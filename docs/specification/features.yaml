@@ -1,0 +1,19 @@
+schema: 1
+language: rune
+baseline: standard-ml
+features:
+  - id: lexical-analysis
+    status: scaffold
+    spec: lexical-analysis.md
+  - id: core-expressions
+    status: planned
+    spec: core-expressions.md
+  - id: static-semantics
+    status: planned
+    spec: static-semantics.md
+  - id: modules
+    status: planned
+    spec: modules.md
+  - id: bytecode-execution
+    status: scaffold
+    spec: bytecode-execution.md

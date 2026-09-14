@@ -1,0 +1,32 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  portable-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test the C runtime
+        run: make check-runtime test
+
+  standard-ml:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [smlnj, polyml, mlton]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Standard ML toolchains
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y smlnj polyml mlton
+      - name: Check Standard ML implementation
+        run: |
+          case "${{ matrix.compiler }}" in
+            smlnj) make check-sml ;;
+            polyml) make check-polyml ;;
+            mlton) make check-mlton ;;
+          esac
