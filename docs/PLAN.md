@@ -1,6 +1,35 @@
 # Rune implementation plan
 
-Status: proposed; no compiler or VM implementation yet.
+Status: M0 and M1 complete. M2–M5 remain planned.
+
+## Implementation checkpoint — 2026-09-15
+
+Rune 0.0.1 builds with all three installed host compilers, emits bytecode v1,
+and runs on the C VM. [BUILD.md](BUILD.md) contains the current commands and host
+workarounds; [LANGUAGE.md](LANGUAGE.md) records verified support.
+
+Validation completed:
+
+- `make test-all`: 73 language fixtures under each host, identical bytecode and
+  rejection diagnostics, 12 programs matching all three reference SML compilers,
+  and 78 malformed-bytecode/runtime fixtures.
+- `make test-builds`: all three hosts build from a checkout path containing
+  spaces; incremental builds, source changes, and compilation failures propagate
+  correctly.
+- `make test-sanitize`: GCC address/undefined-behavior checks pass for the VM.
+- `make doctor`, `make check-docs`, and shell/Python syntax checks pass.
+
+Implementation choices for M1: scope resolution, monomorphic type checking, and
+instruction construction share an in-memory pass; files are emitted only after
+that pass succeeds. General typed-core lowering and closure conversion remain
+M2 work. Built-in function values can already be aliased and selected by `if`.
+The bytecode has one implicit entry function, forward branches, explicit source
+positions, and an arena reclaimed at exit. No user-defined functions or GC yet.
+
+Opcode definitions, support tables, and executable example inclusions are checked
+against their source specifications. CI is configured to run the three-host,
+packaging, and sanitizer checks; the remote CI run has not been observed. Only
+x86-64 Linux/GCC has been validated locally.
 
 ## 1. Deliverable and scope
 
@@ -80,7 +109,7 @@ Implement a Makefile and small POSIX shell scripts; no parser generator,
 third-party SML library, or package download should be required for ordinary
 builds. Use the installed host compiler, its Basis Library, Make, and a C compiler.
 
-Planned commands:
+Implemented commands (see BUILD.md for the complete interface):
 
 ```sh
 make doctor                       # Report versions, launch checks, dependencies
@@ -234,10 +263,10 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-All milestones below are pending. Complete and document each gate before claiming
-that its features are implemented.
+M0 and M1 have passed their acceptance gates. M2–M5 remain pending; complete and
+document each gate before claiming that its features are implemented.
 
-### M0 — Host builds and documentation foundation
+### M0 — Host builds and documentation foundation (complete)
 
 - Add the shared source manifest, a minimal compiler CLI, all three build
   adapters, the Makefile, `doctor`, and artifact isolation.
@@ -248,7 +277,7 @@ that its features are implemented.
   invocation from another directory. Exercise these from a checkout path with
   spaces. A deliberately broken SML source must fail every host's build.
 
-### M1 — First end-to-end compiler; first-session target
+### M1 — First end-to-end compiler (complete)
 
 - Implement the `first-slice` rows of LANGUAGE.md: literals, names, `val`, `let`,
   integer/boolean operations, `if`, short-circuit booleans, sequencing, `print`,
@@ -343,8 +372,8 @@ the required job. Local single-host tests remain convenient for development.
 ## 8. Keep language documentation in sync
 
 The repository's [contributor instructions](../AGENTS.md) require language changes
-and documentation/tests to land together. M0 should also make this mechanically
-reviewable:
+and documentation/tests to land together. M0 now implements the following
+mechanical checks:
 
 1. Create `docs/features.tsv` with stable feature IDs, milestone, status
    (`planned`, `partial`, `implemented`, `deferred`), and a documented boundary.
@@ -367,8 +396,8 @@ reviewable:
 
 These checks detect stale tables, examples, and missing coverage. They cannot
 prove prose matches every semantic detail; review must still compare the behavior
-change with its documentation. The current contract explicitly reports zero
-implemented features until the compiler and checks exist.
+change with its documentation. The current contract marks the ten M1 feature rows implemented after their
+three-host checks; later rows remain planned or deferred.
 
 ## 9. Main risks and decisions
 
@@ -381,5 +410,5 @@ implemented features until the compiler and checks exist.
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next implementation action is M0, followed by the first complete
-source-to-bytecode-to-C-VM example in M1.
+The next implementation milestone is M2: user-defined functions, lexical
+closures, tuples, recursive calls, and static polymorphism.

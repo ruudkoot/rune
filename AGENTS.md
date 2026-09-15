@@ -1,6 +1,6 @@
 # Working on Rune
 
-Rune is being planned as a Standard ML ’97 subset compiler written in Standard
+Rune is a Standard ML ’97 subset compiler written in Standard
 ML, with bytecode executed by a portable C VM. Read [the plan](docs/PLAN.md) and
 [the language contract](docs/LANGUAGE.md) before implementing compiler features.
 

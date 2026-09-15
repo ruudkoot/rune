@@ -1,0 +1,1 @@
+val NONE = 1

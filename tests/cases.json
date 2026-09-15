@@ -1,0 +1,943 @@
+[
+  {
+    "path": "examples/hello.sml",
+    "kind": "run",
+    "features": [
+      "lit-values",
+      "bind-val",
+      "expr-let",
+      "expr-if",
+      "expr-ops",
+      "basis-output",
+      "type-static",
+      "lex-names"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/arithmetic.sml",
+    "kind": "run",
+    "features": [
+      "expr-ops",
+      "lit-values",
+      "basis-output"
+    ],
+    "stdout": "13\n~3,2\n~3,~2\n2,~1\n~8\n",
+    "reference": true,
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/accept/int32.sml",
+    "kind": "run",
+    "features": [
+      "lit-values",
+      "expr-ops",
+      "basis-output"
+    ],
+    "stdout": "~2147483648\n2147483647\n0\n",
+    "boundary": [
+      "lit-values",
+      "expr-ops",
+      "basis-output"
+    ]
+  },
+  {
+    "path": "tests/accept/comments.sml",
+    "kind": "run",
+    "features": [
+      "lex-comments",
+      "lex-names",
+      "bind-val"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/shadowing.sml",
+    "kind": "run",
+    "features": [
+      "bind-val",
+      "expr-let",
+      "lex-names"
+    ],
+    "stdout": "21\n2\n",
+    "reference": true,
+    "boundary": [
+      "bind-val",
+      "expr-let",
+      "lex-names"
+    ]
+  },
+  {
+    "path": "tests/accept/short-circuit.sml",
+    "kind": "run",
+    "features": [
+      "expr-if",
+      "expr-ops"
+    ],
+    "stdout": "abcd\n",
+    "reference": true,
+    "boundary": [
+      "expr-if",
+      "expr-ops"
+    ]
+  },
+  {
+    "path": "tests/accept/boolean-precedence.sml",
+    "kind": "run",
+    "features": [
+      "expr-if",
+      "expr-ops"
+    ],
+    "stdout": "ab\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/comparison.sml",
+    "kind": "run",
+    "features": [
+      "expr-ops",
+      "type-static",
+      "lit-values"
+    ],
+    "stdout": "yes\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/sequence.sml",
+    "kind": "run",
+    "features": [
+      "expr-sequence",
+      "expr-let",
+      "basis-output"
+    ],
+    "stdout": "abc15\n",
+    "reference": true,
+    "boundary": [
+      "expr-sequence"
+    ]
+  },
+  {
+    "path": "tests/accept/empty-let.sml",
+    "kind": "run",
+    "features": [
+      "expr-let"
+    ],
+    "stdout": "empty\n",
+    "reference": true,
+    "boundary": [
+      "expr-let"
+    ]
+  },
+  {
+    "path": "tests/accept/alias.sml",
+    "kind": "run",
+    "features": [
+      "basis-output",
+      "bind-val",
+      "type-static"
+    ],
+    "stdout": "42\n",
+    "reference": true,
+    "boundary": [
+      "basis-output"
+    ]
+  },
+  {
+    "path": "tests/accept/escapes.sml",
+    "kind": "run",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "boundary": [
+      "lit-values"
+    ],
+    "stdout_hex": "0708090a0b0c0d5c2200ff001f61620a"
+  },
+  {
+    "path": "tests/accept/nul-string.sml",
+    "kind": "run",
+    "features": [
+      "lit-values",
+      "expr-ops"
+    ],
+    "stdout": "a\u0000b\n",
+    "reference": true,
+    "boundary": [
+      "lit-values",
+      "expr-ops"
+    ]
+  },
+  {
+    "path": "tests/accept/unit.sml",
+    "kind": "run",
+    "features": [
+      "lit-values",
+      "expr-sequence"
+    ],
+    "stdout": "",
+    "reference": true
+  },
+  {
+    "path": "tests/reject/type-add.sml",
+    "kind": "reject",
+    "features": [
+      "type-static",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-static",
+      "expr-ops"
+    ]
+  },
+  {
+    "path": "tests/reject/type-condition.sml",
+    "kind": "reject",
+    "features": [
+      "type-static",
+      "expr-if"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-static",
+      "expr-if"
+    ]
+  },
+  {
+    "path": "tests/reject/type-branches.sml",
+    "kind": "reject",
+    "features": [
+      "type-static",
+      "expr-if"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-static",
+      "expr-if"
+    ]
+  },
+  {
+    "path": "tests/reject/type-print.sml",
+    "kind": "reject",
+    "features": [
+      "basis-output",
+      "type-static"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "basis-output",
+      "type-static"
+    ]
+  },
+  {
+    "path": "tests/reject/shadow-builtin.sml",
+    "kind": "reject",
+    "features": [
+      "basis-output",
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "basis-output",
+      "bind-val"
+    ]
+  },
+  {
+    "path": "tests/reject/function-equality.sml",
+    "kind": "reject",
+    "features": [
+      "expr-ops",
+      "type-static"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "expr-ops",
+      "type-static"
+    ]
+  },
+  {
+    "path": "tests/reject/string-order.sml",
+    "kind": "reject",
+    "features": [
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "expr-ops"
+    ]
+  },
+  {
+    "path": "tests/reject/scope.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "scope",
+    "boundary": [
+      "lex-names",
+      "bind-val"
+    ]
+  },
+  {
+    "path": "tests/reject/let-leak.sml",
+    "kind": "reject",
+    "features": [
+      "expr-let",
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "scope",
+    "boundary": [
+      "expr-let",
+      "bind-val"
+    ]
+  },
+  {
+    "path": "tests/reject/nonrecursive-val.sml",
+    "kind": "reject",
+    "features": [
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "scope",
+    "boundary": [
+      "bind-val"
+    ]
+  },
+  {
+    "path": "tests/reject/large-int.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "range",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/small-int.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "range",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/unterminated-comment.sml",
+    "kind": "reject",
+    "features": [
+      "lex-comments"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lex-comments"
+    ]
+  },
+  {
+    "path": "tests/reject/unterminated-string.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/escape.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/escape-range.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/escape-short.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/escape-gap.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/escape-control.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/string-newline.sml",
+    "kind": "reject",
+    "features": [
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "lex",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/missing-end.sml",
+    "kind": "reject",
+    "features": [
+      "expr-let"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "expr-let"
+    ]
+  },
+  {
+    "path": "tests/reject/missing-else.sml",
+    "kind": "reject",
+    "features": [
+      "expr-if"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "expr-if"
+    ]
+  },
+  {
+    "path": "tests/reject/trailing.sml",
+    "kind": "reject",
+    "features": [
+      "type-static"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "type-static"
+    ]
+  },
+  {
+    "path": "tests/reject/trailing-sequence.sml",
+    "kind": "reject",
+    "features": [
+      "expr-sequence"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "expr-sequence"
+    ]
+  },
+  {
+    "path": "tests/reject/illegal-name.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "lex-names"
+    ]
+  },
+  {
+    "path": "tests/reject/fn.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures",
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-closures",
+      "type-poly"
+    ]
+  },
+  {
+    "path": "tests/reject/fun.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/reject/tuple.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-tuples"
+    ]
+  },
+  {
+    "path": "tests/reject/datatype.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/case.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/exception.sml",
+    "kind": "reject",
+    "features": [
+      "control-exceptions"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "control-exceptions"
+    ]
+  },
+  {
+    "path": "tests/reject/handle.sml",
+    "kind": "reject",
+    "features": [
+      "control-exceptions"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "control-exceptions"
+    ]
+  },
+  {
+    "path": "tests/reject/ref.sml",
+    "kind": "reject",
+    "features": [
+      "data-mutation"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-mutation"
+    ]
+  },
+  {
+    "path": "tests/reject/while.sml",
+    "kind": "reject",
+    "features": [
+      "data-mutation"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-mutation"
+    ]
+  },
+  {
+    "path": "tests/reject/record.sml",
+    "kind": "reject",
+    "features": [
+      "data-records"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "data-records"
+    ]
+  },
+  {
+    "path": "tests/reject/annotation.sml",
+    "kind": "reject",
+    "features": [
+      "decl-types"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "decl-types"
+    ]
+  },
+  {
+    "path": "tests/reject/and.sml",
+    "kind": "reject",
+    "features": [
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "decl-advanced"
+    ]
+  },
+  {
+    "path": "tests/reject/infix.sml",
+    "kind": "reject",
+    "features": [
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "decl-advanced"
+    ]
+  },
+  {
+    "path": "tests/reject/structure.sml",
+    "kind": "reject",
+    "features": [
+      "modules"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "modules"
+    ]
+  },
+  {
+    "path": "tests/reject/real.sml",
+    "kind": "reject",
+    "features": [
+      "numeric-more"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "numeric-more"
+    ]
+  },
+  {
+    "path": "tests/reject/word.sml",
+    "kind": "reject",
+    "features": [
+      "numeric-more"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "numeric-more"
+    ]
+  },
+  {
+    "path": "tests/reject/char.sml",
+    "kind": "reject",
+    "features": [
+      "numeric-more"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "numeric-more"
+    ]
+  },
+  {
+    "path": "tests/reject/basis.sml",
+    "kind": "reject",
+    "features": [
+      "basis-more"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "basis-more"
+    ]
+  },
+  {
+    "path": "tests/runtime/overflow-add.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/overflow-sub.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/overflow-mul.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/overflow-neg.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/overflow-div.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/zero-div.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Div",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/zero-mod.sml",
+    "kind": "runtime",
+    "features": [
+      "expr-ops",
+      "lit-values"
+    ],
+    "stdout": "",
+    "stderr": "Div",
+    "boundary": [
+      "expr-ops",
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/runtime/string-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "lit-values",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "string exceeds 1 MiB",
+    "boundary": [
+      "lit-values"
+    ]
+  },
+  {
+    "path": "tests/reject/keyword-as.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "decl-advanced"
+    ],
+    "boundary": [
+      "lex-names",
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/keyword-with.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "decl-advanced"
+    ],
+    "boundary": [
+      "lex-names",
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/infix-before.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "expr-ops"
+    ],
+    "boundary": [
+      "lex-names",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/infix-o.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "expr-ops"
+    ],
+    "boundary": [
+      "lex-names",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/constructor-nil.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "data-datatypes"
+    ],
+    "boundary": [
+      "lex-names",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/constructor-none.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "data-datatypes"
+    ],
+    "boundary": [
+      "lex-names",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/constructor-overflow.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "control-exceptions"
+    ],
+    "boundary": [
+      "lex-names",
+      "control-exceptions"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/constructor-empty.sml",
+    "kind": "reject",
+    "features": [
+      "lex-names",
+      "control-exceptions"
+    ],
+    "boundary": [
+      "lex-names",
+      "control-exceptions"
+    ],
+    "stdout": "",
+    "stderr": "unsupported"
+  }
+]

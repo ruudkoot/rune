@@ -1,0 +1,1 @@
+val Empty = 1

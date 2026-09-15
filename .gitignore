@@ -1,0 +1,6 @@
+/build/
+**/.cm/
+__pycache__/
+*.pyc
+core
+core.*

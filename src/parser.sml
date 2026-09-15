@@ -1,0 +1,111 @@
+structure Parser =
+struct
+  open Syntax
+  fun parse tokens =
+    let
+      val remaining = ref tokens
+      val depth = ref 0
+      fun current () = case !remaining of t::_ => t | [] => (Lexer.EOF, Source.start)
+      fun position () = #2 (current ())
+      fun spelling () = case #1 (current ()) of Lexer.Word s => s | Lexer.Symbol s => s | _ => ""
+      fun is s = spelling () = s
+      fun pop () = case !remaining of _::ts => remaining := ts | [] => ()
+      fun error msg = Source.fail (position ()) "syntax" msg
+      fun expect s = if is s then pop () else error ("expected '" ^ s ^ "'")
+      val reserved = ["val", "in", "end", "if", "then", "else", "let", "andalso", "orelse", "div", "mod"]
+      fun name s = not (List.exists (fn x => x = s) reserved)
+      fun startsAtom () = case #1 (current ()) of
+          Lexer.Number _ => true | Lexer.Text _ => true
+        | Lexer.Word s => name s orelse s = "let"
+        | Lexer.Symbol s => s = "(" orelse s = "~"
+        | _ => false
+      fun precedence s = case s of
+          "orelse" => 1 | "andalso" => 2
+        | "=" => 4 | "<>" => 4 | "<" => 4 | "<=" => 4 | ">" => 4 | ">=" => 4
+        | "+" => 6 | "-" => 6 | "^" => 6
+        | "*" => 7 | "div" => 7 | "mod" => 7 | _ => ~1
+      fun expression minimum =
+        let
+          val () = depth := !depth+1
+          val () = if !depth > 256 then error "expression nesting exceeds 256" else ()
+          val p = position ()
+          val first = if is "if" andalso minimum <= 2 then
+              (pop (); let val c = expression 0
+                           val () = expect "then"
+                           val a = expression 0
+                           val () = expect "else"
+                           val b = expression 0
+                       in E (p, If (c,a,b)) end)
+            else application ()
+          fun infixes left =
+            let val oper = spelling ()
+                val prec = precedence oper
+                val p = position ()
+            in if prec < minimum orelse prec < 0 then left
+               else (pop ();
+                 let val right = expression (if prec <= 2 then prec else prec+1)
+                     val result = case oper of
+                       "andalso" => E (p, If (left, right, E (p, Boolean false)))
+                     | "orelse" => E (p, If (left, E (p, Boolean true), right))
+                     | _ => E (p, Binary (oper, left, right))
+                 in infixes result end)
+            end
+          val result = infixes first
+        in depth := !depth-1; result end
+      and application () =
+        let val first = atom ()
+            fun loop left = if startsAtom () then
+              let val right = atom ()
+              in loop (E (Syntax.position left, Apply (left,right))) end else left
+        in loop first end
+      and atom () =
+        let val (kind,p) = current ()
+        in case kind of
+            Lexer.Number n => (pop (); E (p, Integer n))
+          | Lexer.Text s => (pop (); E (p, String s))
+          | Lexer.Word "true" => (pop (); E (p, Boolean true))
+          | Lexer.Word "false" => (pop (); E (p, Boolean false))
+          | Lexer.Word "let" =>
+              (pop (); let val ds = declarations "in"
+                           val () = expect "in"
+                           val body = sequence "end"
+                           val () = expect "end"
+                       in E (p, Let (ds,body)) end)
+          | Lexer.Word s => if name s then (pop (); E (p, Name s)) else error "expected expression"
+          | Lexer.Symbol "~" => (pop (); E (p, Name "~"))
+          | Lexer.Symbol "(" =>
+              (pop (); if is ")" then (pop (); E (p, Unit))
+               else let val e = sequence ")" val () = expect ")" in e end)
+          | _ => error "expected expression"
+        end
+      and sequence stop =
+        let val first = expression 0
+            fun loop acc = if is ";" then
+                  (pop (); if is stop then error "expected expression after ';'"
+                   else loop (expression 0 :: acc))
+                else case List.rev acc of [e] => e | es => E (Syntax.position first, Sequence es)
+        in loop [first] end
+      and declarations stop =
+        let
+          fun loop acc =
+            if is ";" then (pop (); loop acc)
+            else if is stop orelse (case #1 (current ()) of Lexer.EOF => true | _ => false)
+              then List.rev acc
+            else if is "val" then
+              let val p = position ()
+                  val () = pop ()
+                  val binding = if is "_" then (pop (); NONE)
+                    else case #1 (current ()) of Lexer.Word s =>
+                       if name s andalso s <> "true" andalso s <> "false"
+                          andalso not (CharVector.exists (fn c => c = #".") s)
+                       then (pop (); SOME s) else error "expected value binding name"
+                     | _ => error "expected value binding name or '_'"
+                  val () = expect "="
+                  val e = expression 0
+              in loop (Val (p,binding,e)::acc) end
+            else error "expected 'val' declaration"
+        in loop [] end
+      val ds = declarations ""
+      val () = case #1 (current ()) of Lexer.EOF => () | _ => error "unexpected trailing input"
+    in ds end
+end
