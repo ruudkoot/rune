@@ -21,7 +21,7 @@ struct
   fun free expression =
     let fun walk bound (E (_,_,node)) acc =
           let fun sub e a = walk bound e a
-              fun many es a = List.foldl (fn (e,a) => sub e a) a es
+              fun many es initialAcc = List.foldl (fn (e,currentAcc) => sub e currentAcc) initialAcc es
           in case node of
               Variable id => if member id bound then acc else insert id acc
             | Binary (_,a,b) => sub b (sub a acc) | Apply (f,a) => sub a (sub f acc)
@@ -30,9 +30,9 @@ struct
             | Function {self,param,body} => walk
                 (patternIds param @ (case self of NONE => bound | SOME id => id::bound)) body acc
             | Let (ds,body) =>
-                let fun bindings bound [] a = walk bound body a
-                      | bindings bound ((pat,e)::rest) a =
-                          bindings (patternIds pat @ bound) rest (walk bound e a)
+                let fun bindings currentBound [] a = walk currentBound body a
+                      | bindings currentBound ((pat,e)::rest) a =
+                          bindings (patternIds pat @ currentBound) rest (walk currentBound e a)
                 in bindings bound ds acc end
             | _ => acc
           end
@@ -44,10 +44,10 @@ struct
       val instructions = ref 0
       fun lookup p env id = case List.find (fn (n,_) => n = id) env of
           SOME (_,a) => a | NONE => Source.fail p "internal" "unresolved core binding"
-      fun build id captures self param body declarations =
+      fun build functionId capturedIds selfBinding parameter functionBody entryDecls =
         let
           val code = ref ([] : instruction list) val counter = ref 0
-          val locals = ref (if id = 0 then 0 else 1)
+          val locals = ref (if functionId = 0 then 0 else 1)
           fun emit p opnum operand =
             if !instructions >= Source.maxCount then Source.fail p "limit" "too many instructions"
             else let val target = ref operand
@@ -66,10 +66,10 @@ struct
             | UnitPattern => (simple p Opcode.CHECK_UNIT; env)
             | TuplePattern ps =>
                 let val () = small p Opcode.CHECK_TUPLE (List.length ps)
-                    fun loop env _ [] = env
-                      | loop env i (pat::rest) =
+                    fun loop currentEnv _ [] = currentEnv
+                      | loop currentEnv i (pat::rest) =
                           (simple p Opcode.DUP; small p Opcode.GET i;
-                           loop (bind env pat) (i+1) rest)
+                           loop (bind currentEnv pat) (i+1) rest)
                     val env' = loop env 0 ps
                 in simple p Opcode.POP; env' end
           fun value env (e as E (p,_,node)) = case node of
@@ -96,7 +96,7 @@ struct
                     val () = branch := IntInf.fromInt (!counter)
                     val () = value env b
                 in join := IntInf.fromInt (!counter) end
-            | Let (ds,e) => value (bindings env ds) e
+            | Let (ds,letBody) => value (bindings env ds) letBody
             | Sequence es => sequence value env es
             | Tuple es => (List.app (value env) es; small p Opcode.TUPLE (List.length es))
             | Function {self,param,body} =>
@@ -121,13 +121,13 @@ struct
             | Let (ds,body) => tail (bindings env ds) body
             | Sequence es => sequence tail env es
             | _ => (value env e; simple p Opcode.RETURN)
-          val env = ListPair.zip (captures,List.tabulate (List.length captures,Environment))
-          val env = case self of NONE => env | SOME id => (id,Self)::env
-          val () = case (param,body) of
+          val capturedEnv = ListPair.zip (capturedIds,List.tabulate (List.length capturedIds,Environment))
+          val env = case selfBinding of NONE => capturedEnv | SOME id => (id,Self)::capturedEnv
+          val () = case (parameter,functionBody) of
               (SOME pat,SOME e) => (small (Core.position e) Opcode.LOAD 0; tail (bind env pat) e)
-            | (NONE,NONE) => (ignore (bindings env declarations); simple Source.start Opcode.HALT)
+            | (NONE,NONE) => (ignore (bindings env entryDecls); simple Source.start Opcode.HALT)
             | _ => Source.fail Source.start "internal" "invalid core function"
-        in functions := (id,{locals= !locals,environment=List.length captures,code=List.rev (!code)}):: !functions end
+        in functions := (functionId,{locals= !locals,environment=List.length capturedIds,code=List.rev (!code)}):: !functions end
       val () = build 0 [] NONE NONE NONE declarations
       fun function i = case List.find (fn (id,_) => id = i) (!functions) of SOME (_,f) => f
         | NONE => Source.fail Source.start "internal" "missing emitted function"

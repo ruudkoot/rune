@@ -26,8 +26,8 @@ struct
                          in names := (name,(t,Local id)):: !names; make t (Core.Bind id) end
                 | Syntax.Wildcard => make (fresh p level) Core.Wildcard
                 | Syntax.UnitPattern => make TUnit Core.UnitPattern
-                | Syntax.TuplePattern ps =>
-                    let val pats = List.map pat ps
+                | Syntax.TuplePattern elements =>
+                    let val pats = List.map pat elements
                     in make (TTuple (List.map Core.patternType pats)) (Core.TuplePattern pats) end
               end
             val pats = List.map pat ps
@@ -86,7 +86,7 @@ struct
               let val es' = List.map sub es
               in make (Core.typeOf (List.last es')) (Core.Sequence es') end
         end
-      and bindings env level depth ds =
+      and bindings initialEnv level depth ds =
         let fun loop env [] acc = (List.rev acc,env)
               | loop env (d::rest) acc =
                 let val (pat,e,env') = case d of
@@ -106,15 +106,15 @@ struct
                                 let val inner = curry rest
                                 in Core.E (p,TFunction (Core.patternType param,Core.typeOf inner),
                                      Core.Function {self=NONE,param=param,body=inner}) end
-                          val (param,body,t) = case curry params of
-                              Core.E (_,t,Core.Function {param,body,...}) => (param,body,t)
+                          val (param,curriedBody,t) = case curry params of
+                              Core.E (_,t,Core.Function {param,body=curriedBody,...}) => (param,curriedBody,t)
                             | _ => Source.fail p "internal" "recursive function without parameters"
                           val () = unify p ft t
                           val () = generalize p level true ft
-                          val e' = Core.E (p,ft,Core.Function {self=SOME id,param=param,body=body})
+                          val e' = Core.E (p,ft,Core.Function {self=SOME id,param=param,body=curriedBody})
                       in (Core.P (p,ft,Core.Bind id),e',(name,(ft,Local id))::env) end
                 in loop env' rest ((pat,e)::acc) end
-        in loop env ds [] end
+        in loop initialEnv ds [] end
       val basis = [("print", (TFunction (TString,TUnit), Builtin 0)),
                    ("Int.toString", (TFunction (TInt,TString), Builtin 1)),
                    ("not", (TFunction (TBool,TBool), Builtin 2)),

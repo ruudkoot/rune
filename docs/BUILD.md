@@ -85,6 +85,28 @@ make vm CC=cc CFLAGS='-O0 -g'
 sources, selected compiler, or flags change. Avoid concurrent builds of the same
 host output directory. `make clean` removes only `build/`.
 
+## Editor setup
+
+Open the repository root in your editor when using Millet. Its default project
+discovery requires exactly one `.mlb` or `.cm` file directly in that directory
+(see [diagnostic 1004](https://github.com/azdavis/millet/blob/main/docs/diagnostics/1004.md)).
+The checked-in [rune.mlb](../rune.mlb) provides this project without a
+`millet.toml` configuration or an initial build. It imports the Standard ML Basis
+Library and lists the working compiler sources in `src/`, in the order specified
+by [sources.list](../sources.list). It remains available after `make clean`.
+
+The editor project covers the portable compiler core. Host entry points,
+examples, and test fixtures are outside its scope; fixtures include deliberately
+invalid programs and programs whose behavior follows Rune's language contract.
+
+Edit `sources.list` when adding or reordering compiler sources, then run
+`make generate`. This regenerates `rune.mlb`, and `make check-docs` detects a
+missing or stale project file. MLton can also type-check the project directly:
+
+```sh
+mlton -stop tc rune.mlb
+```
+
 ## Tests and documentation
 
 ```sh
@@ -115,10 +137,11 @@ LeakSanitizer reports that it cannot run under ptrace; the same suite passes
 outside the sandbox with leak detection enabled. This is an execution-environment
 restriction, not a missing dependency.
 
-`make generate` updates checked-in opcode definitions, the opcode table, the
-language support table, and example inclusions. Edit `spec/opcodes.tsv`,
-`docs/features.tsv`, or `examples/` first. Add feature IDs to `tests/cases.json` and
-include a relevant boundary/rejection case. `make check-docs` rejects stale
+`make generate` updates the checked-in editor project, opcode definitions, the
+opcode table, the language support table, and example inclusions. Edit
+`sources.list`, `spec/opcodes.tsv`, `docs/features.tsv`, or `examples/` first.
+For language features, add feature IDs to `tests/cases.json` and include a
+relevant boundary/rejection case. `make check-docs` rejects stale
 generated material, missing fixtures, missing coverage, and broken local links.
 Prose still needs review whenever semantics change. CI requires the three-host
 suite, build checks, and sanitizer suite.

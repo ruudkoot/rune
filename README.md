@@ -41,6 +41,16 @@ The VM uses only standard C; running `.rbc` files does not require an SML compil
 Poly/ML uses saved states, so its native development linker library is optional.
 Bytecode v1 files must be recompiled for the v2 VM.
 
+## Editor setup
+
+Open the repository root in your editor. Millet discovers the checked-in
+`rune.mlb` there and analyzes the compiler sources in `src/`. The project works
+before the first build and after `make clean`.
+
+After changing `sources.list`, run `make generate` to update the editor project;
+`make check-docs` checks that it stays in sync. See the
+[editor setup guide](docs/BUILD.md#editor-setup) for details.
+
 ## Check changes
 
 ```sh

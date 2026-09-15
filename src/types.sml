@@ -47,21 +47,22 @@ struct
     | TFunction (a,b) => (occurs p id level a; occurs p id level b)
     | TTuple ts => List.app (occurs p id level) ts
     | _ => ()
-  fun unify p a b =
-    let val a = root p a val b = root p b
+  fun unify p left right =
+    let val leftRoot = root p left val rightRoot = root p right
         fun bind r t = case !r of
             Unbound (id,level,eq) => (occurs p id level t;
                 if eq then equality p t else (); r := Link t)
           | _ => Source.fail p "internal" "cannot unify a type scheme"
-    in case (a,b) of
-        (TVar r,TVar s) => if r = s then () else bind r b
-      | (TVar r,_) => bind r b | (_,TVar r) => bind r a
+    in case (leftRoot,rightRoot) of
+        (TVar r,TVar s) => if r = s then () else bind r rightRoot
+      | (TVar r,_) => bind r rightRoot | (_,TVar r) => bind r leftRoot
       | (TInt,TInt) => () | (TBool,TBool) => () | (TString,TString) => () | (TUnit,TUnit) => ()
-      | (TFunction (a,b),TFunction (c,d)) => (unify p a c; unify p b d)
+      | (TFunction (leftArg,leftResult),TFunction (rightArg,rightResult)) =>
+          (unify p leftArg rightArg; unify p leftResult rightResult)
       | (TTuple xs,TTuple ys) => if List.length xs <> List.length ys then
           Source.fail p "type" "tuple arities differ"
           else ListPair.app (fn (x,y) => unify p x y) (xs,ys)
-      | _ => Source.fail p "type" ("expected " ^ shape a ^ ", got " ^ shape b)
+      | _ => Source.fail p "type" ("expected " ^ shape leftRoot ^ ", got " ^ shape rightRoot)
     end
   fun generalize p level eligible t = case root p t of
       TVar r => (case !r of Unbound (id,lev,eq) =>
@@ -81,6 +82,6 @@ struct
               | _ => TVar r)
           | TFunction (a,b) => let val a' = copy a val b' = copy b in TFunction (a',b') end
           | TTuple ts => TTuple (List.map copy ts)
-          | t => t
+          | resolved => resolved
     in copy scheme end
 end
