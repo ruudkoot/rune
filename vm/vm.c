@@ -1,4 +1,4 @@
-/* Rune M3 virtual machine: ISO C11, explicit frames and a non-moving heap. */
+/* Rune virtual machine: ISO C11, explicit frames and a non-moving heap. */
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -512,7 +512,7 @@ static size_t heap_limit(const char *text) {
 int main(int argc, char **argv) {
     int i;
     if (atexit(cleanup)) { fputs("rune-vm: cannot register cleanup\n", stderr); return 1; }
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.0.3 (bytecode v2)"); return 0; }
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.1.0 (bytecode v2)"); return 0; }
     if (argc == 2 && strcmp(argv[1], "--help") == 0) { usage(stdout); return 0; }
     for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--") == 0) { ++i; break; }

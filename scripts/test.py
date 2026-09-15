@@ -222,16 +222,30 @@ def reference_rejections(hosts, cases, directory):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--hosts", nargs="+", choices=["smlnj", "polyml", "mlton"], required=True)
-    parser.add_argument("--vm", default="build/vm/rune-vm")
+    parser.add_argument("--vm", action="append", help="VM executable/launcher; repeat to run identical bytecode on each")
     args = parser.parse_args()
-    vm = (ROOT / args.vm).resolve()
+    vms = [(ROOT / path).resolve() for path in (args.vm or ["build/vm/rune-vm"])]
+
+    def run_vms(arguments, **kwargs):
+        previous = None
+        for vm in vms:
+            result = run([vm, *arguments], **kwargs)
+            evidence = (result.returncode, result.stdout, result.stderr)
+            if previous is not None:
+                assert evidence == previous, ("VM divergence", vm, arguments, previous, evidence)
+            previous = evidence
+        return result
+
     cases = json.loads((ROOT / "tests/cases.json").read_text())
     comparison = {}
+    vm_version = run_vms(["--version"], stdout=None).stdout
+    assert re.fullmatch(rb"Rune VM [0-9]+\.[0-9]+\.[0-9]+ \(bytecode v2\)\n", vm_version), vm_version
+    compiler_version = vm_version.replace(b"Rune VM ", b"Rune ", 1)
     with tempfile.TemporaryDirectory(prefix="rune tests ") as temp:
         directory = Path(temp)
         for host in args.hosts:
             compiler = ROOT / "build" / host / "rune"
-            assert run([compiler, "--version"]).stdout.startswith(b"Rune ")
+            run([compiler, "--version"], stdout=compiler_version)
             assert b"Usage:" in run([compiler, "--help"]).stdout
             run([compiler], status=1)
             run([compiler, "--unknown"], status=1)
@@ -252,7 +266,7 @@ def main():
                     evidence = output.read_bytes()
                     run([compiler, "--check", source], stdout=b"")
                     for stress in ([], ["--gc-stress"]):
-                        runtime = run([vm, *case.get("vm_args", []), *stress, output],
+                        runtime = run_vms([*case.get("vm_args", []), *stress, output],
                                       status=3 if case["kind"] == "runtime" else 0,
                                       stdout=bytes.fromhex(case["stdout_hex"]) if "stdout_hex" in case else case.get("stdout", "").encode())
                         if case["kind"] == "runtime":
@@ -282,27 +296,31 @@ def main():
             spaced = directory / "source file.sml"
             shutil.copyfile(ROOT / "examples/hello.sml", spaced)
             run([compiler, "-o", "output file.rbc", "source file.sml"], cwd=directory)
-            run([vm, "output file.rbc"], cwd=directory, stdout=b"42\n")
+            run_vms(["output file.rbc"], cwd=directory, stdout=b"42\n")
             shutil.copyfile(spaced, directory / "-input.sml")
             run([compiler, "-o", "dash.rbc", "--", "-input.sml"], cwd=directory)
-            run([vm, "dash.rbc"], cwd=directory, stdout=b"42\n")
+            run_vms(["dash.rbc"], cwd=directory, stdout=b"42\n")
             for special in ("--help", "@SMLverbose", "@MLton"):
                 shutil.copyfile(spaced, directory / special)
                 run([compiler, "-o", "special.rbc", "--", special], cwd=directory)
-                run([vm, "special.rbc"], cwd=directory, stdout=b"42\n")
+                run_vms(["special.rbc"], cwd=directory, stdout=b"42\n")
             previous = spaced.read_bytes()
             run([compiler, "-o", spaced, spaced], status=1)
             assert spaced.read_bytes() == previous
             run([compiler, "-o", directory / "missing" / "out.rbc", spaced], status=1)
             assert not list(directory.glob(".*.rbc.*")), "temporary outputs leaked"
-            print(f"{host}: {len(cases)} fixtures (normal and GC stress), CLI, atomic output, and golden encoding passed.")
-        vm_cases(vm, directory)
-        vm_cases(vm, directory, ["--gc-stress"])
-        gc_cli_cases(vm, directory)
+            print(f"{host}: {len(cases)} fixtures (normal and GC stress) on {len(vms)} VM(s), CLI, atomic output, and golden encoding passed.", flush=True)
+        for vm in vms:
+            print(f"VM checks: {vm}", flush=True)
+            vm_cases(vm, directory)
+            vm_cases(vm, directory, ["--gc-stress"])
+            gc_cli_cases(vm, directory)
         references(args.hosts, cases, directory)
         reference_rejections(args.hosts, cases, directory)
     if len(args.hosts) > 1:
         print("Cross-host bytecode and rejection diagnostics are identical.")
+    if len(vms) > 1:
+        print("Identical bytecode produced identical output, status, and runtime diagnostics on every VM.")
 
 
 if __name__ == "__main__":

@@ -4,8 +4,9 @@ CC ?= cc
 CFLAGS ?= -O2
 PYTHON ?= python3
 export SML ML_BUILD POLY MLTON CC CFLAGS
+export I386_CC PPC64_CC QEMU_I386 QEMU_PPC64 PPC64_SYSROOT
 
-.PHONY: build compiler vm all-hosts doctor test test-all check-docs generate clean test-builds test-sanitize test-gc
+.PHONY: build compiler vm all-hosts doctor test test-all check-docs generate clean test-builds test-sanitize test-gc test-portability
 
 build: compiler vm
 
@@ -28,6 +29,9 @@ test: build check-docs test-gc
 
 test-all: all-hosts check-docs test-gc
 	$(PYTHON) scripts/test.py --hosts smlnj polyml mlton
+
+test-portability: all-hosts check-docs test-gc
+	$(PYTHON) scripts/test_portability.py
 
 test-builds:
 	$(PYTHON) scripts/test_builds.py

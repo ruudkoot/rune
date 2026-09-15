@@ -1,65 +1,67 @@
 # Rune implementation plan
 
-Status: M0–M3 complete. M4–M5 remain planned.
+Status: M0–M4 complete. M5 remains deferred.
 
-## Implementation checkpoint — 2026-09-15
+Next session: [M5 datatypes and matching design](#next-session--m5-datatypes-and-matching-design).
 
-Rune 0.0.3 builds with SML/NJ, Poly/ML, and MLton and runs on the ISO C11 VM.
-M3 adds non-moving mark-and-sweep garbage collection for strings, tuples, and
-closures, with a 64 MiB default managed heap ceiling. `--heap-limit BYTES` permits
-smaller heaps; `--gc-stress` collects before every managed allocation, including
-loading. [BUILD.md](BUILD.md) records commands and host workarounds;
-[LANGUAGE.md](LANGUAGE.md) records verified support and retention limits.
+## Implementation checkpoint — 2026-09-16
 
-Validation completed for M3:
+Rune 0.1.0 completes M4. The implementation is committed as `fed2c2e`; this
+checkpoint and the [release notes](RELEASES.md) record its acceptance results.
+The language remains the documented M1/M2 functional subset with M3 garbage
+collection. M4 adds repeatable portability checks, CI coverage, and synchronized
+compiler/VM release versions. Bytecode remains v2 with unchanged encoding and
+instruction meanings; existing v2 files run without recompilation.
 
-- `make test-all`: 133 language fixtures under each host, with every runnable
-  fixture executed normally and with GC stress. Bytecode and rejection diagnostics
-  are identical. The 33 reference programs and 15 type/pattern rejection cases
-  agree with all three reference SML compilers.
-- 372 malformed-bytecode/runtime fixtures pass in each execution mode, including
-  every truncation boundary of empty and closure-containing bytecode, frame and
-  operand limits, and an independently encoded closure call that prints `42`.
-  VM CLI checks cover heap limits, retained constant pools, and option-like paths.
-- Allocation-heavy closure/string/tuple programs finish with a 16 KiB heap;
-  retained closure chains and growing strings fail cleanly when they cannot fit.
-  Heap failures in executing code preserve the instruction's source location.
-  The existing million-call scalar and 100,000-call tuple tail loops also pass.
-- `make test-gc` (also included in `test-all`): explicit root categories, stale
-  capacity slots, shared/cyclic graphs, a 100,000-object chain, and exact heap
-  accounting pass. Cycles are built in the internal C harness because the current
-  immutable Rune objects and SELF do not construct cyclic heaps.
-- `make test-sanitize`: collector harness, the full MLton-driven language corpus,
-  and both modes of VM checks pass with GCC ASan/UBSan and leak detection outside
-  the sandbox. Strict Clang 18.1.3 builds, its collector harness, and the
-  Poly/ML-driven corpus and VM checks pass too.
-- Valgrind 3.22.0 reports zero errors and no leaks for the collector harness.
-- `make check-docs`, Python syntax checks, and `git diff --check` pass.
+Validation completed for M4:
 
-SML/NJ checks ran outside the execution sandbox, following the documented
-`Bad system call` workaround. Leak detection also used the documented
-outside-sandbox path; the prior sandboxed run failed under ptrace. Required tools
-are installed and M3 adds no dependencies. The three-host spaced-checkout,
-incremental-build, and failed-compilation checks passed in M2; build adapters were
-unchanged and that suite was not rerun for M3.
+- Clean `make test-all`: 133 language fixtures under each of SML/NJ, Poly/ML,
+  and MLton, with every runnable fixture executed normally and under GC stress.
+  Bytecode and rejection diagnostics are identical. The 33 reference programs
+  and 15 type/pattern rejection cases agree with all three reference compilers.
+- `make test-portability`: the same bytecode file from each compiler build runs
+  on native x86-64 Linux, emulated i386 Linux (32-bit little-endian), and emulated
+  PowerPC64 Linux (64-bit big-endian). Stdout, exit status, and full runtime
+  diagnostics agree. Each VM passes 372 malformed-bytecode/runtime fixtures in
+  each execution mode, plus heap-option, loading-root, and filename CLI checks.
+- Native and cross-built collector harnesses pass root categories, stale slots,
+  shared/cyclic graphs, a 100,000-object chain, and exact heap accounting.
+  Allocation-heavy programs finish with a 16 KiB heap; retained-heap failures
+  preserve source locations on every VM. Tail-call fixtures pass on every target.
+- Cross-built ELF headers and executing C probes verify architecture, pointer
+  width, and byte order. Additional manual checks reject a native ELF file
+  presented as either cross target and reject a mismatched runtime pointer width.
+  An isolated checkout with apostrophes/spaces also passes the i386 launcher,
+  external-working-directory, and option-like-filename checks.
+- `make test-builds`: all three hosts pass spaced-checkout, incremental-build,
+  changed-source rebuild, and failed-compilation checks.
+- `make CC=clang HOST=polyml test`: strict C11 VM/harness builds and the full
+  Poly/ML-driven corpus, VM checks, and references pass.
+- `make CC=gcc test-sanitize` and `make CC=clang test-sanitize`: collector harness,
+  MLton-driven corpus, normal/stress VM checks, and references pass with ASan,
+  UBSan, and leak detection enabled outside the sandbox.
+- `make doctor`, `make check-docs`, Python syntax checks, and `git diff --check`
+  pass. Grammar, feature/Basis inventory, resource limits, GC retention,
+  bytecode compatibility, CLI behavior, and examples were reviewed against the
+  implementation; no language or instruction changes were needed.
 
-The collector traces constants/source metadata, active operands and initialized
-locals, frame closures, and explicit C temporary roots. Its iterative intrusive
-worklist needs no extra memory during collection. Tail calls reuse frames;
-initialized locals retain objects until overwritten, returned from, or replaced
-by a tail call. There is no last-use analysis. The managed heap ceiling includes
-object headers but excludes bytecode storage, VM stacks, and allocator overhead.
+Local toolchains are GCC 13.3.0, Clang 18.1.3, and QEMU 8.2.2 on Ubuntu 24.04
+x86-64. The PowerPC64 recipe uses Clang plus installed cross binutils and
+libraries, which coexist with GCC multilib. All required tools were available;
+no packages or system settings were changed. [BUILD.md](BUILD.md) records exact
+setup, artifact locations, and overrides.
 
-Bytecode remains v2, with unchanged encoding and instruction meanings. Existing
-v2 files run without recompilation; v1 and unknown versions remain rejected.
-The language remains the M1 expression subset and M2 functions/tuples/polymorphism;
-M3 introduces no syntax or built-ins.
+SML/NJ suites and leak detection ran outside the execution sandbox using the
+previously documented workarounds. Native i386 execution in the sandbox failed
+with `Bad system call`; explicit QEMU user emulation worked. These are execution
+constraints, not missing packages. The additional VM targets are verified under
+emulation; native PowerPC hardware, 32-bit big-endian targets, ARM64, and other
+operating systems remain unverified.
 
-Opcode definitions, support tables, and executable example inclusions are checked
-against their source specifications. Existing CI targets now include GC checks;
-the remote CI run has not been observed. Local VM validation covers x86-64 Linux
-with GCC 13.3.0 and Clang 18.1.3. Other operating systems, 32-bit targets, and
-big-endian targets remain unverified.
+[GitHub Actions run for `fed2c2e`](https://github.com/ruudkoot/rune/actions/runs/35030873753)
+passed both `compiler-and-vm` and `vm-portability`, including GCC/Clang sanitizer
+checks. That observed run covers the implementation; the subsequent release
+status/documentation update is checked locally.
 
 ## 1. Deliverable and scope
 
@@ -293,8 +295,8 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-M0–M3 have passed their acceptance gates. M4–M5 remain pending; complete and
-document each gate before claiming that its features are implemented.
+M0–M4 have passed their acceptance gates. M5 remains pending; complete and
+document each new feature gate before claiming implementation.
 
 ### M0 — Host builds and documentation foundation (complete)
 
@@ -342,16 +344,25 @@ document each gate before claiming that its features are implemented.
   allocation point; malformed instruction/operand/control-flow fixtures fail
   cleanly. Long tail recursion uses bounded frame space.
 
-### M4 — v0.1 release checks
+### M4 — v0.1 release checks (complete)
 
 - Finish all v0.1 language rows, grammar, Basis inventory, build instructions,
   bytecode specification, examples, and contributor documentation checks.
 - **Gate:** clean `make test-all` succeeds on all three hosts; emitted bytecode
   and diagnostics agree; strict C builds and applicable sanitizer checks pass.
-  Run the standalone VM on a second OS or architecture, or state precisely which
-  platform combinations remain unverified. Missing coverage is never a pass.
+  Run the standalone VM and collector harness on a 32-bit little-endian target
+  and a big-endian target in addition to native x86-64 Linux. Record whether
+  execution is native or emulated and which other platforms remain unverified.
+  Missing coverage is never a pass.
 - **Delivery:** portable compiler source, three tested build paths, C VM,
   bytecode tools, documented functional subset, and runnable examples.
+
+M4's gate is complete. `make test-portability` and the CI portability job now
+run the full three-host corpus against all three VM targets. The shared runner
+accepts repeated `--vm` arguments, so each target executes identical bytecode
+and produces comparable runtime diagnostics. Target identity guards and the
+collector harness run before the corpus. See the checkpoint above for results
+and [BUILD.md](BUILD.md#portability-checks) for commands and dependencies.
 
 ### M5 — Expand toward SML ’97; optional self-hosting later
 
@@ -371,6 +382,26 @@ Recommended order, each with its own language documentation and acceptance gate:
 8. Evaluate self-hosting only once Rune accepts the compiler's actual source and
    library dependencies. Then bootstrap from an external host and compare the
    behavior and emitted program bytecode across successive bootstrap stages.
+
+#### Next session — M5 datatypes and matching design
+
+Start with a bounded design for the first M5 slice, then implement it in
+increments with their own acceptance gates:
+
+1. Specify list/datatype syntax, constructor scope and identity, type parameters,
+   constructor patterns, `case`, and multi-clause `fn`/`fun`. Define the initial
+   exclusions explicitly in LANGUAGE.md and the feature manifest.
+2. Design constructor representation, GC tracing, structural equality, matching
+   evaluation order, and uncaught `Match`/`Bind` behavior. Record bytecode changes
+   and compatibility consequences in BYTECODE.md before implementing the format.
+3. Add positive examples and type/pattern rejection or boundary fixtures for
+   each increment, with reference-SML cases in the common supported subset.
+4. Run `make test-all` and `make test-portability` for compiler/runtime changes;
+   exercise new heap layouts under GC stress and sanitizers. Mark a feature
+   implemented only after all three host builds pass its documented gate.
+
+The current toolchain is sufficient to begin this work. Exception handlers,
+mutation, records, modules, and broader Basis support remain later M5 work.
 
 ## 7. Validation strategy
 
@@ -441,5 +472,5 @@ feature rows implemented after their three-host checks; later rows remain deferr
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next milestone is M4: v0.1 release checks, documentation review, and execution
-on a second OS or architecture where available. Record any platform gaps explicitly.
+The next milestone is M5, beginning with the datatype and pattern-matching
+design above. Keep the three-host and VM portability gates as the language grows.

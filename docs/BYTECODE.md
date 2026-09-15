@@ -11,6 +11,13 @@ encoding or instruction changes. Existing v2 files run without recompilation;
 programs that previously exhausted the arena can now finish when their retained
 objects fit in the heap. Version 1 and unknown versions remain rejected.
 
+Rune 0.1.0 (M4) also retains version 2 with unchanged instruction meanings and
+encoding. The portability suite runs each host compiler's identical bytecode on
+native x86-64 Linux and emulated i386 and big-endian PowerPC64 Linux VMs. Fields
+remain little-endian even when the VM executes on a big-endian target. Existing
+v2 files require no recompilation. See [BUILD.md](BUILD.md#portability-checks)
+for the tested configurations and limits of this coverage.
+
 ## Encoding
 
 All unsigned integer fields are little-endian. No alignment or padding is used.

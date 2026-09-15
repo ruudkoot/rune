@@ -1,6 +1,6 @@
 structure Main =
 struct
-  val version = "Rune 0.0.3 (M3; bytecode v2)\n"
+  val version = "Rune 0.1.0 (bytecode v2)\n"
   val usage = "Usage: rune [-o OUTPUT.rbc] [--] INPUT.sml\n       rune --check [--] INPUT.sml\n       rune --disassemble [--] INPUT.rbc\n       rune --help | --version\n"
   exception Usage of string
   fun main (_,args) =

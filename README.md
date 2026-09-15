@@ -7,9 +7,11 @@ that emits bytecode for a portable C virtual machine.
 
 Rune compiles typed expressions, `val`/`let` bindings, user functions, lexical
 closures, recursion, and tuples to bytecode v2. It includes polymorphic type
-inference with the SML value restriction and a garbage-collected VM heap. M0–M3
-pass their acceptance gates under SML/NJ, Poly/ML, and MLton, including allocation
-stress with a 16 KiB heap. The next milestone is the v0.1 release checks (M4).
+inference with the SML value restriction and a garbage-collected VM heap.
+Rune 0.1.0 completes M0–M4 under SML/NJ, Poly/ML, and MLton, including allocation
+stress with a 16 KiB heap. The same bytecode passes on native x86-64 Linux,
+emulated 32-bit i386 Linux, and emulated big-endian PowerPC64 Linux.
+The next milestone is M5: lists, datatypes, and pattern matching.
 
 - [Implementation plan](docs/PLAN.md): milestones, architecture, builds with
   SML/NJ, Poly/ML, and MLton, and acceptance checks.
@@ -17,6 +19,7 @@ stress with a 16 KiB heap. The next milestone is the v0.1 release checks (M4).
   semantics, and exclusions.
 - [Builds and testing](docs/BUILD.md): prerequisites, host adapters, and checks.
 - [Bytecode specification](docs/BYTECODE.md): format, instructions, and VM limits.
+- [Release notes](docs/RELEASES.md): v0.1.0 scope, validation, and compatibility.
 - [Contributor instructions](AGENTS.md): requirements for keeping implementation,
   language documentation, and tests in sync.
 
@@ -63,9 +66,15 @@ make test-all       # Three-host semantics, bytecode equality, reference SML, do
 make test-builds    # Checkout paths with spaces, rebuilds, failed compilations
 make test-sanitize # GCC/Clang address and undefined-behavior sanitizers
 make test-gc        # Collector roots, cycles, deep graphs, and heap accounting
+make test-portability # Native, 32-bit i386, and big-endian PowerPC64 VMs
 make check-docs
 ```
 
 Ordinary builds require Make, a POSIX shell, standard shell utilities, a host SML
 compiler, and a C11 compiler. Tests and documentation generation also use Python 3
 with its standard library. No package downloads occur during builds.
+
+`test-portability` uses additional development tools on x86-64 Linux: GCC
+multilib, Clang, QEMU user emulation, and PowerPC64 binutils/libraries. See the
+[portability setup and target matrix](docs/BUILD.md#portability-checks). Ordinary
+compiler and VM builds do not require these tools.

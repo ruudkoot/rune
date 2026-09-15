@@ -9,10 +9,13 @@ in, so normal builds do not need Python or a parser generator.
 
 Current host installations used for development are SML/NJ 110.79, Poly/ML 5.7.1,
 and MLton 20210117. The VM targets systems with 8-bit bytes, `uint32_t`, and
-`int64_t`. Validation in this workspace is on x86-64 Linux with GCC 13.3.0
-and Clang 18.1.3. Other operating systems, 32-bit targets, and big-endian targets
-are not yet verified. Building the C VM for another target is supported through `CC`/`CFLAGS`;
-running that target's binary requires the appropriate system or emulator.
+`int64_t`. Rune 0.1.0 is validated on native x86-64 Linux with GCC 13.3.0 and
+Clang 18.1.3, and on QEMU 8.2.2 user-emulated i386 Linux (32-bit little-endian,
+GCC) and PowerPC64 Linux (64-bit big-endian, Clang). Other operating systems,
+native PowerPC hardware, ARM64, and 32-bit big-endian targets remain unverified.
+Building the C VM for another target is supported through `CC`/`CFLAGS`; running
+that target's binary requires the appropriate system or emulator. See the
+[portability checks](#portability-checks) for the repeatable development matrix.
 
 ## Commands
 
@@ -132,6 +135,7 @@ make test-all
 make test-builds
 make test-sanitize
 make test-gc
+make test-portability
 make check-docs
 make generate
 ```
@@ -171,4 +175,65 @@ For language features, add feature IDs to `tests/cases.json` and include a
 relevant boundary/rejection case. `make check-docs` rejects stale
 generated material, missing fixtures, missing coverage, and broken local links.
 Prose still needs review whenever semantics change. CI requires the three-host
-suite, build checks, and sanitizer suite.
+suite, build checks, GCC/Clang sanitizer suites, and the portability matrix.
+
+## Portability checks
+
+`make test-portability` builds all three host compilers and the native VM, then
+builds and executes the following additional VMs and collector harnesses:
+
+| Target | Pointers | Byte order | Compiler | Execution |
+| --- | --- | --- | --- | --- |
+| x86-64 Linux | 64-bit | Little-endian | `CC` (default `cc`) | Native |
+| i386 Linux | 32-bit | Little-endian | GCC with `-m32` | `qemu-i386` |
+| PowerPC64 Linux | 64-bit | Big-endian | Clang targeting `powerpc64-linux-gnu` | `qemu-ppc64` |
+
+This development target requires an x86-64 Linux host and the Ubuntu-style
+PowerPC64 toolchain layout. It is separate from the portable C VM's requirements.
+Missing tools or a wrong target fail the check. Each cross-built executable's ELF
+header must match its target architecture, width, and byte order. A C probe
+confirms the executing target's pointer width and byte order before its collector
+harness runs. QEMU is used explicitly, with no binfmt registration or system
+emulator configuration required. Native i386 execution in this workspace's
+sandbox fails with `Bad system call`; QEMU user emulation works.
+
+Install the extra development packages on Ubuntu 24.04 with:
+
+```sh
+sudo apt-get update
+sudo apt-get install clang qemu-user gcc-multilib libc6-dev-i386 \
+  binutils-powerpc64-linux-gnu libc6-dev-ppc64-cross libgcc-13-dev-ppc64-cross
+make test-portability
+```
+
+Clang uses `--target=powerpc64-linux-gnu --gcc-toolchain=/usr` with the PowerPC64
+binutils, headers, and runtime libraries. Installing a GCC cross compiler instead
+conflicts with Ubuntu's `gcc-multilib` metapackage. The listed support packages
+coexist with multilib. No additional tools are needed for this matrix in the
+current development environment; these commands are also used by its CI job.
+
+Artifacts and argument-preserving VM launchers go under
+`build/portability/i386/` and `build/portability/powerpc64/`. Native artifacts
+remain in `build/vm/`. The target uses fixed strict C11 warnings and `-O2` for
+cross builds. Optional executable-path overrides are `I386_CC` (default `gcc`),
+`PPC64_CC` (a Clang-compatible driver, default `clang`), `QEMU_I386`, and
+`QEMU_PPC64`. `PPC64_SYSROOT` overrides QEMU's runtime library prefix, defaulting
+to `/usr/powerpc64-linux-gnu`; compilation uses the toolchain layout under `/usr`.
+
+The test runner compiles each fixture once per SML host and runs that exact
+bytecode file on all three VMs before replacing it. It compares stdout, exit
+status, and full runtime diagnostics in both normal and GC-stress modes,
+including small-heap cases and source locations. Every VM also runs the complete
+malformed-bytecode and CLI checks. The three-host bytecode and reference-SML
+comparisons run in the same invocation. The runner's repeatable `--vm` option
+is available for other already-built VMs or executable launchers:
+
+```sh
+python3 scripts/test.py --hosts smlnj polyml mlton \
+  --vm build/vm/rune-vm \
+  --vm build/portability/i386/run-vm \
+  --vm build/portability/powerpc64/run-vm
+```
+
+This validates the selected emulated Linux configurations. Native PowerPC
+hardware, 32-bit big-endian targets, ARM64, and other OSes remain unverified.

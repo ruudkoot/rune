@@ -4,9 +4,12 @@
 
 Rune implements the M1 expression subset and M2 functions, tuples, and polymorphic
 typing, emitting version 2 bytecode for the C VM. M3 adds garbage collection and
-bounded heap controls. M0–M3 have passed their acceptance gates under all three
-host-built compilers. M4–M5 remain planned or deferred. The [implementation plan](PLAN.md) defines the
-milestones and acceptance checks. See [BUILD.md](BUILD.md) for working commands.
+bounded heap controls. Rune 0.1.0 completes the M0–M4 acceptance gates under all
+three host-built compilers. Identical bytecode passes the corpus on native
+x86-64 Linux and QEMU-emulated i386 (32-bit little-endian) and PowerPC64 (64-bit
+big-endian) Linux VMs. M4 adds portability checks without changing the language
+subset; M5 features remain deferred. The [implementation plan](PLAN.md) records
+the results and remaining platform gaps. See [BUILD.md](BUILD.md) for commands.
 
 Rune targets Standard ML ’97 syntax and semantics within an explicitly documented
 subset. The conformance references are [The Definition of Standard ML, Revised](https://smlfamily.github.io/)
