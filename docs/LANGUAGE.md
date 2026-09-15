@@ -3,8 +3,9 @@
 ## Current status
 
 Rune implements the M1 expression subset and M2 functions, tuples, and polymorphic
-typing, emitting version 2 bytecode for the C VM. M0–M2 have passed their acceptance
-gates under all three host-built compilers. M3–M5 remain planned or deferred. The [implementation plan](PLAN.md) defines the
+typing, emitting version 2 bytecode for the C VM. M3 adds garbage collection and
+bounded heap controls. M0–M3 have passed their acceptance gates under all three
+host-built compilers. M4–M5 remain planned or deferred. The [implementation plan](PLAN.md) defines the
 milestones and acceptance checks. See [BUILD.md](BUILD.md) for working commands.
 
 Rune targets Standard ML ’97 syntax and semantics within an explicitly documented
@@ -36,6 +37,7 @@ passed its fixtures using Rune built by all three host compilers.
 | fn-recursion | Recursive `fun` declarations | implemented | v0.1 / M2 | Single clause; one function per declaration; curried parameters; tail calls |
 | data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2 | Arity at least two; variable, wildcard, unit, and nested tuple patterns |
 | type-poly | Let polymorphism and equality types | implemented | v0.1 / M2 | Hindley–Milner inference, occurs check, SML value restriction, equality constraints |
+| runtime-gc | Garbage collection and bounded heap | implemented | v0.1 / M3 | Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement |
 | data-datatypes | Lists, datatypes, constructor patterns, `case` | deferred | Deferred / M5 | Includes user constructors, multi-clause matches, `Match`, and `Bind` |
 | control-exceptions | `exception`, `raise`, `handle` | deferred | Deferred / M5 | Runtime arithmetic failures exist earlier; user exception handling does not |
 | data-mutation | References, assignment, `while`, arrays, vectors | deferred | Deferred / M5 | No user-visible mutable storage in v0.1 |
@@ -208,18 +210,29 @@ compiler's Basis from a compiled Rune program.
 - **Patterns in M2:** only irrefutable variable, wildcard, unit, and tuple patterns.
   Reject duplicate bound names; destructuring must agree with the inferred type.
   Literal/constructor patterns and match failure semantics arrive with M5.
-- **Limits in M2:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
+- **Limits:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
   nesting, pattern nesting, checked expression-tree depth, and `fun` parameter
   count limited to 256. At most 65,536 binding identities and fresh type variables;
   inference is limited to 1,000,000 type traversal steps per compilation.
   Functions, string constants, total instructions, locals/captures per function,
   tuple arity, active local slots, VM operands, and active frames are capped at
-  65,536. Each string is at most 1 MiB; bytecode at most 16 MiB; VM arena at most
-  64 MiB including metadata. Structural equality uses at most 65,536 pending
-  comparisons and 1,000,000 comparison steps per operation. Limits fail with
-  diagnostics. Memory is reclaimed at process exit; GC is deferred to M3.
-  Tail calls bound frame usage but programs that keep allocating tuples, strings,
-  or closures can still exhaust the arena.
+  65,536. Each string is at most 1 MiB; bytecode at most 16 MiB; the default managed
+  heap is at most 64 MiB including object headers. Structural equality uses at
+  most 65,536 pending comparisons and 1,000,000 comparison steps per operation. Limits fail with
+  diagnostics. The heap ceiling does not include bytecode storage, VM stacks,
+  or the C allocator's internal overhead.
+- **Memory in M3:** non-moving mark-and-sweep collection reclaims unreachable
+  strings, tuples, and closures during execution. Tail-recursive programs can
+  allocate more than the heap ceiling over time when their retained values fit.
+  Constants and source metadata remain live; initialized local slots retain
+  values until their frame is released, replaced by a tail call, or the slot is
+  overwritten. This includes top-level bindings for the lifetime of the program;
+  there is no last-use analysis. A retained graph or single allocation that
+  cannot fit after collection fails with `heap limit exceeded` and status 3.
+  The VM option `--heap-limit BYTES` lowers the ceiling (1 through 67,108,864
+  bytes); `--gc-stress` collects before each managed allocation. These VM controls
+  add no Rune syntax or built-ins. Exact heap consumption depends on C object
+  sizes on the target platform; integer and bytecode semantics do not.
 
 ## Examples
 
@@ -246,6 +259,23 @@ val addTwo = makeAdder 2
 val _ = print (Int.toString (addTwo 40) ^ "\n")
 ```
 <!-- example:examples/closures.sml:end -->
+
+### M3 collection: expected output `1` followed by a newline
+
+This tail-recursive program discards strings, tuples, and closures on each
+iteration. The test suite runs it with a 16 KiB managed heap.
+
+<!-- example:examples/collection.sml:start -->
+```sml
+fun loop (n, total) =
+  if n = 0 then total
+  else let
+    val text = Int.toString n ^ "!"
+    val next = fn x => if text = "1!" then x + 1 else x
+  in loop (n - 1, next total) end
+val _ = print (Int.toString (loop (100000, 0)) ^ "\n")
+```
+<!-- example:examples/collection.sml:end -->
 
 ### Required rejections
 

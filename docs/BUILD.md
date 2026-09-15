@@ -44,6 +44,23 @@ returns 0 on success, 1 for usage/file errors, 2 for invalid bytecode, and 3 for
 runtime failures. Diagnostics go to stderr and include source locations when
 available. `print` adds no automatic newline.
 
+The VM collects unused strings, tuples, and closures automatically. Its default
+managed heap ceiling is 64 MiB, including object headers. For reproducible memory
+tests, lower the ceiling and optionally collect before every allocation:
+
+```sh
+build/mlton/rune -o build/collection.rbc examples/collection.sml
+build/vm/rune-vm --heap-limit 16384 build/collection.rbc
+build/vm/rune-vm --heap-limit 16384 --gc-stress build/collection.rbc
+# Both print 1 followed by a newline.
+```
+
+`--heap-limit` accepts decimal byte counts from 1 through 67,108,864. Invalid
+options exit with status 1; a valid but insufficient heap exits with status 3.
+These options precede the filename, with `--` available for option-like filenames.
+The ceiling covers managed objects; bytecode storage, VM stacks, and C allocator
+overhead are separate. See [BYTECODE.md](BYTECODE.md) for root and retention rules.
+
 ## Host adapters
 
 - **SML/NJ:** `ml-build` reads a generated CM group and exports a heap image.
@@ -114,6 +131,7 @@ make HOST=polyml test
 make test-all
 make test-builds
 make test-sanitize
+make test-gc
 make check-docs
 make generate
 ```
@@ -124,15 +142,24 @@ the reference SML compilers. Rune-specific 32-bit boundaries use explicit expect
 values because SML/NJ's default integers are narrower. VM output checks are byte
 comparisons, including embedded NUL and escaped bytes. M2 fixtures exercise
 closures, polymorphism, tuples, one million tail calls, and resource failures.
+Every runnable fixture is executed normally and with `--gc-stress`, including
+the runtime-failure fixtures. M3 tests run allocation-heavy programs in a 16 KiB
+heap, preserve live captures/tuples/temporary strings, and diagnose retained-heap
+exhaustion. All three host-built compilers run these tests. The standalone VM
+fixtures also run in both modes and test every truncation boundary of empty and
+closure-containing bytecode files.
 Selected type/pattern rejection cases are also checked against all three reference
 compilers. Bytecode v2 fixtures cover function metadata, captures, returns, tail
 calls, tuple operations, and explicit rejection of v1 files.
 
 `test-builds` uses a temporary checkout whose path contains spaces. It checks
 incremental rebuilds and that invalid SML causes each build to fail.
-`test-sanitize` runs the corpus and malformed-bytecode checks with an instrumented
-C VM. It requires GCC or compatible Clang sanitizer flags; it is a separate
-development check from portable C builds. In this execution sandbox,
+`test-gc` builds a C collector harness covering root categories, stale capacity
+slots, shared/cyclic graphs, a 100,000-object chain, and exact heap accounting.
+It is included in `test` and `test-all`, and needs only the existing C compiler.
+`test-sanitize` runs this harness, the corpus, and malformed-bytecode checks with
+address/undefined-behavior instrumentation. It requires GCC or compatible Clang
+sanitizer flags; it is a separate development check from portable C builds. In this execution sandbox,
 LeakSanitizer reports that it cannot run under ptrace; the same suite passes
 outside the sandbox with leak detection enabled. This is an execution-environment
 restriction, not a missing dependency.

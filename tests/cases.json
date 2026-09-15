@@ -1596,34 +1596,6 @@
     ]
   },
   {
-    "path": "tests/runtime/closure-arena-limit.sml",
-    "kind": "runtime",
-    "features": [
-      "fn-recursion",
-      "fn-closures"
-    ],
-    "stdout": "",
-    "stderr": "arena exceeds 64 MiB",
-    "boundary": [
-      "fn-recursion",
-      "fn-closures"
-    ]
-  },
-  {
-    "path": "tests/runtime/tuple-arena-limit.sml",
-    "kind": "runtime",
-    "features": [
-      "fn-recursion",
-      "data-tuples"
-    ],
-    "stdout": "",
-    "stderr": "arena exceeds 64 MiB",
-    "boundary": [
-      "fn-recursion",
-      "data-tuples"
-    ]
-  },
-  {
     "path": "tests/accept/fun-parameter-limit.sml",
     "kind": "run",
     "features": [
@@ -1645,5 +1617,108 @@
     ],
     "stdout": "",
     "stderr": "syntax"
+  },
+  {
+    "path": "examples/collection.sml",
+    "kind": "run",
+    "features": [
+      "runtime-gc",
+      "fn-recursion",
+      "fn-closures",
+      "data-tuples"
+    ],
+    "stdout": "1\n",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
+  },
+  {
+    "path": "tests/accept/gc-closures.sml",
+    "kind": "run",
+    "features": [
+      "runtime-gc",
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "stdout": "20000\n",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/gc-tuples.sml",
+    "kind": "run",
+    "features": [
+      "runtime-gc",
+      "fn-recursion",
+      "data-tuples"
+    ],
+    "stdout": "20000 40000\n",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/gc-roots.sml",
+    "kind": "run",
+    "features": [
+      "runtime-gc",
+      "fn-closures",
+      "data-tuples"
+    ],
+    "stdout": "7 kept\n1234\n8 kept\n42\n10 kept\n",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/runtime/closure-heap-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "runtime-gc",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "boundary": [
+      "runtime-gc",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "heap limit exceeded",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
+  },
+  {
+    "path": "tests/runtime/string-heap-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "runtime-gc",
+      "expr-ops",
+      "fn-recursion"
+    ],
+    "boundary": [
+      "runtime-gc",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "heap limit exceeded",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ],
+    "location": [
+      1,
+      22
+    ]
   }
 ]

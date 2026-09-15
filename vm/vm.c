@@ -1,4 +1,4 @@
-/* Rune M2 virtual machine: ISO C11, explicit frames and checked tagged values. */
+/* Rune M3 virtual machine: ISO C11, explicit frames and a non-moving heap. */
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -15,8 +15,16 @@ _Static_assert(sizeof(uint32_t) == 4 && sizeof(int64_t) == 8, "Rune requires exa
 #define MAX_STRING (1024u * 1024u)
 #define MAX_COUNT 65536u
 #define MAX_HEAP (64u * 1024u * 1024u)
+#define GC_INTERVAL (64u * 1024u)
 
-typedef struct Allocation { struct Allocation *next; max_align_t alignment; } Allocation;
+/* The intrusive mark worklist needs no allocation, even when the heap is full.
+   The alignment member keeps the following payload suitable for every C type. */
+typedef struct Allocation {
+    struct Allocation *next, *gray;
+    size_t bytes;
+    int aggregate, marked;
+    max_align_t alignment;
+} Allocation;
 typedef struct { size_t length; unsigned char data[]; } Blob;
 typedef struct Aggregate Aggregate;
 typedef enum { INVALID, INTEGER, BOOLEAN, STRING, UNIT, BUILTIN, TUPLE, CLOSURE } Tag;
@@ -25,14 +33,16 @@ typedef struct {
     union { int32_t integer; uint32_t number; Blob *string; Aggregate *aggregate; } as;
 } Value;
 struct Aggregate { uint32_t count, function; Value values[]; };
+typedef struct Root { struct Root *previous; Value *values; size_t count; } Root;
 typedef struct { Value a, b; } Pair;
 typedef struct { uint8_t op; uint32_t arg, line, column; } Instruction;
 typedef struct { uint32_t locals, environment, count; Instruction *code; } Function;
 typedef struct { uint32_t function, pc, base, stack_base; Value closure; } Frame;
 typedef struct {
     unsigned char *file;
-    size_t size, cursor, allocated;
-    Allocation *arena;
+    size_t size, cursor, allocated, heap_limit, next_gc;
+    Allocation *heap;
+    Root *roots;
     Blob *source;
     Value *constants, *locals, *stack;
     Function *functions;
@@ -41,12 +51,12 @@ typedef struct {
     int32_t *heights;
     uint32_t *work;
     uint32_t constant_count, function_count, sp, fp, local_used, local_capacity, frame_capacity;
-    int executing;
+    int executing, gc_stress;
 } Machine;
-static Machine vm;
+static Machine vm = {.heap_limit = MAX_HEAP, .next_gc = GC_INTERVAL};
 
 static void cleanup(void) {
-    Allocation *p = vm.arena;
+    Allocation *p = vm.heap;
     uint32_t i;
     while (p) { Allocation *next = p->next; free(p); p = next; }
     if (vm.functions) for (i = 0; i < vm.function_count; ++i) free(vm.functions[i].code);
@@ -84,30 +94,84 @@ static void *grow(void *old, uint32_t *capacity, uint32_t needed, size_t size) {
     *capacity = n;
     return p;
 }
-static void *arena(size_t size) {
+static void mark_object(void *object, Allocation **gray) {
+    Allocation *p;
+    if (!object) return;
+    p = (Allocation *)object - 1;
+    if (p->marked) return;
+    p->marked = 1;
+    p->gray = *gray; *gray = p;
+}
+static void mark_value(Value value, Allocation **gray) {
+    if (value.tag == STRING) mark_object(value.as.string, gray);
+    else if (value.tag == TUPLE || value.tag == CLOSURE) mark_object(value.as.aggregate, gray);
+}
+static void collect(void) {
+    Allocation *gray = NULL, **link;
+    Root *root;
+    uint32_t i;
+    mark_object(vm.source, &gray);
+    /* Loading may collect before the constants array has been allocated. Its
+       not-yet-filled entries have INVALID tags from calloc. */
+    if (vm.constants) for (i = 0; i < vm.constant_count; ++i) mark_value(vm.constants[i], &gray);
+    for (i = 0; i < vm.sp; ++i) mark_value(vm.stack[i], &gray);
+    for (i = 0; i < vm.local_used; ++i) mark_value(vm.locals[i], &gray);
+    for (i = 0; i < vm.fp; ++i) mark_value(vm.frames[i].closure, &gray);
+    for (root = vm.roots; root; root = root->previous) {
+        size_t n;
+        for (n = 0; n < root->count; ++n) mark_value(root->values[n], &gray);
+    }
+    while (gray) {
+        Allocation *p = gray;
+        gray = p->gray;
+        if (p->aggregate) {
+            Aggregate *a = (Aggregate *)(p + 1);
+            for (i = 0; i < a->count; ++i) mark_value(a->values[i], &gray);
+        }
+    }
+    link = &vm.heap;
+    while (*link) {
+        Allocation *p = *link;
+        if (p->marked) { p->marked = 0; link = &p->next; }
+        else { *link = p->next; vm.allocated -= p->bytes; free(p); }
+    }
+    /* Give the live set room to double, with a floor for small programs. */
+    vm.next_gc = vm.allocated > vm.heap_limit / 2 ? vm.heap_limit : vm.allocated * 2;
+    if (vm.next_gc < GC_INTERVAL) vm.next_gc = GC_INTERVAL;
+    if (vm.next_gc > vm.heap_limit) vm.next_gc = vm.heap_limit;
+}
+static void *allocate(size_t size, int is_aggregate) {
     Allocation *p;
     size_t bytes;
-    if (size > MAX_HEAP - sizeof(Allocation)) fail(3, "arena allocation too large");
+    if (size > SIZE_MAX - sizeof(Allocation)) fail(3, "allocation size overflow");
     bytes = sizeof(Allocation) + size;
-    if (bytes > MAX_HEAP - vm.allocated) fail(3, "arena exceeds 64 MiB");
-    p = checked_calloc(1, bytes); p->next = vm.arena;
-    vm.arena = p; vm.allocated += bytes;
+    if (vm.gc_stress || vm.allocated >= vm.next_gc || bytes > vm.next_gc - vm.allocated)
+        collect();
+    if (bytes > vm.heap_limit - vm.allocated) fail(3, "heap limit exceeded");
+    p = calloc(1, bytes);
+    if (!p) { collect(); p = calloc(1, bytes); }
+    if (!p) fail(3, "out of memory");
+    p->bytes = bytes; p->aggregate = is_aggregate; p->next = vm.heap;
+    vm.heap = p; vm.allocated += bytes;
     return p + 1;
 }
 static Blob *blob(size_t length) {
     Blob *p;
     if (length > MAX_STRING) fail(3, "string exceeds 1 MiB");
-    p = arena(sizeof(Blob) + length + 1); p->length = length;
+    p = allocate(sizeof(Blob) + length + 1, 0); p->length = length;
     return p;
 }
 static Aggregate *aggregate(uint32_t count, uint32_t function) {
     Aggregate *p;
     if (count > MAX_COUNT || (count && sizeof(Value) > (SIZE_MAX - sizeof(Aggregate)) / count))
         fail(3, "aggregate size overflow");
-    p = arena(sizeof(Aggregate) + count * sizeof(Value));
+    p = allocate(sizeof(Aggregate) + count * sizeof(Value), 1);
     p->count = count; p->function = function;
     return p;
 }
+/* Only allocate() can collect. Newly returned objects must be published to a
+   root before the next managed allocation. grow(), equality, enter(), and
+   return_value() do not collect; their temporary C values need no extra roots. */
 static uint8_t read8(void) {
     if (vm.cursor >= vm.size) malformed("truncated bytecode");
     return vm.file[vm.cursor++];
@@ -299,11 +363,16 @@ static Value binary(uint8_t op, Value a, Value b) {
     if (op == OP_EQ || op == OP_NE) return scalar(BOOLEAN, (uint32_t)(equal(a,b) ^ (op == OP_NE)));
     if (op == OP_CONCAT) {
         Blob *s; size_t alen, blen;
+        Value operands[] = {a, b};
+        Root root = {vm.roots, operands, 2};
         require(a, STRING); require(b, STRING);
         alen = a.as.string->length; blen = b.as.string->length;
         if (blen > MAX_STRING - alen) fail(3, "string exceeds 1 MiB");
+        vm.roots = &root;
         s = blob(alen + blen); memcpy(s->data, a.as.string->data, alen);
-        memcpy(s->data + alen, b.as.string->data, blen); return string_value(s);
+        memcpy(s->data + alen, b.as.string->data, blen);
+        vm.roots = root.previous;
+        return string_value(s);
     }
     require(a, INTEGER); require(b, INTEGER);
     left = a.as.integer; right = b.as.integer;
@@ -348,8 +417,8 @@ static void enter(Value closure, Value argument, int tail) {
     vm.locals[base] = argument; vm.local_used = base + function->locals;
     if (!tail) {
         if (vm.fp >= MAX_COUNT) fail(3, "frame stack exceeds 65536");
-        ++frame->pc;
         vm.frames = grow(vm.frames, &vm.frame_capacity, vm.fp + 1, sizeof(Frame));
+        ++vm.frames[vm.fp - 1].pc;
         ++vm.fp;
     }
     vm.frames[vm.fp - 1] = (Frame){object->function,0,base,stack_base,closure};
@@ -423,12 +492,38 @@ static void execute(void) {
         ++frame->pc;
     }
 }
+static void usage(FILE *out) {
+    fputs("Usage: rune-vm [--heap-limit BYTES] [--gc-stress] [--] PROGRAM.rbc\n"
+          "  --heap-limit BYTES  Managed heap ceiling, 1 through 67108864 (default).\n"
+          "  --gc-stress         Collect before every managed allocation.\n", out);
+}
+static size_t heap_limit(const char *text) {
+    size_t n = 0;
+    const unsigned char *s = (const unsigned char *)text;
+    if (!*s) fail(1, "invalid heap limit (expected 1 through 67108864 bytes)");
+    for (; *s; ++s) {
+        if (*s < '0' || *s > '9' || n > (MAX_HEAP - (size_t)(*s - '0')) / 10)
+            fail(1, "invalid heap limit (expected 1 through 67108864 bytes)");
+        n = n * 10 + (size_t)(*s - '0');
+    }
+    if (!n) fail(1, "invalid heap limit (expected 1 through 67108864 bytes)");
+    return n;
+}
 int main(int argc, char **argv) {
+    int i;
     if (atexit(cleanup)) { fputs("rune-vm: cannot register cleanup\n", stderr); return 1; }
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.0.2 (bytecode v2)"); return 0; }
-    if (argc == 2 && strcmp(argv[1], "--help") == 0) { puts("Usage: rune-vm [--] PROGRAM.rbc"); return 0; }
-    if (argc == 3 && strcmp(argv[1], "--") == 0) load(argv[2]);
-    else if (argc == 2 && argv[1][0] != '-') load(argv[1]);
-    else { fputs("Usage: rune-vm [--] PROGRAM.rbc\n", stderr); return 1; }
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.0.3 (bytecode v2)"); return 0; }
+    if (argc == 2 && strcmp(argv[1], "--help") == 0) { usage(stdout); return 0; }
+    for (i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--") == 0) { ++i; break; }
+        if (strcmp(argv[i], "--gc-stress") == 0) vm.gc_stress = 1;
+        else if (strcmp(argv[i], "--heap-limit") == 0 && i + 1 < argc)
+            vm.heap_limit = heap_limit(argv[++i]);
+        else if (argv[i][0] == '-') { usage(stderr); return 1; }
+        else break;
+    }
+    if (i != argc - 1) { usage(stderr); return 1; }
+    if (vm.next_gc > vm.heap_limit) vm.next_gc = vm.heap_limit;
+    load(argv[i]);
     execute(); return 0;
 }

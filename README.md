@@ -7,8 +7,9 @@ that emits bytecode for a portable C virtual machine.
 
 Rune compiles typed expressions, `val`/`let` bindings, user functions, lexical
 closures, recursion, and tuples to bytecode v2. It includes polymorphic type
-inference with the SML value restriction. M0–M2 pass their acceptance gates under
-SML/NJ, Poly/ML, and MLton. Garbage collection is the next milestone (M3).
+inference with the SML value restriction and a garbage-collected VM heap. M0–M3
+pass their acceptance gates under SML/NJ, Poly/ML, and MLton, including allocation
+stress with a 16 KiB heap. The next milestone is the v0.1 release checks (M4).
 
 - [Implementation plan](docs/PLAN.md): milestones, architecture, builds with
   SML/NJ, Poly/ML, and MLton, and acceptance checks.
@@ -34,6 +35,10 @@ build/vm/rune-vm build/hello.rbc
 build/mlton/rune -o build/closures.rbc examples/closures.sml
 build/vm/rune-vm build/closures.rbc
 # 42
+
+build/mlton/rune -o build/collection.rbc examples/collection.sml
+build/vm/rune-vm --heap-limit 16384 build/collection.rbc
+# 1
 ```
 
 `make` defaults to MLton. Each host produces a `build/<host>/rune` launcher.
@@ -57,6 +62,7 @@ After changing `sources.list`, run `make generate` to update the editor project;
 make test-all       # Three-host semantics, bytecode equality, reference SML, docs
 make test-builds    # Checkout paths with spaces, rebuilds, failed compilations
 make test-sanitize # GCC/Clang address and undefined-behavior sanitizers
+make test-gc        # Collector roots, cycles, deep graphs, and heap accounting
 make check-docs
 ```
 

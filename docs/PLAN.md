@@ -1,49 +1,65 @@
 # Rune implementation plan
 
-Status: M0, M1, and M2 complete. M3–M5 remain planned.
+Status: M0–M3 complete. M4–M5 remain planned.
 
 ## Implementation checkpoint — 2026-09-15
 
-Rune 0.0.2 builds with SML/NJ, Poly/ML, and MLton, emits bytecode v2, and runs
-on the C VM. M2 adds user-defined functions, lexical closures, currying,
-recursive `fun`, tuples and irrefutable patterns, static polymorphism, equality
-constraints, the value restriction, and tail calls. [BUILD.md](BUILD.md) records
-commands and host workarounds; [LANGUAGE.md](LANGUAGE.md) records verified support.
+Rune 0.0.3 builds with SML/NJ, Poly/ML, and MLton and runs on the ISO C11 VM.
+M3 adds non-moving mark-and-sweep garbage collection for strings, tuples, and
+closures, with a 64 MiB default managed heap ceiling. `--heap-limit BYTES` permits
+smaller heaps; `--gc-stress` collects before every managed allocation, including
+loading. [BUILD.md](BUILD.md) records commands and host workarounds;
+[LANGUAGE.md](LANGUAGE.md) records verified support and retention limits.
 
-Validation completed:
+Validation completed for M3:
 
-- `make test-all`: 129 language fixtures under each host, identical bytecode and
-  rejection diagnostics, 30 programs and 15 type/pattern rejection cases matching
-  all three reference SML compilers, and 125 malformed-bytecode/runtime fixtures.
-  An independently encoded closure-call fixture prints `42`.
-- `make test-builds`: all three hosts build from a checkout path containing
-  spaces; incremental builds, source changes, and compilation failures propagate
-  correctly.
-- `make test-sanitize`: the 129-fixture corpus and VM checks pass with GCC
-  address/undefined-behavior sanitizers and leak detection outside the sandbox.
-  The sandboxed attempt failed because LeakSanitizer cannot run under ptrace.
-- Strict Clang 18.1.3 compilation and the Poly/ML-driven corpus/VM checks pass.
-- `make doctor`, `make check-docs`, and shell/Python syntax checks pass.
+- `make test-all`: 133 language fixtures under each host, with every runnable
+  fixture executed normally and with GC stress. Bytecode and rejection diagnostics
+  are identical. The 33 reference programs and 15 type/pattern rejection cases
+  agree with all three reference SML compilers.
+- 372 malformed-bytecode/runtime fixtures pass in each execution mode, including
+  every truncation boundary of empty and closure-containing bytecode, frame and
+  operand limits, and an independently encoded closure call that prints `42`.
+  VM CLI checks cover heap limits, retained constant pools, and option-like paths.
+- Allocation-heavy closure/string/tuple programs finish with a 16 KiB heap;
+  retained closure chains and growing strings fail cleanly when they cannot fit.
+  Heap failures in executing code preserve the instruction's source location.
+  The existing million-call scalar and 100,000-call tuple tail loops also pass.
+- `make test-gc` (also included in `test-all`): explicit root categories, stale
+  capacity slots, shared/cyclic graphs, a 100,000-object chain, and exact heap
+  accounting pass. Cycles are built in the internal C harness because the current
+  immutable Rune objects and SELF do not construct cyclic heaps.
+- `make test-sanitize`: collector harness, the full MLton-driven language corpus,
+  and both modes of VM checks pass with GCC ASan/UBSan and leak detection outside
+  the sandbox. Strict Clang 18.1.3 builds, its collector harness, and the
+  Poly/ML-driven corpus and VM checks pass too.
+- Valgrind 3.22.0 reports zero errors and no leaks for the collector harness.
+- `make check-docs`, Python syntax checks, and `git diff --check` pass.
 
-The compiler now separates parsing, name resolution/type inference, typed core,
-and instruction construction. New `Types`, `Core`, and `Infer` modules precede
-closure conversion and emission in `Compile`. Stable binding identities preserve
-shadowing; deterministic capture slots and function IDs preserve byte equality.
-Recursive functions use SELF and immutable captured environments. The VM has
-explicit growable frames/local storage and replaces frames for tail calls.
-One million scalar tail calls and 100,000 tuple-argument tail calls pass; ordinary
-recursion, closure/tuple allocation, and inference limits fail with diagnostics.
+SML/NJ checks ran outside the execution sandbox, following the documented
+`Bad system call` workaround. Leak detection also used the documented
+outside-sandbox path; the prior sandboxed run failed under ptrace. Required tools
+are installed and M3 adds no dependencies. The three-host spaced-checkout,
+incremental-build, and failed-compilation checks passed in M2; build adapters were
+unchanged and that suite was not rerun for M3.
 
-Bytecode v2 adds function metadata and closure/tuple instructions. Version 1
-files must be recompiled; both tools explicitly reject v1 and unknown versions.
-The arena is reclaimed at exit; garbage collection remains M3 work. Tail calls
-bound frame space but allocating programs can still exhaust the 64 MiB arena.
+The collector traces constants/source metadata, active operands and initialized
+locals, frame closures, and explicit C temporary roots. Its iterative intrusive
+worklist needs no extra memory during collection. Tail calls reuse frames;
+initialized locals retain objects until overwritten, returned from, or replaced
+by a tail call. There is no last-use analysis. The managed heap ceiling includes
+object headers but excludes bytecode storage, VM stacks, and allocator overhead.
+
+Bytecode remains v2, with unchanged encoding and instruction meanings. Existing
+v2 files run without recompilation; v1 and unknown versions remain rejected.
+The language remains the M1 expression subset and M2 functions/tuples/polymorphism;
+M3 introduces no syntax or built-ins.
 
 Opcode definitions, support tables, and executable example inclusions are checked
-against their source specifications. CI is configured to run the three-host,
-packaging, and sanitizer checks; the remote CI run has not been observed.
-Local VM validation covers x86-64 Linux with GCC 13.3.0 and Clang 18.1.3.
-Other operating systems, 32-bit targets, and big-endian targets remain unverified.
+against their source specifications. Existing CI targets now include GC checks;
+the remote CI run has not been observed. Local VM validation covers x86-64 Linux
+with GCC 13.3.0 and Clang 18.1.3. Other operating systems, 32-bit targets, and
+big-endian targets remain unverified.
 
 ## 1. Deliverable and scope
 
@@ -277,7 +293,7 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-M0, M1, and M2 have passed their acceptance gates. M3–M5 remain pending; complete and
+M0–M3 have passed their acceptance gates. M4–M5 remain pending; complete and
 document each gate before claiming that its features are implemented.
 
 ### M0 — Host builds and documentation foundation (complete)
@@ -316,12 +332,13 @@ document each gate before claiming that its features are implemented.
   and a long tail-recursive loop. Reject self-application, function equality,
   invalid recursive definitions, and invalid generalization of expansive values.
 
-### M3 — Runtime completion for v0.1
+### M3 — Runtime completion for v0.1 (complete)
 
 - Add garbage collection, complete bytecode validation for current instructions,
   bounded resource errors, and useful runtime source locations.
 - **Gate:** allocation-heavy closure/string/tuple programs run under a small heap;
-  dead cyclic closures can be collected; values survive collections at every
+  dead cyclic closures can be collected (tested in the internal C harness);
+  values survive collections at every
   allocation point; malformed instruction/operand/control-flow fixtures fail
   cleanly. Long tail recursion uses bounded frame space.
 
@@ -410,7 +427,7 @@ mechanical checks:
 
 These checks detect stale tables, examples, and missing coverage. They cannot
 prove prose matches every semantic detail; review must still compare the behavior
-change with its documentation. The current contract marks the ten M1 and four M2
+change with its documentation. The current contract marks the ten M1, four M2, and one M3
 feature rows implemented after their three-host checks; later rows remain deferred.
 
 ## 9. Main risks and decisions
@@ -424,5 +441,5 @@ feature rows implemented after their three-host checks; later rows remain deferr
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next implementation milestone is M3: garbage collection and runtime
-completion, including allocation stress, root tracing, and small-heap validation.
+The next milestone is M4: v0.1 release checks, documentation review, and execution
+on a second OS or architecture where available. Record any platform gaps explicitly.

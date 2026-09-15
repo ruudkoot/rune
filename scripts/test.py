@@ -35,7 +35,7 @@ def encode(code, *, locals=0, constants=(), source=b"fixture.sml", version=2,
             string(source) + b"".join(map(string, constants)) + b"".join(bodies))
 
 
-def vm_cases(vm, directory):
+def vm_cases(vm, directory, options=()):
     valid = encode([(0, 0)])
     cases = {
         "magic": b"X" + valid[1:], "truncated": valid[:12],
@@ -102,6 +102,10 @@ def vm_cases(vm, directory):
         "closure-equality": two([(26, 1), (31, 0), (15, 0), (8, 0), (0, 0)], [(6, 0), (27, 0)]),
         "nested-function-equality": encode([(5, 0), (3, 0), (29, 2), (31, 0), (15, 0), (8, 0), (0, 0)]),
         "tail-wrong-call": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)], [(1, 0), (3, 0), (28, 0)]),
+        "frame-limit": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)],
+                           [(25, 0), (6, 0), (21, 0), (27, 0)]),
+        "operand-limit": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)],
+                             [(3, 0), (3, 0), (25, 0), (6, 0), (21, 0), (8, 0), (8, 0), (27, 0)]),
     })
     # A shared tuple DAG can require exponential comparisons despite a small heap.
     dag = [(1, 0), (1, 0), (29, 2)] + [(31, 0), (29, 2)] * 20
@@ -111,26 +115,60 @@ def vm_cases(vm, directory):
                   [(24, 0), (6, 0), (9, 0), (27, 0)], environment=1)
     path = directory / "closure-golden.rbc"
     path.write_bytes(closure)
-    run([vm, path], stdout=b"42")
+    run([vm, *options, path], stdout=b"42")
     # Actual v1 empty-file layout, rather than only changing a v2 version field.
     cases["legacy-v1"] = (b"RUNEBC\r\n" + struct.pack("<IIII", 1, 0, 0, 1) +
                           struct.pack("<I", 0) + struct.pack("<BIII", 0, 0, 1, 1))
     for name, blob in cases.items():
         path = directory / (name + ".rbc")
         path.write_bytes(blob)
-        result = run([vm, path], status=2, stdout=b"")
+        result = run([vm, *options, path], status=2, stdout=b"")
         assert result.stderr, name
     for name, blob in runtime.items():
         path = directory / (name + ".rbc")
         path.write_bytes(blob)
-        result = run([vm, path], status=3, stdout=b"")
+        result = run([vm, *options, path], status=3, stdout=b"")
         assert b"runtime:" in result.stderr, name
-    # Exercise every truncation boundary in a small valid file.
-    for n in range(len(valid)):
-        path = directory / "truncated-each.rbc"
-        path.write_bytes(valid[:n])
-        run([vm, path], status=2, stdout=b"")
-    print(f"VM: {len(cases) + len(runtime) + len(valid)} malformed/runtime fixtures passed.")
+        expected = {"frame-limit": b"frame stack exceeds 65536",
+                    "operand-limit": b"operand stack limit exceeded",
+                    "equality-work-limit": b"equality exceeds 1000000 steps"}.get(name)
+        if expected:
+            assert expected in result.stderr, (name, result.stderr)
+    # Exercise every truncation boundary, including captures/function metadata.
+    for data in (valid, closure):
+        for n in range(len(data)):
+            path = directory / "truncated-each.rbc"
+            path.write_bytes(data[:n])
+            run([vm, *options, path], status=2, stdout=b"")
+    mode = "GC stress" if options else "normal"
+    print(f"VM ({mode}): {len(cases) + len(runtime) + len(valid) + len(closure)} malformed/runtime fixtures passed.")
+
+
+def gc_cli_cases(vm, directory):
+    path = directory / "heap-cli.rbc"
+    path.write_bytes(encode([(0, 0)]))
+    assert b"--heap-limit" in run([vm, "--help"]).stdout
+    for options in ([], ["--gc-stress"], ["--heap-limit", "67108864"],
+                    ["--heap-limit", "0004096", "--gc-stress"]):
+        run([vm, *options, path], stdout=b"")
+    for limit in ("", "0", "-1", "+1", " 1", "1 ", "1.0", "1KiB", "67108865", "9" * 100):
+        result = run([vm, "--heap-limit", limit, path], status=1, stdout=b"")
+        assert b"invalid heap limit" in result.stderr
+    for options in ([], ["--"], ["--gc-stress"], ["--heap-limit"], ["--unknown"], [path, path]):
+        run([vm, *options], status=1, stdout=b"")
+    result = run([vm, "--heap-limit", "1", path], status=3, stdout=b"")
+    assert b"heap limit exceeded" in result.stderr
+    # Source metadata and constants remain rooted during loading, even before
+    # execution has frames. A live pool must fail cleanly under a small heap.
+    path.write_bytes(encode([(4, 0), (8, 0), (0, 0)], constants=[b"x" * 1024] * 32))
+    for options in ([], ["--gc-stress"]):
+        result = run([vm, "--heap-limit", "16384", *options, path], status=3, stdout=b"")
+        assert b"heap limit exceeded" in result.stderr
+        run([vm, "--heap-limit", "65536", *options, path], stdout=b"")
+    special = directory / "--heap-limit"
+    special.write_bytes(encode([(0, 0)]))
+    run([vm, "--gc-stress", "--", special.name], cwd=directory, stdout=b"")
+    print("VM: heap option boundaries, loading roots, and option-like filenames passed.")
 
 
 def references(hosts, cases, directory):
@@ -213,16 +251,18 @@ def main():
                     assert result.stderr == b"", result.stderr
                     evidence = output.read_bytes()
                     run([compiler, "--check", source], stdout=b"")
-                    runtime = run([vm, output], status=3 if case["kind"] == "runtime" else 0,
-                                  stdout=bytes.fromhex(case["stdout_hex"]) if "stdout_hex" in case else case.get("stdout", "").encode())
-                    if case["kind"] == "runtime":
-                        assert case["stderr"].encode() in runtime.stderr, (case, runtime.stderr)
-                        assert re.search(rb":\d+:\d+: runtime: ", runtime.stderr), runtime.stderr
-                        if "location" in case:
-                            line, column = case["location"]
-                            assert f"{source.name}:{line}:{column}: runtime:".encode() in runtime.stderr
-                    else:
-                        assert runtime.stderr == b"", runtime.stderr
+                    for stress in ([], ["--gc-stress"]):
+                        runtime = run([vm, *case.get("vm_args", []), *stress, output],
+                                      status=3 if case["kind"] == "runtime" else 0,
+                                      stdout=bytes.fromhex(case["stdout_hex"]) if "stdout_hex" in case else case.get("stdout", "").encode())
+                        if case["kind"] == "runtime":
+                            assert case["stderr"].encode() in runtime.stderr, (case, runtime.stderr)
+                            assert re.search(rb":\d+:\d+: runtime: ", runtime.stderr), runtime.stderr
+                            if "location" in case:
+                                line, column = case["location"]
+                                assert f"{source.name}:{line}:{column}: runtime:".encode() in runtime.stderr, runtime.stderr
+                        else:
+                            assert runtime.stderr == b"", runtime.stderr
                     assert b"Rune bytecode v2" in run([compiler, "--disassemble", output]).stdout
                 if i in comparison:
                     assert comparison[i] == evidence, f"host divergence: {host}: {case['path']}"
@@ -255,8 +295,10 @@ def main():
             assert spaced.read_bytes() == previous
             run([compiler, "-o", directory / "missing" / "out.rbc", spaced], status=1)
             assert not list(directory.glob(".*.rbc.*")), "temporary outputs leaked"
-            print(f"{host}: {len(cases)} fixtures, CLI, atomic output, and golden encoding passed.")
+            print(f"{host}: {len(cases)} fixtures (normal and GC stress), CLI, atomic output, and golden encoding passed.")
         vm_cases(vm, directory)
+        vm_cases(vm, directory, ["--gc-stress"])
+        gc_cli_cases(vm, directory)
         references(args.hosts, cases, directory)
         reference_rejections(args.hosts, cases, directory)
     if len(args.hosts) > 1:

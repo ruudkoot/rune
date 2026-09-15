@@ -6,6 +6,11 @@ The VM is an ISO C11 stack interpreter requiring 8-bit bytes and exact 32- and
 disassembler reject v1 and unknown versions. Opcode numbers 0–23 are preserved,
 but CALL now also accepts user closures and branches are function-relative.
 
+M3 retains version 2: collection changes only VM memory management, with no
+encoding or instruction changes. Existing v2 files run without recompilation;
+programs that previously exhausted the arena can now finish when their retained
+objects fit in the heap. Version 1 and unknown versions remain rejected.
+
 ## Encoding
 
 All unsigned integer fields are little-endian. No alignment or padding is used.
@@ -116,12 +121,42 @@ Bytecode files are limited to 16 MiB and strings to 1 MiB each. There are at mos
 Each function has at most 65,536 locals and captured values. Tuple arity,
 operand stack values, active local slots, and active frames are capped at 65,536.
 Frames and locals grow on demand and are reused by tail calls.
-Arena allocations for strings, tuples, and closures are limited to 64 MiB,
-including metadata. Equality uses an explicit work stack of at most 65,536 pairs and permits at most
-1,000,000 comparison steps per operation.
+Managed allocations for strings (including constants and source metadata), tuples,
+and closures are limited to 64 MiB by default, including object headers. This
+ceiling excludes bytecode storage, VM stacks, and the C allocator's internal
+overhead. Equality uses an explicit work stack of at most 65,536 pairs and permits
+at most 1,000,000 comparison steps per operation.
 
-The M2 VM frees the arena at process exit; garbage collection arrives in M3.
-Tail calls bound frame space; allocations can still exhaust the arena.
+The M3 VM uses non-moving mark-and-sweep collection. It traces the source
+filename, constants, active operand/local slots, active frame closures, and
+explicit temporary C roots. Tuple fields and closure captures are traced;
+an intrusive iterative worklist handles sharing and cycles without C recursion
+or extra allocations during collection. Uninitialized slots and unused capacity
+are not roots. Initialized locals remain roots until overwritten or until their
+frame returns or is replaced; the compiler does not emit last-use information.
+
+Only managed allocation can trigger collection. Aggregate operands stay on the
+operand stack until construction finishes; concatenation registers its popped
+operands as temporary roots. Frame growth, user-closure entry, returns, and
+equality do not perform managed allocations. The allocating built-in
+`Int.toString` consumes only an integer. New objects are initialized and published
+to roots before the next allocation. Loading also obeys this rule. Collector tests create
+cycles internally: immutable Rune values and SELF currently cannot construct them.
+
+Collection starts with a 64 KiB threshold, capped by the selected heap ceiling.
+After collection the threshold is twice the retained allocation size, with the
+same floor and ceiling. The VM collects before exceeding the threshold, retries
+a failed C heap allocation after collection, and reports `heap limit exceeded`
+if retained objects plus the requested allocation exceed the ceiling. All sizes
+include object headers, which can vary across C platforms. Remaining memory is
+freed at exit.
+
+`--heap-limit BYTES` selects a ceiling from 1 through 67,108,864 bytes using decimal
+digits; invalid values are usage errors. `--gc-stress` collects before every
+managed allocation, including during loading. Options precede the program path;
+`--` ends option parsing. Heap exhaustion while loading has no source position;
+exhaustion while executing includes the current instruction's source position.
+
 Allocation failure is reported. Bytecode format errors exit with status 2;
 runtime failures exit with status 3; usage and file I/O errors use status 1.
 Output is flushed and checked before successful exit.

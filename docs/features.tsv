@@ -13,6 +13,7 @@ fn-closures	`fn`, application, lexical closures, currying	implemented	v0.1 / M2	
 fn-recursion	Recursive `fun` declarations	implemented	v0.1 / M2	Single clause; one function per declaration; curried parameters; tail calls
 data-tuples	Tuples and tuple destructuring	implemented	v0.1 / M2	Arity at least two; variable, wildcard, unit, and nested tuple patterns
 type-poly	Let polymorphism and equality types	implemented	v0.1 / M2	Hindley–Milner inference, occurs check, SML value restriction, equality constraints
+runtime-gc	Garbage collection and bounded heap	implemented	v0.1 / M3	Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement
 data-datatypes	Lists, datatypes, constructor patterns, `case`	deferred	Deferred / M5	Includes user constructors, multi-clause matches, `Match`, and `Bind`
 control-exceptions	`exception`, `raise`, `handle`	deferred	Deferred / M5	Runtime arithmetic failures exist earlier; user exception handling does not
 data-mutation	References, assignment, `while`, arrays, vectors	deferred	Deferred / M5	No user-visible mutable storage in v0.1
