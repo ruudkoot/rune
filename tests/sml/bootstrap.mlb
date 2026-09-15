@@ -1,0 +1,8 @@
+$(SML_LIB)/basis/basis.mlb
+../../src/sml/ast.sml
+../../src/sml/lexer.sml
+../../src/sml/parser.sml
+../../src/sml/tycheck.sml
+../../src/sml/emit.sml
+../../src/sml/rune.sml
+bootstrap.sml
