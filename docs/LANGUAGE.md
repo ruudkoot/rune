@@ -2,9 +2,9 @@
 
 ## Current status
 
-Rune now implements the M1 expression subset and emits version 1 bytecode for
-the C VM. The support table records verification status; later M2–M5 features
-remain planned or deferred. The [implementation plan](PLAN.md) defines the
+Rune implements the M1 expression subset and M2 functions, tuples, and polymorphic
+typing, emitting version 2 bytecode for the C VM. M0–M2 have passed their acceptance
+gates under all three host-built compilers. M3–M5 remain planned or deferred. The [implementation plan](PLAN.md) defines the
 milestones and acceptance checks. See [BUILD.md](BUILD.md) for working commands.
 
 Rune targets Standard ML ’97 syntax and semantics within an explicitly documented
@@ -25,17 +25,17 @@ passed its fixtures using Rune built by all three host compilers.
 | lex-comments | Whitespace and nested `(* ... *)` comments | implemented | First slice | ASCII source syntax initially; diagnose unterminated comments |
 | lex-names | Names and reserved tokens | implemented | First slice | Alphanumeric value names; fixed symbolic operators; recognize deferred keywords |
 | lit-values | `int`, `bool`, `string`, and `unit` values | implemented | First slice | Signed decimal integers, `true`, `false`, quoted byte strings, `()` |
-| bind-val | Sequential `val` declarations and lexical names | implemented | First slice | One identifier or wildcard binding; shadowing; no declaration `and` |
+| bind-val | Sequential `val` declarations and lexical names | implemented | First slice | Variable, wildcard, unit, and tuple patterns; shadowing; no declaration `and` |
 | expr-let | `let ... in ... end` and parentheses | implemented | First slice | Sequential local declarations and expression bodies |
 | expr-if | `if ... then ... else ...` | implemented | First slice | Boolean condition; branches have the same type |
 | expr-ops | Fixed integer, boolean, and string operators | implemented | First slice | Operator inventory below; no real/word overloading or user fixity |
 | expr-sequence | Expression sequencing | implemented | First slice | Parenthesized or `let` body sequences; evaluate left to right |
 | basis-output | `print`, `Int.toString`, `not`, `~` | implemented | First slice | Only the listed signatures; built-in values can be aliased, selected by if, and applied |
 | type-static | Static type checking | implemented | First slice | Reject ill-typed programs before producing bytecode |
-| fn-closures | `fn`, application, lexical closures, currying | planned | v0.1 / M2 | Irrefutable parameters, one match clause; functions are first-class |
-| fn-recursion | Recursive `fun` declarations | planned | v0.1 / M2 | Single clause; one function per declaration; curried parameters; tail calls |
-| data-tuples | Tuples and tuple destructuring | planned | v0.1 / M2 | Arity at least two; variable, wildcard, unit, and nested tuple patterns |
-| type-poly | Let polymorphism and equality types | planned | v0.1 / M2 | Hindley–Milner inference, occurs check, SML value restriction, equality constraints |
+| fn-closures | `fn`, application, lexical closures, currying | implemented | v0.1 / M2 | Irrefutable parameters, one match clause; functions are first-class |
+| fn-recursion | Recursive `fun` declarations | implemented | v0.1 / M2 | Single clause; one function per declaration; curried parameters; tail calls |
+| data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2 | Arity at least two; variable, wildcard, unit, and nested tuple patterns |
+| type-poly | Let polymorphism and equality types | implemented | v0.1 / M2 | Hindley–Milner inference, occurs check, SML value restriction, equality constraints |
 | data-datatypes | Lists, datatypes, constructor patterns, `case` | deferred | Deferred / M5 | Includes user constructors, multi-clause matches, `Match`, and `Bind` |
 | control-exceptions | `exception`, `raise`, `handle` | deferred | Deferred / M5 | Runtime arithmetic failures exist earlier; user exception handling does not |
 | data-mutation | References, assignment, `while`, arrays, vectors | deferred | Deferred / M5 | No user-visible mutable storage in v0.1 |
@@ -47,24 +47,28 @@ passed its fixtures using Rune built by all three host compilers.
 | basis-more | Other Basis Library facilities | deferred | Deferred / M5 | No file I/O, OS interface, sockets, threads, or general library access in v0.1 |
 <!-- features:end -->
 
-## First-slice program model
+## Program model
 
-A file is a sequence of `val` declarations, optionally separated by semicolons;
-there is no implicit interactive `it` binding. Evaluate initializers in source
+A file is a sequence of `val` and `fun` declarations, optionally separated by
+semicolons; there is no implicit interactive `it` binding. Evaluate initializers in source
 order. `val x = e` evaluates `e` using the preceding environment and then binds
 `x`; `val _ = e` evaluates and discards its value. `let` introduces a lexical scope.
 The program finishes after its last declaration. No `main` function is required.
 
 Expressions include the listed literals, bound names, parentheses, `let`, `if`,
-the fixed operators, sequencing, and the built-in calls listed below. Parse the
+tuples, functions, the fixed operators, sequencing, and the built-in calls below. Parse the
 whole file; trailing unrecognized tokens are errors. Applications can call the
-four built-in function values below, including aliases or values selected by `if`. User-defined functions arrive in M2.
+four built-in function values below and user closures, including aliases or values
+selected by `if`. Function application is unary and associates to the left;
+`fun f x y = e` defines a curried function, so `f x` returns a closure.
+A recursive `fun` binding is in scope within its own body. Plain `val` remains
+non-recursive. Functions can escape their defining scope and retain captured values.
 
 Source syntax initially uses ASCII letters/digits and SML alphanumeric identifier
 conventions, including underscores and primes after the first character. `_` is
 a wildcard, not a value name. Other symbolic identifiers, leading underscores
-in names, type variables, and Unicode identifiers are outside M1. Qualified alphanumeric names are lexed, but
-only the predeclared `Int.toString` binding is available.
+in names, explicit type variables, and Unicode identifiers are unsupported.
+Qualified alphanumeric names are lexed, but only the predeclared `Int.toString` binding is available.
 
 String literals represent bytes. Supported SML escapes include backslash,
 quote, named control characters (`\a`, `\b`, `\t`, `\n`, `\v`, `\f`, `\r`),
@@ -78,7 +82,7 @@ outside the initial subset.
 The grammar below omits comments and whitespace. `name` is an alphanumeric name
 starting with an ASCII letter and continuing with ASCII letters, digits, `_`, or
 `'`. `qualified-name` consists of such names separated by dots. Reserved SML
-keywords cannot be names. M1 recognizes deferred keywords and rejects them with
+keywords cannot be names. Rune recognizes deferred keywords and rejects them with
 an `unsupported` diagnostic. Unknown qualified names also report `unsupported`;
 unknown unqualified names report `scope`.
 
@@ -90,34 +94,43 @@ without changing SML's binding semantics. In particular, `val nil = 1` is reject
 
 ```text
 program      = { declaration | ";" } EOF
- declaration = "val" (name | "_") "=" expression
+ declaration = "val" pattern "=" expression
+             | "fun" name pattern { pattern } "=" expression
+ pattern     = name | "_" | "()" | "(" pattern ")"
+             | "(" pattern "," pattern { "," pattern } ")"
  expression  = "if" expression "then" expression "else" expression
+             | "fn" pattern "=>" expression
              | boolean-or
  boolean-or  = boolean-and [ "orelse" expression ]
  boolean-and = infix-expression [ "andalso" boolean-rhs ]
  boolean-rhs = "if" expression "then" expression "else" expression
+             | "fn" pattern "=>" expression
              | boolean-and
  infix-expression = application { infix-operator application }
  application = atom { atom }
  atom        = decimal-integer | string | "true" | "false" | "()"
              | name | qualified-name | "~"
              | "(" sequence ")"
+             | "(" expression "," expression { "," expression } ")"
              | "let" { declaration | ";" } "in" sequence "end"
  sequence    = expression { ";" expression }
  decimal-integer = [ "~" ] digit { digit }
 ```
 
 Apply the precedence table below when grouping `infix-expression`; boolean
-forms associate to the right. An `if` in the right operand of a boolean form
-extends through its complete branches. Application arguments are atoms: use
-parentheses around an `if` argument. Empty `()` is a unit expression; `val () = e`
-is not yet an accepted binding pattern. A sequence needs an expression after each
-semicolon. The `let` declaration section may be empty.
+forms associate to the right. An `if` or `fn` in the right operand of a boolean
+form extends through its complete branches or body. Application arguments are
+atoms: parenthesize an `if` or `fn` argument. Empty `()` is a unit expression and
+a unit pattern; `val () = e` requires a unit initializer. A sequence needs an
+expression after each semicolon. The `let` declaration section may be empty.
 
 Signed literals require `~` adjacent to digits; separated `~` uses ordinary
 application. Symbolic tokens use maximal munch: `1 + ~2` is accepted; `1+~2`
 contains the unsupported symbolic token `+~`. Symbolic identifier bindings,
-`op`, general patterns, tuples, annotations, and declaration `and` are deferred.
+`op`, literal/constructor patterns, annotations, and declaration `and` are deferred.
+Each `fn` or `fun` has one clause; `fun` declares one function at a time.
+Duplicate names within a pattern or across one `fun` parameter list are errors.
+Nested `fn` expressions may shadow an earlier parameter.
 
 ## Operators and built-ins
 
@@ -125,7 +138,7 @@ Implemented precedence, highest first; parentheses override grouping:
 
 | Form | Associativity / behavior | Types in the subset |
 | --- | --- | --- |
-| Application | Left-associative; built-in function values in M1 | If `f : 'a -> 'b` and `x : 'a`, then `f x : 'b` |
+| Application | Left-associative; built-ins and user closures | If `f : 'a -> 'b` and `x : 'a`, then `f x : 'b` |
 | `*`, `div`, `mod` | Left-associative; SML precedence 7 | `int * int -> int` |
 | `+`, `-`, `^` | Left-associative; SML precedence 6 | Integer arithmetic; string concatenation for `^` |
 | `=`, `<>`, `<`, `<=`, `>`, `>=` | Left-associative; SML precedence 4 | Equality as below; ordering for integers only |
@@ -136,11 +149,11 @@ Implemented precedence, highest first; parentheses override grouping:
 Negation `~` and `not` use prefix application syntax; a leading `~` is also part
 of a signed integer literal. Short-circuit forms and sequencing are syntax, not
 ordinary function calls. Their grouping with `if` and `let` follows the grammar
-above. `fn` remains deferred.
+above. A `fn` body extends as far to the right as the grammar permits.
 
-M1 equality accepts matching scalar types (`int`, `bool`, `string`, `unit`). M2
-adds structural tuple equality and polymorphic equality with equality-type
-constraints. Equality on functions is a static error. String ordering is deferred
+Equality accepts matching scalar types (`int`, `bool`, `string`, `unit`),
+structural tuples, and polymorphic equality with equality-type constraints.
+Equality on functions is a static error. String ordering is deferred
 even though string equality is included. Ordinary operators and built-ins obey
 lexical binding/shadowing rules within accepted syntax; they are not unshadowable
 magic names. Infix operators need not be exposed through deferred `op` syntax.
@@ -182,23 +195,36 @@ compiler's Basis from a compiled Rune program.
 - **Functions in M2:** lexical scope, first-class closures, curried application,
   and recursion through `fun`. A recursive function is monomorphic in its own
   body; its completed binding may be generalized. No polymorphic recursion.
+  Tail-position calls replace the current VM frame, including calls through aliases
+  and higher-order parameters. Calls in `if` branches, final sequence expressions,
+  and `let` bodies preserve tail position. Ordinary calls use explicit VM frames.
 - **Inference in M2:** infer types; generalize eligible non-expansive bindings
-  according to the SML ’97 value restriction. Unification must perform occurs
-  checks and propagate equality constraints. Do not generalize every `val` merely
-  because this subset has no references yet.
+  according to the SML ’97 value restriction. Literals, names, `fn`, and tuples
+  of non-expansive expressions are eligible; applications, conditionals, sequences,
+  and `let` expressions are expansive. Expansive bindings keep shared monomorphic
+  variables that later uses can constrain. Variables shared with the surrounding
+  scope are never generalized. Unification performs occurs checks and propagates
+  equality constraints through tuples and type schemes.
 - **Patterns in M2:** only irrefutable variable, wildcard, unit, and tuple patterns.
   Reject duplicate bound names; destructuring must agree with the inferred type.
   Literal/constructor patterns and match failure semantics arrive with M5.
-- **Limits in M1:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
-  nesting and checked expression-tree depth 256; local slots, string constants,
-  instructions, and VM operand stack at most 65,536; each string at most 1 MiB;
-  bytecode at most 16 MiB; VM arena at most 64 MiB including metadata. Limits
-  fail with diagnostics. Memory is reclaimed at process exit; GC is deferred.
+- **Limits in M2:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
+  nesting, pattern nesting, checked expression-tree depth, and `fun` parameter
+  count limited to 256. At most 65,536 binding identities and fresh type variables;
+  inference is limited to 1,000,000 type traversal steps per compilation.
+  Functions, string constants, total instructions, locals/captures per function,
+  tuple arity, active local slots, VM operands, and active frames are capped at
+  65,536. Each string is at most 1 MiB; bytecode at most 16 MiB; VM arena at most
+  64 MiB including metadata. Structural equality uses at most 65,536 pending
+  comparisons and 1,000,000 comparison steps per operation. Limits fail with
+  diagnostics. Memory is reclaimed at process exit; GC is deferred to M3.
+  Tail calls bound frame usage but programs that keep allocating tuples, strings,
+  or closures can still exhaust the arena.
 
 ## Examples
 
-The first example is included from `examples/hello.sml` and executed by the test
-suite. `make check-docs` verifies that its inclusion stays current.
+These examples are included from `examples/` and executed by the test suite.
+`make check-docs` verifies that their inclusions stay current.
 
 ### First slice: expected output `42` followed by a newline
 
@@ -211,15 +237,15 @@ val _ = if answer = 42
 ```
 <!-- example:examples/hello.sml:end -->
 
-### Planned M2 example: expected output `42` followed by a newline
+### M2 closures: expected output `42` followed by a newline
 
-This example requires user-defined functions and is not accepted by M1.
-
+<!-- example:examples/closures.sml:start -->
 ```sml
 fun makeAdder x = fn y => x + y
 val addTwo = makeAdder 2
 val _ = print (Int.toString (addTwo 40) ^ "\n")
 ```
+<!-- example:examples/closures.sml:end -->
 
 ### Required rejections
 
@@ -231,9 +257,9 @@ val x = 2147483648               (* Rune integer literal out of range *)
 ```
 
 The test corpus covers these cases individually and rejects deferred forms such
-as `fn`, `fun`, `datatype`, `case`, `handle`, `ref`, and `structure`. Function
-equality is already rejected for built-in functions; polymorphic self-application
-checks arrive in M2.
+as `datatype`, `case`, `handle`, `ref`, and `structure`. It also rejects function
+equality (including functions inside tuples), self-application, polymorphic
+recursion, duplicate pattern names, and invalid generalization of expansive values.
 
 ## Maintenance
 

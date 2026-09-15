@@ -507,7 +507,7 @@
       "type-poly"
     ],
     "stdout": "",
-    "stderr": "unsupported",
+    "stderr": "type",
     "boundary": [
       "fn-closures",
       "type-poly"
@@ -520,7 +520,7 @@
       "fn-recursion"
     ],
     "stdout": "",
-    "stderr": "unsupported",
+    "stderr": "syntax",
     "boundary": [
       "fn-recursion"
     ]
@@ -532,7 +532,7 @@
       "data-tuples"
     ],
     "stdout": "",
-    "stderr": "unsupported",
+    "stderr": "type",
     "boundary": [
       "data-tuples"
     ]
@@ -939,5 +939,711 @@
     ],
     "stdout": "",
     "stderr": "unsupported"
+  },
+  {
+    "path": "examples/closures.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "fn-recursion",
+      "type-poly"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/polymorphic-id.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "fn-recursion",
+      "type-poly"
+    ],
+    "stdout": "42\nok\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/closure-shadow.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "bind-val"
+    ],
+    "stdout": "8 22 100\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/closure-transitive.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "stdout": "6 34\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/higher-order.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "fn-recursion",
+      "type-poly",
+      "basis-output"
+    ],
+    "stdout": "42\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/factorial.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "3628800\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/recursive-curry.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "stdout": "55 25\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/recursive-nested.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "stdout": "42 7\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/recursive-shadow.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "bind-val"
+    ],
+    "stdout": "7 99\nok\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tail-loop.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "expr-sequence"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tail-tuple.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "data-tuples"
+    ],
+    "stdout": "100000\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tail-builtin.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion",
+      "basis-output"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tuple-patterns.sml",
+    "kind": "run",
+    "features": [
+      "data-tuples",
+      "bind-val",
+      "fn-closures",
+      "fn-recursion",
+      "type-poly"
+    ],
+    "stdout": "42\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tuple-equality.sml",
+    "kind": "run",
+    "features": [
+      "data-tuples",
+      "type-poly"
+    ],
+    "stdout": "equal\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/tuple-poly-bind.sml",
+    "kind": "run",
+    "features": [
+      "data-tuples",
+      "type-poly",
+      "fn-closures"
+    ],
+    "stdout": "42\nok\n7\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/function-order.sml",
+    "kind": "run",
+    "features": [
+      "fn-closures",
+      "data-tuples",
+      "expr-sequence"
+    ],
+    "stdout": "fa12FAB\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/weak-type-use.sml",
+    "kind": "run",
+    "features": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "stdout": "42\n7\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/poly-local.sml",
+    "kind": "run",
+    "features": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "stdout": "42\nok\n",
+    "reference": true
+  },
+  {
+    "path": "tests/reject/function-tuple-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples",
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "data-tuples",
+      "type-poly"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/equality-constraint.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/equality-nested-constraint.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "data-tuples"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/value-restriction.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/value-restriction-if.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/value-restriction-tuple.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "data-tuples"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/value-restriction-let.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/outer-type-escape.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/outer-function-escape.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/monomorphic-parameter.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "fn-closures"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/polymorphic-recursion.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/recursive-infinite-type.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "type-poly",
+      "fn-recursion"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/recursive-result-type.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/reject/duplicate-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples",
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "data-tuples",
+      "bind-val"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/duplicate-parameters.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion",
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "fn-recursion",
+      "data-tuples"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/unit-pattern-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples",
+      "bind-val"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "data-tuples",
+      "bind-val"
+    ],
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/unit-parameter-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples",
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "boundary": [
+      "data-tuples",
+      "fn-closures"
+    ]
+  },
+  {
+    "path": "tests/reject/pattern-scope.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "scope",
+    "boundary": [
+      "fn-closures"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-parameter-scope.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "scope",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/reject/fn-literal-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-closures",
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-literal-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-recursion",
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/fn-multiple-clauses.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-closures",
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-multiple-clauses.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion",
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-recursion",
+      "data-datatypes"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-mutual.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion",
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-recursion",
+      "decl-advanced"
+    ]
+  },
+  {
+    "path": "tests/reject/val-rec.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion",
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "stderr": "unsupported",
+    "boundary": [
+      "fn-recursion",
+      "decl-advanced"
+    ]
+  },
+  {
+    "path": "tests/reject/fn-missing-arrow.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "fn-closures"
+    ]
+  },
+  {
+    "path": "tests/reject/fn-missing-body.sml",
+    "kind": "reject",
+    "features": [
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "fn-closures"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-missing-parameter.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/reject/fun-bool-name.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/reject/pattern-tuple-trailing.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "data-tuples"
+    ]
+  },
+  {
+    "path": "tests/reject/expr-tuple-trailing.sml",
+    "kind": "reject",
+    "features": [
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "syntax",
+    "boundary": [
+      "data-tuples"
+    ]
+  },
+  {
+    "path": "tests/reject/inference-limit.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "limit",
+    "boundary": [
+      "type-poly",
+      "data-tuples"
+    ]
+  },
+  {
+    "path": "tests/runtime/recursive-overflow.sml",
+    "kind": "runtime",
+    "features": [
+      "fn-recursion",
+      "expr-ops"
+    ],
+    "stdout": "",
+    "stderr": "Overflow",
+    "boundary": [
+      "fn-recursion",
+      "expr-ops"
+    ],
+    "location": [
+      1,
+      22
+    ]
+  },
+  {
+    "path": "tests/runtime/non-tail-stack-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "local stack exceeds 65536",
+    "boundary": [
+      "fn-recursion"
+    ]
+  },
+  {
+    "path": "tests/runtime/closure-arena-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "stdout": "",
+    "stderr": "arena exceeds 64 MiB",
+    "boundary": [
+      "fn-recursion",
+      "fn-closures"
+    ]
+  },
+  {
+    "path": "tests/runtime/tuple-arena-limit.sml",
+    "kind": "runtime",
+    "features": [
+      "fn-recursion",
+      "data-tuples"
+    ],
+    "stdout": "",
+    "stderr": "arena exceeds 64 MiB",
+    "boundary": [
+      "fn-recursion",
+      "data-tuples"
+    ]
+  },
+  {
+    "path": "tests/accept/fun-parameter-limit.sml",
+    "kind": "run",
+    "features": [
+      "fn-recursion"
+    ],
+    "boundary": [
+      "fn-recursion"
+    ],
+    "stdout": ""
+  },
+  {
+    "path": "tests/reject/fun-parameter-limit.sml",
+    "kind": "reject",
+    "features": [
+      "fn-recursion"
+    ],
+    "boundary": [
+      "fn-recursion"
+    ],
+    "stdout": "",
+    "stderr": "syntax"
   }
 ]

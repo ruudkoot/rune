@@ -1,1 +1,1 @@
-fun f x = x
+fun bad = 1

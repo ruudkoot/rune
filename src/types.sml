@@ -1,0 +1,86 @@
+(* Mutable unification variables are private to elaboration. Generic variables
+   form type schemes; instantiation copies only those variables. *)
+signature TYPES =
+sig
+  datatype ty = TInt | TBool | TString | TUnit | TFunction of ty * ty
+              | TTuple of ty list | TVar of variable ref
+  and variable = Unbound of int * int * bool | Link of ty | Generic of int * bool
+  val reset : unit -> unit
+  val fresh : Source.pos -> int -> ty
+  val unify : Source.pos -> ty -> ty -> unit
+  val equality : Source.pos -> ty -> unit
+  val generalize : Source.pos -> int -> bool -> ty -> unit
+  val instantiate : Source.pos -> int -> ty -> ty
+end
+structure Types :> TYPES =
+struct
+  datatype ty = TInt | TBool | TString | TUnit | TFunction of ty * ty
+              | TTuple of ty list | TVar of variable ref
+  and variable = Unbound of int * int * bool | Link of ty | Generic of int * bool
+  val next = ref 0
+  val work = ref 0
+  fun reset () = (next := 0; work := 0)
+  fun tick p = (work := !work+1; if !work > 1000000 then
+      Source.fail p "limit" "type inference exceeds 1000000 steps" else ())
+  fun fresh p level =
+    if !next >= Source.maxCount then Source.fail p "limit" "too many type variables"
+    else let val id = !next in next := id+1; TVar (ref (Unbound (id,level,false))) end
+  fun root p (TVar r) = (tick p; case !r of Link t =>
+        let val t' = root p t in r := Link t'; t' end | _ => TVar r)
+    | root p t = (tick p; t)
+  fun shape TInt = "int" | shape TBool = "bool" | shape TString = "string"
+    | shape TUnit = "unit" | shape (TFunction _) = "function"
+    | shape (TTuple _) = "tuple" | shape (TVar _) = "type variable"
+  fun equality p t = case root p t of
+      TFunction _ => Source.fail p "type" "functions do not admit equality"
+    | TTuple ts => List.app (equality p) ts
+    | TVar r => (case !r of Unbound (id,lev,_) => r := Unbound (id,lev,true)
+                  | _ => Source.fail p "internal" "unexpected type scheme in equality")
+    | _ => ()
+  (* Occurs checking also lowers levels of escaping variables. This prevents
+     generalization of variables shared with a surrounding lexical scope. *)
+  fun occurs p id level t = case root p t of
+      TVar r => (case !r of Unbound (other,lev,eq) =>
+          if id = other then Source.fail p "type" "infinite type (occurs check)"
+          else if lev > level then r := Unbound (other,level,eq) else ()
+        | _ => Source.fail p "internal" "unexpected type scheme in unification")
+    | TFunction (a,b) => (occurs p id level a; occurs p id level b)
+    | TTuple ts => List.app (occurs p id level) ts
+    | _ => ()
+  fun unify p a b =
+    let val a = root p a val b = root p b
+        fun bind r t = case !r of
+            Unbound (id,level,eq) => (occurs p id level t;
+                if eq then equality p t else (); r := Link t)
+          | _ => Source.fail p "internal" "cannot unify a type scheme"
+    in case (a,b) of
+        (TVar r,TVar s) => if r = s then () else bind r b
+      | (TVar r,_) => bind r b | (_,TVar r) => bind r a
+      | (TInt,TInt) => () | (TBool,TBool) => () | (TString,TString) => () | (TUnit,TUnit) => ()
+      | (TFunction (a,b),TFunction (c,d)) => (unify p a c; unify p b d)
+      | (TTuple xs,TTuple ys) => if List.length xs <> List.length ys then
+          Source.fail p "type" "tuple arities differ"
+          else ListPair.app (fn (x,y) => unify p x y) (xs,ys)
+      | _ => Source.fail p "type" ("expected " ^ shape a ^ ", got " ^ shape b)
+    end
+  fun generalize p level eligible t = case root p t of
+      TVar r => (case !r of Unbound (id,lev,eq) =>
+          if lev > level then r := (if eligible then Generic (id,eq) else Unbound (id,level,eq)) else ()
+        | _ => ())
+    | TFunction (a,b) => (generalize p level eligible a; generalize p level eligible b)
+    | TTuple ts => List.app (generalize p level eligible) ts
+    | _ => ()
+  fun instantiate p level scheme =
+    let val copies = ref ([] : (int * ty) list)
+        fun copy t = case root p t of
+            TVar r => (case !r of Generic (id,eq) =>
+                (case List.find (fn (n,_) => n = id) (!copies) of SOME (_,v) => v
+                 | NONE => let val v = fresh p level
+                               val () = if eq then equality p v else ()
+                           in copies := (id,v):: !copies; v end)
+              | _ => TVar r)
+          | TFunction (a,b) => let val a' = copy a val b' = copy b in TFunction (a',b') end
+          | TTuple ts => TTuple (List.map copy ts)
+          | t => t
+    in copy scheme end
+end

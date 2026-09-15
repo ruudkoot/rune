@@ -1,35 +1,49 @@
 # Rune implementation plan
 
-Status: M0 and M1 complete. M2–M5 remain planned.
+Status: M0, M1, and M2 complete. M3–M5 remain planned.
 
 ## Implementation checkpoint — 2026-09-15
 
-Rune 0.0.1 builds with all three installed host compilers, emits bytecode v1,
-and runs on the C VM. [BUILD.md](BUILD.md) contains the current commands and host
-workarounds; [LANGUAGE.md](LANGUAGE.md) records verified support.
+Rune 0.0.2 builds with SML/NJ, Poly/ML, and MLton, emits bytecode v2, and runs
+on the C VM. M2 adds user-defined functions, lexical closures, currying,
+recursive `fun`, tuples and irrefutable patterns, static polymorphism, equality
+constraints, the value restriction, and tail calls. [BUILD.md](BUILD.md) records
+commands and host workarounds; [LANGUAGE.md](LANGUAGE.md) records verified support.
 
 Validation completed:
 
-- `make test-all`: 73 language fixtures under each host, identical bytecode and
-  rejection diagnostics, 12 programs matching all three reference SML compilers,
-  and 78 malformed-bytecode/runtime fixtures.
+- `make test-all`: 129 language fixtures under each host, identical bytecode and
+  rejection diagnostics, 30 programs and 15 type/pattern rejection cases matching
+  all three reference SML compilers, and 125 malformed-bytecode/runtime fixtures.
+  An independently encoded closure-call fixture prints `42`.
 - `make test-builds`: all three hosts build from a checkout path containing
   spaces; incremental builds, source changes, and compilation failures propagate
   correctly.
-- `make test-sanitize`: GCC address/undefined-behavior checks pass for the VM.
+- `make test-sanitize`: the 129-fixture corpus and VM checks pass with GCC
+  address/undefined-behavior sanitizers and leak detection outside the sandbox.
+  The sandboxed attempt failed because LeakSanitizer cannot run under ptrace.
+- Strict Clang 18.1.3 compilation and the Poly/ML-driven corpus/VM checks pass.
 - `make doctor`, `make check-docs`, and shell/Python syntax checks pass.
 
-Implementation choices for M1: scope resolution, monomorphic type checking, and
-instruction construction share an in-memory pass; files are emitted only after
-that pass succeeds. General typed-core lowering and closure conversion remain
-M2 work. Built-in function values can already be aliased and selected by `if`.
-The bytecode has one implicit entry function, forward branches, explicit source
-positions, and an arena reclaimed at exit. No user-defined functions or GC yet.
+The compiler now separates parsing, name resolution/type inference, typed core,
+and instruction construction. New `Types`, `Core`, and `Infer` modules precede
+closure conversion and emission in `Compile`. Stable binding identities preserve
+shadowing; deterministic capture slots and function IDs preserve byte equality.
+Recursive functions use SELF and immutable captured environments. The VM has
+explicit growable frames/local storage and replaces frames for tail calls.
+One million scalar tail calls and 100,000 tuple-argument tail calls pass; ordinary
+recursion, closure/tuple allocation, and inference limits fail with diagnostics.
+
+Bytecode v2 adds function metadata and closure/tuple instructions. Version 1
+files must be recompiled; both tools explicitly reject v1 and unknown versions.
+The arena is reclaimed at exit; garbage collection remains M3 work. Tail calls
+bound frame space but allocating programs can still exhaust the 64 MiB arena.
 
 Opcode definitions, support tables, and executable example inclusions are checked
 against their source specifications. CI is configured to run the three-host,
-packaging, and sanitizer checks; the remote CI run has not been observed. Only
-x86-64 Linux/GCC has been validated locally.
+packaging, and sanitizer checks; the remote CI run has not been observed.
+Local VM validation covers x86-64 Linux with GCC 13.3.0 and Clang 18.1.3.
+Other operating systems, 32-bit targets, and big-endian targets remain unverified.
 
 ## 1. Deliverable and scope
 
@@ -65,7 +79,7 @@ The authoritative scope is [LANGUAGE.md](LANGUAGE.md). The language Definition
 and Basis Library are separate conformance references; supporting part of the
 language does not imply implementing the entire Basis.
 
-## 2. Environment findings
+## 2. Initial environment findings (M0)
 
 Inspected on 2026-09-15. The starting repository contained only a placeholder
 README. The following are local observations, not minimum-version promises:
@@ -83,7 +97,7 @@ The SML smoke program shared one source file, converted `2147483647` through
 launch methods printed the same result, including an argument containing spaces.
 These probes validate the host strategy, not an unimplemented Rune build.
 
-Details to handle in M0:
+M0 findings addressed by the current build adapters:
 
 - SML/NJ is stopped with `Bad system call` in this session's sandbox; it runs
   outside it. Treat this as an execution-environment constraint, and report it
@@ -249,7 +263,7 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
   uses lengths, and `Int.toString` uses SML's `~` negative sign.
 - Keep VM frames on an explicit growable stack; a tail call replaces the current
   frame. Ordinary SML recursion must not recurse through C calls.
-- M1 may use an allocation arena reclaimed at program exit, with documented
+- M1 and M2 use an allocation arena reclaimed at program exit, with documented
   limits. M3 replaces it with non-moving mark-and-sweep collection for strings,
   tuples, and closures. Trace explicit roots: value stack, frames, environments,
   globals, constants, and temporary C values across allocation points. Use an
@@ -263,7 +277,7 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-M0 and M1 have passed their acceptance gates. M2–M5 remain pending; complete and
+M0, M1, and M2 have passed their acceptance gates. M3–M5 remain pending; complete and
 document each gate before claiming that its features are implemented.
 
 ### M0 — Host builds and documentation foundation (complete)
@@ -291,7 +305,7 @@ document each gate before claiming that its features are implemented.
 - **Delivery:** a clearly labeled SML ’97 subset, with no user-defined functions
   yet. Do not stretch this milestone to include modules or self-hosting.
 
-### M2 — Functions and static polymorphism
+### M2 — Functions and static polymorphism (complete)
 
 - Add `fn`, single-clause recursive `fun`, currying, lexical closures, tuples,
   irrefutable binding patterns, and Hindley–Milner inference with the value
@@ -396,8 +410,8 @@ mechanical checks:
 
 These checks detect stale tables, examples, and missing coverage. They cannot
 prove prose matches every semantic detail; review must still compare the behavior
-change with its documentation. The current contract marks the ten M1 feature rows implemented after their
-three-host checks; later rows remain planned or deferred.
+change with its documentation. The current contract marks the ten M1 and four M2
+feature rows implemented after their three-host checks; later rows remain deferred.
 
 ## 9. Main risks and decisions
 
@@ -410,5 +424,5 @@ three-host checks; later rows remain planned or deferred.
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next implementation milestone is M2: user-defined functions, lexical
-closures, tuples, recursive calls, and static polymorphism.
+The next implementation milestone is M3: garbage collection and runtime
+completion, including allocation stress, root tracing, and small-heap validation.

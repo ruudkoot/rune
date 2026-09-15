@@ -23,3 +23,13 @@ code	name	operand	pops	pushes
 21	CALL	none	2	1
 22	JUMP	target	0	0
 23	JUMP_FALSE	target	1	0
+24	ENV	environment	0	1
+25	SELF	none	0	1
+26	CLOSURE	function	-1	1
+27	RETURN	none	1	0
+28	TAILCALL	none	2	0
+29	TUPLE	arity	-1	1
+30	GET	index	1	1
+31	DUP	none	1	2
+32	CHECK_UNIT	none	1	0
+33	CHECK_TUPLE	arity	1	1

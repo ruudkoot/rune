@@ -22,18 +22,24 @@ def run(args, *, cwd=ROOT, input=None, status=0, stdout=None):
     return result
 
 
-def encode(code, *, locals=0, constants=(), source=b"fixture.sml", version=1):
+def encode(code, *, locals=0, constants=(), source=b"fixture.sml", version=2,
+           functions=None, entry=0):
     string = lambda s: struct.pack("<I", len(s)) + s
-    return (b"RUNEBC\r\n" + struct.pack("<IIII", version, locals, len(constants), len(code)) +
-            string(source) + b"".join(map(string, constants)) +
-            b"".join(struct.pack("<BIII", op, arg, 1, 1) for op, arg in code))
+    if functions is None:
+        functions = [(locals, 0, code)]
+    bodies = []
+    for slots, environment, instructions in functions:
+        bodies.append(struct.pack("<III", slots, environment, len(instructions)) +
+                      b"".join(struct.pack("<BIII", op, arg, 1, 1) for op, arg in instructions))
+    return (b"RUNEBC\r\n" + struct.pack("<IIII", version, entry, len(functions), len(constants)) +
+            string(source) + b"".join(map(string, constants)) + b"".join(bodies))
 
 
 def vm_cases(vm, directory):
     valid = encode([(0, 0)])
     cases = {
         "magic": b"X" + valid[1:], "truncated": valid[:12],
-        "version": encode([(0, 0)], version=2), "trailing": valid + b"x",
+        "version": encode([(0, 0)], version=1), "unknown-version": encode([(0, 0)], version=99), "trailing": valid + b"x",
         "zero-code": encode([]), "unknown-op": encode([(255, 0)]),
         "unused-operand": encode([(0, 1)]), "bad-bool": encode([(2, 2), (8, 0), (0, 0)]),
         "bad-builtin": encode([(5, 4), (8, 0), (0, 0)]),
@@ -49,7 +55,7 @@ def vm_cases(vm, directory):
         "position": valid[:-8] + bytes(8),
         "truncated-string": valid[:24] + struct.pack("<I", 999) + b"x",
         "oversized-string": valid[:24] + struct.pack("<I", 1048577),
-        "count-limit": valid[:12] + struct.pack("<I", 65537) + valid[16:],
+        "count-limit": valid[:16] + struct.pack("<I", 65537) + valid[20:],
     }
     runtime = {
         "uninitialized": encode([(6, 0), (8, 0), (0, 0)], locals=1),
@@ -57,6 +63,58 @@ def vm_cases(vm, directory):
         "wrong-call": encode([(1, 1), (3, 0), (21, 0), (8, 0), (0, 0)]),
         "function-equality": encode([(5, 0), (5, 0), (15, 0), (8, 0), (0, 0)]),
     }
+    def two(main, body, *, slots=1, environment=0):
+        return encode([], functions=[(0, 0, main), (slots, environment, body)])
+
+    cases.update({
+        "no-functions": encode([], functions=[]),
+        "entry-index": encode([(0, 0)], entry=1),
+        "entry-environment": encode([], functions=[(0, 1, [(0, 0)])]),
+        "no-argument": two([(0, 0)], [(3, 0), (27, 0)], slots=0),
+        "entry-return": encode([(3, 0), (27, 0)]),
+        "entry-tail": encode([(5, 0), (3, 0), (28, 0)]),
+        "entry-self": encode([(25, 0), (8, 0), (0, 0)]),
+        "callee-halt": two([(0, 0)], [(0, 0)]),
+        "empty-return": two([(0, 0)], [(27, 0)]),
+        "extra-return": two([(0, 0)], [(3, 0), (3, 0), (27, 0)]),
+        "tail-underflow": two([(0, 0)], [(3, 0), (28, 0)]),
+        "tail-extra": two([(0, 0)], [(3, 0), (5, 0), (3, 0), (28, 0)]),
+        "callee-falloff": two([(0, 0)], [(3, 0)]),
+        "cross-function-branch": two([(22, 2), (0, 0)], [(3, 0), (27, 0)]),
+        "environment-index": two([(0, 0)], [(24, 1), (27, 0)], environment=1),
+        "closure-entry": encode([(26, 0), (8, 0), (0, 0)]),
+        "closure-index": encode([(26, 1), (8, 0), (0, 0)]),
+        "closure-underflow": two([(26, 1), (8, 0), (0, 0)], [(24, 0), (27, 0)], environment=1),
+        "tuple-underflow": encode([(3, 0), (29, 2), (8, 0), (0, 0)]),
+        "tuple-arity-small": encode([(29, 1), (8, 0), (0, 0)]),
+        "tuple-arity-big": encode([(29, 65537), (8, 0), (0, 0)]),
+        "tuple-index-big": encode([(3, 0), (30, 65536), (8, 0), (0, 0)]),
+        "unreachable-invalid": encode([(0, 0), (6, 0)]),
+    })
+    runtime.update({
+        "get-wrong-tag": encode([(3, 0), (30, 0), (8, 0), (0, 0)]),
+        "get-out-of-bounds": encode([(3, 0), (3, 0), (29, 2), (30, 2), (8, 0), (0, 0)]),
+        "check-unit-tag": encode([(1, 0), (32, 0), (0, 0)]),
+        "check-tuple-tag": encode([(3, 0), (33, 2), (8, 0), (0, 0)]),
+        "check-tuple-arity": encode([(3, 0), (3, 0), (29, 2), (33, 3), (8, 0), (0, 0)]),
+        "callee-uninitialized": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)],
+                                    [(6, 1), (27, 0)], slots=2),
+        "closure-equality": two([(26, 1), (31, 0), (15, 0), (8, 0), (0, 0)], [(6, 0), (27, 0)]),
+        "nested-function-equality": encode([(5, 0), (3, 0), (29, 2), (31, 0), (15, 0), (8, 0), (0, 0)]),
+        "tail-wrong-call": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)], [(1, 0), (3, 0), (28, 0)]),
+    })
+    # A shared tuple DAG can require exponential comparisons despite a small heap.
+    dag = [(1, 0), (1, 0), (29, 2)] + [(31, 0), (29, 2)] * 20
+    runtime["equality-work-limit"] = encode(dag + [(31, 0), (15, 0), (8, 0), (0, 0)])
+    # Independently encoded closure call: capture 40, add argument 2, print 42.
+    closure = two([(5, 0), (5, 1), (1, 40), (26, 1), (1, 2), (21, 0), (21, 0), (21, 0), (8, 0), (0, 0)],
+                  [(24, 0), (6, 0), (9, 0), (27, 0)], environment=1)
+    path = directory / "closure-golden.rbc"
+    path.write_bytes(closure)
+    run([vm, path], stdout=b"42")
+    # Actual v1 empty-file layout, rather than only changing a v2 version field.
+    cases["legacy-v1"] = (b"RUNEBC\r\n" + struct.pack("<IIII", 1, 0, 0, 1) +
+                          struct.pack("<I", 0) + struct.pack("<BIII", 0, 0, 1, 1))
     for name, blob in cases.items():
         path = directory / (name + ".rbc")
         path.write_bytes(blob)
@@ -106,6 +164,23 @@ def references(hosts, cases, directory):
     print(f"Reference SML: {len(eligible)} programs agree under {', '.join(hosts)}.")
 
 
+def reference_rejections(hosts, cases, directory):
+    eligible = [c for c in cases if c.get("reference_reject")]
+    source = directory / "reject-reference.sml"
+    for host in hosts:
+        for case in eligible:
+            source.write_text("structure Rejected = struct\n" + (ROOT / case["path"]).read_text() + "end\n")
+            if host == "mlton":
+                result = run([os.environ.get("MLTON") or "mlton", "-output", directory / "rejected", source], status=1)
+            elif host == "polyml":
+                result = run([os.environ.get("POLY") or "poly", "--script", source], status=1)
+            else:
+                result = run([os.environ.get("SML") or "sml"], cwd=directory, status=1,
+                             input=b'(use "reject-reference.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
+            assert result.stdout or result.stderr, (host, case)
+    print(f"Reference SML: {len(eligible)} type/pattern rejections agree under {', '.join(hosts)}.")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--hosts", nargs="+", choices=["smlnj", "polyml", "mlton"], required=True)
@@ -142,9 +217,13 @@ def main():
                                   stdout=bytes.fromhex(case["stdout_hex"]) if "stdout_hex" in case else case.get("stdout", "").encode())
                     if case["kind"] == "runtime":
                         assert case["stderr"].encode() in runtime.stderr, (case, runtime.stderr)
+                        assert re.search(rb":\d+:\d+: runtime: ", runtime.stderr), runtime.stderr
+                        if "location" in case:
+                            line, column = case["location"]
+                            assert f"{source.name}:{line}:{column}: runtime:".encode() in runtime.stderr
                     else:
                         assert runtime.stderr == b"", runtime.stderr
-                    assert b"Rune bytecode v1" in run([compiler, "--disassemble", output]).stdout
+                    assert b"Rune bytecode v2" in run([compiler, "--disassemble", output]).stdout
                 if i in comparison:
                     assert comparison[i] == evidence, f"host divergence: {host}: {case['path']}"
                 comparison[i] = evidence
@@ -153,6 +232,12 @@ def main():
             empty.write_text("")
             run([compiler, "-o", directory / "empty.rbc", empty])
             assert (directory / "empty.rbc").read_bytes() == encode([(0, 0)], source=b"empty.sml")
+            # Both tools reject earlier and unknown format versions explicitly.
+            for version in (1, 99):
+                incompatible = directory / "incompatible.rbc"
+                incompatible.write_bytes(encode([(0, 0)], version=version))
+                rejected = run([compiler, "--disassemble", incompatible], status=1, stdout=b"")
+                assert b"unsupported bytecode version" in rejected.stderr
             # Launch outside the checkout, preserving relative paths and argv.
             spaced = directory / "source file.sml"
             shutil.copyfile(ROOT / "examples/hello.sml", spaced)
@@ -173,6 +258,7 @@ def main():
             print(f"{host}: {len(cases)} fixtures, CLI, atomic output, and golden encoding passed.")
         vm_cases(vm, directory)
         references(args.hosts, cases, directory)
+        reference_rejections(args.hosts, cases, directory)
     if len(args.hosts) > 1:
         print("Cross-host bytecode and rejection diagnostics are identical.")
 

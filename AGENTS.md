@@ -30,3 +30,19 @@ ML, with bytecode executed by a portable C VM. Read [the plan](docs/PLAN.md) and
   and failures explicitly; missing hosts do not count as passing.
 - Until these targets exist, verify changes appropriately and describe what
   actually ran. Do not present proposed commands as working implementations.
+
+## Environment tools and reporting
+
+- Proactively tell the user when missing or additional environment tools would
+  materially help the current task or an upcoming milestone. Report this before,
+  during, or after the task as appropriate; do not wait for the user to ask.
+- Check what is installed first. Distinguish required dependencies, useful
+  optional tools, and tools that can wait until a later milestone.
+- Explain the concrete benefit and provide exact package names and installation
+  commands for the detected OS, or the appropriate installation method.
+- When an environment limitation affects work or verification, report the
+  observed failure, any workaround used, and what remains unverified. Separate
+  confirmed causes from hypotheses; do not describe sandbox restrictions as
+  missing packages.
+- Continue authorized work using available tools when practical. Recommendations
+  alone are not instructions to install packages or change sandbox settings.

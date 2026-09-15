@@ -1,12 +1,12 @@
-/* Rune M1 virtual machine: ISO C11, explicit byte encoding and checked values. */
+/* Rune M2 virtual machine: ISO C11, explicit frames and checked tagged values. */
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "opcode.h"
 
 _Static_assert(CHAR_BIT == 8, "Rune requires 8-bit bytes");
@@ -16,39 +16,49 @@ _Static_assert(sizeof(uint32_t) == 4 && sizeof(int64_t) == 8, "Rune requires exa
 #define MAX_COUNT 65536u
 #define MAX_HEAP (64u * 1024u * 1024u)
 
-typedef struct Blob {
-    struct Blob *next;
-    size_t length;
-    unsigned char data[];
-} Blob;
-typedef enum { INVALID, INTEGER, BOOLEAN, STRING, UNIT, BUILTIN } Tag;
+typedef struct Allocation { struct Allocation *next; max_align_t alignment; } Allocation;
+typedef struct { size_t length; unsigned char data[]; } Blob;
+typedef struct Aggregate Aggregate;
+typedef enum { INVALID, INTEGER, BOOLEAN, STRING, UNIT, BUILTIN, TUPLE, CLOSURE } Tag;
 typedef struct {
     Tag tag;
-    union { int32_t integer; uint32_t number; Blob *string; } as;
+    union { int32_t integer; uint32_t number; Blob *string; Aggregate *aggregate; } as;
 } Value;
+struct Aggregate { uint32_t count, function; Value values[]; };
+typedef struct { Value a, b; } Pair;
 typedef struct { uint8_t op; uint32_t arg, line, column; } Instruction;
+typedef struct { uint32_t locals, environment, count; Instruction *code; } Function;
+typedef struct { uint32_t function, pc, base, stack_base; Value closure; } Frame;
 typedef struct {
     unsigned char *file;
     size_t size, cursor, allocated;
-    Blob *arena, *source;
+    Allocation *arena;
+    Blob *source;
     Value *constants, *locals, *stack;
-    Instruction *code;
-    int *heights;
+    Function *functions;
+    Frame *frames;
+    Pair *pairs;
+    int32_t *heights;
     uint32_t *work;
-    uint32_t constant_count, local_count, count, pc, sp;
+    uint32_t constant_count, function_count, sp, fp, local_used, local_capacity, frame_capacity;
     int executing;
 } Machine;
 static Machine vm;
 
 static void cleanup(void) {
-    Blob *p = vm.arena;
-    while (p) { Blob *next = p->next; free(p); p = next; }
-    free(vm.file); free(vm.constants); free(vm.locals); free(vm.stack);
-    free(vm.code); free(vm.heights); free(vm.work);
+    Allocation *p = vm.arena;
+    uint32_t i;
+    while (p) { Allocation *next = p->next; free(p); p = next; }
+    if (vm.functions) for (i = 0; i < vm.function_count; ++i) free(vm.functions[i].code);
+    free(vm.file); free(vm.constants); free(vm.locals); free(vm.stack); free(vm.functions);
+    free(vm.frames); free(vm.pairs); free(vm.heights); free(vm.work);
 }
 static void fail(int status, const char *message) {
     if (vm.executing) {
-        Instruction in = vm.code[vm.pc];
+        Frame *frame = &vm.frames[vm.fp - 1];
+        Function *function = &vm.functions[frame->function];
+        uint32_t pc = frame->pc < function->count ? frame->pc : function->count - 1;
+        Instruction in = function->code[pc];
         fprintf(stderr, "%s:%" PRIu32 ":%" PRIu32 ": runtime: %s\n",
                 (const char *)vm.source->data, in.line, in.column, message);
     } else fprintf(stderr, "rune-vm: %s\n", message);
@@ -62,15 +72,40 @@ static void *checked_calloc(size_t count, size_t size) {
     if (!p) fail(3, "out of memory");
     return p;
 }
+static void *grow(void *old, uint32_t *capacity, uint32_t needed, size_t size) {
+    uint32_t n = *capacity ? *capacity : 16;
+    void *p;
+    if (needed > MAX_COUNT) fail(3, "frame or local stack exceeds 65536");
+    if (needed <= *capacity) return old;
+    while (n < needed) n *= 2;
+    if (n > SIZE_MAX / size) fail(3, "allocation size overflow");
+    p = realloc(old, n * size);
+    if (!p) fail(3, "out of memory");
+    *capacity = n;
+    return p;
+}
+static void *arena(size_t size) {
+    Allocation *p;
+    size_t bytes;
+    if (size > MAX_HEAP - sizeof(Allocation)) fail(3, "arena allocation too large");
+    bytes = sizeof(Allocation) + size;
+    if (bytes > MAX_HEAP - vm.allocated) fail(3, "arena exceeds 64 MiB");
+    p = checked_calloc(1, bytes); p->next = vm.arena;
+    vm.arena = p; vm.allocated += bytes;
+    return p + 1;
+}
 static Blob *blob(size_t length) {
     Blob *p;
-    size_t bytes;
     if (length > MAX_STRING) fail(3, "string exceeds 1 MiB");
-    bytes = sizeof(Blob) + length + 1;
-    if (bytes > MAX_HEAP - vm.allocated) fail(3, "arena exceeds 64 MiB");
-    p = checked_calloc(1, bytes);
-    p->next = vm.arena; p->length = length;
-    vm.arena = p; vm.allocated += bytes;
+    p = arena(sizeof(Blob) + length + 1); p->length = length;
+    return p;
+}
+static Aggregate *aggregate(uint32_t count, uint32_t function) {
+    Aggregate *p;
+    if (count > MAX_COUNT || (count && sizeof(Value) > (SIZE_MAX - sizeof(Aggregate)) / count))
+        fail(3, "aggregate size overflow");
+    p = arena(sizeof(Aggregate) + count * sizeof(Value));
+    p->count = count; p->function = function;
     return p;
 }
 static uint8_t read8(void) {
@@ -107,38 +142,41 @@ static Value integer(int64_t number) {
 static Value string_value(Blob *s) {
     Value v; v.tag = STRING; v.as.string = s; return v;
 }
-static void edge(uint32_t target, int height, uint32_t *tail) {
-    if (target >= vm.count) malformed("control flow falls off code");
+static Value aggregate_value(Tag tag, Aggregate *a) {
+    Value v; v.tag = tag; v.as.aggregate = a; return v;
+}
+static void edge(Function *f, uint32_t target, int32_t height, uint32_t *tail) {
+    if (target >= f->count) malformed("control flow falls off code");
     if (vm.heights[target] == -1) {
-        vm.heights[target] = height;
-        vm.work[(*tail)++] = target;
+        vm.heights[target] = height; vm.work[(*tail)++] = target;
     } else if (vm.heights[target] != height) malformed("inconsistent stack height at branch join");
 }
-static void verify(void) {
+static void verify(Function *f) {
     uint32_t i, head = 0, tail = 0;
-    vm.heights = checked_calloc(vm.count, sizeof(*vm.heights));
-    vm.work = checked_calloc(vm.count, sizeof(*vm.work));
-    for (i = 0; i < vm.count; ++i) vm.heights[i] = -1;
-    edge(0, 0, &tail);
+    for (i = 0; i < f->count; ++i) vm.heights[i] = -1;
+    edge(f, 0, 0, &tail);
     while (head < tail) {
         uint32_t at = vm.work[head++];
-        Instruction in = vm.code[at];
-        int height = vm.heights[at];
-        if (height < op_pops[in.op]) malformed("operand stack underflow");
-        height = height - op_pops[in.op] + op_pushes[in.op];
-        if (height > (int)MAX_COUNT) malformed("operand stack limit exceeded");
-        if (in.op == OP_HALT) {
-            if (height) malformed("HALT requires an empty stack");
-        } else if (in.op == OP_JUMP) edge(in.arg, height, &tail);
+        Instruction in = f->code[at];
+        int32_t height = vm.heights[at];
+        int32_t pops = op_pops[in.op];
+        if (in.op == OP_CLOSURE) pops = (int32_t)vm.functions[in.arg].environment;
+        if (in.op == OP_TUPLE) pops = (int32_t)in.arg;
+        if (height < pops) malformed("operand stack underflow");
+        height = height - pops + op_pushes[in.op];
+        if (height > (int32_t)MAX_COUNT) malformed("operand stack limit exceeded");
+        if (in.op == OP_HALT || in.op == OP_RETURN || in.op == OP_TAILCALL) {
+            if (height) malformed("terminal instruction has leftover operands");
+        } else if (in.op == OP_JUMP) edge(f, in.arg, height, &tail);
         else {
-            if (in.op == OP_JUMP_FALSE) edge(in.arg, height, &tail);
-            edge(at + 1, height, &tail);
+            if (in.op == OP_JUMP_FALSE) edge(f, in.arg, height, &tail);
+            edge(f, at + 1, height, &tail);
         }
     }
 }
 static void load(const char *path) {
     FILE *file = fopen(path, "rb");
-    uint32_t i;
+    uint32_t i, fid, total = 0;
     if (!file) { fprintf(stderr, "rune-vm: %s: %s\n", path, strerror(errno)); exit(1); }
     vm.file = checked_calloc(MAX_FILE + 1, 1);
     vm.size = fread(vm.file, 1, MAX_FILE + 1, file);
@@ -146,37 +184,55 @@ static void load(const char *path) {
     if (fclose(file)) fail(1, "cannot close bytecode input");
     if (vm.size > MAX_FILE) malformed("bytecode exceeds 16 MiB");
     for (i = 0; i < 8; ++i) if (read8() != (uint8_t)"RUNEBC\r\n"[i]) malformed("invalid bytecode magic");
-    if (read32() != 1) malformed("unsupported bytecode version");
-    vm.local_count = count32(); vm.constant_count = count32(); vm.count = count32();
-    if (!vm.count) malformed("empty instruction stream");
+    if (read32() != 2) malformed("unsupported bytecode version");
+    if (read32() != 0) malformed("entry function must be zero");
+    vm.function_count = count32(); vm.constant_count = count32();
+    if (!vm.function_count) malformed("no entry function");
     vm.source = read_string();
     if (memchr(vm.source->data, 0, vm.source->length)) malformed("NUL in source filename");
     vm.constants = checked_calloc(vm.constant_count, sizeof(Value));
-    vm.locals = checked_calloc(vm.local_count, sizeof(Value));
+    vm.functions = checked_calloc(vm.function_count, sizeof(Function));
     vm.stack = checked_calloc(MAX_COUNT, sizeof(Value));
-    vm.code = checked_calloc(vm.count, sizeof(Instruction));
+    vm.heights = checked_calloc(MAX_COUNT, sizeof(*vm.heights));
+    vm.work = checked_calloc(MAX_COUNT, sizeof(*vm.work));
     for (i = 0; i < vm.constant_count; ++i) vm.constants[i] = string_value(read_string());
-    for (i = 0; i < vm.count; ++i) {
-        Instruction *in = &vm.code[i];
-        in->op = read8(); in->arg = read32(); in->line = read32(); in->column = read32();
-        if (in->op >= OP_COUNT) malformed("unknown opcode");
-        if (!in->line || !in->column) malformed("invalid source position");
-        switch (op_arg[in->op]) {
-        case ARG_NONE: if (in->arg) malformed("nonzero unused operand"); break;
-        case ARG_BOOL: if (in->arg > 1) malformed("invalid boolean operand"); break;
-        case ARG_BUILTIN: if (in->arg > 3) malformed("invalid built-in operand"); break;
-        case ARG_CONSTANT: if (in->arg >= vm.constant_count) malformed("invalid constant index"); break;
-        case ARG_LOCAL: if (in->arg >= vm.local_count) malformed("invalid local index"); break;
-        case ARG_TARGET: if (in->arg <= i || in->arg >= vm.count) malformed("invalid forward branch target"); break;
-        case ARG_INT: break;
-        default: malformed("invalid operand specification");
+    for (fid = 0; fid < vm.function_count; ++fid) {
+        Function *f = &vm.functions[fid];
+        f->locals = count32(); f->environment = count32(); f->count = count32();
+        total += f->count;
+        if (!f->count || total > MAX_COUNT) malformed("invalid instruction count");
+        if (!fid && f->environment) malformed("entry function has captures");
+        if (fid && !f->locals) malformed("function has no argument slot");
+        f->code = checked_calloc(f->count, sizeof(Instruction));
+        for (i = 0; i < f->count; ++i) {
+            Instruction *in = &f->code[i];
+            in->op = read8(); in->arg = read32(); in->line = read32(); in->column = read32();
+            if (in->op >= OP_COUNT) malformed("unknown opcode");
+            if (!in->line || !in->column) malformed("invalid source position");
+            if ((in->op == OP_HALT && fid) ||
+                (!fid && (in->op == OP_RETURN || in->op == OP_TAILCALL || in->op == OP_SELF)))
+                malformed("instruction is invalid in this function");
+            switch (op_arg[in->op]) {
+            case ARG_NONE: if (in->arg) malformed("nonzero unused operand"); break;
+            case ARG_BOOL: if (in->arg > 1) malformed("invalid boolean operand"); break;
+            case ARG_BUILTIN: if (in->arg > 3) malformed("invalid built-in operand"); break;
+            case ARG_CONSTANT: if (in->arg >= vm.constant_count) malformed("invalid constant index"); break;
+            case ARG_LOCAL: if (in->arg >= f->locals) malformed("invalid local index"); break;
+            case ARG_ENVIRONMENT: if (in->arg >= f->environment) malformed("invalid environment index"); break;
+            case ARG_FUNCTION: if (!in->arg || in->arg >= vm.function_count) malformed("invalid closure function"); break;
+            case ARG_ARITY: if (in->arg < 2 || in->arg > MAX_COUNT) malformed("invalid tuple arity"); break;
+            case ARG_INDEX: if (in->arg >= MAX_COUNT) malformed("invalid tuple index"); break;
+            case ARG_TARGET: if (in->arg <= i || in->arg >= f->count) malformed("invalid forward branch target"); break;
+            case ARG_INT: break;
+            default: malformed("invalid operand specification");
+            }
         }
     }
     if (vm.cursor != vm.size) malformed("trailing bytecode data");
-    verify();
+    for (fid = 0; fid < vm.function_count; ++fid) verify(&vm.functions[fid]);
 }
 static Value pop(void) {
-    if (!vm.sp) fail(3, "operand stack underflow");
+    if (vm.sp <= vm.frames[vm.fp - 1].stack_base) fail(3, "operand stack underflow");
     return vm.stack[--vm.sp];
 }
 static void push(Value value) {
@@ -187,15 +243,34 @@ static void require(Value value, Tag tag) {
     if (value.tag != tag) fail(3, "invalid value type in bytecode");
 }
 static int equal(Value a, Value b) {
-    if (a.tag != b.tag) fail(3, "equality operands have different types");
-    switch (a.tag) {
-    case INTEGER: return a.as.integer == b.as.integer;
-    case BOOLEAN: return a.as.number == b.as.number;
-    case STRING: return a.as.string->length == b.as.string->length &&
-        memcmp(a.as.string->data, b.as.string->data, a.as.string->length) == 0;
-    case UNIT: return 1;
-    default: fail(3, "value does not admit equality"); return 0;
+    uint32_t pending = 0, steps = 0;
+    if (!vm.pairs) vm.pairs = checked_calloc(MAX_COUNT, sizeof(Pair));
+    vm.pairs[pending++] = (Pair){a,b};
+    while (pending) {
+        Pair pair = vm.pairs[--pending];
+        a = pair.a; b = pair.b;
+        if (++steps > 1000000u) fail(3, "equality exceeds 1000000 steps");
+        if (a.tag != b.tag) fail(3, "equality operands have different types");
+        switch (a.tag) {
+        case INTEGER: if (a.as.integer != b.as.integer) return 0; break;
+        case BOOLEAN: if (a.as.number != b.as.number) return 0; break;
+        case STRING:
+            if (a.as.string->length != b.as.string->length ||
+                memcmp(a.as.string->data, b.as.string->data, a.as.string->length)) return 0;
+            break;
+        case UNIT: break;
+        case TUPLE: {
+            Aggregate *x = a.as.aggregate, *y = b.as.aggregate;
+            uint32_t i;
+            if (x->count != y->count) fail(3, "equality tuple arities differ");
+            if (x->count > MAX_COUNT - pending) fail(3, "equality stack exceeds 65536");
+            for (i = x->count; i; --i) vm.pairs[pending++] = (Pair){x->values[i-1],y->values[i-1]};
+            break;
+        }
+        default: fail(3, "value does not admit equality");
+        }
     }
+    return 1;
 }
 static Value call(Value function, Value arg) {
     require(function, BUILTIN);
@@ -248,13 +323,53 @@ static Value binary(uint8_t op, Value a, Value b) {
     default: fail(3, "invalid binary operation"); return scalar(UNIT, 0);
     }
 }
+/* A return restores saved VM state; no Rune call uses the C call stack. */
+static void return_value(Value result) {
+    Frame *frame = &vm.frames[vm.fp - 1];
+    if (vm.fp <= 1 || vm.sp != frame->stack_base) fail(3, "invalid return stack");
+    vm.local_used = frame->base; --vm.fp; push(result);
+}
+static void enter(Value closure, Value argument, int tail) {
+    Aggregate *object;
+    Function *function;
+    uint32_t base, stack_base;
+    Frame *frame;
+    require(closure, CLOSURE); object = closure.as.aggregate;
+    if (!object->function || object->function >= vm.function_count) fail(3, "invalid closure function");
+    function = &vm.functions[object->function];
+    if (object->count != function->environment) fail(3, "invalid closure environment");
+    frame = &vm.frames[vm.fp - 1];
+    base = tail ? frame->base : vm.local_used;
+    stack_base = tail ? frame->stack_base : vm.sp;
+    if (tail && vm.sp != stack_base) fail(3, "invalid tail call stack");
+    if (function->locals > MAX_COUNT - base) fail(3, "local stack exceeds 65536");
+    vm.locals = grow(vm.locals, &vm.local_capacity, base + function->locals, sizeof(Value));
+    memset(vm.locals + base, 0, function->locals * sizeof(Value));
+    vm.locals[base] = argument; vm.local_used = base + function->locals;
+    if (!tail) {
+        if (vm.fp >= MAX_COUNT) fail(3, "frame stack exceeds 65536");
+        ++frame->pc;
+        vm.frames = grow(vm.frames, &vm.frame_capacity, vm.fp + 1, sizeof(Frame));
+        ++vm.fp;
+    }
+    vm.frames[vm.fp - 1] = (Frame){object->function,0,base,stack_base,closure};
+}
 static void execute(void) {
+    vm.frames = grow(vm.frames, &vm.frame_capacity, 1, sizeof(Frame));
+    vm.frames[0] = (Frame){0,0,0,0,{INVALID,{0}}}; vm.fp = 1;
+    vm.locals = grow(vm.locals, &vm.local_capacity, vm.functions[0].locals, sizeof(Value));
+    vm.local_used = vm.functions[0].locals;
+    if (vm.local_used) memset(vm.locals, 0, vm.local_used * sizeof(Value));
     vm.executing = 1;
-    for (vm.pc = 0; vm.pc < vm.count;) {
-        Instruction in = vm.code[vm.pc];
+    for (;;) {
+        Frame *frame = &vm.frames[vm.fp - 1];
+        Function *function = &vm.functions[frame->function];
+        Instruction in;
+        if (frame->pc >= function->count) fail(3, "control flow fell off code");
+        in = function->code[frame->pc];
         switch (in.op) {
         case OP_HALT:
-            if (vm.sp) fail(3, "HALT requires an empty stack");
+            if (vm.sp || vm.fp != 1) fail(3, "invalid HALT stack");
             if (fflush(stdout)) fail(3, "output error");
             return;
         case OP_INT: push(integer(in.arg > INT32_MAX ? (int64_t)in.arg - INT64_C(4294967296) : (int64_t)in.arg)); break;
@@ -263,29 +378,57 @@ static void execute(void) {
         case OP_STRING: push(vm.constants[in.arg]); break;
         case OP_BUILTIN: push(scalar(BUILTIN, in.arg)); break;
         case OP_LOAD:
-            if (vm.locals[in.arg].tag == INVALID) fail(3, "uninitialized local slot");
-            push(vm.locals[in.arg]); break;
-        case OP_STORE: vm.locals[in.arg] = pop(); break;
+            if (vm.locals[frame->base + in.arg].tag == INVALID) fail(3, "uninitialized local slot");
+            push(vm.locals[frame->base + in.arg]); break;
+        case OP_STORE: vm.locals[frame->base + in.arg] = pop(); break;
         case OP_POP: (void)pop(); break;
-        case OP_CALL: { Value arg = pop(); Value function = pop(); push(call(function, arg)); break; }
-        case OP_JUMP: vm.pc = in.arg; continue;
+        case OP_DUP: { Value v = pop(); push(v); push(v); break; }
+        case OP_ENV: push(frame->closure.as.aggregate->values[in.arg]); break;
+        case OP_SELF: push(frame->closure); break;
+        case OP_CLOSURE: case OP_TUPLE: {
+            uint32_t count = in.op == OP_TUPLE ? in.arg : vm.functions[in.arg].environment;
+            Aggregate *object = aggregate(count, in.op == OP_TUPLE ? 0 : in.arg);
+            uint32_t i;
+            for (i = count; i; --i) object->values[i-1] = pop();
+            push(aggregate_value(in.op == OP_TUPLE ? TUPLE : CLOSURE, object)); break;
+        }
+        case OP_GET: {
+            Value tuple = pop(); require(tuple, TUPLE);
+            if (in.arg >= tuple.as.aggregate->count) fail(3, "tuple index out of bounds");
+            push(tuple.as.aggregate->values[in.arg]); break;
+        }
+        case OP_CHECK_UNIT: require(pop(), UNIT); break;
+        case OP_CHECK_TUPLE: {
+            Value tuple = pop(); require(tuple, TUPLE);
+            if (tuple.as.aggregate->count != in.arg) fail(3, "tuple pattern arity mismatch");
+            push(tuple); break;
+        }
+        case OP_RETURN: { Value result = pop(); return_value(result); continue; }
+        case OP_CALL: case OP_TAILCALL: {
+            Value arg = pop(); Value callable = pop();
+            if (callable.tag == BUILTIN) {
+                Value result = call(callable, arg);
+                if (in.op == OP_TAILCALL) { return_value(result); continue; }
+                push(result);
+            } else { enter(callable, arg, in.op == OP_TAILCALL); continue; }
+            break;
+        }
+        case OP_JUMP: frame->pc = in.arg; continue;
         case OP_JUMP_FALSE: {
             Value condition = pop(); require(condition, BOOLEAN);
-            if (!condition.as.number) { vm.pc = in.arg; continue; } break;
+            if (!condition.as.number) { frame->pc = in.arg; continue; } break;
         }
         default: { Value b = pop(); Value a = pop(); push(binary(in.op, a, b)); break; }
         }
-        ++vm.pc;
+        ++frame->pc;
     }
-    fail(3, "control flow fell off code");
 }
 int main(int argc, char **argv) {
     if (atexit(cleanup)) { fputs("rune-vm: cannot register cleanup\n", stderr); return 1; }
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.0.1 (bytecode v1)"); return 0; }
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.0.2 (bytecode v2)"); return 0; }
     if (argc == 2 && strcmp(argv[1], "--help") == 0) { puts("Usage: rune-vm [--] PROGRAM.rbc"); return 0; }
     if (argc == 3 && strcmp(argv[1], "--") == 0) load(argv[2]);
     else if (argc == 2 && argv[1][0] != '-') load(argv[1]);
     else { fputs("Usage: rune-vm [--] PROGRAM.rbc\n", stderr); return 1; }
-    execute();
-    return 0;
+    execute(); return 0;
 }

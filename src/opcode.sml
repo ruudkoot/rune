@@ -25,6 +25,16 @@ struct
   val CALL = 21
   val JUMP = 22
   val JUMP_FALSE = 23
-  val names = Vector.fromList ["HALT", "INT", "BOOL", "UNIT", "STRING", "BUILTIN", "LOAD", "STORE", "POP", "ADD", "SUB", "MUL", "DIV", "MOD", "CONCAT", "EQ", "NE", "LT", "LE", "GT", "GE", "CALL", "JUMP", "JUMP_FALSE"]
-  val operands = Vector.fromList ["none", "int", "bool", "none", "constant", "builtin", "local", "local", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "target", "target"]
+  val ENV = 24
+  val SELF = 25
+  val CLOSURE = 26
+  val RETURN = 27
+  val TAILCALL = 28
+  val TUPLE = 29
+  val GET = 30
+  val DUP = 31
+  val CHECK_UNIT = 32
+  val CHECK_TUPLE = 33
+  val names = Vector.fromList ["HALT", "INT", "BOOL", "UNIT", "STRING", "BUILTIN", "LOAD", "STORE", "POP", "ADD", "SUB", "MUL", "DIV", "MOD", "CONCAT", "EQ", "NE", "LT", "LE", "GT", "GE", "CALL", "JUMP", "JUMP_FALSE", "ENV", "SELF", "CLOSURE", "RETURN", "TAILCALL", "TUPLE", "GET", "DUP", "CHECK_UNIT", "CHECK_TUPLE"]
+  val operands = Vector.fromList ["none", "int", "bool", "none", "constant", "builtin", "local", "local", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "target", "target", "environment", "none", "function", "none", "none", "arity", "index", "none", "none", "arity"]
 end

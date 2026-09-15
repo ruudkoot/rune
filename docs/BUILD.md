@@ -9,9 +9,9 @@ in, so normal builds do not need Python or a parser generator.
 
 Current host installations used for development are SML/NJ 110.79, Poly/ML 5.7.1,
 and MLton 20210117. The VM targets systems with 8-bit bytes, `uint32_t`, and
-`int64_t`. Validation in this workspace is on x86-64 Linux with GCC 13.3.0;
-other operating systems, 32-bit targets, big-endian targets, and Clang are not yet
-verified. Building the C VM for another target is supported through `CC`/`CFLAGS`;
+`int64_t`. Validation in this workspace is on x86-64 Linux with GCC 13.3.0
+and Clang 18.1.3. Other operating systems, 32-bit targets, and big-endian targets
+are not yet verified. Building the C VM for another target is supported through `CC`/`CFLAGS`;
 running that target's binary requires the appropriate system or emulator.
 
 ## Commands
@@ -100,13 +100,20 @@ make generate
 diagnostics, checks malformed bytecode, and runs selected programs directly under
 the reference SML compilers. Rune-specific 32-bit boundaries use explicit expected
 values because SML/NJ's default integers are narrower. VM output checks are byte
-comparisons, including embedded NUL and escaped bytes.
+comparisons, including embedded NUL and escaped bytes. M2 fixtures exercise
+closures, polymorphism, tuples, one million tail calls, and resource failures.
+Selected type/pattern rejection cases are also checked against all three reference
+compilers. Bytecode v2 fixtures cover function metadata, captures, returns, tail
+calls, tuple operations, and explicit rejection of v1 files.
 
 `test-builds` uses a temporary checkout whose path contains spaces. It checks
 incremental rebuilds and that invalid SML causes each build to fail.
 `test-sanitize` runs the corpus and malformed-bytecode checks with an instrumented
 C VM. It requires GCC or compatible Clang sanitizer flags; it is a separate
-development check from portable C builds.
+development check from portable C builds. In this execution sandbox,
+LeakSanitizer reports that it cannot run under ptrace; the same suite passes
+outside the sandbox with leak detection enabled. This is an execution-environment
+restriction, not a missing dependency.
 
 `make generate` updates checked-in opcode definitions, the opcode table, the
 language support table, and example inclusions. Edit `spec/opcodes.tsv`,

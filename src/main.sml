@@ -1,6 +1,6 @@
 structure Main =
 struct
-  val version = "Rune 0.0.1 (M1; bytecode v1)\n"
+  val version = "Rune 0.0.2 (M2; bytecode v2)\n"
   val usage = "Usage: rune [-o OUTPUT.rbc] [--] INPUT.sml\n       rune --check [--] INPUT.sml\n       rune --disassemble [--] INPUT.rbc\n       rune --help | --version\n"
   exception Usage of string
   fun main (_,args) =
@@ -42,7 +42,7 @@ struct
             val () = inputName := file
             val () = if mode <> "compile" andalso Option.isSome output then raise Usage "-o requires compilation" else ()
           in if mode = "disassemble" then Bytecode.disassemble file
-             else let val program = Compile.program (Parser.parse (Lexer.scan (read file)))
+             else let val program = Compile.program (Infer.program (Parser.parse (Lexer.scan (read file))))
                   in if mode = "check" then ()
                      else let val destination = case output of SOME s => s
                                 | NONE => #base (OS.Path.splitBaseExt file) ^ ".rbc"

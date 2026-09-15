@@ -1,1 +1,1 @@
-val f = fn x => x
+val bad = fn x => x x

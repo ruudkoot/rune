@@ -3,4 +3,4 @@
 __pycache__/
 *.pyc
 core
-core.*
+core.[0-9]*
