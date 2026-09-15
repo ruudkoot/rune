@@ -21,14 +21,17 @@ check-sml:
 
 check-polyml:
 	@if command -v poly >/dev/null 2>&1; then \
-		printf '%s\n' 'Poly/ML: checker available'; \
+		printf '%s\n' 'Poly/ML: checking compiler module'; \
+		poly --script tests/sml/bootstrap.sml >/dev/null; \
 	else \
 		printf '%s\n' 'Poly/ML: skipped (poly not installed)'; \
 	fi
 
 check-mlton:
 	@if command -v mlton >/dev/null 2>&1; then \
-		printf '%s\n' 'MLton: checker available'; \
+		printf '%s\n' 'MLton: checking compiler module'; \
+		mkdir -p $(BUILD_DIR); \
+		mlton -output $(BUILD_DIR)/rune-compiler src/sml/rune.mlb; \
 	else \
 		printf '%s\n' 'MLton: skipped (mlton not installed)'; \
 	fi

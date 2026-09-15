@@ -20,10 +20,11 @@ Production implementation lives in `src/sml/` and `src/runtime/`. The
 implementations for comparison. The `prototypes/` tree is for experiments that
 may be discarded. Neither tree is a production dependency.
 
-The compiler will eventually be split into modules for source locations,
-lexing, parsing, elaboration, typing, intermediate representations, bytecode
-emission, and diagnostics. The initial scaffold keeps these boundaries visible
-without inventing language semantics prematurely.
+The compiler is split into modules for the expression AST, lexing, parsing,
+type checking, and bytecode emission. `src/sml/rune.sml` only orchestrates
+these phases. The current type checker validates the initial `int`/`bool`
+language before emission; source locations, richer elaboration, intermediate
+representations, and diagnostics remain later milestones.
 
 ## Bytecode contract
 

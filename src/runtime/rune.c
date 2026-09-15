@@ -4,7 +4,7 @@
 
 int main(void)
 {
-    const uint8_t empty_program[] = {0u};
+    const uint8_t empty_program[] = {'R', 'U', 'N', 'E', 1u, 0u};
     const enum rune_vm_status status =
         rune_vm_run(empty_program, sizeof empty_program);
 
