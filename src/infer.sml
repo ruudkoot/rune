@@ -92,7 +92,7 @@ struct
               | Syntax.TypeName (name,args) =>
                   let val ts = List.map (translate (depth+1)) args
                   in case find tenv' name of
-                      SOME (_,Primitive t) => if null ts then t
+                      SOME (_,Primitive t) => if List.null ts then t
                         else Source.fail p "type" "type constructor arity mismatch"
                     | SOME (_,Nominal (tc as TypeConstructor {arity,...})) =>
                         if List.length ts = arity then TData (tc,ts)
@@ -152,17 +152,17 @@ struct
           | Syntax.Case (subject,clauses) =>
               let val subject' = sub subject val result = fresh p level
                   fun clause (pat,body) =
-                    let val (ps,names) = patterns env level [pat] val pat' = hd ps
+                    let val (ps,names) = patterns env level [pat] val pat' = List.hd ps
                         val () = unify p (Core.typeOf subject') (Core.patternType pat')
-                        val body' = expression (names @ env) tenv level (depth+1) body
+                        val body' = expression (List.concat [names,env]) tenv level (depth+1) body
                         val () = unify p result (Core.typeOf body')
                     in (pat',body') end
                   val clauses' = List.map clause clauses
                   val () = Match.check p true (List.map #1 clauses')
               in make result (Core.Case (subject',clauses')) end
           | Syntax.Fn (pat,body) =>
-              let val (ps,names) = patterns env level [pat] val param = hd ps
-                  val body' = expression (names @ env) tenv level (depth+1) body
+              let val (ps,names) = patterns env level [pat] val param = List.hd ps
+                  val body' = expression (List.concat [names,env]) tenv level (depth+1) body
                   val () = Match.check p true ps
               in make (TFunction (Core.patternType param,Core.typeOf body'))
                    (Core.Function {self=NONE,param=param,body=body'}) end
@@ -181,21 +181,21 @@ struct
         let fun loop env tenv [] acc = (List.rev acc,env,tenv)
               | loop env tenv (Syntax.Datatype (p,vs,name,cs)::rest) acc =
                   let val (names,tenv') = datatypeBinding tenv level p vs name cs
-                  in loop (names @ env) tenv' rest acc end
+                  in loop (List.concat [names,env]) tenv' rest acc end
               | loop env tenv (d::rest) acc =
                 let val (pat,e,env') = case d of
                     Syntax.Val (p,pat,e) =>
                       let val e' = expression env tenv (level+1) depth e
-                          val (ps,names) = patterns env (level+1) [pat] val pat' = hd ps
+                          val (ps,names) = patterns env (level+1) [pat] val pat' = List.hd ps
                           val () = unify p (Core.patternType pat') (Core.typeOf e')
                           val () = Match.check p (not top) ps
                           val () = generalize p level (nonexpansive e') (Core.typeOf e')
-                      in (pat',e',names @ env) end
+                      in (pat',e',List.concat [names,env]) end
                   | Syntax.Fun (p,name,ps,body) =>
                       let val id = identity p val ft = fresh p (level+1)
                           val recursive = (name,(ft,Local id))::env
                           val (params,names) = patterns recursive (level+1) ps
-                          val body' = expression (names @ recursive) tenv (level+1) (depth+1) body
+                          val body' = expression (List.concat [names,recursive]) tenv (level+1) (depth+1) body
                           val () = List.app (fn param => Match.check p true [param]) params
                           (* Derived fun gathers every curried argument before testing patterns. *)
                           val raw = if List.all irrefutable params then params

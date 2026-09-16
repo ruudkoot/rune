@@ -7,6 +7,13 @@ struct
                | Integer of IntInf.int | String of string
   datatype family = Fixed of (key * int) list | Constructors of int list ref
   datatype pat = Any | Head of key * pat list * family option
+  fun sameKey (Data a,Data b) = a = b
+    | sameKey (Tuple a,Tuple b) = a = b
+    | sameKey (Unit,Unit) = true
+    | sameKey (Boolean a,Boolean b) = a = b
+    | sameKey (Integer a,Integer b) = IntInf.eq (a,b)
+    | sameKey (String a,String b) = String.compare (a,b) = EQUAL
+    | sameKey _ = false
   fun normalize tick (Core.P (p,t,node)) = (tick (); case node of
       Core.Bind _ => Any | Core.Wildcard => Any
     | Core.UnitPattern => Head (Unit,[],SOME (Fixed [(Unit,0)]))
@@ -32,21 +39,21 @@ struct
         | members (Constructors ids) = List.map (fn n => (tick (); (Data n,n mod 2))) (!ids)
       fun specialize key arity rows = List.mapPartial (fn row => (tick (); case row of
             Any::rest => SOME (append (anys arity) rest)
-          | Head (k,args,_)::rest => if k = key then SOME (append args rest) else NONE
+          | Head (k,args,_)::rest => if sameKey (k,key) then SOME (append args rest) else NONE
           | [] => NONE)) rows
       fun defaults rows = List.mapPartial (fn row => (tick (); case row of
           Any::rest => SOME rest | _ => NONE)) rows
       fun useful depth rows query =
         (tick (); if depth > 512 then Source.fail p "limit" "match analysis exceeds depth 512" else ();
-         case query of [] => null rows
+        case query of [] => List.null rows
          | Head (key,args,_)::rest =>
              useful (depth+1) (specialize key (List.length args) rows) (append args rest)
          | Any::rest =>
-             null rows orelse let
+             List.null rows orelse let
                val heads = List.mapPartial (fn row => (tick (); case row of
                    Head (k,_,family)::_ => SOME (k,family) | _ => NONE)) rows
                val family = case heads of (_,SOME xs)::_ => SOME (members xs) | _ => NONE
-               fun present key = List.exists (fn (k,_) => (tick (); k = key)) heads
+               fun present key = List.exists (fn (k,_) => (tick (); sameKey (k,key))) heads
              in case family of
                  SOME xs => if List.all (fn (k,_) => present k) xs then
                    List.exists (fn (key,arity) => useful (depth+1)

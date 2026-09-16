@@ -92,7 +92,7 @@ struct
                  if Char.isAlpha c orelse c = #"." then
                    Source.fail p "unsupported" "only decimal integer literals are supported"
                  else () | NONE => ()
-            val n = valOf (IntInf.fromString ((if negative then "~" else "") ^ digits))
+            val n = Option.valOf (IntInf.fromString ((if negative then "~" else "") ^ digits))
         in Number (Source.intRange p n) end
       fun next () =
         let val () = space ()

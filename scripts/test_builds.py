@@ -10,7 +10,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="rune build checkout ") as tmp:
         copy = Path(tmp) / "Rune source"
         shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "build", ".cm", "__pycache__"))
-        for host in ("smlnj", "polyml", "mlton"):
+        for host in ("smlnj", "polyml", "mlton", "mosml"):
             run(["make", f"HOST={host}", "build"], cwd=copy)
             compiler = copy / "build" / host / "rune"
             first = compiler.stat().st_mtime_ns

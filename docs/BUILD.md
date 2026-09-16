@@ -3,7 +3,8 @@
 ## Requirements
 
 Use GNU Make, a POSIX shell and common utilities (`cp`, `cmp`, `cksum`, `dirname`),
-one supported host compiler, and an ISO C11 compiler. Python 3 is needed for tests
+one supported host compiler, and an ISO C11 compiler. Moscow ML also needs `curl`,
+`sha256sum`, `tar`, Perl, and a C preprocessor for its source bootstrap. Python 3 is needed for tests
 and documentation generation only. Generated SML/C opcode definitions are checked
 in, so normal builds do not need Python or a parser generator.
 
@@ -24,6 +25,7 @@ make                            # MLton compiler and C VM
 make HOST=smlnj build
 make HOST=polyml build
 make HOST=mlton build
+make HOST=mosml build
 make all-hosts                   # Fails if any required host is unavailable
 make doctor                     # Report installed tools and SML/NJ startup
 
@@ -84,6 +86,11 @@ overhead are separate. See [BYTECODE.md](BYTECODE.md) for root and retention rul
   The native `polyc` linker path is not required or implemented as a build mode.
 - **MLton:** a generated MLB file and a small entry point produce a native
   executable. No MLton runtime installation is needed to launch this artifact.
+- **Moscow ML:** `scripts/build_mosml.sh` downloads and verifies the pinned 2.10.1
+  source archive, then runs upstream `make world` and `make install` under
+  `build/tools/mosml-ver-2.10.1`. Moscow ML bootstraps from its C runtime and
+  checked-in `mosmlcmp`/`mosmllnk` bytecode; another SML compiler is not required.
+  Rune uses the private `IntInf` Basis library and a `camlrunm`-backed launcher.
 
 One `sources.list` controls compilation order for every host. Source copies and
 host-specific intermediates remain under `build/<host>/`; SML/NJ does not create
@@ -98,6 +105,8 @@ Tool overrides are executable names or paths, not shell fragments:
 make HOST=smlnj SML=/path/to/sml ML_BUILD=/path/to/ml-build
 make HOST=polyml POLY=/path/to/poly
 make HOST=mlton MLTON=/path/to/mlton
+make HOST=mosml MOSMLC=/path/to/mosmlc build
+make HOST=mosml MOSML_VERSION=2.10.1 MOSML_SHA256=<sha256> build
 make vm CC=cc CFLAGS='-O0 -g'
 ```
 

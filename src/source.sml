@@ -9,11 +9,11 @@ struct
   val maxSource = 1048576
   val maxCount = 65536
   val maxString = 1048576
-  val minInt = valOf (IntInf.fromString "~2147483648")
-  val maxInt = valOf (IntInf.fromString "2147483647")
-  val modulus = valOf (IntInf.fromString "4294967296")
-  fun intRange p n =
-    if n < minInt orelse n > maxInt then
+  val minInt : IntInf.int = Option.valOf (IntInf.fromString "~2147483648")
+  val maxInt : IntInf.int = Option.valOf (IntInf.fromString "2147483647")
+  val modulus : IntInf.int = Option.valOf (IntInf.fromString "4294967296")
+  fun intRange p (n : IntInf.int) =
+    if IntInf.< (n, minInt) orelse IntInf.> (n, maxInt) then
       fail p "range" "integer literal is outside Rune's signed 32-bit range"
     else n
 end

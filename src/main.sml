@@ -8,7 +8,8 @@ struct
       val inputName = ref "rune"
       fun read path =
         let val stream = TextIO.openIn path
-        in (TextIO.inputN (stream,Source.maxSource+1) before TextIO.closeIn stream)
+          in let val result = TextIO.inputN (stream,Source.maxSource+1)
+            in TextIO.closeIn stream; result end
            handle ex => (TextIO.closeIn stream handle _ => (); raise ex) end
       fun publish output source program =
         let
@@ -23,8 +24,8 @@ struct
             OS.FileSys.rename {old=temporary,new=output}; release ())
            handle ex => (remove (); raise ex) end
       fun run () = case args of
-          ["--help"] => print usage
-        | ["--version"] => print version
+          ["--help"] => TextIO.output (TextIO.stdOut,usage)
+        | ["--version"] => TextIO.output (TextIO.stdOut,version)
         | _ =>
           let
             fun options [] output mode input = (output,mode,input)

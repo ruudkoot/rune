@@ -1369,7 +1369,8 @@
       "fn-recursion",
       "data-tuples"
     ],
-    "reference_reject": true
+    "reference_reject": true,
+    "reference_reject_hosts": ["smlnj", "polyml", "mlton"]
   },
   {
     "path": "tests/reject/unit-pattern-type.sml",

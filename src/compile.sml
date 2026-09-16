@@ -29,13 +29,13 @@ struct
             | If (c,a,b) => sub b (sub a (sub c acc))
             | Tuple es => many es acc | Sequence es => many es acc
             | Case (subject,clauses) => List.foldl
-                (fn ((pat,body),a) => walk (patternIds pat @ bound) body a) (sub subject acc) clauses
+                (fn ((pat,body),a) => walk (List.concat [patternIds pat,bound]) body a) (sub subject acc) clauses
             | Function {self,param,body} => walk
-                (patternIds param @ (case self of NONE => bound | SOME id => id::bound)) body acc
+                (List.concat [patternIds param,(case self of NONE => bound | SOME id => id::bound)]) body acc
             | Let (ds,body) =>
                 let fun bindings currentBound [] a = walk currentBound body a
                       | bindings currentBound ((pat,e)::rest) a =
-                          bindings (patternIds pat @ currentBound) rest (walk currentBound e a)
+                          bindings (List.concat [patternIds pat,currentBound]) rest (walk currentBound e a)
                 in bindings bound ds acc end
             | _ => acc
           end
@@ -51,12 +51,12 @@ struct
         let
           val code = ref ([] : instruction list) val counter = ref 0
           val locals = ref (if functionId = 0 then 0 else 1)
-          fun emit p opnum operand =
+          fun emit p (opnum : int) (operand : IntInf.int) =
             if !instructions >= Source.maxCount then Source.fail p "limit" "too many instructions"
             else let val target = ref operand
                  in code := {code=opnum,operand=target,pos=p} :: !code;
                     counter := !counter+1; instructions := !instructions+1; target end
-          fun simple p opnum = ignore (emit p opnum 0)
+          fun simple p opnum = ignore (emit p opnum (IntInf.fromInt 0))
           fun small p opnum n = ignore (emit p opnum (IntInf.fromInt n))
           fun load p env id = case lookup p env id of Local n => small p Opcode.LOAD n
             | Environment n => small p Opcode.ENV n | Self => simple p Opcode.SELF
@@ -73,7 +73,7 @@ struct
           (* Every test leaves the operand stack as it found it. Partial bindings
              are clause-local slots; a failed clause cannot expose them. *)
           fun attempt env subject (P (p,_,node)) failures =
-            let fun test () = failures := emit p Opcode.JUMP_FALSE 0 :: !failures
+            let fun test () = failures := emit p Opcode.JUMP_FALSE (IntInf.fromInt 0) :: !failures
                 fun literal emitLiteral =
                   (small p Opcode.LOAD subject; emitLiteral (); simple p Opcode.EQ; test (); env)
             in case node of
@@ -101,8 +101,8 @@ struct
           fun bind failure env (pat as P (p,_,_)) =
             let val subject = save p val failures = ref ([] : IntInf.int ref list)
                 val env' = attempt env subject pat failures
-                val () = if null (!failures) then () else
-                  let val join = emit p Opcode.JUMP 0
+                val () = if List.null (!failures) then () else
+                  let val join = emit p Opcode.JUMP (IntInf.fromInt 0)
                       val () = patch (!failures)
                       val () = small p Opcode.FAIL failure
                   in patch [join] end
@@ -125,8 +125,8 @@ struct
                    | ">" => Opcode.GT | ">=" => Opcode.GE
                    | _ => Source.fail p "internal" "unknown binary operator"))
             | If (c,a,b) =>
-                let val () = value env c val branch = emit p Opcode.JUMP_FALSE 0
-                    val () = value env a val join = emit p Opcode.JUMP 0
+                let val () = value env c val branch = emit p Opcode.JUMP_FALSE (IntInf.fromInt 0)
+                  val () = value env a val join = emit p Opcode.JUMP (IntInf.fromInt 0)
                     val () = branch := IntInf.fromInt (!counter)
                     val () = value env b
                 in join := IntInf.fromInt (!counter) end
@@ -147,7 +147,7 @@ struct
                   let val failures = ref ([] : IntInf.int ref list)
                       val env' = attempt env source pat failures
                       val () = finish env' body
-                      val () = if joins then targets := emit p Opcode.JUMP 0 :: !targets else ()
+                      val () = if joins then targets := emit p Opcode.JUMP (IntInf.fromInt 0) :: !targets else ()
                   in patch (!failures) end
                 val () = List.app clause clauses
                 val () = small p Opcode.FAIL 0
@@ -162,7 +162,7 @@ struct
               Apply (f,a) => (value env f; value env a; simple p Opcode.TAILCALL)
             | Case (subject,clauses) => matching tail false env p subject clauses
             | If (c,a,b) =>
-                let val () = value env c val branch = emit p Opcode.JUMP_FALSE 0
+                let val () = value env c val branch = emit p Opcode.JUMP_FALSE (IntInf.fromInt 0)
                     val () = tail env a val () = branch := IntInf.fromInt (!counter)
                 in tail env b end
             | Let (ds,body) => tail (bindings env ds) body

@@ -19,7 +19,7 @@ def main():
         if "reference_reject_hosts" in case:
             hosts = case["reference_reject_hosts"]
             assert case["kind"] == "reject" and hosts, case
-            assert len(set(hosts)) == len(hosts) and set(hosts) <= {"smlnj", "polyml", "mlton"}, case
+            assert len(set(hosts)) == len(hosts) and set(hosts) <= {"smlnj", "polyml", "mlton", "mosml"}, case
         mapped = set(case["features"])
         assert mapped <= ids, f"unknown feature IDs: {mapped - ids}"
         edges = set(case.get("boundary", []))

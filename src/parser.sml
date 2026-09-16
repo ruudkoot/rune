@@ -187,7 +187,7 @@ struct
                     else if count >= 256 then error "fun exceeds 256 parameters"
                     else parameters (count+1) (atomicPattern 0::acc)
                   val ps = parameters 0 []
-                  val () = if null ps then error "fun requires at least one parameter" else ()
+                  val () = if List.null ps then error "fun requires at least one parameter" else ()
                   val () = expect "=" val body = expression 0
                   val () = if is "|" then Source.fail (position ()) "unsupported"
                              "multi-clause fun is not supported" else ()

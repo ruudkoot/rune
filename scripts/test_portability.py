@@ -71,7 +71,7 @@ def main():
     # test.py compiles each source once per host and runs those exact bytes on
     # every VM before replacing the file. It also compares runtime diagnostics.
     subprocess.run([sys.executable, "-u", str(ROOT / "scripts" / "test.py"),
-                    "--hosts", "smlnj", "polyml", "mlton",
+                    "--hosts", "smlnj", "polyml", "mlton", "mosml",
                     "--vm", str(native), "--vm", str(i386), "--vm", str(ppc64)],
                    cwd=ROOT, check=True)
 

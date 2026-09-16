@@ -13,6 +13,16 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def mosmlc():
+    configured = os.environ.get("MOSMLC")
+    if configured:
+        return configured
+    result = subprocess.run(["sh", ROOT / "scripts/build_mosml.sh"], cwd=ROOT,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    runtime = Path(result.stdout.decode().splitlines()[0])
+    return runtime.parent.parent / "bin" / "mosmlc"
+
+
 def run(args, *, cwd=ROOT, input=None, status=0, stdout=None):
     result = subprocess.run(list(map(str, args)), cwd=cwd, input=input,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
@@ -207,18 +217,23 @@ def gc_cli_cases(vm, directory):
 
 def references(hosts, cases, directory):
     eligible = [c for c in cases if c.get("reference")]
-    text = "structure Reference = struct\n"
+    text = ""
     for i, case in enumerate(eligible):
         text += f'val () = print "RUNE_REFERENCE_BEGIN_{i}\\n"\nlocal\n'
         text += (ROOT / case["path"]).read_text() + "\nin val () = () end\n"
         text += f'val () = print "RUNE_REFERENCE_END_{i}\\n"\n'
-    text += "end\nval () = TextIO.flushOut TextIO.stdOut\nval () = OS.Process.terminate OS.Process.success\n"
-    source = directory / "reference.sml"
+    text += "val () = TextIO.flushOut TextIO.stdOut\nval () = OS.Process.terminate OS.Process.success\n"
+    source = directory / "Reference.sml"
     source.write_text(text)
     for host in hosts:
         if host == "mlton":
             exe = directory / "reference"
             run([os.environ.get("MLTON") or "mlton", "-output", exe, source])
+            result = run([exe])
+        elif host == "mosml":
+            exe = directory / "reference.exe"
+            run([mosmlc(), "-toplevel", source.name], cwd=directory)
+            (directory / "a.out").rename(exe)
             result = run([exe])
         elif host == "polyml":
             result = run([os.environ.get("POLY") or "poly", "--script", source])
@@ -227,7 +242,7 @@ def references(hosts, cases, directory):
             # wrapper sets SMLNJ_HOME, which the interactive Basis autoloader needs.
             sml = os.environ.get("SML") or "sml"
             result = run([sml], cwd=directory,
-                         input=b'(use "reference.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
+                         input=b'(use "Reference.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
         for i, case in enumerate(eligible):
             begin, end = f"RUNE_REFERENCE_BEGIN_{i}\n".encode(), f"RUNE_REFERENCE_END_{i}\n".encode()
             assert result.stdout.count(begin) == result.stdout.count(end) == 1, (host, case, result.stdout)
@@ -238,7 +253,7 @@ def references(hosts, cases, directory):
 
 def reference_rejections(hosts, cases, directory):
     eligible = [c for c in cases if c.get("reference_reject") or c.get("reference_reject_hosts")]
-    source = directory / "reject-reference.sml"
+    source = directory / "Rejected.sml"
     counts = {}
     for host in hosts:
         counts[host] = 0
@@ -248,11 +263,13 @@ def reference_rejections(hosts, cases, directory):
             source.write_text("structure Rejected = struct\n" + (ROOT / case["path"]).read_text() + "end\n")
             if host == "mlton":
                 result = run([os.environ.get("MLTON") or "mlton", "-output", directory / "rejected", source], status=1)
+            elif host == "mosml":
+                result = run([mosmlc(), "-toplevel", source.name], cwd=directory, status=2)
             elif host == "polyml":
                 result = run([os.environ.get("POLY") or "poly", "--script", source], status=1)
             else:
                 result = run([os.environ.get("SML") or "sml"], cwd=directory, status=1,
-                             input=b'(use "reject-reference.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
+                             input=b'(use "Rejected.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
             assert result.stdout or result.stderr, (host, case)
             counts[host] += 1
     print("Reference SML type/pattern rejections: " + ", ".join(f"{h}={n}" for h, n in counts.items()) + ".")
@@ -260,7 +277,7 @@ def reference_rejections(hosts, cases, directory):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--hosts", nargs="+", choices=["smlnj", "polyml", "mlton"], required=True)
+    parser.add_argument("--hosts", nargs="+", choices=["smlnj", "polyml", "mlton", "mosml"], required=True)
     parser.add_argument("--vm", action="append", help="VM executable/launcher; repeat to run identical bytecode on each")
     args = parser.parse_args()
     vms = [(ROOT / path).resolve() for path in (args.vm or ["build/vm/rune-vm"])]

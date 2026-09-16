@@ -8,7 +8,7 @@ that emits bytecode for a portable C virtual machine.
 Rune 0.2.0 adds user datatypes, constructor patterns, `case`, and uncaught
 `Match`/`Bind` failures to the functional subset: typed expressions, `val`/`let`,
 functions, closures, recursion, tuples, and polymorphic type inference. The C VM
-uses bytecode v3 and collects unused heap objects. M5a passes the three-host
+uses bytecode v3 and collects unused heap objects. M5a passes the four-host
 compiler, native/emulated VM, and sanitizer gates; [the checkpoint](docs/PLAN.md)
 records verification. Lists, multi-clause functions, exception handlers, and
 the other M5 features remain deferred.
@@ -36,6 +36,7 @@ build/mlton/rune -o build/hello.rbc examples/hello.sml
 build/vm/rune-vm build/hello.rbc
 # 42
 
+make HOST=mosml build
 build/mlton/rune -o build/closures.rbc examples/closures.sml
 build/vm/rune-vm build/closures.rbc
 # 42
@@ -63,11 +64,10 @@ before the first build and after `make clean`.
 After changing `sources.list`, run `make generate` to update the editor project;
 `make check-docs` checks that it stays in sync. See the
 [editor setup guide](docs/BUILD.md#editor-setup) for details.
-
 ## Check changes
 
 ```sh
-make test-all       # Three-host semantics, bytecode equality, reference SML, docs
+make test-all       # Four-host semantics, bytecode equality, reference SML, docs
 make test-builds    # Checkout paths with spaces, rebuilds, failed compilations
 make test-sanitize # GCC/Clang address and undefined-behavior sanitizers
 make test-gc        # Collector roots, cycles, deep graphs, and heap accounting
@@ -76,8 +76,9 @@ make check-docs
 ```
 
 Ordinary builds require Make, a POSIX shell, standard shell utilities, a host SML
-compiler, and a C11 compiler. Tests and documentation generation also use Python 3
-with its standard library. No package downloads occur during builds.
+compiler, and a C11 compiler. Moscow ML builds additionally require network access,
+curl, sha256sum, tar, Perl, and a C preprocessor. Tests and documentation
+generation also use Python 3 with its standard library.
 
 `test-portability` uses additional development tools on x86-64 Linux: GCC
 multilib, Clang, QEMU user emulation, and PowerPC64 binutils/libraries. See the

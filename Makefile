@@ -3,7 +3,7 @@ HOST ?= mlton
 CC ?= cc
 CFLAGS ?= -O2
 PYTHON ?= python3
-export SML ML_BUILD POLY MLTON CC CFLAGS
+export SML ML_BUILD POLY MLTON MOSMLC MOSML_VERSION MOSML_URL MOSML_SHA256 MOSML_TOOLS_DIR MOSML_CC CC CFLAGS
 export I386_CC PPC64_CC QEMU_I386 QEMU_PPC64 PPC64_SYSROOT
 
 .PHONY: build compiler vm all-hosts doctor test test-all check-docs generate clean test-builds test-sanitize test-gc test-portability
@@ -20,6 +20,7 @@ all-hosts: vm
 	@$(MAKE) HOST=smlnj compiler
 	@$(MAKE) HOST=polyml compiler
 	@$(MAKE) HOST=mlton compiler
+	@$(MAKE) HOST=mosml compiler
 
 doctor:
 	@sh scripts/doctor.sh
@@ -28,7 +29,7 @@ test: build check-docs test-gc
 	$(PYTHON) scripts/test.py --hosts $(HOST)
 
 test-all: all-hosts check-docs test-gc
-	$(PYTHON) scripts/test.py --hosts smlnj polyml mlton
+	$(PYTHON) scripts/test.py --hosts smlnj polyml mlton mosml
 
 test-portability: all-hosts check-docs test-gc
 	$(PYTHON) scripts/test_portability.py

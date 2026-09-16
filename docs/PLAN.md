@@ -18,7 +18,7 @@ Validation completed for M4:
 - Clean `make test-all`: 133 language fixtures under each of SML/NJ, Poly/ML,
   and MLton, with every runnable fixture executed normally and under GC stress.
   Bytecode and rejection diagnostics are identical. The 33 reference programs
-  and 15 type/pattern rejection cases agree with all three reference compilers.
+  and 15 type/pattern rejection cases agree with all four reference compilers.
 - `make test-portability`: the same bytecode file from each compiler build runs
   on native x86-64 Linux, emulated i386 Linux (32-bit little-endian), and emulated
   PowerPC64 Linux (64-bit big-endian). Stdout, exit status, and full runtime
@@ -33,7 +33,7 @@ Validation completed for M4:
   presented as either cross target and reject a mismatched runtime pointer width.
   An isolated checkout with apostrophes/spaces also passes the i386 launcher,
   external-working-directory, and option-like-filename checks.
-- `make test-builds`: all three hosts pass spaced-checkout, incremental-build,
+- `make test-builds`: all four hosts pass spaced-checkout, incremental-build,
   changed-source rebuild, and failed-compilation checks.
 - `make CC=clang HOST=polyml test`: strict C11 VM/harness builds and the full
   Poly/ML-driven corpus, VM checks, and references pass.
@@ -66,7 +66,7 @@ status/documentation update is checked locally.
 ## 1. Deliverable and scope
 
 Build a compiler named Rune in portable Standard ML. The same compiler sources
-must build using SML/NJ, Poly/ML, and MLton. Each resulting Rune compiler translates
+must build using SML/NJ, Poly/ML, MLton, and Moscow ML. Each resulting Rune compiler translates
 the documented SML ’97 subset into the same deterministic `.rbc` bytecode, which
 runs on an independently built C VM.
 
@@ -83,7 +83,7 @@ flowchart LR
     Bytecode --> VM["C virtual machine"]
 ```
 
-Here, building with three compilers means **host compiler portability**. Bytecode
+Here, building with four compilers means **host compiler portability**. Bytecode
 provides target portability: the same `.rbc` file runs wherever Rune's C VM is
 built. Cross-compiling the C VM can use the target platform's C toolchain; Rune
 does not initially need to emit native machine code or compile its own sources.
@@ -148,7 +148,7 @@ make doctor                       # Report versions, launch checks, dependencies
 make HOST=mlton build              # Default HOST; compiler plus C VM
 make HOST=smlnj build
 make HOST=polyml build
-make all-hosts                     # Require and build all three; fail if missing
+make all-hosts                     # Require and build all four; fail if missing
 make HOST=polyml test              # Test one host's Rune and the VM
 make test-all                      # All hosts, bytecode comparison, docs checks
 make check-docs                    # Feature coverage, examples, generated docs
@@ -227,7 +227,7 @@ Suggested layout, introduced as the corresponding milestone is implemented:
 Makefile
 sources.list
 src/             source positions, lexer, parser, types, core, emit, main
-host/            SML/NJ, Poly/ML, and MLton entry points
+host/            SML/NJ, Poly/ML, MLton, and Moscow ML entry points
 vm/              bytecode loader, dispatch loop, values, heap, primitives
 scripts/         build adapters, test runner, documentation checker
 spec/            machine-readable opcode descriptions
@@ -301,11 +301,11 @@ implementation.
 
 ### M0 — Host builds and documentation foundation (complete)
 
-- Add the shared source manifest, a minimal compiler CLI, all three build
+- Add the shared source manifest, a minimal compiler CLI, all four build
   adapters, the Makefile, `doctor`, and artifact isolation.
 - Add a minimal C executable and a test runner with strict failure propagation.
 - Establish the feature manifest and documentation checks described in section 8.
-- **Gate:** build and launch the shared CLI under all three hosts; verify `--help`,
+- **Gate:** build and launch the shared CLI under all four hosts; verify `--help`,
   `--version`, arguments with spaces, failure statuses, incremental rebuilds, and
   invocation from another directory. Exercise these from a checkout path with
   spaces. A deliberately broken SML source must fail every host's build.
@@ -318,7 +318,7 @@ implementation.
 - Implement only the required bytecode instructions, loader, emitter, and VM.
 - Add `--check`, a basic disassembler, source errors, and executable examples.
 - **Gate:** compile an arithmetic/conditional/printing example through each host
-  build; all three `.rbc` files are identical and produce the expected output on
+  build; all four `.rbc` files are identical and produce the expected output on
   the C VM. Include shadowing, false-branch non-evaluation, negative division,
   overflow, string escaping, type errors, and a truncated bytecode rejection.
 - **Delivery:** a clearly labeled SML ’97 subset, with no user-defined functions
@@ -349,7 +349,7 @@ implementation.
 
 - Finish all v0.1 language rows, grammar, Basis inventory, build instructions,
   bytecode specification, examples, and contributor documentation checks.
-- **Gate:** clean `make test-all` succeeds on all three hosts; emitted bytecode
+- **Gate:** clean `make test-all` succeeds on all four hosts; emitted bytecode
   and diagnostics agree; strict C builds and applicable sanitizer checks pass.
   Run the standalone VM and collector harness on a 32-bit little-endian target
   and a big-endian target in addition to native x86-64 Linux. Record whether
@@ -359,7 +359,7 @@ implementation.
   bytecode tools, documented functional subset, and runnable examples.
 
 M4's gate is complete. `make test-portability` and the CI portability job now
-run the full three-host corpus against all three VM targets. The shared runner
+run the full four-host corpus against all four VM targets. The shared runner
 accepts repeated `--vm` arguments, so each target executes identical bytecode
 and produces comparable runtime diagnostics. Target identity guards and the
 collector harness run before the corpus. See the checkpoint above for results
@@ -413,10 +413,10 @@ version strings agree; existing source programs must be recompiled.
 
 Acceptance checkpoint — 2026-09-16:
 
-- `make test-all`: 181 fixtures under each of SML/NJ, Poly/ML, and MLton, normal
+- `make test-all`: 181 fixtures under each of SML/NJ, Poly/ML, MLton, and Moscow ML, normal
   execution and GC stress, identical bytecode and compiler diagnostics, canonical
   disassembly, and CLI/atomic-output checks. The 47 reference programs agree
-  under all three reference compilers.
+  under all four reference compilers.
 - Reference rejection checks pass for 36 cases under SML/NJ and 39 under Poly/ML
   and MLton. Three explicit manifest exceptions cover local datatype escape
   and equality-constrained datatype parameters, which SML/NJ 110.79 accepts.
@@ -431,7 +431,7 @@ Acceptance checkpoint — 2026-09-16:
   equality, stale slots, and exact heap accounting. Constructor-heavy programs
   pass with a 16 KiB heap; retained-heap failures remain source-located.
 - `make CC=clang HOST=polyml test`, GCC and Clang `test-sanitize` with ASan/UBSan
-  and leak detection, and `make test-builds` pass. Build checks cover all three
+  and leak detection, and `make test-builds` pass. Build checks cover all four
   hosts, spaced paths, incremental rebuilds, and intentional compilation failures.
 - `make check-docs`, Python syntax checks, `mlton -stop tc rune.mlb`, and
   `git diff --check` pass. Additional manual checks compare 100 seeded boolean
@@ -461,7 +461,7 @@ Add empty/nonempty and nested lists, polymorphic list processing, equality,
 ordering of element evaluation, small-heap collection, and relevant typing and
 syntax rejections. Update the existing `data-datatypes` boundary and move the
 current `nil` rejection to appropriate accepted and excluded-form coverage.
-Run the same three-host, portability, sanitizer, and documentation gates; decide
+Run the same four-host, portability, sanitizer, and documentation gates; decide
 whether the existing v3 representation needs any compatibility change.
 
 M5c then adds multi-clause `fn`/`fun`, including consistent parameter counts and
@@ -470,7 +470,7 @@ Basis support remain later M5 work.
 
 ## 7. Validation strategy
 
-Use one fixture corpus across all three host-built Rune compilers:
+Use one fixture corpus across all four host-built Rune compilers:
 
 - **Accept/run:** source, expected stdout, expected exit status, and feature IDs.
 - **Reject:** source and stable diagnostic category/span for lexical, syntax,
@@ -493,7 +493,7 @@ Use one fixture corpus across all three host-built Rune compilers:
 
 Introduce these checks with the behavior they validate. M0/M1 need a small useful
 corpus; later milestones add GC stress and malformed control-flow coverage. CI
-must require the three-host matrix, with missing tools reported as failures for
+must require the four-host matrix, with missing tools reported as failures for
 the required job. Local single-host tests remain convenient for development.
 
 ## 8. Keep language documentation in sync
@@ -514,7 +514,7 @@ mechanical checks:
    needs both an accepted example and a rejection of its excluded portion.
 4. Keep runnable documentation examples in `examples/` and include or generate
    their code blocks into documentation. Check for drift and run examples under
-   all three builds as part of `make test-all`. Label future examples as planned.
+   all four builds as part of `make test-all`. Label future examples as planned.
 5. Include the grammar, operator precedence, built-in types/signatures, integer
    limits, runtime failures, and explicit exclusions in the language contract.
    Update these whenever behavior changes, even if a feature ID stays the same.
@@ -524,7 +524,7 @@ mechanical checks:
 These checks detect stale tables, examples, and missing coverage. They cannot
 prove prose matches every semantic detail; review must still compare the behavior
 change with its documentation. The current contract marks the ten M1, four M2, and one M3
-feature rows implemented after their three-host checks. M5a extends these rows
+feature rows implemented after their four-host checks. M5a extends these rows
 and marks `data-datatypes` and `decl-types` partial with explicit exclusions;
 other later rows remain deferred.
 
@@ -533,12 +533,12 @@ other later rows remain deferred.
 | Risk | Decision |
 | --- | --- |
 | Scope expands before the first runnable compiler | Deliver M0–M1 first; add functions and GC in explicit later gates |
-| Host runtimes leak different semantics into Rune | One portable core, isolated adapters, explicit numeric/bytecode formats, three-host tests |
+| Host runtimes leak different semantics into Rune | One portable core, isolated adapters, explicit numeric/bytecode formats, four-host tests |
 | Incorrect SML typing hidden by runtime-only checks | Static checking from M1; occurs check, value restriction, and equality constraints with M2 |
 | Closures and recursion expose memory bugs | Explicit VM stack/roots; GC and stress tests before v0.1 |
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
 The next increment is M5b lists, building on the completed M5a datatype and
-pattern-matching support. Keep the three-host and VM portability gates as the
+pattern-matching support. Keep the four-host and VM portability gates as the
 language grows.

@@ -7,16 +7,26 @@ case "$host" in
     smlnj) runtime=$(find_sml); builder=$(command -v "${ML_BUILD:-ml-build}") ;;
     polyml) runtime=$(command -v "${POLY:-poly}"); builder=$runtime ;;
     mlton) runtime=$(command -v "${MLTON:-mlton}"); builder=$runtime ;;
-    *) echo "Unknown HOST: $host (use smlnj, polyml, or mlton)" >&2; exit 1 ;;
+    mosml)
+        mosml_paths=$(sh "$root/scripts/build_mosml.sh")
+        runtime=$(printf '%s\n' "$mosml_paths" | sed -n '1p')
+        builder=$(printf '%s\n' "$mosml_paths" | sed -n '2p')
+        linker=$(printf '%s\n' "$mosml_paths" | sed -n '3p')
+        stdlib=$(printf '%s\n' "$mosml_paths" | sed -n '4p')
+        intinf="$stdlib"
+        ;;
+    *) echo "Unknown HOST: $host (use smlnj, polyml, mlton, or mosml)" >&2; exit 1 ;;
 esac
 # Resolve relative tool overrides before changing directories.
 case "$runtime" in /*) ;; *) runtime="$root/$runtime" ;; esac
 case "$builder" in /*) ;; *) builder="$root/$builder" ;; esac
+case "${linker:-}" in /*|"") ;; *) linker="$root/$linker" ;; esac
 dest="$root/build/$host"
 mkdir -p "$dest/src"
 {
     printf '%s\n' "$runtime" "$builder"
     cksum sources.list scripts/build.sh scripts/tools.sh host/*.sml
+    test "$host" != mosml || cksum scripts/build_mosml.sh
     while IFS= read -r source; do cksum "$source"; done < sources.list
 } > "$dest/fingerprint.new"
 if [ -x "$dest/rune" ] && [ -f "$dest/fingerprint" ] && cmp -s "$dest/fingerprint.new" "$dest/fingerprint"; then
@@ -28,6 +38,7 @@ cp sources.list "$dest/sources.list"
 cp host/mlton.sml "$dest/main-mlton.sml"
 cp host/polyml.sml "$dest/run-polyml.sml"
 cp host/smlnj.sml "$dest/main-smlnj.sml"
+cp host/mosml.sml "$dest/main-mosml.sml"
 printf '%s\n' "$runtime" > "$dest/runtime"
 cd "$dest"
 case "$host" in
@@ -72,6 +83,47 @@ rune_dir=$(CDPATH= cd -P "$(dirname "$0")" && pwd)
 IFS= read -r runtime < "$rune_dir/runtime"
 for arg in "$@"; do shift; set -- "$@" "rune:$arg"; done
 exec "$runtime" "@SMLload=$rune_dir/rune-image" "$@"
+SH
+        chmod +x rune.new
+        mv rune.new rune
+        ;;
+    mosml)
+        : > sources.mosml
+        while IFS= read -r source; do
+            unit=$(basename "$source" .sml)
+            first=$(printf '%s' "$unit" | cut -c1 | tr '[:lower:]' '[:upper:]')
+            unit="$first$(printf '%s' "$unit" | cut -c2-)"
+            mosml_source="$unit.sml"
+            printf '%s\n' "$mosml_source" >> sources.mosml
+            cp "$source" "$mosml_source.full"
+            if grep -q '^signature ' "$mosml_source.full"; then
+                signature=$(sed -n 's/^signature \([^ ]*\).*/\1/p' "$mosml_source.full")
+                awk '/^structure / { body=1 } !body { print }' "$mosml_source.full" |
+                    sed "s/^signature $signature/signature $unit/" > "$unit.sig"
+                awk '/^structure / { body=1 } body { print }' "$mosml_source.full" |
+                    sed "s/:> $signature/:> $unit/" > "$mosml_source"
+                "$runtime" "$builder" -stdlib "$stdlib" -I "$intinf" -P none -conservative -structure "$unit.sig"
+            else
+                mv "$mosml_source.full" "$mosml_source"
+            fi
+            "$runtime" "$builder" -stdlib "$stdlib" -I "$intinf" -P none -conservative -structure "$mosml_source"
+        done < sources.list
+        cp main-mosml.sml Main-mosml.sml
+        "$runtime" "$builder" -stdlib "$stdlib" -I "$intinf" -P none -conservative -toplevel Main-mosml.sml
+        uos=$(while IFS= read -r source; do unit=$(basename "$source" .sml); first=$(printf '%s' "$unit" | cut -c1 | tr '[:lower:]' '[:upper:]'); printf '%s%s.uo ' "$first" "$(printf '%s' "$unit" | cut -c2-)"; done < sources.list)
+        "$runtime" "$linker" -stdlib "$stdlib" -I "$intinf" -P none -o rune.new $uos Main-mosml.uo
+        chmod +x rune.new
+        mv rune.new rune.bin
+        cat > rune.new <<'SH'
+#!/bin/sh
+set -eu
+rune_dir=$(CDPATH= cd -P "$(dirname "$0")" && pwd)
+set +e
+"$rune_dir/rune.bin" "$@"
+status=$?
+set -e
+test "$status" -eq 255 && status=1
+exit "$status"
 SH
         chmod +x rune.new
         mv rune.new rune
