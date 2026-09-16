@@ -6,7 +6,7 @@ jobs:
   compiler-and-vm:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install host compilers and test tools
         run: sudo apt-get update && sudo apt-get install -y smlnj polyml mlton gcc clang make python3
       - run: make test-all
@@ -19,7 +19,7 @@ jobs:
   vm-portability:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install host compilers and portability tools
         run: |
           sudo apt-get update
