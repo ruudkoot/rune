@@ -22,7 +22,7 @@ def run(args, *, cwd=ROOT, input=None, status=0, stdout=None):
     return result
 
 
-def encode(code, *, locals=0, constants=(), source=b"fixture.sml", version=2,
+def encode(code, *, locals=0, constants=(), source=b"fixture.sml", version=3,
            functions=None, entry=0):
     string = lambda s: struct.pack("<I", len(s)) + s
     if functions is None:
@@ -39,7 +39,7 @@ def vm_cases(vm, directory, options=()):
     valid = encode([(0, 0)])
     cases = {
         "magic": b"X" + valid[1:], "truncated": valid[:12],
-        "version": encode([(0, 0)], version=1), "unknown-version": encode([(0, 0)], version=99), "trailing": valid + b"x",
+        "version": encode([(0, 0)], version=1), "version2": encode([(0, 0)], version=2), "unknown-version": encode([(0, 0)], version=99), "trailing": valid + b"x",
         "zero-code": encode([]), "unknown-op": encode([(255, 0)]),
         "unused-operand": encode([(0, 1)]), "bad-bool": encode([(2, 2), (8, 0), (0, 0)]),
         "bad-builtin": encode([(5, 4), (8, 0), (0, 0)]),
@@ -107,6 +107,26 @@ def vm_cases(vm, directory, options=()):
         "operand-limit": two([(26, 1), (3, 0), (21, 0), (8, 0), (0, 0)],
                              [(3, 0), (3, 0), (25, 0), (6, 0), (21, 0), (8, 0), (8, 0), (27, 0)]),
     })
+    cases.update({
+        "constructor-descriptor": encode([(34, 131072), (8, 0), (0, 0)]),
+        "test-descriptor": encode([(34, 0), (35, 131072), (8, 0), (0, 0)]),
+        "payload-descriptor": encode([(34, 0), (36, 131073), (8, 0), (0, 0)]),
+        "payload-nullary": encode([(34, 0), (36, 0), (8, 0), (0, 0)]),
+        "failure-operand": encode([(37, 2)]),
+        "test-underflow": encode([(35, 0), (8, 0), (0, 0)]),
+        "payload-underflow": encode([(36, 1), (8, 0), (0, 0)]),
+        "unreachable-descriptor": encode([(0, 0), (34, 131072)]),
+    })
+    runtime.update({
+        "test-wrong-type": encode([(3, 0), (35, 0), (8, 0), (0, 0)]),
+        "test-constructor-function": encode([(34, 1), (35, 1), (8, 0), (0, 0)]),
+        "payload-wrong-type": encode([(1, 0), (36, 1), (8, 0), (0, 0)]),
+        "payload-nullary-value": encode([(34, 0), (36, 1), (8, 0), (0, 0)]),
+        "payload-wrong-constructor": encode([(34, 1), (3, 0), (21, 0), (36, 3), (8, 0), (0, 0)]),
+        "constructor-function-equality": encode([(34, 1), (31, 0), (15, 0), (8, 0), (0, 0)]),
+        "match-failure": encode([(37, 0)]),
+        "bind-failure": encode([(3, 0), (37, 1)]),
+    })
     # A shared tuple DAG can require exponential comparisons despite a small heap.
     dag = [(1, 0), (1, 0), (29, 2)] + [(31, 0), (29, 2)] * 20
     runtime["equality-work-limit"] = encode(dag + [(31, 0), (15, 0), (8, 0), (0, 0)])
@@ -116,6 +136,18 @@ def vm_cases(vm, directory, options=()):
     path = directory / "closure-golden.rbc"
     path.write_bytes(closure)
     run([vm, *options, path], stdout=b"42")
+    # A constructor call, successful tag test and payload extraction, encoded
+    # independently of the compiler. The failure edge retains earlier operands.
+    constructor = encode([(5, 0), (5, 1), (34, 1), (1, 42), (21, 0), (31, 0),
+                          (35, 1), (23, 13), (36, 1), (21, 0), (21, 0), (8, 0),
+                          (0, 0), (37, 0)])
+    path = directory / "constructor-golden.rbc"
+    path.write_bytes(constructor)
+    run([vm, *options, path], stdout=b"42")
+    # Maximum legal descriptor and nonmatching tags are valid bytecode.
+    path.write_bytes(encode([(34, 131071), (3, 0), (21, 0), (35, 0), (23, 7),
+                             (37, 0), (37, 1), (0, 0)]))
+    run([vm, *options, path], stdout=b"")
     # Actual v1 empty-file layout, rather than only changing a v2 version field.
     cases["legacy-v1"] = (b"RUNEBC\r\n" + struct.pack("<IIII", 1, 0, 0, 1) +
                           struct.pack("<I", 0) + struct.pack("<BIII", 0, 0, 1, 1))
@@ -131,17 +163,19 @@ def vm_cases(vm, directory, options=()):
         assert b"runtime:" in result.stderr, name
         expected = {"frame-limit": b"frame stack exceeds 65536",
                     "operand-limit": b"operand stack limit exceeded",
-                    "equality-work-limit": b"equality exceeds 1000000 steps"}.get(name)
+                    "equality-work-limit": b"equality exceeds 1000000 steps",
+                    "match-failure": b"uncaught exception Match",
+                    "bind-failure": b"uncaught exception Bind"}.get(name)
         if expected:
             assert expected in result.stderr, (name, result.stderr)
     # Exercise every truncation boundary, including captures/function metadata.
-    for data in (valid, closure):
+    for data in (valid, closure, constructor):
         for n in range(len(data)):
             path = directory / "truncated-each.rbc"
             path.write_bytes(data[:n])
             run([vm, *options, path], status=2, stdout=b"")
     mode = "GC stress" if options else "normal"
-    print(f"VM ({mode}): {len(cases) + len(runtime) + len(valid) + len(closure)} malformed/runtime fixtures passed.")
+    print(f"VM ({mode}): {len(cases) + len(runtime) + len(valid) + len(closure) + len(constructor)} malformed/runtime fixtures passed.")
 
 
 def gc_cli_cases(vm, directory):
@@ -203,10 +237,14 @@ def references(hosts, cases, directory):
 
 
 def reference_rejections(hosts, cases, directory):
-    eligible = [c for c in cases if c.get("reference_reject")]
+    eligible = [c for c in cases if c.get("reference_reject") or c.get("reference_reject_hosts")]
     source = directory / "reject-reference.sml"
+    counts = {}
     for host in hosts:
+        counts[host] = 0
         for case in eligible:
+            if host not in case.get("reference_reject_hosts", hosts):
+                continue
             source.write_text("structure Rejected = struct\n" + (ROOT / case["path"]).read_text() + "end\n")
             if host == "mlton":
                 result = run([os.environ.get("MLTON") or "mlton", "-output", directory / "rejected", source], status=1)
@@ -216,7 +254,8 @@ def reference_rejections(hosts, cases, directory):
                 result = run([os.environ.get("SML") or "sml"], cwd=directory, status=1,
                              input=b'(use "reject-reference.sml"; OS.Process.exit OS.Process.success) handle _ => OS.Process.exit OS.Process.failure;\n')
             assert result.stdout or result.stderr, (host, case)
-    print(f"Reference SML: {len(eligible)} type/pattern rejections agree under {', '.join(hosts)}.")
+            counts[host] += 1
+    print("Reference SML type/pattern rejections: " + ", ".join(f"{h}={n}" for h, n in counts.items()) + ".")
 
 
 def main():
@@ -239,7 +278,7 @@ def main():
     cases = json.loads((ROOT / "tests/cases.json").read_text())
     comparison = {}
     vm_version = run_vms(["--version"], stdout=None).stdout
-    assert re.fullmatch(rb"Rune VM [0-9]+\.[0-9]+\.[0-9]+ \(bytecode v2\)\n", vm_version), vm_version
+    assert re.fullmatch(rb"Rune VM [0-9]+\.[0-9]+\.[0-9]+ \(bytecode v3\)\n", vm_version), vm_version
     compiler_version = vm_version.replace(b"Rune VM ", b"Rune ", 1)
     with tempfile.TemporaryDirectory(prefix="rune tests ") as temp:
         directory = Path(temp)
@@ -262,9 +301,15 @@ def main():
                     assert output.read_bytes() == b"preserve previous output", case
                     evidence = result.stderr
                 else:
-                    assert result.stderr == b"", result.stderr
-                    evidence = output.read_bytes()
-                    run([compiler, "--check", source], stdout=b"")
+                    warnings = case.get("warnings", [])
+                    actual_warnings = result.stderr.decode().splitlines()
+                    assert len(actual_warnings) == len(warnings), (case, actual_warnings, warnings)
+                    for actual, expected in zip(actual_warnings, warnings):
+                        assert actual.endswith(": warning: " + expected), (case, actual)
+                        assert re.search(r":\d+:\d+: warning: ", actual), actual
+                    evidence = (output.read_bytes(), result.stderr)
+                    checked = run([compiler, "--check", source], stdout=b"")
+                    assert checked.stderr == result.stderr, (case, checked.stderr, result.stderr)
                     for stress in ([], ["--gc-stress"]):
                         runtime = run_vms([*case.get("vm_args", []), *stress, output],
                                       status=3 if case["kind"] == "runtime" else 0,
@@ -277,7 +322,7 @@ def main():
                                 assert f"{source.name}:{line}:{column}: runtime:".encode() in runtime.stderr, runtime.stderr
                         else:
                             assert runtime.stderr == b"", runtime.stderr
-                    assert b"Rune bytecode v2" in run([compiler, "--disassemble", output]).stdout
+                    assert b"Rune bytecode v3" in run([compiler, "--disassemble", output]).stdout
                 if i in comparison:
                     assert comparison[i] == evidence, f"host divergence: {host}: {case['path']}"
                 comparison[i] = evidence
@@ -287,11 +332,21 @@ def main():
             run([compiler, "-o", directory / "empty.rbc", empty])
             assert (directory / "empty.rbc").read_bytes() == encode([(0, 0)], source=b"empty.sml")
             # Both tools reject earlier and unknown format versions explicitly.
-            for version in (1, 99):
+            for version in (1, 2, 99):
                 incompatible = directory / "incompatible.rbc"
                 incompatible.write_bytes(encode([(0, 0)], version=version))
                 rejected = run([compiler, "--disassemble", incompatible], status=1, stdout=b"")
                 assert b"unsupported bytecode version" in rejected.stderr
+            for opcode, operand in [(34, 131072), (35, 131072), (36, 0), (36, 131073), (37, 2)]:
+                incompatible.write_bytes(encode([(opcode, operand), (0, 0)]))
+                rejected = run([compiler, "--disassemble", incompatible], status=1, stdout=b"")
+                assert b": bytecode: " in rejected.stderr
+            golden = directory / "construct.rbc"
+            golden.write_bytes(encode([(34, 1), (1, 42), (21, 0), (36, 1), (8, 0), (0, 0)], source=b"construct.sml"))
+            run([compiler, "--disassemble", golden], stdout=(
+                b"Rune bytecode v3; source=construct.sml\nfunction 0; locals=0; environment=0\n"
+                b"0 CONSTRUCTOR 1 @1:1\n1 INT 42 @1:1\n2 CALL 0 @1:1\n"
+                b"3 PAYLOAD 1 @1:1\n4 POP 0 @1:1\n5 HALT 0 @1:1\n"))
             # Launch outside the checkout, preserving relative paths and argv.
             spaced = directory / "source file.sml"
             shutil.copyfile(ROOT / "examples/hello.sml", spaced)

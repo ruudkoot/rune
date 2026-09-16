@@ -9,7 +9,7 @@ in, so normal builds do not need Python or a parser generator.
 
 Current host installations used for development are SML/NJ 110.79, Poly/ML 5.7.1,
 and MLton 20210117. The VM targets systems with 8-bit bytes, `uint32_t`, and
-`int64_t`. Rune 0.1.0 is validated on native x86-64 Linux with GCC 13.3.0 and
+`int64_t`. Rune 0.2.0 is validated on native x86-64 Linux with GCC 13.3.0 and
 Clang 18.1.3, and on QEMU 8.2.2 user-emulated i386 Linux (32-bit little-endian,
 GCC) and PowerPC64 Linux (64-bit big-endian, Clang). Other operating systems,
 native PowerPC hardware, ARM64, and 32-bit big-endian targets remain unverified.
@@ -153,13 +153,20 @@ exhaustion. All three host-built compilers run these tests. The standalone VM
 fixtures also run in both modes and test every truncation boundary of empty and
 closure-containing bytecode files.
 Selected type/pattern rejection cases are also checked against all three reference
-compilers. Bytecode v2 fixtures cover function metadata, captures, returns, tail
-calls, tuple operations, and explicit rejection of v1 files.
+compilers. Three cases use only Poly/ML and MLton as rejection references because
+SML/NJ 110.79 accepts escaping local datatypes and ignores datatype parameter
+equality constraints. The manifest lists these exceptions explicitly; all three
+host-built Rune compilers must reject them. Bytecode v3 fixtures cover function
+metadata, captures, returns, tail calls, tuples, constructor calls/tests/payloads,
+match-failure terminators, and explicit rejection of v1/v2 files. M5a also covers
+ordered/nested matching, diagnostic warnings, nominal type identity, constructor
+polymorphism/equality, partial-application timing, and datatype collection in a
+16 KiB heap. Warnings and emitted bytes are compared across host builds.
 
 `test-builds` uses a temporary checkout whose path contains spaces. It checks
 incremental rebuilds and that invalid SML causes each build to fail.
 `test-gc` builds a C collector harness covering root categories, stale capacity
-slots, shared/cyclic graphs, a 100,000-object chain, and exact heap accounting.
+slots, shared/cyclic graphs, 100,000-object closure/constructor chains, and exact heap accounting.
 It is included in `test` and `test-all`, and needs only the existing C compiler.
 `test-sanitize` runs this harness, the corpus, and malformed-bytecode checks with
 address/undefined-behavior instrumentation. It requires GCC or compatible Clang

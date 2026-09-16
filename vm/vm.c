@@ -27,7 +27,8 @@ typedef struct Allocation {
 } Allocation;
 typedef struct { size_t length; unsigned char data[]; } Blob;
 typedef struct Aggregate Aggregate;
-typedef enum { INVALID, INTEGER, BOOLEAN, STRING, UNIT, BUILTIN, TUPLE, CLOSURE } Tag;
+typedef enum { INVALID, INTEGER, BOOLEAN, STRING, UNIT, BUILTIN, TUPLE, CLOSURE,
+               DATA0, DATA1, CONSTRUCTOR } Tag;
 typedef struct {
     Tag tag;
     union { int32_t integer; uint32_t number; Blob *string; Aggregate *aggregate; } as;
@@ -104,7 +105,8 @@ static void mark_object(void *object, Allocation **gray) {
 }
 static void mark_value(Value value, Allocation **gray) {
     if (value.tag == STRING) mark_object(value.as.string, gray);
-    else if (value.tag == TUPLE || value.tag == CLOSURE) mark_object(value.as.aggregate, gray);
+    else if (value.tag == TUPLE || value.tag == CLOSURE || value.tag == DATA1)
+        mark_object(value.as.aggregate, gray);
 }
 static void collect(void) {
     Allocation *gray = NULL, **link;
@@ -229,7 +231,9 @@ static void verify(Function *f) {
         if (height < pops) malformed("operand stack underflow");
         height = height - pops + op_pushes[in.op];
         if (height > (int32_t)MAX_COUNT) malformed("operand stack limit exceeded");
-        if (in.op == OP_HALT || in.op == OP_RETURN || in.op == OP_TAILCALL) {
+        if (in.op == OP_FAIL) {
+            /* Uncaught match failure discards the entire machine state. */
+        } else if (in.op == OP_HALT || in.op == OP_RETURN || in.op == OP_TAILCALL) {
             if (height) malformed("terminal instruction has leftover operands");
         } else if (in.op == OP_JUMP) edge(f, in.arg, height, &tail);
         else {
@@ -248,7 +252,7 @@ static void load(const char *path) {
     if (fclose(file)) fail(1, "cannot close bytecode input");
     if (vm.size > MAX_FILE) malformed("bytecode exceeds 16 MiB");
     for (i = 0; i < 8; ++i) if (read8() != (uint8_t)"RUNEBC\r\n"[i]) malformed("invalid bytecode magic");
-    if (read32() != 2) malformed("unsupported bytecode version");
+    if (read32() != 3) malformed("unsupported bytecode version");
     if (read32() != 0) malformed("entry function must be zero");
     vm.function_count = count32(); vm.constant_count = count32();
     if (!vm.function_count) malformed("no entry function");
@@ -288,6 +292,11 @@ static void load(const char *path) {
             case ARG_INDEX: if (in->arg >= MAX_COUNT) malformed("invalid tuple index"); break;
             case ARG_TARGET: if (in->arg <= i || in->arg >= f->count) malformed("invalid forward branch target"); break;
             case ARG_INT: break;
+            case ARG_CONSTRUCTOR:
+                if (in->arg >= 2 * MAX_COUNT) malformed("invalid constructor descriptor");
+                if (in->op == OP_PAYLOAD && !(in->arg & 1)) malformed("payload requires unary constructor");
+                break;
+            case ARG_FAILURE: if (in->arg > 1) malformed("invalid match failure operand"); break;
             default: malformed("invalid operand specification");
             }
         }
@@ -314,7 +323,10 @@ static int equal(Value a, Value b) {
         Pair pair = vm.pairs[--pending];
         a = pair.a; b = pair.b;
         if (++steps > 1000000u) fail(3, "equality exceeds 1000000 steps");
-        if (a.tag != b.tag) fail(3, "equality operands have different types");
+        if (a.tag != b.tag) {
+            if ((a.tag == DATA0 && b.tag == DATA1) || (a.tag == DATA1 && b.tag == DATA0)) return 0;
+            fail(3, "equality operands have different types");
+        }
         switch (a.tag) {
         case INTEGER: if (a.as.integer != b.as.integer) return 0; break;
         case BOOLEAN: if (a.as.number != b.as.number) return 0; break;
@@ -323,6 +335,14 @@ static int equal(Value a, Value b) {
                 memcmp(a.as.string->data, b.as.string->data, a.as.string->length)) return 0;
             break;
         case UNIT: break;
+        case DATA0: if (a.as.number != b.as.number) return 0; break;
+        case DATA1: {
+            Aggregate *x = a.as.aggregate, *y = b.as.aggregate;
+            if (x->function != y->function) return 0;
+            if (pending == MAX_COUNT) fail(3, "equality stack exceeds 65536");
+            vm.pairs[pending++] = (Pair){x->values[0],y->values[0]};
+            break;
+        }
         case TUPLE: {
             Aggregate *x = a.as.aggregate, *y = b.as.aggregate;
             uint32_t i;
@@ -337,6 +357,15 @@ static int equal(Value a, Value b) {
     return 1;
 }
 static Value call(Value function, Value arg) {
+    if (function.tag == CONSTRUCTOR) {
+        Root root = {vm.roots, &arg, 1};
+        Aggregate *object;
+        vm.roots = &root;
+        object = aggregate(1, function.as.number);
+        object->values[0] = arg;
+        vm.roots = root.previous;
+        return aggregate_value(DATA1, object);
+    }
     require(function, BUILTIN);
     switch (function.as.number) {
     case 0:
@@ -446,6 +475,19 @@ static void execute(void) {
         case OP_UNIT: push(scalar(UNIT, 0)); break;
         case OP_STRING: push(vm.constants[in.arg]); break;
         case OP_BUILTIN: push(scalar(BUILTIN, in.arg)); break;
+        case OP_CONSTRUCTOR: push(scalar((in.arg & 1) ? CONSTRUCTOR : DATA0, in.arg)); break;
+        case OP_IS_CON: {
+            Value value = pop(); uint32_t descriptor;
+            if (value.tag == DATA0) descriptor = value.as.number;
+            else { require(value, DATA1); descriptor = value.as.aggregate->function; }
+            push(scalar(BOOLEAN, descriptor == in.arg)); break;
+        }
+        case OP_PAYLOAD: {
+            Value value = pop(); require(value, DATA1);
+            if (value.as.aggregate->function != in.arg) fail(3, "constructor payload mismatch");
+            push(value.as.aggregate->values[0]); break;
+        }
+        case OP_FAIL: fail(3, in.arg ? "uncaught exception Bind" : "uncaught exception Match"); break;
         case OP_LOAD:
             if (vm.locals[frame->base + in.arg].tag == INVALID) fail(3, "uninitialized local slot");
             push(vm.locals[frame->base + in.arg]); break;
@@ -475,7 +517,7 @@ static void execute(void) {
         case OP_RETURN: { Value result = pop(); return_value(result); continue; }
         case OP_CALL: case OP_TAILCALL: {
             Value arg = pop(); Value callable = pop();
-            if (callable.tag == BUILTIN) {
+            if (callable.tag == BUILTIN || callable.tag == CONSTRUCTOR) {
                 Value result = call(callable, arg);
                 if (in.op == OP_TAILCALL) { return_value(result); continue; }
                 push(result);
@@ -512,7 +554,7 @@ static size_t heap_limit(const char *text) {
 int main(int argc, char **argv) {
     int i;
     if (atexit(cleanup)) { fputs("rune-vm: cannot register cleanup\n", stderr); return 1; }
-    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.1.0 (bytecode v2)"); return 0; }
+    if (argc == 2 && strcmp(argv[1], "--version") == 0) { puts("Rune VM 0.2.0 (bytecode v3)"); return 0; }
     if (argc == 2 && strcmp(argv[1], "--help") == 0) { usage(stdout); return 0; }
     for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--") == 0) { ++i; break; }

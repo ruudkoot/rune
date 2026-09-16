@@ -12,14 +12,25 @@ struct
       fun pop () = case !remaining of _::ts => remaining := ts | [] => ()
       fun error msg = Source.fail (position ()) "syntax" msg
       fun expect s = if is s then pop () else error ("expected '" ^ s ^ "'")
-      val reserved = ["val", "fn", "fun", "in", "end", "if", "then", "else", "let", "andalso", "orelse", "div", "mod"]
+      val reserved = ["val", "fn", "fun", "datatype", "case", "of", "in", "end", "if", "then", "else", "let", "andalso", "orelse", "div", "mod"]
       fun name s = not (List.exists (fn x => x = s) reserved)
       fun bindingName () = case #1 (current ()) of Lexer.Word s =>
             if name s andalso s <> "true" andalso s <> "false"
                andalso not (CharVector.exists (fn c => c = #".") s)
             then (pop (); s) else error "expected value binding name"
           | _ => error "expected value binding name"
+      fun startsPattern () = case #1 (current ()) of
+          Lexer.Number _ => true | Lexer.Text _ => true
+        | Lexer.Word s => name s
+        | Lexer.Symbol s => s = "(" orelse s = "_"
+        | _ => false
       fun pattern nesting =
+        let val prefix = case #1 (current ()) of Lexer.Word _ => true | _ => false
+            val first = atomicPattern nesting
+        in case first of P (p,Variable s) =>
+             if prefix andalso startsPattern () then P (p,ConstructorPattern (s,atomicPattern (nesting+1))) else first
+           | _ => first end
+      and atomicPattern nesting =
         let val p = position ()
             val () = if nesting > 256 then error "pattern nesting exceeds 256" else ()
         in if is "_" then (pop (); P (p, Wildcard))
@@ -32,12 +43,39 @@ struct
                        val () = expect ")"
                    in case ps of [pat] => pat | _ => P (p, TuplePattern ps) end)
            else case #1 (current ()) of
-             Lexer.Number _ => Source.fail p "unsupported" "literal patterns are not supported"
-           | Lexer.Text _ => Source.fail p "unsupported" "literal patterns are not supported"
-           | Lexer.Word "true" => Source.fail p "unsupported" "literal patterns are not supported"
-           | Lexer.Word "false" => Source.fail p "unsupported" "literal patterns are not supported"
+             Lexer.Number n => (pop (); P (p,IntegerPattern n))
+           | Lexer.Text s => (pop (); P (p,StringPattern s))
+           | Lexer.Word "true" => (pop (); P (p,BooleanPattern true))
+           | Lexer.Word "false" => (pop (); P (p,BooleanPattern false))
            | _ => P (p, Variable (bindingName ()))
         end
+      fun typeExpression nesting =
+        let val p = position ()
+            val () = if nesting > 256 then error "type nesting exceeds 256" else ()
+            fun typeName () = case #1 (current ()) of
+                Lexer.Word s => if name s then (pop (); s) else error "expected type constructor"
+              | _ => error "expected type constructor"
+            fun app () =
+              let val p = position ()
+                  val first = case #1 (current ()) of
+                      Lexer.TypeVariable s => (pop (); Ty (p,TypeVariable s))
+                    | Lexer.Word _ => Ty (p,TypeName (typeName (),[]))
+                    | Lexer.Symbol "(" =>
+                        (pop (); let val t = typeExpression (nesting+1)
+                            fun rest acc = if is "," then
+                              (pop (); rest (typeExpression (nesting+1)::acc)) else List.rev acc
+                            val ts = rest [t] val () = expect ")"
+                         in case ts of [single] => single | _ => Ty (p,TypeName (typeName (),ts)) end)
+                    | _ => error "expected payload type"
+                  fun loop t = case #1 (current ()) of
+                      Lexer.Word s => if name s then (pop (); loop (Ty (p,TypeName (s,[t])))) else t
+                    | _ => t
+              in loop first end
+            val first = app ()
+            fun product acc = if is "*" then (pop (); product (app ()::acc)) else List.rev acc
+            val parts = product [first]
+            val left = case parts of [t] => t | _ => Ty (p,Product parts)
+        in if is "->" then (pop (); Ty (p,Arrow (left,typeExpression (nesting+1)))) else left end
       fun startsAtom () = case #1 (current ()) of
           Lexer.Number _ => true | Lexer.Text _ => true
         | Lexer.Word s => name s orelse s = "let"
@@ -62,7 +100,17 @@ struct
                        in E (p, If (c,a,b)) end)
             else if is "fn" andalso minimum <= 2 then
               (pop (); let val pat = pattern 0 val () = expect "=>"
-                       in E (p, Fn (pat, expression 0)) end)
+                           val body = expression 0
+                           val () = if is "|" then Source.fail (position ()) "unsupported"
+                                      "multi-clause fn is not supported" else ()
+                       in E (p, Fn (pat, body)) end)
+            else if is "case" andalso minimum <= 2 then
+              (pop (); let val subject = expression 0 val () = expect "of"
+                           fun clause () = let val pat = pattern 0 val () = expect "=>"
+                                           in (pat,expression 0) end
+                           val first = clause ()
+                           fun rest acc = if is "|" then (pop (); rest (clause ()::acc)) else List.rev acc
+                       in E (p,Case (subject,rest [first])) end)
             else application ()
           fun infixes left =
             let val oper = spelling ()
@@ -137,12 +185,32 @@ struct
               let val p = position () val () = pop () val f = bindingName ()
                   fun parameters count acc = if is "=" then List.rev acc
                     else if count >= 256 then error "fun exceeds 256 parameters"
-                    else parameters (count+1) (pattern 0::acc)
+                    else parameters (count+1) (atomicPattern 0::acc)
                   val ps = parameters 0 []
                   val () = if null ps then error "fun requires at least one parameter" else ()
                   val () = expect "=" val body = expression 0
+                  val () = if is "|" then Source.fail (position ()) "unsupported"
+                             "multi-clause fun is not supported" else ()
               in loop (Fun (p,f,ps,body)::acc) end
-            else error "expected 'val' or 'fun' declaration"
+            else if is "datatype" then
+              let val p = position () val () = pop ()
+                  fun variable () = case #1 (current ()) of
+                      Lexer.TypeVariable s => (pop (); s) | _ => error "expected type variable"
+                  val variables = if is "(" then
+                      (pop (); let val first = variable ()
+                                   fun rest acc = if is "," then (pop (); rest (variable ()::acc)) else List.rev acc
+                                   val vs = rest [first] val () = expect ")"
+                               in vs end)
+                    else (case #1 (current ()) of Lexer.TypeVariable _ => [variable ()] | _ => [])
+                  val t = bindingName () val () = expect "="
+                  fun constructor () =
+                    let val cp = position () val c = bindingName ()
+                        val payload = if is "of" then (pop (); SOME (typeExpression 0)) else NONE
+                    in (cp,c,payload) end
+                  val first = constructor ()
+                  fun rest acc = if is "|" then (pop (); rest (constructor ()::acc)) else List.rev acc
+              in loop (Datatype (p,variables,t,rest [first])::acc) end
+            else error "expected 'val', 'fun', or 'datatype' declaration"
         in loop [] end
       val ds = declarations ""
       val () = case #1 (current ()) of Lexer.EOF => () | _ => error "unexpected trailing input"

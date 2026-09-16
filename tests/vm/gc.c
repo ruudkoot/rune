@@ -81,6 +81,40 @@ static void deep_graph(void) {
     vm.roots = NULL; reset();
 }
 
+static void constructor_graph(void) {
+    Value values[2] = { {INVALID, {0}}, {INVALID, {0}} };
+    Root root = {NULL, values, 2};
+    size_t live;
+    uint32_t i;
+    vm.roots = &root; vm.gc_stress = 1;
+    values[0] = string_value(blob(17));
+    /* call() must root an argument even after its caller popped the operand. */
+    {
+        Value argument = values[0];
+        values[0].tag = INVALID;
+        values[0] = call(scalar(CONSTRUCTOR, 1), argument);
+    }
+    assert(values[0].as.aggregate->values[0].as.string->length == 17);
+    values[1] = call(scalar(CONSTRUCTOR, 3), values[0]);
+    live = vm.allocated; collect(); assert(vm.allocated == live);
+    values[0].tag = INVALID; collect(); assert(vm.allocated == live);
+    /* Sharing and cycles remain traceable when constructor objects are present. */
+    values[0] = values[1].as.aggregate->values[0];
+    values[0].as.aggregate->values[0] = values[1];
+    collect(); assert(vm.allocated < live);
+    values[0].tag = INVALID; values[1].tag = INVALID;
+    collect(); assert(vm.allocated == 0);
+    vm.gc_stress = 0;
+    values[0] = scalar(DATA0, 0);
+    for (i = 0; i < 100000; ++i) values[0] = call(scalar(CONSTRUCTOR, 3), values[0]);
+    live = vm.allocated; collect(); assert(vm.allocated == live);
+    assert(equal(values[0], values[0]));
+    for (i = 0; i < 100000; ++i) values[0] = values[0].as.aggregate->values[0];
+    assert(values[0].tag == DATA0);
+    collect(); assert(vm.allocated == 0);
+    vm.roots = NULL; reset();
+}
+
 static void exact_limit(void) {
     size_t size = sizeof(Allocation) + sizeof(Blob) + 2;
     vm.heap_limit = size; vm.next_gc = size;
@@ -93,7 +127,7 @@ static void exact_limit(void) {
 }
 
 int main(void) {
-    roots(); cycles(); deep_graph(); exact_limit();
-    puts("GC: roots, stale slots, shared cycles, 100000-object graph, and exact heap limit passed.");
+    roots(); cycles(); deep_graph(); constructor_graph(); exact_limit();
+    puts("GC: roots, stale slots, shared cycles, 100000-object closure/constructor graphs, and exact heap limit passed.");
     return 0;
 }

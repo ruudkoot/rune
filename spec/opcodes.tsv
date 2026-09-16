@@ -33,3 +33,7 @@ code	name	operand	pops	pushes
 31	DUP	none	1	2
 32	CHECK_UNIT	none	1	0
 33	CHECK_TUPLE	arity	1	1
+34	CONSTRUCTOR	constructor	0	1
+35	IS_CON	constructor	1	1
+36	PAYLOAD	constructor	1	1
+37	FAIL	failure	0	0

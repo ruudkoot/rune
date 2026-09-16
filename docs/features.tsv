@@ -2,23 +2,23 @@ id	feature	status	target	boundary
 lex-comments	Whitespace and nested `(* ... *)` comments	implemented	First slice	ASCII source syntax initially; diagnose unterminated comments
 lex-names	Names and reserved tokens	implemented	First slice	Alphanumeric value names; fixed symbolic operators; recognize deferred keywords
 lit-values	`int`, `bool`, `string`, and `unit` values	implemented	First slice	Signed decimal integers, `true`, `false`, quoted byte strings, `()`
-bind-val	Sequential `val` declarations and lexical names	implemented	First slice	Variable, wildcard, unit, and tuple patterns; shadowing; no declaration `and`
+bind-val	Sequential `val` declarations and lexical names	implemented	First slice / M5a	Variable, wildcard, unit, tuple, literal, and constructor patterns; Bind on failure; no declaration and
 expr-let	`let ... in ... end` and parentheses	implemented	First slice	Sequential local declarations and expression bodies
 expr-if	`if ... then ... else ...`	implemented	First slice	Boolean condition; branches have the same type
 expr-ops	Fixed integer, boolean, and string operators	implemented	First slice	Operator inventory below; no real/word overloading or user fixity
 expr-sequence	Expression sequencing	implemented	First slice	Parenthesized or `let` body sequences; evaluate left to right
 basis-output	`print`, `Int.toString`, `not`, `~`	implemented	First slice	Only the listed signatures; built-in values can be aliased, selected by if, and applied
 type-static	Static type checking	implemented	First slice	Reject ill-typed programs before producing bytecode
-fn-closures	`fn`, application, lexical closures, currying	implemented	v0.1 / M2	Irrefutable parameters, one match clause; functions are first-class
-fn-recursion	Recursive `fun` declarations	implemented	v0.1 / M2	Single clause; one function per declaration; curried parameters; tail calls
-data-tuples	Tuples and tuple destructuring	implemented	v0.1 / M2	Arity at least two; variable, wildcard, unit, and nested tuple patterns
-type-poly	Let polymorphism and equality types	implemented	v0.1 / M2	Hindley–Milner inference, occurs check, SML value restriction, equality constraints
+fn-closures	`fn`, application, lexical closures, currying	implemented	v0.1 / M2; M5a	One match clause; refutable parameters; first-class functions and constructors
+fn-recursion	Recursive `fun` declarations	implemented	v0.1 / M2; M5a	Single clause; one function per declaration; curried arguments gathered before matching; tail calls
+data-tuples	Tuples and tuple destructuring	implemented	v0.1 / M2; M5a	Arity at least two; nested patterns including constructors and literals
+type-poly	Let polymorphism and equality types	implemented	v0.1 / M2; M5a	Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints
 runtime-gc	Garbage collection and bounded heap	implemented	v0.1 / M3	Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement
-data-datatypes	Lists, datatypes, constructor patterns, `case`	deferred	Deferred / M5	Includes user constructors, multi-clause matches, `Match`, and `Bind`
+data-datatypes	Lists, datatypes, constructor patterns, `case`	partial	M5a	Parameterized recursive datatypes, constructors, case, Match/Bind, match warnings; lists and multi-clause functions deferred
 control-exceptions	`exception`, `raise`, `handle`	deferred	Deferred / M5	Runtime arithmetic failures exist earlier; user exception handling does not
 data-mutation	References, assignment, `while`, arrays, vectors	deferred	Deferred / M5	No user-visible mutable storage in v0.1
 data-records	Records, selectors, flexible record patterns	deferred	Deferred / M5	Tuples arrive earlier; other record syntax is rejected
-decl-types	Type annotations and explicit type declarations	deferred	Deferred / M5	Includes explicit type-variable syntax, `type`, `eqtype`, `abstype`, and `withtype` where applicable
+decl-types	Type annotations and explicit type declarations	partial	M5a	Type parameters and payload types in datatype declarations; annotations, type, eqtype, abstype, withtype deferred
 decl-advanced	Remaining declaration and fixity forms	deferred	Deferred / M5	`and`, explicit `val rec`, `local`, `open`, `infix`, `infixr`, `nonfix`, and `op`
 modules	Structures, signatures, functors, sharing, ascription	deferred	Deferred / M5	Built-in `Int.toString` is available without user-defined modules
 numeric-more	Reals, words, chars, target `IntInf`, other literal forms	deferred	Deferred / M5	Host `IntInf` may be used internally without exposing it in Rune

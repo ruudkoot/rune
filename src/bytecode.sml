@@ -21,7 +21,7 @@ struct
       fun function ({locals,environment,code} : Compile.function) =
         (count locals; count environment; count (List.length code); List.app instruction code)
       fun output () =
-        (BinIO.output (stream, Byte.stringToBytes magic); count 2; count 0;
+        (BinIO.output (stream, Byte.stringToBytes magic); count 3; count 0;
          count (List.length functions); count (List.length strings); text source;
          List.app text strings; List.app function functions; BinIO.closeOut stream)
     in output () handle ex => (BinIO.closeOut stream handle _ => (); raise ex) end
@@ -51,7 +51,7 @@ struct
            Byte.bytesToString (Word8VectorSlice.vector (Word8VectorSlice.slice (bytes,start,SOME n))) end
       val header = String.implode (List.tabulate (8, fn _ => Char.chr (byte ())))
       val () = if header <> magic then bad "invalid magic" else ()
-      val () = if u32 () <> 2 then bad "unsupported bytecode version" else ()
+      val () = if u32 () <> 3 then bad "unsupported bytecode version" else ()
       val () = if u32 () <> 0 then bad "entry function must be zero" else ()
       val functionCount = bounded Source.maxCount "functions"
       val () = if functionCount = 0 then bad "no entry function" else ()
@@ -75,6 +75,10 @@ struct
                   fun below limit = if operand >= IntInf.fromInt limit then bad ("invalid " ^ kind ^ " operand") else ()
                   val () = case kind of
                       "none" => if operand <> 0 then bad "nonzero unused operand" else ()
+                    | "failure" => below 2
+                    | "constructor" => (below (2*Source.maxCount);
+                        if opnum = Opcode.PAYLOAD andalso IntInf.mod (operand,2) = 0
+                        then bad "payload requires unary constructor" else ())
                     | "bool" => below 2 | "builtin" => below 4
                     | "constant" => below constants | "local" => below locals
                     | "environment" => below environment | "index" => below Source.maxCount
@@ -94,7 +98,7 @@ struct
            "; environment=" ^ Int.toString environment ^ "\n" ^ String.concat code end
       val functions = List.tabulate (functionCount,function)
       val () = if !index <> size then bad "trailing bytecode data" else ()
-      val () = print ("Rune bytecode v2; source=" ^ String.toString source ^ "\n")
+      val () = print ("Rune bytecode v3; source=" ^ String.toString source ^ "\n")
       val () = List.app (fn (i,s) => print ("string " ^ Int.toString i ^ " \"" ^ String.toString s ^ "\"\n"))
         (ListPair.zip (List.tabulate (constants, fn i => i),pool))
     in List.app print functions end
