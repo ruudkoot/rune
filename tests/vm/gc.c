@@ -86,13 +86,19 @@ static void constructor_graph(void) {
     Root root = {NULL, values, 2};
     size_t live;
     uint32_t i;
+    Root *saved_roots;
+    uint32_t saved_sp;
+    vm.stack = checked_calloc(4, sizeof(Value));
+    vm.frames = checked_calloc(1, sizeof(Frame)); vm.fp = 1;
     vm.roots = &root; vm.gc_stress = 1;
     values[0] = string_value(blob(17));
     /* call() must root an argument even after its caller popped the operand. */
     {
         Value argument = values[0];
         values[0].tag = INVALID;
+        saved_roots = vm.roots; saved_sp = vm.sp;
         values[0] = call(scalar(CONSTRUCTOR, 1), argument);
+        assert(vm.roots == saved_roots && vm.sp == saved_sp);
     }
     assert(values[0].as.aggregate->values[0].as.string->length == 17);
     values[1] = call(scalar(CONSTRUCTOR, 3), values[0]);
@@ -126,8 +132,31 @@ static void exact_limit(void) {
     reset();
 }
 
+static void concatenation(void) {
+    Value values[3] = {{INVALID, {0}}, {INVALID, {0}}, {INVALID, {0}}};
+    Root root = {NULL, values, 2};
+    Root *saved_roots;
+    uint32_t saved_sp;
+
+    vm.stack = checked_calloc(4, sizeof(Value));
+    vm.frames = checked_calloc(1, sizeof(Frame)); vm.fp = 1;
+    vm.gc_stress = 1;
+    vm.roots = &root;
+    values[0] = string_value(blob(5)); memcpy(values[0].as.string->data, "hello", 5);
+    values[1] = string_value(blob(6)); memcpy(values[1].as.string->data, " world", 6);
+    saved_roots = vm.roots; saved_sp = vm.sp;
+    values[2] = binary(OP_CONCAT, values[0], values[1]);
+    assert(vm.roots == saved_roots && vm.sp == saved_sp);
+    assert(values[2].tag == STRING && values[2].as.string->length == 11);
+    assert(!memcmp(values[2].as.string->data, "hello world", 11));
+    root.count = 3;
+    collect(); assert(values[2].as.string->length == 11);
+    vm.roots = NULL; collect();
+    reset();
+}
+
 int main(void) {
-    roots(); cycles(); deep_graph(); constructor_graph(); exact_limit();
+    roots(); cycles(); deep_graph(); constructor_graph(); concatenation(); exact_limit();
     puts("GC: roots, stale slots, shared cycles, 100000-object closure/constructor graphs, and exact heap limit passed.");
     return 0;
 }
