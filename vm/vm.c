@@ -358,12 +358,10 @@ static int equal(Value a, Value b) {
 }
 static Value call(Value function, Value arg) {
     if (function.tag == CONSTRUCTOR) {
-        Root root = {vm.roots, &arg, 1};
         Aggregate *object;
-        vm.roots = &root;
+        push(arg);
         object = aggregate(1, function.as.number);
-        object->values[0] = arg;
-        vm.roots = root.previous;
+        object->values[0] = pop();
         return aggregate_value(DATA1, object);
     }
     require(function, BUILTIN);
@@ -392,15 +390,13 @@ static Value binary(uint8_t op, Value a, Value b) {
     if (op == OP_EQ || op == OP_NE) return scalar(BOOLEAN, (uint32_t)(equal(a,b) ^ (op == OP_NE)));
     if (op == OP_CONCAT) {
         Blob *s; size_t alen, blen;
-        Value operands[] = {a, b};
-        Root root = {vm.roots, operands, 2};
         require(a, STRING); require(b, STRING);
         alen = a.as.string->length; blen = b.as.string->length;
         if (blen > MAX_STRING - alen) fail(3, "string exceeds 1 MiB");
-        vm.roots = &root;
+        push(a); push(b);
         s = blob(alen + blen); memcpy(s->data, a.as.string->data, alen);
         memcpy(s->data + alen, b.as.string->data, blen);
-        vm.roots = root.previous;
+        (void)pop(); (void)pop();
         return string_value(s);
     }
     require(a, INTEGER); require(b, INTEGER);
