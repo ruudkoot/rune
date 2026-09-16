@@ -22,18 +22,35 @@ struct
       fun startsPattern () = case #1 (current ()) of
           Lexer.Number _ => true | Lexer.Text _ => true
         | Lexer.Word s => name s
-        | Lexer.Symbol s => s = "(" orelse s = "_"
+        | Lexer.Symbol s => s = "(" orelse s = "[" orelse s = "_"
         | _ => false
       fun pattern nesting =
         let val prefix = case #1 (current ()) of Lexer.Word _ => true | _ => false
             val first = atomicPattern nesting
-        in case first of P (p,Variable s) =>
+            val left = case first of P (p,Variable s) =>
              if prefix andalso startsPattern () then P (p,ConstructorPattern (s,atomicPattern (nesting+1))) else first
-           | _ => first end
+           | _ => first
+        in if is "::" then
+             let val p = position () val () = pop ()
+                 val right = pattern (nesting+1)
+             in P (p,ConstructorPattern ("::",P (p,TuplePattern [left,right]))) end
+           else left end
       and atomicPattern nesting =
         let val p = position ()
             val () = if nesting > 256 then error "pattern nesting exceeds 256" else ()
         in if is "_" then (pop (); P (p, Wildcard))
+           else if is "[" then
+             (pop ();
+              let fun elements count acc =
+                    if count >= 128 then error "list pattern exceeds 128 elements"
+                    else let val pat = pattern (nesting+1)
+                         in if is "," then (pop (); elements (count+1) (pat::acc))
+                            else List.rev (pat::acc) end
+                  val ps = if is "]" then [] else elements 0 []
+                  val () = expect "]"
+              in List.foldr (fn (pat,tail) =>
+                   P (p,ConstructorPattern ("::",P (p,TuplePattern [pat,tail]))))
+                   (P (p,Variable "nil")) ps end)
            else if is "(" then
              (pop (); if is ")" then (pop (); P (p, UnitPattern))
               else let val first = pattern (nesting+1)
@@ -79,11 +96,12 @@ struct
       fun startsAtom () = case #1 (current ()) of
           Lexer.Number _ => true | Lexer.Text _ => true
         | Lexer.Word s => name s orelse s = "let"
-        | Lexer.Symbol s => s = "(" orelse s = "~"
+        | Lexer.Symbol s => s = "(" orelse s = "[" orelse s = "~"
         | _ => false
       fun precedence s = case s of
           "orelse" => 1 | "andalso" => 2
         | "=" => 4 | "<>" => 4 | "<" => 4 | "<=" => 4 | ">" => 4 | ">=" => 4
+        | "::" => 5
         | "+" => 6 | "-" => 6 | "^" => 6
         | "*" => 7 | "div" => 7 | "mod" => 7 | _ => ~1
       fun expression minimum =
@@ -118,10 +136,11 @@ struct
                 val p = position ()
             in if prec < minimum orelse prec < 0 then left
                else (pop ();
-                 let val right = expression (if prec <= 2 then prec else prec+1)
+                 let val right = expression (if prec <= 2 orelse oper = "::" then prec else prec+1)
                      val result = case oper of
                        "andalso" => E (p, If (left, right, E (p, Boolean false)))
                      | "orelse" => E (p, If (left, E (p, Boolean true), right))
+                     | "::" => E (p,Apply (E (p,Name "::"),E (p,Tuple [left,right])))
                      | _ => E (p, Binary (oper, left, right))
                  in infixes result end)
             end
@@ -148,6 +167,18 @@ struct
                        in E (p, Let (ds,body)) end)
           | Lexer.Word s => if name s then (pop (); E (p, Name s)) else error "expected expression"
           | Lexer.Symbol "~" => (pop (); E (p, Name "~"))
+          | Lexer.Symbol "[" =>
+              (pop ();
+               let fun elements count acc =
+                     if count >= 128 then error "list expression exceeds 128 elements"
+                     else let val e = expression 0
+                          in if is "," then (pop (); elements (count+1) (e::acc))
+                             else List.rev (e::acc) end
+                   val es = if is "]" then [] else elements 0 []
+                   val () = expect "]"
+               in List.foldr (fn (e,tail) =>
+                    E (p,Apply (E (p,Name "::"),E (p,Tuple [e,tail]))))
+                    (E (p,Name "nil")) es end)
           | Lexer.Symbol "(" =>
               (pop (); if is ")" then (pop (); E (p, Unit))
                else let val first = expression 0

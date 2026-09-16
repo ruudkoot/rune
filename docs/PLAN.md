@@ -1,8 +1,8 @@
 # Rune implementation plan
 
-Status: M0–M4 and M5a complete. Lists and the remaining M5 increments are deferred.
+Status: M0–M4, M5a, and M5b complete. Remaining M5 increments are deferred.
 
-Next session: [M5b lists](#next-session--m5b-lists).
+Next session: [M5c multi-clause functions](#next-session--m5c-multi-clause-functions).
 
 ## Implementation checkpoint — 2026-09-16
 
@@ -295,7 +295,7 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-M0–M4 and M5a have passed their acceptance gates. The remaining M5 increments
+M0–M4, M5a, and M5b have passed their acceptance gates. The remaining M5 increments
 are pending; complete and document each new feature gate before claiming
 implementation.
 
@@ -371,8 +371,8 @@ Recommended order, each with its own language documentation and acceptance gate:
 
 1. Lists and user datatypes; constructor patterns, `case`, multi-clause matches,
    `Match`/`Bind`, and match diagnostics. M5a completes user datatypes, `case`,
-   refutable patterns, failures, and diagnostics; lists and multi-clause functions
-   follow as M5b and M5c.
+   refutable patterns, failures, and diagnostics. M5b completes lists; multi-clause
+   functions follow as M5c.
 2. Exceptions and handlers, including exception identity and stack unwinding.
 3. References, assignment, `while`, arrays/vectors, and their interaction with
    equality, mutation, garbage collection, and the value restriction.
@@ -449,24 +449,65 @@ complete, while lists, multi-clause functions, general annotations, `type`,
 mutual declarations, replication, and `withtype` remain excluded. The executable
 [datatype example](../examples/datatypes.sml) prints `42` followed by a newline.
 
-#### Next session — M5b lists
+#### M5b — Lists (complete)
 
-Add the predeclared polymorphic `list` type, `nil`, fixed infix `::`, and list
-expression/pattern syntax using the datatype and matching machinery. Specify
-scope, precedence, constructor status, equality, and value-restriction behavior
-before changing the lexer or initial environments. Keep broader List Basis
-functions and user fixity outside this increment unless separately scoped.
+The implementation adds the predeclared polymorphic `list` type, `nil`, fixed
+right-associative infix `::` at precedence 5, and bracket expressions/patterns.
+Parsing expands lists to existing constructor applications and pairs. The
+initial environment installs nominal list metadata and constructor schemes;
+matching, equality, value restriction, emission, and collection reuse M5a.
+`nil` and `::` are protected against rebinding; shadowing the type name `list`
+does not change the initial constructors. Bracket forms contain at most 128
+elements and remain subject to the expanded-tree depth limit of 256.
 
-Add empty/nonempty and nested lists, polymorphic list processing, equality,
-ordering of element evaluation, small-heap collection, and relevant typing and
-syntax rejections. Update the existing `data-datatypes` boundary and move the
-current `nil` rejection to appropriate accepted and excluded-form coverage.
-Run the same three-host, portability, sanitizer, and documentation gates; decide
-whether the existing v3 representation needs any compatibility change.
+Bytecode stays v3 with no VM changes. Initial list constructors precede user
+constructor IDs, so recompilation can change descriptors while old v3 files
+remain compatible. A clean checkout of M5a compiled datatype bytecode that runs
+on the current VM; its VM also runs the new list example normally and under GC
+stress. The executable [list example](../examples/lists.sml) prints `42` and a
+newline. Compiler/VM version strings remain 0.2.0; M5b is unreleased.
 
-M5c then adds multi-clause `fn`/`fun`, including consistent parameter counts and
-curried matching time. Exception handlers, mutation, records, modules, and broader
-Basis support remain later M5 work.
+Acceptance checkpoint — 2026-09-16:
+
+- `make test-all` passes 236 fixtures per host-built Rune compiler, normal and
+  GC-stress execution, identical bytecode/diagnostics, CLI and golden encoding
+  checks, and 622 malformed/runtime fixtures per VM execution mode. The 53 new
+  fixtures cover syntax, inference, matching/warnings, source locations, list
+  bounds, evaluation order, equality, collection, and retained-heap failure.
+- The 62 reference programs agree under all three SML compilers. Reference
+  rejection checks pass for 52 SML/NJ and 58 Poly/ML/MLton cases. Six manifest
+  exceptions cover SML/NJ 110.79's acceptance of local datatype escape (also
+  through lists), ignored datatype parameter equality constraints, and `nil`
+  rebinding through `fun` and `datatype`. Every Rune build rejects these cases.
+- `make test-builds`, `mlton -stop tc rune.mlb`, Python syntax checks, and
+  documentation checks pass.
+- `make test-portability` passes the same 236 fixtures from each compiler on
+  native x86-64, QEMU i386 (32-bit little-endian), and QEMU PowerPC64 (64-bit
+  big-endian), normally and under GC stress. Output, status, and full runtime
+  diagnostics agree. Each VM passes 622 malformed/runtime fixtures in each mode,
+  heap/CLI checks, and the target's platform and collector checks.
+- `make CC=gcc test-sanitize` and `make CC=clang test-sanitize` pass with ASan,
+  UBSan, and leak detection. `make CC=clang HOST=polyml test` also passes strict
+  C11 builds, the full corpus, VM checks, and Poly/ML references.
+- Final `make check-docs` and `git diff --check` pass. `data-datatypes` remains
+  partial because multi-clause functions and other excluded datatype forms are
+  still deferred; the M5b list increment is complete.
+
+The PowerPC64 gate initially failed because Clang selected the native linker:
+`binutils-powerpc64-linux-gnu` and `libgcc-13-dev-ppc64-cross` were missing. The
+user installed both packages, and their binaries/runtime objects were verified
+before rerunning the gate. SML/NJ and leak detection use the documented execution
+outside the sandbox; reference probes use the distribution launcher to supply
+SML/NJ's Basis library paths. Native PowerPC hardware, 32-bit big-endian targets,
+ARM64, and other operating systems remain unverified. CI for this working-tree
+change has not been run.
+
+#### Next session — M5c multi-clause functions
+
+Add multi-clause `fn`/`fun`, including consistent parameter counts, clause order,
+curried matching time, and exhaustiveness/redundancy diagnostics. Keep broader
+List Basis functions and user fixity deferred. Exception handlers, mutation,
+records, modules, and broader Basis support remain later M5 work.
 
 ## 7. Validation strategy
 
@@ -539,6 +580,6 @@ other later rows remain deferred.
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next increment is M5b lists, building on the completed M5a datatype and
-pattern-matching support. Keep the three-host and VM portability gates as the
+The next increment is M5c multi-clause functions, building on the completed
+M5a datatype/matching and M5b list support. Keep the three-host and VM portability gates as the
 language grows.

@@ -6,6 +6,12 @@ versions; source programs must be recompiled. The v2 header/section layout and
 opcodes 0–33 are preserved. CALL and TAILCALL additionally accept unary
 constructor functions. Fields remain explicitly little-endian on every platform.
 
+M5b lists reuse these instructions and representations without a format or VM
+behavior change. Existing v3 files remain compatible, and bytecode containing
+lists runs on the M5a v3 VM. Recompilation can change constructor descriptors
+because the compiler now installs the initial list constructors before user
+declarations; descriptors are local to a bytecode file, not a cross-file ABI.
+
 The VM is an ISO C11 stack interpreter requiring 8-bit bytes and exact 32- and
 64-bit integer types. M2 introduced version 2; M3 collection and the Rune 0.1.0
 M4 checks retained it. See [BUILD.md](BUILD.md#portability-checks) and the
@@ -15,7 +21,8 @@ M4 checks retained it. See [BUILD.md](BUILD.md#portability-checks) and the
 
 ### Constructor representation
 
-A descriptor is `2 * constructor ID + arity`, where IDs are assigned in lexical
+A descriptor is `2 * constructor ID + arity`, where IDs are assigned first to
+the initial list constructors (`nil`: ID 0, `::`: ID 1), then in lexical user
 declaration order, are less than 65,536, and arity is 0 or 1. Operands must be
 less than 131,072; PAYLOAD additionally requires odd parity. Descriptors are
 explicit u32 fields, independent of host word width. IDs are static identities;

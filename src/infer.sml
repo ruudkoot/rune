@@ -32,8 +32,9 @@ struct
                     | _ => Source.fail p "type" "constructor pattern arity mismatch"
                   end
               | _ => Source.fail p "type" ("'" ^ name ^ "' is not a pattern constructor")
-            fun pat (Syntax.P (p,node)) =
+            fun pat depth (Syntax.P (p,node)) =
               let fun make t n = Core.P (p,t,n)
+                  val () = if depth > 256 then Source.fail p "limit" "pattern tree exceeds depth 256" else ()
                   fun variable name =
                     if List.exists (fn (s,_) => s = name) (!names) then
                       Source.fail p "type" ("duplicate pattern name '" ^ name ^ "'")
@@ -43,17 +44,17 @@ struct
                   Syntax.Variable name => (case find env name of
                       SOME (_,(_,Constructor _)) => constructor p name NONE
                     | _ => variable name)
-                | Syntax.ConstructorPattern (name,arg) => constructor p name (SOME (pat arg))
+                | Syntax.ConstructorPattern (name,arg) => constructor p name (SOME (pat (depth+1) arg))
                 | Syntax.IntegerPattern n => make TInt (Core.IntegerPattern n)
                 | Syntax.BooleanPattern b => make TBool (Core.BooleanPattern b)
                 | Syntax.StringPattern s => make TString (Core.StringPattern s)
                 | Syntax.Wildcard => make (fresh p level) Core.Wildcard
                 | Syntax.UnitPattern => make TUnit Core.UnitPattern
                 | Syntax.TuplePattern elements =>
-                    let val pats = List.map pat elements
+                    let val pats = List.map (pat (depth+1)) elements
                     in make (TTuple (List.map Core.patternType pats)) (Core.TuplePattern pats) end
               end
-            val pats = List.map pat ps
+            val pats = List.map (pat 0) ps
         in (pats,!names) end
       fun nonexpansive (Core.E (_,_,node)) = case node of
           Core.Integer _ => true | Core.Boolean _ => true | Core.String _ => true
@@ -180,7 +181,9 @@ struct
       and bindings top initialEnv initialTypes level depth ds =
         let fun loop env tenv [] acc = (List.rev acc,env,tenv)
               | loop env tenv (Syntax.Datatype (p,vs,name,cs)::rest) acc =
-                  let val (names,tenv') = datatypeBinding tenv level p vs name cs
+                  let val () = List.app (fn (cp,c,_) => if c = "nil" then
+                          Source.fail cp "type" "cannot rebind nil" else ()) cs
+                      val (names,tenv') = datatypeBinding tenv level p vs name cs
                   in loop (names @ env) tenv' rest acc end
               | loop env tenv (d::rest) acc =
                 let val (pat,e,env') = case d of
@@ -192,7 +195,8 @@ struct
                           val () = generalize p level (nonexpansive e') (Core.typeOf e')
                       in (pat',e',names @ env) end
                   | Syntax.Fun (p,name,ps,body) =>
-                      let val id = identity p val ft = fresh p (level+1)
+                      let val () = if name = "nil" then Source.fail p "type" "cannot rebind nil" else ()
+                          val id = identity p val ft = fresh p (level+1)
                           val recursive = (name,(ft,Local id))::env
                           val (params,names) = patterns recursive (level+1) ps
                           val body' = expression (names @ recursive) tenv (level+1) (depth+1) body
@@ -222,12 +226,19 @@ struct
                   | Syntax.Datatype _ => Source.fail Source.start "internal" "misplaced datatype"
                 in loop env' tenv rest ((pat,e)::acc) end
         in loop initialEnv initialTypes ds [] end
-      val basis = [("print", (TFunction (TString,TUnit), Builtin 0)),
+      val basisTypes = [("int",Primitive TInt),("bool",Primitive TBool),
+                        ("string",Primitive TString),("unit",Primitive TUnit)]
+      (* Lists use exactly the same nominal types and constructor descriptors as
+         user datatypes. Install them before user declarations to reserve IDs. *)
+      val p = Source.start
+      val a = Syntax.Ty (p,Syntax.TypeVariable "'a")
+      val list = Syntax.Ty (p,Syntax.TypeName ("list",[a]))
+      val (listValues,initialTypes) = datatypeBinding basisTypes 0 p ["'a"] "list"
+        [(p,"nil",NONE),(p,"::",SOME (Syntax.Ty (p,Syntax.Product [a,list])))]
+      val basis = listValues @ [("print", (TFunction (TString,TUnit), Builtin 0)),
                    ("Int.toString", (TFunction (TInt,TString), Builtin 1)),
                    ("not", (TFunction (TBool,TBool), Builtin 2)),
                    ("~", (TFunction (TInt,TInt), Builtin 3))]
-      val basisTypes = [("int",Primitive TInt),("bool",Primitive TBool),
-                        ("string",Primitive TString),("unit",Primitive TUnit)]
-      val (program,_,_) = bindings true basis basisTypes 0 0 declarations
+      val (program,_,_) = bindings true basis initialTypes 0 0 declarations
     in program end
 end

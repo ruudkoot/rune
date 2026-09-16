@@ -1,5 +1,26 @@
 # Rune release notes
 
+## Unreleased — M5b lists
+
+Adds the initial polymorphic `list` type, `nil`, right-associative infix `::`,
+and bracket expressions/patterns. Lists use existing nominal datatypes,
+matching, equality, value restriction, and collection. The source contract
+documents protected constructor names, list type-name shadowing, evaluation
+order, and bounded syntax expansion. Multi-clause functions and broader List
+Basis operations remain deferred.
+
+Bytecode remains v3 with no VM changes. Existing v3 files remain compatible;
+new list bytecode also runs on the M5a VM. User constructor descriptors can
+change on recompilation because the initial list constructors reserve IDs first.
+The compiler and VM continue to report 0.2.0 until a release is made.
+
+The increment adds 53 fixtures and an executable list-processing example among
+them. See [the M5b checkpoint](PLAN.md#m5b--lists-complete) for acceptance
+results and environment details. All 236 fixtures pass under all three
+host-built compilers on native x86-64 and emulated i386/PowerPC64 VMs, normally
+and under GC stress. GCC/Clang sanitizer, build-adapter, and documentation checks
+pass. CI has not been run for this working-tree change.
+
 ## 0.2.0 — 2026-09-16
 
 M5a adds parameterized recursive datatypes, constructor values and patterns,

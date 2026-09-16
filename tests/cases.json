@@ -896,7 +896,8 @@
       "data-datatypes"
     ],
     "stdout": "",
-    "stderr": "unsupported"
+    "stderr": "type",
+    "reference_reject": true
   },
   {
     "path": "tests/reject/constructor-none.sml",
@@ -2497,5 +2498,741 @@
       "lit-values"
     ],
     "stderr": "range"
+  },
+  {
+    "path": "examples/lists.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "fn-recursion",
+      "type-poly"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "fn-recursion",
+      "type-poly"
+    ],
+    "stdout": "42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/lists.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "bind-val",
+      "data-tuples"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "bind-val",
+      "data-tuples"
+    ],
+    "stdout": "6\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-polymorphism.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "42\nalias\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-precedence.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "expr-ops"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "expr-ops"
+    ],
+    "stdout": "operators\n42\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-types.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "decl-types",
+      "type-poly"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "decl-types",
+      "type-poly"
+    ],
+    "stdout": "42\n7\n",
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/list-equality.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "type-poly",
+      "expr-ops"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "type-poly",
+      "expr-ops"
+    ],
+    "stdout": "equal\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-evaluation.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "expr-sequence"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "expr-sequence"
+    ],
+    "stdout": "123456\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-coverage.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stdout": "42\n3\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-warnings.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stdout": "yes\nempty\n42\n",
+    "warnings": [
+      "redundant match clause",
+      "non-exhaustive match",
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/list-function-patterns.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "fn-recursion",
+      "fn-closures"
+    ],
+    "stdout": "42\n7\n9\n",
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match",
+      "non-exhaustive match",
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/list-value-restriction-later.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "ok\n",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-literal-limit.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/list-cons-limit.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "reference": true
+  },
+  {
+    "path": "tests/accept/gc-lists.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "runtime-gc",
+      "fn-recursion"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "runtime-gc",
+      "fn-recursion"
+    ],
+    "stdout": "42\n",
+    "reference": true,
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
+  },
+  {
+    "path": "tests/accept/list-deep-equality.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "runtime-gc",
+      "expr-ops"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "runtime-gc",
+      "expr-ops"
+    ],
+    "stdout": "equal\n",
+    "reference": true
+  },
+  {
+    "path": "tests/reject/list-elements.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-tail.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-pattern-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-duplicate-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-function-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-polymorphic-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-payload-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-occurs.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-value-restriction.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-cons-value-restriction.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-arity.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-two-parameters.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-nominal.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-nil-arity.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/list-rebind-nil.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/list-datatype-nil.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/list-type-escape.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "type",
+    "reference_reject": false,
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/list-trailing.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-leading.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-pattern-trailing.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-unclosed.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-cons-missing.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-cons-prefix.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-cons-fun-parameter.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-datatype-cons.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-append.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "basis-more"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "basis-more"
+    ],
+    "stderr": "unsupported",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-basis.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "basis-more"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "basis-more"
+    ],
+    "stderr": "unsupported",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-literal-limit.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-pattern-limit.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-cons-depth.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "limit",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/reject/list-cons-pattern-depth.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "limit",
+    "reference_reject": false
+  },
+  {
+    "path": "tests/runtime/bind-list.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Bind",
+    "location": [
+      1,
+      5
+    ]
+  },
+  {
+    "path": "tests/runtime/bind-nil.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Bind",
+    "location": [
+      1,
+      5
+    ]
+  },
+  {
+    "path": "tests/runtime/match-list.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Match",
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "location": [
+      1,
+      9
+    ]
+  },
+  {
+    "path": "tests/runtime/match-list-fn.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Match",
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "location": [
+      1,
+      12
+    ]
+  },
+  {
+    "path": "tests/runtime/match-list-curried.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Match",
+    "stdout": "partial\nargument\n",
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "location": [
+      1,
+      1
+    ]
+  },
+  {
+    "path": "tests/runtime/list-evaluation.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Div",
+    "stdout": "first\n",
+    "location": [
+      1,
+      31
+    ]
+  },
+  {
+    "path": "tests/runtime/list-retained.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes",
+      "runtime-gc"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "runtime-gc"
+    ],
+    "stderr": "heap limit exceeded",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
   }
 ]

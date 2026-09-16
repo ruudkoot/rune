@@ -153,15 +153,21 @@ exhaustion. All three host-built compilers run these tests. The standalone VM
 fixtures also run in both modes and test every truncation boundary of empty and
 closure-containing bytecode files.
 Selected type/pattern rejection cases are also checked against all three reference
-compilers. Three cases use only Poly/ML and MLton as rejection references because
-SML/NJ 110.79 accepts escaping local datatypes and ignores datatype parameter
-equality constraints. The manifest lists these exceptions explicitly; all three
+compilers. Six cases use only Poly/ML and MLton as rejection references because
+SML/NJ 110.79 accepts escaping local datatypes (also through lists), ignores datatype
+parameter equality constraints, and permits `nil` rebinding through `fun` and
+`datatype`. The manifest lists these exceptions explicitly; all three
 host-built Rune compilers must reject them. Bytecode v3 fixtures cover function
 metadata, captures, returns, tail calls, tuples, constructor calls/tests/payloads,
 match-failure terminators, and explicit rejection of v1/v2 files. M5a also covers
 ordered/nested matching, diagnostic warnings, nominal type identity, constructor
 polymorphism/equality, partial-application timing, and datatype collection in a
 16 KiB heap. Warnings and emitted bytes are compared across host builds.
+
+M5b fixtures cover list expressions/patterns, polymorphic processing, equality,
+evaluation order, constructor protection, type-name shadowing, value restriction,
+expanded-syntax limits, and source-located match failures. List programs also run
+under normal/stress collection, including a 16 KiB heap and retained-list failure.
 
 `test-builds` uses a temporary checkout whose path contains spaces. It checks
 incremental rebuilds and that invalid SML causes each build to fail.

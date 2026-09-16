@@ -14,7 +14,7 @@ fn-recursion	Recursive `fun` declarations	implemented	v0.1 / M2; M5a	Single clau
 data-tuples	Tuples and tuple destructuring	implemented	v0.1 / M2; M5a	Arity at least two; nested patterns including constructors and literals
 type-poly	Let polymorphism and equality types	implemented	v0.1 / M2; M5a	Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints
 runtime-gc	Garbage collection and bounded heap	implemented	v0.1 / M3	Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement
-data-datatypes	Lists, datatypes, constructor patterns, `case`	partial	M5a	Parameterized recursive datatypes, constructors, case, Match/Bind, match warnings; lists and multi-clause functions deferred
+data-datatypes	Lists, datatypes, constructor patterns, `case`	partial	M5a / M5b	Parameterized recursive datatypes, lists, constructors, case, Match/Bind, match warnings; multi-clause functions deferred
 control-exceptions	`exception`, `raise`, `handle`	deferred	Deferred / M5	Runtime arithmetic failures exist earlier; user exception handling does not
 data-mutation	References, assignment, `while`, arrays, vectors	deferred	Deferred / M5	No user-visible mutable storage in v0.1
 data-records	Records, selectors, flexible record patterns	deferred	Deferred / M5	Tuples arrive earlier; other record syntax is rejected

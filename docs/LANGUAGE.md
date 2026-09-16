@@ -5,8 +5,9 @@
 Rune 0.2.0 adds the M5a datatype and pattern-matching increment to the M1–M3
 functional subset and emits bytecode v3. It supports parameterized recursive
 datatypes, constructor values, `case`, and refutable patterns in `val` and
-single-clause functions. Lists and multi-clause functions remain deferred.
-M5a passes the three-host and native/emulated VM acceptance gates. The
+single-clause functions. The working tree adds M5b polymorphic lists and list
+patterns. Multi-clause functions remain deferred. M5a and M5b pass the three-host,
+native/emulated VM, and sanitizer acceptance gates. The
 [implementation plan](PLAN.md) records validation and remaining platform gaps.
 Rune 0.1.0 completed M0–M4 with bytecode v2;
 v1/v2 files must be recompiled for the v3 VM. See [BUILD.md](BUILD.md) for commands.
@@ -41,7 +42,7 @@ passed its fixtures using Rune built by all three host compilers.
 | data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2; M5a | Arity at least two; nested patterns including constructors and literals |
 | type-poly | Let polymorphism and equality types | implemented | v0.1 / M2; M5a | Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints |
 | runtime-gc | Garbage collection and bounded heap | implemented | v0.1 / M3 | Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement |
-| data-datatypes | Lists, datatypes, constructor patterns, `case` | partial | M5a | Parameterized recursive datatypes, constructors, case, Match/Bind, match warnings; lists and multi-clause functions deferred |
+| data-datatypes | Lists, datatypes, constructor patterns, `case` | partial | M5a / M5b | Parameterized recursive datatypes, lists, constructors, case, Match/Bind, match warnings; multi-clause functions deferred |
 | control-exceptions | `exception`, `raise`, `handle` | deferred | Deferred / M5 | Runtime arithmetic failures exist earlier; user exception handling does not |
 | data-mutation | References, assignment, `while`, arrays, vectors | deferred | Deferred / M5 | No user-visible mutable storage in v0.1 |
 | data-records | Records, selectors, flexible record patterns | deferred | Deferred / M5 | Tuples arrive earlier; other record syntax is rejected |
@@ -61,7 +62,7 @@ initializers in source order. `val x = e` evaluates `e` using the preceding envi
 The program finishes after its last declaration. No `main` function is required.
 
 Expressions include the listed literals, bound names, parentheses, `let`, `if`,
-tuples, functions, `case`, the fixed operators, sequencing, and the built-in calls
+tuples, lists, functions, `case`, the fixed operators, sequencing, and the built-in calls
 below. Parse the whole file; trailing unrecognized tokens are errors. Applications can call the
 four built-in function values below, user closures, and unary constructors,
 including aliases or values selected by `if`. Function application is unary and associates to the left;
@@ -112,16 +113,52 @@ warns about redundant clauses and non-exhaustive matches while compiling them;
 non-exhaustive `val` warns only inside `let`. Analysis is bounded by 1,000,000
 steps and depth 512, with a `limit` diagnostic on exhaustion.
 
-Lists, predeclared option/order constructors, multi-clause functions, general
+Predeclared option/order constructors, multi-clause functions, general
 type annotations, and exception handlers remain deferred. These choices follow
 the [SML Definition](https://smlfamily.github.io/sml97-defn.pdf), sections 4.7,
 4.10–4.11 and Appendix A; the reference fixtures check the observable behavior.
 
-Reference checks account for two observed SML/NJ 110.79 differences: it accepts
-escaping local datatypes and ignores explicit equality constraints on datatype
-parameters in the rejection probes. Poly/ML 5.7.1 and MLton 20210117 reject these
+Reference checks account for observed SML/NJ 110.79 differences: it accepts
+escaping local datatypes (including through lists), ignores explicit equality
+constraints on datatype parameters, and permits rebinding `nil` through `fun`
+and `datatype` in the rejection probes. Poly/ML 5.7.1 and MLton 20210117 reject these
 cases. They have explicit per-host reference coverage; Rune rejects them under
 all three compiler builds. This does not weaken Rune's cross-host gate.
+
+## Lists (M5b)
+
+The initial environment contains the polymorphic type `'a list`, the nullary
+constructor `nil : 'a list`, and the unary constructor
+`:: : 'a * 'a list -> 'a list`. List expressions `[]`, `[e1, ..., en]`, and
+`head :: tail` use these constructors. `::` is fixed right-associative infix
+at precedence 5, between arithmetic/string concatenation and comparisons.
+Elements evaluate left to right; constructing the tail follows evaluation of
+the head. The empty list allocates no managed object. Nonempty lists use the
+existing constructor payload and tuple representation and collector.
+
+List patterns `[]`, `[p1, ..., pn]`, and `head :: tail` work in `case`, `val`,
+`fn`, and parenthesized `fun` parameters. Bracket patterns match exactly their
+stated length. Constructor application binds more tightly than infix `::`.
+Matching, warnings, uncaught `Match`/`Bind`, and curried argument timing follow
+the existing datatype rules. `val nil = e` tests for an empty list; it does not
+bind a variable. `nil` and `::` cannot be rebound, including by a datatype or
+`fun` declaration. The type name `list` can be shadowed by a fresh datatype,
+but existing list constructors and bracket syntax retain their original type.
+
+Lists are homogeneous and admit structural equality exactly when their element
+type admits equality. Empty lists and lists whose elements are non-expansive
+can be generalized; a list containing an expansive expression remains subject
+to the value restriction. Lists nest, can contain functions, and can occur in
+datatype payload types, including recursive payloads.
+
+Bracket expressions and patterns contain at most 128 elements. They expand to
+constructor applications and pairs, so the existing depth limits also apply to
+the expanded trees; surrounding expressions or nested elements can reduce the
+available depth. This is a source-syntax limit, not a runtime list-length limit.
+`@`, `op`, fixity declarations, `List` members, and other list Basis functions
+remain unsupported. These rules follow the
+[SML Definition](https://smlfamily.github.io/sml97-defn.pdf), sections 2.9 and
+Appendices A/C, and the [list datatype](https://smlfamily.github.io/Basis/list.html).
 
 ## Implemented grammar
 
@@ -133,11 +170,11 @@ an `unsupported` diagnostic. Unknown qualified value names report `unsupported`;
 unknown unqualified value names report `scope`. Unknown payload type names report
 `type`.
 
-Deferred predefined infix names (`o`, `before`) and constructors (`nil`, `NONE`,
+Deferred predefined infix names (`o`, `before`) and constructors (`NONE`,
 `SOME`, `LESS`, `EQUAL`, `GREATER`, `ref`, and the standard exception constructors)
 from the [initial Basis](https://smlfamily.github.io/Basis/top-level-chapter.html)
 are rejected as unsupported. They cannot be treated as ordinary variable patterns
-without changing SML's binding semantics. In particular, `val nil = 1` is rejected.
+without changing SML's binding semantics. `val nil = 1` is a type error.
 
 ```text
 program      = { declaration | ";" } EOF
@@ -151,9 +188,11 @@ program      = { declaration | ";" } EOF
  type-application = type-atom { name }
  type-atom   = type-variable | name | "(" type ")"
              | "(" type "," type { "," type } ")" name
- pattern     = atomic-pattern | name atomic-pattern
+ pattern     = constructor-pattern [ "::" pattern ]
+ constructor-pattern = atomic-pattern | name atomic-pattern
  atomic-pattern = name | "_" | "()" | decimal-integer | string | "true" | "false"
              | "(" pattern ")" | "(" pattern "," pattern { "," pattern } ")"
+             | "[" [ pattern { "," pattern } ] "]"
  match       = pattern "=>" expression { "|" pattern "=>" expression }
  expression  = "if" expression "then" expression "else" expression
              | "fn" pattern "=>" expression
@@ -171,6 +210,7 @@ program      = { declaration | ";" } EOF
              | name | qualified-name | "~"
              | "(" sequence ")"
              | "(" expression "," expression { "," expression } ")"
+             | "[" [ expression { "," expression } ] "]"
              | "let" { declaration | ";" } "in" sequence "end"
  sequence    = expression { ";" expression }
  decimal-integer = [ "~" ] digit { digit }
@@ -212,6 +252,7 @@ Implemented precedence, highest first; parentheses override grouping:
 | Application | Left-associative; built-ins, user closures, and constructors | If `f : 'a -> 'b` and `x : 'a`, then `f x : 'b` |
 | `*`, `div`, `mod` | Left-associative; SML precedence 7 | `int * int -> int` |
 | `+`, `-`, `^` | Left-associative; SML precedence 6 | Integer arithmetic; string concatenation for `^` |
+| `::` | Right-associative; SML precedence 5 | `'a * 'a list -> 'a list` |
 | `=`, `<>`, `<`, `<=`, `>`, `>=` | Left-associative; SML precedence 4 | Equality as below; ordering for integers only |
 | `andalso` | Right-associative, short-circuit; binds more tightly than `orelse` | `bool` operands/result |
 | `orelse` | Right-associative, short-circuit | `bool` operands/result |
@@ -228,7 +269,8 @@ constraints.
 Equality on functions is a static error. String ordering is deferred
 even though string equality is included. Ordinary operators and built-ins obey
 lexical binding/shadowing rules within accepted syntax; they are not unshadowable
-magic names. Infix operators need not be exposed through deferred `op` syntax.
+magic names, except for the SML-protected constructors `nil` and `::`.
+Infix operators need not be exposed through deferred `op` syntax.
 
 Initial Basis inventory, in addition to the listed operators and literals:
 
@@ -238,6 +280,8 @@ Initial Basis inventory, in addition to the listed operators and literals:
 | `Int.toString` | `int -> string` |
 | `not` | `bool -> bool` |
 | `~` | `int -> int` |
+| `nil` | `'a list` (constructor) |
+| `::` | `'a * 'a list -> 'a list` (infix constructor) |
 
 `Int.toString` is a predeclared qualified name; other `Int` members and general
 structure declarations are not implied. There is no implicit access to the host
@@ -246,7 +290,7 @@ compiler's Basis from a compiled Rune program.
 ## Semantics that must stay consistent across hosts
 
 - **Evaluation:** strict, left-to-right evaluation of accepted applications,
-  tuples, sequences, and declaration initializers. `if` evaluates one branch;
+  tuples, list elements, sequences, and declaration initializers. `if` evaluates one branch;
   `andalso`/`orelse` evaluate their right operand only when required.
 - **Integers:** signed 32-bit values, from `~2147483648` to `2147483647`, on every
   host and VM. Oversized literals are compile errors; arithmetic overflow raises
@@ -273,7 +317,8 @@ compiler's Basis from a compiled Rune program.
   explicit VM frames.
 - **Inference in M2:** infer types; generalize eligible non-expansive bindings
   according to the SML ’97 value restriction. Literals, names, `fn`, and tuples
-  of non-expansive expressions are eligible. M5a also admits direct constructor
+  of non-expansive expressions are eligible. List literals follow the same rule
+  after expansion to `::` and `nil`. M5a also admits direct constructor
   applications to non-expansive arguments; other applications, conditionals, sequences,
   and `let` expressions are expansive. Expansive bindings keep shared monomorphic
   variables that later uses can constrain. An unresolved type at an expansive
@@ -284,16 +329,18 @@ compiler's Basis from a compiled Rune program.
   generalized. Unification performs occurs checks and propagates
   equality constraints through tuples, datatype parameters, and type schemes.
 - **Patterns:** variable, wildcard, unit, tuple, integer/string/boolean literal,
-  and constructor patterns. Reject duplicate bound names; destructuring must
+  constructor, and list patterns. Reject duplicate bound names; destructuring must
   agree with the inferred type. Refutable bindings and matches follow the M5a
   semantics above. Warnings go to stderr and do not change successful exit status.
   Failures point to the `case` expression, `fn` parameter pattern, `fun`
   declaration, or failed `val` pattern respectively.
 - **Limits:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
-  nesting, pattern nesting, checked expression-tree depth, and `fun` parameter
-  count limited to 256; payload type parsing and checked type-expression depth
+  nesting, pattern nesting, checked expression/pattern-tree depth, and `fun` parameter
+  count limited to 256; bracket list expressions/patterns have at most 128 elements,
+  also subject to expanded-tree depth limits. Payload type parsing and checked type-expression depth
   are also limited to 256. At most 65,536 binding identities, datatype identities,
-  constructors, and fresh type variables; inference is limited to 1,000,000 type traversal steps per compilation. Each
+  constructors, and fresh type variables (including the initial list type and
+  constructors); inference is limited to 1,000,000 type traversal steps per compilation. Each
   match analysis is limited to 1,000,000 steps and recursion depth 512.
   Functions, string constants, total instructions, locals/captures per function,
   tuple arity, active local slots, VM operands, and active frames are capped at
@@ -373,6 +420,16 @@ val _ = print (Int.toString (sum (Node (Leaf 20, Leaf 22))) ^ "\n")
 ```
 <!-- example:examples/datatypes.sml:end -->
 
+### M5b lists: expected output `42` followed by a newline
+
+<!-- example:examples/lists.sml:start -->
+```sml
+fun map f xs = case xs of [] => [] | x :: rest => f x :: map f rest
+fun sum xs = case xs of [] => 0 | x :: rest => x + sum rest
+val _ = print (Int.toString (sum (map (fn x => x * 2) [5, 7, 9])) ^ "\n")
+```
+<!-- example:examples/lists.sml:end -->
+
 ### Required rejections
 
 ```sml
@@ -383,7 +440,7 @@ val x = 2147483648               (* Rune integer literal out of range *)
 ```
 
 The test corpus covers these cases individually and rejects deferred forms such
-as lists, multi-clause functions, `handle`, `ref`, and `structure`. It also rejects function
+as multi-clause functions, `handle`, `ref`, and `structure`. It also rejects function
 equality (including functions inside tuples), self-application, polymorphic
 recursion, duplicate pattern names, and invalid generalization of expansive values.
 

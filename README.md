@@ -5,13 +5,14 @@ that emits bytecode for a portable C virtual machine.
 
 ## Status
 
-Rune 0.2.0 adds user datatypes, constructor patterns, `case`, and uncaught
-`Match`/`Bind` failures to the functional subset: typed expressions, `val`/`let`,
-functions, closures, recursion, tuples, and polymorphic type inference. The C VM
-uses bytecode v3 and collects unused heap objects. M5a passes the three-host
-compiler, native/emulated VM, and sanitizer gates; [the checkpoint](docs/PLAN.md)
-records verification. Lists, multi-clause functions, exception handlers, and
-the other M5 features remain deferred.
+The working tree adds M5b polymorphic lists (`nil`, `::`, bracket expressions
+and patterns) to Rune 0.2.0's functional subset: typed expressions, `val`/`let`,
+functions, closures, recursion, tuples, user datatypes, `case`, and uncaught
+`Match`/`Bind` failures. The C VM collects unused heap objects and keeps bytecode
+v3 compatibility. [The checkpoint](docs/PLAN.md) records acceptance results.
+Multi-clause functions, exception handlers, broader List Basis functions, and
+the other M5 features remain deferred. This working-tree increment is unreleased;
+the compiler and VM continue to report 0.2.0.
 
 - [Implementation plan](docs/PLAN.md): milestones, architecture, builds with
   SML/NJ, Poly/ML, and MLton, and acceptance checks.
@@ -19,7 +20,7 @@ the other M5 features remain deferred.
   semantics, and exclusions.
 - [Builds and testing](docs/BUILD.md): prerequisites, host adapters, and checks.
 - [Bytecode specification](docs/BYTECODE.md): format, instructions, and VM limits.
-- [Release notes](docs/RELEASES.md): v0.2.0 scope, validation, compatibility,
+- [Release notes](docs/RELEASES.md): unreleased changes, v0.2.0, compatibility,
   and earlier history.
 - [Contributor instructions](AGENTS.md): requirements for keeping implementation,
   language documentation, and tests in sync.
@@ -42,6 +43,10 @@ build/vm/rune-vm build/closures.rbc
 
 build/mlton/rune -o build/datatypes.rbc examples/datatypes.sml
 build/vm/rune-vm build/datatypes.rbc
+# 42
+
+build/mlton/rune -o build/lists.rbc examples/lists.sml
+build/vm/rune-vm build/lists.rbc
 # 42
 
 build/mlton/rune -o build/collection.rbc examples/collection.sml
