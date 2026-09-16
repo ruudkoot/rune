@@ -4,6 +4,8 @@ struct
   val start : pos = {line = 1, column = 1}
   exception Error of pos * string * string
   fun fail pos category message = raise Error (pos, category, message)
+  val warnings = ref ([] : (pos * string) list)
+  fun warn pos message = warnings := (pos,message) :: !warnings
   val maxSource = 1048576
   val maxCount = 65536
   val maxString = 1048576

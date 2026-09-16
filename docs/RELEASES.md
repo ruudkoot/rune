@@ -1,5 +1,38 @@
 # Rune release notes
 
+## 0.2.0 — 2026-09-16
+
+M5a adds parameterized recursive datatypes, constructor values and patterns,
+`case`, refutable `val`/`fn`/`fun` patterns, and uncaught `Match`/`Bind` failures.
+Constructor status follows lexical scope, datatype identity is nominal, and
+constructor applications obey the SML value restriction. Datatype equality,
+curried pattern timing, bounded exhaustiveness/redundancy warnings, GC tracing,
+and source-located failures are covered by the acceptance suite.
+
+Bytecode v3 adds four constructor/matching instructions and extends calls to
+unary constructor functions. It preserves the v2 section layout and opcode
+numbers 0–33. The VM and disassembler reject v1/v2 and unknown versions;
+existing source programs must be recompiled. Compiler and VM report 0.2.0.
+
+Validation passes locally:
+
+- 181 fixtures per Rune host build, normal execution and GC stress, identical
+  bytecode and diagnostics, and 47 successful reference programs under all three
+  SML compilers. Reference rejections cover 36 SML/NJ and 39 Poly/ML/MLton cases;
+  three documented SML/NJ reference exceptions never exempt a Rune build from rejection.
+- The same bytecode runs on native x86-64 and QEMU-emulated i386 and PowerPC64
+  VMs. Each passes 622 malformed/runtime fixtures in each mode, heap/CLI checks,
+  and collector checks including deep constructor graphs and payload roots.
+- Strict Clang tests, GCC/Clang ASan/UBSan with leak detection, all three build
+  adapters, documentation generation, and Python/MLton syntax/type checks pass.
+
+Lists, multi-clause functions, general type declarations/annotations, handlers,
+mutation, records, modules, and broader Basis support remain deferred. See
+[LANGUAGE.md](LANGUAGE.md) for exact boundaries and
+[the M5a checkpoint](PLAN.md#m5a--datatypes-and-case-complete) for results,
+reference-compiler differences, and unverified platforms. CI for this change
+has not been run.
+
 ## 0.1.0 — 2026-09-16
 
 Rune's first v0.1 functional subset completes M0–M4. It supports typed expressions,

@@ -1,31 +1,50 @@
-# Rune bytecode, version 2
+# Rune bytecode, version 3
 
-Version 2 adds explicit functions, closures, tuples, and call frames for M2.
+Version 3 adds constructor values, constructor tests/payload access, and uncaught
+match failures for M5a. The writer, disassembler, and VM reject v1/v2 and unknown
+versions; source programs must be recompiled. The v2 header/section layout and
+opcodes 0–33 are preserved. CALL and TAILCALL additionally accept unary
+constructor functions. Fields remain explicitly little-endian on every platform.
+
 The VM is an ISO C11 stack interpreter requiring 8-bit bytes and exact 32- and
-64-bit integer types. Version 1 files must be recompiled: the v2 VM and
-disassembler reject v1 and unknown versions. Opcode numbers 0–23 are preserved,
-but CALL now also accepts user closures and branches are function-relative.
-
-M3 retains version 2: collection changes only VM memory management, with no
-encoding or instruction changes. Existing v2 files run without recompilation;
-programs that previously exhausted the arena can now finish when their retained
-objects fit in the heap. Version 1 and unknown versions remain rejected.
-
-Rune 0.1.0 (M4) also retains version 2 with unchanged instruction meanings and
-encoding. The portability suite runs each host compiler's identical bytecode on
-native x86-64 Linux and emulated i386 and big-endian PowerPC64 Linux VMs. Fields
-remain little-endian even when the VM executes on a big-endian target. Existing
-v2 files require no recompilation. See [BUILD.md](BUILD.md#portability-checks)
-for the tested configurations and limits of this coverage.
+64-bit integer types. M2 introduced version 2; M3 collection and the Rune 0.1.0
+M4 checks retained it. See [BUILD.md](BUILD.md#portability-checks) and the
+[implementation checkpoint](PLAN.md) for tested targets and remaining gaps.
 
 ## Encoding
+
+### Constructor representation
+
+A descriptor is `2 * constructor ID + arity`, where IDs are assigned in lexical
+declaration order, are less than 65,536, and arity is 0 or 1. Operands must be
+less than 131,072; PAYLOAD additionally requires odd parity. Descriptors are
+explicit u32 fields, independent of host word width. IDs are static identities;
+datatype declarations have no runtime allocation or generative exception state.
+The loader checks operand ranges, stack effects and branch joins; FAIL is a
+terminal instruction allowed at any stack height. Unreachable instructions
+still receive ordinary operand validation.
+
+Nullary values and unary constructor functions are scalar VM tags. Applying a
+unary constructor allocates an aggregate containing its descriptor and one
+traced payload value, with the argument explicitly rooted across collection.
+CALL and TAILCALL support constructor functions. IS_CON accepts either datatype
+value tag; PAYLOAD checks both the unary value tag and exact descriptor before
+reading. These checks prevent malformed bytecode from reading invalid storage;
+bytecode validation does not prove nominal source types or global consistency
+of descriptors. Equality compares descriptors then recursively compares payloads
+using the existing bounded iterative worklist; constructor functions reject
+equality. The existing aggregate collector traces unary values without recursive
+C traversal. Aggregate heap accounting and the current local-retention policy
+also apply to constructor payloads and match temporaries.
+
+### File layout
 
 All unsigned integer fields are little-endian. No alignment or padding is used.
 
 | Field | Encoding |
 | --- | --- |
 | Magic | Eight bytes: `RUNEBC\r\n` |
-| Version | u32, currently 2 |
+| Version | u32, currently 3 |
 | Entry function | u32, must be 0 |
 | Functions | u32, 1 through 65,536 |
 | String constants | u32, at most 65,536 |
@@ -35,10 +54,10 @@ All unsigned integer fields are little-endian. No alignment or padding is used.
 | Code | Each instruction: u8 opcode, u32 operand, u32 line, u32 column |
 
 Each function starts at its instruction zero. Function 0 has no argument or
-closure environment and ends with HALT. Every other function has at least one
-local: slot 0 initially holds its unary argument. Other locals start uninitialized.
+closure environment and completes with HALT (or terminates with FAIL). Every
+other function has at least one local: slot 0 initially holds its unary argument. Other locals start uninitialized.
 The current closure supplies immutable environment slots and SELF. Functions
-return one value with RETURN or transfer control with TAILCALL.
+return one value with RETURN, transfer control with TAILCALL, or terminate with FAIL.
 
 Integers use 32-bit two's-complement bit encoding. Strings preserve embedded NUL.
 Source filenames cannot contain NUL. Line and column numbers are one-based byte
@@ -97,6 +116,10 @@ count, and TUPLE consumes its arity operand.
 | 31 | DUP | none | 1 | 2 |
 | 32 | CHECK_UNIT | none | 1 | 0 |
 | 33 | CHECK_TUPLE | arity | 1 | 1 |
+| 34 | CONSTRUCTOR | constructor | 0 | 1 |
+| 35 | IS_CON | constructor | 1 | 1 |
+| 36 | PAYLOAD | constructor | 1 | 1 |
+| 37 | FAIL | failure | 0 | 0 |
 <!-- opcodes:end -->
 
 Binary operations pop right then left operands. STORE consumes a value; LOAD
@@ -107,17 +130,23 @@ JUMP_FALSE consumes a boolean and branches when false. HALT ends execution.
 ENV copies a captured value. SELF copies the current closure. CLOSURE consumes
 captures in ascending environment-slot order and constructs a closure for a
 non-entry function. RETURN restores the caller and pushes the result. TAILCALL
-replaces the current frame; a tail call to a built-in returns its result directly.
+replaces the current frame; a tail call to a built-in or constructor function returns its result directly.
 Calls use explicit VM frames, never recursive C interpreter calls.
 
 TUPLE consumes at least two elements, in source order. GET replaces a tuple with
 its zero-based indexed element. DUP duplicates the top operand. CHECK_UNIT
 consumes a unit; CHECK_TUPLE checks the exact arity without consuming the tuple.
-Tuple values and closure environments are immutable.
+Tuple values, constructor payloads, and closure environments are immutable.
+
+CONSTRUCTOR pushes a nullary value for an even descriptor or a unary constructor
+function for an odd descriptor. IS_CON replaces a datatype value with the
+boolean result of descriptor comparison. PAYLOAD replaces a matching unary
+value with its payload. FAIL 0 reports `uncaught exception Match`; FAIL 1 reports
+`uncaught exception Bind`. Both use the instruction source position and exit 3.
 
 Signed integer arithmetic is checked. `div` rounds down, and `mod` has the
 divisor's sign. The minimum integer divided by `~1` raises `Overflow`; its
-remainder is zero. Equality is structural for tuples of equality values and is
+remainder is zero. Equality is structural for tuples and datatypes of equality values and is
 also defined for integers, booleans, strings, and unit. Functions do not admit
 equality. Arithmetic exceptions terminate with status 3.
 
@@ -129,14 +158,14 @@ Each function has at most 65,536 locals and captured values. Tuple arity,
 operand stack values, active local slots, and active frames are capped at 65,536.
 Frames and locals grow on demand and are reused by tail calls.
 Managed allocations for strings (including constants and source metadata), tuples,
-and closures are limited to 64 MiB by default, including object headers. This
+closures, and unary constructor values are limited to 64 MiB by default, including object headers. This
 ceiling excludes bytecode storage, VM stacks, and the C allocator's internal
 overhead. Equality uses an explicit work stack of at most 65,536 pairs and permits
 at most 1,000,000 comparison steps per operation.
 
-The M3 VM uses non-moving mark-and-sweep collection. It traces the source
+The VM uses non-moving mark-and-sweep collection. It traces the source
 filename, constants, active operand/local slots, active frame closures, and
-explicit temporary C roots. Tuple fields and closure captures are traced;
+explicit temporary C roots. Tuple fields, constructor payloads, and closure captures are traced;
 an intrusive iterative worklist handles sharing and cycles without C recursion
 or extra allocations during collection. Uninitialized slots and unused capacity
 are not roots. Initialized locals remain roots until overwritten or until their
@@ -144,7 +173,8 @@ frame returns or is replaced; the compiler does not emit last-use information.
 
 Only managed allocation can trigger collection. Aggregate operands stay on the
 operand stack until construction finishes; concatenation registers its popped
-operands as temporary roots. Frame growth, user-closure entry, returns, and
+operands as temporary roots. Unary constructor calls root their popped payload
+argument while allocating. Frame growth, user-closure entry, returns, and
 equality do not perform managed allocations. The allocating built-in
 `Int.toString` consumes only an integer. New objects are initialized and published
 to roots before the next allocation. Loading also obeys this rule. Collector tests create

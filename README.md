@@ -5,13 +5,13 @@ that emits bytecode for a portable C virtual machine.
 
 ## Status
 
-Rune compiles typed expressions, `val`/`let` bindings, user functions, lexical
-closures, recursion, and tuples to bytecode v2. It includes polymorphic type
-inference with the SML value restriction and a garbage-collected VM heap.
-Rune 0.1.0 completes M0–M4 under SML/NJ, Poly/ML, and MLton, including allocation
-stress with a 16 KiB heap. The same bytecode passes on native x86-64 Linux,
-emulated 32-bit i386 Linux, and emulated big-endian PowerPC64 Linux.
-The next milestone is M5: lists, datatypes, and pattern matching.
+Rune 0.2.0 adds user datatypes, constructor patterns, `case`, and uncaught
+`Match`/`Bind` failures to the functional subset: typed expressions, `val`/`let`,
+functions, closures, recursion, tuples, and polymorphic type inference. The C VM
+uses bytecode v3 and collects unused heap objects. M5a passes the three-host
+compiler, native/emulated VM, and sanitizer gates; [the checkpoint](docs/PLAN.md)
+records verification. Lists, multi-clause functions, exception handlers, and
+the other M5 features remain deferred.
 
 - [Implementation plan](docs/PLAN.md): milestones, architecture, builds with
   SML/NJ, Poly/ML, and MLton, and acceptance checks.
@@ -19,7 +19,8 @@ The next milestone is M5: lists, datatypes, and pattern matching.
   semantics, and exclusions.
 - [Builds and testing](docs/BUILD.md): prerequisites, host adapters, and checks.
 - [Bytecode specification](docs/BYTECODE.md): format, instructions, and VM limits.
-- [Release notes](docs/RELEASES.md): v0.1.0 scope, validation, and compatibility.
+- [Release notes](docs/RELEASES.md): v0.2.0 scope, validation, compatibility,
+  and earlier history.
 - [Contributor instructions](AGENTS.md): requirements for keeping implementation,
   language documentation, and tests in sync.
 
@@ -39,6 +40,10 @@ build/mlton/rune -o build/closures.rbc examples/closures.sml
 build/vm/rune-vm build/closures.rbc
 # 42
 
+build/mlton/rune -o build/datatypes.rbc examples/datatypes.sml
+build/vm/rune-vm build/datatypes.rbc
+# 42
+
 build/mlton/rune -o build/collection.rbc examples/collection.sml
 build/vm/rune-vm --heap-limit 16384 build/collection.rbc
 # 1
@@ -47,7 +52,7 @@ build/vm/rune-vm --heap-limit 16384 build/collection.rbc
 `make` defaults to MLton. Each host produces a `build/<host>/rune` launcher.
 The VM uses only standard C; running `.rbc` files does not require an SML compiler.
 Poly/ML uses saved states, so its native development linker library is optional.
-Bytecode v1 files must be recompiled for the v2 VM.
+Bytecode v1/v2 files must be recompiled for the v3 VM.
 
 ## Editor setup
 

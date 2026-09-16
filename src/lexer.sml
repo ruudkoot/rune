@@ -1,10 +1,10 @@
 structure Lexer =
 struct
-  datatype kind = Word of string | Number of IntInf.int | Text of string
+  datatype kind = Word of string | TypeVariable of string | Number of IntInf.int | Text of string
                 | Symbol of string | EOF
   type token = kind * Source.pos
   val deferred = String.tokens Char.isSpace
-    "rec and as with datatype abstype withtype case of exception raise handle ref while do type eqtype local open infix infixr nonfix op structure struct signature sig functor sharing where include o before nil NONE SOME LESS EQUAL GREATER Bind Match Chr Div Domain Empty Fail Option Overflow Size Span Subscript"
+    "rec and as with abstype withtype exception raise handle ref while do type eqtype local open infix infixr nonfix op structure struct signature sig functor sharing where include o before nil NONE SOME LESS EQUAL GREATER Bind Match Chr Div Domain Empty Fail Option Overflow Size Span Subscript"
   val symbols = "!%&$#+-/:<=>?@\\~`^|*"
   fun scan input =
     let
@@ -105,6 +105,9 @@ struct
               in if List.exists (fn s => s = word) deferred
                  then Source.fail p "unsupported" ("'" ^ word ^ "' is not supported")
                  else Word word end
+            else if c = #"'" then
+              let val s = consume (fn d => Char.isAlphaNum d orelse d = #"_" orelse d = #"'")
+              in if s = "'" orelse s = "''" then bad p "empty type variable" else TypeVariable s end
             else if Char.isDigit c orelse
               (c = #"~" andalso (case peek 1 of SOME d => Char.isDigit d | NONE => false))
               then number p
@@ -114,7 +117,7 @@ struct
             else if Char.contains symbols c then
               let val s = consume (Char.contains symbols)
               in if List.exists (fn x => x = s)
-                   ["~", "+", "-", "*", "^", "=", "=>", "<>", "<", "<=", ">", ">="]
+                   ["~", "+", "-", "*", "^", "=", "=>", "<>", "<", "<=", ">", ">=", "|", "->"]
                  then Symbol s
                  else Source.fail p "unsupported" ("operator '" ^ s ^ "' is not supported") end
             else Source.fail p "unsupported" ("unexpected or unsupported character '" ^ String.str c ^ "'"), p)

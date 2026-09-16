@@ -538,28 +538,28 @@
     ]
   },
   {
-    "path": "tests/reject/datatype.sml",
-    "kind": "reject",
+    "path": "tests/accept/datatype.sml",
+    "kind": "run",
     "features": [
       "data-datatypes"
     ],
     "stdout": "",
-    "stderr": "unsupported",
     "boundary": [
       "data-datatypes"
-    ]
+    ],
+    "reference": true
   },
   {
-    "path": "tests/reject/case.sml",
-    "kind": "reject",
+    "path": "tests/accept/case.sml",
+    "kind": "run",
     "features": [
       "data-datatypes"
     ],
     "stdout": "",
-    "stderr": "unsupported",
     "boundary": [
       "data-datatypes"
-    ]
+    ],
+    "reference": true
   },
   {
     "path": "tests/reject/exception.sml",
@@ -1119,6 +1119,35 @@
     "reference": true
   },
   {
+    "path": "tests/accept/value-restriction-later-use.sml",
+    "kind": "run",
+    "features": [
+      "type-poly",
+      "fn-closures",
+      "expr-let",
+      "data-datatypes"
+    ],
+    "boundary": [
+      "type-poly"
+    ],
+    "stdout": "42\n42\n",
+    "reference": true
+  },
+  {
+    "path": "tests/reject/value-restriction-later-conflict.sml",
+    "kind": "reject",
+    "features": [
+      "type-poly",
+      "data-datatypes"
+    ],
+    "boundary": [
+      "type-poly"
+    ],
+    "stdout": "",
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
     "path": "tests/accept/poly-local.sml",
     "kind": "run",
     "features": [
@@ -1396,31 +1425,37 @@
     ]
   },
   {
-    "path": "tests/reject/fn-literal-pattern.sml",
-    "kind": "reject",
+    "path": "tests/accept/fn-literal-pattern.sml",
+    "kind": "run",
     "features": [
       "fn-closures",
       "data-datatypes"
     ],
     "stdout": "",
-    "stderr": "unsupported",
     "boundary": [
       "fn-closures",
       "data-datatypes"
+    ],
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match"
     ]
   },
   {
-    "path": "tests/reject/fun-literal-pattern.sml",
-    "kind": "reject",
+    "path": "tests/accept/fun-literal-pattern.sml",
+    "kind": "run",
     "features": [
       "fn-recursion",
       "data-datatypes"
     ],
     "stdout": "",
-    "stderr": "unsupported",
     "boundary": [
       "fn-recursion",
       "data-datatypes"
+    ],
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match"
     ]
   },
   {
@@ -1720,5 +1755,747 @@
       1,
       22
     ]
+  },
+  {
+    "path": "examples/datatypes.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "decl-types",
+      "fn-recursion"
+    ],
+    "stdout": "42\n",
+    "boundary": [
+      "data-datatypes",
+      "decl-types",
+      "fn-recursion"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/datatype-types.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "decl-types",
+      "type-poly"
+    ],
+    "stdout": "42\ntrue\nyes\n",
+    "boundary": [
+      "data-datatypes",
+      "decl-types",
+      "type-poly"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/constructor-scope.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "fn-closures",
+      "bind-val"
+    ],
+    "stdout": "42\n42\n42\n",
+    "boundary": [
+      "data-datatypes",
+      "fn-closures",
+      "bind-val"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/constructor-functions.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "stdout": "42\n",
+    "boundary": [
+      "data-datatypes",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/datatype-equality.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "type-poly",
+      "expr-ops"
+    ],
+    "stdout": "yes\nyes\nyes\n",
+    "boundary": [
+      "data-datatypes",
+      "type-poly",
+      "expr-ops"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/case-order.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "expr-sequence",
+      "lit-values"
+    ],
+    "stdout": "sa42\nnul\nnegative\n",
+    "boundary": [
+      "data-datatypes",
+      "expr-sequence",
+      "lit-values"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/case-nesting.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "42\n42\nyes\n",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/case-warnings.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "42\nyes\n",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "warnings": [
+      "redundant match clause",
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/refutable-functions.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "stdout": "42\n42\n42\n",
+    "boundary": [
+      "data-datatypes",
+      "fn-closures",
+      "fn-recursion"
+    ],
+    "reference": true,
+    "warnings": [
+      "non-exhaustive match",
+      "non-exhaustive match",
+      "non-exhaustive match"
+    ]
+  },
+  {
+    "path": "tests/accept/case-coverage.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "7\n",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "reference": true
+  },
+  {
+    "path": "tests/accept/gc-datatypes.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "runtime-gc",
+      "fn-recursion"
+    ],
+    "stdout": "42\n",
+    "boundary": [
+      "data-datatypes",
+      "runtime-gc",
+      "fn-recursion"
+    ],
+    "reference": true,
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
+  },
+  {
+    "path": "tests/runtime/datatype-retained.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes",
+      "runtime-gc"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "runtime-gc"
+    ],
+    "stderr": "heap limit exceeded",
+    "vm_args": [
+      "--heap-limit",
+      "16384"
+    ]
+  },
+  {
+    "path": "tests/runtime/match-case.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "stderr": "uncaught exception Match",
+    "location": [
+      1,
+      9
+    ]
+  },
+  {
+    "path": "tests/runtime/match-fn.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "stderr": "uncaught exception Match",
+    "location": [
+      1,
+      12
+    ]
+  },
+  {
+    "path": "tests/runtime/match-curried.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "first\npartial\nsecond\n",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "warnings": [
+      "non-exhaustive match"
+    ],
+    "stderr": "uncaught exception Match",
+    "location": [
+      2,
+      1
+    ]
+  },
+  {
+    "path": "tests/runtime/bind-constructor.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Bind",
+    "location": [
+      2,
+      5
+    ]
+  },
+  {
+    "path": "tests/runtime/bind-literal.sml",
+    "kind": "runtime",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "uncaught exception Bind",
+    "location": [
+      1,
+      5
+    ]
+  },
+  {
+    "path": "tests/reject/datatype-payload.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-nominal.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-parameter-arity.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-unbound-parameter.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-duplicate-parameter.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-duplicate-constructor.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-unknown-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-escape.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/datatype-outer-escape.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/constructor-arity.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-extra-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-alias-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-pattern-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-duplicate-binding.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/case-branch-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/case-pattern-type.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-function-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-fixed-function-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-phantom-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-alias-value-restriction.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/constructor-expansive-payload.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-parameter-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "type",
+    "reference_reject_hosts": [
+      "polyml",
+      "mlton"
+    ]
+  },
+  {
+    "path": "tests/reject/datatype-recursive-equality.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "type-poly"
+    ],
+    "stderr": "type",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/reject/datatype-mutual.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-advanced"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-advanced"
+    ],
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/datatype-withtype.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes",
+      "decl-types"
+    ],
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/datatype-replication.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax"
+  },
+  {
+    "path": "tests/reject/fn-case-bar.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "unsupported"
+  },
+  {
+    "path": "tests/reject/match-analysis-limit.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "stdout": "",
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "limit"
+  },
+  {
+    "path": "tests/reject/constructor-parenthesized-head.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes"
+    ],
+    "boundary": [
+      "data-datatypes"
+    ],
+    "stderr": "syntax",
+    "reference_reject": true
+  },
+  {
+    "path": "tests/accept/int32-pattern.sml",
+    "kind": "run",
+    "features": [
+      "data-datatypes",
+      "lit-values"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "lit-values"
+    ],
+    "stdout": "yes\n"
+  },
+  {
+    "path": "tests/reject/large-int-pattern.sml",
+    "kind": "reject",
+    "features": [
+      "data-datatypes",
+      "lit-values"
+    ],
+    "boundary": [
+      "data-datatypes",
+      "lit-values"
+    ],
+    "stderr": "range"
   }
 ]

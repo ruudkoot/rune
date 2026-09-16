@@ -35,6 +35,10 @@ struct
   val DUP = 31
   val CHECK_UNIT = 32
   val CHECK_TUPLE = 33
-  val names = Vector.fromList ["HALT", "INT", "BOOL", "UNIT", "STRING", "BUILTIN", "LOAD", "STORE", "POP", "ADD", "SUB", "MUL", "DIV", "MOD", "CONCAT", "EQ", "NE", "LT", "LE", "GT", "GE", "CALL", "JUMP", "JUMP_FALSE", "ENV", "SELF", "CLOSURE", "RETURN", "TAILCALL", "TUPLE", "GET", "DUP", "CHECK_UNIT", "CHECK_TUPLE"]
-  val operands = Vector.fromList ["none", "int", "bool", "none", "constant", "builtin", "local", "local", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "target", "target", "environment", "none", "function", "none", "none", "arity", "index", "none", "none", "arity"]
+  val CONSTRUCTOR = 34
+  val IS_CON = 35
+  val PAYLOAD = 36
+  val FAIL = 37
+  val names = Vector.fromList ["HALT", "INT", "BOOL", "UNIT", "STRING", "BUILTIN", "LOAD", "STORE", "POP", "ADD", "SUB", "MUL", "DIV", "MOD", "CONCAT", "EQ", "NE", "LT", "LE", "GT", "GE", "CALL", "JUMP", "JUMP_FALSE", "ENV", "SELF", "CLOSURE", "RETURN", "TAILCALL", "TUPLE", "GET", "DUP", "CHECK_UNIT", "CHECK_TUPLE", "CONSTRUCTOR", "IS_CON", "PAYLOAD", "FAIL"]
+  val operands = Vector.fromList ["none", "int", "bool", "none", "constant", "builtin", "local", "local", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "none", "target", "target", "environment", "none", "function", "none", "none", "arity", "index", "none", "none", "arity", "constructor", "constructor", "constructor", "failure"]
 end

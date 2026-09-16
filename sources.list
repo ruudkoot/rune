@@ -5,6 +5,7 @@ src/parser.sml
 src/opcode.sml
 src/types.sml
 src/core.sml
+src/match.sml
 src/infer.sml
 src/compile.sml
 src/bytecode.sml

@@ -2,14 +2,14 @@
 
 ## Current status
 
-Rune implements the M1 expression subset and M2 functions, tuples, and polymorphic
-typing, emitting version 2 bytecode for the C VM. M3 adds garbage collection and
-bounded heap controls. Rune 0.1.0 completes the M0–M4 acceptance gates under all
-three host-built compilers. Identical bytecode passes the corpus on native
-x86-64 Linux and QEMU-emulated i386 (32-bit little-endian) and PowerPC64 (64-bit
-big-endian) Linux VMs. M4 adds portability checks without changing the language
-subset; M5 features remain deferred. The [implementation plan](PLAN.md) records
-the results and remaining platform gaps. See [BUILD.md](BUILD.md) for commands.
+Rune 0.2.0 adds the M5a datatype and pattern-matching increment to the M1–M3
+functional subset and emits bytecode v3. It supports parameterized recursive
+datatypes, constructor values, `case`, and refutable patterns in `val` and
+single-clause functions. Lists and multi-clause functions remain deferred.
+M5a passes the three-host and native/emulated VM acceptance gates. The
+[implementation plan](PLAN.md) records validation and remaining platform gaps.
+Rune 0.1.0 completed M0–M4 with bytecode v2;
+v1/v2 files must be recompiled for the v3 VM. See [BUILD.md](BUILD.md) for commands.
 
 Rune targets Standard ML ’97 syntax and semantics within an explicitly documented
 subset. The conformance references are [The Definition of Standard ML, Revised](https://smlfamily.github.io/)
@@ -29,23 +29,23 @@ passed its fixtures using Rune built by all three host compilers.
 | lex-comments | Whitespace and nested `(* ... *)` comments | implemented | First slice | ASCII source syntax initially; diagnose unterminated comments |
 | lex-names | Names and reserved tokens | implemented | First slice | Alphanumeric value names; fixed symbolic operators; recognize deferred keywords |
 | lit-values | `int`, `bool`, `string`, and `unit` values | implemented | First slice | Signed decimal integers, `true`, `false`, quoted byte strings, `()` |
-| bind-val | Sequential `val` declarations and lexical names | implemented | First slice | Variable, wildcard, unit, and tuple patterns; shadowing; no declaration `and` |
+| bind-val | Sequential `val` declarations and lexical names | implemented | First slice / M5a | Variable, wildcard, unit, tuple, literal, and constructor patterns; Bind on failure; no declaration and |
 | expr-let | `let ... in ... end` and parentheses | implemented | First slice | Sequential local declarations and expression bodies |
 | expr-if | `if ... then ... else ...` | implemented | First slice | Boolean condition; branches have the same type |
 | expr-ops | Fixed integer, boolean, and string operators | implemented | First slice | Operator inventory below; no real/word overloading or user fixity |
 | expr-sequence | Expression sequencing | implemented | First slice | Parenthesized or `let` body sequences; evaluate left to right |
 | basis-output | `print`, `Int.toString`, `not`, `~` | implemented | First slice | Only the listed signatures; built-in values can be aliased, selected by if, and applied |
 | type-static | Static type checking | implemented | First slice | Reject ill-typed programs before producing bytecode |
-| fn-closures | `fn`, application, lexical closures, currying | implemented | v0.1 / M2 | Irrefutable parameters, one match clause; functions are first-class |
-| fn-recursion | Recursive `fun` declarations | implemented | v0.1 / M2 | Single clause; one function per declaration; curried parameters; tail calls |
-| data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2 | Arity at least two; variable, wildcard, unit, and nested tuple patterns |
-| type-poly | Let polymorphism and equality types | implemented | v0.1 / M2 | Hindley–Milner inference, occurs check, SML value restriction, equality constraints |
+| fn-closures | `fn`, application, lexical closures, currying | implemented | v0.1 / M2; M5a | One match clause; refutable parameters; first-class functions and constructors |
+| fn-recursion | Recursive `fun` declarations | implemented | v0.1 / M2; M5a | Single clause; one function per declaration; curried arguments gathered before matching; tail calls |
+| data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2; M5a | Arity at least two; nested patterns including constructors and literals |
+| type-poly | Let polymorphism and equality types | implemented | v0.1 / M2; M5a | Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints |
 | runtime-gc | Garbage collection and bounded heap | implemented | v0.1 / M3 | Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement |
-| data-datatypes | Lists, datatypes, constructor patterns, `case` | deferred | Deferred / M5 | Includes user constructors, multi-clause matches, `Match`, and `Bind` |
+| data-datatypes | Lists, datatypes, constructor patterns, `case` | partial | M5a | Parameterized recursive datatypes, constructors, case, Match/Bind, match warnings; lists and multi-clause functions deferred |
 | control-exceptions | `exception`, `raise`, `handle` | deferred | Deferred / M5 | Runtime arithmetic failures exist earlier; user exception handling does not |
 | data-mutation | References, assignment, `while`, arrays, vectors | deferred | Deferred / M5 | No user-visible mutable storage in v0.1 |
 | data-records | Records, selectors, flexible record patterns | deferred | Deferred / M5 | Tuples arrive earlier; other record syntax is rejected |
-| decl-types | Type annotations and explicit type declarations | deferred | Deferred / M5 | Includes explicit type-variable syntax, `type`, `eqtype`, `abstype`, and `withtype` where applicable |
+| decl-types | Type annotations and explicit type declarations | partial | M5a | Type parameters and payload types in datatype declarations; annotations, type, eqtype, abstype, withtype deferred |
 | decl-advanced | Remaining declaration and fixity forms | deferred | Deferred / M5 | `and`, explicit `val rec`, `local`, `open`, `infix`, `infixr`, `nonfix`, and `op` |
 | modules | Structures, signatures, functors, sharing, ascription | deferred | Deferred / M5 | Built-in `Int.toString` is available without user-defined modules |
 | numeric-more | Reals, words, chars, target `IntInf`, other literal forms | deferred | Deferred / M5 | Host `IntInf` may be used internally without exposing it in Rune |
@@ -54,17 +54,17 @@ passed its fixtures using Rune built by all three host compilers.
 
 ## Program model
 
-A file is a sequence of `val` and `fun` declarations, optionally separated by
-semicolons; there is no implicit interactive `it` binding. Evaluate initializers in source
-order. `val x = e` evaluates `e` using the preceding environment and then binds
+A file is a sequence of `val`, `fun`, and `datatype` declarations, optionally
+separated by semicolons; there is no implicit interactive `it` binding. Evaluate
+initializers in source order. `val x = e` evaluates `e` using the preceding environment and then binds
 `x`; `val _ = e` evaluates and discards its value. `let` introduces a lexical scope.
 The program finishes after its last declaration. No `main` function is required.
 
 Expressions include the listed literals, bound names, parentheses, `let`, `if`,
-tuples, functions, the fixed operators, sequencing, and the built-in calls below. Parse the
-whole file; trailing unrecognized tokens are errors. Applications can call the
-four built-in function values below and user closures, including aliases or values
-selected by `if`. Function application is unary and associates to the left;
+tuples, functions, `case`, the fixed operators, sequencing, and the built-in calls
+below. Parse the whole file; trailing unrecognized tokens are errors. Applications can call the
+four built-in function values below, user closures, and unary constructors,
+including aliases or values selected by `if`. Function application is unary and associates to the left;
 `fun f x y = e` defines a curried function, so `f x` returns a closure.
 A recursive `fun` binding is in scope within its own body. Plain `val` remains
 non-recursive. Functions can escape their defining scope and retain captured values.
@@ -72,7 +72,8 @@ non-recursive. Functions can escape their defining scope and retain captured val
 Source syntax initially uses ASCII letters/digits and SML alphanumeric identifier
 conventions, including underscores and primes after the first character. `_` is
 a wildcard, not a value name. Other symbolic identifiers, leading underscores
-in names, explicit type variables, and Unicode identifiers are unsupported.
+in names and Unicode identifiers are unsupported. Explicit type variables are
+accepted only in datatype parameters and payload types.
 Qualified alphanumeric names are lexed, but only the predeclared `Int.toString` binding is available.
 
 String literals represent bytes. Supported SML escapes include backslash,
@@ -82,14 +83,55 @@ malformed/out-of-range escapes, raw control bytes, and unterminated strings.
 UTF-8 text can be carried as bytes; Unicode identifier processing is
 outside the initial subset.
 
+## Datatypes and matching (M5a)
+
+One `datatype` declaration introduces a fresh nominal type constructor and
+nullary or unary value constructors. Parameters may be ordinary (`'a`) or
+equality (`''a`) variables. Payload types support named types, parameters,
+postfix type application, products, arrows, and parentheses. Declarations may
+be recursive in their own type name, but declaration `and`, replication, and
+`withtype` remain unsupported. A locally introduced type cannot escape its
+`let`, including through an outer unification variable.
+
+Constructor status belongs to the lexical value binding. A constructor name in
+a pattern tests that constructor; a normal value name binds a variable. A `val`
+alias of a constructor is an ordinary value, not another pattern constructor.
+Direct constructor application to a non-expansive argument is non-expansive;
+application through an ordinary alias remains expansive. Datatype equality is
+nominal and structural: the type constructor must admit equality and all its
+actual parameters must admit equality, including unused parameters. Recursive
+datatype equality is the greatest solution consistent with its payloads.
+
+`case e of p => e | ...` evaluates its scrutinee once and tries clauses in source
+order. Patterns include constructors, integer/string/boolean literals, and the
+existing variable, wildcard, unit, and tuple forms. Failed `val` patterns raise
+uncaught `Bind`; exhausted `case`, `fn`, and `fun` matches raise uncaught `Match`.
+Both terminate with VM status 3 and a source location. Single-clause curried
+`fun` collects all arguments before matching its parameters. Match analysis
+warns about redundant clauses and non-exhaustive matches while compiling them;
+non-exhaustive `val` warns only inside `let`. Analysis is bounded by 1,000,000
+steps and depth 512, with a `limit` diagnostic on exhaustion.
+
+Lists, predeclared option/order constructors, multi-clause functions, general
+type annotations, and exception handlers remain deferred. These choices follow
+the [SML Definition](https://smlfamily.github.io/sml97-defn.pdf), sections 4.7,
+4.10–4.11 and Appendix A; the reference fixtures check the observable behavior.
+
+Reference checks account for two observed SML/NJ 110.79 differences: it accepts
+escaping local datatypes and ignores explicit equality constraints on datatype
+parameters in the rejection probes. Poly/ML 5.7.1 and MLton 20210117 reject these
+cases. They have explicit per-host reference coverage; Rune rejects them under
+all three compiler builds. This does not weaken Rune's cross-host gate.
+
 ## Implemented grammar
 
 The grammar below omits comments and whitespace. `name` is an alphanumeric name
 starting with an ASCII letter and continuing with ASCII letters, digits, `_`, or
 `'`. `qualified-name` consists of such names separated by dots. Reserved SML
 keywords cannot be names. Rune recognizes deferred keywords and rejects them with
-an `unsupported` diagnostic. Unknown qualified names also report `unsupported`;
-unknown unqualified names report `scope`.
+an `unsupported` diagnostic. Unknown qualified value names report `unsupported`;
+unknown unqualified value names report `scope`. Unknown payload type names report
+`type`.
 
 Deferred predefined infix names (`o`, `before`) and constructors (`nil`, `NONE`,
 `SOME`, `LESS`, `EQUAL`, `GREATER`, `ref`, and the standard exception constructors)
@@ -100,16 +142,28 @@ without changing SML's binding semantics. In particular, `val nil = 1` is reject
 ```text
 program      = { declaration | ";" } EOF
  declaration = "val" pattern "=" expression
-             | "fun" name pattern { pattern } "=" expression
- pattern     = name | "_" | "()" | "(" pattern ")"
-             | "(" pattern "," pattern { "," pattern } ")"
+             | "fun" name atomic-pattern { atomic-pattern } "=" expression
+             | "datatype" type-parameters name "=" constructor { "|" constructor }
+ type-parameters = [ type-variable | "(" type-variable { "," type-variable } ")" ]
+ constructor = name [ "of" type ]
+ type        = type-product [ "->" type ]
+ type-product = type-application { "*" type-application }
+ type-application = type-atom { name }
+ type-atom   = type-variable | name | "(" type ")"
+             | "(" type "," type { "," type } ")" name
+ pattern     = atomic-pattern | name atomic-pattern
+ atomic-pattern = name | "_" | "()" | decimal-integer | string | "true" | "false"
+             | "(" pattern ")" | "(" pattern "," pattern { "," pattern } ")"
+ match       = pattern "=>" expression { "|" pattern "=>" expression }
  expression  = "if" expression "then" expression "else" expression
              | "fn" pattern "=>" expression
+             | "case" expression "of" match
              | boolean-or
  boolean-or  = boolean-and [ "orelse" expression ]
  boolean-and = infix-expression [ "andalso" boolean-rhs ]
  boolean-rhs = "if" expression "then" expression "else" expression
              | "fn" pattern "=>" expression
+             | "case" expression "of" match
              | boolean-and
  infix-expression = application { infix-operator application }
  application = atom { atom }
@@ -123,19 +177,31 @@ program      = { declaration | ";" } EOF
 ```
 
 Apply the precedence table below when grouping `infix-expression`; boolean
-forms associate to the right. An `if` or `fn` in the right operand of a boolean
-form extends through its complete branches or body. Application arguments are
-atoms: parenthesize an `if` or `fn` argument. Empty `()` is a unit expression and
-a unit pattern; `val () = e` requires a unit initializer. A sequence needs an
+forms associate to the right. An `if`, `fn`, or `case` in a boolean right operand extends through its complete branches or body. Application arguments are
+atoms: parenthesize an `if`, `fn`, or `case` argument. Empty `()` is a unit
+expression and a unit pattern; `val () = e` requires a unit initializer. A sequence needs an
 expression after each semicolon. The `let` declaration section may be empty.
 
 Signed literals require `~` adjacent to digits; separated `~` uses ordinary
 application. Symbolic tokens use maximal munch: `1 + ~2` is accepted; `1+~2`
 contains the unsupported symbolic token `+~`. Symbolic identifier bindings,
-`op`, literal/constructor patterns, annotations, and declaration `and` are deferred.
+`op`, expression annotations, and declaration `and` are deferred.
 Each `fn` or `fun` has one clause; `fun` declares one function at a time.
 Duplicate names within a pattern or across one `fun` parameter list are errors.
-Nested `fn` expressions may shadow an earlier parameter.
+Nested `fn` expressions may shadow an earlier parameter. Constructor application
+patterns in a `fun` parameter must be parenthesized, e.g. `fun f (C x) y = x`.
+A match body extends to the right; an unparenthesized nested `case` owns following
+`|` clauses. A following `|` belonging to `fn`/`fun` is rejected as unsupported
+multi-clause syntax. Parenthesize a nested match/function when an outer `case`
+should consume the next `|`.
+
+In payload types, postfix type application binds more tightly than products,
+which bind more tightly than right-associative arrows. Type applications must
+have the declared arity. Parameters start with `'` or `''` and continue with
+ASCII letters/digits, underscores or primes; a lone `'` or `''` is rejected.
+Duplicate parameters, duplicate constructors, unbound parameters, and unknown
+type names are errors. Names of deferred predefined constructors remain rejected
+even in datatype declarations; qualified constructors and type names are deferred.
 
 ## Operators and built-ins
 
@@ -143,7 +209,7 @@ Implemented precedence, highest first; parentheses override grouping:
 
 | Form | Associativity / behavior | Types in the subset |
 | --- | --- | --- |
-| Application | Left-associative; built-ins and user closures | If `f : 'a -> 'b` and `x : 'a`, then `f x : 'b` |
+| Application | Left-associative; built-ins, user closures, and constructors | If `f : 'a -> 'b` and `x : 'a`, then `f x : 'b` |
 | `*`, `div`, `mod` | Left-associative; SML precedence 7 | `int * int -> int` |
 | `+`, `-`, `^` | Left-associative; SML precedence 6 | Integer arithmetic; string concatenation for `^` |
 | `=`, `<>`, `<`, `<=`, `>`, `>=` | Left-associative; SML precedence 4 | Equality as below; ordering for integers only |
@@ -157,7 +223,8 @@ ordinary function calls. Their grouping with `if` and `let` follows the grammar
 above. A `fn` body extends as far to the right as the grammar permits.
 
 Equality accepts matching scalar types (`int`, `bool`, `string`, `unit`),
-structural tuples, and polymorphic equality with equality-type constraints.
+structural tuples and datatypes, and polymorphic equality with equality-type
+constraints.
 Equality on functions is a static error. String ordering is deferred
 even though string equality is included. Ordinary operators and built-ins obey
 lexical binding/shadowing rules within accepted syntax; they are not unshadowable
@@ -188,8 +255,8 @@ compiler's Basis from a compiled Rune program.
   sign when nonzero. Zero divisors raise `Div`. The minimum integer divided by
   `~1` raises `Overflow`; its remainder is zero. These choices follow the
   [Basis integer operations](https://smlfamily.github.io/Basis/integer.html).
-- **Runtime exceptions in v0.1:** `Div` and `Overflow` terminate with an uncaught
-  exception diagnostic and a nonzero exit status. Source-level exception names,
+- **Runtime exceptions:** `Div`, `Overflow`, `Match`, and `Bind` terminate with an
+  uncaught exception diagnostic and status 3. Source-level exception names,
   `raise`, and `handle` are deferred. Bytecode/resource errors are VM failures,
   not user-catchable SML exceptions.
 - **Strings/output:** immutable byte strings, length-aware operations, embedded
@@ -202,21 +269,32 @@ compiler's Basis from a compiled Rune program.
   body; its completed binding may be generalized. No polymorphic recursion.
   Tail-position calls replace the current VM frame, including calls through aliases
   and higher-order parameters. Calls in `if` branches, final sequence expressions,
-  and `let` bodies preserve tail position. Ordinary calls use explicit VM frames.
+  `case` clause bodies, and `let` bodies preserve tail position. Ordinary calls use
+  explicit VM frames.
 - **Inference in M2:** infer types; generalize eligible non-expansive bindings
   according to the SML ’97 value restriction. Literals, names, `fn`, and tuples
-  of non-expansive expressions are eligible; applications, conditionals, sequences,
+  of non-expansive expressions are eligible. M5a also admits direct constructor
+  applications to non-expansive arguments; other applications, conditionals, sequences,
   and `let` expressions are expansive. Expansive bindings keep shared monomorphic
-  variables that later uses can constrain. Variables shared with the surrounding
-  scope are never generalized. Unification performs occurs checks and propagates
-  equality constraints through tuples and type schemes.
-- **Patterns in M2:** only irrefutable variable, wildcard, unit, and tuple patterns.
-  Reject duplicate bound names; destructuring must agree with the inferred type.
-  Literal/constructor patterns and match failure semantics arrive with M5.
+  variables that later uses can constrain. An unresolved type at an expansive
+  binding is not itself an error; later uses must agree on its monomorphic type.
+  The [later-use regression](../tests/accept/value-restriction-later-use.sml) covers
+  acceptance, and [conflicting uses](../tests/reject/value-restriction-later-conflict.sml)
+  must be rejected. Variables shared with the surrounding scope are never
+  generalized. Unification performs occurs checks and propagates
+  equality constraints through tuples, datatype parameters, and type schemes.
+- **Patterns:** variable, wildcard, unit, tuple, integer/string/boolean literal,
+  and constructor patterns. Reject duplicate bound names; destructuring must
+  agree with the inferred type. Refutable bindings and matches follow the M5a
+  semantics above. Warnings go to stderr and do not change successful exit status.
+  Failures point to the `case` expression, `fn` parameter pattern, `fun`
+  declaration, or failed `val` pattern respectively.
 - **Limits:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
   nesting, pattern nesting, checked expression-tree depth, and `fun` parameter
-  count limited to 256. At most 65,536 binding identities and fresh type variables;
-  inference is limited to 1,000,000 type traversal steps per compilation.
+  count limited to 256; payload type parsing and checked type-expression depth
+  are also limited to 256. At most 65,536 binding identities, datatype identities,
+  constructors, and fresh type variables; inference is limited to 1,000,000 type traversal steps per compilation. Each
+  match analysis is limited to 1,000,000 steps and recursion depth 512.
   Functions, string constants, total instructions, locals/captures per function,
   tuple arity, active local slots, VM operands, and active frames are capped at
   65,536. Each string is at most 1 MiB; bytecode at most 16 MiB; the default managed
@@ -225,12 +303,14 @@ compiler's Basis from a compiled Rune program.
   diagnostics. The heap ceiling does not include bytecode storage, VM stacks,
   or the C allocator's internal overhead.
 - **Memory in M3:** non-moving mark-and-sweep collection reclaims unreachable
-  strings, tuples, and closures during execution. Tail-recursive programs can
+  strings, tuples, closures, and unary constructor payloads during execution.
+  Tail-recursive programs can
   allocate more than the heap ceiling over time when their retained values fit.
   Constants and source metadata remain live; initialized local slots retain
   values until their frame is released, replaced by a tail call, or the slot is
   overwritten. This includes top-level bindings for the lifetime of the program;
-  there is no last-use analysis. A retained graph or single allocation that
+  match temporaries and bindings in failed clauses also follow this rule. There
+  is no last-use analysis. A retained graph or single allocation that
   cannot fit after collection fails with `heap limit exceeded` and status 3.
   The VM option `--heap-limit BYTES` lowers the ceiling (1 through 67,108,864
   bytes); `--gc-stress` collects before each managed allocation. These VM controls
@@ -280,6 +360,19 @@ val _ = print (Int.toString (loop (100000, 0)) ^ "\n")
 ```
 <!-- example:examples/collection.sml:end -->
 
+### M5a datatypes: expected output `42` followed by a newline
+
+<!-- example:examples/datatypes.sml:start -->
+```sml
+datatype 'a tree = Leaf of 'a | Node of 'a tree * 'a tree
+fun sum tree =
+  case tree of
+    Leaf n => n
+  | Node (left, right) => sum left + sum right
+val _ = print (Int.toString (sum (Node (Leaf 20, Leaf 22))) ^ "\n")
+```
+<!-- example:examples/datatypes.sml:end -->
+
 ### Required rejections
 
 ```sml
@@ -290,7 +383,7 @@ val x = 2147483648               (* Rune integer literal out of range *)
 ```
 
 The test corpus covers these cases individually and rejects deferred forms such
-as `datatype`, `case`, `handle`, `ref`, and `structure`. It also rejects function
+as lists, multi-clause functions, `handle`, `ref`, and `structure`. It also rejects function
 equality (including functions inside tuples), self-application, polymorphic
 recursion, duplicate pattern names, and invalid generalization of expansive values.
 

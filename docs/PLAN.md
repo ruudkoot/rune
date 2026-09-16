@@ -1,8 +1,8 @@
 # Rune implementation plan
 
-Status: M0–M4 complete. M5 remains deferred.
+Status: M0–M4 and M5a complete. Lists and the remaining M5 increments are deferred.
 
-Next session: [M5 datatypes and matching design](#next-session--m5-datatypes-and-matching-design).
+Next session: [M5b lists](#next-session--m5b-lists).
 
 ## Implementation checkpoint — 2026-09-16
 
@@ -295,8 +295,9 @@ returns, tuples, and halt. Do not implement every later opcode in M1.
 
 ## 6. Milestones and acceptance gates
 
-M0–M4 have passed their acceptance gates. M5 remains pending; complete and
-document each new feature gate before claiming implementation.
+M0–M4 and M5a have passed their acceptance gates. The remaining M5 increments
+are pending; complete and document each new feature gate before claiming
+implementation.
 
 ### M0 — Host builds and documentation foundation (complete)
 
@@ -369,7 +370,9 @@ and [BUILD.md](BUILD.md#portability-checks) for commands and dependencies.
 Recommended order, each with its own language documentation and acceptance gate:
 
 1. Lists and user datatypes; constructor patterns, `case`, multi-clause matches,
-   `Match`/`Bind`, and match diagnostics.
+   `Match`/`Bind`, and match diagnostics. M5a completes user datatypes, `case`,
+   refutable patterns, failures, and diagnostics; lists and multi-clause functions
+   follow as M5b and M5c.
 2. Exceptions and handlers, including exception identity and stack unwinding.
 3. References, assignment, `while`, arrays/vectors, and their interaction with
    equality, mutation, garbage collection, and the value restriction.
@@ -383,25 +386,87 @@ Recommended order, each with its own language documentation and acceptance gate:
    library dependencies. Then bootstrap from an external host and compare the
    behavior and emitted program bytecode across successive bootstrap stages.
 
-#### Next session — M5 datatypes and matching design
+#### M5a — Datatypes and case (complete)
 
-Start with a bounded design for the first M5 slice, then implement it in
-increments with their own acceptance gates:
+Rune 0.2.0 completes this increment. One datatype per declaration may have
+ordinary or equality type parameters, self-recursion, nullary constructors, and
+unary constructors with scalar, function, tuple, or datatype payloads. Top-level
+and `let` declarations use fresh nominal type identities. Constructor status
+follows lexical bindings; ordinary aliases remain values. The type checker
+handles datatype equality, constructor applications under the value restriction,
+and local type escape through results or surrounding type variables.
 
-1. Specify list/datatype syntax, constructor scope and identity, type parameters,
-   constructor patterns, `case`, and multi-clause `fn`/`fun`. Define the initial
-   exclusions explicitly in LANGUAGE.md and the feature manifest.
-2. Design constructor representation, GC tracing, structural equality, matching
-   evaluation order, and uncaught `Match`/`Bind` behavior. Record bytecode changes
-   and compatibility consequences in BYTECODE.md before implementing the format.
-3. Add positive examples and type/pattern rejection or boundary fixtures for
-   each increment, with reference-SML cases in the common supported subset.
-4. Run `make test-all` and `make test-portability` for compiler/runtime changes;
-   exercise new heap layouts under GC stress and sanitizers. Mark a feature
-   implemented only after all three host builds pass its documented gate.
+`case` supports ordered clauses, nested constructor/tuple patterns, and
+integer/boolean/string patterns. The same patterns work in `val` and
+single-clause `fn`/`fun`. Curried `fun` gathers all arguments before matching.
+Uncaught `Match` and `Bind` include source positions and exit with VM status 3.
+Non-exhaustive and redundant matches produce warnings while compiling; top-level
+`val` suppresses non-exhaustiveness reports. Pattern-matrix analysis has explicit
+work/depth limits and shares constructor-family metadata.
 
-The current toolchain is sufficient to begin this work. Exception handlers,
-mutation, records, modules, and broader Basis support remain later M5 work.
+Bytecode v3 preserves the v2 section layout and opcodes 0–33, and adds
+CONSTRUCTOR, IS_CON, PAYLOAD, and FAIL. Constructor calls root payloads across
+allocation; the collector and iterative equality engine handle the new values.
+The loader and disassembler reject v1/v2 and unknown versions. Compiler and VM
+version strings agree; existing source programs must be recompiled.
+[LANGUAGE.md](LANGUAGE.md) and [BYTECODE.md](BYTECODE.md) define the full boundary.
+
+Acceptance checkpoint — 2026-09-16:
+
+- `make test-all`: 181 fixtures under each of SML/NJ, Poly/ML, and MLton, normal
+  execution and GC stress, identical bytecode and compiler diagnostics, canonical
+  disassembly, and CLI/atomic-output checks. The 47 reference programs agree
+  under all three reference compilers.
+- Reference rejection checks pass for 36 cases under SML/NJ and 39 under Poly/ML
+  and MLton. Three explicit manifest exceptions cover local datatype escape
+  and equality-constrained datatype parameters, which SML/NJ 110.79 accepts.
+  All three host-built Rune compilers reject every Rune rejection fixture;
+  those reference differences never waive Rune's portability requirements.
+- `make test-portability`: each host's identical bytecode runs on native x86-64,
+  QEMU i386 (32-bit little-endian), and QEMU PowerPC64 (64-bit big-endian).
+  Output, exit status, and full runtime diagnostics agree. Each VM passes 622
+  malformed-bytecode/runtime fixtures in each mode plus heap/CLI checks.
+- Native and cross-built collector harnesses pass temporary payload roots,
+  sharing/cycles, 100,000-object constructor and closure chains, iterative deep
+  equality, stale slots, and exact heap accounting. Constructor-heavy programs
+  pass with a 16 KiB heap; retained-heap failures remain source-located.
+- `make CC=clang HOST=polyml test`, GCC and Clang `test-sanitize` with ASan/UBSan
+  and leak detection, and `make test-builds` pass. Build checks cover all three
+  hosts, spaced paths, incremental rebuilds, and intentional compilation failures.
+- `make check-docs`, Python syntax checks, `mlton -stop tc rune.mlb`, and
+  `git diff --check` pass. Additional manual checks compare 100 seeded boolean
+  pattern matrices with exhaustive enumeration and compile/run a datatype with
+  4,000 constructors and a 200-clause match.
+
+The installed Ubuntu 24.04 toolchain was sufficient; no packages or system
+settings changed. SML/NJ and leak detection used the documented execution outside
+the sandbox. Cross targets ran under QEMU. Native PowerPC hardware, 32-bit
+big-endian targets, ARM64, other OSes, and CI for this uncommitted change remain
+unverified. This checkpoint reports local acceptance, not a new CI run.
+
+`data-datatypes` and `decl-types` remain partial feature rows: the M5a scope is
+complete, while lists, multi-clause functions, general annotations, `type`,
+mutual declarations, replication, and `withtype` remain excluded. The executable
+[datatype example](../examples/datatypes.sml) prints `42` followed by a newline.
+
+#### Next session — M5b lists
+
+Add the predeclared polymorphic `list` type, `nil`, fixed infix `::`, and list
+expression/pattern syntax using the datatype and matching machinery. Specify
+scope, precedence, constructor status, equality, and value-restriction behavior
+before changing the lexer or initial environments. Keep broader List Basis
+functions and user fixity outside this increment unless separately scoped.
+
+Add empty/nonempty and nested lists, polymorphic list processing, equality,
+ordering of element evaluation, small-heap collection, and relevant typing and
+syntax rejections. Update the existing `data-datatypes` boundary and move the
+current `nil` rejection to appropriate accepted and excluded-form coverage.
+Run the same three-host, portability, sanitizer, and documentation gates; decide
+whether the existing v3 representation needs any compatibility change.
+
+M5c then adds multi-clause `fn`/`fun`, including consistent parameter counts and
+curried matching time. Exception handlers, mutation, records, modules, and broader
+Basis support remain later M5 work.
 
 ## 7. Validation strategy
 
@@ -459,7 +524,9 @@ mechanical checks:
 These checks detect stale tables, examples, and missing coverage. They cannot
 prove prose matches every semantic detail; review must still compare the behavior
 change with its documentation. The current contract marks the ten M1, four M2, and one M3
-feature rows implemented after their three-host checks; later rows remain deferred.
+feature rows implemented after their three-host checks. M5a extends these rows
+and marks `data-datatypes` and `decl-types` partial with explicit exclusions;
+other later rows remain deferred.
 
 ## 9. Main risks and decisions
 
@@ -472,5 +539,6 @@ feature rows implemented after their three-host checks; later rows remain deferr
 | Documentation overstates compliance | Separate current/planned states, feature IDs, executable examples, required doc updates |
 | Packaging differences make a host unusable | Doctor checks, configurable tools, saved-state Poly/ML path, tested SML/NJ argument handling |
 
-The next milestone is M5, beginning with the datatype and pattern-matching
-design above. Keep the three-host and VM portability gates as the language grows.
+The next increment is M5b lists, building on the completed M5a datatype and
+pattern-matching support. Keep the three-host and VM portability gates as the
+language grows.
