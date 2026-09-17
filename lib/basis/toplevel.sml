@@ -1,0 +1,26 @@
+(* Top-level environment aliases. *)
+val op @ = List.@
+val op ^ = String.^
+val app = List.app
+val map = List.map
+val foldl = List.foldl
+val foldr = List.foldr
+val rev = List.rev
+val length = List.length
+val null = List.null
+val hd = List.hd
+val tl = List.tl
+val size = String.size
+val str = String.str
+val concat = String.concat
+val implode = String.implode
+val explode = String.explode
+val substring = String.substring
+val ord = Char.ord
+val chr = Char.chr
+val real = Real.fromInt
+val floor = Real.floor
+val ceil = Real.ceil
+val round = Real.round
+val trunc = Real.trunc
+val vector = Vector.fromList

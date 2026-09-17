@@ -7,12 +7,15 @@ struct
   (* Items of an infix expression/pattern before fixity resolution. *)
   datatype 'a item = Atom of 'a | Oper of string * Fixity.fixity * Source.span
 
-  fun parseFile (file : Source.file) : program =
+  (* Parse a file starting from the given fixity environment; returns the
+     program and the fixity environment in effect at the end (so that infix
+     declarations carry over to later files of the same program). *)
+  fun parseFileWith (file : Source.file, initialFixity : Fixity.env) : program * Fixity.env =
     let
       val toks = Lexer.tokenize file
       val ntoks = Vector.length toks
       val pos = ref 0
-      val fixenv : Fixity.env ref = ref Fixity.initial
+      val fixenv : Fixity.env ref = ref initialFixity
 
       fun tokAt i = if i < ntoks then Vector.sub (toks, i) else Vector.sub (toks, ntoks - 1)
       fun peek () = #1 (tokAt (!pos))
@@ -763,7 +766,12 @@ struct
                         val () = expect RPAREN
                         val first = PTuple ([a, b], spanFrom start)
                         fun rest acc = if startsAtPat (peek ()) then rest (parseAtPat () :: acc) else List.rev acc
-                      in SOME (s, first :: rest []) end
+                      in
+                        (* `(p1 op p2) op2 p3` is the infix form with a parenthesized first argument *)
+                        case peek () of
+                          ID s2 => if isInfixId s2 then NONE else SOME (s, first :: rest [])
+                        | _ => SOME (s, first :: rest [])
+                      end
                     else NONE
                 | _ => NONE
               end
@@ -801,6 +809,8 @@ struct
 
       val program = parseDecs ()
     in
-      if peek () <> EOF then err ("unexpected '" ^ toString (peek ()) ^ "'") else program
+      if peek () <> EOF then err ("unexpected '" ^ toString (peek ()) ^ "'") else (program, !fixenv)
     end
+
+  fun parseFile (file : Source.file) : program = #1 (parseFileWith (file, Fixity.initial))
 end

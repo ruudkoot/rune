@@ -523,13 +523,13 @@ struct
          | NONE => err (sp, "unbound structure: " ^ longidToString (path, sname)))
 
   (* ------------------------------------------------------------------ *)
+  (* Elaborate top-level declarations, extending env in place. *)
+  fun elabTop (env : env ref, decs : dec list) : unit =
+    List.app (fn d =>
+                let val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
+                in resolvePending (); env := plus (!env, delta) end) decs
+
   fun elabProgram (decs : dec list) : env =
-    let
-      val env = ref Env.initial
-    in
-      List.app (fn d =>
-                  let val delta = elabDec (!env, 0, true, ref StringMap.empty, d)
-                  in resolvePending (); env := plus (!env, delta) end) decs;
-      !env
-    end
+    let val env = ref Env.initial
+    in elabTop (env, decs); !env end
 end

@@ -1,0 +1,18 @@
+# Basis library files compiled (in this order) before every program.
+# Lines starting with # are comments. Paths are relative to this directory.
+general.sml
+bool.sml
+option.sml
+list.sml
+listpair.sml
+int.sml
+word.sml
+char.sml
+string.sml
+real.sml
+array.sml
+vector.sml
+textio.sml
+os.sml
+commandline.sml
+toplevel.sml
