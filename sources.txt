@@ -1,7 +1,3 @@
-# Ordered list of Rune compiler sources.
-# Every SML build file (MLton .mlb, SML/NJ .cm, Poly/ML use-script) is
-# generated from this list by scripts/gen-build-files.sh -- edit only this file.
-# Files must contain only structure/signature/functor declarations.
 src/util/ordmap.sml
 src/util/source.sml
 src/util/error.sml
@@ -13,13 +9,6 @@ src/frontend/fixity.sml
 src/frontend/parser.sml
 src/elab/unify.sml
 src/elab/env.sml
-src/elab/elaborate.sml
-src/backend/opcodes.sml
 src/backend/prims.sml
-src/core/lambda.sml
-src/core/matchcomp.sml
-src/core/translate.sml
-src/backend/codegen.sml
-src/backend/emit.sml
-src/driver/options.sml
+src/elab/elaborate.sml
 src/driver/main.sml
