@@ -1,0 +1,125 @@
+# Rune VM primitives. Single source of truth.
+# Format:  NAME  ARITY  TYPE  DESCRIPTION
+# Primitive numbers are assigned in order starting at 0 by scripts/gen-opcodes.sh.
+# TYPE is documentation only (the prelude supplies the SML type via `_prim "name" : ty`).
+# Primitives that return an option rely on the prelude declaring
+#   datatype 'a option = NONE | SOME of 'a   (NONE = tag 0, SOME = tag 1).
+# Changing this file requires updating docs/bytecode.md (checked by make check-docs).
+
+# --- polymorphic ---
+poly_eq          2  'a * 'a -> bool          Structural equality (refs/arrays by identity).
+ptr_eq           2  'a * 'a -> bool          Identity comparison of heap values.
+
+# --- int (64-bit, Overflow checked) ---
+int_add          2  int * int -> int         Addition; raises Overflow.
+int_sub          2  int * int -> int         Subtraction; raises Overflow.
+int_mul          2  int * int -> int         Multiplication; raises Overflow.
+int_div          2  int * int -> int         Floor division; raises Div, Overflow.
+int_mod          2  int * int -> int         Floor modulus; raises Div.
+int_quot         2  int * int -> int         Truncating division; raises Div, Overflow.
+int_rem          2  int * int -> int         Truncating remainder; raises Div.
+int_neg          1  int -> int               Negation; raises Overflow.
+int_abs          1  int -> int               Absolute value; raises Overflow.
+int_lt           2  int * int -> bool        Less than.
+int_le           2  int * int -> bool        Less or equal.
+int_gt           2  int * int -> bool        Greater than.
+int_ge           2  int * int -> bool        Greater or equal.
+int_to_string    1  int -> string            Decimal rendering with ~ for negative.
+int_from_string  1  string -> int option     Parse an SML integer literal (decimal).
+int_to_char      1  int -> char              Raises Chr if out of range 0..255.
+int_to_real      1  int -> real              Conversion.
+
+# --- word (64-bit unsigned) ---
+word_add         2  word * word -> word      Wrapping addition.
+word_sub         2  word * word -> word      Wrapping subtraction.
+word_mul         2  word * word -> word      Wrapping multiplication.
+word_div         2  word * word -> word      Division; raises Div.
+word_mod         2  word * word -> word      Modulus; raises Div.
+word_lt          2  word * word -> bool      Unsigned less than.
+word_le          2  word * word -> bool      Unsigned less or equal.
+word_gt          2  word * word -> bool      Unsigned greater than.
+word_ge          2  word * word -> bool      Unsigned greater or equal.
+word_andb        2  word * word -> word      Bitwise and.
+word_orb         2  word * word -> word      Bitwise or.
+word_xorb        2  word * word -> word      Bitwise xor.
+word_notb        1  word -> word             Bitwise complement.
+word_lsl         2  word * word -> word      Logical shift left.
+word_lsr         2  word * word -> word      Logical shift right.
+word_to_int      1  word -> int              Raises Overflow if it does not fit.
+word_to_int_x    1  word -> int              Two's complement reinterpretation.
+word_from_int    1  int -> word              Two's complement reinterpretation.
+word_to_string   1  word -> string           Uppercase hexadecimal.
+
+# --- real (IEEE double) ---
+real_add         2  real * real -> real      Addition.
+real_sub         2  real * real -> real      Subtraction.
+real_mul         2  real * real -> real      Multiplication.
+real_div         2  real * real -> real      Division.
+real_neg         1  real -> real             Negation.
+real_abs         1  real -> real             Absolute value.
+real_lt          2  real * real -> bool      Less than.
+real_le          2  real * real -> bool      Less or equal.
+real_gt          2  real * real -> bool      Greater than.
+real_ge          2  real * real -> bool      Greater or equal.
+real_eq          2  real * real -> bool      IEEE equality.
+real_floor       1  real -> int              Raises Overflow/Domain.
+real_ceil        1  real -> int              Raises Overflow/Domain.
+real_round       1  real -> int              Round to nearest even; raises Overflow/Domain.
+real_trunc       1  real -> int              Raises Overflow/Domain.
+real_to_string   1  real -> string           SML formatting (~ for negative, E exponent).
+real_from_string 1  string -> real option    Parse a real literal.
+real_sqrt        1  real -> real             Square root.
+real_exp         1  real -> real             Exponential.
+real_ln          1  real -> real             Natural logarithm.
+real_sin         1  real -> real             Sine.
+real_cos         1  real -> real             Cosine.
+real_tan         1  real -> real             Tangent.
+real_atan        1  real -> real             Arc tangent.
+real_atan2       2  real * real -> real      Two argument arc tangent.
+real_pow         2  real * real -> real      Power.
+real_is_nan      1  real -> bool             NaN test.
+
+# --- char ---
+char_ord         1  char -> int              Code point.
+char_lt          2  char * char -> bool      Less than.
+char_le          2  char * char -> bool      Less or equal.
+char_gt          2  char * char -> bool      Greater than.
+char_ge          2  char * char -> bool      Greater or equal.
+
+# --- string (8-bit byte strings) ---
+string_size      1  string -> int            Length in bytes.
+string_sub       2  string * int -> char     Indexing; raises Subscript.
+string_concat    2  string * string -> string  Concatenation; raises Size.
+string_extract   3  string * int * int -> string  extract(s, i, n): substring of length n; raises Subscript.
+string_lt        2  string * string -> bool  Lexicographic less than.
+string_le        2  string * string -> bool  Lexicographic less or equal.
+string_gt        2  string * string -> bool  Lexicographic greater than.
+string_ge        2  string * string -> bool  Lexicographic greater or equal.
+string_compare   2  string * string -> int   Returns ~1, 0 or 1.
+string_from_char 1  char -> string           One character string.
+string_implode   1  char list -> string      Build a string from a list.
+string_explode   1  string -> char list      List of characters.
+string_concat_list 1 string list -> string   Concatenate a list of strings.
+
+# --- ref / array / vector ---
+ref_new          1  'a -> 'a ref             Allocate a reference cell.
+ref_get          1  'a ref -> 'a             Dereference.
+ref_set          2  'a ref * 'a -> unit      Assignment.
+array_new        2  int * 'a -> 'a array     Allocate; raises Size.
+array_length     1  'a array -> int          Length.
+array_sub        2  'a array * int -> 'a     Indexing; raises Subscript.
+array_update     3  'a array * int * 'a -> unit  Update; raises Subscript.
+array_from_list  1  'a list -> 'a array      Build from a list.
+vector_from_list 1  'a list -> 'a vector     Build from a list.
+vector_length    1  'a vector -> int         Length.
+vector_sub       2  'a vector * int -> 'a    Indexing; raises Subscript.
+
+# --- I/O and system ---
+print            1  string -> unit           Write to stdout.
+print_err        1  string -> unit           Write to stderr.
+flush_out        1  unit -> unit             Flush stdout.
+input_line       1  unit -> string option    Read a line (including newline) from stdin.
+input_all        1  unit -> string           Read the rest of stdin.
+exit             1  int -> 'a                Terminate the process with the given status.
+command_args     1  unit -> string list      Command line arguments after the bytecode file.
+command_name     1  unit -> string           The bytecode file name.
