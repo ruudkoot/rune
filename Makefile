@@ -94,3 +94,4 @@ check: test test-all check-cross check-docs
 
 clean:
 	rm -rf bin build $(GEN_SML) $(GEN_C) tests/out
+	find . -type d -name .cm -prune -exec rm -rf {} +

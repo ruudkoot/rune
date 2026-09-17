@@ -1,5 +1,6 @@
 bin/
 build/
+.cm/
 *.rbc
 tests/out/
 vm/opcodes.h
