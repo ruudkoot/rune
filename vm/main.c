@@ -11,6 +11,20 @@ static void usage(void) {
         "  --version       print the version and exit\n");
 }
 
+static void vm_destroy(VM *vm) {
+    for (uint32_t i = 0; i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
+    free(vm->prog.funcs);
+    free(vm->prog.consts);
+    free(vm->prog.code);
+    free(vm->globals);
+    free(vm->global_set);
+    free(vm->stack);
+    free(vm->frames);
+    free(vm->handlers);
+    free(vm->heap_from);
+    free(vm);
+}
+
 int main(int argc, char **argv) {
     size_t heap = 4u << 20;
     int disasm = 0, trace = 0, stats = 0;
@@ -40,9 +54,10 @@ int main(int argc, char **argv) {
     char err[256];
     if (!load_program(vm, argv[i], err, sizeof err)) {
         fprintf(stderr, "runevm: %s: %s\n", argv[i], err);
+        vm_destroy(vm);
         return 2;
     }
-    if (disasm) { disassemble(&vm->prog, stdout); return 0; }
+    if (disasm) { disassemble(&vm->prog, stdout); vm_destroy(vm); return 0; }
 
     int rc = vm_run(vm);
     fflush(stdout);
@@ -50,5 +65,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "runevm: %zu collections, %zu bytes allocated, semispace %zu bytes, %zu live\n",
                 vm->gc_count, vm->bytes_allocated, vm->heap_size, vm->heap_used);
     }
+    vm_destroy(vm);
     return rc;
 }

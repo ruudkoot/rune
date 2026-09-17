@@ -131,7 +131,21 @@ struct
                else etaPrim prim
              end)
     | ERecord (fields, _) =>
-        Tuple (List.map (fn (_, e) => transExp e) (Types.sortFields fields))
+        let
+          val sorted = Types.sortFields fields
+          val inOrder = ListPair.all (fn ((l1, _), (l2, _)) => l1 = l2) (fields, sorted)
+        in
+          if inOrder then Tuple (List.map (fn (_, e) => transExp e) fields)
+          else
+            (* fields are evaluated in source order but stored in label order *)
+            let
+              val temps = List.map (fn (l, e) => (l, MatchComp.freshVar (), transExp e)) fields
+              val tuple = Tuple (List.map (fn (l, _) =>
+                                              case List.find (fn (l2, _, _) => l2 = l) temps of
+                                                SOME (_, v, _) => Var v
+                                              | NONE => Error.bug "record label") sorted)
+            in List.foldr (fn ((_, v, e), body) => Let (v, e, body)) tuple temps end
+        end
     | ETuple ([], _) => Unit
     | ETuple (es, _) => Tuple (List.map transExp es)
     | ESelect (lab, slot, sp) =>

@@ -1,0 +1,5 @@
+(* non-tail recursion 200000 deep: the VM stack grows as needed *)
+fun sumTo 0 = 0 | sumTo n = n + sumTo (n - 1)
+val () = print (Int.toString (sumTo 200000) ^ "\n")
+fun build 0 = [] | build n = n :: build (n - 1)
+val () = print (Int.toString (length (build 200000)) ^ "\n")

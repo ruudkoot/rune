@@ -229,7 +229,7 @@ static void format_real(double d, char *out, size_t n) {
     snprintf(mant, sizeof mant, "%s", tmp);
     size_t o = 0;
     for (size_t i = 0; mant[i] && o + 1 < n; i++) out[o++] = mant[i] == '-' ? '~' : mant[i];
-    if (!strchr(mant, '.') && o + 2 < n) { out[o++] = '.'; out[o++] = '0'; }
+    if (!strchr(mant, '.') && !expo[0] && o + 2 < n) { out[o++] = '.'; out[o++] = '0'; }
     if (expo[0]) {
         const char *x = expo;
         int neg = 0;

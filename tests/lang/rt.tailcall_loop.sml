@@ -1,0 +1,8 @@
+(* 10 million iterations in constant stack space *)
+fun loop (0, acc) = acc | loop (n, acc) = loop (n - 1, acc + 1)
+val () = print (Int.toString (loop (10000000, 0)) ^ "\n")
+fun even 0 = true | even n = odd (n - 1) and odd 0 = false | odd n = even (n - 1)
+val () = print (Bool.toString (even 1000001) ^ "\n")
+(* tail call through a handler-free case and if *)
+fun count n = if n = 0 then "done" else case n mod 2 of 0 => count (n - 1) | _ => count (n - 1)
+val () = print (count 3000000 ^ "\n")

@@ -1,0 +1,6 @@
+val () = print (Int.toString (Int.min (3, 5)) ^ Int.toString (Int.max (3, 5)) ^ Int.toString (Int.abs ~4) ^ Int.toString (Int.sign ~9) ^ Int.toString (Int.sign 0) ^ Bool.toString (Int.sameSign (1, 2)) ^ "\n")
+val () = print ((case Int.compare (1, 2) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ (case Int.compare (2, 2) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ (case Int.compare (3, 2) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ "\n")
+val () = print (Int.toString (valOf (Int.fromString "123")) ^ Int.toString (valOf (Int.fromString "~45")) ^ Int.toString (valOf (Int.fromString "  7xyz")) ^ Bool.toString (isSome (Int.fromString "abc")) ^ Bool.toString (isSome (Int.fromString "")) ^ "\n")
+val () = print (Int.toString (valOf Int.precision) ^ " " ^ Int.toString (valOf Int.maxInt) ^ " " ^ Int.toString (valOf Int.minInt) ^ "\n")
+val () = print (Int.toString (Int.quot (~7, 2)) ^ Int.toString (Int.rem (~7, 2)) ^ Int.toString (Int.toInt 5) ^ Int.toString (Int.fromInt 6) ^ "\n")
+val () = print ((Int.toString (valOf (Int.fromString "99999999999999999999"))) handle Overflow => "Overflow\n")

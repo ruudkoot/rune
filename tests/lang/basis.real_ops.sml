@@ -1,0 +1,8 @@
+val () = print (Real.toString (Real.fromInt 3) ^ " " ^ Int.toString (Real.floor 2.7) ^ Int.toString (Real.ceil 2.1) ^ Int.toString (Real.round 2.5) ^ Int.toString (Real.round 3.5) ^ Int.toString (Real.trunc ~2.7) ^ Int.toString (Real.floor ~2.1) ^ "\n")
+val () = print (Real.toString (Real.abs ~1.5) ^ " " ^ Real.toString (Real.min (1.0, 2.0)) ^ " " ^ Real.toString (Real.max (1.0, 2.0)) ^ " " ^ Int.toString (Real.sign ~3.0) ^ "\n")
+val () = print (Real.toString (valOf (Real.fromString "3.25")) ^ " " ^ Real.toString (valOf (Real.fromString "~1e2")) ^ " " ^ Bool.toString (isSome (Real.fromString "abc")) ^ "\n")
+val () = print ((case Real.compare (1.0, 2.0) of LESS => "L" | EQUAL => "E" | GREATER => "G") ^ Bool.toString (Real.== (1.0, 1.0)) ^ Bool.toString (Real.!= (1.0, 2.0)) ^ "\n")
+val () = print (Real.toString 100.0 ^ " " ^ Real.toString 0.1 ^ " " ^ Real.toString 123456.789 ^ " " ^ Real.toString 1.0E15 ^ " " ^ Real.toString 1.0E~7 ^ "\n")
+val () = print (Real.toString Real.posInf ^ " " ^ Real.toString Real.negInf ^ " " ^ Bool.toString (Real.isFinite 1.0) ^ Bool.toString (Real.isFinite Real.posInf) ^ Bool.toString (Real.isNan (Real.posInf - Real.posInf)) ^ "\n")
+val () = print (Real.toString (Real.realFloor 2.5) ^ Real.toString (Real.realCeil 2.5) ^ Real.toString (Real.realRound 2.5) ^ Real.toString (Real.realTrunc 2.5) ^ "\n")
+val () = print ((Int.toString (Real.floor (1.0 / 0.0))) handle Overflow => "Overflow\n")

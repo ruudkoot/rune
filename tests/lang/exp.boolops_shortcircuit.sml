@@ -1,0 +1,7 @@
+fun t s = (print s; true)
+fun f s = (print s; false)
+val () = print (Bool.toString (f "1" andalso t "X") ^ "\n")
+val () = print (Bool.toString (t "2" andalso t "3") ^ "\n")
+val () = print (Bool.toString (t "4" orelse f "X") ^ "\n")
+val () = print (Bool.toString (f "5" orelse f "6") ^ "\n")
+val () = print (Bool.toString (not (1 = 2) andalso 2 <> 3) ^ "\n")

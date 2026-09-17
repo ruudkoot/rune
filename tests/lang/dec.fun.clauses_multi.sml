@@ -1,0 +1,9 @@
+fun fib 0 = 0
+  | fib 1 = 1
+  | fib n = fib (n - 1) + fib (n - 2)
+fun zip ([], _) = []
+  | zip (_, []) = []
+  | zip (x :: xs, y :: ys) = (x, y) :: zip (xs, ys)
+fun sum [] acc = acc
+  | sum (x :: xs) acc = sum xs (acc + x)
+val () = print (Int.toString (fib 20) ^ " " ^ Int.toString (length (zip ([1,2,3], ["a","b"]))) ^ " " ^ Int.toString (sum [1,2,3,4] 0) ^ "\n")

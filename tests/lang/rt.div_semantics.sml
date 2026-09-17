@@ -1,0 +1,6 @@
+fun s (a, b) = Int.toString (a div b) ^ "," ^ Int.toString (a mod b) ^ "," ^ Int.toString (Int.quot (a, b)) ^ "," ^ Int.toString (Int.rem (a, b))
+val () = print (s (7, 2) ^ " " ^ s (~7, 2) ^ " " ^ s (7, ~2) ^ " " ^ s (~7, ~2) ^ "\n")
+val () = print ((Int.toString (1 div 0)) handle Div => "Div\n")
+val () = print ((Int.toString (1 mod 0)) handle Div => "Div\n")
+val () = print ((Word.toString (0w1 div 0w0)) handle Div => "Div\n")
+val () = print (Real.toString (1.0 / 0.0) ^ " " ^ Real.toString (~1.0 / 0.0) ^ " " ^ Bool.toString (Real.isNan (0.0 / 0.0)) ^ "\n")

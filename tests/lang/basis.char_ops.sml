@@ -1,0 +1,6 @@
+val () = print (Int.toString (Char.ord #"A") ^ str (Char.chr 66) ^ str (Char.succ #"a") ^ str (Char.pred #"c") ^ "\n")
+val () = print (Bool.toString (Char.isAlpha #"a") ^ Bool.toString (Char.isDigit #"5") ^ Bool.toString (Char.isSpace #" ") ^ Bool.toString (Char.isUpper #"a") ^ Bool.toString (Char.isLower #"a") ^ Bool.toString (Char.isAlphaNum #"_") ^ Bool.toString (Char.isPunct #"!") ^ Bool.toString (Char.isHexDigit #"f") ^ Bool.toString (Char.isCntrl #"\n") ^ Bool.toString (Char.isPrint #"~") ^ "\n")
+val () = print (str (Char.toUpper #"q") ^ str (Char.toLower #"Q") ^ str (Char.toUpper #"1") ^ Bool.toString (Char.contains "abc" #"b") ^ Bool.toString (Char.notContains "abc" #"z") ^ "\n")
+val () = print (Char.toString #"a" ^ Char.toString #"\n" ^ Char.toString #"\\" ^ Char.toString #"\"" ^ Char.toString #"\^A" ^ Char.toString #"\200" ^ "\n")
+val () = print ((case Char.compare (#"a", #"b") of LESS => "L" | _ => "?") ^ Bool.toString (Char.< (#"a", #"b")) ^ Bool.toString (Char.>= (#"a", #"b")) ^ str (valOf (Char.fromString "\\n")) ^ "|" ^ str (valOf (Char.fromString "x")) ^ "\n")
+val () = print ((str (Char.chr 300)) handle Chr => "Chr\n")

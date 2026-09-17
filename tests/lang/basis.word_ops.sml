@@ -1,0 +1,6 @@
+val () = print (Word.toString (Word.fromInt 4096) ^ " " ^ Int.toString (Word.toInt 0wxFF) ^ " " ^ Int.toString (Word.toIntX 0wxFFFFFFFFFFFFFFFF) ^ " " ^ Word.toString (Word.fromInt ~1) ^ "\n")
+val () = print (Word.toString (Word.andb (0wxF0, 0wx3C)) ^ " " ^ Word.toString (Word.orb (0wxF0, 0wx0F)) ^ " " ^ Word.toString (Word.xorb (0wxFF, 0wx0F)) ^ " " ^ Word.toString (Word.notb 0w0) ^ "\n")
+val () = print (Word.toString (Word.<< (0w1, 0w10)) ^ " " ^ Word.toString (Word.>> (0wx400, 0w4)) ^ " " ^ Word.toString (Word.~>> (0wxFFFFFFFFFFFFFFF0, 0w4)) ^ " " ^ Word.toString (Word.~>> (0wxF0, 0w4)) ^ "\n")
+val () = print (Word.toString (Word.min (0w3, 0w9)) ^ Word.toString (Word.max (0w3, 0w9)) ^ (case Word.compare (0w1, 0w2) of LESS => "L" | _ => "?") ^ Int.toString Word.wordSize ^ "\n")
+val () = print (Word.toString (valOf (Word.fromString "ff")) ^ Word.toString (valOf (Word.fromString "0wx10")) ^ Bool.toString (isSome (Word.fromString "zz")) ^ "\n")
+val () = print ((Int.toString (Word.toInt 0wxFFFFFFFFFFFFFFFF)) handle Overflow => "Overflow\n")
