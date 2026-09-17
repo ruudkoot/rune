@@ -1,20 +1,29 @@
 # Rune release notes
 
-## Unreleased — M5b lists
+## Unreleased — M5b lists and M5c multi-clause functions
 
 Adds the initial polymorphic `list` type, `nil`, right-associative infix `::`,
 and bracket expressions/patterns. Lists use existing nominal datatypes,
 matching, equality, value restriction, and collection. The source contract
 documents protected constructor names, list type-name shadowing, evaluation
-order, and bounded syntax expansion. Multi-clause functions and broader List
-Basis operations remain deferred.
+order, and bounded syntax expansion. Broader List Basis operations remain deferred.
+
+M5c adds ordered clauses to `fn` and recursive `fun`, consistent parameter
+counts and types, clause-local bindings, and exhaustiveness/redundancy warnings
+over complete argument rows. Curried `fun` matches after all arguments arrive;
+partial applications preserve captures and clause bodies preserve tail calls.
+Single-clause `fun` now reports at most one non-exhaustiveness warning for its
+whole parameter row. Nested `fn`/`case` expressions own following bars unless
+parenthesized; programs previously rejected as unsupported multi-clause syntax
+can now be accepted or receive a more specific syntax/type diagnostic. M5c
+acceptance checks are in progress.
 
 Bytecode remains v3 with no VM changes. Existing v3 files remain compatible;
 new list bytecode also runs on the M5a VM. User constructor descriptors can
 change on recompilation because the initial list constructors reserve IDs first.
 The compiler and VM continue to report 0.2.0 until a release is made.
 
-The increment adds 53 fixtures and an executable list-processing example among
+The M5b increment adds 53 fixtures and an executable list-processing example among
 them. See [the M5b checkpoint](PLAN.md#m5b--lists-complete) for acceptance
 results and environment details. All 236 fixtures pass under all three
 host-built compilers on native x86-64 and emulated i386/PowerPC64 VMs, normally

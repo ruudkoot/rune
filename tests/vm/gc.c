@@ -132,31 +132,52 @@ static void exact_limit(void) {
     reset();
 }
 
-static void concatenation(void) {
+static void concatenation(uint32_t stack_base, int aliased) {
     Value values[3] = {{INVALID, {0}}, {INVALID, {0}}, {INVALID, {0}}};
     Root root = {NULL, values, 2};
     Root *saved_roots;
-    uint32_t saved_sp;
+    uint32_t saved_sp, i;
+    const char *expected = aliased ? "hellohello" : "hello world";
+    size_t length = strlen(expected);
 
-    vm.stack = checked_calloc(4, sizeof(Value));
+    vm.stack = checked_calloc(MAX_COUNT, sizeof(Value));
     vm.frames = checked_calloc(1, sizeof(Frame)); vm.fp = 1;
+    vm.frames[0].stack_base = stack_base; vm.sp = stack_base;
+    for (i = 0; i < stack_base; ++i) vm.stack[i] = integer(i);
     vm.gc_stress = 1;
     vm.roots = &root;
     values[0] = string_value(blob(5)); memcpy(values[0].as.string->data, "hello", 5);
-    values[1] = string_value(blob(6)); memcpy(values[1].as.string->data, " world", 6);
+    if (aliased) values[1] = values[0];
+    else {
+        values[1] = string_value(blob(6)); memcpy(values[1].as.string->data, " world", 6);
+    }
+    /* Neither input is independently rooted when binary() allocates. */
+    root.count = 0;
     saved_roots = vm.roots; saved_sp = vm.sp;
     values[2] = binary(OP_CONCAT, values[0], values[1]);
     assert(vm.roots == saved_roots && vm.sp == saved_sp);
-    assert(values[2].tag == STRING && values[2].as.string->length == 11);
-    assert(!memcmp(values[2].as.string->data, "hello world", 11));
-    root.count = 3;
-    collect(); assert(values[2].as.string->length == 11);
-    vm.roots = NULL; collect();
+    for (i = 0; i < stack_base; ++i)
+        assert(vm.stack[i].tag == INTEGER && vm.stack[i].as.integer == (int32_t)i);
+    assert(values[2].tag == STRING && values[2].as.string->length == length);
+    assert(!memcmp(values[2].as.string->data, expected, length));
+    /* Publish only the result; both input strings must now be reclaimable. */
+    root.values = &values[2]; root.count = 1;
+    collect(); assert(vm.allocated == bytes(values[2].as.string));
+    assert(values[2].as.string->length == length);
+    assert(!memcmp(values[2].as.string->data, expected, length));
+    vm.roots = NULL; collect(); assert(vm.allocated == 0);
     reset();
 }
 
 int main(void) {
-    roots(); cycles(); deep_graph(); constructor_graph(); concatenation(); exact_limit();
-    puts("GC: roots, stale slots, shared cycles, 100000-object closure/constructor graphs, and exact heap limit passed.");
+    const uint32_t stack_bases[] = {0, 7, MAX_COUNT - 2};
+    size_t i;
+    roots(); cycles(); deep_graph(); constructor_graph(); exact_limit();
+    /* CONCAT may reuse the last two slots even above a nonempty caller stack. */
+    for (i = 0; i < sizeof(stack_bases) / sizeof(stack_bases[0]); ++i) {
+        concatenation(stack_bases[i], 0);
+        concatenation(stack_bases[i], 1);
+    }
+    puts("GC: roots, stale slots, shared cycles, 100000-object closure/constructor graphs, concatenation roots/stack boundaries, and exact heap limit passed.");
     return 0;
 }

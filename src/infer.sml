@@ -66,6 +66,12 @@ struct
       fun irrefutable (Core.P (_,_,node)) = case node of
           Core.Bind _ => true | Core.Wildcard => true | Core.UnitPattern => true
         | Core.TuplePattern ps => List.all irrefutable ps | _ => false
+      (* Function clauses are rows, not independent matches on each parameter. *)
+      fun rowPattern _ [pat] = pat
+        | rowPattern p pats = Core.P (p,TTuple (List.map Core.patternType pats),Core.TuplePattern pats)
+      fun rawParameter (Core.P (p,t,_)) = Core.P (p,t,Core.Bind (identity p))
+      fun argument (Core.P (p,t,Core.Bind id)) = Core.E (p,t,Core.Variable id)
+        | argument _ = Source.fail Source.start "internal" "invalid raw parameter"
       fun datatypeBinding tenv level declarationPos variables datatypeName constructors =
         let
           fun distinct what names =
@@ -161,12 +167,27 @@ struct
                   val clauses' = List.map clause clauses
                   val () = Match.check p true (List.map #1 clauses')
               in make result (Core.Case (subject',clauses')) end
-          | Syntax.Fn (pat,body) =>
+          | Syntax.Fn [(pat,body)] =>
               let val (ps,names) = patterns env level [pat] val param = hd ps
                   val body' = expression (names @ env) tenv level (depth+1) body
                   val () = Match.check p true ps
               in make (TFunction (Core.patternType param,Core.typeOf body'))
                    (Core.Function {self=NONE,param=param,body=body'}) end
+          | Syntax.Fn clauses =>
+              let val input = fresh p level val result = fresh p level
+                  fun clause (pat,body) =
+                    let val (ps,names) = patterns env level [pat] val pat' = hd ps
+                        val () = unify p input (Core.patternType pat')
+                        val body' = expression (names @ env) tenv level (depth+1) body
+                        val () = unify (Core.position body') result (Core.typeOf body')
+                    in (pat',body') end
+                  val clauses' = List.map clause clauses
+                  val () = Match.check p true (List.map #1 clauses')
+                  val param = rawParameter (#1 (hd clauses'))
+                  val Core.P (matchPos,_,_) = param
+                  val body = Core.E (matchPos,result,Core.Case (argument param,clauses'))
+              in make (TFunction (input,result))
+                   (Core.Function {self=NONE,param=param,body=body}) end
           | Syntax.Let (ds,body) =>
               let val first = !nextType
                   val (ds',env',tenv') = bindings false env tenv level (depth+1) ds
@@ -194,23 +215,36 @@ struct
                           val () = Match.check p (not top) ps
                           val () = generalize p level (nonexpansive e') (Core.typeOf e')
                       in (pat',e',names @ env) end
-                  | Syntax.Fun (p,name,ps,body) =>
+                  | Syntax.Fun (p,name,clauses) =>
                       let val () = if name = "nil" then Source.fail p "type" "cannot rebind nil" else ()
                           val id = identity p val ft = fresh p (level+1)
                           val recursive = (name,(ft,Local id))::env
-                          val (params,names) = patterns recursive (level+1) ps
-                          val body' = expression (names @ recursive) tenv (level+1) (depth+1) body
-                          val () = List.app (fn param => Match.check p true [param]) params
+                          fun clause (cp,ps,body) =
+                            let val (params,names) = patterns recursive (level+1) ps
+                                val body' = expression (names @ recursive) tenv (level+1) (depth+1) body
+                                val t = List.foldr (fn (param,t) => TFunction (Core.patternType param,t))
+                                          (Core.typeOf body') params
+                                val () = unify cp ft t
+                            in (cp,params,body') end
+                          val clauses' = List.map clause clauses
+                          val () = Match.check p true (List.map (fn (cp,ps,_) => rowPattern cp ps) clauses')
+                          val (_,params,body') = hd clauses'
                           (* Derived fun gathers every curried argument before testing patterns. *)
-                          val raw = if List.all irrefutable params then params
-                            else List.map (fn Core.P (paramPos,t,_) =>
-                              Core.P (paramPos,t,Core.Bind (identity paramPos))) params
+                          val single = List.length clauses' = 1
+                          val direct = single andalso List.all irrefutable params
+                          val raw = if direct then params else List.map rawParameter params
                           fun deferred ([],[],body) = body
                             | deferred (param::ps,(Core.P (rp,t,Core.Bind argumentId))::rs,body) =
                                 Core.E (p,Core.typeOf body,Core.Case (Core.E (rp,t,Core.Variable argumentId),
                                   [(param,deferred (ps,rs,body))]))
                             | deferred _ = Source.fail p "internal" "invalid deferred parameter"
-                          val matched = if List.all irrefutable params then body' else deferred (params,raw,body')
+                          val matched = if direct then body'
+                            else if single then deferred (params,raw,body')
+                            else let val args = List.map argument raw
+                                     val subject = case args of [arg] => arg
+                                       | _ => Core.E (p,TTuple (List.map Core.typeOf args),Core.Tuple args)
+                                     val matches = List.map (fn (cp,ps,e) => (rowPattern cp ps,e)) clauses'
+                                 in Core.E (p,Core.typeOf body',Core.Case (subject,matches)) end
                           fun curry [] = matched
                             | curry (param::rest) =
                                 let val inner = curry rest

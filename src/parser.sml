@@ -117,18 +117,10 @@ struct
                            val b = expression 0
                        in E (p, If (c,a,b)) end)
             else if is "fn" andalso minimum <= 2 then
-              (pop (); let val pat = pattern 0 val () = expect "=>"
-                           val body = expression 0
-                           val () = if is "|" then Source.fail (position ()) "unsupported"
-                                      "multi-clause fn is not supported" else ()
-                       in E (p, Fn (pat, body)) end)
+              (pop (); E (p, Fn (matchClauses ())))
             else if is "case" andalso minimum <= 2 then
               (pop (); let val subject = expression 0 val () = expect "of"
-                           fun clause () = let val pat = pattern 0 val () = expect "=>"
-                                           in (pat,expression 0) end
-                           val first = clause ()
-                           fun rest acc = if is "|" then (pop (); rest (clause ()::acc)) else List.rev acc
-                       in E (p,Case (subject,rest [first])) end)
+                       in E (p,Case (subject,matchClauses ())) end)
             else application ()
           fun infixes left =
             let val oper = spelling ()
@@ -192,6 +184,12 @@ struct
                     in e end)
           | _ => error "expected expression"
         end
+      and matchClauses () =
+        let fun clause () = let val pat = pattern 0 val () = expect "=>"
+                            in (pat,expression 0) end
+            val first = clause ()
+            fun rest acc = if is "|" then (pop (); rest (clause ()::acc)) else List.rev acc
+        in rest [first] end
       and sequence stop =
         let val first = expression 0
             fun loop acc = if is ";" then
@@ -217,12 +215,22 @@ struct
                   fun parameters count acc = if is "=" then List.rev acc
                     else if count >= 256 then error "fun exceeds 256 parameters"
                     else parameters (count+1) (atomicPattern 0::acc)
-                  val ps = parameters 0 []
-                  val () = if null ps then error "fun requires at least one parameter" else ()
-                  val () = expect "=" val body = expression 0
-                  val () = if is "|" then Source.fail (position ()) "unsupported"
-                             "multi-clause fun is not supported" else ()
-              in loop (Fun (p,f,ps,body)::acc) end
+                  fun clause cp =
+                    let val ps = parameters 0 []
+                        val () = if null ps then error "fun requires at least one parameter" else ()
+                        val () = expect "="
+                    in (cp,ps,expression 0) end
+                  val first as (_,ps,_) = clause p
+                  val arity = List.length ps
+                  fun rest acc = if is "|" then
+                    let val () = pop () val cp = position () val name = bindingName ()
+                        val () = if name = f then () else
+                          Source.fail cp "syntax" "fun clauses must name the same function"
+                        val next as (_,params,_) = clause cp
+                        val () = if List.length params = arity then () else
+                          Source.fail cp "syntax" "fun clauses must have the same number of parameters"
+                    in rest (next::acc) end else List.rev acc
+              in loop (Fun (p,f,rest [first])::acc) end
             else if is "datatype" then
               let val p = position () val () = pop ()
                   fun variable () = case #1 (current ()) of

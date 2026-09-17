@@ -298,6 +298,9 @@ def main():
                 if case["kind"] == "reject":
                     assert (": " + case["stderr"] + ": ").encode() in result.stderr, (case, result.stderr)
                     assert re.search(rb":\d+:\d+: ", result.stderr), result.stderr
+                    if "location" in case:
+                        line, column = case["location"]
+                        assert f"{source.name}:{line}:{column}: ".encode() in result.stderr, result.stderr
                     assert output.read_bytes() == b"preserve previous output", case
                     evidence = result.stderr
                 else:
@@ -307,6 +310,10 @@ def main():
                     for actual, expected in zip(actual_warnings, warnings):
                         assert actual.endswith(": warning: " + expected), (case, actual)
                         assert re.search(r":\d+:\d+: warning: ", actual), actual
+                    if "warning_locations" in case:
+                        assert len(case["warning_locations"]) == len(actual_warnings), case
+                        for actual, (line, column) in zip(actual_warnings, case["warning_locations"]):
+                            assert f"{source.name}:{line}:{column}: warning: " in actual, actual
                     evidence = (output.read_bytes(), result.stderr)
                     checked = run([compiler, "--check", source], stdout=b"")
                     assert checked.stderr == result.stderr, (case, checked.stderr, result.stderr)

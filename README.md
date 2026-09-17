@@ -6,12 +6,13 @@ that emits bytecode for a portable C virtual machine.
 ## Status
 
 The working tree adds M5b polymorphic lists (`nil`, `::`, bracket expressions
-and patterns) to Rune 0.2.0's functional subset: typed expressions, `val`/`let`,
+and patterns) and M5c multi-clause `fn`/`fun` (acceptance checks in progress)
+to Rune 0.2.0's functional subset: typed expressions, `val`/`let`,
 functions, closures, recursion, tuples, user datatypes, `case`, and uncaught
 `Match`/`Bind` failures. The C VM collects unused heap objects and keeps bytecode
 v3 compatibility. [The checkpoint](docs/PLAN.md) records acceptance results.
-Multi-clause functions, exception handlers, broader List Basis functions, and
-the other M5 features remain deferred. This working-tree increment is unreleased;
+Mutual declarations, exception handlers, broader List Basis functions, and
+the other M5 features remain deferred. These working-tree increments are unreleased;
 the compiler and VM continue to report 0.2.0.
 
 - [Implementation plan](docs/PLAN.md): milestones, architecture, builds with

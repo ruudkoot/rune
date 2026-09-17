@@ -359,6 +359,8 @@ static int equal(Value a, Value b) {
 static Value call(Value function, Value arg) {
     if (function.tag == CONSTRUCTOR) {
         Aggregate *object;
+        /* CALL/TAILCALL already popped the callable and argument, leaving room
+           to root the payload on the operand stack while aggregate() collects. */
         push(arg);
         object = aggregate(1, function.as.number);
         object->values[0] = pop();
@@ -393,6 +395,8 @@ static Value binary(uint8_t op, Value a, Value b) {
         require(a, STRING); require(b, STRING);
         alen = a.as.string->length; blen = b.as.string->length;
         if (blen > MAX_STRING - alen) fail(3, "string exceeds 1 MiB");
+        /* The dispatcher already popped both operands. Reuse those slots as
+           roots across blob(), without increasing the instruction's peak stack. */
         push(a); push(b);
         s = blob(alen + blen); memcpy(s->data, a.as.string->data, alen);
         memcpy(s->data + alen, b.as.string->data, blen);

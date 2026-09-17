@@ -1,6 +1,7 @@
 # Rune implementation plan
 
-Status: M0–M4, M5a, and M5b complete. Remaining M5 increments are deferred.
+Status: M0–M4, M5a, and M5b complete. M5c implementation and acceptance checks
+are in progress. Remaining M5 increments are deferred.
 
 Next session: [M5c multi-clause functions](#next-session--m5c-multi-clause-functions).
 
@@ -504,9 +505,87 @@ change has not been run.
 
 #### Next session — M5c multi-clause functions
 
-Add multi-clause `fn`/`fun`, including consistent parameter counts, clause order,
-curried matching time, and exhaustiveness/redundancy diagnostics. Keep broader
-List Basis functions and user fixity deferred. Exception handlers, mutation,
+**Objective (in progress):** support ordered multi-clause `fn` and recursive `fun`
+over the existing patterns. A program should be able to define
+`fun length [] = 0 | length (_ :: xs) = 1 + length xs` and
+`val isEmpty = fn [] => true | _ :: _ => false`, with consistent inference,
+match diagnostics, and execution under all three host-built Rune compilers.
+
+Starting checkpoint — 2026-09-17: M5b is committed as `8722ffa`; the current
+implementation is `179ecb9` (`GC tweaks`), which clarifies temporary-root
+accounting and strengthens the collector harness. The M5b acceptance results
+above describe that increment; rerun the baseline on the starting revision
+before attributing failures to M5c. Compiler and VM versions remain 0.2.0,
+bytecode remains v3, and M5b is unreleased.
+
+Implementation order:
+
+1. **Establish the baseline and semantic probes.** Run `make test-all`. Inspect
+   the current single-clause handling in `src/syntax.sml`, `src/parser.sml`, and
+   `src/infer.sml`, plus `src/match.sml` and `src/compile.sml`. Check the SML
+   Definition's derived `fun` form and probe all three reference compilers for
+   nested `fn`/`case` clause ownership, curried argument timing, repeated function
+   names, and inconsistent arities. Record observable behavior separately from
+   reference compilers' warning wording or severity.
+2. **Represent and parse clause lists.** Preserve each clause's source position.
+   Share `fn`/`case` match parsing where practical; parse each `fun` clause's
+   repeated name and nonempty atomic-pattern parameter list. Require one name
+   and one parameter count throughout a `fun` declaration. Cover rightward
+   nesting and parentheses explicitly. Keep the existing 256-parameter limit
+   and bound traversal of long clause lists using the existing resource policy.
+3. **Infer and lower complete matches.** Give each clause its own pattern scope,
+   unify corresponding argument types and all result types, and share one
+   monomorphic recursive binding across `fun` clauses. Generalize the completed
+   function as before. Lower through the existing closure and ordered `Core.Case`
+   machinery: curried `fun` must collect every argument before selecting a clause
+   or failing. Match analysis must consider complete rows of argument patterns;
+   independent checks of each parameter miss correlations. Reuse tuple patterns
+   or extend the matrix entry point as appropriate, accounting for generated
+   nodes at source-depth/arity boundaries. Preserve clause priority, captures,
+   tail position, and source-located `Match`. The intended implementation uses
+   existing v3 instructions; document compatibility consequences if that changes.
+4. **Extend the corpus and example.** Replace the current unsupported
+   `fn-multiple-clauses` and `fun-multiple-clauses` rejection fixtures with
+   acceptance coverage, updating `tests/cases.json`. Add a runnable multi-clause
+   list-processing example and register it for documentation and reference
+   execution. Required cases include:
+   - First-match priority, literal/list/datatype/tuple patterns, recursion,
+     polymorphism, lexical captures, and reuse of variable names across clauses.
+   - Partial application, side effects in all arguments before a failed match,
+     and different matching times for curried `fun` and nested `fn` expressions.
+   - Exhaustive, non-exhaustive, and redundant matches, including correlated
+     patterns across multiple parameters; source-located runtime `Match`.
+   - Mismatched names/arities, missing parameters, duplicate bindings within one
+     clause, incompatible argument/result types, and malformed separators.
+   - Nested match ownership, the 256-parameter boundary, bounded match-analysis
+     failure, and generated-tree limits. Tail-recursive clause bodies and live
+     partial-application captures must work under GC stress and a small heap.
+5. **Synchronize the contract and close the gate.** Update `docs/LANGUAGE.md`
+   grammar, matching semantics, diagnostics, limits, exclusions, and example;
+   update `docs/features.tsv`, README status, and unreleased release notes. Run
+   `make generate` after changing manifest/example inputs. Mark M5c complete
+   only after its acceptance checks pass; feature rows with broader exclusions
+   remain partial. Record actual counts, failures, workarounds, and unverified
+   platforms in a new checkpoint. Update `docs/BYTECODE.md` for any bytecode or
+   VM behavior change, and build documentation for changed commands/dependencies.
+
+Acceptance gate: `make test-all` and `make check-docs`, including identical
+bytecode and compiler diagnostics across hosts, reference execution/rejections,
+normal and GC-stress execution, and runtime failure locations. Then run
+`make test-portability`, `make test-builds`, `make CC=clang HOST=polyml test`,
+`make CC=gcc test-sanitize`, and `make CC=clang test-sanitize`. Finish with
+`git diff --check`. These are next-session checks, not newly reported passes.
+
+Environment checked on 2026-09-17: `make doctor` passes outside the sandbox with
+SML/NJ 110.79, Poly/ML 5.7.1, MLton 20210117, and GCC 13.3.0. Inside the sandbox
+it fails at SML/NJ startup with `Bad system call` (Make reports error 159).
+Python, Clang, both QEMU launchers, PowerPC64 binutils, and the multilib/cross
+development packages are installed. No additional packages are needed for the
+planned scope. Use the documented execution workarounds for SML/NJ and leak
+detection; tool availability alone does not revalidate the portability suites.
+
+Broader List Basis functions, user fixity, mutual `fun ... and ...`, annotations,
+and additional pattern forms remain deferred. Exception handlers, mutation,
 records, modules, and broader Basis support remain later M5 work.
 
 ## 7. Validation strategy

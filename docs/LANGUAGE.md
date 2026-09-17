@@ -6,7 +6,8 @@ Rune 0.2.0 adds the M5a datatype and pattern-matching increment to the M1–M3
 functional subset and emits bytecode v3. It supports parameterized recursive
 datatypes, constructor values, `case`, and refutable patterns in `val` and
 single-clause functions. The working tree adds M5b polymorphic lists and list
-patterns. Multi-clause functions remain deferred. M5a and M5b pass the three-host,
+patterns, and M5c multi-clause functions (acceptance checks in progress).
+M5a and M5b pass the three-host,
 native/emulated VM, and sanitizer acceptance gates. The
 [implementation plan](PLAN.md) records validation and remaining platform gaps.
 Rune 0.1.0 completed M0–M4 with bytecode v2;
@@ -37,12 +38,12 @@ passed its fixtures using Rune built by all three host compilers.
 | expr-sequence | Expression sequencing | implemented | First slice | Parenthesized or `let` body sequences; evaluate left to right |
 | basis-output | `print`, `Int.toString`, `not`, `~` | implemented | First slice | Only the listed signatures; built-in values can be aliased, selected by if, and applied |
 | type-static | Static type checking | implemented | First slice | Reject ill-typed programs before producing bytecode |
-| fn-closures | `fn`, application, lexical closures, currying | implemented | v0.1 / M2; M5a | One match clause; refutable parameters; first-class functions and constructors |
-| fn-recursion | Recursive `fun` declarations | implemented | v0.1 / M2; M5a | Single clause; one function per declaration; curried arguments gathered before matching; tail calls |
+| fn-closures | `fn`, application, lexical closures, currying | partial | v0.1 / M2; M5a / M5c | Ordered match clauses; refutable parameters; first-class functions and constructors; M5c acceptance pending |
+| fn-recursion | Recursive `fun` declarations | partial | v0.1 / M2; M5a / M5c | Ordered clauses with equal arity; one function per declaration; arguments gathered before matching; tail calls; M5c acceptance pending |
 | data-tuples | Tuples and tuple destructuring | implemented | v0.1 / M2; M5a | Arity at least two; nested patterns including constructors and literals |
 | type-poly | Let polymorphism and equality types | implemented | v0.1 / M2; M5a | Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints |
 | runtime-gc | Garbage collection and bounded heap | implemented | v0.1 / M3 | Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement |
-| data-datatypes | Lists, datatypes, constructor patterns, `case` | partial | M5a / M5b | Parameterized recursive datatypes, lists, constructors, case, Match/Bind, match warnings; multi-clause functions deferred |
+| data-datatypes | Lists, datatypes, constructor patterns, `case` | partial | M5a / M5b / M5c | Parameterized recursive datatypes, lists, constructors, case, multi-clause functions, Match/Bind, match warnings; mutual datatypes, replication, withtype deferred |
 | control-exceptions | `exception`, `raise`, `handle` | deferred | Deferred / M5 | Runtime arithmetic failures exist earlier; user exception handling does not |
 | data-mutation | References, assignment, `while`, arrays, vectors | deferred | Deferred / M5 | No user-visible mutable storage in v0.1 |
 | data-records | Records, selectors, flexible record patterns | deferred | Deferred / M5 | Tuples arrive earlier; other record syntax is rejected |
@@ -107,13 +108,13 @@ datatype equality is the greatest solution consistent with its payloads.
 order. Patterns include constructors, integer/string/boolean literals, and the
 existing variable, wildcard, unit, and tuple forms. Failed `val` patterns raise
 uncaught `Bind`; exhausted `case`, `fn`, and `fun` matches raise uncaught `Match`.
-Both terminate with VM status 3 and a source location. Single-clause curried
+Both terminate with VM status 3 and a source location. Curried
 `fun` collects all arguments before matching its parameters. Match analysis
 warns about redundant clauses and non-exhaustive matches while compiling them;
 non-exhaustive `val` warns only inside `let`. Analysis is bounded by 1,000,000
 steps and depth 512, with a `limit` diagnostic on exhaustion.
 
-Predeclared option/order constructors, multi-clause functions, general
+Predeclared option/order constructors, general
 type annotations, and exception handlers remain deferred. These choices follow
 the [SML Definition](https://smlfamily.github.io/sml97-defn.pdf), sections 4.7,
 4.10–4.11 and Appendix A; the reference fixtures check the observable behavior.
@@ -160,6 +161,46 @@ remain unsupported. These rules follow the
 [SML Definition](https://smlfamily.github.io/sml97-defn.pdf), sections 2.9 and
 Appendices A/C, and the [list datatype](https://smlfamily.github.io/Basis/list.html).
 
+## Multi-clause functions (M5c)
+
+`fn p => e | ...` and `fun f p ... = e | f p ... = e | ...` try their
+clauses in source order. Each `fun` clause must repeat the same function name
+and have the same positive number of parameters, at most 256. Different names
+or parameter counts are syntax errors. `fun` still declares one function at a
+time; mutual declarations with `and` are deferred.
+
+Each clause has its own pattern bindings. Names may repeat across clauses, but
+duplicates within a clause's pattern or complete parameter list are type errors.
+Corresponding arguments have the same types across clauses, and all clause
+results have the same type. The recursive function has one monomorphic type
+shared by every clause; its completed binding may be generalized. Multi-clause
+`fn` expressions are non-expansive, like single-clause functions.
+
+An applied `fn` evaluates its argument once before selecting a clause. A curried
+`fun` collects all arguments before testing any patterns: `f x` can return a
+closure even when `x` will fail every clause after the remaining arguments arrive.
+Nested `fn` expressions match at each application instead. A selected body runs
+once; a failure inside it never retries a later clause. If no clause matches,
+uncaught `Match` points to the first `fn` parameter pattern or the `fun`
+declaration and terminates with status 3. Clause bodies preserve tail position.
+
+Exhaustiveness and redundancy analysis checks complete rows of `fun` parameters,
+including correlations between arguments. A non-exhaustive function produces
+one warning for the whole match, including a single-clause `fun` with several
+refutable parameters. Redundant clauses warn at their pattern (or parameter-row)
+position. Both warnings permit compilation. The existing 1,000,000-step and
+depth-512 match-analysis limits apply per complete function match. Clause counts
+are bounded by the source/token and analysis limits rather than a separate cap.
+
+Lowering reuses closures, tuples, and `case`. Fully applying a multi-clause
+`fun` with two or more parameters allocates an argument tuple for matching.
+Generated currying and that tuple do not count toward source-tree depth limits;
+expanded list patterns still do. Generated patterns participate in the existing
+match-analysis depth/work limits, and emitted code uses the existing resource
+limits. Bytecode remains v3; the VM and instruction semantics are unchanged.
+These rules follow the [SML Definition](https://smlfamily.github.io/sml97-defn.pdf),
+sections 2.8 and 4.11 and Appendix A, Figure 17.
+
 ## Implemented grammar
 
 The grammar below omits comments and whitespace. `name` is an alphanumeric name
@@ -179,8 +220,9 @@ without changing SML's binding semantics. `val nil = 1` is a type error.
 ```text
 program      = { declaration | ";" } EOF
  declaration = "val" pattern "=" expression
-             | "fun" name atomic-pattern { atomic-pattern } "=" expression
+             | "fun" fun-clause { "|" fun-clause }
              | "datatype" type-parameters name "=" constructor { "|" constructor }
+ fun-clause  = name atomic-pattern { atomic-pattern } "=" expression
  type-parameters = [ type-variable | "(" type-variable { "," type-variable } ")" ]
  constructor = name [ "of" type ]
  type        = type-product [ "->" type ]
@@ -195,13 +237,13 @@ program      = { declaration | ";" } EOF
              | "[" [ pattern { "," pattern } ] "]"
  match       = pattern "=>" expression { "|" pattern "=>" expression }
  expression  = "if" expression "then" expression "else" expression
-             | "fn" pattern "=>" expression
+             | "fn" match
              | "case" expression "of" match
              | boolean-or
  boolean-or  = boolean-and [ "orelse" expression ]
  boolean-and = infix-expression [ "andalso" boolean-rhs ]
  boolean-rhs = "if" expression "then" expression "else" expression
-             | "fn" pattern "=>" expression
+             | "fn" match
              | "case" expression "of" match
              | boolean-and
  infix-expression = application { infix-operator application }
@@ -226,14 +268,14 @@ Signed literals require `~` adjacent to digits; separated `~` uses ordinary
 application. Symbolic tokens use maximal munch: `1 + ~2` is accepted; `1+~2`
 contains the unsupported symbolic token `+~`. Symbolic identifier bindings,
 `op`, expression annotations, and declaration `and` are deferred.
-Each `fn` or `fun` has one clause; `fun` declares one function at a time.
-Duplicate names within a pattern or across one `fun` parameter list are errors.
+Each `fn` or `fun` has one or more clauses; `fun` declares one function at a time.
+Duplicate names within a pattern or across one clause's `fun` parameter list are errors.
 Nested `fn` expressions may shadow an earlier parameter. Constructor application
 patterns in a `fun` parameter must be parenthesized, e.g. `fun f (C x) y = x`.
-A match body extends to the right; an unparenthesized nested `case` owns following
-`|` clauses. A following `|` belonging to `fn`/`fun` is rejected as unsupported
-multi-clause syntax. Parenthesize a nested match/function when an outer `case`
-should consume the next `|`.
+A match body extends to the right; an unparenthesized nested `case` or `fn` owns
+following `|` clauses. Parenthesize a nested match/function when an outer
+`case`, `fn`, or `fun` should consume the next `|`. Misplaced bars can therefore
+cause syntax or type errors in the inner match.
 
 In payload types, postfix type application binds more tightly than products,
 which bind more tightly than right-associative arrows. Type applications must
@@ -332,7 +374,7 @@ compiler's Basis from a compiled Rune program.
   constructor, and list patterns. Reject duplicate bound names; destructuring must
   agree with the inferred type. Refutable bindings and matches follow the M5a
   semantics above. Warnings go to stderr and do not change successful exit status.
-  Failures point to the `case` expression, `fn` parameter pattern, `fun`
+  Failures point to the `case` expression, first `fn` parameter pattern, `fun`
   declaration, or failed `val` pattern respectively.
 - **Limits:** source size 1 MiB; at most 65,536 non-EOF tokens; parser
   nesting, pattern nesting, checked expression/pattern-tree depth, and `fun` parameter
@@ -430,6 +472,18 @@ val _ = print (Int.toString (sum (map (fn x => x * 2) [5, 7, 9])) ^ "\n")
 ```
 <!-- example:examples/lists.sml:end -->
 
+### M5c multi-clause functions: expected output `42` followed by a newline
+
+<!-- example:examples/multi-clause.sml:start -->
+```sml
+fun map f [] = []
+  | map f (x :: xs) = f x :: map f xs
+fun sum [] = 0
+  | sum (x :: xs) = x + sum xs
+val _ = print (Int.toString (sum (map (fn x => x * 2) [5,7,9])) ^ "\n")
+```
+<!-- example:examples/multi-clause.sml:end -->
+
 ### Required rejections
 
 ```sml
@@ -440,7 +494,7 @@ val x = 2147483648               (* Rune integer literal out of range *)
 ```
 
 The test corpus covers these cases individually and rejects deferred forms such
-as multi-clause functions, `handle`, `ref`, and `structure`. It also rejects function
+as mutual function declarations, `handle`, `ref`, and `structure`. It also rejects function
 equality (including functions inside tuples), self-application, polymorphic
 recursion, duplicate pattern names, and invalid generalization of expansive values.
 

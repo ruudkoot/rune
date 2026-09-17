@@ -178,11 +178,18 @@ or extra allocations during collection. Uninitialized slots and unused capacity
 are not roots. Initialized locals remain roots until overwritten or until their
 frame returns or is replaced; the compiler does not emit last-use information.
 
-Only managed allocation can trigger collection. Aggregate operands stay on the
-operand stack until construction finishes; concatenation registers its popped
-operands as temporary roots. Unary constructor calls root their popped payload
-argument while allocating. Frame growth, user-closure entry, returns, and
-equality do not perform managed allocations. The allocating built-in
+Only managed allocation can trigger collection. Tuple fields and closure captures
+stay on the operand stack until construction finishes. Concatenation temporarily
+pushes its two popped operands back onto that traced stack while allocating and
+copying the result. Unary constructor calls similarly push their popped payload
+argument while allocating. These temporary roots reuse slots already freed by
+the dispatcher: CONCAT, CALL, and TAILCALL each pop two operands first. They do
+not increase the instruction's peak operand-stack usage, and the helpers restore
+the stack depth before returning. This rooting strategy leaves bytecode v3 and
+its instruction semantics unchanged; existing v3 files remain compatible.
+
+Frame growth, user-closure entry, returns, and equality do not perform managed
+allocations. The allocating built-in
 `Int.toString` consumes only an integer. New objects are initialized and published
 to roots before the next allocation. Loading also obeys this rule. Collector tests create
 cycles internally: immutable Rune values and SELF currently cannot construct them.

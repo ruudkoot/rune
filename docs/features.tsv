@@ -9,12 +9,12 @@ expr-ops	Fixed integer, boolean, and string operators	implemented	First slice	Op
 expr-sequence	Expression sequencing	implemented	First slice	Parenthesized or `let` body sequences; evaluate left to right
 basis-output	`print`, `Int.toString`, `not`, `~`	implemented	First slice	Only the listed signatures; built-in values can be aliased, selected by if, and applied
 type-static	Static type checking	implemented	First slice	Reject ill-typed programs before producing bytecode
-fn-closures	`fn`, application, lexical closures, currying	implemented	v0.1 / M2; M5a	One match clause; refutable parameters; first-class functions and constructors
-fn-recursion	Recursive `fun` declarations	implemented	v0.1 / M2; M5a	Single clause; one function per declaration; curried arguments gathered before matching; tail calls
+fn-closures	`fn`, application, lexical closures, currying	partial	v0.1 / M2; M5a / M5c	Ordered match clauses; refutable parameters; first-class functions and constructors; M5c acceptance pending
+fn-recursion	Recursive `fun` declarations	partial	v0.1 / M2; M5a / M5c	Ordered clauses with equal arity; one function per declaration; arguments gathered before matching; tail calls; M5c acceptance pending
 data-tuples	Tuples and tuple destructuring	implemented	v0.1 / M2; M5a	Arity at least two; nested patterns including constructors and literals
 type-poly	Let polymorphism and equality types	implemented	v0.1 / M2; M5a	Hindley–Milner inference, nominal datatypes, constructor value restriction, equality constraints
 runtime-gc	Garbage collection and bounded heap	implemented	v0.1 / M3	Non-moving mark-and-sweep; 64 MiB default heap; active locals retain values until frame release or replacement
-data-datatypes	Lists, datatypes, constructor patterns, `case`	partial	M5a / M5b	Parameterized recursive datatypes, lists, constructors, case, Match/Bind, match warnings; multi-clause functions deferred
+data-datatypes	Lists, datatypes, constructor patterns, `case`	partial	M5a / M5b / M5c	Parameterized recursive datatypes, lists, constructors, case, multi-clause functions, Match/Bind, match warnings; mutual datatypes, replication, withtype deferred
 control-exceptions	`exception`, `raise`, `handle`	deferred	Deferred / M5	Runtime arithmetic failures exist earlier; user exception handling does not
 data-mutation	References, assignment, `while`, arrays, vectors	deferred	Deferred / M5	No user-visible mutable storage in v0.1
 data-records	Records, selectors, flexible record patterns	deferred	Deferred / M5	Tuples arrive earlier; other record syntax is rejected

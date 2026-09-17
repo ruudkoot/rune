@@ -169,6 +169,13 @@ evaluation order, constructor protection, type-name shadowing, value restriction
 expanded-syntax limits, and source-located match failures. List programs also run
 under normal/stress collection, including a 16 KiB heap and retained-list failure.
 
+M5c fixtures extend function checks to ordered clauses, shared argument/result
+types, clause-local scopes, correlated pattern coverage, and nested match
+parsing. Runtime checks distinguish curried `fun` from nested `fn` matching
+times, preserve failure locations, and exercise tail calls and captured partial
+applications with GC stress and a 16 KiB heap. Syntax/typing rejections and
+parameter/analysis boundaries use the same three-host corpus.
+
 `test-builds` uses a temporary checkout whose path contains spaces. It checks
 incremental rebuilds and that invalid SML causes each build to fail.
 `test-gc` builds a C collector harness covering root categories, stale capacity

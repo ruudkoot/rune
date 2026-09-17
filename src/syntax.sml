@@ -12,10 +12,10 @@ struct
            | Name of string | Binary of string * expr * expr
            | Apply of expr * expr | If of expr * expr * expr
            | Let of decl list * expr | Sequence of expr list
-           | Fn of pattern * expr | Tuple of expr list
+           | Fn of (pattern * expr) list | Tuple of expr list
            | Case of expr * (pattern * expr) list
   and decl = Val of Source.pos * pattern * expr
-           | Fun of Source.pos * string * pattern list * expr
+           | Fun of Source.pos * string * (Source.pos * pattern list * expr) list
            | Datatype of Source.pos * string list * string * (Source.pos * string * typeExpr option) list
   fun position (E (p, _)) = p
 end
