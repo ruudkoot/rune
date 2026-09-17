@@ -57,8 +57,9 @@ rules so that one source tree builds everywhere and emits identical output:
 
 1. Only the SML Basis Library (2004 revision) is used—no SML/NJ library, no
    compiler-specific structures outside `src/main/`.
-2. Every file contains only `structure`/`signature`/`functor` declarations
-   (required by SML/NJ's CM).
+2. Every file contains only `structure` declarations (required by SML/NJ's
+   CM). Signatures and functors are not used: Rune cannot compile them yet
+   (see rule 6).
 3. Never depend on the width of `Int`: SML/NJ's `Int` here is 31-bit, MLton's
    32-bit, Poly/ML's arbitrary precision. Source literals are kept as
    `IntInf.int`; bytecode immediates are limited to ±2^30; 64-bit values are
@@ -68,6 +69,10 @@ rules so that one source tree builds everywhere and emits identical output:
 5. All iteration over maps uses the ordered `StringMap`/`IntMap` from
    `src/util/ordmap.sml`, and every generated name/stamp comes from a counter,
    so output is deterministic across hosts.
+6. The compiler must be compilable by Rune itself, so its sources stay inside
+   the language described in `docs/language.md`: no signatures, ascription or
+   functors, and no literal or operator overloading at `IntInf.int` (write
+   `IntInf.fromInt n` and `IntInf.+ (a, b)`).
 
 ## Using the compiler
 

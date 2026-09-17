@@ -24,7 +24,9 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md`. |
 | Driver | `src/driver/options.sml`, `main.sml` | CLI | Compiles the basis (from `lib/basis/MANIFEST`) followed by the user files as one program. |
 
-Shared utilities: `src/util/ordmap.sml` (AVL maps), `source.sml` (files,
+Shared utilities: `src/util/ordmap.sml` (AVL maps: a generic `OrdMap` taking
+the comparison as a value, specialised as `StringMap`/`IntMap` without
+functors), `source.sml` (files,
 spans, line/column), `error.sml` (`CompileError`, `Bug`).
 
 ## Virtual machine
