@@ -2,3 +2,7 @@ bin/
 build/
 *.rbc
 tests/out/
+vm/opcodes.h
+vm/prims_table.h
+src/backend/opcodes.sml
+src/backend/prims.sml
