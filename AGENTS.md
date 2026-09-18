@@ -29,12 +29,15 @@ keep these invariants:
 
 * Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
   Poly/ML build files are generated from it — never edit `build/`.
-* The compiler must build with all three SML systems and produce identical
-  bytecode. Follow the portability rules in `docs/building.md` (Basis-only
-  code, no dependence on `Int` width, structures only at top level,
-  deterministic iteration).
+* The compiler must build with all three SML systems and with itself
+  (`make boot`), and all four builds must produce identical bytecode. Follow
+  the portability rules in `docs/building.md` (Basis-only code, no dependence
+  on `Int` width, structures only at top level, deterministic iteration, and
+  sources that stay inside the language described in `docs/language.md`: no
+  signatures or functors, explicit `IntInf` operations).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `check-cross`, `check-docs`). For VM changes also run the suite with the
+  `check-cross`, `check-docs`, `test-boot`, `bootstrap`; about 20 minutes,
+  use `make test` while iterating). For VM changes also run the suite with the
   sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
 * `.expected` files are written by hand or reviewed line by line after
   `tests/run-tests.sh --update <filter>`; never accept generated output

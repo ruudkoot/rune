@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
         } else if (strcmp(argv[i], "--disasm") == 0) disasm = 1;
         else if (strcmp(argv[i], "--trace") == 0) trace = 1;
         else if (strcmp(argv[i], "--stats") == 0) stats = 1;
-        else if (strcmp(argv[i], "--version") == 0) { printf("runevm 0.1.0\n"); return 0; }
+        else if (strcmp(argv[i], "--version") == 0) { printf("runevm 0.2.0\n"); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;

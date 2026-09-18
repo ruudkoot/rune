@@ -25,7 +25,10 @@ virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
 | `make test-all` | run the suite with each of the three compiler builds |
 | `make check-cross` | compile every test with all three builds and compare the bytecode |
 | `make check-docs` | verify docs, tests and `.def` files are in sync |
-| `make check` | all of the above |
+| `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-mlton`) and the `bin/rune-boot` wrapper that runs it on `runevm` |
+| `make test-boot` | run `tests/run-tests.sh` with `bin/rune-boot` |
+| `make bootstrap` | compile the compiler with `bin/rune-boot` and check the result equals `bin/rune.rbc` |
+| `make check` | all of the above (about 20 minutes, most of it spent running the compiler on the interpreter) |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
 `CC=clang make vm` selects another C compiler. `RUNE_LIB=/path make` bakes a
@@ -46,24 +49,51 @@ different default basis-library location into the compiler (default:
   the generated `RUNE_PRIM_LIST` X-macro, so adding a primitive means: add a
   line to `prims.def`, implement `p_<name>` in `vm/prims.c`, document it in
   `docs/bytecode.md`.
-* Entry points: `src/main/mlton-main.sml` and `src/main/polyml-main.sml` call
-  `Main.main`; SML/NJ's `ml-build` exports `Main.main` directly and
-  `bin/rune-smlnj` is a shell wrapper around `sml @SMLload`.
+* Entry points: `src/main/mlton-main.sml`, `src/main/polyml-main.sml` and
+  `src/main/rune-main.sml` (the self-hosted build) call `Main.main`; SML/NJ's
+  `ml-build` exports `Main.main` directly and `bin/rune-smlnj` is a shell
+  wrapper around `sml @SMLload`.
+
+## Bootstrapping
+
+The compiler is written in the language it compiles, so it can build itself:
+
+1. `make boot` compiles `build/config.sml`, the files of `sources.txt` and
+   `src/main/rune-main.sml` with `bin/rune-mlton` into `bin/rune.rbc`
+   (stage 1) and writes `bin/rune-boot`, a wrapper that runs
+   `runevm --heap-size $(BOOT_HEAP) bin/rune.rbc` (the large initial semispace,
+   256 MiB by default, keeps the bootstrap nearly collection-free).
+2. `bin/rune-boot` accepts the same options as `bin/rune`, so
+   `make test-boot` runs the whole test suite with it and `make check-cross`
+   compares its bytecode with the three host builds on every test program,
+   the examples, and the compiler sources themselves.
+3. `make bootstrap` compiles the compiler with `bin/rune-boot` into
+   `bin/rune.stage2.rbc` and checks with `cmp` that it is identical to
+   `bin/rune.rbc`: the compiler reproduces itself byte for byte.
+
+All of this relies on the compiler being deterministic (ordered maps and
+counter-generated stamps, rule 5 below) and on its sources staying inside the
+language Rune accepts (rule 6). If stage 2 ever differs from stage 1, diff the
+`runevm --disasm` output of the two files, then the `--dump-lambda` /
+`--dump-code` output of `bin/rune` and `bin/rune-boot` on the first
+differing input.
 
 ## Portability rules for compiler sources
 
 The three SML systems differ in ways that matter; the code base follows these
 rules so that one source tree builds everywhere and emits identical output:
 
-1. Only the SML Basis Library (2004 revision) is used—no SML/NJ library, no
-   compiler-specific structures outside `src/main/`.
+1. Only the part of the SML Basis Library (2004 revision) that Rune's own
+   basis provides is used—no SML/NJ library, no compiler-specific structures
+   outside `src/main/`.
 2. Every file contains only `structure` declarations (required by SML/NJ's
    CM). Signatures and functors are not used: Rune cannot compile them yet
    (see rule 6).
 3. Never depend on the width of `Int`: SML/NJ's `Int` here is 31-bit, MLton's
    32-bit, Poly/ML's arbitrary precision. Source literals are kept as
    `IntInf.int`; bytecode immediates are limited to ±2^30; 64-bit values are
-   serialized from `IntInf` with `quot`/`rem`.
+   serialized from `IntInf` with `quot`/`rem` (with explicit `IntInf`
+   operations, see rule 6).
 4. Reals are never converted to binary by the compiler; they travel to the VM
    as their literal text.
 5. All iteration over maps uses the ordered `StringMap`/`IntMap` from
@@ -79,6 +109,7 @@ rules so that one source tree builds everywhere and emits identical output:
 ```
 bin/rune [options] file.sml ...      # produces first-file.rbc (or -o FILE)
 bin/runevm [options] file.rbc [args] # runs it
+bin/rune-boot [options] file.sml ... # the same compiler, running on runevm
 ```
 
 Run `bin/rune --help` and `bin/runevm --help` for the option lists. Exit

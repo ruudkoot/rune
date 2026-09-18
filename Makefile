@@ -8,6 +8,9 @@
 #   make test-all   run the suite with each of the three compiler builds
 #   make check-cross  verify all three builds emit byte-identical bytecode
 #   make check-docs verify docs/language.md, tests and .def files are in sync
+#   make boot       bin/rune.rbc (the compiler compiled by itself) + bin/rune-boot wrapper
+#   make test-boot  run the suite with the self-hosted compiler
+#   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
 
 SHELL   := /bin/sh
@@ -24,7 +27,12 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/config.sml
 VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c
 VM_HDRS := vm/vm.h $(GEN_C)
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs check clean
+# Sources of the compiler as compiled by itself, and the initial semispace of
+# the VM running it (a large heap keeps the bootstrap nearly collection-free).
+BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
+BOOT_HEAP ?= 268435456
+
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean
 
 all: mlton vm
 
@@ -84,13 +92,33 @@ test-all: all3 vm
 	  sh tests/run-tests.sh --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
 
-check-cross: all3
+check-cross: all3 bin/rune-boot
 	sh scripts/check-cross.sh
 
 check-docs:
 	sh scripts/check-docs.sh
 
-check: test test-all check-cross check-docs
+# ---------------------------------------------------------------- bootstrap
+# Stage 1: the MLton build compiles the compiler to bytecode. bin/rune-boot
+# runs it on runevm; `bootstrap` checks that it reproduces itself byte for byte.
+bin/rune.rbc: bin/rune-mlton bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+	bin/rune-mlton -o $@ $(BOOT_SRCS)
+
+bin/rune-boot: bin/rune.rbc
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(BOOT_HEAP) "$$d/rune.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+boot: bin/rune-boot
+
+test-boot: bin/rune-boot vm
+	sh tests/run-tests.sh --rune bin/rune-boot --vm bin/runevm
+
+bootstrap: bin/rune-boot
+	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
+	cmp bin/rune.rbc bin/rune.stage2.rbc
+	@echo "bootstrap: bin/rune.rbc reproduces itself"
+
+check: test test-all check-cross check-docs test-boot bootstrap
 
 clean:
 	rm -rf bin build $(GEN_SML) $(GEN_C) tests/out

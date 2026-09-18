@@ -21,13 +21,25 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | Rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
-| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md`. |
+| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `BinIO`. |
 | Driver | `src/driver/options.sml`, `main.sml` | CLI | Compiles the basis (from `lib/basis/MANIFEST`) followed by the user files as one program. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: a generic `OrdMap` taking
 the comparison as a value, specialised as `StringMap`/`IntMap` without
 functors), `source.sml` (files,
 spans, line/column), `error.sml` (`CompileError`, `Bug`).
+
+## Bootstrapping
+
+The compiler is compiled by itself: `make boot` compiles the sources with the
+MLton build into `bin/rune.rbc`, which `runevm` executes as `bin/rune-boot`;
+`make bootstrap` verifies that this self-hosted compiler reproduces
+`bin/rune.rbc` byte for byte, and `check-cross` verifies that it agrees with
+the host builds on every test program. This works because every pass is
+deterministic (ordered maps, counter-generated stamps, reals passed through as
+text) and because the compiler sources use only what Rune itself supports
+(`docs/building.md`, portability rule 6): plain structures instead of
+functors, explicit `IntInf` operations, `TextIO`/`BinIO` file streams.
 
 ## Virtual machine
 

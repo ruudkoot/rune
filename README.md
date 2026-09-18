@@ -4,7 +4,9 @@ Rune is a Standard ML '97 compiler that targets a compact stack bytecode, plus
 `runevm`, a portable C99 interpreter with a copying garbage collector. The
 compiler is written in portable Standard ML and builds unchanged with
 **MLton**, **SML/NJ** and **Poly/ML** — all three produce byte-identical
-bytecode.
+bytecode. It also compiles itself: `make boot` produces `bin/rune.rbc`, a
+compiler that runs on `runevm`, and `make bootstrap` checks that it
+reproduces itself byte for byte.
 
 ```
 $ make                                   # bin/rune (MLton) + bin/runevm
@@ -47,8 +49,11 @@ See [docs/building.md](docs/building.md). In short:
 make all3          # bin/rune-mlton, bin/rune-smlnj, bin/rune-polyml
 make test          # run the suite with bin/rune
 make test-all      # ... with each compiler build
-make check-cross   # identical bytecode from all three builds
+make check-cross   # identical bytecode from all builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
+make boot          # bin/rune.rbc + bin/rune-boot: the compiler compiled by itself
+make test-boot     # run the suite with the self-hosted compiler
+make bootstrap     # the self-hosted compiler reproduces bin/rune.rbc
 make check         # everything
 ```
 
@@ -65,8 +70,10 @@ uncaught exception is reported on stderr and exits with status 1.
 
 ## Status
 
-Version 0.1.0: first working release. The compiler is not self-hosting yet
-(it uses `IntInf`, `BinIO`, `TextIO.openIn` and functors, which Rune does not
-provide). See the *Planned* rows in [docs/language.md](docs/language.md) for
-the roadmap: signatures and functors, equality types, exhaustiveness warnings,
-file I/O, `IntInf`.
+Version 0.2.0: the compiler is self-hosting. `bin/rune.rbc` (the compiler
+compiled by the MLton build) runs on `runevm`, passes the test suite, emits the
+same bytecode as the three host builds, and reproduces itself byte for byte.
+Running the compiler on the interpreter is about 100× slower than the MLton
+build (a few seconds per program, under a minute for the compiler itself).
+See the *Planned* rows in [docs/language.md](docs/language.md) for the
+roadmap: signatures and functors, equality types, exhaustiveness warnings.
