@@ -21,6 +21,7 @@ struct
   | SEMI | DOTS | UNDERSCORE | BAR | EQUALS | DARROW | ARROW | HASH
     (* extension *)
   | PRIM                                  (* _prim *)
+  | OVERLOAD                              (* _overload *)
   | EOF
 
   fun toString t =
@@ -49,6 +50,7 @@ struct
     | SEMI => ";" | DOTS => "..." | UNDERSCORE => "_" | BAR => "|" | EQUALS => "="
     | DARROW => "=>" | ARROW => "->" | HASH => "#"
     | PRIM => "_prim"
+    | OVERLOAD => "_overload"
     | EOF => "<eof>"
 
   val reserved : (string * token) list =

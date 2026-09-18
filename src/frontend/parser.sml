@@ -257,10 +257,10 @@ struct
         in
           case peek () of
             UNDERSCORE => (advance (); PWild start)
-          | INT i => (advance (); PScon (SInt i, start))
-          | WORD w => (advance (); PScon (SWord w, start))
-          | STRING s => (advance (); PScon (SString s, start))
-          | CHAR c => (advance (); PScon (SChar c, start))
+          | INT i => (advance (); PScon (SInt i, ref NONE, start))
+          | WORD w => (advance (); PScon (SWord w, ref NONE, start))
+          | STRING s => (advance (); PScon (SString s, ref NONE, start))
+          | CHAR c => (advance (); PScon (SChar c, ref NONE, start))
           | REAL _ => err "real constants are not allowed in patterns"
           | ID s => (advance (); PVar (([], s), ref NONE, start))
           | LONGID (p, s) => (advance (); PVar ((p, s), ref NONE, start))
@@ -445,11 +445,11 @@ struct
         let val start = peekSpan ()
         in
           case peek () of
-            INT i => (advance (); EScon (SInt i, start))
-          | WORD w => (advance (); EScon (SWord w, start))
-          | REAL r => (advance (); EScon (SReal r, start))
-          | STRING s => (advance (); EScon (SString s, start))
-          | CHAR c => (advance (); EScon (SChar c, start))
+            INT i => (advance (); EScon (SInt i, ref NONE, start))
+          | WORD w => (advance (); EScon (SWord w, ref NONE, start))
+          | REAL r => (advance (); EScon (SReal r, ref NONE, start))
+          | STRING s => (advance (); EScon (SString s, ref NONE, start))
+          | CHAR c => (advance (); EScon (SChar c, ref NONE, start))
           | ID s => (advance (); EVar (([], s), ref NONE, start))
           | LONGID (p, s) => (advance (); EVar ((p, s), ref NONE, start))
           | EQUALS => err "infix operator '=' used without arguments; use 'op ='"
@@ -675,6 +675,26 @@ struct
                 val ids = parseFixityIds ()
                 val () = fixenv := List.map (fn id => (id, Fixity.Nonfix)) ids @ !fixenv
               in DNonfix (ids, spanFrom start) end
+          | OVERLOAD =>
+              (* _overload <kind> <longstrid> [<bits> | via <longvid>] *)
+              let
+                val () = advance ()
+                val kind = case next () of ID s => s | _ => err "expected a kind (int, word or real) after _overload"
+                val strid = case next () of
+                              ID s => [s]
+                            | LONGID (p, s) => p @ [s]
+                            | _ => err "expected a structure name in _overload"
+                val literal =
+                  case peek () of
+                    INT i => (advance (); OvBits (IntInf.toInt i))
+                  | ID "via" =>
+                      (advance ();
+                       case next () of
+                         ID s => OvVia ([], s)
+                       | LONGID (p, s) => OvVia (p, s)
+                       | _ => err "expected a function name after via")
+                  | _ => OvBits 64
+              in DOverload {kind = kind, strid = strid, literal = literal, span = spanFrom start} end
           | STRUCTURE =>
               if ctx = Let then err "structure declarations are not allowed inside expressions"
               else

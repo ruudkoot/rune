@@ -67,7 +67,10 @@ struct
   fun shiftLimbs (0, ds) = ds
     | shiftLimbs (n, ds) = 0 :: shiftLimbs (n - 1, ds)
 
-  fun mulMag (a, b) =
+  (* The product of a zero (no limbs) and b must have no limbs either: a
+     shifted empty partial product is a list of zero limbs. *)
+  fun mulMag ([], _) = []
+    | mulMag (a, b) =
     let
       fun go ([], _, acc) = acc
         | go (y :: ys, shift, acc) =
@@ -226,3 +229,15 @@ struct
 end
 
 structure LargeInt = IntInf
+
+(* Integer constants and the overloaded operators at IntInf.int. A constant
+   is converted from its digits where it is evaluated. *)
+structure RuneIntInf =
+struct
+  fun fromLit (digits : string) : IntInf.int =
+    case IntInf.fromString digits of
+      SOME i => i
+    | NONE => raise Fail "RuneIntInf.fromLit"
+end
+
+_overload int IntInf via RuneIntInf.fromLit

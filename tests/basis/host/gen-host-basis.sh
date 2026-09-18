@@ -6,6 +6,8 @@
 #   RUNE_PRIM.sml   signature RUNE_PRIM: a `val` per primitive of vm/prims.def
 #                   with the type of its TYPE column
 #   basis/*.sml     lib/basis with `_prim "name"` replaced by `RunePrim.name`
+#                   and without its `_overload` declarations (a host has its
+#                   own, closed, overloading)
 #   hide.sml        rebinds the top-level values of the Basis Library to a
 #                   value of no use, so that a test cannot pass with the
 #                   host's `exnName` where lib/basis does not define one
@@ -70,7 +72,7 @@ grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | while read -r f; do
          { print }' "lib/basis/$f"
   else
     cat "lib/basis/$f"
-  fi | sed 's/_prim "\([a-z_0-9]*\)"/RunePrim.\1/g' > "$dest"
+  fi | sed -e 's/_prim "\([a-z_0-9]*\)"/RunePrim.\1/g' -e 's/^_overload .*//' > "$dest"
   structures=$(sed -n 's/^structure \([A-Za-z0-9_]*\).*/\1/p' "lib/basis/$f" | tr '\n' ' ')
   printf '%s\t%s\n' "$dest" "${structures% }" >> "$out/files"
 done

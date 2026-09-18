@@ -43,6 +43,30 @@ struct
         err (sp, context ^ ": type mismatch between " ^ s1 ^ " and " ^ s2 ^ " (" ^ reason ^ ")")
       end
 
+  (* int and word constants awaiting the resolution of their type, for the
+     check that the type can represent them *)
+  val pendingLiterals : (scon * ty * Source.span) list ref = ref []
+
+  fun power2 (n : int) : IntInf.int = IntInf.pow (IntInf.fromInt 2, n)
+
+  fun checkLiteral (sc, t, sp) =
+    let
+      fun check (what, v, lo, hi) =
+        if IntInf.< (v, lo) orelse IntInf.> (v, hi)
+        then err (sp, what ^ " constant " ^ Ast.sconToString sc ^ " is out of range for the type " ^ toString t)
+        else ()
+    in
+      case prune t of
+        TCon (c, _) =>
+          (case (sc, Overload.literalOf c) of
+             (SInt v, SOME (Overload.Bits n)) =>
+               check ("integer", v, IntInf.~ (power2 (n - 1)), IntInf.- (power2 (n - 1), IntInf.fromInt 1))
+           | (SWord v, SOME (Overload.Bits n)) =>
+               check ("word", v, IntInf.fromInt 0, IntInf.- (power2 n, IntInf.fromInt 1))
+           | _ => ())
+      | _ => ()
+    end
+
   fun registerOverloads t =
     case prune t of
       TVar r => (case !r of Unbound {kind = KOverload _, ...} => pendingOverloads := r :: !pendingOverloads | _ => ())
@@ -62,7 +86,9 @@ struct
                          else Error.bug "resolvePending: empty overload class"
                      in Unify.unify (TVar r, default) end
                  | _ => ()) (!pendingOverloads);
-     pendingOverloads := [])
+     pendingOverloads := [];
+     List.app checkLiteral (List.rev (!pendingLiterals));
+     pendingLiterals := [])
 
   (* Section 4.11: the program context must determine every flexible record.
      Checked once the whole program is elaborated, together with the deferred
@@ -91,9 +117,27 @@ struct
           if List.exists (fn (l2, _) => l2 = l) rest then err (sp, "duplicate record label '" ^ l ^ "'") else go rest
     in go fields end
 
-  fun sconTy sc =
-    case sc of
-      SInt _ => intTy | SWord _ => wordTy | SReal _ => realTy | SString _ => stringTy | SChar _ => charTy
+  (* The type of a special constant. An int or word constant is overloaded
+     over the types of its kind (Appendix E: the classes Int and Word) and
+     defaults to int or word; its type is left in the slot for Translate. *)
+  fun sconTy (level, sc, slot : ty option ref, sp) =
+    let
+      fun overloaded kind =
+        let val t = freshTvar (level, KOverload [kind], false)
+        in
+          registerOverloads t;
+          pendingLiterals := (sc, t, sp) :: !pendingLiterals;
+          slot := SOME t;
+          t
+        end
+    in
+      case sc of
+        SInt _ => overloaded "int"
+      | SWord _ => overloaded "word"
+      | SReal _ => realTy
+      | SString _ => stringTy
+      | SChar _ => charTy
+    end
 
   type scope = ty StringMap.map ref
 
@@ -281,7 +325,7 @@ struct
       fun elab p =
         case p of
           PWild _ => (fresh level, [])
-        | PScon (sc, _) => (sconTy sc, [])
+        | PScon (sc, slot, sp) => (sconTy (level, sc, slot, sp), [])
         | PVar (longid as (path, name), slot, sp) =>
             (case lookupCon (env, longid, sp) of
                SOME (Con {scheme, info}) =>
@@ -381,7 +425,7 @@ struct
 
   fun elabExp (env, level, scope : scope, e : exp) : ty =
     case e of
-      EScon (sc, _) => sconTy sc
+      EScon (sc, slot, sp) => sconTy (level, sc, slot, sp)
     | EVar (longid, slot, sp) =>
         (case findVal (env, longid) of
            NONE => err (sp, "unbound variable or constructor: " ^ longidToString longid)
@@ -738,6 +782,38 @@ struct
     | DInfix _ => Env.empty
     | DInfixr _ => Env.empty
     | DNonfix _ => Env.empty
+    | DOverload {kind, strid, literal, span = sp} =>
+        (* Register <strid>.<kind> as an overloading type whose operators are
+           the values of the structure. A structure that only renames a
+           registered type (structure Int64 = Int) needs no registration. *)
+        let
+          val () = if !allowPrim then () else err (sp, "_overload is only allowed when compiling with --allow-prim")
+          val name = String.concatWith "." strid
+          val () = if List.exists (fn k => k = kind) ["int", "word", "real"] then ()
+                   else err (sp, "_overload: unknown kind " ^ kind)
+          val str = case Env.findStr (env, strid) of
+                      SOME e => e
+                    | NONE => err (sp, "unbound structure: " ^ name)
+          val tycon = case Env.findTy (str, ([], kind)) of
+                        SOME tystr =>
+                          (case Env.tyStrName tystr of
+                             SOME c => c
+                           | NONE => err (sp, "_overload: " ^ name ^ "." ^ kind ^ " is not a type name"))
+                      | NONE => err (sp, "_overload: structure " ^ name ^ " has no type " ^ kind)
+          fun global what longid =
+            case Env.findVal (env, longid) of
+              SOME (Val {stamp, global = true, ...}) => stamp
+            | _ => err (sp, "_overload: " ^ what ^ " is not a top-level value")
+          fun operator opname = (opname, Overload.Global (global (name ^ "." ^ opname) (strid, opname)))
+          val lit = case literal of
+                      OvBits n => Overload.Bits n
+                    | OvVia (path, f) => Overload.Via (global (String.concatWith "." (path @ [f])) (path, f))
+        in
+          case Overload.kindOf tycon of
+            SOME _ => ()
+          | NONE => Overload.register (tycon, kind, List.map operator (Overload.operators kind), lit);
+          Env.empty
+        end
     | DStructure (binds, _) =>
         (* all bindings of one declaration are elaborated in the same environment (rule 61) *)
         List.foldl (fn (b : strbind, delta) => bindStr (delta, #name b, elabStrexp (env, level, top, outerScope, #strexp b)))

@@ -23,6 +23,29 @@ struct
     | SString s => CString s
     | SChar c => CChar (Char.ord c)
 
+  (* A special constant at the type elaboration found for it: a constant, or
+     for a type registered with `_overload ... via f` the application of f to
+     the digits. *)
+  fun sconExp (sc, slot : Types.ty option ref) : lexp =
+    let
+      fun via digits =
+        case !slot of
+          SOME t =>
+            (case Types.resolve t of
+               Types.TCon (c, _) =>
+                 (case Overload.literalOf c of
+                    SOME (Overload.Via f) => SOME (App (Global f, Const (CString digits)))
+                  | _ => NONE)
+             | _ => NONE)
+        | NONE => NONE
+      fun digits i = if IntInf.< (i, IntInf.fromInt 0) then "~" ^ IntInf.toString (IntInf.~ i) else IntInf.toString i
+    in
+      case sc of
+        SInt i => (case via (digits i) of SOME e => e | NONE => Const (sconConst sc))
+      | SWord w => (case via (digits w) of SOME e => e | NONE => Const (sconConst sc))
+      | _ => Const (sconConst sc)
+    end
+
   fun info (slot : patinfo option ref, sp) =
     case !slot of
       SOME i => i
@@ -66,7 +89,7 @@ struct
   fun compilePat (p : pat, v : int, k : lexp) : lexp =
     case p of
       PWild _ => k
-    | PScon (sc, _) => testEq (Var v, Const (sconConst sc), k)
+    | PScon (sc, slot, _) => testEq (Var v, sconExp (sc, slot), k)
     | PVar (_, slot, sp) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, k)

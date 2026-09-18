@@ -112,8 +112,6 @@ native:smlnj@110.79 | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromSt
 rune | @absent/intinf_sig | RUNE-DEV | no StringCvt structure, which INTEGER names in the types of fmt and scan
 rune | @absent/intinf_scan | RUNE-DEV | no StringCvt structure, so no IntInf.fmt and IntInf.scan
 rune | @section/intinf/* | RUNE-DEV | IntInf lacks log2, andb, orb, xorb, notb, << and ~>>
-rune | IntInf.*/zero-times-* | RUNE-DEV | IntInf.* (0, j) with j of two or more limbs is a non-canonical zero: it prints as 0 but is not equal to 0, has sign 1 and corrupts sums
-rune | IntInf.*/law-* | RUNE-DEV | consequence of the non-canonical zero of IntInf.*: a zero quotient times a large divisor
 native:smlnj@110.79 | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
 native:smlnj@110.79 | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for |i| = 1 and j < 0
 native:smlnj@110.79 | IntInf.*/Div-zero-by-zero | HOST-BUG | IntInf.mod (0, 0) and IntInf.rem (0, 0) do not raise Div

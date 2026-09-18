@@ -30,7 +30,7 @@ struct
   fun simplify (p : pat) : spat =
     case p of
       PWild _ => Any
-    | PScon (sc, _) => Const sc
+    | PScon (sc, _, _) => Const sc
     | PVar (_, slot, sp) =>
         (case info (slot, sp) of
            PIVar _ => Any

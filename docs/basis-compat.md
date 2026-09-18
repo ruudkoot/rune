@@ -60,7 +60,6 @@ the behaviour that is wrong in what exists today:
 | `Bool` | `fromString` accepts exactly `"true"` and `"false"`: case and initial whitespace are not ignored, and characters after the word give `NONE`. |
 | `Int` | `fromString` does not skip a leading vertical tab or form feed. |
 | `Word` | `fromString` skips no whitespace, does not accept the prefixes `0wX` and `0X`, gives `NONE` for a prefix that no digit follows (the number is the `0`), and wraps around instead of raising `Overflow`. |
-| `IntInf` | `*` with a zero first operand and a second operand of two or more limbs gives a non-canonical zero: it prints as `0`, is not equal to 0, has `sign` 1 and corrupts later sums. |
 | `Real` | `signBit` is false for every NaN (so `~`, `sameSign`, `copySign` ignore the sign of a NaN); `checkFloat` raises `Domain` on NaN, not `Div`; `realFloor`, `realCeil`, `realTrunc`, `realRound` go through `int`: `Overflow` on huge values and infinities, `Domain` on NaN, a zero result loses its sign, and `realRound (2^52 + 1)` is `2^52 + 2`. |
 | `Math` | `pow (1.0, NaN)` and `pow (±1.0, ±inf)` are 1.0 (C `pow`), not NaN; `sinh` and `tanh` of `~0.0` are `0.0`; `tanh` is NaN for infinities and for \|x\| > 710. |
 | `Char`, `String` | `fromString` converts non-printing characters instead of stopping at them, does not limit `\^c` to the range `@`..`_`, has no `\uxxxx`, and `String.fromString` gives `NONE` instead of the prefix converted before an improper escape; `Char.fromString` has no `\f...f\`; `String.fromString` passes over an unterminated one. |
@@ -73,6 +72,11 @@ The `xc1` configurations reproduce these check for check, so they are
 properties of the library source and not of Rune's compiler or VM. The
 departures that `xc1` does not reproduce come from the VM's primitives
 (`Math.pow`, `sinh`, `tanh` follow C).
+
+Fixed since M0, with their deviation lines removed: `IntInf.*` with a zero
+first operand and a second operand of two or more limbs gave a non-canonical
+zero (it printed as `0`, was not equal to 0, had `sign` 1 and corrupted
+later sums).
 
 ## Where the hosts depart from the specification
 

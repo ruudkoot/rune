@@ -14,6 +14,9 @@ struct
     | SString of string
     | SChar of char
 
+  (* The constants of a type registered with _overload (Overload.literal). *)
+  datatype ovliteral = OvBits of int | OvVia of string list * string
+
   (* Resolved status of a value identifier, filled by elaboration. *)
   datatype varinfo =
       VLocal of int                             (* variable stamp *)
@@ -34,7 +37,7 @@ struct
        and exninfo = {name : string, stamp : int, isGlobal : bool, hasArg : bool, builtin : int option}
 
   datatype exp =
-      EScon of scon * span
+      EScon of scon * Types.ty option ref * span   (* the type of an int or word constant, filled by elaboration *)
     | EVar of longid * varinfo option ref * span
     | ERecord of (string * exp) list * span
     | ETuple of exp list * span                 (* including () *)
@@ -56,7 +59,7 @@ struct
 
   and pat =
       PWild of span
-    | PScon of scon * span
+    | PScon of scon * Types.ty option ref * span
     | PVar of longid * patinfo option ref * span          (* variable or nullary constructor *)
     | PRecord of (string * pat) list * bool * Types.ty option ref * span   (* fields, flexible, full record type *)
     | PTuple of pat list * span
@@ -86,6 +89,7 @@ struct
     | DInfix of int * string list * span
     | DInfixr of int * string list * span
     | DNonfix of string list * span
+    | DOverload of {kind : string, strid : string list, literal : ovliteral, span : span}   (* _overload *)
     | DStructure of strbind list * span
     | DSignature of sigbind list * span
     | DFunctor of funbind list * span
@@ -132,7 +136,7 @@ struct
 
   fun spanOfExp e =
     case e of
-      EScon (_, s) => s | EVar (_, _, s) => s | ERecord (_, s) => s | ETuple (_, s) => s
+      EScon (_, _, s) => s | EVar (_, _, s) => s | ERecord (_, s) => s | ETuple (_, s) => s
     | ESelect (_, _, s) => s | EList (_, s) => s | ESeq (_, s) => s | ELet (_, _, s) => s
     | EApp (_, _, s) => s | ETyped (_, _, s) => s | EAndalso (_, _, s) => s
     | EOrelse (_, _, s) => s | EHandle (_, _, s) => s | ERaise (_, s) => s
@@ -141,7 +145,7 @@ struct
 
   fun spanOfPat p =
     case p of
-      PWild s => s | PScon (_, s) => s | PVar (_, _, s) => s | PRecord (_, _, _, s) => s
+      PWild s => s | PScon (_, _, s) => s | PVar (_, _, s) => s | PRecord (_, _, _, s) => s
     | PTuple (_, s) => s | PList (_, s) => s | PApp (_, _, _, s) => s | PTyped (_, _, s) => s
     | PLayered (_, _, _, _, s) => s
 
@@ -155,7 +159,7 @@ struct
       DVal (_, _, s) => s | DValRec (_, _, s) => s | DFun (_, _, s) => s | DType (_, s) => s
     | DDatatype (_, _, s) => s | DDatatypeRepl (_, _, s) => s | DAbstype (_, _, _, s) => s | DException (_, s) => s
     | DLocal (_, _, s) => s | DOpen (_, s) => s | DInfix (_, _, s) => s | DInfixr (_, _, s) => s
-    | DNonfix (_, s) => s | DStructure (_, s) => s | DSignature (_, s) => s | DFunctor (_, s) => s
+    | DNonfix (_, s) => s | DOverload {span = s, ...} => s | DStructure (_, s) => s | DSignature (_, s) => s | DFunctor (_, s) => s
 
   fun spanOfStrexp e =
     case e of
@@ -184,7 +188,7 @@ struct
   (* --- deep copy with fresh annotation slots (functor bodies are elaborated once per application) --- *)
   fun copyExp e =
     case e of
-      EScon _ => e
+      EScon (sc, _, s) => EScon (sc, ref NONE, s)
     | EVar (id, _, sp) => EVar (id, ref NONE, sp)
     | ERecord (fs, sp) => ERecord (List.map (fn (l, e) => (l, copyExp e)) fs, sp)
     | ETuple (es, sp) => ETuple (List.map copyExp es, sp)
@@ -209,7 +213,7 @@ struct
   and copyPat p =
     case p of
       PWild _ => p
-    | PScon _ => p
+    | PScon (sc, _, s) => PScon (sc, ref NONE, s)
     | PVar (id, _, sp) => PVar (id, ref NONE, sp)
     | PRecord (fs, flex, _, sp) => PRecord (List.map (fn (l, p) => (l, copyPat p)) fs, flex, ref NONE, sp)
     | PTuple (ps, sp) => PTuple (List.map copyPat ps, sp)
@@ -240,6 +244,7 @@ struct
     | DInfix _ => d
     | DInfixr _ => d
     | DNonfix _ => d
+    | DOverload _ => d
     | DStructure (bs, sp) =>
         DStructure (List.map (fn {name, strexp, span} => {name = name, strexp = copyStrexp strexp, span = span}) bs, sp)
     | DSignature _ => d
@@ -264,7 +269,7 @@ struct
 
   fun expToString e =
     case e of
-      EScon (sc, _) => sconToString sc
+      EScon (sc, _, _) => sconToString sc
     | EVar (id, _, _) => longidToString id
     | ERecord (fields, _) => "{" ^ String.concatWith ", " (List.map (fn (l, e) => l ^ " = " ^ expToString e) fields) ^ "}"
     | ETuple (es, _) => "(" ^ String.concatWith ", " (List.map expToString es) ^ ")"
@@ -290,7 +295,7 @@ struct
   and patToString p =
     case p of
       PWild _ => "_"
-    | PScon (sc, _) => sconToString sc
+    | PScon (sc, _, _) => sconToString sc
     | PVar (id, _, _) => longidToString id
     | PRecord (fields, flex, _, _) =>
         "{" ^ String.concatWith ", " (List.map (fn (l, p) => l ^ " = " ^ patToString p) fields)
@@ -355,6 +360,7 @@ struct
       | DInfix (p, ids, _) => "infix " ^ Int.toString p ^ " " ^ String.concatWith " " ids
       | DInfixr (p, ids, _) => "infixr " ^ Int.toString p ^ " " ^ String.concatWith " " ids
       | DNonfix (ids, _) => "nonfix " ^ String.concatWith " " ids
+      | DOverload {kind, strid, ...} => "_overload " ^ kind ^ " " ^ String.concatWith "." strid
       | DStructure (bs, _) =>
           "structure " ^ String.concatWith " and " (List.map (fn {name, strexp, ...} => name ^ " = " ^ strexpToString strexp) bs)
       | DSignature (bs, _) =>

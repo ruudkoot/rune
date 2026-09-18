@@ -32,10 +32,19 @@ struct
     | _ =>
         let val tc = operandTycon ty
         in
-          case Overload.primOf (tc, name) of
-            SOME prim => prim
-          | NONE => Error.bug ("operator " ^ name ^ " at type " ^ #name tc)
+          case Overload.implOf (tc, name) of
+            SOME (Overload.Prim prim) => prim
+          | _ => Error.bug ("operator " ^ name ^ " at type " ^ #name tc)
         end
+
+  (* The top-level variable that implements an overloaded operator at a type
+     registered with _overload, if that is where the operator resolved to. *)
+  fun builtinGlobal (name : string, ty : Types.ty) : int option =
+    case name of
+      "=" => NONE | "<>" => NONE | ":=" => NONE | "!" => NONE
+    | _ => (case Overload.implOf (operandTycon ty, name) of
+              SOME (Overload.Global g) => SOME g
+            | _ => NONE)
 
   (* Variables bound to a primitive, `val op + = _prim "int_add" : int * int -> int`,
      or to such a variable, `val size = String.size`, by stamp. An application
@@ -115,7 +124,7 @@ struct
 
   and transExp (e : exp) : lexp =
     case e of
-      EScon (sc, _) => Const (sconConst sc)
+      EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
     | EVar (_, slot, sp) =>
         (case varinfo (slot, sp) of
            VLocal s => Var s
@@ -125,13 +134,16 @@ struct
          | VExn info => exnExp info
          | VExnVal info => exnExp info
          | VBuiltin (name, ty) =>
-             let val prim = builtinPrim (name, ty)
-             in
-               if name = "<>" then
-                 let val x = MatchComp.freshVar ()
-                 in Fn (x, notExp (Prim (prim, [Select (0, Var x), Select (1, Var x)]))) end
-               else etaPrim prim
-             end)
+             (case builtinGlobal (name, ty) of
+                SOME g => Global g
+              | NONE =>
+                  let val prim = builtinPrim (name, ty)
+                  in
+                    if name = "<>" then
+                      let val x = MatchComp.freshVar ()
+                      in Fn (x, notExp (Prim (prim, [Select (0, Var x), Select (1, Var x)]))) end
+                    else etaPrim prim
+                  end))
     | ERecord (fields, _) =>
         let
           val sorted = Types.sortFields fields
@@ -200,10 +212,16 @@ struct
          | VExn info => exnApp (info, f, a)
          | VExnVal info => exnApp (info, f, a)
          | VBuiltin (name, ty) =>
-             let
-               val prim = builtinPrim (name, ty)
-               val call = applyPrim (prim, a)
-             in if name = "<>" then notExp call else call end
+             (case builtinGlobal (name, ty) of
+                SOME g =>
+                  (case IntMap.find (!primAliases, g) of
+                     SOME prim => applyPrim (prim, a)
+                   | NONE => App (Global g, transExp a))
+              | NONE =>
+                  let
+                    val prim = builtinPrim (name, ty)
+                    val call = applyPrim (prim, a)
+                  in if name = "<>" then notExp call else call end)
          | _ =>
              (case primAliasOf f of
                 SOME prim => applyPrim (prim, a)
@@ -304,6 +322,7 @@ struct
     | DInfix _ => k ()
     | DInfixr _ => k ()
     | DNonfix _ => k ()
+    | DOverload _ => k ()
     | DStructure (binds, _) =>
         let
           fun go [] = k ()

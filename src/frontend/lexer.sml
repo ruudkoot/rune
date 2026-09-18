@@ -34,7 +34,9 @@ struct
 
       fun digitsWhile (i, p) = if at i andalso p (ch i) then digitsWhile (i + 1, p) else i
 
-      (* Explicit IntInf operations: Rune has no literal overloading. *)
+      (* Explicit IntInf operations: the hosts that compile this file type an
+         integer constant as IntInf.int, Rune as well, but only once lib/basis
+         registers IntInf; the sources must not depend on it. *)
       fun parseInt (s, radix : int) : IntInf.int =
         let
           val r = IntInf.fromInt radix
@@ -196,6 +198,8 @@ struct
             else if c = #"_" then
               (if String.size text >= i + 5 andalso String.substring (text, i, 5) = "_prim"
                   andalso not (isIdentChar (ch (i + 5))) then (PRIM, span (i, i + 5), i + 5)
+               else if String.size text >= i + 9 andalso String.substring (text, i, 9) = "_overload"
+                  andalso not (isIdentChar (ch (i + 9))) then (OVERLOAD, span (i, i + 9), i + 9)
                else (UNDERSCORE, span (i, i + 1), i + 1))
             else if c = #"." then
               (if ch (i + 1) = #"." andalso ch (i + 2) = #"." then (DOTS, span (i, i + 3), i + 3)

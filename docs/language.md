@@ -21,13 +21,14 @@ SML rejects, or reject some that SML accepts.
 
 | Topic | Rune behaviour |
 |---|---|
-| Integer literals | Integer, word and real literals have exactly one type each (`int`, `word`, `real`); there is no literal overloading over multiple precisions. `Int` is 64-bit, `Word` is 64-bit, `Real` is IEEE double. `IntInf.int` values are built with `IntInf.fromInt`/`fromString` or arithmetic, and the operators on them are not overloaded (`IntInf.+`). |
+| Integer literals | An integer constant is overloaded over the types of kind `int` and defaults to `int`; a word constant likewise over the kind `word`. Besides `int` and `word` these are the types the basis library registers with `_overload`: today `IntInf.int` (= `LargeInt.int`). A constant that its type cannot represent is a compile-time error (`int` and `word` have 64 bits). An `IntInf.int` constant is converted from its digits where it is evaluated, and compared structurally in a pattern. Real constants have the type `real` only. `Int` is 64-bit, `Word` is 64-bit, `Real` is IEEE double. |
 | Strings | 8-bit byte strings; `\uXXXX` escapes above 255 are errors. |
 | Functors | A functor body is specialised per application (the copy is type-checked against the actual argument, which cannot fail after the check against the parameter signature). This is not observable, but the bytecode contains one copy of the body per application. |
 | Programs | Rune is a batch compiler: a static error in any top-level declaration rejects the whole program, and an uncaught exception terminates it. Chapter 8 regards programs as interactive and would skip the failing declaration and continue. |
 | Overloading | Overloaded operators and literals are resolved (and defaulted) at the end of the enclosing top-level declaration. `~` is overloaded at `int`, `word` and `real`. |
 | Flexible records | The labels of a flexible record pattern (`{a, ...}`) or selector (`#a`) must be determined by the end of the program (Section 4.11 leaves the granularity to the implementation). A generalised flexible record is resolved by any of its uses; the types of the labels it did not mention are then determined per use rather than shared. |
 | `_prim "name" : ty` | Extension used by the basis library to access VM primitives. Only allowed with `--allow-prim`. |
+| `_overload kind Strid [bits \| via f]` | Extension used by the basis library: a declaration that makes the type `Strid.kind` (`kind` is `int`, `word` or `real`) an overloading type. The overloaded operators at that type are the values `Strid.+`, `Strid.<`, ...; its constants are those of the builtin type restricted to `bits` bits (default 64), or `f digits` for a function `f : string -> Strid.kind`. Only allowed with `--allow-prim`. |
 | I/O | `TextIO`/`BinIO` streams are concrete datatypes (so they admit equality); `BinIO` shares `TextIO`'s stream types; `Word8Vector.vector` is `string` and there is no `Word8`. |
 
 ## Lexical structure
@@ -112,6 +113,7 @@ SML rejects, or reject some that SML accepts.
 | ty.infer.letpoly | Hindley–Milner inference with let-polymorphism | Supported | |
 | ty.infer.valuerestriction | Value restriction (only non-expansive bindings generalize); a top-level declaration may not leave a type variable undetermined (rules 87–89, e.g. `val r = ref nil` is an error) | Supported | |
 | ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~` on `int`/`word`/`real`; `abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. |
+| ty.overload.literal | Overloaded integer and word constants (in expressions and patterns) and operators at the types registered by the basis library: `IntInf.int` | Supported | Default `int`/`word`; out-of-range constants are compile-time errors (`tests/errors/err.literal_*`). |
 | ty.record.flex | Flexible record types from `#lab` and `{..., ...}` | Supported | |
 | ty.annot | Type annotations on expressions and patterns | Supported | |
 | ty.tyvar.explicit | Explicit type variables `fun 'a f (x : 'a) = ...`, `''a`; implicit scoping at the outermost value declaration where the variable occurs unguarded (Section 4.6); the variables are rigid in their scope and must be generalised by it (rule 15) | Supported | Type variables in `type`, `datatype`, `exception` declarations and signatures must be bound (by the `tyvarseq`, an enclosing value declaration, or implicitly in `val` specifications). |
@@ -167,7 +169,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | Chapter 8 programs, rules 87–89 | dec.toplevelexp, ty.infer.valuerestriction |
 | Appendix A derived forms | exp.tuple, exp.record.select, exp.case, exp.if, exp.boolops, exp.seq, exp.let, exp.while, exp.list, pat.tuple, pat.list, dec.fun, dec.datatype.withtype, dec.abstype, dec.toplevelexp, mod.ascription, mod.functor, mod.functor.result, mod.spec, mod.include, mod.sharing.structure, mod.wheretype |
 | Appendix C, D initial basis | basis.general, ty.eqtype |
-| Appendix E overloading | ty.overload.default, exp.literal |
+| Appendix E overloading | ty.overload.default, ty.overload.literal, exp.literal |
 
 ## Runtime behaviour
 
@@ -214,7 +216,7 @@ Library that are not listed are not available.
 | basis.byte | `Byte`: `bytesToString`, `stringToBytes` | Partial | No `byteToChar`, `charToByte`, `unpackString`, `unpackStringVec` or `packString` (no `Word8`). |
 | basis.io | `IO`: exceptions `Io {name, function, cause}` and `ClosedStream` | Partial | No `BlockingNotSupported`, `NonblockingNotSupported`, `RandomAccessNotSupported` or `buffer_mode`. |
 | basis.substring | `Substring` | Planned | |
-| basis.intinf | `IntInf`: `int`, `precision`, `minInt`, `maxInt`, `fromInt`, `toInt`, `toLarge`, `fromLarge`, `~`, `+`, `-`, `*`, `div`, `mod`, `quot`, `rem`, `divMod`, `quotRem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `pow`, `toString`, `fromString`; `LargeInt` = `IntInf` | Partial | Implemented in SML with base-2^30 limbs. No `IntInf` literals or overloading: write `IntInf.fromInt n`, `IntInf.+ (a, b)`. No bit operations, `log2`, `fmt` or `scan`. |
+| basis.intinf | `IntInf`: `int`, `precision`, `minInt`, `maxInt`, `fromInt`, `toInt`, `toLarge`, `fromLarge`, `~`, `+`, `-`, `*`, `div`, `mod`, `quot`, `rem`, `divMod`, `quotRem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `pow`, `toString`, `fromString`; `LargeInt` = `IntInf` | Partial | Implemented in SML with base-2^30 limbs. Integer constants and the overloaded operators work at `IntInf.int` (`ty.overload.literal`; `RuneIntInf.fromLit` converts the constants). No bit operations, `log2`, `fmt` or `scan`. |
 
 Tags of `option` (`NONE` = 0, `SOME` = 1) and `order` are fixed by the basis
 because VM primitives construct these values directly.

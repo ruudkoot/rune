@@ -267,7 +267,11 @@ struct
             (case !r of
                Unbound {id, kind = KPlain, eq, ...} => tvName (id, eq)
              | Unbound {kind = KRigid name, ...} => name
-             | Unbound {id, kind = KOverload _, ...} => tvName (id, false)
+             | Unbound {id, kind = KOverload kinds, ...} =>
+                 (* the type it defaults to, which is what `1` and `x + y` mean to the reader *)
+                 if List.exists (fn k => k = "int") kinds then "int"
+                 else if List.exists (fn k => k = "real") kinds then "real"
+                 else (case kinds of k :: _ => k | [] => tvName (id, false))
              | Unbound {kind = KFlex (fields, _), ...} =>
                  "{" ^ String.concatWith ", " (List.map (fn (l, t) => l ^ " : " ^ go (0, t)) fields) ^ ", ...}"
              | Bound _ => "?")
