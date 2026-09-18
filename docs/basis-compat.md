@@ -73,6 +73,10 @@ properties of the library source and not of Rune's compiler or VM. The
 departures that `xc1` does not reproduce come from the VM's primitives
 (`Math.pow`, `sinh`, `tanh` follow C).
 
+Added since M0, with their deviation lines removed: `exnName` and `exnMessage`
+(at top level and in `General`, which now matches `GENERAL`), and the three
+`*NotSupported` exceptions and `buffer_mode` of `IO`, which now matches `IO`.
+
 Fixed since M0, with their deviation lines removed: `IntInf.*` with a zero
 first operand and a second operand of two or more limbs gave a non-canonical
 zero (it printed as `0`, was not equal to 0, had `sign` 1 and corrupted

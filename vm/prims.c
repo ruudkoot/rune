@@ -69,6 +69,13 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
 
 /* ================================================================ poly */
 static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(ARG(1), ARG(0)))); }
+/* exn values are K_EXN [constructor, payload]; a constructor is K_EXNCON [name]. */
+static int p_exn_name(VM *vm) {
+    Obj *e = check_obj(vm, ARG(0), K_EXN, "exn_name");
+    Value con = OBJ_FIELDS(e)[0];
+    if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) vm_fatal(vm, "primitive exn_name: malformed exception value");
+    return ret(vm, 1, OBJ_FIELDS(con.u.p)[0]);
+}
 static int p_ptr_eq(VM *vm) {
     Value a = ARG(1), b = ARG(0);
     int eq = a.tag == b.tag && (a.tag == T_PTR ? a.u.p == b.u.p : a.u.i == b.u.i);

@@ -135,3 +135,4 @@ file_error       1  unit -> string            strerror text of the last failed f
 
 # --- added after the first release of the table (numbers are positions: append only) ---
 word_neg         1  word -> word              Two's complement negation: 0 - w.
+exn_name         1  exn -> string             The name of the exception constructor of an exception value.

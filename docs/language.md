@@ -194,7 +194,7 @@ Library that are not listed are not available.
 
 | ID | Structure | Status | Notes |
 |---|---|---|---|
-| basis.general | Top-level `option`, `order`, `Fail`, `Option`, `Empty`, `Span`, `Unordered`, `not`, `ignore`, `o`, `before`, `getOpt`, `isSome`, `valOf`, `print`, `ref`, `!`, `:=`; structure `General` | Supported | |
+| basis.general | Top-level `option`, `order`, `Fail`, `Option`, `Empty`, `Span`, `Unordered`, `not`, `ignore`, `o`, `before`, `getOpt`, `isSome`, `valOf`, `print`, `exnName`, `exnMessage`, `ref`, `!`, `:=`; structure `General` | Supported | |
 | basis.bool | `Bool`: `not`, `toString`, `fromString` | Supported | |
 | basis.int | `Int`: `precision`, `minInt`, `maxInt`, `toInt`, `fromInt`, `toLarge`, `fromLarge`, arithmetic, `quot`, `rem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `toString`, `fromString` | Partial | `fromString` parses decimal only; no `fmt`/`scan`. `toLarge`/`fromLarge` convert to/from `IntInf`. |
 | basis.word | `Word`: `wordSize`, conversions, arithmetic, comparisons, `andb`, `orb`, `xorb`, `notb`, `<<`, `>>`, `~>>`, `min`, `max`, `compare`, `toString`, `fromString` | Partial | `toString`/`fromString` are hexadecimal; no `fmt`/`scan`. `toLargeInt`/`toLargeIntX`/`fromLargeInt` go through `IntInf`. |
@@ -214,7 +214,7 @@ Library that are not listed are not available.
 | basis.textio.files | File streams: `TextIO.openIn`, `openOut`, `openAppend`, reading and writing files; errors raise `IO.Io {name, function, cause}` with `cause` `OS.SysErr` or `IO.ClosedStream` | Supported | Streams are concrete datatypes carrying a VM file handle. |
 | basis.binio | `BinIO`: `openIn`, `openOut`, `openAppend`, `closeIn`, `closeOut`, `output`, `inputAll`, `flushOut`; `Word8Vector`: `vector`, `length` | Partial | `Word8Vector.vector` is `string`; no `Word8`, no element access. |
 | basis.byte | `Byte`: `bytesToString`, `stringToBytes` | Partial | No `byteToChar`, `charToByte`, `unpackString`, `unpackStringVec` or `packString` (no `Word8`). |
-| basis.io | `IO`: exceptions `Io {name, function, cause}` and `ClosedStream` | Partial | No `BlockingNotSupported`, `NonblockingNotSupported`, `RandomAccessNotSupported` or `buffer_mode`. |
+| basis.io | `IO`: exceptions `Io {name, function, cause}`, `BlockingNotSupported`, `NonblockingNotSupported`, `RandomAccessNotSupported`, `ClosedStream`; datatype `buffer_mode` | Supported | |
 | basis.substring | `Substring` | Planned | |
 | basis.intinf | `IntInf`: `int`, `precision`, `minInt`, `maxInt`, `fromInt`, `toInt`, `toLarge`, `fromLarge`, `~`, `+`, `-`, `*`, `div`, `mod`, `quot`, `rem`, `divMod`, `quotRem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `pow`, `toString`, `fromString`; `LargeInt` = `IntInf` | Partial | Implemented in SML with base-2^30 limbs. Integer constants and the overloaded operators work at `IntInf.int` (`ty.overload.literal`; `RuneIntInf.fromLit` converts the constants). No bit operations, `log2`, `fmt` or `scan`. |
 

@@ -114,6 +114,8 @@ struct
   val string_explode = String.explode
   val string_concat_list = String.concat
 
+  val exn_name = exnName
+
   (* ---- ref, array, vector ---- *)
   fun ref_new x = ref x
   fun ref_get r = !r

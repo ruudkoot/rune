@@ -19,4 +19,6 @@ struct
   val op o = op o
   val op before = op before
   val ignore = ignore
+  val exnName = exnName
+  val exnMessage = exnMessage
 end

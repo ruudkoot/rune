@@ -76,3 +76,10 @@ val ceil = _prim "real_ceil" : real -> int
 val round = _prim "real_round" : real -> int
 val trunc = _prim "real_trunc" : real -> int
 val vector = _prim "vector_from_list" : 'a list -> 'a vector
+
+(* ---- exceptions ---- *)
+val exnName = _prim "exn_name" : exn -> string
+
+(* "will at least contain the string exnName ex" *)
+fun exnMessage (Fail s) = "Fail: " ^ s
+  | exnMessage e = exnName e

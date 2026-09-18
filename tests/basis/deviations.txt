@@ -21,12 +21,8 @@
 # docs/basis-compat.md describes the differences recorded here.
 
 # ---- General
-rune | @section/general/exnName | RUNE-DEV | General.exnName and the top-level exnName are not implemented
-rune | @section/general/exnMessage | RUNE-DEV | General.exnMessage and the top-level exnMessage are not implemented
-rune | @section/general/exnMessage-exnName | RUNE-DEV | needs exnName and exnMessage, which are not implemented
 rune | @section/general/Substring.span | RUNE-DEV | no Substring structure yet, so nothing can raise Span
 rune | @section/general/IntInf.log2 | RUNE-DEV | IntInf.log2 is not implemented
-rune | @load/general_sig | RUNE-DEV | General lacks exnName and exnMessage, so it does not match GENERAL
 native:smlnj@110.79 | General.exnMessage/contains-exnName-* | HOST-BUG | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
 *:smlnj@110.79 | General.*/as-value | HOST-BUG | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 
@@ -166,13 +162,6 @@ rune | @absent/binio_sig | RUNE-DEV | no Word8 structure; Word8Vector.vector is 
 rune | @absent/byte | RUNE-DEV | no Word8 structure
 rune | @absent/byte_sig | RUNE-DEV | no Word8, Word8Array, slice and Substring structures, which BYTE names
 native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
-
-# ---- IO
-rune | @section/io/*NotSupported | RUNE-DEV | IO lacks BlockingNotSupported, NonblockingNotSupported and RandomAccessNotSupported
-rune | @section/io/distinct | RUNE-DEV | IO lacks BlockingNotSupported, NonblockingNotSupported and RandomAccessNotSupported
-rune | @section/io/buffer_mode | RUNE-DEV | IO lacks the datatype buffer_mode
-rune | @section/io/exnName* | RUNE-DEV | General.exnName is not implemented
-rune | @load/io_sig | RUNE-DEV | IO lacks buffer_mode and three exceptions, so it does not match IO
 
 # ---- OS.Process, CommandLine
 rune | @absent/os.process_sig | RUNE-DEV | no Time structure, which OS_PROCESS names in the type of sleep
