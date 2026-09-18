@@ -8,34 +8,38 @@
 # host      how tests/basis/host/gen-host-basis.sh gives the file to MLton,
 #           SML/NJ and Poly/ML: yes (as it is), swap (without the types and
 #           exceptions a host must keep its own of) or no
-# provides  the structures, signatures and functors the file declares
+# provides  the structures, signatures, functors and top-level types the
+#           file declares
 # requires  those of other files that it names; each must be provided by an
 #           earlier line. -Name: the file has the identifier Name without
 #           needing the file that provides it (initial.sml declares the
-#           exception Option, pervasive.sml raises it).
+#           exception Option, pervasive.sml raises it and defines the
+#           function substring, which is also the name of a type).
 #
 # `rune --basis-check` verifies the last two columns against the sources, and
-# that a demand file declares modules only: a top-level value or fixity
-# directive of such a file would be in scope for some programs and not for
-# others. `rune --basis-deps FILE...` prints the files a program loads, and
+# that a demand file declares modules and types only: everything it puts in
+# scope is in its provides column, so a program that mentions it loads the
+# file. (A top-level value or fixity directive belongs in an always file.) `rune --basis-deps FILE...` prints the files a program loads, and
 # `rune --basis all` loads every file.
 initial.sml     | always | swap |                       | -Option
-pervasive.sml   | always | yes  |                       | -Option
+pervasive.sml   | always | yes  |                       | -Option -substring
 general.sml     | demand | yes  | General               |
-bool.sml        | demand | yes  | Bool                  |
+stringcvt.sml   | demand | yes  | StringCvt             |
+bool.sml        | demand | yes  | Bool                  | StringCvt
 option.sml      | demand | yes  | Option                |
 list.sml        | demand | yes  | List                  |
 listpair.sml    | demand | yes  | ListPair              |
-intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List
-int.sml         | demand | yes  | Int                   | IntInf
-word.sml        | demand | yes  | Word                  | Int IntInf
-char.sml        | demand | yes  | Char                  | Int
-string.sml      | demand | yes  | String                | Char Int List
+intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List StringCvt
+int.sml         | demand | yes  | Int                   | IntInf StringCvt
+word.sml        | demand | yes  | Word LargeWord        | Int IntInf List StringCvt
+char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
+string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
+substring.sml   | demand | yes  | Substring substring   | List String
 real.sml        | demand | yes  | Real Math             |
 array.sml       | demand | yes  | Array                 | List Option
 vector.sml      | demand | yes  | Vector                | List Option
 os.sml          | demand | yes  | OS                    |
 io.sml          | demand | yes  | IO                    |
-textio.sml      | demand | yes  | TextIO                | IO OS String
+textio.sml      | demand | yes  | TextIO                | IO OS String Substring
 binio.sml       | demand | yes  | Word8Vector Byte BinIO | String TextIO
 commandline.sml | demand | yes  | CommandLine           |

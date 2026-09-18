@@ -105,9 +105,10 @@ struct
     in fixity := fx; prog end
 
   (* --basis-check: the provides and requires columns say what the sources
-     do, every required file comes first, and a demand file declares nothing
-     but modules (a top-level value or fixity directive would be in scope
-     for some programs only). *)
+     do, and every required file comes first. A demand file declares modules
+     and type abbreviations only, all of them in its provides column: what it
+     puts in scope is then in scope for exactly the programs that mention it.
+     (A top-level value or fixity directive belongs in an always file.) *)
   fun checkManifest () : OS.Process.status =
     let
       val entries = readManifest ()
@@ -128,6 +129,7 @@ struct
             List.concat (List.map (fn Ast.DStructure (binds, _) => List.map #name binds
                                     | Ast.DSignature (binds, _) => List.map #name binds
                                     | Ast.DFunctor (binds, _) => List.map #name binds
+                                    | Ast.DType (binds, _) => List.map #name binds
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
@@ -146,8 +148,8 @@ struct
           val () =
             if #always e then ()
             else List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => () | Ast.DFunctor _ => ()
-                            | Ast.DOverload _ => ()
-                            | d => complain (e, "a demand file may declare modules only, but has: " ^
+                            | Ast.DType _ => () | Ast.DOverload _ => ()
+                            | d => complain (e, "a demand file may declare modules and types only, but has: " ^
                                                 String.substring (Ast.decToString d ^ "                    ", 0, 20)))
                           prog
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end

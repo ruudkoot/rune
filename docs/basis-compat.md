@@ -73,6 +73,16 @@ properties of the library source and not of Rune's compiler or VM. The
 departures that `xc1` does not reproduce come from the VM's primitives
 (`Math.pow`, `sinh`, `tanh` follow C).
 
+M2 so far (25,040 of 25,151 checks pass on Rune; 6 of the 49 tests need a
+structure Rune lacks): `StringCvt` and `Substring`; `scan` and `fmt` for
+`Bool`, `Int`, `Word` and `IntInf`, whose `fromString` now follow the
+specification; `IntInf.log2`, the bit operations and the shifts; `LargeWord`
+and the `Word` conversions to it; `Char` and `String` `scan`, `toCString`,
+`fromCString`, and `fromString` rewritten on one escape scanner. That removed
+the `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String` rows of the table
+above except the double quote reading. `Int` and `Word` find their precision
+with the arithmetic itself, so the hosts load them (see below).
+
 Added since M0, with their deviation lines removed: `exnName` and `exnMessage`
 (at top level and in `General`, which now matches `GENERAL`), and the three
 `*NotSupported` exceptions and `buffer_mode` of `IO`, which now matches `IO`.
@@ -187,16 +197,14 @@ example contradicts "may vary".
   |---|---|---|
   | SML/NJ 110.79 | `intinf.sml` | the limb base 2^30 is not a 31-bit `int` constant |
   | SML/NJ 110.79 | `real.sml` | the host raises `BadReal` on the literal `4.9E~324` (a host bug with subnormal literals) |
-  | SML/NJ 110.79, 110.99.9; Poly/ML 5.7.1, 5.9.2 | `int.sml` | `minInt`/`maxInt` are written as 64-bit literals |
 
-  So of the 45 tests, 14 are N/A on SML/NJ 110.79 and 3 on Poly/ML 5.7.1.
-  Where `int.sml` is left out and `intinf.sml` is not, `Int.toLarge` is the
-  host's and does not produce Rune's `LargeInt.int`, so the `word` test does
-  not load either (a `WIDTH` line).
+  So 13 of the 49 tests are N/A on SML/NJ 110.79, and none on MLton and
+  Poly/ML. (At M0 `int.sml` wrote `minInt` and `maxInt` as 64-bit literals and
+  no 63-bit host loaded it; it now finds the precision by doubling until
+  `Overflow`, and `word.sml` by shifting a bit out.)
 
   MLton compiles the `xc1` programs with `-default-type int64 -default-type
-  word64` and loads every file. The precision-dependent constants move to one
-  configuration structure in M2, after which the hosts load these files.
+  word64`, the precision of the VM.
 * `option`, `order` and the exceptions of the initial basis are the host's in
   an `xc1` program, because the host's own library and the primitives share
   them with the program; Rune's declarations of them are not compiled.

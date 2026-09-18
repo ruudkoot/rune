@@ -387,7 +387,11 @@ for id in $ids; do
   d=$out/$(dirname_of "$id")
   mkdir -p "$d"
   for t in $tests; do rm -f "$d/$t.result"; done
-  [ -n "$filter" ] || rm -rf "$d/probe"
+  # What a host has does not change between runs; what Rune's library has does.
+  case "$id" in
+    rune|xc1:*) rm -rf "$d/probe" ;;
+    *) [ -n "$filter" ] || rm -rf "$d/probe" ;;
+  esac
 done
 
 # probe_basis ID: generate the library sources of xc1 configuration ID and

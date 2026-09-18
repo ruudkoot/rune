@@ -23,6 +23,9 @@ static Obj *check_obj(VM *vm, Value v, int kind, const char *prim) {
     return v.u.p;
 }
 
+/* String.maxSize: a longer result raises Size. */
+#define MAX_STRING 0x3fffffff
+
 enum { EXN_MATCH = 0, EXN_BIND, EXN_OVERFLOW, EXN_DIV, EXN_SUBSCRIPT, EXN_SIZE, EXN_CHR, EXN_DOMAIN };
 
 static int raise_with(VM *vm, int arity, int k) {
@@ -315,7 +318,7 @@ static int p_string_sub(VM *vm) {
 static int p_string_concat(VM *vm) {
     STR2("string_concat");
     uint64_t n = (uint64_t)a->len + b->len;
-    if (n > 0x7fffffff) return raise_with(vm, 2, EXN_SIZE);
+    if (n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)n);
     a = ARG(1).u.p; b = ARG(0).u.p;   /* may have moved */
     memcpy(OBJ_BYTES(r), OBJ_BYTES(a), a->len);
@@ -362,7 +365,7 @@ static Value list_tail(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[1]
 static int p_string_implode(VM *vm) {
     int64_t n = list_length(ARG(0));
     if (n < 0) vm_fatal(vm, "string_implode: malformed list");
-    if (n > 0x7fffffff) return raise_with(vm, 1, EXN_SIZE);
+    if (n > MAX_STRING) return raise_with(vm, 1, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)n);
     Value l = ARG(0);
     for (int64_t i = 0; i < n; i++) {
@@ -395,7 +398,7 @@ static int p_string_concat_list(VM *vm) {
         if (s.tag != T_PTR || s.u.p->kind != K_STRING) vm_fatal(vm, "string_concat_list: non-string element");
         total += s.u.p->len;
     }
-    if (total > 0x7fffffff) return raise_with(vm, 1, EXN_SIZE);
+    if (total > MAX_STRING) return raise_with(vm, 1, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)total);
     uint32_t o = 0;
     for (Value x = ARG(0); x.tag == T_PTR; x = list_tail(x)) {

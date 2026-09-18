@@ -40,7 +40,7 @@ struct
     if !closed then ioError (name, "output", IO.ClosedStream)
     else if fileWrite (fd, s) then () else ioError (name, "output", sysError ())
   fun output1 (out, c) = output (out, String.str c)
-  fun outputSubstr (out, s) = output (out, s)
+  fun outputSubstr (out, ss) = output (out, Substring.string ss)
   fun flushOut (Out {fd, ...}) = fileFlush fd
   val print = print
 

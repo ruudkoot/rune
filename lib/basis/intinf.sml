@@ -173,23 +173,6 @@ struct
         val pieces = render (true, chunks (mag, []))
       in strConcat (if neg then "~" :: pieces else pieces) end
 
-  fun fromString s =
-    let
-      fun isSpace c = c = #" " orelse (ord c >= 9 andalso ord c <= 13)
-      fun isDigit c = ord c >= 48 andalso ord c <= 57
-      fun skip (c :: cs) = if isSpace c then skip cs else c :: cs
-        | skip [] = []
-      val cs = skip (explode s)
-      val (neg, cs) =
-        case cs of
-          c :: rest => if c = #"~" orelse c = #"-" then (true, rest) else if c = #"+" then (false, rest) else (false, cs)
-        | [] => (false, [])
-      fun digits (c :: cs, mag, any) =
-          if isDigit c then digits (cs, addSmall (mulSmall (mag, 10), ord c - 48), true) else (mag, any)
-        | digits ([], mag, any) = (mag, any)
-      val (mag, any) = digits (cs, [], false)
-    in if any then SOME (make (neg, mag)) else NONE end
-
   fun pow (x as I (neg, mag), n : limb) =
     if n < 0 then
       (case mag of
@@ -199,6 +182,139 @@ struct
     else
       let fun go (b, e, acc) = if e = 0 then acc else go (mulI (b, b), e div 2, if e mod 2 = 1 then mulI (acc, b) else acc)
       in go (x, n, one) end
+
+  (* ---- fmt and scan ---- *)
+  fun radixBase StringCvt.BIN = 2
+    | radixBase StringCvt.OCT = 8
+    | radixBase StringCvt.DEC = 10
+    | radixBase StringCvt.HEX = 16
+
+  fun fmt StringCvt.DEC x = toString x
+    | fmt radix (I (neg, mag)) =
+      let
+        val r = radixBase radix
+        fun digit d = chr (if d < 10 then 48 + d else 55 + d)
+        fun go (m, acc) =
+          if List.null m then acc
+          else let val (q, d) = divModSmall (m, r) in go (q, digit d :: acc) end
+      in
+        case mag of
+          [] => "0"
+        | _ => implode (if neg then #"~" :: go (mag, []) else go (mag, []))
+      end
+
+  (* [+~-]?digits; in radix HEX an optional 0x or 0X, which counts only when
+     a digit follows it. *)
+  fun scan radix (getc : (char, 'a) StringCvt.reader) src =
+    let
+      val r = radixBase radix
+      fun digitValue c =
+        let
+          val n = ord c
+          val v = if 48 <= n andalso n <= 57 then n - 48
+                  else if 97 <= n andalso n <= 102 then n - 87
+                  else if 65 <= n andalso n <= 70 then n - 55
+                  else 99
+        in if v < r then SOME v else NONE end
+      fun isDigitNext src =
+        case getc src of SOME (c, _) => (case digitValue c of SOME _ => true | NONE => false) | NONE => false
+      val src = StringCvt.skipWS getc src
+      val (negative, src) =
+        case getc src of
+          SOME (#"~", rest) => (true, rest)
+        | SOME (#"-", rest) => (true, rest)
+        | SOME (#"+", rest) => (false, rest)
+        | _ => (false, src)
+      val src =
+        if r <> 16 then src
+        else
+          case getc src of
+            SOME (#"0", rest) =>
+              (case getc rest of
+                 SOME (c, rest') => if (c = #"x" orelse c = #"X") andalso isDigitNext rest' then rest' else src
+               | NONE => src)
+          | _ => src
+      fun digits (src, mag) =
+        case getc src of
+          SOME (c, rest) =>
+            (case digitValue c of
+               SOME d => digits (rest, addSmall (mulSmall (mag, r), d))
+             | NONE => (mag, src))
+        | NONE => (mag, src)
+    in
+      if isDigitNext src then
+        let val (mag, rest) = digits (src, [])
+        in SOME (make (negative, mag), rest) end
+      else NONE
+    end
+
+  fun fromString s = StringCvt.scanString (scan StringCvt.DEC) s
+
+  (* ---- log2, bit operations and shifts ----
+     The bit operations see a number in two's complement with an infinite
+     sign extension: the limbs of a negative number are the complement of
+     those of |x| - 1. *)
+  fun log2 (I (neg, mag)) : limb =
+    if neg orelse List.null mag then raise Domain
+    else
+      let fun bits (0, n) = n
+            | bits (t, n) = bits (t div 2, n + 1)
+      in 30 * (List.length mag - 1) + bits (List.last mag, 0) - 1 end
+
+  val wordAnd = _prim "word_andb" : word * word -> word
+  val wordOr = _prim "word_orb" : word * word -> word
+  val wordXor = _prim "word_xorb" : word * word -> word
+  val wordFromInt = _prim "word_from_int" : limb -> word
+  val wordToInt = _prim "word_to_int" : word -> limb
+  val wordToIntX = _prim "word_to_int_x" : word -> limb
+  val mask = base - 1
+
+  fun twos (I (neg, mag), n) =
+    let
+      fun pad ([], 0) = []
+        | pad ([], k) = 0 :: pad ([], k - 1)
+        | pad (d :: ds, k) = d :: pad (ds, k - 1)
+      val limbs = pad (if neg then subMag (mag, [1]) else mag, n)
+    in if neg then List.map (fn d => mask - d) limbs else limbs end
+
+  fun fromTwos (neg, limbs) =
+    if neg then make (true, addMag (norm (List.map (fn d => mask - d) limbs), [1]))
+    else make (false, norm limbs)
+
+  fun bitwise (f : word * word -> word, signOf : bool * bool -> bool) (a as I (na, ma), b as I (nb, mb)) =
+    let
+      val la = List.length ma and lb = List.length mb
+      val n = (if la > lb then la else lb) + 1
+      fun zip (x :: xs, y :: ys) = wordToInt (f (wordFromInt x, wordFromInt y)) :: zip (xs, ys)
+        | zip _ = []
+    in fromTwos (signOf (na, nb), zip (twos (a, n), twos (b, n))) end
+
+  val andb = bitwise (wordAnd, fn (x, y) => x andalso y)
+  val orb = bitwise (wordOr, fn (x, y) => x orelse y)
+  val xorb = bitwise (wordXor, fn (x, y) => x <> y)
+  fun notb x = subI (negI x, one)
+
+  fun pow2 0 = 1
+    | pow2 k = 2 * pow2 (k - 1)
+
+  (* i * 2^w *)
+  fun << (I (neg, mag), w : word) =
+    if List.null mag then zero
+    else
+      let val k = wordToInt w
+      in make (neg, shiftLimbs (k div 30, mulSmall (mag, pow2 (k mod 30)))) end
+
+  (* floor (i / 2^w); for a negative number that is -(((|i| - 1) div 2^w) + 1) *)
+  fun ~>> (x as I (neg, mag), w : word) =
+    let
+      val k = wordToIntX w
+      fun shiftRight m =
+        if k < 0 orelse k div 30 >= List.length m then []
+        else #1 (divModSmall (List.drop (m, k div 30), pow2 (k mod 30)))
+    in
+      if neg then make (true, addMag (shiftRight (subMag (mag, [1])), [1]))
+      else make (false, shiftRight mag)
+    end
 
   (* ---- the public operators (shadowing the int ones from here on) ---- *)
 

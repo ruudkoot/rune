@@ -19,7 +19,7 @@ keep these invariants:
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/MANIFEST` with what it provides and requires
   (`rune --basis-check`, part of `make check-docs`, verifies the columns; a
-  file loaded on demand declares modules only). Its test belongs to the Basis
+  file loaded on demand declares modules and types only, all in its provides column). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
   written as `tests/basis/README.md` describes, with expected values worked
   out from the text of the specification. `make check-docs` wants a check for

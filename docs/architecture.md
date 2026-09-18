@@ -84,7 +84,8 @@ temporaries that must survive an allocation are pushed on the value stack
 
 `lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the
 order, and what each file provides and requires, is in `lib/basis/MANIFEST`. A
-file that is loaded on demand declares modules only, so that the top-level
+file that is loaded on demand declares modules and types only, all listed in
+its provides column, so that the top-level
 environment of a program does not depend on which files it happens to load. Two
 files are compiled before every program: `initial.sml` (`option`, `order` and
 the exceptions that are not built in) and `pervasive.sml` (the values of the

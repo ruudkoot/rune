@@ -101,7 +101,9 @@ struct
   val char_ge = Char.>=
   val string_size = String.size
   val string_sub = String.sub
-  val string_concat = String.^
+  (* the VM's limit (String.maxSize of lib/basis), not the host's *)
+  val maxString = 1073741823
+  fun string_concat (a, b) = if String.size a + String.size b > maxString then raise Size else a ^ b
   fun string_extract (s, i, n) = String.substring (s, i, n)
   val string_lt = String.<
   val string_le = String.<=

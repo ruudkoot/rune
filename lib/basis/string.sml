@@ -66,36 +66,9 @@ struct
 
   fun toString s = translate Char.toString s
 
-  fun fromString s =
-    let
-      fun go [] = SOME []
-        | go (#"\\" :: rest) =
-          let
-            fun skipGap (c :: cs) = if Char.isSpace c then skipGap cs else c :: cs
-              | skipGap [] = []
-          in
-            case rest of
-              #"a" :: cs => cont (#"\a", cs) | #"b" :: cs => cont (#"\b", cs)
-            | #"t" :: cs => cont (#"\t", cs) | #"n" :: cs => cont (#"\n", cs)
-            | #"v" :: cs => cont (#"\v", cs) | #"f" :: cs => cont (#"\f", cs)
-            | #"r" :: cs => cont (#"\r", cs) | #"\\" :: cs => cont (#"\\", cs)
-            | #"\"" :: cs => cont (#"\"", cs)
-            | #"^" :: d :: cs => cont (Char.chr (Int.- (Char.ord d, 64)), cs)
-            | a :: b :: d :: cs =>
-              if Char.isDigit a andalso Char.isDigit b andalso Char.isDigit d then
-                let val v = Int.+ (Int.* (Int.- (Char.ord a, 48), 100),
-                                   Int.+ (Int.* (Int.- (Char.ord b, 48), 10), Int.- (Char.ord d, 48)))
-                in if Int.> (v, 255) then NONE else cont (Char.chr v, cs) end
-              else if Char.isSpace a then go (skipGapEnd (skipGap (a :: b :: d :: cs)))
-              else NONE
-            | c :: cs => if Char.isSpace c then go (skipGapEnd (skipGap (c :: cs))) else NONE
-            | [] => NONE
-          end
-        | go (c :: cs) = cont (c, cs)
-      and cont (c, cs) = case go cs of NONE => NONE | SOME r => SOME (c :: r)
-      and skipGapEnd (#"\\" :: cs) = cs
-        | skipGapEnd cs = cs
-    in
-      case go (explode s) of NONE => NONE | SOME cs => SOME (implode cs)
-    end
+  (* formatting sequences are skipped around every character *)
+  fun scan getc src = RuneEscape.scanString (RuneEscape.scanSml, true) getc src
+  fun fromString s = StringCvt.scanString scan s
+  fun toCString s = translate Char.toCString s
+  fun fromCString s = StringCvt.scanString (RuneEscape.scanString (RuneEscape.cChar, false)) s
 end

@@ -89,7 +89,7 @@ char_ge          2  char * char -> bool      Greater or equal.
 # --- string (8-bit byte strings) ---
 string_size      1  string -> int            Length in bytes.
 string_sub       2  string * int -> char     Indexing; raises Subscript.
-string_concat    2  string * string -> string  Concatenation; raises Size.
+string_concat    2  string * string -> string  Concatenation; raises Size above 1073741823 characters (String.maxSize).
 string_extract   3  string * int * int -> string  extract(s, i, n): substring of length n; raises Subscript.
 string_lt        2  string * string -> bool  Lexicographic less than.
 string_le        2  string * string -> bool  Lexicographic less or equal.
@@ -97,9 +97,9 @@ string_gt        2  string * string -> bool  Lexicographic greater than.
 string_ge        2  string * string -> bool  Lexicographic greater or equal.
 string_compare   2  string * string -> int   Returns ~1, 0 or 1.
 string_from_char 1  char -> string           One character string.
-string_implode   1  char list -> string      Build a string from a list.
+string_implode   1  char list -> string      Build a string from a list; raises Size above 1073741823 characters.
 string_explode   1  string -> char list      List of characters.
-string_concat_list 1 string list -> string   Concatenate a list of strings.
+string_concat_list 1 string list -> string   Concatenate a list of strings; raises Size above 1073741823 characters.
 
 # --- ref / array / vector ---
 ref_new          1  'a -> 'a ref             Allocate a reference cell.

@@ -21,19 +21,10 @@
 # docs/basis-compat.md describes the differences recorded here.
 
 # ---- General
-rune | @section/general/Substring.span | RUNE-DEV | no Substring structure yet, so nothing can raise Span
-rune | @section/general/IntInf.log2 | RUNE-DEV | IntInf.log2 is not implemented
 native:smlnj@110.79 | General.exnMessage/contains-exnName-* | HOST-BUG | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
 *:smlnj@110.79 | General.*/as-value | HOST-BUG | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 
 # ---- Bool
-rune | @section/bool/scan | RUNE-DEV | Bool.scan is not implemented
-rune | @section/bool/scanString | RUNE-DEV | no StringCvt structure, and no Bool.scan
-rune | @absent/bool_sig | RUNE-DEV | no StringCvt structure, which BOOL names in the type of scan
-rune | Bool.fromString/case-* | RUNE-DEV | fromString accepts exactly "true" and "false": case is not ignored
-rune | Bool.fromString/ws* | RUNE-DEV | fromString accepts exactly "true" and "false": initial whitespace is not skipped
-rune | Bool.fromString/prefix-* | RUNE-DEV | fromString accepts exactly "true" and "false": characters after the sequence make it return NONE
-rune | Bool.fromString/mixed-* | RUNE-DEV | fromString accepts exactly "true" and "false" (case, whitespace, trailing characters)
 native:mlton@20210117 | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
 native:mlton@20210117 | Bool.*/ws* | HOST-BUG | Bool.scan and fromString do not skip initial whitespace
 native:mlton@20210117 | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString neither ignore case nor skip initial whitespace
@@ -55,13 +46,6 @@ rune | Array.copy/Subscript-changes-nothing | RUNE-DEV | Array.copy copies the e
 native:smlnj@110.79 | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
 
 # ---- Char
-rune | @absent/char_sig | RUNE-DEV | no StringCvt structure, which CHAR names in the type of scan (Char also lacks scan, toCString, fromCString)
-rune | @section/char/scan | RUNE-DEV | no Char.scan, no StringCvt
-rune | @section/char/cstring | RUNE-DEV | no Char.toCString, Char.fromCString
-rune | Char.fromString/printable-only-* | RUNE-DEV | converts a first character outside [0x20,0x7E] to itself instead of returning NONE
-rune | Char.fromString/control-range-* | RUNE-DEV | \^c is not limited to ord c in [64,95]: \^` and \^a convert, \^? raises Chr
-rune | Char.fromString/u-* | RUNE-DEV | no \uxxxx escape
-rune | Char.fromString/format-* | RUNE-DEV | no \f...f\ escape in Char.fromString (String.fromString has it)
 rune | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote, as Poly/ML; the test takes the reading of MLton and SML/NJ (NONE)
 native:polyml@5.7.1 | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
 native:* | *.fromCString/unescaped-double-quote* | HOST-BUG | converts an unescaped double quote, which the specification says fromCString does not accept
@@ -73,19 +57,8 @@ native:mlton@20210117 | Char.fromCString/illegal-u | HOST-BUG | fromCString acce
 native:smlnj@110.79 | *.toCString/nul* | HOST-BUG | toCString #"\000" is "\\0", not three octal digits
 native:smlnj@110.79 | *.fromCString/control* | HOST-BUG | fromCString does not accept \^c
 
-# ---- String (the three bad-escape lines in this order: the first match wins)
-rune | @absent/string_sig | RUNE-DEV | no StringCvt structure, which STRING names in the type of scan (String also lacks scan, toCString, fromCString)
-rune | @section/string/scan | RUNE-DEV | no String.scan, no StringCvt
-rune | @section/string/cstring | RUNE-DEV | no String.toCString, String.fromCString
-rune | String.fromString/u-escape-* | RUNE-DEV | no \uxxxx escape
-rune | String.fromString/not-printable-* | RUNE-DEV | converts non-printing characters instead of stopping at them
-rune | String.fromString/sample-[26] | RUNE-DEV | converts non-printing characters instead of stopping at them
-rune | String.fromString/bad-escape-stops-at-control-96 | RUNE-DEV | \^c is not limited to ord c in [64,95]
-rune | String.fromString/bad-escape-stops-* | RUNE-DEV | NONE instead of the prefix converted before an improper escape sequence
-rune | String.fromString/sample-3 | RUNE-DEV | NONE instead of the prefix converted before an improper escape sequence
-rune | String.fromString/format-then-illegal-escape | RUNE-DEV | NONE instead of SOME "" when only an escaped formatting sequence precedes an improper escape sequence
-rune | String.fromString/format-unterminated | RUNE-DEV | passes over \f...f without the closing backslash
-rune | String.fromString/sample-7 | RUNE-DEV | passes over \f...f without the closing backslash
+# ---- String
+rune | @section/string_sig/charvector | RUNE-DEV | no CharVector structure yet, so String.string cannot be shown to be CharVector.vector
 native:mlton@20210117 | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
 native:mlton@20210117 | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
 native:smlnj@110.79 | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a segmentation fault
@@ -97,30 +70,16 @@ native:smlnj@110.79 | String.fromCString/toCString-35 | HOST-BUG | toCString #"\
 native:smlnj@110.79 | String.fromCString/stops-at-* | HOST-BUG | fromCString returns NONE unless the whole string converts
 
 # ---- Int
-rune | @absent/int_sig | RUNE-DEV | no StringCvt structure, which INTEGER names in the types of fmt and scan
-rune | @absent/int_scan | RUNE-DEV | no StringCvt structure, so no Int.fmt and Int.scan
-rune | Int.fromString/whitespace-[avf]* | RUNE-DEV | Int.fromString does not skip a leading vertical tab or form feed
 native:smlnj@110.79 | Int.sameSign/* | HOST-BUG | sameSign (0, i) is true for positive i
 native:smlnj@110.79 | *.scan/DEC-whitespace-[avfr]* | HOST-BUG | scan does not skip vertical tab, form feed and carriage return
 native:smlnj@110.79 | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
 
 # ---- IntInf
-rune | @absent/intinf_sig | RUNE-DEV | no StringCvt structure, which INTEGER names in the types of fmt and scan
-rune | @absent/intinf_scan | RUNE-DEV | no StringCvt structure, so no IntInf.fmt and IntInf.scan
-rune | @section/intinf/* | RUNE-DEV | IntInf lacks log2, andb, orb, xorb, notb, << and ~>>
 native:smlnj@110.79 | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
 native:smlnj@110.79 | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for |i| = 1 and j < 0
 native:smlnj@110.79 | IntInf.*/Div-zero-by-zero | HOST-BUG | IntInf.mod (0, 0) and IntInf.rem (0, 0) do not raise Div
 
 # ---- Word
-rune | @absent/word_sig | RUNE-DEV | no LargeWord and StringCvt structures, which WORD names
-rune | @absent/word_scan | RUNE-DEV | no StringCvt structure, so no Word.fmt and Word.scan
-rune | @absent/word_large | RUNE-DEV | no LargeWord structure
-xc1:polyml@5.7.1 | @load/word | WIDTH | lib/basis/int.sml does not load on a 63-bit host (it writes minInt and maxInt as 64-bit literals), so Int is the host's there and Int.toLarge gives the host's LargeInt.int, not the one of lib/basis/intinf.sml
-rune | Word.fromString/whitespace-* | RUNE-DEV | Word.fromString does not skip leading whitespace
-rune | Word.fromString/prefix-0[wX]* | RUNE-DEV | Word.fromString does not accept the prefixes 0wX and 0X
-rune | Word.fromString/bare-prefix-* | RUNE-DEV | Word.fromString gives NONE for a prefix that no digit follows, where the 0 of the prefix is the number
-rune | Word.fromString/Overflow-* | RUNE-DEV | Word.fromString wraps around instead of raising Overflow
 native:mlton@20210117 | Word.scan/*-bare-prefix-* | HOST-BUG | consumes the prefix 0w, 0wx or 0x although no digit follows it
 native:mlton@20210117 | Word.scan/*-0x-is-no-prefix | HOST-BUG | gives NONE for 0x42 in the radices BIN, OCT and DEC, where the number is the 0
 native:* | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format: SML/NJ and Poly/ML read 0w12 as 0wx12, MLton consumes 0w1
@@ -128,7 +87,7 @@ native:smlnj@110.79 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as
 native:polyml@5.7.1 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 
 # ---- TextIO
-rune | @absent/textio_sig | RUNE-DEV | no StringCvt and Substring structures, which TEXT_IO names
+rune | @load/textio_sig | RUNE-DEV | TextIO has no StreamIO substructure and lacks the members of the @section/textio lines, so it does not match TEXT_IO
 rune | @section/textio/vector-elem | RUNE-DEV | TextIO lacks the types vector and elem
 rune | @section/textio/input | RUNE-DEV | TextIO.input is not implemented
 rune | @section/textio/input1 | RUNE-DEV | TextIO.input1 is not implemented
@@ -137,7 +96,6 @@ rune | @section/textio/lookahead | RUNE-DEV | TextIO.lookahead is not implemente
 rune | @section/textio/endOfStream | RUNE-DEV | TextIO.endOfStream is not implemented
 rune | @section/textio/canInput | RUNE-DEV | TextIO.canInput is not implemented
 rune | @section/textio/openString | RUNE-DEV | TextIO.openString is not implemented
-rune | @section/textio/outputSubstr | RUNE-DEV | no Substring structure; TextIO.outputSubstr takes a string
 rune | @section/textio/scanStream | RUNE-DEV | TextIO.scanStream is not implemented (nor StringCvt and Int.scan)
 rune | @section/textio/mixed* | RUNE-DEV | needs input, input1, inputN, lookahead, endOfStream, canInput and openString, which are not implemented
 rune | @section/textio/multiple-end-of-stream | RUNE-DEV | needs input, input1 and endOfStream, which are not implemented
@@ -260,3 +218,17 @@ native:smlnj@110.79 | Math.pow/negzero-base-negative-odd | HOST-BUG | Math.pow (
 native:smlnj@110.79 | Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
 native:smlnj@110.79 | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
 native:smlnj@110.79 | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
+
+# ---- StringCvt
+rune | @section/stringcvt/Real.fmt | RUNE-DEV | Real.fmt is not implemented, so the realfmt constructors cannot be given to it
+native:smlnj@110.79 | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - |s|) instead of returning s
+native:smlnj@110.79 | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
+
+# ---- Substring
+rune | @section/substring_sig/CharVectorSlice | RUNE-DEV | no CharVectorSlice structure, so Substring.substring is not CharVectorSlice.slice
+native:mlton@20210117 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj@110.79 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj@110.79 | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubstring "" ss is false when ss is empty
+native:polyml@5.7.1 | Substring.substring/Subscript-not-Overflow-sum-* | HOST-BUG | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@5.7.1 | Substring.extract/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@5.7.1 | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-BUG | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
