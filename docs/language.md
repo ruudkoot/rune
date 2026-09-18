@@ -22,7 +22,7 @@ programs that SML rejects, or reject some that SML accepts.
 | Equality types | `''a` type variables are accepted but equality is **not** restricted to equality types: `=` works on any type (reals compare by IEEE equality, functions never compare equal, refs/arrays compare by identity). |
 | Exhaustiveness | No "match nonexhaustive" or "match redundant" warnings. A failed match raises `Match` (or `Bind` for `val`) at runtime as required. |
 | Value restriction | Enforced (expansive bindings stay monomorphic), but an unresolved monomorphic type variable at top level is not reported as an error. |
-| Integer literals | Integer, word and real literals have exactly one type each (`int`, `word`, `real`); there is no literal overloading over multiple precisions. `Int` is 64-bit, `Word` is 64-bit, `Real` is IEEE double. |
+| Integer literals | Integer, word and real literals have exactly one type each (`int`, `word`, `real`); there is no literal overloading over multiple precisions. `Int` is 64-bit, `Word` is 64-bit, `Real` is IEEE double. `IntInf.int` values are built with `IntInf.fromInt`/`fromString` or arithmetic, and the operators on them are not overloaded (`IntInf.+`). |
 | Strings | 8-bit byte strings; `\uXXXX` escapes above 255 are errors. |
 | Modules | Only `structure S = struct ... end`, `structure S = T`, `open`, and long identifiers. No signatures, ascription or functors (Planned). |
 | `abstype` | Not supported (Planned). |
@@ -154,8 +154,8 @@ Library that are not listed are not available.
 |---|---|---|---|
 | basis.general | Top-level `option`, `order`, `Fail`, `Option`, `Empty`, `Span`, `Unordered`, `not`, `ignore`, `o`, `before`, `getOpt`, `isSome`, `valOf`, `print`, `ref`, `!`, `:=`; structure `General` | Supported | |
 | basis.bool | `Bool`: `not`, `toString`, `fromString` | Supported | |
-| basis.int | `Int`: `precision`, `minInt`, `maxInt`, `toInt`, `fromInt`, `toLarge`, `fromLarge`, arithmetic, `quot`, `rem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `toString`, `fromString` | Partial | `fromString` parses decimal only; no `fmt`/`scan`. |
-| basis.word | `Word`: `wordSize`, conversions, arithmetic, comparisons, `andb`, `orb`, `xorb`, `notb`, `<<`, `>>`, `~>>`, `min`, `max`, `compare`, `toString`, `fromString` | Partial | `toString`/`fromString` are hexadecimal; no `fmt`/`scan`. |
+| basis.int | `Int`: `precision`, `minInt`, `maxInt`, `toInt`, `fromInt`, `toLarge`, `fromLarge`, arithmetic, `quot`, `rem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `toString`, `fromString` | Partial | `fromString` parses decimal only; no `fmt`/`scan`. `toLarge`/`fromLarge` convert to/from `IntInf`. |
+| basis.word | `Word`: `wordSize`, conversions, arithmetic, comparisons, `andb`, `orb`, `xorb`, `notb`, `<<`, `>>`, `~>>`, `min`, `max`, `compare`, `toString`, `fromString` | Partial | `toString`/`fromString` are hexadecimal; no `fmt`/`scan`. `toLargeInt`/`toLargeIntX`/`fromLargeInt` go through `IntInf`. |
 | basis.real | `Real`: arithmetic, comparisons, `==`, `!=`, `isNan`, `isFinite`, `isNormal`, `posInf`, `negInf`, `maxFinite`, `minPos`, `sign`, `signBit`, `copySign`, `min`, `max`, `compare`, `fromInt`, `floor`, `ceil`, `round`, `trunc`, `realFloor`..., `toInt`, `toString`, `fromString`, `checkFloat` | Partial | `toString` uses 12 significant digits; no `fmt`/`toDecimal`. |
 | basis.math | `Math`: `pi`, `e`, `sqrt`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `exp`, `ln`, `log10`, `pow`, `sinh`, `cosh`, `tanh` | Supported | Also available as `Real.Math`. |
 | basis.char | `Char`: `ord`, `chr`, `minChar`, `maxChar`, `maxOrd`, `succ`, `pred`, comparisons, `compare`, `contains`, `notContains`, `is*` predicates, `toLower`, `toUpper`, `toString`, `fromString` | Supported | |
@@ -172,7 +172,7 @@ Library that are not listed are not available.
 | basis.textio.files | File streams: `TextIO.openIn`, `openOut`, `openAppend`, reading and writing files; errors raise `IO.Io {name, function, cause}` with `cause` `OS.SysErr` or `IO.ClosedStream` | Supported | Streams are concrete datatypes carrying a VM file handle. |
 | basis.binio | `BinIO`: `openIn`, `openOut`, `openAppend`, `closeIn`, `closeOut`, `output`, `inputAll`, `flushOut`; `Byte`: `bytesToString`, `stringToBytes`; `Word8Vector`: `vector`, `length` | Partial | `Word8Vector.vector` is `string`; no `Word8`, no element access. |
 | basis.substring | `Substring` | Planned | |
-| basis.intinf | `IntInf` / `LargeInt` | Planned | |
+| basis.intinf | `IntInf`: `int`, `precision`, `minInt`, `maxInt`, `fromInt`, `toInt`, `toLarge`, `fromLarge`, `~`, `+`, `-`, `*`, `div`, `mod`, `quot`, `rem`, `divMod`, `quotRem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `pow`, `toString`, `fromString`; `LargeInt` = `IntInf` | Partial | Implemented in SML with base-2^30 limbs. No `IntInf` literals or overloading: write `IntInf.fromInt n`, `IntInf.+ (a, b)`. No bit operations, `log2`, `fmt` or `scan`. |
 
 Tags of `option` (`NONE` = 0, `SOME` = 1) and `order` are fixed by the basis
 because VM primitives construct these values directly.

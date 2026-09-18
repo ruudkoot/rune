@@ -5,6 +5,7 @@ bool.sml
 option.sml
 list.sml
 listpair.sml
+intinf.sml
 int.sml
 word.sml
 char.sml

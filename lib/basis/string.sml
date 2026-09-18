@@ -20,8 +20,7 @@ struct
   fun substring (s, i, n) = extractN (s, i, n)
 
   fun concatWith sep [] = ""
-    | concatWith sep [s] = s
-    | concatWith sep (s :: rest) = s ^ sep ^ concatWith sep rest
+    | concatWith sep (s :: rest) = concat (s :: List.foldr (fn (x, acc) => sep :: x :: acc) [] rest)
 
   fun map f s = implode (List.map f (explode s))
 

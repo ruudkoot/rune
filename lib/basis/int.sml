@@ -8,8 +8,8 @@ struct
 
   val toInt = fn (x : int) => x
   val fromInt = fn (x : int) => x
-  val toLarge = fn (x : int) => x
-  val fromLarge = fn (x : int) => x
+  val toLarge = IntInf.fromInt
+  val fromLarge = IntInf.toInt
 
   val op + = _prim "int_add" : int * int -> int
   val op - = _prim "int_sub" : int * int -> int

@@ -9,9 +9,13 @@ struct
   val fromInt = _prim "word_from_int" : int -> word
   val toLarge = fn (w : word) => w
   val fromLarge = fn (w : word) => w
-  val toLargeInt = toInt
-  val toLargeIntX = toIntX
-  val fromLargeInt = fromInt
+  val two64 = IntInf.pow (IntInf.fromInt 2, 64)
+  val two63 = IntInf.pow (IntInf.fromInt 2, 63)
+  fun toLargeInt w = let val i = toIntX w in if Int.< (i, 0) then IntInf.+ (IntInf.fromInt i, two64) else IntInf.fromInt i end
+  fun toLargeIntX w = IntInf.fromInt (toIntX w)
+  fun fromLargeInt x =
+    let val r = IntInf.mod (x, two64)
+    in fromInt (IntInf.toInt (if IntInf.>= (r, two63) then IntInf.- (r, two64) else r)) end
 
   val op + = _prim "word_add" : word * word -> word
   val op - = _prim "word_sub" : word * word -> word
