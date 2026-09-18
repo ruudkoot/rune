@@ -79,21 +79,6 @@ native:smlnj@110.79 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as
 native:polyml@5.7.1 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 
 # ---- TextIO
-rune | @load/textio_sig | RUNE-DEV | TextIO has no StreamIO substructure and lacks the members of the @section/textio lines, so it does not match TEXT_IO
-rune | @section/textio/vector-elem | RUNE-DEV | TextIO lacks the types vector and elem
-rune | @section/textio/input | RUNE-DEV | TextIO.input is not implemented
-rune | @section/textio/input1 | RUNE-DEV | TextIO.input1 is not implemented
-rune | @section/textio/inputN | RUNE-DEV | TextIO.inputN is not implemented
-rune | @section/textio/lookahead | RUNE-DEV | TextIO.lookahead is not implemented
-rune | @section/textio/endOfStream | RUNE-DEV | TextIO.endOfStream is not implemented
-rune | @section/textio/canInput | RUNE-DEV | TextIO.canInput is not implemented
-rune | @section/textio/openString | RUNE-DEV | TextIO.openString is not implemented
-rune | @section/textio/scanStream | RUNE-DEV | TextIO.scanStream is not implemented (nor StringCvt and Int.scan)
-rune | @section/textio/mixed* | RUNE-DEV | needs input, input1, inputN, lookahead, endOfStream, canInput and openString, which are not implemented
-rune | @section/textio/multiple-end-of-stream | RUNE-DEV | needs input, input1 and endOfStream, which are not implemented
-rune | TextIO.output1/Io-closed-stream-function | RUNE-DEV | output1 on a closed stream raises Io with function "output"
-rune | TextIO.closeIn/then-* | RUNE-DEV | inputLine and inputAll on a closed instream raise Io {cause = ClosedStream} instead of behaving as at end-of-stream
-rune | TextIO.closeIn/unread-* | RUNE-DEV | inputLine and inputAll on a closed instream raise Io {cause = ClosedStream} instead of behaving as at end-of-stream
 native:mlton@* | *IO.output1/Io-closed-stream-function | HOST-BUG | output1 on a closed stream raises Io with function "output"
 native:mlton@* | *IO.*/*-and-inputAll | HOST-BUG | after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 native:mlton@* | *IO.input1/file-grows-after-end-of-stream | HOST-BUG | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
@@ -107,16 +92,6 @@ native:polyml@* | *IO.inputAll/file-grows-after-end-of-stream | SPEC-AMBIGUOUS |
 native:polyml@* | TextIO.inputLine/*end-of-stream | SPEC-AMBIGUOUS | inputLine that returned NONE reads on when the file has grown; the test takes the STREAM_IO model, as MLton and SML/NJ do
 
 # ---- BinIO, Byte
-rune | @section/binio/elem | RUNE-DEV | BinIO lacks the type elem
-rune | @section/binio/output1 | RUNE-DEV | BinIO.output1 is not implemented
-rune | @section/binio/input* | RUNE-DEV | BinIO.input, input1 and inputN are not implemented
-rune | @section/binio/lookahead | RUNE-DEV | BinIO.lookahead is not implemented
-rune | @section/binio/endOfStream | RUNE-DEV | BinIO.endOfStream is not implemented
-rune | @section/binio/canInput | RUNE-DEV | BinIO.canInput is not implemented
-rune | @section/binio/mixed | RUNE-DEV | needs input, input1, inputN, lookahead, endOfStream and canInput, which are not implemented
-rune | @section/binio/multiple-end-of-stream | RUNE-DEV | needs input, input1 and endOfStream, which are not implemented
-rune | BinIO.closeIn/then-* | RUNE-DEV | inputAll on a closed instream raises Io {cause = ClosedStream} instead of behaving as at end-of-stream
-rune | @load/binio_sig | RUNE-DEV | BinIO lacks elem and the input operations, so it does not match BIN_IO
 native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
 
 # ---- OS.Process, CommandLine

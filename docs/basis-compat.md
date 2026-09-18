@@ -90,6 +90,13 @@ the `Real` and `Math` rows of the table above. `Real.toString` now follows
 `GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
 Poly/ML print `1.0`.
 
+M4 rebuilt `TextIO` and `BinIO` on `PRIM_IO` and the functional streams, and
+every check of their tests passes on Rune and, through `xc1`, on all three
+hosts. Writing the shim for the hosts turned up two more host defects:
+Poly/ML 5.7.1 answers every `Posix.IO.lseek` with 0 (the shim counts the
+position itself and takes the size from `fstat`), and a host reader must not
+treat the end of a file as final, because a file may grow.
+
 M3 added the slices, `Array2`, the monomorphic `Word8` and `Char` sequences,
 `Byte` and `Text`; every check of their tests passes on Rune (and on MLton but
 for one `Array2.copy` overlap bug and its equality restriction). The hosts'

@@ -155,3 +155,5 @@ real_get_round   1  unit -> int               The current rounding mode, numbere
 real_sinh        1  real -> real              Hyperbolic sine.
 real_cosh        1  real -> real              Hyperbolic cosine.
 real_tanh        1  real -> real              Hyperbolic tangent.
+file_read_vec    2  int * int -> string       Read at most n bytes; "" at end of file. Raises Size for a negative n.
+file_avail       1  int -> int                Bytes that can be read without waiting, ~1 when that cannot be told.

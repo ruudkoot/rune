@@ -35,5 +35,8 @@ val () = (ignore (TextIO.openIn "tests/out/no-such-file.tmp"); print "opened?!\n
          handle IO.Io {name, function, cause = OS.SysErr _} => print ("Io " ^ function ^ " " ^ name ^ "\n")
 val () = (TextIO.output (out, "late\n"); print "wrote?!\n")
          handle IO.Io {function, cause = IO.ClosedStream, ...} => print ("closed " ^ function ^ "\n")
-val () = (ignore (TextIO.inputLine ins); print "read?!\n")
-         handle IO.Io {function, cause = IO.ClosedStream, ...} => print ("closed " ^ function ^ "\n")
+(* "Other operations on a closed stream will behave as if the stream is at
+   end-of-stream", so reading gives nothing and raises nothing. *)
+val () = print ("closed reads: " ^ (case TextIO.inputLine ins of SOME l => "line " ^ l | NONE => "eof")
+                ^ " " ^ (if TextIO.inputAll ins = "" then "empty" else "data")
+                ^ " " ^ Bool.toString (TextIO.endOfStream ins) ^ "\n")

@@ -246,7 +246,7 @@ struct
      of the host, which the suite tests as well, plays no part ---- *)
   structure FS = Posix.FileSys
   datatype file =
-      Reader of {fd : Posix.IO.file_desc, buf : string ref, pos : int ref, eof : bool ref}
+      Reader of {fd : Posix.IO.file_desc, buf : string ref, pos : int ref, eof : bool ref, taken : int ref}
     | Writer of Posix.IO.file_desc
   val files : (int * file) list ref = ref []
   val next = ref 3
@@ -262,7 +262,7 @@ struct
     let
       val f = case mode of
                 0 => Reader {fd = FS.openf (name, FS.O_RDONLY, FS.O.flags []),
-                             buf = ref "", pos = ref 0, eof = ref false}
+                             buf = ref "", pos = ref 0, eof = ref false, taken = ref 0}
               | 1 => Writer (FS.createf (name, FS.O_WRONLY, FS.O.trunc, rw))
               | _ => Writer (FS.createf (name, FS.O_WRONLY, FS.O.append, rw))
       val h = !next
@@ -296,18 +296,19 @@ struct
     | file_flush 2 = TextIO.flushOut TextIO.stdErr
     | file_flush _ = ()
 
-  (* fill: append what the file has to the buffer; false at end of file, and
-     from then on. *)
-  fun fill {fd, buf, pos, eof} =
-    if !eof then false
-    else
-      let val more = Byte.bytesToString (Posix.IO.readVec (fd, 65536))
-      in
-        if more = "" then (eof := true; false)
-        else (buf := String.extract (!buf, !pos, NONE) ^ more; pos := 0; true)
-      end
+  (* fill: append what the file has to the buffer; false when it has nothing
+     more for now. A file may grow after it has been read to its end, so this
+     tries again every time. *)
+  fun fill {fd, buf, pos, eof, taken} =
+    let val more = Byte.bytesToString (Posix.IO.readVec (fd, 65536))
+    in
+      if more = "" then (eof := true; false)
+      else (buf := String.extract (!buf, !pos, NONE) ^ more; pos := 0; eof := false;
+            taken := !taken + String.size more; true)
+    end
 
-  fun readLine (r as {buf, pos, ...} : {fd : Posix.IO.file_desc, buf : string ref, pos : int ref, eof : bool ref}) =
+  fun readLine (r as {buf, pos, ...}
+                : {fd : Posix.IO.file_desc, buf : string ref, pos : int ref, eof : bool ref, taken : int ref}) =
     let
       val s = !buf
       val start = !pos
@@ -326,15 +327,49 @@ struct
     | file_read_line h =
       (case lookup h of SOME (Reader r) => readLine r | _ => NONE)
 
+  (* at most n bytes, "" at end of file *)
+  fun file_read_vec (0, n) =
+      (case TextIO.inputN (TextIO.stdIn, n) of s => s)
+    | file_read_vec (h, n) =
+      if n < 0 then raise Size
+      else
+        (case lookup h of
+           SOME (Reader (r as {buf, pos, ...})) =>
+             let
+               val buffered = String.size (!buf) - !pos
+               val () = if buffered <= 0 then ignore (fill r) else ()
+               val have = String.size (!buf) - !pos
+               val k = if n < have then n else have
+               val s = String.substring (!buf, !pos, k)
+             in pos := !pos + k; s end
+         | _ => "")
+
+  (* What a seekable file has left; ~1 for anything else. The position is
+     counted here and the size comes from fstat, because Poly/ML 5.7.1
+     answers every lseek with 0. *)
+  fun file_avail 0 = ~1
+    | file_avail h =
+      (case lookup h of
+         SOME (Reader {fd, buf, pos, taken, ...}) =>
+           let
+             val buffered = String.size (!buf) - !pos
+             val theEnd = Position.toInt (Posix.FileSys.ST.size (Posix.FileSys.fstat fd))
+           in buffered + theEnd - !taken end
+           handle OS.SysErr _ => ~1
+       | _ => 0)
+
   fun file_read_all 0 = TextIO.inputAll TextIO.stdIn
     | file_read_all h =
       (case lookup h of
-         SOME (Reader {fd, buf, pos, eof}) =>
+         SOME (Reader {fd, buf, pos, eof, taken}) =>
            let
              val buffered = String.extract (!buf, !pos, NONE)
              fun go acc =
                let val more = Byte.bytesToString (Posix.IO.readVec (fd, 65536))
-               in if more = "" then (eof := true; String.concat (List.rev acc)) else go (more :: acc) end
+               in
+                 if more = "" then (eof := true; String.concat (List.rev acc))
+                 else (taken := !taken + String.size more; go (more :: acc))
+               end
            in buf := ""; pos := 0; go [buffered] end
        | _ => "")
 

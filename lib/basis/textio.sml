@@ -1,51 +1,101 @@
-(* TextIO: standard streams and files. A stream carries its VM file handle
-   (0 stdin, 1 stdout, 2 stderr, others from file_open), its name for error
-   messages, and whether it has been closed. *)
+(* TextIO: the imperative text streams (signature TEXT_IO). *)
 structure TextIO =
 struct
-  datatype instream = In of {fd : int, name : string, closed : bool ref}
-  datatype outstream = Out of {fd : int, name : string, closed : bool ref}
+  structure StreamIO =
+    RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice)
 
-  val fileOpen = _prim "file_open" : string * int -> int option
-  val fileClose = _prim "file_close" : int -> unit
-  val fileWrite = _prim "file_write" : int * string -> bool
-  val fileFlush = _prim "file_flush" : int -> unit
-  val fileReadLine = _prim "file_read_line" : int -> string option
-  val fileReadAll = _prim "file_read_all" : int -> string
-  val fileError = _prim "file_error" : unit -> string
+  structure Imperative = RuneImperativeIOFn (structure SIO = StreamIO structure V = CharVector)
 
-  fun ioError (name, function, cause) = raise IO.Io {name = name, function = function, cause = cause}
-  fun sysError () = OS.SysErr (fileError (), NONE)
+  type vector = string
+  type elem = char
+  datatype instream = datatype Imperative.instream
+  datatype outstream = datatype Imperative.outstream
 
-  val stdIn = In {fd = 0, name = "<stdin>", closed = ref false}
-  val stdOut = Out {fd = 1, name = "<stdout>", closed = ref false}
-  val stdErr = Out {fd = 2, name = "<stderr>", closed = ref false}
+  val input = Imperative.input
+  val input1 = Imperative.input1
+  val inputN = Imperative.inputN
+  val inputAll = Imperative.inputAll
+  val canInput = Imperative.canInput
+  val lookahead = Imperative.lookahead
+  val closeIn = Imperative.closeIn
+  val endOfStream = Imperative.endOfStream
+  val output = Imperative.output
+  val output1 = Imperative.output1
+  val flushOut = Imperative.flushOut
+  val closeOut = Imperative.closeOut
+  val getPosOut = Imperative.getPosOut
+  val setPosOut = Imperative.setPosOut
+  val mkInstream = Imperative.mkInstream
+  val getInstream = Imperative.getInstream
+  val setInstream = Imperative.setInstream
+  val mkOutstream = Imperative.mkOutstream
+  val getOutstream = Imperative.getOutstream
+  val setOutstream = Imperative.setOutstream
 
-  fun openIn name =
-    case fileOpen (name, 0) of
-      SOME fd => In {fd = fd, name = name, closed = ref false}
-    | NONE => ioError (name, "openIn", sysError ())
+  local
+    (* A file of the VM as a reader and as a writer. *)
+    fun reader (fd, name) =
+      TextPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
+                     readVec = SOME (RuneFile.readVec fd), readArr = NONE,
+                     readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
+                     avail = RuneFile.avail fd,
+                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
+                     close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+    fun writer (fd, name) =
+      TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
+                     writeVec = SOME (fn sl => RuneFile.writeString (fd, name) (CharVectorSlice.vector sl)),
+                     writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
+                     block = NONE, canOutput = NONE,
+                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
+                     close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+    fun instreamOf (fd, name) = mkInstream (StreamIO.mkInstream (reader (fd, name), ""))
+    (* The VM buffers a file of its own, so the stream layer keeps nothing:
+       what a program writes through print and through a stream then reaches
+       the file in the order it was written. *)
+    fun outstreamOf (fd, name) = Imperative.mkOutstreamOver (StreamIO.mkOutstream (writer (fd, name), IO.NO_BUF), RuneFile.flush fd)
+  in
+    fun openIn name = instreamOf (RuneFile.open' ("openIn", 0) name, name)
+    fun openOut name = outstreamOf (RuneFile.open' ("openOut", 1) name, name)
+    fun openAppend name = outstreamOf (RuneFile.open' ("openAppend", 2) name, name)
+    fun openString s = mkInstream (StreamIO.mkInstream (TextPrimIO.openVector s, ""))
 
-  fun openOutMode (function, mode) name =
-    case fileOpen (name, mode) of
-      SOME fd => Out {fd = fd, name = name, closed = ref false}
-    | NONE => ioError (name, function, sysError ())
-  fun openOut name = openOutMode ("openOut", 1) name
-  fun openAppend name = openOutMode ("openAppend", 2) name
+    val stdIn = instreamOf (0, "<stdIn>")
+    val stdOut = outstreamOf (1, "<stdOut>")
+    val stdErr = outstreamOf (2, "<stdErr>")
+  end
 
-  fun closeIn (In {fd, closed, ...}) = (fileClose fd; closed := true)
-  fun closeOut (Out {fd, closed, ...}) = (fileFlush fd; fileClose fd; closed := true)
+  (* A line includes its newline; a last line without one gets it. NONE at
+     the end of the stream, which is not passed: "if endOfStream f returns
+     true, then input f returns ("", f')". *)
+  fun inputLine (InStream r) =
+    let
+      fun index (v, i) =
+        if i >= size v then NONE else if String.sub (v, i) = #"\n" then SOME i else index (v, i + 1)
+      fun go (strm, acc) =
+        let val (v, strm') = StreamIO.input strm
+        in
+          if size v = 0 then
+            case acc of
+              [] => (r := strm; NONE)
+            | _ => (r := strm'; SOME (String.concat (List.rev ("\n" :: acc))))
+          else
+            case index (v, 0) of
+              SOME k =>
+                (r := #2 (StreamIO.inputN (strm, k + 1));
+                 SOME (String.concat (List.rev (String.extract (v, 0, SOME (k + 1)) :: acc))))
+            | NONE => go (strm', v :: acc)
+        end
+    in go (!r, []) end
 
-  fun output (Out {fd, name, closed}, s) =
-    if !closed then ioError (name, "output", IO.ClosedStream)
-    else if fileWrite (fd, s) then () else ioError (name, "output", sysError ())
-  fun output1 (out, c) = output (out, String.str c)
-  fun outputSubstr (out, ss) = output (out, Substring.string ss)
-  fun flushOut (Out {fd, ...}) = fileFlush fd
-  val print = print
+  fun outputSubstr (strm, ss) = output (strm, Substring.string ss)
 
-  fun inputLine (In {fd, name, closed}) =
-    if !closed then ioError (name, "inputLine", IO.ClosedStream) else fileReadLine fd
-  fun inputAll (In {fd, name, closed}) =
-    if !closed then ioError (name, "inputAll", IO.ClosedStream) else fileReadAll fd
+  (* "print s = (output (stdOut, s); flushOut stdOut)" *)
+  fun print s = (output (stdOut, s); flushOut stdOut)
+
+  (* The scanner reads from the functional stream and the imperative one is
+     left where it stopped. *)
+  fun scanStream scan (InStream r) =
+    case scan StreamIO.input1 (!r) of
+      SOME (v, rest) => (r := rest; SOME v)
+    | NONE => NONE
 end

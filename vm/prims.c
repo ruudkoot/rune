@@ -657,6 +657,34 @@ static int p_file_read_all(VM *vm) {
     if (!f) return ret(vm, 1, mk_ptr(vm_string_from(vm, "", 0)));
     return read_all(vm, f, 1);
 }
+/* Read at most n bytes; the empty string at end of file. */
+static int p_file_read_vec(VM *vm) {
+    FILE *f = file_of(vm, ARG(1), "file_read_vec");
+    check_tag(vm, ARG(0), T_INT, "file_read_vec");
+    int64_t n = ARG(0).u.i;
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
+    if (!f) return ret(vm, 2, mk_ptr(vm_string_from(vm, "", 0)));
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    size_t got = fread(buf, 1, (size_t)n, f);
+    Obj *s = vm_string_from(vm, buf, (uint32_t)got);
+    free(buf);
+    return ret(vm, 2, mk_ptr(s));
+}
+
+/* What a seekable file has left; ~1 for anything else, which the library
+   reads as "cannot be told without waiting". */
+static int p_file_avail(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_avail");
+    if (!f) return ret(vm, 1, mk_int(0));
+    long here = ftell(f);
+    if (here < 0) return ret(vm, 1, mk_int(-1));
+    if (fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
+    long end = ftell(f);
+    if (fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
+    return ret(vm, 1, mk_int(end - here));
+}
+
 static int p_file_error(VM *vm) {
     const char *m = strerror(vm->io_errno);
     return ret(vm, 1, mk_ptr(vm_string_from(vm, m, (uint32_t)strlen(m))));

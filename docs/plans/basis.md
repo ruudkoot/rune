@@ -16,7 +16,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
 | M2, text conversion and numbers | done; `IntN`/`WordN` omitted for now (below) |
 | M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
-| M4–M8 | not started |
+| M4, the I/O stack | done |
+| M5–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -56,6 +57,25 @@ rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
 depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
+
+M4 delivered `PRIM_IO` and `STREAM_IO` with the functors behind them
+(`RunePrimIOFn`, `RuneStreamIOFn`, `RuneImperativeIOFn`), `TextPrimIO` and
+`BinPrimIO`, `Position`, `OS.IO.iodesc`, and `TextIO` and `BinIO` rebuilt on
+them with every member of their imperative interfaces. A functional stream is
+a position in a chain of segments that the reader fills in as they are
+wanted, so a stream that has reached the end of a file reads what the file
+gains afterwards, two streams that share a segment read the same elements,
+and `closeIn` drops what was read ahead. Two primitives were added,
+`file_read_vec` and `file_avail`; the VM keeps a file's buffer, so a stream
+holds nothing of its own unless `setBufferMode` asks it to, and what
+`BLOCK_BUF` holds is lost if a program ends without flushing (the at-exit
+actions come with `OS.Process.atExit` in M5). On Rune 39,055 of 39,062 checks
+pass; the 7 that do not are the `OS.Process` members of M5 and one reading of
+the specification. The bootstrap rose about 5%, from 675.1 M to 710.7 M
+instructions, because the compiler compiles the library it loads and the
+stack is more of it; `src/backend/emit.sml` writes its bytecode with `TextIO`
+rather than `BinIO`, which keeps the second copy of the stack out of the
+compiler.
 
 M3 delivered `VectorSlice`, `ArraySlice`, `Array2`, the signatures
 `MONO_VECTOR`, `MONO_ARRAY`, `MONO_VECTOR_SLICE` and `MONO_ARRAY_SLICE` with
