@@ -11,15 +11,17 @@
 # provides  the structures, signatures and functors the file declares
 # requires  those of other files that it names; each must be provided by an
 #           earlier line. -Name: the file has the identifier Name without
-#           needing the file that provides it (general.sml declares the
-#           exception Option).
+#           needing the file that provides it (initial.sml declares the
+#           exception Option, pervasive.sml raises it).
 #
 # `rune --basis-check` verifies the last two columns against the sources, and
 # that a demand file declares modules only: a top-level value or fixity
 # directive of such a file would be in scope for some programs and not for
 # others. `rune --basis-deps FILE...` prints the files a program loads, and
 # `rune --basis all` loads every file.
-general.sml     | always | swap | General               | -Option
+initial.sml     | always | swap |                       | -Option
+pervasive.sml   | always | yes  |                       | -Option
+general.sml     | demand | yes  | General               |
 bool.sml        | demand | yes  | Bool                  |
 option.sml      | demand | yes  | Option                |
 list.sml        | demand | yes  | List                  |
@@ -37,4 +39,3 @@ io.sml          | demand | yes  | IO                    |
 textio.sml      | demand | yes  | TextIO                | IO OS String
 binio.sml       | demand | yes  | Word8Vector Byte BinIO | String TextIO
 commandline.sml | demand | yes  | CommandLine           |
-toplevel.sml    | always | yes  | | Char List Real String Vector

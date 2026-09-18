@@ -4,8 +4,8 @@ struct
   type char = char
   type string = string
 
-  val ord = _prim "char_ord" : char -> int
-  val chr = _prim "int_to_char" : int -> char
+  val ord = ord
+  val chr = chr
   val minChar = #"\000"
   val maxChar = #"\255"
   val maxOrd = 255

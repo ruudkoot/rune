@@ -39,11 +39,11 @@ struct
     if isNan a orelse isNan b then raise Unordered
     else if a < b then LESS else if a == b then EQUAL else GREATER
 
-  val fromInt = _prim "int_to_real" : int -> real
-  val floor = _prim "real_floor" : real -> int
-  val ceil = _prim "real_ceil" : real -> int
-  val round = _prim "real_round" : real -> int
-  val trunc = _prim "real_trunc" : real -> int
+  val fromInt = real
+  val floor = floor
+  val ceil = ceil
+  val round = round
+  val trunc = trunc
   fun realFloor r = fromInt (floor r)
   fun realCeil r = fromInt (ceil r)
   fun realRound r = fromInt (round r)

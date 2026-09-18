@@ -4,7 +4,7 @@ struct
   type 'a vector = 'a vector
   val maxLen = 100000000
 
-  val fromList = _prim "vector_from_list" : 'a list -> 'a vector
+  val fromList = vector
   val length = _prim "vector_length" : 'a vector -> int
   val sub = _prim "vector_sub" : 'a vector * int -> 'a
 

@@ -5,19 +5,19 @@ struct
   type char = char
 
   val maxSize = 1073741823
-  val size = _prim "string_size" : string -> int
+  val size = size
   val sub = _prim "string_sub" : string * int -> char
-  val op ^ = _prim "string_concat" : string * string -> string
-  val str = _prim "string_from_char" : char -> string
-  val implode = _prim "string_implode" : char list -> string
-  val explode = _prim "string_explode" : string -> char list
-  val concat = _prim "string_concat_list" : string list -> string
+  val op ^ = op ^
+  val str = str
+  val implode = implode
+  val explode = explode
+  val concat = concat
   val extractN = _prim "string_extract" : string * int * int -> string
 
   fun extract (s, i, NONE) = extractN (s, i, Int.- (size s, i))
     | extract (s, i, SOME n) = extractN (s, i, n)
 
-  fun substring (s, i, n) = extractN (s, i, n)
+  val substring = substring
 
   fun concatWith sep [] = ""
     | concatWith sep (s :: rest) = concat (s :: List.foldr (fn (x, acc) => sep :: x :: acc) [] rest)

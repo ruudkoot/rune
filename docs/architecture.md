@@ -85,7 +85,11 @@ temporaries that must survive an allocation are pushed on the value stack
 `lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the
 order, and what each file provides and requires, is in `lib/basis/MANIFEST`. A
 file that is loaded on demand declares modules only, so that the top-level
-environment of a program does not depend on which files it happens to load. Primitives are bound with `_prim "name" : ty`. The tags
+environment of a program does not depend on which files it happens to load. Two
+files are compiled before every program: `initial.sml` (`option`, `order` and
+the exceptions that are not built in) and `pervasive.sml` (the values of the
+top-level environment, written on primitives; `List.map` is the top-level
+`map`, not the other way round, so that these 90 lines need no other file). Primitives are bound with `_prim "name" : ty`. The tags
 of `option` and `order` are relied upon by primitives that construct options.
 
 ## Adding a language feature (checklist)
