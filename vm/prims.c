@@ -550,6 +550,110 @@ static int p_date_format(VM *vm) {
     return ret(vm, 3, mk_ptr(s));
 }
 
+/* The string of a K_STRING argument, as a C string the caller frees. */
+static char *c_string(VM *vm, Value v, const char *prim) {
+    Obj *s = check_obj(vm, v, K_STRING, prim);
+    char *out = malloc((size_t)s->len + 1);
+    if (!out) vm_fatal(vm, "out of memory");
+    memcpy(out, OBJ_BYTES(s), s->len);
+    out[s->len] = 0;
+    return out;
+}
+
+/* A primitive that takes a path and gives an int. */
+#define PATH_INT(name, call)                                   \
+    static int p_##name(VM *vm) {                              \
+        char *path = c_string(vm, ARG(0), #name);              \
+        int64_t r = call(path);                                \
+        free(path);                                            \
+        return ret(vm, 1, mk_int(r));                          \
+    }
+PATH_INT(os_mkdir, sys_mkdir)
+PATH_INT(os_rmdir, sys_rmdir)
+PATH_INT(os_chdir, sys_chdir)
+PATH_INT(os_remove, sys_remove)
+PATH_INT(os_file_kind, sys_file_kind)
+PATH_INT(os_link_kind, sys_link_kind)
+PATH_INT(os_file_size, sys_file_size)
+PATH_INT(os_mod_time, sys_mod_time)
+
+/* A primitive that takes a path and gives a string, empty on failure. */
+#define PATH_STRING(name, call)                                \
+    static int p_##name(VM *vm) {                              \
+        char *path = c_string(vm, ARG(0), #name);              \
+        const char *r = call(path);                            \
+        free(path);                                            \
+        return push_string_value(vm, r ? r : "");              \
+    }
+PATH_STRING(os_read_link, sys_read_link)
+PATH_STRING(os_real_path, sys_real_path)
+
+static int p_os_getcwd(VM *vm) {
+    const char *dir = sys_getcwd();
+    return push_string_value(vm, dir ? dir : "");
+}
+
+static int p_os_tmp_name(VM *vm) {
+    const char *name = sys_tmp_name();
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_os_rename(VM *vm) {
+    char *from = c_string(vm, ARG(1), "os_rename");
+    char *to = c_string(vm, ARG(0), "os_rename");
+    int r = sys_rename(from, to);
+    free(from);
+    free(to);
+    return ret(vm, 2, mk_int(r));
+}
+
+static int p_os_access(VM *vm) {
+    char *path = c_string(vm, ARG(2), "os_access");
+    check_tag(vm, ARG(1), T_INT, "os_access");
+    check_tag(vm, ARG(0), T_INT, "os_access");
+    int64_t flags = ARG(1).u.i;
+    int r = sys_access(path, (flags & 1) != 0, (flags & 2) != 0, (flags & 4) != 0);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_os_set_time(VM *vm) {
+    char *path = c_string(vm, ARG(2), "os_set_time");
+    check_tag(vm, ARG(1), T_INT, "os_set_time");
+    check_tag(vm, ARG(0), T_INT, "os_set_time");
+    int r = sys_set_time(path, ARG(1).u.i, (int)ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_os_file_id(VM *vm) {
+    char *path = c_string(vm, ARG(0), "os_file_id");
+    int64_t id[2];
+    int ok = sys_file_id(path, &id[0], &id[1]);
+    free(path);
+    return push_int_list(vm, id, ok == 0 ? 2 : 0, 1);
+}
+
+static int p_os_open_dir(VM *vm) {
+    char *path = c_string(vm, ARG(0), "os_open_dir");
+    int r = sys_open_dir(path);
+    free(path);
+    return ret(vm, 1, mk_int(r));
+}
+
+static int p_os_read_dir(VM *vm) {
+    INT1("os_read_dir");
+    const char *name = sys_read_dir((int)x);
+    if (!name) return ret(vm, 1, mk_con0(0));
+    Obj *o = vm_string_from(vm, name, (uint32_t)strlen(name));
+    Value r = mk_some(vm, mk_ptr(o));
+    return ret(vm, 1, r);
+}
+
+static int p_os_rewind_dir(VM *vm) { INT1("os_rewind_dir"); return ret(vm, 1, mk_int(sys_rewind_dir((int)x))); }
+static int p_os_close_dir(VM *vm) { INT1("os_close_dir"); return ret(vm, 1, mk_int(sys_close_dir((int)x))); }
+
+
 static int p_os_system(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "os_system");
     char *command = malloc((size_t)s->len + 1);
@@ -815,6 +919,44 @@ static int p_file_avail(VM *vm) {
 }
 
 static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
+
+/* The handles of the library are indices of the VM's table; the system
+   knows the descriptors of the files behind them. */
+static int descriptor_of(VM *vm, Value h, const char *prim) {
+    FILE *f = file_of(vm, h, prim);
+    return f ? sys_fileno(f) : -1;
+}
+
+static int p_os_desc_kind(VM *vm) {
+    int fd = descriptor_of(vm, ARG(0), "os_desc_kind");
+    return ret(vm, 1, mk_int(fd < 0 ? -1 : sys_desc_kind(fd)));
+}
+
+static int p_os_poll(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "os_poll");
+    int64_t n = list_length(ARG(2));
+    if (n < 0 || list_length(ARG(1)) != n) vm_fatal(vm, "primitive os_poll: malformed list");
+    int32_t *fds = malloc((size_t)(n > 0 ? n : 1) * sizeof *fds);
+    int32_t *events = malloc((size_t)(n > 0 ? n : 1) * sizeof *events);
+    if (!fds || !events) vm_fatal(vm, "out of memory");
+    if (int_list(ARG(2), fds, (int)n) != n || int_list(ARG(1), events, (int)n) != n)
+        vm_fatal(vm, "primitive os_poll: malformed list");
+    int *wide_fds = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_fds);
+    int *wide_events = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_events);
+    if (!wide_fds || !wide_events) vm_fatal(vm, "out of memory");
+    for (int i = 0; i < (int)n; i++) {
+        wide_fds[i] = descriptor_of(vm, mk_int(fds[i]), "os_poll");
+        wide_events[i] = events[i];
+    }
+    int ready = sys_poll(wide_fds, wide_events, (int)n, ARG(0).u.i);
+    int64_t *out = malloc((size_t)(n > 0 ? n : 1) * sizeof *out);
+    if (!out) vm_fatal(vm, "out of memory");
+    for (int i = 0; i < (int)n; i++) out[i] = wide_events[i];
+    free(fds); free(events); free(wide_fds); free(wide_events);
+    int r = push_int_list(vm, out, ready < 0 ? 0 : (int)n, 3);
+    free(out);
+    return r;
+}
 
 static int p_file_error(VM *vm) {
     const char *m = strerror(vm->io_errno);

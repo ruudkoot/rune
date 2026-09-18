@@ -465,4 +465,104 @@ struct
          | Posix.Process.W_SIGNALED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
          | Posix.Process.W_STOPPED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg))
   fun os_getenv name = OS.Process.getEnv name
+
+  (* ---- the file system, on the host's Posix ---- *)
+  fun noted f = (f (); 0) handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun notedValue (f, onFailure) = f () handle OS.SysErr (_, e) => (noteError e; onFailure)
+
+  val rwx = Posix.FileSys.S.flags [Posix.FileSys.S.irwxu, Posix.FileSys.S.irwxg, Posix.FileSys.S.irwxo]
+  fun os_mkdir path = noted (fn () => Posix.FileSys.mkdir (path, rwx))
+  fun os_rmdir path = noted (fn () => Posix.FileSys.rmdir path)
+  fun os_chdir path = noted (fn () => Posix.FileSys.chdir path)
+  fun os_getcwd () = notedValue (Posix.FileSys.getcwd, "")
+  fun os_remove path = noted (fn () => Posix.FileSys.unlink path)
+  fun os_rename (from, to) = noted (fn () => Posix.FileSys.rename {old = from, new = to})
+
+  fun os_access (path, flags, _) =
+    let
+      fun bit (k, m) = if Int.rem (Int.quot (flags, k), 2) = 1 then [m] else []
+      val modes = bit (1, Posix.FileSys.A_READ) @ bit (2, Posix.FileSys.A_WRITE) @ bit (4, Posix.FileSys.A_EXEC)
+    in if Posix.FileSys.access (path, modes) then 1 else 0 end
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun kindOf st =
+    if Posix.FileSys.ST.isReg st then 0
+    else if Posix.FileSys.ST.isDir st then 1
+    else if Posix.FileSys.ST.isLink st then 2
+    else 3
+  fun os_file_kind path = notedValue (fn () => kindOf (Posix.FileSys.stat path), ~1)
+  fun os_link_kind path = notedValue (fn () => kindOf (Posix.FileSys.lstat path), ~1)
+  fun os_file_size path =
+    notedValue (fn () => Position.toInt (Posix.FileSys.ST.size (Posix.FileSys.stat path)), ~1)
+  fun os_mod_time path =
+    notedValue (fn () => Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.mtime (Posix.FileSys.stat path))), ~1)
+  fun os_set_time (path, seconds, now) =
+    noted (fn () =>
+      Posix.FileSys.utime (path, if now = 1 then NONE
+                                 else SOME {actime = Time.fromSeconds (Int.toLarge seconds),
+                                            modtime = Time.fromSeconds (Int.toLarge seconds)}))
+  fun os_read_link path = notedValue (fn () => Posix.FileSys.readlink path, "")
+  fun os_real_path path = notedValue (fn () => OS.FileSys.fullPath path, "")
+  fun os_tmp_name () = OS.FileSys.tmpName ()
+  fun os_file_id path =
+    notedValue (fn () =>
+      let val st = Posix.FileSys.stat path
+      in [SysWord.toInt (Posix.FileSys.devToWord (Posix.FileSys.ST.dev st)),
+          SysWord.toInt (Posix.FileSys.inoToWord (Posix.FileSys.ST.ino st))] end, [])
+
+  (* The directory streams the library holds by number. *)
+  val dirs : (int * Posix.FileSys.dirstream option ref) list ref = ref []
+  val nextDir = ref 0
+  fun dirOf n =
+    let fun go [] = NONE | go ((k, d) :: rest) = if k = n then SOME d else go rest
+    in go (!dirs) end
+
+  fun os_open_dir path =
+    (let
+       val d = Posix.FileSys.opendir path
+       val n = !nextDir
+     in nextDir := n + 1; dirs := (n, ref (SOME d)) :: !dirs; n end)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun os_read_dir n =
+    case dirOf n of
+      SOME (ref (SOME d)) => Posix.FileSys.readdir d
+    | _ => NONE
+
+  fun os_rewind_dir n =
+    case dirOf n of
+      SOME (ref (SOME d)) => (Posix.FileSys.rewinddir d; 0)
+    | _ => ~1
+
+  fun os_close_dir n =
+    case dirOf n of
+      SOME (r as ref (SOME d)) => (Posix.FileSys.closedir d; r := NONE; 0)
+    | _ => ~1
+
+  (* ---- descriptors ---- *)
+  fun descriptorOf h =
+    case lookup h of
+      SOME (Reader {fd, ...}) => SOME fd
+    | SOME (Writer fd) => SOME fd
+    | NONE => NONE
+
+  fun os_desc_kind h =
+    case descriptorOf h of
+      NONE => (case h of 0 => 3 | 1 => 3 | 2 => 3 | _ => ~1)
+    | SOME fd =>
+        notedValue (fn () =>
+          let val st = Posix.FileSys.fstat fd
+          in
+            if Posix.FileSys.ST.isReg st then 0
+            else if Posix.FileSys.ST.isDir st then 1
+            else if Posix.FileSys.ST.isLink st then 2
+            else if Posix.FileSys.ST.isFIFO st then 4
+            else if Posix.FileSys.ST.isSock st then 5
+            else 6
+          end, ~1)
+
+  (* The host has no poll of its own, so a file is taken to be ready, which
+     is what poll says of a regular file. *)
+  fun os_poll (handles, events, _) =
+    List.map (fn e => e) events
 end

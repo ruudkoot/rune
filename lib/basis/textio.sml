@@ -40,14 +40,14 @@ struct
                      readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                      avail = RuneFile.avail fd,
                      getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                     close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+                     close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD fd)}
     fun writer (fd, name) =
       TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                      writeVec = SOME (fn sl => RuneFile.writeString (fd, name) (CharVectorSlice.vector sl)),
                      writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
                      block = NONE, canOutput = NONE,
                      getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                     close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+                     close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD fd)}
     fun instreamOf (fd, name) = mkInstream (StreamIO.mkInstream (reader (fd, name), ""))
     (* The VM buffers a file of its own, so the stream layer keeps nothing:
        what a program writes through print and through a stream then reaches

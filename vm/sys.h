@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /* The last failure, as an errno value, and its text and name. */
 int sys_errno(void);
@@ -36,6 +37,45 @@ int64_t sys_date_seconds(int32_t parts[9], int local);
 int sys_date_offset(int64_t seconds, int32_t *offset);
 /* strftime; returns the length written, or -1. */
 int sys_date_format(const char *format, const int32_t parts[9], int local, char *out, size_t n);
+
+/* Files and directories. A function that returns int gives 0 or -1. */
+int sys_mkdir(const char *path);
+int sys_rmdir(const char *path);
+int sys_chdir(const char *path);
+const char *sys_getcwd(void);                 /* NULL on failure */
+int sys_remove(const char *path);
+int sys_rename(const char *from, const char *to);
+int sys_access(const char *path, int read, int write, int exec);   /* 1, 0, or -1 */
+/* The kind of a file: 0 regular, 1 directory, 2 symbolic link, 3 other;
+   -1 on failure. sys_file_kind follows links, sys_link_kind does not. */
+int sys_file_kind(const char *path);
+int sys_link_kind(const char *path);
+int64_t sys_file_size(const char *path);      /* -1 on failure */
+int64_t sys_mod_time(const char *path);       /* seconds since the epoch, -1 on failure */
+int sys_set_time(const char *path, int64_t seconds, int now);
+const char *sys_read_link(const char *path);  /* NULL on failure */
+const char *sys_real_path(const char *path);  /* NULL on failure */
+const char *sys_tmp_name(void);               /* NULL on failure */
+/* The device and inode of a file, which identify it. */
+int sys_file_id(const char *path, int64_t *device, int64_t *inode);
+
+/* Directories. A stream is an int; -1 means the call failed. */
+int sys_open_dir(const char *path);
+const char *sys_read_dir(int dir);            /* NULL at the end and on failure */
+int sys_rewind_dir(int dir);
+int sys_close_dir(int dir);
+
+/* I/O descriptors. The descriptor of an open file, which is what the two
+   calls below take; -1 when there is none. */
+int sys_fileno(FILE *file);
+/* The kind of a descriptor: 0 file, 1 directory, 2 symbolic link,
+   3 terminal, 4 pipe, 5 socket, 6 device; -1 on failure. */
+int sys_desc_kind(int fd);
+/* Wait until one of n descriptors is ready, for at most `microseconds` (a
+   negative time waits without a limit). fds[] holds the descriptors and
+   events[] their events, as bits: 1 read, 2 write, 4 urgent. On return
+   events[] holds what happened. The number of ready descriptors, or -1. */
+int sys_poll(const int *fds, int *events, int n, int64_t microseconds);
 
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */

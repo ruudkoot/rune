@@ -172,3 +172,25 @@ date_format      3  string * int list * int -> string  strftime of the parts.
 os_system        1  string -> int             Run a command with the shell and wait; what it exited with, or 128 plus the signal that ended it, or ~1.
 os_getenv        1  string -> string option   The value of an environment variable.
 file_errno       1  unit -> int               The errno of the last file_open or file_write that failed.
+os_mkdir         1  string -> int             Make a directory; 0, or ~1 with the reason in sys_errno.
+os_rmdir         1  string -> int             Remove an empty directory.
+os_chdir         1  string -> int             Change the working directory.
+os_getcwd        1  unit -> string            The working directory; "" on failure.
+os_remove        1  string -> int             Remove a file.
+os_rename        2  string * string -> int    Rename a file.
+os_access        3  string * int * int -> int  Whether the file can be read, written or run (the flags are 1 for the third argument's bits 1, 2 and 4); 1, 0 or ~1.
+os_file_kind     1  string -> int             0 file, 1 directory, 2 symbolic link, 3 other, ~1 on failure; follows links.
+os_link_kind     1  string -> int             The same without following the last link.
+os_file_size     1  string -> int             The size of a file in bytes; ~1 on failure.
+os_mod_time      1  string -> int             When a file was last changed, in seconds since the epoch; ~1 on failure.
+os_set_time      3  string * int * int -> int  Set that time, or the present when the third argument is 1.
+os_read_link     1  string -> string          What a symbolic link points at; "" on failure.
+os_real_path     1  string -> string          The path without links or the arcs . and ..; "" on failure.
+os_tmp_name      1  unit -> string            The name of a new file that did not exist; "" on failure.
+os_file_id       1  string -> int list        The device and the inode of a file, which tell files apart; [] on failure.
+os_open_dir      1  string -> int             Open a directory; the number of the stream, or ~1.
+os_read_dir      1  int -> string option      The next name in it, without . and ..; NONE at the end.
+os_rewind_dir    1  int -> int                Start again at the first name.
+os_close_dir     1  int -> int                Close the stream.
+os_desc_kind     1  int -> int                The kind of a file handle: 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device, ~1 on failure.
+os_poll          3  int list * int list * int -> int list  Wait until one of the handles is ready, at most for the given microseconds (a negative time has no limit); the events wanted and then returned are bits: 1 read, 2 write, 4 urgent. [] on failure.

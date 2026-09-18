@@ -39,14 +39,14 @@ struct
                     readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                     avail = RuneFile.avail fd,
                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                    close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+                    close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD fd)}
     fun writer (fd, name) =
       BinPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                     writeVec = SOME (fn sl => RuneFile.writeString (fd, name) (Word8VectorSlice.vector sl)),
                     writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
                     block = NONE, canOutput = NONE,
                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                    close = RuneFile.close fd, ioDesc = SOME (OS.IO.FD fd)}
+                    close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD fd)}
     fun outstreamOf (fd, name) =
       Imperative.mkOutstreamOver (StreamIO.mkOutstream (writer (fd, name), IO.NO_BUF), RuneFile.flush fd)
   in

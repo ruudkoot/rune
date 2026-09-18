@@ -17,7 +17,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M2, text conversion and numbers | done; `IntN`/`WordN` omitted for now (below) |
 | M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
 | M4, the I/O stack | done |
-| M5, time and the system | `Time`, `Timer`, `Date`, `OS.Process` and the system layer done; `OS.FileSys`, `OS.Path` and `OS.IO` not started |
+| M5, time and the system | done |
 | M6–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
@@ -59,7 +59,7 @@ depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
 
-M5 so far: the system layer of the plan (`vm/sys.h` with `vm/sys_posix.c` and
+M5 delivered the system layer of the plan (`vm/sys.h` with `vm/sys_posix.c` and
 `vm/sys_none.c`, which `make SYS=none` selects and which fails everything
 with `ENOSYS`), the primitives for errors, time, the calendar and processes,
 and `Time`, `Timer`, `Date` and the rest of `OS.Process` on them, with
@@ -69,10 +69,14 @@ value, and the failures of the file primitives now carry it. Rune passes
 39,097 of 39,098 checks, no test is absent any more, and the one deviation
 that is left is a reading of the specification, not a gap.
 
-Still to do in M5: `OS.FileSys`, `OS.Path` (which needs no primitive at all)
-and `OS.IO`, and suite tests for `Time`, `Timer` and `Date` with the host
-cross-checks (`tests/lang/basis.time_*`, `basis.timer_*` and `basis.date_*`
-cover them for now).
+It also delivered `OS.Path` (text only, no primitive), `OS.FileSys` and
+`OS.IO`, with the primitives for files, directories and `poll` behind the
+same layer, and `OS` itself, which re-exports them.
+
+Left over from M5, for a later milestone: suite tests for `Time`, `Timer`,
+`Date`, `OS.Path`, `OS.FileSys` and `OS.IO` with the host cross-checks; the
+tests in `tests/lang` cover them for now (`basis.os.path_rules` follows the
+tables of the specification row by row).
 
 M4 delivered `PRIM_IO` and `STREAM_IO` with the functors behind them
 (`RunePrimIOFn`, `RuneStreamIOFn`, `RuneImperativeIOFn`), `TextPrimIO` and

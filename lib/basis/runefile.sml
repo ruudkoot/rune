@@ -16,7 +16,7 @@ struct
 
   val chunkSize = 4096
 
-  fun sysError () = OS.SysErr (fileError (), SOME (fileErrno ()))
+  fun sysError () = RuneError.SysErr (fileError (), SOME (fileErrno ()))
 
   (* mode: 0 read, 1 write and truncate, 2 append *)
   fun open' (function, mode) name =

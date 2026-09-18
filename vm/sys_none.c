@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <time.h>
 
 static int last = 0;
@@ -40,3 +41,36 @@ int sys_date_format(const char *format, const int32_t parts[9], int local, char 
 
 int sys_system(const char *command) { (void)command; return fail(); }
 const char *sys_getenv(const char *name) { (void)name; return NULL; }
+
+int sys_mkdir(const char *path) { (void)path; return fail(); }
+int sys_rmdir(const char *path) { (void)path; return fail(); }
+int sys_chdir(const char *path) { (void)path; return fail(); }
+const char *sys_getcwd(void) { fail(); return NULL; }
+int sys_remove(const char *path) { return remove(path) == 0 ? 0 : fail(); }
+int sys_rename(const char *from, const char *to) { return rename(from, to) == 0 ? 0 : fail(); }
+int sys_access(const char *path, int read, int write, int exec) {
+    (void)path; (void)read; (void)write; (void)exec; return fail();
+}
+int sys_file_kind(const char *path) { (void)path; return fail(); }
+int sys_link_kind(const char *path) { (void)path; return fail(); }
+int64_t sys_file_size(const char *path) { (void)path; return fail(); }
+int64_t sys_mod_time(const char *path) { (void)path; return fail(); }
+int sys_set_time(const char *path, int64_t seconds, int now) {
+    (void)path; (void)seconds; (void)now; return fail();
+}
+const char *sys_read_link(const char *path) { (void)path; fail(); return NULL; }
+const char *sys_real_path(const char *path) { (void)path; fail(); return NULL; }
+const char *sys_tmp_name(void) { return tmpnam(NULL); }
+int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
+    (void)path; (void)device; (void)inode; return fail();
+}
+int sys_open_dir(const char *path) { (void)path; return fail(); }
+const char *sys_read_dir(int dir) { (void)dir; fail(); return NULL; }
+int sys_rewind_dir(int dir) { (void)dir; return fail(); }
+int sys_close_dir(int dir) { (void)dir; return fail(); }
+
+int sys_fileno(FILE *file) { (void)file; return fail(); }
+int sys_desc_kind(int fd) { (void)fd; return fail(); }
+int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
+    (void)fds; (void)events; (void)n; (void)microseconds; return fail();
+}

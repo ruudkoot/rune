@@ -36,7 +36,7 @@ struct
             val v =
               case readVec of
                 SOME f => (f (if chunkSize < 1 then 1 else chunkSize)
-                           handle OS.SysErr e => ioError (name, function, OS.SysErr e))
+                           handle RuneError.SysErr e => ioError (name, function, RuneError.SysErr e))
               | NONE => ioError (name, function, IO.BlockingNotSupported)
           in
             s := (if V.length v = 0 then Eos (ref Unread) else Chunk (v, ref Unread));
@@ -170,7 +170,7 @@ struct
           fun go i =
             if i >= V.length v then ()
             else go (i + f (VS.slice (v, i, NONE)))
-        in go 0 handle OS.SysErr e => ioError (name, function, OS.SysErr e) end
+        in go 0 handle RuneError.SysErr e => ioError (name, function, RuneError.SysErr e) end
 
   fun flushBuffer (Out {writer, buffer, ...}, function) =
     case !buffer of

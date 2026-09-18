@@ -32,7 +32,7 @@ struct
            endPos : (unit -> pos) option,
            verifyPos : (unit -> pos) option,
            close : unit -> unit,
-           ioDesc : OS.IO.iodesc option}
+           ioDesc : RuneIODesc.iodesc option}
 
   datatype writer =
     WR of {name : string,
@@ -48,7 +48,7 @@ struct
            endPos : (unit -> pos) option,
            verifyPos : (unit -> pos) option,
            close : unit -> unit,
-           ioDesc : OS.IO.iodesc option}
+           ioDesc : RuneIODesc.iodesc option}
 
   (* A reader over a vector that is there already. *)
   fun openVector v =

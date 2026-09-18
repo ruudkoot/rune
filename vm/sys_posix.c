@@ -3,6 +3,7 @@
 #include "sys.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -10,6 +11,11 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <poll.h>
+#include <limits.h>
+#include <sys/stat.h>
+#include <utime.h>
 
 int sys_errno(void) { return errno; }
 void sys_set_errno(int e) { errno = e; }
@@ -167,3 +173,183 @@ int sys_system(const char *command) {
 }
 
 const char *sys_getenv(const char *name) { return getenv(name); }
+
+/* ---------------------------------------------------------------- files */
+int sys_mkdir(const char *path) { return mkdir(path, 0777); }
+int sys_rmdir(const char *path) { return rmdir(path); }
+int sys_chdir(const char *path) { return chdir(path); }
+
+static char path_buffer[4096];
+
+const char *sys_getcwd(void) {
+    return getcwd(path_buffer, sizeof path_buffer);
+}
+
+int sys_remove(const char *path) { return unlink(path); }
+int sys_rename(const char *from, const char *to) { return rename(from, to); }
+
+int sys_access(const char *path, int read, int write, int exec) {
+    int mode = 0;
+    if (read) mode |= R_OK;
+    if (write) mode |= W_OK;
+    if (exec) mode |= X_OK;
+    if (mode == 0) mode = F_OK;
+    return access(path, mode) == 0 ? 1 : 0;
+}
+
+static int kind_of(mode_t mode) {
+    if (S_ISREG(mode)) return 0;
+    if (S_ISDIR(mode)) return 1;
+    if (S_ISLNK(mode)) return 2;
+    return 3;
+}
+
+int sys_file_kind(const char *path) {
+    struct stat st;
+    if (stat(path, &st) != 0) return -1;
+    return kind_of(st.st_mode);
+}
+
+int sys_link_kind(const char *path) {
+    struct stat st;
+    if (lstat(path, &st) != 0) return -1;
+    return kind_of(st.st_mode);
+}
+
+int64_t sys_file_size(const char *path) {
+    struct stat st;
+    if (stat(path, &st) != 0) return -1;
+    return (int64_t)st.st_size;
+}
+
+int64_t sys_mod_time(const char *path) {
+    struct stat st;
+    if (stat(path, &st) != 0) return -1;
+    return (int64_t)st.st_mtime;
+}
+
+int sys_set_time(const char *path, int64_t seconds, int now) {
+    if (now) return utime(path, NULL);
+    struct utimbuf times;
+    times.actime = (time_t)seconds;
+    times.modtime = (time_t)seconds;
+    return utime(path, &times);
+}
+
+const char *sys_read_link(const char *path) {
+    ssize_t n = readlink(path, path_buffer, sizeof path_buffer - 1);
+    if (n < 0) return NULL;
+    path_buffer[n] = 0;
+    return path_buffer;
+}
+
+const char *sys_real_path(const char *path) {
+    return realpath(path, path_buffer);
+}
+
+const char *sys_tmp_name(void) {
+    const char *dir = getenv("TMPDIR");
+    if (!dir || !*dir) dir = "/tmp";
+    snprintf(path_buffer, sizeof path_buffer, "%s/runeXXXXXX", dir);
+    int fd = mkstemp(path_buffer);
+    if (fd < 0) return NULL;
+    close(fd);
+    return path_buffer;
+}
+
+int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
+    struct stat st;
+    if (stat(path, &st) != 0) return -1;
+    *device = (int64_t)st.st_dev;
+    *inode = (int64_t)st.st_ino;
+    return 0;
+}
+
+/* The open directory streams, indexed by the number the library holds. */
+static DIR **dirs = NULL;
+static int dirs_length = 0;
+
+int sys_open_dir(const char *path) {
+    DIR *d = opendir(path);
+    if (!d) return -1;
+    for (int i = 0; i < dirs_length; i++)
+        if (dirs[i] == NULL) { dirs[i] = d; return i; }
+    DIR **grown = realloc(dirs, (size_t)(dirs_length + 1) * sizeof(DIR *));
+    if (!grown) { closedir(d); errno = ENOMEM; return -1; }
+    dirs = grown;
+    dirs[dirs_length] = d;
+    return dirs_length++;
+}
+
+static DIR *dir_of(int dir) {
+    if (dir < 0 || dir >= dirs_length) { errno = EBADF; return NULL; }
+    if (dirs[dir] == NULL) { errno = EBADF; return NULL; }
+    return dirs[dir];
+}
+
+/* The entries "." and ".." are left out, as OS.FileSys.readDir prescribes. */
+const char *sys_read_dir(int dir) {
+    DIR *d = dir_of(dir);
+    if (!d) return NULL;
+    for (;;) {
+        errno = 0;
+        struct dirent *entry = readdir(d);
+        if (!entry) return NULL;
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            snprintf(path_buffer, sizeof path_buffer, "%s", entry->d_name);
+            return path_buffer;
+        }
+    }
+}
+
+int sys_rewind_dir(int dir) {
+    DIR *d = dir_of(dir);
+    if (!d) return -1;
+    rewinddir(d);
+    return 0;
+}
+
+int sys_close_dir(int dir) {
+    DIR *d = dir_of(dir);
+    if (!d) return -1;
+    dirs[dir] = NULL;
+    return closedir(d);
+}
+
+/* ---------------------------------------------------------------- descriptors */
+int sys_fileno(FILE *file) { return file ? fileno(file) : -1; }
+
+int sys_desc_kind(int fd) {
+    struct stat st;
+    if (fstat(fd, &st) != 0) return -1;
+    if (isatty(fd)) return 3;
+    if (S_ISREG(st.st_mode)) return 0;
+    if (S_ISDIR(st.st_mode)) return 1;
+    if (S_ISLNK(st.st_mode)) return 2;
+    if (S_ISFIFO(st.st_mode)) return 4;
+    if (S_ISSOCK(st.st_mode)) return 5;
+    return 6;
+}
+
+int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
+    if (n < 0) { errno = EINVAL; return -1; }
+    struct pollfd *items = malloc((size_t)(n > 0 ? n : 1) * sizeof *items);
+    if (!items) { errno = ENOMEM; return -1; }
+    for (int i = 0; i < n; i++) {
+        items[i].fd = fds[i];
+        items[i].events = (short)(((events[i] & 1) ? POLLIN : 0) |
+                                  ((events[i] & 2) ? POLLOUT : 0) |
+                                  ((events[i] & 4) ? POLLPRI : 0));
+        items[i].revents = 0;
+    }
+    int timeout = microseconds < 0 ? -1 : (int)((microseconds + 999) / 1000);
+    int ready;
+    do { ready = poll(items, (nfds_t)n, timeout); } while (ready < 0 && errno == EINTR);
+    if (ready >= 0)
+        for (int i = 0; i < n; i++)
+            events[i] = ((items[i].revents & (POLLIN | POLLHUP)) ? 1 : 0) |
+                        ((items[i].revents & POLLOUT) ? 2 : 0) |
+                        ((items[i].revents & POLLPRI) ? 4 : 0);
+    free(items);
+    return ready;
+}

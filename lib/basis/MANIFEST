@@ -64,19 +64,23 @@ position.sml    | demand | yes  | Position              | Int
 time.sml        | demand | yes  | Time                  | Char IEEEReal Int IntInf LargeInt List Real String StringCvt
 timer.sml       | demand | yes  | Timer                 | Time
 date.sml        | demand | yes  | Date                  | Char Int List Option String StringCvt Time
+runeerror.sml   | demand | yes  | RuneError             | Int
 runeexit.sml    | demand | yes  | RuneExit              |
-os.sml          | demand | yes  | OS                    | Int RuneExit Time Word -IO
+ospath.sml      | demand | yes  | RunePath              | List String
+osfilesys.sml   | demand | yes  | RuneFileSys           | Int IntInf List RuneError RunePath Time Word
+osio.sml        | demand | yes  | RuneIODesc            | Int List RuneError Time Word
+os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath Time -IO
 io.sml          | demand | yes  | IO                    |
-primio_sig.sml  | demand | yes  | PRIM_IO               | OS
-primio_fn.sml   | demand | yes  | RunePrimIOFn          | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE OS Position
+primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
+primio_fn.sml   | demand | yes  | RunePrimIOFn          | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position RuneIODesc
 streamio_sig.sml | demand | yes | STREAM_IO            | IO
-streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE OS PRIM_IO
-runefile.sml    | demand | yes  | RuneFile              | IO OS Word8
+streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneError
+runefile.sml    | demand | yes  | RuneFile              | IO RuneError Word8
 textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice RunePrimIOFn
 binprimio.sml   | demand | yes  | BinPrimIO             | RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO
-textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List OS RuneFile RuneImperativeIOFn RuneStreamIOFn String Substring TextPrimIO
+textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
-binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO OS RuneFile RuneImperativeIOFn RuneStreamIOFn Word8 Word8Vector Word8VectorSlice
+binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn Word8 Word8Vector Word8VectorSlice
 commandline.sml | demand | yes  | CommandLine           |
 epilogue.sml    | final  | no   |                       | RuneExit

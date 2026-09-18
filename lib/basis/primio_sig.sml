@@ -24,7 +24,7 @@ sig
            endPos : (unit -> pos) option,
            verifyPos : (unit -> pos) option,
            close : unit -> unit,
-           ioDesc : OS.IO.iodesc option}
+           ioDesc : RuneIODesc.iodesc option}
 
   datatype writer =
     WR of {name : string,
@@ -40,7 +40,7 @@ sig
            endPos : (unit -> pos) option,
            verifyPos : (unit -> pos) option,
            close : unit -> unit,
-           ioDesc : OS.IO.iodesc option}
+           ioDesc : RuneIODesc.iodesc option}
 
   val openVector : vector -> reader
   val nullRd : unit -> reader

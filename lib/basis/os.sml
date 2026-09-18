@@ -1,26 +1,15 @@
-(* OS: the errors of the system, the process, and the I/O descriptors. *)
+(* OS: the errors of the system, the file system, paths, the process and the
+   I/O descriptors. *)
 structure OS =
 struct
-  (* A syserror is an errno value. *)
-  type syserror = int
-  exception SysErr of string * syserror option
+  type syserror = RuneError.syserror
+  exception SysErr = RuneError.SysErr
+  val errorMsg = RuneError.errorMsg
+  val errorName = RuneError.errorName
+  val syserror = RuneError.syserror
 
-  local
-    val errno = _prim "sys_errno" : unit -> int
-    val message = _prim "sys_error_msg" : int -> string
-    val name = _prim "sys_error_name" : int -> string
-    val ofName = _prim "sys_error_of_name" : string -> int
-  in
-    fun errorMsg e = message e
-    fun errorName e = let val n = name e in if n = "" then "error" ^ Int.toString e else n end
-    fun syserror s =
-      case ofName s of
-        ~1 => NONE
-      | e => SOME e
-    (* The last failure of the system, as an exception. *)
-    fun lastError () = let val e = errno () in SysErr (message e, SOME e) end
-    fun fail function = raise lastError ()
-  end
+  structure FileSys = RuneFileSys
+  structure Path = RunePath
 
   structure Process =
   struct
@@ -35,12 +24,10 @@ struct
       val sleep' = _prim "time_sleep" : int -> unit
       val exit' = _prim "exit" : int -> 'a
     in
-      (* "returns the termination status of the command"; the shell reports a
-         command that could not be run as 127, and a failure of the call
-         itself raises SysErr. *)
+      (* "returns the termination status of the command" *)
       fun system command =
         case system' command of
-          ~1 => fail "system"
+          ~1 => raise RuneError.lastError ()
         | status => status
 
       fun getEnv name = getenv' name
@@ -57,13 +44,6 @@ struct
     end
   end
 
-  (* The rest of OS.IO (poll and its kin) comes with the system layer; the
-     type is here because PRIM_IO names it. A descriptor is the handle of the
-     VM's file table. *)
-  structure IO =
-  struct
-    datatype iodesc = FD of int
-    fun hash (FD fd) = Word.fromInt fd
-    fun compare (FD a, FD b) = Int.compare (a, b)
-  end
+  (* A descriptor is the handle of the VM's file table. *)
+  structure IO = RuneIODesc
 end
