@@ -12,6 +12,10 @@
 #   make test-boot  run the suite with the self-hosted compiler
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
+#   make doctor     check that the tools all targets need are installed
+#
+# The build and test targets check their own tools once before they first run
+# (scripts/doctor.sh); `make DOCTOR=no ...` skips that.
 #
 # Recipes and test programs run in parallel on all available CPUs;
 # `make JOBS=N ...` uses N instead.
@@ -41,9 +45,20 @@ VM_HDRS := vm/vm.h $(GEN_C)
 BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOT_HEAP ?= 268435456
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean doctor
 
 all: mlton vm
+
+# ---------------------------------------------------------------- environment
+# `make doctor` reports on everything. Targets depend (order-only) on a stamp
+# per doctor scope, so each scope is checked once: again after `make clean` or
+# when the script changes.
+doctor:
+	@CC="$(CC)" sh scripts/doctor.sh
+
+build/.doctor-%: scripts/doctor.sh
+	@mkdir -p build
+	@[ "$(DOCTOR)" = no ] || { CC="$(CC)" sh scripts/doctor.sh --quiet --scope $* && touch $@; }
 
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
@@ -64,44 +79,44 @@ polyml: bin/rune-polyml
 
 all3: mlton smlnj polyml
 
-bin/rune-mlton: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml
+bin/rune-mlton: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
 	mlton -output $@ build/rune.mlb
 
-bin/rune-smlnj: $(BUILDGEN) $(SOURCES) $(GEN_SML)
+bin/rune-smlnj: $(BUILDGEN) $(SOURCES) $(GEN_SML) | build/.doctor-smlnj
 	@mkdir -p bin
 	ml-build build/rune.cm Main.main bin/rune-smlnj.heap
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec sml @SMLload="$$d/rune-smlnj.heap" "$$@"\n' > $@
 	chmod +x $@
 
-bin/rune-polyml: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml
+bin/rune-polyml: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml | build/.doctor-polyml
 	@mkdir -p bin
 	polyc -o $@ build/polyml-build.sml
 
 # ---------------------------------------------------------------- VM
 vm: bin/runevm
 
-bin/runevm: $(VM_SRCS) $(VM_HDRS)
+bin/runevm: $(VM_SRCS) $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -o $@ $(VM_SRCS) -lm
 
 vm-asan: bin/runevm-asan
 
-bin/runevm-asan: $(VM_SRCS) $(VM_HDRS)
+bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
 
 # ---------------------------------------------------------------- tests
-test: mlton vm
+test: mlton vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm
 
-test-all: all3 vm
+test-all: all3 vm | build/.doctor-check
 	@for c in mlton smlnj polyml; do \
 	  echo "=== testing with $$c build ==="; \
 	  sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
 
-check-cross: all3 bin/rune-boot
+check-cross: all3 bin/rune-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
 check-docs:
@@ -119,7 +134,7 @@ bin/rune-boot: bin/rune.rbc
 
 boot: bin/rune-boot
 
-test-boot: bin/rune-boot vm
+test-boot: bin/rune-boot vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-boot --vm bin/runevm
 
 bootstrap: bin/rune-boot

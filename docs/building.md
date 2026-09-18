@@ -10,7 +10,20 @@ virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
 * A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`.
 * At least one of: MLton (tested: 20210117), SML/NJ (tested: 110.79, 32-bit
   build), Poly/ML (tested: 5.7.1). On Debian/Ubuntu:
-  `apt install mlton smlnj polyml build-essential`.
+  `apt install mlton smlnj polyml libpolyml-dev libgmp-dev build-essential`.
+
+`make doctor` checks all of this (and the tools of the test, sanitizer, host
+matrix and profiling targets), by running the tools rather than just looking
+for them: it compiles a C99 program, and a program with MLton and with
+`polyc`. For everything that is missing it prints the install command of the
+system's package manager (`apt`, `dnf`, `pacman` or `brew`) and exits with
+status 1; optional tools only produce warnings.
+
+The build and test targets run the same check for the tools they need, once,
+before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
+`build/.doctor-<scope>` records success, so the check is repeated after
+`make clean` or when the script changes). `make DOCTOR=no ...` skips it, and
+`CC`, `MLTON`, `SMLNJ`, `POLY` and `POLYC` name the tools to check.
 
 ## Targets
 
@@ -29,6 +42,7 @@ virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
 | `make test-boot` | run `tests/run-tests.sh` with `bin/rune-boot` |
 | `make bootstrap` | compile the compiler with `bin/rune-boot` and check the result equals `bin/rune.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
+| `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
 Make runs recipes, and the test scripts run test programs, in parallel on

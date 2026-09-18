@@ -40,13 +40,14 @@ description of the supported language. Every feature row there has an id
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests) |
 | `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md) |
 | `examples/` | small programs |
-| `scripts/` | build-file and table generators, consistency checks |
+| `scripts/` | build-file and table generators, consistency checks, `doctor.sh` |
 
 ## Building and testing
 
 See [docs/building.md](docs/building.md). In short:
 
 ```
+make doctor        # check the environment: compilers, tools, how to install what is missing
 make all3          # bin/rune-mlton, bin/rune-smlnj, bin/rune-polyml
 make test          # run the suite with bin/rune
 make test-all      # ... with each compiler build
