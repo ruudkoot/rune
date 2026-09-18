@@ -36,18 +36,26 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make test` | run `tests/run-tests.sh` with `bin/rune` |
 | `make test-all` | run the suite with each of the three compiler builds |
-| `make check-cross` | compile every test with all three builds and compare the bytecode |
-| `make check-docs` | verify docs, tests and `.def` files are in sync |
+| `make check-cross` | compile every test, example and Basis Library suite program with all builds and compare the bytecode |
+| `make check-docs` | verify docs, tests and `.def` files are in sync, and that the Basis Library suite has a check for every specified member |
+| `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-mlton`) and the `bin/rune-boot` wrapper that runs it on `runevm` |
 | `make test-boot` | run `tests/run-tests.sh` with `bin/rune-boot` |
 | `make bootstrap` | compile the compiler with `bin/rune-boot` and check the result equals `bin/rune.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
+| `make matrix-quick` | the Basis Library suite on Rune, on the libraries of the installed MLton, SML/NJ and Poly/ML, and on Rune's library compiled by them; not part of `make check` |
+| `make hosts` | install the current releases of the three (MLton 20241230, SML/NJ 110.99.9, Poly/ML 5.9.2) under `${RUNE_HOSTS:-~/.local/rune-hosts}`; no root access needed, about 200 MB and a few minutes |
+| `make matrix` | `matrix-quick` and the same with those releases |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
 Make runs recipes, and the test scripts run test programs, in parallel on
 all available CPUs; `make JOBS=4 check` limits that to 4 (`tests/run-tests.sh`
 and `scripts/check-cross.sh` take `-j N`).
+
+The matrix targets are described in [basis-compat.md](basis-compat.md) and
+`tests/basis/README.md`; `MLTON`, `SMLNJ` and `POLY` select the installed
+hosts they use and `RUNE_HOSTS` the prefix of the current ones.
 
 `CC=clang make vm` selects another C compiler. `RUNE_LIB=/path make` bakes a
 different default basis-library location into the compiler (default:

@@ -210,7 +210,9 @@ Library that are not listed are not available.
 | basis.os.process | `OS.Process`: `status`, `success`, `failure`, `isSuccess`, `exit`, `terminate`; `OS.SysErr`, `OS.syserror` | Supported | |
 | basis.toplevel | Top-level aliases: `@ ^ app map foldl foldr rev length null hd tl size str concat implode explode substring ord chr real floor ceil round trunc vector` | Supported | |
 | basis.textio.files | File streams: `TextIO.openIn`, `openOut`, `openAppend`, reading and writing files; errors raise `IO.Io {name, function, cause}` with `cause` `OS.SysErr` or `IO.ClosedStream` | Supported | Streams are concrete datatypes carrying a VM file handle. |
-| basis.binio | `BinIO`: `openIn`, `openOut`, `openAppend`, `closeIn`, `closeOut`, `output`, `inputAll`, `flushOut`; `Byte`: `bytesToString`, `stringToBytes`; `Word8Vector`: `vector`, `length` | Partial | `Word8Vector.vector` is `string`; no `Word8`, no element access. |
+| basis.binio | `BinIO`: `openIn`, `openOut`, `openAppend`, `closeIn`, `closeOut`, `output`, `inputAll`, `flushOut`; `Word8Vector`: `vector`, `length` | Partial | `Word8Vector.vector` is `string`; no `Word8`, no element access. |
+| basis.byte | `Byte`: `bytesToString`, `stringToBytes` | Partial | No `byteToChar`, `charToByte`, `unpackString`, `unpackStringVec` or `packString` (no `Word8`). |
+| basis.io | `IO`: exceptions `Io {name, function, cause}` and `ClosedStream` | Partial | No `BlockingNotSupported`, `NonblockingNotSupported`, `RandomAccessNotSupported` or `buffer_mode`. |
 | basis.substring | `Substring` | Planned | |
 | basis.intinf | `IntInf`: `int`, `precision`, `minInt`, `maxInt`, `fromInt`, `toInt`, `toLarge`, `fromLarge`, `~`, `+`, `-`, `*`, `div`, `mod`, `quot`, `rem`, `divMod`, `quotRem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `pow`, `toString`, `fromString`; `LargeInt` = `IntInf` | Partial | Implemented in SML with base-2^30 limbs. No `IntInf` literals or overloading: write `IntInf.fromInt n`, `IntInf.+ (a, b)`. No bit operations, `log2`, `fmt` or `scan`. |
 

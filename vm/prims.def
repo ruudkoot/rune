@@ -105,12 +105,12 @@ string_concat_list 1 string list -> string   Concatenate a list of strings.
 ref_new          1  'a -> 'a ref             Allocate a reference cell.
 ref_get          1  'a ref -> 'a             Dereference.
 ref_set          2  'a ref * 'a -> unit      Assignment.
-array_new        2  int * 'a -> 'a array     Allocate; raises Size.
+array_new        2  int * 'a -> 'a array     Allocate; raises Size if the length is negative or above 100000000.
 array_length     1  'a array -> int          Length.
 array_sub        2  'a array * int -> 'a     Indexing; raises Subscript.
 array_update     3  'a array * int * 'a -> unit  Update; raises Subscript.
-array_from_list  1  'a list -> 'a array      Build from a list.
-vector_from_list 1  'a list -> 'a vector     Build from a list.
+array_from_list  1  'a list -> 'a array      Build from a list; raises Size above 100000000 elements.
+vector_from_list 1  'a list -> 'a vector     Build from a list; raises Size above 100000000 elements.
 vector_length    1  'a vector -> int         Length.
 vector_sub       2  'a vector * int -> 'a    Indexing; raises Subscript.
 
@@ -129,6 +129,6 @@ file_open        2  string * int -> int option  Open a file (mode 0 read, 1 writ
 file_close       1  int -> unit               Close a handle (no-op for 0-2 and already closed handles).
 file_write       2  int * string -> bool      Write bytes; false if the handle is invalid or the write fails.
 file_flush       1  int -> unit               Flush a handle.
-file_read_line   1  int -> string option      Read a line including its newline; NONE at end of file.
-file_read_all    1  int -> string             Read the rest of a handle.
+file_read_line   1  int -> string option      Read a line including its newline (a last line without one gets it); NONE at end of file, and from then on.
+file_read_all    1  int -> string             Read the rest of a handle, including what the file has gained since an end of file.
 file_error       1  unit -> string            strerror text of the last failed file_open or file_write.

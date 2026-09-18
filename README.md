@@ -37,8 +37,8 @@ description of the supported language. Every feature row there has an id
 | `src/` | the compiler (frontend, elaboration, core translation, backend, driver) |
 | `vm/` | the virtual machine; `opcodes.def` and `prims.def` define the instruction set |
 | `lib/basis/` | the basis library, compiled before every program |
-| `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests) |
-| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md) |
+| `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
+| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md) |
 | `examples/` | small programs |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh` |
 
@@ -53,6 +53,7 @@ make test          # run the suite with bin/rune
 make test-all      # ... with each compiler build
 make check-cross   # identical bytecode from all builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
+make test-basis    # the Basis Library suite (tests/basis) with bin/rune
 make boot          # bin/rune.rbc + bin/rune-boot: the compiler compiled by itself
 make test-boot     # run the suite with the self-hosted compiler
 make bootstrap     # the self-hosted compiler reproduces bin/rune.rbc
@@ -84,4 +85,5 @@ seconds for the compiler itself). The remaining differences from the
 Definition are the implementation-defined choices listed in
 [docs/language.md](docs/language.md); the Basis Library is still a subset.
 [docs/plans/sml97.md](docs/plans/sml97.md) records how the language was
-completed and what is left.
+completed and what is left; [docs/plans/basis.md](docs/plans/basis.md) is the
+plan for the full Basis Library.

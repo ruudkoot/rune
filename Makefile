@@ -8,11 +8,16 @@
 #   make test-all   run the suite with each of the three compiler builds
 #   make check-cross  verify all three builds emit byte-identical bytecode
 #   make check-docs verify docs/language.md, tests and .def files are in sync
+#   make test-basis run the Basis Library suite (tests/basis) with bin/rune
 #   make boot       bin/rune.rbc (the compiler compiled by itself) + bin/rune-boot wrapper
 #   make test-boot  run the suite with the self-hosted compiler
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
 #   make doctor     check that the tools all targets need are installed
+#   make matrix-quick  the Basis Library suite on Rune, on the installed MLton,
+#                   SML/NJ and Poly/ML, and on Rune's library compiled by them
+#   make hosts      install current releases of the three under ~/.local/rune-hosts
+#   make matrix     matrix-quick and the same with those releases
 #
 # The build and test targets check their own tools once before they first run
 # (scripts/doctor.sh); `make DOCTOR=no ...` skips that.
@@ -45,7 +50,7 @@ VM_HDRS := vm/vm.h $(GEN_C)
 BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOT_HEAP ?= 268435456
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean doctor
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean doctor test-basis hosts matrix-quick matrix
 
 all: mlton vm
 
@@ -121,6 +126,24 @@ check-cross: all3 bin/rune-boot | build/.doctor-check
 
 check-docs:
 	sh scripts/check-docs.sh
+	sh scripts/check-basis-coverage.sh
+
+# ---------------------------------------------------------------- Basis Library suite
+# tests/basis/README.md. The matrix targets compare Rune with other systems
+# and are not part of `make check`.
+test-basis: mlton vm | build/.doctor-check
+	sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
+
+hosts: | build/.doctor-matrix
+	sh scripts/fetch-hosts.sh
+
+MATRIX_DOCTOR := build/.doctor-mlton build/.doctor-smlnj build/.doctor-polyml build/.doctor-check
+
+matrix-quick: mlton vm | $(MATRIX_DOCTOR)
+	sh tests/basis/run-matrix.sh -j $(JOBS) --configs installed,xc1
+
+matrix: mlton vm | $(MATRIX_DOCTOR)
+	sh tests/basis/run-matrix.sh -j $(JOBS) --configs all
 
 # ---------------------------------------------------------------- bootstrap
 # Stage 1: the MLton build compiles the compiler to bytecode. bin/rune-boot
@@ -149,6 +172,7 @@ check:
 	@$(MAKE) --no-print-directory all3 vm boot
 	@$(MAKE) --no-print-directory test
 	@$(MAKE) --no-print-directory test-all
+	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-boot bootstrap
 	@$(MAKE) --no-print-directory check-cross check-docs
 

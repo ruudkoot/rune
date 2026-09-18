@@ -17,7 +17,14 @@ keep these invariants:
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
 * When adding a basis structure, add a `basis.<name>` row listing its members
-  and add the file to `lib/basis/MANIFEST`.
+  and add the file to `lib/basis/MANIFEST`. Its test belongs to the Basis
+  Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
+  written as `tests/basis/README.md` describes, with expected values worked
+  out from the text of the specification. `make check-docs` wants a check for
+  every member the specification's signature names, and `make test-basis` an
+  explanation in `tests/basis/deviations.txt` for every check that fails.
+  After a library change run `make matrix-quick` as well: it runs the suite on
+  MLton, SML/NJ and Poly/ML, and on Rune's library compiled by them.
 * **Instruction set / primitives** change only through `vm/opcodes.def` and
   `vm/prims.def` (then `make gen`), with the corresponding implementation in
   `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
@@ -39,7 +46,7 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
+  `test-basis`, `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
   sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs

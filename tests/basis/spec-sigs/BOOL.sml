@@ -1,0 +1,14 @@
+(* signature BOOL, transcribed from https://smlfamily.github.io/Basis/bool.html
+
+   The page specifies `datatype bool = false | true`, which the Definition
+   does not allow (Section 2.9: true and false may not be specified); the
+   replication below is the legal way to say the same. *)
+signature SPEC_BOOL =
+sig
+  datatype bool = datatype bool
+
+  val not : bool -> bool
+  val toString : bool -> string
+  val scan : (char, 'a) StringCvt.reader -> (bool, 'a) StringCvt.reader
+  val fromString : string -> bool option
+end

@@ -1,8 +1,11 @@
 #!/bin/sh
 # Verify that documentation, tests and definition files are in sync:
 #  1. every docs/language.md row marked Supported/Partial has a test
-#     tests/lang/<id>_*.sml;
-#  2. every tests/lang/<id>_*.sml has a row <id> in docs/language.md;
+#     tests/lang/<id>_*.sml; for a row basis.<name> a test of the Basis
+#     Library suite, tests/basis/<name>.sml or tests/basis/<name>_*.sml, will
+#     do as well;
+#  2. every tests/lang/<id>_*.sml has a row <id> in docs/language.md, and
+#     every tests/basis/<name>[_*].sml a row basis.<name>;
 #  3. every opcode in vm/opcodes.def and primitive in vm/prims.def is mentioned
 #     in docs/bytecode.md;
 #  4. every top-level structure in lib/basis/*.sml is mentioned in docs/language.md;
@@ -18,9 +21,15 @@ tested=$(grep -E '^\| [a-z][a-z0-9.]* \|' "$doc" | grep -E '\| (Supported|Partia
 
 # 1. documented features need tests
 for id in $tested; do
-  if ! ls tests/lang/"$id"_*.sml > /dev/null 2>&1; then
-    fail "feature '$id' is documented as implemented in $doc but has no test tests/lang/${id}_*.sml"
-  fi
+  ls tests/lang/"$id"_*.sml > /dev/null 2>&1 && continue
+  case "$id" in
+    basis.*)
+      name=${id#basis.}
+      [ -f "tests/basis/$name.sml" ] && continue
+      ls tests/basis/"$name"_*.sml > /dev/null 2>&1 && continue
+      ;;
+  esac
+  fail "feature '$id' is documented as implemented in $doc but has no test tests/lang/${id}_*.sml"
 done
 
 # duplicate ids
@@ -36,6 +45,18 @@ for f in tests/lang/*.sml; do
     if ! echo "$tested" | grep -qx "$id"; then
       fail "test $f exists but '$id' is not marked Supported or Partial in $doc"
     fi
+  fi
+done
+
+basis_tests=0
+for f in tests/basis/*.sml; do
+  case "$(basename "$f")" in harness.sml|finish.sml) continue ;; esac
+  basis_tests=$((basis_tests + 1))
+  id=basis.$(basename "$f" .sml | sed 's/_.*//')
+  if ! echo "$rows" | grep -qx "$id"; then
+    fail "test $f has no row '$id' in $doc"
+  elif ! echo "$tested" | grep -qx "$id"; then
+    fail "test $f exists but '$id' is not marked Supported or Partial in $doc"
   fi
 done
 
@@ -71,6 +92,6 @@ for f in tests/errors/*.sml; do
 done
 
 if [ $status = 0 ]; then
-  echo "check-docs: OK ($(echo "$tested" | wc -l | tr -d ' ') documented features, $(ls tests/lang/*.sml | wc -l | tr -d ' ') tests)"
+  echo "check-docs: OK ($(echo "$tested" | wc -l | tr -d ' ') documented features, $(ls tests/lang/*.sml | wc -l | tr -d ' ') tests, $basis_tests Basis Library suite files)"
 fi
 exit $status
