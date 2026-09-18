@@ -124,8 +124,11 @@ struct
                  | Unbound {kind = KRigid n, ...} => raise Unify ("overloaded operator used at the explicit type variable " ^ n)
                  | Bound _ => Error.bug "bindVar: pruned variable is bound")
             | TCon (c, []) =>
-                if isBuiltinTycon c andalso List.exists (fn n => n = #name c) names then r := Bound t
-                else raise Unify ("overloaded operator not defined at type " ^ toString t)
+                (case Overload.kindOf c of
+                   SOME kind =>
+                     if List.exists (fn n => n = kind) names then r := Bound t
+                     else raise Unify ("overloaded operator not defined at type " ^ toString t)
+                 | NONE => raise Unify ("overloaded operator not defined at type " ^ toString t))
             | _ => raise Unify ("overloaded operator used at type " ^ toString t))
        | KFlex (fields, group) =>
            (case t of

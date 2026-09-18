@@ -7,13 +7,9 @@ struct
 
   fun sconConst sc = MatchComp.sconConst sc
 
-  fun tyconName (t : Types.ty) : string option =
-    case Types.resolve t of
-      Types.TCon (c, _) => SOME (#name c)
-    | _ => NONE
-
-  (* Domain type of an operator: first component for binary operators. *)
-  fun operandTycon (t : Types.ty) : string =
+  (* Domain type constructor of an operator: that of the first component for
+     binary operators. *)
+  fun operandTycon (t : Types.ty) : Types.tycon =
     let
       val opnd =
         case Types.resolve t of
@@ -21,40 +17,25 @@ struct
         | Types.TArrow (a, _) => a
         | _ => Error.bug "builtin operator without arrow type"
     in
-      case tyconName opnd of
-        SOME n => n
-      | NONE => "int"    (* unconstrained: defaulted *)
+      case Types.resolve opnd of
+        Types.TCon (c, _) => c
+      | _ => Types.intTycon    (* unconstrained: defaulted *)
     end
 
   (* Resolve a builtin operator at its instantiated type to a primitive. *)
   fun builtinPrim (name : string, ty : Types.ty) : string =
-    let
-      val tc = operandTycon ty
-      fun arith (i, w, r) =
-        case tc of "int" => i | "word" => w | "real" => r
-                 | _ => Error.bug ("operator " ^ name ^ " at type " ^ tc)
-      fun cmp base =
-        case tc of
-          "int" => "int_" ^ base | "word" => "word_" ^ base | "real" => "real_" ^ base
-        | "char" => "char_" ^ base | "string" => "string_" ^ base
-        | _ => Error.bug ("comparison " ^ name ^ " at type " ^ tc)
-    in
-      case name of
-        "+" => arith ("int_add", "word_add", "real_add")
-      | "-" => arith ("int_sub", "word_sub", "real_sub")
-      | "*" => arith ("int_mul", "word_mul", "real_mul")
-      | "div" => arith ("int_div", "word_div", "")
-      | "mod" => arith ("int_mod", "word_mod", "")
-      | "/" => "real_div"
-      | "~" => arith ("int_neg", "", "real_neg")
-      | "abs" => arith ("int_abs", "", "real_abs")
-      | "<" => cmp "lt" | "<=" => cmp "le" | ">" => cmp "gt" | ">=" => cmp "ge"
-      | "=" => "poly_eq"
-      | "<>" => "poly_eq"
-      | ":=" => "ref_set"
-      | "!" => "ref_get"
-      | _ => Error.bug ("unknown builtin operator " ^ name)
-    end
+    case name of
+      "=" => "poly_eq"
+    | "<>" => "poly_eq"
+    | ":=" => "ref_set"
+    | "!" => "ref_get"
+    | _ =>
+        let val tc = operandTycon ty
+        in
+          case Overload.primOf (tc, name) of
+            SOME prim => prim
+          | NONE => Error.bug ("operator " ^ name ^ " at type " ^ #name tc)
+        end
 
   (* Variables bound to a primitive, `val op + = _prim "int_add" : int * int -> int`,
      or to such a variable, `val size = String.size`, by stamp. An application

@@ -8,6 +8,7 @@ src/util/error.sml
 src/frontend/token.sml
 src/frontend/lexer.sml
 src/elab/types.sml
+src/elab/overload.sml
 src/frontend/ast.sml
 src/frontend/fixity.sml
 src/frontend/parser.sml

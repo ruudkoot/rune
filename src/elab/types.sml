@@ -18,7 +18,7 @@ struct
   and kind =
       KPlain
     | KRigid of string                     (* explicit type variable in scope (Section 4.6): unifies with nothing but variables *)
-    | KOverload of string list             (* names of admissible builtin tycons *)
+    | KOverload of string list             (* admissible kinds of overloading types (Overload) *)
     | KFlex of (string * ty) list * flexgroup
         (* known fields of a flexible record, and the variables that stand
            for the same record (a generalised one and its instances): when
@@ -56,9 +56,6 @@ struct
   val builtinTycons =
     [intTycon, wordTycon, realTycon, charTycon, stringTycon, boolTycon, listTycon, refTycon,
      exnTycon, arrayTycon, vectorTycon]
-
-  (* Is c one of the builtin type names (by stamp)? *)
-  fun isBuiltinTycon (c : tycon) = List.exists (fn b => sameTycon (b, c)) builtinTycons
 
   val intTy = TCon (intTycon, [])
   val wordTy = TCon (wordTycon, [])
