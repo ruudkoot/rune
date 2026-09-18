@@ -182,10 +182,9 @@ struct
               lexNumber (i, i + 1, true)
             else if isIdentStart c then lexAlpha i
             else if c = #"'" then
+              (* Section 2.4: a type variable is an alphanumeric identifier starting with a prime *)
               let val j = digitsWhile (i + 1, isIdentChar)
-              in if j = i + 1 then err (i, i + 1, "malformed type variable")
-                 else (TYVAR (String.substring (text, i, j - i)), span (i, j), j)
-              end
+              in (TYVAR (String.substring (text, i, j - i)), span (i, j), j) end
             else if c = #"\"" then
               let val (s, j) = lexStringBody (i, i + 1, [])
               in (STRING s, span (i, j), j) end

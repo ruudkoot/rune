@@ -57,6 +57,8 @@ struct
       val () = Elaborate.elabTop (env, preludeProg)
       val () = Elaborate.allowPrim := !Options.allowPrim
       val () = Elaborate.elabTop (env, userProg)
+      val () = Elaborate.finish ()
+      val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
       if !Options.typecheckOnly then OS.Process.success
       else

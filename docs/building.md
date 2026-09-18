@@ -80,7 +80,8 @@ counter-generated stamps, rule 5 below) and on its sources staying inside the
 language Rune accepts (rule 6). If stage 2 ever differs from stage 1, diff the
 `runevm --disasm` output of the two files, then the `--dump-lambda` /
 `--dump-code` output of `bin/rune` and `bin/rune-boot` on the first
-differing input.
+differing input. `src/util/ordmap.sml` (a functor applied twice) is the
+module-system acceptance test of the bootstrap.
 
 ## Portability rules for compiler sources
 
@@ -90,9 +91,8 @@ rules so that one source tree builds everywhere and emits identical output:
 1. Only the part of the SML Basis Library (2004 revision) that Rune's own
    basis provides is used—no SML/NJ library, no compiler-specific structures
    outside `src/main/`.
-2. Every file contains only `structure` declarations (required by SML/NJ's
-   CM). Signatures and functors are not used: Rune cannot compile them yet
-   (see rule 6).
+2. Every file contains only top-level `structure`, `signature` and `functor`
+   declarations (required by SML/NJ's CM).
 3. Never depend on the width of `Int`: SML/NJ's `Int` here is 31-bit, MLton's
    32-bit, Poly/ML's arbitrary precision. Source literals are kept as
    `IntInf.int`; bytecode immediates are limited to ±2^30; 64-bit values are
@@ -104,9 +104,9 @@ rules so that one source tree builds everywhere and emits identical output:
    `src/util/ordmap.sml`, and every generated name/stamp comes from a counter,
    so output is deterministic across hosts.
 6. The compiler must be compilable by Rune itself, so its sources stay inside
-   the language described in `docs/language.md`: no signatures, ascription or
-   functors, and no literal or operator overloading at `IntInf.int` (write
-   `IntInf.fromInt n` and `IntInf.+ (a, b)`).
+   the language described in `docs/language.md`: in particular no literal or
+   operator overloading at `IntInf.int` (write `IntInf.fromInt n` and
+   `IntInf.+ (a, b)`), and only the Basis subset Rune provides.
 
 ## Using the compiler
 

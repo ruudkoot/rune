@@ -1,0 +1,1 @@
+type t must admit equality but int -> int does not

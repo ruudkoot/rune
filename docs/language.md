@@ -1,34 +1,32 @@
 # The Rune language
 
-Rune compiles **Standard ML '97** (the Core language, the Basis Library subset
-listed below, and namespace-only structures) to bytecode for the `runevm`
-interpreter. This document is the authoritative description of what Rune
+Rune compiles **Standard ML '97** (the full Core and Modules language of *The
+Definition of Standard ML (Revised)*, and the Basis Library subset listed
+below) to bytecode for the `runevm` interpreter. This document is the authoritative description of what Rune
 accepts; `make check-docs` verifies that every feature marked *Supported* or
 *Partial* has a test in `tests/lang/` named `<id>_<something>.sml`, and that
 every test corresponds to a row here.
 
 Status values: **Supported** (implemented, tested), **Partial** (implemented
 with documented restrictions), **Planned** (not yet implemented; using it is a
-compile-time error).
+compile-time error). The order in which the *Planned* rows and the deviations
+below are to be closed is in [plans/sml97.md](plans/sml97.md).
 
 ## Deviations from the Definition
 
-These are intentional simplifications of the first release. They never make a
-well-typed SML program behave differently; they only make Rune accept some
-programs that SML rejects, or reject some that SML accepts.
+These are the choices the Definition leaves to an implementation, plus the
+few places where Rune knowingly departs from it. They never make a well-typed
+SML program behave differently; they only make Rune accept some programs that
+SML rejects, or reject some that SML accepts.
 
 | Topic | Rune behaviour |
 |---|---|
-| Equality types | `''a` type variables are accepted but equality is **not** restricted to equality types: `=` works on any type (reals compare by IEEE equality, functions never compare equal, refs/arrays compare by identity). |
-| Exhaustiveness | No "match nonexhaustive" or "match redundant" warnings. A failed match raises `Match` (or `Bind` for `val`) at runtime as required. |
-| Value restriction | Enforced (expansive bindings stay monomorphic), but an unresolved monomorphic type variable at top level is not reported as an error. |
 | Integer literals | Integer, word and real literals have exactly one type each (`int`, `word`, `real`); there is no literal overloading over multiple precisions. `Int` is 64-bit, `Word` is 64-bit, `Real` is IEEE double. `IntInf.int` values are built with `IntInf.fromInt`/`fromString` or arithmetic, and the operators on them are not overloaded (`IntInf.+`). |
 | Strings | 8-bit byte strings; `\uXXXX` escapes above 255 are errors. |
-| Modules | Only `structure S = struct ... end`, `structure S = T`, `open`, and long identifiers. No signatures, ascription or functors (Planned). |
-| `abstype` | Not supported (Planned). |
-| Type variable scoping | Explicit type variables are scoped at the nearest enclosing `val`/`fun` declaration. A type variable that is unified with a concrete type is not reported. |
-| Top-level expressions | `exp ;` at top level is accepted and treated as `val _ = exp`. |
-| Flexible records | Must be resolved by the end of the enclosing top-level declaration (as in SML). |
+| Functors | A functor body is specialised per application (the copy is type-checked against the actual argument, which cannot fail after the check against the parameter signature). This is not observable, but the bytecode contains one copy of the body per application. |
+| Programs | Rune is a batch compiler: a static error in any top-level declaration rejects the whole program, and an uncaught exception terminates it. Chapter 8 regards programs as interactive and would skip the failing declaration and continue. |
+| Overloading | Overloaded operators and literals are resolved (and defaulted) at the end of the enclosing top-level declaration. `~` is overloaded at `int`, `word` and `real`. |
+| Flexible records | The labels of a flexible record pattern (`{a, ...}`) or selector (`#a`) must be determined by the end of the program (Section 4.11 leaves the granularity to the implementation). A generalised flexible record is resolved by any of its uses; the types of the labels it did not mention are then determined per use rather than shared. |
 | `_prim "name" : ty` | Extension used by the basis library to access VM primitives. Only allowed with `--allow-prim`. |
 | I/O | `TextIO`/`BinIO` streams are concrete datatypes (so they admit equality); `BinIO` shares `TextIO`'s stream types; `Word8Vector.vector` is `string` and there is no `Word8`. |
 
@@ -49,12 +47,12 @@ programs that SML rejects, or reject some that SML accepts.
 | ID | Feature | Status | Notes |
 |---|---|---|---|
 | dec.val | `val pat = exp`, `val ... and ...`, explicit type variables `val 'a x = ...` | Supported | Refutable patterns raise `Bind`. |
-| dec.valrec | `val rec f = fn ...` (and mutually recursive with `and`) | Supported | Right-hand side must be a `fn`. |
+| dec.valrec | `val rec f = fn ...` (and mutually recursive with `and`); `rec` after `and` makes the remaining bindings recursive | Supported | Right-hand side must be a `fn`. |
 | dec.fun | `fun f x y = ...` curried functions | Supported | |
 | dec.fun.clauses | Multiple clauses `fun f 0 = ... \| f n = ...`, mutual recursion with `and` | Supported | All clauses must have the same name and arity. |
 | dec.fun.infix | Infix function definitions `fun x ++ y = ...` and `fun (x ++ y) z = ...` | Supported | Requires a prior `infix` directive. |
 | dec.type | `type` abbreviations with parameters | Supported | |
-| dec.datatype | `datatype` with nullary and unary constructors | Supported | |
+| dec.datatype | `datatype` with nullary and unary constructors | Supported | The syntactic restrictions of Section 2.9 are enforced: no duplicate type variables, type constructors, constructors or exception constructors in one declaration; `true`, `false`, `nil`, `::`, `ref` cannot be rebound, nor `it` as a constructor. |
 | dec.datatype.poly | Parameterized datatypes `datatype ('a, 'b) t = ...` | Supported | |
 | dec.datatype.mutual | Mutually recursive datatypes with `and` | Supported | |
 | dec.datatype.withtype | `datatype ... withtype ...` | Supported | |
@@ -63,10 +61,10 @@ programs that SML rejects, or reject some that SML accepts.
 | dec.exception.repl | `exception E = F` | Supported | |
 | dec.local | `local dec in dec end` | Supported | |
 | dec.infix | `infix`, `infixr`, `nonfix` with precedences 0–9, lexically scoped | Supported | Directives carry across the files of one program. |
-| dec.structure | `structure S = struct ... end`, `structure S = T`, nested structures, long identifiers | Partial | Namespaces only: no signatures, ascription or functors. |
+| dec.structure | `structure S = struct ... end`, `structure S = T`, nested structures, long identifiers | Supported | See the *Modules* section for signatures, ascription and functors. |
 | dec.open | `open S T` | Supported | |
-| dec.toplevelexp | Top-level expression statements `exp;` | Supported | Extension: treated as `val _ = exp`. |
-| dec.abstype | `abstype` | Planned | |
+| dec.toplevelexp | Top-level expression statements `exp ;` | Supported | Appendix A derived form: `val it = exp`; `it` can be used and rebound afterwards. |
+| dec.abstype | `abstype datbind withtype typbind with dec end` | Supported | Outside the body the types are abstract: no constructors, no equality (rule 19). |
 
 ## Expressions
 
@@ -75,7 +73,7 @@ programs that SML rejects, or reject some that SML accepts.
 | exp.literal | Integer, word, real, character and string constants | Supported | |
 | exp.tuple | Tuples `(a, b)`, unit `()` | Supported | |
 | exp.record | Records `{a = 1, b = "x"}`, structural equality, label order irrelevant | Supported | Fields are evaluated in source order. |
-| exp.record.select | Selectors `#lab` (including numeric labels `#2`) | Supported | The record type must be determined within the enclosing top-level declaration. |
+| exp.record.select | Selectors `#lab` (including numeric labels `#2`) | Supported | The record type must be determined by the end of the program. |
 | exp.list | List syntax `[a, b, c]` | Supported | |
 | exp.seq | Sequencing `(e1; e2; e3)` | Supported | |
 | exp.let | `let dec in exp; exp end` | Supported | |
@@ -101,7 +99,7 @@ programs that SML rejects, or reject some that SML accepts.
 | pat.con | Constructor patterns, nullary and with arguments, nested | Supported | |
 | pat.tuple | Tuple patterns and `()` | Supported | |
 | pat.record | Record patterns `{a, b = p, c : ty}` | Supported | |
-| pat.record.flex | Flexible record patterns `{a, ...}` | Supported | Full type must be known within the declaration. |
+| pat.record.flex | Flexible record patterns `{a, ...}` | Supported | The full set of labels must be determined by the end of the program. |
 | pat.list | List patterns `[]`, `[p1, p2]`, `p :: ps` | Supported | |
 | pat.layered | Layered patterns `x as p`, `x : ty as p` | Supported | |
 | pat.annot | Typed patterns `p : ty` | Supported | |
@@ -112,22 +110,64 @@ programs that SML rejects, or reject some that SML accepts.
 | ID | Feature | Status | Notes |
 |---|---|---|---|
 | ty.infer.letpoly | Hindley–Milner inference with let-polymorphism | Supported | |
-| ty.infer.valuerestriction | Value restriction (only non-expansive bindings generalize) | Supported | See deviations. |
+| ty.infer.valuerestriction | Value restriction (only non-expansive bindings generalize); a top-level declaration may not leave a type variable undetermined (rules 87–89, e.g. `val r = ref nil` is an error) | Supported | |
 | ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~`/`abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. |
 | ty.record.flex | Flexible record types from `#lab` and `{..., ...}` | Supported | |
 | ty.annot | Type annotations on expressions and patterns | Supported | |
-| ty.tyvar.explicit | Explicit type variables `fun 'a f (x : 'a) = ...`, `''a` | Supported | Equality attribute not enforced. |
+| ty.tyvar.explicit | Explicit type variables `fun 'a f (x : 'a) = ...`, `''a`; implicit scoping at the outermost value declaration where the variable occurs unguarded (Section 4.6); the variables are rigid in their scope and must be generalised by it (rule 15) | Supported | Type variables in `type`, `datatype`, `exception` declarations and signatures must be bound (by the `tyvarseq`, an enclosing value declaration, or implicitly in `val` specifications). |
 | ty.abbrev | Expansion of type abbreviations, arity checking | Supported | |
-| ty.eqtype | Equality type checking | Planned | |
-| ty.exhaustive | Exhaustiveness and redundancy warnings | Planned | |
+| ty.eqtype | Equality types: `=` and `<>` have type `''a * ''a -> bool`; `real`, `exn`, function types and abstract types do not admit equality, datatypes admit it when all constructor arguments do (maximised), `ref` and `array` always do | Supported | `eqtype` specifications, `where type` and `sharing` respect the attribute. Overloaded operators at an equality type exclude `real`. |
+| ty.exhaustive | Warnings (Section 4.11): `fn`, `case` and `fun` matches that are not exhaustive, redundant rules in any match including `handle`, and non-exhaustive `val` bindings that are not top-level declarations | Supported | Reported on stderr after type checking with the missing case; `--no-warnings` silences them. A failed match still raises `Match` (or `Bind`) at runtime. |
 
 ## Modules
 
 | ID | Feature | Status | Notes |
 |---|---|---|---|
-| mod.signature | `signature`, `sig ... end` | Planned | |
-| mod.ascription | `structure S : SIG`, `:>` | Planned | |
-| mod.functor | `functor` | Planned | |
+| mod.strdec.and | Simultaneous structure bindings `structure A = ... and B = ...` | Supported | All right-hand sides see the environment before the declaration. |
+| mod.strdec.local | `local strdec in strdec end` with structure declarations | Supported | |
+| mod.let | `let strdec in strexp end` | Supported | |
+| mod.signature | `signature S = sig ... end and T = ...`, signature identifiers in ascriptions and functor parameters | Supported | Every use of a signature identifier instantiates its flexible type names afresh (rule 65). |
+| mod.spec | Specifications: `val`, `type`, `eqtype`, `type t = ty`, `datatype`, `datatype t = datatype u`, `exception`, `structure`, sequencing | Supported | An identifier may be specified only once in a signature (rule 77). `withtype` is not allowed in specifications. |
+| mod.include | `include SIG`, `include A B ...`, `include sig ... end` | Supported | |
+| mod.wheretype | `SIG where type tyvarseq t = ty and type ...`, also on types of substructures | Supported | The type must be a flexible type of the signature; arity and equality are checked. |
+| mod.sharing | `sharing type t = u = ...` | Supported | All types must be flexible types of the signature with the same arity. |
+| mod.sharing.structure | `sharing A = B` (derived form: shares all common type constructors) | Supported | Common types whose type functions are already equal are skipped. |
+| mod.ascription | Transparent ascription `strexp : SIG`, `structure S : SIG = ...`, matching by instantiation and enrichment | Supported | Components not in the signature are hidden. A constructor or exception matched by a `val` specification becomes an ordinary value (5.9). |
+| mod.ascription.opaque | Opaque ascription `strexp :> SIG`, `structure S :> SIG = ...` | Supported | The signature's types become fresh abstract types; `eqtype` and `datatype` specifications keep equality. |
+| mod.functor | `functor F (X : SIG) = strexp`, `functor F (spec) = strexp`, application `F (strexp)` and `F (strdec)`, `and` | Supported | The body is type-checked once against the parameter signature; each application elaborates and compiles a copy of the body specialised to the argument (rule 54). |
+| mod.functor.result | Result ascription `functor F (X : S) : R = ...` and `:> R` | Supported | |
+| mod.functor.generative | Datatypes and exceptions declared in a functor body are fresh for every application | Supported | |
+| mod.functor.nested | Functor application inside functor bodies, functor results as arguments | Supported | |
+
+## Definition coverage
+
+Where each part of the Definition is exercised. The rows are the ids above.
+
+| Definition | Rows |
+|---|---|
+| 2.2–2.5 special constants, comments, identifiers | lex.int, lex.word, lex.real, lex.char, lex.string, lex.comments, lex.ident |
+| 2.6 infixed operators, `op` | dec.infix, exp.infix, exp.op, dec.fun.infix |
+| 2.8 atomic expressions | exp.literal, exp.app, exp.record, exp.record.select, exp.tuple, exp.list, exp.seq, exp.let |
+| 2.8 expressions and matches | exp.app, exp.infix, exp.annot, exp.boolops, exp.handle, exp.raise, exp.if, exp.while, exp.case, exp.fn |
+| 2.8 declarations and bindings | dec.val, dec.valrec, dec.fun, dec.fun.clauses, dec.type, dec.datatype, dec.datatype.poly, dec.datatype.mutual, dec.datatype.withtype, dec.datatype.repl, dec.abstype, dec.exception, dec.exception.repl, dec.local, dec.open |
+| 2.8 patterns | pat.wild, pat.const, pat.var, pat.con, pat.record, pat.record.flex, pat.tuple, pat.list, pat.layered, pat.annot, pat.ref |
+| 2.8 type expressions | ty.tyvar.explicit, ty.abbrev, ty.annot, exp.record |
+| 2.9 syntactic restrictions | dec.datatype (notes), dec.valrec, tests/errors/err.rebind_*, err.dup_* |
+| 3.4 structure expressions and declarations | dec.structure, mod.strdec.and, mod.strdec.local, mod.let, mod.ascription, mod.ascription.opaque, mod.functor |
+| 3.4 signature expressions and specifications | mod.signature, mod.spec, mod.include, mod.wheretype, mod.sharing |
+| 3.4 functor and top-level declarations | mod.functor, mod.functor.result, mod.functor.generative, mod.functor.nested |
+| 3.5 syntactic restrictions | tests/errors/err.spec_*, err.let_structure, err.let_functor |
+| 4.6, rule 15 explicit type variables | ty.tyvar.explicit |
+| 4.7–4.8 closure and value restriction | ty.infer.letpoly, ty.infer.valuerestriction |
+| 4.9, 4.4 equality | ty.eqtype |
+| 4.11 further restrictions | ty.exhaustive, ty.record.flex |
+| Chapter 5 static semantics for Modules | mod.ascription, mod.ascription.opaque, mod.wheretype, mod.sharing, mod.sharing.structure, mod.functor.generative |
+| Chapter 6 dynamic semantics for the Core | rt.tailcall, rt.deeprec, rt.exn.uncaught, rt.overflow, rt.div, rt.equality, rt.closure, exp.app (evaluation order), dec.exception (generativity) |
+| Chapter 7 dynamic semantics for Modules | mod.functor.generative, mod.ascription (hidden components) |
+| Chapter 8 programs, rules 87–89 | dec.toplevelexp, ty.infer.valuerestriction |
+| Appendix A derived forms | exp.tuple, exp.record.select, exp.case, exp.if, exp.boolops, exp.seq, exp.let, exp.while, exp.list, pat.tuple, pat.list, dec.fun, dec.datatype.withtype, dec.abstype, dec.toplevelexp, mod.ascription, mod.functor, mod.functor.result, mod.spec, mod.include, mod.sharing.structure, mod.wheretype |
+| Appendix C, D initial basis | basis.general, ty.eqtype |
+| Appendix E overloading | ty.overload.default, exp.literal |
 
 ## Runtime behaviour
 

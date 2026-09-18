@@ -1,0 +1,1 @@
+datatype b = true | maybe

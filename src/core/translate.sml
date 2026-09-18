@@ -88,6 +88,18 @@ struct
 
   and notExp e = If (e, falseExp, trueExp)
 
+  (* A constructor as a value: a closure for constructors with arguments. *)
+  and conExp (info : coninfo) : lexp =
+    if #hasArg info then
+      let val x = MatchComp.freshVar ()
+      in if #isRef info then Fn (x, Prim ("ref_new", [Var x])) else Fn (x, Con (#tag info, Var x)) end
+    else Con0 (#tag info)
+
+  and exnExp (info : exninfo) : lexp =
+    if #hasArg info then
+      let val x = MatchComp.freshVar () in Fn (x, MkExn (exnConExp info, Var x)) end
+    else MkExn (exnConExp info, Unit)
+
   and exnConExp info = MatchComp.exnConExp info
 
   and varinfo (slot : varinfo option ref, sp) =
@@ -113,15 +125,10 @@ struct
         (case varinfo (slot, sp) of
            VLocal s => Var s
          | VGlobal s => Global s
-         | VCon info =>
-             if #hasArg info then
-               let val x = MatchComp.freshVar ()
-               in if #isRef info then Fn (x, Prim ("ref_new", [Var x])) else Fn (x, Con (#tag info, Var x)) end
-             else Con0 (#tag info)
-         | VExn info =>
-             if #hasArg info then
-               let val x = MatchComp.freshVar () in Fn (x, MkExn (exnConExp info, Var x)) end
-             else MkExn (exnConExp info, Unit)
+         | VCon info => conExp info
+         | VConVal info => conExp info
+         | VExn info => exnExp info
+         | VExnVal info => exnExp info
          | VBuiltin (name, ty) =>
              let val prim = builtinPrim (name, ty)
              in
@@ -193,12 +200,10 @@ struct
     case stripTyped f of
       EVar (_, slot, vsp) =>
         (case varinfo (slot, vsp) of
-           VCon info =>
-             if #hasArg info then
-               (if #isRef info then Prim ("ref_new", [transExp a]) else Con (#tag info, transExp a))
-             else App (transExp f, transExp a)
-         | VExn info =>
-             if #hasArg info then MkExn (exnConExp info, transExp a) else App (transExp f, transExp a)
+           VCon info => conApp (info, f, a)
+         | VConVal info => conApp (info, f, a)
+         | VExn info => exnApp (info, f, a)
+         | VExnVal info => exnApp (info, f, a)
          | VBuiltin (name, ty) =>
              let
                val prim = builtinPrim (name, ty)
@@ -208,6 +213,14 @@ struct
     | EPrim (name, _, _) => applyPrim (name, a)
     | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)
+
+  and conApp (info : coninfo, f, a) =
+    if #hasArg info then
+      (if #isRef info then Prim ("ref_new", [transExp a]) else Con (#tag info, transExp a))
+    else App (transExp f, transExp a)
+
+  and exnApp (info : exninfo, f, a) =
+    if #hasArg info then MkExn (exnConExp info, transExp a) else App (transExp f, transExp a)
 
   (* ------------------------------------------------------------------ *)
   (* Declarations: k builds the continuation (the rest of the scope).     *)
@@ -241,11 +254,24 @@ struct
         in go binds end
     | DValRec (_, binds, _) =>
         let
-          fun stamp (PVar (_, slot, sp)) = patInfo (slot, sp)
-            | stamp (PTyped (p, _, _)) = stamp p
-            | stamp p = bug (spanOfPat p, "val rec pattern")
-          val bs = List.map (fn (p, e) => (stamp p, transExp e)) binds
-        in transRecBindings (bs, k) end
+          (* the first variable of each pattern carries the closure; the
+             others are bound to it afterwards *)
+          fun vars p =
+            case recBindVars p of
+              SOME (vs, _) => List.map (fn (_, slot, sp) => patInfo (slot, sp)) vs
+            | NONE => bug (spanOfPat p, "val rec pattern")
+          val groups = List.map (fn (p, e) => (vars p, transExp e)) binds
+          val primaries =
+            List.map (fn ([], e) => (PIVar (MatchComp.freshVar (), false), e)
+                       | (v :: _, e) => (v, e)) groups
+          fun aliases [] = k ()
+            | aliases ((PIVar (s0, g0) :: rest, _) :: more) =
+                List.foldr (fn (PIVar (s, g), body) =>
+                                MatchComp.bindVar (s, g, if g0 then Global s0 else Var s0, body)
+                             | (_, body) => body)
+                           (aliases more) rest
+            | aliases (_ :: more) = aliases more
+        in transRecBindings (primaries, fn () => aliases groups) end
     | DFun (_, fundefs, _) =>
         let
           fun transFundef (f : fundef) =
@@ -261,6 +287,7 @@ struct
     | DType _ => k ()
     | DDatatype _ => k ()
     | DDatatypeRepl _ => k ()
+    | DAbstype (_, _, decs, _) => transDecs (decs, k)     (* dynamically local datatype ... in decs end *)
     | DException (exbinds, _) =>
         let
           fun go [] = k ()
@@ -275,8 +302,28 @@ struct
     | DInfix _ => k ()
     | DInfixr _ => k ()
     | DNonfix _ => k ()
-    | DStructure (_, StrStruct (decs, _), _) => transDecs (decs, k)
-    | DStructure (_, StrId _, _) => k ()
+    | DStructure (binds, _) =>
+        let
+          fun go [] = k ()
+            | go ((b : strbind) :: rest) = transStrexp (#strexp b, fn () => go rest)
+        in go binds end
+    | DSignature _ => k ()
+    | DFunctor _ => k ()
+
+  (* Structure expressions have no runtime representation of their own: a
+     functor application evaluates its argument's declarations and then the
+     elaborated copy of the functor body. *)
+  and transStrexp (se : strexp, k : unit -> lexp) : lexp =
+    case se of
+      StrStruct (decs, _) => transDecs (decs, k)
+    | StrId _ => k ()
+    | StrAscribe (e, _, _, _) => transStrexp (e, k)
+    | StrApp (_, arg, slot, sp) =>
+        transStrexp (arg, fn () =>
+          case !slot of
+            SOME body => transStrexp (body, k)
+          | NONE => bug (sp, "functor application not elaborated"))
+    | StrLet (decs, e, _) => transDecs (decs, fn () => transStrexp (e, k))
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)

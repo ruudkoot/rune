@@ -1,0 +1,1 @@
+structure S : sig val f : 'a -> 'a end = struct fun f (x : int) = x end

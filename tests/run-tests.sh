@@ -6,7 +6,8 @@
 #   matching .expected file. Optional siblings: .args (command line words for
 #   the program), .vmargs (options for runevm), .stdin (fed to the program),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
-#   exactly when present).
+#   exactly when present), .cwarn (expected compiler stderr, i.e. warnings,
+#   compared exactly when present; otherwise the compiler must print nothing).
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
 #   compiler's stderr must contain the text in the .expected file.
 #
@@ -59,7 +60,17 @@ run_lang() {
   code=$?
   if [ "$update" = 1 ]; then
     cp "$out/$name.stdout" "$base.expected"
+    [ -f "$base.cwarn" ] && cp "$out/$name.cerr" "$base.cwarn"
     echo "updated $name"
+    return
+  fi
+  if [ -f "$base.cwarn" ]; then
+    if ! cmp -s "$out/$name.cerr" "$base.cwarn"; then
+      echo "FAIL $name: compiler warnings differ (diff $base.cwarn $out/$name.cerr)"
+      return
+    fi
+  elif [ -s "$out/$name.cerr" ]; then
+    echo "FAIL $name: unexpected compiler output: $(head -1 "$out/$name.cerr")"
     return
   fi
   if [ "$code" != "$expected_code" ]; then

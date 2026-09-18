@@ -21,13 +21,16 @@ struct
     | VCon of coninfo
     | VExn of exninfo
     | VBuiltin of string * Types.ty             (* builtin operator (possibly overloaded) and its operand type *)
+    | VConVal of coninfo                        (* constructor that lost its status through a signature *)
+    | VExnVal of exninfo                        (* exception constructor that lost its status *)
 
   and patinfo =
       PIVar of int * bool                       (* stamp, isGlobal *)
     | PICon of coninfo
     | PIExn of exninfo
 
-  withtype coninfo = {name : string, tag : int, hasArg : bool, ncons : int, isRef : bool}
+  withtype coninfo = {name : string, tag : int, hasArg : bool, ncons : int, isRef : bool,
+                      siblings : (string * bool) list}   (* all constructors of the datatype (name, has argument), by tag *)
        and exninfo = {name : string, stamp : int, isGlobal : bool, hasArg : bool, builtin : int option}
 
   datatype exp =
@@ -76,17 +79,40 @@ struct
     | DType of typbind list * span
     | DDatatype of datbind list * typbind list * span
     | DDatatypeRepl of string * longid * span
+    | DAbstype of datbind list * typbind list * dec list * span
     | DException of exbind list * span
     | DLocal of dec list * dec list * span
     | DOpen of longid list * span
     | DInfix of int * string list * span
     | DInfixr of int * string list * span
     | DNonfix of string list * span
-    | DStructure of string * strexp * span
+    | DStructure of strbind list * span
+    | DSignature of sigbind list * span
+    | DFunctor of funbind list * span
 
   and strexp =
       StrStruct of dec list * span
     | StrId of longid * span
+    | StrAscribe of strexp * sigexp * bool * span            (* true = opaque (:>) *)
+    | StrApp of string * strexp * strexp option ref * span   (* functor application; the slot receives the elaborated copy of the body *)
+    | StrLet of dec list * strexp * span
+
+  and sigexp =
+      SigSig of spec list * span
+    | SigId of string * span
+    | SigWhere of sigexp * (string list * longid * ty * span) list * span   (* where type tyvarseq longtycon = ty *)
+
+  and spec =
+      SpecVal of (string * ty * span) list * span
+    | SpecType of (string list * string * span) list * span
+    | SpecEqtype of (string list * string * span) list * span
+    | SpecDatatype of datbind list * span
+    | SpecDatatypeRepl of string * longid * span
+    | SpecException of (string * ty option * span) list * span
+    | SpecStructure of (string * sigexp * span) list * span
+    | SpecInclude of sigexp * span
+    | SpecSharingType of longid list * span
+    | SpecSharing of longid list * span                      (* structure sharing (derived form) *)
 
   and exbind =
       ExnDecl of string * ty option * patinfo option ref * span
@@ -98,6 +124,9 @@ struct
                      info : patinfo option ref, span : span}
        and typbind = {tyvars : string list, name : string, ty : ty, span : span}
        and datbind = {tyvars : string list, name : string, cons : (string * ty option * span) list, span : span}
+       and strbind = {name : string, strexp : strexp, span : span}
+       and sigbind = {name : string, sigexp : sigexp, span : span}
+       and funbind = {name : string, param : string option, paramSig : sigexp, body : strexp, span : span}
 
   type program = dec list
 
@@ -124,9 +153,105 @@ struct
   fun spanOfDec d =
     case d of
       DVal (_, _, s) => s | DValRec (_, _, s) => s | DFun (_, _, s) => s | DType (_, s) => s
-    | DDatatype (_, _, s) => s | DDatatypeRepl (_, _, s) => s | DException (_, s) => s
+    | DDatatype (_, _, s) => s | DDatatypeRepl (_, _, s) => s | DAbstype (_, _, _, s) => s | DException (_, s) => s
     | DLocal (_, _, s) => s | DOpen (_, s) => s | DInfix (_, _, s) => s | DInfixr (_, _, s) => s
-    | DNonfix (_, s) => s | DStructure (_, _, s) => s
+    | DNonfix (_, s) => s | DStructure (_, s) => s | DSignature (_, s) => s | DFunctor (_, s) => s
+
+  fun spanOfStrexp e =
+    case e of
+      StrStruct (_, s) => s | StrId (_, s) => s | StrAscribe (_, _, _, s) => s
+    | StrApp (_, _, _, s) => s | StrLet (_, _, s) => s
+
+  fun spanOfSigexp e =
+    case e of
+      SigSig (_, s) => s | SigId (_, s) => s | SigWhere (_, _, s) => s
+
+  (* The variables of a pattern allowed on the left of a recursive value
+     binding (Section 2.9 restricts only the expression): variables, layered
+     and typed patterns and wildcards. Returns the variables with their
+     annotation slots and the type annotations met, or NONE otherwise. *)
+  fun recBindVars (p : pat) : ((string * patinfo option ref * span) list * ty list) option =
+    case p of
+      PVar (([], name), slot, sp) => SOME ([(name, slot, sp)], [])
+    | PWild _ => SOME ([], [])
+    | PTyped (p, t, _) => (case recBindVars p of SOME (vs, ts) => SOME (vs, t :: ts) | NONE => NONE)
+    | PLayered (name, tyopt, p, slot, sp) =>
+        (case recBindVars p of
+           SOME (vs, ts) => SOME ((name, slot, sp) :: vs, (case tyopt of SOME t => [t] | NONE => []) @ ts)
+         | NONE => NONE)
+    | _ => NONE
+
+  (* --- deep copy with fresh annotation slots (functor bodies are elaborated once per application) --- *)
+  fun copyExp e =
+    case e of
+      EScon _ => e
+    | EVar (id, _, sp) => EVar (id, ref NONE, sp)
+    | ERecord (fs, sp) => ERecord (List.map (fn (l, e) => (l, copyExp e)) fs, sp)
+    | ETuple (es, sp) => ETuple (List.map copyExp es, sp)
+    | ESelect (l, _, sp) => ESelect (l, ref NONE, sp)
+    | EList (es, sp) => EList (List.map copyExp es, sp)
+    | ESeq (es, sp) => ESeq (List.map copyExp es, sp)
+    | ELet (ds, e, sp) => ELet (List.map copyDec ds, copyExp e, sp)
+    | EApp (f, a, sp) => EApp (copyExp f, copyExp a, sp)
+    | ETyped (e, t, sp) => ETyped (copyExp e, t, sp)
+    | EAndalso (a, b, sp) => EAndalso (copyExp a, copyExp b, sp)
+    | EOrelse (a, b, sp) => EOrelse (copyExp a, copyExp b, sp)
+    | EHandle (e, rules, sp) => EHandle (copyExp e, copyRules rules, sp)
+    | ERaise (e, sp) => ERaise (copyExp e, sp)
+    | EIf (a, b, c, sp) => EIf (copyExp a, copyExp b, copyExp c, sp)
+    | EWhile (a, b, sp) => EWhile (copyExp a, copyExp b, sp)
+    | ECase (e, rules, sp) => ECase (copyExp e, copyRules rules, sp)
+    | EFn (rules, sp) => EFn (copyRules rules, sp)
+    | EPrim _ => e
+
+  and copyRules rules = List.map (fn (p, e) => (copyPat p, copyExp e)) rules
+
+  and copyPat p =
+    case p of
+      PWild _ => p
+    | PScon _ => p
+    | PVar (id, _, sp) => PVar (id, ref NONE, sp)
+    | PRecord (fs, flex, _, sp) => PRecord (List.map (fn (l, p) => (l, copyPat p)) fs, flex, ref NONE, sp)
+    | PTuple (ps, sp) => PTuple (List.map copyPat ps, sp)
+    | PList (ps, sp) => PList (List.map copyPat ps, sp)
+    | PApp (id, _, p, sp) => PApp (id, ref NONE, copyPat p, sp)
+    | PTyped (p, t, sp) => PTyped (copyPat p, t, sp)
+    | PLayered (v, t, p, _, sp) => PLayered (v, t, copyPat p, ref NONE, sp)
+
+  and copyDec d =
+    case d of
+      DVal (tvs, binds, sp) => DVal (tvs, List.map (fn (p, e) => (copyPat p, copyExp e)) binds, sp)
+    | DValRec (tvs, binds, sp) => DValRec (tvs, List.map (fn (p, e) => (copyPat p, copyExp e)) binds, sp)
+    | DFun (tvs, fs, sp) =>
+        DFun (tvs, List.map (fn {name, clauses, info = _, span} =>
+                               {name = name,
+                                clauses = List.map (fn {pats, resty, body} =>
+                                                       {pats = List.map copyPat pats, resty = resty, body = copyExp body}) clauses,
+                                info = ref NONE, span = span}) fs, sp)
+    | DType _ => d
+    | DDatatype _ => d
+    | DDatatypeRepl _ => d
+    | DAbstype (dbs, tbs, decs, sp) => DAbstype (dbs, tbs, List.map copyDec decs, sp)
+    | DException (ebs, sp) =>
+        DException (List.map (fn ExnDecl (n, t, _, sp) => ExnDecl (n, t, ref NONE, sp)
+                               | ExnRepl (n, id, _, sp) => ExnRepl (n, id, ref NONE, sp)) ebs, sp)
+    | DLocal (d1, d2, sp) => DLocal (List.map copyDec d1, List.map copyDec d2, sp)
+    | DOpen _ => d
+    | DInfix _ => d
+    | DInfixr _ => d
+    | DNonfix _ => d
+    | DStructure (bs, sp) =>
+        DStructure (List.map (fn {name, strexp, span} => {name = name, strexp = copyStrexp strexp, span = span}) bs, sp)
+    | DSignature _ => d
+    | DFunctor _ => d
+
+  and copyStrexp se =
+    case se of
+      StrStruct (ds, sp) => StrStruct (List.map copyDec ds, sp)
+    | StrId _ => se
+    | StrAscribe (e, sg, opaque, sp) => StrAscribe (copyStrexp e, sg, opaque, sp)
+    | StrApp (f, a, _, sp) => StrApp (f, copyStrexp a, ref NONE, sp)
+    | StrLet (ds, e, sp) => StrLet (List.map copyDec ds, copyStrexp e, sp)
 
   (* --- debugging printer (used by --dump-ast) --- *)
   fun sconToString sc =
@@ -214,6 +339,9 @@ struct
                             (List.map (fn (c, NONE, _) => c | (c, SOME t, _) => c ^ " of " ^ tyToString t) cons)) dbs)
           ^ (case tbs of [] => "" | _ => " withtype " ^ decToString (DType (tbs, Source.noSpan)))
       | DDatatypeRepl (n, id, _) => "datatype " ^ n ^ " = datatype " ^ longidToString id
+      | DAbstype (dbs, tbs, ds, _) =>
+          "abs" ^ decToString (DDatatype (dbs, tbs, Source.noSpan)) ^ " with "
+          ^ String.concatWith " " (List.map decToString ds) ^ " end"
       | DException (ebs, _) =>
           "exception " ^
           String.concatWith " and "
@@ -227,8 +355,55 @@ struct
       | DInfix (p, ids, _) => "infix " ^ Int.toString p ^ " " ^ String.concatWith " " ids
       | DInfixr (p, ids, _) => "infixr " ^ Int.toString p ^ " " ^ String.concatWith " " ids
       | DNonfix (ids, _) => "nonfix " ^ String.concatWith " " ids
-      | DStructure (n, StrStruct (ds, _), _) =>
-          "structure " ^ n ^ " = struct " ^ String.concatWith " " (List.map decToString ds) ^ " end"
-      | DStructure (n, StrId (id, _), _) => "structure " ^ n ^ " = " ^ longidToString id
+      | DStructure (bs, _) =>
+          "structure " ^ String.concatWith " and " (List.map (fn {name, strexp, ...} => name ^ " = " ^ strexpToString strexp) bs)
+      | DSignature (bs, _) =>
+          "signature " ^ String.concatWith " and " (List.map (fn {name, sigexp, ...} => name ^ " = " ^ sigexpToString sigexp) bs)
+      | DFunctor (bs, _) =>
+          "functor " ^
+          String.concatWith " and "
+            (List.map (fn {name, param, paramSig, body, ...} =>
+                          name ^ " (" ^ (case param of SOME p => p ^ " : " ^ sigexpToString paramSig
+                                                       | NONE => (case paramSig of SigSig (ss, _) => specsToString ss | _ => sigexpToString paramSig))
+                          ^ ") = " ^ strexpToString body) bs)
+    end
+
+  and strexpToString e =
+    case e of
+      StrStruct (ds, _) => "struct " ^ String.concatWith " " (List.map decToString ds) ^ " end"
+    | StrId (id, _) => longidToString id
+    | StrAscribe (e, s, opaque, _) => strexpToString e ^ (if opaque then " :> " else " : ") ^ sigexpToString s
+    | StrApp (f, a, _, _) => f ^ " (" ^ strexpToString a ^ ")"
+    | StrLet (ds, e, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ strexpToString e ^ " end"
+
+  and sigexpToString s =
+    case s of
+      SigSig (specs, _) => "sig " ^ specsToString specs ^ " end"
+    | SigId (n, _) => n
+    | SigWhere (s, clauses, _) =>
+        sigexpToString s ^ " where " ^
+        String.concatWith " and "
+          (List.map (fn (tvs, id, t, _) => "type " ^ (case tvs of [] => "" | _ => "(" ^ String.concatWith ", " tvs ^ ") ")
+                                          ^ longidToString id ^ " = " ^ tyToString t) clauses)
+
+  and specsToString specs = String.concatWith " " (List.map specToString specs)
+
+  and specToString sp =
+    let
+      fun tyvars [] = "" | tyvars vs = "(" ^ String.concatWith ", " vs ^ ") "
+    in
+      case sp of
+        SpecVal (ds, _) => "val " ^ String.concatWith " and " (List.map (fn (n, t, _) => n ^ " : " ^ tyToString t) ds)
+      | SpecType (ds, _) => "type " ^ String.concatWith " and " (List.map (fn (tvs, n, _) => tyvars tvs ^ n) ds)
+      | SpecEqtype (ds, _) => "eqtype " ^ String.concatWith " and " (List.map (fn (tvs, n, _) => tyvars tvs ^ n) ds)
+      | SpecDatatype (dbs, _) => decToString (DDatatype (dbs, [], Source.noSpan))
+      | SpecDatatypeRepl (n, id, _) => "datatype " ^ n ^ " = datatype " ^ longidToString id
+      | SpecException (ds, _) =>
+          "exception " ^ String.concatWith " and " (List.map (fn (n, NONE, _) => n | (n, SOME t, _) => n ^ " of " ^ tyToString t) ds)
+      | SpecStructure (ds, _) =>
+          "structure " ^ String.concatWith " and " (List.map (fn (n, s, _) => n ^ " : " ^ sigexpToString s) ds)
+      | SpecInclude (s, _) => "include " ^ sigexpToString s
+      | SpecSharingType (ids, _) => "sharing type " ^ String.concatWith " = " (List.map longidToString ids)
+      | SpecSharing (ids, _) => "sharing " ^ String.concatWith " = " (List.map longidToString ids)
     end
 end

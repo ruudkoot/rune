@@ -11,6 +11,7 @@ struct
   val dumpLambda = ref false
   val dumpCode = ref false
   val typecheckOnly = ref false
+  val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
 
@@ -25,6 +26,7 @@ struct
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --typecheck-only  stop after type checking\n\
+    \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
     \  --dump-tokens     print the token stream\n\
     \  --dump-ast        print the parsed program\n\
     \  --dump-lambda     print the intermediate representation\n\
@@ -44,6 +46,7 @@ struct
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
+    | "--no-warnings" :: rest => (noWarnings := true; parse rest)
     | "--dump-tokens" :: rest => (dumpTokens := true; parse rest)
     | "--dump-ast" :: rest => (dumpAst := true; parse rest)
     | "--dump-lambda" :: rest => (dumpLambda := true; parse rest)

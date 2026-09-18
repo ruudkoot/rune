@@ -1,0 +1,1 @@
+value x has type string in the structure but int in the signature

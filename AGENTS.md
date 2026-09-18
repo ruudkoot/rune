@@ -23,7 +23,9 @@ keep these invariants:
   `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
   `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
-  contain the `.expected` text).
+  contain the `.expected` text). Warnings are covered by a `.cwarn` file next
+  to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
+  without one must compile silently.
 
 ## Build and verification
 
@@ -32,20 +34,27 @@ keep these invariants:
 * The compiler must build with all three SML systems and with itself
   (`make boot`), and all four builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
-  on `Int` width, structures only at top level, deterministic iteration, and
-  sources that stay inside the language described in `docs/language.md`: no
-  signatures or functors, explicit `IntInf` operations).
+  on `Int` width, only `structure`/`signature`/`functor` at top level,
+  deterministic iteration, and sources that stay inside the language
+  described in `docs/language.md`: explicit `IntInf` operations, Rune's
+  Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
   `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
   sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
+* `tests/external/run-mlton.sh DIR` runs MLton's regression programs
+  (`regression/` of github.com/MLton/mlton, not part of this repository) as
+  an external conformance corpus; `tests/external/mlton-skip.txt` lists the
+  programs that need Basis Library parts Rune lacks or MLton-specific
+  behaviour, each with its reason. A program that fails and is not on that
+  list is a bug.
 * `.expected` files are written by hand or reviewed line by line after
   `tests/run-tests.sh --update <filter>`; never accept generated output
   blindly.
 
 ## Conventions
 
-* SML: one `structure` per file, no top-level `open`, 2-space indentation,
+* SML: one main `structure` (or `functor`) per file, no top-level `open`, 2-space indentation,
   `Error.error (span, msg)` for user errors and `Error.bug` for invariant
   violations. Error messages start lowercase and name the construct.
 * C: C99, no platform-specific code, every primitive validates argument tags

@@ -18,11 +18,12 @@ Hello, world!
 ## What it supports
 
 The full Core language of SML '97 (datatypes, pattern matching, exceptions,
-records, let-polymorphism, refs, proper tail calls), namespace-only structures
-(`structure S = struct ... end`, `open`, `S.x`) and a substantial subset of
-the Basis Library (`Int`, `IntInf`, `Word`, `Real`, `Math`, `Char`, `String`, `List`,
-`ListPair`, `Option`, `Array`, `Vector`, `TextIO` and `BinIO` on standard streams and files,
-`CommandLine`, `OS.Process`). Signatures and functors are not implemented yet.
+records, let-polymorphism, refs, proper tail calls), the Modules language
+(structures, signatures, transparent and opaque ascription, `where type`,
+`sharing`, functors) and a substantial subset of the Basis Library (`Int`,
+`IntInf`, `Word`, `Real`, `Math`, `Char`, `String`, `List`, `ListPair`,
+`Option`, `Array`, `Vector`, `TextIO` and `BinIO` on standard streams and
+files, `CommandLine`, `OS.Process`).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed
 description of the supported language. Every feature row there has an id
@@ -60,7 +61,7 @@ make check         # everything
 ## Using it
 
 ```
-rune [options] file.sml ...     -o FILE, --typecheck-only, --dump-ast, --dump-lambda, --dump-code, --help
+rune [options] file.sml ...     -o FILE, --typecheck-only, --no-warnings, --dump-ast, --dump-lambda, --dump-code, --help
 runevm [options] file.rbc [args ...]   --disasm, --trace, --stats, --heap-size N, --help
 ```
 
@@ -70,10 +71,16 @@ uncaught exception is reported on stderr and exits with status 1.
 
 ## Status
 
-Version 0.2.0: the compiler is self-hosting. `bin/rune.rbc` (the compiler
-compiled by the MLton build) runs on `runevm`, passes the test suite, emits the
-same bytecode as the three host builds, and reproduces itself byte for byte.
-Running the compiler on the interpreter is about 100× slower than the MLton
-build (a few seconds per program, under a minute for the compiler itself).
-See the *Planned* rows in [docs/language.md](docs/language.md) for the
-roadmap: signatures and functors, equality types, exhaustiveness warnings.
+Version 0.3.0: the compiler implements the full language of *The Definition
+of Standard ML (Revised)*, Core and Modules, including equality types, the
+exhaustiveness and redundancy reports of Section 4.11, `abstype`, and the
+static restrictions on explicit type variables and top-level declarations,
+and it is self-hosting: `bin/rune.rbc` (the compiler compiled by the MLton
+build) runs on `runevm`, passes the test suite, emits the same bytecode as the
+three host builds, and reproduces itself byte for byte. Running the compiler
+on the interpreter is about 30× slower than the MLton build (about three
+seconds for the compiler itself). The remaining differences from the
+Definition are the implementation-defined choices listed in
+[docs/language.md](docs/language.md); the Basis Library is still a subset.
+[docs/plans/sml97.md](docs/plans/sml97.md) records how the language was
+completed and what is left.

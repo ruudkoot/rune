@@ -1,0 +1,7 @@
+tests/lang/ty.exhaustive_warnings.sml:3:5: warning: match is not exhaustive (missing case: C _)
+tests/lang/ty.exhaustive_warnings.sml:5:5: warning: match is not exhaustive (missing case: C (B _, _))
+tests/lang/ty.exhaustive_warnings.sml:7:52: warning: redundant match rule
+tests/lang/ty.exhaustive_warnings.sml:9:19: warning: binding is not exhaustive (missing case: NONE)
+tests/lang/ty.exhaustive_warnings.sml:10:64: warning: redundant match rule
+tests/lang/ty.exhaustive_warnings.sml:12:5: warning: match is not exhaustive (missing case: _)
+tests/lang/ty.exhaustive_warnings.sml:14:5: warning: match is not exhaustive (missing case: (B _) A)

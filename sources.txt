@@ -13,6 +13,8 @@ src/frontend/fixity.sml
 src/frontend/parser.sml
 src/elab/unify.sml
 src/elab/env.sml
+src/elab/sigmatch.sml
+src/elab/exhaust.sml
 src/backend/opcodes.sml
 src/backend/prims.sml
 src/elab/elaborate.sml

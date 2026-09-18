@@ -6,6 +6,6 @@ val live = mk 1000
 val junk = churn 20000 []
 val () = print (Int.toString (length live) ^ " " ^ Int.toString (length junk) ^ "\n")
 val () = print (Int.toString (#1 (List.nth (live, 999))) ^ #2 (List.nth (live, 500)) ^ "\n")
-val big = ref []
+val big : string list ref = ref []
 val () = List.app (fn i => big := Int.toString i :: !big) (List.tabulate (50000, fn i => i))
 val () = print (Int.toString (length (!big)) ^ hd (!big) ^ "\n")

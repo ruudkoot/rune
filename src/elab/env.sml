@@ -8,10 +8,12 @@ struct
     | Con of {scheme : scheme, info : Ast.coninfo}
     | Exn of {ty : ty, info : Ast.exninfo}
     | Prim of {scheme : scheme, name : string}          (* builtin (overloaded) operator *)
+    | ConAsVal of {scheme : scheme, info : Ast.coninfo} (* constructor matched by a val specification: a plain value *)
+    | ExnAsVal of {ty : ty, info : Ast.exninfo}         (* likewise for an exception constructor *)
 
-  datatype tystatus =
-      Tycon of {tycon : tycon, cons : (string * valstatus) list}
-    | Abbrev of {params : int list, body : ty}          (* params: ids of parameter variables in body *)
+  (* A type structure (Section 4.9): a type function and, for a datatype,
+     its constructors (in declaration order). *)
+  datatype tystatus = TyStr of {fcn : tyfcn, cons : (string * valstatus) list}
 
   datatype env = Env of {vals : valstatus StringMap.map, tys : tystatus StringMap.map, strs : env StringMap.map}
 
@@ -31,6 +33,21 @@ struct
          tys = StringMap.unionWith #2 (#tys e1, #tys e2),
          strs = StringMap.unionWith #2 (#strs e1, #strs e2)}
 
+  (* Union of environments that must not overlap (rule 77: specifications). *)
+  fun plusDisjoint (Env e1, Env e2, sp) =
+    let
+      fun check (what, m1, m2) =
+        StringMap.appi (fn (n, _) =>
+                           if StringMap.member (m1, n) then
+                             Error.error (sp, "duplicate specification of " ^ what ^ " '" ^ n ^ "'")
+                           else ()) m2
+    in
+      check ("value", #vals e1, #vals e2);
+      check ("type", #tys e1, #tys e2);
+      check ("structure", #strs e1, #strs e2);
+      plus (Env e1, Env e2)
+    end
+
   fun findStr (env, []) = SOME env
     | findStr (env, s :: rest) =
       case StringMap.find (strs env, s) of
@@ -47,25 +64,49 @@ struct
       SOME e => StringMap.find (tys e, name)
     | NONE => NONE
 
+  fun tyStrName (TyStr {fcn = TName c, ...}) = SOME c
+    | tyStrName _ = NONE
+
+  (* --- realisation of environments --- *)
+  fun realizeVal (phi : realisation, v : valstatus) : valstatus =
+    case v of
+      Val {scheme, stamp, global} => Val {scheme = realize (phi, scheme), stamp = stamp, global = global}
+    | Con {scheme, info} => Con {scheme = realize (phi, scheme), info = info}
+    | Exn {ty, info} => Exn {ty = realize (phi, ty), info = info}
+    | Prim {scheme, name} => Prim {scheme = realize (phi, scheme), name = name}
+    | ConAsVal {scheme, info} => ConAsVal {scheme = realize (phi, scheme), info = info}
+    | ExnAsVal {ty, info} => ExnAsVal {ty = realize (phi, ty), info = info}
+
+  fun realizeTyStr (phi : realisation, TyStr {fcn, cons}) : tystatus =
+    TyStr {fcn = realizeFcn (phi, fcn), cons = List.map (fn (n, v) => (n, realizeVal (phi, v))) cons}
+
+  fun realizeEnv (phi : realisation, Env {vals, tys, strs}) : env =
+    Env {vals = StringMap.map (fn v => realizeVal (phi, v)) vals,
+         tys = StringMap.map (fn t => realizeTyStr (phi, t)) tys,
+         strs = StringMap.map (fn e => realizeEnv (phi, e)) strs}
+
   (* --- initial environment --- *)
   fun generic (id, eq) = TVar (ref (Unbound {id = id, level = genericLevel, kind = KPlain, eq = eq}))
   fun overloaded (id, names) = TVar (ref (Unbound {id = id, level = genericLevel, kind = KOverload names, eq = false}))
 
   val a = generic (~1, false)
   val b = generic (~2, false)
+  val eqa = generic (~3, true)          (* ''a: the type of = and <> (Appendix C) *)
 
-  fun conInfo (name, tag, hasArg, ncons) : Ast.coninfo =
-    {name = name, tag = tag, hasArg = hasArg, ncons = ncons, isRef = false}
+  fun conInfo (name, tag, hasArg, siblings) : Ast.coninfo =
+    {name = name, tag = tag, hasArg = hasArg, ncons = List.length siblings, isRef = false, siblings = siblings}
 
+  val boolSiblings = [("false", false), ("true", false)]
+  val listSiblings = [("nil", false), ("::", true)]
   val boolCons =
-    [("false", Con {scheme = boolTy, info = conInfo ("false", 0, false, 2)}),
-     ("true", Con {scheme = boolTy, info = conInfo ("true", 1, false, 2)})]
+    [("false", Con {scheme = boolTy, info = conInfo ("false", 0, false, boolSiblings)}),
+     ("true", Con {scheme = boolTy, info = conInfo ("true", 1, false, boolSiblings)})]
   val listCons =
-    [("nil", Con {scheme = listTy a, info = conInfo ("nil", 0, false, 2)}),
-     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", 1, true, 2)})]
+    [("nil", Con {scheme = listTy a, info = conInfo ("nil", 0, false, listSiblings)}),
+     ("::", Con {scheme = TArrow (tupleTy [a, listTy a], listTy a), info = conInfo ("::", 1, true, listSiblings)})]
   val refCons =
     [("ref", Con {scheme = TArrow (a, refTy a),
-                  info = {name = "ref", tag = 0, hasArg = true, ncons = 1, isRef = true}})]
+                  info = {name = "ref", tag = 0, hasArg = true, ncons = 1, isRef = true, siblings = [("ref", true)]}})]
 
   val builtinExns = ["Match", "Bind", "Overflow", "Div", "Subscript", "Size", "Chr", "Domain"]
 
@@ -93,24 +134,26 @@ struct
      binop ("/", ["real"], ~15),
      unop ("~", numeric, ~16), unop ("abs", ["int", "real"], ~17),
      cmpop ("<", ordered, ~18), cmpop ("<=", ordered, ~19), cmpop (">", ordered, ~20), cmpop (">=", ordered, ~21),
-     ("=", Prim {scheme = TArrow (tupleTy [a, a], boolTy), name = "="}),
-     ("<>", Prim {scheme = TArrow (tupleTy [a, a], boolTy), name = "<>"}),
+     ("=", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "="}),
+     ("<>", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "<>"}),
      (":=", Prim {scheme = TArrow (tupleTy [refTy a, a], unitTy), name = ":="}),
      ("!", Prim {scheme = TArrow (refTy a, a), name = "!"})]
 
+  fun nameStr (c, cons) = TyStr {fcn = TName c, cons = cons}
+
   val builtinTys =
-    [("int", Tycon {tycon = intTycon, cons = []}),
-     ("word", Tycon {tycon = wordTycon, cons = []}),
-     ("real", Tycon {tycon = realTycon, cons = []}),
-     ("char", Tycon {tycon = charTycon, cons = []}),
-     ("string", Tycon {tycon = stringTycon, cons = []}),
-     ("bool", Tycon {tycon = boolTycon, cons = boolCons}),
-     ("list", Tycon {tycon = listTycon, cons = listCons}),
-     ("ref", Tycon {tycon = refTycon, cons = refCons}),
-     ("exn", Tycon {tycon = exnTycon, cons = []}),
-     ("array", Tycon {tycon = arrayTycon, cons = []}),
-     ("vector", Tycon {tycon = vectorTycon, cons = []}),
-     ("unit", Abbrev {params = [], body = unitTy})]
+    [("int", nameStr (intTycon, [])),
+     ("word", nameStr (wordTycon, [])),
+     ("real", nameStr (realTycon, [])),
+     ("char", nameStr (charTycon, [])),
+     ("string", nameStr (stringTycon, [])),
+     ("bool", nameStr (boolTycon, boolCons)),
+     ("list", nameStr (listTycon, listCons)),
+     ("ref", nameStr (refTycon, refCons)),
+     ("exn", nameStr (exnTycon, [])),
+     ("array", nameStr (arrayTycon, [])),
+     ("vector", nameStr (vectorTycon, [])),
+     ("unit", TyStr {fcn = TAbbrev ([], unitTy), cons = []})]
 
   val initial =
     Env {vals = StringMap.fromList builtinVals,
