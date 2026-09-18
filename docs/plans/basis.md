@@ -14,7 +14,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | Part 0, `make doctor` | done |
 | M0, suite, matrix and cross-check scaffolding | done |
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
-| M2, text conversion and numbers | in progress; `IntN`/`WordN` omitted for now (below) |
+| M2, text conversion and numbers | done; `IntN`/`WordN` omitted for now (below) |
 | M3–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
@@ -47,6 +47,14 @@ tested: the object kind for mutable bytes, `_primtype` and the block
 primitives (M3, with the monomorphic arrays and slices); the `print` hook and
 the `SysErr`/`Io` declarations in `initial.sml` (M4, with the I/O stack and
 `sys_init`); the exit hook (M5, with `OS.Process.atExit`).
+
+M2 delivered `StringCvt`, `Substring`, `scan` and `fmt` for `Bool`, `Int`,
+`Word`, `IntInf`, `Char` and `String` (with `toCString`/`fromCString`), the
+rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
+`Real` and `Math`, `IEEEReal`, and `LargeReal`. `Int` and `Word` no longer
+depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
+On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
+`Time`.
 
 **Omitted for now: `IntN` and `WordN`.** The fixed-width structures (`Int8`,
 `Int16`, `Int32`, `Int64`, `Word8`, `Word16`, `Word32`, `Word64`) are not
