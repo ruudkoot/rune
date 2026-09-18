@@ -12,10 +12,11 @@ struct
   val fileReadVec = _prim "file_read_vec" : int * int -> string
   val fileAvail = _prim "file_avail" : int -> int
   val fileError = _prim "file_error" : unit -> string
+  val fileErrno = _prim "file_errno" : unit -> int
 
   val chunkSize = 4096
 
-  fun sysError () = OS.SysErr (fileError (), NONE)
+  fun sysError () = OS.SysErr (fileError (), SOME (fileErrno ()))
 
   (* mode: 0 read, 1 write and truncate, 2 append *)
   fun open' (function, mode) name =

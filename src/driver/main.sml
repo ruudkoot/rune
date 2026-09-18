@@ -13,7 +13,8 @@ struct
      files, the files that provide a name it mentions, and what those require:
      the scan below looks at identifiers only, so it may load a file the
      program does not need, never miss one it does. *)
-  type entry = {file : string, always : bool, provides : string list, requires : string list}
+  datatype when = Always | Demand | Final
+  type entry = {file : string, when : when, provides : string list, requires : string list}
 
   fun trim (s : string) : string =
     let
@@ -38,7 +39,7 @@ struct
         case List.map trim (String.fields (fn c => c = #"|") line) of
           [file, mode, _, provides, requires] =>
             {file = file,
-             always = (case mode of "always" => true | "demand" => false | _ => bad line),
+             when = (case mode of "always" => Always | "demand" => Demand | "final" => Final | _ => bad line),
              provides = names provides, requires = names requires}
         | _ => bad line
       val ins = TextIO.openIn manifest
@@ -77,8 +78,21 @@ struct
                                                         ", which no file provides"))
                      (StringMap.insert (chosen, #file e, ()))
                      (List.filter (fn n => not (String.isPrefix "-" n)) (#requires e))
-      val wanted = fn e : entry => #always e orelse List.exists (fn n => StringMap.member (mentioned, n)) (#provides e)
+      val wanted = fn e : entry => #when e = Always orelse List.exists (fn n => StringMap.member (mentioned, n)) (#provides e)
       val chosen = List.foldl (fn (e, chosen) => if wanted e then add (e, chosen) else chosen) StringMap.empty entries
+      (* A file compiled after the program joins it only when what it needs is
+         there anyway: a program that never mentions OS has nothing to do when
+         it ends. *)
+      fun providerOf n = StringMap.find (provider, n)
+      val chosen =
+        List.foldl (fn (e : entry, chosen) =>
+                       if #when e = Final
+                          andalso List.all (fn n => case providerOf n of
+                                                      SOME f => StringMap.member (chosen, f)
+                                                    | NONE => false)
+                                           (List.filter (fn n => not (String.isPrefix "-" n)) (#requires e))
+                       then add (e, chosen) else chosen)
+                   chosen entries
     in List.filter (fn e : entry => StringMap.member (chosen, #file e)) entries end
 
   fun defaultOutput (first : string) : string =
@@ -146,7 +160,7 @@ struct
                                      else complain (e, "requires " ^ n ^ ", which is not provided by an earlier file"))
                             (#requires e)
           val () =
-            if #always e then ()
+            if #when e <> Demand then ()
             else List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => () | Ast.DFunctor _ => ()
                             | Ast.DType _ => () | Ast.DOverload _ => ()
                             | d => complain (e, "a demand file may declare modules and types only, but has: " ^
@@ -174,14 +188,15 @@ struct
           end
     in
       if !Options.basisDeps then (List.app (fn e : entry => println (#file e)) basis; OS.Process.success)
-      else compileWith (basis, userToks, inputs)
+      else compileWith (List.filter (fn e : entry => #when e <> Final) basis,
+                        List.filter (fn e : entry => #when e = Final) basis, userToks, inputs)
     end
 
-  and compileWith (basis : entry list, userToks, inputs) : OS.Process.status =
+  and compileWith (basis : entry list, final : entry list, userToks, inputs) : OS.Process.status =
     let
-      val preludeProg =
-        List.concat (List.map (fn e : entry => parseTokens (loadTokens (libDir () ^ "/" ^ #file e))) basis)
-      val userProg = List.concat (List.map parseTokens userToks)
+      fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (libDir () ^ "/" ^ #file e))) es)
+      val preludeProg = parseEntries basis
+      val userProg = List.concat (List.map parseTokens userToks) @ parseEntries final
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) userProg else ()
       val env = ref Env.initial
       val () = Elaborate.allowPrim := true

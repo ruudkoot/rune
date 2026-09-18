@@ -6,6 +6,7 @@
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
+#include "sys.h"
 
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
 
@@ -447,6 +448,134 @@ static int64_t list_length(Value l) {
 static Value list_head(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[0]; }
 static Value list_tail(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[1]; }
 
+/* ================================================================ system */
+static int push_string_value(VM *vm, const char *s) {
+    Obj *o = vm_string_from(vm, s, (uint32_t)strlen(s));
+    return ret(vm, 1, mk_ptr(o));
+}
+
+static int p_sys_errno(VM *vm) { return ret(vm, 1, mk_int(sys_errno())); }
+static int p_sys_error_msg(VM *vm) { INT1("sys_error_msg"); return push_string_value(vm, sys_error_msg((int)x)); }
+static int p_sys_error_name(VM *vm) { INT1("sys_error_name"); return push_string_value(vm, sys_error_name((int)x)); }
+static int p_sys_error_of_name(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "sys_error_of_name");
+    char *name = malloc((size_t)s->len + 1);
+    if (!name) vm_fatal(vm, "out of memory");
+    memcpy(name, OBJ_BYTES(s), s->len);
+    name[s->len] = 0;
+    int e = sys_error_of_name(name);
+    free(name);
+    return ret(vm, 1, mk_int(e));
+}
+
+static int p_time_now(VM *vm) { return ret(vm, 1, mk_int(sys_time_now())); }
+static int p_time_user(VM *vm) { return ret(vm, 1, mk_int(sys_time_user())); }
+static int p_time_sys(VM *vm) { return ret(vm, 1, mk_int(sys_time_sys())); }
+static int p_time_sleep(VM *vm) { INT1("time_sleep"); sys_time_sleep(x); return ret(vm, 1, mk_unit()); }
+
+/* A list of the ints in xs, built on the VM stack so that the collector sees
+   every cell while the next one is allocated. */
+static int push_int_list(VM *vm, const int64_t *xs, int n, int arity) {
+    vm_push(vm, mk_con0(0));
+    for (int i = n; i > 0; i--) {
+        vm_push(vm, mk_int(xs[i - 1]));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+
+/* The ints of a list, at most n of them; -1 when the list is malformed or
+   longer than n. */
+static int int_list(Value l, int32_t *out, int n) {
+    int64_t len = list_length(l);
+    if (len < 0 || len > n) return -1;
+    for (int i = 0; i < (int)len; i++) {
+        Value head = list_head(l);
+        if (head.tag != T_INT) return -1;
+        out[i] = (int32_t)head.u.i;
+        l = list_tail(l);
+    }
+    return (int)len;
+}
+
+static int p_date_parts(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "date_parts");
+    check_tag(vm, ARG(0), T_INT, "date_parts");
+    int32_t parts[9];
+    if (sys_date_parts(ARG(1).u.i, (int)ARG(0).u.i, parts) != 0) return push_int_list(vm, NULL, 0, 2);
+    int64_t wide[9];
+    for (int i = 0; i < 9; i++) wide[i] = parts[i];
+    return push_int_list(vm, wide, 9, 2);
+}
+
+static int p_date_seconds(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "date_seconds");
+    int32_t parts[9];
+    for (int i = 0; i < 9; i++) parts[i] = 0;
+    parts[8] = -1;
+    if (int_list(ARG(1), parts, 9) < 0) vm_fatal(vm, "primitive date_seconds: malformed list");
+    int64_t t = sys_date_seconds(parts, (int)ARG(0).u.i);
+    if (t == -1) return push_int_list(vm, NULL, 0, 2);
+    int64_t wide[10];
+    wide[0] = t;
+    for (int i = 0; i < 9; i++) wide[i + 1] = parts[i];
+    return push_int_list(vm, wide, 10, 2);
+}
+
+static int p_date_offset(VM *vm) {
+    INT1("date_offset");
+    int32_t offset = 0;
+    if (sys_date_offset(x, &offset) != 0) return raise_with(vm, 1, EXN_DOMAIN);
+    return ret(vm, 1, mk_int(offset));
+}
+
+static int p_date_format(VM *vm) {
+    Obj *f = check_obj(vm, ARG(2), K_STRING, "date_format");
+    check_tag(vm, ARG(0), T_INT, "date_format");
+    int32_t parts[9];
+    for (int i = 0; i < 9; i++) parts[i] = 0;
+    if (int_list(ARG(1), parts, 9) < 0) vm_fatal(vm, "primitive date_format: malformed list");
+    char *format = malloc((size_t)f->len + 1);
+    if (!format) vm_fatal(vm, "out of memory");
+    memcpy(format, OBJ_BYTES(f), f->len);
+    format[f->len] = 0;
+    size_t cap = (size_t)f->len * 16 + 256;
+    char *out = malloc(cap);
+    if (!out) vm_fatal(vm, "out of memory");
+    int n = sys_date_format(format, parts, (int)ARG(0).u.i, out, cap);
+    free(format);
+    Obj *s = vm_string_from(vm, out, n < 0 ? 0 : (uint32_t)n);
+    free(out);
+    return ret(vm, 3, mk_ptr(s));
+}
+
+static int p_os_system(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "os_system");
+    char *command = malloc((size_t)s->len + 1);
+    if (!command) vm_fatal(vm, "out of memory");
+    memcpy(command, OBJ_BYTES(s), s->len);
+    command[s->len] = 0;
+    fflush(stdout);
+    int status = sys_system(command);
+    free(command);
+    return ret(vm, 1, mk_int(status));
+}
+
+static int p_os_getenv(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "os_getenv");
+    char *name = malloc((size_t)s->len + 1);
+    if (!name) vm_fatal(vm, "out of memory");
+    memcpy(name, OBJ_BYTES(s), s->len);
+    name[s->len] = 0;
+    const char *value = sys_getenv(name);
+    free(name);
+    if (!value) return ret(vm, 1, mk_con0(0));
+    Obj *o = vm_string_from(vm, value, (uint32_t)strlen(value));
+    Value r = mk_some(vm, mk_ptr(o));
+    return ret(vm, 1, r);
+}
+
 static int p_string_implode(VM *vm) {
     int64_t n = list_length(ARG(0));
     if (n < 0) vm_fatal(vm, "string_implode: malformed list");
@@ -684,6 +813,8 @@ static int p_file_avail(VM *vm) {
     if (fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
     return ret(vm, 1, mk_int(end - here));
 }
+
+static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
 
 static int p_file_error(VM *vm) {
     const char *m = strerror(vm->io_errno);

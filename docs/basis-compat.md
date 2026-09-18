@@ -90,6 +90,12 @@ the `Real` and `Math` rows of the table above. `Real.toString` now follows
 `GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
 Poly/ML print `1.0`.
 
+M5 added `Time`, `Timer`, `Date` and the rest of `OS.Process`; the one
+deviation left for Rune is the unescaped double quote of `Char.fromString`,
+which the table of readings below records. `Time` holds microseconds in an
+`int` and its conversions take and give `LargeInt.int`, as the specification
+prescribes.
+
 M4 rebuilt `TextIO` and `BinIO` on `PRIM_IO` and the functional streams, and
 every check of their tests passes on Rune and, through `xc1`, on all three
 hosts. Writing the shim for the hosts turned up two more host defects:

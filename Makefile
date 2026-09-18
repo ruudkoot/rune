@@ -60,8 +60,12 @@ GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
 BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/config.sml
 
-VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c
-VM_HDRS := vm/vm.h $(GEN_C)
+# The core VM is ISO C99; what needs the operating system is in vm/sys.h and
+# one of its implementations. `make SYS=none` builds without POSIX, and the
+# library then reports ENOSYS for what it cannot do.
+SYS ?= posix
+VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_$(SYS).c
+VM_HDRS := vm/vm.h vm/sys.h $(GEN_C)
 
 # Sources of the compiler as compiled by itself, the host build that compiles
 # stage 1, and the initial semispace of the VM that bin/rune runs on. The heap

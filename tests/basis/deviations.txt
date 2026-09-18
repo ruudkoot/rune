@@ -95,12 +95,6 @@ native:polyml@* | TextIO.inputLine/*end-of-stream | SPEC-AMBIGUOUS | inputLine t
 native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
 
 # ---- OS.Process, CommandLine
-rune | @absent/os.process_sig | RUNE-DEV | no Time structure, which OS_PROCESS names in the type of sleep
-rune | @section/os.process/syserror | RUNE-DEV | OS lacks errorMsg, errorName and syserror, and SysErr never carries a syserror
-rune | @section/os.process/getEnv* | RUNE-DEV | OS.Process.getEnv (and system) is not implemented
-rune | @section/os.process/system | RUNE-DEV | OS.Process.system is not implemented
-rune | @section/os.process/sleep | RUNE-DEV | OS.Process.sleep is not implemented (no Time structure)
-rune | @section/os.process/atExit | RUNE-DEV | OS.Process.atExit is not implemented
 native:smlnj@110.79 | OS.Process.sleep/positive | HOST-BUG | sleep drops the fraction of a second: sleep 0.2 s returns at once, 1.2 s after 1 s
 *:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
 

@@ -251,7 +251,11 @@ struct
   val files : (int * file) list ref = ref []
   val next = ref 3
   val lastError = ref ""
+  val lastErrno = ref 0
   val rw = FS.S.flags [FS.S.irusr, FS.S.iwusr, FS.S.irgrp, FS.S.iwgrp, FS.S.iroth, FS.S.iwoth]
+
+  fun noteError (SOME e) = lastErrno := SysWord.toInt (Posix.Error.toWord e)
+    | noteError NONE = ()
 
   fun lookup h =
     let fun go [] = NONE
@@ -267,7 +271,7 @@ struct
               | _ => Writer (FS.createf (name, FS.O_WRONLY, FS.O.append, rw))
       val h = !next
     in next := h + 1; files := (h, f) :: !files; SOME h end
-    handle OS.SysErr (msg, _) => (lastError := msg; NONE)
+    handle OS.SysErr (msg, e) => (lastError := msg; noteError e; NONE)
 
   fun file_close h =
     (case lookup h of
@@ -290,7 +294,7 @@ struct
       (case lookup h of
          SOME (Writer fd) => (writeAll (fd, s); true)
        | _ => (lastError := OS.errorMsg Posix.Error.badf; false))
-      handle OS.SysErr (msg, _) => (lastError := msg; false)
+      handle OS.SysErr (msg, e) => (lastError := msg; noteError e; false)
 
   fun file_flush 1 = TextIO.flushOut TextIO.stdOut
     | file_flush 2 = TextIO.flushOut TextIO.stdErr
@@ -374,4 +378,91 @@ struct
        | _ => "")
 
   fun file_error () = !lastError
+  fun file_errno () = !lastErrno
+
+  (* ---- the system layer, on the host's Posix, Date and Timer ----
+     The VM numbers the errors of the system the way the C library does,
+     which is what Posix.Error holds too; its names are the lower-case tails
+     of the C ones. *)
+  fun sys_errno () = !lastErrno
+  fun errorOf e = Posix.Error.fromWord (SysWord.fromInt e)
+  fun sys_error_msg e = Posix.Error.errorMsg (errorOf e)
+  fun sys_error_name e =
+    case Posix.Error.errorName (errorOf e) of
+      "" => ""
+    | name => "E" ^ String.map Char.toUpper name
+  fun sys_error_of_name name =
+    if String.size name < 2 orelse String.sub (name, 0) <> #"E" then ~1
+    else
+      case Posix.Error.syserror (String.map Char.toLower (String.extract (name, 1, NONE))) of
+        SOME e => SysWord.toInt (Posix.Error.toWord e)
+      | NONE => ~1
+
+  fun time_now () = Int.fromLarge (Time.toMicroseconds (Time.now ()))
+  val cpu = Timer.totalCPUTimer ()
+  fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer cpu)))
+  fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer cpu)))
+  fun time_sleep n = if n <= 0 then () else OS.Process.sleep (Time.fromMicroseconds (Int.toLarge n))
+
+  val months = [Date.Jan, Date.Feb, Date.Mar, Date.Apr, Date.May, Date.Jun,
+                Date.Jul, Date.Aug, Date.Sep, Date.Oct, Date.Nov, Date.Dec]
+  val weekdays = [Date.Sun, Date.Mon, Date.Tue, Date.Wed, Date.Thu, Date.Fri, Date.Sat]
+  fun indexOf (x, l) =
+    let fun go (k, y :: rest) = if y = x then k else go (k + 1, rest) | go (_, []) = 0
+    in go (0, l) end
+
+  fun partsOf d =
+    [Date.second d, Date.minute d, Date.hour d, Date.day d, indexOf (Date.month d, months),
+     Date.year d - 1900, indexOf (Date.weekDay d, weekdays), Date.yearDay d,
+     case Date.isDst d of NONE => ~1 | SOME true => 1 | SOME false => 0]
+
+  fun dateOf (parts, local') =
+    case parts of
+      sec :: min :: hr :: mday :: mon :: yr :: _ =>
+        Date.date {year = yr + 1900, month = List.nth (months, if mon < 0 then 0 else if mon > 11 then 11 else mon),
+                   day = mday, hour = hr, minute = min, second = sec,
+                   offset = if local' = 1 then NONE else SOME Time.zeroTime}
+    | _ => raise Fail "dateOf"
+
+  fun date_parts (seconds, local') =
+    partsOf ((if local' = 1 then Date.fromTimeLocal else Date.fromTimeUniv) (Time.fromSeconds (Int.toLarge seconds)))
+    handle _ => []
+
+  fun date_seconds (parts, local') =
+    let
+      val t = Int.fromLarge (Time.toSeconds (Date.toTime (dateOf (parts, local'))))
+      val back = (if local' = 1 then Date.fromTimeLocal else Date.fromTimeUniv) (Time.fromSeconds (Int.toLarge t))
+    in t :: partsOf back end
+    handle _ => []
+
+  (* how far local time is ahead of UTC *)
+  fun date_offset (seconds : int) =
+    let
+      val t = Time.fromSeconds (Int.toLarge seconds)
+      val asLocal = Date.fromTimeLocal t
+      val asUtc = Date.fromTimeUniv t
+      fun minutesOf d = ((Date.yearDay d * 24 + Date.hour d) * 60 + Date.minute d)
+      val difference = minutesOf asLocal - minutesOf asUtc
+      (* a day may separate them at the turn of a year *)
+      val difference = if difference > 720 then difference - 1440
+                       else if difference < ~720 then difference + 1440 else difference
+    in difference * 60 end
+    handle _ => raise Domain
+
+  fun date_format (format, parts, local') = Date.fmt format (dateOf (parts, local'))
+
+  (* The status of the host's OS.Process.system is abstract, so the command
+     is run here: what it exited with, or 128 plus the signal that ended it. *)
+  fun os_system command =
+    case Posix.Process.fork () of
+      NONE =>
+        ((Posix.Process.exece ("/bin/sh", ["sh", "-c", command], Posix.ProcEnv.environ ())) ;
+         Posix.Process.exit 0w127)
+    | SOME pid =>
+        (case #2 (Posix.Process.waitpid (Posix.Process.W_CHILD pid, [])) of
+           Posix.Process.W_EXITED => 0
+         | Posix.Process.W_EXITSTATUS w => Word8.toInt w
+         | Posix.Process.W_SIGNALED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
+         | Posix.Process.W_STOPPED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg))
+  fun os_getenv name = OS.Process.getEnv name
 end

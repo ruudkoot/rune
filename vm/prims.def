@@ -157,3 +157,18 @@ real_cosh        1  real -> real              Hyperbolic cosine.
 real_tanh        1  real -> real              Hyperbolic tangent.
 file_read_vec    2  int * int -> string       Read at most n bytes; "" at end of file. Raises Size for a negative n.
 file_avail       1  int -> int                Bytes that can be read without waiting, ~1 when that cannot be told.
+sys_errno        1  unit -> int               The errno of the last system call that failed.
+sys_error_msg    1  int -> string             The text of an errno value.
+sys_error_name   1  int -> string             The name of an errno value ("ENOENT"); "" when it has none.
+sys_error_of_name 1 string -> int             The errno value of a name; ~1 when it is not known.
+time_now         1  unit -> int               Microseconds since the epoch.
+time_user        1  unit -> int               Processor time of this program in user mode, in microseconds.
+time_sys         1  unit -> int               The same in system mode.
+time_sleep       1  int -> unit               Wait for that many microseconds; a negative time waits not at all.
+date_parts       2  int * int -> int list     Broken-down time (second, minute, hour, day, month, year - 1900, weekday, yearday, daylight saving) of a time in seconds, local when the second argument is 1; [] on failure.
+date_seconds     2  int list * int -> int list  The reverse: the seconds, followed by the parts normalised; [] on failure.
+date_offset      1  int -> int                Seconds by which local time is ahead of UTC at that time; raises Domain on failure.
+date_format      3  string * int list * int -> string  strftime of the parts.
+os_system        1  string -> int             Run a command with the shell and wait; what it exited with, or 128 plus the signal that ended it, or ~1.
+os_getenv        1  string -> string option   The value of an environment variable.
+file_errno       1  unit -> int               The errno of the last file_open or file_write that failed.
