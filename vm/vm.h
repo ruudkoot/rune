@@ -119,10 +119,14 @@ typedef struct VM {
     size_t heap_used;
     size_t gc_count;
     size_t bytes_allocated;
+    uint64_t objects_allocated;
+    uint64_t instructions;   /* executed so far */
+    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
 
     uint32_t pc;
     int trace;
     int stats;
+    int count;               /* --count: report the deterministic counters at exit */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -152,6 +156,9 @@ static inline void vm_push(VM *vm, Value v) {
 Value vm_pop(VM *vm);
 Value *vm_top(VM *vm, size_t depth);  /* pointer to stack[sp-1-depth] */
 void vm_fatal(VM *vm, const char *fmt, ...);
+/* Every normal end of a run (halt, the exit primitive, an uncaught exception)
+   goes through vm_exit, which flushes and prints what --count and --stats ask for. */
+void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
 int vm_run(VM *vm);

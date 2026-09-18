@@ -64,7 +64,7 @@ make check         # everything
 
 ```
 rune [options] file.sml ...     -o FILE, --typecheck-only, --no-warnings, --dump-ast, --dump-lambda, --dump-code, --help
-runevm [options] file.rbc [args ...]   --disasm, --trace, --stats, --heap-size N, --help
+runevm [options] file.rbc [args ...]   --disasm, --trace, --stats, --count, --gc-stress N, --heap-size N, --help
 ```
 
 Programs read `CommandLine.arguments ()` (the words after the `.rbc` file),

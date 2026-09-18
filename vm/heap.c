@@ -20,17 +20,20 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->heap_used = 0;
     vm->gc_count = 0;
     vm->bytes_allocated = 0;
+    vm->objects_allocated = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
 }
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = sizeof(Obj) + payload_size(payload_bytes);
-    if (vm->heap_used + size > vm->heap_size) {
+    if (vm->heap_used + size > vm->heap_size ||
+        (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0)) {
         vm_gc(vm, size);
     }
     Obj *o = (Obj *)(vm->heap_from + vm->heap_used);
     vm->heap_used += size;
     vm->bytes_allocated += size;
+    vm->objects_allocated++;
     o->kind = kind;
     o->pad = 0;
     o->contag = contag;

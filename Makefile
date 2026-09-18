@@ -9,6 +9,8 @@
 #   make check-cross  verify all three builds emit byte-identical bytecode
 #   make check-docs verify docs/language.md, tests and .def files are in sync
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
+#   make test-stress  both suites with a collection before every GC_STRESS-th
+#                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation
 #   make boot       bin/rune.rbc (the compiler compiled by itself) + bin/rune-boot wrapper
 #   make test-boot  run the suite with the self-hosted compiler
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
@@ -50,7 +52,7 @@ VM_HDRS := vm/vm.h $(GEN_C)
 BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOT_HEAP ?= 268435456
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean doctor test-basis hosts matrix-quick matrix
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot test-boot bootstrap check clean doctor test-basis test-stress hosts matrix-quick matrix
 
 all: mlton vm
 
@@ -133,6 +135,19 @@ check-docs:
 # and are not part of `make check`.
 test-basis: mlton vm | build/.doctor-check
 	sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
+
+# Not part of `make check`: a collection before every allocation makes a few
+# tests quadratic. For VM changes, next to `make vm-asan`.
+# The Basis Library suite keeps vectors of 200000 elements alive, so it gets
+# a longer interval and time limit (about 4 minutes).
+GC_STRESS ?= 101
+GC_STRESS_BASIS ?= 1009
+test-stress: mlton vm | build/.doctor-check
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
+	chmod +x bin/runevm-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm-stress
+	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNEVM="$(ROOT)/bin/runevm-stress" \
+	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
 
 hosts: | build/.doctor-matrix
 	sh scripts/fetch-hosts.sh

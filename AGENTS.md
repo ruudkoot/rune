@@ -48,7 +48,8 @@ keep these invariants:
 * Before finishing any change run `make check` (= `test`, `test-all`,
   `test-basis`, `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
-  sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
+  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
+  and with a collection at (nearly) every allocation, `make test-stress`.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the

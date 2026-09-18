@@ -149,7 +149,7 @@ int vm_raise(VM *vm, Value exn) {
             fprintf(stderr, "<invalid exception value>");
         }
         fprintf(stderr, "\n");
-        exit(1);
+        vm_exit(vm, 1);
     }
     Handler h = vm->handlers[--vm->hp];
     vm->fp = h.fp;
@@ -201,6 +201,7 @@ int vm_run(VM *vm) {
         int32_t a = op_nargs[op] > 0 ? read_i32(code + pc + 1) : 0;
         int32_t b = op_nargs[op] > 1 ? read_i32(code + pc + 5) : 0;
         if (vm->trace) fprintf(stderr, "[%6u] %-12s %d %d  sp=%zu fp=%zu\n", pc, op_names[op], a, b, vm->sp, vm->fp);
+        vm->instructions++;
         vm->pc = pc + instr_length(op);
         Frame *fr = &vm->frames[vm->fp];
 

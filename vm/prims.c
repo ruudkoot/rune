@@ -567,9 +567,8 @@ static int p_file_error(VM *vm) {
 }
 static int p_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "exit");
-    fflush(stdout);
-    fflush(stderr);
-    exit((int)ARG(0).u.i);
+    vm_exit(vm, (int)ARG(0).u.i);
+    return 0;
 }
 static int p_command_args(VM *vm) {
     vm_push(vm, mk_con0(0));

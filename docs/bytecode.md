@@ -146,6 +146,14 @@ raised as noted.
 * `runevm --disasm file.rbc` prints constants, globals and code;
 * `runevm --trace file.rbc` traces every instruction to stderr;
 * `runevm --stats file.rbc` prints heap statistics at exit;
+* `runevm --count file.rbc` prints the instructions executed and the bytes and
+  objects allocated at exit (also after the `exit` primitive and an uncaught
+  exception). The numbers depend on the program and its input only, not on
+  the machine or the heap size, so they serve as performance budgets;
+* `runevm --gc-stress N file.rbc` collects before every Nth allocation. With
+  N = 1 every allocation moves every live object, which exposes a primitive
+  that keeps a heap pointer in a C variable across an allocation
+  (`make test-stress`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
 * `rune --dump-code file.sml` prints the generated code with symbolic labels
   before serialization; `--dump-lambda` prints the intermediate representation.
