@@ -3,6 +3,9 @@ structure Substring =
 struct
   type char = char
   type string = string
+  (* CharVectorSlice.slice is this type; CharVectorSlice is built on Substring
+     and not the other way round, so that TextIO, which needs substrings, does
+     not pull in the functors of the monomorphic sequences. *)
   datatype substring = SS of string * int * int
 
   local

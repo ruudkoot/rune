@@ -33,7 +33,7 @@ native:smlnj@110.79 | Bool.*/wsx-* | HOST-BUG | Bool.scan and fromString skip sp
 native:smlnj@110.79 | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
 
 # ---- Vector
-native:smlnj@110.79 | Vector.update/[Sm]* | HOST-BUG | Vector.update returns the vector unchanged instead of raising Subscript when the index is out of range
+native:smlnj@110.79 | *Vector.update/[Sm]* | HOST-BUG | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
 
 # ---- Array
 native:smlnj@110.79 | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
@@ -51,7 +51,6 @@ native:smlnj@110.79 | *.toCString/nul* | HOST-BUG | toCString #"\000" is "\\0", 
 native:smlnj@110.79 | *.fromCString/control* | HOST-BUG | fromCString does not accept \^c
 
 # ---- String
-rune | @section/string_sig/charvector | RUNE-DEV | no CharVector structure yet, so String.string cannot be shown to be CharVector.vector
 native:mlton@20210117 | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
 native:mlton@20210117 | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
 native:smlnj@110.79 | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a segmentation fault
@@ -108,10 +107,16 @@ native:polyml@* | *IO.inputAll/file-grows-after-end-of-stream | SPEC-AMBIGUOUS |
 native:polyml@* | TextIO.inputLine/*end-of-stream | SPEC-AMBIGUOUS | inputLine that returned NONE reads on when the file has grown; the test takes the STREAM_IO model, as MLton and SML/NJ do
 
 # ---- BinIO, Byte
-rune | @load/binio | RUNE-DEV | Word8Vector is still a bare string without fromList, sub, ...; BinIO has no element operations
+rune | @section/binio/elem | RUNE-DEV | BinIO lacks the type elem
+rune | @section/binio/output1 | RUNE-DEV | BinIO.output1 is not implemented
+rune | @section/binio/input* | RUNE-DEV | BinIO.input, input1 and inputN are not implemented
+rune | @section/binio/lookahead | RUNE-DEV | BinIO.lookahead is not implemented
+rune | @section/binio/endOfStream | RUNE-DEV | BinIO.endOfStream is not implemented
+rune | @section/binio/canInput | RUNE-DEV | BinIO.canInput is not implemented
+rune | @section/binio/mixed | RUNE-DEV | needs input, input1, inputN, lookahead, endOfStream and canInput, which are not implemented
+rune | @section/binio/multiple-end-of-stream | RUNE-DEV | needs input, input1 and endOfStream, which are not implemented
+rune | BinIO.closeIn/then-* | RUNE-DEV | inputAll on a closed instream raises Io {cause = ClosedStream} instead of behaving as at end-of-stream
 rune | @load/binio_sig | RUNE-DEV | BinIO lacks elem and the input operations, so it does not match BIN_IO
-rune | @load/byte | RUNE-DEV | Word8Vector is still a bare string without fromList, sub, ...; Byte lacks byteToChar, charToByte and the pack functions
-rune | @absent/byte_sig | RUNE-DEV | no Word8Array, Word8ArraySlice and Word8VectorSlice structures, which BYTE names
 native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
 
 # ---- OS.Process, CommandLine
@@ -190,7 +195,6 @@ native:smlnj@110.79 | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRi
 native:smlnj@110.79 | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
 
 # ---- Substring
-rune | @section/substring_sig/CharVectorSlice | RUNE-DEV | no CharVectorSlice structure, so Substring.substring is not CharVectorSlice.slice
 native:mlton@20210117 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
 native:smlnj@110.79 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
 native:smlnj@110.79 | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubstring "" ss is false when ss is empty
@@ -210,3 +214,30 @@ xc1:polyml@* | @section/word8/constants | XC1-NA | word constants and overloaded
 native:smlnj@110.79 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 native:polyml@5.7.1 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 native:polyml@5.7.1 | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
+
+# ---- the monomorphic vectors, arrays and slices
+native:smlnj@110.79 | *Slice.findi/* | HOST-BUG | findi of the slices passes f the index in the underlying vector or array, not the index in the slice
+native:smlnj@110.79 | *VectorSlice.subslice/* | HOST-BUG | subslice (sl, i, NONE) checks i against the length of the underlying vector instead of |sl|: for |sl| < i it returns a slice of negative length instead of raising Subscript
+native:smlnj@110.79 | *ArraySlice.subslice/* | HOST-BUG | subslice (sl, i, NONE) checks i against the length of the underlying array instead of |sl|
+native:smlnj@110.79 | *ArraySlice.collate/* | HOST-BUG | collate of the array slices is wrong: equal slices of two or more elements compare GREATER, a proper prefix compares EQUAL
+native:smlnj@110.79 | *Slice.*/Subscript-not-Overflow | HOST-BUG | sub, update and copy with an index or di near Int.maxInt raise Overflow instead of Subscript
+native:polyml@5.7.1 | *ArraySlice.copy/Subscript-not-Overflow | HOST-BUG | copy with di = Int.maxInt raises Overflow instead of Subscript
+native:smlnj@110.79 | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
+native:polyml@5.7.1 | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
+native:polyml@5.7.1 | *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+# ---- Array2
+native:mlton@20210117 | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:smlnj@110.79 | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:mlton@20210117 | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+native:smlnj@110.79 | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+native:smlnj@110.79 | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
+native:smlnj@110.79 | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
+native:smlnj@110.79 | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
+native:smlnj@110.79 | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
+native:smlnj@110.79 | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
+native:polyml@5.7.1 | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+native:polyml@5.7.1 | Array2.*/no-rows* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+native:polyml@5.7.1 | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+native:polyml@5.7.1 | Array2.array/Size-negative-columns-no-rows | HOST-BUG | array (0, ~1, x) does not raise Size
+native:polyml@5.7.1 | Array2.*/zero-length-not-equal | HOST-BUG | two arrays without rows are equal

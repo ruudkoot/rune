@@ -15,7 +15,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M0, suite, matrix and cross-check scaffolding | done |
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
 | M2, text conversion and numbers | done; `IntN`/`WordN` omitted for now (below) |
-| M3–M8 | not started |
+| M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
+| M4–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -55,6 +56,19 @@ rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
 depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
+
+M3 delivered `VectorSlice`, `ArraySlice`, `Array2`, the signatures
+`MONO_VECTOR`, `MONO_ARRAY`, `MONO_VECTOR_SLICE` and `MONO_ARRAY_SLICE` with
+the functors behind them (`lib/basis/mono_fns.sml`; one file per instance),
+the `Word8` and `Char` instances of all four, the complete `Byte`, and `Text`.
+`Substring.substring` is `CharVectorSlice.slice` and `String.string` is
+`CharVector.vector`. On Rune 38,830 of 38,869 checks pass. Two shortcuts, both
+visible in `docs/language.md`: a `Word8Vector.vector` is a `string` and the
+type is not abstract, and a `Word8Array.array` is an ordinary array with one
+VM value per byte. Still to do in M3: the compact byte-array object kind with
+`_primtype` and the block primitives that were moved here from M1, the
+`PackWord`/`PackReal` structures, and the optional instances for other
+element types (`Bool`, `Int`, `Real`, ...), each one line per functor.
 
 **Omitted for now: `IntN` and `WordN`, except a minimal `Word8`.** The
 fixed-width structures (`Int8`, `Int16`, `Int32`, `Int64`, `Word16`,

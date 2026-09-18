@@ -36,13 +36,31 @@ word_sig.sml    | demand | yes  | WORD                  | LargeInt LargeWord Str
 word8.sml       | demand | yes  | Word8                 | StringCvt WORD Word
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
-substring.sml   | demand | yes  | Substring substring   | List String
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
 real.sml        | demand | yes  | Real Math LargeReal   | IEEEReal Int IntInf List StringCvt
 vector.sml      | demand | yes  | Vector                | List Option
 array.sml       | demand | yes  | Array                 | List Option Vector
+vectorslice.sml | demand | yes  | VectorSlice           | List Vector
+arrayslice.sml  | demand | yes  | ArraySlice            | Array Vector VectorSlice
+mono_sigs.sml   | demand | yes  | MONO_VECTOR MONO_ARRAY MONO_VECTOR_SLICE MONO_ARRAY_SLICE |
+mono_vector_fn.sml | demand | yes | RuneStringVectorFn | List String
+mono_array_fn.sml | demand | yes | RuneMonoArrayFn     | Array MONO_VECTOR
+mono_vector_slice_fn.sml | demand | yes | RuneMonoVectorSliceFn | List MONO_VECTOR
+mono_array_slice_fn.sml | demand | yes | RuneMonoArraySliceFn | MONO_ARRAY MONO_VECTOR MONO_VECTOR_SLICE
+charvector.sml  | demand | yes  | CharVector            | MONO_VECTOR RuneStringVectorFn
+substring.sml   | demand | yes  | Substring substring   | List String
+charvectorslice.sml | demand | yes | CharVectorSlice     | CharVector MONO_VECTOR_SLICE Substring
+word8vector.sml | demand | yes  | Word8Vector           | MONO_VECTOR RuneStringVectorFn Word8
+word8vectorslice.sml | demand | yes | Word8VectorSlice   | MONO_VECTOR_SLICE RuneMonoVectorSliceFn Word8Vector
+word8array.sml  | demand | yes  | Word8Array            | MONO_ARRAY RuneMonoArrayFn Word8Vector
+word8arrayslice.sml | demand | yes | Word8ArraySlice     | MONO_ARRAY_SLICE RuneMonoArraySliceFn Word8Array Word8Vector Word8VectorSlice
+chararray.sml   | demand | yes  | CharArray             | CharVector MONO_ARRAY RuneMonoArrayFn
+chararrayslice.sml | demand | yes | CharArraySlice       | CharArray CharVector CharVectorSlice MONO_ARRAY_SLICE RuneMonoArraySliceFn
+array2.sml      | demand | yes  | Array2                | Array List Vector
+text.sml        | demand | yes  | Text                  | Char CharArray CharArraySlice CharVector CharVectorSlice String Substring
 os.sml          | demand | yes  | OS                    |
 io.sml          | demand | yes  | IO                    |
 textio.sml      | demand | yes  | TextIO                | IO OS String Substring
-binio.sml       | demand | yes  | Word8Vector Byte BinIO | String TextIO
+byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
+binio.sml       | demand | yes  | BinIO                 | TextIO Word8Vector
 commandline.sml | demand | yes  | CommandLine           |

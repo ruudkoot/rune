@@ -90,6 +90,18 @@ the `Real` and `Math` rows of the table above. `Real.toString` now follows
 `GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
 Poly/ML print `1.0`.
 
+M3 added the slices, `Array2`, the monomorphic `Word8` and `Char` sequences,
+`Byte` and `Text`; every check of their tests passes on Rune (and on MLton but
+for one `Array2.copy` overlap bug and its equality restriction). The hosts'
+departures there are in `tests/basis/deviations.txt` under "the monomorphic
+vectors, arrays and slices" and "Array2"; the ones worth knowing: on SML/NJ
+110.79 `findi` of every slice passes the index in the base sequence,
+`subslice (sl, i, NONE)` can return a slice of negative length, `collate` of
+array slices looks at the first elements only, and `Array2` traversals of a
+region without rows touch memory beyond the array (a segmentation fault for
+`modifyi` and `copy`); on Poly/ML 5.7.1 an `Array2` without rows has no
+columns either.
+
 Not implemented, by decision and not by oversight: the fixed-width `IntN`
 and `WordN` structures (`Int8` ... `Int64`, `Word16` ... `Word64`), except a
 minimal `Word8` for the byte-oriented structures;
