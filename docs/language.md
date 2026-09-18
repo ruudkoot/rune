@@ -30,6 +30,7 @@ programs that SML rejects, or reject some that SML accepts.
 | Top-level expressions | `exp ;` at top level is accepted and treated as `val _ = exp`. |
 | Flexible records | Must be resolved by the end of the enclosing top-level declaration (as in SML). |
 | `_prim "name" : ty` | Extension used by the basis library to access VM primitives. Only allowed with `--allow-prim`. |
+| I/O | `TextIO`/`BinIO` streams are concrete datatypes (so they admit equality); `BinIO` shares `TextIO`'s stream types; `Word8Vector.vector` is `string` and there is no `Word8`. |
 
 ## Lexical structure
 
@@ -164,11 +165,12 @@ Library that are not listed are not available.
 | basis.option | `Option`: `getOpt`, `isSome`, `valOf`, `filter`, `join`, `app`, `map`, `mapPartial`, `compose`, `composePartial` | Supported | |
 | basis.array | `Array`: `array`, `fromList`, `tabulate`, `length`, `sub`, `update`, `app`, `appi`, `modify`, `modifyi`, `foldl`, `foldli`, `foldr`, `foldri`, `toList`, `vector`, `find`, `findi`, `exists`, `all`, `copy`, `collate` | Partial | `copy` takes `{src, dst, di}`; no slices. |
 | basis.vector | `Vector`: `fromList`, `tabulate`, `length`, `sub`, `update`, `app`, `appi`, `map`, `mapi`, `foldl`, `foldli`, `foldr`, `foldri`, `toList`, `concat`, `find`, `findi`, `exists`, `all`, `collate` | Supported | Vectors have structural equality. |
-| basis.textio | `TextIO`: `stdIn`, `stdOut`, `stdErr`, `output`, `output1`, `outputSubstr`, `flushOut`, `print`, `inputLine`, `inputAll`, `closeIn`, `closeOut` | Partial | Standard streams only; no file I/O (Planned: basis.textio.files). |
+| basis.textio | `TextIO`: `stdIn`, `stdOut`, `stdErr`, `openIn`, `openOut`, `openAppend`, `output`, `output1`, `outputSubstr`, `flushOut`, `print`, `inputLine`, `inputAll`, `closeIn`, `closeOut` | Partial | No `input1`, `inputN`, `endOfStream`, `lookahead` or `StreamIO`. |
 | basis.commandline | `CommandLine`: `name`, `arguments` | Supported | |
-| basis.os.process | `OS.Process`: `status`, `success`, `failure`, `isSuccess`, `exit`, `terminate` | Supported | |
+| basis.os.process | `OS.Process`: `status`, `success`, `failure`, `isSuccess`, `exit`, `terminate`; `OS.SysErr`, `OS.syserror` | Supported | |
 | basis.toplevel | Top-level aliases: `@ ^ app map foldl foldr rev length null hd tl size str concat implode explode substring ord chr real floor ceil round trunc vector` | Supported | |
-| basis.textio.files | `TextIO.openIn/openOut` and file streams | Planned | |
+| basis.textio.files | File streams: `TextIO.openIn`, `openOut`, `openAppend`, reading and writing files; errors raise `IO.Io {name, function, cause}` with `cause` `OS.SysErr` or `IO.ClosedStream` | Supported | Streams are concrete datatypes carrying a VM file handle. |
+| basis.binio | `BinIO`: `openIn`, `openOut`, `openAppend`, `closeIn`, `closeOut`, `output`, `inputAll`, `flushOut`; `Byte`: `bytesToString`, `stringToBytes`; `Word8Vector`: `vector`, `length` | Partial | `Word8Vector.vector` is `string`; no `Word8`, no element access. |
 | basis.substring | `Substring` | Planned | |
 | basis.intinf | `IntInf` / `LargeInt` | Planned | |
 

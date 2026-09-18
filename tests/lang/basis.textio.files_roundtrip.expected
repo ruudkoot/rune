@@ -1,0 +1,13 @@
+line: alpha
+rest: beta
+g|
+at eof: true
+3 lines
+[alpha\n]
+[beta\n]
+[g\n]
+size 15
+bytes 0 255
+Io openIn tests/out/no-such-file.tmp
+closed output
+closed inputLine

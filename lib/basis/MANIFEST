@@ -12,7 +12,9 @@ string.sml
 real.sml
 array.sml
 vector.sml
-textio.sml
 os.sml
+io.sml
+textio.sml
+binio.sml
 commandline.sml
 toplevel.sml

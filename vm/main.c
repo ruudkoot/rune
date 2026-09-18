@@ -22,6 +22,8 @@ static void vm_destroy(VM *vm) {
     free(vm->frames);
     free(vm->handlers);
     free(vm->heap_from);
+    for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
+    free(vm->files);
     free(vm);
 }
 
@@ -49,6 +51,10 @@ int main(int argc, char **argv) {
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
+    vm->files_cap = 8;
+    vm->files = calloc(vm->files_cap, sizeof(FILE *));
+    vm->files[0] = stdin; vm->files[1] = stdout; vm->files[2] = stderr;
+    vm->nfiles = 3;
     heap_init(vm, heap);
 
     char err[256];

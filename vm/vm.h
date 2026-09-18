@@ -127,6 +127,12 @@ typedef struct VM {
     int argc;
     char **argv;             /* arguments after the bytecode file */
     const char *progname;
+
+    /* open files indexed by handle: 0 stdin, 1 stdout, 2 stderr (never closed);
+       handles are never reused, a closed slot is NULL */
+    FILE **files;
+    size_t nfiles, files_cap;
+    int io_errno;            /* errno of the last failed file_open / file_write */
 } VM;
 
 /* heap.c */

@@ -123,3 +123,12 @@ input_all        1  unit -> string           Read the rest of stdin.
 exit             1  int -> 'a                Terminate the process with the given status.
 command_args     1  unit -> string list      Command line arguments after the bytecode file.
 command_name     1  unit -> string           The bytecode file name.
+
+# --- files (handles: 0 stdin, 1 stdout, 2 stderr, others from file_open) ---
+file_open        2  string * int -> int option  Open a file (mode 0 read, 1 write/truncate, 2 append); NONE on failure.
+file_close       1  int -> unit               Close a handle (no-op for 0-2 and already closed handles).
+file_write       2  int * string -> bool      Write bytes; false if the handle is invalid or the write fails.
+file_flush       1  int -> unit               Flush a handle.
+file_read_line   1  int -> string option      Read a line including its newline; NONE at end of file.
+file_read_all    1  int -> string             Read the rest of a handle.
+file_error       1  unit -> string            strerror text of the last failed file_open or file_write.

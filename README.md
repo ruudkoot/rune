@@ -19,7 +19,7 @@ The full Core language of SML '97 (datatypes, pattern matching, exceptions,
 records, let-polymorphism, refs, proper tail calls), namespace-only structures
 (`structure S = struct ... end`, `open`, `S.x`) and a substantial subset of
 the Basis Library (`Int`, `Word`, `Real`, `Math`, `Char`, `String`, `List`,
-`ListPair`, `Option`, `Array`, `Vector`, `TextIO` on standard streams,
+`ListPair`, `Option`, `Array`, `Vector`, `TextIO` and `BinIO` on standard streams and files,
 `CommandLine`, `OS.Process`). Signatures and functors are not implemented yet.
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed

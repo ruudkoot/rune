@@ -1,6 +1,9 @@
-(* OS.Process *)
+(* OS: SysErr and OS.Process *)
 structure OS =
 struct
+  type syserror = int
+  exception SysErr of string * syserror option
+
   structure Process =
   struct
     type status = int

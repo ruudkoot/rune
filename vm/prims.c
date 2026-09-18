@@ -466,33 +466,104 @@ static int p_print_err(VM *vm) {
 }
 static int p_flush_out(VM *vm) { fflush(stdout); return ret(vm, 1, mk_unit()); }
 
-static int p_input_line(VM *vm) {
+/* Read one line (including its newline) from f; a final line without a
+   newline gets one (Basis). Pops `arity` arguments, pushes string option. */
+static int read_line(VM *vm, FILE *f, int arity) {
     size_t cap = 128, n = 0;
     char *buf = malloc(cap);
     int c;
-    while ((c = fgetc(stdin)) != EOF) {
+    while ((c = fgetc(f)) != EOF) {
         if (n + 1 >= cap) { cap *= 2; buf = realloc(buf, cap); }
         buf[n++] = (char)c;
         if (c == '\n') break;
     }
-    if (n == 0) { free(buf); return ret(vm, 1, mk_con0(0)); }
-    if (buf[n - 1] != '\n') buf[n++] = '\n';   /* Basis: a final line without newline gets one */
+    if (n == 0) { free(buf); return ret(vm, arity, mk_con0(0)); }
+    if (buf[n - 1] != '\n') buf[n++] = '\n';
     Obj *s = vm_string_from(vm, buf, (uint32_t)n);
     free(buf);
     Value r = mk_some(vm, mk_ptr(s));
-    return ret(vm, 1, r);
+    return ret(vm, arity, r);
 }
-static int p_input_all(VM *vm) {
+/* Read the rest of f into a string. */
+static int read_all(VM *vm, FILE *f, int arity) {
     size_t cap = 4096, n = 0;
     char *buf = malloc(cap);
     size_t k;
-    while ((k = fread(buf + n, 1, cap - n, stdin)) > 0) {
+    while ((k = fread(buf + n, 1, cap - n, f)) > 0) {
         n += k;
         if (n == cap) { cap *= 2; buf = realloc(buf, cap); }
     }
     Obj *s = vm_string_from(vm, buf, (uint32_t)n);
     free(buf);
-    return ret(vm, 1, mk_ptr(s));
+    return ret(vm, arity, mk_ptr(s));
+}
+static int p_input_line(VM *vm) { return read_line(vm, stdin, 1); }
+static int p_input_all(VM *vm) { return read_all(vm, stdin, 1); }
+
+/* --- files: handles index vm->files; invalid or closed handles yield NULL --- */
+static FILE *file_of(VM *vm, Value h, const char *prim) {
+    check_tag(vm, h, T_INT, prim);
+    int64_t i = h.u.i;
+    if (i < 0 || (uint64_t)i >= vm->nfiles) return NULL;
+    return vm->files[i];
+}
+static int p_file_open(VM *vm) {
+    Obj *s = check_obj(vm, ARG(1), K_STRING, "file_open");
+    check_tag(vm, ARG(0), T_INT, "file_open");
+    int64_t mode = ARG(0).u.i;
+    const char *m = mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 2 ? "ab" : NULL;
+    if (!m) vm_fatal(vm, "primitive file_open: bad mode");
+    char *path = malloc((size_t)s->len + 1);
+    if (!path) vm_fatal(vm, "out of memory");
+    memcpy(path, OBJ_BYTES(s), s->len);
+    path[s->len] = 0;
+    FILE *f = NULL;
+    if (strlen(path) != s->len) vm->io_errno = EINVAL;   /* embedded NUL */
+    else { f = fopen(path, m); if (!f) vm->io_errno = errno; }
+    free(path);
+    if (!f) return ret(vm, 2, mk_con0(0));
+    if (vm->nfiles == vm->files_cap) {
+        vm->files_cap *= 2;
+        vm->files = realloc(vm->files, vm->files_cap * sizeof(FILE *));
+        if (!vm->files) vm_fatal(vm, "out of memory");
+    }
+    int64_t h = (int64_t)vm->nfiles;
+    vm->files[vm->nfiles++] = f;
+    Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
+    return ret(vm, 2, r);
+}
+static int p_file_close(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "file_close");
+    int64_t i = ARG(0).u.i;
+    if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) { fclose(vm->files[i]); vm->files[i] = NULL; }
+    return ret(vm, 1, mk_unit());
+}
+static int p_file_write(VM *vm) {
+    FILE *f = file_of(vm, ARG(1), "file_write");
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "file_write");
+    if (!f) { vm->io_errno = EBADF; return ret(vm, 2, mk_bool(0)); }
+    if (f == stderr) fflush(stdout);
+    if (fwrite(OBJ_BYTES(s), 1, s->len, f) != s->len) { vm->io_errno = errno; return ret(vm, 2, mk_bool(0)); }
+    return ret(vm, 2, mk_bool(1));
+}
+static int p_file_flush(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_flush");
+    if (f) fflush(f);
+    return ret(vm, 1, mk_unit());
+}
+static int p_file_read_line(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_read_line");
+    if (!f) return ret(vm, 1, mk_con0(0));
+    return read_line(vm, f, 1);
+}
+static int p_file_read_all(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_read_all");
+    if (!f) return ret(vm, 1, mk_ptr(vm_string_from(vm, "", 0)));
+    return read_all(vm, f, 1);
+}
+static int p_file_error(VM *vm) {
+    const char *m = strerror(vm->io_errno);
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, m, (uint32_t)strlen(m))));
 }
 static int p_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "exit");
