@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rune test runner.
-#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--update] [FILTER]
+#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--update] [-j N] [FILTER]
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .args (command line words for
@@ -9,17 +9,25 @@
 #   exactly when present).
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
 #   compiler's stderr must contain the text in the .expected file.
+#
+# Tests run N at a time (default: all available CPUs); results are reported
+# in file order. Each test runs in a worker, `run-tests.sh ... --one SRC`,
+# which writes its outcome to tests/out/<name>.result.
 set -u
 
 rune=bin/rune
 vm=bin/runevm
 update=0
+jobs=""
+one=""
 filter=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --rune) rune=$2; shift 2 ;;
     --vm) vm=$2; shift 2 ;;
     --update) update=1; shift ;;
+    -j) jobs=$2; shift 2 ;;
+    --one) one=$2; shift 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -27,24 +35,16 @@ done
 cd "$(dirname "$0")/.."
 out=tests/out
 mkdir -p "$out"
-pass=0
-fail=0
-failed=""
 
-report_fail() {
-  fail=$((fail + 1))
-  failed="$failed $1"
-  echo "FAIL $1: $2"
-}
-
-for src in tests/lang/*.sml; do
-  name=$(basename "$src" .sml)
-  case "$name" in *"$filter"*) ;; *) continue ;; esac
+# run_lang NAME / run_error NAME: run one test and print its outcome: PASS,
+# "FAIL NAME: why" or "updated NAME".
+run_lang() {
+  name=$1
   base=tests/lang/$name
   rbc=$out/$name.rbc
-  if ! "$rune" "$src" -o "$rbc" 2> "$out/$name.cerr"; then
-    report_fail "$name" "compile error: $(head -1 "$out/$name.cerr")"
-    continue
+  if ! "$rune" "$base.sml" -o "$rbc" 2> "$out/$name.cerr"; then
+    echo "FAIL $name: compile error: $(head -1 "$out/$name.cerr")"
+    return
   fi
   args=""
   [ -f "$base.args" ] && args=$(cat "$base.args")
@@ -60,50 +60,91 @@ for src in tests/lang/*.sml; do
   if [ "$update" = 1 ]; then
     cp "$out/$name.stdout" "$base.expected"
     echo "updated $name"
-    continue
+    return
   fi
   if [ "$code" != "$expected_code" ]; then
-    report_fail "$name" "exit code $code, expected $expected_code: $(head -1 "$out/$name.stderr")"
-    continue
+    echo "FAIL $name: exit code $code, expected $expected_code: $(head -1 "$out/$name.stderr")"
+    return
   fi
   if [ ! -f "$base.expected" ]; then
-    report_fail "$name" "missing $base.expected"
-    continue
+    echo "FAIL $name: missing $base.expected"
+    return
   fi
   if ! cmp -s "$out/$name.stdout" "$base.expected"; then
-    report_fail "$name" "stdout differs (diff $base.expected $out/$name.stdout)"
-    continue
+    echo "FAIL $name: stdout differs (diff $base.expected $out/$name.stdout)"
+    return
   fi
   if [ -f "$base.stderr" ] && ! cmp -s "$out/$name.stderr" "$base.stderr"; then
-    report_fail "$name" "stderr differs (diff $base.stderr $out/$name.stderr)"
-    continue
+    echo "FAIL $name: stderr differs (diff $base.stderr $out/$name.stderr)"
+    return
   fi
-  pass=$((pass + 1))
-done
+  echo PASS
+}
 
-for src in tests/errors/*.sml; do
-  [ -f "$src" ] || continue
-  name=$(basename "$src" .sml)
-  case "$name" in *"$filter"*) ;; *) continue ;; esac
+run_error() {
+  name=$1
   base=tests/errors/$name
-  if "$rune" "$src" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then
-    report_fail "$name" "expected a compile error but compilation succeeded"
-    continue
+  if "$rune" "$base.sml" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then
+    echo "FAIL $name: expected a compile error but compilation succeeded"
+    return
   fi
   if [ "$update" = 1 ]; then
     head -1 "$out/$name.cerr" | sed 's/^[^ ]* error: //' > "$base.expected"
     echo "updated $name"
-    continue
+    return
   fi
   if [ ! -f "$base.expected" ]; then
-    report_fail "$name" "missing $base.expected"
-    continue
+    echo "FAIL $name: missing $base.expected"
+    return
   fi
   if ! head -1 "$out/$name.cerr" | grep -qF "$(cat "$base.expected")"; then
-    report_fail "$name" "error message mismatch: $(head -1 "$out/$name.cerr")"
-    continue
+    echo "FAIL $name: error message mismatch: $(head -1 "$out/$name.cerr")"
+    return
   fi
-  pass=$((pass + 1))
+  echo PASS
+}
+
+if [ -n "$one" ]; then
+  name=$(basename "$one" .sml)
+  case "$one" in
+    tests/lang/*) run_lang "$name" ;;
+    *) run_error "$name" ;;
+  esac > "$out/$name.result"
+  exit 0
+fi
+
+[ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
+tests=""
+for src in tests/lang/*.sml tests/errors/*.sml; do
+  [ -f "$src" ] || continue
+  case "$(basename "$src" .sml)" in *"$filter"*) tests="$tests $src" ;; esac
+done
+
+rm -f "$out"/*.result
+upd=""
+[ "$update" = 1 ] && upd=--update
+if [ -n "$tests" ]; then
+  # shellcheck disable=SC2086
+  printf '%s\n' $tests |
+    xargs -n 1 -P "$jobs" sh tests/run-tests.sh --rune "$rune" --vm "$vm" $upd --one
+fi
+
+pass=0
+fail=0
+failed=""
+for src in $tests; do
+  name=$(basename "$src" .sml)
+  result=$(cat "$out/$name.result" 2> /dev/null)
+  case "$result" in
+    PASS) pass=$((pass + 1)) ;;
+    "updated $name") echo "$result" ;;
+    *)
+      [ -n "$result" ] || result="FAIL $name: no result"
+      echo "$result"
+      fail=$((fail + 1))
+      failed="$failed $name"
+      ;;
+  esac
 done
 
 echo "passed $pass, failed $fail"

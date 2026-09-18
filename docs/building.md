@@ -7,7 +7,7 @@ virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
 
 ## Prerequisites
 
-* A C99 compiler (`cc`; gcc 13 and clang 18 are tested), `make`, POSIX `sh`, `awk`.
+* A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`.
 * At least one of: MLton (tested: 20210117), SML/NJ (tested: 110.79, 32-bit
   build), Poly/ML (tested: 5.7.1). On Debian/Ubuntu:
   `apt install mlton smlnj polyml build-essential`.
@@ -28,8 +28,12 @@ virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-mlton`) and the `bin/rune-boot` wrapper that runs it on `runevm` |
 | `make test-boot` | run `tests/run-tests.sh` with `bin/rune-boot` |
 | `make bootstrap` | compile the compiler with `bin/rune-boot` and check the result equals `bin/rune.rbc` |
-| `make check` | all of the above (about 20 minutes, most of it spent running the compiler on the interpreter) |
+| `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
+
+Make runs recipes, and the test scripts run test programs, in parallel on
+all available CPUs; `make JOBS=4 check` limits that to 4 (`tests/run-tests.sh`
+and `scripts/check-cross.sh` take `-j N`).
 
 `CC=clang make vm` selects another C compiler. `RUNE_LIB=/path make` bakes a
 different default basis-library location into the compiler (default:

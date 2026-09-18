@@ -36,8 +36,8 @@ keep these invariants:
   sources that stay inside the language described in `docs/language.md`: no
   signatures or functors, explicit `IntInf` operations).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `check-cross`, `check-docs`, `test-boot`, `bootstrap`; about 20 minutes,
-  use `make test` while iterating). For VM changes also run the suite with the
+  `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
+  about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
   sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
 * `.expected` files are written by hand or reviewed line by line after
   `tests/run-tests.sh --update <filter>`; never accept generated output

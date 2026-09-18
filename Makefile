@@ -12,8 +12,17 @@
 #   make test-boot  run the suite with the self-hosted compiler
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
+#
+# Recipes and test programs run in parallel on all available CPUs;
+# `make JOBS=N ...` uses N instead.
 
 SHELL   := /bin/sh
+ifndef JOBS
+JOBS    := $(shell sh scripts/ncpus.sh)
+endif
+ifeq ($(MAKELEVEL),0)
+MAKEFLAGS += -j$(JOBS)
+endif
 CC      ?= cc
 CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -pedantic
 ROOT    := $(CURDIR)
@@ -39,10 +48,10 @@ all: mlton vm
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
 
-$(BUILDGEN): sources.txt scripts/gen-build-files.sh
+$(BUILDGEN) &: sources.txt scripts/gen-build-files.sh
 	RUNE_LIB="$(RUNE_LIB)" sh scripts/gen-build-files.sh "$(ROOT)"
 
-$(GEN_SML) $(GEN_C): vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
+$(GEN_SML) $(GEN_C) &: vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
 	sh scripts/gen-opcodes.sh
 
 # ---------------------------------------------------------------- compiler
@@ -84,16 +93,16 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS)
 
 # ---------------------------------------------------------------- tests
 test: mlton vm
-	sh tests/run-tests.sh --rune bin/rune --vm bin/runevm
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune --vm bin/runevm
 
 test-all: all3 vm
 	@for c in mlton smlnj polyml; do \
 	  echo "=== testing with $$c build ==="; \
-	  sh tests/run-tests.sh --rune bin/rune-$$c --vm bin/runevm || exit 1; \
+	  sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
 
 check-cross: all3 bin/rune-boot
-	sh scripts/check-cross.sh
+	sh scripts/check-cross.sh -j $(JOBS)
 
 check-docs:
 	sh scripts/check-docs.sh
@@ -111,14 +120,22 @@ bin/rune-boot: bin/rune.rbc
 boot: bin/rune-boot
 
 test-boot: bin/rune-boot vm
-	sh tests/run-tests.sh --rune bin/rune-boot --vm bin/runevm
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-boot --vm bin/runevm
 
 bootstrap: bin/rune-boot
 	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
 	cmp bin/rune.rbc bin/rune.stage2.rbc
 	@echo "bootstrap: bin/rune.rbc reproduces itself"
 
-check: test test-all check-cross check-docs test-boot bootstrap
+# Steps run one after another: the suite runs share tests/out, and each step
+# keeps JOBS CPUs busy by itself. bootstrap is a single process, so it runs
+# alongside test-boot.
+check:
+	@$(MAKE) --no-print-directory all3 vm boot
+	@$(MAKE) --no-print-directory test
+	@$(MAKE) --no-print-directory test-all
+	@$(MAKE) --no-print-directory test-boot bootstrap
+	@$(MAKE) --no-print-directory check-cross check-docs
 
 clean:
 	rm -rf bin build $(GEN_SML) $(GEN_C) tests/out
