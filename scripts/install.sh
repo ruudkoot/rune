@@ -124,7 +124,9 @@ else
 fi
 
 copy "$root/lib/basis/MANIFEST" "$libdir/basis/MANIFEST" 644
-while read -r f; do
+# the first column of a line is the file
+while IFS='|' read -r f _; do
+  f=$(echo $f)
   case "$f" in ""|\#*) continue ;; esac
   copy "$root/lib/basis/$f" "$libdir/basis/$f" 644
 done < "$root/lib/basis/MANIFEST"

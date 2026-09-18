@@ -59,11 +59,13 @@ check() {
 }
 
 # A program is a source file, `basis:TEST` for the program of the Basis
-# Library suite that runs tests/basis/TEST.sml, or `rune` for the compiler
-# itself.
+# Library suite that runs tests/basis/TEST.sml, `basis-all` for a program
+# compiled with every file of the basis library (--basis all), or `rune` for
+# the compiler itself.
 result_name() {
   case "$1" in
     basis:*) echo "basis-${1#basis:}" ;;
+    basis-all) echo basis-all ;;
     *) basename "$1" .sml ;;
   esac
 }
@@ -73,6 +75,7 @@ if [ -n "$one" ]; then
   case "$one" in
     # shellcheck disable=SC2046
     rune) check rune build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    basis-all) check basis-all --basis all examples/hello.sml ;;
     basis:*)
       may_fail=1
       t=tests/basis/${one#basis:}.sml
@@ -99,6 +102,7 @@ done
 rm -f "$out"/*.result
 # The compiler is the longest job, so it goes first.
 # shellcheck disable=SC2086
+sources="$sources basis-all"
 printf '%s\n' rune $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
 
 status=0

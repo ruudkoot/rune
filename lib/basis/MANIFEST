@@ -1,21 +1,40 @@
-# Basis library files compiled (in this order) before every program.
-# Lines starting with # are comments. Paths are relative to this directory.
-general.sml
-bool.sml
-option.sml
-list.sml
-listpair.sml
-intinf.sml
-int.sml
-word.sml
-char.sml
-string.sml
-real.sml
-array.sml
-vector.sml
-os.sml
-io.sml
-textio.sml
-binio.sml
-commandline.sml
-toplevel.sml
+# The basis library, one file per line, in load order:
+#
+#   file | always or demand | host | provides | requires
+#
+# always    the file is compiled before every program
+# demand    it is compiled before the programs that mention a name it
+#           provides, and before the files that require it
+# host      how tests/basis/host/gen-host-basis.sh gives the file to MLton,
+#           SML/NJ and Poly/ML: yes (as it is), swap (without the types and
+#           exceptions a host must keep its own of) or no
+# provides  the structures, signatures and functors the file declares
+# requires  those of other files that it names; each must be provided by an
+#           earlier line. -Name: the file has the identifier Name without
+#           needing the file that provides it (general.sml declares the
+#           exception Option).
+#
+# `rune --basis-check` verifies the last two columns against the sources, and
+# that a demand file declares modules only: a top-level value or fixity
+# directive of such a file would be in scope for some programs and not for
+# others. `rune --basis-deps FILE...` prints the files a program loads, and
+# `rune --basis all` loads every file.
+general.sml     | always | swap | General               | -Option
+bool.sml        | demand | yes  | Bool                  |
+option.sml      | demand | yes  | Option                |
+list.sml        | demand | yes  | List                  |
+listpair.sml    | demand | yes  | ListPair              |
+intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List
+int.sml         | demand | yes  | Int                   | IntInf
+word.sml        | demand | yes  | Word                  | Int IntInf
+char.sml        | demand | yes  | Char                  | Int
+string.sml      | demand | yes  | String                | Char Int List
+real.sml        | demand | yes  | Real Math             |
+array.sml       | demand | yes  | Array                 | List Option
+vector.sml      | demand | yes  | Vector                | List Option
+os.sml          | demand | yes  | OS                    |
+io.sml          | demand | yes  | IO                    |
+textio.sml      | demand | yes  | TextIO                | IO OS String
+binio.sml       | demand | yes  | Word8Vector Byte BinIO | String TextIO
+commandline.sml | demand | yes  | CommandLine           |
+toplevel.sml    | always | yes  | | Char List Real String Vector

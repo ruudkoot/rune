@@ -76,11 +76,13 @@ for f in lib/basis/*.sml; do
 done
 
 # 5. manifest consistency
-for f in $(grep -v '^[[:space:]]*#' lib/basis/MANIFEST | grep -v '^[[:space:]]*$'); do
+# (the first column of a line; `rune --basis-check` verifies the others)
+manifest_files=$(grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | sed 's/[[:space:]]*|.*//')
+for f in $manifest_files; do
   [ -f "lib/basis/$f" ] || fail "lib/basis/MANIFEST lists missing file $f"
 done
 for f in lib/basis/*.sml; do
-  grep -qx "$(basename "$f")" lib/basis/MANIFEST || fail "$f is not listed in lib/basis/MANIFEST"
+  echo "$manifest_files" | grep -qx "$(basename "$f")" || fail "$f is not listed in lib/basis/MANIFEST"
 done
 
 # 6. every test has an expected output

@@ -6,6 +6,10 @@ _rune() {
     prev=${COMP_WORDS[COMP_CWORD-1]}
 
     case $prev in
+        --basis)
+            COMPREPLY=($(compgen -W 'demand all' -- "$cur"))
+            return
+            ;;
         --lib)
             COMPREPLY=($(compgen -d -- "$cur"))
             return
@@ -17,7 +21,7 @@ _rune() {
     esac
 
     if [[ $cur == -* ]]; then
-        COMPREPLY=($(compgen -W '-o --lib --no-prelude --allow-prim
+        COMPREPLY=($(compgen -W '-o --lib --no-prelude --basis --basis-deps --basis-check --allow-prim
             --typecheck-only --no-warnings --dump-tokens --dump-ast
             --dump-lambda --dump-code --version --help' -- "$cur"))
         return

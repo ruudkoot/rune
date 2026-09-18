@@ -47,6 +47,26 @@ Do not compile the basis library before the inputs. The result then has no
 top-level environment at all, so it is only useful together with
 .BR \-\-allow\-prim .
 .TP
+.BI \-\-basis " MODE"
+With
+.B demand
+(the default) the compiler looks at the identifiers of the inputs and compiles
+the files of the basis library that provide a structure, signature or functor
+they mention, the files those require, and the few that every program gets.
+With
+.B all
+it compiles every file. The
+.B MANIFEST
+records what each file provides and requires.
+.TP
+.B \-\-basis\-deps
+Print the basis library files that the inputs load, one per line, and exit.
+.TP
+.B \-\-basis\-check
+Check the provides and requires columns of the
+.B MANIFEST
+against the library sources, and exit.
+.TP
 .B \-\-allow\-prim
 Allow the
 .B _prim

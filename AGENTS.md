@@ -17,7 +17,9 @@ keep these invariants:
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
 * When adding a basis structure, add a `basis.<name>` row listing its members
-  and add the file to `lib/basis/MANIFEST`. Its test belongs to the Basis
+  and add the file to `lib/basis/MANIFEST` with what it provides and requires
+  (`rune --basis-check`, part of `make check-docs`, verifies the columns; a
+  file loaded on demand declares modules only). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
   written as `tests/basis/README.md` describes, with expected values worked
   out from the text of the specification. `make check-docs` wants a check for

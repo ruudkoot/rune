@@ -156,9 +156,10 @@ test-all: all3 vm | build/.doctor-check
 check-cross: all3 bin/rune-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
-check-docs:
+check-docs: $(RUNE)
 	sh scripts/check-docs.sh
 	sh scripts/check-basis-coverage.sh
+	$(RUNE) --basis-check
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems

@@ -16,11 +16,13 @@
 #                   load order with the structures each one declares
 # The same output serves every host.
 #
-# general.sml declares the types and exceptions that primitives and the
-# host's own library share with the program (option, order, Fail, ...). On a
-# host those must remain the host's, so their declarations are left out; what
-# the file defines in terms of them is kept. IEEEReal.Unordered takes the
-# place of Rune's top-level Unordered.
+# The host column of lib/basis/MANIFEST says how a file is given to a host:
+# yes, as it is; no, not at all; swap, without its top-level datatype and
+# exception declarations. The latter is for the file that declares the types
+# and exceptions that primitives and the host's own library share with the
+# program (option, order, Fail, ...): on a host those must remain the host's;
+# what the file defines in terms of them is kept. IEEEReal.Unordered takes
+# the place of Rune's top-level Unordered.
 set -eu
 
 [ $# = 1 ] || { echo "usage: tests/basis/host/gen-host-basis.sh OUTDIR" >&2; exit 2; }
@@ -63,10 +65,13 @@ END { print "end" }
 printf '%s\n' "$out/RUNE_PRIM.sml" "$here/rune-prim.sml" "$out/hide.sml" > "$out/prelude"
 
 : > "$out/files"
-grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | while read -r f; do
+grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | while IFS='|' read -r f _ host _; do
+  f=$(echo $f)
+  host=$(echo $host)
+  [ "$host" = no ] && continue
   dest=$out/basis/$f
   # Line numbers stay those of lib/basis.
-  if [ "$f" = general.sml ]; then
+  if [ "$host" = swap ]; then
     awk '/^exception Unordered$/ { print "exception Unordered = IEEEReal.Unordered"; next }
          /^(datatype|exception) / { print ""; next }
          { print }' "lib/basis/$f"

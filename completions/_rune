@@ -4,6 +4,9 @@ _arguments -s \
   '-o[write bytecode to FILE]:output file:_files' \
   '--lib[directory holding the basis library in DIR/basis]:library directory:_files -/' \
   '--no-prelude[do not compile the basis library before the inputs]' \
+  '--basis[which files of the basis library to compile]:mode:(demand all)' \
+  '--basis-deps[print the basis library files the inputs load and exit]' \
+  '--basis-check[check the MANIFEST of the basis library and exit]' \
   '--allow-prim[allow the _prim extension in the inputs]' \
   '--typecheck-only[stop after type checking]' \
   '--no-warnings[do not print match warnings]' \

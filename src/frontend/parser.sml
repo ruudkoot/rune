@@ -15,9 +15,10 @@ struct
   (* Parse a file starting from the given fixity environment; returns the
      program and the fixity environment in effect at the end (so that infix
      declarations carry over to later files of the same program). *)
-  fun parseFileWith (file : Source.file, initialFixity : Fixity.env) : program * Fixity.env =
+  (* Parse the tokens of a file (Lexer.tokenize), so that the driver can look
+     at them before it decides what else to parse. *)
+  fun parseTokensWith (toks : Lexer.item vector, initialFixity : Fixity.env) : program * Fixity.env =
     let
-      val toks = Lexer.tokenize file
       val ntoks = Vector.length toks
       val pos = ref 0
       val fixenv : Fixity.env ref = ref initialFixity
@@ -1191,6 +1192,9 @@ struct
     in
       if peek () <> EOF then err ("unexpected '" ^ toString (peek ()) ^ "'") else (program, !fixenv)
     end
+
+  fun parseFileWith (file : Source.file, initialFixity : Fixity.env) : program * Fixity.env =
+    parseTokensWith (Lexer.tokenize file, initialFixity)
 
   fun parseFile (file : Source.file) : program = #1 (parseFileWith (file, Fixity.initial))
 end

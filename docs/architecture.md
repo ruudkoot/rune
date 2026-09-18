@@ -22,7 +22,7 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `BinIO`. |
-| Driver | `src/driver/options.sml`, `main.sml` | CLI | Compiles the basis (from `lib/basis/MANIFEST`) followed by the user files as one program. |
+| Driver | `src/driver/options.sml`, `main.sml` | CLI | Tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
@@ -82,8 +82,10 @@ temporaries that must survive an allocation are pushed on the value stack
 
 ## Basis library
 
-`lib/basis/*.sml` is ordinary SML compiled before every program; the order is
-`lib/basis/MANIFEST`. Primitives are bound with `_prim "name" : ty`. The tags
+`lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the
+order, and what each file provides and requires, is in `lib/basis/MANIFEST`. A
+file that is loaded on demand declares modules only, so that the top-level
+environment of a program does not depend on which files it happens to load. Primitives are bound with `_prim "name" : ty`. The tags
 of `option` and `order` are relied upon by primitives that construct options.
 
 ## Adding a language feature (checklist)
