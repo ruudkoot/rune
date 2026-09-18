@@ -37,8 +37,8 @@ string.sml      | demand | yes  | String                | Char Int List RuneEsca
 substring.sml   | demand | yes  | Substring substring   | List String
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
 real.sml        | demand | yes  | Real Math LargeReal   | IEEEReal Int IntInf List StringCvt
-array.sml       | demand | yes  | Array                 | List Option
 vector.sml      | demand | yes  | Vector                | List Option
+array.sml       | demand | yes  | Array                 | List Option Vector
 os.sml          | demand | yes  | OS                    |
 io.sml          | demand | yes  | IO                    |
 textio.sml      | demand | yes  | TextIO                | IO OS String Substring

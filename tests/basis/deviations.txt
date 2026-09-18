@@ -33,16 +33,9 @@ native:smlnj@110.79 | Bool.*/wsx-* | HOST-BUG | Bool.scan and fromString skip sp
 native:smlnj@110.79 | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
 
 # ---- Vector
-rune | Vector.update/[Sm]* | RUNE-DEV | Vector.update returns a copy of the vector instead of raising Subscript when the index is out of range
 native:smlnj@110.79 | Vector.update/[Sm]* | HOST-BUG | Vector.update returns the vector unchanged instead of raising Subscript when the index is out of range
-rune | Vector.tabulate/Size-above-maxLen | RUNE-DEV | Vector.tabulate applies f (via List.tabulate) before n is compared with maxLen
 
 # ---- Array
-rune | Array.tabulate/Size-above-maxLen | RUNE-DEV | Array.tabulate applies f (via List.tabulate) before n is compared with maxLen
-rune | @section/array/copyVec | RUNE-DEV | Array.copyVec is not implemented
-rune | @section/array_sig/ARRAY | RUNE-DEV | Array lacks copyVec, so it does not match ARRAY
-rune | Array.copy/Subscript-empty-src-* | RUNE-DEV | Array.copy checks di only through the updates it performs, so with an empty src no Subscript is raised for di < 0 or di > |dst|
-rune | Array.copy/Subscript-changes-nothing | RUNE-DEV | Array.copy copies the elements that fit into dst before it raises Subscript; all three hosts leave dst unchanged
 native:smlnj@110.79 | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
 
 # ---- Char

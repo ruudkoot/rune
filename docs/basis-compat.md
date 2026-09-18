@@ -61,9 +61,6 @@ the behaviour that is wrong in what exists today:
 | `Int` | `fromString` does not skip a leading vertical tab or form feed. |
 | `Word` | `fromString` skips no whitespace, does not accept the prefixes `0wX` and `0X`, gives `NONE` for a prefix that no digit follows (the number is the `0`), and wraps around instead of raising `Overflow`. |
 | `Char`, `String` | `fromString` converts non-printing characters instead of stopping at them, does not limit `\^c` to the range `@`..`_`, has no `\uxxxx`, and `String.fromString` gives `NONE` instead of the prefix converted before an improper escape; `Char.fromString` has no `\f...f\`; `String.fromString` passes over an unterminated one. |
-| `Vector` | `update` with an index out of range returns a copy instead of raising `Subscript`. |
-| `Array` | `copy` copies the elements that fit before it raises `Subscript`, and raises nothing for an empty `src` with `di` out of range. |
-| `Array`, `Vector` | `tabulate` applies `f` before `n` is compared with `maxLen`. |
 | `TextIO` | input on a closed stream raises `Io {cause = ClosedStream}` instead of behaving as at end-of-stream; `output1` on a closed stream reports the function `"output"`. |
 
 The `xc1` configurations reproduce these check for check, so they are
@@ -80,6 +77,10 @@ and the `Word` conversions to it; `Char` and `String` `scan`, `toCString`,
 the `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String` rows of the table
 above except the double quote reading. `Int` and `Word` find their precision
 with the arithmetic itself, so the hosts load them (see below).
+
+The `Vector` and `Array` rows are fixed as well (`update` and `copy` check
+their bounds first, `tabulate` checks `maxLen` before it applies `f`,
+`copyVec` exists).
 
 `Real` is complete and `IEEEReal` exists (M2): the members that need the C
 library are primitives (`frexp`, `ldexp`, `nextafter`, `fmod`, `%e`/`%f`
