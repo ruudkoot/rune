@@ -144,7 +144,11 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 void vm_gc(VM *vm, size_t needed);
 
 /* interp.c */
-void vm_push(VM *vm, Value v);
+void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
+static inline void vm_push(VM *vm, Value v) {
+    if (vm->sp >= vm->stack_cap) vm_grow_stack(vm, vm->sp + 1);
+    vm->stack[vm->sp++] = v;
+}
 Value vm_pop(VM *vm);
 Value *vm_top(VM *vm, size_t depth);  /* pointer to stack[sp-1-depth] */
 void vm_fatal(VM *vm, const char *fmt, ...);
@@ -157,7 +161,12 @@ int values_equal(Value a, Value b);
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
 void disassemble(const Program *p, FILE *out);
-int instr_length(uint8_t op);
+
+/* byte length of an instruction, or 0 for an invalid opcode */
+static inline int instr_length(uint8_t op) {
+    if (op >= OP__COUNT) return 0;
+    return 1 + 4 * op_nargs[op];
+}
 
 /* prims.c */
 typedef int (*PrimFn)(VM *vm);

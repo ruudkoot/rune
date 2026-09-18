@@ -16,15 +16,14 @@ void vm_fatal(VM *vm, const char *fmt, ...) {
     exit(2);
 }
 
-void vm_push(VM *vm, Value v) {
-    if (vm->sp >= vm->stack_cap) {
-        size_t ncap = vm->stack_cap ? vm->stack_cap * 2 : 1024;
-        Value *ns = realloc(vm->stack, ncap * sizeof(Value));
-        if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
-        vm->stack = ns;
-        vm->stack_cap = ncap;
-    }
-    vm->stack[vm->sp++] = v;
+void vm_grow_stack(VM *vm, size_t need) {
+    size_t ncap = vm->stack_cap ? vm->stack_cap : 1024;
+    while (ncap < need) ncap *= 2;
+    if (ncap == vm->stack_cap) return;
+    Value *ns = realloc(vm->stack, ncap * sizeof(Value));
+    if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
+    vm->stack = ns;
+    vm->stack_cap = ncap;
 }
 
 Value vm_pop(VM *vm) {
@@ -317,8 +316,12 @@ int vm_run(VM *vm) {
                 size_t base = vm->sp;
                 push_frame(vm, (uint32_t)fidx, c, vm->pc, base);
             }
-            vm_push(vm, arg);
-            for (uint32_t i = 1; i < fn->nlocals; i++) vm_push(vm, mk_unit());
+            /* local 0 is the argument; the other locals start as unit */
+            if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);
+            Value *slot = &vm->stack[vm->sp];
+            slot[0] = arg;
+            for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+            vm->sp += fn->nlocals;
             vm->pc = fn->code_offset;
             break;
         }

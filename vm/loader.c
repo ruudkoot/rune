@@ -22,11 +22,6 @@ static int64_t rd_i64(Reader *r) {
     return (int64_t)v;
 }
 
-int instr_length(uint8_t op) {
-    if (op >= OP__COUNT) return 0;
-    return 1 + 4 * op_nargs[op];
-}
-
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
     return 0;
