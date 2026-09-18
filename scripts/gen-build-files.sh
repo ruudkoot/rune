@@ -6,7 +6,6 @@
 set -eu
 
 root=${1:-$(pwd)}
-libdir=${RUNE_LIB:-$root/lib}
 cd "$root"
 mkdir -p build
 
@@ -45,8 +44,7 @@ cat > build/config.sml <<EOF
 structure Config =
 struct
   val version = "0.3.0"
-  val defaultLibDir = "$libdir"
 end
 EOF
 
-echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/config.sml (lib=$libdir)"
+echo "generated build/rune.mlb build/rune.cm build/polyml-build.sml build/config.sml"

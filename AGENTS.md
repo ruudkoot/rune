@@ -38,6 +38,10 @@ keep these invariants:
 
 * Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
   Poly/ML build files are generated from it — never edit `build/`.
+* The compiler has no built-in library path: `--lib DIR` is required, and each
+  `bin/rune*` is a generated wrapper that passes it and execs the payload next
+  to it. Nothing absolute is baked into the bytecode. `make install` writes the
+  same kind of wrapper for the installed tree (`scripts/install.sh`).
 * The compiler must build with all three SML systems and with itself
   (`make boot`), and all four builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
@@ -46,8 +50,11 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
-  about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
+  `test-basis`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
+  every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
+  same suite with the MLton build and is the faster loop while iterating. For
+  VM changes also run the suite with the
   sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs

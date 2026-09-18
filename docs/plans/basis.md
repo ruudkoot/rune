@@ -86,7 +86,7 @@ ships them) and `Windows`.
    never too little, and the order is fixed. The always-loaded part stays
    under about 400 lines; `print` goes through a hook that `TextIO` replaces.
    Flags: `--basis all`, `--basis-deps`, `--basis-check`. Eager loading of the
-   full library would cost about 15 s per compile on `rune-boot`; a
+   full library would cost about 15 s per compile on `bin/rune`; a
    demand-loaded hello should drop from 0.75 s to about 0.3 s.
 4. **Runtime support.** `exn_name`; an object kind for mutable bytes
    (identity equality; GC-critical); block primitives `array_blit`,

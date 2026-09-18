@@ -1,0 +1,67 @@
+.TH RUNEVM 1 "2026" "runevm 0.2.0" "Rune Manual"
+.SH NAME
+runevm \- run Rune bytecode
+.SH SYNOPSIS
+.B runevm
+.RI [ options ]
+.I file.rbc
+.RI [ args " ...]"
+.SH DESCRIPTION
+.B runevm
+loads a bytecode file produced by
+.BR rune (1)
+and interprets it. Everything after
+.I file.rbc
+is passed to the program and is what its
+.B CommandLine.arguments
+returns;
+.B CommandLine.name
+is
+.I file.rbc
+as spelled on the command line.
+.PP
+The VM is a copying collector over two semispaces. The heap grows on demand, so
+.B \-\-heap\-size
+only sets how much is mapped up front.
+.SH OPTIONS
+.TP
+.BI \-\-heap\-size " N"
+Map
+.I N
+bytes per semispace initially (default 4194304, minimum 4096).
+.TP
+.B \-\-disasm
+Print the bytecode of the program and exit without running it.
+.TP
+.B \-\-trace
+Trace every instruction executed to standard error.
+.TP
+.B \-\-stats
+Print the number of collections, bytes allocated, semispace size and live bytes
+to standard error at exit.
+.TP
+.B \-\-count
+Print the instructions executed and the bytes and objects allocated to standard
+error at exit. The numbers are the same for every run of a program.
+.TP
+.BI \-\-gc\-stress " N"
+Collect before every
+.IR N th
+allocation. This exercises the collector and the primitives' handling of heap
+pointers, and makes programs far slower.
+.TP
+.B \-\-version
+Print the version and exit.
+.TP
+.B \-\-help
+Print a usage summary and exit.
+.SH EXIT STATUS
+.B runevm
+exits with the status the program passed to
+.BR OS.Process.exit ,
+0 when the program returns normally, and 1 after reporting an uncaught
+exception on standard error. It exits 2 when the options are wrong, when the
+bytecode file cannot be read, and on a fatal error in the bytecode itself
+(a type error the compiler should have prevented).
+.SH SEE ALSO
+.BR rune (1)

@@ -16,13 +16,16 @@ struct
     in go [] before TextIO.closeIn ins end
 
   fun preludeFiles () : string list =
-    let
-      val dir = !Options.libDir ^ "/basis"
-      val manifest = dir ^ "/MANIFEST"
-    in
-      List.map (fn f => dir ^ "/" ^ f) (readLines manifest)
-      handle IO.Io _ => raise Options.Usage ("cannot read basis manifest " ^ manifest ^ " (use --lib or --no-prelude)")
-    end
+    case !Options.libDir of
+      NONE => raise Options.Usage "no basis library (use --lib DIR or --no-prelude)"
+    | SOME lib =>
+      let
+        val dir = lib ^ "/basis"
+        val manifest = dir ^ "/MANIFEST"
+      in
+        List.map (fn f => dir ^ "/" ^ f) (readLines manifest)
+        handle IO.Io _ => raise Options.Usage ("cannot read basis manifest " ^ manifest ^ " (use --lib or --no-prelude)")
+      end
 
   fun defaultOutput (first : string) : string =
     let

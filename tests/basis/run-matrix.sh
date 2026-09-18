@@ -3,7 +3,8 @@
 #   tests/basis/run-matrix.sh [-j N] [--configs C1,C2,...] [FILTER]
 #
 # Configurations (default: rune):
-#   rune                   bin/rune + bin/runevm (override: RUNE=, RUNEVM=)
+#   rune                   bin/rune, the self-hosted compiler, + bin/runevm
+#                          (override: RUNE=, RUNEVM=; both must be absolute)
 #   native:mlton  native:smlnj  native:polyml
 #                          the suite against the host's own Basis Library,
 #                          with the installed host (override: MLTON=, SMLNJ=, POLY=)

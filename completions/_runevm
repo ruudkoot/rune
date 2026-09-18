@@ -1,0 +1,13 @@
+#compdef runevm
+
+_arguments -s \
+  '--heap-size[initial semispace size in bytes]:bytes:' \
+  '--disasm[print the bytecode and exit]' \
+  '--trace[trace every instruction to stderr]' \
+  '--stats[print heap statistics at exit]' \
+  '--count[print instructions and allocations at exit]' \
+  '--gc-stress[collect before every Nth allocation]:interval:' \
+  '--version[print the version and exit]' \
+  '(- *)--help[print a usage summary and exit]' \
+  '1:bytecode file:_files -g "*.rbc"' \
+  '*:program argument:'

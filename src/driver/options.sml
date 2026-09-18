@@ -5,7 +5,8 @@ struct
   val inputs : string list ref = ref []
   val noPrelude = ref false
   val allowPrim = ref false
-  val libDir = ref Config.defaultLibDir
+  (* No default: every bin/rune* is a wrapper that passes --lib. *)
+  val libDir : string option ref = ref NONE
   val dumpTokens = ref false
   val dumpAst = ref false
   val dumpLambda = ref false
@@ -21,8 +22,8 @@ struct
     \Compile Standard ML source files to Rune bytecode (run with runevm).\n\
     \\n\
     \  -o FILE           write bytecode to FILE (default: first input with .rbc)\n\
-    \  --lib DIR         directory containing the basis library\n\
-    \                    (default: " ^ Config.defaultLibDir ^ ")\n\
+    \  --lib DIR         directory containing the basis library, in DIR/basis\n\
+    \                    (required unless --no-prelude)\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --typecheck-only  stop after type checking\n\
@@ -41,7 +42,7 @@ struct
       [] => ()
     | "-o" :: f :: rest => (output := SOME f; parse rest)
     | ["-o"] => raise Usage "-o requires an argument"
-    | "--lib" :: d :: rest => (libDir := d; parse rest)
+    | "--lib" :: d :: rest => (libDir := SOME d; parse rest)
     | ["--lib"] => raise Usage "--lib requires an argument"
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)

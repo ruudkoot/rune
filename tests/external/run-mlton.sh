@@ -2,6 +2,8 @@
 # Run MLton's regression programs (github.com/MLton/mlton, regression/) as an
 # external conformance corpus:
 #   tests/external/run-mlton.sh [--rune BIN] [--vm BIN] [-j N] DIR
+# The default compiler is bin/rune, the self-hosted one; --rune bin/rune-mlton
+# is faster.
 # Every DIR/<name>.sml that has a DIR/<name>.ok is compiled, run with a
 # 20-second limit, and its stdout compared with the .ok file. Programs listed
 # in tests/external/mlton-skip.txt (one name per line, with a reason after

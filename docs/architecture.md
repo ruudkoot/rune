@@ -46,15 +46,23 @@ application.
 
 ## Bootstrapping
 
-The compiler is compiled by itself: `make boot` compiles the sources with the
-MLton build into `bin/rune.rbc`, which `runevm` executes as `bin/rune-boot`;
-`make bootstrap` verifies that this self-hosted compiler reproduces
-`bin/rune.rbc` byte for byte, and `check-cross` verifies that it agrees with
-the host builds on every test program. This works because every pass is
-deterministic (ordered maps, counter-generated stamps, reals passed through as
-text) and because the compiler sources use only what Rune itself supports
-(`docs/building.md`, portability rule 6): explicit `IntInf` operations and
-the `TextIO`/`BinIO` file streams of Rune's basis.
+The compiler is compiled by itself, and the result is what Rune ships:
+`make boot` compiles the sources with a host build (`BOOTHOST`, by default
+MLton) into `bin/rune.rbc`, which `runevm` executes as `bin/rune-boot`, and
+`bin/rune` names that. The host builds `bin/rune-mlton`, `bin/rune-smlnj` and
+`bin/rune-polyml` exist to bootstrap it and to check it: `make bootstrap`
+verifies that the self-hosted compiler reproduces `bin/rune.rbc` byte for
+byte, and `check-cross` verifies that all four builds agree on every test
+program. This works because every
+pass is deterministic (ordered maps, counter-generated stamps, reals passed
+through as text) and because the compiler sources use only what Rune itself
+supports (`docs/building.md`, portability rule 6): explicit `IntInf`
+operations and the `TextIO`/`BinIO` file streams of Rune's basis.
+
+None of the four builds knows where the basis library is: `--lib DIR` is
+required, and each `bin/rune*` is a wrapper script that supplies it and execs
+the payload beside it. The bytecode therefore contains no path, and
+`make install` only has to write a different wrapper.
 
 ## Virtual machine
 
