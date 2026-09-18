@@ -205,7 +205,8 @@ native:polyml@5.7.1 | IEEEReal.fromString/integer | HOST-BUG | scan keeps the tr
 native:polyml@5.7.1 | IEEEReal.fromString/small-fraction | HOST-BUG | scan keeps the leading zeros of the fraction and does not lower exp: "0.00125" gives [0, 0, 1, 2, 5] and exp 0
 
 # ---- Word8
-xc1:* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+xc1:mlton@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+xc1:polyml@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
 native:smlnj@110.79 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 native:polyml@5.7.1 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 native:polyml@5.7.1 | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
