@@ -1,5 +1,7 @@
 (* Serialization of a compiled program to the .rbc bytecode format.
-   See docs/bytecode.md for the layout. All multi-byte values are little-endian. *)
+   See docs/bytecode.md for the layout. All multi-byte values are little-endian.
+   The output is assembled from 8-bit strings rather than a list of bytes so
+   that the emitter is cheap when the compiler itself runs on runevm. *)
 structure Emit =
 struct
   open Lambda Codegen
@@ -7,29 +9,26 @@ struct
   val magic = "RUNE"
   val version = 1
 
-  val two64 : IntInf.int = IntInf.pow (2, 64)
+  val two64 : IntInf.int = IntInf.pow (IntInf.fromInt 2, 64)
+  val b256 : IntInf.int = IntInf.fromInt 256
 
-  (* Byte buffer built in reverse. *)
-  type buf = Word8.word list ref
-
-  fun byte (b : buf, v : int) = b := Word8.fromInt (v mod 256) :: !b
+  fun byteChar (v : int) : char = Char.chr (v mod 256)
+  fun u8 (v : int) : string = String.str (byteChar v)
 
   (* floor division makes this correct for negative values too (two's complement) *)
-  fun u32 (b : buf, v : int) =
-    (byte (b, v mod 256); byte (b, (v div 256) mod 256); byte (b, (v div 65536) mod 256); byte (b, (v div 16777216) mod 256))
+  fun u32 (v : int) : string =
+    String.implode [byteChar v, byteChar (v div 256), byteChar (v div 65536), byteChar (v div 16777216)]
 
-  fun i32 (b : buf, v : int) = u32 (b, v)
+  val i32 = u32
 
-  fun i64 (b : buf, v : IntInf.int) =
+  fun i64 (v : IntInf.int) : string =
     let
       val u = IntInf.mod (v, two64)     (* two's complement *)
-      fun go (0, _) = ()
-        | go (n, x) = (byte (b, IntInf.toInt (IntInf.rem (x, 256))); go (n - 1, IntInf.quot (x, 256)))
-    in go (8, u) end
+      fun go (0, _) = []
+        | go (n, x) = byteChar (IntInf.toInt (IntInf.rem (x, b256))) :: go (n - 1, IntInf.quot (x, b256))
+    in String.implode (go (8, u)) end
 
-  fun bytes (b : buf, s : string) = CharVector.app (fn c => byte (b, Char.ord c)) s
-
-  fun str (b : buf, s : string) = (u32 (b, String.size s); bytes (b, s))
+  fun str (s : string) : string = u32 (String.size s) ^ s
 
   (* SML real literal text to C strtod syntax. *)
   fun realText (r : string) = String.map (fn #"~" => #"-" | c => c) r
@@ -38,9 +37,9 @@ struct
     | instrSize (OpLab _) = 5
     | instrSize (Lab _) = 0
 
-  fun serialize (p : program) : Word8.word list =
+  (* The file as chunks in order: the header, then one chunk per function. *)
+  fun serialize (p : program) : string list =
     let
-      val b : buf = ref []
       (* layout: function start offsets and label offsets *)
       val labels : int IntMap.map ref = ref IntMap.empty
       val (starts, codeLen) =
@@ -53,40 +52,36 @@ struct
                        in ((#id f, off) :: starts, off') end) ([], 0) (#funcs p)
       val starts = List.rev starts
       fun labelOffset l = case IntMap.find (!labels, l) of SOME o' => o' | NONE => Error.bug "unresolved label"
+      fun constBytes c =
+        case c of
+          CInt i => u8 0 ^ i64 i
+        | CWord w => u8 1 ^ i64 w
+        | CReal r => u8 2 ^ str (realText r)
+        | CString s => u8 3 ^ str s
+        | CChar c => u8 4 ^ u8 c
+      fun funcEntry (f : func, (_, off)) = u32 off ^ u32 (#nlocals f) ^ str (#name f)
+      fun itemBytes it =
+        case it of
+          Op (opc, args) => String.concat (u8 opc :: List.map i32 args)
+        | OpLab (opc, l) => u8 opc ^ i32 (labelOffset l)
+        | Lab _ => ""
+      val header =
+        String.concat
+          [magic, u32 version,
+           u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
+           u32 (#nglobals p),
+           u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),
+           u32 codeLen]
     in
-      bytes (b, magic);
-      u32 (b, version);
-      (* constants *)
-      u32 (b, List.length (#consts p));
-      List.app (fn c =>
-                  case c of
-                    CInt i => (byte (b, 0); i64 (b, i))
-                  | CWord w => (byte (b, 1); i64 (b, w))
-                  | CReal r => (byte (b, 2); str (b, realText r))
-                  | CString s => (byte (b, 3); str (b, s))
-                  | CChar c => (byte (b, 4); byte (b, c))) (#consts p);
-      (* globals *)
-      u32 (b, #nglobals p);
-      (* functions *)
-      u32 (b, List.length (#funcs p));
-      ListPair.app (fn (f : func, (_, off)) => (u32 (b, off); u32 (b, #nlocals f); str (b, #name f))) (#funcs p, starts);
-      (* code *)
-      u32 (b, codeLen);
-      List.app (fn f =>
-                  List.app (fn it =>
-                              case it of
-                                Op (opc, args) => (byte (b, opc); List.app (fn a => i32 (b, a)) args)
-                              | OpLab (opc, l) => (byte (b, opc); i32 (b, labelOffset l))
-                              | Lab _ => ()) (#code f)) (#funcs p);
-      List.rev (!b)
+      header :: List.map (fn (f : func) => String.concat (List.map itemBytes (#code f))) (#funcs p)
     end
 
   fun writeFile (path : string, p : program) : unit =
     let
-      val data = serialize p
+      val chunks = serialize p
       val out = BinIO.openOut path
     in
-      BinIO.output (out, Word8Vector.fromList data);
+      List.app (fn s => BinIO.output (out, Byte.stringToBytes s)) chunks;
       BinIO.closeOut out
     end
 end

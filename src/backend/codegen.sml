@@ -92,8 +92,8 @@ struct
     | NONE => Error.bug ("unknown primitive " ^ name)
 
   (* immediates are kept within 31 bits so that every host SML Int can hold them *)
-  val int32Max : IntInf.int = 1073741823
-  val int32Min : IntInf.int = ~1073741824
+  val int32Max : IntInf.int = IntInf.fromInt 1073741823
+  val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
   (* ---------------------------------------------------------------- *)
   type ctx = {locals : int IntMap.map ref, nlocals : int ref, env : int IntMap.map,
@@ -120,7 +120,7 @@ struct
       Var v => loadVar (ctx, v)
     | Global g => emit (ctx, Op (Opcodes.GLOBAL, [globalIdx g]))
     | Const (CInt i) =>
-        if i >= int32Min andalso i <= int32Max then emit (ctx, Op (Opcodes.INT, [IntInf.toInt i]))
+        if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then emit (ctx, Op (Opcodes.INT, [IntInf.toInt i]))
         else emit (ctx, Op (Opcodes.CONST, [constIdx (CInt i)]))
     | Const c => emit (ctx, Op (Opcodes.CONST, [constIdx c]))
     | Unit => emit (ctx, Op (Opcodes.UNIT, []))

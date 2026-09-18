@@ -34,18 +34,20 @@ struct
 
       fun digitsWhile (i, p) = if at i andalso p (ch i) then digitsWhile (i + 1, p) else i
 
-      fun parseInt (s, radix) : IntInf.int =
+      (* Explicit IntInf operations: Rune has no literal overloading. *)
+      fun parseInt (s, radix : int) : IntInf.int =
         let
+          val r = IntInf.fromInt radix
           fun go (i, acc) =
             if i >= String.size s then acc
-            else go (i + 1, acc * radix + IntInf.fromInt (hexVal (String.sub (s, i))))
-        in go (0, 0) end
+            else go (i + 1, IntInf.+ (IntInf.* (acc, r), IntInf.fromInt (hexVal (String.sub (s, i)))))
+        in go (0, IntInf.fromInt 0) end
 
       (* Lex a numeric literal starting at i (after an optional ~ at negStart). *)
       fun lexNumber (start, i, neg) =
         let
           fun finishInt (j, v) =
-            (INT (if neg then ~v else v), span (start, j), j)
+            (INT (if neg then IntInf.~ v else v), span (start, j), j)
         in
           if ch i = #"0" andalso ch (i + 1) = #"w" andalso not neg
              andalso (Char.isDigit (ch (i + 2)) orelse (ch (i + 2) = #"x" andalso isHex (ch (i + 3)))) then

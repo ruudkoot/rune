@@ -161,7 +161,7 @@ struct
       and parseLabel () : string =
         case next () of
           ID s => s
-        | INT i => if i > 0 then IntInf.toString i else err "record label must be a positive integer"
+        | INT i => if IntInf.> (i, IntInf.fromInt 0) then IntInf.toString i else err "record label must be a positive integer"
         | t => errAt (prevSpan (), "expected record label but found '" ^ toString t ^ "'")
 
       fun parseTyvarSeq () : string list =
@@ -679,7 +679,7 @@ struct
           val () = advance ()
           val prec = case peek () of
                        INT i => (advance ();
-                                 if i < 0 orelse i > 9 then err "infix precedence must be between 0 and 9"
+                                 if IntInf.< (i, IntInf.fromInt 0) orelse IntInf.> (i, IntInf.fromInt 9) then err "infix precedence must be between 0 and 9"
                                  else IntInf.toInt i)
                      | _ => 0
           val ids = parseFixityIds ()
