@@ -32,6 +32,8 @@ listpair.sml    | demand | yes  | ListPair              |
 intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List StringCvt
 int.sml         | demand | yes  | Int                   | IntInf StringCvt
 word.sml        | demand | yes  | Word LargeWord        | Int IntInf List StringCvt
+word_sig.sml    | demand | yes  | WORD                  | LargeInt LargeWord StringCvt Word
+word8.sml       | demand | yes  | Word8                 | StringCvt WORD Word
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
 substring.sml   | demand | yes  | Substring substring   | List String

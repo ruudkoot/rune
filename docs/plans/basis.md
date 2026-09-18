@@ -56,18 +56,19 @@ depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
 
-**Omitted for now: `IntN` and `WordN`.** The fixed-width structures (`Int8`,
-`Int16`, `Int32`, `Int64`, `Word8`, `Word16`, `Word32`, `Word64`) are not
-implemented. The groundwork is in place: a functor with a `val bits`
+**Omitted for now: `IntN` and `WordN`, except a minimal `Word8`.** The
+fixed-width structures (`Int8`, `Int16`, `Int32`, `Int64`, `Word16`,
+`Word32`, `Word64`) are not implemented. `Word8` exists
+(`lib/basis/word8.sml`, sealed with `signature WORD`, registered with
+`_overload word Word8 8`) because the byte-oriented structures cannot do
+without it; it is written directly, not as an instance of a functor, and its
+test is one application of `tests/basis/fn/word_fn.sml`. The groundwork is in place: a functor with a `val bits`
 parameter and opaque sealing works in Rune, `_overload int Int32 32` would
 register such a type with range-checked constants, and the test functors
 `tests/basis/fn/integer_fn.sml`, `integer_scan_fn.sml`, `word_fn.sml`,
 `word_large_fn.sml` and `word_scan_fn.sml` take any INTEGER or WORD structure
-and its name. What is missing is the signatures `INTEGER` and `WORD` in
-`lib/basis`, one file per instance, and their rows and tests. Consequences
-until then: `Word8` is absent, so M3's `Word8Vector`, `Word8Array`, `Byte`
-and `BinIO` element access have to wait for at least that instance, and the
-`binio`, `byte` tests stay ABSENT on Rune.
+and its name. What is missing is the signature `INTEGER` in `lib/basis`, the functors, one
+file per instance, and their rows and tests.
 
 Left for later milestones: the deviation lines for the current host releases
 (M8; `make matrix` reports their differences as unexplained until then),

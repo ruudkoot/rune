@@ -91,7 +91,8 @@ the `Real` and `Math` rows of the table above. `Real.toString` now follows
 Poly/ML print `1.0`.
 
 Not implemented, by decision and not by oversight: the fixed-width `IntN`
-and `WordN` structures (`Int8` ... `Int64`, `Word8` ... `Word64`);
+and `WordN` structures (`Int8` ... `Int64`, `Word16` ... `Word64`), except a
+minimal `Word8` for the byte-oriented structures;
 [plans/basis.md](plans/basis.md) says what is prepared for them.
 
 Added since M0, with their deviation lines removed: `exnName` and `exnMessage`

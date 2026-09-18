@@ -108,10 +108,10 @@ native:polyml@* | *IO.inputAll/file-grows-after-end-of-stream | SPEC-AMBIGUOUS |
 native:polyml@* | TextIO.inputLine/*end-of-stream | SPEC-AMBIGUOUS | inputLine that returned NONE reads on when the file has grown; the test takes the STREAM_IO model, as MLton and SML/NJ do
 
 # ---- BinIO, Byte
-rune | @absent/binio | RUNE-DEV | no Word8 structure; Word8Vector.vector is string
-rune | @absent/binio_sig | RUNE-DEV | no Word8 structure; Word8Vector.vector is string
-rune | @absent/byte | RUNE-DEV | no Word8 structure
-rune | @absent/byte_sig | RUNE-DEV | no Word8, Word8Array, slice and Substring structures, which BYTE names
+rune | @load/binio | RUNE-DEV | Word8Vector is still a bare string without fromList, sub, ...; BinIO has no element operations
+rune | @load/binio_sig | RUNE-DEV | BinIO lacks elem and the input operations, so it does not match BIN_IO
+rune | @load/byte | RUNE-DEV | Word8Vector is still a bare string without fromList, sub, ...; Byte lacks byteToChar, charToByte and the pack functions
+rune | @absent/byte_sig | RUNE-DEV | no Word8Array, Word8ArraySlice and Word8VectorSlice structures, which BYTE names
 native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
 
 # ---- OS.Process, CommandLine
@@ -203,3 +203,9 @@ native:smlnj@110.79 | @load/ieeereal | HOST-BUG | IEEEReal is that of the 1997 B
 native:smlnj@110.79 | @load/ieeereal_sig | HOST-BUG | IEEEReal is that of the 1997 Basis, so it does not match IEEE_REAL
 native:polyml@5.7.1 | IEEEReal.fromString/integer | HOST-BUG | scan keeps the trailing zeros of il@fl: "100" gives the digits [1, 0, 0]
 native:polyml@5.7.1 | IEEEReal.fromString/small-fraction | HOST-BUG | scan keeps the leading zeros of the fraction and does not lower exp: "0.00125" gives [0, 0, 1, 2, 5] and exp 0
+
+# ---- Word8
+xc1:* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+native:smlnj@110.79 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@5.7.1 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@5.7.1 | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
