@@ -56,6 +56,20 @@ struct
       | _ => Error.bug ("unknown builtin operator " ^ name)
     end
 
+  (* Variables bound to a primitive, `val op + = _prim "int_add" : int * int -> int`,
+     or to such a variable, `val size = String.size`, by stamp. An application
+     of one is translated like an application of the primitive itself; the
+     variable still gets its closure, for the uses that are not applications. *)
+  val primAliases : string IntMap.map ref = ref IntMap.empty
+
+  fun primAliasOf (e : exp) : string option =
+    case e of
+      ETyped (e, _, _) => primAliasOf e
+    | EPrim (name, _, _) => SOME name
+    | EVar (_, ref (SOME (VGlobal s)), _) => IntMap.find (!primAliases, s)
+    | EVar (_, ref (SOME (VLocal s)), _) => IntMap.find (!primAliases, s)
+    | _ => NONE
+
   fun primArity name =
     case Prims.find name of
       SOME (_, a) => a
@@ -209,7 +223,10 @@ struct
                val prim = builtinPrim (name, ty)
                val call = applyPrim (prim, a)
              in if name = "<>" then notExp call else call end
-         | _ => App (transExp f, transExp a))
+         | _ =>
+             (case primAliasOf f of
+                SOME prim => applyPrim (prim, a)
+              | NONE => App (transExp f, transExp a)))
     | EPrim (name, _, _) => applyPrim (name, a)
     | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)
@@ -242,7 +259,11 @@ struct
             case p of
               PVar (_, slot, sp) =>
                 (case patInfo (slot, sp) of
-                   PIVar (stamp, g) => MatchComp.bindVar (stamp, g, transExp e, k ())
+                   PIVar (stamp, g) =>
+                     (case primAliasOf e of
+                        SOME prim => primAliases := IntMap.insert (!primAliases, stamp, prim)
+                      | NONE => ();
+                      MatchComp.bindVar (stamp, g, transExp e, k ()))
                  | _ => general (p, e, k))
             | PWild _ => Seq (transExp e, k ())
             | _ => general (p, e, k)

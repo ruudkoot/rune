@@ -86,7 +86,15 @@ These change no instruction or bytecode format. Each is small.
   (`compareInt`, `Int.<`, `Int.>`). Compare with the builtin `<`/`>` at type
   `int`, or have the primitive return an `order`.
 
-### 2. Inline primitives bound with `val`
+### 2. Inline primitives bound with `val` (done)
+
+Done as part of [basis.md](basis.md): `Translate` records the variables bound
+to a primitive, or to such a variable (`val size = String.size`), and
+translates their applications like `applyPrim`. Measured with `runevm --count`
+on the compiler compiling itself: 541.7 M to 491.9 M instructions, 916 MB to
+650 MB allocated, 22.1 M to 15.5 M objects, 4.3 s to 3.5 s. The description
+as it was written:
+
 
 `lib/basis/int.sml` and others bind `val op < = _prim "int_lt" : ...`. This
 makes `Int.<`, `Int.+` and friends global closures. Every qualified use
