@@ -31,7 +31,8 @@
      val fromList : (key * 'a) list -> 'a map
      exception NotFound
 
-   unionWith f (m1, m2): keys of m2 override m1 unless f is used to combine. *)
+   unionWith f (m1, m2): keys of m2 override m1 unless f is used to combine;
+   the cost is proportional to the size of m2, so pass the smaller map second. *)
 
 structure OrdMap =
 struct
@@ -129,11 +130,12 @@ struct
   fun filteri cmp p m =
     foldli (fn (k, v, acc) => if p (k, v) then insert cmp (acc, k, v) else acc) E m
 
+  (* Inserts the bindings of m2 into m1: O(|m2| log |m1|). *)
   fun unionWith cmp f (m1, m2) =
-    foldli (fn (k, v, acc) =>
+    foldli (fn (k, v2, acc) =>
               case find cmp (acc, k) of
-                NONE => insert cmp (acc, k, v)
-              | SOME v2 => insert cmp (acc, k, f (v, v2))) m2 m1
+                NONE => insert cmp (acc, k, v2)
+              | SOME v1 => insert cmp (acc, k, f (v1, v2))) m1 m2
 
   fun fromList cmp l = List.foldl (fn ((k, v), m) => insert cmp (m, k, v)) E l
 end
