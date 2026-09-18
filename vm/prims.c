@@ -173,6 +173,7 @@ static int p_word_andb(VM *vm) { WORD2("word_andb"); return ret(vm, 2, mk_word(x
 static int p_word_orb(VM *vm) { WORD2("word_orb"); return ret(vm, 2, mk_word(x | y)); }
 static int p_word_xorb(VM *vm) { WORD2("word_xorb"); return ret(vm, 2, mk_word(x ^ y)); }
 static int p_word_notb(VM *vm) { WORD1("word_notb"); return ret(vm, 1, mk_word(~x)); }
+static int p_word_neg(VM *vm) { WORD1("word_neg"); return ret(vm, 1, mk_word(0 - x)); }
 static int p_word_lsl(VM *vm) { WORD2("word_lsl"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x << y)); }
 static int p_word_lsr(VM *vm) { WORD2("word_lsr"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x >> y)); }
 static int p_word_to_int(VM *vm) { WORD1("word_to_int"); if (x > (uint64_t)INT64_MAX) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int((int64_t)x)); }

@@ -52,6 +52,7 @@ struct
   val word_to_int_x = Word.toIntX
   val word_from_int = Word.fromInt
   val word_to_string = Word.toString
+  val word_neg = Word.~
 
   (* ---- real ---- *)
   val real_add = Real.+

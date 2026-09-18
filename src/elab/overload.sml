@@ -39,7 +39,7 @@ struct
                 ("mod", "int_mod"), ("~", "int_neg"), ("abs", "int_abs")] @ comparisons "int");
      register (Types.wordTycon, "word",
                [("+", "word_add"), ("-", "word_sub"), ("*", "word_mul"), ("div", "word_div"),
-                ("mod", "word_mod")] @ comparisons "word");
+                ("mod", "word_mod"), ("~", "word_neg")] @ comparisons "word");
      register (Types.realTycon, "real",
                [("+", "real_add"), ("-", "real_sub"), ("*", "real_mul"), ("/", "real_div"),
                 ("~", "real_neg"), ("abs", "real_abs")] @ comparisons "real");

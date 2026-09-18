@@ -132,3 +132,6 @@ file_flush       1  int -> unit               Flush a handle.
 file_read_line   1  int -> string option      Read a line including its newline (a last line without one gets it); NONE at end of file, and from then on.
 file_read_all    1  int -> string             Read the rest of a handle, including what the file has gained since an end of file.
 file_error       1  unit -> string            strerror text of the last failed file_open or file_write.
+
+# --- added after the first release of the table (numbers are positions: append only) ---
+word_neg         1  word -> word              Two's complement negation: 0 - w.

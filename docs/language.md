@@ -111,7 +111,7 @@ SML rejects, or reject some that SML accepts.
 |---|---|---|---|
 | ty.infer.letpoly | Hindley–Milner inference with let-polymorphism | Supported | |
 | ty.infer.valuerestriction | Value restriction (only non-expansive bindings generalize); a top-level declaration may not leave a type variable undetermined (rules 87–89, e.g. `val r = ref nil` is an error) | Supported | |
-| ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~`/`abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. |
+| ty.overload.default | Overloaded `+ - * div mod / ~ abs < <= > >=` at `int`, `word`, `real`, `char`, `string`; default `int` | Supported | `~` on `int`/`word`/`real`; `abs` on `int`/`real`; `div`/`mod` on `int`/`word`; `/` on `real`. |
 | ty.record.flex | Flexible record types from `#lab` and `{..., ...}` | Supported | |
 | ty.annot | Type annotations on expressions and patterns | Supported | |
 | ty.tyvar.explicit | Explicit type variables `fun 'a f (x : 'a) = ...`, `''a`; implicit scoping at the outermost value declaration where the variable occurs unguarded (Section 4.6); the variables are rigid in their scope and must be generalised by it (rule 15) | Supported | Type variables in `type`, `datatype`, `exception` declarations and signatures must be bound (by the `tyvarseq`, an enclosing value declaration, or implicitly in `val` specifications). |

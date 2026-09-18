@@ -40,7 +40,7 @@ struct
         let val shifted = >> (w, n)
         in if negative then orb (shifted, notb (>> (notb 0w0, n))) else shifted end
     end
-  fun ~ w = 0w0 - w
+  val ~ = _prim "word_neg" : word -> word
 
   fun min (a : word, b) = if a < b then a else b
   fun max (a : word, b) = if a > b then a else b
