@@ -136,3 +136,22 @@ file_error       1  unit -> string            strerror text of the last failed f
 # --- added after the first release of the table (numbers are positions: append only) ---
 word_neg         1  word -> word              Two's complement negation: 0 - w.
 exn_name         1  exn -> string             The name of the exception constructor of an exception value.
+real_floor_r     1  real -> real              Largest integral real not above the argument; zeros, infinities and NaN unchanged.
+real_ceil_r      1  real -> real              Smallest integral real not below the argument.
+real_trunc_r     1  real -> real              The argument without its fraction.
+real_round_r     1  real -> real              Nearest integral real, ties to even; the sign of the argument is kept.
+real_sign_bit    1  real -> bool              The sign bit, also of zeros and NaNs.
+real_copy_sign   2  real * real -> real       The first argument with the sign of the second.
+real_frexp_man   1  real -> real              man of x = man * 2^exp with 0.5 <= |man| < 1; x itself for zeros, infinities and NaN.
+real_frexp_exp   1  real -> int               exp of the same; 0 for zeros, infinities and NaN.
+real_ldexp       2  real * int -> real        x * 2^n, correctly rounded; overflows to an infinity, underflows to a zero.
+real_next_after  2  real * real -> real       The next real after the first argument in the direction of the second.
+real_rem         2  real * real -> real       x - n*y for n = trunc (x/y), computed exactly (C fmod).
+real_fmt_e       2  real * int -> string      C printf %.*e of a finite real: n digits after the point, e.g. -1.50e+02.
+real_fmt_f       2  real * int -> string      C printf %.*f of a finite real: n digits after the point.
+real_shortest    1  real -> string            The %.*e rendering of a finite real with the fewest digits that reads back as the same real.
+real_set_round   1  int -> unit               Rounding mode of the arithmetic: 0 nearest, 1 downward, 2 upward, 3 toward zero.
+real_get_round   1  unit -> int               The current rounding mode, numbered likewise.
+real_sinh        1  real -> real              Hyperbolic sine.
+real_cosh        1  real -> real              Hyperbolic cosine.
+real_tanh        1  real -> real              Hyperbolic tangent.

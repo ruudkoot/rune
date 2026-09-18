@@ -5,6 +5,7 @@
 #include "vm.h"
 #include <math.h>
 #include <errno.h>
+#include <fenv.h>
 
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
 
@@ -262,19 +263,24 @@ static int p_real_to_string(VM *vm) {
 
 static int p_real_from_string(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "real_from_string");
-    char buf[128];
-    uint32_t n = s->len < sizeof buf - 1 ? s->len : (uint32_t)(sizeof buf - 1);
+    uint32_t n = s->len;
     const char *b = OBJ_BYTES(s);
+    char *buf = malloc((size_t)n + 1);   /* a numeral may have any number of digits */
+    if (!buf) vm_fatal(vm, "out of memory");
     uint32_t i = 0, o = 0;
     while (i < n && (b[i] == ' ' || b[i] == '\t' || b[i] == '\n')) i++;
     for (; i < n; i++) buf[o++] = b[i] == '~' ? '-' : b[i];
     buf[o] = 0;
-    if (o == 0 || !((buf[0] >= '0' && buf[0] <= '9') || buf[0] == '-' || buf[0] == '+' || buf[0] == '.'))
+    if (o == 0 || !((buf[0] >= '0' && buf[0] <= '9') || buf[0] == '-' || buf[0] == '+' || buf[0] == '.')) {
+        free(buf);
         return ret(vm, 1, mk_con0(0));
+    }
     char *end;
     errno = 0;
     double d = strtod(buf, &end);
-    if (end == buf) return ret(vm, 1, mk_con0(0));
+    int none = end == buf;
+    free(buf);
+    if (none) return ret(vm, 1, mk_con0(0));
     Value r = mk_some(vm, mk_real(d));
     return ret(vm, 1, r);
 }
@@ -288,6 +294,85 @@ static int p_real_atan(VM *vm) { REAL1("real_atan"); return ret(vm, 1, mk_real(a
 static int p_real_atan2(VM *vm) { REAL2("real_atan2"); return ret(vm, 2, mk_real(atan2(x, y))); }
 static int p_real_pow(VM *vm) { REAL2("real_pow"); return ret(vm, 2, mk_real(pow(x, y))); }
 static int p_real_is_nan(VM *vm) { REAL1("real_is_nan"); return ret(vm, 1, mk_bool(isnan(x))); }
+
+/* --- the parts of REAL and MATH that need the C library (all ISO C99) --- */
+static int p_real_floor_r(VM *vm) { REAL1("real_floor_r"); return ret(vm, 1, mk_real(floor(x))); }
+static int p_real_ceil_r(VM *vm) { REAL1("real_ceil_r"); return ret(vm, 1, mk_real(ceil(x))); }
+static int p_real_trunc_r(VM *vm) { REAL1("real_trunc_r"); return ret(vm, 1, mk_real(trunc(x))); }
+/* Ties to even whatever the rounding mode is; x - floor x is exact. */
+static int p_real_round_r(VM *vm) {
+    REAL1("real_round_r");
+    if (isnan(x) || isinf(x)) return ret(vm, 1, mk_real(x));
+    double below = floor(x), d = x - below, r;
+    if (d < 0.5) r = below;
+    else if (d > 0.5) r = below + 1.0;
+    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
+    return ret(vm, 1, mk_real(copysign(r, x)));
+}
+static int p_real_sign_bit(VM *vm) { REAL1("real_sign_bit"); return ret(vm, 1, mk_bool(signbit(x) != 0)); }
+static int p_real_copy_sign(VM *vm) { REAL2("real_copy_sign"); return ret(vm, 2, mk_real(copysign(x, y))); }
+static int p_real_frexp_man(VM *vm) { REAL1("real_frexp_man"); int e; return ret(vm, 1, mk_real(frexp(x, &e))); }
+static int p_real_frexp_exp(VM *vm) {
+    REAL1("real_frexp_exp");
+    int e = 0;
+    if (!isnan(x) && !isinf(x) && x != 0.0) (void)frexp(x, &e);
+    return ret(vm, 1, mk_int(e));
+}
+static int p_real_ldexp(VM *vm) {
+    check_tag(vm, ARG(1), T_REAL, "real_ldexp");
+    check_tag(vm, ARG(0), T_INT, "real_ldexp");
+    double x = ARG(1).u.d;
+    int64_t n = ARG(0).u.i;
+    if (n > 100000) n = 100000;
+    if (n < -100000) n = -100000;
+    return ret(vm, 2, mk_real(ldexp(x, (int)n)));
+}
+static int p_real_next_after(VM *vm) { REAL2("real_next_after"); return ret(vm, 2, mk_real(nextafter(x, y))); }
+static int p_real_rem(VM *vm) { REAL2("real_rem"); return ret(vm, 2, mk_real(fmod(x, y))); }
+
+/* printf of a finite real with n digits after the point; the longest result
+   is that of %f for the largest real, 309 digits before the point. */
+static int real_printf(VM *vm, const char *name, const char *format) {
+    check_tag(vm, ARG(1), T_REAL, name);
+    check_tag(vm, ARG(0), T_INT, name);
+    double x = ARG(1).u.d;
+    int64_t n = ARG(0).u.i;
+    if (n < 0 || n > 100000) return raise_with(vm, 2, EXN_SIZE);
+    size_t cap = (size_t)n + 400;
+    char *buf = malloc(cap);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int len = snprintf(buf, cap, format, (int)n, x);
+    Obj *s = vm_string_from(vm, buf, (uint32_t)len);
+    free(buf);
+    return ret(vm, 2, mk_ptr(s));
+}
+static int p_real_fmt_e(VM *vm) { return real_printf(vm, "real_fmt_e", "%.*e"); }
+static int p_real_fmt_f(VM *vm) { return real_printf(vm, "real_fmt_f", "%.*f"); }
+static int p_real_shortest(VM *vm) {
+    REAL1("real_shortest");
+    char buf[64];
+    int len = 0;
+    for (int k = 0; k <= 16; k++) {
+        len = snprintf(buf, sizeof buf, "%.*e", k, x);
+        if (strtod(buf, NULL) == x) break;
+    }
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)len)));
+}
+static const int rounding_modes[4] = { FE_TONEAREST, FE_DOWNWARD, FE_UPWARD, FE_TOWARDZERO };
+static int p_real_set_round(VM *vm) {
+    INT1("real_set_round");
+    if (x < 0 || x > 3) vm_fatal(vm, "primitive real_set_round: bad mode");
+    fesetround(rounding_modes[x]);
+    return ret(vm, 1, mk_unit());
+}
+static int p_real_get_round(VM *vm) {
+    int mode = fegetround(), k = 0;
+    for (int i = 0; i < 4; i++) if (rounding_modes[i] == mode) k = i;
+    return ret(vm, 1, mk_int(k));
+}
+static int p_real_sinh(VM *vm) { REAL1("real_sinh"); return ret(vm, 1, mk_real(sinh(x))); }
+static int p_real_cosh(VM *vm) { REAL1("real_cosh"); return ret(vm, 1, mk_real(cosh(x))); }
+static int p_real_tanh(VM *vm) { REAL1("real_tanh"); return ret(vm, 1, mk_real(tanh(x))); }
 
 /* ================================================================ char */
 #define CHAR2(name) int64_t x = ARG(1).u.i, y = ARG(0).u.i; check_tag(vm, ARG(1), T_CHAR, name); check_tag(vm, ARG(0), T_CHAR, name)

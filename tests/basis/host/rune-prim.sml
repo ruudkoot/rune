@@ -81,7 +81,23 @@ struct
     end
   val real_trunc = Real.trunc
   val real_to_string = Real.toString
-  val real_from_string = Real.fromString
+  (* Poly/ML raises Overflow for an exponent that does not fit an int; the
+     value is then an infinity, or a zero for a negative exponent or a zero
+     mantissa. *)
+  fun real_from_string s =
+    Real.fromString s
+    handle Overflow =>
+      let
+        val cs = String.explode s
+        fun mantissaIsZero [] = true
+          | mantissaIsZero (c :: rest) =
+            if c = #"e" orelse c = #"E" then true
+            else if #"1" <= c andalso c <= #"9" then false
+            else mantissaIsZero rest
+        val negativeExponent = String.isSubstring "e-" s orelse String.isSubstring "e~" s
+                               orelse String.isSubstring "E-" s orelse String.isSubstring "E~" s
+        val magnitude = if mantissaIsZero cs orelse negativeExponent then 0.0 else Real.posInf
+      in SOME (if String.isPrefix "-" s orelse String.isPrefix "~" s then ~ magnitude else magnitude) end
   val real_sqrt = Math.sqrt
   val real_exp = Math.exp
   val real_ln = Math.ln
@@ -92,6 +108,82 @@ struct
   val real_atan2 = Math.atan2
   val real_pow = Math.pow
   val real_is_nan = Real.isNan
+
+  (* ---- the primitives that are C library functions on the VM ----
+     Written to avoid what the suite shows to be wrong on a host: reals from
+     2^52 are integral already (SML/NJ's realFloor is inexact there), a zero
+     result takes the sign of the argument, and rounding is decided on the
+     exact fraction x - floor x (Poly/ML rounds 0.49999999999999994 up). *)
+  val two52 = 4503599627370496.0
+  fun integral (f : real -> real) x =
+    if Real.isNan x orelse not (Real.isFinite x) orelse Real.abs x >= two52 then x
+    else let val r = f x in if Real.== (r, 0.0) then Real.copySign (0.0, x) else r end
+  val real_floor_r = integral Real.realFloor
+  val real_ceil_r = integral Real.realCeil
+  val real_trunc_r = integral Real.realTrunc
+  val real_round_r =
+    integral (fn x =>
+      let val below = Real.realFloor x
+          val d = x - below
+      in
+        if d < 0.5 then below
+        else if d > 0.5 then below + 1.0
+        else if Real.== (Real.rem (below, 2.0), 0.0) then below
+        else below + 1.0
+      end)
+  val real_sign_bit = Real.signBit
+  val real_copy_sign = Real.copySign
+  fun unscaled x = Real.isNan x orelse not (Real.isFinite x) orelse Real.== (x, 0.0)
+  fun real_frexp_man x = if unscaled x then x else #man (Real.toManExp x)
+  fun real_frexp_exp x = if unscaled x then 0 else #exp (Real.toManExp x)
+  fun real_ldexp (x, n) = if unscaled x then x else Real.fromManExp {man = x, exp = n}
+  val real_next_after = Real.nextAfter
+  (* C's fmod, exactly: the hosts compute x - n*y in floating point. While
+     r >= y, subtract y scaled to the binade of r, halved if that is above r;
+     then t <= r < 2t and r - t is exact (Sterbenz). *)
+  fun real_rem (x, y) =
+    if Real.isNan x orelse Real.isNan y then x + y
+    else if not (Real.isFinite x) orelse Real.== (y, 0.0) then Real.posInf - Real.posInf
+    else if not (Real.isFinite y) then x
+    else
+      let
+        val ay = Real.abs y
+        fun go r =
+          if r < ay then r
+          else
+            let
+              val t = Real.fromManExp {man = ay, exp = #exp (Real.toManExp r) - #exp (Real.toManExp ay)}
+              val t = if t > r then t / 2.0 else t
+            in go (r - t) end
+      in Real.copySign (go (Real.abs x), x) end
+
+  (* C's printf syntax from the host's fmt, for a finite real that is not negative *)
+  fun cSyntax s = String.map (fn #"E" => #"e" | #"~" => #"-" | c => c) s
+  fun precision n = if n < 0 orelse n > 100000 then raise Size else SOME n
+  fun real_fmt_e (x, n) = cSyntax (Real.fmt (StringCvt.SCI (precision n)) x)
+  fun real_fmt_f (x, n) = Real.fmt (StringCvt.FIX (precision n)) x
+  fun real_shortest x =
+    let
+      fun go k =
+        let val s = Real.fmt (StringCvt.SCI (SOME k)) x
+        in
+          if k >= 16 then s
+          else case Real.fromString s of
+                 SOME y => if Real.== (x, y) then s else go (k + 1)
+               | NONE => go (k + 1)
+        end
+    in cSyntax (go 0) end
+
+  fun real_set_round 0 = IEEEReal.setRoundingMode IEEEReal.TO_NEAREST
+    | real_set_round 1 = IEEEReal.setRoundingMode IEEEReal.TO_NEGINF
+    | real_set_round 2 = IEEEReal.setRoundingMode IEEEReal.TO_POSINF
+    | real_set_round _ = IEEEReal.setRoundingMode IEEEReal.TO_ZERO
+  fun real_get_round () =
+    case IEEEReal.getRoundingMode () of
+      IEEEReal.TO_NEAREST => 0 | IEEEReal.TO_NEGINF => 1 | IEEEReal.TO_POSINF => 2 | IEEEReal.TO_ZERO => 3
+  val real_sinh = Math.sinh
+  fun real_cosh x = Math.cosh (Real.abs x)   (* even; MLton gives ~inf for ~inf *)
+  val real_tanh = Math.tanh
 
   (* ---- char and string ---- *)
   val char_ord = Char.ord

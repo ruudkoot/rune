@@ -14,7 +14,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | Part 0, `make doctor` | done |
 | M0, suite, matrix and cross-check scaffolding | done |
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
-| M2–M8 | not started |
+| M2, text conversion and numbers | in progress; `IntN`/`WordN` omitted for now (below) |
+| M3–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -47,6 +48,19 @@ primitives (M3, with the monomorphic arrays and slices); the `print` hook and
 the `SysErr`/`Io` declarations in `initial.sml` (M4, with the I/O stack and
 `sys_init`); the exit hook (M5, with `OS.Process.atExit`).
 
+**Omitted for now: `IntN` and `WordN`.** The fixed-width structures (`Int8`,
+`Int16`, `Int32`, `Int64`, `Word8`, `Word16`, `Word32`, `Word64`) are not
+implemented. The groundwork is in place: a functor with a `val bits`
+parameter and opaque sealing works in Rune, `_overload int Int32 32` would
+register such a type with range-checked constants, and the test functors
+`tests/basis/fn/integer_fn.sml`, `integer_scan_fn.sml`, `word_fn.sml`,
+`word_large_fn.sml` and `word_scan_fn.sml` take any INTEGER or WORD structure
+and its name. What is missing is the signatures `INTEGER` and `WORD` in
+`lib/basis`, one file per instance, and their rows and tests. Consequences
+until then: `Word8` is absent, so M3's `Word8Vector`, `Word8Array`, `Byte`
+and `BinIO` element access have to wait for at least that instance, and the
+`binio`, `byte` tests stay ABSENT on Rune.
+
 Left for later milestones: the deviation lines for the current host releases
 (M8; `make matrix` reports their differences as unexplained until then),
 tests that need a second process (exit status, `atExit` order, what `print`
@@ -75,8 +89,9 @@ ships them) and `Windows`.
   `docs/language.md` row and a test, every primitive is in `docs/bytecode.md`.
 * Library sources and tests do not depend on the precision of `int` and
   `word`. Measured on the hosts: SML/NJ 110.79 31 bits, MLton 32 (64 with
-  `-default-type`), Poly/ML and SML/NJ 110.99 63. Precisions come from one
-  configuration structure.
+  `-default-type`), Poly/ML and SML/NJ 110.99 63. `Int` and `Word` find
+  their precision with the arithmetic itself (doubling until `Overflow`,
+  shifting a bit out).
 * Tests are portable Standard ML '97 plus the Basis Library, nothing else.
 * The core VM uses only ISO C99. POSIX code lives only in `vm/sys_posix.c`,
   behind `vm/sys.h`, with `vm/sys_none.c` as the fallback.

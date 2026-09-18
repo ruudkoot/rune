@@ -60,8 +60,6 @@ the behaviour that is wrong in what exists today:
 | `Bool` | `fromString` accepts exactly `"true"` and `"false"`: case and initial whitespace are not ignored, and characters after the word give `NONE`. |
 | `Int` | `fromString` does not skip a leading vertical tab or form feed. |
 | `Word` | `fromString` skips no whitespace, does not accept the prefixes `0wX` and `0X`, gives `NONE` for a prefix that no digit follows (the number is the `0`), and wraps around instead of raising `Overflow`. |
-| `Real` | `signBit` is false for every NaN (so `~`, `sameSign`, `copySign` ignore the sign of a NaN); `checkFloat` raises `Domain` on NaN, not `Div`; `realFloor`, `realCeil`, `realTrunc`, `realRound` go through `int`: `Overflow` on huge values and infinities, `Domain` on NaN, a zero result loses its sign, and `realRound (2^52 + 1)` is `2^52 + 2`. |
-| `Math` | `pow (1.0, NaN)` and `pow (±1.0, ±inf)` are 1.0 (C `pow`), not NaN; `sinh` and `tanh` of `~0.0` are `0.0`; `tanh` is NaN for infinities and for \|x\| > 710. |
 | `Char`, `String` | `fromString` converts non-printing characters instead of stopping at them, does not limit `\^c` to the range `@`..`_`, has no `\uxxxx`, and `String.fromString` gives `NONE` instead of the prefix converted before an improper escape; `Char.fromString` has no `\f...f\`; `String.fromString` passes over an unterminated one. |
 | `Vector` | `update` with an index out of range returns a copy instead of raising `Subscript`. |
 | `Array` | `copy` copies the elements that fit before it raises `Subscript`, and raises nothing for an empty `src` with `di` out of range. |
@@ -71,7 +69,7 @@ the behaviour that is wrong in what exists today:
 The `xc1` configurations reproduce these check for check, so they are
 properties of the library source and not of Rune's compiler or VM. The
 departures that `xc1` does not reproduce come from the VM's primitives
-(`Math.pow`, `sinh`, `tanh` follow C).
+(at M0 `Math.pow`, `sinh` and `tanh` followed C).
 
 M2 so far (25,040 of 25,151 checks pass on Rune; 6 of the 49 tests need a
 structure Rune lacks): `StringCvt` and `Substring`; `scan` and `fmt` for
@@ -82,6 +80,18 @@ and the `Word` conversions to it; `Char` and `String` `scan`, `toCString`,
 the `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String` rows of the table
 above except the double quote reading. `Int` and `Word` find their precision
 with the arithmetic itself, so the hosts load them (see below).
+
+`Real` is complete and `IEEEReal` exists (M2): the members that need the C
+library are primitives (`frexp`, `ldexp`, `nextafter`, `fmod`, `%e`/`%f`
+formatting, the shortest digits that read back, `fesetround`, `sinh`, `cosh`,
+`tanh`), and `fromLargeInt` rounds correctly with a sticky bit. That removed
+the `Real` and `Math` rows of the table above. `Real.toString` now follows
+`GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
+Poly/ML print `1.0`.
+
+Not implemented, by decision and not by oversight: the fixed-width `IntN`
+and `WordN` structures (`Int8` ... `Int64`, `Word8` ... `Word64`);
+[plans/basis.md](plans/basis.md) says what is prepared for them.
 
 Added since M0, with their deviation lines removed: `exnName` and `exnMessage`
 (at top level and in `General`, which now matches `GENERAL`), and the three

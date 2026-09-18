@@ -35,7 +35,8 @@ word.sml        | demand | yes  | Word LargeWord        | Int IntInf List String
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
 substring.sml   | demand | yes  | Substring substring   | List String
-real.sml        | demand | yes  | Real Math             |
+ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
+real.sml        | demand | yes  | Real Math LargeReal   | IEEEReal Int IntInf List StringCvt
 array.sml       | demand | yes  | Array                 | List Option
 vector.sml      | demand | yes  | Vector                | List Option
 os.sml          | demand | yes  | OS                    |

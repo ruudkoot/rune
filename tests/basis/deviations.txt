@@ -132,34 +132,6 @@ native:smlnj@110.79 | OS.Process.sleep/positive | HOST-BUG | sleep drops the fra
 *:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
 
 # ---- Real, Math
-rune | @absent/real_fmt | RUNE-DEV | no StringCvt and IEEEReal structures, so no Real.fmt, scan, toDecimal and fromDecimal
-rune | @section/real/rem | RUNE-DEV | Real.rem is not implemented
-rune | @section/real/muladd | RUNE-DEV | Real.*+ and Real.*- are not implemented
-rune | @section/real/unordered-exn | RUNE-DEV | no structure IEEEReal: Real.compare raises a top-level exception Unordered, not IEEEReal.Unordered
-rune | @section/real/comparereal | RUNE-DEV | Real.compareReal and IEEEReal.real_order are not implemented
-rune | @section/real/qeq | RUNE-DEV | Real.?= is not implemented
-rune | @section/real/unordered | RUNE-DEV | Real.unordered is not implemented
-rune | @section/real/class | RUNE-DEV | Real.class and IEEEReal.float_class are not implemented
-rune | @section/real/manexp* | RUNE-DEV | Real.toManExp and Real.fromManExp are not implemented
-rune | @section/real/split | RUNE-DEV | Real.split and Real.realMod are not implemented
-rune | @section/real/nextafter | RUNE-DEV | Real.nextAfter is not implemented
-rune | @section/real/rounding-modes | RUNE-DEV | no IEEEReal.rounding_mode: Real.toInt has the type real -> int
-rune | @section/real/tolargeint* | RUNE-DEV | Real.toLargeInt is not implemented
-rune | @section/real/fromlargeint | RUNE-DEV | Real.fromLargeInt is not implemented
-rune | @section/real/large | RUNE-DEV | no structure LargeReal; Real.fromLarge has the type real -> real
-rune | @section/real/largereal | RUNE-DEV | no structure LargeReal
-rune | @load/real_sig | RUNE-DEV | Real does not match REAL: no IEEEReal, StringCvt.realfmt, LargeReal, and the members of the @section/real lines are missing
-rune | Real.*/*nan-sign | RUNE-DEV | Real.signBit is false for every NaN, so that ~, signBit, sameSign and copySign ignore the sign of a NaN
-rune | Real.checkFloat/Div-nan | RUNE-DEV | Real.checkFloat raises Domain on NaN, not Div
-rune | Real.real*/*huge | RUNE-DEV | realFloor, realCeil, realTrunc and realRound convert through int and raise Overflow beyond its range
-rune | Real.real*/*Inf | RUNE-DEV | realFloor, realCeil, realTrunc and realRound raise Overflow on infinities instead of returning them
-rune | Real.real*/nan | RUNE-DEV | realFloor, realCeil, realTrunc and realRound raise Domain on NaN instead of returning it
-rune | Real.real*/negzero-sign | RUNE-DEV | realFloor, realCeil, realTrunc and realRound lose the sign of a zero result
-rune | Real.realRound/large-odd | RUNE-DEV | Real.realRound (2^52 + 1) is 2^52 + 2
-rune | Math.pow/*one-base-* | RUNE-DEV | Math.pow (1.0, NaN) and Math.pow (+-1.0, +-inf) are 1.0 (C pow), not NaN
-rune | Math.*nh/negzero | RUNE-DEV | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
-rune | Math.tanh/*Inf | RUNE-DEV | Math.tanh of an infinity is NaN (inf / inf), not +-1
-rune | Math.tanh/large* | RUNE-DEV | Math.tanh x is NaN where sinh x and cosh x overflow (|x| > 710)
 native:mlton@20210117 | Real.rem/zero-by-zero | HOST-BUG | Real.rem (0.0, 0.0) is 0.0, not NaN
 native:mlton@20210117 | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
 native:mlton@20210117 | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
@@ -220,7 +192,7 @@ native:smlnj@110.79 | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
 native:smlnj@110.79 | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
 
 # ---- StringCvt
-rune | @section/stringcvt/Real.fmt | RUNE-DEV | Real.fmt is not implemented, so the realfmt constructors cannot be given to it
+xc1:smlnj@110.79 | @section/stringcvt/Real.fmt | HOST-BUG | lib/basis/real.sml does not load there (the host raises BadReal on the literal 4.9E~324), so Real is the host's and its fmt wants the host's StringCvt.realfmt
 native:smlnj@110.79 | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - |s|) instead of returning s
 native:smlnj@110.79 | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
 
@@ -232,3 +204,9 @@ native:smlnj@110.79 | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubs
 native:polyml@5.7.1 | Substring.substring/Subscript-not-Overflow-sum-* | HOST-BUG | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
 native:polyml@5.7.1 | Substring.extract/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
 native:polyml@5.7.1 | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-BUG | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
+
+# ---- IEEEReal
+native:smlnj@110.79 | @load/ieeereal | HOST-BUG | IEEEReal is that of the 1997 Basis: NAN carries a nan_mode and decimal_approx has a field kind
+native:smlnj@110.79 | @load/ieeereal_sig | HOST-BUG | IEEEReal is that of the 1997 Basis, so it does not match IEEE_REAL
+native:polyml@5.7.1 | IEEEReal.fromString/integer | HOST-BUG | scan keeps the trailing zeros of il@fl: "100" gives the digits [1, 0, 0]
+native:polyml@5.7.1 | IEEEReal.fromString/small-fraction | HOST-BUG | scan keeps the leading zeros of the fraction and does not lower exp: "0.00125" gives [0, 0, 1, 2, 5] and exp 0
