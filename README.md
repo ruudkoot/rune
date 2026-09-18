@@ -57,6 +57,7 @@ make test-all      # ... with each of the three host builds
 make check-cross   # identical bytecode from all four builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
 make test-basis    # the Basis Library suite (tests/basis) with bin/rune
+make perf-check    # instruction and allocation budgets (tests/perf); same numbers on every machine
 make bootstrap     # the self-hosted compiler reproduces bin/rune.rbc
 make check         # everything
 make install       # install under PREFIX; sudo make install goes to /usr/local

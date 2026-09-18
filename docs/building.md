@@ -59,6 +59,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make check-cross` | compile every test, example and Basis Library suite program with all four builds and compare the bytecode |
 | `make check-docs` | verify docs, tests and `.def` files are in sync, and that the Basis Library suite has a check for every specified member |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
+| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml` and by the bootstrap, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |

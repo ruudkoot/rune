@@ -13,7 +13,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 |---|---|
 | Part 0, `make doctor` | done |
 | M0, suite, matrix and cross-check scaffolding | done |
-| M1–M8 | not started |
+| M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
+| M2–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -26,6 +27,25 @@ every failure on the seven configurations is a line of
 is in [docs/basis-compat.md](../basis-compat.md); the departures of Rune's
 existing code listed there are fixed in M2–M5 with the structure they belong
 to, and their deviation lines go with them.
+
+M1 delivered, one commit each: `runevm --count` and `--gc-stress` with
+`make test-stress`, and a map for `Prims.find`; inlined applications of
+variables bound to a primitive (the bootstrap went from 541.7 M to 491.9 M
+instructions and from 916 MB to 650 MB allocated); the overload registry
+`src/elab/overload.sml` (bytecode-identical); the primitive `word_neg`;
+overloaded int and word constants with compile-time range errors, and the
+`_overload` declaration, with `IntInf.int` as the first registered type;
+MANIFEST v2 and the demand-driven loader (`--basis all`, `--basis-deps`,
+`--basis-check`); the always-loaded part reduced to `initial.sml` and
+`pervasive.sml`, 91 lines (hello: 64 KB of bytecode to 4.3 KB, 0.53 s to
+0.04 s to compile with `bin/rune`); `exn_name` with `exnName` and `exnMessage`;
+`make perf-check` (`tests/perf`), part of `make check`.
+
+Moved from M1 to the milestone of their first user, so that they arrive
+tested: the object kind for mutable bytes, `_primtype` and the block
+primitives (M3, with the monomorphic arrays and slices); the `print` hook and
+the `SysErr`/`Io` declarations in `initial.sml` (M4, with the I/O stack and
+`sys_init`); the exit hook (M5, with `OS.Process.atExit`).
 
 Left for later milestones: the deviation lines for the current host releases
 (M8; `make matrix` reports their differences as unexplained until then),

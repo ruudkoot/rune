@@ -7,6 +7,14 @@ spend their time in it. It records where the time goes and the remaining work,
 ordered by expected gain per effort. Numbers are from 2026-09-18 on a 16-CPU
 Linux machine.
 
+## Measuring
+
+`runevm --count` prints the instructions executed and the bytes and objects
+allocated; `make perf-check` holds benchmark programs, the hello compile and
+the bootstrap to budgets on those numbers (`tests/perf`). After a change
+that is meant to move them, `sh tests/perf/run-perf.sh --update` and quote the
+old and new numbers in the commit.
+
 ## Where we are
 
 | Workload | MLton build | `bin/rune` |

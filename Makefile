@@ -15,6 +15,7 @@
 #   make check-cross  verify all four builds emit byte-identical bytecode
 #   make check-docs verify docs/language.md, tests and .def files are in sync
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
+#   make perf-check verify the instruction and allocation budgets (tests/perf)
 #   make test-stress  both suites with a collection before every GC_STRESS-th
 #                   (101; Basis Library suite: GC_STRESS_BASIS-th, 1009) allocation
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
@@ -71,7 +72,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis test-stress hosts matrix-quick matrix install uninstall
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix install uninstall
 
 all: vm boot
 
@@ -169,6 +170,12 @@ test-basis: $(RUNE) vm | build/.doctor-check
 	RUNE=$(abspath $(RUNE)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
 
+# Deterministic budgets on what `runevm --count` reports, for benchmark
+# programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
+# --update after a deliberate change). About 10 seconds.
+perf-check: $(RUNE) vm | build/.doctor-check
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
+
 # Not part of `make check`: a collection before every allocation makes a few
 # tests quadratic. For VM changes, next to `make vm-asan`.
 # The Basis Library suite keeps vectors of 200000 elements alive, so it gets
@@ -229,6 +236,7 @@ check:
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
+	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-cross check-docs
 
 clean:

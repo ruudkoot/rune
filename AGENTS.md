@@ -52,7 +52,7 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  `test-basis`, `perf-check`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For
