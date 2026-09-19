@@ -1,103 +1,107 @@
-abstype MLton treats abstype as a datatype; the Definition forbids equality outside the body (rule 19)
-args-create MLton- or SML/NJ-specific: MLton.Process
-args-spawn MLton- or SML/NJ-specific: MLton.Process
-binio too slow on the interpreter (passes in about 100 s)
-callcc MLton- or SML/NJ-specific: MLton.Cont
-callcc2 MLton- or SML/NJ-specific: SMLofNJ.Cont.callcc
-callcc3 MLton- or SML/NJ-specific: MLton
-char.scan Char.fromString converts an unescaped double quote, a reading of the specification (docs/basis-compat.md); MLton gives NONE
-cmdline CommandLine.name is environment-specific
-command-line CommandLine.name is environment-specific
-conv assumes a 32-bit int, MLton's default; Rune's has 64 bits
-conversion Basis: Word16 (IntN and WordN are omitted for now)
-date-localOffset MLton- or SML/NJ-specific: MLton.ProcEnv.setenv
-eq MLton- or SML/NJ-specific: MLton.eq
-exn-history MLton- or SML/NJ-specific: SMLofNJ.exnHistory
-exn-history3 MLton- or SML/NJ-specific: SMLofNJ.exnHistory
-fast too slow on the interpreter
-filesys needs the file README and the links testlink, testcycl and testbadl where it runs
-finalize MLton- or SML/NJ-specific: MLton.Finalizable
-finalize.2 MLton- or SML/NJ-specific: MLton.Finalizable
-finalize.3 MLton- or SML/NJ-specific: MLton.Finalizable
-finalize.4 MLton- or SML/NJ-specific: MLton.Finalizable
-finalize.5 MLton- or SML/NJ-specific: MLton.Finalizable
-finalize.6 MLton- or SML/NJ-specific: MLton.Finalizable
-fixed-integer MLton-specific: Int2 ... Int64 including widths the specification does not have
-flat-array.4 MLton-specific: Word14
-gc-collect MLton- or SML/NJ-specific: MLton.GC.collect
-gc-collect2 MLton- or SML/NJ-specific: MLton.GC.collect
-general MLton-specific: expects Array.array (Array.maxLen + 1, ()) to overflow (MLton's maxLen is maxInt; Rune's is 100000000, so Size)
-harmonic too slow on the interpreter (IntInf; not done after 10 minutes)
-ieee-real Basis: PackRealBig (Pack* is not implemented)
-int-inf.2 assumes a 32-bit int, MLton's default; Rune's has 64 bits
-int-inf.5 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.compare MLton types an integer constant from a later declaration; Rune defaults it to int at the end of its own
-int-inf.rep1 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.rep2 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.rep3 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.rep4 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.rep5 MLton- or SML/NJ-specific: MLton.IntInf
-int-mul-pow2 Basis: Int8 (IntN and WordN are omitted for now)
-int-overflow Int is 64-bit in Rune; the program expects a 32-bit Int.fromString overflow
-kitsimple too slow on the interpreter
-mlton.overload MLton- or SML/NJ-specific: expected declaration but found '_'
-mlton.share MLton- or SML/NJ-specific: MLton.share
-mlton.word MLton- or SML/NJ-specific: MLton.Word
-mutex MLton- or SML/NJ-specific: MLton.Signal
-nextAfter Basis: Real32 (only Real, which is Real64, is implemented)
-once MLton- or SML/NJ-specific: SMLofNJ.Cont
-overloading Basis: Int16 (IntN and WordN are omitted for now)
-pack MLton- or SML/NJ-specific: MLton.GC
-pack-real Basis: PackReal* (Pack* is not implemented)
-pack-real.2 Basis: PackReal64Little (Pack* is not implemented)
-pack-word Basis: PackWord* (Pack* is not implemented)
-prodcons MLton- or SML/NJ-specific: MLton.Signal
-real Basis: Real32 (only Real, which is Real64, is implemented)
-real-basic Basis: signature PACK_REAL (Pack* is not implemented)
-real-int Basis: Real32 (only Real, which is Real64, is implemented)
-real-sign Basis: Real32 (only Real, which is Real64, is implemented)
-real-str Basis: PackRealBig (Pack* is not implemented)
-ref-flatten.2 Basis: Word16 (IntN and WordN are omitted for now)
-rlimit MLton- or SML/NJ-specific: MLton.Rlimit
-same-fringe MLton- or SML/NJ-specific: MLton.Thread
-serialize MLton- or SML/NJ-specific: MLton
-signals MLton- or SML/NJ-specific: MLton.Signal
-signals2 MLton- or SML/NJ-specific: MLton.Thread
-signals3 MLton- or SML/NJ-specific: MLton.Signal
-signals4 MLton- or SML/NJ-specific: MLton.Signal
-size MLton- or SML/NJ-specific: MLton.size
-slow too slow on the interpreter (IntInf; not done after 10 minutes)
-slow2 too slow on the interpreter (IntInf; not done after 10 minutes)
-slower too slow on the interpreter (passes in about 8 minutes)
-smith-normal-form too slow on the interpreter (IntInf; not done after 10 minutes)
-socket MLton resolves undetermined top-level types across declarations (the mode of a socket); the Definition rejects them (rules 87-89)
-string MLton-specific: expects String.fromCString to give SOME "" where no character converts (the specification says NONE)
-string.fromString String.fromString converts an unescaped double quote, the reading of SML/NJ and Poly/ML (docs/basis-compat.md); MLton stops at it
-suspend MLton- or SML/NJ-specific: MLton.Signal
-test-create MLton- or SML/NJ-specific: MLton.Process
-test-spawn MLton- or SML/NJ-specific: MLton.Process
-textio compares what it writes to stdOut and stdErr merged; the runner compares stdOut
-textio.2 too slow on the interpreter (passes in about 100 s)
-thread-switch MLton- or SML/NJ-specific: MLton
-thread-switch-share MLton- or SML/NJ-specific: MLton.Thread.Runnable.t
-thread-switch-size MLton- or SML/NJ-specific: MLton.Thread.Runnable.t
-thread0 MLton- or SML/NJ-specific: MLton.Thread
-thread1 MLton- or SML/NJ-specific: MLton
-thread2 MLton- or SML/NJ-specific: MLton
-timeout MLton- or SML/NJ-specific: MLton
-undetermined MLton resolves undetermined top-level types across declarations; the Definition rejects them (rules 87-89)
-weak MLton- or SML/NJ-specific: MLton.Weak
-weak.2 MLton- or SML/NJ-specific: MLton.Weak
-weak.3 unclassified: the type of cache, 'a list ref, contains a type variable that cannot be generali
-weird-word1 MLton-specific: Word5 (a width the specification does not have)
-weird-word2 MLton-specific: Word5 (a width the specification does not have)
-widechar characters above 255 (Basis WideChar)
-word assumes a 32-bit word, MLton's default; Rune's has 64 bits
-word-all MLton-specific: Word2 ... Word31 (widths the specification does not have)
-wordn-array MLton-specific: Word5 (a width the specification does not have)
-world1 MLton- or SML/NJ-specific: MLton.World
-world2 MLton- or SML/NJ-specific: MLton.World
-world3 MLton- or SML/NJ-specific: MLton.World
-world4 MLton- or SML/NJ-specific: MLton.World
-world5 MLton- or SML/NJ-specific: MLton.World
-world6 MLton- or SML/NJ-specific: MLton.World
+# Programs of MLton's regression suite that tests/external/run-mlton.sh
+# skips: one per line, the name, a space and CATEGORY: reason.
+#   EXTENSION   needs an extension of MLton or SML/NJ (MLton.*, SMLofNJ.*, a
+#               WordN or IntN of a width the specification does not have)
+#   DEFINITION  MLton accepts or types the program where the Definition
+#               rejects it or leaves the choice to the implementation
+#   WIDTH       assumes MLton's 32-bit int or word, or its size limits
+#   READING     MLton reads the specification otherwise (or departs from it)
+#   HARNESS     needs files, a program name or merged output that the runner
+#               does not provide
+#   SLOW        does not finish in the runner's 20 seconds on the interpreter
+#   SCOPE       needs a part of the Basis Library that Rune leaves out
+# Remove a line when its program passes.
+abstype DEFINITION: MLton treats abstype as a datatype; the Definition forbids equality on the type outside the body (rule 19)
+args-create EXTENSION: MLton.Process
+args-spawn EXTENSION: MLton.Process
+binio SLOW: too slow on the interpreter (passes in about 100 s)
+callcc EXTENSION: MLton.Cont
+callcc2 EXTENSION: SMLofNJ.Cont.callcc
+callcc3 EXTENSION: MLton
+char.scan READING: Char.fromString converts an unescaped double quote, a reading of the specification (docs/basis-compat.md); MLton gives NONE
+cmdline HARNESS: prints CommandLine.name, which MLton's run gives as ./cmdline
+command-line HARNESS: prints CommandLine.name, which MLton's run gives as ./command-line
+conv WIDTH: assumes a 32-bit int, MLton's default; Rune's has 64 bits
+conversion DEFINITION: MLton types the word constants of x8 from a later declaration (as Word8.word); Rune resolves overloading at the end of each top-level declaration (Appendix E allows it) and defaults them to word
+date-localOffset EXTENSION: MLton.ProcEnv.setenv
+eq EXTENSION: MLton.eq
+exn-history EXTENSION: SMLofNJ.exnHistory
+exn-history3 EXTENSION: SMLofNJ.exnHistory
+fast SLOW: too slow on the interpreter
+filesys HARNESS: needs the file README and the links testlink, testcycl and testbadl where it runs
+finalize EXTENSION: MLton.Finalizable
+finalize.2 EXTENSION: MLton.Finalizable
+finalize.3 EXTENSION: MLton.Finalizable
+finalize.4 EXTENSION: MLton.Finalizable
+finalize.5 EXTENSION: MLton.Finalizable
+finalize.6 EXTENSION: MLton.Finalizable
+fixed-integer EXTENSION: Int2 ... Int64, widths the specification does not have
+flat-array.4 EXTENSION: Word14, a width the specification does not have
+gc-collect EXTENSION: MLton.GC.collect
+gc-collect2 EXTENSION: MLton.GC.collect
+general WIDTH: expects Array.array (Array.maxLen + 1, ()) to overflow (MLton's maxLen is maxInt); Rune's maxLen is 100000000, so it raises Size
+harmonic SLOW: too slow on the interpreter (IntInf; not done after 10 minutes)
+int-inf.2 WIDTH: assumes a 32-bit int, MLton's default; Rune's has 64 bits
+int-inf.5 EXTENSION: MLton.IntInf
+int-inf.compare DEFINITION: MLton types an integer constant from a later declaration; Rune resolves overloading at the end of each top-level declaration (Appendix E allows it) and defaults the constant to int
+int-inf.rep1 EXTENSION: MLton.IntInf
+int-inf.rep2 EXTENSION: MLton.IntInf
+int-inf.rep3 EXTENSION: MLton.IntInf
+int-inf.rep4 EXTENSION: MLton.IntInf
+int-inf.rep5 EXTENSION: MLton.IntInf
+int-overflow WIDTH: expects Int.fromString to overflow at 32 bits; Rune's int has 64
+kitsimple SLOW: too slow on the interpreter
+mlton.overload EXTENSION: MLton's _overload declaration
+mlton.share EXTENSION: MLton.share
+mlton.word EXTENSION: MLton.Word
+mutex EXTENSION: MLton.Signal
+nextAfter READING: Real32.nextAfter (r, t) returns r when r = t, as the specification says, so nextAfter (~0.0, 0.0) is ~0.0; MLton returns t (and so does Rune's Real.nextAfter, which is C's nextafter)
+once EXTENSION: SMLofNJ.Cont
+pack EXTENSION: MLton.GC
+prodcons EXTENSION: MLton.Signal
+real READING: MLton prints ~0.0 without its sign under SCI, FIX and GEN (docs/basis-compat.md), fuses Real64 *+, makes a numeral with a huge exponent INF in IEEEReal.fromString, and computes Real32.rem inexactly (rem (maxFinite, 1230.0) is 0.2E32, not below 1230)
+real-int WIDTH: converts ints from Int.minInt on, which has 32 bits in MLton; Rune's int has 64
+real-str READING: Real.fromDecimal rounds in the current rounding mode; MLton rounds to nearest in every mode
+rlimit EXTENSION: MLton.Rlimit
+same-fringe EXTENSION: MLton.Thread
+serialize EXTENSION: MLton
+signals EXTENSION: MLton.Signal
+signals2 EXTENSION: MLton.Thread
+signals3 EXTENSION: MLton.Signal
+signals4 EXTENSION: MLton.Signal
+size EXTENSION: MLton.size
+slow SLOW: too slow on the interpreter (IntInf; not done after 10 minutes)
+slow2 SLOW: too slow on the interpreter (IntInf; not done after 10 minutes)
+slower SLOW: too slow on the interpreter (passes in about 8 minutes)
+smith-normal-form SLOW: too slow on the interpreter (IntInf; not done after 10 minutes)
+socket DEFINITION: MLton resolves undetermined top-level types across declarations (the mode of a socket); the Definition rejects them (rules 87-89)
+string READING: MLton expects String.fromCString to give SOME "" where no character converts; the specification says NONE
+string.fromString READING: String.fromString converts an unescaped double quote, the reading of SML/NJ and Poly/ML (docs/basis-compat.md); MLton stops at it
+suspend EXTENSION: MLton.Signal
+test-create EXTENSION: MLton.Process
+test-spawn EXTENSION: MLton.Process
+textio HARNESS: the expected output is stdOut and stdErr merged; the runner compares stdOut
+textio.2 SLOW: too slow on the interpreter (passes in about 100 s)
+thread-switch EXTENSION: MLton
+thread-switch-share EXTENSION: MLton.Thread.Runnable.t
+thread-switch-size EXTENSION: MLton.Thread.Runnable.t
+thread0 EXTENSION: MLton.Thread
+thread1 EXTENSION: MLton
+thread2 EXTENSION: MLton
+timeout EXTENSION: MLton
+undetermined DEFINITION: MLton resolves undetermined top-level types across declarations; the Definition rejects them (rules 87-89)
+weak EXTENSION: MLton.Weak
+weak.2 EXTENSION: MLton.Weak
+weak.3 DEFINITION: val cache = ref [] gets its type from a later declaration, which MLton allows and the Definition rejects (rules 87-89); the program also needs MLton.Weak
+weird-word1 EXTENSION: Word5, a width the specification does not have
+weird-word2 EXTENSION: Word5, a width the specification does not have
+widechar SCOPE: characters above 255 (WideChar, outside the plan's scope)
+word WIDTH: assumes a 32-bit word, MLton's default; Rune's has 64 bits
+word-all EXTENSION: Word2 ... Word31, widths the specification does not have
+wordn-array EXTENSION: Word5, a width the specification does not have
+world1 EXTENSION: MLton.World
+world2 EXTENSION: MLton.World
+world3 EXTENSION: MLton.World
+world4 EXTENSION: MLton.World
+world5 EXTENSION: MLton.World
+world6 EXTENSION: MLton.World

@@ -41,7 +41,7 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 ## Summary
 
 The last run of `make matrix` (every configuration, both generations of
-hosts). A check that fails is explained by a line of
+hosts), at commit 1bbab40. A check that fails is explained by a line of
 `tests/basis/deviations.txt` or fails the run. A test is absent where the
 system lacks a structure it requires (an optional one: the hosts lack most
 of the monomorphic families and some of `IntN`, `WordN` and `Pack*`; see the
@@ -50,25 +50,27 @@ not load the file of lib/basis it needs.
 
 | Configuration | Checks | Pass | Explained | Tests absent | Tests N/A |
 |---|---:|---:|---:|---:|---:|
-| `rune` | 127,899 | 127,892 | 7 | 0 | 0 |
-| `native:mlton@20210117` | 127,848 | 127,457 | 391 | 0 | 0 |
-| `native:smlnj@110.79` | 60,077 | 58,335 | 1,742 | 40 | 0 |
-| `native:polyml@5.7.1` | 63,531 | 62,753 | 778 | 36 | 0 |
-| `xc1:mlton@20210117` | 127,879 | 127,571 | 308 | 0 | 0 |
-| `xc1:smlnj@110.79` | 85,338 | 83,197 | 2,141 | 0 | 32 |
-| `xc1:polyml@5.7.1` | 127,826 | 127,355 | 471 | 0 | 0 |
-| `native:mlton@20241230` | 127,848 | 127,510 | 338 | 0 | 0 |
-| `native:smlnj@110.99.9` | 60,496 | 59,849 | 647 | 38 | 0 |
-| `native:polyml@5.9.2` | 66,837 | 66,165 | 672 | 34 | 0 |
-| `xc1:mlton@20241230` | 127,879 | 127,571 | 308 | 0 | 0 |
-| `xc1:smlnj@110.99.9` | 127,892 | 127,490 | 402 | 0 | 0 |
-| `xc1:polyml@5.9.2` | 127,851 | 127,496 | 355 | 0 | 0 |
+| `rune` | 132,612 | 132,611 | 1 | 0 | 0 |
+| `native:mlton@20210117` | 132,500 | 132,107 | 393 | 2 | 0 |
+| `native:smlnj@110.79` | 60,135 | 58,389 | 1,746 | 47 | 0 |
+| `native:polyml@5.7.1` | 63,598 | 62,845 | 753 | 42 | 0 |
+| `xc1:mlton@20210117` | 132,592 | 132,284 | 308 | 0 | 0 |
+| `xc1:smlnj@110.79` | 89,820 | 87,679 | 2,141 | 0 | 35 |
+| `xc1:polyml@5.7.1` | 132,582 | 132,106 | 475 | 0 | 0 |
+| `native:mlton@20241230` | 132,500 | 132,160 | 340 | 2 | 0 |
+| `native:smlnj@110.99.9` | 60,554 | 59,903 | 651 | 45 | 0 |
+| `native:polyml@5.9.2` | 67,138 | 66,456 | 682 | 36 | 0 |
+| `xc1:mlton@20241230` | 132,592 | 132,284 | 308 | 0 | 0 |
+| `xc1:smlnj@110.99.9` | 132,605 | 132,199 | 406 | 0 | 0 |
+| `xc1:polyml@5.9.2` | 132,564 | 132,209 | 355 | 0 | 0 |
 
 On Rune the one failure is a reading of the specification (below). The
 `xc1` configurations fail it too, the checks the shim cannot run (sockets,
 `poll`), the checks where a host's function under a primitive of the shim is
 wrong, and on SML/NJ 110.79 whatever needs more than 31 bits of `int`
-(`Time` counts microseconds since 1970).
+(`Time` counts microseconds since 1970). In that run the `unix` test did not end
+on `xc1:polyml@5.7.1` (a child hung after the fork, as `os.process` can
+there; both are `HOST-FLAKY`), hence the one check missing from its row.
 
 ## Structures each system provides
 
@@ -133,13 +135,21 @@ every structure of the specification on each system:
 | `PackWord64Big` | yes | yes | | | yes | yes | |
 | `PackWord64Little` | yes | yes | | | yes | yes | |
 | `RealArray2` | yes | yes | | yes | yes | | yes |
+| `Real32` | yes | yes | | | yes | | yes |
+| `Real32Array` | yes | yes | | | yes | | |
+| `Real32Array2` | yes | yes | | | yes | | |
+| `Real32ArraySlice` | yes | yes | | | yes | | |
+| `Real32Vector` | yes | yes | | | yes | | |
+| `Real32VectorSlice` | yes | yes | | | yes | | |
+| `PackReal32Big` | yes | yes | | | yes | | yes |
+| `PackReal32Little` | yes | yes | | | yes | | yes |
 | `Real64` | yes | yes | yes | | yes | yes | |
 | `Real64Array` | yes | yes | yes | | yes | yes | |
 | `Real64Array2` | yes | yes | | | yes | | |
 | `Real64ArraySlice` | yes | yes | yes | | yes | yes | |
 | `Real64Vector` | yes | yes | yes | | yes | yes | |
 | `Real64VectorSlice` | yes | yes | yes | | yes | yes | |
-| `SML90` | | | yes | yes | | yes | yes |
+| `SML90` | yes | | yes | yes | | yes | yes |
 | `WideChar` | | yes | | | yes | | |
 | `WideCharArray` | | yes | | | yes | | |
 | `WideCharVector` | | yes | | | yes | | |
@@ -183,6 +193,7 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 | `Int8.int`, `Int16.int`, `Int32.int` | an `int` kept in the range of the precision (`Overflow` beyond it); `Int64` and `FixedInt` are `Int` |
 | `Word8.word`, `Word16.word`, `Word32.word` | a `word` whose upper bits are zero; `Word64` is `Word` |
 | `real` | IEEE double; `LargeReal` is `Real` |
+| `Real32.real` | abstract: an IEEE double that binary32 represents, every result rounded to binary32 in the current rounding mode |
 | `char`, `string` | 8-bit characters; strings are immutable byte sequences |
 | `IntInf.int` | a datatype in SML: sign and base-2^30 limbs |
 | `Word8Vector.vector`, `CharVector.vector` | `string` (not abstract) |
