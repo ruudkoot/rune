@@ -36,6 +36,16 @@ int.sml         | demand | yes  | Int                   | IntInf StringCvt
 word.sml        | demand | yes  | Word LargeWord SysWord | Int IntInf List StringCvt
 word_sig.sml    | demand | yes  | WORD                  | LargeInt LargeWord StringCvt Word
 word8.sml       | demand | yes  | Word8                 | StringCvt WORD Word
+int_sig.sml     | demand | yes  | INTEGER               | Int LargeInt StringCvt
+intn_fn.sml     | demand | yes  | RuneIntNFn            | INTEGER Int StringCvt
+int8.sml        | demand | yes  | Int8                  | RuneIntNFn
+int16.sml       | demand | yes  | Int16                 | RuneIntNFn
+int32.sml       | demand | yes  | Int32                 | RuneIntNFn
+int64.sml       | demand | yes  | FixedInt Int64        | Int
+wordn_fn.sml    | demand | yes  | RuneWordNFn           | Int StringCvt WORD Word
+word16.sml      | demand | yes  | Word16                | RuneWordNFn
+word32.sml      | demand | yes  | Word32                | RuneWordNFn
+word64.sml      | demand | yes  | Word64                | Word
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
@@ -110,7 +120,7 @@ sig_generic_sock.sml | demand | yes  | GENERIC_SOCK | Socket
 sig_ieee_real.sml | demand | yes  | IEEE_REAL | StringCvt
 sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO
 sig_inet_sock.sml | demand | yes  | INET_SOCK | NetHostDB Socket
-sig_integer.sml | demand | yes  | INTEGER | Int LargeInt StringCvt
+sig_int_inf.sml | demand | yes  | INT_INF | INTEGER Int Word
 sig_io.sml | demand | yes  | IO |
 sig_list.sml | demand | yes  | LIST |
 sig_list_pair.sml | demand | yes  | LIST_PAIR |
@@ -138,7 +148,6 @@ sig_vector_slice.sml | demand | yes  | VECTOR_SLICE | Vector
 sig_posix_tty.sml | demand | yes  | POSIX_TTY | BIT_FLAGS SysWord
 sig_posix_io.sml | demand | yes  | POSIX_IO | BIT_FLAGS BinPrimIO Position TextPrimIO Word8ArraySlice Word8Vector Word8VectorSlice
 sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO Word8 Word8Vector
-sig_int_inf.sml | demand | yes  | INT_INF | INTEGER Int Word
 sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH Math StringCvt
 sig_os.sml | demand | yes  | OS | IO OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
 sig_text.sml | demand | yes  | TEXT | CHAR Char CharArray CharArraySlice CharVector CharVectorSlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING String Substring

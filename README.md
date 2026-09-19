@@ -24,8 +24,8 @@ records, let-polymorphism, refs, proper tail calls), the Modules language
 `sharing`, functors) and the Basis Library: the required structures, and of
 the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
 the monomorphic vectors and arrays, `Posix`, `Unix`, the sockets and the
-network databases). Omitted for now: the fixed-width `IntN` and `WordN`
-structures other than `Word8`, `Pack*`, `WideChar` and `Posix.TTY`
+network databases, the fixed-width `IntN` and `WordN`). Not there yet:
+`Pack*`, `WideChar` and `Posix.TTY`
 ([docs/basis-compat.md](docs/basis-compat.md)).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed

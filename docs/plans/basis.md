@@ -14,7 +14,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | Part 0, `make doctor` | done |
 | M0, suite, matrix and cross-check scaffolding | done |
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
-| M2, text conversion and numbers | done; `IntN`/`WordN` omitted for now (below) |
+| M2, text conversion and numbers | done (`IntN`/`WordN` came after M8, below) |
 | M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
 | M4, the I/O stack | done |
 | M5, time and the system | done |
@@ -185,19 +185,15 @@ VM value per byte. Still to do in M3: the compact byte-array object kind with
 `PackWord`/`PackReal` structures, and the optional instances for other
 element types (`Bool`, `Int`, `Real`, ...), each one line per functor.
 
-**Omitted for now: `IntN` and `WordN`, except a minimal `Word8`.** The
-fixed-width structures (`Int8`, `Int16`, `Int32`, `Int64`, `Word16`,
-`Word32`, `Word64`) are not implemented. `Word8` exists
-(`lib/basis/word8.sml`, sealed with `signature WORD`, registered with
-`_overload word Word8 8`) because the byte-oriented structures cannot do
-without it; it is written directly, not as an instance of a functor, and its
-test is one application of `tests/basis/fn/word_fn.sml`. The groundwork is in place: a functor with a `val bits`
-parameter and opaque sealing works in Rune, `_overload int Int32 32` would
-register such a type with range-checked constants, and the test functors
+`IntN` and `WordN` were omitted for a while and are there now (after M8):
+`Int8`, `Int16` and `Int32` are applications of `RuneIntNFn`
+(`lib/basis/intn_fn.sml`), which keeps a value in an `int` and raises
+`Overflow` for a result beyond the precision; `Word16` and `Word32` of
+`RuneWordNFn`, which keeps the upper bits of a `word` zero as `Word8` does;
+`Int64`, `FixedInt` and `Word64` are `Int` and `Word`. Each is registered
+with `_overload`, and its tests are the test functors
 `tests/basis/fn/integer_fn.sml`, `integer_scan_fn.sml`, `word_fn.sml`,
-`word_large_fn.sml` and `word_scan_fn.sml` take any INTEGER or WORD structure
-and its name. What is missing is the signature `INTEGER` in `lib/basis`, the functors, one
-file per instance, and their rows and tests.
+`word_large_fn.sml` and `word_scan_fn.sml` applied to it (`tests/basis/intn_*.sml`).
 
 Left for later milestones: tests that need a second process (exit status, `atExit` order, what `print`
 writes, stdin contents, command-line arguments), and a per-test time limit

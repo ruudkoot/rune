@@ -131,6 +131,8 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 |---|---|
 | `int`, `Int.int`, `LargeInt`... | `int`: 64-bit two's complement, `Overflow` checked; `LargeInt` is `IntInf` |
 | `word`, `Word.word` | 64 bits; `LargeWord` and `SysWord` are `Word` |
+| `Int8.int`, `Int16.int`, `Int32.int` | an `int` kept in the range of the precision (`Overflow` beyond it); `Int64` and `FixedInt` are `Int` |
+| `Word8.word`, `Word16.word`, `Word32.word` | a `word` whose upper bits are zero; `Word64` is `Word` |
 | `real` | IEEE double; `LargeReal` is `Real` |
 | `char`, `string` | 8-bit characters; strings are immutable byte sequences |
 | `IntInf.int` | a datatype in SML: sign and base-2^30 limbs |
@@ -152,9 +154,6 @@ reaches.
 
 Not implemented:
 
-* the fixed-width `IntN` and `WordN` structures (`Int8` ... `Int64`, `Word16`
-  ... `Word64`, and `FixedInt`), except `Word8`, and the signature `INTEGER`;
-  [plans/basis.md](plans/basis.md) says what is prepared for them;
 * `PackWord*` and `PackReal*`;
 * the monomorphic sequences of other elements than `Word8` and `Char`
   (`BoolVector`, `IntArray`, `RealArray`, ...) and the `MONO_ARRAY2`

@@ -616,3 +616,37 @@ xc1:* | NetServDB.* | XC1-NA | tests/basis/host/rune-prim.sml fails every networ
 # ---- the signatures of lib/basis (signatures.sml)
 xc1:smlnj@110.79 | @section/signatures/int-inf | WIDTH | IntInf is the host's here (intinf.sml does not load: its limb base 2^30 is no 31-bit int constant), and its fmt and scan take the host's StringCvt.radix, not the one of lib/basis that INT_INF names
 xc1:smlnj@110.79 | @section/signatures/timer | WIDTH | Timer is the host's here (timer.sml does not load: it reads Time.now when it is loaded, microseconds since 1970 in an int, which overflow the host's 31 bits), and its times are the host's Time.time, not the one of lib/basis that TIMER names
+
+# ---- IntN, WordN: what the base structures get wrong shows in the others too
+native:smlnj@110.79 | Int[0-9]*.sameSign/* | HOST-BUG | sameSign (0, i) is true for positive i
+native:mlton@20210117 | Word[0-9]*.scan/*-bare-prefix-* | HOST-BUG | consumes the prefix 0w, 0wx or 0x although no digit follows it
+native:mlton@20210117 | Word[0-9]*.scan/*-0x-is-no-prefix | HOST-BUG | gives NONE for 0x42 in the radices BIN, OCT and DEC, where the number is the 0
+native:mlton@20210117 | Word[0-9]*.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but MLton 20210117 consumes 0w1 (fixed in 20241230)
+native:smlnj@110.79 | Word[0-9]*.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12 (fixed in 110.99.9)
+native:polyml@* | Word[0-9]*.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+native:smlnj@110.79 | Word[0-9]*.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@* | Word[0-9]*.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:smlnj@110.79 | Int32.div/Overflow-minInt-by-minus-one | HOST-BUG | Int32.div (minInt, ~1) raises Div, not Overflow
+native:smlnj@110.79 | Int32.quot/Overflow-minInt-by-minus-one | HOST-BUG | Int32.quot (minInt, ~1) raises Div, not Overflow
+native:smlnj@* | Int[0-9]*.mod/minInt-by-minus-one | HOST-BUG | mod (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+native:smlnj@* | Int[0-9]*.rem/minInt-by-minus-one | HOST-BUG | rem (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+native:smlnj@110.79 | Int64.mod/*minInt* | HOST-BUG | Int64.mod raises an exception when minInt is one of its arguments
+native:smlnj@110.79 | Int64.fromString/* | HOST-BUG | Int64.fromString raises an exception for a value that does not fit 32 bits
+native:smlnj@110.79 | Int64.scan/* | HOST-BUG | Int64.scan raises an exception for a value that does not fit 32 bits
+native:smlnj@110.79 | Int64.fmt/*HEX* | HOST-BUG | Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+native:smlnj@110.99.9 | Int32.abs/Overflow-minInt | HOST-BUG | Int32.abs minInt gives minInt instead of raising Overflow
+native:smlnj@110.79 | Word64.* | HOST-BUG | Word64 of this 32-bit system is broken: LargeWord has 32 bits (so toLarge, fromLarge and their synonyms raise Overflow, and wordSize exceeds LargeWord.wordSize), min answers the larger word, scan and fromString misread prefixes, and toIntX does not raise Overflow
+native:smlnj@* | Word[0-9]*.toInt/through-LargeWord-* | HOST-BUG | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+native:polyml@* | Word[0-9]*.~>>/*-by-all-ones | HOST-BUG | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
+native:polyml@* | Word64.~>>/* | HOST-BUG | Word64.~>> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
+native:polyml@5.7.1 | Word64.fromInt/* | HOST-BUG | Word64 holds 63 bits: fromInt ~1 is 0wx7FFFFFFFFFFFFFFF, not 0wxFFFFFFFFFFFFFFFF
+native:polyml@5.7.1 | Word64.toInt*/* | HOST-BUG | Word64 holds 63 bits: toInt and toIntX raise no Overflow where the word does not fit an int
+native:polyml@5.7.1 | Word64.~/* | HOST-BUG | Word64 holds 63 bits: ~ gives a word with the top bit set where the 63-bit value has it clear
+xc1:mlton@* | @section/intn_*/constants | XC1-NA | integer and word constants at the IntN and WordN of lib/basis: a host's overloading is closed
+xc1:polyml@* | @section/intn_*/constants | XC1-NA | integer and word constants at the IntN and WordN of lib/basis: a host's overloading is closed
+xc1:smlnj@110.99.9 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the constants of the section are typed at the host's own int (its overloading is closed), whose + does not overflow at the precision of the IntN of lib/basis
+xc1:smlnj@110.99.9 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
+xc1:polyml@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
+xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
+xc1:smlnj@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
+xc1:smlnj@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
