@@ -1348,6 +1348,25 @@ static int p_file_avail(VM *vm) {
 
 static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
 
+/* file_tell h: the position of the file, in bytes, or -1 (not a file that
+   has positions, or an invalid handle). */
+static int p_file_tell(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_tell");
+    long here = f ? ftell(f) : -1;
+    if (here < 0) vm->io_errno = errno;
+    return ret(vm, 1, mk_int(here < 0 ? -1 : here));
+}
+
+/* file_seek (h, p): move to byte p from the start (flushing what is
+   written first, as fseek does); 0, or -1 on failure. */
+static int p_file_seek(VM *vm) {
+    FILE *f = file_of(vm, ARG(1), "file_seek");
+    check_tag(vm, ARG(0), T_INT, "file_seek");
+    int ok = f && ARG(0).u.i >= 0 && fseek(f, (long)ARG(0).u.i, SEEK_SET) == 0;
+    if (!ok) vm->io_errno = f ? errno : EBADF;
+    return ret(vm, 2, mk_int(ok ? 0 : -1));
+}
+
 /* The handles of the library are indices of the VM's table; the system
    knows the descriptors of the files behind them. */
 static int descriptor_of(VM *vm, Value h, const char *prim) {

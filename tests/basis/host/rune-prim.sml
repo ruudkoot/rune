@@ -369,6 +369,24 @@ struct
            handle OS.SysErr _ => ~1
        | _ => 0)
 
+  (* The position of a file: for a reader what it has taken from the file
+     less what it holds, for a writer the descriptor's; ~1 for the standard
+     handles, which the shim reaches through the host's streams. *)
+  fun file_tell h =
+    (case lookup h of
+       SOME (Reader {buf, pos, taken, ...}) => !taken - (String.size (!buf) - !pos)
+     | SOME (Writer fd) => Position.toInt (Posix.IO.lseek (fd, Position.fromInt 0, Posix.IO.SEEK_CUR))
+     | NONE => ~1)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun file_seek (h, p) =
+    (case lookup h of
+       SOME (Reader {fd, buf, pos, eof, taken}) =>
+         (ignore (Posix.IO.lseek (fd, Position.fromInt p, Posix.IO.SEEK_SET));
+          buf := ""; pos := 0; eof := false; taken := p; 0)
+     | SOME (Writer fd) => (ignore (Posix.IO.lseek (fd, Position.fromInt p, Posix.IO.SEEK_SET)); 0)
+     | NONE => ~1)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
   fun file_read_all 0 = TextIO.inputAll TextIO.stdIn
     | file_read_all h =
       (case lookup h of

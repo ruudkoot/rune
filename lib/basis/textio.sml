@@ -71,49 +71,41 @@ struct
 
   local
     fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
-    (* A file of the VM as a reader. Its position is the number of bytes it
-       has read, when it was opened at the start of the file (counted says
-       so); "Further operations on the reader (besides close and getPos)
-       raise" Io with the cause ClosedStream. *)
-    fun reader (fd, name, counted) =
+    (* A file of the VM as a reader, with the positions of the file when it
+       has them; "Further operations on the reader (besides close and
+       getPos) raise" Io with the cause ClosedStream. *)
+    fun reader (fd, name) =
       let
         val closed = ref false
-        val count = ref 0
-        fun readVec n =
-          if !closed then closedIo (name, "readVec")
-          else let val s = RuneFile.readVec fd n in count := !count + size s; s end
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun readVec n = if !closed then closedIo (name, "readVec") else RuneFile.readVec fd n
       in
         TextPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
                        readVec = SOME readVec, readArr = NONE,
                        readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                        avail = fn () => if !closed then closedIo (name, "avail") else RuneFile.avail fd (),
-                       getPos = if counted then SOME (fn () => !count) else NONE,
-                       setPos = NONE, endPos = NONE, verifyPos = NONE,
-                       close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                       getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
+                       close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                        ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
       end
     (* A file of the VM as a writer, which writes through, and the device of
-       the stream over it, which leaves the VM to buffer. Its position is the
-       number of bytes written, when it was opened at the start of the file. *)
-    fun writer (fd, name, counted) =
+       the stream over it, which leaves the VM to buffer. *)
+    fun writer (fd, name) =
       let
         val closed = ref false
-        val count = ref 0
-        fun put s =
-          if !closed then closedIo (name, "writeVec")
-          else (ignore (RuneFile.writeString (fd, name) s); count := !count + size s)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun put s = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) s)
         fun writeVec sl = let val s = CharVectorSlice.vector sl in put s; RuneFile.flush fd (); size s end
       in
         (TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                         writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
                         block = NONE, canOutput = NONE,
-                        getPos = if counted then SOME (fn () => !count) else NONE,
-                        setPos = NONE, endPos = NONE, verifyPos = NONE,
-                        close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                        getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
+                        close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                         ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
          {write = put, flush = RuneFile.flush fd})
       end
-    fun instreamOf (fd, name, counted) = mkInstream (StreamIO.mkInstream (reader (fd, name, counted), ""))
+    fun instreamOf (fd, name) = mkInstream (StreamIO.mkInstream (reader (fd, name), ""))
     (* "When opening a stream for writing, the stream will be block buffered
        by default, unless the underlying file is associated with an
        interactive or terminal device (i.e., the kind of the underlying
@@ -125,19 +117,19 @@ struct
       (if RuneIODesc.kind (RuneIODesc.FD (RuneFile.descriptor fd)) = RuneIODesc.Kind.tty then IO.LINE_BUF
        else IO.BLOCK_BUF)
       handle _ => IO.BLOCK_BUF
-    fun outstreamOf (fd, name, counted, mode) =
-      let val (w, device) = writer (fd, name, counted)
+    fun outstreamOf (fd, name, mode) =
+      let val (w, device) = writer (fd, name)
       in mkOutstream (StreamIO.mkOutstreamOver (w, mode, device)) end
   in
-    fun openIn name = instreamOf (RuneFile.open' ("openIn", 0) name, name, true)
-    fun openOut name = let val fd = RuneFile.open' ("openOut", 1) name in outstreamOf (fd, name, true, modeOf fd) end
-    fun openAppend name = let val fd = RuneFile.open' ("openAppend", 2) name in outstreamOf (fd, name, false, modeOf fd) end
+    fun openIn name = instreamOf (RuneFile.open' ("openIn", 0) name, name)
+    fun openOut name = let val fd = RuneFile.open' ("openOut", 1) name in outstreamOf (fd, name, modeOf fd) end
+    fun openAppend name = let val fd = RuneFile.open' ("openAppend", 2) name in outstreamOf (fd, name, modeOf fd) end
     fun openString s = mkInstream (StreamIO.mkInstream (TextPrimIO.openVector s, ""))
 
-    val stdIn = instreamOf (0, "<stdIn>", false)
-    val stdOut = outstreamOf (1, "<stdOut>", false, modeOf 1)
+    val stdIn = instreamOf (0, "<stdIn>")
+    val stdOut = outstreamOf (1, "<stdOut>", modeOf 1)
     (* "stdErr is initially unbuffered" *)
-    val stdErr = outstreamOf (2, "<stdErr>", false, IO.NO_BUF)
+    val stdErr = outstreamOf (2, "<stdErr>", IO.NO_BUF)
   end
 
   fun inputLine (InStream r) =

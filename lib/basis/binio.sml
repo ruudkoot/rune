@@ -38,53 +38,47 @@ struct
   local
     fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
     (* The reader and the writer of a file of the VM, as in TextIO: the
-       position is the number of bytes read or written since the file was
-       opened at its start; the writer writes through, the stream leaves the
-       VM to buffer. *)
+       positions of the file when it has them; the writer writes through, the
+       stream leaves the VM to buffer. *)
     fun reader (fd, name) =
       let
         val closed = ref false
-        val count = ref 0
-        fun readVec n =
-          if !closed then closedIo (name, "readVec")
-          else let val v = RuneFile.readVec fd n in count := !count + Word8Vector.length v; v end
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun readVec n = if !closed then closedIo (name, "readVec") else RuneFile.readVec fd n
       in
         BinPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
                       readVec = SOME readVec, readArr = NONE,
                       readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                       avail = fn () => if !closed then closedIo (name, "avail") else RuneFile.avail fd (),
-                      getPos = SOME (fn () => !count), setPos = NONE, endPos = NONE, verifyPos = NONE,
-                      close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                      getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
+                      close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                       ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
       end
-    fun writer (fd, name, counted) =
+    fun writer (fd, name) =
       let
         val closed = ref false
-        val count = ref 0
-        fun put v =
-          if !closed then closedIo (name, "writeVec")
-          else (ignore (RuneFile.writeString (fd, name) v); count := !count + Word8Vector.length v)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun put v = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) v)
         fun writeVec sl =
           let val v = Word8VectorSlice.vector sl in put v; RuneFile.flush fd (); Word8Vector.length v end
       in
         (BinPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
                        writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
                        block = NONE, canOutput = NONE,
-                       getPos = if counted then SOME (fn () => !count) else NONE,
-                       setPos = NONE, endPos = NONE, verifyPos = NONE,
-                       close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                       getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,
+                       close = fn () => if !closed then () else (remember (); closed := true; RuneFile.close fd ()),
                        ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
          {write = put, flush = RuneFile.flush fd})
       end
-    fun outstreamOf (fd, name, counted) =
-      let val (w, device) = writer (fd, name, counted)
+    fun outstreamOf (fd, name) =
+      let val (w, device) = writer (fd, name)
       in mkOutstream (StreamIO.mkOutstreamOver (w, IO.BLOCK_BUF, device)) end
   in
     fun openIn name =
       mkInstream (StreamIO.mkInstream (reader (RuneFile.open' ("openIn", 0) name, name), Word8Vector.fromList []))
     fun openOut name =
-      outstreamOf (RuneFile.open' ("openOut", 1) name, name, true)
+      outstreamOf (RuneFile.open' ("openOut", 1) name, name)
     fun openAppend name =
-      outstreamOf (RuneFile.open' ("openAppend", 2) name, name, false)
+      outstreamOf (RuneFile.open' ("openAppend", 2) name, name)
   end
 end

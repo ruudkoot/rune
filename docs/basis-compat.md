@@ -63,7 +63,7 @@ and the two tests of `Posix.TTY`, which Rune lacks.
 | `xc1:polyml@5.9.2` | 42,204 | 41,874 | 330 | 2 |
 
 On Rune the failures are one reading of the specification (below) and what
-is not implemented: `Posix.TTY`, `setPos` on files, the socket options that
+is not implemented: `Posix.TTY`, the socket options that
 need a `struct`. The `xc1` configurations fail those too, the checks the shim
 cannot run (sockets, `poll`), the checks where a host's function under a
 primitive of the shim is wrong, and on SML/NJ 110.79 whatever needs more
@@ -163,8 +163,6 @@ Not implemented:
 * IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`,
   `getLINGER` reports only whether a socket lingers and `setLINGER` fails
   (the primitives pass an `int` where the system wants a `struct linger`);
-* `setPos` of the readers and writers of files (they count their positions,
-  but the VM has no primitive that seeks in a file);
 * the functors `PrimIO`, `StreamIO` and `ImperativeIO` under those names
   (`lib/basis` has them as `RunePrimIOFn`, `RuneStreamIOFn` and
   `RuneImperativeIOFn`).

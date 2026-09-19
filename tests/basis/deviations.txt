@@ -496,8 +496,6 @@ xc1:smlnj@110.79 | Posix.IO.mk*/* | WIDTH | the readers and writers of lib/basis
 
 # ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
 # Rune
-rune | *IO.setPosOut/file-overwrites | RUNE-DEV | the writers of files have no setPos: the VM has no primitive that moves in a file (fseek), so setPosOut on a file stream raises Io {cause = RandomAccessNotSupported, ...}
-rune | TextIO.StreamIO.filePosIn/setPos-then-readVec | RUNE-DEV | the readers of files have no setPos: the VM has no primitive that moves in a file (fseek)
 # MLton
 native:mlton@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 native:mlton@* | *IO.StreamIO.canInput/determined-stream-does-not-block | HOST-BUG | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
@@ -520,6 +518,8 @@ native:smlnj@110.99.9 | *IO.StreamIO.inputN/fewer-then-past-the-end-of-stream | 
 native:smlnj@110.99.9 | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
 native:smlnj@110.99.9 | *IO.StreamIO.output*/Io-terminated* | HOST-BUG | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 native:smlnj@110.99.9 | *IO.setPosOut/* | HOST-BUG | setPosOut neither flushes nor moves the writer: output goes on at the end
+xc1:polyml@5.7.1 | *IO*.[gs]etPosOut/* | HOST-BUG | the shim's file_tell and file_seek of a writer are the host's Posix.IO.lseek, which answers 0 and does not move the file
+xc1:polyml@5.7.1 | TextIO.StreamIO.filePosIn/setPos-then-readVec | HOST-BUG | the shim's file_seek is the host's Posix.IO.lseek, which does not move the file
 native:smlnj@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
 native:smlnj@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 # Poly/ML

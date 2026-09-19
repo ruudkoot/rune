@@ -274,3 +274,5 @@ posix_exit       1  int -> 'a                End the process at once with the st
 posix_lock       6  int * int * int * int * int * int -> int list  fcntl with a lock: descriptor, command (F_GETLK, F_SETLK, F_SETLKW), type, whence, start, length; the lock afterwards (type, whence, start, length, pid), [] on failure.
 posix_pathconf   3  string * int * string -> int list  The limit of a path (of the descriptor when the path is "") named without its _PC_ prefix: [value], [~1] when there is none, [] on failure.
 posix_utime      3  string * int * int -> int  Set the access and modification times of a file, in seconds.
+file_tell        1  int -> int                The position of a file in bytes, or ~1 when it has none (a pipe, a terminal) or the handle is closed.
+file_seek        2  int * int -> int          Move a file to a position in bytes from its start; 0, or ~1 on failure (file_errno says why).
