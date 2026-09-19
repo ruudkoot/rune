@@ -644,3 +644,10 @@ xc1:polyml@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose preci
 xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
 xc1:smlnj@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
 xc1:smlnj@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
+
+# ---- PackWord, PackReal
+native:smlnj@110.79 | PackReal64*.update/element-1 | HOST-BUG | update writes nothing into the array
+native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
+native:smlnj@110.99.9 | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
+xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
+xc1:smlnj@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits

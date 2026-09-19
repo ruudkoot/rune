@@ -49,7 +49,7 @@ word64.sml      | demand | yes  | Word64                | Word
 char.sml        | demand | yes  | RuneEscape Char       | Int StringCvt
 string.sml      | demand | yes  | String                | Char Int List RuneEscape StringCvt -substring
 ieeereal.sml    | demand | yes  | IEEEReal              | StringCvt
-real.sml        | demand | yes  | Real Math LargeReal   | IEEEReal Int IntInf List StringCvt
+real.sml        | demand | yes  | Real Math LargeReal Real64 | IEEEReal Int IntInf List StringCvt
 vector.sml      | demand | yes  | Vector                | List Option
 array.sml       | demand | yes  | Array                 | List Option Vector
 vectorslice.sml | demand | yes  | VectorSlice           | List Vector
@@ -66,6 +66,8 @@ word8vector.sml | demand | yes  | Word8Vector           | MONO_VECTOR RuneString
 word8vectorslice.sml | demand | yes | Word8VectorSlice   | MONO_VECTOR_SLICE Substring Word8 Word8Vector
 word8array.sml  | demand | yes  | Word8Array            | MONO_ARRAY RuneMonoArrayFn Word8Vector
 word8arrayslice.sml | demand | yes | Word8ArraySlice     | MONO_ARRAY_SLICE RuneMonoArraySliceFn Word8Array Word8Vector Word8VectorSlice
+pack_word.sml   | demand | yes  | PackWord16Big PackWord16Little PackWord32Big PackWord32Little PackWord64Big PackWord64Little RunePackWordFn | Int Word Word8 Word8Array Word8Vector
+pack_real.sml   | demand | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle RunePackRealFn | Real RunePackWordFn Word8 Word8Array
 chararray.sml   | demand | yes  | CharArray             | CharVector MONO_ARRAY RuneMonoArrayFn
 chararrayslice.sml | demand | yes | CharArraySlice       | CharArray CharVector CharVectorSlice MONO_ARRAY_SLICE RuneMonoArraySliceFn
 array2.sml      | demand | yes  | Array2                | Array List Vector
@@ -134,6 +136,8 @@ sig_os_file_sys.sml | demand | yes  | OS_FILE_SYS | Position Time
 sig_os_io.sml | demand | yes  | OS_IO | Time
 sig_os_path.sml | demand | yes  | OS_PATH |
 sig_os_process.sml | demand | yes  | OS_PROCESS | Time
+sig_pack_real.sml | demand | yes  | PACK_REAL | Word8Array Word8Vector
+sig_pack_word.sml | demand | yes  | PACK_WORD | LargeWord Word8Array Word8Vector
 sig_posix_proc_env.sml | demand | yes  | POSIX_PROC_ENV | SysWord Time
 sig_posix_signal.sml | demand | yes  | POSIX_SIGNAL | SysWord
 sig_posix_sys_db.sml | demand | yes  | POSIX_SYS_DB |

@@ -320,3 +320,4 @@ end
 
 structure Math = Real.Math
 structure LargeReal = Real
+structure Real64 = Real

@@ -153,7 +153,7 @@ reaches.
 
 Not implemented:
 
-* `PackWord*` and `PackReal*`;
+* `Real32`, and so `PackReal32Big` and `PackReal32Little`;
 * the monomorphic sequences of other elements than `Word8` and `Char`
   (`BoolVector`, `IntArray`, `RealArray`, ...) and the `MONO_ARRAY2`
   structures (`CharArray2`, `Word8Array2`, ...);
