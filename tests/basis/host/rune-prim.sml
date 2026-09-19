@@ -813,6 +813,39 @@ struct
     end
     handle OS.SysErr (_, e) => (noteError e; [])
 
+  (* ---- sockets and the network databases ----
+     The hosts keep a socket and its address behind types that carry the
+     family and the mode, where the library passes numbers and bytes; the
+     cross-check leaves them out (XC1-N/A), and every call fails with ENOSYS. *)
+  fun unsupported onFailure = (lastErrno := posix_const "ENOSYS"; onFailure)
+  fun socket_create (_ : int, _ : int, _ : int) = unsupported ~1
+  fun socket_pair (_ : int, _ : int, _ : int) : int list = unsupported []
+  fun socket_bind (_ : int, _ : string) = unsupported ~1
+  fun socket_connect (_ : int, _ : string) = unsupported ~1
+  fun socket_listen (_ : int, _ : int) = unsupported ~1
+  fun socket_accept (_ : int) = unsupported ~1
+  fun socket_send (_ : int, _ : string, _ : int) = unsupported ~1
+  fun socket_sendto (_ : int, _ : string, _ : int, _ : string) = unsupported ~1
+  fun socket_recv (_ : int, _ : int, _ : int) = unsupported ""
+  fun socket_recvfrom (_ : int, _ : int, _ : int) : string list = unsupported []
+  fun socket_shutdown (_ : int, _ : int) = unsupported ~1
+  fun socket_name (_ : int) = unsupported ""
+  fun socket_peer (_ : int) = unsupported ""
+  fun socket_getopt (_ : int, _ : int, _ : int) = unsupported ~1
+  fun socket_setopt (_ : int, _ : int, _ : int, _ : int) = unsupported ~1
+  fun socket_inet_addr (_ : string, _ : int) = unsupported ""
+  fun socket_unix_addr (_ : string) = unsupported ""
+  fun socket_addr_family (_ : string) = unsupported ~1
+  fun socket_inet_parts (_ : string) : string list = unsupported []
+  fun socket_unix_path (_ : string) = unsupported ""
+  fun netdb_host_byname (_ : string) : string list = unsupported []
+  fun netdb_host_byaddr (_ : string) : string list = unsupported []
+  fun netdb_hostname () = unsupported ""
+  fun netdb_proto_byname (_ : string) : string list = unsupported []
+  fun netdb_proto_bynumber (_ : int) : string list = unsupported []
+  fun netdb_serv_byname (_ : string, _ : string) : string list = unsupported []
+  fun netdb_serv_byport (_ : int, _ : string) : string list = unsupported []
+
   fun posix_getgr (name, gid) =
     let
       val gr = if name = "" then Posix.SysDB.getgrgid (Posix.ProcEnv.wordToGid (SysWord.fromInt gid))

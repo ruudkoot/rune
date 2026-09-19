@@ -499,6 +499,23 @@ static int int_list(Value l, int32_t *out, int n) {
     return (int)len;
 }
 
+/* The strings a system call left one after another, as a list. */
+static int push_strings(VM *vm, const char *packed, int arity) {
+    int n = 0;
+    for (const char *p = packed; p && *p; p += strlen(p) + 1) n++;
+    vm_push(vm, mk_con0(0));
+    /* backwards, so that the list comes out in order */
+    for (int i = n; i > 0; i--) {
+        const char *p = packed;
+        for (int k = 1; k < i; k++) p += strlen(p) + 1;
+        Obj *s = vm_string_from(vm, p, (uint32_t)strlen(p));
+        vm_push(vm, mk_ptr(s));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+
 static int p_date_parts(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "date_parts");
     check_tag(vm, ARG(0), T_INT, "date_parts");
@@ -832,6 +849,209 @@ static int p_posix_getgr(VM *vm) {
     return ret(vm, 2, l);
 }
 
+/* ================================================================ sockets */
+static int push_last_addr(VM *vm, int ok, int arity) {
+    if (ok != 0) return push_string_value(vm, "");
+    Obj *o = vm_string_from(vm, sys_last_addr(), (uint32_t)sys_last_addr_len());
+    return ret(vm, arity, mk_ptr(o));
+}
+
+static int p_socket_create(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_create");
+    check_tag(vm, ARG(1), T_INT, "socket_create");
+    check_tag(vm, ARG(0), T_INT, "socket_create");
+    return ret(vm, 3, mk_int(sys_socket((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_pair(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_pair");
+    check_tag(vm, ARG(1), T_INT, "socket_pair");
+    check_tag(vm, ARG(0), T_INT, "socket_pair");
+    int fds[2];
+    int ok = sys_socketpair((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i, fds);
+    int64_t out[2] = { fds[0], fds[1] };
+    return push_int_list(vm, out, ok == 0 ? 2 : 0, 3);
+}
+
+#define SOCK_ADDR(name, call)                                               \
+    static int p_##name(VM *vm) {                                           \
+        check_tag(vm, ARG(1), T_INT, #name);                                \
+        Obj *a = check_obj(vm, ARG(0), K_STRING, #name);                    \
+        int r = call((int)ARG(1).u.i, OBJ_BYTES(a), (int)a->len);           \
+        return ret(vm, 2, mk_int(r));                                       \
+    }
+SOCK_ADDR(socket_bind, sys_bind)
+SOCK_ADDR(socket_connect, sys_connect)
+
+static int p_socket_listen(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_listen");
+    check_tag(vm, ARG(0), T_INT, "socket_listen");
+    return ret(vm, 2, mk_int(sys_listen((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_accept(VM *vm) { INT1("socket_accept"); return ret(vm, 1, mk_int(sys_accept((int)x))); }
+
+static int p_socket_send(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_send");
+    Obj *b = check_obj(vm, ARG(1), K_STRING, "socket_send");
+    check_tag(vm, ARG(0), T_INT, "socket_send");
+    return ret(vm, 3, mk_int(sys_send((int)ARG(2).u.i, OBJ_BYTES(b), b->len, (int)ARG(0).u.i)));
+}
+
+static int p_socket_sendto(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "socket_sendto");
+    Obj *b = check_obj(vm, ARG(2), K_STRING, "socket_sendto");
+    check_tag(vm, ARG(1), T_INT, "socket_sendto");
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_sendto");
+    int64_t k = sys_sendto((int)ARG(3).u.i, OBJ_BYTES(b), b->len, (int)ARG(1).u.i,
+                           OBJ_BYTES(a), (int)a->len);
+    return ret(vm, 4, mk_int(k));
+}
+
+static char *receive_buffer(VM *vm, int64_t n, const char *prim) {
+    if (n < 0 || n > MAX_STRING) vm_fatal(vm, "primitive %s: bad length", prim);
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    return buf;
+}
+
+static int p_socket_recv(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_recv");
+    check_tag(vm, ARG(1), T_INT, "socket_recv");
+    check_tag(vm, ARG(0), T_INT, "socket_recv");
+    int64_t n = ARG(1).u.i;
+    char *buf = receive_buffer(vm, n, "socket_recv");
+    int64_t got = sys_recv((int)ARG(2).u.i, buf, n, (int)ARG(0).u.i);
+    Obj *s = vm_string_from(vm, buf, got < 0 ? 0 : (uint32_t)got);
+    free(buf);
+    return ret(vm, 3, mk_ptr(s));
+}
+
+static int p_socket_recvfrom(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_recvfrom");
+    check_tag(vm, ARG(1), T_INT, "socket_recvfrom");
+    check_tag(vm, ARG(0), T_INT, "socket_recvfrom");
+    int64_t n = ARG(1).u.i;
+    char *buf = receive_buffer(vm, n, "socket_recvfrom");
+    int64_t got = sys_recvfrom((int)ARG(2).u.i, buf, n, (int)ARG(0).u.i);
+    if (got < 0) { free(buf); return push_int_list(vm, NULL, 0, 3); }
+    /* the bytes, then the address, built on the stack so the collector sees them */
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, sys_last_addr(), (uint32_t)sys_last_addr_len())));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, buf, (uint32_t)got)));
+    vm_cons(vm);
+    free(buf);
+    Value l = vm_pop(vm);
+    return ret(vm, 3, l);
+}
+
+static int p_socket_shutdown(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_shutdown");
+    check_tag(vm, ARG(0), T_INT, "socket_shutdown");
+    return ret(vm, 2, mk_int(sys_shutdown((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_name(VM *vm) { INT1("socket_name"); return push_last_addr(vm, sys_sock_name((int)x), 1); }
+static int p_socket_peer(VM *vm) { INT1("socket_peer"); return push_last_addr(vm, sys_sock_peer((int)x), 1); }
+
+static int p_socket_getopt(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_getopt");
+    check_tag(vm, ARG(1), T_INT, "socket_getopt");
+    check_tag(vm, ARG(0), T_INT, "socket_getopt");
+    return ret(vm, 3, mk_int(sys_getsockopt((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_setopt(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "socket_setopt");
+    check_tag(vm, ARG(2), T_INT, "socket_setopt");
+    check_tag(vm, ARG(1), T_INT, "socket_setopt");
+    check_tag(vm, ARG(0), T_INT, "socket_setopt");
+    return ret(vm, 4, mk_int(sys_setsockopt((int)ARG(3).u.i, (int)ARG(2).u.i,
+                                            (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_inet_addr(VM *vm) {
+    char *host = c_string(vm, ARG(1), "socket_inet_addr");
+    check_tag(vm, ARG(0), T_INT, "socket_inet_addr");
+    int ok = sys_inet_addr(host, (int)ARG(0).u.i);
+    free(host);
+    return push_last_addr(vm, ok, 2);
+}
+
+static int p_socket_unix_addr(VM *vm) {
+    char *path = c_string(vm, ARG(0), "socket_unix_addr");
+    int ok = sys_unix_addr(path);
+    free(path);
+    return push_last_addr(vm, ok, 1);
+}
+
+static int p_socket_addr_family(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_addr_family");
+    return ret(vm, 1, mk_int(sys_addr_family(OBJ_BYTES(a), (int)a->len)));
+}
+
+static int p_socket_inet_parts(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet_parts");
+    int port = 0;
+    const char *host = sys_inet_parts(OBJ_BYTES(a), (int)a->len, &port);
+    if (!host) return push_int_list(vm, NULL, 0, 1);
+    char buffer[32];
+    snprintf(buffer, sizeof buffer, "%d", port);
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
+    vm_cons(vm);
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+static int p_socket_unix_path(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_unix_path");
+    const char *path = sys_unix_path(OBJ_BYTES(a), (int)a->len);
+    return push_string_value(vm, path ? path : "");
+}
+
+#define NETDB_NAME(name, call)                                  \
+    static int p_##name(VM *vm) {                               \
+        char *arg = c_string(vm, ARG(0), #name);                \
+        const char *packed = call(arg);                         \
+        free(arg);                                              \
+        return push_strings(vm, packed ? packed : "", 1);       \
+    }
+NETDB_NAME(netdb_host_byname, sys_host_byname)
+NETDB_NAME(netdb_host_byaddr, sys_host_byaddr)
+NETDB_NAME(netdb_proto_byname, sys_proto_byname)
+
+static int p_netdb_hostname(VM *vm) {
+    const char *name = sys_hostname();
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_netdb_proto_bynumber(VM *vm) {
+    INT1("netdb_proto_bynumber");
+    const char *packed = sys_proto_bynumber((int)x);
+    return push_strings(vm, packed ? packed : "", 1);
+}
+
+static int p_netdb_serv_byname(VM *vm) {
+    char *name = c_string(vm, ARG(1), "netdb_serv_byname");
+    char *protocol = c_string(vm, ARG(0), "netdb_serv_byname");
+    const char *packed = sys_serv_byname(name, protocol);
+    free(name);
+    free(protocol);
+    return push_strings(vm, packed ? packed : "", 2);
+}
+
+static int p_netdb_serv_byport(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "netdb_serv_byport");
+    char *protocol = c_string(vm, ARG(0), "netdb_serv_byport");
+    const char *packed = sys_serv_byport((int)ARG(1).u.i, protocol);
+    free(protocol);
+    return push_strings(vm, packed ? packed : "", 2);
+}
+
 static int p_os_system(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "os_system");
     char *command = malloc((size_t)s->len + 1);
@@ -1140,23 +1360,6 @@ static void free_array(char **a) {
     if (!a) return;
     for (char **p = a; *p; p++) free(*p);
     free(a);
-}
-
-/* The strings a system call left one after another, as a list. */
-static int push_strings(VM *vm, const char *packed, int arity) {
-    int n = 0;
-    for (const char *p = packed; p && *p; p += strlen(p) + 1) n++;
-    vm_push(vm, mk_con0(0));
-    /* backwards, so that the list comes out in order */
-    for (int i = n; i > 0; i--) {
-        const char *p = packed;
-        for (int k = 1; k < i; k++) p += strlen(p) + 1;
-        Obj *s = vm_string_from(vm, p, (uint32_t)strlen(p));
-        vm_push(vm, mk_ptr(s));
-        vm_cons(vm);
-    }
-    Value l = vm_pop(vm);
-    return ret(vm, arity, l);
 }
 
 static int p_posix_fork(VM *vm) { fflush(stdout); fflush(stderr); return ret(vm, 1, mk_int(sys_fork())); }

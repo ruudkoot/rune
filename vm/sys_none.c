@@ -134,3 +134,35 @@ const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
     (void)name; (void)gid; (void)id; fail(); return NULL;
 }
 const char *sys_group_members(void) { return ""; }
+
+int sys_socket(int d, int t, int p) { (void)d; (void)t; (void)p; return fail(); }
+int sys_socketpair(int d, int t, int p, int out[2]) { (void)d; (void)t; (void)p; (void)out; return fail(); }
+int sys_bind(int fd, const char *a, int n) { (void)fd; (void)a; (void)n; return fail(); }
+int sys_connect(int fd, const char *a, int n) { (void)fd; (void)a; (void)n; return fail(); }
+int sys_listen(int fd, int b) { (void)fd; (void)b; return fail(); }
+int sys_accept(int fd) { (void)fd; return fail(); }
+int64_t sys_send(int fd, const char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
+int64_t sys_sendto(int fd, const char *b, int64_t n, int f, const char *a, int al) {
+    (void)fd; (void)b; (void)n; (void)f; (void)a; (void)al; return fail();
+}
+int64_t sys_recv(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
+int64_t sys_recvfrom(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
+int sys_shutdown(int fd, int how) { (void)fd; (void)how; return fail(); }
+int sys_sock_name(int fd) { (void)fd; return fail(); }
+int sys_sock_peer(int fd) { (void)fd; return fail(); }
+const char *sys_last_addr(void) { return ""; }
+int sys_last_addr_len(void) { return 0; }
+int sys_getsockopt(int fd, int l, int n) { (void)fd; (void)l; (void)n; return fail(); }
+int sys_setsockopt(int fd, int l, int n, int v) { (void)fd; (void)l; (void)n; (void)v; return fail(); }
+int sys_inet_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
+int sys_unix_addr(const char *p) { (void)p; return fail(); }
+int sys_addr_family(const char *a, int n) { (void)a; (void)n; return fail(); }
+const char *sys_inet_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
+const char *sys_unix_path(const char *a, int n) { (void)a; (void)n; fail(); return NULL; }
+const char *sys_host_byname(const char *n) { (void)n; fail(); return NULL; }
+const char *sys_host_byaddr(const char *d) { (void)d; fail(); return NULL; }
+const char *sys_hostname(void) { fail(); return NULL; }
+const char *sys_proto_byname(const char *n) { (void)n; fail(); return NULL; }
+const char *sys_proto_bynumber(int n) { (void)n; fail(); return NULL; }
+const char *sys_serv_byname(const char *n, const char *p) { (void)n; (void)p; fail(); return NULL; }
+const char *sys_serv_byport(int p, const char *pr) { (void)p; (void)pr; fail(); return NULL; }

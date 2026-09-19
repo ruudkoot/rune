@@ -242,3 +242,30 @@ posix_mkfifo     2  string * int -> int       Make a named pipe.
 posix_umask      1  int -> int                Set the mask of new files; the one before.
 posix_getpw      2  string * int -> string list  A user by name, or by number when the name is ""; the name, the home directory and the shell, then the user and group numbers. [] when there is none.
 posix_getgr      2  string * int -> string list  A group likewise: the name, then its number, then the members.
+socket_create    3  int * int * int -> int    A socket of the domain, type and protocol; the handle, or ~1.
+socket_pair      3  int * int * int -> int list  A pair of connected sockets; [] on failure.
+socket_bind      2  int * string -> int       Give a socket an address.
+socket_connect   2  int * string -> int       Connect it to one.
+socket_listen    2  int * int -> int          Let it accept that many waiting connections.
+socket_accept    1  int -> int                Take a connection; the handle of the new socket, or ~1.
+socket_send      3  int * string * int -> int  Send the bytes with the flags; how many, or ~1.
+socket_sendto    4  int * string * int * string -> int  The same to an address.
+socket_recv      3  int * int * int -> string  Receive at most n bytes with the flags; "" at the end or on failure.
+socket_recvfrom  3  int * int * int -> string list  The bytes and the address they came from; [] on failure.
+socket_shutdown  2  int * int -> int          Stop reading, writing or both.
+socket_name      1  int -> string             The address of a socket; "" on failure.
+socket_peer      1  int -> string             The address at the other end.
+socket_getopt    3  int * int * int -> int    An option of a socket.
+socket_setopt    4  int * int * int * int -> int  Set one.
+socket_inet_addr 2  string * int -> string    An address of the internet, from a dotted host (or "" for any) and a port; "" on failure.
+socket_unix_addr 1  string -> string          An address in the file system.
+socket_addr_family 1 string -> int            Which kind of address it is.
+socket_inet_parts 1 string -> string list     The dotted host and the port of an internet address; [] when it is not one.
+socket_unix_path 1  string -> string          The path of an address in the file system.
+netdb_host_byname 1 string -> string list     A host by name: its name, its address, then its other names; [] when there is none.
+netdb_host_byaddr 1 string -> string list     The same by dotted address.
+netdb_hostname   1  unit -> string            The name of this machine.
+netdb_proto_byname 1 string -> string list    A protocol by name: its name, its number, then its other names.
+netdb_proto_bynumber 1 int -> string list     The same by number.
+netdb_serv_byname 2 string * string -> string list  A service by name and protocol: its name, its port, its protocol, then its other names.
+netdb_serv_byport 2 int * string -> string list  The same by port.

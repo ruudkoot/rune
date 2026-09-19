@@ -16,6 +16,12 @@
 extern char **environ;
 #include <dirent.h>
 #include <poll.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/times.h>
@@ -24,6 +30,7 @@ extern char **environ;
 #include <pwd.h>
 #include <grp.h>
 #include <limits.h>
+#include <stddef.h>
 #include <sys/stat.h>
 #include <utime.h>
 
@@ -393,6 +400,13 @@ static const struct { const char *name; int64_t value; } constants[] = {
     C(SEEK_SET) C(SEEK_CUR) C(SEEK_END)
     C(F_DUPFD) C(F_GETFD) C(F_SETFD) C(F_GETFL) C(F_SETFL) C(FD_CLOEXEC)
     C(WNOHANG) C(WUNTRACED)
+    /* sockets */
+    C(AF_INET) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
+    C(SO_DEBUG) C(SO_REUSEADDR) C(SO_KEEPALIVE) C(SO_DONTROUTE) C(SO_LINGER)
+    C(SO_BROADCAST) C(SO_OOBINLINE) C(SO_SNDBUF) C(SO_RCVBUF) C(SO_TYPE) C(SO_ERROR)
+    C(MSG_OOB) C(MSG_PEEK) C(MSG_DONTROUTE)
+    C(SHUT_RD) C(SHUT_WR) C(SHUT_RDWR)
+    C(IPPROTO_TCP) C(TCP_NODELAY)
 #undef C
 };
 static const size_t n_constants = sizeof constants / sizeof constants[0];
@@ -619,3 +633,211 @@ const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
 }
 
 const char *sys_group_members(void) { return members; }
+
+/* ---------------------------------------------------------------- sockets */
+static char address[128];
+static int address_length = 0;
+
+const char *sys_last_addr(void) { return address; }
+int sys_last_addr_len(void) { return address_length; }
+
+int sys_socket(int domain, int type, int protocol) { return socket(domain, type, protocol); }
+
+int sys_socketpair(int domain, int type, int protocol, int out[2]) {
+    return socketpair(domain, type, protocol, out);
+}
+
+int sys_bind(int fd, const char *addr, int n) {
+    return bind(fd, (const struct sockaddr *)addr, (socklen_t)n);
+}
+
+int sys_connect(int fd, const char *addr, int n) {
+    return connect(fd, (const struct sockaddr *)addr, (socklen_t)n);
+}
+
+int sys_listen(int fd, int backlog) { return listen(fd, backlog); }
+int sys_accept(int fd) { return accept(fd, NULL, NULL); }
+
+int64_t sys_send(int fd, const char *buf, int64_t n, int flags) {
+    return (int64_t)send(fd, buf, (size_t)n, flags);
+}
+
+int64_t sys_sendto(int fd, const char *buf, int64_t n, int flags, const char *addr, int addrlen) {
+    return (int64_t)sendto(fd, buf, (size_t)n, flags, (const struct sockaddr *)addr, (socklen_t)addrlen);
+}
+
+int64_t sys_recv(int fd, char *buf, int64_t n, int flags) {
+    return (int64_t)recv(fd, buf, (size_t)n, flags);
+}
+
+int64_t sys_recvfrom(int fd, char *buf, int64_t n, int flags) {
+    socklen_t len = sizeof address;
+    ssize_t got = recvfrom(fd, buf, (size_t)n, flags, (struct sockaddr *)address, &len);
+    address_length = got < 0 ? 0 : (int)len;
+    return (int64_t)got;
+}
+
+int sys_shutdown(int fd, int how) { return shutdown(fd, how); }
+
+int sys_sock_name(int fd) {
+    socklen_t len = sizeof address;
+    if (getsockname(fd, (struct sockaddr *)address, &len) != 0) return -1;
+    address_length = (int)len;
+    return 0;
+}
+
+int sys_sock_peer(int fd) {
+    socklen_t len = sizeof address;
+    if (getpeername(fd, (struct sockaddr *)address, &len) != 0) return -1;
+    address_length = (int)len;
+    return 0;
+}
+
+int sys_getsockopt(int fd, int level, int name) {
+    int value = 0;
+    socklen_t len = sizeof value;
+    if (getsockopt(fd, level, name, &value, &len) != 0) return -1;
+    return value;
+}
+
+int sys_setsockopt(int fd, int level, int name, int value) {
+    return setsockopt(fd, level, name, &value, sizeof value);
+}
+
+int sys_inet_addr(const char *host, int port) {
+    struct sockaddr_in in;
+    memset(&in, 0, sizeof in);
+    in.sin_family = AF_INET;
+    in.sin_port = htons((unsigned short)port);
+    if (!host || !*host) in.sin_addr.s_addr = htonl(INADDR_ANY);
+    else if (inet_pton(AF_INET, host, &in.sin_addr) != 1) { errno = EINVAL; return -1; }
+    memcpy(address, &in, sizeof in);
+    address_length = (int)sizeof in;
+    return 0;
+}
+
+int sys_unix_addr(const char *path) {
+    struct sockaddr_un un;
+    memset(&un, 0, sizeof un);
+    un.sun_family = AF_UNIX;
+    if (strlen(path) >= sizeof un.sun_path) { errno = ENAMETOOLONG; return -1; }
+    strcpy(un.sun_path, path);
+    size_t n = offsetof(struct sockaddr_un, sun_path) + strlen(path) + 1;
+    memcpy(address, &un, n);
+    address_length = (int)n;
+    return 0;
+}
+
+int sys_addr_family(const char *addr, int n) {
+    if (n < (int)sizeof(sa_family_t)) return -1;
+    struct sockaddr sa;
+    memcpy(&sa, addr, sizeof sa < (size_t)n ? sizeof sa : (size_t)n);
+    return sa.sa_family;
+}
+
+const char *sys_inet_parts(const char *addr, int n, int *port) {
+    if (n < (int)sizeof(struct sockaddr_in)) return NULL;
+    struct sockaddr_in in;
+    memcpy(&in, addr, sizeof in);
+    if (in.sin_family != AF_INET) return NULL;
+    if (!inet_ntop(AF_INET, &in.sin_addr, path_buffer, sizeof path_buffer)) return NULL;
+    *port = ntohs(in.sin_port);
+    return path_buffer;
+}
+
+const char *sys_unix_path(const char *addr, int n) {
+    if (n < (int)offsetof(struct sockaddr_un, sun_path)) return NULL;
+    struct sockaddr_un un;
+    memset(&un, 0, sizeof un);
+    memcpy(&un, addr, (size_t)n < sizeof un ? (size_t)n : sizeof un);
+    if (un.sun_family != AF_UNIX) return NULL;
+    snprintf(path_buffer, sizeof path_buffer, "%s", un.sun_path);
+    return path_buffer;
+}
+
+/* name, then the addresses or numbers, then the other names. */
+static const char *pack(const char *first, char **rest, const char *second) {
+    size_t at = 0;
+    const char *parts[2] = { first, second };
+    for (int i = 0; i < 2; i++) {
+        if (!parts[i]) continue;
+        size_t n = strlen(parts[i]);
+        if (at + n + 2 >= sizeof strings) break;
+        memcpy(strings + at, parts[i], n);
+        at += n;
+        strings[at++] = 0;
+    }
+    for (char **p = rest; p && *p; p++) {
+        size_t n = strlen(*p);
+        if (at + n + 2 >= sizeof strings) break;
+        memcpy(strings + at, *p, n);
+        at += n;
+        strings[at++] = 0;
+    }
+    strings[at] = 0;
+    return strings;
+}
+
+static const char *pack_host(struct hostent *h) {
+    if (!h) return NULL;
+    char dotted[64] = "";
+    if (h->h_addrtype == AF_INET && h->h_addr_list && h->h_addr_list[0])
+        inet_ntop(AF_INET, h->h_addr_list[0], dotted, sizeof dotted);
+    return pack(h->h_name, h->h_aliases, dotted);
+}
+
+const char *sys_host_byname(const char *name) { return pack_host(gethostbyname(name)); }
+
+const char *sys_host_byaddr(const char *dotted) {
+    struct in_addr in;
+    if (inet_pton(AF_INET, dotted, &in) != 1) { errno = EINVAL; return NULL; }
+    return pack_host(gethostbyaddr(&in, sizeof in, AF_INET));
+}
+
+const char *sys_hostname(void) {
+    if (gethostname(path_buffer, sizeof path_buffer) != 0) return NULL;
+    return path_buffer;
+}
+
+static const char *pack_proto(struct protoent *p) {
+    if (!p) return NULL;
+    char number[32];
+    snprintf(number, sizeof number, "%d", p->p_proto);
+    return pack(p->p_name, p->p_aliases, number);
+}
+
+const char *sys_proto_byname(const char *name) { return pack_proto(getprotobyname(name)); }
+const char *sys_proto_bynumber(int number) { return pack_proto(getprotobynumber(number)); }
+
+static const char *pack_serv(struct servent *s) {
+    if (!s) return NULL;
+    char number[32];
+    snprintf(number, sizeof number, "%d", ntohs((unsigned short)s->s_port));
+    /* the name, the port, the protocol, then the other names */
+    size_t at = 0;
+    const char *parts[3] = { s->s_name, number, s->s_proto };
+    for (int i = 0; i < 3; i++) {
+        size_t n = strlen(parts[i]);
+        if (at + n + 2 >= sizeof strings) break;
+        memcpy(strings + at, parts[i], n);
+        at += n;
+        strings[at++] = 0;
+    }
+    for (char **p = s->s_aliases; p && *p; p++) {
+        size_t n = strlen(*p);
+        if (at + n + 2 >= sizeof strings) break;
+        memcpy(strings + at, *p, n);
+        at += n;
+        strings[at++] = 0;
+    }
+    strings[at] = 0;
+    return strings;
+}
+
+const char *sys_serv_byname(const char *name, const char *protocol) {
+    return pack_serv(getservbyname(name, protocol && *protocol ? protocol : NULL));
+}
+
+const char *sys_serv_byport(int port, const char *protocol) {
+    return pack_serv(getservbyport(htons((unsigned short)port), protocol && *protocol ? protocol : NULL));
+}

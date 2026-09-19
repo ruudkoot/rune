@@ -90,6 +90,9 @@ imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO
 textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
 binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn Word8 Word8Vector Word8VectorSlice
+socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List RuneError RuneIODesc Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
+netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int String StringCvt
+inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
 unix.sml        | demand | yes  | Unix                  | BinIO IO Posix TextIO Word8
 commandline.sml | demand | yes  | CommandLine           |
 epilogue.sml    | final  | no   |                       | RuneExit

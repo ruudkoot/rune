@@ -1,0 +1,4 @@
+192.0.2.7:8080 family is INET: true
+any: 0.0.0.0 0
+unix address round trip: true family is UNIX: true
+pair: paired

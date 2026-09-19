@@ -90,6 +90,11 @@ the `Real` and `Math` rows of the table above. `Real.toString` now follows
 `GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
 Poly/ML print `1.0`.
 
+M7 added the sockets (`Socket`, `INetSock`, `UnixSock`, `GenericSock`) and
+the network databases (`NetHostDB`, `NetProtDB`, `NetServDB`). A
+`NetHostDB.in_addr` is the dotted text of an IPv4 address, and IPv6 is not
+supported.
+
 M6 added `Posix` (all but `TTY`) and `Unix`. The `xc1` configurations run
 them on the hosts' own `Posix`, which is how the library is checked against
 three other implementations of the same interface.
@@ -260,6 +265,12 @@ example contradicts "may vary".
   C code; `vm/prims.def` now states the 100000000-element limit of arrays and
   vectors, the newline that `file_read_line` adds to a last line, and what
   the two read primitives do after an end of file.
+* The sockets and the network databases are left out. The hosts keep a
+  socket and its address behind types indexed by the family and the mode,
+  where Rune's primitives pass descriptors and bytes. The shim would need a
+  table of host sockets per family and mode to bridge them, so its socket
+  and database primitives fail with `ENOSYS`. The tests of M7 are in
+  `tests/lang`, which runs on Rune only.
 * The host's `OS.Process.exit` knows two statuses, so
   `RunePrim.exit` maps 0 and 1 to them and leaves other statuses to
   `Posix.Process.exit`.

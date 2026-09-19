@@ -19,7 +19,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M4, the I/O stack | done |
 | M5, time and the system | done |
 | M6, Posix and Unix | done but for `Posix.TTY` and file locking |
-| M7–M8 | not started |
+| M7, sockets and the network databases | done; `getNREAD`, `getATMARK` and the linger time are stubs (below) |
+| M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -59,6 +60,23 @@ rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
 depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
+
+M7 delivered `Socket`, `INetSock`, `UnixSock`, `GenericSock`, `NetHostDB`,
+`NetProtDB` and `NetServDB` on 27 more primitives behind the system layer. A
+socket is the descriptor the system gives it and an address is the bytes of
+its `sockaddr`, which only the structure of its family takes apart. The
+phantom types of the specification tie a socket to its family and its mode:
+`accept` of a passive stream gives an active stream of the same family.
+`Socket.select` is `OS.IO.poll`. Each structure is written as `RuneSocket`,
+`RuneINetSock`, ... and bound to its name of the specification in the same
+file, so a program that names only `NetHostDB` loads `netdb.sml` alone. The
+tests are in `tests/lang`: a TCP echo and a UDP datagram over the loopback,
+the addresses of both families with a `socketPair`, and lookups in the three
+databases. The `xc1` configurations leave the sockets out (see the
+compatibility document), so these tests run on Rune only.
+
+Left of M7: `getNREAD` answers 0, `getATMARK` answers `false`, and
+`getLINGER` reports only whether lingering is on, not for how long.
 
 M6 delivered `Posix` with seven of its eight substructures (`Error`,
 `Signal`, `Process`, `ProcEnv`, `FileSys`, `IO`, `SysDB`) and `Unix`, on

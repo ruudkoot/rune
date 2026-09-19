@@ -141,6 +141,44 @@ const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]);
 const char *sys_getgr(const char *name, int64_t gid, int64_t *id);
 const char *sys_group_members(void);
 
+/* Sockets. An address is the bytes of a sockaddr, which the library keeps
+   as a string; a call that fails gives -1. */
+int sys_socket(int domain, int type, int protocol);
+int sys_socketpair(int domain, int type, int protocol, int out[2]);
+int sys_bind(int fd, const char *addr, int n);
+int sys_connect(int fd, const char *addr, int n);
+int sys_listen(int fd, int backlog);
+int sys_accept(int fd);
+int64_t sys_send(int fd, const char *buf, int64_t n, int flags);
+int64_t sys_sendto(int fd, const char *buf, int64_t n, int flags, const char *addr, int addrlen);
+int64_t sys_recv(int fd, char *buf, int64_t n, int flags);
+/* recvfrom leaves the address in sys_last_addr, of sys_last_addr_len bytes. */
+int64_t sys_recvfrom(int fd, char *buf, int64_t n, int flags);
+int sys_shutdown(int fd, int how);
+/* getsockname and getpeername, likewise. */
+int sys_sock_name(int fd);
+int sys_sock_peer(int fd);
+const char *sys_last_addr(void);
+int sys_last_addr_len(void);
+int sys_getsockopt(int fd, int level, int name);
+int sys_setsockopt(int fd, int level, int name, int value);
+/* Building and taking apart the addresses. */
+int sys_inet_addr(const char *host, int port);      /* into sys_last_addr */
+int sys_unix_addr(const char *path);
+int sys_addr_family(const char *addr, int n);
+/* The host of an INET address, dotted, and its port; NULL when it is not one. */
+const char *sys_inet_parts(const char *addr, int n, int *port);
+const char *sys_unix_path(const char *addr, int n);
+/* The databases: the entries come back as strings one after another, as for
+   uname, and NULL when there is none. */
+const char *sys_host_byname(const char *name);
+const char *sys_host_byaddr(const char *dotted);
+const char *sys_hostname(void);
+const char *sys_proto_byname(const char *name);
+const char *sys_proto_bynumber(int number);
+const char *sys_serv_byname(const char *name, const char *protocol);
+const char *sys_serv_byport(int port, const char *protocol);
+
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */
 const char *sys_getenv(const char *name);       /* NULL when it is not set */
