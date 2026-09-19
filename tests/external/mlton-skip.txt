@@ -55,7 +55,7 @@ mlton.overload EXTENSION: MLton's _overload declaration
 mlton.share EXTENSION: MLton.share
 mlton.word EXTENSION: MLton.Word
 mutex EXTENSION: MLton.Signal
-nextAfter READING: Real32.nextAfter (r, t) returns r when r = t, as the specification says, so nextAfter (~0.0, 0.0) is ~0.0; MLton returns t (and so does Rune's Real.nextAfter, which is C's nextafter)
+nextAfter READING: nextAfter (r, t) returns r when r = t, as the specification says, so nextAfter (~0.0, 0.0) is ~0.0; MLton returns t, as C's nextafter does (docs/basis-compat.md)
 once EXTENSION: SMLofNJ.Cont
 pack EXTENSION: MLton.GC
 prodcons EXTENSION: MLton.Signal

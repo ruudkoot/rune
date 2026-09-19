@@ -645,8 +645,11 @@ struct
   val () = eqR ("Real.nextAfter/negative-down", ~1.0 - pow2 ~52, fn () => Real.nextAfter (~1.0, ~2.0))
   val () = eqR ("Real.nextAfter/equal", 1.0, fn () => Real.nextAfter (1.0, 1.0))
   (* "If r = t then it returns r", and "the sign of a zero is ignored in all
-     comparisons"; which zero comes back is not checked (C returns t). *)
+     comparisons": 0.0 = ~0.0, so r comes back, with its sign (C's nextafter
+     returns t). *)
   val () = T.check ("Real.nextAfter/equal-zeros", fn () => Real.== (Real.nextAfter (0.0, ~0.0), 0.0))
+  val () = eqR ("Real.nextAfter/equal-zeros-returns-r", ~0.0, fn () => Real.nextAfter (~0.0, 0.0))
+  val () = eqR ("Real.nextAfter/equal-zeros-returns-r-positive", 0.0, fn () => Real.nextAfter (0.0, ~0.0))
   val () = eqR ("Real.nextAfter/zero-up", Real.minPos, fn () => Real.nextAfter (0.0, 1.0))
   val () = eqR ("Real.nextAfter/zero-down", ~ Real.minPos, fn () => Real.nextAfter (0.0, ~1.0))
   val () = eqR ("Real.nextAfter/negzero-up", Real.minPos, fn () => Real.nextAfter (~0.0, 1.0))

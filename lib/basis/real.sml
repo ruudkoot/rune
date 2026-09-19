@@ -83,8 +83,10 @@ struct
       in {whole = whole, frac = copySign (if isFinite r then r - whole else 0.0, r)} end
   fun realMod r = #frac (split r)
 
+  (* "If r = t then it returns r": ~0.0 for nextAfter (~0.0, 0.0), where C's
+     nextafter returns t *)
   local val next = _prim "real_next_after" : real * real -> real
-  in fun nextAfter (r, t) = if isFinite r orelse isNan r then next (r, t) else r end
+  in fun nextAfter (r, t) = if r == t orelse not (isFinite r orelse isNan r) then r else next (r, t) end
 
   fun checkFloat r = if isNan r then raise Div else if isFinite r then r else raise Overflow
 

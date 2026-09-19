@@ -96,7 +96,8 @@ struct
       in if Real.< (Real.abs r, 9007199254740992.0) then single r else fromLargeInt (Int.toLarge i) end
 
     (* The next binary32 value: away from zero the spacing at r, toward zero
-       half of it at a power of two (above the subnormals). *)
+       half of it at a power of two (above the subnormals). "If r = t then it
+       returns r", so ~0.0 for nextAfter (~0.0, 0.0), as Real.nextAfter. *)
     fun nextAfter (r, t) =
       if Real.isNan r orelse Real.isNan t then Real.+ (r, t)
       else if not (Real.isFinite r) orelse Real.== (r, t) then r

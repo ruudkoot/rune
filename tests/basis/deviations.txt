@@ -118,6 +118,8 @@ native:mlton@* | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0
 native:mlton@* | Math.cosh/negInf | SPEC-AMBIGUOUS | Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
 native:polyml@5.7.1 | Real.rem/both-infinite | HOST-BUG | Real.rem (posInf, posInf) is posInf, not NaN
 native:polyml@5.7.1 | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
+native:mlton@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+native:polyml@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 native:polyml@* | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
 native:polyml@* | Real.*ound/just-below-half | HOST-BUG | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
 native:polyml@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2
@@ -683,6 +685,8 @@ native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raisin
 # ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
 # no Real32)
 native:polyml@5.9.2 | PackReal32*.*/Subscript-maxInt | HOST-BUG | subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+native:mlton@* | Real32.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | as Real.nextAfter/equal-zeros-returns-r*: returns t
+native:polyml@5.9.2 | Real32.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | as Real.nextAfter/equal-zeros-returns-r*: returns t
 native:polyml@5.9.2 | PackReal32Big.isBigEndian/value | HOST-BUG | PackReal32Big.isBigEndian is false (it packs the most significant byte first)
 native:polyml@5.9.2 | Real32.fromLargeInt/rounds-once | HOST-BUG | fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 native:polyml@5.9.2 | Real32.toDecimal/negative-zero | HOST-BUG | toDecimal of a zero has exp 1, not 0

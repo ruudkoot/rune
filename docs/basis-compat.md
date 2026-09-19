@@ -364,6 +364,7 @@ and says so in a comment at the check.
 |---|---|---|
 | `Char.fromString "\""`, `String.fromString "a\"b"` | names only non-printing characters and improper escapes as reasons to stop | per function, the majority: `Char` gives `NONE` (MLton, SML/NJ; Poly/ML and Rune convert), `String` converts the quote (SML/NJ, Poly/ML, Rune; MLton stops) |
 | `Real.fmt` of `~0.0` | the formats say only `[~]?` | the sign is printed (SML/NJ, Poly/ML; MLton omits it) |
+| `Real.nextAfter (~0.0, 0.0)`, `(0.0, ~0.0)` | "If r = t then it returns r", where comparisons ignore the sign of a zero | `r`, the zero with its sign, in `Real` and `Real32` (SML/NJ; MLton and Poly/ML return `t`, as C's `nextafter` does) |
 | `Math.cosh negInf` | "cosh ±infinity = ±infinity" beside the definition (e^x + e^-x)/2 | `posInf`, the definition (MLton follows the table) |
 | `Math.pow (±1, ±inf)`, `pow (1, NaN)` | the table says NaN; C99 and IEEE 754-2008 say 1 | NaN, the page (MLton, SML/NJ) |
 | `Io {function}` of `outputSubstr` | "equivalent to output (strm, Substring.string ss)" against "the name of the function raising the exception" | `"output"` (MLton, Poly/ML) |
