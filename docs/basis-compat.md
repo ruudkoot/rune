@@ -43,28 +43,31 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 The last run of `make matrix` (every configuration, both generations of
 hosts). A check that fails is explained by a line of
 `tests/basis/deviations.txt` or fails the run; "not run" counts the tests
-that are N/A because a host does not load the file of lib/basis they need.
+that are N/A because a host does not load the file of lib/basis they need,
+and the two tests of `Posix.TTY`, which Rune lacks.
 
 | Configuration | Checks | Pass | Explained | Tests not run |
 |---|---:|---:|---:|---:|
-| `rune` | 39,098 | 39,097 | 1 | 0 |
-| `native:mlton@20210117` | 39,089 | 38,888 | 201 | 0 |
-| `native:smlnj@110.79` | 38,653 | 38,038 | 615 | 0 |
-| `native:polyml@5.7.1` | 39,101 | 38,913 | 188 | 0 |
-| `xc1:mlton@20210117` | 39,091 | 39,089 | 2 | 0 |
-| `xc1:smlnj@110.79` | 26,100 | 26,018 | 82 | 9 |
-| `xc1:polyml@5.7.1` | 39,091 | 39,088 | 3 | 0 |
-| `native:mlton@20241230` | 39,089 | 38,902 | 187 | 0 |
-| `native:smlnj@110.99.9` | 38,772 | 38,395 | 377 | 0 |
-| `native:polyml@5.9.2` | 39,101 | 38,903 | 198 | 0 |
-| `xc1:mlton@20241230` | 39,091 | 39,089 | 2 | 0 |
-| `xc1:smlnj@110.99.9` | 39,091 | 39,049 | 42 | 0 |
-| `xc1:polyml@5.9.2` | 39,091 | 39,086 | 5 | 0 |
+| `rune` | 42,239 | 42,217 | 22 | 2 |
+| `native:mlton@20210117` | 42,526 | 42,210 | 316 | 0 |
+| `native:smlnj@110.79` | 41,700 | 40,971 | 729 | 0 |
+| `native:polyml@5.7.1` | 42,528 | 42,204 | 324 | 0 |
+| `xc1:mlton@20210117` | 42,232 | 41,914 | 318 | 2 |
+| `xc1:smlnj@110.79` | 28,896 | 28,261 | 635 | 16 |
+| `xc1:polyml@5.7.1` | 42,179 | 41,749 | 430 | 2 |
+| `native:mlton@20241230` | 42,526 | 42,224 | 302 | 0 |
+| `native:smlnj@110.99.9` | 42,044 | 41,509 | 535 | 0 |
+| `native:polyml@5.9.2` | 42,535 | 42,226 | 309 | 0 |
+| `xc1:mlton@20241230` | 42,232 | 41,914 | 318 | 2 |
+| `xc1:smlnj@110.99.9` | 42,232 | 41,862 | 370 | 2 |
+| `xc1:polyml@5.9.2` | 42,204 | 41,874 | 330 | 2 |
 
-Rune itself fails one check, a reading of the specification (below). The
-`xc1` configurations fail the same one, the checks that need a host's
-overloading to be open (`Word8` constants), and the checks where a host's
-function under a primitive of the shim is wrong.
+On Rune the failures are one reading of the specification (below) and what
+is not implemented: `Posix.TTY`, `setPos` on files, the socket options that
+need a `struct`. The `xc1` configurations fail those too, the checks the shim
+cannot run (sockets, `poll`), the checks where a host's function under a
+primitive of the shim is wrong, and on SML/NJ 110.79 whatever needs more
+than 31 bits of `int` (`Time` counts microseconds since 1970).
 
 ## Structures each system provides
 
@@ -141,9 +144,11 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 
 ## Where Rune departs from the specification
 
-One check fails on Rune: `Char.fromString "\""` converts the double quote,
-where the test takes the reading of MLton and SML/NJ (`NONE`); see the table
-of readings below.
+22 checks fail on Rune, each with its `RUNE-DEV` or `SPEC-AMBIGUOUS` line.
+One is a reading: `Char.fromString "\""` converts the double quote, where
+the test takes the reading of MLton and SML/NJ (`NONE`); see the table of
+readings below. The others are the parts of what follows that the suite
+reaches.
 
 Not implemented:
 
@@ -156,10 +161,20 @@ Not implemented:
   structures (`CharArray2`, `Word8Array2`, ...);
 * `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
 * `Posix.TTY` and the file locking of `Posix.IO`;
-* IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`, and
-  `getLINGER` reports only whether a socket lingers;
-* most of the specification's signatures: `lib/basis` declares `WORD`,
-  `PRIM_IO`, `STREAM_IO` and the `MONO_*` ones only.
+* IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`,
+  `getLINGER` reports only whether a socket lingers and `setLINGER` fails
+  (the primitives pass an `int` where the system wants a `struct linger`);
+* `setPos` of the readers and writers of files (they count their positions,
+  but the VM has no primitive that seeks in a file);
+* the functors `PrimIO`, `StreamIO` and `ImperativeIO` under those names
+  (`lib/basis` has them as `RunePrimIOFn`, `RuneStreamIOFn` and
+  `RuneImperativeIOFn`).
+
+The signatures of the specification are all there (row `basis.signatures`
+of [language.md](language.md)), and every structure that Rune has matches
+its signature, except `Posix`, which lacks `TTY`. The suite checks every
+value and exception those signatures specify, on Rune and on the hosts:
+`scripts/check-basis-coverage.sh` counts 1,481 of them.
 
 Fixed along the way, each with the deviation lines it removed: the
 `fromString` of `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String`

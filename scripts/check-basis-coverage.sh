@@ -45,11 +45,40 @@ trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 } | sort -u > "$tmp/labels"
 
 # members FILE SIGNATURE: the val and exception names the signature specifies.
+# A member of a substructure specified in place, `structure O : sig ... end`,
+# is named O.member (on one line or several).
 members() {
   awk -v sig="$2" '
-    $1 == "signature" && $2 == sig { on = 1; next }
-    on && $1 == "signature" { on = 0 }
-    on && ($1 == "val" || $1 == "exception") { print $2 }
+    # drop comments, which nest
+    { line = $0; out = ""
+      while (length(line) > 0) {
+        if (substr(line, 1, 2) == "(*") { depth++; line = substr(line, 3); continue }
+        if (depth > 0 && substr(line, 1, 2) == "*)") { depth--; line = substr(line, 3); continue }
+        if (depth == 0) out = out substr(line, 1, 1)
+        line = substr(line, 2)
+      }
+      $0 = out }
+    $1 == "signature" && $2 == sig { on = 1; body = 0; n = 0 }
+    on {
+      for (i = 1; i <= NF; i++) {
+        t = $i
+        if (t == "signature" && i + 1 <= NF && $(i + 1) != sig && body) { on = 0; break }
+        if (t == "structure" && i + 1 <= NF) { pending = $(i + 1); continue }
+        if (t == "sig") {
+          if (!body) { body = 1; pending = ""; continue }
+          stack[++n] = pending; pending = ""; continue
+        }
+        if (t == "end") {
+          if (n > 0) { n--; continue }
+          if (body) { on = 0; break }
+        }
+        if ((t == "val" || t == "exception") && i + 1 <= NF) {
+          prefix = ""
+          for (k = 1; k <= n; k++) if (stack[k] != "") prefix = prefix stack[k] "."
+          print prefix $(i + 1)
+        }
+      }
+    }
   ' "$1" | sort -u
 }
 

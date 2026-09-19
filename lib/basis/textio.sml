@@ -1,8 +1,45 @@
 (* TextIO: the imperative text streams (signature TEXT_IO). *)
 structure TextIO =
 struct
-  structure StreamIO =
-    RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice)
+  local
+    structure SI =
+      RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice
+                      val isNewline = fn c => c = #"\n")
+  in
+    (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings. *)
+    structure StreamIO =
+    struct
+      open SI
+
+      (* "ln returns all characters from the current position up to and
+         including the next newline (#"\n") character. If it detects an
+         end-of-stream before the next newline, it returns the characters
+         read appended with a newline. [...] If the current stream position
+         is the end-of-stream, then it returns NONE." The line that ends at
+         an end-of-stream leaves the stream after it. *)
+      fun inputLine strm =
+        let
+          fun index (v, i) =
+            if i >= size v then NONE else if String.sub (v, i) = #"\n" then SOME i else index (v, i + 1)
+          fun go (strm, acc) =
+            let val (v, strm') = input strm
+            in
+              if size v = 0 then
+                case acc of
+                  [] => NONE
+                | _ => SOME (String.concat (List.rev ("\n" :: acc)), strm')
+              else
+                case index (v, 0) of
+                  SOME k => SOME (String.concat (List.rev (String.extract (v, 0, SOME (k + 1)) :: acc)),
+                                  #2 (inputN (strm, k + 1)))
+                | NONE => go (strm', v :: acc)
+            end
+        in go (strm, []) end
+
+      (* "This is equivalent to: output (strm, Substring.string ss)" *)
+      fun outputSubstr (strm, ss) = output (strm, Substring.string ss)
+    end
+  end
 
   structure Imperative = RuneImperativeIOFn (structure SIO = StreamIO structure V = CharVector)
 
@@ -33,59 +70,80 @@ struct
   val setOutstream = Imperative.setOutstream
 
   local
-    (* A file of the VM as a reader and as a writer. *)
-    fun reader (fd, name) =
-      TextPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
-                     readVec = SOME (RuneFile.readVec fd), readArr = NONE,
-                     readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
-                     avail = RuneFile.avail fd,
-                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                     close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
-    fun writer (fd, name) =
-      TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
-                     writeVec = SOME (fn sl => RuneFile.writeString (fd, name) (CharVectorSlice.vector sl)),
-                     writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
-                     block = NONE, canOutput = NONE,
-                     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                     close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
-    fun instreamOf (fd, name) = mkInstream (StreamIO.mkInstream (reader (fd, name), ""))
-    (* The VM buffers a file of its own, so the stream layer keeps nothing:
-       what a program writes through print and through a stream then reaches
-       the file in the order it was written. *)
-    fun outstreamOf (fd, name) = Imperative.mkOutstreamOver (StreamIO.mkOutstream (writer (fd, name), IO.NO_BUF), RuneFile.flush fd)
+    fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
+    (* A file of the VM as a reader. Its position is the number of bytes it
+       has read, when it was opened at the start of the file (counted says
+       so); "Further operations on the reader (besides close and getPos)
+       raise" Io with the cause ClosedStream. *)
+    fun reader (fd, name, counted) =
+      let
+        val closed = ref false
+        val count = ref 0
+        fun readVec n =
+          if !closed then closedIo (name, "readVec")
+          else let val s = RuneFile.readVec fd n in count := !count + size s; s end
+      in
+        TextPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
+                       readVec = SOME readVec, readArr = NONE,
+                       readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
+                       avail = fn () => if !closed then closedIo (name, "avail") else RuneFile.avail fd (),
+                       getPos = if counted then SOME (fn () => !count) else NONE,
+                       setPos = NONE, endPos = NONE, verifyPos = NONE,
+                       close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                       ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
+      end
+    (* A file of the VM as a writer, which writes through, and the device of
+       the stream over it, which leaves the VM to buffer. Its position is the
+       number of bytes written, when it was opened at the start of the file. *)
+    fun writer (fd, name, counted) =
+      let
+        val closed = ref false
+        val count = ref 0
+        fun put s =
+          if !closed then closedIo (name, "writeVec")
+          else (ignore (RuneFile.writeString (fd, name) s); count := !count + size s)
+        fun writeVec sl = let val s = CharVectorSlice.vector sl in put s; RuneFile.flush fd (); size s end
+      in
+        (TextPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
+                        writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
+                        block = NONE, canOutput = NONE,
+                        getPos = if counted then SOME (fn () => !count) else NONE,
+                        setPos = NONE, endPos = NONE, verifyPos = NONE,
+                        close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                        ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
+         {write = put, flush = RuneFile.flush fd})
+      end
+    fun instreamOf (fd, name, counted) = mkInstream (StreamIO.mkInstream (reader (fd, name, counted), ""))
+    (* "When opening a stream for writing, the stream will be block buffered
+       by default, unless the underlying file is associated with an
+       interactive or terminal device (i.e., the kind of the underlying
+       iodesc is OS.IO.Kind.tty), in which case the stream will be line
+       buffered." The VM keeps the block; the stream keeps nothing, so that
+       what a program writes through print and through a stream reaches the
+       file in the order it was written. *)
+    fun modeOf fd =
+      (if RuneIODesc.kind (RuneIODesc.FD (RuneFile.descriptor fd)) = RuneIODesc.Kind.tty then IO.LINE_BUF
+       else IO.BLOCK_BUF)
+      handle _ => IO.BLOCK_BUF
+    fun outstreamOf (fd, name, counted, mode) =
+      let val (w, device) = writer (fd, name, counted)
+      in mkOutstream (StreamIO.mkOutstreamOver (w, mode, device)) end
   in
-    fun openIn name = instreamOf (RuneFile.open' ("openIn", 0) name, name)
-    fun openOut name = outstreamOf (RuneFile.open' ("openOut", 1) name, name)
-    fun openAppend name = outstreamOf (RuneFile.open' ("openAppend", 2) name, name)
+    fun openIn name = instreamOf (RuneFile.open' ("openIn", 0) name, name, true)
+    fun openOut name = let val fd = RuneFile.open' ("openOut", 1) name in outstreamOf (fd, name, true, modeOf fd) end
+    fun openAppend name = let val fd = RuneFile.open' ("openAppend", 2) name in outstreamOf (fd, name, false, modeOf fd) end
     fun openString s = mkInstream (StreamIO.mkInstream (TextPrimIO.openVector s, ""))
 
-    val stdIn = instreamOf (0, "<stdIn>")
-    val stdOut = outstreamOf (1, "<stdOut>")
-    val stdErr = outstreamOf (2, "<stdErr>")
+    val stdIn = instreamOf (0, "<stdIn>", false)
+    val stdOut = outstreamOf (1, "<stdOut>", false, modeOf 1)
+    (* "stdErr is initially unbuffered" *)
+    val stdErr = outstreamOf (2, "<stdErr>", false, IO.NO_BUF)
   end
 
-  (* A line includes its newline; a last line without one gets it. NONE at
-     the end of the stream, which is not passed: "if endOfStream f returns
-     true, then input f returns ("", f')". *)
   fun inputLine (InStream r) =
-    let
-      fun index (v, i) =
-        if i >= size v then NONE else if String.sub (v, i) = #"\n" then SOME i else index (v, i + 1)
-      fun go (strm, acc) =
-        let val (v, strm') = StreamIO.input strm
-        in
-          if size v = 0 then
-            case acc of
-              [] => (r := strm; NONE)
-            | _ => (r := strm'; SOME (String.concat (List.rev ("\n" :: acc))))
-          else
-            case index (v, 0) of
-              SOME k =>
-                (r := #2 (StreamIO.inputN (strm, k + 1));
-                 SOME (String.concat (List.rev (String.extract (v, 0, SOME (k + 1)) :: acc))))
-            | NONE => go (strm', v :: acc)
-        end
-    in go (!r, []) end
+    case StreamIO.inputLine (!r) of
+      SOME (l, s) => (r := s; SOME l)
+    | NONE => NONE
 
   fun outputSubstr (strm, ss) = output (strm, Substring.string ss)
 

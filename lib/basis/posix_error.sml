@@ -38,9 +38,11 @@ struct
         fun go [] = cName
           | go ((name, c) :: rest) = if c = cName then name else go rest
       in go table end
+    (* "If e is a syserror, we have SOME(e) = syserror(errorName e)": the
+       names of the table, and those that errorName gives the others. *)
     fun syserror name =
       let
-        fun go [] = NONE
+        fun go [] = RuneError.syserror name
           | go ((n, c) :: rest) = if n = name then (case const c of ~1 => NONE | v => SOME v) else go rest
       in go table end
 

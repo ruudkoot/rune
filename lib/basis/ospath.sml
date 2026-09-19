@@ -37,7 +37,12 @@ struct
 
   fun isAbsolute path = #isAbs (fromString path)
   fun isRelative path = not (isAbsolute path)
-  fun isRoot path = path <> "" andalso List.all isSeparator (explode path)
+  (* "true if path is a canonical specification of a root directory": "/",
+     and not "//", whose last arc is the empty one. *)
+  fun isRoot path =
+    case fromString path of
+      {isAbs = true, arcs = [""], ...} => true
+    | _ => false
 
   (* "the file part is the last arc" *)
   fun splitDirFile path =

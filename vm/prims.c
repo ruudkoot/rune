@@ -750,6 +750,36 @@ static int p_posix_stat(VM *vm) {
     return push_int_list(vm, out, ok == 0 ? 11 : 0, 3);
 }
 
+/* posix_lock (fd, command, type, whence, start, length) */
+static int p_posix_lock(VM *vm) {
+    for (int i = 0; i < 6; i++) check_tag(vm, ARG(i), T_INT, "posix_lock");
+    int64_t out[5];
+    int ok = sys_lock((int)ARG(5).u.i, (int)ARG(4).u.i, (int)ARG(3).u.i, (int)ARG(2).u.i,
+                      ARG(1).u.i, ARG(0).u.i, out);
+    return push_int_list(vm, out, ok == 0 ? 5 : 0, 6);
+}
+
+/* posix_pathconf (path, fd, name): of the descriptor when the path is "" */
+static int p_posix_pathconf(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_pathconf");
+    check_tag(vm, ARG(1), T_INT, "posix_pathconf");
+    char *name = c_string(vm, ARG(0), "posix_pathconf");
+    int64_t v;
+    int ok = sys_pathconf(path[0] ? path : NULL, (int)ARG(1).u.i, name, &v);
+    free(path);
+    free(name);
+    return push_int_list(vm, &v, ok == 0 ? 1 : 0, 3);
+}
+
+static int p_posix_utime(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_utime");
+    check_tag(vm, ARG(1), T_INT, "posix_utime");
+    check_tag(vm, ARG(0), T_INT, "posix_utime");
+    int r = sys_utime(path, ARG(1).u.i, ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
 static int p_posix_chmod(VM *vm) {
     char *path = c_string(vm, ARG(2), "posix_chmod");
     check_tag(vm, ARG(1), T_INT, "posix_chmod");

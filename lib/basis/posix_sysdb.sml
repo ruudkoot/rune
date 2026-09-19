@@ -8,6 +8,12 @@ struct
     val getpw' = _prim "posix_getpw" : string * int -> string list
     val getgr' = _prim "posix_getgr" : string * int -> string list
     fun number s = case Int.fromString s of SOME n => n | NONE => 0
+    (* "It raises OS.SysErr if there is no group or user with the given ID
+       or name": the C library reports that without an errno. *)
+    fun failure what =
+      case RuneError.lastError () of
+        RuneError.SysErr (_, SOME 0) => RuneError.SysErr ("no such " ^ what, NONE)
+      | e => e
   in
     structure Passwd =
     struct
@@ -31,16 +37,20 @@ struct
       case l of
         [name, home, shell, uid, gid] =>
           ({name = name, uid = number uid, gid = number gid, home = home, shell = shell} : Passwd.passwd)
-      | _ => raise RuneError.lastError ()
+      | _ => raise failure "user"
 
     fun groupOf l =
       case l of
         name :: gid :: members => ({name = name, gid = number gid, members = members} : Group.group)
-      | _ => raise RuneError.lastError ()
+      | _ => raise failure "group"
 
-    fun getpwnam name = passwdOf (getpw' (name, 0))
+    (* The primitives look up the number when the name is empty, so no
+       name is looked up that is empty. *)
+    fun getpwnam name =
+      if name = "" then raise RuneError.SysErr ("no such user", NONE) else passwdOf (getpw' (name, 0))
     fun getpwuid uid = passwdOf (getpw' ("", uid))
-    fun getgrnam name = groupOf (getgr' (name, 0))
+    fun getgrnam name =
+      if name = "" then raise RuneError.SysErr ("no such group", NONE) else groupOf (getgr' (name, 0))
     fun getgrgid gid = groupOf (getgr' ("", gid))
   end
 end

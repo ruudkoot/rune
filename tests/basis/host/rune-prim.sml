@@ -394,16 +394,22 @@ struct
   fun sys_errno () = !lastErrno
   fun errorOf e = Posix.Error.fromWord (SysWord.fromInt e)
   fun sys_error_msg e = Posix.Error.errorMsg (errorOf e)
+  (* The C name of the host's name of an error, and the reverse: E2BIG is
+     toobig, the others are the C name in lower case without the E. *)
+  fun cNameOf "toobig" = "E2BIG"
+    | cNameOf name = "E" ^ String.map Char.toUpper name
+  fun hostNameOf "E2BIG" = SOME "toobig"
+    | hostNameOf name =
+      if String.size name < 2 orelse String.sub (name, 0) <> #"E" then NONE
+      else SOME (String.map Char.toLower (String.extract (name, 1, NONE)))
   fun sys_error_name e =
     case Posix.Error.errorName (errorOf e) of
       "" => ""
-    | name => "E" ^ String.map Char.toUpper name
+    | name => cNameOf name
   fun sys_error_of_name name =
-    if String.size name < 2 orelse String.sub (name, 0) <> #"E" then ~1
-    else
-      case Posix.Error.syserror (String.map Char.toLower (String.extract (name, 1, NONE))) of
-        SOME e => SysWord.toInt (Posix.Error.toWord e)
-      | NONE => ~1
+    case Option.mapPartial Posix.Error.syserror (hostNameOf name) of
+      SOME e => SysWord.toInt (Posix.Error.toWord e)
+    | NONE => ~1
 
   fun time_now () = Int.fromLarge (Time.toMicroseconds (Time.now ()))
   val cpu = Timer.totalCPUTimer ()
@@ -474,8 +480,8 @@ struct
     case Posix.Process.fromStatus (OS.Process.system command) of
       Posix.Process.W_EXITED => 0
     | Posix.Process.W_EXITSTATUS w => Word8.toInt w
-    | Posix.Process.W_SIGNALED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
-    | Posix.Process.W_STOPPED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
+    | Posix.Process.W_SIGNALED sg => 256 + SysWord.toInt (Posix.Signal.toWord sg)
+    | Posix.Process.W_STOPPED sg => 512 + SysWord.toInt (Posix.Signal.toWord sg)
   fun os_getenv name = OS.Process.getEnv name
 
   (* ---- the file system, on the host's Posix ---- *)
@@ -619,14 +625,20 @@ struct
        ("SEEK_SET", 0), ("SEEK_CUR", 1), ("SEEK_END", 2),
        ("F_DUPFD", 0), ("F_GETFD", 1), ("F_SETFD", 2), ("F_GETFL", 3), ("F_SETFL", 4),
        ("FD_CLOEXEC", ofWord (Posix.IO.FD.toWord Posix.IO.FD.cloexec)),
-       ("WNOHANG", 1), ("WUNTRACED", 2)]
+       ("F_GETLK", 5), ("F_SETLK", 6), ("F_SETLKW", 7), ("F_RDLCK", 0), ("F_WRLCK", 1), ("F_UNLCK", 2),
+       ("WNOHANG", 1), ("WUNTRACED", 2),
+       (* the sockets fail with ENOSYS, but their families and types are
+          values of the library all the same *)
+       ("AF_UNIX", 1), ("AF_INET", 2), ("SOCK_STREAM", 1), ("SOCK_DGRAM", 2), ("SOL_SOCKET", 1),
+       ("SO_DEBUG", 1), ("SO_REUSEADDR", 2), ("SO_TYPE", 3), ("SO_ERROR", 4), ("SO_DONTROUTE", 5),
+       ("SO_BROADCAST", 6), ("SO_SNDBUF", 7), ("SO_RCVBUF", 8), ("SO_KEEPALIVE", 9), ("SO_OOBINLINE", 10),
+       ("SO_LINGER", 13), ("MSG_OOB", 1), ("MSG_PEEK", 2), ("MSG_DONTROUTE", 4),
+       ("SHUT_RD", 0), ("SHUT_WR", 1), ("SHUT_RDWR", 2), ("IPPROTO_TCP", 6), ("TCP_NODELAY", 1)]
 
     fun posix_const name =
       let
         fun go [] =
-            (case PE.syserror (if String.size name > 1 andalso String.sub (name, 0) = #"E"
-                               then String.map Char.toLower (String.extract (name, 1, NONE))
-                               else name) of
+            (case Option.mapPartial PE.syserror (hostNameOf name) of
                SOME e => ofWord (PE.toWord e)
              | NONE => ~1)
           | go ((n, v) :: rest) = if n = name then v else go rest
@@ -654,14 +666,14 @@ struct
                 else if pid = 0 then Posix.Process.W_SAME_GROUP
                 else if pid < 0 then Posix.Process.W_GROUP (Posix.Process.wordToPid (SysWord.fromInt (~pid)))
                 else Posix.Process.W_CHILD (Posix.Process.wordToPid (SysWord.fromInt pid))
-      (* The flags of waitpid are named differently on the hosts; W_NOHANG is
-         the one that matters and waitpid_nh covers it. *)
+      (* WNOHANG (1) is waitpid_nh, WUNTRACED (2) is W.untraced *)
+      val options = if Int.rem (Int.quot (flags, 2), 2) = 1 then [Posix.Process.W.untraced] else []
       val (got, status) =
         if Int.rem (flags, 2) = 1 then
-          (case Posix.Process.waitpid_nh (arg, []) of
+          (case Posix.Process.waitpid_nh (arg, options) of
              SOME r => r
            | NONE => (Posix.Process.wordToPid 0w0, Posix.Process.W_EXITED))
-        else Posix.Process.waitpid (arg, [])
+        else Posix.Process.waitpid (arg, options)
       val number = SysWord.toInt (Posix.Process.pidToWord got)
     in
       case status of
@@ -705,7 +717,13 @@ struct
                             pgid = if pgid = 0 then NONE else SOME (Posix.Process.wordToPid (SysWord.fromInt pgid))};
      0)
     handle OS.SysErr (_, e) => (noteError e; ~1)
-  fun posix_uname () = List.map (fn (_, v) => v) (Posix.ProcEnv.uname ())
+  (* in the order of the primitive; the hosts list the fields in orders of their own *)
+  fun posix_uname () =
+    let val fields = Posix.ProcEnv.uname ()
+    in
+      List.map (fn name => case List.find (fn (n, _) => n = name) fields of SOME (_, v) => v | NONE => "")
+               ["sysname", "nodename", "release", "version", "machine"]
+    end
   fun posix_times () =
     let val {elapsed, utime, stime, cutime, cstime} = Posix.ProcEnv.times ()
     in List.map (fn t => Int.fromLarge (Time.toMicroseconds t)) [elapsed, utime, stime, cutime, cstime] end
@@ -736,10 +754,49 @@ struct
   fun posix_pipe () =
     let val {infd, outfd} = Posix.IO.pipe () in [fdNum infd, fdNum outfd] end
     handle OS.SysErr (_, e) => (noteError e; [])
+  (* errno is 0 after a read that succeeds, as posix_read promises *)
   fun posix_read (n, k) =
     if k < 0 then raise Size
-    else Byte.bytesToString (Posix.IO.readVec (fdOf n, k))
+    else (Byte.bytesToString (Posix.IO.readVec (fdOf n, k)) before lastErrno := 0)
          handle OS.SysErr (_, e) => (noteError e; "")
+  fun posix_utime (path, access, modification) =
+    (Posix.FileSys.utime (path, SOME {actime = Time.fromSeconds (Int.toLarge access),
+                                      modtime = Time.fromSeconds (Int.toLarge modification)}); 0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_pathconf (path, n, name) =
+    (case (if path = "" then Posix.FileSys.fpathconf (fdOf n, name) else Posix.FileSys.pathconf (path, name)) of
+       NONE => [~1]
+     | SOME w => [SysWord.toInt w])
+    handle OS.SysErr (_, e) => (noteError e; [])
+  (* the host's locks, in the numbers of the system *)
+  fun posix_lock (n, command, ltype, whence, start, len) =
+    let
+      fun lt t = if t = posix_const "F_RDLCK" then Posix.IO.F_RDLCK
+                 else if t = posix_const "F_WRLCK" then Posix.IO.F_WRLCK else Posix.IO.F_UNLCK
+      fun ltNum Posix.IO.F_RDLCK = posix_const "F_RDLCK"
+        | ltNum Posix.IO.F_WRLCK = posix_const "F_WRLCK"
+        | ltNum Posix.IO.F_UNLCK = posix_const "F_UNLCK"
+      fun wh w = if w = posix_const "SEEK_CUR" then Posix.IO.SEEK_CUR
+                 else if w = posix_const "SEEK_END" then Posix.IO.SEEK_END else Posix.IO.SEEK_SET
+      fun whNum Posix.IO.SEEK_SET = posix_const "SEEK_SET"
+        | whNum Posix.IO.SEEK_CUR = posix_const "SEEK_CUR"
+        | whNum Posix.IO.SEEK_END = posix_const "SEEK_END"
+      val fl = Posix.IO.FLock.flock {ltype = lt ltype, whence = wh whence, start = Position.fromInt start,
+                                     len = Position.fromInt len, pid = NONE}
+      val got = if command = posix_const "F_GETLK" then Posix.IO.getlk (fdOf n, fl)
+                else if command = posix_const "F_SETLKW" then Posix.IO.setlkw (fdOf n, fl)
+                else Posix.IO.setlk (fdOf n, fl)
+    in
+      [ltNum (Posix.IO.FLock.ltype got), whNum (Posix.IO.FLock.whence got),
+       Position.toInt (Posix.IO.FLock.start got), Position.toInt (Posix.IO.FLock.len got),
+       (* the system leaves the pid of a segment without a lock as it was
+          given, which is 0 on the VM; SML/NJ gives one it did not set *)
+       case (Posix.IO.FLock.ltype got, Posix.IO.FLock.pid got) of
+         (Posix.IO.F_UNLCK, _) => 0
+       | (_, SOME p) => SysWord.toInt (Posix.Process.pidToWord p)
+       | (_, NONE) => 0]
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
   fun posix_write (n, s) =
     Posix.IO.writeVec (fdOf n, Word8VectorSlice.full (Byte.stringToBytes s))
     handle OS.SysErr (_, e) => (noteError e; ~1)
@@ -775,6 +832,8 @@ struct
                  else if Posix.FileSys.ST.isLink st then 2
                  else if Posix.FileSys.ST.isFIFO st then 4
                  else if Posix.FileSys.ST.isSock st then 5
+                 else if Posix.FileSys.ST.isChr st then 6
+                 else if Posix.FileSys.ST.isBlk st then 7
                  else 3
     in
       [kind, SysWord.toInt (Posix.FileSys.S.toWord (Posix.FileSys.ST.mode st)),

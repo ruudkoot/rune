@@ -36,13 +36,33 @@ struct
 
     fun exit (status : Word8.word) = exit' (Word8.toInt status)
 
-    val wnohang = const "WNOHANG"
-    val wuntraced = const "WUNTRACED"
-    datatype waitpid_flag = W_NOHANG | W_UNTRACED
-    fun flagBits flags =
-      List.foldl (fn (W_NOHANG, acc) => Word.toInt (Word.orb (Word.fromInt acc, Word.fromInt wnohang))
-                   | (W_UNTRACED, acc) => Word.toInt (Word.orb (Word.fromInt acc, Word.fromInt wuntraced)))
-                 0 flags
+    (* OS.Process.status is an int: 0 is success, 1 to 255 what the process
+       exited with, 256 plus the signal that ended it and 512 plus the one
+       that stopped it (Unix.reap and OS.Process.system both say so). *)
+    fun fromStatus (s : int) =
+      if s = 0 then W_EXITED
+      else if s >= 256 andalso s < 512 then W_SIGNALED (s - 256)
+      else if s >= 512 andalso s < 768 then W_STOPPED (s - 512)
+      else W_EXITSTATUS (Word8.fromInt s)
+
+    (* The flags of waitpid. WNOHANG is not one of them: waitpid_nh adds it. *)
+    structure W =
+    struct
+      type flags = word
+      val untraced = Word.fromInt (case const "WUNTRACED" of ~1 => 0 | v => v)
+      val all = untraced
+      fun toWord (f : flags) = f
+      (* "toWord o fromWord must be equivalent to fn w => andb (w, toWord all)" *)
+      fun fromWord w = Word.andb (w, all)
+      fun flags l = List.foldl Word.orb 0w0 l
+      fun intersect l = List.foldl Word.andb all l
+      fun clear (a, b) = Word.andb (Word.notb a, b)
+      fun allSet (a, b) = Word.andb (a, b) = a
+      fun anySet (a, b) = Word.andb (a, b) <> 0w0
+    end
+
+    val wnohang = Word.fromInt (const "WNOHANG")
+    fun flagBits flags = Word.toInt (W.flags flags)
 
     fun pidOf W_ANY_CHILD = ~1
       | pidOf (W_CHILD pid) = pid
@@ -61,7 +81,7 @@ struct
       | _ => raise RuneError.lastError ()
 
     fun waitpid_nh (arg, flags) =
-      case waitpid' (pidOf arg, flagBits (W_NOHANG :: flags)) of
+      case waitpid' (pidOf arg, Word.toInt (Word.orb (wnohang, Word.fromInt (flagBits flags)))) of
         [0, _, _] => NONE
       | [pid, kind, value] => SOME (pid, statusOf (kind, value))
       | _ => raise RuneError.lastError ()

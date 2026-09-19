@@ -169,7 +169,7 @@ date_parts       2  int * int -> int list     Broken-down time (second, minute, 
 date_seconds     2  int list * int -> int list  The reverse: the seconds, followed by the parts normalised; [] on failure.
 date_offset      1  int -> int                Seconds by which local time is ahead of UTC at that time; raises Domain on failure.
 date_format      3  string * int list * int -> string  strftime of the parts.
-os_system        1  string -> int             Run a command with the shell and wait; what it exited with, or 128 plus the signal that ended it, or ~1.
+os_system        1  string -> int             Run a command with the shell and wait; what it exited with, or 256 plus the signal that ended it, or ~1.
 os_getenv        1  string -> string option   The value of an environment variable.
 file_errno       1  unit -> int               The errno of the last file_open or file_write that failed.
 os_mkdir         1  string -> int             Make a directory; 0, or ~1 with the reason in sys_errno.
@@ -227,13 +227,13 @@ posix_close      1  int -> int                Close a handle.
 posix_dup        1  int -> int                Another handle for the same file.
 posix_dup2       2  int * int -> int          The same, with the second handle given.
 posix_pipe       1  unit -> int list          A pipe, as [read handle, write handle]; [] on failure.
-posix_read       2  int * int -> string       Read at most n bytes; "" at end of file. Raises Size for a negative n.
+posix_read       2  int * int -> string       Read at most n bytes; "" at end of file (sys_errno is then 0) or on failure. Raises Size for a negative n.
 posix_write      2  int * string -> int       Write the bytes; how many were written, or ~1.
 posix_lseek      3  int * int * int -> int    Move the position; where it ends up, or ~1.
 posix_fsync      1  int -> int                Write what the system holds for the file to the disk.
 posix_fcntl      3  int * int * int -> int    The fcntl of POSIX, for the commands of the flags of a handle.
 posix_ftruncate  2  int * int -> int          Set the length of a file.
-posix_stat       3  string * int * int -> int list  The fields of stat: kind, mode, inode, device, links, user, group, size, access time, modification time, change time; of the path, of what a link points at when the second argument is 1, or of the handle when the path is ""; [] on failure.
+posix_stat       3  string * int * int -> int list  The fields of stat: kind, mode, inode, device, links, user, group, size, access time, modification time, change time; of the path, of the link itself when the second argument is 1 (0 follows it), or of the descriptor when the path is ""; [] on failure. The kind: 0 regular file, 1 directory, 2 symbolic link, 3 other, 4 FIFO, 5 socket, 6 character device, 7 block device.
 posix_chmod      3  string * int * int -> int  Set the mode of a path, or of a handle when the path is "".
 posix_chown      4  string * int * int * int -> int  Set the user and group likewise.
 posix_link       2  string * string -> int    Make a hard link.
@@ -271,3 +271,6 @@ netdb_serv_byname 2 string * string -> string list  A service by name and protoc
 netdb_serv_byport 2 int * string -> string list  The same by port.
 file_descriptor  1  int -> int                The descriptor of the system under a file handle; ~1 for a closed one.
 posix_exit       1  int -> 'a                End the process at once with the status: no buffer is flushed and no at-exit action runs.
+posix_lock       6  int * int * int * int * int * int -> int list  fcntl with a lock: descriptor, command (F_GETLK, F_SETLK, F_SETLKW), type, whence, start, length; the lock afterwards (type, whence, start, length, pid), [] on failure.
+posix_pathconf   3  string * int * string -> int list  The limit of a path (of the descriptor when the path is "") named without its _PC_ prefix: [value], [~1] when there is none, [] on failure.
+posix_utime      3  string * int * int -> int  Set the access and modification times of a file, in seconds.

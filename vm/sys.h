@@ -125,6 +125,9 @@ int64_t sys_write_fd(int fd, const char *buf, int64_t n);
 int64_t sys_lseek_fd(int fd, int64_t offset, int whence);
 int sys_fsync(int fd);
 int sys_fcntl(int fd, int command, int argument);
+int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t length, int64_t out[5]);
+int sys_pathconf(const char *path, int fd, const char *name, int64_t *out);
+int sys_utime(const char *path, int64_t access, int64_t modification);
 int sys_ftruncate(int fd, int64_t length);
 /* The fields of stat: kind, mode, inode, device, links, user, group, size,
    access time, modification time, change time. */

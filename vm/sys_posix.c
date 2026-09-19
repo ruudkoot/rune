@@ -179,13 +179,13 @@ int sys_date_format(const char *format, const int32_t parts[9], int local, char 
     return (int)k;
 }
 
-/* The status a shell would report: what the command exited with, or 128
-   plus the signal that ended it. */
+/* An OS.Process.status: what the command exited with, or 256 plus the
+   signal that ended it (Posix.Process.fromStatus tells them apart). */
 int sys_system(const char *command) {
     int status = system(command);
     if (status == -1) return -1;
     if (WIFEXITED(status)) return WEXITSTATUS(status);
-    if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
+    if (WIFSIGNALED(status)) return 256 + WTERMSIG(status);
     return status;
 }
 
@@ -214,10 +214,16 @@ int sys_access(const char *path, int read, int write, int exec) {
     return access(path, mode) == 0 ? 1 : 0;
 }
 
+/* 0 regular file, 1 directory, 2 symbolic link, 4 FIFO, 5 socket,
+   6 character device, 7 block device, 3 anything else */
 static int kind_of(mode_t mode) {
     if (S_ISREG(mode)) return 0;
     if (S_ISDIR(mode)) return 1;
     if (S_ISLNK(mode)) return 2;
+    if (S_ISFIFO(mode)) return 4;
+    if (S_ISSOCK(mode)) return 5;
+    if (S_ISCHR(mode)) return 6;
+    if (S_ISBLK(mode)) return 7;
     return 3;
 }
 
@@ -250,6 +256,13 @@ int sys_set_time(const char *path, int64_t seconds, int now) {
     struct utimbuf times;
     times.actime = (time_t)seconds;
     times.modtime = (time_t)seconds;
+    return utime(path, &times);
+}
+
+int sys_utime(const char *path, int64_t access, int64_t modification) {
+    struct utimbuf times;
+    times.actime = (time_t)access;
+    times.modtime = (time_t)modification;
     return utime(path, &times);
 }
 
@@ -399,6 +412,11 @@ static const struct { const char *name; int64_t value; } constants[] = {
     /* where a seek starts, what fcntl does, how to wait */
     C(SEEK_SET) C(SEEK_CUR) C(SEEK_END)
     C(F_DUPFD) C(F_GETFD) C(F_SETFD) C(F_GETFL) C(F_SETFL) C(FD_CLOEXEC)
+    C(F_GETLK) C(F_SETLK) C(F_SETLKW) C(F_RDLCK) C(F_WRLCK) C(F_UNLCK)
+    /* the limits of pathconf */
+    C(_PC_LINK_MAX) C(_PC_MAX_CANON) C(_PC_MAX_INPUT) C(_PC_NAME_MAX) C(_PC_PATH_MAX)
+    C(_PC_PIPE_BUF) C(_PC_CHOWN_RESTRICTED) C(_PC_NO_TRUNC) C(_PC_VDISABLE)
+    C(_PC_SYNC_IO) C(_PC_ASYNC_IO) C(_PC_PRIO_IO) C(_PC_FILESIZEBITS)
     C(WNOHANG) C(WUNTRACED)
     /* sockets */
     C(AF_INET) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
@@ -543,9 +561,11 @@ int sys_dup(int fd) { return dup(fd); }
 int sys_dup2(int fd, int to) { return dup2(fd, to); }
 int sys_pipe(int out[2]) { return pipe(out); }
 
+/* errno is cleared first, as for sys_recv: nothing read is the end of the
+   file when it is still 0 afterwards. */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     ssize_t k;
-    do { k = read(fd, buf, (size_t)n); } while (k < 0 && errno == EINTR);
+    do { errno = 0; k = read(fd, buf, (size_t)n); } while (k < 0 && errno == EINTR);
     return (int64_t)k;
 }
 
@@ -561,6 +581,43 @@ int64_t sys_lseek_fd(int fd, int64_t offset, int whence) {
 
 int sys_fsync(int fd) { return fsync(fd); }
 int sys_fcntl(int fd, int command, int argument) { return fcntl(fd, command, argument); }
+
+/* fcntl with a struct flock: F_GETLK, F_SETLK or F_SETLKW. out is the lock
+   afterwards: type, whence, start, length, pid. */
+int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t length, int64_t out[5]) {
+    struct flock lock;
+    memset(&lock, 0, sizeof lock);
+    lock.l_type = (short)type;
+    lock.l_whence = (short)whence;
+    lock.l_start = (off_t)start;
+    lock.l_len = (off_t)length;
+    int r;
+    do { r = fcntl(fd, command, &lock); } while (r < 0 && errno == EINTR);
+    if (r < 0) return -1;
+    out[0] = lock.l_type;
+    out[1] = lock.l_whence;
+    out[2] = (int64_t)lock.l_start;
+    out[3] = (int64_t)lock.l_len;
+    out[4] = (int64_t)lock.l_pid;
+    return 0;
+}
+
+/* pathconf of the path, or fpathconf of fd when path is NULL, for the name
+   of a limit without its prefix ("LINK_MAX" is _PC_LINK_MAX). 0 and the value
+   in *out, -1 in *out when there is no limit; -1 on failure. */
+int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
+    char full[64];
+    if (strlen(name) + 5 > sizeof full) { errno = EINVAL; return -1; }
+    strcpy(full, "_PC_");
+    strcat(full, name);
+    int64_t which = sys_const(full);
+    if (which < 0) { errno = EINVAL; return -1; }
+    errno = 0;
+    long v = path ? pathconf(path, (int)which) : fpathconf(fd, (int)which);
+    if (v < 0 && errno != 0) return -1;
+    *out = v < 0 ? -1 : (int64_t)v;
+    return 0;
+}
 int sys_ftruncate(int fd, int64_t length) { return ftruncate(fd, (off_t)length); }
 
 int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {

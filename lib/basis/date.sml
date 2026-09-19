@@ -5,8 +5,8 @@ struct
   datatype month = Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
   exception Date
 
-  (* The offset is the time zone the date is in: NONE local, SOME t east of
-     Greenwich (the specification's convention for the argument of date). *)
+  (* The offset is the time zone the date is in: NONE local, SOME t the time
+     t west of UTC, less than a day either way. *)
   type date = {year : int, month : month, day : int, hour : int, minute : int, second : int,
                offset : Time.time option, wday : weekday, yday : int, isDst : bool option}
 
@@ -57,21 +57,71 @@ struct
        weekdayNumber (#wday d), #yday d,
        case #isDst d of NONE => ~1 | SOME true => 1 | SOME false => 0]
 
-    (* The date in the zone of offset, with the day of the week and of the
-       year worked out and the fields normalised. *)
-    fun date {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} =
+    (* The proleptic Gregorian calendar ("Leap years follow the Gregorian
+       calendar"), for the dates of a zone at a fixed offset from UTC, which
+       need no time zone: the days from 1970-01-01 to y-m-d, for m in 1..12
+       and any d, and back (Howard Hinnant's days_from_civil and
+       civil_from_days; div rounds down, as they need). *)
+    fun daysFromCivil (y, m, d) =
       let
-        val local' = case off of NONE => true | SOME _ => false
-        val fields = [s, mi, h, d, monthNumber m, y - 1900, 0, 0, if local' then ~1 else 0]
+        val y = if m <= 2 then y - 1 else y
+        val era = y div 400
+        val yoe = y - era * 400
+        val doy = (153 * (if m > 2 then m - 3 else m + 9) + 2) div 5 + d - 1
+      in era * 146097 + yoe * 365 + yoe div 4 - yoe div 100 + doy - 719468 end
+    fun civilFromDays days =
+      let
+        val z = days + 719468
+        val era = z div 146097
+        val doe = z - era * 146097
+        val yoe = (doe - doe div 1460 + doe div 36524 - doe div 146096) div 365
+        val doy = doe - (365 * yoe + yoe div 4 - yoe div 100)
+        val mp = (5 * doy + 2) div 153
+        val m = if mp < 10 then mp + 3 else mp - 9
+      in (yoe + era * 400 + (if m <= 2 then 1 else 0), m, doy - (153 * mp + 2) div 5 + 1) end
+    fun monthLength (y, k) =    (* k = 0 for January *)
+      daysFromCivil (if k = 11 then y + 1 else y, (k + 1) mod 12 + 1, 1) - daysFromCivil (y, k + 1, 1)
+
+    (* The date of the fields in the zone at offset from UTC, normalised:
+       "Seconds outside the range [0,59] are converted to the equivalent
+       minutes and added to the minutes argument", and so on up to years. *)
+    fun fixed (y, m, d, h, mi, s, offset) =
+      let
+        val mi = mi + s div 60
+        val h = h + mi div 60
+        val days = daysFromCivil (y, monthNumber m + 1, 1) + (d - 1) + h div 24
+        val (y', m', d') = civilFromDays days
       in
-        case seconds' (fields, if local' then 1 else 0) of
-          _ :: sec :: min :: hr :: mday :: mon :: yr :: wday :: yday :: dst :: _ =>
-            ({second = sec, minute = min, hour = hr, day = mday, month = monthOf mon,
-             year = yr + 1900, wday = weekdayOf wday, yday = yday,
-             isDst = if dst < 0 then NONE else SOME (dst > 0),
-             offset = Option.map (fn t => Time.ofMicros (Int.mod (Time.micros t div 1000000, 86400) * 1000000)) off} : date)
-        | _ => raise Date
+        {year = y', month = monthOf (m' - 1), day = d', hour = h mod 24, minute = mi mod 60,
+         second = s mod 60, offset = SOME offset,
+         wday = weekdayOf ((days + 4) mod 7),                 (* 1970-01-01 was a Thursday *)
+         yday = days - daysFromCivil (y', 1, 1), isDst = SOME false} : date
       end
+
+    (* The date in the zone of offset, with the day of the week and of the
+       year worked out and the fields normalised. "Offsets are taken modulo
+       24 hours. That is, we express t, in hours, as sgn(t)(24*d + r) ... The
+       offset then becomes sgn(t)*r and sgn(t)(24*d) is added to the hours";
+       a local date is normalised by the C library, which knows the zone. *)
+    fun date {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} =
+      (case off of
+         SOME t =>
+           let
+             val microsPerDay = 86400 * 1000000
+             val sign = if Time.micros t < 0 then ~1 else 1
+             val magnitude = Int.abs (Time.micros t)
+           in
+             fixed (y, m, d, h + sign * 24 * (magnitude div microsPerDay), mi, s,
+                    Time.ofMicros (sign * (magnitude mod microsPerDay)))
+           end
+       | NONE =>
+           case seconds' ([s, mi, h, d, monthNumber m, y - 1900, 0, 0, ~1], 1) of
+             _ :: sec :: min :: hr :: mday :: mon :: yr :: wday :: yday :: dst :: _ =>
+               {second = sec, minute = min, hour = hr, day = mday, month = monthOf mon,
+                year = yr + 1900, wday = weekdayOf wday, yday = yday,
+                isDst = if dst < 0 then NONE else SOME (dst > 0), offset = NONE}
+           | _ => raise Date)
+      handle Overflow => raise Date
 
     fun localOffset () = Time.ofMicros (Int.~ (offset' (Time.micros (Time.now ()) div 1000000)) * 1000000)
 
@@ -81,27 +131,58 @@ struct
            month = #month d, year = #year d, wday = #wday d, yday = #yday d,
            isDst = #isDst d, offset = NONE} : date) end
 
+    (* the second that t falls in, as a date in UTC *)
     fun fromTimeUniv t =
-      let val d = partsOf (Time.micros t div 1000000, false)
-      in ({second = #second d, minute = #minute d, hour = #hour d, day = #day d,
-           month = #month d, year = #year d, wday = #wday d, yday = #yday d,
-           isDst = #isDst d, offset = SOME Time.zeroTime} : date) end
+      let val s = Time.micros t div 1000000
+      in fixed (1970, Jan, 1 + s div 86400, 0, 0, s mod 86400, Time.zeroTime) end
 
-    (* "the date is interpreted in its own time zone" *)
+    (* "the date is interpreted in its own time zone": a date at an offset t
+       west of UTC is t earlier than the same date in UTC *)
     fun toTime (d : date) =
+      (case #offset d of
+         SOME off =>
+           let
+             val days = daysFromCivil (#year d, monthNumber (#month d) + 1, #day d)
+             val seconds = ((days * 24 + #hour d) * 60 + #minute d) * 60 + #second d
+           in Time.+ (Time.ofMicros (seconds * 1000000), off) end
+       | NONE =>
+           case seconds' (listOf d, 1) of
+             [] => raise Date
+           | t :: _ => Time.ofMicros (t * 1000000))
+      handle Overflow => raise Date | Time.Time => raise Date
+
+    (* "They raise Date if the given date is invalid", as a date from scan
+       may be. *)
+    fun valid (d : date) =
+      #day d >= 1 andalso #day d <= monthLength (#year d, monthNumber (#month d))
+      andalso #hour d >= 0 andalso #hour d <= 23 andalso #minute d >= 0 andalso #minute d <= 59
+      andalso #second d >= 0 andalso #second d <= 61
+
+    (* Only the directives of the specification reach strftime: a % followed
+       by another character c is "the character c". The C library knows the
+       name of the local zone only; %Z of a date at an offset is zone. *)
+    fun directives (format, zone) =
       let
-        val local' = case #offset d of NONE => true | SOME _ => false
-      in
-        case seconds' (listOf d, if local' then 1 else 0) of
-          [] => raise Date
-        | t :: _ =>
-            (case #offset d of
-               NONE => Time.ofMicros (t * 1000000)
-             | SOME off => Time.- (Time.ofMicros (t * 1000000), off))
-      end
+        fun go (#"%" :: #"Z" :: rest, acc) =
+              (case zone of
+                 SOME name => go (rest, List.revAppend (String.explode name, acc))
+               | NONE => go (rest, #"Z" :: #"%" :: acc))
+          | go (#"%" :: c :: rest, acc) =
+              if Char.contains "aAbBcdHIjmMpSUwWxXyYZ%" c then go (rest, c :: #"%" :: acc)
+              else go (rest, c :: acc)
+          | go ([#"%"], acc) = go ([], #"%" :: #"%" :: acc)
+          | go (c :: rest, acc) = go (rest, c :: acc)
+          | go ([], acc) = String.implode (List.rev acc)
+      in go (String.explode format, []) end
+
+    (* "time zone name or abbreviation, or the empty string if no time zone
+       information exists": UTC, or nothing for another offset *)
+    fun zoneName (d : date) =
+      Option.map (fn t => if Time.micros t = 0 then "UTC" else "") (#offset d)
 
     fun fmt format (d : date) =
-      format' (format, listOf d, case #offset d of NONE => 1 | SOME _ => 0)
+      if valid d then format' (directives (format, zoneName d), listOf d, if Option.isSome (#offset d) then 0 else 1)
+      else raise Date
 
     (* strftime's %c, as the specification prescribes for toString:
        "Thu Sep 18 23:39:29 2026" *)
@@ -182,8 +263,9 @@ struct
                                                     | (SOME year, src) =>
                                                         SOME ({year = year, month = mon, day = day,
                                                                hour = hour, minute = minute, second = second,
-                                                               wday = wday, yday = 0, isDst = NONE,
-                                                               offset = NONE} : date, src)
+                                                               wday = wday, isDst = NONE, offset = NONE,
+                                                               yday = daysFromCivil (year, monthNumber mon + 1, day)
+                                                                      - daysFromCivil (year, 1, 1)} : date, src)
                                                   end))))
                         end
                   end

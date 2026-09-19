@@ -18,13 +18,26 @@ struct
     val ftruncate' = _prim "posix_ftruncate" : int * int -> int
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun named name = case const name of ~1 => 0 | v => v
+    (* The primitives take the path "" for "the descriptor"; a path that is
+       empty is refused as the system refuses it ("an empty string causes an
+       exception"). *)
+    fun nonEmpty "" = let val e = named "ENOENT" in raise RuneError.SysErr (RuneError.errorMsg e, SOME e) end
+      | nonEmpty p = p
   in
     fun fdToWord (fd : file_desc) = Word.fromInt fd
     fun wordToFD w = Word.toInt w
     fun fdToIOD (fd : file_desc) = RuneIODesc.FD fd
     fun iodToFD (RuneIODesc.FD fd) = SOME fd
 
-    (* The flags of open and the bits of a mode, as words. *)
+    val stdin : file_desc = 0
+    val stdout : file_desc = 1
+    val stderr : file_desc = 2
+
+    (* The flags of open and the bits of a mode, as words. "all represents
+       the union of all flags", also those of the system that O does not
+       name (O_CLOEXEC, and O_LARGEFILE, which getfl reports): the bits of a
+       C int. fromWord keeps the bits of all, so that "toWord o fromWord" is
+       "fn w => SysWord.andb (w, toWord all)". *)
     structure O =
     struct
       type flags = word
@@ -34,11 +47,11 @@ struct
       val nonblock = Word.fromInt (named "O_NONBLOCK")
       val sync = Word.fromInt (named "O_SYNC")
       val trunc = Word.fromInt (named "O_TRUNC")
+      val all = if Word.wordSize > 32 then Word.<< (0w1, 0w32) - 0w1 else Word.notb 0w0
       fun toWord (f : flags) = f
-      fun fromWord w = w
-      val all = Word.orb (append, Word.orb (excl, Word.orb (noctty,
-                  Word.orb (nonblock, Word.orb (sync, trunc)))))
+      fun fromWord w = Word.andb (w, all)
       fun flags l = List.foldl Word.orb 0w0 l
+      fun intersect l = List.foldl Word.andb all l
       fun allSet (a, b) = Word.andb (a, b) = a
       fun anySet (a, b) = Word.andb (a, b) <> 0w0
       fun clear (a, b) = Word.andb (Word.notb a, b)
@@ -47,6 +60,7 @@ struct
     structure S =
     struct
       type mode = word
+      type flags = mode
       val irwxu = Word.fromInt (named "S_IRWXU")
       val irusr = Word.fromInt (named "S_IRUSR")
       val iwusr = Word.fromInt (named "S_IWUSR")
@@ -61,10 +75,12 @@ struct
       val ixoth = Word.fromInt (named "S_IXOTH")
       val isuid = Word.fromInt (named "S_ISUID")
       val isgid = Word.fromInt (named "S_ISGID")
+      (* every bit that chmod sets: those above and S_ISVTX, 07777 *)
+      val all = 0w4095
       fun toWord (m : mode) = m
-      fun fromWord w = w
-      val all = Word.orb (irwxu, Word.orb (irwxg, Word.orb (irwxo, Word.orb (isuid, isgid))))
+      fun fromWord w = Word.andb (w, all)
       fun flags l = List.foldl Word.orb 0w0 l
+      fun intersect l = List.foldl Word.andb all l
       fun allSet (a, b) = Word.andb (a, b) = a
       fun anySet (a, b) = Word.andb (a, b) <> 0w0
       fun clear (a, b) = Word.andb (Word.notb a, b)
@@ -96,17 +112,40 @@ struct
     fun umask mask = Word.fromInt (check (umask' (Word.toInt mask)))
     fun ftruncate (fd, length) = ignore (check (ftruncate' (fd, length)))
 
-    (* What stat reports. *)
+    (* "creates a new directory named s with protection mode m (as modified
+       by the umask)". The directory of OS.FileSys gets every permission the
+       mask leaves; the mask is widened by those that m does not give while
+       it is made. *)
+    fun mkdir (path, perms) =
+      let
+        val mask = umask' 0
+        fun restore () = ignore (umask' mask)
+      in
+        ignore (umask' (Word.toInt (Word.orb (Word.fromInt mask, Word.andb (Word.notb perms, 0w511)))));
+        (RuneFileSys.mkDir path; restore ()) handle e => (restore (); raise e)
+      end
+
+    type dev = int
+    type ino = int
+    fun wordToDev w : dev = Word.toInt w
+    fun devToWord (d : dev) = Word.fromInt d
+    fun wordToIno w : ino = Word.toInt w
+    fun inoToWord (i : ino) = Word.fromInt i
+
+    (* What stat reports. The kind is posix_stat's: 0 regular file, 1
+       directory, 2 symbolic link, 3 anything else; 4 FIFO, 5 socket, 6
+       character device and 7 block device where the primitive tells them
+       apart (the VM does not yet: it reports them as 3). *)
     structure ST =
     struct
-      type stat = {kind : int, mode : word, ino : int, dev : int, nlink : int,
+      type stat = {kind : int, mode : word, ino : ino, dev : dev, nlink : int,
                    uid : uid, gid : gid, size : int,
                    atime : Time.time, mtime : Time.time, ctime : Time.time}
       fun isDir (s : stat) = #kind s = 1
       fun isLink (s : stat) = #kind s = 2
       fun isReg (s : stat) = #kind s = 0
       fun isChr (s : stat) = #kind s = 6
-      fun isBlk (s : stat) = false
+      fun isBlk (s : stat) = #kind s = 7
       fun isFIFO (s : stat) = #kind s = 4
       fun isSock (s : stat) = #kind s = 5
       fun mode (s : stat) = #mode s
@@ -124,24 +163,22 @@ struct
     fun statOf (path, follow, fd) =
       case stat' (path, follow, fd) of
         [kind, mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime] =>
-          ({kind = kind, mode = Word.fromInt mode, ino = ino, dev = dev, nlink = nlink,
+          ({kind = kind, mode = S.fromWord (Word.fromInt mode), ino = ino, dev = dev, nlink = nlink,
             uid = uid, gid = gid, size = size,
             atime = Time.ofMicros (atime * 1000000), mtime = Time.ofMicros (mtime * 1000000),
             ctime = Time.ofMicros (ctime * 1000000)} : ST.stat)
       | _ => raise RuneError.lastError ()
 
-    fun stat path = statOf (path, 0, 0)
-    fun lstat path = statOf (path, 1, 0)
+    fun stat path = statOf (nonEmpty path, 0, 0)
+    fun lstat path = statOf (nonEmpty path, 1, 0)
     fun fstat fd = statOf ("", 0, fd)
 
-    fun chmod (path, perms) = ignore (check (chmod' (path, 0, Word.toInt perms)))
+    fun chmod (path, perms) = ignore (check (chmod' (nonEmpty path, 0, Word.toInt perms)))
     fun fchmod (fd, perms) = ignore (check (chmod' ("", fd, Word.toInt perms)))
-    fun chown (path, uid, gid) = ignore (check (chown' (path, 0, uid, gid)))
+    fun chown (path, uid, gid) = ignore (check (chown' (nonEmpty path, 0, uid, gid)))
     fun fchown (fd, uid, gid) = ignore (check (chown' ("", fd, uid, gid)))
 
     (* The rest of the file system is the same as OS.FileSys's. *)
-    val mkdir = fn (path, perms) => ignore (check (if Word.toInt perms >= 0 then
-                                                     (RuneFileSys.mkDir path; 0) else ~1))
     val rmdir = RuneFileSys.rmDir
     val chdir = RuneFileSys.chDir
     val getcwd = RuneFileSys.getDir
@@ -155,7 +192,20 @@ struct
     type dirstream = RuneFileSys.dirstream
     datatype access_mode = datatype RuneFileSys.access_mode
     val access = RuneFileSys.access
-    fun utime (path, NONE) = RuneFileSys.setTime (path, NONE)
-      | utime (path, SOME {actime, modtime}) = RuneFileSys.setTime (path, SOME modtime)
+    local
+      val utime' = _prim "posix_utime" : string * int * int -> int
+      val pathconf' = _prim "posix_pathconf" : string * int * string -> int list
+      fun seconds t = Time.micros t div 1000000
+      fun limit [~1] = NONE
+        | limit [v] = SOME (Word.fromInt v)
+        | limit _ = raise RuneError.lastError ()
+    in
+      fun utime (path, NONE) = RuneFileSys.setTime (path, NONE)
+        | utime (path, SOME {actime, modtime}) =
+            if utime' (nonEmpty path, seconds actime, seconds modtime) < 0 then raise RuneError.lastError () else ()
+      (* the limits are named without their prefix: "LINK_MAX", "NAME_MAX", ... *)
+      fun pathconf (path, name) = limit (pathconf' (nonEmpty path, 0, name))
+      fun fpathconf (fd : file_desc, name) = limit (pathconf' ("", fd, name))
+    end
   end
 end

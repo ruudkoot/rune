@@ -1,8 +1,11 @@
 (* BinIO: the imperative binary streams (signature BIN_IO). *)
 structure BinIO =
 struct
+  (* "For binary streams, LINE_BUF mode should be treated as a synonym for
+     BLOCK_BUF": no element is a newline. *)
   structure StreamIO =
-    RuneStreamIOFn (structure PIO = BinPrimIO structure V = Word8Vector structure VS = Word8VectorSlice)
+    RuneStreamIOFn (structure PIO = BinPrimIO structure V = Word8Vector structure VS = Word8VectorSlice
+                    val isNewline = fn (_ : Word8.word) => false)
 
   structure Imperative = RuneImperativeIOFn (structure SIO = StreamIO structure V = Word8Vector)
 
@@ -33,28 +36,55 @@ struct
   val setOutstream = Imperative.setOutstream
 
   local
+    fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
+    (* The reader and the writer of a file of the VM, as in TextIO: the
+       position is the number of bytes read or written since the file was
+       opened at its start; the writer writes through, the stream leaves the
+       VM to buffer. *)
     fun reader (fd, name) =
-      BinPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
-                    readVec = SOME (RuneFile.readVec fd), readArr = NONE,
-                    readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
-                    avail = RuneFile.avail fd,
-                    getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                    close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
-    fun writer (fd, name) =
-      BinPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
-                    writeVec = SOME (fn sl => RuneFile.writeString (fd, name) (Word8VectorSlice.vector sl)),
-                    writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
-                    block = NONE, canOutput = NONE,
-                    getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
-                    close = RuneFile.close fd, ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
-    fun outstreamOf (fd, name) =
-      Imperative.mkOutstreamOver (StreamIO.mkOutstream (writer (fd, name), IO.NO_BUF), RuneFile.flush fd)
+      let
+        val closed = ref false
+        val count = ref 0
+        fun readVec n =
+          if !closed then closedIo (name, "readVec")
+          else let val v = RuneFile.readVec fd n in count := !count + Word8Vector.length v; v end
+      in
+        BinPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
+                      readVec = SOME readVec, readArr = NONE,
+                      readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
+                      avail = fn () => if !closed then closedIo (name, "avail") else RuneFile.avail fd (),
+                      getPos = SOME (fn () => !count), setPos = NONE, endPos = NONE, verifyPos = NONE,
+                      close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                      ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))}
+      end
+    fun writer (fd, name, counted) =
+      let
+        val closed = ref false
+        val count = ref 0
+        fun put v =
+          if !closed then closedIo (name, "writeVec")
+          else (ignore (RuneFile.writeString (fd, name) v); count := !count + Word8Vector.length v)
+        fun writeVec sl =
+          let val v = Word8VectorSlice.vector sl in put v; RuneFile.flush fd (); Word8Vector.length v end
+      in
+        (BinPrimIO.WR {name = name, chunkSize = RuneFile.chunkSize,
+                       writeVec = SOME writeVec, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE,
+                       block = NONE, canOutput = NONE,
+                       getPos = if counted then SOME (fn () => !count) else NONE,
+                       setPos = NONE, endPos = NONE, verifyPos = NONE,
+                       close = fn () => if !closed then () else (closed := true; RuneFile.close fd ()),
+                       ioDesc = SOME (RuneIODesc.FD (RuneFile.descriptor fd))},
+         {write = put, flush = RuneFile.flush fd})
+      end
+    fun outstreamOf (fd, name, counted) =
+      let val (w, device) = writer (fd, name, counted)
+      in mkOutstream (StreamIO.mkOutstreamOver (w, IO.BLOCK_BUF, device)) end
   in
     fun openIn name =
-      mkInstream (StreamIO.mkInstream (reader (RuneFile.open' ("openIn", 0) name, name), ""))
+      mkInstream (StreamIO.mkInstream (reader (RuneFile.open' ("openIn", 0) name, name), Word8Vector.fromList []))
     fun openOut name =
-      outstreamOf (RuneFile.open' ("openOut", 1) name, name)
+      outstreamOf (RuneFile.open' ("openOut", 1) name, name, true)
     fun openAppend name =
-      outstreamOf (RuneFile.open' ("openAppend", 2) name, name)
+      outstreamOf (RuneFile.open' ("openAppend", 2) name, name, false)
   end
 end

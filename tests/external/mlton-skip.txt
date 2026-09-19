@@ -22,7 +22,7 @@ finalize.3 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.4 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.5 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.6 MLton- or SML/NJ-specific: MLton.Finalizable
-fixed-integer Basis: signature INTEGER
+fixed-integer MLton-specific: Int2 ... Int64 including widths the specification does not have
 flat-array.4 MLton-specific: Word14
 gc-collect MLton- or SML/NJ-specific: MLton.GC.collect
 gc-collect2 MLton- or SML/NJ-specific: MLton.GC.collect
@@ -37,26 +37,25 @@ int-inf.rep2 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep3 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep4 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep5 MLton- or SML/NJ-specific: MLton.IntInf
-int-mul-pow2 Basis: signature INTEGER
+int-mul-pow2 Basis: Int8 (IntN and WordN are omitted for now)
 int-overflow Int is 64-bit in Rune; the program expects a 32-bit Int.fromString overflow
 kitsimple too slow on the interpreter
 mlton.overload MLton- or SML/NJ-specific: expected declaration but found '_'
 mlton.share MLton- or SML/NJ-specific: MLton.share
 mlton.word MLton- or SML/NJ-specific: MLton.Word
 mutex MLton- or SML/NJ-specific: MLton.Signal
-nextAfter Basis: signature REAL
+nextAfter Basis: Real32 (only Real, which is Real64, is implemented)
 once MLton- or SML/NJ-specific: SMLofNJ.Cont
 overloading Basis: Int16 (IntN and WordN are omitted for now)
 pack MLton- or SML/NJ-specific: MLton.GC
 pack-real Basis: PackReal* (Pack* is not implemented)
 pack-real.2 Basis: PackReal64Little (Pack* is not implemented)
 pack-word Basis: PackWord* (Pack* is not implemented)
-parse Basis: signature IO
 prodcons MLton- or SML/NJ-specific: MLton.Signal
-real Basis: signature REAL
-real-basic Basis: signature REAL
-real-int Basis: signature REAL
-real-sign Basis: signature REAL
+real Basis: Real32 (only Real, which is Real64, is implemented)
+real-basic Basis: signature PACK_REAL (Pack* is not implemented)
+real-int Basis: Real32 (only Real, which is Real64, is implemented)
+real-sign Basis: Real32 (only Real, which is Real64, is implemented)
 real-str Basis: PackRealBig (Pack* is not implemented)
 ref-flatten.2 Basis: Word16 (IntN and WordN are omitted for now)
 rlimit MLton- or SML/NJ-specific: MLton.Rlimit

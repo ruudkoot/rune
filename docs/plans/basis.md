@@ -90,10 +90,21 @@ have the shape of `SOCKET` (the options and addresses belong in `Ctl`, and
 the `NB` functions, `sameAddr` and the phantom types of the modes were
 missing). `SysWord` was added as `Word`.
 
-Left after M8: the signatures of the specification. `lib/basis` declares
-`WORD`, `PRIM_IO`, `STREAM_IO` and the `MONO_*` ones only, so a program
-cannot write `structure R : REAL = Real`; the transcriptions in
-`tests/basis/spec-sigs` are the starting point.
+After M8, the signatures of the specification and the suite tests of
+everything M5 to M7 added. The signatures of `TIME`, `TIMER`, `DATE`, the
+`OS_*` ones, the I/O stack (`PRIM_IO`, `STREAM_IO`, `TEXT_STREAM_IO`,
+`IMPERATIVE_IO`, `TEXT_IO`, `BIN_IO`), `POSIX` and its eight parts,
+`BIT_FLAGS`, `UNIX` and the sockets and databases were transcribed from
+the pages, and every value and exception they specify got a check (1,481 in
+all, from 690); the suite has 135 files and 42,239 checks on Rune. The
+transcriptions are also the library's signatures now: `scripts/gen-basis-sigs.sh`
+makes `lib/basis/sig_*.sml` from them, loaded on demand, and `make check-docs`
+checks that they agree. The loader lets a name have several files (`IO`
+and `OS` are a structure and a signature). The tests found some sixty bugs
+in `Time`, `Timer`, `Date`, `OS.Path`, `OS.FileSys`, `OS.IO`, `Posix`, `Unix`,
+the I/O stack and the sockets, fixed with new primitives where needed
+(`posix_lock`, `posix_pathconf`, `posix_utime`, and `posix_stat` reports FIFOs,
+sockets and devices); `docs/basis-compat.md` lists what is still missing.
 
 M7 delivered `Socket`, `INetSock`, `UnixSock`, `GenericSock`, `NetHostDB`,
 `NetProtDB` and `NetServDB` on 27 more primitives behind the system layer. A

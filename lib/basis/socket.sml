@@ -27,6 +27,7 @@ struct
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
     fun named name = case const name of ~1 => 0 | v => v
+    fun invalid () = let val e = named "EINVAL" in RuneError.SysErr (RuneError.errorMsg e, SOME e) end
     (* distinct types without values, so that the checker keeps them apart *)
     datatype dgram' = DGRAM
     datatype 'mode stream' = STREAM
@@ -168,20 +169,29 @@ struct
       let val (a, i, _) = Word8ArraySlice.base sl
       in Word8Array.copyVec {src = got, dst = a, di = i}; Word8Vector.length got end
 
+    (* "Size if n < 0 or n > Word8Vector.maxLen". The system would wait for a
+       byte to arrive even when none is asked for, but "if n is 0, then the
+       empty vector will be returned": only whether the socket is open is
+       looked at then. *)
+    fun wanted (fd, n) =
+      if n < 0 orelse n > Word8Vector.maxLen then raise Size
+      else if n = 0 then (ignore (check (getopt' (fd, named "SOL_SOCKET", named "SO_TYPE"))); false)
+      else true
+    val none = Word8Vector.fromList []
     fun 'af recvVec' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if n < 0 then raise Size else received (recv' (fd, n, inFlags flags))
+      if wanted (fd, n) then received (recv' (fd, n, inFlags flags)) else none
     fun recvVec (s, n) = recvVec' (s, n, noIn)
     fun recvArr' (s, sl, flags) = intoArray (sl, recvVec' (s, Word8ArraySlice.length sl, flags))
     fun recvArr (s, sl) = recvArr' (s, sl, noIn)
     fun 'af recvVecNB' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if n < 0 then raise Size else nonBlocking (fd, fn () => receivedNB (recv' (fd, n, inFlags flags)))
+      if wanted (fd, n) then nonBlocking (fd, fn () => receivedNB (recv' (fd, n, inFlags flags))) else SOME none
     fun recvVecNB (s, n) = recvVecNB' (s, n, noIn)
     fun recvArrNB' (s, sl, flags) =
       Option.map (fn v => intoArray (sl, v)) (recvVecNB' (s, Word8ArraySlice.length sl, flags))
     fun recvArrNB (s, sl) = recvArrNB' (s, sl, noIn)
 
     fun 'af recvVecFrom' (SOCK fd : ('af, dgram) sock, n, flags) : Word8Vector.vector * 'af sock_addr =
-      if n < 0 then raise Size
+      if n < 0 orelse n > Word8Vector.maxLen then raise Size
       else
         (case recvfrom' (fd, n, inFlags flags) of
            [bytes, addr] => (bytes, ADDR addr)
@@ -192,7 +202,7 @@ struct
       in (intoArray (sl, bytes), addr) end
     fun recvArrFrom (s, sl) = recvArrFrom' (s, sl, noIn)
     fun 'af recvVecFromNB' (SOCK fd : ('af, dgram) sock, n, flags) : (Word8Vector.vector * 'af sock_addr) option =
-      if n < 0 then raise Size
+      if n < 0 orelse n > Word8Vector.maxLen then raise Size
       else
         nonBlocking (fd, fn () =>
           case recvfrom' (fd, n, inFlags flags) of
@@ -235,18 +245,35 @@ struct
         (* "the time a socket lingers"; the primitive reads whether it does
            only, so a lingering socket reports zero seconds *)
         fun getLINGER s = if getInt (s, "SO_LINGER") = 0 then NONE else SOME Time.zeroTime
+        (* "If t is negative or too large, then the Time is raised": the
+           system keeps the seconds in a C int *)
         fun setLINGER (s, NONE) = setInt (s, "SO_LINGER", 0)
-          | setLINGER (s, SOME t) = setInt (s, "SO_LINGER", IntInf.toInt (Time.toSeconds t))
+          | setLINGER (s, SOME t) =
+              let val secs = Time.toSeconds t
+              in
+                if Time.< (t, Time.zeroTime) orelse IntInf.>= (secs, IntInf.pow (IntInf.fromInt 2, 31))
+                then raise Time.Time
+                else setInt (s, "SO_LINGER", IntInf.toInt secs)
+              end
         fun 'af getSockName (SOCK fd : ('af, 'sock_type) sock) : 'af sock_addr = ADDR (checkString (name' fd))
         fun 'af getPeerName (SOCK fd : ('af, 'sock_type) sock) : 'af sock_addr = ADDR (checkString (peer' fd))
-        fun getNREAD (_ : ('af, 'sock_type) sock) = 0
-        fun getATMARK (_ : ('af, active stream) sock) = false
+        (* No primitive asks the system these; the socket is only checked to
+           be open ("These functions raise the SysErr exception when the
+           argument socket has been closed"). *)
+        fun getNREAD (s : ('af, 'sock_type) sock) = (ignore (getInt (s, "SO_TYPE")); 0)
+        fun getATMARK (s : ('af, active stream) sock) = (ignore (getInt (s, "SO_TYPE")); false)
       end
     end
 
-    (* Waiting for sockets, on the poll of OS.IO. *)
+    (* Waiting for sockets, on the poll of OS.IO, which would take a negative
+       timeout for none: "This function raises SysErr ... if the timeout
+       value is negative." *)
     fun select {rds : sock_desc list, wrs : sock_desc list, exs : sock_desc list, timeout} =
       let
+        val () =
+          case timeout of
+            SOME t => if Time.< (t, Time.zeroTime) then raise invalid () else ()
+          | NONE => ()
         fun descs (l, f) = List.map (fn d => f (valOf (RuneIODesc.pollDesc d))) l
         val all = descs (rds, RuneIODesc.pollIn) @ descs (wrs, RuneIODesc.pollOut)
                   @ descs (exs, RuneIODesc.pollPri)

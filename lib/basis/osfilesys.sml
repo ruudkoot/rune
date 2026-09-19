@@ -47,12 +47,12 @@ struct
     fun isLink path = check (linkKind path) = 2
     fun readLink path = checkString (readLink' path)
 
-    (* "the canonical path, with no symbolic links"; fullPath needs the file
-       to exist, realPath does not need the last arc to. *)
+    (* "the canonical path, with no symbolic links"; "An empty path is treated
+       as "."". realPath is the implementation note of the specification. *)
+    fun fullPath path = checkString (realPath' (if path = "" then RunePath.currentArc else path))
     fun realPath path =
-      if RunePath.isAbsolute path then checkString (realPath' path)
-      else RunePath.mkRelative {path = checkString (realPath' path), relativeTo = getDir ()}
-    fun fullPath path = checkString (realPath' path)
+      if RunePath.isAbsolute path then fullPath path
+      else RunePath.mkRelative {path = fullPath path, relativeTo = fullPath (getDir ())}
 
     fun modTime path = Time.fromSeconds (IntInf.fromInt (check (modTime' path)))
     fun fileSize path = check (fileSize' path)
@@ -77,7 +77,8 @@ struct
       case fileId' path of
         [device, inode] => (device, inode)
       | _ => raise RuneError.lastError ()
-    fun hash ((device, inode) : file_id) = Word.fromInt (device * 65599 + inode)
+    (* In words, which wrap around, so that no file_id overflows. *)
+    fun hash ((device, inode) : file_id) = Word.+ (Word.* (Word.fromInt device, 0w65599), Word.fromInt inode)
     fun compare ((d1, i1) : file_id, (d2, i2) : file_id) =
       case Int.compare (d1, d2) of EQUAL => Int.compare (i1, i2) | other => other
   end

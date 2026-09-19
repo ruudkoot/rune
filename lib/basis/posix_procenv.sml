@@ -73,9 +73,14 @@ struct
     fun ctermid () = checkString (ctermid' ())
     fun ttyname (fd : file_desc) = checkString (ttyname' fd)
     fun isatty (fd : file_desc) = isatty' fd = 1
+    (* "It raises OS.SysErr if s does not denote a supported POSIX system
+       variable"; a variable without a limit (sysconf gives ~1 and leaves
+       errno alone) has no value either. *)
     fun sysconf name =
       case sysconf' name of
-        ~1 => raise RuneError.lastError ()
+        ~1 => (case RuneError.lastError () of
+                 RuneError.SysErr (_, SOME 0) => raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
+               | e => raise e)
       | v => Word.fromInt v
   end
 end

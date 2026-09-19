@@ -9,7 +9,7 @@ struct
     val setopt' = _prim "socket_setopt" : int * int * int * int -> int
     fun named name = case const name of ~1 => 0 | v => v
     fun number s = case Int.fromString s of SOME n => n | NONE => 0
-    datatype inet' = INET
+    datatype inet' = InetFamily
   in
     type inet = inet'
     type 'sock_type sock = (inet, 'sock_type) RuneSocket.sock
@@ -56,7 +56,7 @@ struct
     val unixPath = _prim "socket_unix_path" : string -> string
     val const = _prim "posix_const" : string -> int
     fun named name = case const name of ~1 => 0 | v => v
-    datatype unix' = UNIX
+    datatype unix' = UnixFamily
   in
     type unix = unix'
     type 'sock_type sock = (unix, 'sock_type) RuneSocket.sock

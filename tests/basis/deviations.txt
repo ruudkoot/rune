@@ -105,7 +105,9 @@ native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packSt
 
 # ---- OS.Process, CommandLine
 native:smlnj@110.79 | OS.Process.sleep/positive | HOST-BUG | sleep drops the fraction of a second: sleep 0.2 s returns at once, 1.2 s after 1 s
+native:polyml@5.9.2 | OS.Process.sleep/positive | HOST-FLAKY | sleep 0.2 s sometimes returns a little before 0.2 s have passed (once in a full matrix run; tests/basis/host/rune-prim.sml sleeps again for what is left for this reason)
 xc1:smlnj@110.79 | OS.Process.sleep/* | WIDTH | Time.now of lib/basis counts microseconds in an int (51 bits today); the host's int has 31 bits, so the shim's time_now raises Overflow
+xc1:polyml@5.7.1 | @load/os.process | HOST-FLAKY | the test may not end: a forked child hangs before it executes (one thread, waiting on a futex: a lock of the runtime that another thread held at the fork), and OS.Process.system waits for it without a bound (a child of this test was found hung, left over from a matrix run)
 *:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
 
 # ---- Real, Math
@@ -240,3 +242,375 @@ native:polyml@* | Array2.*/no-rows* | HOST-BUG | an array without rows has no nu
 native:polyml@* | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 native:polyml@* | Array2.array/Size-negative-columns-no-rows | HOST-BUG | array (0, ~1, x) does not raise Size
 native:polyml@* | Array2.*/zero-length-not-equal | HOST-BUG | two arrays without rows are equal
+
+# ---- OS.Path
+native:mlton@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+native:mlton@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+native:smlnj@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+native:smlnj@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+native:smlnj@* | OS.Path.mkCanonical/._ | HOST-BUG | mkCanonical raises Fail on a relative path that reduces to no arc but ends with an empty one ("./", ".//", "a/../") instead of returning "."
+native:smlnj@* | OS.Path.mkCanonical/*-random | HOST-BUG | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+native:smlnj@* | OS.Path.isCanonical/is-mkCanonical-equality-random | HOST-BUG | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+native:smlnj@* | OS.Path.getParent/keeps-canonical-random | HOST-BUG | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+native:smlnj@* | OS.Path.mkAbsolute/keeps-canonical-random | HOST-BUG | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+native:smlnj@* | OS.Path.fromUnixPath/empty | HOST-BUG | fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
+native:polyml@* | OS.Path.toString/relative-only-empty-arc-Path | HOST-BUG | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path ("if isAbs is false and arcs has an initial empty arc")
+native:polyml@* | OS.Path.fromString/inverts-toString-random | HOST-BUG | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path, and fromString "" has no arcs
+native:polyml@* | OS.Path.getParent/a_. | HOST-BUG | getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
+native:polyml@5.7.1 | OS.Path.getParent/*_.. | HOST-BUG | getParent "a/.." is "a" and getParent "../.." is "..", not "a/../.." and "../../.." ("If the last arc is empty or the parent arc, then getParent appends a parent arc")
+native:polyml@* | OS.Path.fromUnixPath/_* | HOST-BUG | fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
+native:polyml@* | OS.Path.toUnixPath/_ | HOST-BUG | toUnixPath "/" is "" instead of "/"
+
+# ---- OS.FileSys
+xc1:smlnj@110.79 | OS.FileSys.setTime/* | WIDTH | Time.time of lib/basis is microseconds in an int, and the int of the host has 31 bits: the times the checks set (10^9 seconds and more) raise Time, and Time.now raises Overflow
+xc1:smlnj@110.79 | OS.FileSys.modTime/* | WIDTH | modTime makes the time of a file (seconds since 1970) a Time.time of lib/basis, microseconds in an int, and the int of the host has 31 bits: Overflow (and Time.now overflows too)
+xc1:smlnj@110.79 | OS.FileSys.remove/others-kept | WIDTH | new.txt, which the list should hold, is written by OS.FileSys.modTime/new-file-is-now, which raises Overflow at Time.now before it writes the file (microseconds since 1970 in an int of 31 bits)
+xc1:smlnj@110.79 | OS.FileSys.tmpName/not-for-other-users | WIDTH | Posix.FileSys.stat of lib/basis makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | OS.FileSys:OS_FILE_SYS/Position.int-and-Time.time | WIDTH | modTime and Time.now give microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+
+# ---- OS.IO
+native:mlton@* | OS.IO.poll/closed-SysErr | HOST-BUG | poll of a descriptor that has been closed returns [] instead of raising OS.SysErr
+native:polyml@5.7.1 | OS.IO.poll/closed-SysErr | HOST-BUG | poll of a descriptor that has been closed raises Option instead of OS.SysErr
+native:mlton@* | OS.IO.Kind.*/dev-null | HOST-BUG | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+native:smlnj@* | OS.IO.Kind.*/dev-null | HOST-BUG | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+native:mlton@* | OS.IO.Kind.tty/standard-descriptors | HOST-BUG | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+native:smlnj@* | OS.IO.Kind.tty/standard-descriptors | HOST-BUG | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+native:smlnj@* | @section/os.io/input-and-output | HOST-BUG | poll of a descriptor for input and output at once (pollIn (pollOut pd)) ends the runtime with a segmentation fault
+native:polyml@* | OS.IO.poll/*order* | HOST-BUG | poll returns the poll_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
+native:polyml@5.7.1 | @section/os.io_std/hash-compare | HOST-BUG | OS.IO.hash and OS.IO.compare end the process with a segmentation fault on the descriptors of the standard streams (and on any that Posix.FileSys.fdToIOD makes)
+native:polyml@5.9.2 | OS.IO.compare/TextIO.stdIn-equals-Posix-stdin | HOST-BUG | the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
+xc1:* | OS.IO.pollPri/file | XC1-NA | os_poll of tests/basis/host/rune-prim.sml does not reach the system's poll: it answers at once that every descriptor is ready for every event asked, so a regular file has high-priority data
+xc1:* | OS.IO.poll/empty-pipe | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: the read end of an empty pipe is ready for input
+xc1:* | OS.IO.poll/only-the-ready-ones-in-order | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: the read end of an empty pipe is among the ready ones
+xc1:* | OS.IO.poll/times-out | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: poll of an empty pipe with a timeout neither waits nor gives [] (on SML/NJ 110.79 the check's Time.now raises Overflow first: microseconds since 1970 in a 31-bit int)
+xc1:* | OS.IO.poll/zero-does-not-block | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: poll of an empty pipe with a zero timeout gives it as ready (on SML/NJ 110.79 the check's Time.now raises Overflow first: microseconds since 1970 in a 31-bit int)
+xc1:* | OS.IO.Kind.socket/tcp | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to ask the kind of
+xc1:polyml@5.7.1 | OS.IO.kind/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so os_desc_kind describes standard input: a file is a device, and a closed descriptor raises no SysErr
+xc1:polyml@5.7.1 | OS.IO.Kind.* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so os_desc_kind describes standard input: a file, a pipe and a directory are devices
+xc1:polyml@5.7.1 | OS.IO.poll/closed-SysErr | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the descriptor that poll of lib/basis looks at first (os_desc_kind) is standard input, and a closed one raises no SysErr
+
+# ---- OS
+native:polyml@* | OS.errorName/is-Posix.Error.errorName | HOST-BUG | OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
+
+# ---- Time
+native:* | Time.fromReal/nan | HOST-BUG | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+native:smlnj@* | Time.*Inf | HOST-BUG | fromReal of an infinite real raises Overflow, not Time
+native:polyml@* | Time.*Inf | HOST-BUG | fromReal of an infinite real raises Overflow, not Time
+native:polyml@* | Time.toSeconds/*negative* | HOST-BUG | toSeconds rounds a negative time towards minus infinity (~2.01 s gives ~3), not "towards 0"
+native:polyml@* | Time.toSeconds/less-than-a-second | HOST-BUG | toSeconds rounds a negative time towards minus infinity (~0.999 s gives ~1), not "towards 0"
+native:polyml@* | Time.toSeconds/is-toMicroseconds-quot | HOST-BUG | toSeconds and toMilliseconds round a negative time towards minus infinity, not "towards 0"
+native:polyml@* | Time.toMilliseconds/rounds-negative-towards-zero | HOST-BUG | toMilliseconds rounds a negative time towards minus infinity (~1500 us gives ~2), not "towards 0"
+native:polyml@* | Time.fmt/Size* | HOST-BUG | fmt with a negative number of digits does not raise Size
+native:polyml@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+native:mlton@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+native:mlton@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+native:smlnj@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+# ---- Date. Some of these depend on the time zone of the machine (Europe/London):
+# the hosts other than Poly/ML convert UTC dates with mktime, in local time.
+native:mlton@* | Date.offset/* | HOST-BUG | offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
+native:mlton@* | Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | HOST-BUG | date with an offset of more than a day east moves the date a day the wrong way
+native:mlton@* | Date.date/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:mlton@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:mlton@* | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
+native:mlton@* | Date.toTime/last-second-of-1969 | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+native:mlton@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@* | Date.toTime/last-second-of-1969 | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+native:smlnj@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@* | Date.offset/*moves-the-date | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24*d) is added to the hours")
+native:smlnj@110.79 | Date.toTime/offset-modulo-24-hours-*is-the-same-time | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
+native:smlnj@* | Date.toTime/*inverts-fromTimeUniv* | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset (an hour in summer time)
+native:smlnj@* | Date.toTime/fromTimeUniv-inverts-1972-2037 | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset (an hour in summer time)
+native:smlnj@* | Date.localOffset/west-of-UTC-now | HOST-BUG | localOffset is east of UTC (110.79: +1 hour in British summer time), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
+native:smlnj@* | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
+xc1:smlnj@110.99.9 | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": date_format of tests/basis/host/rune-prim.sml is the host's Date.fmt, which takes the Y after %% as a directive
+native:smlnj@* | Date.*/initial-whitespace | HOST-BUG | scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
+native:smlnj@* | Date.scan/24-characters | HOST-BUG | scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+native:smlnj@110.79 | Date.date/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:smlnj@110.79 | Date.toTime/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:smlnj@110.99.9 | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
+native:smlnj@110.79 | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
+native:smlnj@110.79 | Date.offset/*-keeps-the-fields | HOST-BUG | date with an offset converts the fields to UTC (12:00 at 5 hours west gives 17:00)
+native:smlnj@110.79 | Date.compare/ignores-the-offset | HOST-BUG | date with an offset converts the fields to UTC, so that compare sees other fields
+native:smlnj@110.79 | Date.fromTimeLocal/offset-is-NONE | HOST-BUG | fromTimeLocal gives offset SOME (the local offset east of UTC), not NONE ("The returned date will have offset=NONE")
+native:smlnj@110.79 | Date.fromTimeLocal/toTime-inverts | HOST-BUG | toTime of a date from fromTimeLocal is off by the local offset
+native:smlnj@110.79 | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UTC date
+native:smlnj@110.79 | Date.toString/* | HOST-BUG | toString pads the day with a space ("Wed Mar  8 19:06:45 1995"), not with 0 ("Wed Mar 08 19:06:45 1995"; "equivalent to Date.fmt "%a %b %d %H:%M:%S %Y"")
+native:smlnj@110.99.9 | Date.toTime/offset-* | HOST-BUG | toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
+native:smlnj@110.99.9 | Date.date/offset-of-the-local-zone | HOST-BUG | toTime ignores the offset of a date
+native:smlnj@110.99.9 | Date.fromTimeUniv/fraction-of-a-second | HOST-BUG | toTime reads a UTC date in summer as local time (23:59:59 UTC comes back as 21:59:59)
+native:polyml@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+*:polyml@* | Date.fmt/empty | HOST-BUG | fmt "" raises Date instead of giving ""
+native:polyml@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+xc1:smlnj@110.79 | Date.fmt/* | WIDTH | date of lib/basis works out the offset of a date in microseconds (a day is 86400 * 1000000 of them) in an int, and the int of the host has 31 bits: every date at an offset raises Date, the UTC dates that fmt is given too
+xc1:smlnj@110.79 | Date.toString/* | WIDTH | toString is fmt of a UTC date, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits
+xc1:smlnj@110.79 | Date.fromString/* | WIDTH | the strings the checks read are toString of UTC dates, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits
+
+# ---- Posix.Error, Posix.Signal, Posix.Process, Posix.ProcEnv, Posix.SysDB, Posix (whole), Posix.TTY, Unix (group posix1)
+rune | @absent/posix_tty | RUNE-DEV | Posix has no TTY (the terminal settings)
+rune | @absent/posix_tty_sig | RUNE-DEV | Posix has no TTY (the terminal settings)
+rune | @section/posix_sig/whole | RUNE-DEV | Posix has no TTY, so it does not match POSIX
+rune | @section/posix_sig/tty-types | RUNE-DEV | Posix has no TTY
+*:smlnj@* | Posix.Error.notty/ttyname-of-dev-null | HOST-BUG | ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+*:polyml@* | Posix.Error.badf/close-twice | HOST-BUG | Posix.IO.close of a descriptor that is already closed raises no exception
+*:polyml@5.7.1 | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | Posix.IO.lseek on a pipe raises no exception
+xc1:polyml@5.7.1 | Posix.Error.pipe/write-without-reader | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the child writes on standard input (EBADF) instead of the pipe
+*:smlnj@110.99.9 | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+*:polyml@* | Posix.Signal.pipe/ends-shell | HOST-BUG | the runtime ignores SIGPIPE, and the programs it executes inherit that
+native:mlton@* | Posix.Process.W.untraced/in-all | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+native:mlton@* | Posix.Process.W.allSet/inclusion | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+native:mlton@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Posix.Process.W.toWord/of-fromWord | HOST-BUG | W.fromWord keeps the bits that are not in W.all
+xc1:* | Posix.Process.exit/no-flush | XC1-NA | the file handles of tests/basis/host/rune-prim.sml write through (file_write), where the VM's keep the block that TextIO leaves them to buffer: what the child wrote before Posix.Process.exit is in the file already (and on SML/NJ 110.79 the check raises Overflow first, at the Time.now of C.waitBounded: microseconds since 1970 in a 31-bit int; on Poly/ML the child's exit fails too, as in Posix.Process.exit/status)
+*:polyml@* | Posix.Process.pause/until-* | HOST-BUG | a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
+*:polyml@5.7.1 | Posix.Process.exit/[szn]* | HOST-BUG | a forked child that calls Posix.Process.exit (or OS.Process.exit) dies of a segmentation fault
+*:polyml@5.9.2 | Posix.Process.exit/[szn]* | HOST-BUG | a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
+native:smlnj@110.79 | Posix.ProcEnv.times/elapsed-is-wall-time | HOST-BUG | the elapsed time of times does not advance
+native:smlnj@110.99.9 | Posix.ProcEnv.time/* | HOST-BUG | time () is negative: the seconds since the Epoch overflow 32 bits
+*:smlnj@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-BUG | the elapsed time of times is negative
+xc1:smlnj@110.79 | Posix.ProcEnv.times/* | WIDTH | times gives its times as microseconds in an int (posix_times), the elapsed time since a point in the past among them, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.ProcEnv.time/* | WIDTH | time and Time.now give microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.ProcEnv.wordTo[UG]id/no-validation | WIDTH | lib/basis keeps a uid and a gid in an int, and 1999999999 does not fit the host's 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.ProcEnv.setpgid/*SOME* | WIDTH | the check waits for the child with a deadline (C.waitBounded, C.appears), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.W_STOPPED/stop | WIDTH | the check waits for the child with a deadline (C.stopped), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.kill/term | WIDTH | the check waits for the child with a deadline (C.appears), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.K_*/* | WIDTH | the check waits for the child with a deadline (C.appears, C.stopped), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.pause/until-* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.exit/[szn]* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.waitpid_nh/ended-child | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.Process.waitpid_nh/no-child | WIDTH | no exception: children of earlier checks are left to wait for, because those checks raised Overflow before they reaped them (a deadline from Time.now, microseconds since 1970 in an int of 31 bits)
+xc1:smlnj@110.79 | Posix.Process.sleep/* | WIDTH | the check times sleep with Time.now, which gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.SysDB.get*id/unknown | WIDTH | raises Overflow, not SysErr: lib/basis keeps a uid and a gid in an int, and 1999999999 does not fit the host's 31 bits
+xc1:smlnj@110.79 | Posix:POSIX/FileSys.uid-is-ProcEnv.uid | WIDTH | stat of lib/basis makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+native:polyml@* | @section/posix_sig/whole | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:polyml@* | @section/posix_tty/pgrp | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:polyml@* | @section/posix_tty_sig/whole | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:mlton@* | Posix.TTY.getlflag/sample | HOST-BUG | getlflag returns the output flags (those of getoflag)
+native:smlnj@* | Posix.TTY.TC.getpgrp/not-a-terminal | HOST-BUG | TC.getpgrp of a descriptor that is not a terminal raises no exception
+native:mlton@* | Unix.reap/status | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.reap/twice | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_EXITSTATUS/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_SIGNALED/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_STOPPED/reap-waits-for-the-end | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED)
+native:mlton@* | Unix.kill/* | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:smlnj@* | Unix.execute*/no-such-program | HOST-BUG | a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+native:smlnj@* | Unix.exit/flushes | HOST-BUG | Unix.exit does not flush the output streams that are open
+native:smlnj@110.99.9 | Unix.exit/status | HOST-FLAKY | raised an exception once in a full matrix run (in the parent, which forks the child and waits for it with waitpid_nh and sleep); not seen in 54 runs of the test since, six at a time beside a matrix of the xc1 configurations, nor in 300 rounds of fork, waitpid_nh and sleep
+*:polyml@5.7.1 | Unix.exit/status | HOST-BUG | a forked child that calls Unix.exit dies of a segmentation fault
+xc1:smlnj@110.79 | Unix.execute*/[aed]* | WIDTH | the parent reads the child's output with a stream that Posix.IO.mkTextReader makes, which asks fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.*streamOf/* | WIDTH | the streams on the child's pipes are made by Posix.IO.mkTextReader and the like, which ask fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.streamsOf/* | WIDTH | the streams on the child's pipes are made by Posix.IO.mkTextReader and the like, which ask fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.kill/* | WIDTH | the check reads the child's answer with a stream that Posix.IO.mkTextReader makes, which asks fstat whether the descriptor is a regular file; fstat makes the times of the pipe microseconds in an int of 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.W_STOPPED/reap-waits-for-the-end | WIDTH | the check waits for the child's pid with a deadline (PosixChild.until), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.exit/status | WIDTH | the check waits for the child with a deadline (PosixChild.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Unix.exit/[fr]* | HOST-FLAKY | the file is read while the child that calls Unix.exit may still be running: Unix.exit/status did not wait for it, because PosixChild.waitBounded raised Overflow at Time.now (WIDTH: microseconds since 1970 in an int of 31 bits); whether the child has written the file by then depends on the scheduling (flushes has always failed, runs-atExit once in three runs)
+xc1:polyml@5.7.1 | Unix.execute/argument-list | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the parent reads the child's output from standard input (nothing)
+xc1:polyml@5.7.1 | Unix.execute/directory | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the parent reads the child's output from standard input (nothing)
+xc1:polyml@5.7.1 | Unix.*OutstreamOf/to-cat | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the parent writes the child's input on standard input (EBADF)
+xc1:polyml@5.7.1 | Unix.streamsOf/conversation | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the parent writes the child's input on standard input (EBADF)
+*:polyml@5.7.1 | @load/posix_process | HOST-FLAKY | the test sometimes does not end: a forked child hangs before it executes or leaves (one thread, waiting on a futex: a lock of the runtime that another thread held at the fork), and the test waits for it without a bound (xc1: 2 of 24 runs, 12 at once, and two full matrix runs; native: one full matrix run, where the hung child was found)
+xc1:polyml@5.7.1 | Unix.execute*/no-such-program | HOST-BUG | the child that cannot execute the command leaves with posix_exit 126, which tests/basis/host/rune-prim.sml writes with the host's Posix.Process.exit, and a forked child that calls it dies of a segmentation fault
+xc1:polyml@5.9.2 | @load/unix | HOST-BUG | the test does not end: the child of Unix.execute that cannot execute ./no-such-program leaves with posix_exit 126, which tests/basis/host/rune-prim.sml writes with the host's Posix.Process.exit, and a forked child that calls it never ends, so reap waits for ever
+native:polyml@5.9.2 | Unix.exit/status | HOST-BUG | a forked child that calls Unix.exit never ends
+
+*:smlnj@* | Posix.Process.fromStatus/system-killed | HOST-BUG | OS.Process.system returns failure (W_EXITSTATUS 1) for a command that a signal ended
+native:smlnj@* | Unix.exit/runs-atExit | HOST-BUG | Unix.exit does not run the actions of OS.Process.atExit
+
+# ---- BIT_FLAGS (posix_bitflags.sml, posix_bitflags_sig.sml)
+rune | @section/posix_bitflags/tty-* | RUNE-DEV | Posix has no TTY yet (the flags of Posix.TTY.I, O, C and L)
+rune | @section/posix_bitflags_sig/tty-* | RUNE-DEV | Posix has no TTY yet (the flags of Posix.TTY.I, O, C and L)
+native:mlton@* | Posix.*.allSet/* | HOST-BUG | allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
+native:mlton@* | Posix.*.fromWord/random-words-beyond-all | HOST-BUG | all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all)
+native:polyml@* | Posix.*.fromWord/*-all | HOST-BUG | fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all) and fromWord makes flags outside all
+xc1:polyml@5.7.1 | Posix.*.allSet/empty-in-anything | HOST-BUG | compiler bug: Word.andb (0w0, w) is w when 0w0 is a constant and w is not (fun f w = Word.andb (0w0, w) = 0w0 gives f 0w1 = false); allSet (a, b) of lib/basis is Word.andb (a, b) = a, inlined with a = flags [] = 0w0
+xc1:polyml@5.7.1 | Posix.*.anySet/empty-meets-nothing | HOST-BUG | compiler bug: Word.andb (0w0, w) is w when 0w0 is a constant and w is not; anySet (a, b) of lib/basis is Word.andb (a, b) <> 0w0, inlined with a = flags [] = 0w0
+
+# ---- Posix.FileSys (posix_filesys*.sml)
+native:mlton@* | Posix.FileSys.ST.mode/* | HOST-BUG | ST.mode includes the bits of the file type of st_mode (S_IFREG, S_IFDIR, S_IFIFO) besides the protection mode
+native:polyml@* | Posix.FileSys.wordToFD/inverts-fdToWord | HOST-BUG | wordToFD makes a new file_desc that is not equal (=) to the file_desc with the same number: equality of file_desc is that of the object
+native:polyml@5.9.2 | Posix.FileSys.stdin/wordToFD-0 | HOST-BUG | wordToFD 0w0 is not equal (=) to stdin: equality of file_desc is that of the object
+native:polyml@5.7.1 | @section/posix_filesys_sig/iodesc | HOST-BUG | OS.IO.compare of two iodescs of Posix.FileSys.stdout (fdToIOD) ends Poly/ML with a segmentation fault
+xc1:* | Posix.FileSys.ST.isSock/socket | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to stat
+xc1:smlnj@110.79 | Posix.FileSys.ST.* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.stat/* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.[fl]stat/* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.utime/* | WIDTH | the check reads the times back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.S.*/chmod | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.*chmod/* | WIDTH | the check reads the mode back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.creat*/* | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.umask/removes-permissions | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.mk*/* | WIDTH | the check looks at what it made with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.*chown/* | WIDTH | the check reads the owner back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.*link/* | WIDTH | the check looks at the links with stat or lstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.rename/into-directory | WIDTH | the check looks at the file with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.ftruncate/size | WIDTH | the check reads the size back with fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.getcwd/is-the-directory | WIDTH | the check compares the directories with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.stdout/is-open | WIDTH | the check asks fstat whether the descriptor is open, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.iodToFD/descriptor-of-a-stream | WIDTH | the check looks at the descriptor with fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.[di]*ToWord/* | WIDTH | the check takes the device and the inode from stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj@110.79 | Posix.FileSys.wordTo[DI]*/* | WIDTH | the check takes the device and the inode from stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:polyml@5.7.1 | Posix.FileSys.fdToIOD/kind-of-a-file | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the kind of the file is that of standard input
+xc1:polyml@5.7.1 | Posix.FileSys.iodToFD/descriptor-of-a-stream | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so fstat of the stream's descriptor describes standard input
+xc1:polyml@5.7.1 | Posix.FileSys.openf/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is read as standard input (nothing) and written as it (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O_*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is read as standard input (nothing, also when it is write-only) and written as it (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.trunc/then-writes | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is written as standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.append/writes-at-end | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is written as standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.excl/new-file | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is written as standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.sync/writes | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is written as standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.flags/append-and-sync | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is written as standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.O.noctty/regular-file | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is read as standard input (nothing)
+xc1:polyml@5.7.1 | Posix.FileSys.O.nonblock/regular-file | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file opened is read as standard input (nothing)
+xc1:polyml@5.7.1 | Posix.FileSys.creat*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file made is read and written as standard input (nothing; EBADF)
+xc1:polyml@5.7.1 | Posix.FileSys.f[cst]*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so fchmod, fchown, ftruncate and fstat act on standard input (EBADF, or a character device)
+xc1:polyml@5.7.1 | Posix.FileSys.ST.isFIFO/pipe | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so fstat of the pipe describes standard input, a character device
+xc1:polyml@5.7.1 | Posix.FileSys.utime/fstat-agrees | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so fstat of the file describes standard input
+
+# ---- Posix.IO (posix_io.sml, posix_io_sig.sml)
+*:smlnj@* | Posix.IO.*getfl* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor
+*:smlnj@* | Posix.IO.setfl/[ak]* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
+*:smlnj@* | Posix.IO.O.nonblock/setfl | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
+native:smlnj@110.99.9 | Posix.IO.FLock.* | HOST-BUG | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+*:polyml@5.7.1 | Posix.IO.SEEK_* | HOST-BUG | lseek returns 0 and does not move the file offset
+*:polyml@5.7.1 | Posix.IO.lseek/* | HOST-BUG | lseek returns 0 and does not move the file offset
+xc1:polyml@5.7.1 | Posix.IO.read*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so readVec and readArr read standard input (nothing), also from a write-only or closed descriptor
+xc1:polyml@5.7.1 | Posix.IO.write*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so writeVec and writeArr write on standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.IO.fsync/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the file is written on standard input (EBADF)
+xc1:polyml@5.7.1 | Posix.IO.dup*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so dup, dupfd and dup2 duplicate standard input (nothing to read, EBADF to write)
+xc1:polyml@5.7.1 | Posix.IO.FD.cloexec/per-descriptor | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so setfd and getfd act on standard input
+xc1:polyml@5.7.1 | Posix.IO.O_*/getfl | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so getfl gives the flags of standard input (O_RDONLY)
+xc1:polyml@5.7.1 | Posix.IO.O.*/getfl-after-openf | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so getfl gives the flags of standard input
+xc1:polyml@5.7.1 | Posix.IO.setfl/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so setfl and getfl act on standard input, and the file is written on it (EBADF)
+xc1:polyml@5.7.1 | Posix.IO.mk*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so the readers read standard input (nothing) and the writers write on it (EBADF)
+xc1:polyml@5.7.1 | Posix.IO.[gs]etlk*/* | HOST-BUG | wordToFD of the number of a descriptor that has been closed gives the closed file_desc, which stands for descriptor 0 (standard input, /dev/null) from then on, also once the number is open again; tests/basis/host/rune-prim.sml reaches descriptors by number with wordToFD, so a write lock is asked for on standard input, which is open for reading only (EBADF)
+xc1:smlnj@110.79 | Posix.IO.mk*/* | WIDTH | the readers and writers of lib/basis ask fstat whether the descriptor is a regular file, and fstat makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+
+# ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
+# Rune
+rune | *IO.setPosOut/file-overwrites | RUNE-DEV | the writers of files have no setPos: the VM has no primitive that moves in a file (fseek), so setPosOut on a file stream raises Io {cause = RandomAccessNotSupported, ...}
+rune | TextIO.StreamIO.filePosIn/setPos-then-readVec | RUNE-DEV | the readers of files have no setPos: the VM has no primitive that moves in a file (fseek)
+# MLton
+native:mlton@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:mlton@* | *IO.StreamIO.canInput/determined-stream-does-not-block | HOST-BUG | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+native:mlton@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:mlton@* | *IO.StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+native:mlton@* | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
+native:mlton@* | *IO.StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+# SML/NJ
+native:smlnj@110.79 | @load/*io_full_sig | HOST-BUG | TextIO.StreamIO.setPosOut and BinIO.StreamIO.setPosOut have the type out_pos -> unit, not out_pos -> outstream (fixed in 110.99.9)
+native:smlnj@110.79 | @load/*io_streamio | HOST-BUG | TextIO.StreamIO.setPosOut and BinIO.StreamIO.setPosOut have the type out_pos -> unit, not out_pos -> outstream (fixed in 110.99.9)
+native:smlnj@110.79 | *PrimIO.openVector/chunkSize-positive | HOST-BUG | the reader of openVector of an empty vector has chunkSize 0 ("chunkSize <= 0 is illegal")
+native:smlnj@110.79 | *PrimIO.openVector/avail-after-close | HOST-BUG | avail of a closed openVector reader raises nothing
+native:smlnj@110.99.9 | @load/io_primio* | HOST-BUG | the avail field of TextPrimIO.RD and BinPrimIO.RD has the type unit -> Position.int option, not unit -> int option, so that neither structure matches PRIM_IO
+native:smlnj@110.99.9 | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:smlnj@110.99.9 | *IO.StreamIO.canInput/* | HOST-BUG | canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+native:smlnj@110.99.9 | *IO.StreamIO.getReader/Io-* | HOST-BUG | getReader of a closed or truncated stream raises nothing
+native:smlnj@110.99.9 | *IO.StreamIO.getWriter/Io-closed | HOST-BUG | getWriter of a closed stream raises nothing
+native:smlnj@110.99.9 | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
+native:smlnj@110.99.9 | *IO.StreamIO.inputN/fewer-then-past-the-end-of-stream | HOST-BUG | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+native:smlnj@110.99.9 | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+native:smlnj@110.99.9 | *IO.StreamIO.output*/Io-terminated* | HOST-BUG | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+native:smlnj@110.99.9 | *IO.setPosOut/* | HOST-BUG | setPosOut neither flushes nor moves the writer: output goes on at the end
+native:smlnj@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
+native:smlnj@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
+# Poly/ML
+native:polyml@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:polyml@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:polyml@* | *IO.StreamIO.input/Io-* | HOST-BUG | input lets the exception of the reader through instead of raising Io with it as the cause
+native:polyml@* | *IO.inputAll/up-to-each-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+native:polyml@* | *IO.StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+native:polyml@* | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+native:polyml@* | *IO.StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+native:polyml@5.7.1 | *IO.StreamIO.closeIn/Io-when-the-reader-fails | HOST-BUG | closeIn lets the exception of the reader's close through instead of raising Io
+native:polyml@5.7.1 | *IO.StreamIO.closeOut/twice | HOST-BUG | closeOut of a closed stream closes the writer again ("This operation has no effect if f is already closed")
+native:polyml@5.7.1 | *IO.output/shared-stream | HOST-BUG | closeOut of a closed stream closes the writer again ("This operation has no effect if f is already closed")
+
+# ---- Socket, INetSock, UnixSock, GenericSock (net group)
+rune | Socket.Ctl.setLINGER/some | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
+rune | Socket.Ctl.setLINGER/zero | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
+rune | Socket.Ctl.setLINGER/none-again | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
+rune | Socket.Ctl.getNREAD/* | RUNE-DEV | getNREAD answers 0: no primitive asks the system (ioctl FIONREAD)
+rune | Socket.Ctl.getATMARK/before-and-at-the-mark | RUNE-DEV | getATMARK answers false: no primitive asks the system (sockatmark)
+native:mlton@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
+native:mlton@* | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER raises Overflow, not Time, for a time too large for the system
+native:mlton@* | Socket.Ctl.getNREAD/* | HOST-BUG | getNREAD answers ~1 whatever there is to read
+native:mlton@* | Socket.Ctl.getATMARK/* | HOST-BUG | getATMARK answers true whether or not the read pointer is at the out-of-band mark
+native:mlton@* | Socket.Ctl.getERROR/closed | HOST-BUG | getERROR of a closed socket answers instead of raising SysErr
+native:mlton@* | Socket.recvVecNB/zero | HOST-BUG | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+native:mlton@* | Socket.recvArrNB/empty-slice | HOST-BUG | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+native:smlnj@* | Socket.familyOfAddr/* | HOST-BUG | familyOfAddr gives a family that is neither INetSock.inetAF nor UnixSock.unixAF (AF.toString says "<UNKNOWN>")
+native:smlnj@* | Socket.send*'/don't_route | HOST-BUG | the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+native:smlnj@* | Socket.send*'/oob | HOST-BUG | the flags are swapped: sendVec' and sendArr' send oob as don't_route (no urgent byte), and recvVec' and recvArr' receive oob as peek
+native:smlnj@* | Socket.recv*'/oob | HOST-BUG | the flags are swapped: recvVec' and recvArr' receive oob as peek (the byte stays), and sendVec' sends oob as don't_route (no urgent byte)
+native:smlnj@* | Socket.recv*'/peek | HOST-BUG | the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+native:smlnj@* | Socket.recvVecNB'/nothing-there | HOST-BUG | the flags are swapped: recvVecNB' takes peek for oob and raises SysErr (EINVAL) instead of giving NONE
+native:smlnj@* | Socket.Ctl.getATMARK/before-and-at-the-mark | HOST-BUG | sendVec' sends oob as don't_route, so that there is no urgent byte and no mark
+native:smlnj@* | Socket.select/exceptional-condition | HOST-BUG | sendVec' sends oob as don't_route, so that there is no urgent byte to make an exceptional condition
+native:smlnj@* | Socket.sendVecTo/empty-message | HOST-BUG | a datagram of no bytes never arrives
+native:smlnj@* | Socket.recvVecFrom/message-and-address | HOST-BUG | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+native:smlnj@* | Socket.recvVecFrom/one-message-at-a-time | HOST-BUG | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+native:smlnj@* | Socket.recvVecFromNB/message | HOST-BUG | the address recvVecFromNB gives is not sameAddr to the sender's (recvArrFromNB's is)
+native:smlnj@* | Socket.recvArrFrom/empty-slice | HOST-BUG | with an empty slice, the address recvArrFrom gives is not sameAddr to the sender's
+native:smlnj@* | Socket.recvVecFrom/unix | HOST-BUG | the Unix-domain address recvVecFrom and recvVecFromNB give is garbled: UnixSock.fromAddr of it is not the sender's path
+native:smlnj@* | UnixSock.fromAddr/sender-of-a-message | HOST-BUG | the Unix-domain address recvVecFromNB gives is garbled: UnixSock.fromAddr of it is not the sender's path
+native:smlnj@* | Socket.recvVec*/above-maxLen | HOST-BUG | recvVec and recvVecFrom do not raise Size when n > Word8Vector.maxLen
+native:smlnj@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
+native:smlnj@110.79 | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER raises Overflow, not Time, for a time too large for the system
+native:smlnj@110.99.9 | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER takes a time too large for the system without raising Time
+native:polyml@* | Socket.AF.list/names-are-toString | HOST-BUG | AF.list names AF_UNIX's value also "LOCAL" (5.9.2: and "FILE"), which toString calls "UNIX"
+native:polyml@* | Socket.connect/already-connected | HOST-BUG | connect on a connected socket returns instead of raising SysErr
+native:polyml@* | Socket.select/negative-timeout | HOST-BUG | select takes a negative timeout for zero instead of raising SysErr
+native:polyml@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER raises SysErr ("Invalid time"), not Time, for a negative time
+native:polyml@* | Socket.recvVecNB/zero | HOST-BUG | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+native:polyml@* | Socket.recvArrNB/empty-slice | HOST-BUG | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+native:polyml@5.7.1 | Socket.close/twice* | HOST-BUG | close of a closed socket returns instead of raising SysErr
+native:polyml@5.7.1 | Socket.send*To* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random, so that the message sent is not received
+native:polyml@5.7.1 | Socket.recv*From* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | Socket.connect/dgram-* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | INetSock.UDP.* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | INetSock.any/reached-through-loopback | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | UnixSock.DGrm.* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | UnixSock.fromAddr/sender-of-a-message | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+native:polyml@5.7.1 | GenericSock.*/inet-dgram* | HOST-FLAKY | recvfrom is called with an uninitialised address length: it fails (EINVAL) or garbles the address at random
+xc1:* | INetSock:INET_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INetSock.any rests on socket_inet_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
+xc1:* | UnixSock:UNIX_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | UnixSock.toAddr rests on socket_unix_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
+xc1:* | Socket.Ctl.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to get or set an option of
+xc1:* | Socket.NO_* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no connection to shut down
+xc1:* | Socket.SOCK.*/type-of-a-*-socket | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to ask the type of
+xc1:* | Socket.[a-z]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket is made, bound, connected or used
+xc1:* | INetSock.[TUaft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no TCP or UDP socket, and no address (socket_inet_addr)
+xc1:* | UnixSock.[DSft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no Unix-domain socket or pair, and no address (socket_unix_addr)
+xc1:* | GenericSock.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket or pair of any family
+
+# ---- NetHostDB, NetProtDB, NetServDB (net group)
+native:mlton@* | NetHostDB.fromString/initial-whitespace | HOST-BUG | fromString and scan do not skip initial whitespace
+native:mlton@* | NetHostDB.scan/whitespace-then-rest | HOST-BUG | fromString and scan do not skip initial whitespace
+native:mlton@* | NetServDB.getByName/* | HOST-BUG | the port of an entry is not converted from network byte order (80 comes out as 5242880)
+native:mlton@* | NetServDB.port/* | HOST-BUG | the port of an entry is not converted from network byte order (22 comes out as 1441792)
+native:mlton@* | NetServDB.getByPort/* | HOST-BUG | getByPort does not convert the port to network byte order and finds nothing
+native:mlton@* | NetServDB.name/http | HOST-BUG | getByPort, which the check looks the entry up with, finds nothing
+native:smlnj@* | NetServDB.getByPort/* | HOST-BUG | getByPort finds nothing for a port that /etc/services lists
+native:smlnj@* | NetServDB.name/http | HOST-BUG | getByPort, which the check looks the entry up with, finds nothing
+native:polyml@* | NetHostDB.fromString/two-parts | HOST-BUG | the last number of "a.b" is taken for the last byte, not the last 24 bits ("127.1" is 0.0.127.1)
+native:polyml@* | NetHostDB.fromString/three-parts | HOST-BUG | the last number of "a.b.c" is taken for the last byte, not the last 16 bits ("127.0.1" is 0.127.0.1)
+native:polyml@* | NetHostDB.fromString/same-address | HOST-BUG | "127.1" is read as 0.0.127.1, not 127.0.0.1
+native:polyml@* | NetHostDB.fromString/initial-whitespace | HOST-BUG | fromString and scan do not skip initial whitespace
+native:polyml@* | NetHostDB.scan/whitespace-then-rest | HOST-BUG | fromString and scan do not skip initial whitespace
+native:polyml@5.7.1 | NetHostDB.getByAddr/loopback | HOST-BUG | getByAddr 127.0.0.1 gives the entry of this host's own name with the address 0.0.0.0
+xc1:* | NetHostDB.*/localhost | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetHostDB.getByAddr/* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetHostDB.getHostName/* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS (netdb_hostname answers "")
+xc1:* | NetProtDB.* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetServDB.* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+
+# ---- the signatures of lib/basis (signatures.sml)
+xc1:smlnj@110.79 | @section/signatures/int-inf | WIDTH | IntInf is the host's here (intinf.sml does not load: its limb base 2^30 is no 31-bit int constant), and its fmt and scan take the host's StringCvt.radix, not the one of lib/basis that INT_INF names
+xc1:smlnj@110.79 | @section/signatures/timer | WIDTH | Timer is the host's here (timer.sml does not load: it reads Time.now when it is loaded, microseconds since 1970 in an int, which overflow the host's 31 bits), and its times are the host's Time.time, not the one of lib/basis that TIMER names

@@ -2,13 +2,11 @@
 structure Unix =
 struct
   type signal = Posix.Signal.signal
-  datatype exit_status = W_EXITED | W_EXITSTATUS of Word8.word
-                       | W_SIGNALED of signal | W_STOPPED of signal
+  (* "If an implementation provides both the Posix and Unix structures, then
+     Posix.Process.exit_status and exit_status must be the same type." *)
+  datatype exit_status = datatype Posix.Process.exit_status
 
-  fun fromStatus Posix.Process.W_EXITED = W_EXITED
-    | fromStatus (Posix.Process.W_EXITSTATUS w) = W_EXITSTATUS w
-    | fromStatus (Posix.Process.W_SIGNALED s) = W_SIGNALED s
-    | fromStatus (Posix.Process.W_STOPPED s) = W_STOPPED s
+  val fromStatus = Posix.Process.fromStatus
 
   (* What is left of a process: how to talk to it, and what became of it.
      The two type variables say which kind of stream has been asked for, as
@@ -26,15 +24,23 @@ struct
       let
         val {infd = fromChildRead, outfd = fromChildWrite} = Posix.IO.pipe ()
         val {infd = toChildRead, outfd = toChildWrite} = Posix.IO.pipe ()
+        (* Our ends are closed in every program started later, so that this
+           child sees the end of its input when we close ours. *)
+        val () = Posix.IO.setfd (fromChildRead, Posix.IO.FD.cloexec)
+        val () = Posix.IO.setfd (toChildWrite, Posix.IO.FD.cloexec)
       in
         case Posix.Process.fork () of
           NONE =>
-            (Posix.IO.dup2 {old = toChildRead, new = 0};
-             Posix.IO.dup2 {old = fromChildWrite, new = 1};
-             Posix.IO.close fromChildRead;
-             Posix.IO.close toChildWrite;
-             run (path, path :: args);
-             Posix.Process.exit (Word8.fromInt 127))
+            ((Posix.IO.dup2 {old = toChildRead, new = 0};
+              Posix.IO.dup2 {old = fromChildWrite, new = 1};
+              Posix.IO.close fromChildRead;
+              Posix.IO.close toChildWrite;
+              run (path, path :: args))
+             handle _ => ();
+             (* "If the child process fails to execute the command (i.e.,
+                the execve call fails), then it should exit with a status
+                code of 126." *)
+             Posix.Process.exit (Word8.fromInt 126))
         | SOME pid =>
             (Posix.IO.close fromChildWrite;
              Posix.IO.close toChildRead;
@@ -77,18 +83,39 @@ struct
 
   fun protect f x = f x
 
-  (* "reaps the process, closing the streams"; the status is kept, so that
-     asking twice gives the same answer. *)
-  fun reap (Proc {pid, infd, outfd, status, ins, outs}) =
-    case !status of
-      SOME s => fromStatus s
-    | NONE =>
-        let
-          val () = (Posix.IO.close outfd handle _ => ())
-          val () = (Posix.IO.close infd handle _ => ())
-          val (_, s) = Posix.Process.waitpid (Posix.Process.W_CHILD pid, [])
-        in status := SOME s; ins := NONE; outs := NONE; fromStatus s end
+  local
+    (* The OS.Process.status of an exit_status, which Posix.Process.fromStatus
+       turns back into it. *)
+    fun toStatus W_EXITED = 0
+      | toStatus (W_EXITSTATUS w) = Word8.toInt w
+      | toStatus (W_SIGNALED s) = 256 + s
+      | toStatus (W_STOPPED s) = 512 + s
+  in
+    (* "closes the input and output streams associated with pr, and then
+       suspends the current process until the system process corresponding
+       to pr terminates"; the status is kept, so that asking twice gives the
+       same answer. Without W.untraced, waitpid does not return for a
+       process that is only stopped. *)
+    fun reap (Proc {pid, infd, outfd, status, ins, outs}) =
+      case !status of
+        SOME s => toStatus s
+      | NONE =>
+          let
+            val () = (Posix.IO.close outfd handle _ => ())
+            val () = (Posix.IO.close infd handle _ => ())
+            val (_, s) = Posix.Process.waitpid (Posix.Process.W_CHILD pid, [])
+          in status := SOME s; ins := NONE; outs := NONE; toStatus s end
+  end
 
   fun kill (Proc {pid, ...}, signal) = Posix.Process.kill (Posix.Process.K_PROC pid, signal)
-  fun exit (status : Word8.word) = Posix.Process.exit status
+  (* "executes all actions registered with OS.Process.atExit, flushes and
+     closes all I/O streams opened using the Library, then terminates": the
+     VM's exit flushes the files, which is all a stream has to write unless
+     its buffer mode was changed (streams are unbuffered, NO_BUF, by
+     default). *)
+  local
+    val exit' = _prim "exit" : int -> 'a
+  in
+    fun exit (status : Word8.word) = (RuneExit.run (); exit' (Word8.toInt status))
+  end
 end

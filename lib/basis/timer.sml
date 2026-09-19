@@ -17,10 +17,18 @@ struct
       in {usr = usr, sys = sys} end
     (* The collector's time is not measured on its own. *)
     fun checkGCTime _ = Time.zeroTime
-    val totalCPUTimer = startCPUTimer
+    (* The processor times that the primitives give count from the start of
+       the process, the "system-dependent initialization time". *)
+    fun totalCPUTimer () = {user = Time.zeroTime, sys = Time.zeroTime}
   end
 
   fun startRealTimer () = Time.now ()
   fun checkRealTimer start = Time.- (Time.now (), start)
-  val totalRealTimer = startRealTimer
+  local
+    (* The real time is counted from when the library is initialised, before
+       the program's own code runs. *)
+    val initialization = Time.now ()
+  in
+    fun totalRealTimer () = initialization
+  end
 end

@@ -12,7 +12,9 @@ struct
      cross-check of tests/basis.) A program is compiled after the always
      files, the files that provide a name it mentions, and what those require:
      the scan below looks at identifiers only, so it may load a file the
-     program does not need, never miss one it does. *)
+     program does not need, never miss one it does. A name can have several
+     files, as IO and OS do (the structure and the signature of the
+     specification); naming it loads them all. *)
   datatype when = Always | Demand | Final
   type entry = {file : string, when : when, provides : string list, requires : string list}
 
@@ -60,20 +62,31 @@ struct
                    | ((Token.LONGID (s :: _, _), _), acc) => StringMap.insert (acc, s, ())
                    | (_, acc) => acc) acc toks
 
+  (* name -> the files that provide it, in MANIFEST order *)
+  fun providers (entries : entry list) : string list StringMap.map =
+    List.foldl (fn (e : entry, m) =>
+                   List.foldl (fn (n, m) =>
+                                  StringMap.insert (m, n, (case StringMap.find (m, n) of
+                                                             SOME fs => fs @ [#file e]
+                                                           | NONE => [#file e])))
+                              m (#provides e))
+               StringMap.empty entries
+
   (* The entries to load for a program that mentions the given names, in
      MANIFEST order. *)
   fun select (entries : entry list, mentioned : names) : entry list =
     let
-      val provider =
-        List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, #file e)) m (#provides e))
-                   StringMap.empty entries
+      val provider = providers entries
       fun entryOf file = List.find (fn e : entry => #file e = file) entries
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, #file e) then chosen
         else
           List.foldl (fn (n, chosen) =>
                          case StringMap.find (provider, n) of
-                           SOME file => (case entryOf file of SOME e' => add (e', chosen) | NONE => chosen)
+                           SOME files =>
+                             List.foldl (fn (file, chosen) =>
+                                            case entryOf file of SOME e' => add (e', chosen) | NONE => chosen)
+                                        chosen files
                          | NONE => raise Options.Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
                                                         ", which no file provides"))
                      (StringMap.insert (chosen, #file e, ()))
@@ -88,7 +101,7 @@ struct
         List.foldl (fn (e : entry, chosen) =>
                        if #when e = Final
                           andalso List.all (fn n => case providerOf n of
-                                                      SOME f => StringMap.member (chosen, f)
+                                                      SOME fs => List.exists (fn f => StringMap.member (chosen, f)) fs
                                                     | NONE => false)
                                            (List.filter (fn n => not (String.isPrefix "-" n)) (#requires e))
                        then add (e, chosen) else chosen)
@@ -127,9 +140,7 @@ struct
     let
       val entries = readManifest ()
       val dir = libDir ()
-      val provider =
-        List.foldl (fn (e : entry, m) => List.foldl (fn (n, m) => StringMap.insert (m, n, #file e)) m (#provides e))
-                   StringMap.empty entries
+      val provider = providers entries
       val ok = ref true
       fun complain (e : entry, msg) = (eprintln ("rune: " ^ dir ^ "/MANIFEST: " ^ #file e ^ ": " ^ msg); ok := false)
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
@@ -147,10 +158,12 @@ struct
                                     | _ => []) prog)
           val () = if sorted declared = sorted (#provides e) then ()
                    else complain (e, "provides " ^ show (sorted (#provides e)) ^ " but declares " ^ show (sorted declared))
+          (* the names another file provides and this one does not *)
           val used =
-            List.filter (fn n => case StringMap.find (provider, n) of
-                                   SOME file => file <> #file e
-                                 | NONE => false)
+            List.filter (fn n => not (List.exists (fn p => p = n) (#provides e))
+                                 andalso (case StringMap.find (provider, n) of
+                                            SOME files => List.exists (fn f => f <> #file e) files
+                                          | NONE => false))
                         (StringMap.listKeys (namesOf (toks, StringMap.empty)))
           (* -Name in the column: named, but not required *)
           fun plain n = if String.isPrefix "-" n then String.extract (n, 1, NONE) else n

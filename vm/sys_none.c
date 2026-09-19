@@ -115,6 +115,15 @@ int64_t sys_write_fd(int fd, const char *buf, int64_t n) { (void)fd; (void)buf; 
 int64_t sys_lseek_fd(int fd, int64_t offset, int whence) { (void)fd; (void)offset; (void)whence; return fail(); }
 int sys_fsync(int fd) { (void)fd; return fail(); }
 int sys_fcntl(int fd, int command, int argument) { (void)fd; (void)command; (void)argument; return fail(); }
+int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t length, int64_t out[5]) {
+    (void)fd; (void)command; (void)type; (void)whence; (void)start; (void)length; (void)out; return fail();
+}
+int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
+    (void)path; (void)fd; (void)name; (void)out; return fail();
+}
+int sys_utime(const char *path, int64_t access, int64_t modification) {
+    (void)path; (void)access; (void)modification; return fail();
+}
 int sys_ftruncate(int fd, int64_t length) { (void)fd; (void)length; return fail(); }
 int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {
     (void)path; (void)follow; (void)fd; (void)out; return fail();

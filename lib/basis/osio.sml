@@ -54,10 +54,15 @@ struct
     fun isPri (PollInfo (_, e)) = Word.andb (Word.fromInt e, 0w4) <> 0w0
 
     (* "returns the descriptors that are ready"; a timeout of NONE waits for
-       as long as it takes. *)
+       as long as it takes. "The poll function will raise OS.SysErr if, for
+       example, one of the file descriptors refers to a closed file": the
+       system reports such a descriptor as one that is ready, with an event
+       the primitive does not pass on, so each descriptor is looked at
+       first. *)
     fun poll (descs, timeout) =
       let
         val fds = List.map (fn PollDesc (FD fd, _) => fd) descs
+        val () = List.app (fn fd => if descKind fd < 0 then raise RuneError.lastError () else ()) fds
         val events = List.map (fn PollDesc (_, e) => e) descs
         val micros = case timeout of NONE => ~1 | SOME t => Time.micros t
       in

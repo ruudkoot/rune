@@ -72,9 +72,9 @@ osio.sml        | demand | yes  | RuneIODesc            | Int List RuneError Tim
 os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath Time -IO
 io.sml          | demand | yes  | IO                    |
 primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
-primio_fn.sml   | demand | yes  | RunePrimIOFn          | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position RuneIODesc
+primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position RuneIODesc
 streamio_sig.sml | demand | yes | STREAM_IO            | IO
-streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneError
+streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO
 runefile.sml    | demand | yes  | RuneFile              | IO RuneError Word8
 textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice RunePrimIOFn
 binprimio.sml   | demand | yes  | BinPrimIO             | RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
@@ -93,6 +93,61 @@ binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile 
 socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int String StringCvt
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
-unix.sml        | demand | yes  | Unix                  | BinIO IO Posix TextIO Word8
+unix.sml        | demand | yes  | Unix                  | BinIO IO Posix RuneExit TextIO Word8
 commandline.sml | demand | yes  | CommandLine           |
+# ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
+sig_array.sml | demand | yes  | ARRAY | Vector
+sig_array2.sml | demand | yes  | ARRAY2 | Vector
+sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice
+sig_bit_flags.sml | demand | yes  | BIT_FLAGS | SysWord
+sig_bool.sml | demand | yes  | BOOL | StringCvt
+sig_byte.sml | demand | yes  | BYTE | Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
+sig_char.sml | demand | yes  | CHAR | Char String StringCvt
+sig_command_line.sml | demand | yes  | COMMAND_LINE |
+sig_date.sml | demand | yes  | DATE | Date StringCvt Time
+sig_general.sml | demand | yes  | GENERAL |
+sig_generic_sock.sml | demand | yes  | GENERIC_SOCK | Socket
+sig_ieee_real.sml | demand | yes  | IEEE_REAL | StringCvt
+sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO
+sig_inet_sock.sml | demand | yes  | INET_SOCK | NetHostDB Socket
+sig_integer.sml | demand | yes  | INTEGER | Int LargeInt StringCvt
+sig_io.sml | demand | yes  | IO |
+sig_list.sml | demand | yes  | LIST |
+sig_list_pair.sml | demand | yes  | LIST_PAIR |
+sig_math.sml | demand | yes  | MATH |
+sig_net_host_db.sml | demand | yes  | NET_HOST_DB | StringCvt
+sig_net_prot_db.sml | demand | yes  | NET_PROT_DB |
+sig_net_serv_db.sml | demand | yes  | NET_SERV_DB |
+sig_option.sml | demand | yes  | OPTION | Option
+sig_os_file_sys.sml | demand | yes  | OS_FILE_SYS | Position Time
+sig_os_io.sml | demand | yes  | OS_IO | Time
+sig_os_path.sml | demand | yes  | OS_PATH |
+sig_os_process.sml | demand | yes  | OS_PROCESS | Time
+sig_posix_proc_env.sml | demand | yes  | POSIX_PROC_ENV | SysWord Time
+sig_posix_signal.sml | demand | yes  | POSIX_SIGNAL | SysWord
+sig_posix_sys_db.sml | demand | yes  | POSIX_SYS_DB |
+sig_string.sml | demand | yes  | STRING | String StringCvt substring
+sig_string_cvt.sml | demand | yes  | STRING_CVT |
+sig_substring.sml | demand | yes  | SUBSTRING | substring
+sig_text_stream_io.sml | demand | yes  | TEXT_STREAM_IO | Char CharVector STREAM_IO substring
+sig_time.sml | demand | yes  | TIME | LargeInt LargeReal StringCvt Time
+sig_timer.sml | demand | yes  | TIMER | Time
+sig_unix_sock.sml | demand | yes  | UNIX_SOCK | Socket
+sig_vector.sml | demand | yes  | VECTOR |
+sig_vector_slice.sml | demand | yes  | VECTOR_SLICE | Vector
+sig_posix_tty.sml | demand | yes  | POSIX_TTY | BIT_FLAGS SysWord
+sig_posix_io.sml | demand | yes  | POSIX_IO | BIT_FLAGS BinPrimIO Position TextPrimIO Word8ArraySlice Word8Vector Word8VectorSlice
+sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO Word8 Word8Vector
+sig_int_inf.sml | demand | yes  | INT_INF | INTEGER Int Word
+sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH Math StringCvt
+sig_os.sml | demand | yes  | OS | IO OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
+sig_text.sml | demand | yes  | TEXT | CHAR Char CharArray CharArraySlice CharVector CharVectorSlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING String Substring
+sig_text_io.sml | demand | yes  | TEXT_IO | Char StringCvt TEXT_STREAM_IO TextPrimIO substring
+sig_unix.sml | demand | yes  | UNIX | BinIO OS TextIO Word8
+sig_socket.sml | demand | yes  | SOCKET | NetHostDB OS Time Word8ArraySlice Word8Vector Word8VectorSlice
+sig_posix_process.sml | demand | yes  | POSIX_PROCESS | BIT_FLAGS OS SysWord Time Word8
+sig_posix_file_sys.sml | demand | yes  | POSIX_FILE_SYS | BIT_FLAGS OS Position SysWord Time
+sig_posix_error.sml | demand | yes  | POSIX_ERROR | OS SysWord
+sig_posix.sml | demand | yes  | POSIX | IO POSIX_ERROR POSIX_FILE_SYS POSIX_IO POSIX_PROCESS POSIX_PROC_ENV POSIX_SIGNAL POSIX_SYS_DB POSIX_TTY
+# ---- end of the signatures
 epilogue.sml    | final  | no   |                       | RuneExit

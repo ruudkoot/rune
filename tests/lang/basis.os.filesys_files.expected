@@ -5,4 +5,4 @@ modTime in the past: true
 same file: true
 chDir: true
 renamed: true
-gone: ENOENT
+gone: noent

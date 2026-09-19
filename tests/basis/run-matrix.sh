@@ -52,7 +52,10 @@
 # the same failure in an xc1 configuration, which shares the library source.
 # Exit status 1: an unexplained failure, or a line that matches no failure of
 # a configuration it names (so the file never goes stale; not checked when a
-# FILTER is given). A test that is ABSENT for the rune configuration is the
+# FILTER is given, nor, in a configuration where a test timed out, for a line
+# that matches one of the test's checks as the rune configuration reports
+# them: those after the point where it stopped did not run). A test that is
+# ABSENT for the rune configuration is the
 # failed check @absent/TEST, to be explained likewise: Rune's library is
 # meant to be complete.
 #
@@ -107,7 +110,7 @@ config_field() { awk -F '\t' -v id="$1" -v n="$2" '$1 == id { print $n }' "$run/
 # first_error FILE...: the line that best explains why a program did not load
 # (not a declaration that an interactive system echoes, like `val file_error`).
 first_error() {
-  cat "$@" 2> /dev/null | grep -v -E '^PASS |^\[opening |^[[:space:]]*(val|exception|type|datatype|structure|signature) ' |
+  cat "$@" 2> /dev/null | grep -v -E '^PASS |^\[opening |^[[:space:]]*(val|exception|type|eqtype|datatype|structure|signature|functor) ' |
     grep -i -m 1 -E 'error|exception|raised|timed out' | cut -c 1-300
 }
 
@@ -699,17 +702,37 @@ fi
 
 # Stale deviations: a line must match a failure in every configuration of
 # this run that its configuration glob names (not a HOST-FLAKY line: that
-# failure comes and goes).
+# failure comes and goes). The checks of a test that timed out in a
+# configuration, as the rune configuration reports them, are in $run/unrun:
+# a line that matches one of them may concern a check that did not run.
 if [ -z "$filter" ]; then
+  : > "$run/unrun"
+  for id in $ids; do
+    d=$out/$(dirname_of "$id")
+    for t in $tests; do
+      if grep -q '^FAIL @load/[^ ]* -- timed out after ' "$d/$t.result" 2> /dev/null; then
+        sed -n -E "s/^(PASS|FAIL) ([^ ]*).*/$id \2/p" "$out/rune/$t.result" >> "$run/unrun" 2> /dev/null
+      fi
+    done
+  done
+  # unrun ID LABEL-GLOB: a check of a test that timed out in ID matches
+  unrun() {
+    while read -r unrun_id unrun_label; do
+      [ "$unrun_id" = "$1" ] || continue
+      # shellcheck disable=SC2254
+      case "$unrun_label" in $2) return 0 ;; esac
+    done < "$run/unrun"
+    return 1
+  }
   while IFS='|' read -r line cglob lglob category reason; do
     [ "$category" = HOST-FLAKY ] && continue
     for id in $ids; do
       # shellcheck disable=SC2254
       case "$id" in $cglob) ;; *) continue ;; esac
-      if ! grep -q -x "$line $id" "$used"; then
-        echo "stale deviation: tests/basis/deviations.txt:$line ($cglob | $lglob) matches no failure of $id"
-        status=1
-      fi
+      grep -q -x "$line $id" "$used" && continue
+      unrun "$id" "$lglob" && continue
+      echo "stale deviation: tests/basis/deviations.txt:$line ($cglob | $lglob) matches no failure of $id"
+      status=1
     done
   done < "$dev"
 fi
