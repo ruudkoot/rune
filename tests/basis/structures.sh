@@ -25,15 +25,28 @@ LargeReal LargeWord List ListPair Math OS OS.FileSys OS.IO OS.Path OS.Process
 Option Position Real String StringCvt Substring Text TextIO TextPrimIO Time
 Timer Vector VectorSlice Word Word8 Word8Array Word8ArraySlice Word8Vector
 Word8VectorSlice
-Array2 BoolArray BoolArraySlice BoolVector BoolVectorSlice BoolArray2
+Array2 BoolArray BoolArray2 BoolArraySlice BoolVector BoolVectorSlice
 CharArray2 FixedInt GenericSock INetSock Int8 Int16 Int32 Int64 IntInf
-IntArray IntArraySlice IntVector IntVectorSlice IntArray2 LargeIntArray
-LargeRealArray LargeWordArray NetHostDB NetProtDB NetServDB PackRealBig
-PackRealLittle PackWord16Big PackWord16Little PackWord32Big PackWord32Little
-PackWord64Big PackWord64Little Posix RealArray RealArraySlice RealVector
-RealVectorSlice RealArray2 SML90 Socket Unix UnixSock WideChar WideCharArray
-WideCharVector WideString WideSubstring WideText WideTextIO WideTextPrimIO
-Windows Word16 Word32 Word64 Word8Array2"
+IntArray IntArray2 IntArraySlice IntVector IntVectorSlice Int8Array
+Int8Array2 Int8ArraySlice Int8Vector Int8VectorSlice Int16Array Int16Array2
+Int16ArraySlice Int16Vector Int16VectorSlice Int32Array Int32Array2
+Int32ArraySlice Int32Vector Int32VectorSlice Int64Array Int64Array2
+Int64ArraySlice Int64Vector Int64VectorSlice LargeIntArray LargeIntArray2
+LargeIntArraySlice LargeIntVector LargeIntVectorSlice LargeRealArray
+LargeRealArray2 LargeRealArraySlice LargeRealVector LargeRealVectorSlice
+LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector
+LargeWordVectorSlice NetHostDB NetProtDB NetServDB PackRealBig
+PackRealLittle PackReal64Big PackReal64Little PackWord16Big PackWord16Little
+PackWord32Big PackWord32Little PackWord64Big PackWord64Little Posix
+RealArray RealArray2 RealArraySlice RealVector RealVectorSlice Real64
+Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice
+SML90 Socket Unix UnixSock WideChar WideCharArray WideCharVector WideString
+WideSubstring WideText WideTextIO WideTextPrimIO Windows WordArray
+WordArray2 WordArraySlice WordVector WordVectorSlice Word16 Word16Array
+Word16Array2 Word16ArraySlice Word16Vector Word16VectorSlice Word32
+Word32Array Word32Array2 Word32ArraySlice Word32Vector Word32VectorSlice
+Word64 Word64Array Word64Array2 Word64ArraySlice Word64Vector
+Word64VectorSlice Word8Array2"
 
 for n in $names; do
   echo "structure Probe = $n" > "$work/$(echo "$n" | tr . _).sml"

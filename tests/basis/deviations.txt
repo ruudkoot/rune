@@ -645,6 +645,19 @@ xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose s
 xc1:smlnj@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
 xc1:smlnj@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
 
+# ---- the monomorphic vectors and arrays of other elements
+native:polyml@* | @section/mono.bool*/slices | HOST-ABSENT | Poly/ML has BoolVector, BoolArray and BoolArray2 but not BoolVectorSlice and BoolArraySlice
+native:smlnj@* | @section/mono.real*/array2* | HOST-ABSENT | SML/NJ has the vectors, arrays and slices of Real and Real64 but not RealArray2 and Real64Array2
+native:smlnj@* | @section/signatures/mono-array2 | HOST-ABSENT | SML/NJ has no structure that matches MONO_ARRAY2 (no Word8Array2)
+native:mlton@20241230 | Bool*:MONO_*/vector-is-BoolVector.vector | HOST-BUG | BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+native:mlton@* | ?*Array2.copy/overlap-[lr]* | HOST-BUG | as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+native:polyml@* | ?*Array2.*/Subscript-not-Overflow-* | HOST-BUG | as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+native:polyml@* | ?*Array2.*/no-rows* | HOST-BUG | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+native:polyml@* | ?*Array2.*/*model-empty-* | HOST-BUG | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+native:polyml@* | ?*Array2.array/Size-negative-columns-no-rows | HOST-BUG | as Array2.array: array (0, ~1, x) does not raise Size
+native:polyml@* | ?*Array2.*/zero-length-not-equal | HOST-BUG | as in Array2: two arrays without rows are equal
+xc1:smlnj@110.79 | Word32*.* | WIDTH | Word32 of lib/basis keeps a word of 32 bits in the host's word, which has 31: the largest word loses its top bit and the top bit alone is 0, so the samples of the test are not distinct (the check elem/eight-distinct-samples says so) and every check that tells them apart fails
+
 # ---- PackWord, PackReal
 native:smlnj@110.79 | PackReal64*.update/element-1 | HOST-BUG | update writes nothing into the array
 native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")

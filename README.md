@@ -23,10 +23,10 @@ records, let-polymorphism, refs, proper tail calls), the Modules language
 (structures, signatures, transparent and opaque ascription, `where type`,
 `sharing`, functors) and the Basis Library: the required structures, and of
 the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
-the monomorphic vectors and arrays, `Posix`, `Unix`, the sockets and the
+the monomorphic vectors, arrays, slices and two-dimensional arrays of every
+element type but wide characters, `Posix`, `Unix`, the sockets and the
 network databases, the fixed-width `IntN` and `WordN`, `Pack*`). Not there yet:
-the other monomorphic vectors and arrays, `Real32` and `WideChar`
-([docs/basis-compat.md](docs/basis-compat.md)).
+`Real32` and `WideChar` ([docs/basis-compat.md](docs/basis-compat.md)).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed
 description of the supported language. Every feature row there has an id

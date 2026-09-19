@@ -42,24 +42,27 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 
 The last run of `make matrix` (every configuration, both generations of
 hosts). A check that fails is explained by a line of
-`tests/basis/deviations.txt` or fails the run; "not run" counts the tests
-that are N/A because a host does not load the file of lib/basis they need.
+`tests/basis/deviations.txt` or fails the run. A test is absent where the
+system lacks a structure it requires (an optional one: the hosts lack most
+of the monomorphic families and some of `IntN`, `WordN` and `Pack*`; see the
+table of structures below), and N/A in an `xc1` configuration whose host does
+not load the file of lib/basis it needs.
 
-| Configuration | Checks | Pass | Explained | Tests not run |
-|---|---:|---:|---:|---:|
-| `rune` | 42,239 | 42,217 | 22 | 2 |
-| `native:mlton@20210117` | 42,526 | 42,210 | 316 | 0 |
-| `native:smlnj@110.79` | 41,700 | 40,971 | 729 | 0 |
-| `native:polyml@5.7.1` | 42,528 | 42,204 | 324 | 0 |
-| `xc1:mlton@20210117` | 42,232 | 41,914 | 318 | 2 |
-| `xc1:smlnj@110.79` | 28,896 | 28,261 | 635 | 16 |
-| `xc1:polyml@5.7.1` | 42,179 | 41,749 | 430 | 2 |
-| `native:mlton@20241230` | 42,526 | 42,224 | 302 | 0 |
-| `native:smlnj@110.99.9` | 42,044 | 41,509 | 535 | 0 |
-| `native:polyml@5.9.2` | 42,535 | 42,226 | 309 | 0 |
-| `xc1:mlton@20241230` | 42,232 | 41,914 | 318 | 2 |
-| `xc1:smlnj@110.99.9` | 42,232 | 41,862 | 370 | 2 |
-| `xc1:polyml@5.9.2` | 42,204 | 41,874 | 330 | 2 |
+| Configuration | Checks | Pass | Explained | Tests absent | Tests N/A |
+|---|---:|---:|---:|---:|---:|
+| `rune` | 127,899 | 127,892 | 7 | 0 | 0 |
+| `native:mlton@20210117` | 127,848 | 127,457 | 391 | 0 | 0 |
+| `native:smlnj@110.79` | 60,077 | 58,335 | 1,742 | 40 | 0 |
+| `native:polyml@5.7.1` | 63,531 | 62,753 | 778 | 36 | 0 |
+| `xc1:mlton@20210117` | 127,879 | 127,571 | 308 | 0 | 0 |
+| `xc1:smlnj@110.79` | 85,338 | 83,197 | 2,141 | 0 | 32 |
+| `xc1:polyml@5.7.1` | 127,826 | 127,355 | 471 | 0 | 0 |
+| `native:mlton@20241230` | 127,848 | 127,510 | 338 | 0 | 0 |
+| `native:smlnj@110.99.9` | 60,496 | 59,849 | 647 | 38 | 0 |
+| `native:polyml@5.9.2` | 66,837 | 66,165 | 672 | 34 | 0 |
+| `xc1:mlton@20241230` | 127,879 | 127,571 | 308 | 0 | 0 |
+| `xc1:smlnj@110.99.9` | 127,892 | 127,490 | 402 | 0 | 0 |
+| `xc1:polyml@5.9.2` | 127,851 | 127,496 | 355 | 0 | 0 |
 
 On Rune the failures are one reading of the specification (below) and what
 is not implemented: the socket options that
@@ -75,38 +78,68 @@ every structure of the specification on each system:
 
 | Structure | Rune | MLton 20210117 | SML/NJ 110.79 | Poly/ML 5.7.1 | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `BoolArray` | | yes | | yes | yes | | yes |
-| `BoolArraySlice` | | yes | | | yes | | |
-| `BoolVector` | | yes | | yes | yes | | yes |
-| `BoolVectorSlice` | | yes | | | yes | | |
-| `BoolArray2` | | yes | | yes | yes | | yes |
-| `CharArray2` | | yes | | yes | yes | | yes |
-| `FixedInt` | | yes | yes | yes | yes | yes | yes |
-| `Int8` | | yes | | | yes | | |
-| `Int16` | | yes | | | yes | | |
-| `Int32` | | yes | yes | yes | yes | yes | yes |
-| `Int64` | | yes | yes | | yes | yes | |
-| `IntArray` | | yes | | yes | yes | | yes |
-| `IntArraySlice` | | yes | | yes | yes | | yes |
-| `IntVector` | | yes | | yes | yes | | yes |
-| `IntVectorSlice` | | yes | | yes | yes | | yes |
-| `IntArray2` | | yes | | yes | yes | | yes |
-| `LargeIntArray` | | yes | | | yes | | |
-| `LargeRealArray` | | yes | | | yes | | |
-| `LargeWordArray` | | yes | | | yes | | |
-| `PackRealBig` | | yes | | yes | yes | | yes |
-| `PackRealLittle` | | yes | | yes | yes | | yes |
-| `PackWord16Big` | | yes | yes | yes | yes | yes | yes |
-| `PackWord16Little` | | yes | yes | yes | yes | yes | yes |
-| `PackWord32Big` | | yes | yes | yes | yes | yes | yes |
-| `PackWord32Little` | | yes | yes | yes | yes | yes | yes |
-| `PackWord64Big` | | yes | | | yes | yes | |
-| `PackWord64Little` | | yes | | | yes | yes | |
-| `RealArray` | | yes | yes | yes | yes | yes | yes |
-| `RealArraySlice` | | yes | yes | yes | yes | yes | yes |
-| `RealVector` | | yes | yes | yes | yes | yes | yes |
-| `RealVectorSlice` | | yes | yes | yes | yes | yes | yes |
-| `RealArray2` | | yes | | yes | yes | | yes |
+| `BoolArray` | yes | yes | | yes | yes | | yes |
+| `BoolArray2` | yes | yes | | yes | yes | | yes |
+| `BoolArraySlice` | yes | yes | | | yes | | |
+| `BoolVector` | yes | yes | | yes | yes | | yes |
+| `BoolVectorSlice` | yes | yes | | | yes | | |
+| `CharArray2` | yes | yes | | yes | yes | | yes |
+| `Int8` | yes | yes | | | yes | | |
+| `Int16` | yes | yes | | | yes | | |
+| `Int64` | yes | yes | yes | | yes | yes | |
+| `IntArray` | yes | yes | | yes | yes | | yes |
+| `IntArray2` | yes | yes | | yes | yes | | yes |
+| `IntArraySlice` | yes | yes | | yes | yes | | yes |
+| `IntVector` | yes | yes | | yes | yes | | yes |
+| `IntVectorSlice` | yes | yes | | yes | yes | | yes |
+| `Int8Array` | yes | yes | | | yes | | |
+| `Int8Array2` | yes | yes | | | yes | | |
+| `Int8ArraySlice` | yes | yes | | | yes | | |
+| `Int8Vector` | yes | yes | | | yes | | |
+| `Int8VectorSlice` | yes | yes | | | yes | | |
+| `Int16Array` | yes | yes | | | yes | | |
+| `Int16Array2` | yes | yes | | | yes | | |
+| `Int16ArraySlice` | yes | yes | | | yes | | |
+| `Int16Vector` | yes | yes | | | yes | | |
+| `Int16VectorSlice` | yes | yes | | | yes | | |
+| `Int32Array` | yes | yes | | | yes | | |
+| `Int32Array2` | yes | yes | | | yes | | |
+| `Int32ArraySlice` | yes | yes | | | yes | | |
+| `Int32Vector` | yes | yes | | | yes | | |
+| `Int32VectorSlice` | yes | yes | | | yes | | |
+| `Int64Array` | yes | yes | | | yes | | |
+| `Int64Array2` | yes | yes | | | yes | | |
+| `Int64ArraySlice` | yes | yes | | | yes | | |
+| `Int64Vector` | yes | yes | | | yes | | |
+| `Int64VectorSlice` | yes | yes | | | yes | | |
+| `LargeIntArray` | yes | yes | | | yes | | |
+| `LargeIntArray2` | yes | yes | | | yes | | |
+| `LargeIntArraySlice` | yes | yes | | | yes | | |
+| `LargeIntVector` | yes | yes | | | yes | | |
+| `LargeIntVectorSlice` | yes | yes | | | yes | | |
+| `LargeRealArray` | yes | yes | | | yes | | |
+| `LargeRealArray2` | yes | yes | | | yes | | |
+| `LargeRealArraySlice` | yes | yes | | | yes | | |
+| `LargeRealVector` | yes | yes | | | yes | | |
+| `LargeRealVectorSlice` | yes | yes | | | yes | | |
+| `LargeWordArray` | yes | yes | | | yes | | |
+| `LargeWordArray2` | yes | yes | | | yes | | |
+| `LargeWordArraySlice` | yes | yes | | | yes | | |
+| `LargeWordVector` | yes | yes | | | yes | | |
+| `LargeWordVectorSlice` | yes | yes | | | yes | | |
+| `PackRealBig` | yes | yes | | yes | yes | | yes |
+| `PackRealLittle` | yes | yes | | yes | yes | | yes |
+| `PackReal64Big` | yes | yes | yes | | yes | yes | |
+| `PackReal64Little` | yes | yes | yes | | yes | yes | |
+| `PackWord64Big` | yes | yes | | | yes | yes | |
+| `PackWord64Little` | yes | yes | | | yes | yes | |
+| `RealArray2` | yes | yes | | yes | yes | | yes |
+| `Real64` | yes | yes | yes | | yes | yes | |
+| `Real64Array` | yes | yes | yes | | yes | yes | |
+| `Real64Array2` | yes | yes | | | yes | | |
+| `Real64ArraySlice` | yes | yes | yes | | yes | yes | |
+| `Real64Vector` | yes | yes | yes | | yes | yes | |
+| `Real64VectorSlice` | yes | yes | yes | | yes | yes | |
 | `SML90` | | | yes | yes | | yes | yes |
 | `WideChar` | | yes | | | yes | | |
 | `WideCharArray` | | yes | | | yes | | |
@@ -117,12 +150,30 @@ every structure of the specification on each system:
 | `WideTextIO` | | | | | | | |
 | `WideTextPrimIO` | | | | | | | |
 | `Windows` | | | | | | | |
-| `Word16` | | yes | | | yes | | yes |
-| `Word32` | | yes | yes | yes | yes | yes | yes |
-| `Word64` | | yes | yes | yes | yes | yes | yes |
-| `Word8Array2` | | yes | | yes | yes | | yes |
+| `WordArray` | yes | yes | | | yes | | |
+| `WordArray2` | yes | yes | | | yes | | |
+| `WordArraySlice` | yes | yes | | | yes | | |
+| `WordVector` | yes | yes | | | yes | | |
+| `WordVectorSlice` | yes | yes | | | yes | | |
+| `Word16` | yes | yes | | | yes | | yes |
+| `Word16Array` | yes | yes | | | yes | | |
+| `Word16Array2` | yes | yes | | | yes | | |
+| `Word16ArraySlice` | yes | yes | | | yes | | |
+| `Word16Vector` | yes | yes | | | yes | | |
+| `Word16VectorSlice` | yes | yes | | | yes | | |
+| `Word32Array` | yes | yes | | | yes | | |
+| `Word32Array2` | yes | yes | | | yes | | |
+| `Word32ArraySlice` | yes | yes | | | yes | | |
+| `Word32Vector` | yes | yes | | | yes | | |
+| `Word32VectorSlice` | yes | yes | | | yes | | |
+| `Word64Array` | yes | yes | | | yes | | |
+| `Word64Array2` | yes | yes | | | yes | | |
+| `Word64ArraySlice` | yes | yes | | | yes | | |
+| `Word64Vector` | yes | yes | | | yes | | |
+| `Word64VectorSlice` | yes | yes | | | yes | | |
+| `Word8Array2` | yes | yes | | yes | yes | | yes |
 
-Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `Byte`, `Char`, `CharArray`, `CharArraySlice`, `CharVector`, `CharVectorSlice`, `CommandLine`, `Date`, `General`, `IEEEReal`, `IO`, `Int`, `LargeInt`, `LargeReal`, `LargeWord`, `List`, `ListPair`, `Math`, `OS`, `OS.FileSys`, `OS.IO`, `OS.Path`, `OS.Process`, `Option`, `Position`, `Real`, `String`, `StringCvt`, `Substring`, `Text`, `TextIO`, `TextPrimIO`, `Time`, `Timer`, `Vector`, `VectorSlice`, `Word`, `Word8`, `Word8Array`, `Word8ArraySlice`, `Word8Vector`, `Word8VectorSlice`, `Array2`, `GenericSock`, `INetSock`, `IntInf`, `NetHostDB`, `NetProtDB`, `NetServDB`, `Posix`, `Socket`, `Unix`, `UnixSock`.
+Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `Byte`, `Char`, `CharArray`, `CharArraySlice`, `CharVector`, `CharVectorSlice`, `CommandLine`, `Date`, `General`, `IEEEReal`, `IO`, `Int`, `LargeInt`, `LargeReal`, `LargeWord`, `List`, `ListPair`, `Math`, `OS`, `OS.FileSys`, `OS.IO`, `OS.Path`, `OS.Process`, `Option`, `Position`, `Real`, `String`, `StringCvt`, `Substring`, `Text`, `TextIO`, `TextPrimIO`, `Time`, `Timer`, `Vector`, `VectorSlice`, `Word`, `Word8`, `Word8Array`, `Word8ArraySlice`, `Word8Vector`, `Word8VectorSlice`, `Array2`, `FixedInt`, `GenericSock`, `INetSock`, `Int32`, `IntInf`, `NetHostDB`, `NetProtDB`, `NetServDB`, `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `Posix`, `RealArray`, `RealArraySlice`, `RealVector`, `RealVectorSlice`, `Socket`, `Unix`, `UnixSock`, `Word32`, `Word64`.
 
 ## Representation choices in Rune
 
@@ -137,6 +188,9 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 | `IntInf.int` | a datatype in SML: sign and base-2^30 limbs |
 | `Word8Vector.vector`, `CharVector.vector` | `string` (not abstract) |
 | `Word8Array.array` | an `array` of `Word8.word`, one VM value per byte |
+| `BoolVector.vector`, `IntVector.vector`, `RealVector.vector`, ... | a `Vector.vector` of the elements (`RuneMonoVectorFn`); the arrays are `Array.array` values, the slices a triple of their own |
+| `BoolArray2.array`, `CharArray2.array`, ... | an `Array2.array` of the elements; rows and columns are the vectors of the family |
+| `Int64Vector`, `Word64Vector`, `LargeWordVector`, `Real64Vector`, `LargeRealVector` and their families | the structures of `Int`, `Word` and `Real` (`Int64` is `Int`, `Word64` and `LargeWord` are `Word`, `Real64` and `LargeReal` are `Real`) |
 | `TextIO.instream`, `BinIO.instream` | a reference to a functional stream (so it admits equality); an `outstream` holds a function and does not |
 | `Time.time` | microseconds in an `int`; the conversions take and give `LargeInt.int` |
 | `OS.IO.iodesc`, `Posix.FileSys.file_desc` | the descriptor of the system |
@@ -153,10 +207,8 @@ reaches.
 
 Not implemented:
 
-* `Real32`, and so `PackReal32Big` and `PackReal32Little`;
-* the monomorphic sequences of other elements than `Word8` and `Char`
-  (`BoolVector`, `IntArray`, `RealArray`, ...) and the `MONO_ARRAY2`
-  structures (`CharArray2`, `Word8Array2`, ...);
+* `Real32`, and so `PackReal32Big`, `PackReal32Little` and the `Real32`
+  vectors and arrays;
 * `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
 * IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`,
   `getLINGER` reports only whether a socket lingers and `setLINGER` fails
@@ -261,6 +313,25 @@ The current releases, against the installed ones:
   is `"0.0E1"`; `fromManExp {man = minPos, exp = 2074}` is `inf`; and
   `fromString` of 2^53 + 1 + 10^-21 gives 2^53, as if the digits stopped at
   the tie.
+
+The monomorphic sequences of the other element types (`BoolVector`,
+`IntArraySlice`, `RealArray2`, ...), which came later:
+
+* MLton and Poly/ML have the defects of their `Array2` in every `MONO_ARRAY2`
+  structure too: MLton's `copy` within one array to the left or the right in
+  the same rows, Poly/ML's arrays without rows, the `Overflow` of its region
+  checks, `array (0, ~1, x)` without `Size` and two arrays without rows that
+  are equal. The slices have the `Overflow` of the other slices on Poly/ML,
+  and on SML/NJ 110.79 the `findi`, `subslice` and `collate` of the other
+  slices; `RealVector.update` out of range returns the vector on SML/NJ.
+* MLton 20241230 computes `BoolVector.length (BoolArray.vector
+  (BoolArray.array (3, true)))` as 0 in a program that also uses
+  `BoolArraySlice` or `BoolArray2` (3 by itself, and 3 in the same program on
+  20210117).
+* Which families a host has is in the table above: SML/NJ has only those of
+  `Real` and `Real64`, without the `Array2`; Poly/ML those of `Bool` (without
+  the slices), `Int` and `Real`; MLton all of them. A test of a family a host
+  lacks is absent there.
 
 Found while writing the suite, outside what the matrix can show:
 

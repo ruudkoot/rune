@@ -237,6 +237,10 @@ struct
   structure S57 : MONO_ARRAY_SLICE = Word8ArraySlice
   val () = T.check ("Word8ArraySlice:MONO_ARRAY_SLICE/basis-signature", fn () => true)
   (*>> mono-array-slice *)
+  (*<< mono-array2 *)
+  structure S58 : MONO_ARRAY2 = Word8Array2
+  val () = T.check ("Word8Array2:MONO_ARRAY2/basis-signature", fn () => true)
+  (*>> mono-array2 *)
   (*<< posix *)
   structure S100 : POSIX = Posix
   val () = T.check ("Posix:POSIX/basis-signature", fn () => true)

@@ -15,7 +15,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M0, suite, matrix and cross-check scaffolding | done |
 | M1, compiler and runtime prerequisites | done, except what moved to its first user (below) |
 | M2, text conversion and numbers | done (`IntN`/`WordN` came after M8, below) |
-| M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
+| M3, sequences | done (`Pack*` and the other element types came after M8, below), except the compact byte arrays |
 | M4, the I/O stack | done |
 | M5, time and the system | done |
 | M6, Posix and Unix | done (`Posix.TTY` and file locking came after M8) |
@@ -182,7 +182,8 @@ type is not abstract, and a `Word8Array.array` is an ordinary array with one
 VM value per byte. Still to do in M3: the compact byte-array object kind with
 `_primtype` and the block primitives that were moved here from M1, the
 `PackWord`/`PackReal` structures, and the optional instances for other
-element types (`Bool`, `Int`, `Real`, ...), each one line per functor.
+element types (`Bool`, `Int`, `Real`, ...), each one line per functor. The
+last two came after M8 (below).
 
 `IntN` and `WordN` were omitted for a while and are there now (after M8):
 `Int8`, `Int16` and `Int32` are applications of `RuneIntNFn`
@@ -193,6 +194,36 @@ element types (`Bool`, `Int`, `Real`, ...), each one line per functor.
 with `_overload`, and its tests are the test functors
 `tests/basis/fn/integer_fn.sml`, `integer_scan_fn.sml`, `word_fn.sml`,
 `word_large_fn.sml` and `word_scan_fn.sml` applied to it (`tests/basis/intn_*.sml`).
+
+The monomorphic vectors, arrays and slices of the other element types, and
+the two-dimensional arrays (`MONO_ARRAY2`), came after M8 as well:
+`RuneMonoVectorFn` (`lib/basis/mono_poly_vector_fn.sml`) makes a
+`MONO_VECTOR` of any element type out of `Vector` (its vector is an
+`elem Vector.vector`, and the signature's `vector` is a plain `type`, so
+reals work), `RuneMonoArrayFn`, `RuneMonoVectorSliceFn` and
+`RuneMonoArraySliceFn` build the rest of a family on it, and
+`RuneMonoArray2Fn` (`mono_array2_fn.sml`) makes a `MONO_ARRAY2` of `Array2`
+and the family's vector. A family is one file (`lib/basis/mono_bool.sml`,
+...): `Bool`, `Int`, `Int8`, `Int16`, `Int32`, `LargeInt`, `Word`, `Word16`,
+`Word32` and `Real` are instances, and `Int64`, `Word64`, `LargeWord`,
+`Real64` and `LargeReal` are the families of `Int`, `Word` and `Real` under
+other names, as their element types are; `CharArray2` and `Word8Array2`
+complete the families of `Char` and `Word8`. `MONO_ARRAY2` was transcribed
+from its page and is generated into `lib/basis` like the other signatures of
+the specification, so the `Array2` instances match it without being sealed
+with it. The suite has a test functor for it, `tests/basis/fn/mono_array2_fn.sml`
+(the checks of `array2.sml` on coded elements, and its laws), and a test per
+family, `tests/basis/mono.<elem>.sml`, that applies the five test functors to
+16 sample elements, with the slices and the two-dimensional arrays in
+sections for hosts that have only the vectors and arrays; `bool` has two
+values, so `mono.bool.sml` checks each member by hand. The 34 new files hold
+64,583 checks, all of which pass on Rune; the suite has 193 files and 127,899
+checks there, and all 13 configurations of `make matrix` pass. The hosts'
+`MONO_ARRAY2` structures have the defects of their `Array2`, and MLton
+20241230 computes the length of `BoolArray.vector` of a new array as 0 in one
+test program (`docs/basis-compat.md`). Compiling hello reads the 20 new lines
+of the MANIFEST: its budget was re-recorded (8.15 M instructions, from 7.31 M
+at the previous commit).
 
 Left for later milestones: tests that need a second process (exit status, `atExit` order, what `print`
 writes, stdin contents, command-line arguments), and a per-test time limit
