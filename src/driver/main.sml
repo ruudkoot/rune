@@ -16,7 +16,9 @@ struct
      files, as IO and OS do (the structure and the signature of the
      specification); naming it loads them all. *)
   datatype when = Always | Demand | Final
-  type entry = {file : string, when : when, provides : string list, requires : string list}
+  (* requires is read from the text when it is asked for: most programs need
+     it of few files *)
+  type entry = {file : string, when : when, provides : string list, requires : unit -> string list}
 
   fun trim (s : string) : string =
     let
@@ -32,27 +34,57 @@ struct
       NONE => raise Options.Usage "no basis library (use --lib DIR or --no-prelude)"
     | SOME lib => lib ^ "/basis"
 
+  (* The MANIFEST is read for every program, so it is scanned in one pass
+     over its text, a line at a time, with the bars and the words of a line
+     found by index rather than by splitting it into strings first. *)
   fun readManifest () : entry list =
     let
       val manifest = libDir () ^ "/MANIFEST"
-      fun bad line = raise Options.Usage ("malformed line in " ^ manifest ^ ": " ^ line)
-      fun names field = String.tokens Char.isSpace field
-      fun entry line =
-        case List.map trim (String.fields (fn c => c = #"|") line) of
-          [file, mode, _, provides, requires] =>
-            {file = file,
-             when = (case mode of "always" => Always | "demand" => Demand | "final" => Final | _ => bad line),
-             provides = names provides, requires = names requires}
-        | _ => bad line
       val ins = TextIO.openIn manifest
                 handle IO.Io _ => raise Options.Usage ("cannot read basis manifest " ^ manifest ^ " (use --lib or --no-prelude)")
-      fun go acc =
-        case TextIO.inputLine ins of
-          NONE => List.rev acc
-        | SOME l =>
-            let val t = trim l
-            in if t = "" orelse String.isPrefix "#" t then go acc else go (entry t :: acc) end
-    in go [] before TextIO.closeIn ins end
+      val text = TextIO.inputAll ins before TextIO.closeIn ins
+      val n = String.size text
+      fun at k = String.sub (text, k)
+      fun blank c = c = #" " orelse c = #"\t" orelse c = #"\r"
+      (* the words of text[i, j) *)
+      fun words (i, j) =
+        let
+          fun skip k = if k < j andalso blank (at k) then skip (k + 1) else k
+          fun stop k = if k < j andalso not (blank (at k)) then stop (k + 1) else k
+          fun go (k, acc) =
+            let val a = skip k
+            in if a >= j then List.rev acc else let val e = stop a in go (e, String.substring (text, a, e - a) :: acc) end end
+        in go (i, []) end
+      fun bad (i, e) = raise Options.Usage ("malformed line in " ^ manifest ^ ": " ^ String.substring (text, i, e - i))
+      (* the one word of text[i, j), or NONE *)
+      fun one (i, j) = case words (i, j) of [w] => SOME w | _ => NONE
+      (* a line text[i, e) of five fields *)
+      fun entry (i, e) =
+        let
+          fun bars (k, acc) = if k >= e then List.rev acc else bars (k + 1, if at k = #"|" then k :: acc else acc)
+        in
+          case bars (i, []) of
+            [b1, b2, b3, b4] =>
+              (case (one (i, b1), one (b1 + 1, b2)) of
+                 (SOME file, SOME mode) =>
+                   {file = file,
+                    when = (case mode of "always" => Always | "demand" => Demand | "final" => Final | _ => bad (i, e)),
+                    provides = words (b3 + 1, b4), requires = fn () => words (b4 + 1, e)}
+               | _ => bad (i, e))
+          | _ => bad (i, e)
+        end
+      fun go (i, acc) =
+        if i >= n then List.rev acc
+        else
+          let
+            fun eol k = if k < n andalso at k <> #"\n" then eol (k + 1) else k
+            val e = eol i
+            fun first k = if k < e andalso blank (at k) then first (k + 1) else k
+            val f = first i
+          in
+            if f >= e orelse at f = #"#" then go (e + 1, acc) else go (e + 1, entry (i, e) :: acc)
+          end
+    in go (0, []) end
 
   type names = unit StringMap.map
 
@@ -76,34 +108,32 @@ struct
      MANIFEST order. *)
   fun select (entries : entry list, mentioned : names) : entry list =
     let
-      val provider = providers entries
-      fun entryOf file = List.find (fn e : entry => #file e = file) entries
+      (* The files that provide a name: a scan of the entries, compared with
+         the primitive =, for the few names the chosen files require (a map of
+         every name would cost more to build than a program needs). *)
+      fun providersOf n = List.filter (fn e : entry => List.exists (fn p => p = n) (#provides e)) entries
+      fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, #file e) then chosen
         else
           List.foldl (fn (n, chosen) =>
-                         case StringMap.find (provider, n) of
-                           SOME files =>
-                             List.foldl (fn (file, chosen) =>
-                                            case entryOf file of SOME e' => add (e', chosen) | NONE => chosen)
-                                        chosen files
-                         | NONE => raise Options.Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
-                                                        ", which no file provides"))
+                         case providersOf n of
+                           [] => raise Options.Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
+                                                      ", which no file provides")
+                         | es => List.foldl add chosen es)
                      (StringMap.insert (chosen, #file e, ()))
-                     (List.filter (fn n => not (String.isPrefix "-" n)) (#requires e))
+                     (required e)
       val wanted = fn e : entry => #when e = Always orelse List.exists (fn n => StringMap.member (mentioned, n)) (#provides e)
       val chosen = List.foldl (fn (e, chosen) => if wanted e then add (e, chosen) else chosen) StringMap.empty entries
       (* A file compiled after the program joins it only when what it needs is
          there anyway: a program that never mentions OS has nothing to do when
          it ends. *)
-      fun providerOf n = StringMap.find (provider, n)
       val chosen =
         List.foldl (fn (e : entry, chosen) =>
                        if #when e = Final
-                          andalso List.all (fn n => case providerOf n of
-                                                      SOME fs => List.exists (fn f => StringMap.member (chosen, f)) fs
-                                                    | NONE => false)
-                                           (List.filter (fn n => not (String.isPrefix "-" n)) (#requires e))
+                          andalso List.all (fn n => List.exists (fn e' : entry => StringMap.member (chosen, #file e'))
+                                                                (providersOf n))
+                                           (required e)
                        then add (e, chosen) else chosen)
                    chosen entries
     in List.filter (fn e : entry => StringMap.member (chosen, #file e)) entries end
@@ -167,11 +197,11 @@ struct
                         (StringMap.listKeys (namesOf (toks, StringMap.empty)))
           (* -Name in the column: named, but not required *)
           fun plain n = if String.isPrefix "-" n then String.extract (n, 1, NONE) else n
-          val () = if used = sorted (List.map plain (#requires e)) then ()
-                   else complain (e, "requires " ^ show (#requires e) ^ " but names " ^ show used)
+          val () = if used = sorted (List.map plain (#requires e ())) then ()
+                   else complain (e, "requires " ^ show (#requires e ()) ^ " but names " ^ show used)
           val () = List.app (fn n => if String.isPrefix "-" n orelse StringMap.member (earlier, n) then ()
                                      else complain (e, "requires " ^ n ^ ", which is not provided by an earlier file"))
-                            (#requires e)
+                            (#requires e ())
           val () =
             if #when e <> Demand then ()
             else List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => () | Ast.DFunctor _ => ()
