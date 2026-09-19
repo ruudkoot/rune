@@ -92,6 +92,14 @@ while [ $# -gt 0 ]; do
 done
 
 self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
+# Every program runs in the same time zone, whatever the machine's: a rule of
+# POSIX that the C library reads without a time zone database, 3:30 west of
+# UTC with summer time from the second Sunday in March to the first Sunday in
+# November. Local time then differs from UTC by a fraction of an hour and by
+# the season, so that the checks of local time can tell them apart, and what
+# a host gets wrong about local time is the same on every machine.
+TZ='NST3:30NDT,M3.2.0,M11.1.0'
+export TZ
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 suite=$root/tests/basis

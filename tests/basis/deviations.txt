@@ -305,8 +305,9 @@ native:polyml@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt goes through a
 native:mlton@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
 native:mlton@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
 native:smlnj@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
-# ---- Date. Some of these depend on the time zone of the machine (Europe/London):
-# the hosts other than Poly/ML convert UTC dates with mktime, in local time.
+# ---- Date. The suite runs in one time zone on every machine, 3:30 west of UTC
+# with summer time (tests/basis/run-matrix.sh); the hosts other than Poly/ML
+# convert UTC dates with mktime, in local time, which shows in that zone.
 native:mlton@* | Date.offset/* | HOST-BUG | offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
 native:mlton@* | Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | HOST-BUG | date with an offset of more than a day east moves the date a day the wrong way
 native:mlton@* | Date.date/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
@@ -317,16 +318,15 @@ native:mlton@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime
 native:mlton@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
 native:mlton@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
 native:mlton@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
-native:smlnj@* | Date.toTime/last-second-of-1969 | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
-native:smlnj@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj@110.79 | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
 native:smlnj@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
 native:smlnj@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
 native:smlnj@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
 native:smlnj@* | Date.offset/*moves-the-date | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24*d) is added to the hours")
 native:smlnj@110.79 | Date.toTime/offset-modulo-24-hours-*is-the-same-time | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
-native:smlnj@* | Date.toTime/*inverts-fromTimeUniv* | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset (an hour in summer time)
-native:smlnj@* | Date.toTime/fromTimeUniv-inverts-1972-2037 | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset (an hour in summer time)
-native:smlnj@* | Date.localOffset/west-of-UTC-now | HOST-BUG | localOffset is east of UTC (110.79: +1 hour in British summer time), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
+native:smlnj@* | Date.toTime/*inverts-fromTimeUniv* | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+native:smlnj@* | Date.toTime/fromTimeUniv-inverts-1972-2037 | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+native:smlnj@* | Date.localOffset/west-of-UTC-now | HOST-BUG | localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
 native:smlnj@* | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
 xc1:smlnj@110.99.9 | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": date_format of tests/basis/host/rune-prim.sml is the host's Date.fmt, which takes the Y after %% as a directive
 native:smlnj@* | Date.*/initial-whitespace | HOST-BUG | scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
@@ -343,9 +343,11 @@ native:smlnj@110.79 | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UT
 native:smlnj@110.79 | Date.toString/* | HOST-BUG | toString pads the day with a space ("Wed Mar  8 19:06:45 1995"), not with 0 ("Wed Mar 08 19:06:45 1995"; "equivalent to Date.fmt "%a %b %d %H:%M:%S %Y"")
 native:smlnj@110.99.9 | Date.toTime/offset-* | HOST-BUG | toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
 native:smlnj@110.99.9 | Date.date/offset-of-the-local-zone | HOST-BUG | toTime ignores the offset of a date
-native:smlnj@110.99.9 | Date.fromTimeUniv/fraction-of-a-second | HOST-BUG | toTime reads a UTC date in summer as local time (23:59:59 UTC comes back as 21:59:59)
+native:smlnj@110.99.9 | Date.fromTimeUniv/* | HOST-BUG | fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
 native:polyml@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
 *:polyml@* | Date.fmt/empty | HOST-BUG | fmt "" raises Date instead of giving ""
+native:mlton@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+native:smlnj@110.99.9 | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 native:polyml@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UTC date (an empty result of strftime)
 xc1:smlnj@110.79 | Date.fmt/* | WIDTH | date of lib/basis works out the offset of a date in microseconds (a day is 86400 * 1000000 of them) in an int, and the int of the host has 31 bits: every date at an offset raises Date, the UTC dates that fmt is given too
 xc1:smlnj@110.79 | Date.toString/* | WIDTH | toString is fmt of a UTC date, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits

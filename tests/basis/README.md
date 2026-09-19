@@ -32,6 +32,12 @@ described in [docs/basis-compat.md](../../docs/basis-compat.md).
 
 ## Writing a test
 
+Every program runs in the same time zone, whatever the machine's:
+`run-matrix.sh` (and `tests/run-tests.sh`) set `TZ` to a POSIX rule, 3:30
+west of UTC with summer time, which the C library reads without a time zone
+database. A check of local time may rely on that zone being different from
+UTC, but not on any other property of it.
+
 ```sml
 (* requires: Int StringCvt *)
 (* uses: spec-sigs/INTEGER.sml *)

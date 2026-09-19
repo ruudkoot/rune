@@ -15,6 +15,9 @@
 # in file order. Each test runs in a worker, `run-tests.sh ... --one SRC`,
 # which writes its outcome to tests/out/<name>.result.
 set -u
+# The same time zone on every machine (tests/basis/run-matrix.sh says why).
+TZ='NST3:30NDT,M3.2.0,M11.1.0'
+export TZ
 
 rune=bin/rune
 vm=bin/runevm
