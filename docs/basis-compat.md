@@ -204,9 +204,7 @@ and SML/NJ (`NONE`); see the table of readings below.
 
 Not implemented:
 
-* `Real32`, and so `PackReal32Big`, `PackReal32Little` and the `Real32`
-  vectors and arrays;
-* `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
+* `WideChar` and its family (characters have 8 bits), and `Windows`;
 * IPv6.
 
 The functor `StreamIO` takes `VectorSlice` and `ArraySlice` besides the

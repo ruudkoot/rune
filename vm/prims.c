@@ -275,8 +275,10 @@ static int p_real_to_string(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)strlen(buf))));
 }
 
-static int p_real_from_string(VM *vm) {
-    Obj *s = check_obj(vm, ARG(0), K_STRING, "real_from_string");
+/* A numeral in C syntax (~ read as -) to a double, or with single to the
+   nearest binary32 value; NONE when it does not start as a number. */
+static int real_parse(VM *vm, const char *name, int single) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, name);
     uint32_t n = s->len;
     const char *b = OBJ_BYTES(s);
     char *buf = malloc((size_t)n + 1);   /* a numeral may have any number of digits */
@@ -291,12 +293,20 @@ static int p_real_from_string(VM *vm) {
     }
     char *end;
     errno = 0;
-    double d = strtod(buf, &end);
+    double d = single ? (double)strtof(buf, &end) : strtod(buf, &end);
     int none = end == buf;
     free(buf);
     if (none) return ret(vm, 1, mk_con0(0));
     Value r = mk_some(vm, mk_real(d));
     return ret(vm, 1, r);
+}
+static int p_real_from_string(VM *vm) { return real_parse(vm, "real_from_string", 0); }
+static int p_real_single_from_string(VM *vm) { return real_parse(vm, "real_single_from_string", 1); }
+/* Real32: a double rounded to binary32 in the current rounding mode. */
+static int p_real_to_single(VM *vm) {
+    REAL1("real_to_single");
+    volatile float f = (float)x;
+    return ret(vm, 1, mk_real((double)f));
 }
 static int p_real_sqrt(VM *vm) { REAL1("real_sqrt"); return ret(vm, 1, mk_real(sqrt(x))); }
 static int p_real_exp(VM *vm) { REAL1("real_exp"); return ret(vm, 1, mk_real(exp(x))); }

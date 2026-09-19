@@ -283,3 +283,5 @@ real_to_bits     1  real -> word              The 64 bits of a real, IEEE 754 bi
 real_from_bits   1  word -> real              The real of 64 bits.
 socket_linger    3  int * int * int -> int list  SO_LINGER of a socket: set it to the seconds (~1 turns it off) when the second argument is 1; [the seconds afterwards, ~1 when off], [] on failure.
 socket_query     2  int * int -> int          0: the bytes a socket can read at once (FIONREAD); 1: whether it is at the out-of-band mark; ~1 on failure.
+real_to_single   1  real -> real              The IEEE 754 binary32 value nearest the argument in the current rounding mode (an infinity beyond the range), as a real.
+real_single_from_string 1  string -> real option  Parse a real literal to the nearest binary32 value (C strtof), as a real.

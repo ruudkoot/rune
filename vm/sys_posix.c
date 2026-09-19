@@ -597,7 +597,7 @@ int sys_fcntl(int fd, int command, int argument) { return fcntl(fd, command, arg
 
 /* The terminal settings of fd as numbers: iflag, oflag, cflag, lflag, input
    speed, output speed, then the NCCS control characters. -1 on failure. */
-int sys_tcgetattr(int fd, int64_t out[6 + NCCS]) {
+int sys_tcgetattr(int fd, int64_t *out) {
     struct termios t;
     if (tcgetattr(fd, &t) != 0) return -1;
     out[0] = t.c_iflag; out[1] = t.c_oflag; out[2] = t.c_cflag; out[3] = t.c_lflag;
@@ -608,7 +608,7 @@ int sys_tcgetattr(int fd, int64_t out[6 + NCCS]) {
 
 /* The inverse, with the action TCSANOW, TCSADRAIN or TCSAFLUSH; in holds
    6 + NCCS numbers. The fields the numbers do not describe stay as they are. */
-int sys_tcsetattr(int fd, int action, const int64_t in[6 + NCCS]) {
+int sys_tcsetattr(int fd, int action, const int64_t *in) {
     struct termios t;
     if (tcgetattr(fd, &t) != 0) return -1;
     t.c_iflag = (tcflag_t)in[0]; t.c_oflag = (tcflag_t)in[1];

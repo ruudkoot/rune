@@ -75,7 +75,11 @@ struct
                (case kind of
                   KOverload names =>
                     (case List.filter (fn n => n <> "real") names of
-                       [] => raise Unify "overloaded operator used at a type that does not admit equality"
+                       [] =>
+                         (* a real constant, or an operator at the kind real alone *)
+                         if List.all (fn n => n = "real") names
+                         then raise Unify "type real does not admit equality (an overloaded operator or constant of kind real)"
+                         else raise Unify "overloaded operator used at a type that does not admit equality"
                      | names' => r := Unbound {id = id, level = level, kind = KOverload names', eq = true})
                 | KFlex (fields, _) =>
                     (r := Unbound {id = id, level = level, kind = kind, eq = true};

@@ -25,7 +25,7 @@ struct
 
   (* A special constant at the type elaboration found for it: a constant, or
      for a type registered with `_overload ... via f` the application of f to
-     the digits. *)
+     the digits (the text, for a real constant). *)
   fun sconExp (sc, slot : Types.ty option ref) : lexp =
     let
       fun via digits =
@@ -43,6 +43,7 @@ struct
       case sc of
         SInt i => (case via (digits i) of SOME e => e | NONE => Const (sconConst sc))
       | SWord w => (case via (digits w) of SOME e => e | NONE => Const (sconConst sc))
+      | SReal text => (case via text of SOME e => e | NONE => Const (sconConst sc))
       | _ => Const (sconConst sc)
     end
 

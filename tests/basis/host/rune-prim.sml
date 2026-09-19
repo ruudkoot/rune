@@ -110,7 +110,7 @@ struct
   val real_sin = Math.sin
   val real_cos = Math.cos
   val real_tan = Math.tan
-  val real_atan = Math.atan
+  fun real_atan x = if Real.== (x, 0.0) then x else Math.atan x   (* SML/NJ: atan 0.0 is ~0.0 *)
   val real_atan2 = Math.atan2
   val real_pow = Math.pow
   val real_is_nan = Real.isNan
@@ -226,6 +226,95 @@ struct
   fun real_get_round () =
     case IEEEReal.getRoundingMode () of
       IEEEReal.TO_NEAREST => 0 | IEEEReal.TO_NEGINF => 1 | IEEEReal.TO_POSINF => 2 | IEEEReal.TO_ZERO => 3
+
+  (* Real32, rounding to binary32 in the current mode: to a multiple of the
+     spacing 2^q of binary32 at the magnitude, as an integral real of at most
+     25 bits (real_to_single) or, for the exact value of a numeral, with
+     IntInf (real_single_from_string, as strtof). *)
+  local
+    val maxSingle = Real.fromManExp {man = 1.0 - Real.fromManExp {man = 1.0, exp = ~24}, exp = 128}
+    val minSingle = Real.fromManExp {man = 1.0, exp = ~149}
+    (* q for a magnitude in [2^(e-1), 2^e) *)
+    fun quantum e = if e < ~125 then ~149 else e - 24
+    (* whether the mode rounds a magnitude up at this sign *)
+    fun away (negative, mode) = (mode = 1 andalso negative) orelse (mode = 2 andalso not negative)
+    fun beyond (negative, mode) =
+      let val m = if mode = 0 orelse away (negative, mode) then Real.posInf else maxSingle
+      in if negative then Real.~ m else m end
+    fun signed (negative, r) = if negative then Real.~ r else r
+  in
+    fun real_to_single x =
+      if Real.isNan x orelse not (Real.isFinite x) orelse Real.== (x, 0.0) then x
+      else
+        let
+          val mode = real_get_round ()
+          val q = quantum (#exp (Real.toManExp x))
+          val scaled = Real.fromManExp {man = x, exp = Int.~ q}
+          val n = case mode of 0 => real_round_r scaled | 1 => real_floor_r scaled
+                             | 2 => real_ceil_r scaled | _ => real_trunc_r scaled
+          val r = Real.fromManExp {man = n, exp = q}
+        in if Real.> (Real.abs r, maxSingle) then beyond (Real.< (x, 0.0), mode) else r end
+
+    fun real_single_from_string s =
+      let
+        val (negative, cs) =
+          case String.explode s of
+            #"-" :: r => (true, r) | #"~" :: r => (true, r) | #"+" :: r => (false, r) | cs => (false, cs)
+        fun isDigit c = #"0" <= c andalso c <= #"9"
+        fun value c = IntInf.fromInt (Char.ord c - 48)
+        (* the digits as an integer, how many there are, and the rest *)
+        fun number (c :: r, acc, n) =
+              if isDigit c then number (r, IntInf.+ (IntInf.* (acc, 10), value c), n + 1) else (acc, n, c :: r)
+          | number ([], acc, n) = (acc, n, [])
+        val (whole, nw, rest) = number (cs, 0, 0)
+        val (d, nf, rest) = case rest of #"." :: r => number (r, whole, 0) | _ => (whole, 0, rest)
+        val exponent =
+          case rest of
+            e :: r =>
+              if e = #"e" orelse e = #"E" then
+                let
+                  val (neg, r) = case r of #"-" :: t => (true, t) | #"~" :: t => (true, t)
+                                         | #"+" :: t => (false, t) | _ => (false, r)
+                  val (x, n, _) = number (r, 0, 0)
+                in if n = 0 then 0 else if neg then IntInf.~ x else x end
+              else 0
+          | [] => 0
+        val mode = real_get_round ()
+      in
+        if nw + nf = 0 then NONE
+        else if d = 0 then SOME (signed (negative, 0.0))
+        else
+          let
+            (* d * 10^e; its decimal digits end at 10^(e + digits) *)
+            val e = IntInf.- (exponent, IntInf.fromInt nf)
+            val top = IntInf.+ (e, IntInf.fromInt (String.size (IntInf.toString d)))
+          in
+            if IntInf.> (top, 40) then SOME (beyond (negative, mode))
+            else if IntInf.< (top, ~50) then SOME (signed (negative, if away (negative, mode) then minSingle else 0.0))
+            else
+              let
+                val e = IntInf.toInt e
+                val (num, den) = if e >= 0 then (IntInf.* (d, IntInf.pow (10, e)), 1) else (d, IntInf.pow (10, Int.~ e))
+                fun shift (i, k) = IntInf.<< (i, Word.fromInt k)
+                (* the magnitude is in [2^(t-1), 2^t) *)
+                val k = IntInf.log2 num - IntInf.log2 den
+                val below = if k >= 0 then IntInf.< (num, shift (den, k)) else IntInf.< (shift (num, Int.~ k), den)
+                val t = (if below then k - 1 else k) + 1
+                val q = quantum t
+                val (num, den) = if q <= 0 then (shift (num, Int.~ q), den) else (num, shift (den, q))
+                val n = IntInf.div (num, den)
+                val rem = IntInf.mod (num, den)
+                val up =
+                  if mode = 0 then
+                    (case IntInf.compare (IntInf.* (rem, 2), den) of
+                       GREATER => true | LESS => false | EQUAL => IntInf.mod (n, 2) = 1)
+                  else away (negative, mode) andalso rem <> 0
+                val n = if up then IntInf.+ (n, 1) else n
+                val r = Real.fromManExp {man = Real.fromLargeInt n, exp = q}
+              in SOME (if Real.> (r, maxSingle) then beyond (negative, mode) else signed (negative, r)) end
+          end
+      end
+  end
   val real_sinh = Math.sinh
   fun real_cosh x = Math.cosh (Real.abs x)   (* even; MLton gives ~inf for ~inf *)
   val real_tanh = Math.tanh

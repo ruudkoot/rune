@@ -25,12 +25,13 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 status=0
 
-# The MANIFEST without the generated block, and the names its files provide.
-awk -v b="$begin" -v e="$end" '$0 == b { skip = 1; next } $0 == e { skip = 0; next } !skip' "$manifest" > "$tmp/manifest.base"
-awk -F '|' '!/^[[:space:]]*(#|$)/ { n = split($4, p, " "); for (i = 1; i <= n; i++) print p[i] }' "$tmp/manifest.base" | sort -u > "$tmp/provided"
+# The MANIFEST without the generated block, a line @BLOCK@ where it was, and
+# the names its files provide.
+awk -v b="$begin" -v e="$end" '$0 == b { skip = 1; print "@BLOCK@"; next } $0 == e { skip = 0; next } !skip' "$manifest" > "$tmp/manifest.base"
+awk -F '|' '!/^[[:space:]]*(#|$|@BLOCK@)/ { n = split($4, p, " "); for (i = 1; i <= n; i++) print p[i] }' "$tmp/manifest.base" | sort -u > "$tmp/provided"
 # The signatures lib/basis declares itself (a structure and a signature can
 # have the same name, IO and OS: only these count).
-for f in $(awk -F '|' '!/^[[:space:]]*(#|$)/ { gsub(/ /, "", $1); print $1 }' "$tmp/manifest.base"); do
+for f in $(awk -F '|' '!/^[[:space:]]*(#|$|@BLOCK@)/ { gsub(/ /, "", $1); print $1 }' "$tmp/manifest.base"); do
   case "$f" in sig_*) continue ;; esac
   sed -n 's/^signature \([A-Z0-9_]*\).*/\1/p' "$basis/$f"
 done | sort -u > "$tmp/own"
@@ -89,9 +90,11 @@ done < "$tmp/sigs"
   done
   echo "$end"
 } > "$tmp/block"
-# The block goes before the files compiled after the program.
-awk -v blockfile="$tmp/block" '
-  !done && /^[^#]*\| *final *\|/ { while ((getline l < blockfile) > 0) print l; done = 1 }
+# The block goes where it was, so that the files after it can use the
+# signatures; the first time, before the files compiled after the program.
+awk -v blockfile="$tmp/block" -v had="$(grep -c -x '@BLOCK@' "$tmp/manifest.base")" '
+  $0 == "@BLOCK@" { while ((getline l < blockfile) > 0) print l; done = 1; next }
+  !done && !had && /^[^#]*\| *final *\|/ { while ((getline l < blockfile) > 0) print l; done = 1 }
   { print }
   END { if (!done) while ((getline l < blockfile) > 0) print l }
 ' "$tmp/manifest.base" > "$tmp/manifest.new"

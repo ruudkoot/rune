@@ -128,6 +128,7 @@ netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB Ru
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
 unix.sml        | demand | yes  | Unix                  | BinIO IO Posix RuneExit TextIO Word8
 commandline.sml | demand | yes  | CommandLine           |
+sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
 sig_array2.sml | demand | yes  | ARRAY2 | Vector
@@ -162,6 +163,7 @@ sig_pack_word.sml | demand | yes  | PACK_WORD | LargeWord Word8Array Word8Vector
 sig_posix_proc_env.sml | demand | yes  | POSIX_PROC_ENV | SysWord Time
 sig_posix_signal.sml | demand | yes  | POSIX_SIGNAL | SysWord
 sig_posix_sys_db.sml | demand | yes  | POSIX_SYS_DB |
+sig_sml90.sml | demand | yes  | SML90 |
 sig_string.sml | demand | yes  | STRING | String StringCvt substring
 sig_string_cvt.sml | demand | yes  | STRING_CVT |
 sig_substring.sml | demand | yes  | SUBSTRING | substring
@@ -185,4 +187,8 @@ sig_posix_file_sys.sml | demand | yes  | POSIX_FILE_SYS | BIT_FLAGS OS Position 
 sig_posix_error.sml | demand | yes  | POSIX_ERROR | OS SysWord
 sig_posix.sml | demand | yes  | POSIX | IO POSIX_ERROR POSIX_FILE_SYS POSIX_IO POSIX_PROCESS POSIX_PROC_ENV POSIX_SIGNAL POSIX_SYS_DB POSIX_TTY
 # ---- end of the signatures
+# After the signatures, which they are sealed with or name.
+real32.sml      | demand | yes  | Real32 RuneReal32 RuneReal32Lit | Char IEEEReal Int IntInf List Math REAL Real String StringCvt Word
+pack_real32.sml | demand | yes  | PackReal32Big PackReal32Little RunePackReal32Fn | IEEEReal Real Real32 RunePackWordFn Word Word8 Word8Array
+mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real32 RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
 epilogue.sml    | final  | no   |                       | RuneExit

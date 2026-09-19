@@ -659,3 +659,22 @@ native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of
 native:smlnj@110.99.9 | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 xc1:smlnj@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits
+
+# ---- SML90. The page of the specification is gone (tests/basis/sml90.sml);
+# the Definition of 1990 says what sqrt, ln, ord and lookahead do.
+native:smlnj@* | SML90.arctan/zero | HOST-BUG | Math.atan 0.0 is ~0.0
+native:smlnj@* | SML90.ord/Ord-empty | HOST-BUG | ord "" raises Subscript, not Ord
+native:smlnj@* | SML90.lookahead/* | HOST-BUG | lookahead raises Io at the end of the stream instead of returning ""
+native:polyml@* | SML90.Sqrt/new | SPEC-AMBIGUOUS | Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
+native:polyml@* | SML90.Ln/new | SPEC-AMBIGUOUS | as SML90.Sqrt/new
+native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raising Ln
+
+# ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
+# no Real32)
+native:polyml@5.9.2 | PackReal32Big.isBigEndian/value | HOST-BUG | PackReal32Big.isBigEndian is false (it packs the most significant byte first)
+native:polyml@5.9.2 | Real32.fromLargeInt/rounds-once | HOST-BUG | fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
+native:polyml@5.9.2 | Real32.toDecimal/negative-zero | HOST-BUG | toDecimal of a zero has exp 1, not 0
+native:polyml@5.9.2 | Real32.fromString/overflow | HOST-BUG | fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
+native:polyml@5.9.2 | Real32.fromString/above-half-minPos | HOST-BUG | fromString rounds a number just above half of minPos to zero
+native:polyml@5.9.2 | Real32.fromString/TO_NEGINF | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
+xc1:smlnj@110.99.9 | Real32.fmt/GEN-20 | HOST-BUG | fmt rests on the shim's real_fmt_e, which is the host's Real.fmt, and that gives at most 17 significant digits

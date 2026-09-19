@@ -38,7 +38,9 @@ LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector
 LargeWordVectorSlice NetHostDB NetProtDB NetServDB PackRealBig
 PackRealLittle PackReal64Big PackReal64Little PackWord16Big PackWord16Little
 PackWord32Big PackWord32Little PackWord64Big PackWord64Little Posix
-RealArray RealArray2 RealArraySlice RealVector RealVectorSlice Real64
+RealArray RealArray2 RealArraySlice RealVector RealVectorSlice Real32
+Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice
+PackReal32Big PackReal32Little Real64
 Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice
 SML90 Socket Unix UnixSock WideChar WideCharArray WideCharVector WideString
 WideSubstring WideText WideTextIO WideTextPrimIO Windows WordArray

@@ -117,9 +117,10 @@ struct
           if List.exists (fn (l2, _) => l2 = l) rest then err (sp, "duplicate record label '" ^ l ^ "'") else go rest
     in go fields end
 
-  (* The type of a special constant. An int or word constant is overloaded
-     over the types of its kind (Appendix E: the classes Int and Word) and
-     defaults to int or word; its type is left in the slot for Translate. *)
+  (* The type of a special constant. An int, word or real constant is
+     overloaded over the types of its kind (Appendix E: the classes Int, Word
+     and Real) and defaults to int, word or real; its type is left in the slot
+     for Translate. *)
   fun sconTy (level, sc, slot : ty option ref, sp) =
     let
       fun overloaded kind =
@@ -134,7 +135,7 @@ struct
       case sc of
         SInt _ => overloaded "int"
       | SWord _ => overloaded "word"
-      | SReal _ => realTy
+      | SReal _ => overloaded "real"
       | SString _ => stringTy
       | SChar _ => charTy
     end
