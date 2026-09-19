@@ -105,7 +105,7 @@ io.sml          | demand | yes  | IO                    |
 primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
 primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position RuneIODesc
 streamio_sig.sml | demand | yes | STREAM_IO            | IO
-streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO
+streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneExit
 runefile.sml    | demand | yes  | RuneFile              | IO RuneError Word8
 textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice RunePrimIOFn
 binprimio.sml   | demand | yes  | BinPrimIO             | RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice

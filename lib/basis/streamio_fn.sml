@@ -216,7 +216,8 @@ struct
   datatype outstream =
     Out of {writer : writer, augmented : writer, mode : IO.buffer_mode ref,
             buffer : vector list ref, buffered : int ref, status : status ref,
-            device : {write : vector -> unit, flush : unit -> unit} option}
+            device : {write : vector -> unit, flush : unit -> unit} option,
+            held : int option ref}
   type out_pos = {stream : outstream, position : pos}
 
   fun writerName (PIO.WR {name, ...}) = name
@@ -232,11 +233,15 @@ struct
         in go 0 end
 
   (* What the buffer holds goes to the writer; it is emptied first, so that
-     nothing is written twice if the writer fails. *)
-  fun flushBuffer (Out {augmented, buffer, buffered, ...}, function) =
+     nothing is written twice if the writer fails. A stream with an empty
+     buffer has nothing for RuneExit to flush. *)
+  fun flushBuffer (Out {augmented, buffer, buffered, held, ...}, function) =
     case !buffer of
       [] => ()
-    | chunks => (buffer := []; buffered := 0; writeAll (augmented, V.concat (List.rev chunks), function))
+    | chunks =>
+        (buffer := []; buffered := 0;
+         case !held of SOME id => (RuneExit.release id; held := NONE) | NONE => ();
+         writeAll (augmented, V.concat (List.rev chunks), function))
 
   fun flushDevice (Out {device, writer, ...}, function) =
     case device of
@@ -247,17 +252,17 @@ struct
 
   fun mkOutstream (writer, mode) =
     Out {writer = writer, augmented = PIO.augmentWriter writer, mode = ref mode, buffer = ref [],
-         buffered = ref 0, status = ref Active, device = NONE}
+         buffered = ref 0, status = ref Active, device = NONE, held = ref NONE}
 
   (* A stream over a file of the VM: write hands a vector to the VM, flush
      makes the VM write what it holds. Not in STREAM_IO. *)
   fun mkOutstreamOver (writer, mode, device) =
     Out {writer = writer, augmented = PIO.augmentWriter writer, mode = ref mode, buffer = ref [],
-         buffered = ref 0, status = ref Active, device = SOME device}
+         buffered = ref 0, status = ref Active, device = SOME device, held = ref NONE}
 
   fun hasNewline v = V.exists isNewline v
 
-  fun outputWith (strm as Out {writer, augmented, mode, buffer, buffered, status, device}, v, function) =
+  fun outputWith (strm as Out {writer, augmented, mode, buffer, buffered, status, device, held}, v, function) =
     if !status <> Active then ioError (writerName writer, function, IO.ClosedStream)
     else
       case device of
@@ -270,7 +275,11 @@ struct
       | NONE =>
           let
             val PIO.WR {chunkSize, ...} = augmented
-            fun keep () = (buffer := v :: !buffer; buffered := !buffered + V.length v)
+            fun keep () =
+              (buffer := v :: !buffer; buffered := !buffered + V.length v;
+               case !held of
+                 NONE => held := SOME (RuneExit.hold (fn () => flushBuffer (strm, "flushOut")))
+               | SOME _ => ())
           in
             case !mode of
               IO.NO_BUF => (flushBuffer (strm, function); writeAll (augmented, v, function))
