@@ -1,21 +1,27 @@
 (* The readers and writers of one element type (signature PRIM_IO). A reader
    made here offers the operations its argument gives and those that can be
-   built from them (augmentReader); the rest are NONE. *)
+   built from them (augmentReader); the rest are NONE. The positions are of
+   any type; index, when the argument has it, turns an index of a vector
+   into a position and back, which the reader of openVector needs to have
+   positions at all. *)
 functor RunePrimIOFn (structure V : MONO_VECTOR
                       structure A : MONO_ARRAY where type elem = V.elem where type vector = V.vector
                       structure VS : MONO_VECTOR_SLICE where type elem = V.elem where type vector = V.vector
                       structure AS : MONO_ARRAY_SLICE where type elem = V.elem
                                      where type array = A.array where type vector = V.vector
                                      where type vector_slice = VS.slice
-                      val someElem : V.elem) =
+                      val someElem : V.elem
+                      eqtype pos
+                      val compare : pos * pos -> order
+                      val index : {fromInt : int -> pos, toInt : pos -> int} option) =
 struct
   type elem = V.elem
   type vector = V.vector
   type vector_slice = VS.slice
   type array = A.array
   type array_slice = AS.slice
-  type pos = Position.int
-  val compare = Position.compare
+  type pos = pos
+  val compare = compare
 
   datatype reader =
     RD of {name : string,
@@ -83,10 +89,13 @@ struct
           readVecNB = SOME (g "readVecNB" (SOME o readVec)), readArrNB = SOME (g "readArrNB" (SOME o readArr)),
           block = SOME (g "block" (fn () => ())), canInput = SOME (g "canInput" (fn () => true)),
           avail = g "avail" (fn () => SOME (V.length v - !pos)),
-          getPos = SOME (fn () => Position.fromInt (!pos)),
-          setPos = SOME (g "setPos" (fn p => if p < 0 orelse p > V.length v then raise Subscript else pos := Position.toInt p)),
-          endPos = SOME (g "endPos" (fn () => Position.fromInt (V.length v))),
-          verifyPos = SOME (g "verifyPos" (fn () => Position.fromInt (!pos))),
+          getPos = Option.map (fn {fromInt, ...} => fn () => fromInt (!pos)) index,
+          setPos = Option.map (fn {toInt, ...} =>
+                                 g "setPos" (fn p => let val i = toInt p
+                                                     in if i < 0 orelse i > V.length v then raise Subscript else pos := i end))
+                              index,
+          endPos = Option.map (fn {fromInt, ...} => g "endPos" (fn () => fromInt (V.length v))) index,
+          verifyPos = Option.map (fn {fromInt, ...} => g "verifyPos" (fn () => fromInt (!pos))) index,
           close = fn () => closed := true,
           ioDesc = NONE}
     end

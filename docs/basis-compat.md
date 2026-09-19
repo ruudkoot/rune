@@ -198,21 +198,20 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 
 ## Where Rune departs from the specification
 
-22 checks fail on Rune, each with its `RUNE-DEV` or `SPEC-AMBIGUOUS` line.
-One is a reading: `Char.fromString "\""` converts the double quote, where
-the test takes the reading of MLton and SML/NJ (`NONE`); see the table of
-readings below. The others are the parts of what follows that the suite
-reaches.
+One check fails on Rune, a reading of the specification: `Char.fromString
+"\""` converts the double quote, where the test takes the reading of MLton
+and SML/NJ (`NONE`); see the table of readings below.
 
 Not implemented:
 
 * `Real32`, and so `PackReal32Big`, `PackReal32Little` and the `Real32`
   vectors and arrays;
 * `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
-* IPv6;
-* the functors `PrimIO`, `StreamIO` and `ImperativeIO` under those names
-  (`lib/basis` has them as `RunePrimIOFn`, `RuneStreamIOFn` and
-  `RuneImperativeIOFn`).
+* IPv6.
+
+The functor `StreamIO` takes `VectorSlice` and `ArraySlice` besides the
+arguments of the specification, as MLton's does, and its `PrimIO` must have
+positions of type `Position.int`.
 
 The signatures of the specification are all there (row `basis.signatures`
 of [language.md](language.md)), and every structure that Rune has matches

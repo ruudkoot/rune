@@ -103,12 +103,12 @@ osio.sml        | demand | yes  | RuneIODesc            | Int List RuneError Tim
 os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath Time -IO
 io.sml          | demand | yes  | IO                    |
 primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
-primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position RuneIODesc
+primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Option RuneIODesc
 streamio_sig.sml | demand | yes | STREAM_IO            | IO
 streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneExit
 runefile.sml    | demand | yes  | RuneFile              | IO RuneError Word8
-textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice RunePrimIOFn
-binprimio.sml   | demand | yes  | BinPrimIO             | RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
+textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice Position RunePrimIOFn
+binprimio.sml   | demand | yes  | BinPrimIO             | Position RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 posix_error.sml | demand | yes  | RunePosixError        | RuneError Word
 posix_signal.sml | demand | yes | RunePosixSignal       | Word
 posix_process.sml | demand | yes | RunePosixProcess     | Int IntInf List RuneError RunePosixSignal Time Word Word8
@@ -118,10 +118,11 @@ posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSl
 posix_sysdb.sml | demand | yes  | RunePosixSysDB        | Int RuneError RunePosixProcEnv
 posix_tty.sml   | demand | yes  | RunePosixTTY RunePosixTTYFlagsFn | Char CharVector Int List RuneError RunePosixFileSys RunePosixProcess String Word
 posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
-imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO
-textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn String Substring TextPrimIO
+imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO -StreamIO
+io_functors.sml | demand | yes  | ImperativeIO PrimIO StreamIO | -Array -ArraySlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO Position RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn STREAM_IO -Vector -VectorSlice
+textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn -StreamIO String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
-binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn Word8 Word8Vector Word8VectorSlice
+binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn -StreamIO Word8 Word8Vector Word8VectorSlice
 socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int String StringCvt
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
@@ -140,7 +141,7 @@ sig_date.sml | demand | yes  | DATE | Date StringCvt Time
 sig_general.sml | demand | yes  | GENERAL |
 sig_generic_sock.sml | demand | yes  | GENERIC_SOCK | Socket
 sig_ieee_real.sml | demand | yes  | IEEE_REAL | StringCvt
-sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO
+sig_imperative_io.sml | demand | yes  | IMPERATIVE_IO | STREAM_IO StreamIO
 sig_inet_sock.sml | demand | yes  | INET_SOCK | NetHostDB Socket
 sig_int_inf.sml | demand | yes  | INT_INF | INTEGER Int Word
 sig_io.sml | demand | yes  | IO |
@@ -172,11 +173,11 @@ sig_vector.sml | demand | yes  | VECTOR |
 sig_vector_slice.sml | demand | yes  | VECTOR_SLICE | Vector
 sig_posix_tty.sml | demand | yes  | POSIX_TTY | BIT_FLAGS SysWord
 sig_posix_io.sml | demand | yes  | POSIX_IO | BIT_FLAGS BinPrimIO Position TextPrimIO Word8ArraySlice Word8Vector Word8VectorSlice
-sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO Word8 Word8Vector
+sig_bin_io.sml | demand | yes  | BIN_IO | BinPrimIO IMPERATIVE_IO StreamIO Word8 Word8Vector
 sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH Math StringCvt
 sig_os.sml | demand | yes  | OS | IO OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
 sig_text.sml | demand | yes  | TEXT | CHAR Char CharArray CharArraySlice CharVector CharVectorSlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING String Substring
-sig_text_io.sml | demand | yes  | TEXT_IO | Char StringCvt TEXT_STREAM_IO TextPrimIO substring
+sig_text_io.sml | demand | yes  | TEXT_IO | Char StreamIO StringCvt TEXT_STREAM_IO TextPrimIO substring
 sig_unix.sml | demand | yes  | UNIX | BinIO OS TextIO Word8
 sig_socket.sml | demand | yes  | SOCKET | NetHostDB OS Time Word8ArraySlice Word8Vector Word8VectorSlice
 sig_posix_process.sml | demand | yes  | POSIX_PROCESS | BIT_FLAGS OS SysWord Time Word8

@@ -4,4 +4,7 @@ structure TextPrimIO =
                 structure A = CharArray
                 structure VS = CharVectorSlice
                 structure AS = CharArraySlice
-                val someElem = #"\000")
+                val someElem = #"\000"
+                type pos = Position.int
+                val compare = Position.compare
+                val index = SOME {fromInt = Position.fromInt, toInt = Position.toInt})
