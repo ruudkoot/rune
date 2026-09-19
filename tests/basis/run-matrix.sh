@@ -1,6 +1,7 @@
 #!/bin/sh
 # Run the Basis Library suite (tests/basis/*.sml) on a matrix of configurations.
 #   tests/basis/run-matrix.sh [-j N] [--configs C1,C2,...] [FILTER]
+#   tests/basis/run-matrix.sh --perf [--configs C1,C2,...] [FILTER]
 #
 # Configurations (default: rune):
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
@@ -54,9 +55,24 @@
 # FILTER is given). A test that is ABSENT for the rune configuration is the
 # failed check @absent/TEST, to be explained likewise: Rune's library is
 # meant to be complete.
+#
+# --perf times the programs of tests/perf instead (`make perf`), one at a
+# time, in the same configurations. A program's top-level declarations become
+# the body of a function that is called R times, R from the `wall R` line of
+# its .budget file (default 1), so what is timed is running the program, not
+# compiling it, on every host; of three such rounds the fastest counts. Each run must print what NAME.expected holds.
+# The table in tests/out/perf/wall.md gives the milliseconds of one run and
+# each time divided by the baseline of its configuration, the geometric mean
+# of fib and tak, which use no Basis Library: that separates what the library
+# costs from how fast the configuration runs code at all. A program is n/a
+# in an xc1 configuration when its .budget file has a line `noxc1 REASON`,
+# when it names a structure whose file the host left out, or when the host's
+# int is too narrow for the Time of lib/basis. A host that fails a program
+# is reported under the table; only a failure of `rune` fails the run.
 set -u
 
 jobs=""
+perf=${RUNE_MATRIX_PERF:-0}
 configs=rune
 filter=""
 one_config=""
@@ -66,7 +82,8 @@ while [ $# -gt 0 ]; do
     -j) jobs=$2; shift 2 ;;
     --configs) configs=$2; shift 2 ;;
     --one) one_config=$2; one_test=$3; shift 3 ;;
-    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
+    --perf) perf=1; shift ;;
+    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -90,7 +107,7 @@ config_field() { awk -F '\t' -v id="$1" -v n="$2" '$1 == id { print $n }' "$run/
 # first_error FILE...: the line that best explains why a program did not load
 # (not a declaration that an interactive system echoes, like `val file_error`).
 first_error() {
-  cat "$@" 2> /dev/null | grep -v -E '^PASS |^[[:space:]]*(val|exception|type|datatype|structure|signature) ' |
+  cat "$@" 2> /dev/null | grep -v -E '^PASS |^\[opening |^[[:space:]]*(val|exception|type|datatype|structure|signature) ' |
     grep -i -m 1 -E 'error|exception|raised|timed out' | cut -c 1-300
 }
 
@@ -308,8 +325,81 @@ run_one() {
   mv "$result.tmp" "$result"
 }
 
+# wall_program NAME R FILE KIND: tests/perf/NAME.sml as the body of a function
+# that FILE calls R times between reading and printing a real-time timer.
+# CommandLine is shadowed: a host's own arguments are not the program's.
+# The Time of lib/basis counts microseconds since 1970 in an int, which an
+# xc1 host with a narrow int cannot do: the program then prints NA. (A host's
+# own Time has no such limit.)
+wall_program() {
+  {
+    echo 'structure CommandLine = struct fun name () = "bench" fun arguments () : string list = [] end'
+    echo 'fun runeWallBody__ () = let'
+    cat "$root/tests/perf/$1.sml"
+    echo 'in () end'
+    if [ "$4" = xc1 ]; then
+      echo 'val () ='
+      echo '  case Int.precision of'
+      printf '%s\n' '    SOME p => if p < 52 then print ("NA the int has " ^ Int.toString p ^ " bits, Time needs 52\n") else ()'
+      echo '  | NONE => ()'
+      echo 'val runeWallRun__ = case Int.precision of SOME p => p >= 52 | NONE => true'
+    else
+      echo 'val runeWallRun__ = true'
+    fi
+    # three rounds of R runs; the fastest round is the measurement
+    echo "fun runeWallRound__ () = let val t = Timer.startRealTimer () fun loop 0 = () | loop k = (runeWallBody__ (); loop (k - 1))"
+    echo "  in loop $2; Time.toMicroseconds (Timer.checkRealTimer t) end"
+    printf '%s\n' 'val () = if runeWallRun__ then let val a = runeWallRound__ () val b = runeWallRound__ () val c = runeWallRound__ ()'
+    printf '%s\n' '  in print ("TIME " ^ LargeInt.toString (LargeInt.min (a, LargeInt.min (b, c))) ^ "\n") end else ()'
+    printf '%s\n' 'val () = print "SUMMARY 0 checks\n"'
+  } > "$3"
+}
+
+# perf_one CONFIG NAME: time tests/perf/NAME.sml in CONFIG; the result is
+# "TIME microseconds", "NA structure" or "FAIL why".
+perf_one() {
+  config=$1
+  test=$2
+  kind=$(config_field "$config" 2)
+  host=$(config_field "$config" 3)
+  cmd1=$(config_field "$config" 4)
+  cmd2=$(config_field "$config" 5)
+  cfgout=$out/$(dirname_of "$config")
+  work=$cfgout/perf-$test.dir
+  result=$cfgout/perf-$test.result
+  mkdir -p "$cfgout"
+  if [ "$kind" = xc1 ]; then
+    why=$(sed -n 's/^noxc1 //p' "$root/tests/perf/$test.budget")
+    if [ -n "$why" ]; then echo "NA $why" > "$result"; return; fi
+    for m in $(cut -f 1 "$cfgout/basis.dropped" | while read -r f; do awk -F '\t' -v f="$f" '{ n = split($1, p, "/"); if (p[n] == f) print $2 }' "$cfgout/basis/files"; done); do
+      if grep -q -w "$m" "$root/tests/perf/$test.sml"; then echo "NA $m" > "$result"; return; fi
+    done
+  fi
+  reps=$(sed -n 's/^wall //p' "$root/tests/perf/$test.budget")
+  reps=${reps:-1}
+  mkdir -p "$cfgout/perf"
+  wall_program "$test" "$reps" "$cfgout/perf/$test.sml" "$kind"
+  # shellcheck disable=SC2046
+  if ! load "$work" run $(prefix) "$cfgout/perf/$test.sml"; then
+    echo "FAIL $(first_error "$work/log" "$work/stdout")" > "$result"
+    return
+  fi
+  if grep -q '^NA ' "$work/stdout"; then
+    grep '^NA ' "$work/stdout" | head -1 > "$result"
+    return
+  fi
+  # An interactive host echoes its declarations: count the expected lines.
+  want=$(wc -l < "$root/tests/perf/$test.expected")
+  got=$(grep -c -x -F -f "$root/tests/perf/$test.expected" "$work/stdout")
+  if [ "$got" != $((want * reps * 3)) ]; then
+    echo "FAIL printed $(grep -v -E '^(TIME|SUMMARY) ' "$work/stdout" | head -1), expected $(head -1 "$root/tests/perf/$test.expected") $((reps * 3)) times" > "$result"
+    return
+  fi
+  echo "TIME $(sed -n 's/^TIME //p' "$work/stdout") $reps" > "$result"
+}
+
 if [ -n "$one_config" ]; then
-  run_one "$one_config" "$one_test"
+  if [ "$perf" = 1 ]; then perf_one "$one_config" "$one_test"; else run_one "$one_config" "$one_test"; fi
   exit 0
 fi
 
@@ -375,11 +465,18 @@ for c in $(expand "$configs"); do resolve "$c" || exit 2; done
 ids=$(cut -f 1 "$run/configs")
 
 tests=""
-for f in "$suite"/*.sml; do
-  name=$(basename "$f" .sml)
-  case "$name" in harness|finish) continue ;; esac
-  case "$name" in *"$filter"*) tests="$tests $name" ;; esac
-done
+if [ "$perf" = 1 ]; then
+  for f in "$root"/tests/perf/*.expected; do
+    name=$(basename "$f" .expected)
+    case "$name" in *"$filter"*) tests="$tests $name" ;; esac
+  done
+else
+  for f in "$suite"/*.sml; do
+    name=$(basename "$f" .sml)
+    case "$name" in harness|finish) continue ;; esac
+    case "$name" in *"$filter"*) tests="$tests $name" ;; esac
+  done
+fi
 [ -n "$tests" ] || { echo "run-matrix: no test matches '$filter'" >&2; exit 2; }
 
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
@@ -445,6 +542,58 @@ for id in $ids; do
   case "$id" in xc1:*) probe_basis "$id" & pids="$pids $!" ;; esac
 done
 for pid in $pids; do wait "$pid" || exit 2; done
+if [ "$perf" = 1 ]; then
+  # One at a time: a timing is only worth something on an idle machine.
+  for id in $ids; do for t in $tests; do printf '%s\n%s\n' "$id" "$t"; done; done |
+    RUNE_MATRIX_RUN=$run RUNE_MATRIX_PERF=1 xargs -n 2 -P 1 sh "$self" --one
+  wall=$root/tests/out/perf/wall.md
+  mkdir -p "$root/tests/out/perf"
+  status=0
+  # cell ID NAME: "ms" of one run, n/a, or error (the reason goes to
+  # stderr, and so does why a cell is n/a)
+  cell() {
+    r=$out/$(dirname_of "$1")/perf-$2.result
+    if [ ! -f "$r" ]; then echo error; echo "error $1 $2: no result" >&2; return; fi
+    case "$(cut -d ' ' -f 1 "$r")" in
+      TIME) awk '{ printf "%.2f", $2 / $3 / 1000 }' "$r" ;;
+      NA) echo n/a; echo "n/a $1 $2: $(cut -d ' ' -f 2- "$r")" >&2 ;;
+      *) echo error; echo "error $1 $2: $(cut -d ' ' -f 2- "$r")" >&2 ;;
+    esac
+  }
+  {
+    echo "# Wall-clock times"
+    echo
+    echo "Milliseconds of one run of each program of tests/perf, on $(uname -m) with $(sh scripts/ncpus.sh) CPUs, $(date -u +%Y-%m-%d)."
+    echo "In parentheses: the time divided by the baseline of the configuration (the geometric mean of fib and tak)."
+    echo
+    printf '| Program |'; for id in $ids; do printf ' %s |' "$id"; done; echo
+    printf '|---|'; for id in $ids; do printf '%s' '---:|'; done; echo
+    for t in $tests; do
+      printf '| %s |' "$t"
+      for id in $ids; do
+        v=$(cell "$id" "$t" 2>> "$run/perf-errors")
+        base=$(awk -v a="$(cell "$id" fib 2> /dev/null)" -v b="$(cell "$id" tak 2> /dev/null)" 'BEGIN { if (a + 0 > 0 && b + 0 > 0) printf "%.3f", sqrt(a * b) }')
+        case "$v" in
+          error|n/a) printf ' %s |' "$v" ;;
+          *) if [ -n "$base" ]; then printf ' %s (%s) |' "$v" "$(awk -v v="$v" -v b="$base" 'BEGIN { printf "%.1f", v / b }')"; else printf ' %s |' "$v"; fi ;;
+        esac
+      done
+      echo
+    done
+  } > "$wall"
+  if [ -s "$run/perf-errors" ]; then
+    { echo
+      echo "Not measured:"
+      echo
+      sort -u "$run/perf-errors" | sed 's/^/* /'
+    } >> "$wall"
+  fi
+  cat "$wall"
+  # A host that cannot run a program is reported; Rune that cannot fails.
+  grep -q '^error rune ' "$run/perf-errors" 2> /dev/null && status=1
+  echo "table: ${wall#"$root"/}"
+  exit $status
+fi
 for id in $ids; do for t in $tests; do printf '%s\n%s\n' "$id" "$t"; done; done |
   RUNE_MATRIX_RUN=$run xargs -n 2 -P "$jobs" sh "$self" --one
 
@@ -549,9 +698,11 @@ if [ -s "$unexplained" ]; then
 fi
 
 # Stale deviations: a line must match a failure in every configuration of
-# this run that its configuration glob names.
+# this run that its configuration glob names (not a HOST-FLAKY line: that
+# failure comes and goes).
 if [ -z "$filter" ]; then
   while IFS='|' read -r line cglob lglob category reason; do
+    [ "$category" = HOST-FLAKY ] && continue
     for id in $ids; do
       # shellcheck disable=SC2254
       case "$id" in $cglob) ;; *) continue ;; esac

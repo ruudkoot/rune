@@ -86,11 +86,12 @@ native:smlnj@110.79 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
 
 Categories: `RUNE-DEV` (Rune departs from the specification, or does not
 implement the member yet), `HOST-BUG` (the host departs from it), `HOST-ABSENT`
-(the host lacks the member), `SPEC-AMBIGUOUS` (the specification allows both
-behaviours; the reason states the reading the test takes), `WIDTH` (follows
-from the precision of a type), `XC1-NA` (not meaningful for Rune's library on
-a host). A line that stops matching a failure is an error, so fixed
-deviations must be removed. Besides checks, a label can be `@section/TEST/NAME`
+(the host lacks the member), `HOST-FLAKY` (the host fails the check only
+sometimes), `SPEC-AMBIGUOUS` (the specification allows both behaviours; the
+reason states the reading the test takes), `WIDTH` (follows from the
+precision of a type), `XC1-NA` (not meaningful for Rune's library on a host).
+A line that stops matching a failure is an error, so fixed deviations must be
+removed; a `HOST-FLAKY` line is exempt. Besides checks, a label can be `@section/TEST/NAME`
 (a section that does not load), `@load/TEST` (a test that does not load or
 runs out of time) or, for `rune` only, `@absent/TEST` (a test that needs a
 structure Rune lacks). A `RUNE-DEV` or `SPEC-AMBIGUOUS` line for `rune` holds

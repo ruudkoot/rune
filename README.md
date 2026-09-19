@@ -21,10 +21,12 @@ Hello, world!
 The full Core language of SML '97 (datatypes, pattern matching, exceptions,
 records, let-polymorphism, refs, proper tail calls), the Modules language
 (structures, signatures, transparent and opaque ascription, `where type`,
-`sharing`, functors) and a substantial subset of the Basis Library (`Int`,
-`IntInf`, `Word`, `Real`, `Math`, `Char`, `String`, `List`, `ListPair`,
-`Option`, `Array`, `Vector`, `TextIO` and `BinIO` on standard streams and
-files, `CommandLine`, `OS.Process`).
+`sharing`, functors) and the Basis Library: the required structures, and of
+the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
+the monomorphic vectors and arrays, `Posix`, `Unix`, the sockets and the
+network databases). Omitted for now: the fixed-width `IntN` and `WordN`
+structures other than `Word8`, `Pack*`, `WideChar` and `Posix.TTY`
+([docs/basis-compat.md](docs/basis-compat.md)).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed
 description of the supported language. Every feature row there has an id
@@ -37,7 +39,7 @@ description of the supported language. Every feature row there has an id
 |---|---|
 | `src/` | the compiler (frontend, elaboration, core translation, backend, driver) |
 | `vm/` | the virtual machine; `opcodes.def` and `prims.def` define the instruction set |
-| `lib/basis/` | the basis library, compiled before every program |
+| `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
 | `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md) |
 | `examples/` | small programs |
@@ -97,7 +99,7 @@ three host builds, and reproduces itself byte for byte. Running the compiler
 on the interpreter is about 30× slower than the MLton build (about three
 seconds for the compiler itself). The remaining differences from the
 Definition are the implementation-defined choices listed in
-[docs/language.md](docs/language.md); the Basis Library is still a subset.
+[docs/language.md](docs/language.md).
 [docs/plans/sml97.md](docs/plans/sml97.md) records how the language was
 completed and what is left; [docs/plans/basis.md](docs/plans/basis.md) is the
 plan for the full Basis Library.

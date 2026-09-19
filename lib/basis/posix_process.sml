@@ -12,7 +12,7 @@ struct
     val kill' = _prim "posix_kill" : int * int -> int
     val alarm' = _prim "posix_alarm" : int -> int
     val pause' = _prim "posix_pause" : unit -> int
-    val exit' = _prim "exit" : int -> 'a
+    val exit' = _prim "posix_exit" : int -> 'a
     val const = _prim "posix_const" : string -> int
     val sleep' = _prim "time_sleep" : int -> unit
     fun check r = if r < 0 then raise RuneError.lastError () else r

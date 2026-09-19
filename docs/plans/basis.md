@@ -20,7 +20,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M5, time and the system | done |
 | M6, Posix and Unix | done but for `Posix.TTY` and file locking |
 | M7, sockets and the network databases | done; `getNREAD`, `getATMARK` and the linger time are stubs (below) |
-| M8 | not started |
+| M8, current-release matrix, wall-clock table, final compatibility document | done; the specification's signatures are still to add (below) |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -60,6 +60,40 @@ rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
 depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
+
+M8 ran the suite on the current releases (MLton 20241230, SML/NJ 110.99.9,
+Poly/ML 5.9.2) as well: all 13 configurations of `make matrix` pass, with the
+lines of an installed host widened to `HOST@*` where the current release
+fails the same check, new lines for what the current releases break, and a
+category `HOST-FLAKY` for SML/NJ 110.99.9, which on a loaded machine
+sometimes gets a floating-point result wrong (such a line need not match).
+`real.sml` and `unix.sml` became portable enough that SML/NJ 110.79 loads
+them, so the `Real` and `Math` tests now run in `xc1` there too.
+`tests/basis/structures.sh` makes the table of the structures each system
+provides, and `make perf` (`run-matrix.sh --perf`) the table of wall-clock
+times; both are in `docs/basis-compat.md`.
+
+MLton's regression programs, the success measure of this plan, were run
+again: of the 142 programs that `tests/external/mlton-skip.txt` skipped, 38
+now pass (143 pass, none fails, 104 are skipped). The others need MLton's
+own structures, a 32-bit `int`, the omitted `IntN`, `WordN` and `Pack*`, the
+signatures `REAL`, `INTEGER` and `IO`, or more time than the 20 seconds the
+runner allows. Running them found and fixed six bugs of Rune's library:
+`OS.Path.mkRelative` canonicalised its `path` and dropped a trailing `/`;
+`mkAbsolute` and `mkRelative` did not raise `Path` for a relative
+`relativeTo`; `joinDirFile` doubled the `/` of the root; `Posix.Process.exit`
+flushed the buffers (it has a primitive of its own now, `posix_exit`, on
+C99's `_Exit`); `OS.IO.poll` and `Socket.select` took a descriptor of the
+system for a handle of the VM (an `iodesc` is the system's descriptor now,
+and `file_descriptor` gives the one under a handle); and `Socket` did not
+have the shape of `SOCKET` (the options and addresses belong in `Ctl`, and
+the `NB` functions, `sameAddr` and the phantom types of the modes were
+missing). `SysWord` was added as `Word`.
+
+Left after M8: the signatures of the specification. `lib/basis` declares
+`WORD`, `PRIM_IO`, `STREAM_IO` and the `MONO_*` ones only, so a program
+cannot write `structure R : REAL = Real`; the transcriptions in
+`tests/basis/spec-sigs` are the starting point.
 
 M7 delivered `Socket`, `INetSock`, `UnixSock`, `GenericSock`, `NetHostDB`,
 `NetProtDB` and `NetServDB` on 27 more primitives behind the system layer. A
@@ -154,9 +188,7 @@ register such a type with range-checked constants, and the test functors
 and its name. What is missing is the signature `INTEGER` in `lib/basis`, the functors, one
 file per instance, and their rows and tests.
 
-Left for later milestones: the deviation lines for the current host releases
-(M8; `make matrix` reports their differences as unexplained until then),
-tests that need a second process (exit status, `atExit` order, what `print`
+Left for later milestones: tests that need a second process (exit status, `atExit` order, what `print`
 writes, stdin contents, command-line arguments), and a per-test time limit
 for checks that hang a host (`OS.Process.sleep` of a negative time).
 

@@ -10,73 +10,82 @@
 #   RUNE-DEV        Rune departs from the specification or lacks the member
 #   HOST-BUG        the host departs from the specification
 #   HOST-ABSENT     the host lacks the member
+#   HOST-FLAKY      the host fails the check only sometimes; such a line is
+#                   not required to match
 #   SPEC-AMBIGUOUS  the specification allows both behaviours; the reason names
 #                   the reading the test takes
 #   WIDTH           follows from the precision of a type
 #   XC1-NA          not meaningful for Rune's library on a host
 # A RUNE-DEV or SPEC-AMBIGUOUS line for `rune` holds for the xc1 configurations
-# as well: they run the same library source.
+# as well: they run the same library source. A host line that names an xc1
+# configuration records a host defect that reaches Rune's library through a
+# primitive of tests/basis/host/rune-prim.sml written on the host's function.
 # A failure without a line fails the run, and so does a line that matches no
 # failure of a configuration it names: remove a line when its cause is fixed.
 # docs/basis-compat.md describes the differences recorded here.
 
 # ---- General
-native:smlnj@110.79 | General.exnMessage/contains-exnName-* | HOST-BUG | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
-*:smlnj@110.79 | General.*/as-value | HOST-BUG | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+native:smlnj@* | General.exnMessage/contains-exnName-* | HOST-BUG | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
+*:smlnj@* | General.*/as-value | HOST-BUG | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 
 # ---- Bool
-native:mlton@20210117 | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
-native:mlton@20210117 | Bool.*/ws* | HOST-BUG | Bool.scan and fromString do not skip initial whitespace
-native:mlton@20210117 | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString neither ignore case nor skip initial whitespace
-native:smlnj@110.79 | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
-native:smlnj@110.79 | Bool.*/wsx-* | HOST-BUG | Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
-native:smlnj@110.79 | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
+native:mlton@* | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
+native:mlton@* | Bool.*/ws* | HOST-BUG | Bool.scan and fromString do not skip initial whitespace
+native:mlton@* | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString neither ignore case nor skip initial whitespace
+native:smlnj@* | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
+native:smlnj@* | Bool.*/wsx-* | HOST-BUG | Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
+native:smlnj@* | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
 
 # ---- Vector
-native:smlnj@110.79 | *Vector.update/[Sm]* | HOST-BUG | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+native:smlnj@* | *Vector.update/[Sm]* | HOST-BUG | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
 
 # ---- Array
-native:smlnj@110.79 | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
+native:smlnj@* | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
 
 # ---- Char
 rune | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote, as Poly/ML; the test takes the reading of MLton and SML/NJ (NONE)
-native:polyml@5.7.1 | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+native:polyml@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
 native:* | *.fromCString/unescaped-double-quote* | HOST-BUG | converts an unescaped double quote, which the specification says fromCString does not accept
 native:* | Char.fromCString/hex-huge-does-not-fit | HOST-BUG | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
-native:mlton@20210117 | Char.scan/trailing-format-after-*escape | HOST-BUG | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
-native:smlnj@110.79 | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
-native:polyml@5.7.1 | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
-native:mlton@20210117 | Char.fromCString/illegal-u | HOST-BUG | fromCString accepts the SML escape \uxxxx
+native:mlton@* | Char.scan/trailing-format-after-*escape | HOST-BUG | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
+native:smlnj@* | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
+native:polyml@* | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
+native:mlton@* | Char.fromCString/illegal-u | HOST-BUG | fromCString accepts the SML escape \uxxxx
 native:smlnj@110.79 | *.toCString/nul* | HOST-BUG | toCString #"\000" is "\\0", not three octal digits
-native:smlnj@110.79 | *.fromCString/control* | HOST-BUG | fromCString does not accept \^c
+native:smlnj@* | *.fromCString/control* | HOST-BUG | fromCString does not accept \^c
 
 # ---- String
-native:mlton@20210117 | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
-native:mlton@20210117 | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
-native:smlnj@110.79 | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a segmentation fault
-native:smlnj@110.79 | String.isSubstring/empty-empty | HOST-BUG | isSubstring "" "" is false
-native:smlnj@110.79 | String.isSubstring/law-39 | HOST-BUG | isSubstring "" "" is false (the law draws two empty strings)
-native:smlnj@110.79 | String.*/format-then-* | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
-native:smlnj@110.79 | String.fromString/sample-6 | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+native:mlton@* | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
+native:mlton@* | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
+native:smlnj@* | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a crash (a segmentation fault on 110.79, a failed allocation on 110.99.9)
+native:smlnj@* | String.isSubstring/empty-empty | HOST-BUG | isSubstring "" "" is false
+native:smlnj@* | String.isSubstring/law-39 | HOST-BUG | isSubstring "" "" is false (the law draws two empty strings)
+native:smlnj@* | String.*/format-then-* | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+native:smlnj@* | String.fromString/sample-6 | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
 native:smlnj@110.79 | String.fromCString/toCString-35 | HOST-BUG | toCString #"\000" is "\\0", so a digit that follows is read as part of the escape
-native:smlnj@110.79 | String.fromCString/stops-at-* | HOST-BUG | fromCString returns NONE unless the whole string converts
+native:smlnj@* | String.fromCString/stops-at-* | HOST-BUG | fromCString returns NONE unless the whole string converts
 
 # ---- Int
 native:smlnj@110.79 | Int.sameSign/* | HOST-BUG | sameSign (0, i) is true for positive i
-native:smlnj@110.79 | *.scan/DEC-whitespace-[avfr]* | HOST-BUG | scan does not skip vertical tab, form feed and carriage return
-native:smlnj@110.79 | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+native:smlnj@* | *.scan/DEC-whitespace-[avfr]* | HOST-BUG | scan does not skip vertical tab, form feed and carriage return
+native:smlnj@* | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
 
 # ---- IntInf
-native:smlnj@110.79 | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
-native:smlnj@110.79 | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for |i| = 1 and j < 0
+native:smlnj@* | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
+native:smlnj@* | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for |i| = 1 and j < 0
 native:smlnj@110.79 | IntInf.*/Div-zero-by-zero | HOST-BUG | IntInf.mod (0, 0) and IntInf.rem (0, 0) do not raise Div
+native:polyml@5.9.2 | IntInf.~>>/* | HOST-BUG | IntInf.~>> of a negative number that does not fit a machine word rounds towards zero, not down (~2^100 ~>> 0w101 is 0, not ~1); 5.7.1 rounds down
+native:smlnj@110.99.9 | IntInf.scan/BIN-* | HOST-BUG | IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+native:smlnj@110.99.9 | IntInf.scan/OCT-* | HOST-BUG | IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 
 # ---- Word
 native:mlton@20210117 | Word.scan/*-bare-prefix-* | HOST-BUG | consumes the prefix 0w, 0wx or 0x although no digit follows it
 native:mlton@20210117 | Word.scan/*-0x-is-no-prefix | HOST-BUG | gives NONE for 0x42 in the radices BIN, OCT and DEC, where the number is the 0
-native:* | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format: SML/NJ and Poly/ML read 0w12 as 0wx12, MLton consumes 0w1
+native:mlton@20210117 | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but MLton 20210117 consumes 0w1 (fixed in 20241230)
+native:smlnj@110.79 | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12 (fixed in 110.99.9)
+native:polyml@* | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
 native:smlnj@110.79 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
-native:polyml@5.7.1 | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@* | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 
 # ---- TextIO
 native:mlton@* | *IO.output1/Io-closed-stream-function | HOST-BUG | output1 on a closed stream raises Io with function "output"
@@ -96,93 +105,114 @@ native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packSt
 
 # ---- OS.Process, CommandLine
 native:smlnj@110.79 | OS.Process.sleep/positive | HOST-BUG | sleep drops the fraction of a second: sleep 0.2 s returns at once, 1.2 s after 1 s
+xc1:smlnj@110.79 | OS.Process.sleep/* | WIDTH | Time.now of lib/basis counts microseconds in an int (51 bits today); the host's int has 31 bits, so the shim's time_now raises Overflow
 *:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
 
 # ---- Real, Math
-native:mlton@20210117 | Real.rem/zero-by-zero | HOST-BUG | Real.rem (0.0, 0.0) is 0.0, not NaN
-native:mlton@20210117 | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
-native:mlton@20210117 | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
-native:mlton@20210117 | Math.cosh/negInf | SPEC-AMBIGUOUS | Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+native:mlton@* | Real.rem/zero-by-zero | HOST-BUG | Real.rem (0.0, 0.0) is 0.0, not NaN
+native:mlton@* | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
+native:mlton@* | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
+native:mlton@* | Math.cosh/negInf | SPEC-AMBIGUOUS | Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
 native:polyml@5.7.1 | Real.rem/both-infinite | HOST-BUG | Real.rem (posInf, posInf) is posInf, not NaN
 native:polyml@5.7.1 | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
-native:polyml@5.7.1 | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
-native:polyml@5.7.1 | Real.*ound/just-below-half | HOST-BUG | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-native:polyml@5.7.1 | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2
-native:polyml@5.7.1 | Real.realRound/negzero-sign | HOST-BUG | Real.realRound (~0.25) is 0.0, not ~0.0
+native:polyml@* | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
+native:polyml@* | Real.*ound/just-below-half | HOST-BUG | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+native:polyml@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2
+native:polyml@* | Real.realRound/negzero-sign | HOST-BUG | Real.realRound (~0.25) is 0.0, not ~0.0
 native:polyml@5.7.1 | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: bits below the rounding position are dropped
-native:polyml@5.7.1 | Real.fmt/GEN-integral-* | HOST-BUG | GEN prints integral values with ".0" ("1.0")
-native:polyml@5.7.1 | Real.toString/integral-* | HOST-BUG | toString prints integral values with ".0" ("1.0")
-native:polyml@5.7.1 | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
-native:polyml@5.7.1 | Real.toString/notation-* | HOST-BUG | toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+native:polyml@* | Real.fmt/GEN-integral-* | HOST-BUG | GEN prints integral values with ".0" ("1.0")
+native:polyml@* | Real.toString/integral-* | HOST-BUG | toString prints integral values with ".0" ("1.0")
+native:polyml@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
+native:polyml@* | Real.toString/notation-* | HOST-BUG | toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
 native:polyml@5.7.1 | Real.*/bare-point* | HOST-BUG | scan accepts a point without any digit: fromString "." = SOME 0.0
 native:polyml@5.7.1 | Real.*/nonfinite-* | HOST-BUG | scan does not accept inf, infinity and nan
 native:polyml@5.7.1 | Real.fromString/huge-* | HOST-BUG | scan raises Overflow when the exponent does not fit an int
 native:polyml@5.7.1 | Real.scan/after-exponent-* | HOST-BUG | scan consumes the character that follows a complete exponent: "1E2.5" leaves "5"
-native:polyml@5.7.1 | Math.pow/*one-base-*Inf | HOST-BUG | Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
+native:polyml@* | Math.pow/*one-base-*Inf | HOST-BUG | Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
 native:smlnj@110.79 | @section/real/class | HOST-BUG | IEEEReal.float_class is that of the 1997 Basis: NAN carries a nan_mode
 native:smlnj@110.79 | @load/real_sig | HOST-BUG | Real does not match REAL: fromDecimal : IEEEReal.decimal_approx -> real, without option
 native:smlnj@110.79 | @section/real_fmt/decimal* | HOST-BUG | IEEEReal.decimal_approx has a field kind instead of class, and toDecimal and fromDecimal raise Fail "unimplemented"
-native:smlnj@110.79 | Real.rem/*Inf-y | HOST-BUG | Real.rem (x, inf) is NaN, not x
-native:smlnj@110.79 | Real.rem/law-agrees-with-Int-rem | HOST-BUG | Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
-native:smlnj@110.79 | Real.toManExp/* | HOST-BUG | toManExp does not normalise zeros (exp ~1022), subnormals and reals from 2^1023 ({man = r, exp = 0})
+native:smlnj@* | Real.rem/*Inf-y | HOST-BUG | Real.rem (x, inf) is NaN, not x
+native:smlnj@* | Real.rem/law-agrees-with-Int-rem | HOST-BUG | Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
+*:smlnj@110.79 | Real.toManExp/* | HOST-BUG | toManExp does not normalise zeros (exp ~1022), subnormals and reals from 2^1023 ({man = r, exp = 0})
 native:smlnj@110.79 | Real.fromManExp/*-man | HOST-BUG | fromManExp raises Overflow when man is zero, infinite or NaN
-native:smlnj@110.79 | Real.fromManExp/minPos | HOST-BUG | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos
-native:smlnj@110.79 | Real.fromManExp/huge-man-* | HOST-BUG | fromManExp loops forever when man is 2^1023 or more (the checks are guarded by a probe of toManExp and fail without calling it)
-native:smlnj@110.79 | Real.toLargeInt/huge-* | HOST-BUG | toLargeInt loops forever on reals of 2^1023 or more (guarded like Real.fromManExp/huge-man-*)
+*:smlnj@* | Real.fromManExp/minPos | HOST-BUG | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos
+*:smlnj@110.79 | Real.fromManExp/huge-man-* | HOST-BUG | fromManExp loops forever when man is 2^1023 or more (the checks are guarded by a probe of toManExp and fail without calling it)
+*:smlnj@110.79 | Real.toLargeInt/huge-* | HOST-BUG | toLargeInt loops forever on reals of 2^1023 or more (guarded like Real.fromManExp/huge-man-*)
+xc1:smlnj@110.79 | Real.toLargeInt/* | WIDTH | lib/basis/real.sml converts through int values of up to 54 bits, and IntInf is the host's (intinf.sml does not load); the host's int has 31 bits, so Overflow
+xc1:smlnj@110.79 | Real.fromLargeInt/* | WIDTH | lib/basis/real.sml converts numbers below 2^55 through int; the host's int has 31 bits, so Overflow
 native:smlnj@110.79 | Real.split/* | HOST-BUG | split loses the sign of zero parts, gives frac = NaN for infinities and 0.0 for minPos
 native:smlnj@110.79 | Real.realMod/* | HOST-BUG | realMod loses the sign of a zero and is NaN for infinities
-native:smlnj@110.79 | Real.nextAfter/* | HOST-ABSENT | Real.nextAfter raises Fail "Real.nextAfter unimplemented"
-native:smlnj@110.79 | Real.realFloor/zero | HOST-BUG | Real.realFloor 0.0 is ~0.0
-native:smlnj@110.79 | Real.real*/*huge | HOST-BUG | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
-native:smlnj@110.79 | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52
-native:smlnj@110.79 | Real.real*/negzero-sign | HOST-BUG | realCeil, realTrunc and realRound lose the sign of a zero result
-native:smlnj@110.79 | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0
+*:smlnj@110.79 | Real.nextAfter/* | HOST-ABSENT | Real.nextAfter raises Fail "Real.nextAfter unimplemented"
+native:smlnj@* | Real.realFloor/zero | HOST-BUG | Real.realFloor 0.0 is ~0.0
+native:smlnj@* | Real.real*/*huge | HOST-BUG | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
+native:smlnj@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52
+native:smlnj@* | Real.real*/negzero-sign | HOST-BUG | realCeil, realTrunc and realRound lose the sign of a zero result
+*:smlnj@* | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0
 native:smlnj@110.79 | Real.round/minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
 native:smlnj@110.79 | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
-native:smlnj@110.79 | Real.fmt/SCI-twenty-digits | HOST-BUG | SCI prints at most 14 digits after the point
-native:smlnj@110.79 | Real.fmt/GEN-seventeen-digits | HOST-BUG | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
+*:smlnj@110.79 | Real.fmt/SCI-twenty-digits | HOST-BUG | SCI prints at most 14 digits after the point
+*:smlnj@* | Real.fmt/GEN-seventeen-digits | HOST-BUG | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 native:smlnj@110.79 | Real.fmt/GEN-integral-* | HOST-BUG | GEN prints integral values with ".0" ("1.0")
 native:smlnj@110.79 | Real.toString/integral-* | HOST-BUG | toString prints integral values with ".0" ("1.0")
-native:smlnj@110.79 | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
+native:smlnj@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
 native:smlnj@110.79 | Real.toString/notation-* | HOST-BUG | toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
 native:smlnj@110.79 | Real.fmt/EXACT-* | HOST-ABSENT | Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+xc1:smlnj@110.79 | Real.fmt/EXACT-* | HOST-BUG | EXACT of lib/basis rests on the shim's real_shortest, which is the host's Real.fmt, and that gives at most 15 significant digits
+xc1:smlnj@110.79 | Real.*Decimal/* | HOST-BUG | toDecimal rests on the host's Real.fmt through the shim (at most 15 digits) and fromDecimal on its Real.fromString (not correctly rounded)
 native:smlnj@110.79 | Real.fmt/Size-GEN-when-spec-is-evaluated | HOST-BUG | Real.fmt (GEN (SOME 0)) raises Size only when applied to a real
-native:smlnj@110.79 | Real.fromString/leading-whitespace | HOST-BUG | scan skips only space, tab and newline, not the other Char.isSpace characters (\r, \v, \f)
+native:smlnj@* | Real.fromString/leading-whitespace | HOST-BUG | scan skips only space, tab and newline, not the other Char.isSpace characters (\r, \v, \f)
 native:smlnj@110.79 | Real.*/nonfinite-* | HOST-BUG | scan does not accept inf, infinity and nan
 native:smlnj@110.79 | Real.fromString/huge-* | HOST-BUG | scan raises Overflow when the exponent does not fit an int
-native:smlnj@110.79 | Real.fromString/exact-* | HOST-BUG | scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
-native:smlnj@110.79 | Math.atan2/*negzero* | HOST-BUG | Math.atan2 ignores the sign of a zero: atan2 (~0.0, 1.0) = 0.0, atan2 (0.0, ~0.0) = 0.0
-native:smlnj@110.79 | Math.atan2/*Inf-y-*Inf-x | HOST-BUG | Math.atan2 of two infinities is NaN
-native:smlnj@110.79 | Math.pow/negzero-base-negative-odd | HOST-BUG | Math.pow (~0.0, ~3.0) is posInf, not negInf
-native:smlnj@110.79 | Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
-native:smlnj@110.79 | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
-native:smlnj@110.79 | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
+*:smlnj@* | Real.fromString/exact-* | HOST-BUG | scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
+*:smlnj@* | Math.atan2/*negzero* | HOST-BUG | Math.atan2 ignores the sign of a zero: atan2 (~0.0, 1.0) = 0.0, atan2 (0.0, ~0.0) = 0.0
+*:smlnj@* | Math.atan2/*Inf-y-*Inf-x | HOST-BUG | Math.atan2 of two infinities is NaN
+*:smlnj@* | Math.pow/negzero-base-negative-odd | HOST-BUG | Math.pow (~0.0, ~3.0) is posInf, not negInf
+*:smlnj@* | Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
+*:smlnj@* | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
+*:smlnj@* | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
+*:smlnj@110.99.9 | Real.*/law-* | HOST-FLAKY | on a loaded machine (32 runs at once) about one run in ten gets a result wrong in the last bits: fromManExp (toManExp x) differs from x for x = ~9.69494874253E272; never seen alone
+*:smlnj@110.99.9 | Math.*/law-* | HOST-FLAKY | as the Real laws: Math.ln/law-product-is-sum failed once in a full matrix run and not since
+native:smlnj@110.99.9 | Real.rem/*Inf-x | HOST-BUG | rem (±inf, y) is a zero, not NaN
+native:smlnj@110.99.9 | Real.rem/*zero-y | HOST-BUG | rem (x, ±0.0) is a zero, not NaN
+*:smlnj@110.99.9 | Real.*/Overflow-*above-maxInt | HOST-BUG | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+*:smlnj@110.99.9 | Real.*/*minInt* | HOST-BUG | ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+*:smlnj@110.99.9 | Real.*/*near-maxInt | HOST-BUG | ceil of the largest real below 2^62, an integer, is one less than it
+*:smlnj@110.99.9 | Real.fmt/*-minPos | HOST-BUG | fmt of minPos prints the digits of the shortest representation, 5E~324, padded with zeros instead of the digits asked for
+native:smlnj@110.99.9 | Real.scan/point-* | HOST-BUG | scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
+native:polyml@5.9.2 | Real.toDecimal/* | HOST-BUG | toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+native:polyml@5.9.2 | Real.fmt/EXACT-*zero | HOST-BUG | fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+*:polyml@5.9.2 | Real.fromManExp/wide-exp-subnormal-to-large | HOST-BUG | fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
+*:polyml@5.9.2 | Real.fromString/exact-round-above-half | HOST-BUG | fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 
 # ---- StringCvt
-xc1:smlnj@110.79 | @section/stringcvt/Real.fmt | HOST-BUG | lib/basis/real.sml does not load there (the host raises BadReal on the literal 4.9E~324), so Real is the host's and its fmt wants the host's StringCvt.realfmt
-native:smlnj@110.79 | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - |s|) instead of returning s
-native:smlnj@110.79 | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
+native:smlnj@* | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - |s|) instead of returning s
+native:smlnj@* | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
 
 # ---- Substring
-native:mlton@20210117 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
-native:smlnj@110.79 | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
-native:smlnj@110.79 | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubstring "" ss is false when ss is empty
-native:polyml@5.7.1 | Substring.substring/Subscript-not-Overflow-sum-* | HOST-BUG | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
-native:polyml@5.7.1 | Substring.extract/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
-native:polyml@5.7.1 | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-BUG | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
+native:mlton@* | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj@* | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj@* | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubstring "" ss is false when ss is empty
+native:polyml@* | Substring.substring/Subscript-not-Overflow-sum-* | HOST-BUG | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@* | Substring.extract/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@* | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-BUG | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
 
 # ---- IEEEReal
 native:smlnj@110.79 | @load/ieeereal | HOST-BUG | IEEEReal is that of the 1997 Basis: NAN carries a nan_mode and decimal_approx has a field kind
 native:smlnj@110.79 | @load/ieeereal_sig | HOST-BUG | IEEEReal is that of the 1997 Basis, so it does not match IEEE_REAL
 native:polyml@5.7.1 | IEEEReal.fromString/integer | HOST-BUG | scan keeps the trailing zeros of il@fl: "100" gives the digits [1, 0, 0]
 native:polyml@5.7.1 | IEEEReal.fromString/small-fraction | HOST-BUG | scan keeps the leading zeros of the fraction and does not lower exp: "0.00125" gives [0, 0, 1, 2, 5] and exp 0
+native:smlnj@110.99.9 | IEEEReal.toString/negative-nan | HOST-BUG | toString of a NaN with the sign set is "nan", not "~nan"
+native:smlnj@110.99.9 | IEEEReal.scan/point-without-fraction | HOST-BUG | scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+native:polyml@5.9.2 | IEEEReal.toString/is-fmt-EXACT | HOST-BUG | follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
 
 # ---- Word8
 xc1:mlton@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
 xc1:polyml@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+xc1:smlnj@110.99.9 | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
 native:smlnj@110.79 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
-native:polyml@5.7.1 | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
-native:polyml@5.7.1 | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
+native:polyml@* | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@* | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
 
 # ---- the monomorphic vectors, arrays and slices
 native:smlnj@110.79 | *Slice.findi/* | HOST-BUG | findi of the slices passes f the index in the underlying vector or array, not the index in the slice
@@ -190,23 +220,23 @@ native:smlnj@110.79 | *VectorSlice.subslice/* | HOST-BUG | subslice (sl, i, NONE
 native:smlnj@110.79 | *ArraySlice.subslice/* | HOST-BUG | subslice (sl, i, NONE) checks i against the length of the underlying array instead of |sl|
 native:smlnj@110.79 | *ArraySlice.collate/* | HOST-BUG | collate of the array slices is wrong: equal slices of two or more elements compare GREATER, a proper prefix compares EQUAL
 native:smlnj@110.79 | *Slice.*/Subscript-not-Overflow | HOST-BUG | sub, update and copy with an index or di near Int.maxInt raise Overflow instead of Subscript
-native:polyml@5.7.1 | *ArraySlice.copy/Subscript-not-Overflow | HOST-BUG | copy with di = Int.maxInt raises Overflow instead of Subscript
+native:polyml@* | *ArraySlice.copy/Subscript-not-Overflow | HOST-BUG | copy with di = Int.maxInt raises Overflow instead of Subscript
 native:smlnj@110.79 | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
-native:polyml@5.7.1 | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
-native:polyml@5.7.1 | *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+native:polyml@* | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
+native:polyml@* | *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 
 # ---- Array2
-native:mlton@20210117 | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
-native:smlnj@110.79 | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
-native:mlton@20210117 | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
-native:smlnj@110.79 | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
-native:smlnj@110.79 | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
-native:smlnj@110.79 | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
-native:smlnj@110.79 | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
-native:smlnj@110.79 | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
-native:smlnj@110.79 | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
-native:polyml@5.7.1 | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
-native:polyml@5.7.1 | Array2.*/no-rows* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
-native:polyml@5.7.1 | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
-native:polyml@5.7.1 | Array2.array/Size-negative-columns-no-rows | HOST-BUG | array (0, ~1, x) does not raise Size
-native:polyml@5.7.1 | Array2.*/zero-length-not-equal | HOST-BUG | two arrays without rows are equal
+native:mlton@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:smlnj@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:mlton@* | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+native:smlnj@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+native:smlnj@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
+native:smlnj@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
+native:smlnj@* | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
+native:smlnj@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
+native:smlnj@* | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
+native:polyml@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+native:polyml@* | Array2.*/no-rows* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+native:polyml@* | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+native:polyml@* | Array2.array/Size-negative-columns-no-rows | HOST-BUG | array (0, ~1, x) does not raise Size
+native:polyml@* | Array2.*/zero-length-not-equal | HOST-BUG | two arrays without rows are equal

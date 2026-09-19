@@ -34,7 +34,7 @@ struct
              Posix.IO.close fromChildRead;
              Posix.IO.close toChildWrite;
              run (path, path :: args);
-             Posix.Process.exit 0w127)
+             Posix.Process.exit (Word8.fromInt 127))
         | SOME pid =>
             (Posix.IO.close fromChildWrite;
              Posix.IO.close toChildRead;

@@ -375,7 +375,7 @@ int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
 static const struct { const char *name; int64_t value; } constants[] = {
 #define C(n) { #n, (int64_t)n },
     /* the errors of POSIX.1 */
-    C(E2BIG) C(EACCES) C(EADDRINUSE) C(EADDRNOTAVAIL) C(EAFNOSUPPORT) C(EAGAIN)
+    C(E2BIG) C(EACCES) C(EADDRINUSE) C(EADDRNOTAVAIL) C(EAFNOSUPPORT) C(EAGAIN) C(EWOULDBLOCK)
     C(EALREADY) C(EBADF) C(EBADMSG) C(EBUSY) C(ECANCELED) C(ECHILD) C(ECONNABORTED)
     C(ECONNREFUSED) C(ECONNRESET) C(EDEADLK) C(EDESTADDRREQ) C(EDOM) C(EDQUOT)
     C(EEXIST) C(EFAULT) C(EFBIG) C(EHOSTUNREACH) C(EIDRM) C(EILSEQ) C(EINPROGRESS)
@@ -666,12 +666,16 @@ int64_t sys_sendto(int fd, const char *buf, int64_t n, int flags, const char *ad
     return (int64_t)sendto(fd, buf, (size_t)n, flags, (const struct sockaddr *)addr, (socklen_t)addrlen);
 }
 
+/* errno is cleared first: nothing received is the end of the stream when it
+   is still 0 afterwards, a failure otherwise. */
 int64_t sys_recv(int fd, char *buf, int64_t n, int flags) {
+    errno = 0;
     return (int64_t)recv(fd, buf, (size_t)n, flags);
 }
 
 int64_t sys_recvfrom(int fd, char *buf, int64_t n, int flags) {
     socklen_t len = sizeof address;
+    errno = 0;
     ssize_t got = recvfrom(fd, buf, (size_t)n, flags, (struct sockaddr *)address, &len);
     address_length = got < 0 ? 0 : (int)len;
     return (int64_t)got;

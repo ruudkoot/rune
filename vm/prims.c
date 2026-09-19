@@ -1446,14 +1446,22 @@ static int p_posix_ctermid(VM *vm) {
     return push_string_value(vm, name ? name : "");
 }
 
+/* These four take a descriptor of the system, as Posix and the sockets have
+   them; file_descriptor gives the one of a handle of the VM's table. */
+static int p_file_descriptor(VM *vm) {
+    return ret(vm, 1, mk_int(descriptor_of(vm, ARG(0), "file_descriptor")));
+}
+
 static int p_posix_ttyname(VM *vm) {
-    int fd = descriptor_of(vm, ARG(0), "posix_ttyname");
+    INT1("posix_ttyname");
+    int fd = (int)x;
     const char *name = fd < 0 ? NULL : sys_ttyname(fd);
     return push_string_value(vm, name ? name : "");
 }
 
 static int p_posix_isatty(VM *vm) {
-    int fd = descriptor_of(vm, ARG(0), "posix_isatty");
+    INT1("posix_isatty");
+    int fd = (int)x;
     return ret(vm, 1, mk_int(fd < 0 ? 0 : sys_isatty(fd)));
 }
 
@@ -1465,7 +1473,8 @@ static int p_posix_sysconf(VM *vm) {
 }
 
 static int p_os_desc_kind(VM *vm) {
-    int fd = descriptor_of(vm, ARG(0), "os_desc_kind");
+    INT1("os_desc_kind");
+    int fd = (int)x;
     return ret(vm, 1, mk_int(fd < 0 ? -1 : sys_desc_kind(fd)));
 }
 
@@ -1482,7 +1491,7 @@ static int p_os_poll(VM *vm) {
     int *wide_events = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_events);
     if (!wide_fds || !wide_events) vm_fatal(vm, "out of memory");
     for (int i = 0; i < (int)n; i++) {
-        wide_fds[i] = descriptor_of(vm, mk_int(fds[i]), "os_poll");
+        wide_fds[i] = fds[i];
         wide_events[i] = events[i];
     }
     int ready = sys_poll(wide_fds, wide_events, (int)n, ARG(0).u.i);
@@ -1502,6 +1511,12 @@ static int p_file_error(VM *vm) {
 static int p_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "exit");
     vm_exit(vm, (int)ARG(0).u.i);
+    return 0;
+}
+/* Posix.Process.exit: at once, with nothing flushed (C99's _Exit). */
+static int p_posix_exit(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "posix_exit");
+    _Exit((int)ARG(0).u.i);
     return 0;
 }
 static int p_command_args(VM *vm) {

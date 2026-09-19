@@ -12,6 +12,10 @@
 #                      @boot stands for the compiler's own sources
 #   scale N EXPONENT   also run with the arguments N and 4N: the instructions
 #                      may grow with at most N^(EXPONENT + 0.15)
+#   wall R             `make perf` runs the program R times per measurement
+#                      (tests/basis/run-matrix.sh --perf); ignored here
+#   noxc1 REASON       `make perf` does not run it on Rune's library compiled
+#                      by a host; ignored here
 #   instructions N     the budgets: the measured values plus 10 %
 #   bytes N
 #   objects N

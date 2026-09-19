@@ -22,6 +22,8 @@ Systems compared:
 make matrix-quick                      # rune, native:HOST and xc1:HOST on the installed hosts
 make hosts && make matrix              # the same with the current releases as well
 sh tests/basis/run-matrix.sh --configs installed,xc1 real    # tests whose name contains "real"
+sh tests/basis/structures.sh --current  # which structures each system has
+make perf PERF_CONFIGS=all             # wall-clock times of tests/perf, one at a time
 ```
 
 The report is `tests/out/matrix/report.md`; the logs of one test in one
@@ -36,114 +38,148 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   `vm/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
 
+## Summary
+
+The last run of `make matrix` (every configuration, both generations of
+hosts). A check that fails is explained by a line of
+`tests/basis/deviations.txt` or fails the run; "not run" counts the tests
+that are N/A because a host does not load the file of lib/basis they need.
+
+| Configuration | Checks | Pass | Explained | Tests not run |
+|---|---:|---:|---:|---:|
+| `rune` | 39,098 | 39,097 | 1 | 0 |
+| `native:mlton@20210117` | 39,089 | 38,888 | 201 | 0 |
+| `native:smlnj@110.79` | 38,653 | 38,038 | 615 | 0 |
+| `native:polyml@5.7.1` | 39,101 | 38,913 | 188 | 0 |
+| `xc1:mlton@20210117` | 39,091 | 39,089 | 2 | 0 |
+| `xc1:smlnj@110.79` | 26,100 | 26,018 | 82 | 9 |
+| `xc1:polyml@5.7.1` | 39,091 | 39,088 | 3 | 0 |
+| `native:mlton@20241230` | 39,089 | 38,902 | 187 | 0 |
+| `native:smlnj@110.99.9` | 38,772 | 38,395 | 377 | 0 |
+| `native:polyml@5.9.2` | 39,101 | 38,903 | 198 | 0 |
+| `xc1:mlton@20241230` | 39,091 | 39,089 | 2 | 0 |
+| `xc1:smlnj@110.99.9` | 39,091 | 39,049 | 42 | 0 |
+| `xc1:polyml@5.9.2` | 39,091 | 39,086 | 5 | 0 |
+
+Rune itself fails one check, a reading of the specification (below). The
+`xc1` configurations fail the same one, the checks that need a host's
+overloading to be open (`Word8` constants), and the checks where a host's
+function under a primitive of the shim is wrong.
+
+## Structures each system provides
+
+`tests/basis/structures.sh --current` probes `structure Probe = NAME` for
+every structure of the specification on each system:
+
+| Structure | Rune | MLton 20210117 | SML/NJ 110.79 | Poly/ML 5.7.1 | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `BoolArray` | | yes | | yes | yes | | yes |
+| `BoolArraySlice` | | yes | | | yes | | |
+| `BoolVector` | | yes | | yes | yes | | yes |
+| `BoolVectorSlice` | | yes | | | yes | | |
+| `BoolArray2` | | yes | | yes | yes | | yes |
+| `CharArray2` | | yes | | yes | yes | | yes |
+| `FixedInt` | | yes | yes | yes | yes | yes | yes |
+| `Int8` | | yes | | | yes | | |
+| `Int16` | | yes | | | yes | | |
+| `Int32` | | yes | yes | yes | yes | yes | yes |
+| `Int64` | | yes | yes | | yes | yes | |
+| `IntArray` | | yes | | yes | yes | | yes |
+| `IntArraySlice` | | yes | | yes | yes | | yes |
+| `IntVector` | | yes | | yes | yes | | yes |
+| `IntVectorSlice` | | yes | | yes | yes | | yes |
+| `IntArray2` | | yes | | yes | yes | | yes |
+| `LargeIntArray` | | yes | | | yes | | |
+| `LargeRealArray` | | yes | | | yes | | |
+| `LargeWordArray` | | yes | | | yes | | |
+| `PackRealBig` | | yes | | yes | yes | | yes |
+| `PackRealLittle` | | yes | | yes | yes | | yes |
+| `PackWord16Big` | | yes | yes | yes | yes | yes | yes |
+| `PackWord16Little` | | yes | yes | yes | yes | yes | yes |
+| `PackWord32Big` | | yes | yes | yes | yes | yes | yes |
+| `PackWord32Little` | | yes | yes | yes | yes | yes | yes |
+| `PackWord64Big` | | yes | | | yes | yes | |
+| `PackWord64Little` | | yes | | | yes | yes | |
+| `RealArray` | | yes | yes | yes | yes | yes | yes |
+| `RealArraySlice` | | yes | yes | yes | yes | yes | yes |
+| `RealVector` | | yes | yes | yes | yes | yes | yes |
+| `RealVectorSlice` | | yes | yes | yes | yes | yes | yes |
+| `RealArray2` | | yes | | yes | yes | | yes |
+| `SML90` | | | yes | yes | | yes | yes |
+| `WideChar` | | yes | | | yes | | |
+| `WideCharArray` | | yes | | | yes | | |
+| `WideCharVector` | | yes | | | yes | | |
+| `WideString` | | yes | | | yes | | |
+| `WideSubstring` | | yes | | | yes | | |
+| `WideText` | | yes | | | yes | | |
+| `WideTextIO` | | | | | | | |
+| `WideTextPrimIO` | | | | | | | |
+| `Windows` | | | | | | | |
+| `Word16` | | yes | | | yes | | yes |
+| `Word32` | | yes | yes | yes | yes | yes | yes |
+| `Word64` | | yes | yes | yes | yes | yes | yes |
+| `Word8Array2` | | yes | | yes | yes | | yes |
+
+Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `Byte`, `Char`, `CharArray`, `CharArraySlice`, `CharVector`, `CharVectorSlice`, `CommandLine`, `Date`, `General`, `IEEEReal`, `IO`, `Int`, `LargeInt`, `LargeReal`, `LargeWord`, `List`, `ListPair`, `Math`, `OS`, `OS.FileSys`, `OS.IO`, `OS.Path`, `OS.Process`, `Option`, `Position`, `Real`, `String`, `StringCvt`, `Substring`, `Text`, `TextIO`, `TextPrimIO`, `Time`, `Timer`, `Vector`, `VectorSlice`, `Word`, `Word8`, `Word8Array`, `Word8ArraySlice`, `Word8Vector`, `Word8VectorSlice`, `Array2`, `GenericSock`, `INetSock`, `IntInf`, `NetHostDB`, `NetProtDB`, `NetServDB`, `Posix`, `Socket`, `Unix`, `UnixSock`.
+
 ## Representation choices in Rune
 
 | Type | Representation |
 |---|---|
-| `int`, `Int.int` | 64-bit two's complement, `Overflow` checked |
-| `word`, `Word.word` | 64 bits |
-| `real` | IEEE double |
+| `int`, `Int.int`, `LargeInt`... | `int`: 64-bit two's complement, `Overflow` checked; `LargeInt` is `IntInf` |
+| `word`, `Word.word` | 64 bits; `LargeWord` and `SysWord` are `Word` |
+| `real` | IEEE double; `LargeReal` is `Real` |
 | `char`, `string` | 8-bit characters; strings are immutable byte sequences |
 | `IntInf.int` | a datatype in SML: sign and base-2^30 limbs |
-| `Word8Vector.vector` | `string` |
-| `TextIO.instream`, `outstream` | a record around a VM file handle; `BinIO` shares them |
+| `Word8Vector.vector`, `CharVector.vector` | `string` (not abstract) |
+| `Word8Array.array` | an `array` of `Word8.word`, one VM value per byte |
+| `TextIO.instream`, `BinIO.instream` | a reference to a functional stream (so it admits equality); an `outstream` holds a function and does not |
+| `Time.time` | microseconds in an `int`; the conversions take and give `LargeInt.int` |
+| `OS.IO.iodesc`, `Posix.FileSys.file_desc` | the descriptor of the system |
+| `Socket.sock` | the descriptor of the system, with the family and the mode as phantom types; a `sock_addr` is the bytes of the `sockaddr` |
+| `NetHostDB.in_addr` | the dotted text of an IPv4 address |
 
 ## Where Rune departs from the specification
 
-The `RUNE-DEV` lines of `tests/basis/deviations.txt` (M0: 17,619 of 17,975
-checks pass on Rune; 17 of the 45 tests need a structure Rune lacks). Missing
-members and structures are the subject of [plans/basis.md](plans/basis.md);
-the behaviour that is wrong in what exists today:
+One check fails on Rune: `Char.fromString "\""` converts the double quote,
+where the test takes the reading of MLton and SML/NJ (`NONE`); see the table
+of readings below.
 
-| Structure | Departure |
-|---|---|
-| `Bool` | `fromString` accepts exactly `"true"` and `"false"`: case and initial whitespace are not ignored, and characters after the word give `NONE`. |
-| `Int` | `fromString` does not skip a leading vertical tab or form feed. |
-| `Word` | `fromString` skips no whitespace, does not accept the prefixes `0wX` and `0X`, gives `NONE` for a prefix that no digit follows (the number is the `0`), and wraps around instead of raising `Overflow`. |
-| `Char`, `String` | `fromString` converts non-printing characters instead of stopping at them, does not limit `\^c` to the range `@`..`_`, has no `\uxxxx`, and `String.fromString` gives `NONE` instead of the prefix converted before an improper escape; `Char.fromString` has no `\f...f\`; `String.fromString` passes over an unterminated one. |
-| `TextIO` | input on a closed stream raises `Io {cause = ClosedStream}` instead of behaving as at end-of-stream; `output1` on a closed stream reports the function `"output"`. |
+Not implemented:
 
-The `xc1` configurations reproduce these check for check, so they are
-properties of the library source and not of Rune's compiler or VM. The
-departures that `xc1` does not reproduce come from the VM's primitives
-(at M0 `Math.pow`, `sinh` and `tanh` followed C).
+* the fixed-width `IntN` and `WordN` structures (`Int8` ... `Int64`, `Word16`
+  ... `Word64`, and `FixedInt`), except `Word8`, and the signature `INTEGER`;
+  [plans/basis.md](plans/basis.md) says what is prepared for them;
+* `PackWord*` and `PackReal*`;
+* the monomorphic sequences of other elements than `Word8` and `Char`
+  (`BoolVector`, `IntArray`, `RealArray`, ...) and the `MONO_ARRAY2`
+  structures (`CharArray2`, `Word8Array2`, ...);
+* `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
+* `Posix.TTY` and the file locking of `Posix.IO`;
+* IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`, and
+  `getLINGER` reports only whether a socket lingers;
+* most of the specification's signatures: `lib/basis` declares `WORD`,
+  `PRIM_IO`, `STREAM_IO` and the `MONO_*` ones only.
 
-M2 so far (25,040 of 25,151 checks pass on Rune; 6 of the 49 tests need a
-structure Rune lacks): `StringCvt` and `Substring`; `scan` and `fmt` for
-`Bool`, `Int`, `Word` and `IntInf`, whose `fromString` now follow the
-specification; `IntInf.log2`, the bit operations and the shifts; `LargeWord`
-and the `Word` conversions to it; `Char` and `String` `scan`, `toCString`,
-`fromCString`, and `fromString` rewritten on one escape scanner. That removed
-the `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String` rows of the table
-above except the double quote reading. `Int` and `Word` find their precision
-with the arithmetic itself, so the hosts load them (see below).
-
-The `Vector` and `Array` rows are fixed as well (`update` and `copy` check
-their bounds first, `tabulate` checks `maxLen` before it applies `f`,
-`copyVec` exists).
-
-`Real` is complete and `IEEEReal` exists (M2): the members that need the C
-library are primitives (`frexp`, `ldexp`, `nextafter`, `fmod`, `%e`/`%f`
-formatting, the shortest digits that read back, `fesetround`, `sinh`, `cosh`,
-`tanh`), and `fromLargeInt` rounds correctly with a sticky bit. That removed
-the `Real` and `Math` rows of the table above. `Real.toString` now follows
-`GEN`: `1.0` prints as `1` and `1000.0` as `1E3`, as on MLton; SML/NJ and
-Poly/ML print `1.0`.
-
-M7 added the sockets (`Socket`, `INetSock`, `UnixSock`, `GenericSock`) and
-the network databases (`NetHostDB`, `NetProtDB`, `NetServDB`). A
-`NetHostDB.in_addr` is the dotted text of an IPv4 address, and IPv6 is not
-supported.
-
-M6 added `Posix` (all but `TTY`) and `Unix`. The `xc1` configurations run
-them on the hosts' own `Posix`, which is how the library is checked against
-three other implementations of the same interface.
-
-M5 added `Time`, `Timer`, `Date`, `OS.Path`, `OS.FileSys`, `OS.IO` and the
-rest of `OS.Process`; the one
-deviation left for Rune is the unescaped double quote of `Char.fromString`,
-which the table of readings below records. `Time` holds microseconds in an
-`int` and its conversions take and give `LargeInt.int`, as the specification
-prescribes.
-
-M4 rebuilt `TextIO` and `BinIO` on `PRIM_IO` and the functional streams, and
-every check of their tests passes on Rune and, through `xc1`, on all three
-hosts. Writing the shim for the hosts turned up two more host defects:
-Poly/ML 5.7.1 answers every `Posix.IO.lseek` with 0 (the shim counts the
-position itself and takes the size from `fstat`), and a host reader must not
-treat the end of a file as final, because a file may grow.
-
-M3 added the slices, `Array2`, the monomorphic `Word8` and `Char` sequences,
-`Byte` and `Text`; every check of their tests passes on Rune (and on MLton but
-for one `Array2.copy` overlap bug and its equality restriction). The hosts'
-departures there are in `tests/basis/deviations.txt` under "the monomorphic
-vectors, arrays and slices" and "Array2"; the ones worth knowing: on SML/NJ
-110.79 `findi` of every slice passes the index in the base sequence,
-`subslice (sl, i, NONE)` can return a slice of negative length, `collate` of
-array slices looks at the first elements only, and `Array2` traversals of a
-region without rows touch memory beyond the array (a segmentation fault for
-`modifyi` and `copy`); on Poly/ML 5.7.1 an `Array2` without rows has no
-columns either.
-
-Not implemented, by decision and not by oversight: the fixed-width `IntN`
-and `WordN` structures (`Int8` ... `Int64`, `Word16` ... `Word64`), except a
-minimal `Word8` for the byte-oriented structures;
-[plans/basis.md](plans/basis.md) says what is prepared for them.
-
-Added since M0, with their deviation lines removed: `exnName` and `exnMessage`
-(at top level and in `General`, which now matches `GENERAL`), and the three
-`*NotSupported` exceptions and `buffer_mode` of `IO`, which now matches `IO`.
-
-Fixed since M0, with their deviation lines removed: `IntInf.*` with a zero
-first operand and a second operand of two or more limbs gave a non-canonical
-zero (it printed as `0`, was not equal to 0, had `sign` 1 and corrupted
-later sums).
+Fixed along the way, each with the deviation lines it removed: the
+`fromString` of `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String`
+(whitespace, prefixes, escapes, `Overflow`); the bounds checks of
+`Vector.update`, `Array.copy` and `tabulate`; `IntInf` with a zero first
+operand and a second operand of two or more limbs, which gave a zero that was
+not equal to 0; `exnName` and `exnMessage`; the input functions of a closed
+`TextIO` stream. Found by MLton's regression programs (M8): `OS.Path.mkRelative`
+canonicalised its `path` and dropped its trailing `/`, `mkAbsolute` and
+`mkRelative` did not raise `Path` for a relative `relativeTo`,
+`joinDirFile` doubled the `/` of the root, `Posix.Process.exit` flushed
+the buffers, `OS.IO.poll` and `Socket.select` took a descriptor of the
+system for a handle of the VM, and `Socket` did not have the shape of
+`SOCKET` (`Ctl`, the `NB` functions, `sameAddr`).
 
 ## Where the hosts depart from the specification
 
-The `HOST-BUG` and `HOST-ABSENT` lines, for the installed versions (M0; the
-current releases are compared in M8). Checks that fail, of about 22,900:
-MLton 20210117 195, Poly/ML 5.7.1 87, SML/NJ 110.79 409.
+The `HOST-BUG`, `HOST-ABSENT` and `HOST-FLAKY` lines. The counts of the
+summary above include the `WIDTH` and `SPEC-AMBIGUOUS` lines of the hosts;
+the installed versions first.
 
 * **MLton 20210117.** `Bool.scan` and `fromString` are case-sensitive and skip
   no whitespace. `Word.scan` consumes a prefix (`0w`, `0wx`, `0x`) that no
@@ -186,6 +222,35 @@ MLton 20210117 195, Poly/ML 5.7.1 87, SML/NJ 110.79 409.
   `Char.fromCString` raises `Overflow` for a `\x` escape beyond `Int.maxInt`;
   `Char.scan` leaves a trailing escaped formatting sequence in the stream;
   `Word.scan HEX` treats `0w` as a prefix.
+
+The current releases, against the installed ones:
+
+* **MLton 20241230** fixes the 14 `Word.scan` checks (`0w` is no longer
+  taken for a prefix of the hexadecimal format) and adds nothing: 187 checks
+  fail, each for a reason that 20210117 has too.
+* **SML/NJ 110.99.9** (64-bit) fixes 272: the `Real` formatting, `nextAfter`,
+  `fromManExp`, `toManExp` and `split`, the `IEEEReal` of the 2004 Basis, the
+  `findi`, `subslice` and `collate` of the slices, `Int.sameSign`, `toCString`
+  of `#"\000"`. New in it: `IntInf.scan` in the radices `BIN` and `OCT`
+  accepts digits the radix does not have; `floor`, `ceil`, `trunc` and
+  `round` wrap around above `maxInt` instead of raising `Overflow`, and
+  `ceil` and `trunc` of `minInt` give `maxInt`; `rem` of an infinity or by a
+  zero is a zero, not NaN; `Real.scan` and `IEEEReal.scan` consume a decimal
+  point that no digit follows; `IEEEReal.toString` drops the sign of a NaN;
+  `fmt` of `minPos` pads the digits of `5E~324` with zeros. It reads the
+  literal `4.9E~324` as 0.0 (110.79 rejects it). And on a loaded machine it
+  sometimes computes a floating-point result wrongly: in about one run in ten
+  of 32 at once, `fromManExp (toManExp x)` differs from `x` in the last bits
+  or a `Math.ln` law fails; alone it never happens. Those are the
+  `HOST-FLAKY` lines, which are not required to match.
+* **Poly/ML 5.9.2** fixes 33: the rounding of `Real.fromString` and
+  `Real.scan`, `IEEEReal.fromString`, `Real.rem` of infinities, `fmt` and
+  `round`. New in it: `IntInf.~>>` of a negative number beyond a machine word
+  rounds towards zero instead of down (`~2^100 ~>> 0w101` is 0); `toDecimal`
+  gives `exp = 1` for zeros, infinities and NaNs, and `fmt EXACT` of a zero
+  is `"0.0E1"`; `fromManExp {man = minPos, exp = 2074}` is `inf`; and
+  `fromString` of 2^53 + 1 + 10^-21 gives 2^53, as if the digits stopped at
+  the tie.
 
 Found while writing the suite, outside what the matrix can show:
 
@@ -238,17 +303,21 @@ example contradicts "may vary".
 
 * A file of `lib/basis` that a host does not load is left out of the `xc1`
   configuration of that host; the tests of its structures are N/A there. The
-  report lists the files and the first error. At M0:
+  report lists the files and the first error. Today one file is left out:
 
   | Host | File | Why |
   |---|---|---|
   | SML/NJ 110.79 | `intinf.sml` | the limb base 2^30 is not a 31-bit `int` constant |
-  | SML/NJ 110.79 | `real.sml` | the host raises `BadReal` on the literal `4.9E~324` (a host bug with subnormal literals) |
 
-  So 13 of the 49 tests are N/A on SML/NJ 110.79, and none on MLton and
-  Poly/ML. (At M0 `int.sml` wrote `minInt` and `maxInt` as 64-bit literals and
-  no 63-bit host loaded it; it now finds the precision by doubling until
-  `Overflow`, and `word.sml` by shifting a bit out.)
+  So 9 of the 76 tests are N/A on SML/NJ 110.79, and none elsewhere. Three
+  files have been made portable to get there: `int.sml` and `word.sml` find
+  their precision by doubling until `Overflow` and by shifting a bit out,
+  `real.sml` computes `minPos` as `minNormalPos / 2^52` (SML/NJ misreads the
+  literal `4.9E~324`), and `unix.sml` builds its exit status with
+  `Word8.fromInt` (a host cannot type the literal `0w127` at Rune's `Word8`).
+  On a 31-bit `int` some of Rune's code overflows where the VM's 64 bits do
+  not: `Time.now` (microseconds since 1970) and the conversions between
+  `real` and `LargeInt`; those are the `WIDTH` lines of SML/NJ 110.79.
 
   MLton compiles the `xc1` programs with `-default-type int64 -default-type
   word64`, the precision of the VM.
@@ -260,8 +329,12 @@ example contradicts "may vary".
   cannot pass with the host's `exnName` where Rune defines none.
 * `RunePrim` does not go through host functions that the suite shows to be
   wrong: files use `Posix.IO` and not the host's streams (MLton's `inputAll`
-  after `input1`), and `real_round` is written with `floor` (Poly/ML's
-  `round`). Writing it showed three primitives whose contract was only in the
+  after `input1`), `real_round` is written with `floor` (Poly/ML's `round`;
+  `trunc`, which would suit a 31-bit `int` better, gives `maxInt` for `minInt`
+  on SML/NJ 110.99.9), and `time_sleep` sleeps again for what is left
+  (Poly/ML 5.9.2 can return early). Where the shim does call the host's
+  function, the host's bug shows in the `xc1` configuration too: a host line
+  that names `*:HOST` explains both. Writing it showed three primitives whose contract was only in the
   C code; `vm/prims.def` now states the 100000000-element limit of arrays and
   vectors, the newline that `file_read_line` adds to a last line, and what
   the two read primitives do after an end of file.
@@ -277,3 +350,50 @@ example contradicts "may vary".
 * `poly_eq` and `ptr_eq` are what Rune's compiler makes of `=` and of
   exception matching. No library source names them and they are not part of
   `RUNE_PRIM`.
+
+## Performance
+
+`make perf PERF_CONFIGS=all` on an x86_64 machine with 16 CPUs, idle but for
+the one program being timed (2026-09-19). Each cell is the milliseconds of
+one run of a program of `tests/perf`: the program is run R times in a row
+(the `wall R` line of its `.budget` file) in three rounds, and the fastest
+round counts; SML/NJ and Poly/ML compile it before the timer starts, like the
+others. In parentheses: the time divided by the baseline of the same
+configuration, the geometric mean of `fib` and `tak`, which use no Basis
+Library. That ratio separates what a library costs from how fast a system
+runs code at all.
+
+| Program | rune | native:mlton@20210117 | native:smlnj@110.79 | native:polyml@5.7.1 | xc1:mlton@20210117 | xc1:smlnj@110.79 | xc1:polyml@5.7.1 | native:mlton@20241230 | native:smlnj@110.99.9 | native:polyml@5.9.2 | xc1:mlton@20241230 | xc1:smlnj@110.99.9 | xc1:polyml@5.9.2 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| array_sieve | 42.59 (3.9) | 0.43 (1.9) | 0.94 (2.8) | 0.65 (2.2) | 0.51 (1.9) | n/a | 0.64 (2.2) | 0.74 (2.1) | 1.24 (3.6) | 0.64 (3.1) | 0.46 (1.6) | 1.27 (3.6) | 0.50 (2.4) |
+| fib | 12.03 (1.1) | 0.39 (1.7) | 0.41 (1.2) | 0.41 (1.4) | 0.40 (1.5) | n/a | 0.48 (1.6) | 0.41 (1.2) | 0.44 (1.3) | 0.33 (1.6) | 0.54 (1.8) | 0.53 (1.5) | 0.30 (1.5) |
+| intinf_fact | 326.69 (29.5) | 0.04 (0.2) | 0.45 (1.4) | 0.45 (1.5) | n/a | n/a | n/a | 0.14 (0.4) | 0.25 (0.7) | 0.21 (1.0) | n/a | n/a | n/a |
+| list_ops | 35.36 (3.2) | 1.72 (7.6) | 1.26 (3.8) | 1.81 (6.2) | 1.07 (4.0) | n/a | 1.19 (4.0) | 1.48 (4.3) | 1.58 (4.6) | 1.60 (7.7) | 1.21 (4.1) | 2.42 (6.9) | 0.77 (3.8) |
+| real_nbody | 9.97 (0.9) | 0.58 (2.6) | 0.50 (1.5) | error | 0.59 (2.2) | n/a | error | 0.59 (1.7) | 0.52 (1.5) | 1.11 (5.4) | 0.60 (2.0) | 0.49 (1.4) | 1.06 (5.2) |
+| string_ops | 36.70 (3.3) | 1.39 (6.2) | 2.16 (6.5) | 3.10 (10.6) | 2.10 (7.8) | n/a | 2.72 (9.3) | 1.78 (5.2) | 2.46 (7.1) | 2.12 (10.2) | 2.04 (6.9) | 3.60 (10.3) | 2.35 (11.5) |
+| tak | 10.16 (0.9) | 0.13 (0.6) | 0.27 (0.8) | 0.21 (0.7) | 0.18 (0.7) | n/a | 0.18 (0.6) | 0.29 (0.8) | 0.27 (0.8) | 0.13 (0.6) | 0.16 (0.5) | 0.23 (0.7) | 0.14 (0.7) |
+| word_bits | 16.26 (1.5) | 0.12 (0.5) | 0.26 (0.8) | 0.24 (0.8) | 0.10 (0.4) | n/a | 0.21 (0.7) | 0.16 (0.5) | 0.26 (0.8) | 0.15 (0.7) | 0.10 (0.3) | 0.28 (0.8) | 0.16 (0.8) |
+
+Not measured: `real_nbody` on Poly/ML 5.7.1 (the compiler stops with
+`InternalError: asGenReg`); `intinf_fact` in the `xc1` configurations (its
+`IntInf` constants would need the host's overloading to include the `IntInf`
+of `lib/basis`); anything on `xc1:smlnj@110.79`, where the `Time` of
+`lib/basis`, which counts microseconds since 1970 in an `int`, overflows the
+host's 31 bits.
+
+What the table says:
+
+* Rune's VM runs plain code 20 to 80 times slower than the native code of
+  the hosts (`fib` 12 ms against 0.3 to 0.5 ms, `tak` 10 ms against 0.13 to
+  0.3 ms). This is the interpreter; it is the subject of
+  [plans/performance.md](plans/performance.md).
+* Relative to that baseline, the library costs Rune what it costs the hosts:
+  `array_sieve`, `list_ops` and `string_ops` take 3 to 4 times the baseline on
+  Rune, 2 to 12 times on the hosts.
+* `IntInf` is the exception: 30 times the baseline on Rune, 0.2 to 1.5 times
+  on the hosts, which use GMP (MLton) or native code. Its limbs of 30 bits
+  are an SML datatype, and every limb operation runs on the interpreter.
+* The `xc1` columns run Rune's library compiled by each host, and they are
+  about as fast as that host's own library (`list_ops` 1.1 ms on MLton against
+  1.7 ms native, `string_ops` 2.1 against 1.4): the algorithms of `lib/basis`
+  are not what makes Rune slow.

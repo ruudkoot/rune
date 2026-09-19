@@ -1,142 +1,104 @@
 abstype MLton treats abstype as a datatype; the Definition forbids equality outside the body (rule 19)
 args-create MLton- or SML/NJ-specific: MLton.Process
-args-spawn Posix structure not in Rune's basis
-array Basis: ArraySlice.vector
-array2 Basis: Array2
-array5 Basis: Array2
-array6 Basis: ArraySlice.vector
-binio Basis: OS.FileSys.tmpName
-bool-scan Basis: Bool.scan
-bytechar Basis: Word8.toInt
+args-spawn MLton- or SML/NJ-specific: MLton.Process
+binio too slow on the interpreter (passes in about 100 s)
 callcc MLton- or SML/NJ-specific: MLton.Cont
 callcc2 MLton- or SML/NJ-specific: SMLofNJ.Cont.callcc
 callcc3 MLton- or SML/NJ-specific: MLton
-cases Basis: Word8.word
-char.scan Basis: Char.scan
-check_arrays Basis: Word8Array.array
+char.scan Char.fromString converts an unescaped double quote, a reading of the specification (docs/basis-compat.md); MLton gives NONE
 cmdline CommandLine.name is environment-specific
 command-line CommandLine.name is environment-specific
-conv integer literals are not overloaded at IntInf.int (Basis)
-conv2 integer literals are not overloaded at IntInf.int (Basis)
-conversion Basis: Word16.fromLarge
-date Basis: Time
+conv assumes a 32-bit int, MLton's default; Rune's has 64 bits
+conversion Basis: Word16 (IntN and WordN are omitted for now)
 date-localOffset MLton- or SML/NJ-specific: MLton.ProcEnv.setenv
 eq MLton- or SML/NJ-specific: MLton.eq
 exn-history MLton- or SML/NJ-specific: SMLofNJ.exnHistory
 exn-history3 MLton- or SML/NJ-specific: SMLofNJ.exnHistory
 fast too slow on the interpreter
-filesys Basis: OS.FileSys
+filesys needs the file README and the links testlink, testcycl and testbadl where it runs
 finalize MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.2 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.3 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.4 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.5 MLton- or SML/NJ-specific: MLton.Finalizable
 finalize.6 MLton- or SML/NJ-specific: MLton.Finalizable
-fixed-integer Basis: INTEGER
-flat-array.3 Basis: Real.toString prints 101.0 where MLton prints 101
-flat-array.4 Basis: Word14.fromInt
-ftruncate Posix structure not in Rune's basis
+fixed-integer Basis: signature INTEGER
+flat-array.4 MLton-specific: Word14
 gc-collect MLton- or SML/NJ-specific: MLton.GC.collect
 gc-collect2 MLton- or SML/NJ-specific: MLton.GC.collect
-general Basis: exnName
-harmonic integer literals are not overloaded at IntInf.int (Basis)
-ieee-real Basis: IEEEReal
-int Basis: StringCvt.scanString
-int-inf.0 integer literals are not overloaded at IntInf.int (Basis)
-int-inf.1 integer literals are not overloaded at IntInf.int (Basis)
-int-inf.2 integer literals are not overloaded at IntInf.int (Basis)
-int-inf.3 integer literals are not overloaded at IntInf.int (Basis)
-int-inf.4 integer literals are not overloaded at IntInf.int (Basis)
+general MLton-specific: expects Array.array (Array.maxLen + 1, ()) to overflow (MLton's maxLen is maxInt; Rune's is 100000000, so Size)
+harmonic too slow on the interpreter (IntInf; not done after 10 minutes)
+ieee-real Basis: PackRealBig (Pack* is not implemented)
+int-inf.2 assumes a 32-bit int, MLton's default; Rune's has 64 bits
 int-inf.5 MLton- or SML/NJ-specific: MLton.IntInf
-int-inf.bitops Basis: IntInf.fmt
-int-inf.compare integer literals are not overloaded at IntInf.int (Basis)
-int-inf.log2 Basis: IntInf.log2
+int-inf.compare MLton types an integer constant from a later declaration; Rune defaults it to int at the end of its own
 int-inf.rep1 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep2 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep3 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep4 MLton- or SML/NJ-specific: MLton.IntInf
 int-inf.rep5 MLton- or SML/NJ-specific: MLton.IntInf
-int-mul-pow2 Basis: INTEGER
+int-mul-pow2 Basis: signature INTEGER
 int-overflow Int is 64-bit in Rune; the program expects a 32-bit Int.fromString overflow
 kitsimple too slow on the interpreter
 mlton.overload MLton- or SML/NJ-specific: expected declaration but found '_'
 mlton.share MLton- or SML/NJ-specific: MLton.share
 mlton.word MLton- or SML/NJ-specific: MLton.Word
-mutex Posix structure not in Rune's basis
-nextAfter Basis: REAL
-nonexhaustive Basis: Word8.word
+mutex MLton- or SML/NJ-specific: MLton.Signal
+nextAfter Basis: signature REAL
 once MLton- or SML/NJ-specific: SMLofNJ.Cont
-overloading Basis: Int16.int
+overloading Basis: Int16 (IntN and WordN are omitted for now)
 pack MLton- or SML/NJ-specific: MLton.GC
-pack-real Basis: PACK_REAL
-pack-real.2 Basis: Word8Vector.fromList
-pack-word Basis: PACK_WORD
-parse Basis: IO
-posix-exit Posix structure not in Rune's basis
-prodcons Posix structure not in Rune's basis
-real Basis: REAL
-real-algsimp Basis: ?=
-real-basic Basis: REAL
-real-decimal.1 Basis: IEEEReal.NAN
-real-int Basis: REAL
-real-sign Basis: REAL
-real-str Basis: IEEEReal
-ref-flatten.2 Basis: Word16.word
+pack-real Basis: PackReal* (Pack* is not implemented)
+pack-real.2 Basis: PackReal64Little (Pack* is not implemented)
+pack-word Basis: PackWord* (Pack* is not implemented)
+parse Basis: signature IO
+prodcons MLton- or SML/NJ-specific: MLton.Signal
+real Basis: signature REAL
+real-basic Basis: signature REAL
+real-int Basis: signature REAL
+real-sign Basis: signature REAL
+real-str Basis: PackRealBig (Pack* is not implemented)
+ref-flatten.2 Basis: Word16 (IntN and WordN are omitted for now)
 rlimit MLton- or SML/NJ-specific: MLton.Rlimit
 same-fringe MLton- or SML/NJ-specific: MLton.Thread
 serialize MLton- or SML/NJ-specific: MLton
-signals Posix structure not in Rune's basis
+signals MLton- or SML/NJ-specific: MLton.Signal
 signals2 MLton- or SML/NJ-specific: MLton.Thread
-signals3 Posix structure not in Rune's basis
-signals4 Posix structure not in Rune's basis
+signals3 MLton- or SML/NJ-specific: MLton.Signal
+signals4 MLton- or SML/NJ-specific: MLton.Signal
 size MLton- or SML/NJ-specific: MLton.size
-slow integer literals are not overloaded at IntInf.int (Basis)
-slow2 integer literals are not overloaded at IntInf.int (Basis)
-slower integer literals are not overloaded at IntInf.int (Basis)
-smith-normal-form Basis: Byte.charToByte
-socket Basis: INetSock.any
-string Basis: CharVector.tabulate
-string.fromString Basis: String.fromString escape handling
-string2 Basis: Char.toCString
-stringcvt Basis: StringCvt
-substring Basis: Substring
-substring-overflow Basis: Substring
-suspend Posix structure not in Rune's basis
-test-create Posix structure not in Rune's basis
-test-spawn Posix structure not in Rune's basis
-testMatrix Basis: Real.toString prints 101.0 where MLton prints 101
-textio Basis: endOfStream
-textio.2 Basis: OS.FileSys.tmpName
-textio.3 Basis: TextIO.StreamIO.input1
+slow too slow on the interpreter (IntInf; not done after 10 minutes)
+slow2 too slow on the interpreter (IntInf; not done after 10 minutes)
+slower too slow on the interpreter (passes in about 8 minutes)
+smith-normal-form too slow on the interpreter (IntInf; not done after 10 minutes)
+socket MLton resolves undetermined top-level types across declarations (the mode of a socket); the Definition rejects them (rules 87-89)
+string MLton-specific: expects String.fromCString to give SOME "" where no character converts (the specification says NONE)
+string.fromString String.fromString converts an unescaped double quote, the reading of SML/NJ and Poly/ML (docs/basis-compat.md); MLton stops at it
+suspend MLton- or SML/NJ-specific: MLton.Signal
+test-create MLton- or SML/NJ-specific: MLton.Process
+test-spawn MLton- or SML/NJ-specific: MLton.Process
+textio compares what it writes to stdOut and stdErr merged; the runner compares stdOut
+textio.2 too slow on the interpreter (passes in about 100 s)
 thread-switch MLton- or SML/NJ-specific: MLton
 thread-switch-share MLton- or SML/NJ-specific: MLton.Thread.Runnable.t
 thread-switch-size MLton- or SML/NJ-specific: MLton.Thread.Runnable.t
 thread0 MLton- or SML/NJ-specific: MLton.Thread
 thread1 MLton- or SML/NJ-specific: MLton
-thread2 Posix structure not in Rune's basis
-time Basis: Time
-time2 Basis: Time
-time3 Basis: Time
-time4 Basis: Time.fromString
+thread2 MLton- or SML/NJ-specific: MLton
 timeout MLton- or SML/NJ-specific: MLton
 undetermined MLton resolves undetermined top-level types across declarations; the Definition rejects them (rules 87-89)
-unixpath Basis: OS.Path
-vector Basis: VectorSlice.vector
 weak MLton- or SML/NJ-specific: MLton.Weak
 weak.2 MLton- or SML/NJ-specific: MLton.Weak
 weak.3 unclassified: the type of cache, 'a list ref, contains a type variable that cannot be generali
-weird-word1 Basis: Word5.word
-weird-word2 Basis: Word5.word
+weird-word1 MLton-specific: Word5 (a width the specification does not have)
+weird-word2 MLton-specific: Word5 (a width the specification does not have)
 widechar characters above 255 (Basis WideChar)
-word Basis: StringCvt.scanString
-word-all Basis: WORD
-word-scan Basis: StringCvt.BIN
-word8array Basis: Word8Array
-word8vector Basis: Word8.word
-wordn-array Basis: WORD
-world1 Posix structure not in Rune's basis
-world2 Posix structure not in Rune's basis
-world3 Posix structure not in Rune's basis
-world4 Posix structure not in Rune's basis
-world5 Posix structure not in Rune's basis
-world6 Posix structure not in Rune's basis
+word assumes a 32-bit word, MLton's default; Rune's has 64 bits
+word-all MLton-specific: Word2 ... Word31 (widths the specification does not have)
+wordn-array MLton-specific: Word5 (a width the specification does not have)
+world1 MLton- or SML/NJ-specific: MLton.World
+world2 MLton- or SML/NJ-specific: MLton.World
+world3 MLton- or SML/NJ-specific: MLton.World
+world4 MLton- or SML/NJ-specific: MLton.World
+world5 MLton- or SML/NJ-specific: MLton.World
+world6 MLton- or SML/NJ-specific: MLton.World

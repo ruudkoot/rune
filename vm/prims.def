@@ -192,8 +192,8 @@ os_open_dir      1  string -> int             Open a directory; the number of th
 os_read_dir      1  int -> string option      The next name in it, without . and ..; NONE at the end.
 os_rewind_dir    1  int -> int                Start again at the first name.
 os_close_dir     1  int -> int                Close the stream.
-os_desc_kind     1  int -> int                The kind of a file handle: 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device, ~1 on failure.
-os_poll          3  int list * int list * int -> int list  Wait until one of the handles is ready, at most for the given microseconds (a negative time has no limit); the events wanted and then returned are bits: 1 read, 2 write, 4 urgent. [] on failure.
+os_desc_kind     1  int -> int                The kind of a descriptor of the system: 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device, ~1 on failure.
+os_poll          3  int list * int list * int -> int list  Wait until one of the descriptors of the system is ready, at most for the given microseconds (a negative time has no limit); the events wanted and then returned are bits: 1 read, 2 write, 4 urgent. [] on failure.
 posix_const      1  string -> int             The value of a named constant of POSIX (an errno, a signal, a flag of open, a bit of a file mode); ~1 when the name is not known.
 posix_fork       1  unit -> int               Make a child process: 0 in it, its number in the parent, ~1 on failure.
 posix_exec       3  string * string list * int -> int  Replace this program with another: the path (searched for on PATH when the third argument is 1) and the arguments; returns ~1, or not at all.
@@ -219,8 +219,8 @@ posix_uname      1  unit -> string list       The system, the machine's name, th
 posix_times      1  unit -> int list          Elapsed, user, system, children's user and children's system time, in microseconds.
 posix_environ    1  unit -> string list       The environment, as "name=value".
 posix_ctermid    1  unit -> string            The controlling terminal of this process.
-posix_ttyname    1  int -> string             The terminal a handle is open on; "" when it is not one.
-posix_isatty     1  int -> int                Whether a handle is a terminal.
+posix_ttyname    1  int -> string             The terminal a descriptor is open on; "" when it is not one.
+posix_isatty     1  int -> int                Whether a descriptor is a terminal.
 posix_sysconf    1  string -> int             A number the system reports (ARG_MAX, CLK_TCK, OPEN_MAX, PAGESIZE, ...); ~1 when the name is not known.
 posix_openf      3  string * int * int -> int  Open a file with the flags and mode of POSIX; the handle, or ~1.
 posix_close      1  int -> int                Close a handle.
@@ -250,7 +250,7 @@ socket_listen    2  int * int -> int          Let it accept that many waiting co
 socket_accept    1  int -> int                Take a connection; the handle of the new socket, or ~1.
 socket_send      3  int * string * int -> int  Send the bytes with the flags; how many, or ~1.
 socket_sendto    4  int * string * int * string -> int  The same to an address.
-socket_recv      3  int * int * int -> string  Receive at most n bytes with the flags; "" at the end or on failure.
+socket_recv      3  int * int * int -> string  Receive at most n bytes with the flags; "" at the end (sys_errno is then 0) or on failure.
 socket_recvfrom  3  int * int * int -> string list  The bytes and the address they came from; [] on failure.
 socket_shutdown  2  int * int -> int          Stop reading, writing or both.
 socket_name      1  int -> string             The address of a socket; "" on failure.
@@ -269,3 +269,5 @@ netdb_proto_byname 1 string -> string list    A protocol by name: its name, its 
 netdb_proto_bynumber 1 int -> string list     The same by number.
 netdb_serv_byname 2 string * string -> string list  A service by name and protocol: its name, its port, its protocol, then its other names.
 netdb_serv_byport 2 int * string -> string list  The same by port.
+file_descriptor  1  int -> int                The descriptor of the system under a file handle; ~1 for a closed one.
+posix_exit       1  int -> 'a                End the process at once with the status: no buffer is flushed and no at-exit action runs.

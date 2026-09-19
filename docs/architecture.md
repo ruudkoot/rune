@@ -73,6 +73,7 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/interp.c` | Stacks, frames, handlers, `vm_run` dispatch loop, structural equality, exception raising. |
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
 | `vm/prims.c` | One function per primitive; the dispatch table is generated from `prims.def`. |
+| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems; `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
 | `vm/main.c` | Command line handling. |
 
 GC discipline in C: an allocation may move every heap object, so primitives
@@ -90,8 +91,13 @@ environment of a program does not depend on which files it happens to load. Two
 files are compiled before every program: `initial.sml` (`option`, `order` and
 the exceptions that are not built in) and `pervasive.sml` (the values of the
 top-level environment, written on primitives; `List.map` is the top-level
-`map`, not the other way round, so that these 90 lines need no other file). Primitives are bound with `_prim "name" : ty`. The tags
-of `option` and `order` are relied upon by primitives that construct options.
+`map`, not the other way round, so that these 90 lines need no other file). The
+driver loads a file on demand when the program names something it provides,
+with the files it requires. A `final` file (`epilogue.sml`, which runs the
+`OS.Process.atExit` actions) is compiled after the program, and only when
+the files it requires are loaded already. Primitives are bound with
+`_prim "name" : ty`. The tags of `option` and `order` are relied upon by
+primitives that construct options.
 
 ## Adding a language feature (checklist)
 

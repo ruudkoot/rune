@@ -23,8 +23,10 @@ struct
   val posInf = 1.0 / 0.0
   val negInf = ~1.0 / 0.0
   val maxFinite = 1.7976931348623157E308
-  val minPos = 4.9E~324
   val minNormalPos = 2.2250738585072014E~308
+  (* 2^~1074, computed: some hosts of the cross-check misread the literal
+     4.9E~324 (SML/NJ 110.79 rejects it, 110.99.9 reads 0.0) *)
+  val minPos = minNormalPos / 4503599627370496.0
 
   fun isFinite r = not (isNan r) andalso r < posInf andalso r > negInf
   fun isNormal r = isFinite r andalso abs r >= minNormalPos

@@ -66,6 +66,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make matrix-quick` | the Basis Library suite on Rune, on the libraries of the installed MLton, SML/NJ and Poly/ML, and on Rune's library compiled by them; not part of `make check` |
 | `make hosts` | install the current releases of the three (MLton 20241230, SML/NJ 110.99.9, Poly/ML 5.9.2) under `${RUNE_HOSTS:-~/.local/rune-hosts}`; no root access needed, about 200 MB and a few minutes |
 | `make matrix` | `matrix-quick` and the same with those releases |
+| `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of `matrix-quick` (`PERF_CONFIGS=all` adds the current releases), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
 | `make install` | install `rune`, `runevm`, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |

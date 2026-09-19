@@ -11,8 +11,8 @@ struct
   in
     (* An address is the dotted text, which is what the system takes. *)
     type in_addr = string
-    type net_addr_family = int
-    type entry = {name : string, aliases : string list, addrType : net_addr_family, addrs : in_addr list}
+    type addr_family = int
+    type entry = {name : string, aliases : string list, addrType : addr_family, addrs : in_addr list}
 
     fun name (e : entry) = #name e
     fun aliases (e : entry) = #aliases e

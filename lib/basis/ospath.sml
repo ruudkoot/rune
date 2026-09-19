@@ -57,12 +57,16 @@ struct
   fun dir path = #dir (splitDirFile path)
   fun file path = #file (splitDirFile path)
 
+  (* The inverse of splitDirFile: the empty arc that ends dir ("/" or "a/")
+     is dropped, so that "/" and "b" join to "/b", and "/" and "" to "/". *)
   fun joinDirFile {dir, file} =
     let
       val _ = checkArc file
       val {isAbs, vol, arcs} = fromString dir
-      val arcs = if dir = "" then [file] else arcs @ [file]
-    in toString {isAbs = isAbs, vol = vol, arcs = arcs} end
+      val arcs = case List.rev arcs of "" :: rest => List.rev rest | _ => arcs
+    in
+      if dir = "" then file else toString {isAbs = isAbs, vol = vol, arcs = arcs @ [file]}
+    end
 
   (* "the extension is a non-empty sequence of characters following the
      right-most, non-initial, occurrence of "." in the last arc" *)
@@ -127,30 +131,37 @@ struct
         val arcs = case (p, drop pArcs) of ("", _) => qArcs | (_, kept) => kept @ qArcs
       in toString {isAbs = isAbs, vol = vol, arcs = arcs} end
 
+  (* "If relativeTo is not absolute ... the Path exception is raised", also
+     when path is absolute (or, for mkRelative, relative) already. *)
   fun mkAbsolute {path, relativeTo} =
-    if isAbsolute path then path
-    else if isRelative relativeTo then raise Path
+    if isRelative relativeTo then raise Path
+    else if isAbsolute path then path
     else mkCanonical (concat (relativeTo, path))
 
-  (* "the common prefix is stripped ... a parent arc for each arc left" *)
+  (* The common prefix is stripped and a parent arc is put for each arc of
+     relativeTo left. relativeTo is reduced first; the arcs of path are kept as
+     they are, trailing empty arc included ("/a/b/" relative to "/a/c" is
+     "../b/", "/a/b/../c" relative to "/a/d" is "../b/../c"), except that the
+     root alone has none. *)
   fun mkRelative {path, relativeTo} =
-    if isRelative path then path
-    else if isRelative relativeTo then raise Path
+    if isRelative relativeTo then raise Path
+    else if isRelative path then path
     else
       let
-        val abs = mkCanonical relativeTo
-        val {vol = pVol, arcs = pArcs, ...} = fromString (mkCanonical path)
-        val {vol = aVol, arcs = aArcs, ...} = fromString abs
+        val {vol = pVol, arcs = pArcs, ...} = fromString path
+        val {vol = aVol, arcs = aArcs, ...} = fromString (mkCanonical relativeTo)
         val () = if pVol = aVol then () else raise Path
-        fun strip (a :: as', b :: bs) = if a = b then strip (as', bs) else (a :: as', b :: bs)
-          | strip (as', bs) = (as', bs)
-        fun withoutEmpty l = List.filter (fn a => a <> "") l
-        val (p', a') = strip (withoutEmpty pArcs, withoutEmpty aArcs)
-        val arcs = List.map (fn _ => parentArc) a' @ p'
+        val pArcs = case pArcs of [""] => [] | l => l
+        val aArcs = List.filter (fn a => a <> "") aArcs
+        fun parents l = List.map (fn _ => parentArc) l
+        fun h ([], []) = [currentArc]
+          | h (p, []) = p
+          | h ([], a) = parents a
+          | h (p as x :: xs, a as y :: ys) = if x = y then h (xs, ys) else parents a @ p
       in
-        case arcs of
-          [] => currentArc
-        | _ => toString {isAbs = false, vol = "", arcs = arcs}
+        case h (pArcs, aArcs) of
+          [""] => currentArc
+        | arcs => toString {isAbs = false, vol = "", arcs = arcs}
       end
 
   (* The VM runs on Unix, so these are the identity. *)

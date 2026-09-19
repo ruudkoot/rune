@@ -119,3 +119,4 @@ struct
 end
 
 structure LargeWord = Word
+structure SysWord = Word

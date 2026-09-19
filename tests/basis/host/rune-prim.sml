@@ -69,7 +69,9 @@ struct
   val real_floor = Real.floor
   val real_ceil = Real.ceil
   (* Not the host's Real.round: Poly/ML 5.7.1 rounds 0.49999999999999994 up.
-     r - floor r is exact, so the three cases are decided exactly. *)
+     r - floor r is exact, so the three cases are decided exactly. On a
+     31-bit int, floor overflows for r in [minInt - 0.5, minInt), which rounds
+     to minInt (not trunc: SML/NJ 110.99.9 truncates minInt to maxInt). *)
   fun real_round r =
     let
       val below = Real.floor r
@@ -79,6 +81,10 @@ struct
       else if Real.> (d, 0.5) orelse Int.rem (below, 2) <> 0 then Int.+ (below, 1)
       else below
     end
+    handle Overflow =>
+      case Int.minInt of
+        SOME m => if Real.< (r, 0.0) andalso Real.>= (r, Real.- (Real.fromInt m, 0.5)) then m else raise Overflow
+      | NONE => raise Overflow
   val real_trunc = Real.trunc
   val real_to_string = Real.toString
   (* Poly/ML raises Overflow for an exponent that does not fit an int; the
@@ -238,6 +244,7 @@ struct
     | exit 1 = OS.Process.exit OS.Process.failure
     | exit n =
       (TextIO.flushOut TextIO.stdOut; Posix.Process.exit (Word8.fromInt n))
+  fun posix_exit n = Posix.Process.exit (Word8.fromInt n)
   val command_args = CommandLine.arguments
   val command_name = CommandLine.name
 
@@ -402,7 +409,17 @@ struct
   val cpu = Timer.totalCPUTimer ()
   fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer cpu)))
   fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer cpu)))
-  fun time_sleep n = if n <= 0 then () else OS.Process.sleep (Time.fromMicroseconds (Int.toLarge n))
+  (* At least n microseconds, as the VM waits: Poly/ML 5.9.2 can return a
+     little early, so sleep again for what is left. *)
+  fun time_sleep n =
+    if n <= 0 then ()
+    else
+      let
+        val until = Time.+ (Time.now (), Time.fromMicroseconds (Int.toLarge n))
+        fun go () =
+          let val now = Time.now ()
+          in if Time.< (now, until) then (OS.Process.sleep (Time.- (until, now)); go ()) else () end
+      in go () end
 
   val months = [Date.Jan, Date.Feb, Date.Mar, Date.Apr, Date.May, Date.Jun,
                 Date.Jul, Date.Aug, Date.Sep, Date.Oct, Date.Nov, Date.Dec]
@@ -535,20 +552,27 @@ struct
     | _ => ~1
 
   (* ---- descriptors ---- *)
+  fun fdOf (n : int) = Posix.FileSys.wordToFD (SysWord.fromInt n)
+  fun fdNum fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
+
   fun descriptorOf h =
     case lookup h of
       SOME (Reader {fd, ...}) => SOME fd
     | SOME (Writer fd) => SOME fd
     | NONE => NONE
 
-  fun os_desc_kind h =
+  (* An iodesc is the host's descriptor, as it is the system's on the VM. *)
+  fun file_descriptor h =
     case descriptorOf h of
-      NONE => (case h of 0 => 3 | 1 => 3 | 2 => 3 | _ => ~1)
-    | SOME fd =>
+      SOME fd => fdNum fd
+    | NONE => if h >= 0 andalso h <= 2 then h else ~1
+
+  fun os_desc_kind n =
         notedValue (fn () =>
-          let val st = Posix.FileSys.fstat fd
+          let val st = Posix.FileSys.fstat (fdOf n)
           in
-            if Posix.FileSys.ST.isReg st then 0
+            if Posix.ProcEnv.isatty (fdOf n) then 3
+            else if Posix.FileSys.ST.isReg st then 0
             else if Posix.FileSys.ST.isDir st then 1
             else if Posix.FileSys.ST.isLink st then 2
             else if Posix.FileSys.ST.isFIFO st then 4
@@ -610,8 +634,6 @@ struct
   end
 
   (* The descriptors of the host are abstract; these hold the numbers. *)
-  fun fdOf (n : int) = Posix.FileSys.wordToFD (SysWord.fromInt n)
-  fun fdNum fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
 
   fun posix_fork () =
     case Posix.Process.fork () of
@@ -689,18 +711,8 @@ struct
     in List.map (fn t => Int.fromLarge (Time.toMicroseconds t)) [elapsed, utime, stime, cutime, cstime] end
   fun posix_environ () = Posix.ProcEnv.environ ()
   fun posix_ctermid () = Posix.ProcEnv.ctermid ()
-  fun posix_ttyname h =
-    (case lookup h of
-       SOME (Reader {fd, ...}) => Posix.ProcEnv.ttyname fd
-     | SOME (Writer fd) => Posix.ProcEnv.ttyname fd
-     | NONE => Posix.ProcEnv.ttyname (fdOf h))
-    handle OS.SysErr (_, e) => (noteError e; "")
-  fun posix_isatty h =
-    (case lookup h of
-       SOME (Reader {fd, ...}) => (if Posix.ProcEnv.isatty fd then 1 else 0)
-     | SOME (Writer fd) => (if Posix.ProcEnv.isatty fd then 1 else 0)
-     | NONE => (if Posix.ProcEnv.isatty (fdOf h) then 1 else 0))
-    handle OS.SysErr _ => 0
+  fun posix_ttyname n = Posix.ProcEnv.ttyname (fdOf n) handle OS.SysErr (_, e) => (noteError e; "")
+  fun posix_isatty n = (if Posix.ProcEnv.isatty (fdOf n) then 1 else 0) handle OS.SysErr _ => 0
   fun posix_sysconf name = SysWord.toInt (Posix.ProcEnv.sysconf name)
                            handle OS.SysErr (_, e) => (noteError e; ~1)
 

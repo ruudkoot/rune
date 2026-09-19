@@ -25,6 +25,8 @@
 #                   SML/NJ and Poly/ML, and on Rune's library compiled by them
 #   make hosts      install current releases of the three under ~/.local/rune-hosts
 #   make matrix     matrix-quick and the same with those releases
+#   make perf       the wall-clock times of tests/perf in the configurations of
+#                   matrix-quick (PERF_CONFIGS=all adds the current releases)
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
 # bin/rune-mlton, bin/rune-smlnj and bin/rune-polyml exist to bootstrap it and
@@ -76,7 +78,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix install uninstall
+.PHONY: all mlton smlnj polyml all3 vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot
 
@@ -208,6 +210,12 @@ matrix-quick: $(RUNE) vm | $(MATRIX_DOCTOR)
 matrix: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs all
+
+PERF_CONFIGS ?= installed,xc1
+
+perf: $(RUNE) vm | $(MATRIX_DOCTOR)
+	RUNE=$(abspath $(RUNE)) RUNEVM=$(abspath $(RUNEVM)) \
+	  sh tests/basis/run-matrix.sh --perf --configs $(PERF_CONFIGS)
 
 # ---------------------------------------------------------------- bootstrap
 # Stage 1: a host build compiles the compiler to bytecode. bin/rune-boot runs

@@ -13,6 +13,8 @@ struct
   val fileAvail = _prim "file_avail" : int -> int
   val fileError = _prim "file_error" : unit -> string
   val fileErrno = _prim "file_errno" : unit -> int
+  (* the descriptor of the system under a handle, which is what an iodesc is *)
+  val descriptor = _prim "file_descriptor" : int -> int
 
   val chunkSize = 4096
 
