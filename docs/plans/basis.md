@@ -18,7 +18,8 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
 | M4, the I/O stack | done |
 | M5, time and the system | done |
-| M6–M8 | not started |
+| M6, Posix and Unix | done but for `Posix.TTY` and file locking |
+| M7–M8 | not started |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
 programs for the 19 existing structures (17,975 checks on Rune, about 22,900
@@ -58,6 +59,17 @@ rest of `IntInf` (`log2`, bit operations, shifts), `LargeWord`, the complete
 depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
+
+M6 delivered `Posix` with seven of its eight substructures (`Error`,
+`Signal`, `Process`, `ProcEnv`, `FileSys`, `IO`, `SysDB`) and `Unix`, on
+about 50 more primitives behind the same system layer. One of them,
+`posix_const`, answers with the value of a named constant, so a flag or a
+signal costs no primitive of its own. `Posix.IO` also makes the readers and
+writers of `PRIM_IO` over a descriptor, which is what `Unix` talks to a
+child process with.
+
+Left of M6: `Posix.TTY` (the terminal settings, which need `termios`) and the
+file locking of `Posix.IO` (`F_GETLK` and its kin).
 
 M5 delivered the system layer of the plan (`vm/sys.h` with `vm/sys_posix.c` and
 `vm/sys_none.c`, which `make SYS=none` selects and which fails everything

@@ -74,3 +74,63 @@ int sys_desc_kind(int fd) { (void)fd; return fail(); }
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
     (void)fds; (void)events; (void)n; (void)microseconds; return fail();
 }
+
+int64_t sys_const(const char *name) { (void)name; return -1; }
+int sys_fork(void) { return fail(); }
+int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
+    (void)path; (void)argv; (void)envp; (void)search; return fail();
+}
+int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags; (void)out; return fail(); }
+int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
+int sys_alarm(int seconds) { (void)seconds; return fail(); }
+int sys_pause(void) { return fail(); }
+int64_t sys_getpid(void) { return fail(); }
+int64_t sys_getppid(void) { return fail(); }
+int64_t sys_getuid(void) { return fail(); }
+int64_t sys_geteuid(void) { return fail(); }
+int64_t sys_getgid(void) { return fail(); }
+int64_t sys_getegid(void) { return fail(); }
+int sys_setuid(int64_t uid) { (void)uid; return fail(); }
+int sys_setgid(int64_t gid) { (void)gid; return fail(); }
+int sys_getgroups(int64_t *out, int n) { (void)out; (void)n; return fail(); }
+const char *sys_getlogin(void) { fail(); return NULL; }
+int64_t sys_getpgrp(void) { return fail(); }
+int64_t sys_setsid(void) { return fail(); }
+int sys_setpgid(int64_t pid, int64_t pgid) { (void)pid; (void)pgid; return fail(); }
+const char *sys_uname(void) { fail(); return NULL; }
+int sys_times(int64_t out[5]) { (void)out; return fail(); }
+const char *sys_environ(void) { fail(); return NULL; }
+const char *sys_ctermid(void) { fail(); return NULL; }
+const char *sys_ttyname(int fd) { (void)fd; fail(); return NULL; }
+int sys_isatty(int fd) { (void)fd; return fail(); }
+int64_t sys_sysconf(const char *name) { (void)name; return fail(); }
+
+int sys_openf(const char *path, int flags, int mode) { (void)path; (void)flags; (void)mode; return fail(); }
+int sys_close_fd(int fd) { (void)fd; return fail(); }
+int sys_dup(int fd) { (void)fd; return fail(); }
+int sys_dup2(int fd, int to) { (void)fd; (void)to; return fail(); }
+int sys_pipe(int out[2]) { (void)out; return fail(); }
+int64_t sys_read_fd(int fd, char *buf, int64_t n) { (void)fd; (void)buf; (void)n; return fail(); }
+int64_t sys_write_fd(int fd, const char *buf, int64_t n) { (void)fd; (void)buf; (void)n; return fail(); }
+int64_t sys_lseek_fd(int fd, int64_t offset, int whence) { (void)fd; (void)offset; (void)whence; return fail(); }
+int sys_fsync(int fd) { (void)fd; return fail(); }
+int sys_fcntl(int fd, int command, int argument) { (void)fd; (void)command; (void)argument; return fail(); }
+int sys_ftruncate(int fd, int64_t length) { (void)fd; (void)length; return fail(); }
+int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {
+    (void)path; (void)follow; (void)fd; (void)out; return fail();
+}
+int sys_chmod(const char *path, int fd, int mode) { (void)path; (void)fd; (void)mode; return fail(); }
+int sys_chown(const char *path, int fd, int64_t uid, int64_t gid) {
+    (void)path; (void)fd; (void)uid; (void)gid; return fail();
+}
+int sys_link(const char *from, const char *to) { (void)from; (void)to; return fail(); }
+int sys_symlink(const char *from, const char *to) { (void)from; (void)to; return fail(); }
+int sys_mkfifo(const char *path, int mode) { (void)path; (void)mode; return fail(); }
+int sys_umask(int mask) { (void)mask; return fail(); }
+const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]) {
+    (void)name; (void)uid; (void)out; fail(); return NULL;
+}
+const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
+    (void)name; (void)gid; (void)id; fail(); return NULL;
+}
+const char *sys_group_members(void) { return ""; }

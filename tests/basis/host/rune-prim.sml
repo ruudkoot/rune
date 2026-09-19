@@ -451,19 +451,14 @@ struct
 
   fun date_format (format, parts, local') = Date.fmt format (dateOf (parts, local'))
 
-  (* The status of the host's OS.Process.system is abstract, so the command
-     is run here: what it exited with, or 128 plus the signal that ended it. *)
+  (* The status of the host's OS.Process.system is abstract; Posix.Process
+     opens it, which is cheaper and safer than running the command here. *)
   fun os_system command =
-    case Posix.Process.fork () of
-      NONE =>
-        ((Posix.Process.exece ("/bin/sh", ["sh", "-c", command], Posix.ProcEnv.environ ())) ;
-         Posix.Process.exit 0w127)
-    | SOME pid =>
-        (case #2 (Posix.Process.waitpid (Posix.Process.W_CHILD pid, [])) of
-           Posix.Process.W_EXITED => 0
-         | Posix.Process.W_EXITSTATUS w => Word8.toInt w
-         | Posix.Process.W_SIGNALED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
-         | Posix.Process.W_STOPPED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg))
+    case Posix.Process.fromStatus (OS.Process.system command) of
+      Posix.Process.W_EXITED => 0
+    | Posix.Process.W_EXITSTATUS w => Word8.toInt w
+    | Posix.Process.W_SIGNALED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
+    | Posix.Process.W_STOPPED sg => 128 + SysWord.toInt (Posix.Signal.toWord sg)
   fun os_getenv name = OS.Process.getEnv name
 
   (* ---- the file system, on the host's Posix ---- *)
@@ -565,4 +560,267 @@ struct
      is what poll says of a regular file. *)
   fun os_poll (handles, events, _) =
     List.map (fn e => e) events
+
+  (* ---- POSIX, on the host's own Posix ----
+     The named constants come from the host's structures, so that the same
+     library sees the same numbers it would on the VM. *)
+  local
+    structure PF = Posix.FileSys
+    structure PE = Posix.Error
+    structure PS = Posix.Signal
+    fun ofWord w = SysWord.toInt w
+  in
+    val constants =
+      [("O_APPEND", ofWord (PF.O.toWord PF.O.append)), ("O_EXCL", ofWord (PF.O.toWord PF.O.excl)),
+       ("O_NOCTTY", ofWord (PF.O.toWord PF.O.noctty)), ("O_NONBLOCK", ofWord (PF.O.toWord PF.O.nonblock)),
+       ("O_SYNC", ofWord (PF.O.toWord PF.O.sync)), ("O_TRUNC", ofWord (PF.O.toWord PF.O.trunc)),
+       ("O_RDONLY", 0), ("O_WRONLY", 1), ("O_RDWR", 2), ("O_CREAT", 64),
+       ("S_IRUSR", ofWord (PF.S.toWord PF.S.irusr)), ("S_IWUSR", ofWord (PF.S.toWord PF.S.iwusr)),
+       ("S_IXUSR", ofWord (PF.S.toWord PF.S.ixusr)), ("S_IRWXU", ofWord (PF.S.toWord PF.S.irwxu)),
+       ("S_IRGRP", ofWord (PF.S.toWord PF.S.irgrp)), ("S_IWGRP", ofWord (PF.S.toWord PF.S.iwgrp)),
+       ("S_IXGRP", ofWord (PF.S.toWord PF.S.ixgrp)), ("S_IRWXG", ofWord (PF.S.toWord PF.S.irwxg)),
+       ("S_IROTH", ofWord (PF.S.toWord PF.S.iroth)), ("S_IWOTH", ofWord (PF.S.toWord PF.S.iwoth)),
+       ("S_IXOTH", ofWord (PF.S.toWord PF.S.ixoth)), ("S_IRWXO", ofWord (PF.S.toWord PF.S.irwxo)),
+       ("S_ISUID", ofWord (PF.S.toWord PF.S.isuid)), ("S_ISGID", ofWord (PF.S.toWord PF.S.isgid)),
+       ("SIGABRT", ofWord (PS.toWord PS.abrt)), ("SIGALRM", ofWord (PS.toWord PS.alrm)),
+       ("SIGBUS", ofWord (PS.toWord PS.bus)), ("SIGCHLD", ofWord (PS.toWord PS.chld)),
+       ("SIGCONT", ofWord (PS.toWord PS.cont)), ("SIGFPE", ofWord (PS.toWord PS.fpe)),
+       ("SIGHUP", ofWord (PS.toWord PS.hup)), ("SIGILL", ofWord (PS.toWord PS.ill)),
+       ("SIGINT", ofWord (PS.toWord PS.int)), ("SIGKILL", ofWord (PS.toWord PS.kill)),
+       ("SIGPIPE", ofWord (PS.toWord PS.pipe)), ("SIGQUIT", ofWord (PS.toWord PS.quit)),
+       ("SIGSEGV", ofWord (PS.toWord PS.segv)), ("SIGSTOP", ofWord (PS.toWord PS.stop)),
+       ("SIGTERM", ofWord (PS.toWord PS.term)), ("SIGTSTP", ofWord (PS.toWord PS.tstp)),
+       ("SIGTTIN", ofWord (PS.toWord PS.ttin)), ("SIGTTOU", ofWord (PS.toWord PS.ttou)),
+       ("SIGUSR1", ofWord (PS.toWord PS.usr1)), ("SIGUSR2", ofWord (PS.toWord PS.usr2)),
+       ("SEEK_SET", 0), ("SEEK_CUR", 1), ("SEEK_END", 2),
+       ("F_DUPFD", 0), ("F_GETFD", 1), ("F_SETFD", 2), ("F_GETFL", 3), ("F_SETFL", 4),
+       ("FD_CLOEXEC", ofWord (Posix.IO.FD.toWord Posix.IO.FD.cloexec)),
+       ("WNOHANG", 1), ("WUNTRACED", 2)]
+
+    fun posix_const name =
+      let
+        fun go [] =
+            (case PE.syserror (if String.size name > 1 andalso String.sub (name, 0) = #"E"
+                               then String.map Char.toLower (String.extract (name, 1, NONE))
+                               else name) of
+               SOME e => ofWord (PE.toWord e)
+             | NONE => ~1)
+          | go ((n, v) :: rest) = if n = name then v else go rest
+      in go constants end
+  end
+
+  (* The descriptors of the host are abstract; these hold the numbers. *)
+  fun fdOf (n : int) = Posix.FileSys.wordToFD (SysWord.fromInt n)
+  fun fdNum fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
+
+  fun posix_fork () =
+    case Posix.Process.fork () of
+      NONE => 0
+    | SOME pid => SysWord.toInt (Posix.Process.pidToWord pid)
+
+  fun posix_exec (path, args, search) =
+    ((if search = 1 then Posix.Process.execp (path, args)
+      else Posix.Process.exec (path, args)); ~1)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_exece (path, args, env) =
+    (Posix.Process.exece (path, args, env); ~1)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_waitpid (pid, flags) =
+    let
+      val arg = if pid = ~1 then Posix.Process.W_ANY_CHILD
+                else if pid = 0 then Posix.Process.W_SAME_GROUP
+                else if pid < 0 then Posix.Process.W_GROUP (Posix.Process.wordToPid (SysWord.fromInt (~pid)))
+                else Posix.Process.W_CHILD (Posix.Process.wordToPid (SysWord.fromInt pid))
+      (* The flags of waitpid are named differently on the hosts; W_NOHANG is
+         the one that matters and waitpid_nh covers it. *)
+      val (got, status) =
+        if Int.rem (flags, 2) = 1 then
+          (case Posix.Process.waitpid_nh (arg, []) of
+             SOME r => r
+           | NONE => (Posix.Process.wordToPid 0w0, Posix.Process.W_EXITED))
+        else Posix.Process.waitpid (arg, [])
+      val number = SysWord.toInt (Posix.Process.pidToWord got)
+    in
+      case status of
+        Posix.Process.W_EXITED => [number, 0, 0]
+      | Posix.Process.W_EXITSTATUS w => [number, 0, Word8.toInt w]
+      | Posix.Process.W_SIGNALED s => [number, 1, ofWordSignal s]
+      | Posix.Process.W_STOPPED s => [number, 2, ofWordSignal s]
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
+  and ofWordSignal s = SysWord.toInt (Posix.Signal.toWord s)
+
+  fun posix_kill (pid, signal) =
+    (Posix.Process.kill (if pid = 0 then Posix.Process.K_SAME_GROUP
+                         else if pid < 0 then Posix.Process.K_GROUP (Posix.Process.wordToPid (SysWord.fromInt (~pid)))
+                         else Posix.Process.K_PROC (Posix.Process.wordToPid (SysWord.fromInt pid)),
+                        Posix.Signal.fromWord (SysWord.fromInt signal));
+     0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_alarm n = Int.fromLarge (Time.toSeconds (Posix.Process.alarm (Time.fromSeconds (Int.toLarge n))))
+  fun posix_pause () = (Posix.Process.pause (); 0)
+  fun posix_getpid () = SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.getpid ()))
+  fun posix_getppid () = SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.getppid ()))
+  fun posix_getuid () = SysWord.toInt (Posix.ProcEnv.uidToWord (Posix.ProcEnv.getuid ()))
+  fun posix_geteuid () = SysWord.toInt (Posix.ProcEnv.uidToWord (Posix.ProcEnv.geteuid ()))
+  fun posix_getgid () = SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.ProcEnv.getgid ()))
+  fun posix_getegid () = SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.ProcEnv.getegid ()))
+  fun posix_setuid u = (Posix.ProcEnv.setuid (Posix.ProcEnv.wordToUid (SysWord.fromInt u)); 0)
+                       handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_setgid g = (Posix.ProcEnv.setgid (Posix.ProcEnv.wordToGid (SysWord.fromInt g)); 0)
+                       handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_getgroups () =
+    List.map (fn g => SysWord.toInt (Posix.ProcEnv.gidToWord g)) (Posix.ProcEnv.getgroups ())
+    handle OS.SysErr (_, e) => (noteError e; [])
+  fun posix_getlogin () = Posix.ProcEnv.getlogin () handle OS.SysErr (_, e) => (noteError e; "")
+  fun posix_getpgrp () = SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.getpgrp ()))
+  fun posix_setsid () = SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.setsid ()))
+                        handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_setpgid (pid, pgid) =
+    (Posix.ProcEnv.setpgid {pid = if pid = 0 then NONE else SOME (Posix.Process.wordToPid (SysWord.fromInt pid)),
+                            pgid = if pgid = 0 then NONE else SOME (Posix.Process.wordToPid (SysWord.fromInt pgid))};
+     0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_uname () = List.map (fn (_, v) => v) (Posix.ProcEnv.uname ())
+  fun posix_times () =
+    let val {elapsed, utime, stime, cutime, cstime} = Posix.ProcEnv.times ()
+    in List.map (fn t => Int.fromLarge (Time.toMicroseconds t)) [elapsed, utime, stime, cutime, cstime] end
+  fun posix_environ () = Posix.ProcEnv.environ ()
+  fun posix_ctermid () = Posix.ProcEnv.ctermid ()
+  fun posix_ttyname h =
+    (case lookup h of
+       SOME (Reader {fd, ...}) => Posix.ProcEnv.ttyname fd
+     | SOME (Writer fd) => Posix.ProcEnv.ttyname fd
+     | NONE => Posix.ProcEnv.ttyname (fdOf h))
+    handle OS.SysErr (_, e) => (noteError e; "")
+  fun posix_isatty h =
+    (case lookup h of
+       SOME (Reader {fd, ...}) => (if Posix.ProcEnv.isatty fd then 1 else 0)
+     | SOME (Writer fd) => (if Posix.ProcEnv.isatty fd then 1 else 0)
+     | NONE => (if Posix.ProcEnv.isatty (fdOf h) then 1 else 0))
+    handle OS.SysErr _ => 0
+  fun posix_sysconf name = SysWord.toInt (Posix.ProcEnv.sysconf name)
+                           handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_openf (path, flags, mode) =
+    let
+      val accessBits = Int.rem (flags, 4)
+      val openMode = if accessBits = 1 then Posix.FileSys.O_WRONLY
+                     else if accessBits = 2 then Posix.FileSys.O_RDWR
+                     else Posix.FileSys.O_RDONLY
+      val others = Posix.FileSys.O.fromWord (SysWord.fromInt (flags - accessBits - (if mode = 0 then 0 else 64)))
+      val fd = if mode = 0 then Posix.FileSys.openf (path, openMode, others)
+               else Posix.FileSys.createf (path, openMode, others,
+                                           Posix.FileSys.S.fromWord (SysWord.fromInt mode))
+    in fdNum fd end
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_close n = (Posix.IO.close (fdOf n); 0) handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_dup n = fdNum (Posix.IO.dup (fdOf n)) handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_dup2 (old, new) = (Posix.IO.dup2 {old = fdOf old, new = fdOf new}; 0)
+                              handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_pipe () =
+    let val {infd, outfd} = Posix.IO.pipe () in [fdNum infd, fdNum outfd] end
+    handle OS.SysErr (_, e) => (noteError e; [])
+  fun posix_read (n, k) =
+    if k < 0 then raise Size
+    else Byte.bytesToString (Posix.IO.readVec (fdOf n, k))
+         handle OS.SysErr (_, e) => (noteError e; "")
+  fun posix_write (n, s) =
+    Posix.IO.writeVec (fdOf n, Word8VectorSlice.full (Byte.stringToBytes s))
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_lseek (n, offset, whence) =
+    Position.toInt (Posix.IO.lseek (fdOf n, Position.fromInt offset,
+                                    if whence = 0 then Posix.IO.SEEK_SET
+                                    else if whence = 1 then Posix.IO.SEEK_CUR
+                                    else Posix.IO.SEEK_END))
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_fsync n = (Posix.IO.fsync (fdOf n); 0) handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_fcntl (n, command, argument) =
+    (case command of
+       0 => fdNum (Posix.IO.dupfd {old = fdOf n, base = fdOf argument})
+     | 1 => SysWord.toInt (Posix.IO.FD.toWord (Posix.IO.getfd (fdOf n)))
+     | 2 => (Posix.IO.setfd (fdOf n, Posix.IO.FD.fromWord (SysWord.fromInt argument)); 0)
+     | 3 => let val (flags, mode) = Posix.IO.getfl (fdOf n)
+            in SysWord.toInt (Posix.IO.O.toWord flags)
+               + (case mode of Posix.FileSys.O_RDONLY => 0 | Posix.FileSys.O_WRONLY => 1 | Posix.FileSys.O_RDWR => 2)
+            end
+     | _ => (Posix.IO.setfl (fdOf n, Posix.IO.O.fromWord (SysWord.fromInt argument)); 0))
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_ftruncate (n, length) =
+    (Posix.FileSys.ftruncate (fdOf n, Position.fromInt length); 0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_stat (path, follow, n) =
+    let
+      val st = if path = "" then Posix.FileSys.fstat (fdOf n)
+               else if follow = 1 then Posix.FileSys.lstat path
+               else Posix.FileSys.stat path
+      val kind = if Posix.FileSys.ST.isReg st then 0
+                 else if Posix.FileSys.ST.isDir st then 1
+                 else if Posix.FileSys.ST.isLink st then 2
+                 else if Posix.FileSys.ST.isFIFO st then 4
+                 else if Posix.FileSys.ST.isSock st then 5
+                 else 3
+    in
+      [kind, SysWord.toInt (Posix.FileSys.S.toWord (Posix.FileSys.ST.mode st)),
+       SysWord.toInt (Posix.FileSys.inoToWord (Posix.FileSys.ST.ino st)),
+       SysWord.toInt (Posix.FileSys.devToWord (Posix.FileSys.ST.dev st)),
+       Posix.FileSys.ST.nlink st,
+       SysWord.toInt (Posix.ProcEnv.uidToWord (Posix.FileSys.ST.uid st)),
+       SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.FileSys.ST.gid st)),
+       Position.toInt (Posix.FileSys.ST.size st),
+       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.atime st)),
+       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.mtime st)),
+       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.ctime st))]
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
+
+  fun posix_chmod (path, n, mode) =
+    ((if path = "" then Posix.FileSys.fchmod (fdOf n, Posix.FileSys.S.fromWord (SysWord.fromInt mode))
+      else Posix.FileSys.chmod (path, Posix.FileSys.S.fromWord (SysWord.fromInt mode)));
+     0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_chown (path, n, uid, gid) =
+    ((if path = "" then Posix.FileSys.fchown (fdOf n, Posix.ProcEnv.wordToUid (SysWord.fromInt uid),
+                                              Posix.ProcEnv.wordToGid (SysWord.fromInt gid))
+      else Posix.FileSys.chown (path, Posix.ProcEnv.wordToUid (SysWord.fromInt uid),
+                                Posix.ProcEnv.wordToGid (SysWord.fromInt gid)));
+     0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  fun posix_link (from, to) = (Posix.FileSys.link {old = from, new = to}; 0)
+                              handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_symlink (from, to) = (Posix.FileSys.symlink {old = from, new = to}; 0)
+                                 handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_mkfifo (path, mode) =
+    (Posix.FileSys.mkfifo (path, Posix.FileSys.S.fromWord (SysWord.fromInt mode)); 0)
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_umask mask =
+    SysWord.toInt (Posix.FileSys.S.toWord (Posix.FileSys.umask (Posix.FileSys.S.fromWord (SysWord.fromInt mask))))
+
+  fun posix_getpw (name, uid) =
+    let
+      val pw = if name = "" then Posix.SysDB.getpwuid (Posix.ProcEnv.wordToUid (SysWord.fromInt uid))
+               else Posix.SysDB.getpwnam name
+    in
+      [Posix.SysDB.Passwd.name pw, Posix.SysDB.Passwd.home pw, Posix.SysDB.Passwd.shell pw,
+       Int.toString (SysWord.toInt (Posix.ProcEnv.uidToWord (Posix.SysDB.Passwd.uid pw))),
+       Int.toString (SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.SysDB.Passwd.gid pw)))]
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
+
+  fun posix_getgr (name, gid) =
+    let
+      val gr = if name = "" then Posix.SysDB.getgrgid (Posix.ProcEnv.wordToGid (SysWord.fromInt gid))
+               else Posix.SysDB.getgrnam name
+    in
+      Posix.SysDB.Group.name gr
+      :: Int.toString (SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.SysDB.Group.gid gr)))
+      :: Posix.SysDB.Group.members gr
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
 end

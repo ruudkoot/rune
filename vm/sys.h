@@ -77,6 +77,70 @@ int sys_desc_kind(int fd);
    events[] holds what happened. The number of ready descriptors, or -1. */
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds);
 
+/* The named constants of POSIX: errno values, signals, the flags of open,
+   the bits of a file mode, and the rest. -1 when the name is not known. */
+int64_t sys_const(const char *name);
+
+/* Processes and their environment. A call that fails gives -1. */
+int sys_fork(void);
+int sys_exec(const char *path, char *const argv[], char *const envp[], int search);
+/* Wait for a child: out[] gets the process, then 0 exited, 1 signalled or
+   2 stopped, then the status or the signal. */
+int sys_waitpid(int64_t pid, int flags, int64_t out[3]);
+int sys_kill(int64_t pid, int signal);
+int sys_alarm(int seconds);
+int sys_pause(void);
+int64_t sys_getpid(void);
+int64_t sys_getppid(void);
+int64_t sys_getuid(void);
+int64_t sys_geteuid(void);
+int64_t sys_getgid(void);
+int64_t sys_getegid(void);
+int sys_setuid(int64_t uid);
+int sys_setgid(int64_t gid);
+int sys_getgroups(int64_t *out, int n);        /* how many, or -1 */
+const char *sys_getlogin(void);
+int64_t sys_getpgrp(void);
+int64_t sys_setsid(void);
+int sys_setpgid(int64_t pid, int64_t pgid);
+/* The five strings of uname, each NUL-terminated, one after another. */
+const char *sys_uname(void);
+int sys_times(int64_t out[5]);                 /* elapsed, user, system, child user, child system */
+const char *sys_environ(void);                 /* the variables, each NUL-terminated, then an empty one */
+const char *sys_ctermid(void);
+const char *sys_ttyname(int fd);
+int sys_isatty(int fd);
+int64_t sys_sysconf(const char *name);
+
+/* Descriptors, as the numbers the system gives them rather than the handles
+   of the VM's table. A call that fails gives -1. */
+int sys_openf(const char *path, int flags, int mode);
+int sys_close_fd(int fd);
+int sys_dup(int fd);
+int sys_dup2(int fd, int to);
+int sys_pipe(int out[2]);
+/* Read into buf, or write from it; the number of bytes, or -1. */
+int64_t sys_read_fd(int fd, char *buf, int64_t n);
+int64_t sys_write_fd(int fd, const char *buf, int64_t n);
+int64_t sys_lseek_fd(int fd, int64_t offset, int whence);
+int sys_fsync(int fd);
+int sys_fcntl(int fd, int command, int argument);
+int sys_ftruncate(int fd, int64_t length);
+/* The fields of stat: kind, mode, inode, device, links, user, group, size,
+   access time, modification time, change time. */
+int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]);
+int sys_chmod(const char *path, int fd, int mode);
+int sys_chown(const char *path, int fd, int64_t uid, int64_t gid);
+int sys_link(const char *from, const char *to);
+int sys_symlink(const char *from, const char *to);
+int sys_mkfifo(const char *path, int mode);
+int sys_umask(int mask);
+/* The fields of a user: name, password, home, shell, then the ids in out[].
+   The names come back one after another, as for uname. */
+const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]);
+const char *sys_getgr(const char *name, int64_t gid, int64_t *id);
+const char *sys_group_members(void);
+
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */
 const char *sys_getenv(const char *name);       /* NULL when it is not set */
