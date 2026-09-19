@@ -18,7 +18,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M3, sequences | done for `Word8` and `Char`; `Pack*` and the other element types not started (below) |
 | M4, the I/O stack | done |
 | M5, time and the system | done |
-| M6, Posix and Unix | done but for `Posix.TTY` and file locking |
+| M6, Posix and Unix | done (`Posix.TTY` and file locking came after M8) |
 | M7, sockets and the network databases | done; `getNREAD`, `getATMARK` and the linger time are stubs (below) |
 | M8, current-release matrix, wall-clock table, final compatibility document | done; the specification's signatures are still to add (below) |
 
@@ -131,8 +131,7 @@ signal costs no primitive of its own. `Posix.IO` also makes the readers and
 writers of `PRIM_IO` over a descriptor, which is what `Unix` talks to a
 child process with.
 
-Left of M6: `Posix.TTY` (the terminal settings, which need `termios`) and the
-file locking of `Posix.IO` (`F_GETLK` and its kin).
+`Posix.TTY` and the file locking of `Posix.IO` came after M8, on the primitives `posix_tcgetattr`, `posix_tcsetattr`, `posix_tcop` and `posix_lock`.
 
 M5 delivered the system layer of the plan (`vm/sys.h` with `vm/sys_posix.c` and
 `vm/sys_none.c`, which `make SYS=none` selects and which fails everything

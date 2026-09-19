@@ -43,8 +43,7 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 The last run of `make matrix` (every configuration, both generations of
 hosts). A check that fails is explained by a line of
 `tests/basis/deviations.txt` or fails the run; "not run" counts the tests
-that are N/A because a host does not load the file of lib/basis they need,
-and the two tests of `Posix.TTY`, which Rune lacks.
+that are N/A because a host does not load the file of lib/basis they need.
 
 | Configuration | Checks | Pass | Explained | Tests not run |
 |---|---:|---:|---:|---:|
@@ -63,7 +62,7 @@ and the two tests of `Posix.TTY`, which Rune lacks.
 | `xc1:polyml@5.9.2` | 42,204 | 41,874 | 330 | 2 |
 
 On Rune the failures are one reading of the specification (below) and what
-is not implemented: `Posix.TTY`, the socket options that
+is not implemented: the socket options that
 need a `struct`. The `xc1` configurations fail those too, the checks the shim
 cannot run (sockets, `poll`), the checks where a host's function under a
 primitive of the shim is wrong, and on SML/NJ 110.79 whatever needs more
@@ -159,7 +158,6 @@ Not implemented:
   (`BoolVector`, `IntArray`, `RealArray`, ...) and the `MONO_ARRAY2`
   structures (`CharArray2`, `Word8Array2`, ...);
 * `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
-* `Posix.TTY` and the file locking of `Posix.IO`;
 * IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`,
   `getLINGER` reports only whether a socket lingers and `setLINGER` fails
   (the primitives pass an `int` where the system wants a `struct linger`);
@@ -169,7 +167,7 @@ Not implemented:
 
 The signatures of the specification are all there (row `basis.signatures`
 of [language.md](language.md)), and every structure that Rune has matches
-its signature, except `Posix`, which lacks `TTY`. The suite checks every
+its signature. The suite checks every
 value and exception those signatures specify, on Rune and on the hosts:
 `scripts/check-basis-coverage.sh` counts 1,481 of them.
 

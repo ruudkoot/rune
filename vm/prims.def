@@ -276,3 +276,8 @@ posix_pathconf   3  string * int * string -> int list  The limit of a path (of t
 posix_utime      3  string * int * int -> int  Set the access and modification times of a file, in seconds.
 file_tell        1  int -> int                The position of a file in bytes, or ~1 when it has none (a pipe, a terminal) or the handle is closed.
 file_seek        2  int * int -> int          Move a file to a position in bytes from its start; 0, or ~1 on failure (file_errno says why).
+posix_tcgetattr  1  int -> int list          The settings of a terminal: iflag, oflag, cflag, lflag, input speed, output speed, then the NCCS control characters; [] on failure.
+posix_tcsetattr  3  int * int * int list -> int  Set them with an action (TCSANOW, TCSADRAIN, TCSAFLUSH); ~1 on failure.
+posix_tcop       3  int * int * int -> int    On a terminal: 0 tcdrain, 1 tcflush (the queue), 2 tcflow (the action), 3 tcsendbreak (the duration), 4 tcgetpgrp (gives the group), 5 tcsetpgrp (the group); ~1 on failure.
+real_to_bits     1  real -> word              The 64 bits of a real, IEEE 754 binary64.
+real_from_bits   1  word -> real              The real of 64 bits.

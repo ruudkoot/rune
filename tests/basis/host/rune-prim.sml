@@ -138,6 +138,45 @@ struct
         else below + 1.0
       end)
   val real_sign_bit = Real.signBit
+  (* The bits of IEEE 754 binary64, worked out with the host's IntInf, which
+     every host has (SML/NJ has no PackReal). A host whose word has fewer
+     than 64 bits keeps the low ones. *)
+  local
+    val two52 = IntInf.pow (2, 52)
+    val two63 = IntInf.pow (2, 63)
+  in
+    fun real_to_bits r =
+      let
+        val sign = if Real.signBit r then two63 else 0
+        val body =
+          if Real.isNan r then IntInf.* (0xFFF, IntInf.pow (2, 51))
+          else if not (Real.isFinite r) then IntInf.* (0x7FF, two52)
+          else if Real.== (r, 0.0) then 0
+          else
+            let
+              val a = Real.abs r
+              val {man, exp} = Real.toManExp a
+              val e = exp + 1022
+            in
+              if e >= 1 then
+                IntInf.+ (IntInf.* (IntInf.fromInt e, two52),
+                          Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = 2.0 * man - 1.0, exp = 52}))
+              else Real.toLargeInt IEEEReal.TO_NEAREST (Real.fromManExp {man = a, exp = 1074})
+            end
+      in Word.fromLargeInt (IntInf.+ (sign, body)) end
+    fun real_from_bits w =
+      let
+        val i = Word.toLargeInt w
+        val negative = IntInf.>= (i, two63)
+        val m = if negative then IntInf.- (i, two63) else i
+        val e = IntInf.toInt (IntInf.div (m, two52))
+        val f = IntInf.mod (m, two52)
+        val magnitude =
+          if e = 0x7FF then (if f = 0 then Real.posInf else 0.0 / 0.0)
+          else if e = 0 then Real.fromManExp {man = Real.fromLargeInt f, exp = ~1074}
+          else Real.fromManExp {man = 1.0 + Real.fromLargeInt f / Real.fromLargeInt two52, exp = e - 1023}
+      in if negative then Real.~ magnitude else magnitude end
+  end
   val real_copy_sign = Real.copySign
   fun unscaled x = Real.isNan x orelse not (Real.isFinite x) orelse Real.== (x, 0.0)
   fun real_frexp_man x = if unscaled x then x else #man (Real.toManExp x)
@@ -651,7 +690,79 @@ struct
        ("SO_DEBUG", 1), ("SO_REUSEADDR", 2), ("SO_TYPE", 3), ("SO_ERROR", 4), ("SO_DONTROUTE", 5),
        ("SO_BROADCAST", 6), ("SO_SNDBUF", 7), ("SO_RCVBUF", 8), ("SO_KEEPALIVE", 9), ("SO_OOBINLINE", 10),
        ("SO_LINGER", 13), ("MSG_OOB", 1), ("MSG_PEEK", 2), ("MSG_DONTROUTE", 4),
-       ("SHUT_RD", 0), ("SHUT_WR", 1), ("SHUT_RDWR", 2), ("IPPROTO_TCP", 6), ("TCP_NODELAY", 1)]
+       ("SHUT_RD", 0), ("SHUT_WR", 1), ("SHUT_RDWR", 2), ("IPPROTO_TCP", 6), ("TCP_NODELAY", 1),
+       (* the terminal: the flags, indices and speeds are the host's; the
+          actions of TC are abstract on the hosts, so they are Linux's *)
+       ("BRKINT", ofWord (Posix.TTY.I.toWord Posix.TTY.I.brkint)),
+       ("ICRNL", ofWord (Posix.TTY.I.toWord Posix.TTY.I.icrnl)),
+       ("IGNBRK", ofWord (Posix.TTY.I.toWord Posix.TTY.I.ignbrk)),
+       ("IGNCR", ofWord (Posix.TTY.I.toWord Posix.TTY.I.igncr)),
+       ("IGNPAR", ofWord (Posix.TTY.I.toWord Posix.TTY.I.ignpar)),
+       ("INLCR", ofWord (Posix.TTY.I.toWord Posix.TTY.I.inlcr)),
+       ("INPCK", ofWord (Posix.TTY.I.toWord Posix.TTY.I.inpck)),
+       ("ISTRIP", ofWord (Posix.TTY.I.toWord Posix.TTY.I.istrip)),
+       ("IXOFF", ofWord (Posix.TTY.I.toWord Posix.TTY.I.ixoff)),
+       ("IXON", ofWord (Posix.TTY.I.toWord Posix.TTY.I.ixon)),
+       ("PARMRK", ofWord (Posix.TTY.I.toWord Posix.TTY.I.parmrk)),
+       ("OPOST", ofWord (Posix.TTY.O.toWord Posix.TTY.O.opost)),
+       ("CLOCAL", ofWord (Posix.TTY.C.toWord Posix.TTY.C.clocal)),
+       ("CREAD", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cread)),
+       ("CS5", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cs5)),
+       ("CS6", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cs6)),
+       ("CS7", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cs7)),
+       ("CS8", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cs8)),
+       ("CSIZE", ofWord (Posix.TTY.C.toWord Posix.TTY.C.csize)),
+       ("CSTOPB", ofWord (Posix.TTY.C.toWord Posix.TTY.C.cstopb)),
+       ("HUPCL", ofWord (Posix.TTY.C.toWord Posix.TTY.C.hupcl)),
+       ("PARENB", ofWord (Posix.TTY.C.toWord Posix.TTY.C.parenb)),
+       ("PARODD", ofWord (Posix.TTY.C.toWord Posix.TTY.C.parodd)),
+       ("ECHO", ofWord (Posix.TTY.L.toWord Posix.TTY.L.echo)),
+       ("ECHOE", ofWord (Posix.TTY.L.toWord Posix.TTY.L.echoe)),
+       ("ECHOK", ofWord (Posix.TTY.L.toWord Posix.TTY.L.echok)),
+       ("ECHONL", ofWord (Posix.TTY.L.toWord Posix.TTY.L.echonl)),
+       ("ICANON", ofWord (Posix.TTY.L.toWord Posix.TTY.L.icanon)),
+       ("IEXTEN", ofWord (Posix.TTY.L.toWord Posix.TTY.L.iexten)),
+       ("ISIG", ofWord (Posix.TTY.L.toWord Posix.TTY.L.isig)),
+       ("NOFLSH", ofWord (Posix.TTY.L.toWord Posix.TTY.L.noflsh)),
+       ("TOSTOP", ofWord (Posix.TTY.L.toWord Posix.TTY.L.tostop)),
+       ("VEOF", Posix.TTY.V.eof),
+       ("VEOL", Posix.TTY.V.eol),
+       ("VERASE", Posix.TTY.V.erase),
+       ("VINTR", Posix.TTY.V.intr),
+       ("VKILL", Posix.TTY.V.kill),
+       ("VMIN", Posix.TTY.V.min),
+       ("VQUIT", Posix.TTY.V.quit),
+       ("VSUSP", Posix.TTY.V.susp),
+       ("VTIME", Posix.TTY.V.time),
+       ("VSTART", Posix.TTY.V.start),
+       ("VSTOP", Posix.TTY.V.stop),
+       ("NCCS", Posix.TTY.V.nccs),
+       ("B0", ofWord (Posix.TTY.speedToWord Posix.TTY.b0)),
+       ("B50", ofWord (Posix.TTY.speedToWord Posix.TTY.b50)),
+       ("B75", ofWord (Posix.TTY.speedToWord Posix.TTY.b75)),
+       ("B110", ofWord (Posix.TTY.speedToWord Posix.TTY.b110)),
+       ("B134", ofWord (Posix.TTY.speedToWord Posix.TTY.b134)),
+       ("B150", ofWord (Posix.TTY.speedToWord Posix.TTY.b150)),
+       ("B200", ofWord (Posix.TTY.speedToWord Posix.TTY.b200)),
+       ("B300", ofWord (Posix.TTY.speedToWord Posix.TTY.b300)),
+       ("B600", ofWord (Posix.TTY.speedToWord Posix.TTY.b600)),
+       ("B1200", ofWord (Posix.TTY.speedToWord Posix.TTY.b1200)),
+       ("B1800", ofWord (Posix.TTY.speedToWord Posix.TTY.b1800)),
+       ("B2400", ofWord (Posix.TTY.speedToWord Posix.TTY.b2400)),
+       ("B4800", ofWord (Posix.TTY.speedToWord Posix.TTY.b4800)),
+       ("B9600", ofWord (Posix.TTY.speedToWord Posix.TTY.b9600)),
+       ("B19200", ofWord (Posix.TTY.speedToWord Posix.TTY.b19200)),
+       ("B38400", ofWord (Posix.TTY.speedToWord Posix.TTY.b38400)),
+       ("TCSANOW", 0),
+       ("TCSADRAIN", 1),
+       ("TCSAFLUSH", 2),
+       ("TCOOFF", 0),
+       ("TCOON", 1),
+       ("TCIOFF", 2),
+       ("TCION", 3),
+       ("TCIFLUSH", 0),
+       ("TCOFLUSH", 1),
+       ("TCIOFLUSH", 2)]
 
     fun posix_const name =
       let
@@ -786,6 +897,48 @@ struct
        NONE => [~1]
      | SOME w => [SysWord.toInt w])
     handle OS.SysErr (_, e) => (noteError e; [])
+  (* the terminal, on the host's Posix.TTY; the numbers of the actions are
+     Linux's (see posix_const). Poly/ML has no TC.getpgrp or setpgrp, so
+     those two fail with ENOSYS on every host. *)
+  fun posix_tcgetattr n =
+    let
+      val {iflag, oflag, cflag, lflag, cc, ispeed, ospeed} = Posix.TTY.fieldsOf (Posix.TTY.TC.getattr (fdOf n))
+      fun w x = SysWord.toInt x
+    in
+      [w (Posix.TTY.I.toWord iflag), w (Posix.TTY.O.toWord oflag), w (Posix.TTY.C.toWord cflag),
+       w (Posix.TTY.L.toWord lflag), w (Posix.TTY.speedToWord ispeed), w (Posix.TTY.speedToWord ospeed)]
+      @ List.tabulate (Posix.TTY.V.nccs, fn i => ord (Posix.TTY.V.sub (cc, i)))
+    end
+    handle OS.SysErr (_, e) => (noteError e; [])
+  fun posix_tcsetattr (n, action, fields) =
+    (case fields of
+       iflag :: oflag :: cflag :: lflag :: ispeed :: ospeed :: cc =>
+         let
+           fun w x = SysWord.fromInt x
+           val t = Posix.TTY.termios
+                     {iflag = Posix.TTY.I.fromWord (w iflag), oflag = Posix.TTY.O.fromWord (w oflag),
+                      cflag = Posix.TTY.C.fromWord (w cflag), lflag = Posix.TTY.L.fromWord (w lflag),
+                      cc = Posix.TTY.V.cc (List.tabulate (List.length cc, fn i => (i, chr (List.nth (cc, i))))),
+                      ispeed = Posix.TTY.wordToSpeed (w ispeed), ospeed = Posix.TTY.wordToSpeed (w ospeed)}
+           val a = if action = 1 then Posix.TTY.TC.sadrain else if action = 2 then Posix.TTY.TC.saflush
+                   else Posix.TTY.TC.sanow
+         in Posix.TTY.TC.setattr (fdOf n, a, t); 0 end
+     | _ => (lastErrno := posix_const "EINVAL"; ~1))
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+  fun posix_tcop (op', n, argument) =
+    (case op' of
+       0 => (Posix.TTY.TC.drain (fdOf n); 0)
+     | 1 => (Posix.TTY.TC.flush (fdOf n, if argument = 1 then Posix.TTY.TC.oflush
+                                         else if argument = 2 then Posix.TTY.TC.ioflush
+                                         else Posix.TTY.TC.iflush); 0)
+     | 2 => (Posix.TTY.TC.flow (fdOf n, if argument = 1 then Posix.TTY.TC.oon
+                                        else if argument = 2 then Posix.TTY.TC.ioff
+                                        else if argument = 3 then Posix.TTY.TC.ion
+                                        else Posix.TTY.TC.ooff); 0)
+     | 3 => (Posix.TTY.TC.sendbreak (fdOf n, argument); 0)
+     | _ => (lastErrno := posix_const "ENOSYS"; ~1))
+    handle OS.SysErr (_, e) => (noteError e; ~1)
+
   (* the host's locks, in the numbers of the system *)
   fun posix_lock (n, command, ltype, whence, start, len) =
     let

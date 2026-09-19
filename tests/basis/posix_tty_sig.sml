@@ -1,4 +1,4 @@
-(* requires: Posix.TTY Posix *)
+(* requires: Posix *)
 (* uses: spec-sigs/BIT_FLAGS.sml spec-sigs/POSIX_TTY.sml *)
 (* Posix.TTY matches POSIX_TTY, and its pid and file_desc are those of
    Posix.Process and Posix.ProcEnv (the constraints of `structure TTY` in

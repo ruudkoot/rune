@@ -8,4 +8,5 @@ struct
   structure FileSys = RunePosixFileSys
   structure IO = RunePosixIO
   structure SysDB = RunePosixSysDB
+  structure TTY = RunePosixTTY
 end

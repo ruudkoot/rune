@@ -121,6 +121,10 @@ int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t l
 int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
     (void)path; (void)fd; (void)name; (void)out; return fail();
 }
+int sys_tcgetattr(int fd, int64_t *out) { (void)fd; (void)out; return fail(); }
+int sys_tcsetattr(int fd, int action, const int64_t *in) { (void)fd; (void)action; (void)in; return fail(); }
+int64_t sys_tcop(int op, int fd, int64_t argument) { (void)op; (void)fd; (void)argument; return fail(); }
+int sys_nccs(void) { return 0; }
 int sys_utime(const char *path, int64_t access, int64_t modification) {
     (void)path; (void)access; (void)modification; return fail();
 }

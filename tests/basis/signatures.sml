@@ -2,8 +2,7 @@
    (the basis library's signature files, made from tests/basis/spec-sigs by
    scripts/gen-basis-sigs.sh, and the ones lib/basis declares itself), and
    the structures match them. One section per signature, so that a host
-   without one signature still runs the others. POSIX and POSIX_TTY are left
-   out: Rune has no Posix.TTY. *)
+   without one signature still runs the others. *)
 structure TestSignatures =
 struct
   (*<< array *)
@@ -238,4 +237,12 @@ struct
   structure S57 : MONO_ARRAY_SLICE = Word8ArraySlice
   val () = T.check ("Word8ArraySlice:MONO_ARRAY_SLICE/basis-signature", fn () => true)
   (*>> mono-array-slice *)
+  (*<< posix *)
+  structure S100 : POSIX = Posix
+  val () = T.check ("Posix:POSIX/basis-signature", fn () => true)
+  (*>> posix *)
+  (*<< posix-tty *)
+  structure S101 : POSIX_TTY = Posix.TTY
+  val () = T.check ("Posix.TTY:POSIX_TTY/basis-signature", fn () => true)
+  (*>> posix-tty *)
 end

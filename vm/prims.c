@@ -207,6 +207,19 @@ static int p_real_sub(VM *vm) { REAL2("real_sub"); return ret(vm, 2, mk_real(x -
 static int p_real_mul(VM *vm) { REAL2("real_mul"); return ret(vm, 2, mk_real(x * y)); }
 static int p_real_div(VM *vm) { REAL2("real_div"); return ret(vm, 2, mk_real(x / y)); }
 static int p_real_neg(VM *vm) { REAL1("real_neg"); return ret(vm, 1, mk_real(-x)); }
+/* The 64 bits of a real, IEEE 754 binary64, and back (PackReal). */
+static int p_real_to_bits(VM *vm) {
+    REAL1("real_to_bits");
+    uint64_t w;
+    memcpy(&w, &x, sizeof w);
+    return ret(vm, 1, mk_word(w));
+}
+static int p_real_from_bits(VM *vm) {
+    WORD1("real_from_bits");
+    double d;
+    memcpy(&d, &x, sizeof d);
+    return ret(vm, 1, mk_real(d));
+}
 static int p_real_abs(VM *vm) { REAL1("real_abs"); return ret(vm, 1, mk_real(fabs(x))); }
 static int p_real_lt(VM *vm) { REAL2("real_lt"); return ret(vm, 2, mk_bool(x < y)); }
 static int p_real_le(VM *vm) { REAL2("real_le"); return ret(vm, 2, mk_bool(x <= y)); }
@@ -769,6 +782,42 @@ static int p_posix_pathconf(VM *vm) {
     free(path);
     free(name);
     return push_int_list(vm, &v, ok == 0 ? 1 : 0, 3);
+}
+
+/* The terminal: posix_tcgetattr fd, posix_tcsetattr (fd, action, numbers),
+   posix_tcop (op, fd, argument); see sys_tcgetattr for the numbers. */
+static int p_posix_tcgetattr(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "posix_tcgetattr");
+    int n = 6 + sys_nccs();
+    int64_t *out = malloc((size_t)n * sizeof *out);
+    if (!out) vm_fatal(vm, "out of memory");
+    int ok = sys_tcgetattr((int)ARG(0).u.i, out);
+    int r = push_int_list(vm, out, ok == 0 ? n : 0, 1);
+    free(out);
+    return r;
+}
+
+static int p_posix_tcsetattr(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "posix_tcsetattr");
+    check_tag(vm, ARG(1), T_INT, "posix_tcsetattr");
+    int n = 6 + sys_nccs();
+    int32_t *narrow = malloc((size_t)n * sizeof *narrow);
+    int64_t *in = malloc((size_t)n * sizeof *in);
+    if (!narrow || !in) vm_fatal(vm, "out of memory");
+    int r;
+    if (int_list(ARG(0), narrow, n) != n) { sys_set_errno(EINVAL); r = -1; }
+    else {
+        for (int i = 0; i < n; i++) in[i] = narrow[i];
+        r = sys_tcsetattr((int)ARG(2).u.i, (int)ARG(1).u.i, in);
+    }
+    free(narrow);
+    free(in);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_posix_tcop(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "posix_tcop");
+    return ret(vm, 3, mk_int(sys_tcop((int)ARG(2).u.i, (int)ARG(1).u.i, ARG(0).u.i)));
 }
 
 static int p_posix_utime(VM *vm) {

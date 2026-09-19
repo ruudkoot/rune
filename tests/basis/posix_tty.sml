@@ -1,4 +1,4 @@
-(* requires: Posix.TTY Posix OS *)
+(* requires: Posix OS *)
 (* Posix.TTY (signature POSIX_TTY), after
    https://smlfamily.github.io/Basis/posix-tty.html, as far as it can be
    checked without a terminal: the tests run with /dev/null as standard

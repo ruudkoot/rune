@@ -33,6 +33,7 @@ extern char **environ;
 #include <stddef.h>
 #include <sys/stat.h>
 #include <utime.h>
+#include <termios.h>
 
 int sys_errno(void) { return errno; }
 void sys_set_errno(int e) { errno = e; }
@@ -413,6 +414,17 @@ static const struct { const char *name; int64_t value; } constants[] = {
     C(SEEK_SET) C(SEEK_CUR) C(SEEK_END)
     C(F_DUPFD) C(F_GETFD) C(F_SETFD) C(F_GETFL) C(F_SETFL) C(FD_CLOEXEC)
     C(F_GETLK) C(F_SETLK) C(F_SETLKW) C(F_RDLCK) C(F_WRLCK) C(F_UNLCK)
+    /* the terminal (Posix.TTY) */
+    C(BRKINT) C(ICRNL) C(IGNBRK) C(IGNCR) C(IGNPAR) C(INLCR) C(INPCK) C(ISTRIP)
+    C(IXOFF) C(IXON) C(PARMRK) C(OPOST) C(CLOCAL) C(CREAD) C(CS5) C(CS6) C(CS7)
+    C(CS8) C(CSIZE) C(CSTOPB) C(HUPCL) C(PARENB) C(PARODD) C(ECHO) C(ECHOE)
+    C(ECHOK) C(ECHONL) C(ICANON) C(IEXTEN) C(ISIG) C(NOFLSH) C(TOSTOP)
+    C(VEOF) C(VEOL) C(VERASE) C(VINTR) C(VKILL) C(VMIN) C(VQUIT) C(VSUSP)
+    C(VTIME) C(VSTART) C(VSTOP) C(NCCS)
+    C(B0) C(B50) C(B75) C(B110) C(B134) C(B150) C(B200) C(B300) C(B600) C(B1200)
+    C(B1800) C(B2400) C(B4800) C(B9600) C(B19200) C(B38400)
+    C(TCSANOW) C(TCSADRAIN) C(TCSAFLUSH) C(TCOOFF) C(TCOON) C(TCIOFF) C(TCION)
+    C(TCIFLUSH) C(TCOFLUSH) C(TCIOFLUSH)
     /* the limits of pathconf */
     C(_PC_LINK_MAX) C(_PC_MAX_CANON) C(_PC_MAX_INPUT) C(_PC_NAME_MAX) C(_PC_PATH_MAX)
     C(_PC_PIPE_BUF) C(_PC_CHOWN_RESTRICTED) C(_PC_NO_TRUNC) C(_PC_VDISABLE)
@@ -581,6 +593,46 @@ int64_t sys_lseek_fd(int fd, int64_t offset, int whence) {
 
 int sys_fsync(int fd) { return fsync(fd); }
 int sys_fcntl(int fd, int command, int argument) { return fcntl(fd, command, argument); }
+
+/* The terminal settings of fd as numbers: iflag, oflag, cflag, lflag, input
+   speed, output speed, then the NCCS control characters. -1 on failure. */
+int sys_tcgetattr(int fd, int64_t out[6 + NCCS]) {
+    struct termios t;
+    if (tcgetattr(fd, &t) != 0) return -1;
+    out[0] = t.c_iflag; out[1] = t.c_oflag; out[2] = t.c_cflag; out[3] = t.c_lflag;
+    out[4] = (int64_t)cfgetispeed(&t); out[5] = (int64_t)cfgetospeed(&t);
+    for (int i = 0; i < NCCS; i++) out[6 + i] = t.c_cc[i];
+    return 0;
+}
+
+/* The inverse, with the action TCSANOW, TCSADRAIN or TCSAFLUSH; in holds
+   6 + NCCS numbers. The fields the numbers do not describe stay as they are. */
+int sys_tcsetattr(int fd, int action, const int64_t in[6 + NCCS]) {
+    struct termios t;
+    if (tcgetattr(fd, &t) != 0) return -1;
+    t.c_iflag = (tcflag_t)in[0]; t.c_oflag = (tcflag_t)in[1];
+    t.c_cflag = (tcflag_t)in[2]; t.c_lflag = (tcflag_t)in[3];
+    if (cfsetispeed(&t, (speed_t)in[4]) != 0 || cfsetospeed(&t, (speed_t)in[5]) != 0) return -1;
+    for (int i = 0; i < NCCS; i++) t.c_cc[i] = (cc_t)in[6 + i];
+    return tcsetattr(fd, action, &t);
+}
+
+/* The other calls on a terminal: 0 tcdrain, 1 tcflush (argument: the queue),
+   2 tcflow (the action), 3 tcsendbreak (the duration), 4 tcgetpgrp (gives
+   the group), 5 tcsetpgrp (the group). -1 on failure. */
+int64_t sys_tcop(int op, int fd, int64_t argument) {
+    switch (op) {
+    case 0: return tcdrain(fd);
+    case 1: return tcflush(fd, (int)argument);
+    case 2: return tcflow(fd, (int)argument);
+    case 3: return tcsendbreak(fd, (int)argument);
+    case 4: return (int64_t)tcgetpgrp(fd);
+    case 5: return tcsetpgrp(fd, (pid_t)argument);
+    default: errno = EINVAL; return -1;
+    }
+}
+
+int sys_nccs(void) { return NCCS; }
 
 /* fcntl with a struct flock: F_GETLK, F_SETLK or F_SETLKW. out is the lock
    afterwards: type, whence, start, length, pid. */

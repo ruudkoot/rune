@@ -354,10 +354,6 @@ xc1:smlnj@110.79 | Date.toString/* | WIDTH | toString is fmt of a UTC date, and 
 xc1:smlnj@110.79 | Date.fromString/* | WIDTH | the strings the checks read are toString of UTC dates, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits
 
 # ---- Posix.Error, Posix.Signal, Posix.Process, Posix.ProcEnv, Posix.SysDB, Posix (whole), Posix.TTY, Unix (group posix1)
-rune | @absent/posix_tty | RUNE-DEV | Posix has no TTY (the terminal settings)
-rune | @absent/posix_tty_sig | RUNE-DEV | Posix has no TTY (the terminal settings)
-rune | @section/posix_sig/whole | RUNE-DEV | Posix has no TTY, so it does not match POSIX
-rune | @section/posix_sig/tty-types | RUNE-DEV | Posix has no TTY
 *:smlnj@* | Posix.Error.notty/ttyname-of-dev-null | HOST-BUG | ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
 *:polyml@* | Posix.Error.badf/close-twice | HOST-BUG | Posix.IO.close of a descriptor that is already closed raises no exception
 *:polyml@5.7.1 | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | Posix.IO.lseek on a pipe raises no exception
@@ -427,8 +423,6 @@ native:polyml@5.9.2 | Unix.exit/status | HOST-BUG | a forked child that calls Un
 native:smlnj@* | Unix.exit/runs-atExit | HOST-BUG | Unix.exit does not run the actions of OS.Process.atExit
 
 # ---- BIT_FLAGS (posix_bitflags.sml, posix_bitflags_sig.sml)
-rune | @section/posix_bitflags/tty-* | RUNE-DEV | Posix has no TTY yet (the flags of Posix.TTY.I, O, C and L)
-rune | @section/posix_bitflags_sig/tty-* | RUNE-DEV | Posix has no TTY yet (the flags of Posix.TTY.I, O, C and L)
 native:mlton@* | Posix.*.allSet/* | HOST-BUG | allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
 native:mlton@* | Posix.*.fromWord/random-words-beyond-all | HOST-BUG | all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all)
 native:polyml@* | Posix.*.fromWord/*-all | HOST-BUG | fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all) and fromWord makes flags outside all

@@ -95,7 +95,8 @@ posix_procenv.sml | demand | yes | RunePosixProcEnv     | RuneError RunePosixPro
 posix_filesys.sml | demand | yes | RunePosixFileSys     | List RuneError RuneFileSys RuneIODesc RunePosixProcEnv Time Word
 posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List RuneError RuneIODesc RunePosixFileSys RunePosixProcess TextPrimIO Word Word8Array Word8ArraySlice Word8VectorSlice
 posix_sysdb.sml | demand | yes  | RunePosixSysDB        | Int RuneError RunePosixProcEnv
-posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB
+posix_tty.sml   | demand | yes  | RunePosixTTY RunePosixTTYFlagsFn | Char CharVector Int List RuneError RunePosixFileSys RunePosixProcess String Word
+posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
 imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO
 textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
