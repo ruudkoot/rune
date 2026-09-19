@@ -133,6 +133,9 @@ int sys_nccs(void);
 int sys_tcgetattr(int fd, int64_t *out);
 int sys_tcsetattr(int fd, int action, const int64_t *in);
 int64_t sys_tcop(int op, int fd, int64_t argument);
+/* sockets: SO_LINGER, FIONREAD and sockatmark */
+int sys_linger(int fd, int set, int *seconds);
+int sys_socket_query(int fd, int what);
 int sys_ftruncate(int fd, int64_t length);
 /* The fields of stat: kind, mode, inode, device, links, user, group, size,
    access time, modification time, change time. */

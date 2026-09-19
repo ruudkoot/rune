@@ -116,7 +116,7 @@ struct
       case l of
         name :: address :: others =>
           SOME ({name = name, aliases = others, addrType = const "AF_INET",
-                 addrs = if address = "" then [] else [address]} : entry)
+                 addrs = String.tokens (fn c => c = #" ") address} : entry)
       | _ => NONE
 
     fun getByName name = entryOf (byname name)

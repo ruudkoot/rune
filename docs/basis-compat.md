@@ -64,12 +64,11 @@ not load the file of lib/basis it needs.
 | `xc1:smlnj@110.99.9` | 127,892 | 127,490 | 402 | 0 | 0 |
 | `xc1:polyml@5.9.2` | 127,851 | 127,496 | 355 | 0 | 0 |
 
-On Rune the failures are one reading of the specification (below) and what
-is not implemented: the socket options that
-need a `struct`. The `xc1` configurations fail those too, the checks the shim
-cannot run (sockets, `poll`), the checks where a host's function under a
-primitive of the shim is wrong, and on SML/NJ 110.79 whatever needs more
-than 31 bits of `int` (`Time` counts microseconds since 1970).
+On Rune the one failure is a reading of the specification (below). The
+`xc1` configurations fail it too, the checks the shim cannot run (sockets,
+`poll`), the checks where a host's function under a primitive of the shim is
+wrong, and on SML/NJ 110.79 whatever needs more than 31 bits of `int`
+(`Time` counts microseconds since 1970).
 
 ## Structures each system provides
 
@@ -210,9 +209,7 @@ Not implemented:
 * `Real32`, and so `PackReal32Big`, `PackReal32Little` and the `Real32`
   vectors and arrays;
 * `WideChar` and its family (characters have 8 bits), `SML90` and `Windows`;
-* IPv6; `Socket.Ctl.getNREAD` answers 0, `getATMARK` answers `false`,
-  `getLINGER` reports only whether a socket lingers and `setLINGER` fails
-  (the primitives pass an `int` where the system wants a `struct linger`);
+* IPv6;
 * the functors `PrimIO`, `StreamIO` and `ImperativeIO` under those names
   (`lib/basis` has them as `RunePrimIOFn`, `RuneStreamIOFn` and
   `RuneImperativeIOFn`).

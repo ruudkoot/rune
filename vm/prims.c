@@ -820,6 +820,22 @@ static int p_posix_tcop(VM *vm) {
     return ret(vm, 3, mk_int(sys_tcop((int)ARG(2).u.i, (int)ARG(1).u.i, ARG(0).u.i)));
 }
 
+/* socket_linger (fd, set, seconds): [seconds] afterwards (~1 when off), []
+   on failure */
+static int p_socket_linger(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "socket_linger");
+    int seconds = (int)ARG(0).u.i;
+    int64_t out = 0;
+    int ok = sys_linger((int)ARG(2).u.i, (int)ARG(1).u.i, &seconds);
+    out = seconds;
+    return push_int_list(vm, &out, ok == 0 ? 1 : 0, 3);
+}
+static int p_socket_query(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_query");
+    check_tag(vm, ARG(0), T_INT, "socket_query");
+    return ret(vm, 2, mk_int(sys_socket_query((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
 static int p_posix_utime(VM *vm) {
     char *path = c_string(vm, ARG(2), "posix_utime");
     check_tag(vm, ARG(1), T_INT, "posix_utime");

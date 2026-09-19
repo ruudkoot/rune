@@ -1080,6 +1080,8 @@ struct
   fun socket_addr_family (_ : string) = unsupported ~1
   fun socket_inet_parts (_ : string) : string list = unsupported []
   fun socket_unix_path (_ : string) = unsupported ""
+  fun socket_linger (_ : int, _ : int, _ : int) : int list = unsupported []
+  fun socket_query (_ : int, _ : int) = unsupported ~1
   fun netdb_host_byname (_ : string) : string list = unsupported []
   fun netdb_host_byaddr (_ : string) : string list = unsupported []
   fun netdb_hostname () = unsupported ""

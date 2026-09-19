@@ -34,6 +34,7 @@ extern char **environ;
 #include <sys/stat.h>
 #include <utime.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 int sys_errno(void) { return errno; }
 void sys_set_errno(int e) { errno = e; }
@@ -767,12 +768,17 @@ int sys_connect(int fd, const char *addr, int n) {
 int sys_listen(int fd, int backlog) { return listen(fd, backlog); }
 int sys_accept(int fd) { return accept(fd, NULL, NULL); }
 
+/* A send to a peer that has gone fails with EPIPE (MSG_NOSIGNAL) instead of
+   ending the program with SIGPIPE. */
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 int64_t sys_send(int fd, const char *buf, int64_t n, int flags) {
-    return (int64_t)send(fd, buf, (size_t)n, flags);
+    return (int64_t)send(fd, buf, (size_t)n, flags | MSG_NOSIGNAL);
 }
 
 int64_t sys_sendto(int fd, const char *buf, int64_t n, int flags, const char *addr, int addrlen) {
-    return (int64_t)sendto(fd, buf, (size_t)n, flags, (const struct sockaddr *)addr, (socklen_t)addrlen);
+    return (int64_t)sendto(fd, buf, (size_t)n, flags | MSG_NOSIGNAL, (const struct sockaddr *)addr, (socklen_t)addrlen);
 }
 
 /* errno is cleared first: nothing received is the end of the stream when it
@@ -815,6 +821,33 @@ int sys_getsockopt(int fd, int level, int name) {
 
 int sys_setsockopt(int fd, int level, int name, int value) {
     return setsockopt(fd, level, name, &value, sizeof value);
+}
+
+/* SO_LINGER, a struct linger: set it when set is 1 (seconds < 0 turns
+   lingering off); *seconds is what it is afterwards, -1 when off. */
+int sys_linger(int fd, int set, int *seconds) {
+    struct linger l;
+    socklen_t len = sizeof l;
+    if (set) {
+        l.l_onoff = *seconds >= 0;
+        l.l_linger = *seconds >= 0 ? *seconds : 0;
+        if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof l) != 0) return -1;
+    }
+    if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &l, &len) != 0) return -1;
+    *seconds = l.l_onoff ? l.l_linger : -1;
+    return 0;
+}
+
+/* 0: the bytes that can be read at once (FIONREAD); 1: whether the socket
+   is at the out-of-band mark. -1 on failure. */
+int sys_socket_query(int fd, int what) {
+    if (what == 0) {
+        int n = 0;
+        return ioctl(fd, FIONREAD, &n) == 0 ? n : -1;
+    }
+    if (what == 1) return sockatmark(fd);
+    errno = EINVAL;
+    return -1;
 }
 
 int sys_inet_addr(const char *host, int port) {
@@ -891,11 +924,21 @@ static const char *pack(const char *first, char **rest, const char *second) {
     return strings;
 }
 
+/* The addresses of a host go in one part, separated by spaces. */
 static const char *pack_host(struct hostent *h) {
     if (!h) return NULL;
-    char dotted[64] = "";
-    if (h->h_addrtype == AF_INET && h->h_addr_list && h->h_addr_list[0])
-        inet_ntop(AF_INET, h->h_addr_list[0], dotted, sizeof dotted);
+    char dotted[1024] = "";
+    size_t at = 0;
+    if (h->h_addrtype == AF_INET && h->h_addr_list)
+        for (char **a = h->h_addr_list; *a; a++) {
+            char one[INET_ADDRSTRLEN];
+            if (!inet_ntop(AF_INET, *a, one, sizeof one)) continue;
+            size_t n = strlen(one);
+            if (at + n + 2 >= sizeof dotted) break;
+            if (at > 0) dotted[at++] = ' ';
+            memcpy(dotted + at, one, n + 1);
+            at += n;
+        }
     return pack(h->h_name, h->h_aliases, dotted);
 }
 

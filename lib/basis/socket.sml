@@ -24,6 +24,8 @@ struct
     val close' = _prim "posix_close" : int -> int
     val fcntl' = _prim "posix_fcntl" : int * int * int -> int
     val errno' = _prim "sys_errno" : unit -> int
+    val linger' = _prim "socket_linger" : int * int * int -> int list
+    val query' = _prim "socket_query" : int * int -> int
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
     fun named name = case const name of ~1 => 0 | v => v
@@ -242,26 +244,29 @@ struct
         fun setRCVBUF (s, v) = setInt (s, "SO_RCVBUF", v)
         fun getTYPE s : SOCK.sock_type = getInt (s, "SO_TYPE")
         fun getERROR s = getInt (s, "SO_ERROR") <> 0
-        (* "the time a socket lingers"; the primitive reads whether it does
-           only, so a lingering socket reports zero seconds *)
-        fun getLINGER s = if getInt (s, "SO_LINGER") = 0 then NONE else SOME Time.zeroTime
+        (* SO_LINGER is a struct linger: whether the socket lingers, and for
+           how many seconds *)
+        fun linger (SOCK fd, set, seconds) =
+          case linger' (fd, set, seconds) of
+            [s] => if s < 0 then NONE else SOME (Time.fromSeconds (IntInf.fromInt s))
+          | _ => raise RuneError.lastError ()
+        fun getLINGER s = linger (s, 0, 0)
         (* "If t is negative or too large, then the Time is raised": the
            system keeps the seconds in a C int *)
-        fun setLINGER (s, NONE) = setInt (s, "SO_LINGER", 0)
+        fun setLINGER (s, NONE) = ignore (linger (s, 1, ~1))
           | setLINGER (s, SOME t) =
               let val secs = Time.toSeconds t
               in
                 if Time.< (t, Time.zeroTime) orelse IntInf.>= (secs, IntInf.pow (IntInf.fromInt 2, 31))
                 then raise Time.Time
-                else setInt (s, "SO_LINGER", IntInf.toInt secs)
+                else ignore (linger (s, 1, IntInf.toInt secs))
               end
         fun 'af getSockName (SOCK fd : ('af, 'sock_type) sock) : 'af sock_addr = ADDR (checkString (name' fd))
         fun 'af getPeerName (SOCK fd : ('af, 'sock_type) sock) : 'af sock_addr = ADDR (checkString (peer' fd))
-        (* No primitive asks the system these; the socket is only checked to
-           be open ("These functions raise the SysErr exception when the
-           argument socket has been closed"). *)
-        fun getNREAD (s : ('af, 'sock_type) sock) = (ignore (getInt (s, "SO_TYPE")); 0)
-        fun getATMARK (s : ('af, active stream) sock) = (ignore (getInt (s, "SO_TYPE")); false)
+        (* the bytes that can be read at once (FIONREAD), and whether the
+           next byte is the out-of-band mark (sockatmark) *)
+        fun getNREAD (SOCK fd : ('af, 'sock_type) sock) = check (query' (fd, 0))
+        fun getATMARK (SOCK fd : ('af, active stream) sock) = check (query' (fd, 1)) <> 0
       end
     end
 

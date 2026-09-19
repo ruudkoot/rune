@@ -530,11 +530,6 @@ native:polyml@5.7.1 | *IO.StreamIO.closeOut/twice | HOST-BUG | closeOut of a clo
 native:polyml@5.7.1 | *IO.output/shared-stream | HOST-BUG | closeOut of a closed stream closes the writer again ("This operation has no effect if f is already closed")
 
 # ---- Socket, INetSock, UnixSock, GenericSock (net group)
-rune | Socket.Ctl.setLINGER/some | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
-rune | Socket.Ctl.setLINGER/zero | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
-rune | Socket.Ctl.setLINGER/none-again | RUNE-DEV | setLINGER hands SO_LINGER an int where the system wants a struct linger, and Linux refuses it (EINVAL): socket_setopt takes an int value only
-rune | Socket.Ctl.getNREAD/* | RUNE-DEV | getNREAD answers 0: no primitive asks the system (ioctl FIONREAD)
-rune | Socket.Ctl.getATMARK/before-and-at-the-mark | RUNE-DEV | getATMARK answers false: no primitive asks the system (sockatmark)
 native:mlton@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
 native:mlton@* | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER raises Overflow, not Time, for a time too large for the system
 native:mlton@* | Socket.Ctl.getNREAD/* | HOST-BUG | getNREAD answers ~1 whatever there is to read

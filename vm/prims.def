@@ -262,7 +262,7 @@ socket_unix_addr 1  string -> string          An address in the file system.
 socket_addr_family 1 string -> int            Which kind of address it is.
 socket_inet_parts 1 string -> string list     The dotted host and the port of an internet address; [] when it is not one.
 socket_unix_path 1  string -> string          The path of an address in the file system.
-netdb_host_byname 1 string -> string list     A host by name: its name, its address, then its other names; [] when there is none.
+netdb_host_byname 1 string -> string list     A host by name: its name, its addresses separated by spaces, then its other names; [] when there is none.
 netdb_host_byaddr 1 string -> string list     The same by dotted address.
 netdb_hostname   1  unit -> string            The name of this machine.
 netdb_proto_byname 1 string -> string list    A protocol by name: its name, its number, then its other names.
@@ -281,3 +281,5 @@ posix_tcsetattr  3  int * int * int list -> int  Set them with an action (TCSANO
 posix_tcop       3  int * int * int -> int    On a terminal: 0 tcdrain, 1 tcflush (the queue), 2 tcflow (the action), 3 tcsendbreak (the duration), 4 tcgetpgrp (gives the group), 5 tcsetpgrp (the group); ~1 on failure.
 real_to_bits     1  real -> word              The 64 bits of a real, IEEE 754 binary64.
 real_from_bits   1  word -> real              The real of 64 bits.
+socket_linger    3  int * int * int -> int list  SO_LINGER of a socket: set it to the seconds (~1 turns it off) when the second argument is 1; [the seconds afterwards, ~1 when off], [] on failure.
+socket_query     2  int * int -> int          0: the bytes a socket can read at once (FIONREAD); 1: whether it is at the out-of-band mark; ~1 on failure.
