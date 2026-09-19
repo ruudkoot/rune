@@ -238,5 +238,10 @@ struct
                  fn () => inMode IEEEReal.TO_POSINF (fn () => Real32.+ (s 1.0, Real32.minPos)))
   val () = eq32 ("Real32.fromString/TO_NEGINF", 0.0999999940395355224609375,
                  fn () => inMode IEEEReal.TO_NEGINF (fn () => valOf (Real32.fromString "0.1")))
+  val () = eq32 ("Real32.fromString/TO_POSINF-negative", ~0.0999999940395355224609375,
+                 fn () => inMode IEEEReal.TO_POSINF (fn () => valOf (Real32.fromString "~0.1")))
+  val () = eq32 ("Real32.fromDecimal/TO_NEGINF-negative", ~ tenth,
+                 fn () => inMode IEEEReal.TO_NEGINF (fn () =>
+                   valOf (Real32.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
   (*>> rounding-modes *)
 end

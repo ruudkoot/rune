@@ -515,4 +515,36 @@ struct
                 SOME r => Real.isNan r andalso not (Real.signBit r)
               | NONE => false))
   (*>> decimal-nan *)
+
+  (* A numeral is rounded in the current rounding mode, with its sign: a
+     negative one rounds down to the more negative real under TO_NEGINF.
+     0.1 is not a real; the nearest, 0.1 itself here, is above it, and below
+     is the real under that (0.1 less its spacing, 2^~56; nextAfter would do,
+     but SML/NJ 110.79 lacks it). *)
+  fun inMode mode f =
+    let val saved = IEEEReal.getRoundingMode ()
+    in IEEEReal.setRoundingMode mode; (f () before IEEEReal.setRoundingMode saved)
+       handle e => (IEEEReal.setRoundingMode saved; raise e)
+    end
+  val below = 0.1 - Real.fromManExp {man = 1.0, exp = ~56}
+
+  (*<< scan-rounding-mode *)
+  val () = T.eqReal ("Real.fromString/TO_NEGINF-negative", ~0.1,
+                     fn () => inMode IEEEReal.TO_NEGINF (fn () => valOf (Real.fromString "~0.1")))
+  val () = T.eqReal ("Real.fromString/TO_POSINF-negative", Real.~ below,
+                     fn () => inMode IEEEReal.TO_POSINF (fn () => valOf (Real.fromString "~0.1")))
+  val () = T.eqReal ("Real.fromString/TO_ZERO-negative", Real.~ below,
+                     fn () => inMode IEEEReal.TO_ZERO (fn () => valOf (Real.fromString "-0.1")))
+  val () = T.eqReal ("Real.fromString/TO_NEGINF-positive", below,
+                     fn () => inMode IEEEReal.TO_NEGINF (fn () => valOf (Real.fromString "0.1")))
+  val () = T.eqReal ("Real.scan/TO_NEGINF-negative", ~0.1,
+                     fn () => inMode IEEEReal.TO_NEGINF (fn () => valOf (StringCvt.scanString Real.scan "~0.1")))
+  (*>> scan-rounding-mode *)
+
+  (*<< decimal-rounding-mode *)
+  (* here the nearest is also the result of rounding down *)
+  val () = T.eqReal ("Real.fromDecimal/TO_NEGINF-negative", ~0.1,
+                     fn () => inMode IEEEReal.TO_NEGINF (fn () =>
+                       valOf (Real.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
+  (*>> decimal-rounding-mode *)
 end

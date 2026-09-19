@@ -237,16 +237,18 @@ struct
       if List.exists (fn d => Int.< (d, 0) orelse Int.> (d, 9)) digits then NONE
       else
         let
-          val magnitude =
+          val value =
             case class of
               IEEEReal.ZERO => 0.0
             | IEEEReal.INF => posInf
             | IEEEReal.NAN => posInf - posInf
             | _ =>
-                (case parse ("0." ^ implode (map (fn d => chr (Int.+ (48, d))) digits) ^ "0e" ^ intToString' exp) of
+                (* with its sign, which decides the direction of a rounding mode *)
+                (case parse ((if sign then "-" else "") ^ "0."
+                             ^ implode (map (fn d => chr (Int.+ (48, d))) digits) ^ "0e" ^ intToString' exp) of
                    SOME v => v
                  | NONE => 0.0)
-        in SOME (copySign (magnitude, if sign then ~1.0 else 1.0)) end
+        in SOME (copySign (value, if sign then ~1.0 else 1.0)) end
     and intToString' e = if Int.< (e, 0) then "-" ^ intToString (Int.~ e) else intToString e
 
     (* "The exception should be raised when fmt spec is evaluated." *)
@@ -268,8 +270,9 @@ struct
     fun toString r = fmt (StringCvt.GEN NONE) r
 
     (* The numeral is scanned by IEEEReal and handed to the C library as
-       text, whatever its length, so the result is correctly rounded; too
-       large a magnitude is an infinity, too small a zero. *)
+       text with its sign, whatever its length, so the result is correctly
+       rounded in the current rounding mode; too large a magnitude is an
+       infinity, too small a zero. *)
     fun scan getc src =
       case IEEEReal.scanNumeral getc src of
         NONE => NONE
@@ -281,8 +284,10 @@ struct
             val e = case exponent of
                       NONE => ""
                     | SOME (negative, ds) => "e" ^ (if negative then "-" else "") ^ text ds
-            val magnitude = case parse (text il ^ "." ^ text fl ^ "0" ^ e) of SOME v => v | NONE => 0.0
-          in SOME (copySign (magnitude, if sign then ~1.0 else 1.0), rest) end
+            val value = case parse ((if sign then "-" else "") ^ text il ^ "." ^ text fl ^ "0" ^ e) of
+                          SOME v => v
+                        | NONE => 0.0
+          in SOME (copySign (value, if sign then ~1.0 else 1.0), rest) end
 
     fun fromString s = StringCvt.scanString scan s
   end

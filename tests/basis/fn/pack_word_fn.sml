@@ -96,4 +96,15 @@ struct
                      fn () => P.update (Word8Array.array (bytes, Word8.fromInt 0), ~1, w))
   val () = T.raises (lab "update/Subscript-past-the-end", isSubscript,
                      fn () => P.update (Word8Array.array (2 * bytes - 1, Word8.fromInt 0), 1, w))
+  (* the largest int, where bytesPerElem * (i + 1) overflows (Poly/ML's int
+     has no largest); in a ref, since Poly/ML 5.7.1 folds a constant index and
+     raises Overflow while it compiles the test *)
+  val largestRef = ref (getOpt (Int.maxInt, 1073741823))
+  fun largest () = !largestRef
+  val () = T.raises (lab "subVec/Subscript-maxInt", isSubscript, fn () => P.subVec (vec small, largest ()))
+  val () = T.raises (lab "subVecX/Subscript-maxInt", isSubscript, fn () => P.subVecX (vec small, largest ()))
+  val () = T.raises (lab "subArr/Subscript-maxInt", isSubscript, fn () => P.subArr (arr small, largest ()))
+  val () = T.raises (lab "subArrX/Subscript-maxInt", isSubscript, fn () => P.subArrX (arr small, largest ()))
+  val () = T.raises (lab "update/Subscript-maxInt", isSubscript,
+                     fn () => P.update (Word8Array.array (2 * bytes, Word8.fromInt 0), largest (), w))
 end

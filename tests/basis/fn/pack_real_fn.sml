@@ -80,4 +80,12 @@ struct
                          in P.update (a, 1, 0.5); List.tabulate (24, fn i => Word8.toInt (Word8Array.sub (a, i))) end)
   val () = T.raises (lab "update/Subscript-negative", isSubscript, fn () => P.update (Word8Array.array (8, Word8.fromInt 0), ~1, 1.0))
   val () = T.raises (lab "update/Subscript-past-the-end", isSubscript, fn () => P.update (Word8Array.array (15, Word8.fromInt 0), 1, 1.0))
+  (* the largest int, where bytesPerElem * (i + 1) overflows (Poly/ML's int
+     has no largest); in a ref, since Poly/ML 5.7.1 folds a constant index and
+     raises Overflow while it compiles the test *)
+  val largestRef = ref (getOpt (Int.maxInt, 1073741823))
+  fun largest () = !largestRef
+  val () = T.raises (lab "subVec/Subscript-maxInt", isSubscript, fn () => P.subVec (vecOf three, largest ()))
+  val () = T.raises (lab "subArr/Subscript-maxInt", isSubscript, fn () => P.subArr (arrOf three, largest ()))
+  val () = T.raises (lab "update/Subscript-maxInt", isSubscript, fn () => P.update (Word8Array.array (16, Word8.fromInt 0), largest (), 1.0))
 end

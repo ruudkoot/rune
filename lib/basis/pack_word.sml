@@ -9,9 +9,11 @@ struct
     (* where the k-th byte (0 the least significant) of element i is *)
     fun place (i, k) =
       Int.+ (Int.* (bytesPerElem, i), if isBigEndian then Int.- (Int.- (bytesPerElem, 1), k) else k)
-    (* "Subscript if i < 0 or if length < bytesPerElem * (i + 1)" *)
+    (* "Subscript if i < 0 or if length < bytesPerElem * (i + 1)", worked out
+       without the product, which overflows for a large i *)
     fun check (length, i) =
-      if Int.< (i, 0) orelse Int.< (length, Int.* (bytesPerElem, Int.+ (i, 1))) then raise Subscript else ()
+      if Int.< (i, 0) orelse Int.> (i, Int.div (Int.- (length, bytesPerElem), bytesPerElem))
+      then raise Subscript else ()
     fun get sub (seq, i) =
       let
         fun go (k, w) =

@@ -108,6 +108,7 @@ native:smlnj@110.79 | OS.Process.sleep/positive | HOST-BUG | sleep drops the fra
 native:polyml@5.9.2 | OS.Process.sleep/positive | HOST-FLAKY | sleep 0.2 s sometimes returns a little before 0.2 s have passed (once in a full matrix run; tests/basis/host/rune-prim.sml sleeps again for what is left for this reason)
 xc1:smlnj@110.79 | OS.Process.sleep/* | WIDTH | Time.now of lib/basis counts microseconds in an int (51 bits today); the host's int has 31 bits, so the shim's time_now raises Overflow
 xc1:polyml@5.7.1 | @load/os.process | HOST-FLAKY | the test may not end: a forked child hangs before it executes (one thread, waiting on a futex: a lock of the runtime that another thread held at the fork), and OS.Process.system waits for it without a bound (a child of this test was found hung, left over from a matrix run)
+xc1:polyml@5.7.1 | @load/unix | HOST-FLAKY | as @load/os.process: a child of Unix.execute can hang after the fork (found hung in a matrix run, its parent waiting for it)
 *:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
 
 # ---- Real, Math
@@ -186,6 +187,15 @@ native:polyml@5.9.2 | Real.toDecimal/* | HOST-BUG | toDecimal gives exp = 1, not
 native:polyml@5.9.2 | Real.fmt/EXACT-*zero | HOST-BUG | fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
 *:polyml@5.9.2 | Real.fromManExp/wide-exp-subnormal-to-large | HOST-BUG | fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
 *:polyml@5.9.2 | Real.fromString/exact-round-above-half | HOST-BUG | fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
+
+# Rounding a numeral in the current rounding mode (real_fmt.sml, section
+# scan-rounding-mode); an xc1 configuration reads numerals with the host's
+# Real.fromString (the shim's real_from_string).
+native:smlnj@* | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+xc1:smlnj@110.99.9 | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+xc1:smlnj@110.79 | Real.*/TO_*-negative | HOST-BUG | the host's Real.fromString (not correctly rounded) rounds a numeral with a minus sign the wrong way under a directed rounding mode
+*:polyml@5.9.2 | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+*:polyml@5.7.1 | Real.*/TO_*-negative | HOST-BUG | a negative numeral is rounded the wrong way under a directed rounding mode: fromString, scan and fromDecimal round its magnitude and then negate it
 
 # ---- StringCvt
 native:smlnj@* | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - |s|) instead of returning s
@@ -659,6 +669,7 @@ native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of
 native:smlnj@110.99.9 | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
 xc1:smlnj@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits
+native:polyml@* | PackWord*.*/Subscript-maxInt | HOST-BUG | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
 
 # ---- SML90. The page of the specification is gone (tests/basis/sml90.sml);
 # the Definition of 1990 says what sqrt, ln, ord and lookahead do.
@@ -671,10 +682,11 @@ native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raisin
 
 # ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
 # no Real32)
+native:polyml@5.9.2 | PackReal32*.*/Subscript-maxInt | HOST-BUG | subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
 native:polyml@5.9.2 | PackReal32Big.isBigEndian/value | HOST-BUG | PackReal32Big.isBigEndian is false (it packs the most significant byte first)
 native:polyml@5.9.2 | Real32.fromLargeInt/rounds-once | HOST-BUG | fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 native:polyml@5.9.2 | Real32.toDecimal/negative-zero | HOST-BUG | toDecimal of a zero has exp 1, not 0
 native:polyml@5.9.2 | Real32.fromString/overflow | HOST-BUG | fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
 native:polyml@5.9.2 | Real32.fromString/above-half-minPos | HOST-BUG | fromString rounds a number just above half of minPos to zero
-native:polyml@5.9.2 | Real32.fromString/TO_NEGINF | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
+native:polyml@5.9.2 | Real32.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
 xc1:smlnj@110.99.9 | Real32.fmt/GEN-20 | HOST-BUG | fmt rests on the shim's real_fmt_e, which is the host's Real.fmt, and that gives at most 17 significant digits
