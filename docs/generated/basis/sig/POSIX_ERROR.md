@@ -1,12 +1,12 @@
 # signature POSIX_ERROR
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **POSIX_ERROR**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **POSIX_ERROR**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 0 of 49 entries documented |
+| Documentation | 49 of 49 entries documented |
 | Tests | 81 checks of 49 entries |
 | Source | [lib/basis/sig\_posix\_error.sml](../../../../lib/basis/sig_posix_error.sml) |
 
@@ -21,13 +21,32 @@ structure Posix.Error : POSIX_ERROR
 | --- | --- | --- |
 | `Posix.Error` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
-signature POSIX\_ERROR, transcribed from
-<https://smlfamily.github.io/Basis/posix-error.html>
+The conditions the system reports when a call fails, and their names.
 
-The page writes `eqtype syserror = OS.Process.syserror`. OS.Process has no
-type syserror, and the description says the type "is identical to the type
-OS.syserror"; SML '97 has no `eqtype t = ty` specification either, so it is
-written `type syserror = OS.syserror`, which is an equality type.
+A failing POSIX call raises [`OS.SysErr`](../sig/OS.md#exn-syserr) with a [`syserror`](#val-syserror), which is the
+`errno` the call left behind. The values below are the conditions POSIX
+names; comparing with one of them is how a program asks why a call failed:
+
+```f () handle OS.SysErr (_, SOME e) => if e = Posix.Error.noent then ... else ...```
+
+Which condition a call reports is POSIX's business, not this library's,
+and POSIX leaves some of it open: removing a directory that is not empty
+may give [`exist`](#val-exist) or [`notempty`](#val-notempty), and a system may report something no name
+here covers. [`errorName`](#val-errorname) names those too.
+
+> **Erratum** `POSIX_ERROR.syserror/spec-writes-OS.Process`. The
+> page writes `eqtype syserror = OS.Process.syserror`; [`OS.Process`](../sig/OS.md#str-process) has no
+> such type, the description says it "is identical to the type
+> [`OS.syserror`](../sig/OS.md#val-syserror)", and `eqtype t = ty` is not a specification SML allows. It
+> is written `type syserror = OS.syserror`, which admits equality.
+
+> **Reading** `Posix.Error/which-error-is-posix's`. Which condition a failing
+> call reports is prescribed by POSIX and not by this library; where POSIX
+> allows two, the suite accepts either.
+
+## Contents
+
+[The conditions POSIX names](#the-conditions-posix-names)
 
 ## Interface
 
@@ -37,54 +56,99 @@ sig
   type <a href="#type-syserror">syserror</a> = OS.syserror
 
   val <a href="#val-toword">toWord</a> : syserror -&gt; SysWord.word
+
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; syserror
 
   val <a href="#val-errormsg">errorMsg</a> : syserror -&gt; string
+
   val <a href="#val-errorname">errorName</a> : syserror -&gt; string
+
   val <a href="#val-syserror">syserror</a> : string -&gt; syserror option
 
   val <a href="#val-acces">acces</a> : syserror
+
   val <a href="#val-again">again</a> : syserror
+
   val <a href="#val-badf">badf</a> : syserror
+
   val <a href="#val-badmsg">badmsg</a> : syserror
+
   val <a href="#val-busy">busy</a> : syserror
+
   val <a href="#val-canceled">canceled</a> : syserror
+
   val <a href="#val-child">child</a> : syserror
+
   val <a href="#val-deadlk">deadlk</a> : syserror
+
   val <a href="#val-dom">dom</a> : syserror
+
   val <a href="#val-exist">exist</a> : syserror
+
   val <a href="#val-fault">fault</a> : syserror
+
   val <a href="#val-fbig">fbig</a> : syserror
+
   val <a href="#val-inprogress">inprogress</a> : syserror
+
   val <a href="#val-intr">intr</a> : syserror
+
   val <a href="#val-inval">inval</a> : syserror
+
   val <a href="#val-io">io</a> : syserror
+
   val <a href="#val-isdir">isdir</a> : syserror
+
   val <a href="#val-loop">loop</a> : syserror
+
   val <a href="#val-mfile">mfile</a> : syserror
+
   val <a href="#val-mlink">mlink</a> : syserror
+
   val <a href="#val-msgsize">msgsize</a> : syserror
+
   val <a href="#val-nametoolong">nametoolong</a> : syserror
+
   val <a href="#val-nfile">nfile</a> : syserror
+
   val <a href="#val-nodev">nodev</a> : syserror
+
   val <a href="#val-noent">noent</a> : syserror
+
   val <a href="#val-noexec">noexec</a> : syserror
+
   val <a href="#val-nolck">nolck</a> : syserror
+
   val <a href="#val-nomem">nomem</a> : syserror
+
   val <a href="#val-nospc">nospc</a> : syserror
+
   val <a href="#val-nosys">nosys</a> : syserror
+
   val <a href="#val-notdir">notdir</a> : syserror
+
   val <a href="#val-notempty">notempty</a> : syserror
+
   val <a href="#val-notsup">notsup</a> : syserror
+
   val <a href="#val-notty">notty</a> : syserror
+
   val <a href="#val-nxio">nxio</a> : syserror
+
   val <a href="#val-perm">perm</a> : syserror
+
   val <a href="#val-pipe">pipe</a> : syserror
+
   val <a href="#val-range">range</a> : syserror
+
   val <a href="#val-rofs">rofs</a> : syserror
+
   val <a href="#val-spipe">spipe</a> : syserror
+
   val <a href="#val-srch">srch</a> : syserror
+
   val <a href="#val-toobig">toobig</a> : syserror
+
   val <a href="#val-xdev">xdev</a> : syserror
 end
 </pre>
@@ -94,6 +158,11 @@ end
 ```sml
 type syserror = OS.syserror
 ```
+
+The type of a condition the system reports: the [`syserror`](#val-syserror) of [`OS`](../sig/OS.md).
+
+> **Deviation** `Posix.Error.syserror/is-an-int`. It is the `errno` of the
+> system, an `int`, and the structure is not sealed, so that shows.
 
 <details><summary>Tests (4)</summary>
 
@@ -107,6 +176,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val toWord : syserror -> SysWord.word
 ```
 
+`toWord e` is the number the system gives `e`, its `errno` value.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `distinct-words` &middot; `nonzero`
@@ -118,6 +189,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val fromWord : SysWord.word -> syserror
 ```
+
+`fromWord w` is the condition whose `errno` value is `w`.
 
 <details><summary>Tests (2)</summary>
 
@@ -131,6 +204,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val errorMsg : syserror -> string
 ```
 
+`errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `is-OS.errorMsg` &middot; `nonempty` &middot; `differ` &middot; `of-SysErr`
@@ -142,6 +217,12 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val errorName : syserror -> string
 ```
+
+`errorName e` is a short name for `e`, meant for a program.
+
+> **Implementation** `Posix.Error.errorName/the-posix-names`. For the
+> conditions POSIX names it is the name below -- `"noent"` for [`noent`](#val-noent) \--
+> and for the others it is the name [`OS.errorName`](../sig/OS.md#val-errorname) invents.
 
 <details><summary>Tests (4)</summary>
 
@@ -155,17 +236,30 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val syserror : string -> syserror option
 ```
 
+`syserror s` is `SOME` of the condition that [`errorName`](#val-errorname) calls `s`, or `NONE`.
+
+**Law** `syserror (errorName e) = SOME e` for every condition, named here
+or not.
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `inverts-errorName-all` &middot; `unknown-name` &middot; `empty-name` &middot; `is-OS.syserror`
 
 </details>
 
+## The conditions POSIX names
+
 ### <a name="val-acces"></a>`acces`
 
 ```sml
 val acces : syserror
 ```
+
+Permission is refused.
+
+> **Implementation** `Posix.Error.acces/not-for-the-superuser`. Permission
+> bits do not stop a privileged process, so the suite's checks of this and
+> of [`perm`](#val-perm) hold for an ordinary user and pass trivially as root.
 
 <details><summary>Tests (2)</summary>
 
@@ -179,6 +273,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val again : syserror
 ```
 
+Nothing is ready; try again.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -190,6 +286,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val badf : syserror
 ```
+
+The file descriptor is not open, or not open the right way.
 
 <details><summary>Tests (2)</summary>
 
@@ -203,6 +301,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val badmsg : syserror
 ```
 
+The message is not of the right kind.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -214,6 +314,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val busy : syserror
 ```
+
+What was asked for is in use.
 
 <details><summary>Tests (1)</summary>
 
@@ -227,6 +329,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val canceled : syserror
 ```
 
+The operation was cancelled.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -238,6 +342,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val child : syserror
 ```
+
+The process has no child to wait for.
 
 <details><summary>Tests (2)</summary>
 
@@ -251,6 +357,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val deadlk : syserror
 ```
 
+Waiting would deadlock.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -262,6 +370,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val dom : syserror
 ```
+
+The argument is outside the domain of the function.
 
 <details><summary>Tests (1)</summary>
 
@@ -275,6 +385,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val exist : syserror
 ```
 
+The file is there already.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `mkDir-twice`
@@ -286,6 +398,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val fault : syserror
 ```
+
+An address given to the system is not one the process may use.
 
 <details><summary>Tests (1)</summary>
 
@@ -299,6 +413,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val fbig : syserror
 ```
 
+The file would grow past what the system or the process allows.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -310,6 +426,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val inprogress : syserror
 ```
+
+The operation has started and is not finished.
 
 <details><summary>Tests (1)</summary>
 
@@ -323,6 +441,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val intr : syserror
 ```
 
+A signal arrived before anything was done.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -334,6 +454,11 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val inval : syserror
 ```
+
+An argument is not one the call accepts.
+
+> **Implementation** `Posix.Error.inval/rename-into-itself`. Renaming a
+> directory into itself is taken to report this condition.
 
 <details><summary>Tests (2)</summary>
 
@@ -347,6 +472,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val io : syserror
 ```
 
+The device reported a failure.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -358,6 +485,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val isdir : syserror
 ```
+
+The name is a directory where one is not allowed.
 
 <details><summary>Tests (2)</summary>
 
@@ -371,6 +500,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val loop : syserror
 ```
 
+Too many symbolic links were followed; they may lead in a circle.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `symbolic-link-loop`
@@ -382,6 +513,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val mfile : syserror
 ```
+
+The process has as many files open as it may.
 
 <details><summary>Tests (1)</summary>
 
@@ -395,6 +528,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val mlink : syserror
 ```
 
+The file has as many links as it may.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -406,6 +541,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val msgsize : syserror
 ```
+
+The message is longer than may be sent at once.
 
 <details><summary>Tests (1)</summary>
 
@@ -419,6 +556,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val nametoolong : syserror
 ```
 
+The name, or one of its arcs, is too long.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `long-file-name`
@@ -430,6 +569,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val nfile : syserror
 ```
+
+The system has as many files open as it may.
 
 <details><summary>Tests (1)</summary>
 
@@ -443,6 +584,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val nodev : syserror
 ```
 
+The device does not offer this operation.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -454,6 +597,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val noent : syserror
 ```
+
+The name names nothing.
 
 <details><summary>Tests (2)</summary>
 
@@ -467,6 +612,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val noexec : syserror
 ```
 
+The file is not a program the system can run.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `exec-of-data`
@@ -478,6 +625,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val nolck : syserror
 ```
+
+No lock is free.
 
 <details><summary>Tests (1)</summary>
 
@@ -491,6 +640,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val nomem : syserror
 ```
 
+There is not enough memory.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -502,6 +653,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val nospc : syserror
 ```
+
+There is no room left on the device.
 
 <details><summary>Tests (1)</summary>
 
@@ -515,6 +668,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val nosys : syserror
 ```
 
+The system does not have this call.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -526,6 +681,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val notdir : syserror
 ```
+
+The name is not a directory where one is needed.
 
 <details><summary>Tests (2)</summary>
 
@@ -539,6 +696,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val notempty : syserror
 ```
 
+The directory is not empty.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `rmDir-nonempty`
@@ -550,6 +709,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val notsup : syserror
 ```
+
+The operation is not supported here.
 
 <details><summary>Tests (1)</summary>
 
@@ -563,6 +724,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val notty : syserror
 ```
 
+The descriptor is not a terminal.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `ttyname-of-dev-null`
@@ -574,6 +737,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val nxio : syserror
 ```
+
+The device or the address is not there.
 
 <details><summary>Tests (1)</summary>
 
@@ -587,6 +752,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val perm : syserror
 ```
 
+The operation is not permitted, whatever the permission bits say.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `setuid-root`
@@ -598,6 +765,12 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val pipe : syserror
 ```
+
+A pipe or a socket is written that nobody reads.
+
+> **Reading** `Posix.Error.pipe/or-the-signal`. Writing to such a pipe either
+> ends the writer with [`Posix.Signal.pipe`](../sig/POSIX_SIGNAL.md#val-pipe) or, when that signal is ignored
+> or caught, fails with this condition; the suite accepts both.
 
 <details><summary>Tests (2)</summary>
 
@@ -611,6 +784,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val range : syserror
 ```
 
+The result is outside the range the type can hold.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -622,6 +797,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val rofs : syserror
 ```
+
+The file system may only be read.
 
 <details><summary>Tests (1)</summary>
 
@@ -635,6 +812,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val spipe : syserror
 ```
 
+The descriptor cannot be positioned: it is a pipe, a socket or a terminal.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `lseek-on-pipe`
@@ -646,6 +825,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 ```sml
 val srch : syserror
 ```
+
+There is no such process.
 
 <details><summary>Tests (2)</summary>
 
@@ -659,6 +840,8 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val toobig : syserror
 ```
 
+The argument list is longer than the system allows.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `exec-huge-argument`
@@ -671,11 +854,17 @@ For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/pos
 val xdev : syserror
 ```
 
+The link would cross from one file system to another.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
 
 </details>
+
+## See also
+
+[`OS`](../sig/OS.md), [`POSIX`](../sig/POSIX.md), [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md), [`POSIX_IO`](../sig/POSIX_IO.md)
 
 ---
 

@@ -10,7 +10,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`ARRAY2`](sig/ARRAY2.md) | 20 | 20 | 100% | 17 | 17 |
 | [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | 26 | 26 | 100% | 25 | 25 |
 | [`BIN_IO`](sig/BIN_IO.md) | 3 | 3 | 100% | 3 | 3 |
-| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 0 | 0% | 7 | 0 |
+| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 9 | 100% | 7 | 7 |
 | [`BOOL`](sig/BOOL.md) | 5 | 5 | 100% | 4 | 4 |
 | [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
 | [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
@@ -44,15 +44,15 @@ documented when a comment describes it, alone or together with the entry before 
 | [`OS_PROCESS`](sig/OS_PROCESS.md) | 10 | 10 | 100% | 7 | 7 |
 | [`PACK_REAL`](sig/PACK_REAL.md) | 8 | 8 | 100% | 5 | 5 |
 | [`PACK_WORD`](sig/PACK_WORD.md) | 7 | 7 | 100% | 5 | 5 |
-| [`POSIX`](sig/POSIX.md) | 8 | 0 | 0% | 0 | 0 |
-| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | 49 | 0 | 0% | 5 | 0 |
-| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | 91 | 0 | 0% | 55 | 0 |
-| [`POSIX_IO`](sig/POSIX_IO.md) | 41 | 0 | 0% | 28 | 0 |
-| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | 22 | 0 | 0% | 15 | 0 |
-| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | 30 | 0 | 0% | 26 | 0 |
-| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | 23 | 0 | 0% | 2 | 0 |
-| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | 18 | 0 | 0% | 12 | 0 |
-| [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 0 | 0% | 25 | 0 |
+| [`POSIX`](sig/POSIX.md) | 8 | 8 | 100% | 0 | 0 |
+| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | 49 | 49 | 100% | 5 | 5 |
+| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | 91 | 91 | 100% | 55 | 55 |
+| [`POSIX_IO`](sig/POSIX_IO.md) | 41 | 41 | 100% | 28 | 28 |
+| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | 22 | 22 | 100% | 15 | 15 |
+| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | 30 | 30 | 100% | 26 | 26 |
+| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | 23 | 23 | 100% | 2 | 2 |
+| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | 18 | 18 | 100% | 12 | 12 |
+| [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
 | [`SML90`](sig/SML90.md) | 36 | 0 | 0% | 18 | 0 |
@@ -66,12 +66,12 @@ documented when a comment describes it, alone or together with the entry before 
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 2 | 100% | 2 | 2 |
 | [`TIME`](sig/TIME.md) | 25 | 25 | 100% | 22 | 22 |
 | [`TIMER`](sig/TIMER.md) | 10 | 10 | 100% | 8 | 8 |
-| [`UNIX`](sig/UNIX.md) | 14 | 0 | 0% | 11 | 0 |
+| [`UNIX`](sig/UNIX.md) | 14 | 14 | 100% | 11 | 11 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 0 | 0% | 6 | 0 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 932 | 60% | 1078 | 757 |
+| **all** | 1538 | 1347 | 87% | 1078 | 943 |
 
 ## Notes that no check pins
 
@@ -84,12 +84,17 @@ be pinned: many are about the text and not about behaviour.
 - `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
 - `OS.FileSys.file_id/is-a-pair` (Deviation), OS_FILE_SYS
 - `OS.Process.status/is-an-int` (Deviation), OS_PROCESS
+- `Posix.ProcEnv.uid/is-an-int` (Deviation), POSIX_PROC_ENV
 - `StringCvt.cs/transparent` (Deviation), STRING_CVT
 - `TIME.time/not-abstract` (Deviation), TIME
 - `TIMER.cpu_timer/not-abstract` (Deviation), TIMER
 - `Timer.checkCPUTimes/no-gc-accounting` (Limitation), TIMER
 - `Timer.checkGCTime/always-zero` (Limitation), TIMER
+- `Posix.IO.file_desc/is-an-int` (Deviation), POSIX_IO
 - `OS.syserror/is-an-int` (Deviation), OS
+- `UNIX/extra-members` (Deviation), UNIX
+- `Posix.Process.pid/is-an-int` (Deviation), POSIX_PROCESS
+- `Posix.Error.syserror/is-an-int` (Deviation), POSIX_ERROR
 
 ---
 

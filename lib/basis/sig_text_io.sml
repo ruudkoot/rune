@@ -18,7 +18,7 @@
    See also: `IMPERATIVE_IO`, `TEXT_STREAM_IO`, `BIN_IO`, `STRING_CVT`,
    `OS_FILE_SYS`
 
-   Transcription-fix: `TEXT_IO/include-rewritten`. The page writes `include
+   Erratum: `TEXT_IO/include-rewritten`. The page writes `include
    IMPERATIVE_IO` and then specifies `StreamIO` again as a
    `TEXT_STREAM_IO`, which is not valid SML. What it means is that a
    structure matching `TEXT_IO` also matches `IMPERATIVE_IO` and has a

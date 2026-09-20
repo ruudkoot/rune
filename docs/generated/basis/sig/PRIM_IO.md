@@ -47,10 +47,10 @@ stream.
 [`STREAM_IO`](../sig/STREAM_IO.md) is the layer above: it buffers, keeps what was read, and turns
 what these raise into the `cause` of an [`IO.Io`](../sig/IO.md#exn-io).
 
-Transcription-fix: `PRIM_IO/pos-of-the-instances`. The specification
-leaves [`vector_slice`](#type-vector_slice) and [`array_slice`](#type-array_slice) abstract; in [`TextPrimIO`](PRIM_IO.md) and
-[`BinPrimIO`](PRIM_IO.md) they are the slice types of the corresponding structures,
-which is what every implementation does and what the suite relies on.
+> **Erratum** `PRIM_IO/pos-of-the-instances`. The specification
+> leaves [`vector_slice`](#type-vector_slice) and [`array_slice`](#type-array_slice) abstract; in [`TextPrimIO`](PRIM_IO.md) and
+> [`BinPrimIO`](PRIM_IO.md) they are the slice types of the corresponding structures,
+> which is what every implementation does and what the suite relies on.
 
 ## Interface
 

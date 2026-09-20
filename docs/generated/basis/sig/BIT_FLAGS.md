@@ -1,12 +1,12 @@
 # signature BIT_FLAGS
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **BIT_FLAGS**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **BIT_FLAGS**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 9 |
-| Documentation | 0 of 9 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | 70 checks of 9 entries |
 | Source | [lib/basis/sig\_bit\_flags.sml](../../../../lib/basis/sig_bit_flags.sml) |
 
@@ -37,14 +37,18 @@ structure Posix.TTY.O : BIT_FLAGS
 | `Posix.TTY.L` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 | `Posix.TTY.O` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
-signature BIT\_FLAGS, transcribed from
-<https://smlfamily.github.io/Basis/bit-flags.html>
+A set of flags held as the bits of a word: what every collection of system
+flags in [`POSIX`](../sig/POSIX.md) has in common.
 
-The flag substructures of the Posix signatures include it:
-Posix.FileSys.S (where type flags = mode) and Posix.FileSys.O
-(spec-sigs/POSIX\_FILE\_SYS.sml), Posix.IO.FD and Posix.IO.O
-(spec-sigs/POSIX\_IO.sml), and Posix.Process.W and the flags of Posix.TTY
-on their pages.
+A [`flags`](#val-flags) value is a set. [`flags`](#val-flags) unites sets, [`intersect`](#val-intersect) cuts them down,
+[`clear`](#val-clear) takes one away from another, and [`allSet`](#val-allset) and [`anySet`](#val-anyset) ask whether
+a set contains another. The named flags of a structure are the one-element
+sets, and [`all`](#val-all) is every bit the system uses there -- which may be more
+than the named flags, since a system knows bits that the specification
+does not name.
+
+[`toWord`](#val-toword) and [`fromWord`](#val-fromword) reach the word underneath, for a program that has
+to speak to something that is not SML.
 
 ## Interface
 
@@ -52,13 +56,21 @@ on their pages.
 signature BIT_FLAGS =
 sig
   eqtype <a href="#type-flags">flags</a>
+
   val <a href="#val-toword">toWord</a> : flags -&gt; SysWord.word
+
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; flags
+
   val <a href="#val-all">all</a> : flags
+
   val <a href="#val-flags">flags</a> : flags list -&gt; flags
+
   val <a href="#val-intersect">intersect</a> : flags list -&gt; flags
+
   val <a href="#val-clear">clear</a> : flags * flags -&gt; flags
+
   val <a href="#val-allset">allSet</a> : flags * flags -&gt; bool
+
   val <a href="#val-anyset">anySet</a> : flags * flags -&gt; bool
 end
 </pre>
@@ -68,6 +80,10 @@ end
 ```sml
 eqtype flags
 ```
+
+The type of a set of flags.
+
+Two are equal when they hold the same flags.
 
 <details><summary>Tests (10)</summary>
 
@@ -85,6 +101,8 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val toWord : flags -> SysWord.word
 ```
 
+`toWord fl` is the word whose bits are the flags of `fl`.
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `of-fromWord`
@@ -101,6 +119,12 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val fromWord : SysWord.word -> flags
 ```
 
+`fromWord w` is the set of the flags that the bits of `w` name.
+
+> **Reading** `BIT_FLAGS.fromWord/masks-the-rest`. The law `toWord o fromWord = (fn w => andb (w, toWord all))` is required for every word, those with
+> bits that no flag of this structure has included: such bits are dropped
+> rather than kept or refused.
+
 <details><summary>Tests (9)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `of-toWord`
@@ -115,6 +139,14 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val all : flags
 ```
 
+Every flag the system uses here.
+
+> **Implementation** `BIT_FLAGS.all/every-bit-the-system-has`. It is every
+> bit of the underlying C value, so it may include flags the
+> specification does not name (`O_CLOEXEC`, `O_LARGEFILE`); that is what
+> lets those survive a trip through [`fromWord`](#val-fromword) or a call that reads the
+> flags back from the system.
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `union-of-all`
@@ -128,6 +160,8 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 ```sml
 val flags : flags list -> flags
 ```
+
+`flags l` is the union of the sets of `l`: a flag is in it when it is in one of them.
 
 <details><summary>Tests (10)</summary>
 
@@ -145,6 +179,10 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val intersect : flags list -> flags
 ```
 
+`intersect l` is the intersection of the sets of `l`: a flag is in it when it is in all of them.
+
+The intersection of no sets at all is [`all`](#val-all).
+
 <details><summary>Tests (9)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty-is-all` &middot; `two`
@@ -158,6 +196,8 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 ```sml
 val clear : flags * flags -> flags
 ```
+
+`clear (fl, gl)` is `gl` without the flags of `fl`.
 
 <details><summary>Tests (9)</summary>
 
@@ -173,6 +213,8 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val allSet : flags * flags -> bool
 ```
 
+`allSet (fl, gl)` is `true` when every flag of `fl` is in `gl`.
+
 <details><summary>Tests (7)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `inclusion`
@@ -187,6 +229,8 @@ In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.s
 val anySet : flags * flags -> bool
 ```
 
+`anySet (fl, gl)` is `true` when some flag of `fl` is in `gl`.
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `intersection`
@@ -194,6 +238,11 @@ For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/bas
 In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-meets-nothing` &middot; `nonempty-meets-itself` &middot; `is-nonempty-intersection` &middot; `is-nonempty-intersection-random` &middot; `symmetric-random`
 
 </details>
+
+## See also
+
+[`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md), [`POSIX_IO`](../sig/POSIX_IO.md), [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md), [`POSIX_TTY`](../sig/POSIX_TTY.md),
+[`WORD`](../sig/WORD.md)
 
 ---
 

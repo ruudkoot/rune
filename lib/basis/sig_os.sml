@@ -13,7 +13,7 @@
 
    See also: `OS_FILE_SYS`, `OS_PATH`, `OS_PROCESS`, `OS_IO`, `POSIX`
 
-   Transcription-fix: `OS/opaque-in-the-page`. The page declares `structure
+   Erratum: `OS/opaque-in-the-page`. The page declares `structure
    OS :> OS`, so the types that no `where` clause fixes are abstract; the
    suite matches `OS` against this signature both transparently and
    opaquely. *)

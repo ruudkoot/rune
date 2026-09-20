@@ -22,7 +22,7 @@
 
    See also: `IO`, `STREAM_IO`, `TEXT_IO`, `BIN_IO`, `POSIX_IO`
 
-   Transcription-fix: `PRIM_IO/pos-of-the-instances`. The specification
+   Erratum: `PRIM_IO/pos-of-the-instances`. The specification
    leaves `vector_slice` and `array_slice` abstract; in `TextPrimIO` and
    `BinPrimIO` they are the slice types of the corresponding structures,
    which is what every implementation does and what the suite relies on. *)

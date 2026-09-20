@@ -36,12 +36,12 @@ for newline. [`BIN_IO`](../sig/BIN_IO.md) is the same for bytes.
 [`StreamIO`](#str-streamio) is the functional stream underneath, reached through
 [`getInstream`](#val-getinstream) and [`getOutstream`](#val-getoutstream); [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) describes it.
 
-Transcription-fix: `TEXT_IO/include-rewritten`. The page writes `include IMPERATIVE_IO` and then specifies [`StreamIO`](#str-streamio) again as a
-[`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md), which is not valid SML. What it means is that a
-structure matching [`TEXT_IO`](TEXT_IO.md) also matches [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) and has a
-[`StreamIO`](#str-streamio) matching [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md); that is what stands here, with the
-substructure first, then the members of [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) in full, then the
-ones of [`TEXT_IO`](TEXT_IO.md).
+> **Erratum** `TEXT_IO/include-rewritten`. The page writes `include IMPERATIVE_IO` and then specifies [`StreamIO`](#str-streamio) again as a
+> [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md), which is not valid SML. What it means is that a
+> structure matching [`TEXT_IO`](TEXT_IO.md) also matches [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) and has a
+> [`StreamIO`](#str-streamio) matching [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md); that is what stands here, with the
+> substructure first, then the members of [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) in full, then the
+> ones of [`TEXT_IO`](TEXT_IO.md).
 
 > **Deviation** `TEXT_IO/WideTextIO-not-matched`. The optional `WideTextIO` is
 > not matched against this signature, because the types here are written

@@ -30,6 +30,31 @@
 | [`TEXT_IO`](sig/TEXT_IO.md) | Text files and the standard streams: the imperative streams of characters, with the ways of opening a file. | required | 36 of 36 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | The functional streams of [`STREAM_IO`](sig/STREAM_IO.md) where the elements are characters, with the two operations that only text has: reading a line and writing a substring. | required | 2 of 2 |
 
+## The operating system
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | A set of flags held as the bits of a word: what every collection of system flags in [`POSIX`](sig/POSIX.md) has in common. | required | 9 of 9 |
+| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
+| [`DATE`](sig/DATE.md) | A moment as a person writes it down: a year, a month, a day and a time of day, in some time zone. | required | 24 of 24 |
+| [`OS`](sig/OS.md) | The operating system: its errors, its file system, its paths, its processes and its I/O descriptors, gathered into one structure. | required | 9 of 9 |
+| [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | The file system: reading directories, moving about in them, and asking what a file is and when it changed. | required | 26 of 26 |
+| [`OS_IO`](sig/OS_IO.md) | Descriptors of open files, devices, pipes and sockets, and waiting until some of them are ready for input or output. | required | 26 of 26 |
+| [`OS_PATH`](sig/OS_PATH.md) | Paths as text: taking them apart, putting them together, and nothing else. | required | 27 of 27 |
+| [`OS_PROCESS`](sig/OS_PROCESS.md) | The process itself: its environment, the commands it runs, and how it ends. | required | 10 of 10 |
+| [`POSIX`](sig/POSIX.md) | The POSIX interface: the system calls of a Unix-like system, gathered into eight substructures. | required | 8 of 8 |
+| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | The conditions the system reports when a call fails, and their names. | required | 49 of 49 |
+| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | Files and directories as POSIX has them: opening them, linking and removing them, and reading and setting what the system records about them. | required | 91 of 91 |
+| [`POSIX_IO`](sig/POSIX_IO.md) | File descriptors: reading and writing them, duplicating them, positioning them, locking them, and turning them into readers and writers. | required | 41 of 41 |
+| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | Processes: making them, replacing them, waiting for them and ending them. | required | 22 of 22 |
+| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | The process's own identity: who it is, who owns it, which group and session it belongs to, and what its environment holds. | required | 30 of 30 |
+| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | The signals a process may be sent, by name. | required | 23 of 23 |
+| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | The password and group databases: turning a user or group name into a number, and back. | required | 18 of 18 |
+| [`POSIX_TTY`](sig/POSIX_TTY.md) | Terminals: their modes, their speeds and the characters that control them. | required | 110 of 110 |
+| [`TIME`](sig/TIME.md) | A length of time, and a point in time counted from a fixed reference. | required | 25 of 25 |
+| [`TIMER`](sig/TIMER.md) | Stopwatches: how much processor time and how much wall-clock time have passed since a timer was started. | required | 10 of 10 |
+| [`UNIX`](sig/UNIX.md) | Running another program and talking to it: a child process with a pipe each way. | required | 14 of 14 |
+
 ## Text and characters
 
 | Signature |  | Status | Documented |
@@ -41,20 +66,6 @@
 | [`STRING_CVT`](sig/STRING_CVT.md) | The types and helpers of the conversions between values and text: the formats of `fmt`, the readers of `scan`. | required | 11 of 11 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | A stretch of a string, without a copy of it: a base string and a start and a length inside it. | required | 39 of 39 |
 | [`TEXT`](sig/TEXT.md) | The structures of one kind of text, gathered so that their types can be named as one: characters, strings, substrings and the vectors and arrays of characters, with the constraints that tie them together. | required | 7 of 7 |
-
-## The operating system
-
-| Signature |  | Status | Documented |
-| --- | --- | --- | --- |
-| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
-| [`DATE`](sig/DATE.md) | A moment as a person writes it down: a year, a month, a day and a time of day, in some time zone. | required | 24 of 24 |
-| [`OS`](sig/OS.md) | The operating system: its errors, its file system, its paths, its processes and its I/O descriptors, gathered into one structure. | required | 9 of 9 |
-| [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | The file system: reading directories, moving about in them, and asking what a file is and when it changed. | required | 26 of 26 |
-| [`OS_IO`](sig/OS_IO.md) | Descriptors of open files, devices, pipes and sockets, and waiting until some of them are ready for input or output. | required | 26 of 26 |
-| [`OS_PATH`](sig/OS_PATH.md) | Paths as text: taking them apart, putting them together, and nothing else. | required | 27 of 27 |
-| [`OS_PROCESS`](sig/OS_PROCESS.md) | The process itself: its environment, the commands it runs, and how it ends. | required | 10 of 10 |
-| [`TIME`](sig/TIME.md) | A length of time, and a point in time counted from a fixed reference. | required | 25 of 25 |
-| [`TIMER`](sig/TIMER.md) | Stopwatches: how much processor time and how much wall-clock time have passed since a timer was started. | required | 10 of 10 |
 
 ## The language
 
@@ -87,24 +98,13 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | signature BIT\_FLAGS, transcribed from <https://smlfamily.github.io/Basis/bit-flags.html> | required | 0 of 9 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | signature GENERIC\_SOCK, transcribed from <https://smlfamily.github.io/Basis/generic-sock.html> | required | 0 of 4 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | signature NET\_HOST\_DB, transcribed from <https://smlfamily.github.io/Basis/net-host-db.html> | required | 0 of 14 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | signature NET\_PROT\_DB, transcribed from <https://smlfamily.github.io/Basis/prot-db.html> | required | 0 of 6 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | signature NET\_SERV\_DB, transcribed from <https://smlfamily.github.io/Basis/serv-db.html> | required | 0 of 7 |
-| [`POSIX`](sig/POSIX.md) | signature POSIX, transcribed from <https://smlfamily.github.io/Basis/posix.html> | required | 0 of 8 |
-| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | signature POSIX\_ERROR, transcribed from <https://smlfamily.github.io/Basis/posix-error.html> | required | 0 of 49 |
-| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | signature POSIX\_FILE\_SYS, transcribed from <https://smlfamily.github.io/Basis/posix-file-sys.html> | required | 0 of 91 |
-| [`POSIX_IO`](sig/POSIX_IO.md) | signature POSIX\_IO, transcribed from <https://smlfamily.github.io/Basis/posix-io.html> | required | 0 of 41 |
-| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | signature POSIX\_PROCESS, transcribed from <https://smlfamily.github.io/Basis/posix-process.html> | required | 0 of 22 |
-| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | signature POSIX\_PROC\_ENV, transcribed from <https://smlfamily.github.io/Basis/posix-proc-env.html> | required | 0 of 30 |
-| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | signature POSIX\_SIGNAL, transcribed from <https://smlfamily.github.io/Basis/posix-signal.html> | required | 0 of 23 |
-| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | signature POSIX\_SYS\_DB, transcribed from <https://smlfamily.github.io/Basis/posix-sys-db.html> | required | 0 of 18 |
-| [`POSIX_TTY`](sig/POSIX_TTY.md) | signature POSIX\_TTY, transcribed from <https://smlfamily.github.io/Basis/posix-tty.html> | required | 0 of 110 |
 | [`SML90`](sig/SML90.md) | signature SML90. The page of the specification that defined it (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed from the signature of MLton's basis library, which follows it, in the order of the page. | required | 0 of 36 |
 | [`SOCKET`](sig/SOCKET.md) | signature SOCKET, transcribed from <https://smlfamily.github.io/Basis/socket.html> | required | 0 of 93 |
-| [`UNIX`](sig/UNIX.md) | signature UNIX, transcribed from <https://smlfamily.github.io/Basis/unix.html> | required | 0 of 14 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | signature UNIX\_SOCK, transcribed from <https://smlfamily.github.io/Basis/unix-sock.html> | required | 0 of 14 |
 
 ## Functors

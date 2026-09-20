@@ -32,9 +32,9 @@ system refuses raises [`SysErr`](#exn-syserr), with the text the system gave and
 [`POSIX`](../sig/POSIX.md) goes further for the systems that have it, and [`UNIX`](../sig/UNIX.md) runs other
 programs.
 
-Transcription-fix: `OS/opaque-in-the-page`. The page declares `structure OS :> OS`, so the types that no `where` clause fixes are abstract; the
-suite matches [`OS`](OS.md) against this signature both transparently and
-opaquely.
+> **Erratum** `OS/opaque-in-the-page`. The page declares `structure OS :> OS`, so the types that no `where` clause fixes are abstract; the
+> suite matches [`OS`](OS.md) against this signature both transparently and
+> opaquely.
 
 ## Interface
 
