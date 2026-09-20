@@ -1,0 +1,4 @@
+runedoc --dump-ir tests/basis/spec-sigs/*.sml
+instructions 81501281
+bytes 118684605
+objects 2775712

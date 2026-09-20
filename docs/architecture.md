@@ -35,9 +35,18 @@ applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
 from the same sources: `sources-doc.txt` lists the utilities, the frontend and
 the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
 library the way the compiler does (the same lexer, parser and, later,
-elaborator), so what it documents is what the compiler compiles. `DocMain`
-(`src/doc/docmain.sml`) is its command line. Nothing of `src/doc` is part of
-the compiler, so it costs the bootstrap nothing.
+elaborator), so what it documents is what the compiler compiles. Nothing of
+`src/doc` is part of the compiler, so it costs the bootstrap nothing.
+
+| Structure | File | Purpose |
+|---|---|---|
+| `DocSource` | `src/doc/docsource.sml` | A file's tokens, the comments in the gaps between them (the lexer keeps none; every gap is white space and comments, or it is a bug), and source text without comments. |
+| `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
+| `DocExtract` | `src/doc/docextract.sml` | Syntax tree to `DocIR`. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
+| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --dump-ir FILE...`. |
+
+Its tests are `tests/doc` (`make test-doc`): an input file and, next to it,
+what `runedoc` is expected to make of it.
 
 ## Modules
 

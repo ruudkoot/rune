@@ -67,10 +67,11 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune` |
 | `make test-all` | run the suite with each of the four host builds |
+| `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
 | `make check-cross` | compile every test, example and Basis Library suite program, the compiler and `runedoc` with all five builds and compare the bytecode; run the five builds of `runedoc` on the same input and compare what they write (`scripts/check-doc-cross.sh`) |
 | `make check-docs` | verify docs, tests and `.def` files are in sync, and that the Basis Library suite has a check for every specified member |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
-| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml` and by the bootstrap, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
+| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml`, by the bootstrap and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |

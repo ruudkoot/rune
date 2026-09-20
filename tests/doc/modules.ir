@@ -1,0 +1,35 @@
+file tests/doc/modules.sml
+  signature S
+    type t
+      spec: type t
+    val x
+      spec: val x : t
+    source: signature S = sig type t val x : t end
+  structure Plain
+  structure Transparent
+    ascribed: S
+  structure Opaque
+    sealed with: S where type t = int
+  structure Alias
+    alias of: Plain
+  structure Nested
+    structure Inner
+      ascribed: S
+      alias of: Transparent
+    structure Deeper
+      structure Innermost
+        alias of: Plain
+  functor Id
+    parameter: X : S
+    ascribed: S
+  functor Make
+    parameter: type elem val zero : elem
+    sealed with: S where type t = elem
+  structure Applied
+    application of Id to: Plain
+  structure Made
+    application of Make to: type elem = int val zero = 0
+  structure A
+    alias of: Plain
+  structure B
+    alias of: Alias

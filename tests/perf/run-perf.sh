@@ -10,6 +10,8 @@
 #   compile FILE...    measure the compiler (bin/rune.rbc) compiling these
 #                      files instead of running tests/perf/NAME.sml;
 #                      @boot stands for the compiler's own sources
+#   runedoc ARG...     measure the documentation generator (bin/runedoc.rbc)
+#                      with these arguments instead; the shell expands a *
 #   scale N EXPONENT   also run with the arguments N and 4N: the instructions
 #                      may grow with at most N^(EXPONENT + 0.15)
 #   wall R             `make perf` runs the program R times per measurement
@@ -58,7 +60,12 @@ measure() {
   name=$1
   shift
   compile=$(sed -n 's/^compile //p' "tests/perf/$name.budget")
-  if [ -n "$compile" ]; then
+  runedoc=$(sed -n 's/^runedoc //p' "tests/perf/$name.budget")
+  if [ -n "$runedoc" ]; then
+    # shellcheck disable=SC2086
+    "$vm" --count --heap-size 67108864 bin/runedoc.rbc --lib lib $runedoc \
+      > "$out/$name.stdout" 2> "$out/$name.stderr"
+  elif [ -n "$compile" ]; then
     files=""
     for f in $compile; do
       if [ "$f" = @boot ]; then files="$files $(boot_sources | tr '\n' ' ')"; else files="$files $f"; fi

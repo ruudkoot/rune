@@ -73,6 +73,9 @@ keep these invariants:
   programs that need Basis Library parts Rune lacks or MLton-specific
   behaviour, each with its reason. A program that fails and is not on that
   list is a bug.
+* A change to the documentation generator (`src/doc`) needs a test in
+  `tests/doc` (`make test-doc`): an input and the expected `.ir` next to it,
+  reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
   `tests/run-tests.sh --update <filter>`; never accept generated output
   blindly.

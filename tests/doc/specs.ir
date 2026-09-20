@@ -1,0 +1,139 @@
+file tests/doc/specs.sml
+  signature ORDERED
+    type t
+      spec: type t
+    val compare
+      spec: val compare : t * t -> order
+    source:
+      |signature ORDERED =
+      |sig
+      |  type t
+      |  val compare : t * t -> order
+      |end
+  signature SPECS
+    type seq
+      spec: type 'a seq
+    eqtype key
+      spec: eqtype key
+    type pair
+      spec: type pair = key * int
+    type box
+      spec: type 'a box = {contents : 'a, tag : key}
+      field contents : 'a
+      field tag : key
+    datatype tree
+      spec: datatype 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+      con Leaf
+      con Node of 'a tree * 'a * 'a tree
+    datatype shape
+      spec:
+        |datatype shape =
+        |    Circle of {centre : real * real, radius : real}
+        |  | Box of {corner : real * real,
+        |            width : real,
+        |            height : real}
+      con Circle of {centre : real * real, radius : real}
+        field centre : real * real
+        field radius : real
+      con Box of {corner : real * real, width : real, height : real}
+        field corner : real * real
+        field width : real
+        field height : real
+    datatype order
+      spec: datatype order = datatype order
+    exception Empty
+      spec: exception Empty
+    exception Bad
+      spec: exception Bad of {line : int, why : string}
+      field line : int
+      field why : string
+    exception Worse
+      spec: exception Worse of string
+    val empty
+      spec: val empty : 'a seq
+    val insert
+      spec: val insert : key * 'a -> 'a seq -> 'a seq
+    val remove
+      spec: val remove : key -> 'a seq -> 'a seq
+    val @@
+      spec: val op @@ : 'a seq * 'a seq -> 'a seq
+    val fold
+      spec: val fold : ({key : key, value : 'a} * 'b -> 'b) -> 'b -> 'a seq -> 'b
+      field key : key
+      field value : 'a
+    val find
+      spec: val find : ('a -> bool) -> 'a seq -> 'a option
+    structure Key
+      spec: structure Key : ORDERED where type t = key
+      signature: ORDERED
+    structure Limits
+      spec: structure Limits : sig ... end
+      val maxLen
+        spec: val maxLen : int
+      val minLen
+        spec: val minLen : int
+    structure A
+      spec: structure A : ORDERED
+      signature: ORDERED
+    structure B
+      spec: structure B : ORDERED
+      signature: ORDERED
+    sharing
+      spec: sharing type A.t = B.t
+    include ORDERED
+      spec: include ORDERED
+      signature: ORDERED
+    include ORDERED
+      spec: include ORDERED where type t = key
+      signature: ORDERED
+    source:
+      |signature SPECS =
+      |sig
+      |  type 'a seq
+      |  eqtype key
+      |  type pair = key * int and 'a box = {contents : 'a, tag : key}
+      |  datatype 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+      |  datatype shape =
+      |      Circle of {centre : real * real, radius : real}
+      |    | Box of {corner : real * real,
+      |              width : real,
+      |              height : real}
+      |  datatype order = datatype order
+      |  exception Empty
+      |  exception Bad of {line : int, why : string} and Worse of string
+      |
+      |  val empty : 'a seq
+      |  val insert : key * 'a -> 'a seq -> 'a seq
+      |  and remove : key -> 'a seq -> 'a seq
+      |  val op @@ : 'a seq * 'a seq -> 'a seq
+      |  val fold : ({key : key, value : 'a} * 'b -> 'b) -> 'b -> 'a seq -> 'b
+      |  val find : ('a -> bool) -> 'a seq -> 'a option
+      |
+      |  structure Key : ORDERED where type t = key
+      |  structure Limits : sig val maxLen : int  val minLen : int end
+      |  structure A : ORDERED and B : ORDERED
+      |  sharing type A.t = B.t
+      |
+      |  include ORDERED
+      |  include ORDERED where type t = key
+      |end
+  signature INCLUDES
+    include ORDERED
+      spec: include ORDERED
+      signature: ORDERED
+    include SPECS
+      spec: include SPECS
+      signature: SPECS
+    include
+      spec: include sig ... end
+      val extra
+        spec: val extra : int
+    source:
+      |signature INCLUDES =
+      |sig
+      |  include ORDERED SPECS
+      |  include sig val extra : int end
+      |end
+  signature RENAMED
+    is: ORDERED where type t = int
+    source: signature RENAMED = ORDERED where type t = int

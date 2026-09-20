@@ -1,6 +1,5 @@
 (* runedoc, the documentation generator: the command line.
-   docs/plans/docgen.md is the plan; so far it names the signatures that the
-   files on the command line declare. *)
+   docs/plans/docgen.md is the plan. *)
 structure DocMain =
 struct
   fun println s = print (s ^ "\n")
@@ -10,13 +9,15 @@ struct
 
   val usage =
     "usage: runedoc [options] FILE...\n\
+    \  --dump-ir   print what is extracted from the files (the intermediate\n\
+    \              representation, in the text form the tests compare)\n\
     \  --lib DIR   the directory of the libraries (the wrappers pass it)\n\
     \  --version   print the version\n\
-    \  --help      print this text\n\
-    \Prints the signatures that the files declare.\n"
+    \  --help      print this text\n"
 
   val libDir : string option ref = ref NONE
   val inputs : string list ref = ref []
+  val dumpIR = ref false
   val showHelp = ref false
   val showVersion = ref false
 
@@ -25,6 +26,7 @@ struct
       [] => ()
     | "--lib" :: dir :: rest => (libDir := SOME dir; parse rest)
     | "--lib" :: [] => raise Usage "--lib needs a directory"
+    | "--dump-ir" :: rest => (dumpIR := true; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
     | "-h" :: rest => (showHelp := true; parse rest)
@@ -32,20 +34,14 @@ struct
         if String.isPrefix "-" arg then raise Usage ("unknown option " ^ arg)
         else (inputs := !inputs @ [arg]; parse rest)
 
-  (* The signatures a file declares, in order. *)
-  fun signaturesOf (path : string) : string list =
-    let
-      val file = Source.load path
-                 handle IO.Io _ => raise Usage ("cannot read " ^ path)
-      val (prog, _) = Parser.parseTokensWith (Lexer.tokenize file, Fixity.initial)
-    in
-      List.concat (List.map (fn Ast.DSignature (binds, _) => List.map #name binds
-                              | _ => []) prog)
-    end
+  fun load (path : string) : DocIR.module list =
+    DocExtract.file path
+    handle IO.Io _ => raise Usage ("cannot read " ^ path)
 
   fun run () : OS.Process.status =
     (if List.null (!inputs) then raise Usage "no input files" else ();
-     List.app (fn path => List.app (fn s => println ("signature " ^ s)) (signaturesOf path)) (!inputs);
+     if !dumpIR then List.app (fn path => print (DocIR.dump (path, load path))) (!inputs)
+     else raise Usage "nothing to do (use --dump-ir)";
      OS.Process.success)
 
   fun main (_ : string, args : string list) : OS.Process.status =

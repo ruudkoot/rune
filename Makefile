@@ -61,6 +61,7 @@ ROOT    := $(CURDIR)
 # `make test RUNE=bin/rune-mlton`.
 RUNE    ?= bin/rune
 RUNEVM  ?= bin/runevm
+RUNEDOC ?= bin/runedoc
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
@@ -95,7 +96,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -243,7 +244,12 @@ test-basis: $(RUNE) vm | build/.doctor-check
 # Deterministic budgets on what `runevm --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;
 # --update after a deliberate change). About 10 seconds.
-perf-check: $(RUNE) vm | build/.doctor-check
+# The tests of the documentation generator (tests/doc), with bin/runedoc;
+# `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
+test-doc: $(RUNEDOC) vm
+	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
+
+perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
 
 # Not part of `make check`: a collection before every allocation makes a few
@@ -325,6 +331,7 @@ bootstrap: bin/rune-boot
 check:
 	@$(MAKE) --no-print-directory host-builds vm boot runedoc
 	@$(MAKE) --no-print-directory test bootstrap
+	@$(MAKE) --no-print-directory test-doc
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory perf-check

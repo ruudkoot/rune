@@ -27,7 +27,8 @@ run() {
 }
 
 # shellcheck disable=SC2046
-run signatures $(grep -l '^signature ' lib/basis/*.sml)
+run ir-basis --dump-ir $(grep -l '^signature ' lib/basis/*.sml)
+run ir-tests --dump-ir tests/doc/*.sml
 
 [ $status = 0 ] && echo "check-doc-cross: the builds of runedoc agree ($builds)"
 exit $status
