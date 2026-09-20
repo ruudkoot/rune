@@ -1,12 +1,12 @@
 # signature MONO_VECTOR
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **MONO_VECTOR**
+[The Standard ML Basis Library](../README.md) &rsaquo; Sequences &rsaquo; **MONO_VECTOR**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 19 |
-| Documentation | 0 of 22 entries documented |
+| Documentation | 22 of 22 entries documented |
 | Tests | 285 checks of 22 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
@@ -57,7 +57,17 @@ structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
 | `Word8Vector` | Word8Vector: a vector of bytes is a string. | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 | `WordVector` | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
-The signatures of the monomorphic vectors, arrays and their slices.
+The sequences of one element type: vectors, arrays and their slices, as
+[`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md) and [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md) describe them for any
+element type.
+
+Fixing the element type lets an implementation pack the elements, so
+[`Word8Vector`](MONO_VECTOR.md) need not hold one machine word per byte, and it gives the
+byte- and character-oriented parts of the library ([`BYTE`](../sig/BYTE.md), [`TEXT`](../sig/TEXT.md),
+[`BIN_IO`](../sig/BIN_IO.md)) a sequence type to name. The members are those of the
+polymorphic signatures, with [`elem`](#type-elem) for the element type; what they mean
+is the same, and the pages of [`VECTOR`](../sig/VECTOR.md) and [`ARRAY`](../sig/ARRAY.md) describe it at more
+length.
 
 ## Interface
 
@@ -65,26 +75,47 @@ The signatures of the monomorphic vectors, arrays and their slices.
 signature MONO_VECTOR =
 sig
   type <a href="#type-vector">vector</a>
+
   type <a href="#type-elem">elem</a>
+
   val <a href="#val-maxlen">maxLen</a> : int
+
   val <a href="#val-fromlist">fromList</a> : elem list -&gt; vector
+
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; elem) -&gt; vector
+
   val <a href="#val-length">length</a> : vector -&gt; int
+
   val <a href="#val-sub">sub</a> : vector * int -&gt; elem
+
   val <a href="#val-update">update</a> : vector * int * elem -&gt; vector
+
   val <a href="#val-concat">concat</a> : vector list -&gt; vector
+
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; vector -&gt; unit
+
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; vector -&gt; unit
+
   val <a href="#val-mapi">mapi</a> : (int * elem -&gt; elem) -&gt; vector -&gt; vector
+
   val <a href="#val-map">map</a> : (elem -&gt; elem) -&gt; vector -&gt; vector
+
   val <a href="#val-foldli">foldli</a> : (int * elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
+
   val <a href="#val-foldri">foldri</a> : (int * elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
+
   val <a href="#val-foldl">foldl</a> : (elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
+
   val <a href="#val-foldr">foldr</a> : (elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
+
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; vector -&gt; (int * elem) option
+
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; vector -&gt; elem option
+
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
+
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
+
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; vector * vector -&gt; order
 end
 </pre>
@@ -94,6 +125,8 @@ end
 ```sml
 type vector
 ```
+
+The type of these vectors.
 
 <details><summary>Tests (2)</summary>
 
@@ -106,6 +139,8 @@ For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charve
 ```sml
 type elem
 ```
+
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](MONO_VECTOR.md), `char` for [`CharVector`](MONO_VECTOR.md).
 
 <details><summary>Tests (2)</summary>
 
@@ -121,6 +156,12 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val maxLen : int
 ```
 
+The greatest length such a vector may have.
+
+> **Implementation** `MONO_VECTOR.maxLen/value`. The same bound as
+> [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen) for the families built on the polymorphic vectors, and
+> [`String.maxSize`](../sig/STRING.md#val-maxsize) for those whose vector is a string.
+
 <details><summary>Tests (2)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-vectors`
@@ -134,6 +175,10 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val fromList : elem list -> vector
 ```
+
+`fromList l` is the sequence of the elements of `l`, in order.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
 <details><summary>Tests (29)</summary>
 
@@ -183,6 +228,10 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val tabulate : int * (int -> elem) -> vector
 ```
 
+`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied.
+
 <details><summary>Tests (15)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -201,6 +250,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val length : vector -> int
 ```
 
+`length x` is the number of elements.
+
 <details><summary>Tests (10)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-size` &middot; `empty-string` &middot; `size*`
@@ -216,6 +267,10 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val sub : vector * int -> elem
 ```
+
+`sub (x, i)` is the element at position `i`, counting from 0.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
 
 <details><summary>Tests (16)</summary>
 
@@ -235,6 +290,10 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val update : vector * int * elem -> vector
 ```
 
+`update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `v`.
+
 <details><summary>Tests (20)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string` &middot; `constant-unchanged`
@@ -250,6 +309,10 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val concat : vector list -> vector
 ```
+
+`concat l` is the vectors of `l` one after another.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxLen`](#val-maxlen).
 
 <details><summary>Tests (15)</summary>
 
@@ -267,6 +330,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val appi : (int * elem -> unit) -> vector -> unit
 ```
 
+`appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
+
 <details><summary>Tests (5)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order` &middot; `empty`
@@ -280,6 +345,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val app : (elem -> unit) -> vector -> unit
 ```
+
+`app f x` applies `f` to every element, from 0 up, for its effect.
 
 <details><summary>Tests (5)</summary>
 
@@ -297,6 +364,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val mapi : (int * elem -> elem) -> vector -> vector
 ```
 
+`mapi f v` is the vector of the results of `f` on the index and the element of each position.
+
 <details><summary>Tests (9)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `index`
@@ -312,6 +381,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val map : (elem -> elem) -> vector -> vector
 ```
+
+`map f v` is the vector of the results of `f` on each element, in order.
 
 <details><summary>Tests (17)</summary>
 
@@ -339,6 +410,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val foldli : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
+`foldli f init x` combines the elements from the left, giving `f` the index as well.
+
 <details><summary>Tests (7)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty`
@@ -353,6 +426,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val foldri : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
+`foldri f init x` combines the elements from the right, giving `f` the index as well.
+
 <details><summary>Tests (6)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-in-order` &middot; `nonassociative`
@@ -366,6 +441,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
+
+`foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
 <details><summary>Tests (24)</summary>
 
@@ -415,6 +492,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val foldr : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
+`foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
 <details><summary>Tests (8)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `implode`
@@ -431,6 +510,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val findi : (int * elem -> bool) -> vector -> (int * elem) option
 ```
 
+`findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
+
 <details><summary>Tests (14)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -446,6 +527,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val find : (elem -> bool) -> vector -> elem option
 ```
+
+`find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
 <details><summary>Tests (15)</summary>
 
@@ -471,6 +554,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val exists : (elem -> bool) -> vector -> bool
 ```
 
+`exists p x` is `true` when some element satisfies `p`.
+
 <details><summary>Tests (11)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -487,6 +572,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val all : (elem -> bool) -> vector -> bool
 ```
 
+`all p x` is `true` when every element satisfies `p`.
+
 <details><summary>Tests (13)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -502,6 +589,8 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ```sml
 val collate : (elem * elem -> order) -> vector * vector -> order
 ```
+
+`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
 
 <details><summary>Tests (40)</summary>
 
@@ -544,6 +633,11 @@ For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mon
 In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `equal` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
 
 </details>
+
+## See also
+
+[`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md), [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md),
+[`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
 
 ---
 

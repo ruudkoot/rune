@@ -2,6 +2,22 @@
 
 [How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
+## Sequences
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`ARRAY`](sig/ARRAY.md) | Arrays: mutable sequences of a fixed length, of any element type. | required | 25 of 25 |
+| [`ARRAY2`](sig/ARRAY2.md) | Two-dimensional arrays: mutable rectangles of elements, indexed by a row and a column. | optional | 20 of 20 |
+| [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | A stretch of an array, without a copy of it: a base array and a start and a length inside it. | required | 26 of 26 |
+| [`MONO_ARRAY`](sig/MONO_ARRAY.md) | Mutable sequences of one element type. | required | 26 of 26 |
+| [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | Two-dimensional arrays of one element type, as [`ARRAY2`](sig/ARRAY2.md) describes them for any element type. | optional | 22 of 22 |
+| [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | A stretch of an array of one element type, without a copy of it. | required | 30 of 30 |
+| [`MONO_VECTOR`](sig/MONO_VECTOR.md) | The sequences of one element type: vectors, arrays and their slices, as [`VECTOR`](sig/VECTOR.md), [`ARRAY`](sig/ARRAY.md), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) and [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) describe them for any element type. | required | 22 of 22 |
+| [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | The same as [`MONO_VECTOR`](sig/MONO_VECTOR.md), with a vector type that admits equality. | extension | 22 of 22 |
+| [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | A stretch of a vector of one element type, without a copy of it. | required | 26 of 26 |
+| [`VECTOR`](sig/VECTOR.md) | Vectors: immutable sequences of a fixed length, of any element type. | required | 21 of 21 |
+| [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | A stretch of a vector, without a copy of it: a base vector and a start and a length inside it. | required | 24 of 24 |
+
 ## Text and characters
 
 | Signature |  | Status | Documented |
@@ -52,9 +68,6 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`ARRAY`](sig/ARRAY.md) | signature ARRAY, transcribed from <https://smlfamily.github.io/Basis/array.html> | required | 0 of 25 |
-| [`ARRAY2`](sig/ARRAY2.md) | signature ARRAY2, transcribed from <https://smlfamily.github.io/Basis/array2.html> | required | 0 of 20 |
-| [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | signature ARRAY\_SLICE, transcribed from <https://smlfamily.github.io/Basis/array-slice.html> | required | 0 of 26 |
 | [`BIN_IO`](sig/BIN_IO.md) | signature BIN\_IO, transcribed from <https://smlfamily.github.io/Basis/bin-io.html> | required | 0 of 3 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | signature BIT\_FLAGS, transcribed from <https://smlfamily.github.io/Basis/bit-flags.html> | required | 0 of 9 |
 | [`DATE`](sig/DATE.md) | signature DATE, transcribed from <https://smlfamily.github.io/Basis/date.html> | required | 0 of 24 |
@@ -62,12 +75,6 @@
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | signature IMPERATIVE\_IO, transcribed from <https://smlfamily.github.io/Basis/imperative-io.html> | required | 0 of 25 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
 | [`IO`](sig/IO.md) | signature IO, transcribed from <https://smlfamily.github.io/Basis/io.html> | required | 0 of 6 |
-| [`MONO_ARRAY`](sig/MONO_ARRAY.md) |  | required | 0 of 26 |
-| [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | signature MONO\_ARRAY2, transcribed from <https://smlfamily.github.io/Basis/mono-array2.html> | required | 0 of 22 |
-| [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) |  | required | 0 of 30 |
-| [`MONO_VECTOR`](sig/MONO_VECTOR.md) | The signatures of the monomorphic vectors, arrays and their slices. | required | 0 of 22 |
-| [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | The same with a vector that admits equality, for a family whose vector is a type of its own: WideCharVector, whose vector is the string of WideString, needs a type name so that wide string constants can be overloaded at it (`_overload string`), and strings are compared with =. | required | 0 of 22 |
-| [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) |  | required | 0 of 26 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | signature NET\_HOST\_DB, transcribed from <https://smlfamily.github.io/Basis/net-host-db.html> | required | 0 of 14 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | signature NET\_PROT\_DB, transcribed from <https://smlfamily.github.io/Basis/prot-db.html> | required | 0 of 6 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | signature NET\_SERV\_DB, transcribed from <https://smlfamily.github.io/Basis/serv-db.html> | required | 0 of 7 |
@@ -94,8 +101,6 @@
 | [`TIMER`](sig/TIMER.md) | signature TIMER, transcribed from <https://smlfamily.github.io/Basis/timer.html> | required | 0 of 10 |
 | [`UNIX`](sig/UNIX.md) | signature UNIX, transcribed from <https://smlfamily.github.io/Basis/unix.html> | required | 0 of 14 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | signature UNIX\_SOCK, transcribed from <https://smlfamily.github.io/Basis/unix-sock.html> | required | 0 of 14 |
-| [`VECTOR`](sig/VECTOR.md) | signature VECTOR, transcribed from <https://smlfamily.github.io/Basis/vector.html> | required | 0 of 21 |
-| [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | signature VECTOR\_SLICE, transcribed from <https://smlfamily.github.io/Basis/vector-slice.html> | required | 0 of 24 |
 
 ## Functors
 

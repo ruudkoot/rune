@@ -6,9 +6,9 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`ARRAY`](sig/ARRAY.md) | 25 | 0 | 0% | 22 | 0 |
-| [`ARRAY2`](sig/ARRAY2.md) | 20 | 0 | 0% | 17 | 0 |
-| [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | 26 | 0 | 0% | 25 | 0 |
+| [`ARRAY`](sig/ARRAY.md) | 25 | 25 | 100% | 22 | 22 |
+| [`ARRAY2`](sig/ARRAY2.md) | 20 | 20 | 100% | 17 | 17 |
+| [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | 26 | 26 | 100% | 25 | 25 |
 | [`BIN_IO`](sig/BIN_IO.md) | 3 | 0 | 0% | 3 | 0 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 0 | 0% | 7 | 0 |
 | [`BOOL`](sig/BOOL.md) | 5 | 5 | 100% | 4 | 4 |
@@ -27,12 +27,12 @@ documented when a comment describes it, alone or together with the entry before 
 | [`LIST`](sig/LIST.md) | 27 | 27 | 100% | 25 | 25 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 15 | 100% | 14 | 14 |
 | [`MATH`](sig/MATH.md) | 18 | 18 | 100% | 15 | 15 |
-| [`MONO_ARRAY`](sig/MONO_ARRAY.md) | 26 | 0 | 0% | 22 | 0 |
-| [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | 22 | 0 | 0% | 17 | 0 |
-| [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | 30 | 0 | 0% | 25 | 0 |
-| [`MONO_VECTOR`](sig/MONO_VECTOR.md) | 22 | 0 | 0% | 19 | 0 |
-| [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | 22 | 0 | 0% | 19 | 0 |
-| [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | 26 | 0 | 0% | 23 | 0 |
+| [`MONO_ARRAY`](sig/MONO_ARRAY.md) | 26 | 26 | 100% | 22 | 22 |
+| [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | 22 | 22 | 100% | 17 | 17 |
+| [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | 30 | 30 | 100% | 25 | 25 |
+| [`MONO_VECTOR`](sig/MONO_VECTOR.md) | 22 | 22 | 100% | 19 | 19 |
+| [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | 22 | 22 | 100% | 19 | 19 |
+| [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | 26 | 26 | 100% | 23 | 23 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | 14 | 0 | 0% | 11 | 0 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 0 | 0% | 5 | 0 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 0 | 0% | 6 | 0 |
@@ -68,16 +68,17 @@ documented when a comment describes it, alone or together with the entry before 
 | [`TIMER`](sig/TIMER.md) | 10 | 0 | 0% | 8 | 0 |
 | [`UNIX`](sig/UNIX.md) | 14 | 0 | 0% | 11 | 0 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 0 | 0% | 6 | 0 |
-| [`VECTOR`](sig/VECTOR.md) | 21 | 0 | 0% | 19 | 0 |
-| [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 0 | 0% | 23 | 0 |
+| [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
+| [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 422 | 27% | 1078 | 340 |
+| **all** | 1538 | 686 | 44% | 1078 | 571 |
 
 ## Notes that no check pins
 
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not
 be pinned: many are about the text and not about behaviour.
 
+- `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `StringCvt.cs/transparent` (Deviation), STRING_CVT
 
 ---

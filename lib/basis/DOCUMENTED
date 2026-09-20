@@ -2,6 +2,9 @@
 # runedoc treats what is a warning elsewhere as an error for them: an entry
 # without documentation, a function whose description shows no usage, a first
 # paragraph too long for a summary, a reference that leads nowhere.
+ARRAY
+ARRAY2
+ARRAY_SLICE
 BOOL
 BYTE
 CHAR
@@ -13,6 +16,12 @@ INT_INF
 LIST
 LIST_PAIR
 MATH
+MONO_ARRAY
+MONO_ARRAY2
+MONO_ARRAY_SLICE
+MONO_VECTOR
+MONO_VECTOR_EQ
+MONO_VECTOR_SLICE
 OPTION
 OS_IO
 PACK_REAL
@@ -22,4 +31,6 @@ STRING
 STRING_CVT
 SUBSTRING
 TEXT
+VECTOR
+VECTOR_SLICE
 WORD

@@ -1,12 +1,12 @@
 # signature ARRAY2
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **ARRAY2**
+[The Standard ML Basis Library](../README.md) &rsaquo; Sequences &rsaquo; **ARRAY2**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
-| Documentation | 0 of 20 entries documented |
+| Documentation | 20 of 20 entries documented |
 | Tests | 273 checks of 18 entries |
 | Source | [lib/basis/sig\_array2.sml](../../../../lib/basis/sig_array2.sml) |
 
@@ -21,8 +21,29 @@ structure Array2 : ARRAY2  (* optional *)
 | --- | --- | --- |
 | `Array2` | Array2: two-dimensional arrays, stored row by row in one array. | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
-signature ARRAY2, transcribed from
-<https://smlfamily.github.io/Basis/array2.html>
+Two-dimensional arrays: mutable rectangles of elements, indexed by a row
+and a column.
+
+Rows and columns are counted from 0, and the first index is the row: `sub (arr, i, j)` is the element in row `i` and column `j`. An array of no rows
+or no columns holds nothing but still has its dimensions.
+
+The traversals take a \*\*region\*\*, a rectangle inside an array: its `base`,
+the [`row`](#val-row) and `col` it starts at, and how many rows and columns it covers,
+where `NONE` means "to the edge". They also take a [`traversal`](#type-traversal), which says
+whether they go along the rows or down the columns; that decides the order
+the elements are visited in, and so what an effect sees.
+
+> **Erratum** `ARRAY2/sub-indices`. The specification's description of [`sub`](#val-sub)
+> says that "`i` gives the row index, and gives the column index"; the
+> second is `j`.
+
+## Contents
+
+[Making an array](#making-an-array) &middot;
+[Elements](#elements) &middot;
+[Shape](#shape) &middot;
+[Copying](#copying) &middot;
+[Traversing](#traversing)
 
 ## Interface
 
@@ -30,25 +51,49 @@ signature ARRAY2, transcribed from
 signature ARRAY2 =
 sig
   eqtype 'a <a href="#type-array">array</a>
-  type 'a <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : 'a array, <a href="#fld-region.row">row</a> : int, <a href="#fld-region.col">col</a> : int, <a href="#fld-region.nrows">nrows</a> : int option, <a href="#fld-region.ncols">ncols</a> : int option}
-  datatype <a href="#type-traversal">traversal</a> = <a href="#con-rowmajor">RowMajor</a> | <a href="#con-colmajor">ColMajor</a>
+
+  type 'a <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : 'a array,
+                    <a href="#fld-region.row">row</a> : int,
+                    <a href="#fld-region.col">col</a> : int,
+                    <a href="#fld-region.nrows">nrows</a> : int option,
+                    <a href="#fld-region.ncols">ncols</a> : int option}
+
+  datatype <a href="#type-traversal">traversal</a>
+    = <a href="#con-rowmajor">RowMajor</a>
+    | <a href="#con-colmajor">ColMajor</a>
 
   val <a href="#val-array">array</a> : int * int * 'a -&gt; 'a array
+
   val <a href="#val-fromlist">fromList</a> : 'a list list -&gt; 'a array
+
   val <a href="#val-tabulate">tabulate</a> : traversal -&gt; int * int * (int * int -&gt; 'a) -&gt; 'a array
+
   val <a href="#val-sub">sub</a> : 'a array * int * int -&gt; 'a
+
   val <a href="#val-update">update</a> : 'a array * int * int * 'a -&gt; unit
+
   val <a href="#val-dimensions">dimensions</a> : 'a array -&gt; int * int
+
   val <a href="#val-ncols">nCols</a> : 'a array -&gt; int
+
   val <a href="#val-nrows">nRows</a> : 'a array -&gt; int
+
   val <a href="#val-row">row</a> : 'a array * int -&gt; 'a Vector.vector
+
   val <a href="#val-column">column</a> : 'a array * int -&gt; 'a Vector.vector
+
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a region, <a href="#fld-copy.dst">dst</a> : 'a array, <a href="#fld-copy.dst_row">dst_row</a> : int, <a href="#fld-copy.dst_col">dst_col</a> : int} -&gt; unit
+
   val <a href="#val-appi">appi</a> : traversal -&gt; (int * int * 'a -&gt; unit) -&gt; 'a region -&gt; unit
+
   val <a href="#val-app">app</a> : traversal -&gt; ('a -&gt; unit) -&gt; 'a array -&gt; unit
+
   val <a href="#val-foldi">foldi</a> : traversal -&gt; (int * int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a region -&gt; 'b
+
   val <a href="#val-fold">fold</a> : traversal -&gt; ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
+
   val <a href="#val-modifyi">modifyi</a> : traversal -&gt; (int * int * 'a -&gt; 'a) -&gt; 'a region -&gt; unit
+
   val <a href="#val-modify">modify</a> : traversal -&gt; ('a -&gt; 'a) -&gt; 'a array -&gt; unit
 end
 </pre>
@@ -59,6 +104,10 @@ end
 eqtype 'a array
 ```
 
+The type of two-dimensional arrays.
+
+Two are equal when they are the same array, as for [`Array.array`](../sig/ARRAY.md#val-array).
+
 <details><summary>Tests (27)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
@@ -68,33 +117,60 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 ### <a name="type-region"></a>`region`
 
 ```sml
-type 'a region = {base : 'a array, row : int, col : int, nrows : int option, ncols : int option}
+type 'a region = {base : 'a array,
+                  row : int,
+                  col : int,
+                  nrows : int option,
+                  ncols : int option}
 ```
+
+A rectangle inside an array: where it starts and how far it reaches.
+
+`NONE` for `nrows` or `ncols` means "as far as the array goes". A region
+is valid when it lies inside its base, and an empty one is valid too, so
+a region that starts at the edge and covers nothing is allowed and
+traverses nothing.
+
+how many columns, or NONE for all that are left
 
 | Field | Type | Description |
 | --- | --- | --- |
-| <a name="fld-region.base"></a>`base` | `'a array` |  |
-| <a name="fld-region.row"></a>`row` | `int` |  |
-| <a name="fld-region.col"></a>`col` | `int` |  |
-| <a name="fld-region.nrows"></a>`nrows` | `int option` |  |
+| <a name="fld-region.base"></a>`base` | `'a array` | the array the rectangle is in |
+| <a name="fld-region.row"></a>`row` | `int` | the row it starts at |
+| <a name="fld-region.col"></a>`col` | `int` | the column it starts at |
+| <a name="fld-region.nrows"></a>`nrows` | `int option` | how many rows, or NONE for all that are left |
 | <a name="fld-region.ncols"></a>`ncols` | `int option` |  |
 
 ### <a name="type-traversal"></a>`traversal`
 
 ```sml
-datatype traversal = RowMajor | ColMajor
+datatype traversal
+  = RowMajor
+  | ColMajor
 ```
+
+Which way a traversal goes.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
-| <a name="con-rowmajor"></a>`RowMajor` |  |  |
-| <a name="con-colmajor"></a>`ColMajor` |  |  |
+| <a name="con-rowmajor"></a>`RowMajor` |  | along each row in turn: (0,0), (0,1), ..., (1,0), ... |
+| <a name="con-colmajor"></a>`ColMajor` |  | down each column in turn: (0,0), (1,0), ..., (0,1), ... |
+
+## Making an array
 
 ### <a name="val-array"></a>`array`
 
 ```sml
 val array : int * int * 'a -> 'a array
 ```
+
+`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0`, or the array would be too large.
+
+> **Implementation** `Array2.array/Size`. How large is too large is not
+> fixed: an array is too large when the number of its elements is no
+> `int`, or when it exceeds what an array can hold.
 
 <details><summary>Tests (27)</summary>
 
@@ -108,6 +184,10 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val fromList : 'a list list -> 'a array
 ```
 
+`fromList rows` is a new array of the lists of `rows`, one row each.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length.
+
 <details><summary>Tests (18)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `dimensions` &middot; `second-row-first-column` &middot; `first-row-last-column` &middot; `one-row` &middot; `one-column` &middot; `one-element` &middot; `no-rows` &middot; `empty-rows` &middot; `strings` &middot; `Size-second-shorter` (raises Size) &middot; `Size-second-longer` (raises Size) &middot; `Size-last-shorter` (raises Size) &middot; `Size-first-empty` (raises Size) &middot; `Size-second-empty` (raises Size) &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `*`
@@ -120,17 +200,35 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 ```
 
+`tabulate trv (r, c, f)` is a new array of `r` rows and `c` columns whose element at `(i, j)` is `f (i, j)`.
+
+`f` is applied in the order that `trv` gives.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0` or the array would be too large,
+before `f` is applied at all.
+
+> **Reading** `Array2.tabulate/traversal-order`. "Initialized in traversal
+> order" is read as: `f (0, 0)` is applied first whichever traversal is
+> asked for, and its result fills the array before the rest is
+> computed.
+
 <details><summary>Tests (19)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `RowMajor` &middot; `ColMajor` &middot; `dimensions` &middot; `RowMajor-order` &middot; `ColMajor-order` &middot; `RowMajor-counter` &middot; `ColMajor-counter` &middot; `one` &middot; `no-rows` &middot; `no-columns` &middot; `no-elements-no-f` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-ColMajor` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `*` &middot; `Size-too-large-RowMajor` (raises Size) &middot; `Size-too-large-ColMajor` (raises Size)
 
 </details>
 
+## Elements
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : 'a array * int * int -> 'a
 ```
+
+`sub (arr, i, j)` is the element of `arr` in row `i` and column `j`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
 <details><summary>Tests (20)</summary>
 
@@ -144,17 +242,25 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val update : 'a array * int * int * 'a -> unit
 ```
 
+`update (arr, i, j, x)` puts `x` in row `i` and column `j` of `arr`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
+
 <details><summary>Tests (17)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `first` &middot; `end-of-first-row` &middot; `start-of-last-row` &middot; `last` &middot; `twice-same-element` &middot; `seen-through-alias` &middot; `Subscript-row-nRows` (raises Subscript) &middot; `Subscript-column-nCols` (raises Subscript) &middot; `Subscript-negative-row` (raises Subscript) &middot; `Subscript-negative-column` (raises Subscript) &middot; `Subscript-no-rows` (raises Subscript) &middot; `Subscript-no-columns` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow-row` (raises Subscript) &middot; `Subscript-not-Overflow-column` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
+## Shape
+
 ### <a name="val-dimensions"></a>`dimensions`
 
 ```sml
 val dimensions : 'a array -> int * int
 ```
+
+`dimensions arr` is the pair of the number of rows and the number of columns.
 
 <details><summary>Tests (3)</summary>
 
@@ -168,6 +274,8 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val nCols : 'a array -> int
 ```
 
+`nCols arr` is the number of columns.
+
 <details><summary>Tests (5)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `no-rows` &middot; `no-columns` &middot; `is-second-of-dimensions` &middot; `*`
@@ -179,6 +287,8 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 ```sml
 val nRows : 'a array -> int
 ```
+
+`nRows arr` is the number of rows.
 
 <details><summary>Tests (5)</summary>
 
@@ -192,6 +302,10 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val row : 'a array * int -> 'a Vector.vector
 ```
 
+`row (arr, i)` is a vector of the elements of row `i`, left to right.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is no row of `arr`.
+
 <details><summary>Tests (11)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `first` &middot; `middle` &middot; `last` &middot; `no-columns` &middot; `is-a-snapshot` &middot; `Subscript-nRows` (raises Subscript) &middot; `Subscript-is-a-column-index` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-no-rows` (raises Subscript) &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript)
@@ -204,17 +318,35 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val column : 'a array * int -> 'a Vector.vector
 ```
 
+`column (arr, j)` is a vector of the elements of column `j`, top to bottom.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
+
 <details><summary>Tests (11)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `first` &middot; `middle` &middot; `last` &middot; `no-rows` &middot; `is-a-snapshot` &middot; `Subscript-nCols` (raises Subscript) &middot; `Subscript-is-a-row-index` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-no-columns` (raises Subscript) &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript)
 
 </details>
 
+## Copying
+
 ### <a name="val-copy"></a>`copy`
 
 ```sml
 val copy : {src : 'a region, dst : 'a array, dst_row : int, dst_col : int} -> unit
 ```
+
+`copy {src, dst, dst_row, dst_col}` copies the region `src` into `dst`, with its top left corner at `(dst_row, dst_col)`.
+
+The source and the destination may be one array and may overlap: every
+element arrives as it was before the copy began.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `src` is not a valid region, or if it does not
+fit into `dst` at that corner.
+
+> **Reading** `Array2.copy/Subscript-dst-nothing-row-beyond`. The place the
+> region is copied to must be inside `dst` even when the region is empty,
+> so a corner outside `dst` raises although nothing would be copied.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -229,11 +361,21 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 
 </details>
 
+## Traversing
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : traversal -> (int * int * 'a -> unit) -> 'a region -> unit
 ```
+
+`appi trv f reg` applies `f` to the row, the column and the element of each position of the region, in the order `trv` gives.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
+
+> **Reading** `Array2.appi/nothing-rows-at-the-end`. "0 \<= \#row reg \<=
+> nRows" allows a region to begin at the edge of the array: such a region
+> and one of no rows or no columns are valid, and traverse nothing.
 
 <details><summary>Tests (17)</summary>
 
@@ -247,6 +389,8 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val app : traversal -> ('a -> unit) -> 'a array -> unit
 ```
 
+`app trv f arr` applies `f` to every element of `arr`, in the order `trv` gives, for its effect.
+
 <details><summary>Tests (6)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `RowMajor` &middot; `ColMajor` &middot; `no-rows` &middot; `no-columns` &middot; `array-unchanged` &middot; `*`
@@ -258,6 +402,10 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 ```sml
 val foldi : traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b
 ```
+
+`foldi trv f init reg` combines the elements of the region, giving `f` the row and the column as well.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
 <details><summary>Tests (15)</summary>
 
@@ -271,6 +419,8 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
+`fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
+
 <details><summary>Tests (7)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `RowMajor-conses-reversed` &middot; `ColMajor-conses-reversed` &middot; `nonassociative-RowMajor` &middot; `nonassociative-ColMajor` &middot; `no-rows` &middot; `no-columns` &middot; `*`
@@ -282,6 +432,10 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 ```sml
 val modifyi : traversal -> (int * int * 'a -> 'a) -> 'a region -> unit
 ```
+
+`modifyi trv f reg` replaces each element of the region by `f` of its row, its column and that element.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
 <details><summary>Tests (16)</summary>
 
@@ -295,11 +449,17 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 val modify : traversal -> ('a -> 'a) -> 'a array -> unit
 ```
 
+`modify trv f arr` replaces every element of `arr` by `f` of it, in the order `trv` gives.
+
 <details><summary>Tests (8)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `RowMajor` &middot; `ColMajor` &middot; `order-RowMajor` &middot; `order-ColMajor` &middot; `ColMajor-counter` &middot; `no-rows` &middot; `twice` &middot; `*`
 
 </details>
+
+## See also
+
+[`ARRAY`](../sig/ARRAY.md), [`VECTOR`](../sig/VECTOR.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md)
 
 ---
 

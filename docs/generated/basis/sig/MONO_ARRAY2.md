@@ -1,12 +1,12 @@
 # signature MONO_ARRAY2
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **MONO_ARRAY2**
+[The Standard ML Basis Library](../README.md) &rsaquo; Sequences &rsaquo; **MONO_ARRAY2**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 18 |
-| Documentation | 0 of 22 entries documented |
+| Documentation | 22 of 22 entries documented |
 | Tests | 340 checks of 19 entries |
 | Source | [lib/basis/sig\_mono\_array2.sml](../../../../lib/basis/sig_mono_array2.sml) |
 
@@ -55,18 +55,26 @@ structure WordArray2 : MONO_ARRAY2 where type vector = WordVector.vector where t
 | `Word8Array2` | Word8Array2: two-dimensional arrays of bytes (optional in the specification), whose rows and columns are Word8Vector.vector values. | [lib/basis/word8array2.sml](../../../../lib/basis/word8array2.sml) |
 | `WordArray2` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
-signature MONO\_ARRAY2, transcribed from
-<https://smlfamily.github.io/Basis/mono-array2.html>
+Two-dimensional arrays of one element type, as [`ARRAY2`](../sig/ARRAY2.md) describes them for
+any element type.
 
-The constraints of the instances (`structure Word8Array2 :> MONO_ARRAY2 where type vector = Word8Vector.vector where type elem = Word8.word`, the
-same for CharArray2 with CharVector.vector and char, and for BoolArray2,
-IntArray2, WordArray2, RealArray2, LargeIntArray2, LargeWordArray2,
-LargeRealArray2, Int\<N\>Array2, Word\<N\>Array2 and Real\<N\>Array2 with the
-vector of their element type) are in tests/basis/word8array2\_sig.sml,
-tests/basis/chararray2\_sig.sml and tests/basis/mono.\*\_sig.sml. "If an
-implementation provides any structure matching MONO\_ARRAY2, it must also
-supply the structure Array2 and its signature ARRAY2": the traversal is
-that of Array2.
+Everything here means what it means in [`ARRAY2`](../sig/ARRAY2.md), whose page describes
+regions and traversals at more length; only the element type is fixed, and
+[`row`](#val-row) and [`column`](#val-column) give the vector of that element type rather than a
+polymorphic one.
+
+> **Erratum** `MONO_ARRAY2/instance-constraints`. The specification writes the
+> identity of [`vector`](#type-vector) with the family's vector and of [`elem`](#type-elem) with its
+> element as constraints on the structure; they are checked in the suite
+> instead, structure by structure.
+
+## Contents
+
+[Making an array](#making-an-array) &middot;
+[Elements](#elements) &middot;
+[Shape](#shape) &middot;
+[Copying](#copying) &middot;
+[Traversing](#traversing)
 
 ## Interface
 
@@ -74,27 +82,47 @@ that of Array2.
 signature MONO_ARRAY2 =
 sig
   eqtype <a href="#type-array">array</a>
+
   type <a href="#type-elem">elem</a>
+
   type <a href="#type-vector">vector</a>
+
   type <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : array, <a href="#fld-region.row">row</a> : int, <a href="#fld-region.col">col</a> : int, <a href="#fld-region.nrows">nrows</a> : int option, <a href="#fld-region.ncols">ncols</a> : int option}
+
   datatype <a href="#type-traversal">traversal</a> = datatype Array2.traversal
 
   val <a href="#val-array">array</a> : int * int * elem -&gt; array
+
   val <a href="#val-fromlist">fromList</a> : elem list list -&gt; array
+
   val <a href="#val-tabulate">tabulate</a> : traversal -&gt; int * int * (int * int -&gt; elem) -&gt; array
+
   val <a href="#val-sub">sub</a> : array * int * int -&gt; elem
+
   val <a href="#val-update">update</a> : array * int * int * elem -&gt; unit
+
   val <a href="#val-dimensions">dimensions</a> : array -&gt; int * int
+
   val <a href="#val-ncols">nCols</a> : array -&gt; int
+
   val <a href="#val-nrows">nRows</a> : array -&gt; int
+
   val <a href="#val-row">row</a> : array * int -&gt; vector
+
   val <a href="#val-column">column</a> : array * int -&gt; vector
+
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : region, <a href="#fld-copy.dst">dst</a> : array, <a href="#fld-copy.dst_row">dst_row</a> : int, <a href="#fld-copy.dst_col">dst_col</a> : int} -&gt; unit
+
   val <a href="#val-appi">appi</a> : traversal -&gt; (int * int * elem -&gt; unit) -&gt; region -&gt; unit
+
   val <a href="#val-app">app</a> : traversal -&gt; (elem -&gt; unit) -&gt; array -&gt; unit
+
   val <a href="#val-foldi">foldi</a> : traversal -&gt; (int * int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; region -&gt; 'b
+
   val <a href="#val-fold">fold</a> : traversal -&gt; (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
+
   val <a href="#val-modifyi">modifyi</a> : traversal -&gt; (int * int * elem -&gt; elem) -&gt; region -&gt; unit
+
   val <a href="#val-modify">modify</a> : traversal -&gt; (elem -&gt; elem) -&gt; array -&gt; unit
 end
 </pre>
@@ -104,6 +132,10 @@ end
 ```sml
 eqtype array
 ```
+
+The type of these two-dimensional arrays.
+
+Two are equal when they are the same array.
 
 <details><summary>Tests (28)</summary>
 
@@ -119,6 +151,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 type elem
 ```
 
+The type of the elements.
+
 <details><summary>Tests (1)</summary>
 
 In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `sixteen-distinct-samples`
@@ -131,11 +165,20 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 type vector
 ```
 
+The type of the vectors that [`row`](#val-row) and [`column`](#val-column) give: the one of the family.
+
 ### <a name="type-region"></a>`region`
 
 ```sml
 type region = {base : array, row : int, col : int, nrows : int option, ncols : int option}
 ```
+
+A rectangle inside an array, as in [`ARRAY2`](../sig/ARRAY2.md): where it starts and how far
+it reaches, with `NONE` for "to the edge".
+
+> **Reading** `MONO_ARRAY2.region/at-the-end`. A region that starts at the
+> edge of the array, and one of no rows or no columns, is valid and
+> covers nothing.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -151,11 +194,20 @@ type region = {base : array, row : int, col : int, nrows : int option, ncols : i
 datatype traversal = datatype Array2.traversal
 ```
 
+Which way a traversal goes: the [`traversal`](#type-traversal) of [`Array2`](../sig/ARRAY2.md), so that the two
+structures speak of one type.
+
+## Making an array
+
 ### <a name="val-array"></a>`array`
 
 ```sml
 val array : int * int * elem -> array
 ```
+
+`array (r, c, x)` is a new array of `r` rows and `c` columns, every element `x`.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0`, or the array would be too large.
 
 <details><summary>Tests (28)</summary>
 
@@ -171,6 +223,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val fromList : elem list list -> array
 ```
 
+`fromList rows` is a new array of the lists of `rows`, one row each.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length.
+
 <details><summary>Tests (20)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Size-ragged` (raises Size)
@@ -185,6 +241,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val tabulate : traversal -> int * int * (int * int -> elem) -> array
 ```
 
+`tabulate trv (r, c, f)` is a new array whose element at `(i, j)` is `f (i, j)`, applied in the order `trv` gives.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0` or the array would be too large.
+
 <details><summary>Tests (24)</summary>
 
 For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `high-characters`
@@ -197,11 +257,17 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 
 </details>
 
+## Elements
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : array * int * int -> elem
 ```
+
+`sub (arr, i, j)` is the element in row `i` and column `j`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
 <details><summary>Tests (24)</summary>
 
@@ -217,6 +283,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val update : array * int * int * elem -> unit
 ```
 
+`update (arr, i, j, x)` puts `x` in row `i` and column `j`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
+
 <details><summary>Tests (20)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Subscript` (raises Subscript)
@@ -225,11 +295,15 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 
 </details>
 
+## Shape
+
 ### <a name="val-dimensions"></a>`dimensions`
 
 ```sml
 val dimensions : array -> int * int
 ```
+
+`dimensions arr` is the pair of the number of rows and the number of columns.
 
 <details><summary>Tests (4)</summary>
 
@@ -245,6 +319,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val nCols : array -> int
 ```
 
+`nCols arr` is the number of columns.
+
 <details><summary>Tests (6)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
@@ -259,6 +335,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val nRows : array -> int
 ```
 
+`nRows arr` is the number of rows.
+
 <details><summary>Tests (6)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
@@ -272,6 +350,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 ```sml
 val row : array * int -> vector
 ```
+
+`row (arr, i)` is a vector of the elements of row `i`, left to right.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is no row of `arr`.
 
 <details><summary>Tests (30)</summary>
 
@@ -319,6 +401,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val column : array * int -> vector
 ```
 
+`column (arr, j)` is a vector of the elements of column `j`, top to bottom.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
+
 <details><summary>Tests (17)</summary>
 
 For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `is-a-string` &middot; `is-CharVector.vector`
@@ -331,11 +417,22 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 
 </details>
 
+## Copying
+
 ### <a name="val-copy"></a>`copy`
 
 ```sml
 val copy : {src : region, dst : array, dst_row : int, dst_col : int} -> unit
 ```
+
+`copy {src, dst, dst_row, dst_col}` copies the region `src` into `dst` at that corner.
+
+Source and destination may be one array and may overlap: every element
+arrives as it was before the copy began.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `src` is not a valid region, or if it does not
+fit into `dst` at that corner, which can happen for an empty region
+too.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -352,11 +449,17 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 
 </details>
 
+## Traversing
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : traversal -> (int * int * elem -> unit) -> region -> unit
 ```
+
+`appi trv f reg` applies `f` to the row, the column and the element of each position of the region.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
 <details><summary>Tests (20)</summary>
 
@@ -372,6 +475,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val app : traversal -> (elem -> unit) -> array -> unit
 ```
 
+`app trv f arr` applies `f` to every element, in the order `trv` gives, for its effect.
+
 <details><summary>Tests (7)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `ColMajor`
@@ -386,6 +491,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val foldi : traversal -> (int * int * elem * 'b -> 'b) -> 'b -> region -> 'b
 ```
 
+`foldi trv f init reg` combines the elements of the region, giving `f` the row and the column as well.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
+
 <details><summary>Tests (19)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `RowMajor` &middot; `ColMajor` &middot; `coordinates` &middot; `Subscript` (raises Subscript)
@@ -399,6 +508,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 ```sml
 val fold : traversal -> (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
+
+`fold trv f init arr` combines every element, in the order `trv` gives.
 
 <details><summary>Tests (11)</summary>
 
@@ -418,6 +529,10 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val modifyi : traversal -> (int * int * elem -> elem) -> region -> unit
 ```
 
+`modifyi trv f reg` replaces each element of the region by `f` of its row, its column and that element.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
+
 <details><summary>Tests (18)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region` &middot; `Subscript` (raises Subscript)
@@ -432,6 +547,8 @@ In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_
 val modify : traversal -> (elem -> elem) -> array -> unit
 ```
 
+`modify trv f arr` replaces every element by `f` of it, in the order `trv` gives.
+
 <details><summary>Tests (12)</summary>
 
 For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `toUpper`
@@ -443,6 +560,10 @@ For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bo
 In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `RowMajor` &middot; `ColMajor` &middot; `order-RowMajor` &middot; `order-ColMajor` &middot; `ColMajor-counter` &middot; `no-rows` &middot; `twice` &middot; `*`
 
 </details>
+
+## See also
+
+[`ARRAY2`](../sig/ARRAY2.md), [`MONO_ARRAY`](../sig/MONO_ARRAY.md), [`MONO_VECTOR`](../sig/MONO_VECTOR.md)
 
 ---
 

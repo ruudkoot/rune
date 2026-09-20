@@ -1,12 +1,12 @@
 # signature MONO_ARRAY
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **MONO_ARRAY**
+[The Standard ML Basis Library](../README.md) &rsaquo; Sequences &rsaquo; **MONO_ARRAY**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 19 |
-| Documentation | 0 of 26 entries documented |
+| Documentation | 26 of 26 entries documented |
 | Tests | 362 checks of 26 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
@@ -57,36 +57,66 @@ structure WordArray : MONO_ARRAY where type vector = WordVector.vector where typ
 | `Word8Array` |  | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
 | `WordArray` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
+Mutable sequences of one element type.
+
+> **Implementation** `Word8Array.array/one-value-per-byte`. A [`Word8Array.array`](#val-array)
+> is an ordinary array with one value of the machine per byte.
+
 ## Interface
 
 <pre>
 signature MONO_ARRAY =
 sig
   eqtype <a href="#type-array">array</a>
+
   type <a href="#type-elem">elem</a>
+
   type <a href="#type-vector">vector</a>
+
   val <a href="#val-maxlen">maxLen</a> : int
+
   val <a href="#val-array">array</a> : int * elem -&gt; array
+
   val <a href="#val-fromlist">fromList</a> : elem list -&gt; array
+
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; elem) -&gt; array
+
   val <a href="#val-length">length</a> : array -&gt; int
+
   val <a href="#val-sub">sub</a> : array * int -&gt; elem
+
   val <a href="#val-update">update</a> : array * int * elem -&gt; unit
+
   val <a href="#val-vector">vector</a> : array -&gt; vector
+
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : array, <a href="#fld-copy.dst">dst</a> : array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
+
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : vector, <a href="#fld-copyvec.dst">dst</a> : array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
+
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; array -&gt; unit
+
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; array -&gt; unit
+
   val <a href="#val-modifyi">modifyi</a> : (int * elem -&gt; elem) -&gt; array -&gt; unit
+
   val <a href="#val-modify">modify</a> : (elem -&gt; elem) -&gt; array -&gt; unit
+
   val <a href="#val-foldli">foldli</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
+
   val <a href="#val-foldri">foldri</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
+
   val <a href="#val-foldl">foldl</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
+
   val <a href="#val-foldr">foldr</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
+
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; array -&gt; (int * elem) option
+
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; array -&gt; elem option
+
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; array -&gt; bool
+
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; array -&gt; bool
+
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; array * array -&gt; order
 end
 </pre>
@@ -96,6 +126,10 @@ end
 ```sml
 eqtype array
 ```
+
+The type of these arrays.
+
+Two are equal when they are the same array, whatever they hold.
 
 <details><summary>Tests (24)</summary>
 
@@ -113,6 +147,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 type elem
 ```
 
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../sig/MONO_VECTOR.md), `char` for [`CharVector`](../sig/MONO_VECTOR.md).
+
 <details><summary>Tests (2)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `is-char`
@@ -126,6 +162,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 type vector
 ```
+
+The type of these vectors.
 
 <details><summary>Tests (29)</summary>
 
@@ -175,6 +213,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val maxLen : int
 ```
 
+The greatest length such an array may have.
+
 <details><summary>Tests (2)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-arrays`
@@ -188,6 +228,10 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val array : int * elem -> array
 ```
+
+`array (n, x)` is a new array of `n` elements, each of them `x`.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
 <details><summary>Tests (24)</summary>
 
@@ -205,6 +249,10 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val fromList : elem list -> array
 ```
 
+`fromList l` is the sequence of the elements of `l`, in order.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
+
 <details><summary>Tests (11)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil`
@@ -218,6 +266,10 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val tabulate : int * (int -> elem) -> array
 ```
+
+`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
+
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied.
 
 <details><summary>Tests (16)</summary>
 
@@ -237,6 +289,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val length : array -> int
 ```
 
+`length x` is the number of elements.
+
 <details><summary>Tests (7)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty`
@@ -250,6 +304,10 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val sub : array * int -> elem
 ```
+
+`sub (x, i)` is the element at position `i`, counting from 0.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
 
 <details><summary>Tests (13)</summary>
 
@@ -266,6 +324,10 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val update : array * int * elem -> unit
 ```
+
+`update (arr, i, x)` puts `x` at position `i` of `arr`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `arr`.
 
 <details><summary>Tests (18)</summary>
 
@@ -284,6 +346,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val vector : array -> vector
 ```
+
+`vector arr` is an immutable vector of the elements of `arr`, which is a copy.
 
 <details><summary>Tests (29)</summary>
 
@@ -333,6 +397,14 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val copy : {src : array, dst : array, di : int} -> unit
 ```
 
+`copy {src, dst, di}` copies `src` into `dst` from position `di` on.
+
+The two may be one array and may overlap: every element arrives as it
+was before the copy began.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if it does not fit, and then nothing has been
+copied.
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-copy.src"></a>`src` | `array` |  |
@@ -354,6 +426,11 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val copyVec : {src : vector, dst : array, di : int} -> unit
 ```
+
+`copyVec {src, dst, di}` copies the vector `src` into `dst` from position `di` on.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if it does not fit, and then nothing has been
+copied.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -379,6 +456,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val appi : (int * elem -> unit) -> array -> unit
 ```
 
+`appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
+
 <details><summary>Tests (4)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -393,6 +472,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val app : (elem -> unit) -> array -> unit
 ```
 
+`app f x` applies `f` to every element, from 0 up, for its effect.
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -406,6 +487,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val modifyi : (int * elem -> elem) -> array -> unit
 ```
+
+`modifyi f x` replaces the element at each position by `f` of the index and that element, in place.
 
 <details><summary>Tests (9)</summary>
 
@@ -422,6 +505,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val modify : (elem -> elem) -> array -> unit
 ```
+
+`modify f x` replaces every element by `f` of it, in place, from 0 up.
 
 <details><summary>Tests (28)</summary>
 
@@ -471,6 +556,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val foldli : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
+`foldli f init x` combines the elements from the left, giving `f` the index as well.
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
@@ -485,6 +572,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val foldri : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
+`foldri f init x` combines the elements from the right, giving `f` the index as well.
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
@@ -498,6 +587,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val foldl : (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
+
+`foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
 <details><summary>Tests (8)</summary>
 
@@ -515,6 +606,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val foldr : (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
+`foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
 <details><summary>Tests (7)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `implode`
@@ -531,6 +624,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val findi : (int * elem -> bool) -> array -> (int * elem) option
 ```
 
+`findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
+
 <details><summary>Tests (11)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first-true` &middot; `none` &middot; `stops`
@@ -544,6 +639,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val find : (elem -> bool) -> array -> elem option
 ```
+
+`find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
 <details><summary>Tests (9)</summary>
 
@@ -561,6 +658,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val exists : (elem -> bool) -> array -> bool
 ```
 
+`exists p x` is `true` when some element satisfies `p`.
+
 <details><summary>Tests (9)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `stops`
@@ -574,6 +673,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 ```sml
 val all : (elem -> bool) -> array -> bool
 ```
+
+`all p x` is `true` when every element satisfies `p`.
 
 <details><summary>Tests (11)</summary>
 
@@ -589,6 +690,8 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val collate : (elem * elem -> order) -> array * array -> order
 ```
 
+`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
 <details><summary>Tests (21)</summary>
 
 For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8array.sml): `unsigned-bytes`
@@ -600,6 +703,10 @@ For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.boo
 In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `equal` &middot; `same-array` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
 
 </details>
+
+## See also
+
+[`ARRAY`](../sig/ARRAY.md), [`MONO_VECTOR`](../sig/MONO_VECTOR.md), [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md)
 
 ---
 

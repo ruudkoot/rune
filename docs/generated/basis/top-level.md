@@ -62,7 +62,7 @@ of that structure's signature.
 | `ceil` | [`Real.ceil`](sig/REAL.md#val-ceil) | `ceil x` is the smallest whole number that is not less than `x`, as an `int`. |
 | `round` | [`Real.round`](sig/REAL.md#val-round) | `round x` is `x` rounded to the nearest whole number, ties to even, as an `int`. |
 | `trunc` | [`Real.trunc`](sig/REAL.md#val-trunc) | `trunc x` is `x` rounded towards zero, as an `int`. |
-| `vector` | [`Vector.fromList`](sig/VECTOR.md#val-fromlist) |  |
+| `vector` | [`Vector.fromList`](sig/VECTOR.md#val-fromlist) | `fromList l` is the vector of the elements of `l`, in order. |
 | `exnName` | [`General.exnName`](sig/GENERAL.md#val-exnname) | `exnName ex` is the name of the constructor of `ex`, without a structure in front and without its argument. |
 | `exnMessage` | [`General.exnMessage`](sig/GENERAL.md#val-exnmessage) | `exnMessage ex` is a message that describes `ex`, for a program that reports an exception it cannot handle. |
 
