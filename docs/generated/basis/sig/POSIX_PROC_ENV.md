@@ -321,6 +321,10 @@ val setgid : gid -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the process may not take the group `g`.
 
+> **Reading** `Posix.ProcEnv.setgid/own-is-allowed`. As for [`setuid`](#val-setuid): a process
+> may always take the group it has, and only a privileged one may take
+> another.
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `own` &middot; `root-raises`

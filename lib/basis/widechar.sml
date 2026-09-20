@@ -162,8 +162,11 @@ end
 
    Implementation: `WideChar.toString/escapes-above-255`. `toString` and
    `toCString` write a character above 255 as `\uXXXX`, or `\UXXXXXXXX` above
-   0xFFFF, as MLton writes them; `fromString` and `fromCString` read those
-   escapes and `\ddd` of up to three decimal digits. The text they take and
+   0xFFFF, as MLton writes them, and `fromString` and `fromCString` read those
+   escapes. `fromString` also reads `\ddd` of exactly three decimal digits,
+   and `fromCString` the escapes of C, whose digits are octal; an octal or a
+   `\x` escape of C names a character up to 255 only, so that
+   `fromCString "\\x1F600"` is `NONE`. The text they take and
    give is of `char`, the 8-bit one, as the signature writes it, and `scan`
    reads from a stream of `char` and yields a wide character.
 

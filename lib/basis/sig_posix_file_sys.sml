@@ -237,7 +237,12 @@ sig
 
   (* `mkdir (p, perms)` makes a directory `p` with the permissions `perms`, less the mask.
 
-     Raises: `OS.SysErr` if `p` is there already, or cannot be made. *)
+     Raises: `OS.SysErr` if `p` is there already, or cannot be made.
+
+     Implementation: `Posix.FileSys.mkdir/shares-OS.FileSys`. `rmdir`, `chdir`,
+     `getcwd`, `unlink`, `rename`, `readlink`, the directory streams and
+     `access` are the functions of `OS.FileSys` under the names of POSIX, and
+     `mkdir` differs from `OS.FileSys.mkDir` in the mode only. *)
   val mkdir : string * S.mode -> unit
 
   (* `mkfifo (p, perms)` makes a named pipe `p` with the permissions `perms`, less the mask.
@@ -303,7 +308,10 @@ sig
     (* `isChr st` is `true` when the file is a character device, as `/dev/null` is. *)
     val isChr : stat -> bool
 
-    (* `isBlk st` is `true` when the file is a block device. *)
+    (* `isBlk st` is `true` when the file is a block device.
+
+       No machine is sure to have a block device that a test may look at, so
+       the suite checks only that this is `false` of what is something else. *)
     val isBlk : stat -> bool
 
     (* `isReg st` is `true` when the file is an ordinary file. *)
@@ -333,7 +341,10 @@ sig
     (* `uid st` is the user that owns the file. *)
     val uid : stat -> uid
 
-    (* `gid st` is the group of the file. *)
+    (* `gid st` is the group of the file.
+
+       A new file has the effective group of the process or the group of its
+       directory, as the system decides; the suite takes either. *)
     val gid : stat -> gid
 
     (* `size st` is the size of the file in bytes. *)

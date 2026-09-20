@@ -13,6 +13,12 @@
    `WideTextIO.inputAll/reads-utf-8`,
    `WideTextIO.inputN/counts-characters-not-bytes`
 
+   Limitation: `WideTextIO/file-streams-have-no-positions`. The reader and
+   the writer of a file of wide characters have no positions, no `ioDesc`,
+   no operations that do not block, and neither `canInput` nor `avail`: a
+   position in the file is one of bytes and not of characters. Their
+   `chunkSize` is 1024 characters, where a file of `TextIO` has 4096.
+
    Implements: PRIM_IO
 
    Status: optional *)

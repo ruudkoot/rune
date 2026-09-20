@@ -219,6 +219,10 @@ val mkDir : string -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` is there already, or cannot be made.
 
+> **Implementation** `OS.FileSys.mkDir/mode`. The directory gets every
+> permission that the mask of the process leaves, as [`Posix.FileSys.mkdir`](../sig/POSIX_FILE_SYS.md#val-mkdir)
+> with the mode 0777 would give it.
+
 <details><summary>Tests (6)</summary>
 
 For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `creates` &middot; `nested` &middot; `missing-parent-SysErr` (raises) &middot; `exists-SysErr` (raises) &middot; `over-a-file-SysErr` (raises) &middot; `empty-SysErr` (raises)
@@ -337,8 +341,9 @@ val modTime : string -> Time.time
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
 
-> **Implementation** `OS.FileSys.modTime/whole-seconds`. The file system
-> keeps whole seconds only, so the time has no fraction.
+> **Implementation** `OS.FileSys.modTime/whole-seconds`. The VM passes on
+> the whole seconds of the time that the file system keeps, so the time
+> has no fraction.
 
 <details><summary>Tests (5)</summary>
 

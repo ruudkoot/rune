@@ -139,6 +139,9 @@ val system : string -> status
 > directory, and [`system`](#val-system) returns only once the command is done. What the
 > process has buffered is neither lost nor written twice by running one.
 
+A command that the shell cannot find gives a status that is no success,
+the 127 of the shell; the suite assumes that of every system's shell.
+
 <details><summary>Tests (15)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `exit-0` &middot; `exit-3` &middot; `exit-1` &middot; `exit-255` &middot; `true` &middot; `false` &middot; `empty-command` &middot; `unknown-command` &middot; `shell-redirection` &middot; `current-directory` &middot; `shell-syntax` &middot; `status-of-last-command` &middot; `status-of-and-list` &middot; `waits-for-the-command` &middot; `keeps-buffered-output`
@@ -155,8 +158,9 @@ val atExit : (unit -> unit) -> unit
 
 > **Implementation** `OS.Process.atExit/how-actions-run`. The actions run in
 > the reverse of the order they were given in, at a normal end and at
-> [`exit`](#val-exit) but not at [`terminate`](#val-terminate) and not after an uncaught exception. An
-> action that raises is ignored, and so is one that registers another.
+> [`exit`](#val-exit) but not at [`terminate`](#val-terminate) and not after an uncaught exception. The
+> exception of an action that raises is dropped and the others run, and
+> an action that calls [`atExit`](#val-atexit) registers nothing.
 
 <details><summary>Tests (3)</summary>
 

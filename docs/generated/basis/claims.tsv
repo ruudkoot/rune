@@ -163,7 +163,7 @@ WideCharVector	structure	MONO_VECTOR	where type elem = WideChar.char	optional	cl
 WideCharVector	structure	MONO_VECTOR_EQ	where type elem = RuneWideChar.char	optional	ascribed	lib/basis/widechar.sml
 WideCharVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideString	structure	STRING	where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
-WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	required	ascribed	lib/basis/widestring.sml
+WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideText	structure	TEXT		optional	claimed	lib/basis/widetext.sml
 WideTextPrimIO	structure	PRIM_IO		optional	claimed	lib/basis/widetextio.sml
 Word	structure	WORD		required	claimed	lib/basis/word.sml

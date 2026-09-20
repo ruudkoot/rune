@@ -16,7 +16,14 @@
    `TEXT`, `BYTE` *)
 signature MONO_VECTOR =
 sig
-  (* The type of these vectors. *)
+  (* The type of these vectors.
+
+     Deviation: `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
+     characters and of bytes, which are strings, a monomorphic vector is the
+     polymorphic vector of its elements, and the structures are not sealed: an
+     `IntVector.vector` is an `int vector`, and a program that relies on it is
+     not portable. The arrays are the same (`IntArray.array` is `int array`),
+     and so are those of `MONO_ARRAY2`. *)
   type vector
 
   (* The type of the elements: `Word8.word` for `Word8Vector`, `char` for `CharVector`. *)
@@ -118,7 +125,12 @@ sig
   (* The type of these vectors. *)
   type vector
 
-  (* The greatest length such an array may have. *)
+  (* The greatest length such an array may have.
+
+     Implementation: `MONO_ARRAY.maxLen/value`. `Array.maxLen`, 100,000,000,
+     for every instance, those of characters and of bytes too.
+
+     Pinned by: `*Array.maxLen/covers-created-arrays` *)
   val maxLen : int
 
   (* `array (n, x)` is a new array of `n` elements, each of them `x`.

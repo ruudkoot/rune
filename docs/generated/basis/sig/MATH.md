@@ -210,6 +210,9 @@ val asin : real -> real
 
 It is a NaN for an `x` outside `[~1, 1]`.
 
+The bounds of the results of [`asin`](#val-asin) and [`acos`](#val-acos) are checked with 1E\~15 to
+spare, for [`pi`](#val-pi) is rounded.
+
 <details><summary>Tests (12)</summary>
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `half` &middot; `one` &middot; `minus-one` &middot; `negative` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-range-and-inverse`

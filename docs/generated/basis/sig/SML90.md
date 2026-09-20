@@ -152,7 +152,7 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 exception Quot
 ```
 
-Raised by division that overflows, and by division by zero.
+Raised by division that overflows; division by zero raises [`Mod`](#exn-mod).
 
 <details><summary>Tests (1)</summary>
 
@@ -342,7 +342,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `car
 exception Interrupt
 ```
 
-Raised when the program is interrupted.
+Meant for a program that is interrupted.
+
+> **Limitation** `SML90.Interrupt/never-raised`. It is declared and nothing
+> raises it: the VM handles no signal, so an interrupt ends the program.
 
 <details><summary>Tests (1)</summary>
 
@@ -538,6 +541,9 @@ val lookahead : instream -> string
 `lookahead f` is the next character of `f` as a string, without removing it, or the empty string at the end.
 
 **Raises** [`Io`](#exn-io) if the stream cannot be read.
+
+> **Reading** `SML90.lookahead/closed-stream-is-empty`. A stream that has been
+> closed is at its end, so it gives the empty string as well, and not [`Io`](#exn-io).
 
 <details><summary>Other implementations (1)</summary>
 

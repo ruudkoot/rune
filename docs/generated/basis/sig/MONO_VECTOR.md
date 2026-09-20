@@ -134,6 +134,13 @@ type vector
 
 The type of these vectors.
 
+> **Deviation** `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
+> characters and of bytes, which are strings, a monomorphic vector is the
+> polymorphic vector of its elements, and the structures are not sealed: an
+> [`IntVector.vector`](#type-vector) is an `int vector`, and a program that relies on it is
+> not portable. The arrays are the same ([`IntArray.array`](../sig/MONO_ARRAY.md#val-array) is `int array`),
+> and so are those of [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md).
+
 <details><summary>Tests (2)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-String.string` &middot; `string-equality`

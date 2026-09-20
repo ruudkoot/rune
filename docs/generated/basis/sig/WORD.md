@@ -154,6 +154,13 @@ The type of words of this structure.
 > [`Word8`](WORD.md), [`Word16`](WORD.md) and [`Word32`](WORD.md) are kept in a word of the machine whose
 > upper bits are zero.
 
+> **Implementation** `Word.word/constants-overloaded`. A word constant has the
+> word type that its context asks for, [`Word8.word`](#type-word) as well as [`word`](#type-word), and
+> is checked against the range of that type when the program is compiled;
+> [`~`](#val-op-tilde) is there for words too. Integer constants are overloaded at
+> [`IntInf.int`](../sig/INTEGER.md#type-int) and the `IntN`, real ones at [`Real32.real`](../sig/REAL.md#type-real), and character and
+> string constants at [`WideChar.char`](../sig/CHAR.md#type-char) and [`WideString.string`](../sig/STRING.md#type-string).
+
 <details><summary>Tests (2)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `is-toplevel-word` &middot; `toplevel-is-Word.word`
@@ -787,8 +794,9 @@ val scan : StringCvt.radix -> (char, 'a) StringCvt.reader -> (word, 'a) StringCv
 `scan radix getc strm` reads a word in the given base from `strm`.
 
 It skips initial white space and then takes an optional prefix and the
-digits: `0w` in any base, and in [`StringCvt.HEX`](../sig/STRING_CVT.md#con-hex) also `0wx`, `0wX`, `0x`
-or `0X`. There is no sign. The answer is `SOME (w, rest)`, or `NONE`
+digits: `0w` in the bases other than [`StringCvt.HEX`](../sig/STRING_CVT.md#con-hex), and in that one
+`0wx`, `0wX`, `0x` or `0X`, where `0w` alone is no prefix: of `"0w1F"`
+the zero is read. There is no sign. The answer is `SOME (w, rest)`, or `NONE`
 when no digit is there.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number of more than [`wordSize`](#val-wordsize)

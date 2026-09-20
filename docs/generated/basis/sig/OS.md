@@ -163,7 +163,10 @@ val errorName : syserror -> string
 
 > **Implementation** `OS.errorName/posix-names`. The names are those of
 > [`Posix.Error`](../sig/POSIX.md#str-error), lower case and without the `E`: `"noent"` rather than
-> `"ENOENT"`.
+> `"ENOENT"`. An error that POSIX has no name for is called `error` and
+> its number, `"error9999"`, which [`syserror`](#val-syserror) reads back.
+
+**Example** `Option.map errorName (syserror "error9999") = SOME "error9999"`
 
 <details><summary>Other implementations (1)</summary>
 

@@ -21,8 +21,15 @@ status=0
 [ -f "$claims" ] || { echo "check-claims: no $claims (run make docs)"; exit 1; }
 
 # "Structure SIG" for every line of the suite, the partial transcriptions
-# (SPEC_*_IMP) left out.
+# (SPEC_*_IMP) left out. An ascription that goes on over several lines, each
+# of which begins with `where`, is read as one.
 cat tests/basis/*_sig.sml |
+  awk 'held != "" { t = $0; sub(/^[ \t]+/, "", t)
+                    if (t ~ /^where /) { held = held " " t; next }
+                    print held; held = "" }
+       /^[ \t]*structure [A-Za-z0-9_]* :>* *SPEC_/ { held = $0; next }
+       { print }
+       END { if (held != "") print held }' |
   sed -n 's/^[[:space:]]*structure [A-Za-z0-9_]* :>* *SPEC_\([A-Z0-9_]*\)\( .*\)* = \([A-Za-z0-9_.'"'"']*\)[[:space:]]*$/\3 \1/p' |
   grep -v '_IMP$' | sort -u > "$tmp/suite"
 

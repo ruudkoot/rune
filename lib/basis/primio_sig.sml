@@ -22,7 +22,7 @@
 
    See also: `IO`, `STREAM_IO`, `TEXT_IO`, `BIN_IO`, `POSIX_IO`
 
-   Erratum: `PRIM_IO/pos-of-the-instances`. The specification
+   Erratum: `PRIM_IO/slices-of-the-instances`. The specification
    leaves `vector_slice` and `array_slice` abstract; in `TextPrimIO` and
    `BinPrimIO` they are the slice types of the corresponding structures,
    which is what every implementation does and what the suite relies on. *)
@@ -78,7 +78,9 @@ sig
      Implementation: `PRIM_IO.reader/what-a-file-has`. The readers Rune makes
      for a file offer `readVec`, `avail`, `close` and `ioDesc`, and the
      positions only when the file has them; `augmentReader` derives the rest
-     that can be derived.
+     that can be derived. Their `chunkSize` is 4096, and so is a writer's. A
+     file is a handle of the VM, 0, 1 and 2 for the standard ones, and
+     `ioDesc` is the descriptor of the system under it.
 
      Pinned by: `*PrimIO.RD/*` `Posix.IO.mkBinReader/*` *)
   datatype reader =

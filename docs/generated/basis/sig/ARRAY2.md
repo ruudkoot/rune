@@ -140,6 +140,12 @@ is valid when it lies inside its base, and an empty one is valid too, so
 a region that starts at the edge and covers nothing is allowed and
 traverses nothing.
 
+> **Reading** `Array2.region/Subscript-not-Overflow`. Whether a region lies
+> inside its array is decided without a sum that could overflow, so a region
+> whose `row + nrows` is no `int` raises [`Subscript`](../sig/GENERAL.md#exn-subscript) and never [`Overflow`](../sig/GENERAL.md#exn-overflow).
+> [`appi`](#val-appi), [`foldi`](#val-foldi) and [`modifyi`](#val-modifyi) find that out before `f` is applied to
+> anything, so a bad region changes nothing.
+
 how many columns, or NONE for all that are left
 
 | Field | Type | Description |

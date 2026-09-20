@@ -82,7 +82,14 @@ sig
     | W_SIGNALED of signal      (* a signal ended it *)
     | W_STOPPED of signal       (* a signal stopped it; it has not ended *)
 
-  (* `fromStatus st` is what the status `st` says about how the process ended. *)
+  (* `fromStatus st` is what the status `st` says about how the process ended.
+
+     Implementation: `Posix.Process.fromStatus/status-encoding`. An
+     `OS.Process.status` is an `int`: the exit code of a process that ended of
+     itself, 256 and the number of the signal that ended it, or 512 and the
+     number of the signal that stopped it.
+
+     Pinned by: `Posix.Process.fromStatus/system-*` *)
   val fromStatus : OS.Process.status -> exit_status
 
   (* The flags that say what `waitpid` is to wait for. *)

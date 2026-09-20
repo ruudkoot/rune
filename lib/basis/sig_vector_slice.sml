@@ -38,7 +38,13 @@ sig
      Example: `vector (slice (Vector.fromList [1, 2, 3, 4], 1, SOME 2)) =
      Vector.fromList [2, 3]`
 
-     Example: `length (slice (Vector.fromList [1, 2, 3], 1, NONE)) = 2` *)
+     Example: `length (slice (Vector.fromList [1, 2, 3], 1, NONE)) = 2`
+
+     Reading: `VectorSlice.slice/Subscript-not-Overflow`. When `i + n` is no
+     `int` the slice does not exist, and `Subscript` says so, never `Overflow`;
+     `subslice` is the same, and so are the slices of the monomorphic vectors.
+
+     Pinned by: `*VectorSlice.s*slice/SOME-Subscript-not-Overflow-sum-*` *)
   val slice : 'a Vector.vector * int * int option -> 'a slice
 
   (* `subslice (sl, i, NONE)` is the stretch of `sl` from position `i` on, and `subslice (sl, i, SOME n)` the `n` elements from `i`.

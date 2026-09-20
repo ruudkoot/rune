@@ -143,6 +143,11 @@ The type of these two-dimensional arrays.
 
 Two are equal when they are the same array.
 
+> **Deviation** `MONO_ARRAY2.array/not-abstract`. An [`IntArray2.array`](#val-array) is an
+> `int Array2.array`: the structures are applications of one functor over
+> [`Array2`](../sig/ARRAY2.md) and are not sealed with this signature, which the library loads
+> after them; they match it, as the suite checks.
+
 <details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)

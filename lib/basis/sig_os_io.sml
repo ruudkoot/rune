@@ -22,7 +22,15 @@ sig
   eqtype iodesc
 
   (* `hash d` is a word that is the same for equal descriptors, for use in a
-     hash table. *)
+     hash table.
+
+     Implementation: `OS.IO.hash/descriptor-number`. The hash is the number of
+     the descriptor, and two `iodesc` are equal when the numbers are: the
+     `iodesc` of the reader under `TextIO.stdIn` is `Posix.FileSys.fdToIOD
+     Posix.FileSys.stdin`.
+
+     Pinned by: `OS.IO.hash/TextIO.stdIn-is-Posix-stdin`,
+     `OS.IO.compare/TextIO.stdIn-is-Posix-stdin` *)
   val hash : iodesc -> word
 
   (* `compare (d, e)` orders descriptors in some total order, which has no
@@ -39,9 +47,17 @@ sig
      descriptor that is closed.
 
      Reading: `OS.IO.kind/other-kinds`. "A given implementation may define
-     other iodesc values": the result need not be one of the seven of `Kind`.
-     An `iodesc_kind` is a name here, and a descriptor of something else has
-     a name that `Kind` does not list. *)
+     other iodesc values": the result need not be one of the seven of `Kind`,
+     and the suite allows for that. Here it always is one: what is none of
+     the others is a `device`.
+
+     Implementation: `OS.IO.kind/what-is-looked-at`. The kind is that of the
+     open file, so a descriptor that was opened through a symbolic link has
+     the kind of what the link names and never `symlink`. A descriptor is a
+     `tty` exactly when `Posix.ProcEnv.isatty` says so, which is asked first:
+     `/dev/null` is a `device`.
+
+     Pinned by: `OS.IO.Kind.*/dev-null` *)
   val kind : iodesc -> iodesc_kind
 
   (* The kinds of descriptor that every system knows. *)
@@ -59,7 +75,17 @@ sig
   (* ---- Polling ---- *)
 
   (* A descriptor together with the events to wait for on it: input, output,
-     urgent input. *)
+     urgent input.
+
+     Implementation: `OS.IO.poll_desc/a-descriptor-and-its-conditions`. A
+     `poll_desc` is the descriptor with the set of conditions asked for, so
+     asking twice is asking once, the order of asking does not matter, and one
+     that asks for input is not equal to one that asks for output. `OS.IO` is
+     not sealed and shows it: the constructor is `PollDesc`, with the bits 1
+     for input, 2 for output and 4 for priority.
+
+     Pinned by: `OS.IO.pollIn/twice`, `OS.IO.pollOut/commutes-with-pollIn`,
+     `OS.IO.pollOut/differs-from-pollIn` *)
   eqtype poll_desc
 
   (* What `poll` found out about one `poll_desc`: which of the events it asked

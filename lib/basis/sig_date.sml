@@ -73,7 +73,15 @@ sig
 
      Example: `(fn d => (month d, day d, hour d)) (date {year = 2001, month =
      Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME
-     Time.zeroTime}) = (Feb, 2, 1)` *)
+     Time.zeroTime}) = (Feb, 2, 1)`
+
+     Implementation: `Date.date/any-year`. The calendar of a date at an offset
+     is computed and not looked up, so any year that is an `int` has its dates,
+     the year ~5 and the year 100000 too. The specification asks for the years
+     from about 1900 to 2200 only, and the suite takes a date or `Date` beyond
+     the range of a 32-bit `time_t`. `toTime` raises `Date` from about the year
+     292000 on, where the microseconds no longer fit, and `fmt` for a year that
+     C's `int` of 32 bits cannot hold. *)
   val date : {year : int,
               month : month,
               day : int,
@@ -121,7 +129,10 @@ sig
      daylight saving time: `SOME true` is wrong for it, and `NONE` and `SOME
      false` are both right.
 
-     Pinned by: `Date.isDst/UTC-is-not-daylight-saving` *)
+     Pinned by: `Date.isDst/UTC-is-not-daylight-saving`
+
+     The suite assumes that no zone has daylight saving time both in January
+     and in July. *)
   val isDst : date -> bool option
 
   (* `localOffset ()` is how far the local zone is west of UTC, now.
@@ -141,7 +152,10 @@ sig
      written to hold in any of them: the offset is `NONE`, whole minutes, and
      less than a day from UTC.
 
-     Pinned by: `Date.fromTimeLocal/*` *)
+     Pinned by: `Date.fromTimeLocal/*`
+
+     The suite's moments are noon UTC on 15 January and 15 July 2001, away from
+     the changes of every zone, and the time at which it runs. *)
   val fromTimeLocal : Time.time -> date
 
   (* `fromTimeUniv t` is the moment `t` read in UTC.
@@ -150,7 +164,10 @@ sig
      second the time falls in: a fraction of a second is dropped, also for
      times before the epoch, where dropping is towards the earlier second.
 
-     Pinned by: `Date.fromTimeUniv/fraction-of-a-second*` *)
+     Pinned by: `Date.fromTimeUniv/fraction-of-a-second*`
+
+     The suite assumes that the clock of the machine shows a year from 2020 to
+     2199. *)
   val fromTimeUniv : Time.time -> date
 
   (* `toTime d` is the moment that `d` names.
@@ -189,7 +206,11 @@ sig
 
      Example: `fmt "%Y-%m-%d %H:%M" (date {year = 1995, month = Mar, day = 8,
      hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) =
-     "1995-03-08 19:06"` *)
+     "1995-03-08 19:06"`
+
+     Implementation: `Date.fmt/zone-names`. `%Z` is the C library's name of the
+     zone for a local date, `UTC` for a date at the offset zero and nothing for
+     one at any other offset. A `%` that ends the format is written as it is. *)
   val fmt : string -> date -> string
 
   (* `toString d` is `d` in the 24 characters of `"Wed Mar 08 19:06:45 1995"`, which is `fmt "%a %b %d %H:%M:%S %Y" d`.

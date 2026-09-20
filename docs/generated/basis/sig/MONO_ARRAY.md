@@ -221,6 +221,9 @@ val maxLen : int
 
 The greatest length such an array may have.
 
+> **Implementation** `MONO_ARRAY.maxLen/value`. [`Array.maxLen`](../sig/ARRAY.md#val-maxlen), 100,000,000,
+> for every instance, those of characters and of bytes too.
+
 <details><summary>Tests (2)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-arrays`

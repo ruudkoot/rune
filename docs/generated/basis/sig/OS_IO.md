@@ -113,6 +113,10 @@ val hash : iodesc -> word
 `hash d` is a word that is the same for equal descriptors, for use in a
 hash table.
 
+> **Implementation** `OS.IO.hash/descriptor-number`. The hash is the number of
+> the descriptor, and two [`iodesc`](#type-iodesc) are equal when the numbers are: the
+> [`iodesc`](#type-iodesc) of the reader under [`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) is `Posix.FileSys.fdToIOD Posix.FileSys.stdin`.
+
 <details><summary>Tests (6)</summary>
 
 For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `same-descriptor` &middot; `equal-descriptors` &middot; `not-constant`
@@ -165,9 +169,15 @@ val kind : iodesc -> iodesc_kind
 descriptor that is closed.
 
 > **Reading** `OS.IO.kind/other-kinds`. "A given implementation may define
-> other iodesc values": the result need not be one of the seven of [`Kind`](#str-kind).
-> An [`iodesc_kind`](#type-iodesc_kind) is a name here, and a descriptor of something else has
-> a name that [`Kind`](#str-kind) does not list.
+> other iodesc values": the result need not be one of the seven of [`Kind`](#str-kind),
+> and the suite allows for that. Here it always is one: what is none of
+> the others is a `device`.
+
+> **Implementation** `OS.IO.kind/what-is-looked-at`. The kind is that of the
+> open file, so a descriptor that was opened through a symbolic link has
+> the kind of what the link names and never `symlink`. A descriptor is a
+> `tty` exactly when [`Posix.ProcEnv.isatty`](../sig/POSIX_PROC_ENV.md#val-isatty) says so, which is asked first:
+> `/dev/null` is a `device`.
 
 <details><summary>Tests (7)</summary>
 
@@ -304,6 +314,13 @@ eqtype poll_desc
 
 A descriptor together with the events to wait for on it: input, output,
 urgent input.
+
+> **Implementation** `OS.IO.poll_desc/a-descriptor-and-its-conditions`. A
+> [`poll_desc`](#type-poll_desc) is the descriptor with the set of conditions asked for, so
+> asking twice is asking once, the order of asking does not matter, and one
+> that asks for input is not equal to one that asks for output. [`OS.IO`](../sig/OS.md#str-io) is
+> not sealed and shows it: the constructor is `PollDesc`, with the bits 1
+> for input, 2 for output and 4 for priority.
 
 ### <a name="type-poll_info"></a>`poll_info`
 

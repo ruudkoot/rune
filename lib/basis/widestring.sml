@@ -153,7 +153,16 @@ end
    `\UXXXXXXXX` (widechar.sml).
 
    Pinned by: `WideString.scan/reads-wide-characters`,
-   `WideString.scan/stops-at-a-character-it-cannot-read` *)
+   `WideString.scan/stops-at-a-character-it-cannot-read`
+
+   Reading: `WideString.scan/an-unescaped-double-quote-ends-it`. In the
+   stream of wide characters an escape is written with the characters of
+   ASCII, and a character that needs none stands for itself, those above 255
+   too. A double quote that no backslash precedes cannot be read and ends the
+   string, where `String.scan`, and `WideString.fromString` on its text of
+   `char`, convert it to itself.
+
+   Pinned by: `WideString.scan/stops-at-a-character-it-cannot-read` *)
 structure WideString :> STRING
   where type string = WideCharVector.vector
   where type char = WideChar.char = RuneWideString
@@ -256,6 +265,10 @@ struct
   val foldr = VS.foldr
 end
 
+(* Implements: SUBSTRING where type substring = WideCharVectorSlice.slice where
+   type string = WideCharVector.vector where type char = WideChar.char
+
+   Status: optional *)
 structure WideSubstring :> SUBSTRING
   where type substring = WideCharVectorSlice.slice
   where type string = WideCharVector.vector

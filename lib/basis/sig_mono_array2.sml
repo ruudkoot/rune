@@ -20,7 +20,12 @@ signature MONO_ARRAY2 =
 sig
   (* The type of these two-dimensional arrays.
 
-     Two are equal when they are the same array. *)
+     Two are equal when they are the same array.
+
+     Deviation: `MONO_ARRAY2.array/not-abstract`. An `IntArray2.array` is an
+     `int Array2.array`: the structures are applications of one functor over
+     `Array2` and are not sealed with this signature, which the library loads
+     after them; they match it, as the suite checks. *)
   eqtype array
 
   (* The type of the elements. *)

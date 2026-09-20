@@ -32,7 +32,16 @@ sig
      `NONE` for `nrows` or `ncols` means "as far as the array goes". A region
      is valid when it lies inside its base, and an empty one is valid too, so
      a region that starts at the edge and covers nothing is allowed and
-     traverses nothing. *)
+     traverses nothing.
+
+     Reading: `Array2.region/Subscript-not-Overflow`. Whether a region lies
+     inside its array is decided without a sum that could overflow, so a region
+     whose `row + nrows` is no `int` raises `Subscript` and never `Overflow`.
+     `appi`, `foldi` and `modifyi` find that out before `f` is applied to
+     anything, so a bad region changes nothing.
+
+     Pinned by: `Array2.*/Subscript-not-Overflow*`,
+     `Array2.appi/Subscript-before-f` *)
   type 'a region = {base : 'a array,       (* the array the rectangle is in *)
                     row : int,             (* the row it starts at *)
                     col : int,             (* the column it starts at *)

@@ -38,7 +38,15 @@ sig
 
   (* `slice (arr, i, NONE)` is the stretch of `arr` from position `i` to its end, and `slice (arr, i, SOME n)` the `n` elements from `i`.
 
-     Raises: `Subscript` if the positions are outside `arr`. *)
+     Raises: `Subscript` if the positions are outside `arr`.
+
+     Reading: `ArraySlice.slice/Subscript-not-Overflow`. When `i + n` is no
+     `int` the slice does not exist, and `Subscript` says so, never `Overflow`;
+     `subslice`, `copy` and `copyVec` are the same with their sums, and so are
+     the slices of the monomorphic arrays.
+
+     Pinned by: `*ArraySlice.s*slice/SOME-Subscript-not-Overflow-sum-*`,
+     `*ArraySlice.copy*/Subscript-not-Overflow*` *)
   val slice : 'a Array.array * int * int option -> 'a slice
 
   (* `subslice (sl, i, NONE)` is the stretch of `sl` from position `i` on, and `subslice (sl, i, SOME n)` the `n` elements from `i`.

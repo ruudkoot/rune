@@ -62,7 +62,11 @@ sig
 
   (* `mkDir p` makes a directory `p`.
 
-     Raises: `OS.SysErr` if `p` is there already, or cannot be made. *)
+     Raises: `OS.SysErr` if `p` is there already, or cannot be made.
+
+     Implementation: `OS.FileSys.mkDir/mode`. The directory gets every
+     permission that the mask of the process leaves, as `Posix.FileSys.mkdir`
+     with the mode 0777 would give it. *)
   val mkDir : string -> unit
 
   (* `rmDir p` removes the directory `p`, which must be empty.
@@ -105,8 +109,9 @@ sig
 
      Raises: `OS.SysErr` if `p` names nothing.
 
-     Implementation: `OS.FileSys.modTime/whole-seconds`. The file system
-     keeps whole seconds only, so the time has no fraction. *)
+     Implementation: `OS.FileSys.modTime/whole-seconds`. The VM passes on
+     the whole seconds of the time that the file system keeps, so the time
+     has no fraction. *)
   val modTime : string -> Time.time
 
   (* `fileSize p` is the size in bytes of what `p` names.

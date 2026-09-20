@@ -1,5 +1,5 @@
-(* OS.IO: the handles of the files a program has open, and waiting for one of
-   them to be ready. *)
+(* OS.IO: the descriptors of the files a program has open, and waiting for one
+   of them to be ready. *)
 structure RuneIODesc =
 struct
   datatype iodesc = FD of int

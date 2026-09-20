@@ -578,6 +578,9 @@ already relative.
 
 **Example** `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"`
 
+**Law** `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for canonical absolute paths `p` and `q`; a path that is not
+canonical comes back canonical
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-mkrelative.path"></a>`path` | `string` |  |

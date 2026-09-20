@@ -15,7 +15,12 @@
 
    Implementation: `IntInf.int/limbs`. A sign and a list of digits in base
    2^30, written in SML on top of the 64-bit `int`; equal numbers are equal
-   values, so `=` compares them. `LargeInt` is `IntInf`. *)
+   values, so `=` compares them. `LargeInt` is `IntInf`.
+
+   Implementation: `INT_INF/constants`. An integer constant may have the type
+   `IntInf.int`, and then be of any size, and the overloaded operators work
+   at it. The specification promises neither, so the suite builds its numbers
+   with `fromInt`, `fromString` and arithmetic. *)
 signature INT_INF =
 sig
   include INTEGER

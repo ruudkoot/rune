@@ -64,7 +64,10 @@ sig
 
   (* `asin x` is the arc sine of `x`, in radians, between `~pi/2` and `pi/2`.
 
-     It is a NaN for an `x` outside `[~1, 1]`. *)
+     It is a NaN for an `x` outside `[~1, 1]`.
+
+     The bounds of the results of `asin` and `acos` are checked with 1E~15 to
+     spare, for `pi` is rounded. *)
   val asin : real -> real
 
   (* `acos x` is the arc cosine of `x`, in radians, between 0 and `pi`.

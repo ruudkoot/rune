@@ -170,7 +170,7 @@ signature; `:` that it matches it, which the test suite checks.
 | `WideCharVector` | :> [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | `where type elem = RuneWideChar.char` | optional | an application of `RuneMonoVectorFn` | [lib/basis/widechar.sml](../../../lib/basis/widechar.sml) |
 | `WideCharVectorSlice` | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = WideCharVector.vector where type elem = WideChar.char` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/widechar.sml](../../../lib/basis/widechar.sml) |
 | `WideString` | :> [`STRING`](sig/STRING.md) | `where type string = WideCharVector.vector where type char = WideChar.char` | optional | is `RuneWideString` | [lib/basis/widestring.sml](../../../lib/basis/widestring.sml) |
-| `WideSubstring` | :> [`SUBSTRING`](sig/SUBSTRING.md) | `where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char` | required | is `RuneWideSubstring` | [lib/basis/widestring.sml](../../../lib/basis/widestring.sml) |
+| `WideSubstring` | :> [`SUBSTRING`](sig/SUBSTRING.md) | `where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char` | optional | is `RuneWideSubstring` | [lib/basis/widestring.sml](../../../lib/basis/widestring.sml) |
 | `WideText` | : [`TEXT`](sig/TEXT.md) |  | optional |  | [lib/basis/widetext.sml](../../../lib/basis/widetext.sml) |
 | `WideTextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) |  | optional | an application of `RunePrimIOFn` | [lib/basis/widetextio.sml](../../../lib/basis/widetextio.sml) |
 | `Word` | : [`WORD`](sig/WORD.md) |  | required |  | [lib/basis/word.sml](../../../lib/basis/word.sml) |
@@ -218,7 +218,7 @@ one by name has the names of that one, and an application of a functor those of 
 | `BinIO` | `Imperative` |
 | `BinIO.StreamIO` | `Active`, `Chunk`, `Closed`, `Eos`, `In`, `Out`, `Terminated`, `Unread`, `flushAll`, `flushBuffer`, `flushDevice`, `force`, `guarded`, `hasNewline`, `here`, `ioError`, `mkOutstreamOver`, `outputWith`, `readerName`, `segment`, `state`, `status`, `writeAll`, `writerName` |
 | `BinPrimIO` | `blocking`, `copyIn`, `first`, `guard`, `mapOpt`, `nonBlocking` |
-| `Date` | `months`, `weekdays`, `monthNumber`, `monthOf`, `weekdayNumber`, `weekdayOf`, `partsOf`, `listOf`, `daysFromCivil`, `civilFromDays`, `monthLength`, `fixed`, `valid`, `directives`, `zoneName`, `dayName`, `monthName` |
+| `Date` | `months`, `weekdays`, `monthNumber`, `monthOf`, `weekdayNumber`, `weekdayOf`, `partsOf`, `listOf`, `daysFromCivil`, `civilFromDays`, `monthLength`, `fixed`, `valid`, `directives`, `zoneName`, `yearFitsC`, `dayName`, `monthName` |
 | `IEEEReal` | `scanNumeral` |
 | `Int` | `digitValue`, `base` |
 | `Int64` | `base`, `digitValue` |

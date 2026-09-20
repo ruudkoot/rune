@@ -193,7 +193,11 @@ sig
      Pinned by: `OS.Path.mkAbsolute/inverts-mkRelative-random`,
      `OS.Path.mkRelative/is-relative-random`
 
-     Example: `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"` *)
+     Example: `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"`
+
+     Law: `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo
+     = q} = p` for canonical absolute paths `p` and `q`; a path that is not
+     canonical comes back canonical *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
   (* `isAbsolute p` is `true` when `p` starts from a root. *)

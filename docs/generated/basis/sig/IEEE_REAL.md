@@ -250,10 +250,11 @@ exponent (`1.5`, `.5`, `15E~1`), or one of the words `inf`, `infinity`
 and `nan` in any mixture of upper and lower case. Every digit that is
 there is kept, however many.
 
-> **Reading** `IEEEReal.scan/huge-exponent`. An exponent whose digits name a
-> number too large for an `int` is taken as the largest `int` rather than
-> raising [`Overflow`](../sig/GENERAL.md#exn-overflow): the number it describes is beyond every real
-> anyway.
+> **Reading** `IEEEReal.scan/huge-exponent`. A huge exponent does not raise
+> [`Overflow`](../sig/GENERAL.md#exn-overflow): once what has been read of it exceeds 10^8 the digits that
+> follow are not counted, so the exponent that is recorded is large and
+> of the right sign, but not the one that was written. The number it
+> describes is beyond every real anyway.
 
 <details><summary>Other implementations (1)</summary>
 

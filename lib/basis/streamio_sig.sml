@@ -170,8 +170,9 @@ sig
 
      Reading: `StreamIO.closeOut/a-failed-flush-leaves-it-open`. Closing an
      already closed stream does nothing; a terminated one is not flushed; and
-     when the flush fails the stream stays open, so that the elements it
-     holds are not lost.
+     when the flush fails the stream stays open, so that it can be closed
+     again. What it held is gone all the same: the buffer is emptied before
+     the writer is asked, as `flushOut` does it.
 
      Pinned by: `*IO.StreamIO.closeOut/left-open-when-flushing-fails` *)
   val closeOut : outstream -> unit

@@ -47,7 +47,7 @@ stream.
 [`STREAM_IO`](../sig/STREAM_IO.md) is the layer above: it buffers, keeps what was read, and turns
 what these raise into the `cause` of an [`IO.Io`](../sig/IO.md#exn-io).
 
-> **Erratum** `PRIM_IO/pos-of-the-instances`. The specification
+> **Erratum** `PRIM_IO/slices-of-the-instances`. The specification
 > leaves [`vector_slice`](#type-vector_slice) and [`array_slice`](#type-array_slice) abstract; in [`TextPrimIO`](PRIM_IO.md) and
 > [`BinPrimIO`](PRIM_IO.md) they are the slice types of the corresponding structures,
 > which is what every implementation does and what the suite relies on.
@@ -236,7 +236,9 @@ for [`OS.IO.poll`](../sig/OS_IO.md#val-poll).
 > **Implementation** `PRIM_IO.reader/what-a-file-has`. The readers Rune makes
 > for a file offer `readVec`, `avail`, `close` and `ioDesc`, and the
 > positions only when the file has them; [`augmentReader`](#val-augmentreader) derives the rest
-> that can be derived.
+> that can be derived. Their `chunkSize` is 4096, and so is a writer's. A
+> file is a handle of the VM, 0, 1 and 2 for the standard ones, and
+> `ioDesc` is the descriptor of the system under it.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |

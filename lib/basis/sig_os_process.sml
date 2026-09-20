@@ -46,15 +46,19 @@ sig
      directory, and `system` returns only once the command is done. What the
      process has buffered is neither lost nor written twice by running one.
 
-     Pinned by: `OS.Process.system/*` *)
+     Pinned by: `OS.Process.system/*`
+
+     A command that the shell cannot find gives a status that is no success,
+     the 127 of the shell; the suite assumes that of every system's shell. *)
   val system : string -> status
 
   (* `atExit f` asks for `f` to be run when the program ends.
 
      Implementation: `OS.Process.atExit/how-actions-run`. The actions run in
      the reverse of the order they were given in, at a normal end and at
-     `exit` but not at `terminate` and not after an uncaught exception. An
-     action that raises is ignored, and so is one that registers another. *)
+     `exit` but not at `terminate` and not after an uncaught exception. The
+     exception of an action that raises is dropped and the others run, and
+     an action that calls `atExit` registers nothing. *)
   val atExit : (unit -> unit) -> unit
 
   (* `exit st` ends the program with the status `st`, after running the `atExit` actions and flushing the streams.

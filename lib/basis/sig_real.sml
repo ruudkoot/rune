@@ -283,7 +283,20 @@ sig
      Raises: `Overflow` if that number is outside the range of `Int.int`;
      `Domain` if `x` is a NaN.
 
-     Example: `floor ~1.5 = ~2` *)
+     Example: `floor ~1.5 = ~2`
+
+     Implementation: `Real.floor/at-the-ends-of-int`. An `int` has 64 bits and
+     a real 53, so near the ends of `int` not every integer is a real. `fromInt
+     maxInt` is 2^63, which is one more than `maxInt`, and `floor` of it raises
+     `Overflow`; the largest real that `floor`, `ceil`, `trunc` and `round`
+     take is 2^63 - 1024. `minInt` is a real, and `minInt - 0.5` is `minInt`
+     itself, so all four give `minInt` for it.
+
+     Pinned by: `Real.floor/Overflow-above-maxInt`
+
+     Example: `(floor (fromInt (valOf Int.maxInt)) handle Overflow => 0) = 0`
+
+     Example: `floor (fromInt (valOf Int.minInt)) = valOf Int.minInt` *)
   val floor : real -> int
 
   (* `ceil x` is the smallest whole number that is not less than `x`, as an `int`.
@@ -370,7 +383,13 @@ sig
 
      Example: `fmt (StringCvt.SCI (SOME 2)) 1234.5 = "1.23E3"`
 
-     Example: `fmt (StringCvt.GEN (SOME 3)) 1234.5 = "1230"` *)
+     Example: `fmt (StringCvt.GEN (SOME 3)) 1234.5 = "1230"`
+
+     Example: `fmt (StringCvt.GEN (SOME 4)) 123456.0 = "123500"`, for the
+     digits beyond the four become zeros where the fixed form is the shorter.
+
+     Example: `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString
+     (toDecimal 0.1)`. *)
   val fmt : StringCvt.realfmt -> real -> string
 
   (* `toString x` is the text of `x` in the general notation with the default number of digits.
@@ -391,7 +410,24 @@ sig
 
      A numeral whose value is too large becomes an infinity and one too small
      a zero; nothing is raised. A numeral that no real holds exactly is
-     rounded as `fromString` rounds it. *)
+     rounded as `fromString` rounds it.
+
+     Reading: `Real.scan/what-is-left-in-the-stream`. A point needs a digit
+     after it, and so does the `E` of an exponent with its sign: what does not
+     complete is left in the stream. `"1."` gives 1.0 and leaves the point,
+     `"1E~"` gives 1.0 and leaves `E~`, and `"."`, `"~."` and `".E1"` give
+     `NONE`. Of the words the longest is tried first, so that `"infinit"` gives
+     infinity and leaves `init`.
+
+     Pinned by: `Real.scan/after-exponent-*`, `Real.scan/bare-point`
+
+     Erratum: `REAL/scan-grammar-grouping`. The grammars of `scan` and of the
+     formats of `StringCvt.realfmt` lost their grouping on the pages. They are
+     read as `[+~-]?([0-9]+(\.[0-9]+)? | \.[0-9]+)([eE][+~-]?[0-9]+)?`, so that
+     the sign belongs to every alternative and the exponent may follow either.
+
+     Example: `Option.map (fn (r, rest) => (toString r, Substring.string rest))
+     (scan Substring.getc (Substring.full "1.")) = SOME ("1", ".")` *)
   val scan : (char, 'a) StringCvt.reader -> (real, 'a) StringCvt.reader
 
   (* `fromString s` is the real that the text `s` begins with, or `NONE`.
@@ -406,10 +442,17 @@ sig
      Example: `Option.map toString (fromString ".5e1x") = SOME "5"` *)
   val fromString : string -> real option
 
-  (* `toDecimal x` is `x` written out in decimal digits, exactly.
+  (* `toDecimal x` is the shortest decimal number that reads back as `x`.
 
-     Every real has an exact decimal form, so nothing is lost; `IEEEReal.toString`
-     turns the result into text. *)
+     `IEEEReal.toString` turns the result into text, and `fromDecimal` turns
+     it into `x` again.
+
+     Reading: `Real.toDecimal/shortest-digits`. The digits are the fewest
+     that `fromDecimal` reads back as the same real, not the exact expansion,
+     which every real has and which is long: `toDecimal 0.1` has the one
+     digit 1, where the real nearest to a tenth has 55.
+
+     Example: `#digits (toDecimal 0.1) = [1]` *)
   val toDecimal : real -> IEEEReal.decimal_approx
 
   (* `fromDecimal d` is the real nearest to the decimal number `d`, or `NONE` when `d` is not a number a real can describe.

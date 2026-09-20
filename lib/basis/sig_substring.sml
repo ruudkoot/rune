@@ -113,7 +113,15 @@ sig
      substring is given, so a partial application with a negative `k` raises
      at once.
 
-     Example: `string (triml 2 (full "hello")) = "llo"` *)
+     Example: `string (triml 2 (full "hello")) = "llo"`
+
+     Reading: `Substring.triml/position-of-the-empty-result`. When `k` is more
+     than the size the result is empty, and the page does not say where in the
+     string it lies: here at the end of the substring for `triml` and at its
+     start for `trimr`. The suite checks that it is empty and lies inside the
+     same string.
+
+     Pinned by: `Substring.trim*/beyond-size*` *)
   val triml : int -> substring -> substring
 
   (* `trimr k ss` is `ss` without its last `k` characters, or empty when it has at most `k`.

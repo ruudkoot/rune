@@ -339,7 +339,9 @@ sig
      vector is returned": it is returned at once, without waiting for
      anything, where the system's own call would wait.
 
-     Pinned by: `Socket.recvVec/zero*` *)
+     Pinned by: `Socket.recvVec/zero*`
+
+     Raises: `Size` if `n` is negative or more than `Word8Vector.maxLen`. *)
   val recvVec : ('af, active stream) sock * int -> Word8Vector.vector
 
   (* `recvVec' (sock, n, flags)` is `recvVec` with the flags `flags`. *)

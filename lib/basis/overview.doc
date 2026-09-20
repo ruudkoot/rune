@@ -20,4 +20,4 @@ function that can fail either returns an `option` or raises an exception, and
 which it does is said for every one. And the optional parts of the library,
 the wide characters, the sized integers, `POSIX` and the sockets, are marked
 as optional, because a program that uses them is not bound to run on every
-implementation.
+implementation. Of the optional parts only `Windows` is missing.

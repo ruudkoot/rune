@@ -15,7 +15,7 @@
 ```sml
 signature SUBSTRING
 structure Substring : SUBSTRING where type string = string where type char = Char.char
-structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char
+structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -418,6 +418,12 @@ val triml : int -> substring -> substring
 > at once.
 
 **Example** `string (triml 2 (full "hello")) = "llo"`
+
+> **Reading** `Substring.triml/position-of-the-empty-result`. When `k` is more
+> than the size the result is empty, and the page does not say where in the
+> string it lies: here at the end of the substring for [`triml`](#val-triml) and at its
+> start for [`trimr`](#val-trimr). The suite checks that it is empty and lies inside the
+> same string.
 
 <details><summary>Other implementations (1)</summary>
 

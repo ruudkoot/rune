@@ -267,6 +267,11 @@ val fromStatus : OS.Process.status -> exit_status
 
 `fromStatus st` is what the status `st` says about how the process ended.
 
+> **Implementation** `Posix.Process.fromStatus/status-encoding`. An
+> [`OS.Process.status`](../sig/OS_PROCESS.md#type-status) is an `int`: the exit code of a process that ended of
+> itself, 256 and the number of the signal that ended it, or 512 and the
+> number of the signal that stopped it.
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value

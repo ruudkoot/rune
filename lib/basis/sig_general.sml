@@ -74,7 +74,11 @@ sig
      above `Array.maxLen`.
 
      Implementation: `General.Size/maxLen`. What is too large depends on the
-     type: `String.maxSize` and `Array.maxLen` say where the bound is. *)
+     type: `String.maxSize` and `Array.maxLen` say where the bound is.
+
+     Where `Array.maxLen + 1` is no `int` nothing can ask for an array that is
+     too long, and the suite's check raises `Size` itself there; here it is an
+     `int`, and `Array.array` raises it. *)
   exception Size
 
   (* Raised by `Substring.span` when its two arguments are not substrings of

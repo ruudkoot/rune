@@ -34,6 +34,11 @@ infinitely many leading ones and `notb i` is `~(i + 1)`.
 > 2^30, written in SML on top of the 64-bit [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
 > values, so `=` compares them. [`LargeInt`](../sig/INTEGER.md) is [`IntInf`](INT_INF.md).
 
+> **Implementation** `INT_INF/constants`. An integer constant may have the type
+> [`IntInf.int`](../sig/INTEGER.md#type-int), and then be of any size, and the overloaded operators work
+> at it. The specification promises neither, so the suite builds its numbers
+> with [`fromInt`](../sig/INTEGER.md#val-fromint), [`fromString`](../sig/INTEGER.md#val-fromstring) and arithmetic.
+
 ## Contents
 
 [Division](#division) &middot;

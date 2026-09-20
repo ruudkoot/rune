@@ -279,6 +279,10 @@ above [`Array.maxLen`](../sig/ARRAY.md#val-maxlen).
 > **Implementation** `General.Size/maxLen`. What is too large depends on the
 > type: [`String.maxSize`](../sig/STRING.md#val-maxsize) and [`Array.maxLen`](../sig/ARRAY.md#val-maxlen) say where the bound is.
 
+Where `Array.maxLen + 1` is no `int` nothing can ask for an array that is
+too long, and the suite's check raises [`Size`](#exn-size) itself there; here it is an
+`int`, and [`Array.array`](../sig/ARRAY.md#val-array) raises it.
+
 Also in the [top-level environment](../top-level.md): `Size`.
 
 <details><summary>Tests (6)</summary>

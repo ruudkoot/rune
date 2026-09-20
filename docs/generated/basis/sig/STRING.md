@@ -136,6 +136,11 @@ The type of strings of these characters.
 > [`string`](#type-string), a sequence of 8-bit characters; [`WideString.string`](#type-string) is one of
 > [`WideChar.char`](../sig/CHAR.md#type-char).
 
+> **Implementation** `String.string/u-escape-above-255-rejected`. An escape
+> `\uXXXX` above 255 in a constant of type [`string`](#type-string) or [`char`](#type-char) is an error
+> when the program is compiled, for the characters have eight bits; at
+> [`WideString.string`](#type-string) it is a character.
+
 ### <a name="type-char"></a>`char`
 
 ```sml
@@ -153,6 +158,14 @@ val maxSize : int
 The greatest length a string may have.
 
 > **Implementation** `String.maxSize/value`. 1073741823, which is 2^30 - 1.
+
+> **Implementation** `String.maxSize/Size-is-not-pinned`. With a bound of 2^30
+> \- 1 no check of the suite makes a string that is too long: [`Size`](../sig/GENERAL.md#exn-size) from
+> [`^`](#val-op-caret), [`concat`](#val-concat), [`implode`](#val-implode) and [`translate`](#val-translate) is raised by the VM when the
+> bound is passed, and the suite checks it only on a system whose [`maxSize`](#val-maxsize)
+> is at most 2^26. The same holds for [`StringCvt.padLeft`](../sig/STRING_CVT.md#val-padleft) and `padRight`,
+> for [`Substring.concat`](../sig/SUBSTRING.md#val-concat) and [`concatWith`](#val-concatwith), and with [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen) for
+> [`Vector.concat`](../sig/VECTOR.md#val-concat) and [`VectorSlice.concat`](../sig/VECTOR_SLICE.md#val-concat).
 
 <details><summary>Tests (3)</summary>
 
@@ -647,6 +660,12 @@ nothing and is passed over, so a stream of one such sequence gives
 > **Reading** `String.fromString/unescaped-double-quote`. A double quote
 > without a backslash converts to itself, as in SML/NJ and Poly/ML; MLton
 > stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) reads it the same way.
+
+> **Reading** `String.scan/empty-input-is-SOME-empty`. Nothing to read is no
+> failure: `fromString ""` is `SOME ""`. `NONE` is for a first character
+> that cannot be read, as in `fromString "\\q"`.
+
+**Example** `fromString "" = SOME ""`
 
 <details><summary>Other implementations (1)</summary>
 

@@ -182,8 +182,15 @@ struct
     fun zoneName (d : date) =
       Option.map (fn t => if Time.micros t = 0 then "UTC" else "") (#offset d)
 
+    (* strftime is given the year less 1900 as an int of C, which has 32
+       bits, and adds the 1900 again in one: a year that either does not fit
+       would be printed as another year. *)
+    fun yearFitsC (d : date) =
+      #year d - 1900 >= ~2147483648 andalso #year d <= 2147483647
+
     fun fmt format (d : date) =
-      if valid d then format' (directives (format, zoneName d), listOf d, if Option.isSome (#offset d) then 0 else 1)
+      if valid d andalso yearFitsC d
+      then format' (directives (format, zoneName d), listOf d, if Option.isSome (#offset d) then 0 else 1)
       else raise Date
 
     (* strftime's %c, as the specification prescribes for toString:

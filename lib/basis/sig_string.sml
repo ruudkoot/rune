@@ -30,7 +30,12 @@ sig
 
      Implementation: `String.string/bytes`. `String.string` is the top-level
      `string`, a sequence of 8-bit characters; `WideString.string` is one of
-     `WideChar.char`. *)
+     `WideChar.char`.
+
+     Implementation: `String.string/u-escape-above-255-rejected`. An escape
+     `\uXXXX` above 255 in a constant of type `string` or `char` is an error
+     when the program is compiled, for the characters have eight bits; at
+     `WideString.string` it is a character. *)
   eqtype string
 
   (* The type of the characters of such a string: `Char.char` for `String`. *)
@@ -40,7 +45,15 @@ sig
 
      Implementation: `String.maxSize/value`. 1073741823, which is 2^30 - 1.
 
-     Pinned by: `String.maxSize/positive`, `String.maxSize/holds-a-long-string` *)
+     Pinned by: `String.maxSize/positive`, `String.maxSize/holds-a-long-string`
+
+     Implementation: `String.maxSize/Size-is-not-pinned`. With a bound of 2^30
+     - 1 no check of the suite makes a string that is too long: `Size` from
+     `^`, `concat`, `implode` and `translate` is raised by the VM when the
+     bound is passed, and the suite checks it only on a system whose `maxSize`
+     is at most 2^26. The same holds for `StringCvt.padLeft` and `padRight`,
+     for `Substring.concat` and `concatWith`, and with `Vector.maxLen` for
+     `Vector.concat` and `VectorSlice.concat`. *)
   val maxSize : int
 
   (* ---- Taking a string apart ---- *)
@@ -227,7 +240,15 @@ sig
 
      Reading: `String.fromString/unescaped-double-quote`. A double quote
      without a backslash converts to itself, as in SML/NJ and Poly/ML; MLton
-     stops at it. `Char.scan` reads it the same way. *)
+     stops at it. `Char.scan` reads it the same way.
+
+     Reading: `String.scan/empty-input-is-SOME-empty`. Nothing to read is no
+     failure: `fromString ""` is `SOME ""`. `NONE` is for a first character
+     that cannot be read, as in `fromString "\\q"`.
+
+     Pinned by: `String.scan/empty`, `String.fromString/empty`
+
+     Example: `fromString "" = SOME ""` *)
   val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader
 
   (* `fromString s` is the characters that the text `s` begins with, read as `scan` reads them, or `NONE`.

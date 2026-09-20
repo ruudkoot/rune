@@ -48,9 +48,12 @@ sig
 
      Implementation: `OS.errorName/posix-names`. The names are those of
      `Posix.Error`, lower case and without the `E`: `"noent"` rather than
-     `"ENOENT"`.
+     `"ENOENT"`. An error that POSIX has no name for is called `error` and
+     its number, `"error9999"`, which `syserror` reads back.
 
-     Pinned by: `OS.errorName/*` *)
+     Pinned by: `OS.errorName/*`
+
+     Example: `Option.map errorName (syserror "error9999") = SOME "error9999"` *)
   val errorName : syserror -> string
 
   (* `syserror s` is `SOME` of the condition that `errorName` calls `s`, or `NONE` when there is none.

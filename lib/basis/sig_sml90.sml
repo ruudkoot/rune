@@ -30,7 +30,7 @@ sig
   (* Raised where `abs` of the least integer would overflow. *)
   exception Abs
 
-  (* Raised by division that overflows, and by division by zero. *)
+  (* Raised by division that overflows; division by zero raises `Mod`. *)
   exception Quot
 
   (* Raised by multiplication that overflows. *)
@@ -82,7 +82,10 @@ sig
   (* Raised when an I/O operation fails, carrying the message alone. *)
   exception Io of string
 
-  (* Raised when the program is interrupted. *)
+  (* Meant for a program that is interrupted.
+
+     Limitation: `SML90.Interrupt/never-raised`. It is declared and nothing
+     raises it: the VM handles no signal, so an interrupt ends the program. *)
   exception Interrupt
 
   (* `sqrt x` is the square root of `x`.
@@ -138,7 +141,10 @@ sig
 
   (* `lookahead f` is the next character of `f` as a string, without removing it, or the empty string at the end.
 
-     Raises: `Io` if the stream cannot be read. *)
+     Raises: `Io` if the stream cannot be read.
+
+     Reading: `SML90.lookahead/closed-stream-is-empty`. A stream that has been
+     closed is at its end, so it gives the empty string as well, and not `Io`. *)
   val lookahead : instream -> string
 
   (* The standard input of the program. *)

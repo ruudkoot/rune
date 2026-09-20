@@ -175,6 +175,10 @@ given and `i + n > Vector.length v`.
 
 **Example** `length (slice (Vector.fromList [1, 2, 3], 1, NONE)) = 2`
 
+> **Reading** `VectorSlice.slice/Subscript-not-Overflow`. When `i + n` is no
+> `int` the slice does not exist, and [`Subscript`](../sig/GENERAL.md#exn-subscript) says so, never [`Overflow`](../sig/GENERAL.md#exn-overflow);
+> [`subslice`](#val-subslice) is the same, and so are the slices of the monomorphic vectors.
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows

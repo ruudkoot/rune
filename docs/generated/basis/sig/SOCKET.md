@@ -1296,6 +1296,8 @@ The empty vector means that the other end has finished sending.
 > vector is returned": it is returned at once, without waiting for
 > anything, where the system's own call would wait.
 
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n` is negative or more than [`Word8Vector.maxLen`](../sig/MONO_VECTOR.md#val-maxlen).
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ** &mdash; recvVec and recvVecFrom do not raise Size when n \> Word8Vector.maxLen

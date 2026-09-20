@@ -192,6 +192,11 @@ val slice : 'a Array.array * int * int option -> 'a slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `arr`.
 
+> **Reading** `ArraySlice.slice/Subscript-not-Overflow`. When `i + n` is no
+> `int` the slice does not exist, and [`Subscript`](../sig/GENERAL.md#exn-subscript) says so, never [`Overflow`](../sig/GENERAL.md#exn-overflow);
+> [`subslice`](#val-subslice), [`copy`](#val-copy) and [`copyVec`](#val-copyvec) are the same with their sums, and so are
+> the slices of the monomorphic arrays.
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows

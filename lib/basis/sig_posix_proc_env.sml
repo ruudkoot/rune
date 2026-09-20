@@ -88,7 +88,13 @@ sig
 
   (* `setgid g` makes `g` the group of this process.
 
-     Raises: `OS.SysErr` if the process may not take the group `g`. *)
+     Raises: `OS.SysErr` if the process may not take the group `g`.
+
+     Reading: `Posix.ProcEnv.setgid/own-is-allowed`. As for `setuid`: a process
+     may always take the group it has, and only a privileged one may take
+     another.
+
+     Pinned by: `Posix.ProcEnv.setgid/own`, `Posix.ProcEnv.setgid/root-raises` *)
   val setgid : gid -> unit
 
   (* `getgroups ()` is the supplementary groups of this process.

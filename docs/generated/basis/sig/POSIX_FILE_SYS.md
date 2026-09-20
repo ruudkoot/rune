@@ -951,6 +951,11 @@ val mkdir : string * S.mode -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` is there already, or cannot be made.
 
+> **Implementation** `Posix.FileSys.mkdir/shares-OS.FileSys`. [`rmdir`](#val-rmdir), [`chdir`](#val-chdir),
+> [`getcwd`](#val-getcwd), [`unlink`](#val-unlink), [`rename`](#val-rename), [`readlink`](#val-readlink), the directory streams and
+> [`access`](#val-access) are the functions of [`OS.FileSys`](../sig/OS.md#str-filesys) under the names of POSIX, and
+> [`mkdir`](#val-mkdir) differs from [`OS.FileSys.mkDir`](../sig/OS_FILE_SYS.md#val-mkdir) in the mode only.
+
 <details><summary>Tests (7)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `makes-a-directory` &middot; `mode` &middot; `mode-less-umask` &middot; `owner-only` &middot; `mask-unchanged` &middot; `existing` (raises) &middot; `missing-parent` (raises)
@@ -1186,6 +1191,9 @@ val isBlk : stat -> bool
 
 `isBlk st` is `true` when the file is a block device.
 
+No machine is sure to have a block device that a test may look at, so
+the suite checks only that this is `false` of what is something else.
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `none-of-the-others`
@@ -1331,6 +1339,9 @@ val gid : stat -> gid
 ```
 
 `gid st` is the group of the file.
+
+A new file has the effective group of the process or the group of its
+directory, as the system decides; the suite takes either.
 
 <details><summary>Tests (1)</summary>
 

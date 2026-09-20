@@ -243,6 +243,14 @@ val date : {year : int,
 
 **Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`
 
+> **Implementation** `Date.date/any-year`. The calendar of a date at an offset
+> is computed and not looked up, so any year that is an `int` has its dates,
+> the year \~5 and the year 100000 too. The specification asks for the years
+> from about 1900 to 2200 only, and the suite takes a date or [`Date`](#exn-date) beyond
+> the range of a 32-bit `time_t`. [`toTime`](#val-totime) raises [`Date`](#exn-date) from about the year
+> 292000 on, where the microseconds no longer fit, and [`fmt`](#val-fmt) for a year that
+> C's `int` of 32 bits cannot hold.
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-date.year"></a>`year` | `int` |  |
@@ -414,6 +422,9 @@ val isDst : date -> bool option
 > **Reading** `Date.isDst/UTC-has-none`. A date at a fixed offset is not in
 > daylight saving time: `SOME true` is wrong for it, and `NONE` and `SOME false` are both right.
 
+The suite assumes that no zone has daylight saving time both in January
+and in July.
+
 <details><summary>Tests (2)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `UTC-is-not-daylight-saving` &middot; `not-both-January-and-July`
@@ -458,6 +469,9 @@ val fromTimeLocal : Time.time -> date
 > written to hold in any of them: the offset is `NONE`, whole minutes, and
 > less than a day from UTC.
 
+The suite's moments are noon UTC on 15 January and 15 July 2001, away from
+the changes of every zone, and the time at which it runs.
+
 <details><summary>Tests (5)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-NONE` &middot; `toTime-inverts` &middot; `differs-from-UTC-by-less-than-a-day` &middot; `differs-from-UTC-by-whole-minutes` &middot; `same-weekDay-and-yearDay-as-the-fields`
@@ -475,6 +489,9 @@ val fromTimeUniv : Time.time -> date
 > **Reading** `Date.fromTimeUniv/second-it-falls-in`. The date is that of the
 > second the time falls in: a fraction of a second is dropped, also for
 > times before the epoch, where dropping is towards the earlier second.
+
+The suite assumes that the clock of the machine shows a year from 2020 to
+2199\.
 
 <details><summary>Other implementations (2)</summary>
 
@@ -563,6 +580,10 @@ val fmt : string -> date -> string
 > and the suite accepts `"UTC"`, `"GMT"`, `"Z"` or nothing.
 
 **Example** `fmt "%Y-%m-%d %H:%M" (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = "1995-03-08 19:06"`
+
+> **Implementation** `Date.fmt/zone-names`. `%Z` is the C library's name of the
+> zone for a local date, `UTC` for a date at the offset zero and nothing for
+> one at any other offset. A `%` that ends the format is written as it is.
 
 <details><summary>Other implementations (5)</summary>
 
