@@ -152,12 +152,12 @@ library of the 64-bit one):
 | `Real64Vector` | yes | yes | yes | |
 | `Real64VectorSlice` | yes | yes | yes | |
 | `SML90` | yes | | yes | yes |
-| `WideChar` | | yes | | |
-| `WideCharArray` | | yes | | |
-| `WideCharVector` | | yes | | |
-| `WideString` | | yes | | |
-| `WideSubstring` | | yes | | |
-| `WideText` | | yes | | |
+| `WideChar` | yes | yes | | |
+| `WideCharArray` | yes | yes | | |
+| `WideCharVector` | yes | yes | | |
+| `WideString` | yes | yes | | |
+| `WideSubstring` | yes | yes | | |
+| `WideText` | yes | yes | | |
 | `WideTextIO` | | | | |
 | `WideTextPrimIO` | | | | |
 | `Windows` | | | | |
@@ -217,8 +217,14 @@ and SML/NJ (`NONE`); see the table of readings below.
 
 Not implemented:
 
-* `WideChar` and its family (characters have 8 bits), and `Windows`;
+* `WideTextIO` and `WideTextPrimIO` (no host has them either), and `Windows`;
 * IPv6.
+
+`WideChar` is there: a wide character is a Unicode code point (`maxOrd`
+0x10FFFF), with `WideString`, `WideSubstring`, `WideText` and the vectors and
+arrays of the family. Its classes and case conversions are those of ASCII,
+which the specification leaves to the implementation, and a character above
+255 is written `\uXXXX` or `\UXXXXXXXX`, as MLton writes it.
 
 The functor `StreamIO` takes `VectorSlice` and `ArraySlice` besides the
 arguments of the specification, as MLton's does, and its `PrimIO` must have

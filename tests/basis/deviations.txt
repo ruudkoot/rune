@@ -575,3 +575,8 @@ native:smlnj32@* | PackWord*.update/* | HOST-BUG | update writes the wrong bytes
 native:smlnj32@* | Posix.IO.SEEK_[CE]*/negative | HOST-BUG | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
 xc1:smlnj32@* | Unix.exit/flushes | HOST-FLAKY | what a forked child writes before Unix.exit is now and then not there when the parent has reaped it (about one run in three)
 xc1:smlnj32@* | Unix.exit/runs-atExit | HOST-FLAKY | as Unix.exit/flushes
+
+# ---- WideChar, WideString, WideSubstring, WideText (only MLton has them)
+native:mlton@* | @load/widestring_sig | SPEC-AMBIGUOUS | WideString.scan reads a stream of char, where the signature of the page writes the structure's own character ("val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader"); the test takes the page
+native:mlton@* | @load/widetext_sig | SPEC-AMBIGUOUS | as @load/widestring_sig: the TEXT of the page holds that STRING
+native:mlton@* | @section/widestring/text | SPEC-AMBIGUOUS | as @load/widestring_sig: the section reads a stream of wide characters with scan
