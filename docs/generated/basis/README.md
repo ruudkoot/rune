@@ -18,6 +18,18 @@
 | [`VECTOR`](sig/VECTOR.md) | Vectors: immutable sequences of a fixed length, of any element type. | required | 21 of 21 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | A stretch of a vector, without a copy of it: a base vector and a start and a length inside it. | required | 24 of 24 |
 
+## Input and output
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`BIN_IO`](sig/BIN_IO.md) | Binary files: the imperative streams of bytes, with the ways of opening a file. | required | 3 of 3 |
+| [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | Streams that remember where they are: a cell holding a functional stream, which every operation replaces by what it left. | required | 25 of 25 |
+| [`IO`](sig/IO.md) | What the whole of the I/O stack shares: the exception it raises and the ways a stream may hold output back. | required | 6 of 6 |
+| [`PRIM_IO`](sig/PRIM_IO.md) | The layer under the streams: a reader is a source of elements, a writer a sink for them, and both are records of the operations they happen to have. | required | 14 of 14 |
+| [`STREAM_IO`](sig/STREAM_IO.md) | Streams as values: reading gives the elements and the stream that is left, so a stream can be kept, read twice, and read from again where it was. | required | 29 of 29 |
+| [`TEXT_IO`](sig/TEXT_IO.md) | Text files and the standard streams: the imperative streams of characters, with the ways of opening a file. | required | 36 of 36 |
+| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | The functional streams of [`STREAM_IO`](sig/STREAM_IO.md) where the elements are characters, with the two operations that only text has: reading a line and writing a substring. | required | 2 of 2 |
+
 ## Text and characters
 
 | Signature |  | Status | Documented |
@@ -68,13 +80,10 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`BIN_IO`](sig/BIN_IO.md) | signature BIN\_IO, transcribed from <https://smlfamily.github.io/Basis/bin-io.html> | required | 0 of 3 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | signature BIT\_FLAGS, transcribed from <https://smlfamily.github.io/Basis/bit-flags.html> | required | 0 of 9 |
 | [`DATE`](sig/DATE.md) | signature DATE, transcribed from <https://smlfamily.github.io/Basis/date.html> | required | 0 of 24 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | signature GENERIC\_SOCK, transcribed from <https://smlfamily.github.io/Basis/generic-sock.html> | required | 0 of 4 |
-| [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | signature IMPERATIVE\_IO, transcribed from <https://smlfamily.github.io/Basis/imperative-io.html> | required | 0 of 25 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
-| [`IO`](sig/IO.md) | signature IO, transcribed from <https://smlfamily.github.io/Basis/io.html> | required | 0 of 6 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | signature NET\_HOST\_DB, transcribed from <https://smlfamily.github.io/Basis/net-host-db.html> | required | 0 of 14 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | signature NET\_PROT\_DB, transcribed from <https://smlfamily.github.io/Basis/prot-db.html> | required | 0 of 6 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | signature NET\_SERV\_DB, transcribed from <https://smlfamily.github.io/Basis/serv-db.html> | required | 0 of 7 |
@@ -91,12 +100,8 @@
 | [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | signature POSIX\_SIGNAL, transcribed from <https://smlfamily.github.io/Basis/posix-signal.html> | required | 0 of 23 |
 | [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | signature POSIX\_SYS\_DB, transcribed from <https://smlfamily.github.io/Basis/posix-sys-db.html> | required | 0 of 18 |
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | signature POSIX\_TTY, transcribed from <https://smlfamily.github.io/Basis/posix-tty.html> | required | 0 of 110 |
-| [`PRIM_IO`](sig/PRIM_IO.md) | signature PRIM\_IO: the readers and writers under the stream layer. | required | 0 of 14 |
 | [`SML90`](sig/SML90.md) | signature SML90. The page of the specification that defined it (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed from the signature of MLton's basis library, which follows it, in the order of the page. | required | 0 of 36 |
 | [`SOCKET`](sig/SOCKET.md) | signature SOCKET, transcribed from <https://smlfamily.github.io/Basis/socket.html> | required | 0 of 93 |
-| [`STREAM_IO`](sig/STREAM_IO.md) | signature STREAM\_IO: the functional streams. | required | 0 of 29 |
-| [`TEXT_IO`](sig/TEXT_IO.md) | signature TEXT\_IO, transcribed from <https://smlfamily.github.io/Basis/text-io.html> and, for the part that it includes, from <https://smlfamily.github.io/Basis/imperative-io.html>. | required | 0 of 36 |
-| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | signature TEXT\_STREAM\_IO, transcribed from <https://smlfamily.github.io/Basis/text-stream-io.html> | required | 0 of 2 |
 | [`TIME`](sig/TIME.md) | signature TIME, transcribed from <https://smlfamily.github.io/Basis/time.html> | required | 0 of 25 |
 | [`TIMER`](sig/TIMER.md) | signature TIMER, transcribed from <https://smlfamily.github.io/Basis/timer.html> | required | 0 of 10 |
 | [`UNIX`](sig/UNIX.md) | signature UNIX, transcribed from <https://smlfamily.github.io/Basis/unix.html> | required | 0 of 14 |

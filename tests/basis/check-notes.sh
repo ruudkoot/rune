@@ -70,12 +70,20 @@ while read -r label; do
   case "$scope" in @*|\**) continue ;; esac           # @load/..., and globs over structures
   structure=${scope%.*}
   member=${scope##*.}
-  sig=$(awk -F '\t' -v s="$structure" 'NR > 1 && $1 == s { print $3; exit }' "$claims")
-  [ -n "$sig" ] || continue
-  grep -q -x "$sig" "$documented" 2> /dev/null || continue
+  # a structure may claim several signatures (TextIO: TEXT_IO and
+  # IMPERATIVE_IO), and the member belongs to one of them; the note is
+  # written once, wherever the member is specified
+  sigs=$(awk -F '\t' -v s="$structure" 'NR > 1 && $1 == s { print $3 }' "$claims" |
+           while read -r s; do grep -q -x "$s" "$documented" 2> /dev/null && echo "$s"; done)
+  [ -n "$sigs" ] || continue
   count=$((count + 1))
-  awk -F '\t' -v sig="$sig" -v m="$member" 'NR > 1 && $2 == "Reading" && $4 == sig && $5 == m { found = 1 } END { exit !found }' "$notes" ||
-    { echo "check-notes: a host reads $scope differently ($label in deviations.txt), and $sig, which is documented in full, has no Reading: for $member"; status=1; }
+  found=0
+  for sig in $sigs; do
+    awk -F '\t' -v sig="$sig" -v m="$member" 'NR > 1 && $2 == "Reading" && $4 == sig && $5 == m { found = 1 } END { exit !found }' "$notes" &&
+      found=1
+  done
+  [ $found = 1 ] ||
+    { echo "check-notes: a host reads $scope differently ($label in deviations.txt), and none of $(echo "$sigs" | tr '\n' ' ')which $structure claims and which are documented in full, has a Reading: for $member"; status=1; }
 done < "$tmp/host"
 
 [ $status = 0 ] && echo "check-notes: OK ($(wc -l < "$tmp/rune" | tr -d ' ') rune lines and $(wc -l < "$tmp/suite-differs" | tr -d ' ') notes that differ agree; $count host readings of documented signatures have their note)"

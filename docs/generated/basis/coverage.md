@@ -9,7 +9,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`ARRAY`](sig/ARRAY.md) | 25 | 25 | 100% | 22 | 22 |
 | [`ARRAY2`](sig/ARRAY2.md) | 20 | 20 | 100% | 17 | 17 |
 | [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | 26 | 26 | 100% | 25 | 25 |
-| [`BIN_IO`](sig/BIN_IO.md) | 3 | 0 | 0% | 3 | 0 |
+| [`BIN_IO`](sig/BIN_IO.md) | 3 | 3 | 100% | 3 | 3 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 0 | 0% | 7 | 0 |
 | [`BOOL`](sig/BOOL.md) | 5 | 5 | 100% | 4 | 4 |
 | [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
@@ -19,11 +19,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 0 | 0% | 4 | 0 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
-| [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 0 | 0% | 20 | 0 |
+| [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 25 | 100% | 20 | 20 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 0 | 0% | 9 | 0 |
 | [`INTEGER`](sig/INTEGER.md) | 30 | 30 | 100% | 26 | 26 |
 | [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
-| [`IO`](sig/IO.md) | 6 | 0 | 0% | 0 | 0 |
+| [`IO`](sig/IO.md) | 6 | 6 | 100% | 0 | 0 |
 | [`LIST`](sig/LIST.md) | 27 | 27 | 100% | 25 | 25 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 15 | 100% | 14 | 14 |
 | [`MATH`](sig/MATH.md) | 18 | 18 | 100% | 15 | 15 |
@@ -53,17 +53,17 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | 23 | 0 | 0% | 2 | 0 |
 | [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | 18 | 0 | 0% | 12 | 0 |
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 0 | 0% | 25 | 0 |
-| [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 0 | 0% | 6 | 0 |
+| [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
 | [`SML90`](sig/SML90.md) | 36 | 0 | 0% | 18 | 0 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 0 | 0% | 76 | 0 |
-| [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 0 | 0% | 21 | 0 |
+| [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
 | [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 39 | 100% | 36 | 36 |
 | [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
-| [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 0 | 0% | 28 | 0 |
-| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 0 | 0% | 2 | 0 |
+| [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 36 | 100% | 28 | 28 |
+| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 2 | 100% | 2 | 2 |
 | [`TIME`](sig/TIME.md) | 25 | 0 | 0% | 22 | 0 |
 | [`TIMER`](sig/TIMER.md) | 10 | 0 | 0% | 8 | 0 |
 | [`UNIX`](sig/UNIX.md) | 14 | 0 | 0% | 11 | 0 |
@@ -71,7 +71,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 686 | 44% | 1078 | 571 |
+| **all** | 1538 | 801 | 52% | 1078 | 651 |
 
 ## Notes that no check pins
 
@@ -79,6 +79,8 @@ A deviation or a limitation that the test suite does not show. A reading or an e
 be pinned: many are about the text and not about behaviour.
 
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
+- `IMPERATIVE_IO/functor-not-sealed` (Deviation), IMPERATIVE_IO
+- `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
 - `StringCvt.cs/transparent` (Deviation), STRING_CVT
 
 ---
