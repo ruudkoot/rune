@@ -11,9 +11,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | 26 | 0 | 0% | 25 | 0 |
 | [`BIN_IO`](sig/BIN_IO.md) | 3 | 0 | 0% | 3 | 0 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 0 | 0% | 7 | 0 |
-| [`BOOL`](sig/BOOL.md) | 5 | 0 | 0% | 4 | 0 |
+| [`BOOL`](sig/BOOL.md) | 5 | 5 | 100% | 4 | 4 |
 | [`BYTE`](sig/BYTE.md) | 7 | 0 | 0% | 7 | 0 |
-| [`CHAR`](sig/CHAR.md) | 35 | 0 | 0% | 30 | 0 |
+| [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 0 | 0% | 2 | 0 |
 | [`DATE`](sig/DATE.md) | 24 | 0 | 0% | 20 | 0 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 0 | 0% | 7 | 0 |
@@ -22,9 +22,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 0 | 0% | 20 | 0 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 0 | 0% | 9 | 0 |
 | [`INTEGER`](sig/INTEGER.md) | 30 | 0 | 0% | 26 | 0 |
-| [`INT_INF`](sig/INT_INF.md) | 10 | 0 | 0% | 10 | 0 |
+| [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
 | [`IO`](sig/IO.md) | 6 | 0 | 0% | 0 | 0 |
-| [`LIST`](sig/LIST.md) | 27 | 0 | 0% | 25 | 0 |
+| [`LIST`](sig/LIST.md) | 27 | 27 | 100% | 25 | 25 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 0 | 0% | 14 | 0 |
 | [`MATH`](sig/MATH.md) | 18 | 0 | 0% | 15 | 0 |
 | [`MONO_ARRAY`](sig/MONO_ARRAY.md) | 26 | 0 | 0% | 22 | 0 |
@@ -36,10 +36,10 @@ documented when a comment describes it, alone or together with the entry before 
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | 14 | 0 | 0% | 11 | 0 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 0 | 0% | 5 | 0 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 0 | 0% | 6 | 0 |
-| [`OPTION`](sig/OPTION.md) | 12 | 0 | 0% | 10 | 0 |
+| [`OPTION`](sig/OPTION.md) | 12 | 12 | 100% | 10 | 10 |
 | [`OS`](sig/OS.md) | 9 | 0 | 0% | 3 | 0 |
 | [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | 26 | 0 | 0% | 23 | 0 |
-| [`OS_IO`](sig/OS_IO.md) | 26 | 0 | 0% | 13 | 0 |
+| [`OS_IO`](sig/OS_IO.md) | 26 | 26 | 100% | 13 | 13 |
 | [`OS_PATH`](sig/OS_PATH.md) | 27 | 0 | 0% | 23 | 0 |
 | [`OS_PROCESS`](sig/OS_PROCESS.md) | 10 | 0 | 0% | 7 | 0 |
 | [`PACK_REAL`](sig/PACK_REAL.md) | 8 | 0 | 0% | 5 | 0 |
@@ -59,7 +59,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`SOCKET`](sig/SOCKET.md) | 93 | 0 | 0% | 76 | 0 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 0 | 0% | 21 | 0 |
 | [`STRING`](sig/STRING.md) | 31 | 0 | 0% | 28 | 0 |
-| [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 0 | 0% | 7 | 0 |
+| [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 0 | 0% | 36 | 0 |
 | [`TEXT`](sig/TEXT.md) | 7 | 0 | 0% | 0 | 0 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 0 | 0% | 28 | 0 |
@@ -71,7 +71,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR`](sig/VECTOR.md) | 21 | 0 | 0% | 19 | 0 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 0 | 0% | 23 | 0 |
 | [`WORD`](sig/WORD.md) | 38 | 0 | 0% | 36 | 0 |
-| **all** | 1538 | 0 | 0% | 1078 | 0 |
+| **all** | 1538 | 126 | 8% | 1078 | 99 |
 
 ---
 

@@ -16,6 +16,10 @@ keep these invariants:
   *Supported* or *Partial* needs a test file `tests/lang/<id>_<name>.sml` with
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
+* `lib/basis/DOCUMENTED` lists the signatures that are documented in full. A
+  member added to one of them needs a doc comment, a function among them a
+  usage head (`docs/doc-comments.md`): `make docs` and `make check-docs` fail
+  otherwise. A signature joins the list when all of it is documented.
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;

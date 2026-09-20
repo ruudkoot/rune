@@ -130,6 +130,17 @@ leaves to the **implementation**, with its value; a **limitation**. A note's
 id is `scope/slug` (`Char.fromString/unescaped-double-quote`,
 `LIST/list-spec`); when one check pins the note, its label is the id.
 
+## The ratchet
+
+`lib/basis/DOCUMENTED` lists the signatures that are documented in full. For
+them `runedoc` makes an error of what it only counts elsewhere
+(`docs/generated/basis/coverage.md`): an entry without a comment (one that is
+documented together with the entry before it counts as documented), a
+function without a usage head, a first paragraph of more than 160 characters
+(it is the summary of the index pages: say the rest in a second paragraph), a
+qualified name in backquotes that leads nowhere. Add a signature to the list
+in the commit that finishes its documentation.
+
 ## Trying it
 
 ```

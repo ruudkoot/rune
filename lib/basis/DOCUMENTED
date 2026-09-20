@@ -1,0 +1,11 @@
+# The signatures that are documented in full (docs/plans/docgen.md, D10).
+# runedoc treats what is a warning elsewhere as an error for them: an entry
+# without documentation, a function whose description shows no usage, a first
+# paragraph too long for a summary, a reference that leads nowhere.
+BOOL
+CHAR
+INT_INF
+LIST
+OPTION
+OS_IO
+STRING_CVT

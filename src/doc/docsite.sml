@@ -63,7 +63,7 @@ struct
     end
 
   (* An environment for pages in the directory that `root` leads out of. *)
-  fun envOf (modules : I.module list, out : string) =
+  fun envOf (modules : I.module list, out : string, ratchet : string list) =
     let
       val claims = DocClaims.ofModules isPublic modules
       val index = R.indexOf (modules, claims, isPublic)
@@ -72,6 +72,7 @@ struct
     in
       (claims, index,
        fn root => {index = index, root = root, up = out, claims = claims, notesOf = notesOf modules,
+                   ratchet = fn s => List.exists (fn r => r = s) ratchet,
                    links = links, anchors = anchors} : P.env)
     end
 
@@ -357,6 +358,7 @@ struct
                   (List.map (fn o' : occurrence =>
                                "[" ^ #signat o' ^ "](" ^ P.href ({index = #index env, root = "../", up = #up env,
                                                                   claims = #claims env, notesOf = #notesOf env,
+                                                                  ratchet = #ratchet env,
                                                                   links = #links env, anchors = #anchors env},
                                                                  path, {page = R.sigPage (#signat o'), anchor = #anchor o'},
                                                                  Source.noSpan) ^ ")") g) ^ "\n"
@@ -422,12 +424,59 @@ struct
                (List.rev (!(#links env)))
     end
 
+  (* ---- the ratchet ---- *)
+  (* DOCUMENTED, in the directory of the library, lists the signatures that are
+     documented in full, one on a line (# begins a comment). For them what is
+     otherwise only counted in coverage.md is an error: an entry without
+     documentation, a function without a usage head, a first paragraph that is
+     too long for a summary, a reference that leads nowhere. So what is done
+     stays done. *)
+  val summaryLimit = 160
+
+  fun ratchetOf (dir : string) : string list =
+    let
+      val ins = TextIO.openIn (dir ^ "/DOCUMENTED")
+      val text = TextIO.inputAll ins before TextIO.closeIn ins
+    in
+      List.filter (fn l => l <> "" andalso not (String.isPrefix "#" l))
+                  (List.map (fn l => String.concat (String.tokens Char.isSpace l)) (String.fields (fn c => c = #"\n") text))
+    end
+    handle IO.Io _ => []
+
+  fun checkRatchet (dir : string, sigs : I.signatureRecord list, ratchet : string list) : unit =
+    (List.app (fn r =>
+                 if List.exists (fn s : I.signatureRecord => #name s = r) sigs then ()
+                 else DocDiag.error ({file = dir ^ "/DOCUMENTED", start = 0, stop = 0}, r ^ " is no signature of the library"))
+              ratchet;
+     List.app (fn s : I.signatureRecord =>
+                 if not (List.exists (fn r => r = #name s) ratchet) then ()
+                 else
+                   (if List.null (#doc s) then DocDiag.error (#span s, "signature " ^ #name s ^ " has no comment, and DOCUMENTED lists it") else ();
+                    List.app (fn e : I.entryRecord =>
+                                let
+                                  val what = I.kindName (#kind e) ^ " " ^ String.concatWith "." (#path e @ [#name e])
+                                  val summary = T.plain (P.summaryOf (#doc e))
+                                in
+                                  if not (P.isDocumented e) then
+                                    DocDiag.error (#span e, what ^ " is not documented, and DOCUMENTED lists " ^ #name s)
+                                  else if P.isFunction e andalso List.null (#heads e) then
+                                    DocDiag.error (#span e, what ^ " is a function whose description shows no usage, such as `" ^ #name e ^ " x`")
+                                  else if String.size summary > summaryLimit then
+                                    DocDiag.error (#span e, "the first paragraph of " ^ what ^ " has " ^ Int.toString (String.size summary)
+                                                            ^ " characters; it is the summary, of at most " ^ Int.toString summaryLimit)
+                                  else ()
+                                end)
+                             (P.entriesOf (#body s))))
+              sigs)
+
   fun build {dir : string, title : string, out : string} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
-      val (claims, index, env) = envOf (modules, upFrom out)
+      val ratchet = ratchetOf dir
+      val (claims, index, env) = envOf (modules, upFrom out, ratchet)
       val () = DocClaims.checkNames (#signatures index) claims
+      val () = checkRatchet (dir, sigs, ratchet)
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"

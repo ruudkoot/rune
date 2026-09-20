@@ -19,6 +19,8 @@ struct
      written, as (page, anchor). *)
   type env = {index : R.index, root : string, up : string,
               claims : DocClaims.claim list,
+              (* the signatures that are documented in full: what is a warning elsewhere is an error there *)
+              ratchet : string -> bool,
               (* the notes of a structure's body, and of the functor it applies, by member *)
               notesOf : string -> (string * I.doc) list,
               links : (string * string * Source.span) list ref,
@@ -76,7 +78,8 @@ struct
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
-            (DocDiag.warn (span, "`" ^ c ^ "` names nothing that is documented"); NONE)
+            ((if #ratchet env sigName then DocDiag.error else DocDiag.warn)
+               (span, "`" ^ c ^ "` names nothing that is documented"); NONE)
         | _ => NONE
       val inl = M.inlines link
       fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"

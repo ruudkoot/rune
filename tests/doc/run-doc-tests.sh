@@ -9,6 +9,10 @@
 #   NAME.md    the output of `runedoc --page tests/doc/NAME.sml`: the pages of
 #              the signatures of the file
 #   NAME.md.diag  the diagnostics of that run; without it there must be none
+# Every directory tests/doc/NAME.lib is a small library (a MANIFEST, perhaps a
+# DOCUMENTED). Its documentation is generated into tests/out/doc/NAME.site:
+#   NAME.lib.diag   the diagnostics of `runedoc --lib tests/doc --library NAME.lib`
+#   NAME.lib.files  the files it writes, one on a line (none after an error)
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -69,6 +73,21 @@ for src in tests/doc/*.sml; do
       echo "failed: $name printed diagnostics for its page and has no .md.diag: $(head -1 "$out/$name.md.diag")"
     fi
   fi
+done
+
+for lib in tests/doc/*.lib; do
+  [ -d "$lib" ] || continue
+  name=$(basename "$lib" .lib)
+  case "$name" in *"$filter"*) ;; *) continue ;; esac
+  rm -rf "$out/$name.site"
+  "$runedoc" --lib tests/doc --library "$name.lib" --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
+  if [ -d "$out/$name.site" ]; then (cd "$out/$name.site" && find . -type f | sort) > "$out/$name.lib.files"; else : > "$out/$name.lib.files"; fi
+  if [ $update = 1 ]; then
+    cp "$out/$name.lib.diag" "tests/doc/$name.lib.diag"
+    cp "$out/$name.lib.files" "tests/doc/$name.lib.files"
+  fi
+  same "$name.lib.diag" "$out/$name.lib.diag" "tests/doc/$name.lib.diag"
+  same "$name.lib.files" "$out/$name.lib.files" "tests/doc/$name.lib.files"
 done
 
 echo "test-doc: passed $passed, failed $failed"

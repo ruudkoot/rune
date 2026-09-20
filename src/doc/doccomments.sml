@@ -83,6 +83,7 @@ struct
     | Token.EXCEPTION => true | Token.STRUCTURE => true | Token.SIGNATURE => true | Token.FUNCTOR => true
     | Token.INCLUDE => true | Token.SHARING => true | Token.AND => true | Token.BAR => true
     | Token.OP => true | Token.COMMA => true
+    | Token.EQUALS => true      (* a comment above `= A`, the first constructor of a datatype *)
     | _ => false
 
   (* items: the (start, stop) of everything that can be documented.

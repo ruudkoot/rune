@@ -87,7 +87,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, envAt) = DocSite.envOf (modules, "")
+      val (claims, index, envAt) = DocSite.envOf (modules, "", [])
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in

@@ -1,12 +1,12 @@
 # signature BOOL
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **BOOL**
+[The Standard ML Basis Library](../README.md) &rsaquo; Text and characters &rsaquo; **BOOL**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 0 of 5 entries documented |
+| Documentation | 5 of 5 entries documented |
 | Source | [lib/basis/sig\_bool.sml](../../../../lib/basis/sig_bool.sml) |
 
 ## Synopsis
@@ -20,11 +20,12 @@ structure Bool : BOOL
 | --- | --- | --- |
 | `Bool` | Bool | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
 
-signature BOOL, transcribed from <https://smlfamily.github.io/Basis/bool.html>
+Booleans: negation, and conversion to and from text.
 
-The page specifies `datatype bool = false | true`, which the Definition
-does not allow (Section 2.9: true and false may not be specified); the
-replication below is the legal way to say the same.
+The conditional `if`, and `andalso` and `orelse`, which evaluate their
+second
+operand only when they must, are part of the language; [`not`](#val-not) is also in the
+top-level environment.
 
 ## Interface
 
@@ -34,8 +35,11 @@ sig
   datatype <a href="#type-bool">bool</a> = datatype bool
 
   val <a href="#val-not">not</a> : bool -&gt; bool
+
   val <a href="#val-tostring">toString</a> : bool -&gt; string
+
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (bool, 'a) StringCvt.reader
+
   val <a href="#val-fromstring">fromString</a> : string -&gt; bool option
 end
 </pre>
@@ -46,11 +50,20 @@ end
 datatype bool = datatype bool
 ```
 
+The type of truth values, with the constructors `false` and `true`. It
+is the top-level [`bool`](#type-bool).
+
+> **Erratum** `BOOL/bool-spec`. The specification writes `datatype bool = false | true`. The Definition (Section 2.9) does not allow `true` and
+> `false` to be specified, so the signature replicates the top-level
+> datatype instead; the meaning is the same.
+
 ### <a name="val-not"></a>`not`
 
 ```sml
 val not : bool -> bool
 ```
+
+`not b` is the negation of `b`.
 
 ### <a name="val-tostring"></a>`toString`
 
@@ -58,17 +71,47 @@ val not : bool -> bool
 val toString : bool -> string
 ```
 
+`toString b` is `"true"` or `"false"`.
+
 ### <a name="val-scan"></a>`scan`
 
 ```sml
 val scan : (char, 'a) StringCvt.reader -> (bool, 'a) StringCvt.reader
 ```
 
+`scan getc strm` reads a boolean from the character stream `strm`, which
+`getc` reads.
+
+It skips initial white space and then takes the word `true` or `false`,
+in any mixture of upper and lower case. The answer is `SOME (b, rest)`,
+with `rest` the stream after the word, or `NONE` when neither word is
+there, in which case nothing has been consumed. What follows the word
+stays in the stream, also when it is a letter: `"truer"` scans as `true`
+and leaves `"r"`.
+
+> **Reading** `Bool.scan/wsx-*`. "Initial whitespace" is what [`Char.isSpace`](../sig/CHAR.md#val-isspace)
+> accepts, as for [`StringCvt.skipWS`](../sig/STRING_CVT.md#val-skipws): the space, and the characters `\t`,
+> `\n`, `\v`, `\f` and `\r`.
+
 ### <a name="val-fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> bool option
 ```
+
+`fromString s` is the boolean that `s` begins with, read as [`scan`](#val-scan) reads
+it, or `NONE`.
+
+**Law** `fromString s = StringCvt.scanString scan s`
+
+> **Reading** `Bool.fromString/none-not-whitespace-*`. The characters whose
+> codes are next to those of the white space characters (0, 8, 14, 31, 33,
+> 95 and 127) are not white space: a string that begins with one of them
+> gives `NONE`.
+
+## See also
+
+[`STRING_CVT`](../sig/STRING_CVT.md)
 
 ---
 
