@@ -76,13 +76,15 @@ The type of optional values, the one of the top-level environment.
 It admits equality when `'a` does.
 
 > **Erratum** `OPTION/option-spec`. [`NONE`](#con-none) and [`SOME`](#con-some) may be specified, unlike
-> the constructors of `bool` and `list`, so the datatype stands here as the
+> the constructors of [`bool`](../sig/BOOL.md#type-bool) and [`list`](../sig/LIST.md#type-list), so the datatype stands here as the
 > specification writes it.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
 | <a name="con-none"></a>`NONE` |  | no value |
 | <a name="con-some"></a>`SOME` | `'a` | the value it carries |
+
+Also in the [top-level environment](../top-level.md): `option`.
 
 ### <a name="exn-option"></a>`Option`
 
@@ -91,6 +93,8 @@ exception Option
 ```
 
 Raised by [`valOf`](#val-valof) when there is no value. It is the top-level [`Option`](#exn-option).
+
+Also in the [top-level environment](../top-level.md): `Option`.
 
 ### <a name="val-getopt"></a>`getOpt`
 
@@ -101,6 +105,8 @@ val getOpt : 'a option * 'a -> 'a
 `getOpt (opt, a)` is the value that `opt` carries, or the default `a` if
 it carries none.
 
+Also in the [top-level environment](../top-level.md): `getOpt`.
+
 ### <a name="val-issome"></a>`isSome`
 
 ```sml
@@ -108,6 +114,8 @@ val isSome : 'a option -> bool
 ```
 
 `isSome opt` is `true` when `opt` carries a value.
+
+Also in the [top-level environment](../top-level.md): `isSome`.
 
 ### <a name="val-valof"></a>`valOf`
 
@@ -118,6 +126,8 @@ val valOf : 'a option -> 'a
 `valOf opt` is the value that `opt` carries.
 
 **Raises** [`Option`](#exn-option) if `opt` is [`NONE`](#con-none).
+
+Also in the [top-level environment](../top-level.md): `valOf`.
 
 ### <a name="val-filter"></a>`filter`
 

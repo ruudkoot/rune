@@ -19,6 +19,7 @@ file tests/doc/modules.sml
     alias of: Plain
   structure Nested
     members: Inner Deeper y
+    twin: y = Inner.x
     structure Inner
       ascribed: S
       alias of: Transparent

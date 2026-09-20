@@ -74,6 +74,9 @@ struct
     | Functor of {name : string, file : string, span : Source.span, doc : doc,
                   param : string, result : ascription option,
                   notes : (string * doc) list}      (* as for a structure: they hold for every application *)
+      (* a declaration at the top level that is no module: what the top-level
+         environment has. kind: val, type, exception, infix 5, ... *)
+    | Decl of {kind : string, names : string list, file : string, span : Source.span, doc : doc}
 
   (* members: the names a structure body declares, when it is written out
      (NONE for an alias or a functor application, whose members only
@@ -82,7 +85,10 @@ struct
   withtype structRecord =
     {name : string, file : string, span : Source.span, doc : doc,
      ascription : ascription option, rhs : rhs, subs : module list,
-     members : string list option, notes : (string * doc) list}
+     members : string list option, notes : (string * doc) list,
+     (* the members that are declared to be something else by name: `val null
+        = null`, `exception Empty = Empty`, `datatype list = datatype list` *)
+     twins : (string * string) list}
 
   (* ---- the text form ---- *)
   fun indent n = CharVector.tabulate (2 * n, fn _ => #" ")
@@ -117,7 +123,7 @@ struct
     :: textLines (n + 1, "spec", spec)
     @ (if adjacent then [indent (n + 1) ^ "adjacent"] else [])
     @ (case leader of SOME l => [indent (n + 1) ^ "documented with: " ^ l] | NONE => [])
-    @ List.map (fn {code, name = h, args} : DocHead.head =>
+    @ List.map (fn {code, name = h, args, ...} : DocHead.head =>
                   indent (n + 1) ^ "head of " ^ h ^ ": " ^ code ^
                   (if List.null args then "" else " (arguments: " ^ String.concatWith " " args ^ ")")) heads
     @ (case sigref of SOME s => [indent (n + 1) ^ "signature: " ^ s] | NONE => [])
@@ -145,7 +151,7 @@ struct
         @ docLines (n + 1, doc)
         @ List.concat (List.map (itemLines (n + 1)) body)
         @ textLines (n + 1, "source", source)
-    | Struct {name, doc, ascription, rhs, subs, members, notes, ...} =>
+    | Struct {name, doc, ascription, rhs, subs, members, notes, twins, ...} =>
         (indent n ^ "structure " ^ name)
         :: ascriptionLines (n + 1) ascription
         @ (case rhs of
@@ -155,6 +161,7 @@ struct
            | Other => [indent (n + 1) ^ "other"])
         @ docLines (n + 1, doc)
         @ (case members of SOME ms => [indent (n + 1) ^ "members: " ^ String.concatWith " " ms] | NONE => [])
+        @ List.map (fn (m, other) => indent (n + 1) ^ "twin: " ^ m ^ " = " ^ other) twins
         @ noteLines (n + 1) notes
         @ List.concat (List.map (moduleLines (n + 1)) subs)
     | Functor {name, doc, param, result, notes, ...} =>
@@ -163,6 +170,9 @@ struct
         @ ascriptionLines (n + 1) result
         @ docLines (n + 1, doc)
         @ noteLines (n + 1) notes
+
+    | Decl {kind, names, doc, ...} =>
+        (indent n ^ "declaration " ^ kind ^ " " ^ String.concatWith " " names) :: docLines (n + 1, doc)
 
   and noteLines n (notes : (string * doc) list) =
     List.concat (List.map (fn (member, doc) => (indent n ^ "notes on " ^ member) :: docLines (n + 1, doc)) notes)

@@ -24,7 +24,7 @@ Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, 
 operations that make sense only, or mostly, without a bound.
 
 [`IntInf.int`](../sig/INTEGER.md#type-int) has no smallest and no largest value: [`precision`](../sig/INTEGER.md#val-precision), [`minInt`](../sig/INTEGER.md#val-minint)
-and [`maxInt`](../sig/INTEGER.md#val-maxint) are `NONE`, and no operation raises `Overflow` except the
+and [`maxInt`](../sig/INTEGER.md#val-maxint) are `NONE`, and no operation raises [`Overflow`](../sig/GENERAL.md#exn-overflow) except the
 conversions to a bounded type. The bit operations treat an integer as an
 infinite string of bits in two's complement, so that a negative number has
 infinitely many leading ones and `notb i` is `~(i + 1)`.
@@ -117,7 +117,7 @@ division.
 The quotient is rounded towards negative infinity and the remainder has
 the sign of `j`.
 
-**Raises** `Div` if `j` is zero.
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
 ### <a name="val-quotrem"></a>`quotRem`
 
@@ -131,7 +131,7 @@ division.
 The quotient is rounded towards zero and the remainder has the sign of
 `i`.
 
-**Raises** `Div` if `j` is zero.
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
 ## Powers and logarithms
 
@@ -146,7 +146,7 @@ val pow : int * Int.int -> int
 For a negative `j` the result is what is left of `1 / i^~j` as an integer:
 1 or \~1 when `i` is 1 or \~1, and 0 for every other `i` but 0.
 
-**Raises** `Div` if `i` is zero and `j` is negative.
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `i` is zero and `j` is negative.
 
 **Example** `pow (2, 100) = 1267650600228229401496703205376`
 
@@ -159,7 +159,7 @@ val log2 : int -> Int.int
 `log2 i` is the largest `k` for which `2^k <= i`: the position of the
 highest bit of `i`.
 
-**Raises** `Domain` if `i <= 0`.
+**Raises** [`Domain`](../sig/GENERAL.md#exn-domain) if `i <= 0`.
 
 ## Bits
 

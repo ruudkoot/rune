@@ -19,7 +19,10 @@ struct
      signature, relative to the root of the output. *)
   type index = {signatures : I.module StringMap.map,
                 structures : string StringMap.map,
-                functors : unit StringMap.map}
+                functors : unit StringMap.map,
+                (* a name of the top-level environment that is a member of a
+                   structure: `Subscript` is General.Subscript, `map` List.map *)
+                tops : target StringMap.map}
 
   fun sigPage (name : string) : string = "sig/" ^ name ^ ".md"
   fun funPage (name : string) : string = "fun/" ^ name ^ ".md"
@@ -107,6 +110,8 @@ struct
            SOME (I.Item (I.Entry {body = SOME b, ...})) => inner (b, rest)
          | _ => NONE)
 
+  fun member' (index, page, items, name) = member (index, page, items, name, [])
+
   datatype result =
       Target of target
     | Argument                      (* a name of the usage head *)
@@ -138,7 +143,10 @@ struct
                 else
                   case StringMap.find (#structures index, x) of
                     SOME s => Target {page = sigPage s, anchor = ""}
-                  | NONE => Unknown
+                  | NONE =>
+                      (case StringMap.find (#tops index, x) of
+                         SOME t => Target t
+                       | NONE => Unknown)
           end
     | SOME (head :: rest, x) =>
         let
@@ -165,7 +173,8 @@ struct
       s :: _ => SOME s
     | [] => NONE
 
-  fun emptyIndex () : index = {signatures = StringMap.empty, structures = StringMap.empty, functors = StringMap.empty}
+  fun emptyIndex () : index =
+    {signatures = StringMap.empty, structures = StringMap.empty, functors = StringMap.empty, tops = StringMap.empty}
 
   (* The index of some modules: every signature, every structure with the
      signature it claims first, every public functor. *)
@@ -183,7 +192,24 @@ struct
         List.foldl (fn (I.Functor {name, ...}, acc) => if isPublic name then StringMap.insert (acc, name, ()) else acc
                      | (_, acc) => acc)
                    StringMap.empty modules
+      val partial = {signatures = signatures, structures = structures, functors = functors, tops = StringMap.empty}
+      (* the first structure that declares a member to be an unqualified name
+         gives that name its description *)
+      val tops =
+        List.foldl (fn (I.Struct {name, twins, ...}, acc) =>
+                        (case StringMap.find (structures, name) of
+                           SOME s =>
+                             List.foldl (fn ((member, other), acc) =>
+                                           if CharVector.exists (fn c => c = #".") other orelse StringMap.member (acc, other) then acc
+                                           else
+                                             case member' (partial, sigPage s, bodyOf (partial, s), member) of
+                                               SOME t => StringMap.insert (acc, other, t)
+                                             | NONE => acc)
+                                        acc twins
+                         | NONE => acc)
+                     | (_, acc) => acc)
+                   StringMap.empty modules
     in
-      {signatures = signatures, structures = structures, functors = functors}
+      {signatures = signatures, structures = structures, functors = functors, tops = tops}
     end
 end

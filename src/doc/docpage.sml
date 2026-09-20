@@ -21,6 +21,8 @@ struct
               claims : DocClaims.claim list,
               (* the signatures that are documented in full: what is a warning elsewhere is an error there *)
               ratchet : string -> bool,
+              (* the top-level name that a member of a signature also has, through a structure that implements it *)
+              topLevel : string * string -> string option,
               (* the notes of a structure's body, and of the functor it applies, by member *)
               notesOf : string -> (string * I.doc) list,
               links : (string * string * Source.span) list ref,
@@ -89,7 +91,16 @@ struct
         case b of
           T.Reserved {keyword, modifier, body} =>
             (case keyword of
-               "Raises" => labelled ("Raises", body)
+               "Raises" =>
+                 ((case T.firstCode body of
+                     SOME exn =>
+                       (case R.resolve (#index env, sigName, path, args) exn of
+                          R.Target _ => ()
+                        | _ => if #ratchet env sigName
+                               then DocDiag.error (span, "`Raises:` names `" ^ exn ^ "`, which is no exception that is documented")
+                               else ())
+                   | NONE => ());
+                  labelled ("Raises", body))
              | "Law" => labelled ("Law", body)
              | "Example" => labelled ("Example", body)
              | "Complexity" => labelled ("Complexity", body)
@@ -194,7 +205,13 @@ struct
              else ""
          | _ => "")
       ^ blocks (env, page, sigName, path, args, span) (#doc e)
-      ^ consTable ^ fieldTable ^ instanceNotes ^ inner
+      ^ consTable ^ fieldTable
+      ^ (case List.mapPartial (fn g : I.entryRecord =>
+                                 if List.null (#path g) then #topLevel env (sigName, #name g) else NONE) group of
+           [] => ""
+         | tops => "Also in the [top-level environment](" ^ #root env ^ "top-level.md): "
+                   ^ String.concatWith ", " (List.map M.code tops) ^ ".\n\n")
+      ^ instanceNotes ^ inner
     end
 
   (* The items of a body: sections, prose, and entries with their followers. *)

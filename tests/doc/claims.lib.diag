@@ -1,0 +1,3 @@
+tests/doc/claims.lib/counter.sml:15:11: error: Wrong does not implement COUNTER, as its comment claims: signature mismatch: value next has type int -> string in the structure but int -> int in the signature (type constructor mismatch: string vs int)
+tests/doc/claims.lib/counter.sml:20:11: error: Narrow does not implement COUNTER where type t = string, as its comment claims: signature mismatch: type t is int in the structure but string in the signature
+tests/doc/claims.lib/counter.sml:25:11: error: Missing does not implement COUNTER, as its comment claims: signature mismatch: value zero is not defined in the structure

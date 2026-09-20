@@ -5,7 +5,8 @@
    arguments are the names the rest of the comment uses for them. *)
 structure DocHead =
 struct
-  type head = {code : string, name : string, args : string list}
+  (* arity: how many arguments the value is applied to, one after another *)
+  type head = {code : string, name : string, args : string list, arity : int}
 
   (* A usage may name the fields of a record argument as a pattern does,
      `make {size, fill}`, which is no expression: a label that stands alone
@@ -83,7 +84,8 @@ struct
     List.mapPartial (fn code =>
                        case Option.mapPartial (fn e => unfold (e, [])) (parseExp code) of
                          SOME (name, args as _ :: _) =>
-                           SOME ({code = code, name = name, args = distinct (List.concat (List.map variables args))}, args)
+                           SOME ({code = code, name = name, args = distinct (List.concat (List.map variables args)),
+                                  arity = List.length args}, args)
                        | _ => NONE) codes
 
   (* What is wrong with these arguments for a value of this type. An argument

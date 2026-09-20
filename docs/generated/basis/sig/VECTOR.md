@@ -75,6 +75,8 @@ val maxLen : int
 val fromList : 'a list -> 'a vector
 ```
 
+Also in the [top-level environment](../top-level.md): `vector`.
+
 ### <a name="val-tabulate"></a>`tabulate`
 
 ```sml

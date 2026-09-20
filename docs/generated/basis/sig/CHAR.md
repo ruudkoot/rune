@@ -185,6 +185,8 @@ val ord : char -> int
 
 `ord c` is the code of `c`, between 0 and [`maxOrd`](#val-maxord).
 
+Also in the [top-level environment](../top-level.md): `ord`.
+
 ### <a name="val-chr"></a>`chr`
 
 ```sml
@@ -193,7 +195,9 @@ val chr : int -> char
 
 `chr i` is the character whose code is `i`.
 
-**Raises** `Chr` if `i < 0` or `i > maxOrd`.
+**Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `i < 0` or `i > maxOrd`.
+
+Also in the [top-level environment](../top-level.md): `chr`.
 
 ### <a name="val-succ"></a>`succ`
 
@@ -203,7 +207,7 @@ val succ : char -> char
 
 `succ c` is the character after `c`, the one with the code `ord c + 1`.
 
-**Raises** `Chr` if `c` is [`maxChar`](#val-maxchar).
+**Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`maxChar`](#val-maxchar).
 
 ### <a name="val-pred"></a>`pred`
 
@@ -213,7 +217,7 @@ val pred : char -> char
 
 `pred c` is the character before `c`, the one with the code `ord c - 1`.
 
-**Raises** `Chr` if `c` is [`minChar`](#val-minchar).
+**Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`minChar`](#val-minchar).
 
 ### <a name="val-compare"></a>`compare`
 
@@ -478,7 +482,7 @@ rejected.
 
 > **Reading** `Char.fromCString/hex-huge-does-not-fit`. A `\x` escape whose
 > value is no character gives `NONE` however many digits it has:
-> `Overflow` is not raised.
+> [`Overflow`](../sig/GENERAL.md#exn-overflow) is not raised.
 
 > **Reading** `Char.fromCString/printable-only-all-converted`. Every printable
 > character but the double quote and the backslash is converted to itself,

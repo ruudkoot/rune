@@ -94,6 +94,8 @@ val maxSize : int
 val size : string -> int
 ```
 
+Also in the [top-level environment](../top-level.md): `size`.
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
@@ -112,17 +114,23 @@ val extract : string * int * int option -> string
 val substring : string * int * int -> string
 ```
 
+Also in the [top-level environment](../top-level.md): `substring`.
+
 ### <a name="val-op-caret"></a>`^`
 
 ```sml
 val ^ : string * string -> string
 ```
 
+Also in the [top-level environment](../top-level.md): `^`.
+
 ### <a name="val-concat"></a>`concat`
 
 ```sml
 val concat : string list -> string
 ```
+
+Also in the [top-level environment](../top-level.md): `concat`.
 
 ### <a name="val-concatwith"></a>`concatWith`
 
@@ -136,17 +144,23 @@ val concatWith : string -> string list -> string
 val str : char -> string
 ```
 
+Also in the [top-level environment](../top-level.md): `str`.
+
 ### <a name="val-implode"></a>`implode`
 
 ```sml
 val implode : char list -> string
 ```
 
+Also in the [top-level environment](../top-level.md): `implode`.
+
 ### <a name="val-explode"></a>`explode`
 
 ```sml
 val explode : string -> char list
 ```
+
+Also in the [top-level environment](../top-level.md): `explode`.
 
 ### <a name="val-map"></a>`map`
 

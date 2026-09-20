@@ -125,6 +125,8 @@ It admits equality when its element type does. The constructors are
 > to be specified, so the signature replicates the top-level datatype
 > instead; the meaning is the same.
 
+Also in the [top-level environment](../top-level.md): `list`.
+
 ### <a name="exn-empty"></a>`Empty`
 
 ```sml
@@ -133,6 +135,8 @@ exception Empty
 
 Raised by [`hd`](#val-hd), [`tl`](#val-tl) and [`last`](#val-last) when they are given the empty list. It is
 the same exception as the top-level [`Empty`](#exn-empty).
+
+Also in the [top-level environment](../top-level.md): `Empty`.
 
 ## Taking lists apart
 
@@ -146,6 +150,8 @@ val null : 'a list -> bool
 
 Unlike `l = []` it does not need an equality type.
 
+Also in the [top-level environment](../top-level.md): `null`.
+
 ### <a name="val-length"></a>`length`
 
 ```sml
@@ -157,6 +163,8 @@ val length : 'a list -> int
 **Law** `length (l @ m) = length l + length m`
 
 **Complexity** linear in the length; constant stack.
+
+Also in the [top-level environment](../top-level.md): `length`.
 
 ### <a name="val-op-at"></a>`@`
 
@@ -173,6 +181,8 @@ It is infix and right associative with precedence 5, the same as `::`, so
 the right in a loop is therefore quadratic: cons onto the front and
 reverse at the end, or use [`revAppend`](#val-revappend).
 
+Also in the [top-level environment](../top-level.md): `@`.
+
 ### <a name="val-hd"></a>`hd`
 
 ```sml
@@ -183,6 +193,8 @@ val hd : 'a list -> 'a
 
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
 
+Also in the [top-level environment](../top-level.md): `hd`.
+
 ### <a name="val-tl"></a>`tl`
 
 ```sml
@@ -192,6 +204,8 @@ val tl : 'a list -> 'a list
 `tl l` is `l` without its first element.
 
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
+
+Also in the [top-level environment](../top-level.md): `tl`.
 
 ### <a name="val-last"></a>`last`
 
@@ -228,7 +242,7 @@ val nth : 'a list * int -> 'a
 
 `nth (l, i)` is the element of `l` at position `i`, counting from 0.
 
-**Raises** `Subscript` if `i < 0` or `i >= length l`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length l`.
 
 **Complexity** linear in `i`.
 
@@ -240,7 +254,7 @@ val take : 'a list * int -> 'a list
 
 `take (l, i)` is the list of the first `i` elements of `l`; `take (l, length l)` is `l`.
 
-**Raises** `Subscript` if `i < 0` or `i > length l`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length l`.
 
 **Law** `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
 
@@ -254,7 +268,7 @@ val drop : 'a list * int -> 'a list
 
 The result shares its cells with `l`: nothing is copied.
 
-**Raises** `Subscript` if `i < 0` or `i > length l`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length l`.
 
 ## Building lists
 
@@ -267,6 +281,8 @@ val rev : 'a list -> 'a list
 `rev l` is the list of the elements of `l` in the opposite order.
 
 **Law** `rev (rev l) = l`
+
+Also in the [top-level environment](../top-level.md): `rev`.
 
 ### <a name="val-concat"></a>`concat`
 
@@ -303,6 +319,8 @@ val app : ('a -> unit) -> 'a list -> unit
 `app f l` applies `f` to every element of `l`, from left to right, for its
 effect.
 
+Also in the [top-level environment](../top-level.md): `app`.
+
 ### <a name="val-map"></a>`map`
 
 ```sml
@@ -313,6 +331,8 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 `l`, from left to right.
 
 **Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects
+
+Also in the [top-level environment](../top-level.md): `map`.
 
 ### <a name="val-mappartial"></a>`mapPartial`
 
@@ -385,6 +405,8 @@ which is `3 - (2 - (1 - 0))`.
 
 **Complexity** one application of `f` per element; constant stack.
 
+Also in the [top-level environment](../top-level.md): `foldl`.
+
 ### <a name="val-foldr"></a>`foldr`
 
 ```sml
@@ -397,6 +419,8 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 
 **Example** `foldr (op ::) [] l = l`, and `foldr (op -) 0 [1, 2, 3] = 2`,
 which is `1 - (2 - (3 - 0))`.
+
+Also in the [top-level environment](../top-level.md): `foldr`.
 
 ### <a name="val-exists"></a>`exists`
 
@@ -433,7 +457,7 @@ val tabulate : int * (int -> 'a) -> 'a list
 `tabulate (n, f)` is `[f 0, f 1, ..., f (n - 1)]`; `f` is applied in order
 of increasing argument.
 
-**Raises** `Size` if `n < 0`, before `f` is applied at all.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`, before `f` is applied at all.
 
 **Law** `tabulate (length l, fn i => nth (l, i)) = l`
 

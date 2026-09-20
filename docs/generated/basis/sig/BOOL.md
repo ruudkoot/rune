@@ -57,6 +57,8 @@ is the top-level [`bool`](#type-bool).
 > `false` to be specified, so the signature replicates the top-level
 > datatype instead; the meaning is the same.
 
+Also in the [top-level environment](../top-level.md): `bool`.
+
 ### <a name="val-not"></a>`not`
 
 ```sml
@@ -64,6 +66,8 @@ val not : bool -> bool
 ```
 
 `not b` is the negation of `b`.
+
+Also in the [top-level environment](../top-level.md): `not`.
 
 ### <a name="val-tostring"></a>`toString`
 

@@ -387,22 +387,34 @@ struct
                | ns => List.map (fn n => (n, ns)) names
              end)
 
+  (* The members that a body declares to be something else, by name. *)
+  fun twinsOf (dec : Ast.dec) : (string * string) list =
+    case dec of
+      Ast.DVal (_, binds, _) =>
+        List.mapPartial (fn (Ast.PVar (([], x), _, _), Ast.EVar (longid, _, _)) => SOME (x, Ast.longidToString longid)
+                          | _ => NONE) binds
+    | Ast.DDatatypeRepl (name, longid, _) => [(name, Ast.longidToString longid)]
+    | Ast.DException (binds, _) =>
+        List.mapPartial (fn Ast.ExnRepl (n, longid, _, _) => SOME (n, Ast.longidToString longid) | _ => NONE) binds
+    | Ast.DLocal (_, decs, _) => List.concat (List.map twinsOf decs)
+    | _ => []
+
   fun structOf (ctx : ctx) ({name, strexp, span} : Ast.strbind) : I.module =
     let
       val src = #src ctx
       val doc = docOf (ctx, StructureDoc, span)
       val (ascription, e) = ascriptionOf ctx strexp
-      val (rhs, subs, members, notes) =
+      val (rhs, subs, members, notes, twins) =
         case e of
           Ast.StrStruct (decs, _) =>
             (I.Body, List.concat (List.map (subStructs ctx) decs), SOME (List.concat (List.map declared decs)),
-             List.concat (List.map (notesOf ctx) decs))
-        | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [], NONE, [])
-        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [])
-        | _ => (I.Other, [], NONE, [])
+             List.concat (List.map (notesOf ctx) decs), List.concat (List.map twinsOf decs))
+        | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [], NONE, [], [])
+        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [], [])
+        | _ => (I.Other, [], NONE, [], [])
     in
       I.Struct {name = name, file = S.name src, span = span, doc = doc, ascription = ascription, rhs = rhs, subs = subs,
-                members = members, notes = notes}
+                members = members, notes = notes, twins = twins}
     end
 
   and subStructs ctx (dec : Ast.dec) : I.module list =
@@ -410,6 +422,10 @@ struct
       Ast.DStructure (binds, _) => List.map (structOf ctx) binds
     | Ast.DLocal (_, decs, _) => List.concat (List.map (subStructs ctx) decs)
     | _ => []
+
+  fun decl (ctx : ctx, kind : string, names : string list, dec : Ast.dec) : I.module =
+    I.Decl {kind = kind, names = names, file = S.name (#src ctx), span = Ast.spanOfDec dec,
+            doc = docOf (ctx, DeclarationDoc, Ast.spanOfDec dec)}
 
   fun modulesOf (ctx : ctx) (dec : Ast.dec) : I.module list =
     let val src = #src ctx
@@ -446,7 +462,20 @@ struct
                                  notes = (case #2 (ascriptionOf ctx body) of
                                             Ast.StrStruct (decs, _) => List.concat (List.map (notesOf ctx) decs)
                                           | _ => [])}) binds
-      | _ => []
+        (* the other declarations of the top level: what the top-level
+           environment has, where a file has any *)
+      | Ast.DInfix (p, names, span) => [decl (ctx, "infix " ^ Int.toString p, names, dec)]
+      | Ast.DInfixr (p, names, span) => [decl (ctx, "infixr " ^ Int.toString p, names, dec)]
+      | Ast.DOverload {kind, strid, ...} => [decl (ctx, "_overload " ^ kind, [String.concatWith "." strid], dec)]
+      | _ =>
+          (case declared dec of
+             [] => []
+           | names =>
+               [decl (ctx, (case dec of
+                              Ast.DVal _ => "val" | Ast.DValRec _ => "val" | Ast.DFun _ => "val"
+                            | Ast.DType _ => "type" | Ast.DDatatype _ => "datatype" | Ast.DDatatypeRepl _ => "datatype"
+                            | Ast.DAbstype _ => "datatype" | Ast.DException _ => "exception" | _ => "declaration"),
+                      names, dec)])
     end
 
   (* The modules a file declares. Every file is parsed on its own, with the

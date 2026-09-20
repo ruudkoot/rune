@@ -76,11 +76,15 @@ type exn = exn
 exception Bind
 ```
 
+Also in the [top-level environment](../top-level.md): `Bind`.
+
 ### <a name="exn-match"></a>`Match`
 
 ```sml
 exception Match
 ```
+
+Also in the [top-level environment](../top-level.md): `Match`.
 
 ### <a name="exn-chr"></a>`Chr`
 
@@ -88,11 +92,15 @@ exception Match
 exception Chr
 ```
 
+Also in the [top-level environment](../top-level.md): `Chr`.
+
 ### <a name="exn-div"></a>`Div`
 
 ```sml
 exception Div
 ```
+
+Also in the [top-level environment](../top-level.md): `Div`.
 
 ### <a name="exn-domain"></a>`Domain`
 
@@ -100,11 +108,15 @@ exception Div
 exception Domain
 ```
 
+Also in the [top-level environment](../top-level.md): `Domain`.
+
 ### <a name="exn-fail"></a>`Fail`
 
 ```sml
 exception Fail of string
 ```
+
+Also in the [top-level environment](../top-level.md): `Fail`.
 
 ### <a name="exn-overflow"></a>`Overflow`
 
@@ -112,11 +124,15 @@ exception Fail of string
 exception Overflow
 ```
 
+Also in the [top-level environment](../top-level.md): `Overflow`.
+
 ### <a name="exn-size"></a>`Size`
 
 ```sml
 exception Size
 ```
+
+Also in the [top-level environment](../top-level.md): `Size`.
 
 ### <a name="exn-span"></a>`Span`
 
@@ -124,11 +140,15 @@ exception Size
 exception Span
 ```
 
+Also in the [top-level environment](../top-level.md): `Span`.
+
 ### <a name="exn-subscript"></a>`Subscript`
 
 ```sml
 exception Subscript
 ```
+
+Also in the [top-level environment](../top-level.md): `Subscript`.
 
 ### <a name="val-exnname"></a>`exnName`
 
@@ -136,11 +156,15 @@ exception Subscript
 val exnName : exn -> string
 ```
 
+Also in the [top-level environment](../top-level.md): `exnName`.
+
 ### <a name="val-exnmessage"></a>`exnMessage`
 
 ```sml
 val exnMessage : exn -> string
 ```
+
+Also in the [top-level environment](../top-level.md): `exnMessage`.
 
 ### <a name="type-order"></a>`order`
 
@@ -154,11 +178,15 @@ datatype order = LESS | EQUAL | GREATER
 | <a name="con-equal"></a>`EQUAL` |  |  |
 | <a name="con-greater"></a>`GREATER` |  |  |
 
+Also in the [top-level environment](../top-level.md): `order`.
+
 ### <a name="val-op-bang"></a>`!`
 
 ```sml
 val ! : 'a ref -> 'a
 ```
+
+Also in the [top-level environment](../top-level.md): `!`.
 
 ### <a name="val-op-colon-eq"></a>`:=`
 
@@ -166,11 +194,15 @@ val ! : 'a ref -> 'a
 val := : 'a ref * 'a -> unit
 ```
 
+Also in the [top-level environment](../top-level.md): `:=`.
+
 ### <a name="val-o"></a>`o`
 
 ```sml
 val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 ```
+
+Also in the [top-level environment](../top-level.md): `o`.
 
 ### <a name="val-before"></a>`before`
 
@@ -178,11 +210,15 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 val before : 'a * unit -> 'a
 ```
 
+Also in the [top-level environment](../top-level.md): `before`.
+
 ### <a name="val-ignore"></a>`ignore`
 
 ```sml
 val ignore : 'a -> unit
 ```
+
+Also in the [top-level environment](../top-level.md): `ignore`.
 
 ---
 

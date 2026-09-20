@@ -424,11 +424,15 @@ val realRound : real -> real
 val floor : real -> int
 ```
 
+Also in the [top-level environment](../top-level.md): `floor`.
+
 ### <a name="val-ceil"></a>`ceil`
 
 ```sml
 val ceil : real -> int
 ```
+
+Also in the [top-level environment](../top-level.md): `ceil`.
 
 ### <a name="val-trunc"></a>`trunc`
 
@@ -436,11 +440,15 @@ val ceil : real -> int
 val trunc : real -> int
 ```
 
+Also in the [top-level environment](../top-level.md): `trunc`.
+
 ### <a name="val-round"></a>`round`
 
 ```sml
 val round : real -> int
 ```
+
+Also in the [top-level environment](../top-level.md): `round`.
 
 ### <a name="val-toint"></a>`toInt`
 
@@ -459,6 +467,8 @@ val toLargeInt : IEEEReal.rounding_mode -> real -> LargeInt.int
 ```sml
 val fromInt : int -> real
 ```
+
+Also in the [top-level environment](../top-level.md): `real`.
 
 ### <a name="val-fromlargeint"></a>`fromLargeInt`
 

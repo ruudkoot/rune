@@ -99,6 +99,7 @@ struct
         end
     | I.Functor {name, doc, result, file, span, ...} => claimsOf (name, true, doc, result, file, span)
     | I.Signature _ => []
+    | I.Decl _ => []
 
   (* The claims of the public modules: those whose name, and the names of the
      structures they are inside, do not begin with Rune. *)

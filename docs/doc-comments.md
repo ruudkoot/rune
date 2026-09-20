@@ -117,7 +117,10 @@ The claim puts `Int` on the page of `INTEGER`, sends `Int.toString` there, and
 is written to `docs/generated/basis/claims.tsv`. `tests/basis/check-claims.sh`
 (part of `make check-docs`) wants every claim to be backed by a line
 `structure C : SPEC_INTEGER = Int` of a `tests/basis/*_sig.sml`, and every such
-line to be claimed. An ascription in the source is a claim by itself. A
+line to be claimed. `runedoc` also elaborates the library and checks every
+claim with the compiler: a structure that does not match what it claims fails
+`make docs` with the compiler's message. An ascription in the source is a
+claim by itself. A
 substructure is claimed above its binding (`structure Path = RunePath` in
 `os.sml`). In the body of a structure or a functor, a note in the comment
 above a declaration is shown under that member on the signature's page, as
@@ -138,7 +141,8 @@ them `runedoc` makes an error of what it only counts elsewhere
 documented together with the entry before it counts as documented), a
 function without a usage head, a first paragraph of more than 160 characters
 (it is the summary of the index pages: say the rest in a second paragraph), a
-qualified name in backquotes that leads nowhere. Add a signature to the list
+qualified name in backquotes that leads nowhere, a `Raises:` whose exception
+is not documented anywhere (the exceptions of the top level are `General`'s). Add a signature to the list
 in the commit that finishes its documentation.
 
 ## Trying it

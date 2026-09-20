@@ -116,7 +116,7 @@ The argument is a number of digits; `NONE` asks for the default.
 
 > **Reading** `StringCvt.SCI/carries-negative`. A constructor carries any
 > `int option`, also one that no format accepts, such as `SCI (SOME ~1)`:
-> `Size` is raised by `fmt`, not by the constructor.
+> [`Size`](../sig/GENERAL.md#exn-size) is raised by `fmt`, not by the constructor.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
@@ -150,14 +150,14 @@ val padLeft : char -> int -> string -> string
 A string that has `i` characters or more is returned as it is, also for a
 negative `i`.
 
-**Raises** `Size` if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
 than `i`.
 
 **Example** `padLeft #"0" 5 "42" = "00042"`
 
 > **Reading** `StringCvt.padLeft/width-minInt`. For the smallest `int` the
 > difference `i - size s` does not exist as an `int`; `s` is returned all
-> the same, and `Overflow` is not raised.
+> the same, and [`Overflow`](../sig/GENERAL.md#exn-overflow) is not raised.
 
 ### <a name="val-padright"></a>`padRight`
 
@@ -170,7 +170,7 @@ val padRight : char -> int -> string -> string
 
 A string that has `i` characters or more is returned as it is.
 
-**Raises** `Size` if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
 than `i`.
 
 ## Building scanners

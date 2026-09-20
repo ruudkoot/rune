@@ -27,6 +27,7 @@ file tests/doc/claims.sml
     reserved Implements: COUNTER where type t = int
     reserved Status: optional
     members: t zero next helper Limits extra
+    twin: extra = hidden
     notes on zero
       reserved Implementation: `Counter.zero/value`. 0.
     notes on next
