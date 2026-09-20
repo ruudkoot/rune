@@ -1,12 +1,12 @@
 # signature OS_PROCESS
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **OS_PROCESS**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **OS_PROCESS**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 0 of 10 entries documented |
+| Documentation | 10 of 10 entries documented |
 | Tests | 37 checks of 10 entries |
 | Source | [lib/basis/sig\_os\_process.sml](../../../../lib/basis/sig_os_process.sml) |
 
@@ -21,8 +21,12 @@ structure OS.Process : OS_PROCESS
 | --- | --- | --- |
 | `OS.Process` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
-signature OS\_PROCESS, transcribed from
-<https://smlfamily.github.io/Basis/os-process.html>
+The process itself: its environment, the commands it runs, and how it
+ends.
+
+[`exit`](#val-exit) ends the program the orderly way: the actions given to [`atExit`](#val-atexit) are
+run, the streams are flushed, and only then does the process stop.
+[`terminate`](#val-terminate) stops it at once, without any of that.
 
 ## Interface
 
@@ -30,14 +34,23 @@ signature OS\_PROCESS, transcribed from
 signature OS_PROCESS =
 sig
   type <a href="#type-status">status</a>
+
   val <a href="#val-success">success</a> : status
+
   val <a href="#val-failure">failure</a> : status
+
   val <a href="#val-issuccess">isSuccess</a> : status -&gt; bool
+
   val <a href="#val-system">system</a> : string -&gt; status
+
   val <a href="#val-atexit">atExit</a> : (unit -&gt; unit) -&gt; unit
+
   val <a href="#val-exit">exit</a> : status -&gt; 'a
+
   val <a href="#val-terminate">terminate</a> : status -&gt; 'a
+
   val <a href="#val-getenv">getEnv</a> : string -&gt; string option
+
   val <a href="#val-sleep">sleep</a> : Time.time -&gt; unit
 end
 </pre>
@@ -47,6 +60,15 @@ end
 ```sml
 type status
 ```
+
+The type of what a program ends with, and what a command it ran ended with.
+
+> **Deviation** `OS.Process.status/is-an-int`. The specification leaves the
+> type abstract; in Rune it is `int`, and the structure is not sealed.
+
+> **Implementation** `OS.Process.status/of-a-command`. The status of a
+> command that [`system`](#val-system) ran is its exit code, or 256 plus the number of
+> the signal that ended it, which [`Posix.Process.fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) decodes.
 
 <details><summary>Tests (1)</summary>
 
@@ -60,6 +82,8 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val success : status
 ```
 
+The status of a program that did what it was meant to do.
+
 <details><summary>Tests (1)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `isSuccess`
@@ -71,6 +95,8 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 ```sml
 val failure : status
 ```
+
+A status of a program that did not.
 
 <details><summary>Tests (1)</summary>
 
@@ -84,6 +110,12 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val isSuccess : status -> bool
 ```
 
+`isSuccess st` is `true` when `st` is a status of a program that succeeded.
+
+> **Reading** `OS.Process.isSuccess/killed-is-not-success`. A command that a
+> signal ended has not succeeded: from [`UNIX`](../sig/UNIX.md), this is true only where
+> [`Posix.Process.fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) gives `W_EXITED`.
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `twice` &middot; `killed-by-signal`
@@ -95,6 +127,15 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 ```sml
 val system : string -> status
 ```
+
+`system cmd` runs `cmd` and is the status it ended with.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the command could not be run at all.
+
+> **Reading** `OS.Process.system/a-real-shell`. A shell runs the command, so
+> redirection, sequencing and variables work; it runs in the current
+> directory, and [`system`](#val-system) returns only once the command is done. What the
+> process has buffered is neither lost nor written twice by running one.
 
 <details><summary>Tests (15)</summary>
 
@@ -108,6 +149,13 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val atExit : (unit -> unit) -> unit
 ```
 
+`atExit f` asks for `f` to be run when the program ends.
+
+> **Implementation** `OS.Process.atExit/how-actions-run`. The actions run in
+> the reverse of the order they were given in, at a normal end and at
+> [`exit`](#val-exit) but not at [`terminate`](#val-terminate) and not after an uncaught exception. An
+> action that raises is ignored, and so is one that registers another.
+
 <details><summary>Tests (3)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `not-run-at-registration` &middot; `action-that-raises` &middot; `action-that-registers`
@@ -119,6 +167,13 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 ```sml
 val exit : status -> 'a
 ```
+
+`exit st` ends the program with the status `st`, after running the [`atExit`](#val-atexit) actions and flushing the streams.
+
+> **Reading** `OS.Process.exit/what-is-flushed`. "Flushes and closes all I/O
+> streams" reaches the streams the library still holds output for, over
+> writers a program supplied; output to a file is held by the VM, which
+> flushes every file itself.
 
 <details><summary>Tests (2)</summary>
 
@@ -132,6 +187,10 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val terminate : status -> 'a
 ```
 
+`terminate st` ends the program with the status `st` at once.
+
+No [`atExit`](#val-atexit) action runs and nothing the library holds is flushed.
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `result-has-any-type` &middot; `result-has-any-type-string`
@@ -143,6 +202,13 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 ```sml
 val getEnv : string -> string option
 ```
+
+`getEnv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
+
+> **Reading** `OS.Process.getEnv/the-whole-name`. The whole name must match:
+> a name that merely begins with one that is set does not, and neither
+> does a name with `"=value"` attached. A command run by [`system`](#val-system) inherits
+> this environment and cannot change it.
 
 <details><summary>Tests (7)</summary>
 
@@ -156,11 +222,17 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val sleep : Time.time -> unit
 ```
 
+`sleep t` waits for the time `t`, and returns at once when `t` is not positive.
+
 <details><summary>Tests (3)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `zero` &middot; `positive` &middot; `positive-not-much-longer`
 
 </details>
+
+## See also
+
+[`OS`](../sig/OS.md), [`UNIX`](../sig/UNIX.md), [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md), [`TIME`](../sig/TIME.md)
 
 ---
 

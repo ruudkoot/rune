@@ -15,7 +15,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
 | [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
-| [`DATE`](sig/DATE.md) | 24 | 0 | 0% | 20 | 0 |
+| [`DATE`](sig/DATE.md) | 24 | 24 | 100% | 20 | 20 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 0 | 0% | 4 | 0 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
@@ -37,11 +37,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 0 | 0% | 5 | 0 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 0 | 0% | 6 | 0 |
 | [`OPTION`](sig/OPTION.md) | 12 | 12 | 100% | 10 | 10 |
-| [`OS`](sig/OS.md) | 9 | 0 | 0% | 3 | 0 |
-| [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | 26 | 0 | 0% | 23 | 0 |
+| [`OS`](sig/OS.md) | 9 | 9 | 100% | 3 | 3 |
+| [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | 26 | 26 | 100% | 23 | 23 |
 | [`OS_IO`](sig/OS_IO.md) | 26 | 26 | 100% | 13 | 13 |
-| [`OS_PATH`](sig/OS_PATH.md) | 27 | 0 | 0% | 23 | 0 |
-| [`OS_PROCESS`](sig/OS_PROCESS.md) | 10 | 0 | 0% | 7 | 0 |
+| [`OS_PATH`](sig/OS_PATH.md) | 27 | 27 | 100% | 23 | 23 |
+| [`OS_PROCESS`](sig/OS_PROCESS.md) | 10 | 10 | 100% | 7 | 7 |
 | [`PACK_REAL`](sig/PACK_REAL.md) | 8 | 8 | 100% | 5 | 5 |
 | [`PACK_WORD`](sig/PACK_WORD.md) | 7 | 7 | 100% | 5 | 5 |
 | [`POSIX`](sig/POSIX.md) | 8 | 0 | 0% | 0 | 0 |
@@ -64,14 +64,14 @@ documented when a comment describes it, alone or together with the entry before 
 | [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 36 | 100% | 28 | 28 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 2 | 100% | 2 | 2 |
-| [`TIME`](sig/TIME.md) | 25 | 0 | 0% | 22 | 0 |
-| [`TIMER`](sig/TIMER.md) | 10 | 0 | 0% | 8 | 0 |
+| [`TIME`](sig/TIME.md) | 25 | 25 | 100% | 22 | 22 |
+| [`TIMER`](sig/TIMER.md) | 10 | 10 | 100% | 8 | 8 |
 | [`UNIX`](sig/UNIX.md) | 14 | 0 | 0% | 11 | 0 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 0 | 0% | 6 | 0 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 801 | 52% | 1078 | 651 |
+| **all** | 1538 | 932 | 60% | 1078 | 757 |
 
 ## Notes that no check pins
 
@@ -79,9 +79,17 @@ A deviation or a limitation that the test suite does not show. A reading or an e
 be pinned: many are about the text and not about behaviour.
 
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
+- `DATE.date/not-abstract` (Deviation), DATE
 - `IMPERATIVE_IO/functor-not-sealed` (Deviation), IMPERATIVE_IO
 - `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
+- `OS.FileSys.file_id/is-a-pair` (Deviation), OS_FILE_SYS
+- `OS.Process.status/is-an-int` (Deviation), OS_PROCESS
 - `StringCvt.cs/transparent` (Deviation), STRING_CVT
+- `TIME.time/not-abstract` (Deviation), TIME
+- `TIMER.cpu_timer/not-abstract` (Deviation), TIMER
+- `Timer.checkCPUTimes/no-gc-accounting` (Limitation), TIMER
+- `Timer.checkGCTime/always-zero` (Limitation), TIMER
+- `OS.syserror/is-an-int` (Deviation), OS
 
 ---
 

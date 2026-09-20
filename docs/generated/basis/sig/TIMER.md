@@ -1,12 +1,12 @@
 # signature TIMER
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **TIMER**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **TIMER**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 0 of 10 entries documented |
+| Documentation | 10 of 10 entries documented |
 | Tests | 26 checks of 8 entries |
 | Source | [lib/basis/sig\_timer.sml](../../../../lib/basis/sig_timer.sml) |
 
@@ -21,7 +21,24 @@ structure Timer : TIMER
 | --- | --- | --- |
 | `Timer` | Timer: how long something took. | [lib/basis/timer.sml](../../../../lib/basis/timer.sml) |
 
-signature TIMER, transcribed from <https://smlfamily.github.io/Basis/timer.html>
+Stopwatches: how much processor time and how much wall-clock time have
+passed since a timer was started.
+
+A timer is started, not read and reset: `startCPUTimer ()` and
+`startRealTimer ()` take a reading of the clocks, and [`checkCPUTimer`](#val-checkcputimer) and
+[`checkRealTimer`](#val-checkrealtimer) give the time since, as often as one likes. The two
+`total` timers are the ones that were started when the program was, so
+they measure the whole run.
+
+Processor time is split into the time the program spent and the time the
+system spent on its behalf, and [`checkCPUTimes`](#val-checkcputimes) separates out what the
+garbage collector took.
+
+> **Reading** `TIMER/only-properties-are-checked`. What a timer reads is not a
+> value a test can predict; the suite checks that times are not negative,
+> that they do not go backwards, and that the equivalences the specification
+> states hold. A system that does not account for processor time may report
+> real time here.
 
 ## Interface
 
@@ -29,18 +46,25 @@ signature TIMER, transcribed from <https://smlfamily.github.io/Basis/timer.html>
 signature TIMER =
 sig
   type <a href="#type-cpu_timer">cpu_timer</a>
+
   type <a href="#type-real_timer">real_timer</a>
 
   val <a href="#val-startcputimer">startCPUTimer</a> : unit -&gt; cpu_timer
+
   val <a href="#val-checkcputimes">checkCPUTimes</a> : cpu_timer
                       -&gt; {<a href="#fld-checkcputimes.nongc">nongc</a> : {usr : Time.time, sys : Time.time},
                           <a href="#fld-checkcputimes.gc">gc</a> : {usr : Time.time, sys : Time.time}}
+
   val <a href="#val-checkcputimer">checkCPUTimer</a> : cpu_timer -&gt; {<a href="#fld-checkcputimer.usr">usr</a> : Time.time, <a href="#fld-checkcputimer.sys">sys</a> : Time.time}
+
   val <a href="#val-checkgctime">checkGCTime</a> : cpu_timer -&gt; Time.time
+
   val <a href="#val-totalcputimer">totalCPUTimer</a> : unit -&gt; cpu_timer
 
   val <a href="#val-startrealtimer">startRealTimer</a> : unit -&gt; real_timer
+
   val <a href="#val-checkrealtimer">checkRealTimer</a> : real_timer -&gt; Time.time
+
   val <a href="#val-totalrealtimer">totalRealTimer</a> : unit -&gt; real_timer
 end
 </pre>
@@ -51,17 +75,27 @@ end
 type cpu_timer
 ```
 
+The type of a processor-time timer.
+
+> **Deviation** `TIMER.cpu_timer/not-abstract`. The specification leaves the
+> type abstract; in Rune it is a record of the two times read when the
+> timer was started, and the structure is not sealed.
+
 ### <a name="type-real_timer"></a>`real_timer`
 
 ```sml
 type real_timer
 ```
 
+The type of a wall-clock timer, a [`Time.time`](../sig/TIME.md#type-time) in the same way.
+
 ### <a name="val-startcputimer"></a>`startCPUTimer`
 
 ```sml
 val startCPUTimer : unit -> cpu_timer
 ```
+
+`startCPUTimer ()` is a timer that counts processor time from now.
 
 <details><summary>Tests (3)</summary>
 
@@ -76,6 +110,15 @@ val checkCPUTimes : cpu_timer
                     -> {nongc : {usr : Time.time, sys : Time.time},
                         gc : {usr : Time.time, sys : Time.time}}
 ```
+
+`checkCPUTimes t` is the processor time since `t` was started, split into the collector's share and the rest.
+
+`usr` is the time the program itself ran, `sys` the time the system
+spent for it.
+
+> **Limitation** `Timer.checkCPUTimes/no-gc-accounting`. The collector's time
+> is not measured on its own: `gc` is zero in both fields and everything
+> is reported under `nongc`.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -94,6 +137,11 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non
 val checkCPUTimer : cpu_timer -> {usr : Time.time, sys : Time.time}
 ```
 
+`checkCPUTimer t` is the processor time since `t` was started, user and system time apart.
+
+It counts the collector's share in, where [`checkCPUTimes`](#val-checkcputimes) reports it
+separately.
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-checkcputimer.usr"></a>`usr` | `Time.time` |  |
@@ -111,6 +159,11 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non
 val checkGCTime : cpu_timer -> Time.time
 ```
 
+`checkGCTime t` is the processor time the collector took since `t` was started.
+
+> **Limitation** `Timer.checkGCTime/always-zero`. It is always `zeroTime`,
+> because the collector's time is not measured on its own.
+
 <details><summary>Tests (4)</summary>
 
 For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `is-gc-usr` &middot; `part-of-usr` &middot; `does-not-go-back`
@@ -122,6 +175,13 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non
 ```sml
 val totalCPUTimer : unit -> cpu_timer
 ```
+
+`totalCPUTimer ()` is the timer that was started when the program was.
+
+> **Implementation** `Timer.totalCPUTimer/from-process-start`. The
+> "system-dependent initialization time" is the start of the process, so
+> the timer's base is zero processor time and what it reports is what the
+> whole run has used.
 
 <details><summary>Tests (3)</summary>
 
@@ -135,6 +195,8 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non
 val startRealTimer : unit -> real_timer
 ```
 
+`startRealTimer ()` is a timer that counts wall-clock time from now.
+
 <details><summary>Tests (2)</summary>
 
 For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `starts` &middot; `starts-near-zero`
@@ -146,6 +208,8 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `sta
 ```sml
 val checkRealTimer : real_timer -> Time.time
 ```
+
+`checkRealTimer t` is the wall-clock time since `t` was started.
 
 <details><summary>Tests (4)</summary>
 
@@ -159,11 +223,21 @@ For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non
 val totalRealTimer : unit -> real_timer
 ```
 
+`totalRealTimer ()` is the wall-clock timer that was started when the program was.
+
+> **Implementation** `Timer.totalRealTimer/from-initialisation`. It counts
+> from the moment the library was initialised, just before the program's
+> own code begins.
+
 <details><summary>Tests (3)</summary>
 
 For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `includes-earlier-time` &middot; `does-not-go-back`
 
 </details>
+
+## See also
+
+[`TIME`](../sig/TIME.md), [`OS_PROCESS`](../sig/OS_PROCESS.md)
 
 ---
 
