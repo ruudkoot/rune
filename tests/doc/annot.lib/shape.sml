@@ -14,7 +14,11 @@ sig
   (* `scale (s, k)` is `s`, `k` times as large. *)
   val scale : shape * int -> shape
 
-  (* `name s` is what `s` is called. *)
+  (* `name s` is what `s` is called.
+
+     The blanks of code stay, as in `"a  circle"`, and a line end in it is one
+     blank: `scale (Circle 1,
+                    2)`. *)
   val name : shape -> string
 
   (* `grow s` is `scale (s, 2)`. *)

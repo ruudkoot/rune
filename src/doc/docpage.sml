@@ -49,6 +49,12 @@ struct
       String.concatWith "/" (go (String.fields (fn c => c = #"/") path, []))
     end
 
+  (* A link to a source file from a page: the way back to where the paths of
+     the sources begin, and then the path; an absolute path is where it is. *)
+  fun sourceLink (env : env, root : string, file : string) : string =
+    let val f = normalise file
+    in "[" ^ DocMarkdown.escape f ^ "](" ^ (if String.isPrefix "/" f then f else root ^ #up env ^ f) ^ ")" end
+
   (* ---- counting ---- *)
   fun entriesOf (items : I.item list) : I.entryRecord list =
     List.concat (List.map (fn I.Item (I.Entry e) =>
@@ -180,7 +186,7 @@ struct
     if List.null sites then ""
     else
       let
-        fun fileLink f = "[" ^ M.escape (normalise f) ^ "](" ^ #root env ^ #up env ^ normalise f ^ ")"
+        fun fileLink f = sourceLink (env, #root env, f)
         val direct = List.filter (fn (_, s : DocTests.site) => not (isSome (#via s))) sites
         val viaFunctor = List.filter (fn (_, s : DocTests.site) => isSome (#via s)) sites
         val directGroups = distinct (List.map (fn (st, s : DocTests.site) => st ^ "\t" ^ #file s) direct)
@@ -420,7 +426,7 @@ struct
                      else Int.toString (List.foldl (fn (l, n) => n + countSites l) 0 perEntry) ^ " checks of "
                           ^ Int.toString checked ^ " entries"
                    end],
-                  ["Source", "[" ^ M.escape (normalise file) ^ "](" ^ #root env ^ #up env ^ normalise file ^ ")"]])
+                  ["Source", sourceLink (env, #root env, file)]])
       ^ "## Synopsis\n\n"
       ^ M.fenced ("sml", String.concatWith "\n"
                           (("signature " ^ name ^ (case sigexp of SOME s => " = " ^ s | NONE => ""))
@@ -434,7 +440,7 @@ struct
          else M.table (["Implementation", "", "Source"],
                        List.map (fn c : DocClaims.claim =>
                                    [M.code (#name c), M.cell link (#summary c),
-                                    "[" ^ M.escape (normalise (#file c)) ^ "](" ^ #root env ^ #up env ^ normalise (#file c) ^ ")"])
+                                    sourceLink (env, #root env, #file c)])
                                 mine))
       ^ blocks (env, page, name, [], [], span) overview
       ^ annotationsBlock (env, name, fn structure' => [structure' ^ ":" ^ name])

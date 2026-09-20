@@ -307,7 +307,7 @@ struct
          if #realisations c = "" then "" else M.code (#realisations c),
          (case #status c of SOME st => st | NONE => sigStatus (#signat c)),
          definedAs c,
-         "[" ^ M.escape (P.normalise (#file c)) ^ "](" ^ #up env ^ P.normalise (#file c) ^ ")"]
+         P.sourceLink (env, "", #file c)]
       (* what a written-out structure declares beyond the signatures it claims *)
       fun extras (c : DocClaims.claim) =
         case structAt (modules, String.fields (fn ch => ch = #".") (#name c)) of
@@ -351,7 +351,7 @@ struct
       ^ "[" ^ M.escape title ^ "](" ^ #root env ^ "README.md) &rsaquo; **" ^ name ^ "**\n\n"
       ^ M.table (["", ""],
                  [["Status", M.escape (case P.reserved (doc, "Status") of b :: _ => T.plain b | [] => "optional")],
-                  ["Source", "[" ^ M.escape (P.normalise file) ^ "](" ^ #root env ^ #up env ^ P.normalise file ^ ")"]])
+                  ["Source", P.sourceLink (env, #root env, file)]])
       ^ "## Synopsis\n\n"
       ^ M.fenced ("sml", "functor " ^ name ^ " (" ^ param ^ ")"
                          ^ String.concat (List.map (fn c : DocClaims.claim =>
@@ -786,7 +786,8 @@ struct
   fun exampleStructureOf (claims : DocClaims.claim list, sigStatus : string -> string) : string -> string option =
     DocExamples.structureOf (claims, fn c : DocClaims.claim => case #status c of SOME st => st | NONE => sigStatus (#signat c))
 
-  fun build {dir : string, title : string, out : string, tests : string option, annotations : string option} : file list =
+  fun build {dir : string, prelude : string option, title : string, out : string, tests : string option,
+             annotations : string option} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
@@ -808,7 +809,7 @@ struct
       val exampleStructure = exampleStructureOf (claims, sigStatus)
       (* the claims that name a signature of the library, checked by the compiler *)
       val () =
-        case DocElab.library dir of
+        case DocElab.library (dir, prelude) of
           SOME lib =>
             (List.app (fn c : DocClaims.claim =>
                          if StringMap.member (#signatures index, #signat c) then DocElab.checkClaim lib c else ())

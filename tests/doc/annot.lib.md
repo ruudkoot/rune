@@ -119,6 +119,9 @@ val name : shape -> string
 
 `name s` is what `s` is called.
 
+The blanks of code stay, as in `"a  circle"`, and a line end in it is one
+blank: `scale (Circle 1, 2)`.
+
 <details><summary>Elsewhere (1)</summary>
 
 - **Round** &mdash; calls a square a box

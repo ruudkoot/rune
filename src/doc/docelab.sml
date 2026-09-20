@@ -5,20 +5,25 @@
    it, every file of the MANIFEST in order with the fixity threaded through,
    and a claim `Implements: SIG where type ...` of a structure S is checked by
    elaborating `structure Claim : SIG where type ... = S` on top of that: what
-   the compiler says against it is the diagnostic. *)
+   the compiler says against it is the diagnostic. A library other than the
+   Basis Library is elaborated on top of it. *)
 structure DocElab =
 struct
   type library = {env : Env.env, fixity : Fixity.env}
 
   (* NONE when the library does not elaborate; the compiler's error is
-     reported, and the documentation is still made. *)
-  fun library (dir : string) : library option =
+     reported, and the documentation is still made. prelude: the directory of
+     a library that this one is written on, the Basis Library for every other
+     one; it is elaborated first, whole. *)
+  fun library (dir : string, prelude : string option) : library option =
     let
       val fixity = ref Fixity.initial
-      fun parse (e : BasisManifest.entry) =
-        let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (dir ^ "/" ^ #file e)), !fixity)
+      fun parse d (e : BasisManifest.entry) =
+        let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
-      val prog = List.concat (List.map parse (BasisManifest.readManifest dir))
+      fun programOf d = List.concat (List.map (parse d) (BasisManifest.readManifest d))
+      val before' = case prelude of SOME d => programOf d | NONE => []
+      val prog = before' @ programOf dir
       val env = ref Env.initial
     in
       Elaborate.allowPrim := true;

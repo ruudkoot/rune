@@ -1,6 +1,8 @@
 #!/bin/sh
 # Install (or remove) Rune: the rune wrapper, runevm, the compiler it runs, the
-# basis library, the man pages and the shell completions.
+# basis library, the man pages and the shell completions; and runedoc, the
+# documentation generator, when it is built (bin/runedoc.rbc, or
+# bin/runedoc-NAME with --host).
 #
 # Usage: scripts/install.sh [--prefix DIR] [--destdir DIR] [--host NAME] [--uninstall]
 #
@@ -55,11 +57,12 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 # ------------------------------------------------------------------ uninstall
 if [ "$uninstall" = 1 ]; then
   rm -f "$bindir/rune" "$bindir/runevm" \
-        "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml"
+        "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml" \
+        "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj" "$bindir/runedoc-polyml"
   rm -rf "$libdir"
-  rm -f "$mandir/rune.1" "$mandir/runevm.1"
-  rm -f "$bashdir/rune"
-  rm -f "$zshdir/_rune" "$zshdir/_runevm"
+  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1"
+  rm -f "$bashdir/rune" "$bashdir/runedoc"
+  rm -f "$zshdir/_rune" "$zshdir/_runevm" "$zshdir/_runedoc"
   echo "uninstalled rune from $prefix"
   exit 0
 fi
@@ -125,6 +128,37 @@ else
   installed="rune-$host"
 fi
 
+# runedoc, when it is built: the same kind of build as rune.
+doc=""
+if [ -z "$host" ]; then
+  if [ -e "$root/bin/runedoc.rbc" ]; then
+    copy "$root/bin/runedoc.rbc" "$libdir/runedoc.rbc" 644
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runedoc.rbc" --lib "$d/../lib/rune" "$@"\n' \
+      "$heap" > "$bindir/runedoc"
+    chmod 755 "$bindir/runedoc"
+    doc=runedoc
+  fi
+elif [ "$host" = smlnj ]; then
+  found=0
+  for h in "$root"/bin/runedoc-smlnj.heap.*; do
+    if [ -e "$h" ]; then copy "$h" "$libdir/${h##*/}" 644; found=1; fi
+  done
+  if [ "$found" = 1 ]; then
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runedoc-smlnj.heap" --lib "$d/../lib/rune" "$@"\n' "$smlnj" \
+      > "$bindir/runedoc-smlnj"
+    doc=runedoc-smlnj
+  fi
+elif [ -e "$root/bin/runedoc-$host.bin" ]; then
+  copy "$root/bin/runedoc-$host.bin" "$libdir/runedoc-$host.bin" 755
+  printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/../lib/rune/runedoc-%s.bin" --lib "$d/../lib/rune" "$@"\n' \
+    "$host" > "$bindir/runedoc-$host"
+  doc=runedoc-$host
+fi
+if [ -n "$host" ] && [ -n "$doc" ]; then
+  chmod 755 "$bindir/$doc"
+  ln -sfn "$doc" "$bindir/runedoc"
+fi
+
 copy "$root/lib/basis/MANIFEST" "$libdir/basis/MANIFEST" 644
 # the first column of a line is the file
 while IFS='|' read -r f _; do
@@ -132,14 +166,23 @@ while IFS='|' read -r f _; do
   case "$f" in ""|\#*) continue ;; esac
   copy "$root/lib/basis/$f" "$libdir/basis/$f" 644
 done < "$root/lib/basis/MANIFEST"
+# what runedoc reads besides: the overview and the list of what is documented in full
+for f in overview.doc DOCUMENTED; do
+  if [ -e "$root/lib/basis/$f" ]; then copy "$root/lib/basis/$f" "$libdir/basis/$f" 644; fi
+done
 
 copy "$root/man/rune.1" "$mandir/rune.1" 644
 copy "$root/man/runevm.1" "$mandir/runevm.1" 644
 copy "$root/completions/rune.bash" "$bashdir/rune" 644
 copy "$root/completions/_rune" "$zshdir/_rune" 644
 copy "$root/completions/_runevm" "$zshdir/_runevm" 644
+if [ -n "$doc" ]; then
+  copy "$root/man/runedoc.1" "$mandir/runedoc.1" 644
+  copy "$root/completions/runedoc.bash" "$bashdir/runedoc" 644
+  copy "$root/completions/_runedoc" "$zshdir/_runedoc" 644
+fi
 
-echo "installed $installed and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
 if [ "$host" = smlnj ]; then
   echo "note: rune-smlnj runs with $smlnj"
 fi

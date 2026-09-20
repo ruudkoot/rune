@@ -428,7 +428,7 @@ val tokens : (char -> bool) -> string -> string list
 A run of delimiters counts as one, and a delimiter at either end leaves
 nothing behind, so this is how a line is split into words.
 
-**Example** `tokens Char.isSpace " a b " = ["a", "b"]`
+**Example** `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
 **Law** `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
 

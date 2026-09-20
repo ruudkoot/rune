@@ -29,6 +29,16 @@ struct
   (* ---- inlines ---- *)
   fun oneLine (s : string) : string = String.concatWith " " (String.tokens Char.isSpace s)
 
+  (* Code on one line: a line end, with the blanks around it, is one blank.
+     The blanks inside a line stay, for they may stand in a string. *)
+  fun codeLine (s : string) : string =
+    let
+      fun notNewline c = c <> #"\n"
+      fun trim l = Substring.string (Substring.dropr Char.isSpace (Substring.dropl Char.isSpace (Substring.full l)))
+    in
+      String.concatWith " " (List.filter (fn l => l <> "") (List.map trim (String.fields (not o notNewline) s)))
+    end
+
   (* Where a URL that begins at i ends: at white space, and before the
      punctuation that ends a sentence or closes a parenthesis around it. *)
   fun urlEnd (s : string, i : int) : int =
@@ -55,7 +65,7 @@ struct
             fun close j = if j >= n then NONE else if String.sub (s, j) = #"`" then SOME j else close (j + 1)
           in
             case close (i + 1) of
-              SOME j => go (j + 1, j + 1, Code (oneLine (String.substring (s, i + 1, j - i - 1))) :: text (from, i, acc))
+              SOME j => go (j + 1, j + 1, Code (codeLine (String.substring (s, i + 1, j - i - 1))) :: text (from, i, acc))
             | NONE => (bad "a backquote without a partner: code stands between two backquotes"; List.rev (text (from, n, acc)))
           end
         else if startsAt (s, i, "http://") orelse startsAt (s, i, "https://") then

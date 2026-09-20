@@ -1,0 +1,19 @@
+#compdef runedoc
+
+_arguments -s \
+  '--library[document the library LIBDIR/NAME, or the directory NAME]:library:_files -/' \
+  '--out[write the pages to DIR]:output directory:_files -/' \
+  '--check[write nothing, fail if DIR is not what would be written]' \
+  '--title[the title of the overview page]:title:' \
+  '--tests[the test suite whose checks the pages list]:suite directory:_files -/' \
+  '--annotations[remarks about the members, by the labels of checks]:annotations file:_files' \
+  '--examples[write the examples that are equations as programs to DIR]:output directory:_files -/' \
+  '--labels[print the checks of the suite of --tests and stop]' \
+  '--check-coverage[check that every specified member has a check]' \
+  '--page[print the pages of the signatures of the files]' \
+  '--dump-ir[print what is extracted from the files]' \
+  '--lint[check the comments of the files]' \
+  '--lib[directory holding the libraries]:library directory:_files -/' \
+  '--version[print the version and exit]' \
+  '(- *)'{-h,--help}'[print a usage summary and exit]' \
+  '*:Standard ML source:_files -g "*.sml"'

@@ -11,7 +11,9 @@ struct
     "usage: runedoc --library NAME --out DIR [--check] [--title TEXT]\n\
     \       runedoc --library NAME --examples DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
-    \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST\n\
+    \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST;\n\
+    \                  a NAME with a slash in it is the directory itself. A\n\
+    \                  library other than LIBDIR/basis is read on top of it\n\
     \  --out DIR       write the documentation there, and remove the pages\n\
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
@@ -117,12 +119,34 @@ struct
       DocSite.verify (env, NONE)
     end
 
+  (* The directory of the library NAME: LIBDIR/NAME, or NAME itself when it
+     is written as a path. *)
+  fun directoryOf (name : string) : string =
+    if CharVector.exists (fn c => c = #"/") name then name
+    else case !libDir of SOME d => d ^ "/" ^ name | NONE => raise Usage "no library directory (use --lib DIR)"
+
+  (* What a library other than the Basis Library is written on: LIBDIR/basis,
+     if it is there. *)
+  fun preludeOf (dir : string) : string option =
+    case !libDir of
+      NONE => NONE
+    | SOME d =>
+        let
+          val basis = d ^ "/basis"
+          fun real p = OS.FileSys.fullPath p handle OS.SysErr _ => p
+        in
+          if real basis = real dir then NONE
+          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ]) then SOME basis
+          else NONE
+        end
+
   fun generate (name : string) : OS.Process.status =
     let
-      val lib = case !libDir of SOME d => d | NONE => raise Usage "no library directory (use --lib DIR)"
+      val lib = directoryOf name
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
-      val files = DocSite.build {dir = lib ^ "/" ^ name, out = dir, tests = !tests, annotations = !annotations,
-                                 title = (case !title of SOME t => t | NONE => name)}
+      val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
+      val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations,
+                                 title = (case !title of SOME t => t | NONE => shown)}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
     in
@@ -144,9 +168,9 @@ struct
        | NONE => raise Usage "--labels needs the suite (use --tests DIR)")
     else if !checkCoverage then
       (case (!library, !tests, !libDir) of
-         (SOME name, SOME suite, SOME lib) =>
+         (SOME name, SOME suite, _) =>
            let
-             val n = DocSite.checkCoverage {dir = lib ^ "/" ^ name, tests = suite}
+             val n = DocSite.checkCoverage {dir = directoryOf name, tests = suite}
                      handle BasisManifest.Usage why => raise Usage why
              val status = report ()
            in
@@ -157,11 +181,11 @@ struct
            end
        | _ => raise Usage "--check-coverage needs --library NAME and --tests DIR")
     else if isSome (!examples) then
-      (case (!library, !libDir) of
-         (SOME name, SOME lib) =>
+      (case !library of
+         SOME name =>
            let
              val dir = valOf (!examples)
-             val files = DocSite.examples {dir = lib ^ "/" ^ name} handle BasisManifest.Usage why => raise Usage why
+             val files = DocSite.examples {dir = directoryOf name} handle BasisManifest.Usage why => raise Usage why
              val status = report ()
            in
              if OS.Process.isSuccess status

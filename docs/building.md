@@ -79,7 +79,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
-| `make install` | install `rune`, `runevm`, the basis library, the man pages and the shell completions under `PREFIX` |
+| `make install` | install `rune`, `runevm`, `runedoc`, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
@@ -108,16 +108,24 @@ host build that compiles stage 1 of the bootstrap.
 
 ```
 $PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
+$PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
 $PREFIX/bin/runevm                   the VM
 $PREFIX/lib/rune/rune.rbc            the compiler
-$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources
-$PREFIX/share/man/man1/              rune.1, runevm.1
-$PREFIX/share/bash-completion/completions/rune
-$PREFIX/share/zsh/site-functions/    _rune, _runevm
+$PREFIX/lib/rune/runedoc.rbc         the documentation generator
+$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
+                                     overview.doc and DOCUMENTED for runedoc
+$PREFIX/share/man/man1/              rune.1, runevm.1, runedoc.1
+$PREFIX/share/bash-completion/completions/rune, runedoc
+$PREFIX/share/zsh/site-functions/    _rune, _runevm, _runedoc
 ```
 
-The installed `rune` derives the library path from its own location
-(`$(dirname $0)/../lib/rune`), so the tree can be moved or staged.
+The installed `rune` and `runedoc` derive the library path from their own
+location (`$(dirname $0)/../lib/rune`), so the tree can be moved or staged.
+`runedoc` is installed when it is built, which `make install` sees to:
+`runedoc --library ./mylib --out docs/mylib` documents a library of your own
+on top of the installed Basis Library (`man runedoc`), and `runedoc --library
+basis --out DIR` writes the pages of the Basis Library, without the test
+inventory, which needs the suite of the sources.
 
 * As a normal user `make install` builds whatever is missing first.
 * As root it builds **nothing** — it installs `bin/` as it stands and fails if

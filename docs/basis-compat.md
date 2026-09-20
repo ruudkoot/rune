@@ -158,8 +158,8 @@ library of the 64-bit one):
 | `WideString` | yes | yes | | |
 | `WideSubstring` | yes | yes | | |
 | `WideText` | yes | yes | | |
-| `WideTextIO` | | | | |
-| `WideTextPrimIO` | | | | |
+| `WideTextIO` | yes | | | |
+| `WideTextPrimIO` | yes | | | |
 | `Windows` | | | | |
 | `WordArray` | yes | yes | | |
 | `WordArray2` | yes | yes | | |

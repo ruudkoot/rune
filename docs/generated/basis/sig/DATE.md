@@ -576,7 +576,7 @@ For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml)
 val toString : date -> string
 ```
 
-`toString d` is `d` in the layout `"Wed Mar 8 19:06:45 1995"`, as C's `%a %b %e %H:%M:%S %Y`.
+`toString d` is `d` in the layout `"Wed Mar  8 19:06:45 1995"`, as C's `%a %b %e %H:%M:%S %Y`.
 
 **Raises** [`Date`](#exn-date) if `d` is not a valid date.
 
