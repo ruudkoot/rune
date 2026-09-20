@@ -1,15 +1,14 @@
 #!/bin/sh
 # Which structures of the Basis Library each system provides: a Markdown
 # table for docs/basis-compat.md.
-#   tests/basis/structures.sh [--current]
+#   tests/basis/structures.sh
 # Every structure of the specification, required and optional, is probed
-# with `structure Probe = NAME` on Rune (bin/rune), the installed MLton,
-# SML/NJ and Poly/ML (override: MLTON=, SMLNJ=, POLY=) and, with --current,
-# the releases under ${RUNE_HOSTS:-$HOME/.local/rune-hosts}. A system has a
+# with `structure Probe = NAME` on Rune (bin/rune) and on the MLton, SML/NJ
+# and Poly/ML that `make hosts` installed under
+# ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (override: MLTON=, SMLNJ=, POLY=;
+# the 32-bit SML/NJ has the library of the 64-bit one). A system has a
 # structure when that declaration compiles in its default environment.
 set -u
-current=0
-[ "${1:-}" = --current ] && current=1
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 work=$root/tests/out/structures
@@ -84,27 +83,22 @@ probe_session() {
 }
 
 systems="rune"
+mlton=${MLTON:-$hosts/mlton/bin/mlton}
+smlnj=${SMLNJ:-$hosts/smlnj/bin/sml}
+poly=${POLY:-$hosts/polyml/bin/poly}
 {
   probe_rune rune
-  system=mlton@installed; probe_mlton "$system" "${MLTON:-mlton}"
-  system=smlnj@installed; probe_session "$system" "${SMLNJ:-sml}"
-  system=polyml@installed; probe_session "$system" "${POLY:-poly}" -q --use
-  if [ $current = 1 ]; then
-    system=mlton@current; probe_mlton "$system" "$hosts/mlton/bin/mlton"
-    system=smlnj@current; probe_session "$system" "$hosts/smlnj/bin/sml"
-    system=polyml@current; probe_session "$system" "$hosts/polyml/bin/poly" -q --use
-  fi
+  system=mlton; probe_mlton "$system" "$mlton"
+  system=smlnj; probe_session "$system" "$smlnj"
+  system=polyml; probe_session "$system" "$poly" -q --use
 } > "$work/results"
 
 version() {
   case "$1" in
     rune) echo Rune ;;
-    mlton@installed) echo "MLton $("${MLTON:-mlton}" 2> /dev/null | sed -n '1s/^MLton \([0-9.]*\).*/\1/p')" ;;
-    smlnj@installed) echo "SML/NJ $("${SMLNJ:-sml}" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9.]*\).*/\1/p')" ;;
-    polyml@installed) echo "Poly/ML $("${POLY:-poly}" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9.]*\).*/\1/p')" ;;
-    mlton@current) echo "MLton $("$hosts/mlton/bin/mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9.]*\).*/\1/p')" ;;
-    smlnj@current) echo "SML/NJ $("$hosts/smlnj/bin/sml" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9.]*\).*/\1/p')" ;;
-    polyml@current) echo "Poly/ML $("$hosts/polyml/bin/poly" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9.]*\).*/\1/p')" ;;
+    mlton) echo "MLton $("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9.]*\).*/\1/p')" ;;
+    smlnj) echo "SML/NJ $("$smlnj" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9.]*\).*/\1/p')" ;;
+    polyml) echo "Poly/ML $("$poly" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9.]*\).*/\1/p')" ;;
   esac
 }
 

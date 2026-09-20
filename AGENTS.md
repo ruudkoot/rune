@@ -25,8 +25,9 @@ keep these invariants:
   out from the text of the specification. `make check-docs` wants a check for
   every member the specification's signature names, and `make test-basis` an
   explanation in `tests/basis/deviations.txt` for every check that fails.
-  After a library change run `make matrix-quick` as well: it runs the suite on
-  MLton, SML/NJ and Poly/ML, and on Rune's library compiled by them.
+  After a library change run `make matrix-quick` as well: it runs the suite
+  on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
+  Poly/ML); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through `vm/opcodes.def` and
   `vm/prims.def` (then `make gen`), with the corresponding implementation in
   `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
@@ -40,12 +41,14 @@ keep these invariants:
 
 * Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
   Poly/ML build files are generated from it — never edit `build/`.
+* The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
+  never from the machine's PATH.
 * The compiler has no built-in library path: `--lib DIR` is required, and each
   `bin/rune*` is a generated wrapper that passes it and execs the payload next
   to it. Nothing absolute is baked into the bytecode. `make install` writes the
   same kind of wrapper for the installed tree (`scripts/install.sh`).
-* The compiler must build with all three SML systems and with itself
-  (`make boot`), and all four builds must produce identical bytecode. Follow
+* The compiler must build with every host SML system and with itself
+  (`make boot`), and all five builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
   on `Int` width, only `structure`/`signature`/`functor` at top level,
   deterministic iteration, and sources that stay inside the language

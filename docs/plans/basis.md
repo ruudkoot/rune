@@ -61,14 +61,12 @@ depend on the precision, so Poly/ML loads all of `lib/basis` under `xc1`.
 On Rune 25,748 of 25,802 checks pass; the 5 absent tests need `Word8` or
 `Time`.
 
-M8 ran the suite on the current releases (MLton 20241230, SML/NJ 110.99.9,
-Poly/ML 5.9.2) as well: all 13 configurations of `make matrix` pass, with the
-lines of an installed host widened to `HOST@*` where the current release
-fails the same check, new lines for what the current releases break, and a
-category `HOST-FLAKY` for SML/NJ 110.99.9, which on a loaded machine
-sometimes gets a floating-point result wrong (such a line need not match).
-`real.sml` and `unix.sml` became portable enough that SML/NJ 110.79 loads
-them, so the `Real` and `Math` tests now run in `xc1` there too.
+M8 ran the suite on a second generation of hosts as well, and every
+configuration of `make matrix` passed, with a category `HOST-FLAKY` for
+SML/NJ, which on a loaded machine sometimes gets a floating-point result
+wrong (such a line need not match). `real.sml` and `unix.sml` became
+portable enough for a host with a 31-bit `int` to load them, so the `Real`
+and `Math` tests run in `xc1` there too.
 `tests/basis/structures.sh` makes the table of the structures each system
 provides, and `make perf` (`run-matrix.sh --perf`) the table of wall-clock
 times; both are in `docs/basis-compat.md`.
@@ -250,8 +248,8 @@ ships them) and `Windows`.
 * The documentation contract of `AGENTS.md`: every module has a
   `docs/language.md` row and a test, every primitive is in `docs/bytecode.md`.
 * Library sources and tests do not depend on the precision of `int` and
-  `word`. Measured on the hosts: SML/NJ 110.79 31 bits, MLton 32 (64 with
-  `-default-type`), Poly/ML and SML/NJ 110.99 63. `Int` and `Word` find
+  `word`. Measured on the hosts: the 32-bit SML/NJ 31 bits, MLton 32 (64 with
+  `-default-type`), Poly/ML and the 64-bit SML/NJ 63. `Int` and `Word` find
   their precision with the arithmetic itself (doubling until `Overflow`,
   shifting a bit out).
 * Tests are portable Standard ML '97 plus the Basis Library, nothing else.
@@ -327,10 +325,10 @@ line that no longer matches one.
   runs Rune's library code without Rune's compiler or VM. Thin system-call
   wrappers and literal overloading are N/A there, never a pass.
 
-Hosts: the installed MLton 20210117, SML/NJ 110.79 and Poly/ML 5.7.1, and the
-current releases that `make hosts` builds under `~/.local/rune-hosts`.
-`make matrix-quick` runs the installed ones, `make matrix` both generations.
-Neither is part of `make check`.
+Hosts: the releases `make hosts` installs under `~/.local/rune-hosts`
+(MLton, SML/NJ built for 64 and for 32 bits, Poly/ML), never the machine's
+own. `make matrix-quick` runs Rune and the `xc1` configurations, `make
+matrix` the native ones as well. Neither is part of `make check`.
 
 ### Performance suite (`tests/perf`)
 

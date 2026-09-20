@@ -1,18 +1,28 @@
 #!/bin/sh
-# Install current releases of the host SML systems under a user-local prefix,
-# for the "@cur" configurations of tests/basis/run-matrix.sh. Nothing is
-# installed system-wide and no root access is needed.
-#   scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [polyml]     (default: all three)
+# Install the host SML systems that build Rune and that the Basis Library
+# suite compares it with, under a user-local prefix (`make hosts`). Nothing is
+# installed system-wide, no root access is needed, and an SML system that the
+# machine itself has is never used.
+#   scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml]     (default: all four)
 # Prefix: ${RUNE_HOSTS:-$HOME/.local/rune-hosts}. Each system goes to
 # <prefix>/<host>-<version>, and <prefix>/<host> is a symlink to it, so
-# <prefix>/mlton/bin/mlton, <prefix>/smlnj/bin/sml and <prefix>/polyml/bin/poly
-# are the commands. MLTON_VERSION, SMLNJ_VERSION and POLYML_VERSION select
-# other releases. `make doctor` checks the tools this script needs.
+# <prefix>/mlton/bin/mlton, <prefix>/smlnj/bin/sml, <prefix>/smlnj32/bin/sml
+# and <prefix>/polyml/bin/poly are the commands. MLTON_VERSION, SMLNJ_VERSION
+# and POLYML_VERSION select other releases. `make doctor` checks the tools
+# this script needs.
 #  * MLton: the binary release from github.com/MLton/mlton (MLton is written
 #    in SML and needs an MLton to build; links against the system's GMP).
-#  * SML/NJ: config/install.sh of the 110.99 series, 64-bit (not the
-#    LLVM-based 2025 series, which does not build without cmake).
+#  * SML/NJ: config/install.sh of the 110.99 series, 64-bit (smlnj) and 32-bit
+#    (smlnj32: 31-bit int and word, which has found many portability bugs;
+#    needs gcc -m32). Not the LLVM-based 2025 series, which does not build
+#    without cmake.
 #  * Poly/ML: built from the source release with ./configure && make.
+# No build here starts from an SML compiler of the machine, so none needs a
+# second stage to shed one: MLton comes as a binary; SML/NJ compiles its C
+# runtime and loads the compiler from the boot files of the same release;
+# Poly/ML's make bootstraps from the release's own portable image, and `make
+# compiler` then rebuilds the compiler with the result. To make sure of it,
+# the builds run with a PATH on which mlton, sml, poly and polyc fail.
 set -eu
 
 MLTON_VERSION=${MLTON_VERSION:-20241230}
@@ -24,17 +34,27 @@ hosts=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --force) force=1 ;;
-    mlton|smlnj|polyml) hosts="$hosts $1" ;;
-    *) echo "usage: scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [polyml]" >&2; exit 2 ;;
+    mlton|smlnj|smlnj32|polyml) hosts="$hosts $1" ;;
+    *) echo "usage: scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml]" >&2; exit 2 ;;
   esac
   shift
 done
-[ -n "$hosts" ] || hosts="mlton smlnj polyml"
+[ -n "$hosts" ] || hosts="mlton smlnj smlnj32 polyml"
 
 cd "$(dirname "$0")/.."
 jobs=$(sh scripts/ncpus.sh)
 prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 mkdir -p "$prefix/src"
+
+# The guard: commands that stand for the machine's own SML systems and fail.
+guard=$prefix/src/guard-bin
+mkdir -p "$guard"
+for c in mlton sml poly polyc; do
+  printf '#!/bin/sh\necho "fetch-hosts: a build ran the machine'"'"'s %s ($0 $*)" >&2\nexit 1\n' "$c" > "$guard/$c"
+  chmod +x "$guard/$c"
+done
+PATH=$guard:$PATH
+export PATH
 
 fetch() {   # fetch URL FILE
   echo "fetching $1"
@@ -76,19 +96,25 @@ install_mlton() {
   activate mlton "$v"
 }
 
-install_smlnj() {
+# install_smlnj_bits NAME BITS: SML/NJ as <prefix>/NAME-<version>.
+install_smlnj_bits() {
+  name=$1
+  bits=$2
   v=$SMLNJ_VERSION
-  if installed smlnj "$v"; then echo "smlnj $v is already installed"; return; fi
-  rm -rf "$prefix/smlnj-$v"
-  mkdir -p "$prefix/smlnj-$v"
-  fetch "https://smlnj.cs.uchicago.edu/dist/working/$v/config.tgz" "$prefix/src/smlnj-$v-config.tgz"
-  tar -xzf "$prefix/src/smlnj-$v-config.tgz" -C "$prefix/smlnj-$v"
+  if installed "$name" "$v"; then echo "$name $v is already installed"; return; fi
+  rm -rf "$prefix/$name-$v"
+  mkdir -p "$prefix/$name-$v"
+  [ -f "$prefix/src/smlnj-$v-config.tgz" ] ||
+    fetch "https://smlnj.cs.uchicago.edu/dist/working/$v/config.tgz" "$prefix/src/smlnj-$v-config.tgz"
+  tar -xzf "$prefix/src/smlnj-$v-config.tgz" -C "$prefix/$name-$v"
   # install.sh downloads the remaining parts of the release and builds the
   # runtime system and the heap images in place.
-  (cd "$prefix/smlnj-$v" && sh config/install.sh -default 64) > "$prefix/src/smlnj-$v.log" 2>&1 ||
-    { echo "fetch-hosts: building SML/NJ failed; see $prefix/src/smlnj-$v.log" >&2; return 1; }
-  activate smlnj "$v"
+  (cd "$prefix/$name-$v" && sh config/install.sh -default "$bits") > "$prefix/src/$name-$v.log" 2>&1 ||
+    { echo "fetch-hosts: building SML/NJ ($bits-bit) failed; see $prefix/src/$name-$v.log" >&2; return 1; }
+  activate "$name" "$v"
 }
+install_smlnj() { install_smlnj_bits smlnj 64; }
+install_smlnj32() { install_smlnj_bits smlnj32 32; }
 
 install_polyml() {
   v=$POLYML_VERSION
@@ -113,5 +139,6 @@ done
 echo "== installed under $prefix"
 [ -x "$prefix/mlton/bin/mlton" ] && "$prefix/mlton/bin/mlton" | head -1
 [ -x "$prefix/smlnj/bin/sml" ] && "$prefix/smlnj/bin/sml" @SMLversion
+[ -x "$prefix/smlnj32/bin/sml" ] && "$prefix/smlnj32/bin/sml" @SMLversion
 [ -x "$prefix/polyml/bin/poly" ] && "$prefix/polyml/bin/poly" -v
 exit $status

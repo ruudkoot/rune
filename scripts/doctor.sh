@@ -4,13 +4,14 @@
 #   scripts/doctor.sh [--quiet] [--scope SCOPE]...
 # Scopes (default: all):
 #   vm      C99 compiler for bin/runevm
-#   mlton smlnj polyml   the SML system behind bin/rune-<scope>
+#   mlton smlnj smlnj32 polyml   the SML system behind bin/rune-<scope>: the
+#           release that scripts/fetch-hosts.sh installed (`make hosts`)
 #   check   the test runners (tests/run-tests.sh, scripts/check-*.sh)
 #   asan    make vm-asan
 #   sys     POSIX headers of the VM's system layer (vm/sys_posix.c)
-#   matrix  fetching and building current host compilers (scripts/fetch-hosts.sh)
+#   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
 #   perf    optional profiling tools
-#   build = vm mlton      all3 = mlton smlnj polyml      all = everything
+#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml      all = everything
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
 # Exit status: 0 when everything required by the scopes is present, else 1.
 # Optional tools only produce warnings. With --quiet only problems are printed.
@@ -28,10 +29,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj polyml check asan sys matrix perf" ;;
+    all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf" ;;
     build) expanded="$expanded vm mlton" ;;
-    all3) expanded="$expanded mlton smlnj polyml" ;;
-    vm|mlton|smlnj|polyml|check|asan|sys|matrix|perf) expanded="$expanded $s" ;;
+    hosts) expanded="$expanded mlton smlnj smlnj32 polyml" ;;
+    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -44,10 +45,13 @@ trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 
 CC=${CC:-cc}
 MAKE_CMD=${MAKE:-make}
-MLTON=${MLTON:-mlton}
-SMLNJ=${SMLNJ:-sml}
-POLY=${POLY:-poly}
-POLYC=${POLYC:-polyc}
+# The host SML systems: those of scripts/fetch-hosts.sh, never the machine's.
+hosts=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
+MLTON=${MLTON:-$hosts/mlton/bin/mlton}
+SMLNJ=${SMLNJ:-$hosts/smlnj/bin/sml}
+SMLNJ32=${SMLNJ32:-$hosts/smlnj32/bin/sml}
+POLYC=${POLYC:-$hosts/polyml/bin/polyc}
+POLY=${POLY:-$(dirname "$POLYC")/poly}
 
 # ---------------------------------------------------------------- packages
 if command -v apt-get > /dev/null 2>&1; then pm=apt
@@ -68,11 +72,7 @@ pkg() {
     apt:asan) echo libasan8 libubsan1 ;;  dnf:asan) echo libasan libubsan ;;
     apt:gmp) echo libgmp-dev ;;           dnf:gmp) echo gmp-devel ;;
     pacman:gmp) echo gmp ;;               brew:gmp) echo gmp ;;
-    apt:mlton) echo mlton ;;              dnf:mlton) echo mlton ;;
-    brew:mlton) echo mlton ;;
-    apt:smlnj) echo smlnj ;;              brew:smlnj) echo smlnj ;;
-    apt:polyml) echo polyml libpolyml-dev ;;  dnf:polyml) echo polyml polyml-devel ;;
-    pacman:polyml) echo polyml ;;         brew:polyml) echo polyml ;;
+    apt:m32) echo gcc-multilib ;;         dnf:m32) echo glibc-devel.i686 libgcc.i686 ;;
     apt:coreutils) echo coreutils ;;      dnf:coreutils) echo coreutils ;;
     pacman:coreutils) echo coreutils ;;   brew:coreutils) echo coreutils ;;
     apt:findutils) echo findutils ;;      dnf:findutils) echo findutils ;;
@@ -87,9 +87,7 @@ pkg() {
 
 upstream() {
   case "$1" in
-    mlton) echo "http://mlton.org" ;;
-    smlnj) echo "https://www.smlnj.org" ;;
-    polyml) echo "https://polyml.org" ;;
+    hosts) echo "run: make hosts" ;;
     *) echo "" ;;
   esac
 }
@@ -109,7 +107,10 @@ bad() {
   p=$(pkg "$3")
   if [ "$p" = - ]; then
     u=$(upstream "$3")
-    [ -n "$u" ] && manual="$manual\n    $1: install from $u"
+    case "$u" in
+      "run: "*) manual="$manual\n    $1: ${u#run: }" ;;
+      ?*) manual="$manual\n    $1: install from $u" ;;
+    esac
   else
     for q in $p; do
       case " $install " in *" $q "*) ;; *) install="$install $q" ;; esac
@@ -208,34 +209,39 @@ EOF
 
 if in_scope mlton; then
   section "MLton (bin/rune-mlton)"
-  if ! command -v "$MLTON" > /dev/null 2>&1; then bad mlton "not found on PATH" mlton
+  if [ ! -x "$MLTON" ]; then bad mlton "not installed: $MLTON" hosts
   elif (cd "$tmp" && "$MLTON" -output hello-mlton hello.sml > mlton.log 2>&1 && ./hello-mlton > /dev/null); then
-    ok mlton "$("$MLTON" 2>&1 | head -1) ($(command -v "$MLTON"))"
+    ok mlton "$("$MLTON" 2>&1 | head -1) ($MLTON)"
   else
     # The usual cause is a missing GMP development package.
     bad mlton "cannot compile a program: $(head -1 "$tmp/mlton.log")" gmp
   fi
 fi
 
-if in_scope smlnj; then
-  section "SML/NJ (bin/rune-smlnj)"
-  if ! command -v "$SMLNJ" > /dev/null 2>&1; then bad sml "not found on PATH" smlnj
-  elif v=$("$SMLNJ" @SMLversion 2> /dev/null); then ok sml "$v ($(command -v "$SMLNJ"))"
-  else bad sml "does not run (a 32-bit SML/NJ needs 32-bit runtime libraries)" smlnj
+# smlnj_scope NAME SML WHAT: SML/NJ at SML and its ml-build.
+smlnj_scope() {
+  section "SML/NJ, $3 (bin/rune-$1)"
+  if [ ! -x "$2" ]; then bad "$1" "not installed: $2" hosts
+  elif v=$("$2" @SMLversion 2> /dev/null); then ok "$1" "$v ($2)"
+  else bad "$1" "does not run: $2" hosts
   fi
-  have ml-build smlnj
-fi
+  if [ -x "$(dirname "$2")/ml-build" ]; then ok ml-build "$(dirname "$2")/ml-build"
+  else bad ml-build "not installed: $(dirname "$2")/ml-build" hosts
+  fi
+}
+in_scope smlnj && smlnj_scope smlnj "$SMLNJ" 64-bit
+in_scope smlnj32 && smlnj_scope smlnj32 "$SMLNJ32" 32-bit
 
 if in_scope polyml; then
   section "Poly/ML (bin/rune-polyml)"
-  if ! command -v "$POLY" > /dev/null 2>&1; then bad poly "not found on PATH" polyml
-  else ok poly "$("$POLY" -v 2> /dev/null | head -1) ($(command -v "$POLY"))"
+  if [ ! -x "$POLY" ]; then bad poly "not installed: $POLY" hosts
+  else ok poly "$("$POLY" -v 2> /dev/null | head -1) ($POLY)"
   fi
-  if ! command -v "$POLYC" > /dev/null 2>&1; then bad polyc "not found on PATH" polyml
+  if [ ! -x "$POLYC" ]; then bad polyc "not installed: $POLYC" hosts
   elif (cd "$tmp" && echo 'fun main () = ()' > hello-main.sml &&
         "$POLYC" -o hello-poly hello-main.sml > polyc.log 2>&1 && ./hello-poly > /dev/null); then
     ok polyc "links programs"
-  else bad polyc "cannot compile a program: $(head -1 "$tmp/polyc.log")" polyml
+  else bad polyc "cannot compile a program: $(head -1 "$tmp/polyc.log")" hosts
   fi
 fi
 
@@ -265,6 +271,11 @@ if in_scope matrix; then
   if "$CC" -o "$tmp/gmp" "$tmp/gmp.c" -lgmp > "$tmp/gmp.log" 2>&1; then ok gmp "headers and library present"
   else bad gmp "cannot compile against GMP: $(head -1 "$tmp/gmp.log")" gmp
   fi
+  # the 32-bit SML/NJ compiles its runtime with -m32
+  cp "$tmp/c99.c" "$tmp/m32.c" 2> /dev/null || printf 'int main(void) { return 0; }\n' > "$tmp/m32.c"
+  if cc_probe m32 -m32; then ok m32 "$CC -m32 builds and runs 32-bit programs"
+  else bad m32 "$CC -m32 fails (the 32-bit SML/NJ needs it): $(head -1 "$tmp/m32.log")" m32
+  fi
   prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
   # Free space on the file system that will hold the prefix (the nearest
   # existing ancestor; doctor creates nothing).
@@ -274,9 +285,9 @@ if in_scope matrix; then
   if [ -n "$free" ] && [ "$free" -ge 3 ]; then ok disk "$free GB free under $prefix"
   else warn disk "less than 3 GB free under $prefix (${free:-?} GB)"
   fi
-  for h in mlton smlnj polyml; do
-    if [ -d "$prefix/$h" ]; then ok "$h@cur" "installed under $prefix/$h"
-    else note "$h@cur" "no current release under $prefix/$h (run: make hosts)"
+  for h in mlton smlnj smlnj32 polyml; do
+    if [ -d "$prefix/$h" ]; then ok "$h" "installed under $prefix/$h"
+    else note "$h" "not installed under $prefix/$h (run: make hosts)"
     fi
   done
 fi

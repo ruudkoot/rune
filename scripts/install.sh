@@ -18,6 +18,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 prefix=${PREFIX:-}
 destdir=${DESTDIR:-}
 host=${HOST:-}
+# the SML/NJ that runs an installed rune-smlnj (that of `make hosts`)
+smlnj=${SMLNJ:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/smlnj/bin/sml}
 heap=${RUNE_HEAP:-67108864}
 uninstall=0
 
@@ -109,7 +111,7 @@ else
       for h in "$root"/bin/rune-smlnj.heap.*; do
         copy "$h" "$libdir/${h##*/}" 644
       done
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec sml @SMLload="$d/../lib/rune/rune-smlnj.heap" --lib "$d/../lib/rune" "$@"\n' \
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/rune-smlnj.heap" --lib "$d/../lib/rune" "$@"\n' "$smlnj" \
         > "$bindir/rune-smlnj"
       ;;
     *)
@@ -139,7 +141,7 @@ copy "$root/completions/_runevm" "$zshdir/_runevm" 644
 
 echo "installed $installed and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
 if [ "$host" = smlnj ]; then
-  echo "note: rune-smlnj needs 'sml' on the PATH to run"
+  echo "note: rune-smlnj runs with $smlnj"
 fi
 
 case ":${PATH:-}:" in

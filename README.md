@@ -51,12 +51,13 @@ description of the supported language. Every feature row there has an id
 See [docs/building.md](docs/building.md). In short:
 
 ```
+make hosts         # install the SML systems Rune is built with, under ~/.local/rune-hosts
 make doctor        # check the environment: compilers, tools, how to install what is missing
 make               # bin/rune (the self-hosted compiler) + bin/runevm
-make all3          # bin/rune-mlton, bin/rune-smlnj, bin/rune-polyml
+make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml
 make test          # run the suite with bin/rune
-make test-all      # ... with each of the three host builds
-make check-cross   # identical bytecode from all four builds, the self-hosted one included
+make test-all      # ... with each of the four host builds
+make check-cross   # identical bytecode from all five builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
 make test-basis    # the Basis Library suite (tests/basis) with bin/rune
 make perf-check    # instruction and allocation budgets (tests/perf); same numbers on every machine

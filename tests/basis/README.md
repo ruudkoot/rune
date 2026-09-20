@@ -12,8 +12,22 @@ written in portable Standard ML '97 so that the same files run
   configurations), which checks that Rune's implementation does not depend on
   accidents of Rune.
 
-`sh tests/basis/run-matrix.sh --configs installed [FILTER]` runs a matrix;
-the script's header describes configurations, the report and the exit status.
+Worth looking into, not done: in an `xc1` configuration every test program
+compiles the whole of lib/basis before its own code, so no test there costs
+less than about 13 s on MLton and SML/NJ and 6 s on Poly/ML — 38% of the work
+of a full matrix, and 56% to 65% of those configurations. SML/NJ
+(`exportML`) and Poly/ML (`PolyML.SaveState`) can save an image with the
+library already loaded and start each test from it, which would leave about a
+second per test; MLton compiles whole programs and has no such way.
+
+The hosts are the releases `make hosts` installs (scripts/fetch-hosts.sh):
+MLton, SML/NJ built for 64 and for 32 bits (its 31-bit `int` and `word` have
+found many portability bugs), and Poly/ML, never the machine's own.
+`make matrix` runs every configuration, `make matrix-quick` Rune and the
+`xc1` ones, and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
+the tests whose names contain FILTER; the script's header describes the
+configurations, the report, the timing statistics it ends with and the exit
+status.
 Differences between implementations are recorded in `deviations.txt` and
 described in [docs/basis-compat.md](../../docs/basis-compat.md).
 
@@ -87,7 +101,7 @@ end
 
 ```
 config-glob | label-glob | CATEGORY | reason
-native:smlnj@110.79 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
+native:smlnj@110.99.9 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
 ```
 
 Categories: `RUNE-DEV` (Rune departs from the specification, or does not

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Verify that the MLton, SML/NJ, Poly/ML and (when built) self-hosted builds
-# of the compiler produce byte-identical bytecode for every test program, the
+# Verify that the MLton, SML/NJ (64- and 32-bit), Poly/ML and (when built)
+# self-hosted builds of the compiler produce byte-identical bytecode for every test program, the
 # examples, the programs of the Basis Library suite, and the compiler itself.
 #   scripts/check-cross.sh [-j N]
 # Programs are checked N at a time (default: all available CPUs), each by a
@@ -19,7 +19,7 @@ done
 cd "$(dirname "$0")/.."
 out=tests/out/cross
 mkdir -p "$out"
-builds="mlton smlnj polyml"
+builds="mlton smlnj smlnj32 polyml"
 [ -x bin/rune-boot ] && builds="$builds boot"
 
 # check NAME SOURCE... : compile the sources with every build and compare;
