@@ -82,7 +82,8 @@ struct
 
   (* A gap without its comments. A comment that has lines to itself goes with
      those lines; one that follows code on its line goes with the blanks before
-     it; one between two tokens of a line leaves a blank. *)
+     it; one between two tokens of a line leaves a blank, unless the second
+     token touches it. *)
   fun gapWithoutComments (src : t, a : int, b : int) : string =
     case commentsIn (src, a, b) of
       [] => substring (src, a, b)
@@ -96,7 +97,7 @@ struct
         fun unmark l = String.implode (List.filter (fn c => c <> mark) (String.explode l))
         fun clean (k, l) =
           if not (CharVector.exists (fn c => c = mark) l) then SOME l
-          else if n = 1 then SOME " "
+          else if n = 1 then SOME (if String.sub (l, String.size l - 1) = mark then "" else " ")
           else if k = 0 then SOME ""
           else if k = n - 1 then SOME (unmark l)
           else NONE

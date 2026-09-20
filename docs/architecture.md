@@ -41,12 +41,15 @@ elaborator), so what it documents is what the compiler compiles. Nothing of
 | Structure | File | Purpose |
 |---|---|---|
 | `DocSource` | `src/doc/docsource.sml` | A file's tokens, the comments in the gaps between them (the lexer keeps none; every gap is white space and comments, or it is a bug), and source text without comments. |
+| `DocDiag` | `src/doc/docdiag.sml` | Diagnostics that accumulate: a run reports everything, in source order, and fails at the end if there was an error. |
+| `DocComments` | `src/doc/doccomments.sml` | What each comment documents, by line: the item directly below it, or the innermost item that ends on its line; a comment that starts with `----` is a section heading, one followed by a blank line is prose. In a signature a comment that is none of these is an error. |
 | `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
-| `DocExtract` | `src/doc/docextract.sml` | Syntax tree to `DocIR`. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
+| `DocExtract` | `src/doc/docextract.sml` | Syntax tree and comments to `DocIR`, in two walks: the first notes what can be documented, the second builds the modules with their comments. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
 | `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --dump-ir FILE...`. |
 
 Its tests are `tests/doc` (`make test-doc`): an input file and, next to it,
-what `runedoc` is expected to make of it.
+what `runedoc` is expected to make of it (`.ir`) and to complain about
+(`.diag`).
 
 ## Modules
 

@@ -22,6 +22,8 @@ src/backend/prims.sml
 src/elab/elaborate.sml
 src/driver/basismanifest.sml
 src/doc/docsource.sml
+src/doc/docdiag.sml
+src/doc/doccomments.sml
 src/doc/docir.sml
 src/doc/docextract.sml
 src/doc/docmain.sml

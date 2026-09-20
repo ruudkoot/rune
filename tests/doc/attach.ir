@@ -1,0 +1,129 @@
+file tests/doc/attach.sml
+  signature ATTACH
+    doc:
+      |The signature's own comment: it stands directly above the declaration, and
+      |it is the first comment of the file.
+      |
+      |A second paragraph belongs to it as well.
+    section Types
+    type t
+      spec: type t
+      doc: A comment above a specification documents it.
+    datatype colour
+      spec:
+        |datatype colour =
+        |    Red
+        |  | Green of int
+        |  | Blue of {depth : int,
+        |             alpha : real,
+        |             name : string}
+        |  | Black
+      doc: Above a datatype: the datatype.
+      con Red
+        doc: after a constructor, on its line
+      con Green of int
+        doc: the bar of the next line does not matter
+      con Blue of {depth : int, alpha : real, name : string}
+        doc: on a line of its own inside a datatype: the next constructor
+        field depth : int
+          doc: after a field and its comma
+        field alpha : real
+          doc: above a field
+        field name : string
+          doc: after the last field, before the brace
+      con Black
+        doc: after the last constructor: the constructor, not the datatype
+    exception Failed
+      spec: exception Failed of {why : string, code : int}
+      doc: after the brace: the exception
+      field why : string
+        doc: why it failed
+      field code : int
+    section Values
+    prose
+      doc:
+        |This paragraph stands for itself: a blank line follows it. It belongs to
+        |the section Values.
+    val first
+      spec: val first : t
+      doc: Above the first of two.
+    val second
+      spec: val second : t
+      adjacent
+      doc: after a value
+    val third
+      spec: val third : t
+    val fourth
+      spec: val fourth : t
+      adjacent
+      doc: after a description that follows `and`
+    val fifth
+      spec: val fifth : t
+      doc: above an `and`
+    val record
+      spec:
+        |val record : {x : int,
+        |              y : int} -> t
+      field x : int
+        doc: the x
+      field y : int
+    structure Inner
+      spec: structure Inner : sig ... end
+      doc: Above a substructure with a signature of its own.
+      section Inside
+      val deep
+        spec: val deep : t
+        doc: Above a value of the substructure.
+      prose
+        doc: The last words of the substructure.
+    include ORD
+      spec: include ORD
+      signature: ORD
+      doc: Above an include.
+    prose
+      doc: At the end of the signature: prose as well.
+    source:
+      |signature ATTACH =
+      |sig
+      |
+      |  type t
+      |
+      |  datatype colour =
+      |      Red
+      |    | Green of int
+      |    | Blue of {depth : int,
+      |               alpha : real,
+      |               name : string}
+      |    | Black
+      |
+      |  exception Failed of {why : string, code : int}
+      |
+      |
+      |
+      |  val first : t
+      |  val second : t
+      |
+      |  val third : t
+      |  and fourth : t
+      |  and fifth : t
+      |
+      |  val record : {x : int,
+      |                y : int} -> t
+      |
+      |  structure Inner :
+      |  sig
+      |
+      |    val deep : t
+      |
+      |  end
+      |
+      |  include ORD
+      |
+      |end
+  structure Attach
+    doc: Above a structure.
+    structure Sub
+      doc: Above a substructure binding.
+  functor AttachFn
+    parameter: X : sig end
+    doc: Above a functor.

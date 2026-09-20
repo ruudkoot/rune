@@ -21,7 +21,7 @@ sig
     where type writer = TextPrimIO.writer
     where type pos = TextPrimIO.pos
 
-  (* IMPERATIVE_IO *)
+  (* ---- The members of IMPERATIVE_IO ---- *)
   type vector = StreamIO.vector
   type elem = StreamIO.elem
 
@@ -52,7 +52,7 @@ sig
   val getPosOut : outstream -> StreamIO.out_pos
   val setPosOut : outstream * StreamIO.out_pos -> unit
 
-  (* TEXT_IO *)
+  (* ---- The members of TEXT_IO ---- *)
   val inputLine : instream -> string option
   val outputSubstr : outstream * substring -> unit
   val openIn : string -> instream

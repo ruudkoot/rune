@@ -25,7 +25,7 @@ sig
   and remove : key -> 'a seq -> 'a seq
   val op @@ : 'a seq * 'a seq -> 'a seq
   val fold : ({key : key, value : 'a} * 'b -> 'b) -> 'b -> 'a seq -> 'b
-  val find : ('a -> bool) (* the test *) -> 'a seq -> 'a option
+  val find : ('a -> bool) -> 'a seq -> 'a option
 
   structure Key : ORDERED where type t = key
   structure Limits : sig val maxLen : int  val minLen : int end

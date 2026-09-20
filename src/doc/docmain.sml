@@ -38,11 +38,17 @@ struct
     DocExtract.file path
     handle IO.Io _ => raise Usage ("cannot read " ^ path)
 
+  (* Diagnostics go to the standard error, in source order; an error among
+     them fails the run after everything has been reported. *)
+  fun report () : OS.Process.status =
+    (List.app eprintln (DocDiag.lines ());
+     if DocDiag.numErrors () > 0 then OS.Process.failure else OS.Process.success)
+
   fun run () : OS.Process.status =
     (if List.null (!inputs) then raise Usage "no input files" else ();
      if !dumpIR then List.app (fn path => print (DocIR.dump (path, load path))) (!inputs)
      else raise Usage "nothing to do (use --dump-ir)";
-     OS.Process.success)
+     report ())
 
   fun main (_ : string, args : string list) : OS.Process.status =
     (parse args;

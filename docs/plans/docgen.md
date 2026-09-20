@@ -15,8 +15,11 @@ was measured on commit `ea3d166` or is cited with its file and line.
 | Milestone | State |
 |---|---|
 | M0, research, spikes, mock page, this roadmap | done, except the live rendering probe (needs a pushed branch) |
-| Decisions D1 (where the doc comments live) and D4 (packaging) | **open: the owner picks**; evidence and a recommendation are below |
-| M1 to M12 | not started |
+| Decisions D1 (where the doc comments live) and D4 (packaging) | taken by the owner on 2026-09-20: D1 = A (the library's signature files, by hand), D4 = a second executable `runedoc` |
+| M1, the prerequisites in the compiler and the scripts | done: a comment byte costs the lexer 47 instructions (from 93); `include A B C` has the spans of its names; `--dump-tokens` only lexes; `gen-basis-sigs.sh` never writes an existing signature file and `--check` compares tokens |
+| M2, the tool | done: `BasisManifest`; `runedoc` built by all five hosts, with `check-doc-cross`; `DocSource`, `DocIR`, `DocExtract`, `runedoc --dump-ir`, `tests/doc`, a perf budget |
+| M3, comments and what they document | done: `DocComments`, `DocDiag`; only 2 of the corpus's group labels stood in a documented signature (`sig_text_io.sml`), and they are headings now |
+| M4 to M12 | not started |
 
 ## Specification from the Human
 - Rune should have good library documenation that can be automatically generated from the source code.

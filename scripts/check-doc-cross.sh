@@ -12,17 +12,20 @@ builds="mlton smlnj smlnj32 polyml"
 [ -x bin/runedoc-boot ] && builds="$builds boot"
 status=0
 
-# run NAME ARG...: the output of every build on these arguments.
+# run NAME ARG...: every build on these arguments. What they print, what they
+# complain about and how they exit must be the same; an input with errors in
+# it (the tests of tests/doc have some) makes them all fail alike.
 run() {
   name=$1
   shift
   for c in $builds; do
-    "bin/runedoc-$c" "$@" > "$out/$name.$c.out" 2> "$out/$name.$c.err" ||
-      { echo "FAIL doc-cross $name: runedoc-$c failed: $(head -1 "$out/$name.$c.err")"; status=1; }
+    "bin/runedoc-$c" "$@" > "$out/$name.$c.out" 2> "$out/$name.$c.err"
+    echo "exit status $?" >> "$out/$name.$c.err"
   done
+  [ -s "$out/$name.mlton.out" ] || { echo "FAIL doc-cross $name: runedoc-mlton printed nothing: $(head -1 "$out/$name.mlton.err")"; status=1; }
   for c in $builds; do
     cmp -s "$out/$name.mlton.out" "$out/$name.$c.out" && cmp -s "$out/$name.mlton.err" "$out/$name.$c.err" ||
-      { echo "FAIL doc-cross $name: the output differs between the mlton and $c builds"; status=1; }
+      { echo "FAIL doc-cross $name: the mlton and $c builds differ (diff $out/$name.mlton.err $out/$name.$c.err)"; status=1; }
   done
 }
 

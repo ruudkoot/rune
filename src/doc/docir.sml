@@ -25,14 +25,17 @@ struct
   (* One thing a signature specifies. spec is its source text without
      comments, beginning with its keyword also where the source has `and`.
      sigref names the signature of `structure S : SIG` and of `include SIG`;
-     body holds the specifications of `structure S : sig ... end`. *)
+     body holds the specifications of `structure S : sig ... end`. adjacent:
+     it follows the entry before it with no blank line and no comment between
+     them, so that the comment of that entry may be meant for both. *)
   datatype entry = Entry of
     {kind : kind, name : string, spec : string, span : Source.span,
      cons : con list, fields : field list,
-     sigref : string option, body : item list option, doc : doc}
+     sigref : string option, body : item list option, adjacent : bool, doc : doc}
 
-  (* A signature body in source order. *)
-  and item = Item of entry
+  (* A signature body in source order: what it specifies, the headings that
+     divide it into sections, and prose that stands between entries. *)
+  and item = Item of entry | Section of string | Prose of doc
 
   datatype rhs =
       Body                          (* struct ... end *)
@@ -72,16 +75,21 @@ struct
     (indent n ^ "con " ^ name ^ (case arg of SOME t => " of " ^ t | NONE => ""))
     :: docLines (n + 1, doc) @ List.concat (List.map (fieldLines (n + 1)) fields)
 
-  fun entryLines n (Entry {kind, name, spec, cons, fields, sigref, body, doc, ...}) =
+  fun entryLines n (Entry {kind, name, spec, cons, fields, sigref, body, adjacent, doc, ...}) =
     (indent n ^ kindName kind ^ (if name = "" then "" else " " ^ name))
     :: textLines (n + 1, "spec", spec)
+    @ (if adjacent then [indent (n + 1) ^ "adjacent"] else [])
     @ (case sigref of SOME s => [indent (n + 1) ^ "signature: " ^ s] | NONE => [])
     @ docLines (n + 1, doc)
     @ List.concat (List.map (conLines (n + 1)) cons)
     @ List.concat (List.map (fieldLines (n + 1)) fields)
     @ (case body of SOME items => List.concat (List.map (itemLines (n + 1)) items) | NONE => [])
 
-  and itemLines n (Item e) = entryLines n e
+  and itemLines n item =
+    case item of
+      Item e => entryLines n e
+    | Section title => [indent n ^ "section " ^ title]
+    | Prose doc => (indent n ^ "prose") :: docLines (n + 1, doc)
 
   fun ascriptionLines n (a : ascription option) =
     case a of

@@ -1,9 +1,11 @@
 file tests/doc/modules.sml
   signature S
+    doc: Structures and functors: what they are ascribed and what they are bound to.
     type t
       spec: type t
     val x
       spec: val x : t
+      adjacent
     source: signature S = sig type t val x : t end
   structure Plain
   structure Transparent
