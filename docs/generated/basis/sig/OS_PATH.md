@@ -175,6 +175,12 @@ val fromString : string -> {isAbs : bool, vol : string, arcs : string list}
 > gives `["", ""]`, `"a/"` gives `["a", ""]`, and `""` gives no arcs at
 > all.
 
+**Example** `fromString "/a/b" = {isAbs = true, vol = "", arcs = ["a", "b"]}`
+
+**Example** `fromString "a//b" = {isAbs = false, vol = "", arcs = ["a", "", "b"]}`
+
+**Example** `fromString "" = {isAbs = false, vol = "", arcs = []}`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-fromstring.isabs"></a>`isAbs` | `bool` |  |
@@ -207,6 +213,8 @@ an arc is not a valid arc.
 > **Reading** `OS.Path.toString/inverts-fromString`. "`fromString o toString` is the identity" holds except for the absolute path with no
 > arcs, which no string produces; where it cannot hold, the exception
 > [`Path`](#exn-path) counts as holding too.
+
+**Example** `toString {isAbs = false, vol = "", arcs = ["a", "b"]} = "a/b"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -273,6 +281,14 @@ It is `p` itself exactly when `p` is a root.
 > a separator the parent arc is appended after it: `"a/"` gives `"a/.."`
 > and `"a///"` gives `"a///.."`.
 
+**Example** `getParent "a/b" = "a"`
+
+**Example** `getParent "a" = "."`
+
+**Example** `getParent "/" = "/"`
+
+**Example** `getParent "." = ".."`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
@@ -293,6 +309,10 @@ val splitDirFile : string -> {dir : string, file : string}
 ```
 
 `splitDirFile p` is `p` split into everything but its last arc, and that last arc.
+
+**Example** `splitDirFile "a/b/c" = {dir = "a/b", file = "c"}`
+
+**Example** `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -318,6 +338,8 @@ val joinDirFile : {dir : string, file : string} -> string
 > **Reading** `OS.Path.joinDirFile/undoes-splitDirFile`. It undoes
 > [`splitDirFile`](#val-splitdirfile) on every path of the specification's table except the
 > empty one.
+
+**Example** `joinDirFile {dir = "a", file = "b"} = "a/b"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -374,6 +396,10 @@ otherwise there is none.
 > everything to the left of the extension, empty arcs and all: `"a//c.x"`
 > has the base `"a//c"`.
 
+**Example** `splitBaseExt "a.tar.gz" = {base = "a.tar", ext = SOME "gz"}`
+
+**Example** `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-splitbaseext.base"></a>`base` | `string` |  |
@@ -398,6 +424,8 @@ val joinBaseExt : {base : string, ext : string option} -> string
 ```
 
 `joinBaseExt {base, ext}` is `base` with `ext` appended after a `.`, or `base` alone when `ext` is `NONE`.
+
+**Example** `joinBaseExt {base = "a", ext = SOME ""} = "a"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -438,6 +466,8 @@ val ext : string -> string option
 
 `ext p` is the [`ext`](#val-ext) part of `splitBaseExt p`.
 
+**Example** `ext "a.b/c" = NONE` for the extension is that of the last arc.
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitBaseExt-random`
@@ -456,6 +486,14 @@ val mkCanonical : string -> string
 > because "redundant current arcs are removed", although the
 > specification's list of canonical paths has `"/."` among them; every
 > host agrees on `"/"`.
+
+**Example** `mkCanonical "a/./b/../c//" = "a/c"`
+
+**Example** `mkCanonical "" = "."`
+
+**Example** `mkCanonical "../a" = "../a"`
+
+**Example** `mkCanonical "/.." = "/"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -503,6 +541,8 @@ val mkAbsolute : {path : string, relativeTo : string} -> string
 **Raises** [`Path`](#exn-path) if `relativeTo` is not absolute -- also when `path`
 already is.
 
+**Example** `mkAbsolute {path = "../b", relativeTo = "/a/c"} = "/a/b"`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-mkabsolute.path"></a>`path` | `string` |  |
@@ -535,6 +575,8 @@ already relative.
 > canonicalised first, while the arcs of `path` are kept as written, a
 > trailing empty arc included: `"/a/b/"` relative to `"/a/c"` is
 > `"../b/"`. A root alone has no arcs to keep.
+
+**Example** `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -607,6 +649,8 @@ volume that `q` does not.
 > appended to those of `p` without cancelling: a `p` that ends in the
 > parent arc keeps it. A trailing empty arc of `p` is absorbed by the
 > join.
+
+**Example** `concat ("a/", "b") = "a/b"`
 
 <details><summary>Tests (4)</summary>
 

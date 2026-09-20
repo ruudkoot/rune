@@ -47,7 +47,9 @@ sig
 
   (* `base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.
 
-     Law: `base (substring (s, i, n)) = (s, i, n)` *)
+     Law: `base (substring (s, i, n)) = (s, i, n)`
+
+     Example: `base (substring ("hello", 1, 3)) = ("hello", 1, 3)` *)
   val base : substring -> string * int * int
 
   (* ---- Making a substring ---- *)
@@ -66,7 +68,9 @@ sig
 
      Law: `substring (s, i, n) = extract (s, i, SOME n)`
 
-     Raises: `Subscript` if `i < 0`, `n < 0` or `i + n > String.size s`. *)
+     Raises: `Subscript` if `i < 0`, `n < 0` or `i + n > String.size s`.
+
+     Example: `string (substring ("hello", 1, 3)) = "ell"` *)
   val substring : string * int * int -> substring
 
   (* `full s` is the whole of `s` as a substring. *)
@@ -87,10 +91,15 @@ sig
   (* `getc ss` is `NONE` for the empty substring and `SOME (c, rest)` for the first character and what follows it.
 
      It has the shape of a `StringCvt.reader`, so a substring is a stream
-     that a `scan` function can read from. *)
+     that a `scan` function can read from.
+
+     Example: `Option.map (fn (c, rest) => (c, string rest)) (getc (full "ab"))
+     = SOME (#"a", "b")` *)
   val getc : substring -> (char * substring) option
 
-  (* `first ss` is `SOME` of the first character of `ss`, or `NONE` when it is empty. *)
+  (* `first ss` is `SOME` of the first character of `ss`, or `NONE` when it is empty.
+
+     Example: `first (full "") = NONE` *)
   val first : substring -> char option
 
   (* ---- Trimming and slicing ---- *)
@@ -102,7 +111,9 @@ sig
      Reading: `Substring.triml/Subscript-negative-k`. The specification says
      that the exception is raised "when `triml k` is evaluated", before the
      substring is given, so a partial application with a negative `k` raises
-     at once. *)
+     at once.
+
+     Example: `string (triml 2 (full "hello")) = "llo"` *)
   val triml : int -> substring -> substring
 
   (* `trimr k ss` is `ss` without its last `k` characters, or empty when it has at most `k`.
@@ -162,7 +173,10 @@ sig
 
   (* `splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.
 
-     Law: `splitl p ss = (takel p ss, dropl p ss)` *)
+     Law: `splitl p ss = (takel p ss, dropl p ss)`
+
+     Example: `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full
+     "ab12")) = ("ab", "12")` *)
   val splitl : (char -> bool) -> substring -> substring * substring
 
   (* `splitr p ss` is the pair of what comes before the longest suffix whose characters satisfy `p`, and that suffix. *)
@@ -173,7 +187,9 @@ sig
      Raises: `Subscript` if `i < 0` or `i > size ss`. *)
   val splitAt : substring * int -> substring * substring
 
-  (* `dropl p ss` is `ss` without the characters at its front that satisfy `p`. *)
+  (* `dropl p ss` is `ss` without the characters at its front that satisfy `p`.
+
+     Example: `string (dropl Char.isSpace (full "  a b")) = "a b"` *)
   val dropl : (char -> bool) -> substring -> substring
 
   (* `dropr p ss` is `ss` without the characters at its end that satisfy `p`. *)
@@ -198,7 +214,10 @@ sig
      specification describes the second component as "the longest suffix of
      `ss` that has `s` as a prefix", and then writes the condition on the
      index in a way that forgets that the occurrence has to lie inside `ss`:
-     an `s` that begins in `ss` and runs past its end is not an occurrence. *)
+     an `s` that begins in `ss` and runs past its end is not an occurrence.
+
+     Example: `(fn (a, b) => (string a, string b)) (position "lo" (full
+     "hello")) = ("hel", "lo")` *)
   val position : string -> substring -> substring * substring
 
   (* `span (ss, tt)` is the stretch from the start of `ss` to the end of `tt`.
@@ -225,7 +244,9 @@ sig
      A run of delimiters counts as one, and the pieces are substrings of the
      same base string, so nothing is copied.
 
-     Law: `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)` *)
+     Law: `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
+
+     Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]` *)
   val tokens : (char -> bool) -> substring -> substring list
 
   (* `fields p ss` is the pieces of `ss` that the characters satisfying `p` separate.

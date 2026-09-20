@@ -57,7 +57,10 @@ sig
 
   (* `fromList rows` is a new array of the lists of `rows`, one row each.
 
-     Raises: `Size` if the lists are not all of one length. *)
+     Raises: `Size` if the lists are not all of one length.
+
+     Example: `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0),
+     dimensions a) end = (3, (2, 2))` *)
   val fromList : 'a list list -> 'a array
 
   (* `tabulate trv (r, c, f)` is a new array of `r` rows and `c` columns whose element at `(i, j)` is `f (i, j)`.
@@ -98,12 +101,16 @@ sig
 
   (* `row (arr, i)` is a vector of the elements of row `i`, left to right.
 
-     Raises: `Subscript` if `i` is no row of `arr`. *)
+     Raises: `Subscript` if `i` is no row of `arr`.
+
+     Example: `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]` *)
   val row : 'a array * int -> 'a Vector.vector
 
   (* `column (arr, j)` is a vector of the elements of column `j`, top to bottom.
 
-     Raises: `Subscript` if `j` is no column of `arr`. *)
+     Raises: `Subscript` if `j` is no column of `arr`.
+
+     Example: `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]` *)
   val column : 'a array * int -> 'a Vector.vector
 
   (* ---- Copying ---- *)
@@ -140,7 +147,13 @@ sig
      Raises: `Subscript` if `reg` is not a valid region. *)
   val foldi : traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b
 
-  (* `fold trv f init arr` combines every element of `arr`, in the order `trv` gives. *)
+  (* `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
+
+     Example: `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2,
+     1]`
+
+     Example: `fold ColMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 2, 3,
+     1]` *)
   val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
   (* `modifyi trv f reg` replaces each element of the region by `f` of its row, its column and that element.

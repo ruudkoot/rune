@@ -564,6 +564,8 @@ val sign : real -> int
 
 **Raises** [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
+**Example** `sign ~0.0 = 0`
+
 <details><summary>Tests (13)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `positive` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `minPos` &middot; `minus-minPos` &middot; `Domain-nan` (raises Domain) &middot; `law-matches-comparison`
@@ -582,6 +584,8 @@ val signBit : real -> bool
 
 > **Reading** `Real.signBit/zeros`. It looks at the bit and not at the value,
 > so it tells the two zeros apart and answers for a NaN as well.
+
+**Example** `signBit ~0.0 = true`
 
 <details><summary>Tests (12)</summary>
 
@@ -654,6 +658,8 @@ val compareReal : real * real -> IEEEReal.real_order
 
 `compareReal (x, y)` orders two reals, and answers `UNORDERED` where a NaN makes the question meaningless.
 
+**Example** `compareReal (0.0 / 0.0, 1.0) = IEEEReal.UNORDERED`
+
 <details><summary>Tests (11)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `less` &middot; `equal` &middot; `greater` &middot; `zeros-equal` &middot; `infinities` &middot; `nan-left` &middot; `nan-right` &middot; `nan-both` &middot; `law-agrees-with-compare`
@@ -696,6 +702,10 @@ The two zeros are the same number; a NaN is not even equal to itself.
 This is the equality of IEEE 754 and what a program should use at
 [`real`](#type-real). The specification writes it infix, which a program must declare
 (`infix 4 ==`) before it can do the same.
+
+**Example** `== (0.0, ~0.0) = true`
+
+**Example** `== (0.0 / 0.0, 0.0 / 0.0) = false`
 
 <details><summary>Tests (10)</summary>
 
@@ -781,6 +791,8 @@ val isNan : real -> bool
 
 `isNan x` is `true` when `x` is a NaN.
 
+**Example** `isNan (0.0 / 0.0) = true`
+
 <details><summary>Tests (9)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `nan` &middot; `zero-by-zero` &middot; `negative-nan` &middot; `ordinary` &middot; `posInf` &middot; `negInf` &middot; `zero`
@@ -837,6 +849,8 @@ val toManExp : real -> {man : real, exp : int}
 > that puts the point after the first digit. For a zero, an infinity or a
 > NaN the significand is `x` itself.
 
+**Example** `(fn {man, exp} => (toString man, exp)) (toManExp 8.0) = ("0.5", 4)`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-tomanexp.man"></a>`man` | `real` |  |
@@ -892,6 +906,8 @@ The whole part is `x` rounded towards zero. For an infinity the
 fractional part is a zero, and for a NaN both are NaNs.
 
 **Law** `#whole (split x) + #frac (split x) == x`
+
+**Example** `(fn {whole, frac} => (toString whole, toString frac)) (split ~1.5) = ("~1", "~0.5")`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1100,6 +1116,8 @@ val floor : real -> int
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is outside the range of [`Int.int`](../sig/INTEGER.md#type-int);
 [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
+**Example** `floor ~1.5 = ~2`
+
 Also in the [top-level environment](../top-level.md): `floor`.
 
 <details><summary>Other implementations (3)</summary>
@@ -1127,6 +1145,8 @@ val ceil : real -> int
 `ceil x` is the smallest whole number that is not less than `x`, as an `int`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
+
+**Example** `ceil ~1.5 = ~1`
 
 Also in the [top-level environment](../top-level.md): `ceil`.
 
@@ -1157,6 +1177,8 @@ val trunc : real -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
+**Example** `trunc ~1.5 = ~1`
+
 Also in the [top-level environment](../top-level.md): `trunc`.
 
 <details><summary>Other implementations (3)</summary>
@@ -1184,6 +1206,10 @@ val round : real -> int
 `round x` is `x` rounded to the nearest whole number, ties to even, as an `int`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
+
+**Example** `round 2.5 = 2`
+
+**Example** `round 3.5 = 4`
 
 Also in the [top-level environment](../top-level.md): `round`.
 
@@ -1216,6 +1242,8 @@ val toInt : IEEEReal.rounding_mode -> real -> int
 `toInt mode x` is `x` rounded to an `int` in the given rounding mode.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
+
+**Example** `toInt IEEEReal.TO_NEAREST 2.5 = 2`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -1377,6 +1405,12 @@ given, so a partial application already raises.
 > the fixed one: `fmt (GEN NONE) 1.0` is `"1"` and `fmt (GEN NONE) 1000.0`
 > is `"1E3"`.
 
+**Example** `fmt (StringCvt.FIX (SOME 2)) 3.14159 = "3.14"`
+
+**Example** `fmt (StringCvt.SCI (SOME 2)) 1234.5 = "1.23E3"`
+
+**Example** `fmt (StringCvt.GEN (SOME 3)) 1234.5 = "1230"`
+
 <details><summary>Other implementations (8)</summary>
 
 - **MLton** &mdash; another reading of the specification: SCI, FIX and GEN print \~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "\~0.0"
@@ -1407,6 +1441,10 @@ val toString : real -> string
 `toString x` is the text of `x` in the general notation with the default number of digits.
 
 **Law** `toString x = fmt (StringCvt.GEN NONE) x`
+
+**Example** `toString 1.0 = "1"`
+
+**Example** `toString ~1.5E~5 = "~1.5E~5"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -1468,6 +1506,8 @@ val fromString : string -> real option
 > the rounding mode that is in force, as in MLton and in C's `strtod`;
 > SML/NJ and Poly/ML always round to nearest. [`Real32.fromString`](#val-fromstring) rounds
 > once, straight to binary32, and not first to binary64.
+
+**Example** `Option.map toString (fromString ".5e1x") = SOME "5"`
 
 <details><summary>Other implementations (8)</summary>
 

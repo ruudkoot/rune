@@ -391,6 +391,8 @@ val fromInt : int -> word
 
 A negative `i` is taken in two's complement.
 
+**Example** `Word8.fromInt 256 = 0w0`
+
 <details><summary>Tests (13)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `decimal-constant` &middot; `hexadecimal-constant`
@@ -412,6 +414,8 @@ val andb : word * word -> word
 ```
 
 `andb (a, b)` is the bitwise "and".
+
+**Example** `andb (0wxF0, 0wx3C) = 0wx30`
 
 <details><summary>Tests (5)</summary>
 
@@ -441,6 +445,8 @@ val xorb : word * word -> word
 
 `xorb (a, b)` is the bitwise exclusive "or".
 
+**Example** `xorb (0wxFF, 0wx0F) = 0wxF0`
+
 <details><summary>Tests (4)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `top-bit` &middot; `model*` &middot; `orb-minus-andb*`
@@ -456,6 +462,8 @@ val notb : word -> word
 `notb w` is `w` with every bit inverted.
 
 **Law** `notb w = ~w - 0w1`
+
+**Example** `Word.notb 0w0 = 0wxFFFFFFFFFFFFFFFF`
 
 <details><summary>Tests (9)</summary>
 
@@ -481,6 +489,10 @@ A shift of [`wordSize`](#val-wordsize) bits or more gives 0.
 
 **Law** `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure
 
+**Example** `<< (0w1, 0w4) = 0w16`
+
+**Example** `Word.<< (0w1, 0w64) = 0w0` for every bit is shifted out.
+
 <details><summary>Tests (11)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `amount-is-a-word`
@@ -500,6 +512,8 @@ val >> : word * Word.word -> word
 A shift of [`wordSize`](#val-wordsize) bits or more gives 0.
 
 **Law** `>> (w, n) = w div 0w2 ^ n`
+
+**Example** `Word8.>> (0wx80, 0w1) = 0wx40`
 
 <details><summary>Tests (11)</summary>
 
@@ -521,6 +535,8 @@ A shift of [`wordSize`](#val-wordsize) bits or more gives 0 for a word whose top
 clear and a word of all ones for one whose top bit is set: it is the
 division of a signed number by a power of two, rounded towards negative
 infinity.
+
+**Example** `Word8.~>> (0wx80, 0w1) = 0wxC0`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -571,6 +587,8 @@ val - : word * word -> word
 ```
 
 `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`.
+
+**Example** `Word.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF`
 
 <details><summary>Tests (10)</summary>
 
@@ -750,6 +768,8 @@ val toString : word -> string
 
 **Law** `toString w = fmt StringCvt.HEX w`
 
+**Example** `toString 0w255 = "FF"`
+
 <details><summary>Tests (6)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
@@ -802,6 +822,10 @@ val fromString : string -> word option
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number of more than [`wordSize`](#val-wordsize) bits.
 
 **Law** `fromString s = StringCvt.scanString (scan StringCvt.HEX) s`
+
+**Example** `fromString "0wxff" = SOME 0w255`
+
+**Example** `fromString "ff" = SOME 0w255`
 
 <details><summary>Other implementations (2)</summary>
 

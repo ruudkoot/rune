@@ -120,6 +120,8 @@ the sign of `j`.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
+**Example** `divMod (~7, 2) = (~4, 1)`
+
 <details><summary>Tests (12)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `Div` (raises Div) &middot; `Div-zero-by-zero` (raises Div) &middot; `Div-2^100` (raises Div) &middot; `10^30+7-by-10^15` &middot; `~10^30-7-by-10^15` &middot; `2^200+1-by-~2^200` &middot; `small-by-2^200` &middot; `as-Int*` &middot; `law*` &middot; `remainder*` &middot; `div-and-mod*`
@@ -139,6 +141,8 @@ The quotient is rounded towards zero and the remainder has the sign of
 `i`.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
+
+**Example** `quotRem (~7, 2) = (~3, ~1)`
 
 <details><summary>Tests (12)</summary>
 
@@ -186,6 +190,8 @@ highest bit of `i`.
 
 **Raises** [`Domain`](../sig/GENERAL.md#exn-domain) if `i <= 0`.
 
+**Example** `log2 (pow (2, 100)) = 100`
+
 <details><summary>Tests (11)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^100` &middot; `2^100-1` &middot; `2^100+1` &middot; `2^1000` &middot; `10^30` &middot; `Domain-zero` (raises Domain) &middot; `Domain-minus-one` (raises Domain) &middot; `Domain-~2^100` (raises Domain) &middot; `number-of-digits*` &middot; `bounds*`
@@ -230,6 +236,9 @@ val andb : int * int -> int
 
 `andb (i, j)` is the bitwise "and" of `i` and `j`.
 
+**Example** `andb (~1, 255) = 255` for a negative number has ones without end
+to the left.
+
 <details><summary>Tests (7)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-with-*` &middot; `2^200-1-and-2^100` &middot; `~2^100-and-2^200-1` &middot; `model*` &middot; `de-morgan*` &middot; `commutative*`
@@ -246,6 +255,8 @@ val notb : int -> int
 
 **Law** `notb i = ~(i + 1)`
 
+**Example** `notb 0 = ~1`
+
 <details><summary>Tests (6)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200` &middot; `~2^200` &middot; `model*` &middot; `negation-minus-one*` &middot; `involution*`
@@ -260,6 +271,8 @@ val << : int * Word.word -> int
 
 `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
 
+**Example** `<< (1, 0w100) = pow (2, 100)`
+
 <details><summary>Tests (8)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `one-by-100` &middot; `minus-one-by-100` &middot; `one-by-200` &middot; `2^36-by-64` &middot; `three-by-1000` &middot; `model*` &middot; `times-power*`
@@ -273,6 +286,8 @@ val ~>> : int * Word.word -> int
 ```
 
 `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.
+
+**Example** `~>> (~5, 0w1) = ~3`
 
 <details><summary>Other implementations (1)</summary>
 

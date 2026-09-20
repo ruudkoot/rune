@@ -237,6 +237,8 @@ val base : substring -> string * int * int
 
 **Law** `base (substring (s, i, n)) = (s, i, n)`
 
+**Example** `base (substring ("hello", 1, 3)) = ("hello", 1, 3)`
+
 <details><summary>Tests (5)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `basic` &middot; `empty` &middot; `identity-on-every-valid-argument` &middot; `law-*`
@@ -288,6 +290,8 @@ val substring : string * int * int -> substring
 **Law** `substring (s, i, n) = extract (s, i, SOME n)`
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, `n < 0` or `i + n > String.size s`.
+
+**Example** `string (substring ("hello", 1, 3)) = "ell"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -368,6 +372,8 @@ val getc : substring -> (char * substring) option
 It has the shape of a [`StringCvt.reader`](../sig/STRING_CVT.md#type-reader), so a substring is a stream
 that a `scan` function can read from.
 
+**Example** `Option.map (fn (c, rest) => (c, string rest)) (getc (full "ab")) = SOME (#"a", "b")`
+
 <details><summary>Tests (14)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `whole` &middot; `one-character` &middot; `last-of-string` &middot; `NONE-empty-inside` &middot; `NONE-empty-string` &middot; `reads-the-substring` &middot; `reader-for-StringCvt.splitl` &middot; `reader-for-StringCvt.skipWS` &middot; `reader-for-Int.scan` &middot; `reader-stops-at-the-end` &middot; `law-*`
@@ -383,6 +389,8 @@ val first : substring -> char option
 ```
 
 `first ss` is `SOME` of the first character of `ss`, or `NONE` when it is empty.
+
+**Example** `first (full "") = NONE`
 
 <details><summary>Tests (9)</summary>
 
@@ -408,6 +416,8 @@ val triml : int -> substring -> substring
 > that the exception is raised "when `triml k` is evaluated", before the
 > substring is given, so a partial application with a negative `k` raises
 > at once.
+
+**Example** `string (triml 2 (full "hello")) = "llo"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -630,6 +640,8 @@ val splitl : (char -> bool) -> substring -> substring * substring
 
 **Law** `splitl p ss = (takel p ss, dropl p ss)`
 
+**Example** `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full "ab12")) = ("ab", "12")`
+
 <details><summary>Tests (14)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `page-example-strings` &middot; `all-satisfy` &middot; `none-satisfies` &middot; `empty` &middot; `first-fails` &middot; `last-fails` &middot; `stops-at-the-end-of-the-substring` &middot; `first-failing-of-several` &middot; `order` &middot; `order-all-satisfy` &middot; `long` &middot; `law-*`
@@ -679,6 +691,8 @@ val dropl : (char -> bool) -> substring -> substring
 ```
 
 `dropl p ss` is `ss` without the characters at its front that satisfy `p`.
+
+**Example** `string (dropl Char.isSpace (full "  a b")) = "a b"`
 
 <details><summary>Tests (9)</summary>
 
@@ -756,6 +770,8 @@ empty string occurs at once, which makes the first component empty.
 > index in a way that forgets that the occurrence has to lie inside `ss`:
 > an `s` that begins in `ss` and runs past its end is not an occurrence.
 
+**Example** `(fn (a, b) => (string a, string b)) (position "lo" (full "hello")) = ("hel", "lo")`
+
 <details><summary>Tests (28)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `first-occurrence` &middot; `at-the-start` &middot; `at-the-end` &middot; `whole` &middot; `one-character` &middot; `overlapping-occurrences` &middot; `after-a-partial-match` &middot; `inside-a-string` &middot; `strings` &middot; `none` &middot; `none-whole-string` &middot; `none-longer-than-the-substring` &middot; `none-only-before-the-substring` &middot; `none-only-after-the-substring` &middot; `none-starts-before-the-substring` &middot; `none-ends-after-the-substring` &middot; `none-in-empty` &middot; `none-in-empty-string` &middot; `empty-string` &middot; `empty-string-in-empty` &middot; `empty-string-in-empty-string` &middot; `empty-string-at-the-end` &middot; `long` &middot; `long-none` &middot; `law-*` &middot; `law-span-restores-*`
@@ -820,6 +836,8 @@ A run of delimiters counts as one, and the pieces are substrings of the
 same base string, so nothing is copied.
 
 **Law** `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
+
+**Example** `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
 
 <details><summary>Tests (16)</summary>
 

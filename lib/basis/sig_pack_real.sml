@@ -27,7 +27,10 @@ sig
   (* Whether the most significant byte of the encoding comes first. *)
   val isBigEndian : bool
 
-  (* `toBytes r` is the encoding of `r` as a vector of `bytesPerElem` bytes. *)
+  (* `toBytes r` is the encoding of `r` as a vector of `bytesPerElem` bytes.
+
+     Example: `PackReal64Big.toBytes 1.0 = Word8Vector.fromList [0wx3F, 0wxF0,
+     0w0, 0w0, 0w0, 0w0, 0w0, 0w0]` *)
   val toBytes : real -> Word8Vector.vector
 
   (* `fromBytes v` is the real whose encoding is the bytes of `v`.
@@ -36,7 +39,10 @@ sig
      vector is read from its start.
 
      Law: `fromBytes (toBytes r) = r`, except that a NaN comes back as some
-     NaN *)
+     NaN
+
+     Example: `Real.== (PackReal64Little.fromBytes (PackReal64Little.toBytes
+     2.5), 2.5) = true` *)
   val fromBytes : Word8Vector.vector -> real
 
   (* `subVec (v, i)` is the real at position `i` of the byte vector `v`, counting in reals.

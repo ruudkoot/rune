@@ -20,15 +20,21 @@ sig
      unsigned number: 200 is the character with code 200, and not the one
      that a signed byte of ~56 would name.
 
-     Law: `Char.ord (byteToChar b) = Word8.toInt b` *)
+     Law: `Char.ord (byteToChar b) = Word8.toInt b`
+
+     Example: `byteToChar 0w65 = #"A"` *)
   val byteToChar : Word8.word -> char
 
   (* `charToByte c` is the code of `c` as a byte.
 
-     Law: `charToByte (byteToChar b) = b` *)
+     Law: `charToByte (byteToChar b) = b`
+
+     Example: `charToByte #"a" = 0w97` *)
   val charToByte : char -> Word8.word
 
-  (* `bytesToString v` is the string of the characters whose codes are the bytes of `v`, in order. *)
+  (* `bytesToString v` is the string of the characters whose codes are the bytes of `v`, in order.
+
+     Example: `bytesToString (stringToBytes "hi") = "hi"` *)
   val bytesToString : Word8Vector.vector -> string
 
   (* `stringToBytes s` is the vector of the codes of the characters of `s`, in order.
@@ -36,7 +42,10 @@ sig
      Law: `bytesToString (stringToBytes s) = s` *)
   val stringToBytes : string -> Word8Vector.vector
 
-  (* `unpackStringVec sl` is the string of the bytes of the vector slice `sl`. *)
+  (* `unpackStringVec sl` is the string of the bytes of the vector slice `sl`.
+
+     Example: `unpackStringVec (Word8VectorSlice.slice (stringToBytes "hello",
+     1, SOME 3)) = "ell"` *)
   val unpackStringVec : Word8VectorSlice.slice -> string
 
   (* `unpackString sl` is the string of the bytes of the array slice `sl`.

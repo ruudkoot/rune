@@ -32,7 +32,9 @@ sig
      signal ended has not succeeded: from `UNIX`, this is true only where
      `Posix.Process.fromStatus` gives `W_EXITED`.
 
-     Pinned by: `OS.Process.isSuccess/killed-by-signal` *)
+     Pinned by: `OS.Process.isSuccess/killed-by-signal`
+
+     Example: `isSuccess success = true` *)
   val isSuccess : status -> bool
 
   (* `system cmd` runs `cmd` and is the status it ended with.
@@ -75,7 +77,9 @@ sig
      does a name with `"=value"` attached. A command run by `system` inherits
      this environment and cannot change it.
 
-     Pinned by: `OS.Process.getEnv/*` *)
+     Pinned by: `OS.Process.getEnv/*`
+
+     Example: `getEnv "A_VARIABLE_THAT_NOBODY_SETS" = NONE` *)
   val getEnv : string -> string option
 
   (* `sleep t` waits for the time `t`, and returns at once when `t` is not positive. *)

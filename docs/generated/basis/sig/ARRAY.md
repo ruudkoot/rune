@@ -248,6 +248,8 @@ val update : 'a array * int * 'a -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
 
+**Example** `let val a = array (3, 0) in update (a, 1, 5); foldr (op ::) [] a end = [0, 5, 0]`
+
 <details><summary>Tests (12)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first` &middot; `middle` &middot; `last` &middot; `twice-same-index` &middot; `seen-by-sub` &middot; `seen-through-alias` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model-*` &middot; `model-*` (raises Subscript)
@@ -286,6 +288,8 @@ every element arrives as it was before the copy began.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
 
+**Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-copy.src"></a>`src` | `'a array` |  |
@@ -308,6 +312,8 @@ val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + Vector.length src > length dst`,
 and then nothing has been copied.
+
+**Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -374,6 +380,8 @@ val modify : ('a -> 'a) -> 'a array -> unit
 ```
 
 `modify f arr` replaces every element by `f` of it, in place, from 0 up.
+
+**Example** `let val a = fromList [1, 2, 3] in modify (fn x => x * 2) a; vector a end = Vector.fromList [2, 4, 6]`
 
 <details><summary>Tests (7)</summary>
 

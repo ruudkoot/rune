@@ -316,6 +316,8 @@ val maxInt : int option
 **Law** `maxInt = SOME (2 ^ (p - 1) - 1)` where `precision = SOME p`. The
 range is not symmetric: `~minInt` overflows and `abs minInt` does too.
 
+**Example** `Int.maxInt = SOME 9223372036854775807`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -468,6 +470,8 @@ val mod : int * int -> int
 > **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
 > although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
 
+**Example** `~7 mod 2 = 1` where `rem (~7, 2)` is `~1`.
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
@@ -525,6 +529,8 @@ val rem : int * int -> int
 
 > **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
+
+**Example** `rem (~7, 2) = ~1` where `~7 mod 2` is `1`.
 
 <details><summary>Other implementations (2)</summary>
 
@@ -703,6 +709,8 @@ val sign : int -> Int.int
 
 `sign i` is \~1, 0 or 1, as `i` is negative, zero or positive.
 
+**Example** `sign ~3 = ~1`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -729,6 +737,8 @@ val sameSign : int * int -> bool
 > number.
 
 **Law** `sameSign (i, j) = (sign i = sign j)`
+
+**Example** `sameSign (0, 1) = false`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -783,6 +793,8 @@ val toString : int -> string
 
 **Law** `toString i = fmt StringCvt.DEC i`
 
+**Example** `toString ~5 = "~5"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -820,6 +832,8 @@ structure.
 > not a prefix, but its `0` is a digit: `"0xg"` scans as 0 and leaves
 > `"xg"` in the stream.
 
+**Example** `StringCvt.scanString (scan StringCvt.HEX) "0x1F" = SOME 31`
+
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
@@ -847,6 +861,10 @@ val fromString : string -> int option
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number outside the range.
 
 **Law** `fromString s = StringCvt.scanString (scan StringCvt.DEC) s`
+
+**Example** `fromString " +12x" = SOME 12`
+
+**Example** `fromString "0x1F" = SOME 0` for it reads decimal digits only.
 
 <details><summary>Other implementations (3)</summary>
 

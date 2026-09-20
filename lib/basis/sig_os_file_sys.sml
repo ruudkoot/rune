@@ -73,7 +73,9 @@ sig
 
   (* `isDir p` is `true` when `p` names a directory, following symbolic links.
 
-     Raises: `OS.SysErr` if `p` names nothing. *)
+     Raises: `OS.SysErr` if `p` names nothing.
+
+     Example: `isDir "." = true` *)
   val isDir : string -> bool
 
   (* `isLink p` is `true` when `p` itself is a symbolic link, without following it.
@@ -89,7 +91,9 @@ sig
   (* `fullPath p` is `p` as an absolute canonical path, with every symbolic link followed.
 
      Raises: `OS.SysErr` if `p` names nothing, or a link leads nowhere or in a
-     circle. *)
+     circle.
+
+     Example: `fullPath "." = getDir ()` *)
   val fullPath : string -> string
 
   (* `realPath p` is `fullPath p` when `p` is absolute, and the same made relative to the current directory when it is not.

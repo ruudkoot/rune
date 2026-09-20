@@ -19,6 +19,8 @@
 #   NAME.lib.notes  the notes.tsv it writes, where the expectation exists
 #   NAME.lib.md     the pages of its signatures, one after another, where the
 #                   expectation exists
+#   NAME.lib.types, NAME.lib.structures  its pages types.md and
+#                   structures.md, where the expectation exists
 #   NAME.lib.examples  the programs that `--examples` writes for it, one after
 #                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
@@ -117,6 +119,13 @@ for lib in tests/doc/*.lib; do
     [ $update = 1 ] && cp "$out/$name.lib.md" "tests/doc/$name.lib.md"
     same "$name.lib.md" "$out/$name.lib.md" "tests/doc/$name.lib.md"
   fi
+  for page in types structures; do
+    if [ -f "tests/doc/$name.lib.$page" ]; then
+      cp "$out/$name.site/$page.md" "$out/$name.lib.$page" 2> /dev/null || : > "$out/$name.lib.$page"
+      [ $update = 1 ] && cp "$out/$name.lib.$page" "tests/doc/$name.lib.$page"
+      same "$name.lib.$page" "$out/$name.lib.$page" "tests/doc/$name.lib.$page"
+    fi
+  done
   if [ -f "tests/doc/$name.lib.examples" ]; then
     rm -rf "$out/$name.examples"
     # shellcheck disable=SC2086

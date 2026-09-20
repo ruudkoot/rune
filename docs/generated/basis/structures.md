@@ -206,8 +206,9 @@ signature; `:` that it matches it, which the test suite checks.
 
 ## Names beyond the signature
 
-What the body of a structure declares and its signatures do not specify. Most structures are not
-sealed, so these names are visible; a program that uses them is not portable.
+What a structure declares and its signatures do not specify. Most structures are not sealed, so
+these names are visible; a program that uses them is not portable. A structure that is another
+one by name has the names of that one, and an application of a functor those of the functor's body.
 
 | Structure | Also declares |
 | --- | --- |
@@ -215,20 +216,42 @@ sealed, so these names are visible; a program that uses them is not portable.
 | `Array2` | `checkSize`, `count`, `traverse`, `rectangle`, `whole` |
 | `ArraySlice` | `Slice` |
 | `BinIO` | `Imperative` |
+| `BinIO.StreamIO` | `Active`, `Chunk`, `Closed`, `Eos`, `In`, `Out`, `Terminated`, `Unread`, `flushAll`, `flushBuffer`, `flushDevice`, `force`, `guarded`, `hasNewline`, `here`, `ioError`, `mkOutstreamOver`, `outputWith`, `readerName`, `segment`, `state`, `status`, `writeAll`, `writerName` |
+| `BinPrimIO` | `blocking`, `copyIn`, `first`, `guard`, `mapOpt`, `nonBlocking` |
 | `Date` | `months`, `weekdays`, `monthNumber`, `monthOf`, `weekdayNumber`, `weekdayOf`, `partsOf`, `listOf`, `daysFromCivil`, `civilFromDays`, `monthLength`, `fixed`, `valid`, `directives`, `zoneName`, `dayName`, `monthName` |
 | `IEEEReal` | `scanNumeral` |
 | `Int` | `digitValue`, `base` |
+| `Int64` | `base`, `digitValue` |
 | `IntInf` | `limb`, `I`, `base`, `intQuot`, `intRem`, `intToString`, `strSize`, `strConcat`, `explode`, `ord`, `norm`, `cmpMag`, `addMag`, `subMag`, `mulSmall`, `addSmall`, `shiftLimbs`, `mulMag`, `divModSmall`, `divModMag`, `make`, `zero`, `one`, `isZero`, `negI`, `absI`, `addI`, `subI`, `mulI`, `quotRemI`, `divModI`, `radixBase`, `wordAnd`, `wordOr`, `wordXor`, `wordFromInt`, `wordToInt`, `wordToIntX`, `mask`, `twos`, `fromTwos`, `bitwise`, `pow2` |
+| `LargeInt` | `<<`, `I`, `absI`, `addI`, `addMag`, `addSmall`, `andb`, `base`, `bitwise`, `cmpMag`, `divMod`, `divModI`, `divModMag`, `divModSmall`, `explode`, `fromTwos`, `intQuot`, `intRem`, `intToString`, `isZero`, `limb`, `log2`, `make`, `mask`, `mulI`, `mulMag`, `mulSmall`, `negI`, `norm`, `notb`, `one`, `orb`, `ord`, `pow`, `pow2`, `quotRem`, `quotRemI`, `radixBase`, `shiftLimbs`, `strConcat`, `strSize`, `subI`, `subMag`, `twos`, `wordAnd`, `wordFromInt`, `wordOr`, `wordToInt`, `wordToIntX`, `wordXor`, `xorb`, `zero`, `~>>` |
+| `LargeReal` | `intToString'`, `normal` |
+| `NetHostDB` | `entryOf` |
+| `NetProtDB` | `entryOf` |
+| `NetServDB` | `entryOf` |
+| `OS.FileSys` | `Dir` |
+| `OS.IO` | `FD`, `PollDesc`, `PollInfo` |
+| `OS.Path` | `checkArc`, `isSeparator`, `separator`, `validArc` |
+| `Posix.Error` | `addrinuse`, `addrnotavail`, `afnosupport`, `already`, `connaborted`, `connrefused`, `connreset`, `destaddrreq`, `dquot`, `hostunreach`, `idrm`, `ilseq`, `isconn`, `multihop`, `named`, `netdown`, `netreset`, `netunreach`, `nobufs`, `noerr`, `nolink`, `nomsg`, `noprotoopt`, `notconn`, `notsock`, `overflow`, `proto`, `protonosupport`, `prototype`, `stale`, `timedout`, `txtbsy` |
+| `Posix.FileSys` | `defaultMode`, `modeBits`, `statOf` |
+| `Posix.IO` | `positions`, `whenceBits` |
+| `Posix.IO.O` | `excl`, `noctty`, `trunc` |
+| `Posix.Process` | `flagBits`, `pidOf`, `statusOf`, `wnohang` |
+| `Posix.SysDB` | `groupOf`, `passwdOf` |
+| `Posix.TTY` | `T` |
 | `Real` | `normal`, `intToString'` |
+| `Socket` | `ADDR`, `arrBytes`, `inFlags`, `intoArray`, `maybe`, `noIn`, `noOut`, `nonBlocking`, `none`, `outFlags`, `received`, `receivedNB`, `sockToWord`, `socket`, `socket'`, `socketPair`, `socketPair'`, `vecBytes`, `wanted`, `wordToSock`, `wouldBlock` |
 | `String` | `extractN`, `compareInt` |
 | `StringCvt` | `maxSize` |
 | `Substring` | `SS` |
 | `TextIO` | `Imperative` |
+| `TextPrimIO` | `blocking`, `copyIn`, `first`, `guard`, `mapOpt`, `nonBlocking` |
 | `Time` | `million`, `checked`, `ofLarge`, `toLarge`, `micros`, `ofMicros` |
 | `Unix` | `Proc`, `streamsOf'`, `protect` |
 | `Vector` | `toList` |
 | `VectorSlice` | `Slice` |
+| `WideTextPrimIO` | `blocking`, `copyIn`, `first`, `guard`, `mapOpt`, `nonBlocking` |
 | `Word` | `two64`, `two63`, `base` |
+| `Word64` | `base`, `two63`, `two64` |
 
 ---
 

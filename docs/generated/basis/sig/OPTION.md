@@ -118,6 +118,8 @@ val getOpt : 'a option * 'a -> 'a
 `getOpt (opt, a)` is the value that `opt` carries, or the default `a` if
 it carries none.
 
+**Example** `getOpt (NONE, 0) = 0`
+
 Also in the [top-level environment](../top-level.md): `getOpt`.
 
 <details><summary>Tests (7)</summary>
@@ -168,6 +170,8 @@ val filter : ('a -> bool) -> 'a -> 'a option
 
 `filter p a` is `SOME a` when `a` satisfies `p`, and [`NONE`](#con-none) otherwise.
 
+**Example** `filter (fn x => x > 0) 0 = NONE`
+
 <details><summary>Tests (7)</summary>
 
 For `Option`, in [tests/basis/option.sml](../../../../tests/basis/option.sml): `true` &middot; `false` &middot; `string` &middot; `applies-f-once-to-a` &middot; `applies-f-once-to-a-false` &middot; `exception-of-f` (raises Fail) &middot; `law-*`
@@ -181,6 +185,8 @@ val join : 'a option option -> 'a option
 ```
 
 `join opt` takes one layer of option away: `SOME (SOME v)` becomes `SOME v`, everything else [`NONE`](#con-none).
+
+**Example** `join (SOME (SOME 1)) = SOME 1`
 
 <details><summary>Tests (8)</summary>
 
@@ -212,6 +218,8 @@ val map : ('a -> 'b) -> 'a option -> 'b option
 `map f opt` is `SOME (f v)` when `opt` is `SOME v`, and [`NONE`](#con-none) when it is
 [`NONE`](#con-none).
 
+**Example** `map (fn x => x + 1) (SOME 1) = SOME 2`
+
 <details><summary>Tests (10)</summary>
 
 For `Option`, in [tests/basis/option.sml](../../../../tests/basis/option.sml): `some` &middot; `none` &middot; `other-type` &middot; `result-is-wrapped` &middot; `applies-f-once` &middot; `none-does-not-apply-f` &middot; `exception-of-f` (raises Fail) &middot; `identity-*` &middot; `composition-*` &middot; `by-cases-*`
@@ -232,6 +240,8 @@ first gave a value.
 
 **Law** `mapPartial f opt = join (map f opt)`
 
+**Example** `mapPartial Int.fromString (SOME "x") = NONE`
+
 <details><summary>Tests (10)</summary>
 
 For `Option`, in [tests/basis/option.sml](../../../../tests/basis/option.sml): `some-to-some` &middot; `some-to-none` &middot; `none` &middot; `other-type` &middot; `applies-f-once` &middot; `none-does-not-apply-f` &middot; `exception-of-f` (raises Fail) &middot; `join-o-map-*` &middot; `by-cases-*` &middot; `SOME-is-identity-*`
@@ -248,6 +258,8 @@ val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
 `g a` is [`NONE`](#con-none).
 
 **Law** `compose (f, g) a = map f (g a)`
+
+**Example** `compose (fn x => x + 1, Int.fromString) "41" = SOME 42`
 
 <details><summary>Tests (10)</summary>
 

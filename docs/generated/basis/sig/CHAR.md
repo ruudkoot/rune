@@ -210,6 +210,8 @@ val ord : char -> int
 
 `ord c` is the code of `c`, between 0 and [`maxOrd`](#val-maxord).
 
+**Example** `ord #"A" = 65`
+
 Also in the [top-level environment](../top-level.md): `ord`.
 
 <details><summary>Tests (10)</summary>
@@ -230,6 +232,8 @@ val chr : int -> char
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `i < 0` or `i > maxOrd`.
 
+**Example** `chr 97 = #"a"`
+
 Also in the [top-level environment](../top-level.md): `chr`.
 
 <details><summary>Tests (15)</summary>
@@ -249,6 +253,8 @@ val succ : char -> char
 `succ c` is the character after `c`, the one with the code `ord c + 1`.
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`maxChar`](#val-maxchar).
+
+**Example** `succ #"a" = #"b"`
 
 <details><summary>Tests (9)</summary>
 
@@ -328,6 +334,8 @@ val contains : string -> char -> bool
 Applied to `s` alone it gives a predicate, which suits the functions that
 take one: `String.tokens (contains " ,;")`.
 
+**Example** `contains "abc" #"b" = true`
+
 <details><summary>Tests (15)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `first` &middot; `last` &middot; `absent` &middot; `case-matters` &middot; `empty-string` &middot; `repeated` &middot; `nul` &middot; `255` &middot; `254-absent` &middot; `all-characters` &middot; `every-character` &middot; `law-*`
@@ -401,6 +409,10 @@ val toUpper : char -> char
 `toUpper c` is the upper case letter for a lower case letter `c`, and `c`
 otherwise.
 
+**Example** `toUpper #"a" = #"A"`
+
+**Example** `toUpper #"1" = #"1"`
+
 <details><summary>Tests (11)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `a` &middot; `z` &middot; `A` &middot; `backquote` &middot; `brace` &middot; `a-grave` &middot; `y-diaeresis` &middot; `all` &middot; `toLower-*`
@@ -416,6 +428,8 @@ val isAlpha : char -> bool
 ```
 
 `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`.
+
+**Example** `isAlpha #"_" = false`
 
 <details><summary>Tests (7)</summary>
 
@@ -566,6 +580,8 @@ val isPunct : char -> bool
 `isPunct c` is `true` for a graphical character that is neither a letter
 nor a digit.
 
+**Example** `isPunct #"_" = true`
+
 <details><summary>Tests (8)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `underscore` &middot; `space` &middot; `inverted-question-mark` &middot; `law-*`
@@ -676,6 +692,8 @@ val fromString : String.string -> char option
 > backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
 > and that is what the suite expects.
 
+**Example** `fromString "\\n" = SOME #"\n"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
@@ -703,6 +721,8 @@ quote, the single quote and the question mark get a backslash in front.
 The control characters with a name in C are `\a`, `\b`, `\t`, `\n`, `\v`,
 `\f` and `\r`; every other character is a backslash and three octal
 digits.
+
+**Example** `toCString #"\000" = "\\000"`
 
 <details><summary>Tests (27)</summary>
 
@@ -733,6 +753,8 @@ rejected.
 > **Reading** `Char.fromCString/printable-only-all-converted`. Every printable
 > character but the double quote and the backslash is converted to itself,
 > the single quote included; what does not print is rejected.
+
+**Example** `fromCString "\\x41" = SOME #"A"`
 
 <details><summary>Other implementations (4)</summary>
 

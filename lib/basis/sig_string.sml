@@ -60,14 +60,18 @@ sig
 
      Reading: `String.extract/SOME-Subscript-not-Overflow-size`. The bound is
      tested so that it cannot overflow: an `i` and an `n` whose sum is no
-     `int` raise `Subscript`, not `Overflow`. *)
+     `int` raise `Subscript`, not `Overflow`.
+
+     Example: `extract ("hello", 2, NONE) = "llo"` *)
   val extract : string * int * int option -> string
 
   (* `substring (s, i, n)` is the `n` characters of `s` from position `i`.
 
      Law: `substring (s, i, n) = extract (s, i, SOME n)`
 
-     Raises: `Subscript` if `i < 0`, `n < 0` or `i + n > size s`. *)
+     Raises: `Subscript` if `i < 0`, `n < 0` or `i + n > size s`.
+
+     Example: `substring ("hello", 1, 3) = "ell"` *)
   val substring : string * int * int -> string
 
   (* ---- Putting strings together ---- *)
@@ -108,7 +112,9 @@ sig
 
   (* `explode s` is the list of the characters of `s`, in order.
 
-     Law: `implode (explode s) = s` *)
+     Law: `implode (explode s) = s`
+
+     Example: `explode "ab" = [#"a", #"b"]` *)
   val explode : string -> char list
 
   (* ---- Transforming ---- *)
@@ -123,7 +129,9 @@ sig
 
      Raises: `Size` if the result would be longer than `maxSize`.
 
-     Law: `translate f s = concat (List.map f (explode s))` *)
+     Law: `translate f s = concat (List.map f (explode s))`
+
+     Example: `translate (fn #"a" => "4" | c => str c) "banana" = "b4n4n4"` *)
   val translate : (char -> string) -> string -> string
 
   (* ---- Splitting ---- *)
@@ -156,7 +164,9 @@ sig
      The empty string occurs in every string.
 
      Complexity: the product of the two sizes in the worst case; the search
-     is the straightforward one. *)
+     is the straightforward one.
+
+     Example: `isSubstring "" "abc" = true` *)
   val isSubstring : string -> string -> bool
 
   (* `isSuffix p s` is `true` when `s` ends with `p`. *)
@@ -168,7 +178,11 @@ sig
 
      A string that is a prefix of another comes before it.
 
-     Law: `compare (s, t) = collate Char.compare (s, t)` *)
+     Law: `compare (s, t) = collate Char.compare (s, t)`
+
+     Example: `compare ("abc", "abd") = LESS`
+
+     Example: `compare ("Z", "a") = LESS` for the capitals come first in ASCII. *)
   val compare : string * string -> order
 
   (* `collate cmp (s, t)` compares two strings lexicographically with `cmp` for the characters.
@@ -192,7 +206,9 @@ sig
      ones as themselves, with a backslash before a backslash or a double
      quote, and the others as a named escape, `\^c`, or three decimal digits.
 
-     Law: `toString s = translate Char.toString s` *)
+     Law: `toString s = translate Char.toString s`
+
+     Example: `toString "a\tb\"" = "a\\tb\\\""` *)
   val toString : string -> String.string
 
   (* `scan getc strm` reads the characters that `strm` begins with in the notation of SML string constants.
@@ -231,7 +247,9 @@ sig
 
      Every character is written as `Char.toCString` writes it, so the single
      quote and the question mark are escaped as well, and what does not print
-     becomes a backslash and three octal digits. *)
+     becomes a backslash and three octal digits.
+
+     Example: `toCString "a\n?" = "a\\n\\?"` *)
   val toCString : string -> String.string
 
   (* `fromCString s` is the characters that the text `s` begins with in the notation of C, or `NONE`.
@@ -242,6 +260,8 @@ sig
      Reading: `String.fromCString/stops-at-hex-longest-sequence`. A `\x`
      escape takes "the longest sequence" of hexadecimal digits: `"\x42C"` is
      one escape of the value 1068, which is no character, and not `\x42`
-     followed by `C`. *)
+     followed by `C`.
+
+     Example: `fromCString "\\x41" = SOME "A"` *)
   val fromCString : String.string -> string option
 end

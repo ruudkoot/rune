@@ -38,7 +38,10 @@ sig
   (* `toAddr (a, port)` is the address of the port `port` at the host address `a`. *)
   val toAddr : NetHostDB.in_addr * int -> sock_addr
 
-  (* `fromAddr a` is the host address and the port that `a` names. *)
+  (* `fromAddr a` is the host address and the port that `a` names.
+
+     Example: `(fn (a, p) => (NetHostDB.toString a, p)) (fromAddr (toAddr
+     (valOf (NetHostDB.fromString "127.0.0.1"), 80))) = ("127.0.0.1", 80)` *)
   val fromAddr : sock_addr -> NetHostDB.in_addr * int
 
   (* `any port` is the address of `port` on every interface of this machine.

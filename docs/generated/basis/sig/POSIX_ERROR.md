@@ -224,6 +224,8 @@ val errorName : syserror -> string
 > conditions POSIX names it is the name below -- `"noent"` for [`noent`](#val-noent) \--
 > and for the others it is the name [`OS.errorName`](../sig/OS.md#val-errorname) invents.
 
+**Example** `errorName noent = "noent"`
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `distinct-errors` &middot; `distinct-names` &middot; `badmsg` &middot; `toobig-not-2big`
@@ -240,6 +242,8 @@ val syserror : string -> syserror option
 
 **Law** `syserror (errorName e) = SOME e` for every condition, named here
 or not.
+
+**Example** `syserror "noent" = SOME noent`
 
 <details><summary>Tests (4)</summary>
 

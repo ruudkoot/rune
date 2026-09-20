@@ -51,7 +51,10 @@ sig
   (* `base sl` is the triple of the array that `sl` is a stretch of, where it starts in that array, and how long it is. *)
   val base : 'a slice -> 'a Array.array * int * int
 
-  (* `vector sl` is an immutable vector of the elements of `sl`, which is a copy. *)
+  (* `vector sl` is an immutable vector of the elements of `sl`, which is a copy.
+
+     Example: `vector (slice (Array.fromList [1, 2, 3], 1, NONE)) =
+     Vector.fromList [2, 3]` *)
   val vector : 'a slice -> 'a Vector.vector
 
   (* ---- Copying ---- *)
@@ -90,7 +93,10 @@ sig
   (* `modifyi f sl` replaces the element at each position by `f` of the index and that element, in place. *)
   val modifyi : (int * 'a -> 'a) -> 'a slice -> unit
 
-  (* `modify f sl` replaces every element by `f` of it, in place, from 0 up. *)
+  (* `modify f sl` replaces every element by `f` of it, in place, from 0 up.
+
+     Example: `let val a = Array.fromList [1, 2, 3, 4] in modify (fn _ => 0)
+     (slice (a, 1, SOME 2)); Array.vector a end = Vector.fromList [1, 0, 0, 4]` *)
   val modify : ('a -> 'a) -> 'a slice -> unit
 
   (* `foldli f init sl` combines the elements from the left, giving `f` the index as well. *)

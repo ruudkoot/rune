@@ -28,7 +28,9 @@ sig
      The quotient is rounded towards negative infinity and the remainder has
      the sign of `j`.
 
-     Raises: `Div` if `j` is zero. *)
+     Raises: `Div` if `j` is zero.
+
+     Example: `divMod (~7, 2) = (~4, 1)` *)
   val divMod : int * int -> int * int
 
   (* `quotRem (i, j)` is the pair `(quot (i, j), rem (i, j))`, computed in one
@@ -37,7 +39,9 @@ sig
      The quotient is rounded towards zero and the remainder has the sign of
      `i`.
 
-     Raises: `Div` if `j` is zero. *)
+     Raises: `Div` if `j` is zero.
+
+     Example: `quotRem (~7, 2) = (~3, ~1)` *)
   val quotRem : int * int -> int * int
 
   (* ---- Powers and logarithms ---- *)
@@ -55,7 +59,9 @@ sig
   (* `log2 i` is the largest `k` for which `2^k <= i`: the position of the
      highest bit of `i`.
 
-     Raises: `Domain` if `i <= 0`. *)
+     Raises: `Domain` if `i <= 0`.
+
+     Example: `log2 (pow (2, 100)) = 100` *)
   val log2 : int -> Int.int
 
   (* ---- Bits ---- *)
@@ -66,18 +72,27 @@ sig
   (* `xorb (i, j)` is the bitwise exclusive "or" of `i` and `j`. *)
   val xorb : int * int -> int
 
-  (* `andb (i, j)` is the bitwise "and" of `i` and `j`. *)
+  (* `andb (i, j)` is the bitwise "and" of `i` and `j`.
+
+     Example: `andb (~1, 255) = 255` for a negative number has ones without end
+     to the left. *)
   val andb : int * int -> int
 
   (* `notb i` is `i` with every bit inverted.
 
-     Law: `notb i = ~(i + 1)` *)
+     Law: `notb i = ~(i + 1)`
+
+     Example: `notb 0 = ~1` *)
   val notb : int -> int
 
-  (* `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`. *)
+  (* `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
+
+     Example: `<< (1, 0w100) = pow (2, 100)` *)
   val << : int * Word.word -> int
 
   (* `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div
-     2^n`, rounded towards negative infinity. *)
+     2^n`, rounded towards negative infinity.
+
+     Example: `~>> (~5, 0w1) = ~3` *)
   val ~>> : int * Word.word -> int
 end

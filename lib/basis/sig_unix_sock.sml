@@ -37,7 +37,9 @@ sig
   (* `toAddr p` is the address of the socket at the path `p`. *)
   val toAddr : string -> sock_addr
 
-  (* `fromAddr a` is the path that `a` names. *)
+  (* `fromAddr a` is the path that `a` names.
+
+     Example: `fromAddr (toAddr "/tmp/s") = "/tmp/s"` *)
   val fromAddr : sock_addr -> string
 
   (* Sockets of this family that carry a stream. *)

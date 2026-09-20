@@ -137,6 +137,9 @@ val fromList : 'a list -> 'a vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
+**Example** `fromList [1, 2] = fromList [1, 2]` for vectors with equal
+elements are equal.
+
 Also in the [top-level environment](../top-level.md): `vector`.
 
 <details><summary>Tests (7)</summary>
@@ -156,6 +159,8 @@ val tabulate : int * (int -> 'a) -> 'a vector
 `f` is applied in order of increasing index.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied at all.
+
+**Example** `foldr (op ::) [] (tabulate (3, fn i => i * 2)) = [0, 2, 4]`
 
 <details><summary>Tests (8)</summary>
 
@@ -189,6 +194,8 @@ val sub : 'a vector * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length v`.
 
+**Example** `sub (fromList [1, 2, 3], 1) = 2`
+
 <details><summary>Tests (9)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`
@@ -208,6 +215,8 @@ val update : 'a vector * int * 'a -> 'a vector
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length v`.
 
 **Complexity** linear in `length v`.
+
+**Example** `update (fromList [1, 2, 3], 1, 9) = fromList [1, 9, 3]`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -230,6 +239,8 @@ val concat : 'a vector list -> 'a vector
 `concat l` is the vectors of `l` one after another.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxLen`](#val-maxlen).
+
+**Example** `concat [fromList [1], fromList [2, 3]] = fromList [1, 2, 3]`
 
 <details><summary>Tests (10)</summary>
 
@@ -274,6 +285,8 @@ val mapi : (int * 'a -> 'b) -> 'a vector -> 'b vector
 ```
 
 `mapi f v` is the vector of the results of `f` on the index and the element of each position.
+
+**Example** `mapi (fn (i, x) => i + x) (fromList [10, 20]) = fromList [10, 21]`
 
 <details><summary>Tests (6)</summary>
 
@@ -363,6 +376,8 @@ val findi : (int * 'a -> bool) -> 'a vector -> (int * 'a) option
 
 It stops at that position: `p` is not applied to what follows.
 
+**Example** `findi (fn (_, x) => x > 1) (fromList [1, 2, 3]) = SOME (1, 2)`
+
 <details><summary>Tests (8)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -422,6 +437,8 @@ val collate : ('a * 'a -> order) -> 'a vector * 'a vector -> order
 The answer is that of `cmp` on the first pair of elements at the same
 position that are not `EQUAL`; if there is none, the shorter vector is
 `LESS`.
+
+**Example** `collate Int.compare (fromList [1], fromList [1, 0]) = LESS`
 
 <details><summary>Tests (13)</summary>
 

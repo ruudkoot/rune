@@ -22,7 +22,9 @@ sig
   (* `not b` is the negation of `b`. *)
   val not : bool -> bool
 
-  (* `toString b` is `"true"` or `"false"`. *)
+  (* `toString b` is `"true"` or `"false"`.
+
+     Example: `toString false = "false"` *)
   val toString : bool -> string
 
   (* `scan getc strm` reads a boolean from the character stream `strm`, which
@@ -48,6 +50,9 @@ sig
      Reading: `Bool.fromString/none-not-whitespace-*`. The characters whose
      codes are next to those of the white space characters (0, 8, 14, 31, 33,
      95 and 127) are not white space: a string that begins with one of them
-     gives `NONE`. *)
+     gives `NONE`.
+
+     Example: `fromString " TRUE" = SOME true` for the case does not matter and
+     blanks are skipped. *)
   val fromString : string -> bool option
 end

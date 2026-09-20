@@ -112,7 +112,9 @@ sig
      one possible format, not a rule.
 
      Implementation: `General.exnMessage/format`. `"Fail: "` and the argument
-     for a `Fail`, and `exnName ex` for everything else. *)
+     for a `Fail`, and `exnName ex` for everything else.
+
+     Example: `exnMessage (Fail "why") = "Fail: why"` *)
   val exnMessage : exn -> string
 
   (* ---- Comparison ---- *)
@@ -134,7 +136,9 @@ sig
 
   (* `(f o g) x` is `f (g x)`: the composition of two functions.
 
-     It is infix with precedence 3. *)
+     It is infix with precedence 3.
+
+     Example: `(Int.toString o (fn x => x + 1)) 1 = "2"` *)
   val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 
   (* `e before e'` is `e`, after `e'` has been evaluated for its effect.
@@ -142,7 +146,9 @@ sig
      It is infix with precedence 0, the loosest there is, so that
      `x before print "done"` needs no parentheses.
 
-     Law: `e before e' = (fn (a, ()) => a) (e, e')` *)
+     Law: `e before e' = (fn (a, ()) => a) (e, e')`
+
+     Example: `(1 before ()) = 1` *)
   val before : 'a * unit -> 'a
 
   (* `ignore e` is `()`: it throws the value of `e` away.

@@ -77,6 +77,60 @@ struct
                                 ^ (if #realisations c = "" then "" else " " ^ #realisations c)
                                 ^ ", as its comment claims: " ^ msg)
 
+  fun namesIn (Env.Env {vals, tys, strs}) : string list =
+    StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty
+                                   (StringMap.listKeys vals @ StringMap.listKeys tys @ StringMap.listKeys strs))
+
+  (* What the structure at a path declares: its values, constructors and
+     exceptions, its types and its substructures, as elaboration knows them,
+     each name once and in the order of the alphabet. This is also known of a
+     structure that is another one by name or an application of a functor,
+     where the syntax shows no body. *)
+  fun namesOf ({env, ...} : library) (path : string list) : string list option =
+    Option.map namesIn (Env.findStr (env, path))
+
+  (* What a signature of the library specifies, or what it specifies for the
+     substructure at a path in it: with what it includes, and with the
+     constructors of a datatype that it only replicates, which the syntax does
+     not show. After `library`. *)
+  fun specifiedBy (signat : string, sub : string list) : string list option =
+    case StringMap.find (!Elaborate.sigs, signat) of
+      SOME {env, ...} => Option.map namesIn (Env.findStr (env, sub))
+    | NONE => NONE
+
+  (* The type name that a type function stands for, if it is one: a type
+     name itself, or an abbreviation that only gives one another name, as
+     `type elem = char` and `type 'a vector = 'a Vector.vector` do. *)
+  fun tyconOf (fcn : Types.tyfcn) : Types.tycon option =
+    case fcn of
+      Types.TName c => SOME c
+    | Types.TAbbrev (ids, body) =>
+        (case Types.prune body of
+           Types.TCon (c, args) =>
+             if List.length args = List.length ids
+                andalso ListPair.all (fn (id, a) =>
+                                        case Types.prune a of
+                                          Types.TVar (ref (Types.Unbound {id = id', ...})) => id = id'
+                                        | _ => false) (ids, args)
+             then SOME c else NONE
+         | _ => NONE)
+
+  (* Every type of the top level and of the structures that `public` lets
+     through, with their substructures: its name as a program writes it, the
+     stamp of the type name it stands for, and its arity. Types with one
+     stamp are one type (D7). *)
+  fun typeNames ({env, ...} : library, public : string -> bool) : (string * int * int) list =
+    let
+      fun walk (prefix : string, Env.Env {tys, strs, ...}) =
+        List.mapPartial (fn (name, Env.TyStr {fcn, ...}) =>
+                           Option.map (fn c : Types.tycon => (prefix ^ name, #stamp c, #arity c)) (tyconOf fcn))
+                        (StringMap.listItemsi tys)
+        @ List.concat (List.map (fn (name, sub) => if public name then walk (prefix ^ name ^ ".", sub) else [])
+                                (StringMap.listItemsi strs))
+    in
+      walk ("", env)
+    end
+
   (* An example against the library: `val it : bool = ...` has to elaborate. *)
   fun checkExample ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
     let

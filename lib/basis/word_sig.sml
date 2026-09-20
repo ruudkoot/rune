@@ -95,37 +95,51 @@ sig
 
   (* `fromInt i` is the word with the low `wordSize` bits of `i`.
 
-     A negative `i` is taken in two's complement. *)
+     A negative `i` is taken in two's complement.
+
+     Example: `Word8.fromInt 256 = 0w0` *)
   val fromInt : int -> word
 
   (* ---- Bits ---- *)
 
-  (* `andb (a, b)` is the bitwise "and". *)
+  (* `andb (a, b)` is the bitwise "and".
+
+     Example: `andb (0wxF0, 0wx3C) = 0wx30` *)
   val andb : word * word -> word
 
   (* `orb (a, b)` is the bitwise "or". *)
   val orb : word * word -> word
 
-  (* `xorb (a, b)` is the bitwise exclusive "or". *)
+  (* `xorb (a, b)` is the bitwise exclusive "or".
+
+     Example: `xorb (0wxFF, 0wx0F) = 0wxF0` *)
   val xorb : word * word -> word
 
   (* `notb w` is `w` with every bit inverted.
 
-     Law: `notb w = ~w - 0w1` *)
+     Law: `notb w = ~w - 0w1`
+
+     Example: `Word.notb 0w0 = 0wxFFFFFFFFFFFFFFFF` *)
   val notb : word -> word
 
   (* `<< (w, n)` is `w` shifted left by `n` bits, with zeros coming in and what leaves the width dropped.
 
      A shift of `wordSize` bits or more gives 0.
 
-     Law: `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure *)
+     Law: `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure
+
+     Example: `<< (0w1, 0w4) = 0w16`
+
+     Example: `Word.<< (0w1, 0w64) = 0w0` for every bit is shifted out. *)
   val << : word * Word.word -> word
 
   (* `>> (w, n)` is `w` shifted right by `n` bits, with zeros coming in.
 
      A shift of `wordSize` bits or more gives 0.
 
-     Law: `>> (w, n) = w div 0w2 ^ n` *)
+     Law: `>> (w, n) = w div 0w2 ^ n`
+
+     Example: `Word8.>> (0wx80, 0w1) = 0wx40` *)
   val >> : word * Word.word -> word
 
   (* `~>> (w, n)` is `w` shifted right by `n` bits, with the top bit of `w` coming in.
@@ -133,7 +147,9 @@ sig
      A shift of `wordSize` bits or more gives 0 for a word whose top bit is
      clear and a word of all ones for one whose top bit is set: it is the
      division of a signed number by a power of two, rounded towards negative
-     infinity. *)
+     infinity.
+
+     Example: `Word8.~>> (0wx80, 0w1) = 0wxC0` *)
   val ~>> : word * Word.word -> word
 
   (* ---- Arithmetic ---- *)
@@ -141,7 +157,9 @@ sig
   (* `a + b` is the sum, taken modulo `2^wordSize`. *)
   val + : word * word -> word
 
-  (* `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`. *)
+  (* `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`.
+
+     Example: `Word.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF` *)
   val - : word * word -> word
 
   (* `a * b` is the product, taken modulo `2^wordSize`. *)
@@ -197,7 +215,9 @@ sig
 
   (* `toString w` is the text of `w` in base 16, with the digits `A` to `F` and no prefix.
 
-     Law: `toString w = fmt StringCvt.HEX w` *)
+     Law: `toString w = fmt StringCvt.HEX w`
+
+     Example: `toString 0w255 = "FF"` *)
   val toString : word -> string
 
   (* `scan radix getc strm` reads a word in the given base from `strm`.
@@ -219,6 +239,10 @@ sig
 
      Raises: `Overflow` if the digits name a number of more than `wordSize` bits.
 
-     Law: `fromString s = StringCvt.scanString (scan StringCvt.HEX) s` *)
+     Law: `fromString s = StringCvt.scanString (scan StringCvt.HEX) s`
+
+     Example: `fromString "0wxff" = SOME 0w255`
+
+     Example: `fromString "ff" = SOME 0w255` *)
   val fromString : string -> word option
 end

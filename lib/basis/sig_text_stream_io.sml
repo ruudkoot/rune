@@ -21,7 +21,10 @@ sig
      every line returned ends in one, and the stream returned is past that
      end of stream. At an end of stream itself it is `NONE`.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Example: `Option.map #1 (inputLine (TextIO.getInstream (TextIO.openString
+     "a\nb"))) = SOME "a\n"` *)
   val inputLine : instream -> (string * instream) option
 
   (* `outputSubstr (f, ss)` writes the characters of the substring `ss`.

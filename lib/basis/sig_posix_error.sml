@@ -51,13 +51,17 @@ sig
 
      Implementation: `Posix.Error.errorName/the-posix-names`. For the
      conditions POSIX names it is the name below -- `"noent"` for `noent` --
-     and for the others it is the name `OS.errorName` invents. *)
+     and for the others it is the name `OS.errorName` invents.
+
+     Example: `errorName noent = "noent"` *)
   val errorName : syserror -> string
 
   (* `syserror s` is `SOME` of the condition that `errorName` calls `s`, or `NONE`.
 
      Law: `syserror (errorName e) = SOME e` for every condition, named here
-     or not. *)
+     or not.
+
+     Example: `syserror "noent" = SOME noent` *)
   val syserror : string -> syserror option
 
   (* ---- The conditions POSIX names ---- *)

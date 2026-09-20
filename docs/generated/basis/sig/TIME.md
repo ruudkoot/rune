@@ -160,6 +160,8 @@ val fromReal : LargeReal.real -> time
 
 **Raises** [`Time`](#exn-time) if `r` is not a number, is infinite, or does not fit.
 
+**Example** `toMilliseconds (fromReal 1.5) = 1500`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton, SML/NJ, Poly/ML** &mdash; fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
@@ -291,6 +293,8 @@ val fromMilliseconds : LargeInt.int -> time
 
 **Raises** [`Time`](#exn-time) if the time does not fit.
 
+**Example** `toSeconds (fromMilliseconds 1500) = 1`
+
 <details><summary>Tests (4)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `basic` &middot; `negative` &middot; `toMilliseconds-inverts` &middot; `huge-exact-or-Time`
@@ -342,6 +346,8 @@ val + : time * time -> time
 > **Implementation** `Time.+/exact-until-it-raises`. Wherever the range ends,
 > doubling a time over and over stays exact until one step raises [`Time`](#exn-time);
 > no step gives a wrong value or another exception.
+
+**Example** `fromSeconds 1 + fromMilliseconds 500 = fromMilliseconds 1500`
 
 <details><summary>Tests (8)</summary>
 
@@ -466,6 +472,12 @@ val fmt : int -> time -> string
 > the digit last kept is rounded to nearest, and since a time holds
 > microseconds every digit past the sixth is a zero.
 
+**Example** `fmt 2 (fromMilliseconds 1500) = "1.50"`
+
+**Example** `fmt 0 (fromMilliseconds 1500) = "2"`
+
+**Example** `fmt 0 (fromMilliseconds 2500) = "3"`
+
 <details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; fmt with a negative number of digits does not raise Size
@@ -487,6 +499,8 @@ val toString : time -> string
 ```
 
 `toString t` is `fmt 3 t`: seconds with three digits of the fraction.
+
+**Example** `toString (fromMilliseconds ~1500) = "~1.500"`
 
 <details><summary>Tests (7)</summary>
 
@@ -528,6 +542,8 @@ val fromString : string -> time option
 **Law** `fromString s = StringCvt.scanString scan s`
 
 **Raises** [`Time`](#exn-time) if the number does not fit.
+
+**Example** `fromString " ~.25x" = SOME (fromMilliseconds ~250)`
 
 <details><summary>Other implementations (1)</summary>
 

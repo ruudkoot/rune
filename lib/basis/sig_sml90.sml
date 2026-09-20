@@ -111,21 +111,29 @@ sig
 
   (* `ord s` is the code of the first character of `s`.
 
-     Raises: `Ord` if `s` is empty. *)
+     Raises: `Ord` if `s` is empty.
+
+     Example: `ord "a" = 97` *)
   val ord : string -> int
 
   (* `chr n` is the one-character string whose character has the code `n`.
 
-     Raises: `Chr` if `n` is no character's code. *)
+     Raises: `Chr` if `n` is no character's code.
+
+     Example: `chr 97 = "a"` *)
   val chr : int -> string
 
   (* `explode s` is the characters of `s`, each as a string of its own.
 
      The `explode` of `STRING` gives a list of characters; this is the older
-     one. *)
+     one.
+
+     Example: `explode "ab" = ["a", "b"]` *)
   val explode : string -> string list
 
-  (* `implode l` is the strings of `l`, one after another. *)
+  (* `implode l` is the strings of `l`, one after another.
+
+     Example: `implode ["a", "bc"] = "abc"` *)
   val implode : string list -> string
 
   (* `lookahead f` is the next character of `f` as a string, without removing it, or the empty string at the end.

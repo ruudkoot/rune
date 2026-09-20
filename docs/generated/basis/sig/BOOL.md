@@ -90,6 +90,8 @@ val toString : bool -> string
 
 `toString b` is `"true"` or `"false"`.
 
+**Example** `toString false = "false"`
+
 <details><summary>Tests (3)</summary>
 
 For `Bool`, in [tests/basis/bool.sml](../../../../tests/basis/bool.sml): `true` &middot; `false` &middot; `of-not-*`
@@ -148,6 +150,9 @@ it, or `NONE`.
 > codes are next to those of the white space characters (0, 8, 14, 31, 33,
 > 95 and 127) are not white space: a string that begins with one of them
 > gives `NONE`.
+
+**Example** `fromString " TRUE" = SOME true` for the case does not matter and
+blanks are skipped.
 
 <details><summary>Other implementations (6)</summary>
 

@@ -50,7 +50,9 @@ sig
      operation until it is set again.
 
      Implementation: `IEEEReal.setRoundingMode/fesetround`. The mode of the C
-     library, set with `fesetround`. *)
+     library, set with `fesetround`.
+
+     Example: `(setRoundingMode TO_NEAREST; getRoundingMode ()) = TO_NEAREST` *)
   val setRoundingMode : rounding_mode -> unit
 
   (* `getRoundingMode ()` is the rounding mode in force. *)
@@ -92,6 +94,8 @@ sig
 
   (* `fromString s` is the decimal number that the text `s` begins with, or `NONE`.
 
-     Law: `fromString s = StringCvt.scanString scan s` *)
+     Law: `fromString s = StringCvt.scanString scan s`
+
+     Example: `Option.map toString (fromString "~0.0012e3") = SOME "~0.12E1"` *)
   val fromString : string -> decimal_approx option
 end

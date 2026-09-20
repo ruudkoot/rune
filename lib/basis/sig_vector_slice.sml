@@ -33,7 +33,12 @@ sig
   (* `slice (v, i, NONE)` is the stretch of `v` from position `i` to its end, and `slice (v, i, SOME n)` the `n` elements from `i`.
 
      Raises: `Subscript` if `i < 0`, if `i > Vector.length v`, or if `n` is
-     given and `i + n > Vector.length v`. *)
+     given and `i + n > Vector.length v`.
+
+     Example: `vector (slice (Vector.fromList [1, 2, 3, 4], 1, SOME 2)) =
+     Vector.fromList [2, 3]`
+
+     Example: `length (slice (Vector.fromList [1, 2, 3], 1, NONE)) = 2` *)
   val slice : 'a Vector.vector * int * int option -> 'a slice
 
   (* `subslice (sl, i, NONE)` is the stretch of `sl` from position `i` on, and `subslice (sl, i, SOME n)` the `n` elements from `i`.
@@ -42,7 +47,10 @@ sig
 
      Reading: `VectorSlice.subslice/NONE-Subscript-beyond`. The bounds are
      those of `sl`, not of the vector it is a slice of: a subslice cannot
-     reach back into the rest of the base vector. *)
+     reach back into the rest of the base vector.
+
+     Example: `(fn (_, i, n) => (i, n)) (base (subslice (slice (Vector.fromList
+     [1, 2, 3, 4, 5], 1, NONE), 1, SOME 2))) = (2, 2)` *)
   val subslice : 'a slice * int * int option -> 'a slice
 
   (* `base sl` is the triple of the vector that `sl` is a stretch of, where it starts in that vector, and how long it is. *)
@@ -62,7 +70,10 @@ sig
   (* `getItem sl` is `NONE` for an empty slice and `SOME (x, rest)` for the first element and what follows it.
 
      It has the shape of a `StringCvt.reader`, so a slice is a stream that a
-     `scan` function can read from. *)
+     `scan` function can read from.
+
+     Example: `Option.map #1 (getItem (full (Vector.fromList [7, 8]))) = SOME
+     7` *)
   val getItem : 'a slice -> ('a * 'a slice) option
 
   (* ---- Traversing ---- *)

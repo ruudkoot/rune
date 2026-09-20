@@ -19,7 +19,7 @@ structure OS.IO : OS_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.IO` | A descriptor is the handle of the VM's file table. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| `OS.IO` | A descriptor is the system's own file descriptor, wrapped (`RuneIODesc.FD`). | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 Descriptors of open files, devices, pipes and sockets, and waiting until
 some of them are ready for input or output.

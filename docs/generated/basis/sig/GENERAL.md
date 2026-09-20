@@ -368,6 +368,8 @@ reports an exception it cannot handle.
 > **Implementation** `General.exnMessage/format`. `"Fail: "` and the argument
 > for a [`Fail`](#exn-fail), and `exnName ex` for everything else.
 
+**Example** `exnMessage (Fail "why") = "Fail: why"`
+
 Also in the [top-level environment](../top-level.md): `exnMessage`.
 
 <details><summary>Other implementations (1)</summary>
@@ -454,6 +456,8 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 
 It is infix with precedence 3.
 
+**Example** `(Int.toString o (fn x => x + 1)) 1 = "2"`
+
 Also in the [top-level environment](../top-level.md): `o`.
 
 <details><summary>Tests (16)</summary>
@@ -474,6 +478,8 @@ It is infix with precedence 0, the loosest there is, so that
 `x before print "done"` needs no parentheses.
 
 **Law** `e before e' = (fn (a, ()) => a) (e, e')`
+
+**Example** `(1 before ()) = 1`
 
 Also in the [top-level environment](../top-level.md): `before`.
 

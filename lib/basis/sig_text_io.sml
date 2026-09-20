@@ -85,7 +85,10 @@ sig
 
   (* `lookahead f` is `SOME` of the next character without removing it, or `NONE` at an end of stream.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Example: `let val s = openString "ab" in (lookahead s, input1 s, input1 s,
+     input1 s) end = (SOME #"a", SOME #"a", SOME #"b", NONE)` *)
   val lookahead : instream -> elem option
 
   (* `closeIn f` closes the stream and the file underneath.
@@ -176,7 +179,10 @@ sig
      there is none to move on to -- and it keeps giving `NONE` even after the
      file has grown. Poly/ML reads on there.
 
-     Pinned by: `TextIO.inputLine/file-grows-after-end-of-stream` *)
+     Pinned by: `TextIO.inputLine/file-grows-after-end-of-stream`
+
+     Example: `let val s = openString "a\nb" in (inputLine s, inputLine s,
+     inputLine s) end = (SOME "a\n", SOME "b\n", NONE)` *)
   val inputLine : instream -> string option
 
   (* `outputSubstr (f, ss)` writes the characters of the substring `ss`.
@@ -213,7 +219,9 @@ sig
      Raises: `IO.Io` if the file cannot be opened. *)
   val openAppend : string -> outstream
 
-  (* `openString s` is a stream reading the characters of `s`, and no file. *)
+  (* `openString s` is a stream reading the characters of `s`, and no file.
+
+     Example: `inputAll (openString "xyz") = "xyz"` *)
   val openString : string -> instream
 
   (* The standard input of the program. *)
@@ -240,7 +248,10 @@ sig
      stopped when it returns `SOME`, and not at all when it returns `NONE`,
      whatever the scanner read while trying.
 
-     Pinned by: `TextIO.scanStream/*` *)
+     Pinned by: `TextIO.scanStream/*`
+
+     Example: `scanStream (Int.scan StringCvt.DEC) (openString " 42 rest") =
+     SOME 42` *)
   val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
                     -> ('a, StreamIO.instream) StringCvt.reader)
                    -> instream -> 'a option

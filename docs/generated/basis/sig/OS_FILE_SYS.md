@@ -252,6 +252,8 @@ val isDir : string -> bool
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
 
+**Example** `isDir "." = true`
+
 <details><summary>Tests (10)</summary>
 
 For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `directory` &middot; `current-arc` &middot; `root` &middot; `trailing-separator` &middot; `file` &middot; `missing-SysErr` (raises) &middot; `empty-SysErr` (raises) &middot; `through-a-link` &middot; `link-to-a-file` &middot; `dangling-SysErr` (raises)
@@ -300,6 +302,8 @@ val fullPath : string -> string
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing, or a link leads nowhere or in a
 circle.
+
+**Example** `fullPath "." = getDir ()`
 
 <details><summary>Tests (15)</summary>
 

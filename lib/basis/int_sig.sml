@@ -69,7 +69,9 @@ sig
   (* `maxInt` is the largest integer of this structure, or `NONE` when there is none.
 
      Law: `maxInt = SOME (2 ^ (p - 1) - 1)` where `precision = SOME p`. The
-     range is not symmetric: `~minInt` overflows and `abs minInt` does too. *)
+     range is not symmetric: `~minInt` overflows and `abs minInt` does too.
+
+     Example: `Int.maxInt = SOME 9223372036854775807` *)
   val maxInt : int option
 
   (* ---- Arithmetic ---- *)
@@ -104,7 +106,9 @@ sig
      Law: `(i div j) * j + (i mod j) = i`
 
      Reading: `Int.mod/minInt-by-minus-one`. `mod` never raises `Overflow`,
-     although `div` does at the same arguments: `minInt mod ~1` is 0. *)
+     although `div` does at the same arguments: `minInt mod ~1` is 0.
+
+     Example: `~7 mod 2 = 1` where `rem (~7, 2)` is `~1`. *)
   val mod : int * int -> int
 
   (* `quot (i, j)` is the quotient, rounded towards zero.
@@ -121,7 +125,9 @@ sig
      Law: `quot (i, j) * j + rem (i, j) = i`
 
      Reading: `Int.rem/minInt-by-minus-one`. As `mod`, it never raises
-     `Overflow`: `rem (minInt, ~1)` is 0. *)
+     `Overflow`: `rem (minInt, ~1)` is 0.
+
+     Example: `rem (~7, 2) = ~1` where `~7 mod 2` is `1`. *)
   val rem : int * int -> int
 
   (* ---- Comparing ---- *)
@@ -152,7 +158,9 @@ sig
   (* `max (i, j)` is the larger of the two. *)
   val max : int * int -> int
 
-  (* `sign i` is ~1, 0 or 1, as `i` is negative, zero or positive. *)
+  (* `sign i` is ~1, 0 or 1, as `i` is negative, zero or positive.
+
+     Example: `sign ~3 = ~1` *)
   val sign : int -> Int.int
 
   (* `sameSign (i, j)` is `true` when `i` and `j` have the same sign.
@@ -161,7 +169,9 @@ sig
      j`", so zero has the same sign as zero only, and not as a positive
      number.
 
-     Law: `sameSign (i, j) = (sign i = sign j)` *)
+     Law: `sameSign (i, j) = (sign i = sign j)`
+
+     Example: `sameSign (0, 1) = false` *)
   val sameSign : int * int -> bool
 
   (* ---- Text ---- *)
@@ -177,7 +187,9 @@ sig
 
   (* `toString i` is the text of `i` in base 10.
 
-     Law: `toString i = fmt StringCvt.DEC i` *)
+     Law: `toString i = fmt StringCvt.DEC i`
+
+     Example: `toString ~5 = "~5"` *)
   val toString : int -> string
 
   (* `scan radix getc strm` reads an integer in the given base from `strm`.
@@ -193,13 +205,19 @@ sig
 
      Reading: `Int.scan/HEX-bare-prefix-0x`. A `0x` that no digit follows is
      not a prefix, but its `0` is a digit: `"0xg"` scans as 0 and leaves
-     `"xg"` in the stream. *)
+     `"xg"` in the stream.
+
+     Example: `StringCvt.scanString (scan StringCvt.HEX) "0x1F" = SOME 31` *)
   val scan : StringCvt.radix -> (char, 'a) StringCvt.reader -> (int, 'a) StringCvt.reader
 
   (* `fromString s` is the integer that the text `s` begins with in base 10, or `NONE`.
 
      Raises: `Overflow` if the digits name a number outside the range.
 
-     Law: `fromString s = StringCvt.scanString (scan StringCvt.DEC) s` *)
+     Law: `fromString s = StringCvt.scanString (scan StringCvt.DEC) s`
+
+     Example: `fromString " +12x" = SOME 12`
+
+     Example: `fromString "0x1F" = SOME 0` for it reads decimal digits only. *)
   val fromString : string -> int option
 end

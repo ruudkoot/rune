@@ -128,6 +128,8 @@ val toBytes : real -> Word8Vector.vector
 
 `toBytes r` is the encoding of `r` as a vector of [`bytesPerElem`](#val-bytesperelem) bytes.
 
+**Example** `PackReal64Big.toBytes 1.0 = Word8Vector.fromList [0wx3F, 0wxF0, 0w0, 0w0, 0w0, 0w0, 0w0, 0w0]`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
@@ -155,6 +157,8 @@ vector is read from its start.
 
 **Law** `fromBytes (toBytes r) = r`, except that a NaN comes back as some
 NaN
+
+**Example** `Real.== (PackReal64Little.fromBytes (PackReal64Little.toBytes 2.5), 2.5) = true`
 
 <details><summary>Other implementations (1)</summary>
 

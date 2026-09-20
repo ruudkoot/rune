@@ -47,7 +47,14 @@ sig
      Reading: `OS.Path.fromString/empty-arcs`. The arcs are the pieces
      between the separators, empty ones included: `"/"` gives `[""]`, `"//"`
      gives `["", ""]`, `"a/"` gives `["a", ""]`, and `""` gives no arcs at
-     all. *)
+     all.
+
+     Example: `fromString "/a/b" = {isAbs = true, vol = "", arcs = ["a", "b"]}`
+
+     Example: `fromString "a//b" = {isAbs = false, vol = "", arcs = ["a", "",
+     "b"]}`
+
+     Example: `fromString "" = {isAbs = false, vol = "", arcs = []}` *)
   val fromString : string -> {isAbs : bool, vol : string, arcs : string list}
 
   (* `toString {isAbs, vol, arcs}` is the path those three make.
@@ -60,7 +67,9 @@ sig
      arcs, which no string produces; where it cannot hold, the exception
      `Path` counts as holding too.
 
-     Pinned by: `OS.Path.fromString/inverts-toString-random` *)
+     Pinned by: `OS.Path.fromString/inverts-toString-random`
+
+     Example: `toString {isAbs = false, vol = "", arcs = ["a", "b"]} = "a/b"` *)
   val toString : {isAbs : bool, vol : string, arcs : string list} -> string
 
   (* `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have. *)
@@ -75,10 +84,22 @@ sig
 
      Reading: `OS.Path.getParent/trailing-separator`. For a path that ends in
      a separator the parent arc is appended after it: `"a/"` gives `"a/.."`
-     and `"a///"` gives `"a///.."`. *)
+     and `"a///"` gives `"a///.."`.
+
+     Example: `getParent "a/b" = "a"`
+
+     Example: `getParent "a" = "."`
+
+     Example: `getParent "/" = "/"`
+
+     Example: `getParent "." = ".."` *)
   val getParent : string -> string
 
-  (* `splitDirFile p` is `p` split into everything but its last arc, and that last arc. *)
+  (* `splitDirFile p` is `p` split into everything but its last arc, and that last arc.
+
+     Example: `splitDirFile "a/b/c" = {dir = "a/b", file = "c"}`
+
+     Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}` *)
   val splitDirFile : string -> {dir : string, file : string}
 
   (* `joinDirFile {dir, file}` is the path of `file` inside `dir`.
@@ -89,7 +110,9 @@ sig
      `splitDirFile` on every path of the specification's table except the
      empty one.
 
-     Pinned by: `OS.Path.joinDirFile/row-*` *)
+     Pinned by: `OS.Path.joinDirFile/row-*`
+
+     Example: `joinDirFile {dir = "a", file = "b"} = "a/b"` *)
   val joinDirFile : {dir : string, file : string} -> string
 
   (* `dir p` is the `dir` part of `splitDirFile p`. *)
@@ -106,16 +129,24 @@ sig
 
      Reading: `OS.Path.splitBaseExt/base-keeps-empty-arcs`. The base is
      everything to the left of the extension, empty arcs and all: `"a//c.x"`
-     has the base `"a//c"`. *)
+     has the base `"a//c"`.
+
+     Example: `splitBaseExt "a.tar.gz" = {base = "a.tar", ext = SOME "gz"}`
+
+     Example: `splitBaseExt ".profile" = {base = ".profile", ext = NONE}` *)
   val splitBaseExt : string -> {base : string, ext : string option}
 
-  (* `joinBaseExt {base, ext}` is `base` with `ext` appended after a `.`, or `base` alone when `ext` is `NONE`. *)
+  (* `joinBaseExt {base, ext}` is `base` with `ext` appended after a `.`, or `base` alone when `ext` is `NONE`.
+
+     Example: `joinBaseExt {base = "a", ext = SOME ""} = "a"` *)
   val joinBaseExt : {base : string, ext : string option} -> string
 
   (* `base p` is the `base` part of `splitBaseExt p`. *)
   val base : string -> string
 
-  (* `ext p` is the `ext` part of `splitBaseExt p`. *)
+  (* `ext p` is the `ext` part of `splitBaseExt p`.
+
+     Example: `ext "a.b/c" = NONE` for the extension is that of the last arc. *)
   val ext : string -> string option
 
   (* `mkCanonical p` is `p` with the current arcs dropped, the parent arcs cancelled where they can be, and the separators made single.
@@ -125,7 +156,15 @@ sig
      specification's list of canonical paths has `"/."` among them; every
      host agrees on `"/"`.
 
-     Pinned by: `OS.Path.isCanonical/example-root-current-arc` *)
+     Pinned by: `OS.Path.isCanonical/example-root-current-arc`
+
+     Example: `mkCanonical "a/./b/../c//" = "a/c"`
+
+     Example: `mkCanonical "" = "."`
+
+     Example: `mkCanonical "../a" = "../a"`
+
+     Example: `mkCanonical "/.." = "/"` *)
   val mkCanonical : string -> string
 
   (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give. *)
@@ -136,7 +175,9 @@ sig
      `path` is given back canonicalised when it is already absolute.
 
      Raises: `Path` if `relativeTo` is not absolute -- also when `path`
-     already is. *)
+     already is.
+
+     Example: `mkAbsolute {path = "../b", relativeTo = "/a/c"} = "/a/b"` *)
   val mkAbsolute : {path : string, relativeTo : string} -> string
 
   (* `mkRelative {path, relativeTo}` is `path` written as a path from `relativeTo`.
@@ -150,7 +191,9 @@ sig
      `"../b/"`. A root alone has no arcs to keep.
 
      Pinned by: `OS.Path.mkAbsolute/inverts-mkRelative-random`,
-     `OS.Path.mkRelative/is-relative-random` *)
+     `OS.Path.mkRelative/is-relative-random`
+
+     Example: `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"` *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
   (* `isAbsolute p` is `true` when `p` starts from a root. *)
@@ -173,7 +216,9 @@ sig
      Reading: `OS.Path.concat/keeps-the-parent-arc`. The arcs of `q` are
      appended to those of `p` without cancelling: a `p` that ends in the
      parent arc keeps it. A trailing empty arc of `p` is absorbed by the
-     join. *)
+     join.
+
+     Example: `concat ("a/", "b") = "a/b"` *)
   val concat : string * string -> string
 
   (* `fromUnixPath p` is the path that `p` names on this system, `p` itself on Unix.

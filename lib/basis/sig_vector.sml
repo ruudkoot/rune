@@ -34,14 +34,19 @@ sig
 
   (* `fromList l` is the vector of the elements of `l`, in order.
 
-     Raises: `Size` if `l` is longer than `maxLen`. *)
+     Raises: `Size` if `l` is longer than `maxLen`.
+
+     Example: `fromList [1, 2] = fromList [1, 2]` for vectors with equal
+     elements are equal. *)
   val fromList : 'a list -> 'a vector
 
   (* `tabulate (n, f)` is the vector of `f 0`, `f 1`, ..., `f (n - 1)`.
 
      `f` is applied in order of increasing index.
 
-     Raises: `Size` if `n < 0` or `n > maxLen`, before `f` is applied at all. *)
+     Raises: `Size` if `n < 0` or `n > maxLen`, before `f` is applied at all.
+
+     Example: `foldr (op ::) [] (tabulate (3, fn i => i * 2)) = [0, 2, 4]` *)
   val tabulate : int * (int -> 'a) -> 'a vector
 
   (* ---- Elements ---- *)
@@ -51,7 +56,9 @@ sig
 
   (* `sub (v, i)` is the element of `v` at position `i`, counting from 0.
 
-     Raises: `Subscript` if `i < 0` or `i >= length v`. *)
+     Raises: `Subscript` if `i < 0` or `i >= length v`.
+
+     Example: `sub (fromList [1, 2, 3], 1) = 2` *)
   val sub : 'a vector * int -> 'a
 
   (* `update (v, i, x)` is a new vector, like `v` but with `x` at position `i`.
@@ -60,12 +67,16 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length v`.
 
-     Complexity: linear in `length v`. *)
+     Complexity: linear in `length v`.
+
+     Example: `update (fromList [1, 2, 3], 1, 9) = fromList [1, 9, 3]` *)
   val update : 'a vector * int * 'a -> 'a vector
 
   (* `concat l` is the vectors of `l` one after another.
 
-     Raises: `Size` if the result would be longer than `maxLen`. *)
+     Raises: `Size` if the result would be longer than `maxLen`.
+
+     Example: `concat [fromList [1], fromList [2, 3]] = fromList [1, 2, 3]` *)
   val concat : 'a vector list -> 'a vector
 
   (* ---- Traversing ---- *)
@@ -76,7 +87,10 @@ sig
   (* `app f v` applies `f` to every element of `v`, from 0 up, for its effect. *)
   val app : ('a -> unit) -> 'a vector -> unit
 
-  (* `mapi f v` is the vector of the results of `f` on the index and the element of each position. *)
+  (* `mapi f v` is the vector of the results of `f` on the index and the element of each position.
+
+     Example: `mapi (fn (i, x) => i + x) (fromList [10, 20]) = fromList [10,
+     21]` *)
   val mapi : (int * 'a -> 'b) -> 'a vector -> 'b vector
 
   (* `map f v` is the vector of the results of `f` on each element, in order. *)
@@ -98,7 +112,9 @@ sig
 
   (* `findi p v` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`.
 
-     It stops at that position: `p` is not applied to what follows. *)
+     It stops at that position: `p` is not applied to what follows.
+
+     Example: `findi (fn (_, x) => x > 1) (fromList [1, 2, 3]) = SOME (1, 2)` *)
   val findi : (int * 'a -> bool) -> 'a vector -> (int * 'a) option
 
   (* `find p v` is `SOME x` for the first element that satisfies `p`, or `NONE`. *)
@@ -114,6 +130,8 @@ sig
 
      The answer is that of `cmp` on the first pair of elements at the same
      position that are not `EQUAL`; if there is none, the shorter vector is
-     `LESS`. *)
+     `LESS`.
+
+     Example: `collate Int.compare (fromList [1], fromList [1, 0]) = LESS` *)
   val collate : ('a * 'a -> order) -> 'a vector * 'a vector -> order
 end

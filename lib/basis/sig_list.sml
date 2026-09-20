@@ -73,7 +73,9 @@ sig
 
      Raises: `Empty` if `l` is empty.
 
-     Complexity: linear in the length; constant stack. *)
+     Complexity: linear in the length; constant stack.
+
+     Example: `last [1, 2, 3] = 3` *)
   val last : 'a list -> 'a
 
   (* `getItem l` is `NONE` for the empty list and `SOME (hd l, tl l)`
@@ -90,7 +92,9 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length l`.
 
-     Complexity: linear in `i`. *)
+     Complexity: linear in `i`.
+
+     Example: `nth ([1, 2, 3], 0) = 1` *)
   val nth : 'a list * int -> 'a
 
   (* `take (l, i)` is the list of the first `i` elements of `l`; `take (l,
@@ -98,14 +102,18 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i > length l`.
 
-     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l` *)
+     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
+
+     Example: `take ([1, 2, 3], 2) = [1, 2]` *)
   val take : 'a list * int -> 'a list
 
   (* `drop (l, i)` is what is left of `l` after its first `i` elements.
 
      The result shares its cells with `l`: nothing is copied.
 
-     Raises: `Subscript` if `i < 0` or `i > length l`. *)
+     Raises: `Subscript` if `i < 0` or `i > length l`.
+
+     Example: `drop ([1, 2, 3], 2) = [3]` *)
   val drop : 'a list * int -> 'a list
 
   (* ---- Building lists ---- *)
@@ -117,7 +125,9 @@ sig
 
   (* `concat ls` appends all the lists of `ls`, in order.
 
-     Law: `concat [l, m, n] = l @ m @ n` *)
+     Law: `concat [l, m, n] = l @ m @ n`
+
+     Example: `concat [[1], [], [2, 3]] = [1, 2, 3]` *)
   val concat : 'a list list -> 'a list
 
   (* `revAppend (l, m)` is `rev l @ m`, built in one pass over `l` and without
@@ -126,7 +136,9 @@ sig
      It is the usual way to finish a loop that accumulated its results back to
      front.
 
-     Law: `revAppend (l, m) = rev l @ m` *)
+     Law: `revAppend (l, m) = rev l @ m`
+
+     Example: `revAppend ([1, 2], [3]) = [2, 1, 3]` *)
   val revAppend : 'a list * 'a list -> 'a list
 
   (* ---- Transforming ---- *)
@@ -147,7 +159,10 @@ sig
      Elements for which `f` answers `NONE` leave nothing behind: it is a `map`
      and a `filter` in one pass.
 
-     Law: `mapPartial f l = map valOf (filter isSome (map f l))` *)
+     Law: `mapPartial f l = map valOf (filter isSome (map f l))`
+
+     Example: `mapPartial (fn x => if x > 1 then SOME (x * x) else NONE) [1, 2,
+     3] = [4, 9]` *)
   val mapPartial : ('a -> 'b option) -> 'a list -> 'b list
 
   (* ---- Searching ---- *)
@@ -155,7 +170,9 @@ sig
   (* `find p l` is `SOME x` for the first element `x` of `l` that satisfies
      `p`, and `NONE` if there is none.
 
-     `p` is not applied to the elements after `x`. *)
+     `p` is not applied to the elements after `x`.
+
+     Example: `find (fn x => x > 1) [1, 2, 3] = SOME 2` *)
   val find : ('a -> bool) -> 'a list -> 'a option
 
   (* `filter p l` is the list of the elements of `l` that satisfy `p`, in their
@@ -171,7 +188,9 @@ sig
      element, from left to right.
 
      Law: `partition p l = (filter p l, filter (not o p) l)` when `p` has no
-     effects *)
+     effects
+
+     Example: `partition (fn x => x > 1) [1, 2, 3] = ([2, 3], [1])` *)
   val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
 
   (* ---- Folding and testing the elements ---- *)
@@ -210,7 +229,10 @@ sig
   (* `all p l` is `true` when every element of `l` satisfies `p`; it stops at
      the first one that does not.
 
-     `all p []` is `true`. *)
+     `all p []` is `true`.
+
+     Example: `all (fn x => x > 0) [] = true` there is no element to fail the
+     test. *)
   val all : ('a -> bool) -> 'a list -> bool
 
   (* ---- Making and comparing ---- *)
@@ -220,7 +242,9 @@ sig
 
      Raises: `Size` if `n < 0`, before `f` is applied at all.
 
-     Law: `tabulate (length l, fn i => nth (l, i)) = l` *)
+     Law: `tabulate (length l, fn i => nth (l, i)) = l`
+
+     Example: `tabulate (3, fn i => i * i) = [0, 1, 4]` *)
   val tabulate : int * (int -> 'a) -> 'a list
 
   (* `collate cmp (l, m)` compares `l` and `m` lexicographically, with `cmp`

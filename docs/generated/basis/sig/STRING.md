@@ -215,6 +215,8 @@ val extract : string * int * int option -> string
 > tested so that it cannot overflow: an `i` and an `n` whose sum is no
 > `int` raise [`Subscript`](../sig/GENERAL.md#exn-subscript), not [`Overflow`](../sig/GENERAL.md#exn-overflow).
 
+**Example** `extract ("hello", 2, NONE) = "llo"`
+
 <details><summary>Tests (30)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `NONE-whole` &middot; `NONE-tail` &middot; `NONE-last` &middot; `NONE-at-size` &middot; `NONE-empty-string` &middot; `NONE-Subscript-beyond-size` (raises Subscript) &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-empty-string` (raises Subscript) &middot; `NONE-Subscript-maxInt` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-whole` &middot; `SOME-to-the-end` &middot; `SOME-zero` &middot; `SOME-zero-at-size` &middot; `SOME-empty-string` &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-end-beyond-size` (raises Subscript) &middot; `SOME-Subscript-start-beyond-size` (raises Subscript) &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-start-zero` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-start` (raises Subscript) &middot; `SOME-law-*` &middot; `NONE-law-*`
@@ -234,6 +236,8 @@ val substring : string * int * int -> string
 **Law** `substring (s, i, n) = extract (s, i, SOME n)`
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, `n < 0` or `i + n > size s`.
+
+**Example** `substring ("hello", 1, 3) = "ell"`
 
 Also in the [top-level environment](../top-level.md): `substring`.
 
@@ -364,6 +368,8 @@ val explode : string -> char list
 
 **Law** `implode (explode s) = s`
 
+**Example** `explode "ab" = [#"a", #"b"]`
+
 Also in the [top-level environment](../top-level.md): `explode`.
 
 <details><summary>Tests (6)</summary>
@@ -406,6 +412,8 @@ one, which is how a string is escaped or expanded.
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
 
 **Law** `translate f s = concat (List.map f (explode s))`
+
+**Example** `translate (fn #"a" => "4" | c => str c) "banana" = "b4n4n4"`
 
 <details><summary>Tests (7)</summary>
 
@@ -492,6 +500,8 @@ The empty string occurs in every string.
 **Complexity** the product of the two sizes in the worst case; the search
 is the straightforward one.
 
+**Example** `isSubstring "" "abc" = true`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; isSubstring "" "" is false
@@ -536,6 +546,10 @@ val compare : string * string -> order
 A string that is a prefix of another comes before it.
 
 **Law** `compare (s, t) = collate Char.compare (s, t)`
+
+**Example** `compare ("abc", "abd") = LESS`
+
+**Example** `compare ("Z", "a") = LESS` for the capitals come first in ASCII.
 
 <details><summary>Tests (18)</summary>
 
@@ -599,6 +613,8 @@ ones as themselves, with a backslash before a backslash or a double
 quote, and the others as a named escape, `\^c`, or three decimal digits.
 
 **Law** `toString s = translate Char.toString s`
+
+**Example** `toString "a\tb\"" = "a\\tb\\\""`
 
 <details><summary>Tests (13)</summary>
 
@@ -691,6 +707,8 @@ Every character is written as [`Char.toCString`](../sig/CHAR.md#val-tocstring) w
 quote and the question mark are escaped as well, and what does not print
 becomes a backslash and three octal digits.
 
+**Example** `toCString "a\n?" = "a\\n\\?"`
+
 <details><summary>Tests (7)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `empty` &middot; `printable` &middot; `escaped-printable` &middot; `nul-and-octal` &middot; `nul-then-digit` &middot; `nul-and-all-characters`
@@ -714,6 +732,8 @@ backslash is not a character of a constant, so it ends the scan.
 > escape takes "the longest sequence" of hexadecimal digits: `"\x42C"` is
 > one escape of the value 1068, which is no character, and not `\x42`
 > followed by `C`.
+
+**Example** `fromCString "\\x41" = SOME "A"`
 
 <details><summary>Other implementations (4)</summary>
 

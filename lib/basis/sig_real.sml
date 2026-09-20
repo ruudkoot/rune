@@ -121,13 +121,17 @@ sig
 
   (* `sign x` is ~1, 0 or 1, as `x` is negative, zero or positive.
 
-     Raises: `Domain` if `x` is a NaN. *)
+     Raises: `Domain` if `x` is a NaN.
+
+     Example: `sign ~0.0 = 0` *)
   val sign : real -> int
 
   (* `signBit x` is `true` when the sign bit of `x` is set.
 
      Reading: `Real.signBit/zeros`. It looks at the bit and not at the value,
-     so it tells the two zeros apart and answers for a NaN as well. *)
+     so it tells the two zeros apart and answers for a NaN as well.
+
+     Example: `signBit ~0.0 = true` *)
   val signBit : real -> bool
 
   (* `sameSign (x, y)` is `true` when `x` and `y` have the same sign bit.
@@ -146,7 +150,9 @@ sig
      `Unordered`. *)
   val compare : real * real -> order
 
-  (* `compareReal (x, y)` orders two reals, and answers `UNORDERED` where a NaN makes the question meaningless. *)
+  (* `compareReal (x, y)` orders two reals, and answers `UNORDERED` where a NaN makes the question meaningless.
+
+     Example: `compareReal (0.0 / 0.0, 1.0) = IEEEReal.UNORDERED` *)
   val compareReal : real * real -> IEEEReal.real_order
 
   (* `x < y`, `x <= y`, `x > y` and `x >= y` compare two reals.
@@ -163,7 +169,11 @@ sig
      The two zeros are the same number; a NaN is not even equal to itself.
      This is the equality of IEEE 754 and what a program should use at
      `real`. The specification writes it infix, which a program must declare
-     (`infix 4 ==`) before it can do the same. *)
+     (`infix 4 ==`) before it can do the same.
+
+     Example: `== (0.0, ~0.0) = true`
+
+     Example: `== (0.0 / 0.0, 0.0 / 0.0) = false` *)
   val == : real * real -> bool
 
   (* `!= (x, y)` is the negation of `== (x, y)`, so it is `true` when either is a NaN. *)
@@ -182,7 +192,9 @@ sig
   (* `isFinite x` is `true` when `x` is neither an infinity nor a NaN. *)
   val isFinite : real -> bool
 
-  (* `isNan x` is `true` when `x` is a NaN. *)
+  (* `isNan x` is `true` when `x` is a NaN.
+
+     Example: `isNan (0.0 / 0.0) = true` *)
   val isNan : real -> bool
 
   (* `isNormal x` is `true` when `x` is an ordinary number: finite, not zero and not subnormal. *)
@@ -199,7 +211,10 @@ sig
      significand as "1.0 <= man * radix < radix", which for radix 2 means
      `0.5 <= |man| < 1.0`: the convention of C's `frexp`, and not the one
      that puts the point after the first digit. For a zero, an infinity or a
-     NaN the significand is `x` itself. *)
+     NaN the significand is `x` itself.
+
+     Example: `(fn {man, exp} => (toString man, exp)) (toManExp 8.0) = ("0.5",
+     4)` *)
   val toManExp : real -> {man : real, exp : int}
 
   (* `fromManExp {man, exp}` is `man * radix^exp`.
@@ -212,7 +227,10 @@ sig
      The whole part is `x` rounded towards zero. For an infinity the
      fractional part is a zero, and for a NaN both are NaNs.
 
-     Law: `#whole (split x) + #frac (split x) == x` *)
+     Law: `#whole (split x) + #frac (split x) == x`
+
+     Example: `(fn {whole, frac} => (toString whole, toString frac)) (split
+     ~1.5) = ("~1", "~0.5")` *)
   val split : real -> {whole : real, frac : real}
 
   (* `realMod x` is the fractional part of `x`, with its sign.
@@ -263,27 +281,39 @@ sig
   (* `floor x` is the largest whole number that is not greater than `x`, as an `int`.
 
      Raises: `Overflow` if that number is outside the range of `Int.int`;
-     `Domain` if `x` is a NaN. *)
+     `Domain` if `x` is a NaN.
+
+     Example: `floor ~1.5 = ~2` *)
   val floor : real -> int
 
   (* `ceil x` is the smallest whole number that is not less than `x`, as an `int`.
 
-     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN. *)
+     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN.
+
+     Example: `ceil ~1.5 = ~1` *)
   val ceil : real -> int
 
   (* `trunc x` is `x` rounded towards zero, as an `int`.
 
-     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN. *)
+     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN.
+
+     Example: `trunc ~1.5 = ~1` *)
   val trunc : real -> int
 
   (* `round x` is `x` rounded to the nearest whole number, ties to even, as an `int`.
 
-     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN. *)
+     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN.
+
+     Example: `round 2.5 = 2`
+
+     Example: `round 3.5 = 4` *)
   val round : real -> int
 
   (* `toInt mode x` is `x` rounded to an `int` in the given rounding mode.
 
-     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN. *)
+     Raises: `Overflow` if it does not fit; `Domain` if `x` is a NaN.
+
+     Example: `toInt IEEEReal.TO_NEAREST 2.5 = 2` *)
   val toInt : IEEEReal.rounding_mode -> real -> int
 
   (* `toLargeInt mode x` is `x` rounded to a `LargeInt.int` in the given rounding mode.
@@ -334,12 +364,22 @@ sig
      fractional part is written without a point, as C's `gcvt` does, and the
      shorter of the scientific and the fixed form is taken, a tie going to
      the fixed one: `fmt (GEN NONE) 1.0` is `"1"` and `fmt (GEN NONE) 1000.0`
-     is `"1E3"`. *)
+     is `"1E3"`.
+
+     Example: `fmt (StringCvt.FIX (SOME 2)) 3.14159 = "3.14"`
+
+     Example: `fmt (StringCvt.SCI (SOME 2)) 1234.5 = "1.23E3"`
+
+     Example: `fmt (StringCvt.GEN (SOME 3)) 1234.5 = "1230"` *)
   val fmt : StringCvt.realfmt -> real -> string
 
   (* `toString x` is the text of `x` in the general notation with the default number of digits.
 
-     Law: `toString x = fmt (StringCvt.GEN NONE) x` *)
+     Law: `toString x = fmt (StringCvt.GEN NONE) x`
+
+     Example: `toString 1.0 = "1"`
+
+     Example: `toString ~1.5E~5 = "~1.5E~5"` *)
   val toString : real -> string
 
   (* `scan getc strm` reads a real from `strm`.
@@ -361,7 +401,9 @@ sig
      Reading: `Real.fromString/TO_NEGINF-negative`. The numeral is rounded in
      the rounding mode that is in force, as in MLton and in C's `strtod`;
      SML/NJ and Poly/ML always round to nearest. `Real32.fromString` rounds
-     once, straight to binary32, and not first to binary64. *)
+     once, straight to binary32, and not first to binary64.
+
+     Example: `Option.map toString (fromString ".5e1x") = SOME "5"` *)
   val fromString : string -> real option
 
   (* `toDecimal x` is `x` written out in decimal digits, exactly.

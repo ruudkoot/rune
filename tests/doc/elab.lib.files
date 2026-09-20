@@ -3,12 +3,15 @@
 ./conventions.md
 ./coverage.md
 ./exceptions.md
+./index/b.md
 ./index/e.md
-./index/p.md
+./index/f.md
+./index/l.md
+./index/s.md
 ./index/t.md
 ./notes.tsv
 ./readings.md
-./sig/STACK.md
+./sig/BOX.md
 ./structures.md
 ./top-level.md
 ./types.md

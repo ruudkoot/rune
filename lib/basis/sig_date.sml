@@ -69,7 +69,11 @@ sig
      days moved into the hours. A local date is normalised by the C library
      instead.
 
-     Pinned by: `Date.date/offset-of-the-local-zone` *)
+     Pinned by: `Date.date/offset-of-the-local-zone`
+
+     Example: `(fn d => (month d, day d, hour d)) (date {year = 2001, month =
+     Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME
+     Time.zeroTime}) = (Feb, 2, 1)` *)
   val date : {year : int,
               month : month,
               day : int,
@@ -96,10 +100,16 @@ sig
   (* `second d` is the second of `d`, from 0 to 59, or up to 61 for a leap second. *)
   val second : date -> int
 
-  (* `weekDay d` is the day of the week of `d`. *)
+  (* `weekDay d` is the day of the week of `d`.
+
+     Example: `weekDay (date {year = 1995, month = Mar, day = 8, hour = 19,
+     minute = 6, second = 45, offset = SOME Time.zeroTime}) = Wed` *)
   val weekDay : date -> weekday
 
-  (* `yearDay d` is the day of the year of `d`, from 0 for the first of January. *)
+  (* `yearDay d` is the day of the year of `d`, from 0 for the first of January.
+
+     Example: `yearDay (date {year = 1995, month = Mar, day = 8, hour = 0,
+     minute = 0, second = 0, offset = SOME Time.zeroTime}) = 66` *)
   val yearDay : date -> int
 
   (* `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC. *)
@@ -149,7 +159,10 @@ sig
      its own time zone": one at offset `t` west of UTC is the UTC reading of
      its fields plus `t`. A local date is converted by the C library.
 
-     Raises: `Date` if the moment does not fit in a `Time.time`. *)
+     Raises: `Date` if the moment does not fit in a `Time.time`.
+
+     Example: `Time.toSeconds (toTime (date {year = 1970, month = Jan, day = 2,
+     hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime})) = 86400` *)
   val toTime : date -> Time.time
 
   (* `compare (d, e)` orders two dates by year, month, day, hour, minute and second, in that order.
@@ -172,12 +185,20 @@ sig
      `%c` gives `c`. The specification names no text for `%Z` on a UTC date,
      and the suite accepts `"UTC"`, `"GMT"`, `"Z"` or nothing.
 
-     Pinned by: `Date.fmt/%Z-UTC`, `Date.fmt/prints-*` *)
+     Pinned by: `Date.fmt/%Z-UTC`, `Date.fmt/prints-*`
+
+     Example: `fmt "%Y-%m-%d %H:%M" (date {year = 1995, month = Mar, day = 8,
+     hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) =
+     "1995-03-08 19:06"` *)
   val fmt : string -> date -> string
 
-  (* `toString d` is `d` in the layout `"Wed Mar  8 19:06:45 1995"`, as C's `%a %b %e %H:%M:%S %Y`.
+  (* `toString d` is `d` in the 24 characters of `"Wed Mar 08 19:06:45 1995"`, which is `fmt "%a %b %d %H:%M:%S %Y" d`.
 
-     Raises: `Date` if `d` is not a valid date. *)
+     Raises: `Date` if `d` is not a valid date.
+
+     Example: `toString (date {year = 1995, month = Mar, day = 8, hour = 19,
+     minute = 6, second = 45, offset = SOME Time.zeroTime}) =
+     "Wed Mar 08 19:06:45 1995"` *)
   val toString : date -> string
 
   (* `scan getc src` reads a date in the layout of `toString`, after leading whitespace.
@@ -191,6 +212,9 @@ sig
 
   (* `fromString s` is `SOME` of the date that `s` begins with, after whitespace, or `NONE`.
 
-     Law: `fromString s = StringCvt.scanString scan s` *)
+     Law: `fromString s = StringCvt.scanString scan s`
+
+     Example: `Option.map toString (fromString
+     "  Wed Mar 08 19:06:45 1995 and more") = SOME "Wed Mar 08 19:06:45 1995"` *)
   val fromString : string -> date option
 end

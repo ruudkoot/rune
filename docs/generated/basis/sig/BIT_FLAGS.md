@@ -182,6 +182,8 @@ val flags : flags list -> flags
 
 `flags l` is the union of the sets of `l`: a flag is in it when it is in one of them.
 
+**Example** `let open Posix.FileSys.S in toWord (flags [irusr, iwusr]) end = 0wx180`
+
 <details><summary>Tests (10)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty` &middot; `one` &middot; `union`
@@ -218,6 +220,8 @@ val clear : flags * flags -> flags
 
 `clear (fl, gl)` is `gl` without the flags of `fl`.
 
+**Example** `let open Posix.FileSys.S in toWord (clear (irusr, irwxu)) end = 0wxC0`
+
 <details><summary>Tests (9)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `difference` &middot; `formula`
@@ -233,6 +237,10 @@ val allSet : flags * flags -> bool
 ```
 
 `allSet (fl, gl)` is `true` when every flag of `fl` is in `gl`.
+
+**Example** `let open Posix.FileSys.S in allSet (irusr, irwxu) end = true`
+
+**Example** `let open Posix.FileSys.S in allSet (irwxu, irusr) end = false`
 
 <details><summary>Other implementations (2)</summary>
 

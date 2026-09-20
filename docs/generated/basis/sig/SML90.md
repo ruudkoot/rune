@@ -462,6 +462,8 @@ val ord : string -> int
 
 **Raises** [`Ord`](#exn-ord) if `s` is empty.
 
+**Example** `ord "a" = 97`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ** &mdash; ord "" raises Subscript, not Ord
@@ -484,6 +486,8 @@ val chr : int -> string
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `n` is no character's code.
 
+**Example** `chr 97 = "a"`
+
 <details><summary>Tests (4)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `97` &middot; `zero` &middot; `Chr-256` (raises Chr) &middot; `Chr-negative` (raises Chr)
@@ -501,6 +505,8 @@ val explode : string -> string list
 The [`explode`](#val-explode) of [`STRING`](../sig/STRING.md) gives a list of characters; this is the older
 one.
 
+**Example** `explode "ab" = ["a", "b"]`
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `letters` &middot; `empty`
@@ -514,6 +520,8 @@ val implode : string list -> string
 ```
 
 `implode l` is the strings of `l`, one after another.
+
+**Example** `implode ["a", "bc"] = "abc"`
 
 <details><summary>Tests (2)</summary>
 

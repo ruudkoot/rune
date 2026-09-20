@@ -28,10 +28,14 @@ sig
      Two are equal when they are the same signal. *)
   eqtype signal
 
-  (* `toWord s` is the number the system gives `s`. *)
+  (* `toWord s` is the number the system gives `s`.
+
+     Example: `toWord kill = 0w9` *)
   val toWord : signal -> SysWord.word
 
-  (* `fromWord w` is the signal numbered `w`, which need not be one named here. *)
+  (* `fromWord w` is the signal numbered `w`, which need not be one named here.
+
+     Example: `fromWord 0w15 = term` *)
   val fromWord : SysWord.word -> signal
 
   (* ---- The signals POSIX names ---- *)

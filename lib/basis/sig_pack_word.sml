@@ -35,12 +35,21 @@ sig
 
      Reading: `PackWord.subVec/Subscript-not-Overflow`. The bound is tested
      without the product `bytesPerElem * (i + 1)`, so a huge `i` raises
-     `Subscript` and not `Overflow`. *)
+     `Subscript` and not `Overflow`.
+
+     Example: `PackWord16Big.subVec (Word8Vector.fromList [0w1, 0w2], 0) =
+     0wx102`
+
+     Example: `PackWord16Little.subVec (Word8Vector.fromList [0w1, 0w2, 0w3,
+     0w4], 1) = 0wx403` for the index counts elements of two bytes, not bytes. *)
   val subVec : Word8Vector.vector * int -> LargeWord.word
 
   (* `subVecX (v, i)` is the word at position `i` of `v`, with its top bit copied into the bits above it.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `v`. *)
+     Raises: `Subscript` if the bytes of element `i` are not all in `v`.
+
+     Example: `PackWord16Big.subVecX (Word8Vector.fromList [0wxFF, 0wxFE], 0) =
+     0wxFFFFFFFFFFFFFFFE` *)
   val subVecX : Word8Vector.vector * int -> LargeWord.word
 
   (* `subArr (arr, i)` is the word at position `i` of the byte array `arr`, with zeros above it.
@@ -57,6 +66,10 @@ sig
 
      What does not fit in that many bytes is dropped.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`. *)
+     Raises: `Subscript` if the bytes of element `i` are not all in `arr`.
+
+     Example: `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update
+     (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12,
+     0wx34]` *)
   val update : Word8Array.array * int * LargeWord.word -> unit
 end

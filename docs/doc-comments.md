@@ -188,7 +188,8 @@ label `Structure:SIG/case` for the signature as a whole. A check whose label
 is computed (`"Int.scan/" ^ name`) counts by the beginning that is written
 out, and one of which only the member is known counts when no other check
 has the label. A glob that finds no check of a documented member is an error,
-so an annotation cannot outlive what it is about. `@title` names the block
+so an annotation does not outlive the check it is about; the exception is a
+member with a check whose label is computed in full, which may be any label. `@title` names the block
 and `@intro` describes it on the page "How to read these pages".
 
 For the Basis Library the file is `tests/basis/annotations.txt`, which

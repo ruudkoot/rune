@@ -101,6 +101,8 @@ It stops at the end of the shorter list.
 
 **Law** `List.length (zip (l, m)) = Int.min (List.length l, List.length m)`
 
+**Example** `zip ([1, 2, 3], ["a", "b"]) = [(1, "a"), (2, "b")]`
+
 <details><summary>Tests (10)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil-nil` &middot; `singleton` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `nil-right` &middot; `two-types` &middot; `model-*` &middot; `long`
@@ -117,6 +119,8 @@ val zipEq : 'a list * 'b list -> ('a * 'b) list
 
 **Raises** [`UnequalLengths`](#exn-unequallengths) if `l` and `m` have different lengths.
 
+**Example** `(zipEq ([1], []) handle UnequalLengths => []) = []`
+
 <details><summary>Tests (10)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil-nil` &middot; `singleton` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-left` (raises) &middot; `UnequalLengths-nil-right` (raises) &middot; `model-*` &middot; `long` &middot; `long-UnequalLengths` (raises)
@@ -132,6 +136,8 @@ val unzip : ('a * 'b) list -> 'a list * 'b list
 `unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.
 
 **Law** `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other
+
+**Example** `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])`
 
 <details><summary>Tests (9)</summary>
 
@@ -186,6 +192,8 @@ val map : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
 **Law** `map f (l, m) = List.map f (zip (l, m))`
 
+**Example** `map (op +) ([1, 2], [10, 20, 30]) = [11, 22]`
+
 <details><summary>Tests (10)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `argument-order` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `order` &middot; `three-types` &middot; `model-*` &middot; `long`
@@ -222,6 +230,8 @@ val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 at the end of the shorter list.
 
 **Law** `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+
+**Example** `foldl (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11`
 
 <details><summary>Tests (9)</summary>
 
@@ -337,6 +347,8 @@ val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 > note is what is implemented, and all three other systems do the same: `p`
 > is applied to the pairs of the common prefix before the lengths are
 > known.
+
+**Example** `allEq (op =) ([1, 2], [1, 2, 3]) = false` where `all (op =) ([1, 2], [1, 2, 3])` is `true`.
 
 <details><summary>Tests (16)</summary>
 

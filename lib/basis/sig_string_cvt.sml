@@ -77,7 +77,9 @@ sig
      A string that has `i` characters or more is returned as it is.
 
      Raises: `Size` if `i` is larger than `String.maxSize` and `s` is shorter
-     than `i`. *)
+     than `i`.
+
+     Example: `padRight #"." 5 "ab" = "ab..."` *)
   val padRight : char -> int -> string -> string
 
   (* ---- Building scanners ---- *)
@@ -90,7 +92,10 @@ sig
      Reading: `StringCvt.splitl/reads-no-further-than-first-failing`. "Will
      often use lookahead characters" is taken to mean exactly one: the
      character that stops the scan is read from the source, and nothing after
-     it. *)
+     it.
+
+     Example: `splitl Char.isDigit List.getItem (explode "12ab") = ("12",
+     [#"a", #"b"])` *)
   val splitl : (char -> bool) -> (char, 'a) reader -> 'a -> string * 'a
 
   (* `takel p getc strm` is the string of the characters at the front of `strm`
@@ -102,7 +107,9 @@ sig
   (* `dropl p getc strm` is `strm` without the characters at its front that
      satisfy `p`.
 
-     Law: `dropl p getc strm = #2 (splitl p getc strm)` *)
+     Law: `dropl p getc strm = #2 (splitl p getc strm)`
+
+     Example: `implode (dropl Char.isSpace List.getItem (explode "  x")) = "x"` *)
   val dropl : (char -> bool) -> (char, 'a) reader -> 'a -> 'a
 
   (* `skipWS getc strm` is `strm` without the white space at its front.

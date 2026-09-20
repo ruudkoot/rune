@@ -23,7 +23,9 @@ sig
   (* The ratio of a circle's circumference to its diameter, as near as the type can say.
 
      Implementation: `Math.pi/nearest-double`. The `real` nearest to pi,
-     which differs from it by about 1.2E~16. *)
+     which differs from it by about 1.2E~16.
+
+     Example: `Real.fmt (StringCvt.FIX (SOME 4)) pi = "3.1416"` *)
   val pi : real
 
   (* The base of the natural logarithm, as near as the type can say. *)
@@ -35,7 +37,9 @@ sig
 
      Implementation: `Math.sqrt/four`. IEEE 754 requires the square root to
      be correctly rounded, so an exact square gives its root exactly:
-     `sqrt 4.0` is `2.0`, not something near it. *)
+     `sqrt 4.0` is `2.0`, not something near it.
+
+     Example: `Real.isNan (sqrt ~1.0) = true` *)
   val sqrt : real -> real
 
   (* `sin x` is the sine of `x` radians.
@@ -79,7 +83,9 @@ sig
      it has the signs of both coordinates; the sign of a zero counts, so that
      the answer is continuous as the point crosses an axis.
 
-     Law: `atan2 (y, x) = atan (y / x)` for `x > 0` *)
+     Law: `atan2 (y, x) = atan (y / x)` for `x > 0`
+
+     Example: `Real.== (atan2 (0.0, ~1.0), pi) = true` *)
   val atan2 : real * real -> real
 
   (* `exp x` is `e` to the power `x`.
@@ -96,12 +102,18 @@ sig
 
      Reading: `Math.pow/one-base-posInf`. `pow (1.0, y)` is a NaN for an
      infinite or NaN `y`, as the specification's table says; C99 and IEEE
-     754-2008 make it 1 instead, and Poly/ML follows them. *)
+     754-2008 make it 1 instead, and Poly/ML follows them.
+
+     Example: `Real.round (pow (2.0, 10.0)) = 1024`
+
+     Example: `Real.toString (pow (0.0, 0.0)) = "1"` *)
   val pow : real * real -> real
 
   (* `ln x` is the natural logarithm of `x`.
 
-     It is negative infinity at zero and a NaN for a negative `x`. *)
+     It is negative infinity at zero and a NaN for a negative `x`.
+
+     Example: `Real.toString (ln 0.0) = "~inf"` *)
   val ln : real -> real
 
   (* `log10 x` is the logarithm of `x` to base 10.

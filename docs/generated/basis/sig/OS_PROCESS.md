@@ -116,6 +116,8 @@ val isSuccess : status -> bool
 > signal ended has not succeeded: from [`UNIX`](../sig/UNIX.md), this is true only where
 > [`Posix.Process.fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) gives `W_EXITED`.
 
+**Example** `isSuccess success = true`
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `twice` &middot; `killed-by-signal`
@@ -209,6 +211,8 @@ val getEnv : string -> string option
 > a name that merely begins with one that is set does not, and neither
 > does a name with `"=value"` attached. A command run by [`system`](#val-system) inherits
 > this environment and cannot change it.
+
+**Example** `getEnv "A_VARIABLE_THAT_NOBODY_SETS" = NONE`
 
 <details><summary>Tests (7)</summary>
 

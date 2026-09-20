@@ -204,6 +204,8 @@ A string that has `i` characters or more is returned as it is.
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
 than `i`.
 
+**Example** `padRight #"." 5 "ab" = "ab..."`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ** &mdash; padLeft and padRight raise Overflow for the smallest int (they compute i - \| s \| ) instead of returning s
@@ -233,6 +235,8 @@ The rest begins with the first character that does not satisfy `p`.
 > often use lookahead characters" is taken to mean exactly one: the
 > character that stops the scan is read from the source, and nothing after
 > it.
+
+**Example** `splitl Char.isDigit List.getItem (explode "12ab") = ("12", [#"a", #"b"])`
 
 <details><summary>Tests (24)</summary>
 
@@ -267,6 +271,8 @@ val dropl : (char -> bool) -> (char, 'a) reader -> 'a -> 'a
 satisfy `p`.
 
 **Law** `dropl p getc strm = #2 (splitl p getc strm)`
+
+**Example** `implode (dropl Char.isSpace List.getItem (explode "  x")) = "x"`
 
 <details><summary>Tests (11)</summary>
 

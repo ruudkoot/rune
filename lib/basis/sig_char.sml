@@ -54,17 +54,23 @@ sig
 
   (* ---- Codes and order ---- *)
 
-  (* `ord c` is the code of `c`, between 0 and `maxOrd`. *)
+  (* `ord c` is the code of `c`, between 0 and `maxOrd`.
+
+     Example: `ord #"A" = 65` *)
   val ord : char -> int
 
   (* `chr i` is the character whose code is `i`.
 
-     Raises: `Chr` if `i < 0` or `i > maxOrd`. *)
+     Raises: `Chr` if `i < 0` or `i > maxOrd`.
+
+     Example: `chr 97 = #"a"` *)
   val chr : int -> char
 
   (* `succ c` is the character after `c`, the one with the code `ord c + 1`.
 
-     Raises: `Chr` if `c` is `maxChar`. *)
+     Raises: `Chr` if `c` is `maxChar`.
+
+     Example: `succ #"a" = #"b"` *)
   val succ : char -> char
 
   (* `pred c` is the character before `c`, the one with the code `ord c - 1`.
@@ -93,7 +99,9 @@ sig
   (* `contains s c` is `true` when `c` occurs in the string `s`.
 
      Applied to `s` alone it gives a predicate, which suits the functions that
-     take one: `String.tokens (contains " ,;")`. *)
+     take one: `String.tokens (contains " ,;")`.
+
+     Example: `contains "abc" #"b" = true` *)
   val contains : string -> char -> bool
 
   (* `notContains s c` is `true` when `c` does not occur in `s`. *)
@@ -117,10 +125,16 @@ sig
   val toLower : char -> char
 
   (* `toUpper c` is the upper case letter for a lower case letter `c`, and `c`
-     otherwise. *)
+     otherwise.
+
+     Example: `toUpper #"a" = #"A"`
+
+     Example: `toUpper #"1" = #"1"` *)
   val toUpper : char -> char
 
-  (* `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`. *)
+  (* `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`.
+
+     Example: `isAlpha #"_" = false` *)
   val isAlpha : char -> bool
 
   (* `isAlphaNum c` is `true` for a letter or a decimal digit. *)
@@ -152,7 +166,9 @@ sig
   val isSpace : char -> bool
 
   (* `isPunct c` is `true` for a graphical character that is neither a letter
-     nor a digit. *)
+     nor a digit.
+
+     Example: `isPunct #"_" = true` *)
   val isPunct : char -> bool
 
   (* `isUpper c` is `true` for an upper case letter, `A` to `Z`. *)
@@ -205,7 +221,9 @@ sig
      program" and names only characters that do not print and bad escapes as
      what stops a scan. Rune therefore converts a double quote that has no
      backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
-     and that is what the suite expects. *)
+     and that is what the suite expects.
+
+     Example: `fromString "\\n" = SOME #"\n"` *)
   val fromString : String.string -> char option
 
   (* `toCString c` is the text that stands for `c` inside a C string constant.
@@ -214,7 +232,9 @@ sig
      quote, the single quote and the question mark get a backslash in front.
      The control characters with a name in C are `\a`, `\b`, `\t`, `\n`, `\v`,
      `\f` and `\r`; every other character is a backslash and three octal
-     digits. *)
+     digits.
+
+     Example: `toCString #"\000" = "\\000"` *)
   val toCString : char -> String.string
 
   (* `fromCString s` is the character that the text `s` begins with in the
@@ -233,6 +253,8 @@ sig
      character but the double quote and the backslash is converted to itself,
      the single quote included; what does not print is rejected.
 
-     Pinned by: `Char.fromCString/printable-only-*` *)
+     Pinned by: `Char.fromCString/printable-only-*`
+
+     Example: `fromCString "\\x41" = SOME #"A"` *)
   val fromCString : String.string -> char option
 end

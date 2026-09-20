@@ -266,6 +266,10 @@ val fromString : string -> in_addr option
 
 **Law** `fromString s = StringCvt.scanString scan s`
 
+**Example** `Option.map toString (fromString "127.1") = SOME "127.0.0.1"`
+
+**Example** `Option.map toString (fromString "0x7f000001") = SOME "127.0.0.1"`
+
 <details><summary>Other implementations (4)</summary>
 
 - **MLton, Poly/ML** &mdash; fromString and scan do not skip initial whitespace

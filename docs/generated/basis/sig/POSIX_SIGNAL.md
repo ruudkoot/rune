@@ -112,6 +112,8 @@ val toWord : signal -> SysWord.word
 
 `toWord s` is the number the system gives `s`.
 
+**Example** `toWord kill = 0w9`
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `distinct`
@@ -125,6 +127,8 @@ val fromWord : SysWord.word -> signal
 ```
 
 `fromWord w` is the signal numbered `w`, which need not be one named here.
+
+**Example** `fromWord 0w15 = term`
 
 <details><summary>Other implementations (1)</summary>
 

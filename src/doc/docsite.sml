@@ -149,8 +149,9 @@ struct
       @ (case List.filter (fn s => areaOf s = NONE) sigs of [] => [] | rest => [(NONE, rest)])
     end
 
+  (* hasTypes: the page of the types that are one type is made (the library elaborates). *)
   fun readme (env : P.env, title : string, overview : I.doc, sigs : I.signatureRecord list,
-              functors : (string * I.doc) list, letters : string list) : string =
+              functors : (string * I.doc) list, letters : string list, hasTypes : bool) : string =
     let
       fun link c = case R.resolve (#index env, "", [], []) c of
                      R.Target t => SOME (P.href (env, "README.md", t, Source.noSpan))
@@ -171,6 +172,7 @@ struct
       ^ String.concat (List.map (M.block link) overview)
       ^ "[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md)"
       ^ " &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md)"
+      ^ (if hasTypes then " &middot; [types that are one type](types.md)" else "")
       ^ " &middot; [readings of the specification](readings.md)"
       ^ " &middot; [what is documented](coverage.md) &middot; index: "
       ^ String.concatWith " " (List.map (fn l => "[" ^ l ^ "](index/" ^ l ^ ".md)") letters) ^ "\n\n"
@@ -283,7 +285,10 @@ struct
                   | _ => [])
                 (R.bodyOf (index, sigName)))
 
-  fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string) : string =
+  (* namesOf: what elaboration knows a structure to declare, if the library
+     was elaborated. *)
+  fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string,
+                      namesOf : (string list -> string list option) option) : string =
     let
       val claims = sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                            case String.compare (#name a, #name b) of
@@ -308,19 +313,39 @@ struct
          (case #status c of SOME st => st | NONE => sigStatus (#signat c)),
          definedAs c,
          P.sourceLink (env, "", #file c)]
-      (* what a written-out structure declares beyond the signatures it claims *)
+      (* What a structure declares beyond the signatures it claims: of a
+         written-out structure what its body declares, in the order of the
+         source; of one that is another by name, or an application of a
+         functor, what elaboration finds in it. *)
       fun extras (c : DocClaims.claim) =
-        case structAt (modules, String.fields (fn ch => ch = #".") (#name c)) of
-          SOME {members = SOME ms, ...} =>
-            let
-              val mine = List.filter (fn c' : DocClaims.claim => #name c' = #name c) claims
-              val spec = List.concat (List.map (fn c' => specified (#index env, #signat c', [#signat c'])) mine)
-              val beyond = List.filter (fn m => not (List.exists (fn s => s = m) spec)) ms
-              fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
-            in
-              distinct beyond
-            end
-        | _ => []
+        let
+          val path = String.fields (fn ch => ch = #".") (#name c)
+          val declared =
+            case (structAt (modules, path), namesOf) of
+              (SOME {members = SOME ms, ...}, _) => ms
+            | (_, SOME f) => Option.getOpt (f path, [])
+            | _ => []
+          (* what the signatures that a structure claims specify at a path
+             below it: elaboration knows it with what is included and
+             replicated, the syntax otherwise *)
+          fun specifiedAt (names : string list, sub : string list) =
+            List.concat
+              (List.map (fn c' : DocClaims.claim =>
+                           if #name c' <> String.concatWith "." names then []
+                           else
+                             case (if isSome namesOf then DocElab.specifiedBy (#signat c', sub) else NONE) of
+                               SOME ns => ns
+                             | NONE => if List.null sub then specified (#index env, #signat c', [#signat c']) else [])
+                        claims)
+          (* also what the signature of a structure around it specifies for it *)
+          fun around n = if n >= List.length path then []
+                         else specifiedAt (List.take (path, n), List.drop (path, n)) @ around (n + 1)
+          val spec = specifiedAt (path, []) @ around 1
+          val beyond = List.filter (fn m => not (List.exists (fn s => s = m) spec)) declared
+          fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
+        in
+          distinct beyond
+        end
       val firstClaims = List.foldl (fn (c : DocClaims.claim, acc) =>
                                       if List.exists (fn c' : DocClaims.claim => #name c' = #name c) acc then acc else acc @ [c])
                                    [] claims
@@ -336,8 +361,9 @@ struct
       ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"], List.map row claims)
       ^ (if List.null beyondRows then ""
          else "## Names beyond the signature\n\n"
-              ^ "What the body of a structure declares and its signatures do not specify. Most structures are not\n"
-              ^ "sealed, so these names are visible; a program that uses them is not portable.\n\n"
+              ^ "What a structure declares and its signatures do not specify. Most structures are not sealed, so\n"
+              ^ "these names are visible; a program that uses them is not portable. A structure that is another\n"
+              ^ "one by name has the names of that one, and an application of a functor those of the functor's body.\n\n"
               ^ M.table (["Structure", "Also declares"], beyondRows))
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
@@ -672,6 +698,79 @@ struct
       !covered
     end
 
+  (* ---- the types that are one type ---- *)
+  (* names: every type of the library with the stamp of its type name and its
+     arity (DocElab.typeNames). A type name that has several names is a row:
+     the name of the top level first, or else the shortest. *)
+  fun typesPage (env : P.env, title : string, names : (string * int * int) list) : string =
+    let
+      val page = "types.md"
+      (* Where a type is documented: with the signature that the structure
+         claims, or one around it; the longest structure first. A type of a
+         structure that no signature specifies is not the library's to show. *)
+      fun target (name : string) : R.target option =
+        let
+          val parts = String.fields (fn c => c = #".") name
+          fun from k =
+            if k < 1 then NONE
+            else
+              let
+                val structure' = String.concatWith "." (List.take (parts, k))
+                val rest = List.drop (parts, k)
+                val (sub, ty) = (List.take (rest, List.length rest - 1), List.last rest)
+                fun first [] = NONE
+                  | first ((c : DocClaims.claim) :: cs) =
+                      if #name c <> structure' orelse #isFunctor c then first cs
+                      else (case R.typeAt (#index env, R.sigPage (#signat c), R.bodyOf (#index env, #signat c), sub, ty) of
+                              SOME t => SOME t
+                            | NONE => first cs)
+              in
+                case first (#claims env) of SOME t => SOME t | NONE => from (k - 1)
+              end
+        in
+          from (List.length parts - 1)
+        end
+      fun link n = Option.map (fn t => P.href (env, page, t, Source.noSpan)) (target n)
+      fun qualified (n : string) = CharVector.exists (fn c => c = #".") n
+      fun better (a : string, b : string) =
+        if qualified a <> qualified b then not (qualified a)
+        else String.size a < String.size b orelse (String.size a = String.size b andalso a < b)
+      val names = List.filter (fn (n, _, _) => not (qualified n) orelse isSome (target n)) names
+      val groups =
+        List.foldl (fn ((name, stamp, arity), m) =>
+                      IntMap.insert (m, stamp, case IntMap.find (m, stamp) of
+                                                 SOME (a, ns) => (a, name :: ns)
+                                               | NONE => (arity, [name])))
+                   IntMap.empty names
+      val rows =
+        List.mapPartial (fn (arity, ns) =>
+                           case sort better ns of
+                             first :: (rest as _ :: _) => SOME (arity, first, rest)
+                           | _ => NONE)
+                        (IntMap.listItems groups)
+      val rows = sort (fn ((_, a : string, _), (_, b, _)) => String.map Char.toLower a < String.map Char.toLower b
+                                                           orelse (String.map Char.toLower a = String.map Char.toLower b andalso a < b)) rows
+      fun vars 0 = ""
+        | vars 1 = "'a "
+        | vars n = "(" ^ String.concatWith ", " (List.tabulate (n, fn i => "'" ^ String.str (Char.chr (Char.ord #"a" + i)))) ^ ") "
+      fun shown arity n = case link n of
+                            SOME href => "[" ^ M.code (vars arity ^ n) ^ "](" ^ href ^ ")"
+                          | NONE => M.code (vars arity ^ n)
+    in
+      "# Types that are one type\n\n"
+      ^ "[" ^ M.escape title ^ "](README.md)\n\n"
+      ^ "Types with several names: a value of one is a value of the others, and a function on one takes\n"
+      ^ "them all. They are found by elaborating the library and comparing the type names, so the table\n"
+      ^ "says what is the case and not only what is meant. Much of it the specification requires\n"
+      ^ "(`String.string` is `string`, `CharVector.vector` is `string`); the rest is a choice of this\n"
+      ^ "library, and where the specification keeps a type abstract that is one of these here, a program\n"
+      ^ "that relies on it is not portable: the type's own entry has a note that says so. A type that\n"
+      ^ "abbreviates more than a name, such as a reader or a record, is not listed.\n\n"
+      ^ M.table (["Type", "Also"], List.map (fn (arity, first, rest) =>
+                                               [shown arity first, String.concatWith ", " (List.map (shown arity) rest)]) rows)
+      ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
+    end
+
   (* ---- the notes ---- *)
   fun dedupNotes (notes : DocNotes.note list) : DocNotes.note list =
     List.foldl (fn (n, acc) =>
@@ -808,8 +907,9 @@ struct
                         | _ => "required"
       val exampleStructure = exampleStructureOf (claims, sigStatus)
       (* the claims that name a signature of the library, checked by the compiler *)
+      val elaborated = DocElab.library (dir, prelude)
       val () =
-        case DocElab.library (dir, prelude) of
+        case elaborated of
           SOME lib =>
             (List.app (fn c : DocClaims.claim =>
                          if StringMap.member (#signatures index, #signat c) then DocElab.checkClaim lib c else ())
@@ -835,14 +935,15 @@ struct
                               functors
       val (indexFiles, letters) = indexPages (env "", sigs)
       val files =
-        ("README.md", readme (env "", title, overviewOf dir, sigs, List.map (fn f => (#name f, #doc f)) functors, letters))
+        ("README.md", readme (env "", title, overviewOf dir, sigs, List.map (fn f => (#name f, #doc f)) functors, letters,
+                              isSome elaborated))
         :: ("conventions.md", conventions (Option.map (fn a : DocAnnot.file => (#title a, #intro a)) annotated))
         :: ("coverage.md", coverage (sigs, case labels of
                                                   SOME ls => List.filter (fn n : DocNotes.note =>
                                                                             (#kind n = "Deviation" orelse #kind n = "Limitation")
                                                                             andalso not (DocNotes.isPinned ls n)) notes
                                                 | NONE => []))
-        :: ("structures.md", structuresPage (env "", title, modules, sigStatus))
+        :: ("structures.md", structuresPage (env "", title, modules, sigStatus, Option.map DocElab.namesOf elaborated))
         :: ("top-level.md", topLevelPage (env "", title, modules))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
         :: ("readings.md", readingsPage (env "", title, notes, labels))
@@ -852,6 +953,10 @@ struct
                                                   LESS => true | GREATER => false | EQUAL => #signat a < #signat b) claims,
                                          sigStatus))
         :: sigPages @ funPages @ indexFiles
+        (* what only elaboration knows *)
+        @ (case elaborated of
+             SOME lib => [("types.md", typesPage (env "", title, DocElab.typeNames (lib, isPublic)))]
+           | NONE => [])
       val () = verify (env "", SOME (List.map #1 files))
       (* file names differ in more than case, for the file systems that ignore it *)
       val () =

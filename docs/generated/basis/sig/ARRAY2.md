@@ -206,6 +206,8 @@ val fromList : 'a list list -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length.
 
+**Example** `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0), dimensions a) end = (3, (2, 2))`
+
 <details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
@@ -367,6 +369,8 @@ val row : 'a array * int -> 'a Vector.vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is no row of `arr`.
 
+**Example** `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]`
+
 <details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
@@ -390,6 +394,8 @@ val column : 'a array * int -> 'a Vector.vector
 `column (arr, j)` is a vector of the elements of column `j`, top to bottom.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
+
+**Example** `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -531,6 +537,10 @@ val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
 `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
+
+**Example** `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2, 1]`
+
+**Example** `fold ColMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 2, 3, 1]`
 
 <details><summary>Other implementations (2)</summary>
 

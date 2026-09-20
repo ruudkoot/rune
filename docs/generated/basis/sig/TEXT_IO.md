@@ -334,6 +334,8 @@ val lookahead : instream -> elem option
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+**Example** `let val s = openString "ab" in (lookahead s, input1 s, input1 s, input1 s) end = (SOME #"a", SOME #"a", SOME #"b", NONE)`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -647,6 +649,8 @@ every line ends in one.
 > there is none to move on to -- and it keeps giving `NONE` even after the
 > file has grown. Poly/ML reads on there.
 
+**Example** `let val s = openString "a\nb" in (inputLine s, inputLine s, inputLine s) end = (SOME "a\n", SOME "b\n", NONE)`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -768,6 +772,8 @@ val openString : string -> instream
 
 `openString s` is a stream reading the characters of `s`, and no file.
 
+**Example** `inputAll (openString "xyz") = "xyz"`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -856,6 +862,8 @@ reader and reads from a source, here the functional stream underneath.
 > implementation the page gives, the stream is moved to where the scanner
 > stopped when it returns `SOME`, and not at all when it returns `NONE`,
 > whatever the scanner read while trying.
+
+**Example** `scanStream (Int.scan StringCvt.DEC) (openString " 42 rest") = SOME 42`
 
 <details><summary>Tests (16)</summary>
 

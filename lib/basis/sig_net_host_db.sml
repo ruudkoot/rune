@@ -82,6 +82,11 @@ sig
 
   (* `fromString s` is `SOME` of the address that `s` begins with, or `NONE`.
 
-     Law: `fromString s = StringCvt.scanString scan s` *)
+     Law: `fromString s = StringCvt.scanString scan s`
+
+     Example: `Option.map toString (fromString "127.1") = SOME "127.0.0.1"`
+
+     Example: `Option.map toString (fromString "0x7f000001") = SOME
+     "127.0.0.1"` *)
   val fromString : string -> in_addr option
 end

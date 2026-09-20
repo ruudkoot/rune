@@ -262,6 +262,8 @@ val last : 'a list -> 'a
 
 **Complexity** linear in the length; constant stack.
 
+**Example** `last [1, 2, 3] = 3`
+
 <details><summary>Tests (4)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `singleton` &middot; `Empty` (raises Empty) &middot; `long`
@@ -301,6 +303,8 @@ val nth : 'a list * int -> 'a
 
 **Complexity** linear in `i`.
 
+**Example** `nth ([1, 2, 3], 0) = 1`
+
 <details><summary>Tests (5)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `first` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-nil` (raises Subscript)
@@ -319,6 +323,8 @@ val take : 'a list * int -> 'a list
 
 **Law** `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
 
+**Example** `take ([1, 2, 3], 2) = [1, 2]`
+
 <details><summary>Tests (6)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `zero` &middot; `some` &middot; `all` &middot; `Subscript-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `take-drop-*`
@@ -336,6 +342,8 @@ val drop : 'a list * int -> 'a list
 The result shares its cells with `l`: nothing is copied.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length l`.
+
+**Example** `drop ([1, 2, 3], 2) = [3]`
 
 <details><summary>Tests (5)</summary>
 
@@ -373,6 +381,8 @@ val concat : 'a list list -> 'a list
 
 **Law** `concat [l, m, n] = l @ m @ n`
 
+**Example** `concat [[1], [], [2, 3]] = [1, 2, 3]`
+
 <details><summary>Tests (3)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil` &middot; `append-*`
@@ -392,6 +402,8 @@ It is the usual way to finish a loop that accumulated its results back to
 front.
 
 **Law** `revAppend (l, m) = rev l @ m`
+
+**Example** `revAppend ([1, 2], [3]) = [2, 1, 3]`
 
 <details><summary>Tests (4)</summary>
 
@@ -451,6 +463,8 @@ and a [`filter`](#val-filter) in one pass.
 
 **Law** `mapPartial f l = map valOf (filter isSome (map f l))`
 
+**Example** `mapPartial (fn x => if x > 1 then SOME (x * x) else NONE) [1, 2, 3] = [4, 9]`
+
 <details><summary>Tests (3)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `order` &middot; `map-filter-*`
@@ -469,6 +483,8 @@ val find : ('a -> bool) -> 'a list -> 'a option
 `p`, and `NONE` if there is none.
 
 `p` is not applied to the elements after `x`.
+
+**Example** `find (fn x => x > 1) [1, 2, 3] = SOME 2`
 
 <details><summary>Tests (3)</summary>
 
@@ -507,6 +523,8 @@ element, from left to right.
 
 **Law** `partition p l = (filter p l, filter (not o p) l)` when `p` has no
 effects
+
+**Example** `partition (fn x => x > 1) [1, 2, 3] = ([2, 3], [1])`
 
 <details><summary>Tests (3)</summary>
 
@@ -593,6 +611,9 @@ the first one that does not.
 
 `all p []` is `true`.
 
+**Example** `all (fn x => x > 0) [] = true` there is no element to fail the
+test.
+
 <details><summary>Tests (4)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `true` &middot; `false` &middot; `nil` &middot; `stops`
@@ -613,6 +634,8 @@ of increasing argument.
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`, before `f` is applied at all.
 
 **Law** `tabulate (length l, fn i => nth (l, i)) = l`
+
+**Example** `tabulate (3, fn i => i * i) = [0, 1, 4]`
 
 <details><summary>Tests (5)</summary>
 

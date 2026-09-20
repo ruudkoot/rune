@@ -250,6 +250,8 @@ val vector : 'a slice -> 'a Vector.vector
 
 `vector sl` is an immutable vector of the elements of `sl`, which is a copy.
 
+**Example** `vector (slice (Array.fromList [1, 2, 3], 1, NONE)) = Vector.fromList [2, 3]`
+
 <details><summary>Tests (7)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `middle` &middot; `full` &middot; `empty` &middot; `equals-tabulate` &middot; `is-a-snapshot` &middot; `model-*` &middot; `long`
@@ -400,6 +402,8 @@ val modify : ('a -> 'a) -> 'a slice -> unit
 ```
 
 `modify f sl` replaces every element by `f` of it, in place, from 0 up.
+
+**Example** `let val a = Array.fromList [1, 2, 3, 4] in modify (fn _ => 0) (slice (a, 1, SOME 2)); Array.vector a end = Vector.fromList [1, 0, 0, 4]`
 
 <details><summary>Tests (7)</summary>
 

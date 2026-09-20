@@ -145,6 +145,8 @@ val fromAddr : sock_addr -> string
 
 `fromAddr a` is the path that `a` names.
 
+**Example** `fromAddr (toAddr "/tmp/s") = "/tmp/s"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ** &mdash; the Unix-domain address recvVecFromNB gives is garbled: UnixSock.fromAddr of it is not the sender's path

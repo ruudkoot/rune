@@ -67,6 +67,8 @@ val byteToChar : Word8.word -> char
 
 **Law** `Char.ord (byteToChar b) = Word8.toInt b`
 
+**Example** `byteToChar 0w65 = #"A"`
+
 <details><summary>Tests (7)</summary>
 
 For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `zero` &middot; `255` &middot; `newline` &middot; `every-byte` &middot; `inverts-charToByte` &middot; `high-bytes-are-not-negative`
@@ -83,6 +85,8 @@ val charToByte : char -> Word8.word
 
 **Law** `charToByte (byteToChar b) = b`
 
+**Example** `charToByte #"a" = 0w97`
+
 <details><summary>Tests (6)</summary>
 
 For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `zero` &middot; `255` &middot; `newline` &middot; `every-character` &middot; `inverts-byteToChar`
@@ -96,6 +100,8 @@ val bytesToString : Word8Vector.vector -> string
 ```
 
 `bytesToString v` is the string of the characters whose codes are the bytes of `v`, in order.
+
+**Example** `bytesToString (stringToBytes "hi") = "hi"`
 
 <details><summary>Tests (7)</summary>
 
@@ -126,6 +132,8 @@ val unpackStringVec : Word8VectorSlice.slice -> string
 ```
 
 `unpackStringVec sl` is the string of the bytes of the vector slice `sl`.
+
+**Example** `unpackStringVec (Word8VectorSlice.slice (stringToBytes "hello", 1, SOME 3)) = "ell"`
 
 <details><summary>Tests (11)</summary>
 

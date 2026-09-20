@@ -21,17 +21,23 @@ sig
 
      It stops at the end of the shorter list.
 
-     Law: `List.length (zip (l, m)) = Int.min (List.length l, List.length m)` *)
+     Law: `List.length (zip (l, m)) = Int.min (List.length l, List.length m)`
+
+     Example: `zip ([1, 2, 3], ["a", "b"]) = [(1, "a"), (2, "b")]` *)
   val zip : 'a list * 'b list -> ('a * 'b) list
 
   (* `zipEq (l, m)` is `zip (l, m)`, and insists that the lists are as long as each other.
 
-     Raises: `UnequalLengths` if `l` and `m` have different lengths. *)
+     Raises: `UnequalLengths` if `l` and `m` have different lengths.
+
+     Example: `(zipEq ([1], []) handle UnequalLengths => []) = []` *)
   val zipEq : 'a list * 'b list -> ('a * 'b) list
 
   (* `unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.
 
-     Law: `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other *)
+     Law: `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other
+
+     Example: `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])` *)
   val unzip : ('a * 'b) list -> 'a list * 'b list
 
   (* ---- Traversing ---- *)
@@ -51,7 +57,9 @@ sig
 
   (* `map f (l, m)` is the list of the results of `f` on the pairs of elements at the same position.
 
-     Law: `map f (l, m) = List.map f (zip (l, m))` *)
+     Law: `map f (l, m) = List.map f (zip (l, m))`
+
+     Example: `map (op +) ([1, 2], [10, 20, 30]) = [11, 22]` *)
   val map : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
   (* `mapEq f (l, m)` is `map f (l, m)`, and insists that the lists are as long as each other.
@@ -66,7 +74,9 @@ sig
      `f` takes the two elements and the accumulator, and the traversal stops
      at the end of the shorter list.
 
-     Law: `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` *)
+     Law: `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+
+     Example: `foldl (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11` *)
   val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
   (* `foldr f init (l, m)` combines the pairs of elements from the right, as `List.foldr` does. *)
@@ -115,6 +125,9 @@ sig
      walks the lists together and stops at the first pair that fails. The
      note is what is implemented, and all three other systems do the same: `p`
      is applied to the pairs of the common prefix before the lengths are
-     known. *)
+     known.
+
+     Example: `allEq (op =) ([1, 2], [1, 2, 3]) = false` where `all (op =) ([1,
+     2], [1, 2, 3])` is `true`. *)
   val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 end

@@ -65,7 +65,10 @@ sig
 
   (* `update (arr, i, x)` puts `x` at position `i` of `arr`.
 
-     Raises: `Subscript` if `i < 0` or `i >= length arr`. *)
+     Raises: `Subscript` if `i < 0` or `i >= length arr`.
+
+     Example: `let val a = array (3, 0) in update (a, 1, 5); foldr (op ::) [] a
+     end = [0, 5, 0]` *)
   val update : 'a array * int * 'a -> unit
 
   (* `vector arr` is an immutable vector of the elements of `arr`.
@@ -81,13 +84,19 @@ sig
      every element arrives as it was before the copy began.
 
      Raises: `Subscript` if `di < 0` or `di + length src > length dst`, and
-     then nothing has been copied. *)
+     then nothing has been copied.
+
+     Example: `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di
+     = 0}; vector a end = Vector.fromList [1, 2, 3, 4]` *)
   val copy : {src : 'a array, dst : 'a array, di : int} -> unit
 
   (* `copyVec {src, dst, di}` copies the elements of the vector `src` into `dst`, starting at position `di`.
 
      Raises: `Subscript` if `di < 0` or `di + Vector.length src > length dst`,
-     and then nothing has been copied. *)
+     and then nothing has been copied.
+
+     Example: `let val a = array (4, 0) in copyVec {src = Vector.fromList [1,
+     2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]` *)
   val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 
   (* ---- Traversing ---- *)
@@ -103,7 +112,10 @@ sig
      The array is changed in place, from 0 up. *)
   val modifyi : (int * 'a -> 'a) -> 'a array -> unit
 
-  (* `modify f arr` replaces every element by `f` of it, in place, from 0 up. *)
+  (* `modify f arr` replaces every element by `f` of it, in place, from 0 up.
+
+     Example: `let val a = fromList [1, 2, 3] in modify (fn x => x * 2) a;
+     vector a end = Vector.fromList [2, 4, 6]` *)
   val modify : ('a -> 'a) -> 'a array -> unit
 
   (* `foldli f init arr` combines the elements from the left, giving `f` the index as well. *)

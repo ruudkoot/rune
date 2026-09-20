@@ -234,6 +234,9 @@ val input1 : instream -> (elem * instream) option
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+**Example** `let val s = TextIO.getInstream (TextIO.openString "abc") in (Option.map #1 (TextIO.StreamIO.input1 s), Option.map #1 (TextIO.StreamIO.input1 s)) end = (SOME #"a", SOME #"a")` for a stream is
+a value, and reading from it gives another.
+
 <details><summary>Tests (6)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-a-StringCvt.reader`

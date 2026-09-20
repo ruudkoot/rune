@@ -85,6 +85,37 @@ struct
              included]
     end
 
+  (* The type `name` of a body, where `member` would find a value of that
+     name first (`array`, `slice`). *)
+  fun typeMember (index : index, page : string, items : I.item list, name : string, seen : string list) : target option =
+    let
+      val entries = List.mapPartial (fn I.Item (I.Entry e) => SOME e | _ => NONE) items
+      fun isType (e : I.entryRecord) = #kind e = I.Type orelse #kind e = I.Eqtype orelse #kind e = I.Datatype
+    in
+      case List.find (fn e => #name e = name andalso isType e) entries of
+        SOME e => SOME {page = page, anchor = DocAnchor.anchor {bound = I.BEntry (#kind e), path = #path e, name = #name e}}
+      | NONE =>
+          List.foldl (fn (e, found) =>
+                        case (found, #kind e, #sigref e, #body e) of
+                          (SOME _, _, _, _) => found
+                        | (NONE, I.Include, SOME s, _) =>
+                            if List.exists (fn s' => s' = s) seen then NONE
+                            else typeMember (index, sigPage s, bodyOf (index, s), name, s :: seen)
+                        | (NONE, I.Include, NONE, SOME inner) => typeMember (index, page, inner, name, seen)
+                        | _ => NONE)
+                     NONE entries
+    end
+
+  (* The type path.name of a body, through substructures as `memberAt` goes. *)
+  fun typeAt (index : index, page : string, items : I.item list, path : string list, name : string) : target option =
+    case path of
+      [] => typeMember (index, page, items, name, [])
+    | s :: rest =>
+        (case List.find (fn I.Item (I.Entry e) => #kind e = I.Structure andalso #name e = s | _ => false) items of
+           SOME (I.Item (I.Entry {body = SOME inner, ...})) => typeAt (index, page, inner, rest, name)
+         | SOME (I.Item (I.Entry {sigref = SOME s', ...})) => typeAt (index, sigPage s', bodyOf (index, s'), rest, name)
+         | _ => NONE)
+
   (* The member path.name of a body: the path leads through substructures,
      into their own signature where they name one. *)
   fun memberAt (index : index, page : string, items : I.item list, path : string list, name : string) : target option =

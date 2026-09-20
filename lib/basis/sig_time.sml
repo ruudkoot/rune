@@ -46,7 +46,9 @@ sig
 
   (* `fromReal r` is `r` seconds, its fraction truncated towards zero.
 
-     Raises: `Time` if `r` is not a number, is infinite, or does not fit. *)
+     Raises: `Time` if `r` is not a number, is infinite, or does not fit.
+
+     Example: `toMilliseconds (fromReal 1.5) = 1500` *)
   val fromReal : LargeReal.real -> time
 
   (* `toReal t` is `t` as a number of seconds, which may lose precision. *)
@@ -83,7 +85,9 @@ sig
 
   (* `fromMilliseconds n` is `n` milliseconds.
 
-     Raises: `Time` if the time does not fit. *)
+     Raises: `Time` if the time does not fit.
+
+     Example: `toSeconds (fromMilliseconds 1500) = 1` *)
   val fromMilliseconds : LargeInt.int -> time
 
   (* `fromMicroseconds n` is `n` microseconds.
@@ -104,7 +108,9 @@ sig
      doubling a time over and over stays exact until one step raises `Time`;
      no step gives a wrong value or another exception.
 
-     Pinned by: `Time.+/Time-when-not-representable*` *)
+     Pinned by: `Time.+/Time-when-not-representable*`
+
+     Example: `fromSeconds 1 + fromMilliseconds 500 = fromMilliseconds 1500` *)
   val + : time * time -> time
 
   (* `t - u` is `t` less `u`, which may be negative.
@@ -144,10 +150,18 @@ sig
      microseconds every digit past the sixth is a zero.
 
      Pinned by: `Time.fmt/fixed-point-semantics*`,
-     `Time.fmt/more-digits-than-microseconds` *)
+     `Time.fmt/more-digits-than-microseconds`
+
+     Example: `fmt 2 (fromMilliseconds 1500) = "1.50"`
+
+     Example: `fmt 0 (fromMilliseconds 1500) = "2"`
+
+     Example: `fmt 0 (fromMilliseconds 2500) = "3"` *)
   val fmt : int -> time -> string
 
-  (* `toString t` is `fmt 3 t`: seconds with three digits of the fraction. *)
+  (* `toString t` is `fmt 3 t`: seconds with three digits of the fraction.
+
+     Example: `toString (fromMilliseconds ~1500) = "~1.500"` *)
   val toString : time -> string
 
   (* `scan getc src` reads a number of seconds, after leading whitespace, and is the time and what is left.
@@ -168,6 +182,8 @@ sig
 
      Law: `fromString s = StringCvt.scanString scan s`
 
-     Raises: `Time` if the number does not fit. *)
+     Raises: `Time` if the number does not fit.
+
+     Example: `fromString " ~.25x" = SOME (fromMilliseconds ~250)` *)
   val fromString : string -> time option
 end

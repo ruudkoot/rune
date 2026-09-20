@@ -152,6 +152,8 @@ val fromAddr : sock_addr -> NetHostDB.in_addr * int
 
 `fromAddr a` is the host address and the port that `a` names.
 
+**Example** `(fn (a, p) => (NetHostDB.toString a, p)) (fromAddr (toAddr (valOf (NetHostDB.fromString "127.0.0.1"), 80))) = ("127.0.0.1", 80)`
+
 <details><summary>Tests (3)</summary>
 
 For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `ports` &middot; `hosts` &middot; `bound-socket`

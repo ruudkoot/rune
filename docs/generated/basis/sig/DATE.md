@@ -241,6 +241,8 @@ val date : {year : int,
 > days moved into the hours. A local date is normalised by the C library
 > instead.
 
+**Example** `(fn d => (month d, day d, hour d)) (date {year = 2001, month = Jan, day = 32, hour = 25, minute = 0, second = 0, offset = SOME Time.zeroTime}) = (Feb, 2, 1)`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-date.year"></a>`year` | `int` |  |
@@ -356,6 +358,8 @@ val weekDay : date -> weekday
 
 `weekDay d` is the day of the week of `d`.
 
+**Example** `weekDay (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = Wed`
+
 <details><summary>Tests (5)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `2000-01-01` &middot; `2000-02-29` &middot; `1900-01-01` &middot; `2200-01-01`
@@ -369,6 +373,8 @@ val yearDay : date -> int
 ```
 
 `yearDay d` is the day of the year of `d`, from 0 for the first of January.
+
+**Example** `yearDay (date {year = 1995, month = Mar, day = 8, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = 66`
 
 <details><summary>Tests (6)</summary>
 
@@ -497,6 +503,8 @@ val toTime : date -> Time.time
 
 **Raises** [`Date`](#exn-date) if the moment does not fit in a [`Time.time`](../sig/TIME.md#type-time).
 
+**Example** `Time.toSeconds (toTime (date {year = 1970, month = Jan, day = 2, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime})) = 86400`
+
 <details><summary>Other implementations (11)</summary>
 
 - **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
@@ -554,6 +562,8 @@ val fmt : string -> date -> string
 > `%c` gives `c`. The specification names no text for `%Z` on a UTC date,
 > and the suite accepts `"UTC"`, `"GMT"`, `"Z"` or nothing.
 
+**Example** `fmt "%Y-%m-%d %H:%M" (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = "1995-03-08 19:06"`
+
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
@@ -576,9 +586,11 @@ For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml)
 val toString : date -> string
 ```
 
-`toString d` is `d` in the layout `"Wed Mar  8 19:06:45 1995"`, as C's `%a %b %e %H:%M:%S %Y`.
+`toString d` is `d` in the 24 characters of `"Wed Mar 08 19:06:45 1995"`, which is `fmt "%a %b %d %H:%M:%S %Y" d`.
 
 **Raises** [`Date`](#exn-date) if `d` is not a valid date.
+
+**Example** `toString (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = "Wed Mar 08 19:06:45 1995"`
 
 <details><summary>Tests (9)</summary>
 
@@ -622,6 +634,8 @@ val fromString : string -> date option
 `fromString s` is `SOME` of the date that `s` begins with, after whitespace, or `NONE`.
 
 **Law** `fromString s = StringCvt.scanString scan s`
+
+**Example** `Option.map toString (fromString "  Wed Mar 08 19:06:45 1995 and more") = SOME "Wed Mar 08 19:06:45 1995"`
 
 <details><summary>Other implementations (1)</summary>
 

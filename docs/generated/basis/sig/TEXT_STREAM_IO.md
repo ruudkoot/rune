@@ -94,6 +94,8 @@ val inputLine : instream -> (string * instream) option
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+**Example** `Option.map #1 (inputLine (TextIO.getInstream (TextIO.openString "a\nb"))) = SOME "a\n"`
+
 <details><summary>Tests (11)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `lines-then-NONE` &middot; `last-line-gets-a-newline` &middot; `empty-stream` &middot; `at-end-of-stream` &middot; `line-ends-at-end-of-stream` &middot; `empty-lines` &middot; `same-result-twice` &middot; `residual-stream` &middot; `does-not-change-the-stream` &middot; `long-line` &middot; `carriage-return-is-kept`

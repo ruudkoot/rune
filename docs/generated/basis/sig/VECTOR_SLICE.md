@@ -171,6 +171,10 @@ val slice : 'a Vector.vector * int * int option -> 'a slice
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, if `i > Vector.length v`, or if `n` is
 given and `i + n > Vector.length v`.
 
+**Example** `vector (slice (Vector.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`
+
+**Example** `length (slice (Vector.fromList [1, 2, 3], 1, NONE)) = 2`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
@@ -196,6 +200,8 @@ val subslice : 'a slice * int * int option -> 'a slice
 > **Reading** `VectorSlice.subslice/NONE-Subscript-beyond`. The bounds are
 > those of `sl`, not of the vector it is a slice of: a subslice cannot
 > reach back into the rest of the base vector.
+
+**Example** `(fn (_, i, n) => (i, n)) (base (subslice (slice (Vector.fromList [1, 2, 3, 4, 5], 1, NONE), 1, SOME 2))) = (2, 2)`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -277,6 +283,8 @@ val getItem : 'a slice -> ('a * 'a slice) option
 
 It has the shape of a [`StringCvt.reader`](../sig/STRING_CVT.md#type-reader), so a slice is a stream that a
 `scan` function can read from.
+
+**Example** `Option.map #1 (getItem (full (Vector.fromList [7, 8]))) = SOME 7`
 
 <details><summary>Tests (8)</summary>
 

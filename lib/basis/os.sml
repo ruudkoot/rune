@@ -49,7 +49,7 @@ struct
     end
   end
 
-  (* A descriptor is the handle of the VM's file table.
+  (* A descriptor is the system's own file descriptor, wrapped (`RuneIODesc.FD`).
 
      Implements: OS_IO *)
   structure IO = RuneIODesc
