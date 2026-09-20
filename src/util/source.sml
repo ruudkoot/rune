@@ -15,12 +15,16 @@ struct
   fun computeLineStarts (text : string) : int vector =
     let
       val n = String.size text
-      fun go (i, acc) =
-        if i >= n then List.rev acc
-        else if String.sub (text, i) = #"\n" then go (i + 1, (i + 1) :: acc)
-        else go (i + 1, acc)
+      val starts = ref [0]
+      (* One argument: a pair would be allocated once per character. *)
+      fun go i =
+        if i >= n then ()
+        else
+          (if String.sub (text, i) = #"\n" then starts := (i + 1) :: !starts else ();
+           go (i + 1))
     in
-      Vector.fromList (go (0, [0]))
+      go 0;
+      Vector.fromList (List.rev (!starts))
     end
 
   fun fromString (name, text) : file =

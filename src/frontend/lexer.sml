@@ -25,12 +25,25 @@ struct
       fun ch i = if i < n then String.sub (text, i) else #"\000"
       fun at i = i < n
 
-      fun skipComment (i, depth, start) =
-        if i >= n then err (start, start + 2, "unterminated comment")
-        else if ch i = #"(" andalso ch (i + 1) = #"*" then skipComment (i + 2, depth + 1, start)
-        else if ch i = #"*" andalso ch (i + 1) = #")" then
-          (if depth = 1 then i + 2 else skipComment (i + 2, depth - 1, start))
-        else skipComment (i + 1, depth, start)
+      (* The index after the comment that starts at start. The loop has one
+         argument and keeps the depth outside it: a tuple of arguments would
+         be allocated once per character. *)
+      fun skipComment start =
+        let
+          val depth = ref 1
+          fun go i =
+            if i >= n then err (start, start + 2, "unterminated comment")
+            else
+              let val c = String.sub (text, i)
+              in
+                if c = #"(" andalso ch (i + 1) = #"*" then (depth := !depth + 1; go (i + 2))
+                else if c = #"*" andalso ch (i + 1) = #")" then
+                  (depth := !depth - 1; if !depth = 0 then i + 2 else go (i + 2))
+                else go (i + 1)
+              end
+        in
+          go (start + 2)
+        end
 
       fun digitsWhile (i, p) = if at i andalso p (ch i) then digitsWhile (i + 1, p) else i
 
@@ -183,7 +196,7 @@ struct
           let val c = ch i
           in
             if Char.isSpace c then next (i + 1)
-            else if c = #"(" andalso ch (i + 1) = #"*" then next (skipComment (i + 2, 1, i))
+            else if c = #"(" andalso ch (i + 1) = #"*" then next (skipComment i)
             else if Char.isDigit c then lexNumber (i, i, false)
             else if c = #"~" andalso Char.isDigit (ch (i + 1))
                     andalso not (ch (i + 1) = #"0" andalso ch (i + 2) = #"w") then
