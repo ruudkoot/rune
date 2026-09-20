@@ -28,6 +28,17 @@ Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
 `error.sml` (`CompileError`, `Bug`).
 
+
+## The documentation generator
+
+`runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built
+from the same sources: `sources-doc.txt` lists the utilities, the frontend and
+the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
+library the way the compiler does (the same lexer, parser and, later,
+elaborator), so what it documents is what the compiler compiles. `DocMain`
+(`src/doc/docmain.sml`) is its command line. Nothing of `src/doc` is part of
+the compiler, so it costs the bootstrap nothing.
+
 ## Modules
 
 Signatures and functors exist only at compile time. A signature elaborates

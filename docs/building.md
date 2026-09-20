@@ -58,15 +58,16 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | Command | Result |
 |---|---|
 | `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit) and Poly/ML 5.9.2 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
-| `make` | `bin/rune` (the self-hosted compiler) and `bin/runevm` |
+| `make` | `bin/rune` (the self-hosted compiler), `bin/runevm` and `bin/runedoc` |
 | `make mlton` / `make smlnj` / `make smlnj32` / `make polyml` | `bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml`; none of them is `bin/rune` |
-| `make host-builds` | all four host builds |
+| `make host-builds` | all four host builds, of the compiler and of `runedoc` |
+| `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
 | `make vm` | `bin/runevm` |
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune` |
 | `make test-all` | run the suite with each of the four host builds |
-| `make check-cross` | compile every test, example and Basis Library suite program with all five builds and compare the bytecode |
+| `make check-cross` | compile every test, example and Basis Library suite program, the compiler and `runedoc` with all five builds and compare the bytecode; run the five builds of `runedoc` on the same input and compare what they write (`scripts/check-doc-cross.sh`) |
 | `make check-docs` | verify docs, tests and `.def` files are in sync, and that the Basis Library suite has a check for every specified member |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
 | `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml` and by the bootstrap, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
@@ -140,6 +141,14 @@ The installed `rune` derives the library path from its own location
   `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script)
   and `build/config.sml` (the version) from it.
   **Add new source files to `sources.txt` only.**
+* `sources-doc.txt` is the same for `runedoc`: the compiler's utilities,
+  frontend and elaborator in the order of `sources.txt`, then `src/doc`. The
+  script makes `build/runedoc.mlb`, `build/runedoc.cm` and
+  `build/runedoc-polyml-build.sml` from it; the entry points are
+  `src/main/runedoc-*-main.sml`. A file that both lists name is compiled into
+  both programs, so the rules below hold for `src/doc` as well. The SML/NJ
+  builds run one after another, because CM keeps its results for all of them
+  in the same `.cm` directories.
 * `vm/opcodes.def` and `vm/prims.def` are the single source of truth for the
   instruction set and primitive table. `scripts/gen-opcodes.sh` generates
   `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml` and

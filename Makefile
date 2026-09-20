@@ -65,7 +65,8 @@ RUNEVM  ?= bin/runevm
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/config.sml
+SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
@@ -94,9 +95,9 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: all mlton smlnj smlnj32 polyml host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
-all: vm boot
+all: vm boot runedoc
 
 # ---------------------------------------------------------------- environment
 # `make doctor` reports on everything. Targets depend (order-only) on a stamp
@@ -112,7 +113,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
 
-$(BUILDGEN) &: sources.txt scripts/gen-build-files.sh
+$(BUILDGEN) &: sources.txt sources-doc.txt scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 $(GEN_SML) $(GEN_C) &: vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
@@ -130,7 +131,7 @@ smlnj32: bin/rune-smlnj32
 
 polyml: bin/rune-polyml
 
-host-builds: mlton smlnj smlnj32 polyml
+host-builds: mlton smlnj smlnj32 polyml runedoc-host-builds
 
 bin/rune-mlton.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -163,6 +164,41 @@ bin/rune-polyml: bin/rune-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
+# ---------------------------------------------------------------- runedoc
+# The documentation generator (docs/plans/docgen.md): the sources of
+# sources-doc.txt, built like the compiler by every host and by the compiler
+# itself (bin/runedoc, on runevm). The SML/NJ builds come one after another
+# and after the compiler's: CM keeps them all in the same .cm directories.
+runedoc-host-builds: bin/runedoc-mlton bin/runedoc-smlnj bin/runedoc-smlnj32 bin/runedoc-polyml
+
+bin/runedoc-mlton.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlton-main.sml | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runedoc.mlb
+
+bin/runedoc-mlton: bin/runedoc-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-mlton.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runedoc-smlnj: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj bin/rune-smlnj32
+	@mkdir -p bin
+	$(MLBUILD) build/runedoc.cm DocMain.main bin/runedoc-smlnj.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
+	chmod +x $@
+
+bin/runedoc-smlnj32: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runedoc-smlnj
+	@mkdir -p bin
+	$(MLBUILD32) build/runedoc.cm DocMain.main bin/runedoc-smlnj32.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj32.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+bin/runedoc-polyml.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-polyml-main.sml | build/.doctor-polyml
+	@mkdir -p bin
+	$(POLYC) -o $@ build/runedoc-polyml-build.sml
+
+bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+
 # ---------------------------------------------------------------- VM
 vm: bin/runevm
 
@@ -187,7 +223,7 @@ test-all: host-builds vm | build/.doctor-check
 	  sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
 
-check-cross: host-builds bin/rune-boot | build/.doctor-check
+check-cross: host-builds bin/rune-boot bin/runedoc-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
 check-docs: $(RUNE)
@@ -263,6 +299,21 @@ bin/rune: bin/rune-boot
 
 boot: bin/rune
 
+# runedoc compiled by the self-hosted compiler.
+DOC_SRCS := build/config.sml $(SOURCES_DOC) src/main/runedoc-rune-main.sml
+
+bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
+	bin/rune -o $@ $(DOC_SRCS)
+
+bin/runedoc-boot: bin/runedoc.rbc Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runedoc.rbc" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runedoc: bin/runedoc-boot
+	ln -sf runedoc-boot $@
+
+runedoc: bin/runedoc
+
 bootstrap: bin/rune-boot
 	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
 	cmp bin/rune.rbc bin/rune.stage2.rbc
@@ -272,7 +323,7 @@ bootstrap: bin/rune-boot
 # keeps JOBS CPUs busy by itself. bootstrap is a single process, so it runs
 # alongside the suite.
 check:
-	@$(MAKE) --no-print-directory host-builds vm boot
+	@$(MAKE) --no-print-directory host-builds vm boot runedoc
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis

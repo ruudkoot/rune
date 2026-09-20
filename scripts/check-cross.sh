@@ -1,7 +1,9 @@
 #!/bin/sh
 # Verify that the MLton, SML/NJ (64- and 32-bit), Poly/ML and (when built)
 # self-hosted builds of the compiler produce byte-identical bytecode for every test program, the
-# examples, the programs of the Basis Library suite, and the compiler itself.
+# examples, the programs of the Basis Library suite, the compiler itself and
+# runedoc, and that the builds of runedoc (scripts/check-doc-cross.sh) write
+# the same documentation.
 #   scripts/check-cross.sh [-j N]
 # Programs are checked N at a time (default: all available CPUs), each by a
 # worker, `check-cross.sh --one PROGRAM`, which writes its outcome to
@@ -60,8 +62,8 @@ check() {
 
 # A program is a source file, `basis:TEST` for the program of the Basis
 # Library suite that runs tests/basis/TEST.sml, `basis-all` for a program
-# compiled with every file of the basis library (--basis all), or `rune` for
-# the compiler itself.
+# compiled with every file of the basis library (--basis all), `rune` for
+# the compiler itself, or `runedoc` for the documentation generator.
 result_name() {
   case "$1" in
     basis:*) echo "basis-${1#basis:}" ;;
@@ -75,6 +77,8 @@ if [ -n "$one" ]; then
   case "$one" in
     # shellcheck disable=SC2046
     rune) check rune build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml ;;
+    # shellcheck disable=SC2046
+    runedoc) check runedoc build/config.sml $(grep -v '^[[:space:]]*#' sources-doc.txt | grep -v '^[[:space:]]*$') src/main/runedoc-rune-main.sml ;;
     basis-all) check basis-all --basis all examples/hello.sml ;;
     basis:*)
       may_fail=1
@@ -103,11 +107,11 @@ rm -f "$out"/*.result
 # The compiler is the longest job, so it goes first.
 # shellcheck disable=SC2086
 sources="$sources basis-all"
-printf '%s\n' rune $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
+printf '%s\n' rune runedoc $sources | xargs -n 1 -P "$jobs" sh scripts/check-cross.sh --one
 
 status=0
 count=0
-for p in $sources rune; do
+for p in $sources rune runedoc; do
   name=$(result_name "$p")
   result=$(cat "$out/$name.result" 2> /dev/null)
   if [ "$result" = OK ]; then
@@ -120,4 +124,5 @@ for p in $sources rune; do
 done
 
 echo "check-cross: $count programs produce identical bytecode with all builds ($builds)"
+sh scripts/check-doc-cross.sh || status=1
 exit $status

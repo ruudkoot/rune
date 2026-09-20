@@ -43,8 +43,9 @@ keep these invariants:
 
 ## Build and verification
 
-* Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
-  Poly/ML build files are generated from it — never edit `build/`.
+* Compiler sources are listed in `sources.txt` (ordered), those of the
+  documentation generator `runedoc` in `sources-doc.txt`; the MLton, SML/NJ and
+  Poly/ML build files are generated from them — never edit `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
 * The compiler has no built-in library path: `--lib DIR` is required, and each
