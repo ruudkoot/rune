@@ -11,7 +11,8 @@ struct
   val sub = _prim "array_sub" : 'a array * int -> 'a
   val update = _prim "array_update" : 'a array * int * 'a -> unit
 
-  fun tabulate (n, f) = fromList (List.tabulate (n, f))
+  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f is applied *)
+  fun tabulate (n, f) = if n > maxLen then raise Size else fromList (List.tabulate (n, f))
 
   fun appi f a =
     let val n = length a
@@ -51,7 +52,16 @@ struct
   fun exists p a = isSome (find p a)
   fun all p a = not (exists (not o p) a)
 
-  fun copy {src, dst, di} = appi (fn (i, x) => update (dst, di + i, x)) src
+  (* "If di < 0 or if |dst| < di+|src|, then the Subscript exception is
+     raised", before anything is copied, and without an overflowing sum. When
+     src and dst are one array the ranges are equal, so the order is free. *)
+  fun copy {src, dst, di} =
+    if di < 0 orelse di > length dst - length src then raise Subscript
+    else appi (fn (i, x) => update (dst, di + i, x)) src
+
+  fun copyVec {src, dst, di} =
+    if di < 0 orelse di > length dst - Vector.length src then raise Subscript
+    else Vector.appi (fn (i, x) => update (dst, di + i, x)) src
 
   fun collate cmp (a, b) = List.collate cmp (toList a, toList b)
 end

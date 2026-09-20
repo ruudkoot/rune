@@ -1,0 +1,51 @@
+/ -> /
+a -> .
+a/ -> a/..
+a/// -> a///..
+a/b -> a
+a/b/ -> a/b/..
+.. -> ../..
+. -> ..
+ -> ..
+ -> {|}
+. -> {|.}
+b -> {|b}
+b/ -> {b|}
+a/b -> {a|b}
+/a -> {/|a}
+ -> {|NONE}
+.login -> {.login|NONE}
+/.login -> {/.login|NONE}
+a -> {a|NONE}
+a. -> {a.|NONE}
+a.b -> {a|b}
+a.b.c -> {a.b|c}
+.news/comp -> {.news/comp|NONE}
+ -> .
+a/../b -> b
+/a/../.. -> /
+./a//b/ -> a/b
+../x -> ../x
+a/b ../b /a/b
+a/b relative to /c/d -> a/b
+/ relative to /a/b/c -> ../../..
+/a/ relative to /a/b/c -> ../../
+/a/b/ relative to /a/c -> ../b/
+/a/b relative to /a/c/ -> ../b
+/a/b/ relative to /a/c/ -> ../b/
+/ relative to / -> .
+/ relative to /. -> .
+/ relative to /.. -> .
+/a/b/../c relative to /a/d -> ../b/../c
+/a/b relative to /c/d -> ../../a/b
+/c/a/b relative to /c/d -> ../a/b
+/c/d/a/b relative to /c/d -> a/b
+mkAbsolute of /a relative to c/d: Path
+mkRelative of a relative to c/d: Path
+join (split ) -> 
+join (split .) -> .
+join (split b) -> b
+join (split b/) -> b/
+join (split a/b) -> a/b
+join (split /a) -> /a
+join (split /) -> /

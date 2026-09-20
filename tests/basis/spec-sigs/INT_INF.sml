@@ -1,0 +1,19 @@
+(* signature INT_INF, transcribed from https://smlfamily.github.io/Basis/int-inf.html
+
+   The page says `include INTEGER`; here that is SPEC_INTEGER, so a program
+   needs spec-sigs/INTEGER.sml before this file. *)
+signature SPEC_INT_INF =
+sig
+  include SPEC_INTEGER
+
+  val divMod : int * int -> int * int
+  val quotRem : int * int -> int * int
+  val pow : int * Int.int -> int
+  val log2 : int -> Int.int
+  val orb : int * int -> int
+  val xorb : int * int -> int
+  val andb : int * int -> int
+  val notb : int -> int
+  val << : int * Word.word -> int
+  val ~>> : int * Word.word -> int
+end

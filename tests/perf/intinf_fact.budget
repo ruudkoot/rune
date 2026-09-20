@@ -1,0 +1,5 @@
+wall 3
+instructions 57300127
+bytes 86984761
+objects 2339832
+noxc1 IntInf constants: a host types them at its own IntInf, not at the one of lib/basis

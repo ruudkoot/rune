@@ -1,16 +1,22 @@
-(* Word: 64-bit unsigned words. *)
+(* Word: unsigned words: 64 bits on the VM. The size is found by shifting a
+   bit out, so that this file means the same to a system whose word is
+   narrower. *)
 structure Word =
 struct
   type word = word
-  val wordSize = 64
+  val wordSize =
+    let
+      val shl = _prim "word_lsl" : word * word -> word
+      fun count (w, n) = if w = 0w0 then n else count (shl (w, 0w1), Int.+ (n, 1))
+    in count (0w1, 0) end
 
   val toInt = _prim "word_to_int" : word -> int
   val toIntX = _prim "word_to_int_x" : word -> int
   val fromInt = _prim "word_from_int" : int -> word
   val toLarge = fn (w : word) => w
   val fromLarge = fn (w : word) => w
-  val two64 = IntInf.pow (IntInf.fromInt 2, 64)
-  val two63 = IntInf.pow (IntInf.fromInt 2, 63)
+  val two64 = IntInf.pow (IntInf.fromInt 2, wordSize)             (* 2^wordSize *)
+  val two63 = IntInf.pow (IntInf.fromInt 2, Int.- (wordSize, 1))  (* 2^(wordSize - 1) *)
   fun toLargeInt w = let val i = toIntX w in if Int.< (i, 0) then IntInf.+ (IntInf.fromInt i, two64) else IntInf.fromInt i end
   fun toLargeIntX w = IntInf.fromInt (toIntX w)
   fun fromLargeInt x =
@@ -35,37 +41,82 @@ struct
   fun ~>> (w, n) =
     let val negative = Int.< (toIntX w, 0)
     in
-      if n >= 0w64 then (if negative then notb 0w0 else 0w0)
+      if n >= fromInt wordSize then (if negative then notb 0w0 else 0w0)
       else
         let val shifted = >> (w, n)
         in if negative then orb (shifted, notb (>> (notb 0w0, n))) else shifted end
     end
-  fun ~ w = 0w0 - w
+  val ~ = _prim "word_neg" : word -> word
 
   fun min (a : word, b) = if a < b then a else b
   fun max (a : word, b) = if a > b then a else b
   fun compare (a : word, b) = if a < b then LESS else if a = b then EQUAL else GREATER
 
   val toString = _prim "word_to_string" : word -> string
-  fun fromString s =
+
+  fun base StringCvt.BIN = 0w2
+    | base StringCvt.OCT = 0w8
+    | base StringCvt.DEC = 0w10
+    | base StringCvt.HEX = 0w16
+
+  fun fmt radix (w : word) =
     let
-      val ord = _prim "char_ord" : char -> int
-      fun hexVal c =
-        let val n = ord c
-        in
-          if Int.>= (n, 48) andalso Int.<= (n, 57) then SOME (fromInt (Int.- (n, 48)))
-          else if Int.>= (n, 97) andalso Int.<= (n, 102) then SOME (fromInt (Int.- (n, 87)))
-          else if Int.>= (n, 65) andalso Int.<= (n, 70) then SOME (fromInt (Int.- (n, 55)))
-          else NONE
-        end
-      fun go ([], acc, any) = if any then SOME acc else NONE
-        | go (c :: cs, acc, any) =
-          case hexVal c of
-            SOME d => go (cs, acc * 0w16 + d, true)
-          | NONE => if any then SOME acc else NONE
-      val cs = (_prim "string_explode" : string -> char list) s
-      val cs = case cs of #"0" :: #"w" :: #"x" :: rest => rest
-                        | #"0" :: #"x" :: rest => rest
-                        | _ => cs
-    in go (cs, 0w0, false) end
+      val r = base radix
+      fun digit d = let val d = toInt d in chr (if Int.< (d, 10) then Int.+ (48, d) else Int.+ (55, d)) end
+      fun go (w, acc) =
+        let val acc = digit (w mod r) :: acc
+            val w = w div r
+        in if w = 0w0 then acc else go (w, acc) end
+    in implode (go (w, [])) end
+
+  (* (0w)?digits, in radix HEX (0wx | 0wX | 0x | 0X)?digits. A prefix counts
+     only when a digit follows it: "0wxg" is 0 and leaves "wxg". Overflow if
+     the number does not fit. *)
+  fun scan radix (getc : (char, 'a) StringCvt.reader) src =
+    let
+      val r = base radix
+      fun digitValue c =
+        case Int.digitValue (toInt r, c) of SOME d => SOME (fromInt d) | NONE => NONE
+      fun isDigitNext src =
+        case getc src of SOME (c, _) => (case digitValue c of SOME _ => true | NONE => false) | NONE => false
+      val src = StringCvt.skipWS getc src
+      (* the stream after the characters cs, if they are next and a digit follows them *)
+      fun prefix ([], rest) = if isDigitNext rest then SOME rest else NONE
+        | prefix (c :: cs, rest) =
+          (case getc rest of
+             SOME (c', rest') => if List.exists (fn x => x = c') c then prefix (cs, rest') else NONE
+           | NONE => NONE)
+      val prefixes =
+        if r = 0w16 then [[[#"0"], [#"w"], [#"x", #"X"]], [[#"0"], [#"x", #"X"]]]
+        else [[[#"0"], [#"w"]]]
+      fun strip [] = src
+        | strip (p :: ps) = (case prefix (p, src) of SOME rest => rest | NONE => strip ps)
+      val src = strip prefixes
+      val limit = notb 0w0 div r
+      fun digits (src, acc) =
+        case getc src of
+          SOME (c, rest) =>
+            (case digitValue c of
+               SOME d =>
+                 if acc > limit then raise Overflow
+                 else
+                   let val shifted = acc * r
+                       val sum = shifted + d
+                   in if sum < shifted then raise Overflow else digits (rest, sum) end
+             | NONE => (acc, src))
+        | NONE => (acc, src)
+    in
+      if isDigitNext src then SOME (digits (src, 0w0)) else NONE
+    end
+
+  fun fromString s = StringCvt.scanString (scan StringCvt.HEX) s
+
+  (* LargeWord is Word *)
+  val toLargeX = toLarge
+  val toLargeWord = toLarge
+  val toLargeWordX = toLarge
+  val fromLargeWord = fromLarge
 end
+
+structure LargeWord = Word
+structure SysWord = Word

@@ -4,14 +4,17 @@ struct
   datatype list = datatype list
   exception Empty = Empty
 
-  fun null [] = true
-    | null _ = false
-
-  fun hd (x :: _) = x
-    | hd [] = raise Empty
-
-  fun tl (_ :: xs) = xs
-    | tl [] = raise Empty
+  (* from the top-level environment (pervasive.sml) *)
+  val null = null
+  val hd = hd
+  val tl = tl
+  val length = length
+  val rev = rev
+  val op @ = op @
+  val app = app
+  val map = map
+  val foldl = foldl
+  val foldr = foldr
 
   fun last [x] = x
     | last (_ :: xs) = last xs
@@ -47,30 +50,12 @@ struct
       if n < 0 then raise Subscript else go (l, n)
     end
 
-  and length l =
-    let fun go ([], n) = n
-          | go (_ :: xs, n) = go (xs, n + 1)
-    in go (l, 0) end
-
-  and rev l =
-    let fun go ([], acc) = acc
-          | go (x :: xs, acc) = go (xs, x :: acc)
-    in go (l, []) end
 
   fun revAppend ([], ys) = ys
     | revAppend (x :: xs, ys) = revAppend (xs, x :: ys)
 
-  fun [] @ ys = ys
-    | (x :: xs) @ ys = x :: (xs @ ys)
-
   fun concat [] = []
     | concat (l :: ls) = l @ concat ls
-
-  fun app f [] = ()
-    | app f (x :: xs) = (f x; app f xs)
-
-  fun map f [] = []
-    | map f (x :: xs) = f x :: map f xs
 
   fun mapPartial f [] = []
     | mapPartial f (x :: xs) =
@@ -89,12 +74,6 @@ struct
       fun go ([], yes, no) = (rev yes, rev no)
         | go (x :: xs, yes, no) = if p x then go (xs, x :: yes, no) else go (xs, yes, x :: no)
     in go (l, [], []) end
-
-  fun foldl f init [] = init
-    | foldl f init (x :: xs) = foldl f (f (x, init)) xs
-
-  fun foldr f init [] = init
-    | foldr f init (x :: xs) = f (x, foldr f init xs)
 
   fun exists p [] = false
     | exists p (x :: xs) = p x orelse exists p xs

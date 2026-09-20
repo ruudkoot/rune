@@ -17,7 +17,17 @@ keep these invariants:
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
 * When adding a basis structure, add a `basis.<name>` row listing its members
-  and add the file to `lib/basis/MANIFEST`.
+  and add the file to `lib/basis/MANIFEST` with what it provides and requires
+  (`rune --basis-check`, part of `make check-docs`, verifies the columns; a
+  file loaded on demand declares modules and types only, all in its provides column). Its test belongs to the Basis
+  Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
+  written as `tests/basis/README.md` describes, with expected values worked
+  out from the text of the specification. `make check-docs` wants a check for
+  every member the specification's signature names, and `make test-basis` an
+  explanation in `tests/basis/deviations.txt` for every check that fails.
+  After a library change run `make matrix-quick` as well: it runs the suite
+  on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
+  Poly/ML); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through `vm/opcodes.def` and
   `vm/prims.def` (then `make gen`), with the corresponding implementation in
   `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
@@ -31,17 +41,27 @@ keep these invariants:
 
 * Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
   Poly/ML build files are generated from it — never edit `build/`.
-* The compiler must build with all three SML systems and with itself
-  (`make boot`), and all four builds must produce identical bytecode. Follow
+* The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
+  never from the machine's PATH.
+* The compiler has no built-in library path: `--lib DIR` is required, and each
+  `bin/rune*` is a generated wrapper that passes it and execs the payload next
+  to it. Nothing absolute is baked into the bytecode. `make install` writes the
+  same kind of wrapper for the installed tree (`scripts/install.sh`).
+* The compiler must build with every host SML system and with itself
+  (`make boot`), and all five builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
   on `Int` width, only `structure`/`signature`/`functor` at top level,
   deterministic iteration, and sources that stay inside the language
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `check-cross`, `check-docs`, `test-boot`, `bootstrap`; runs on all CPUs,
-  about 3 minutes on 16; use `make test` while iterating). For VM changes also run the suite with the
-  sanitizer build: `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`.
+  `test-basis`, `perf-check`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
+  every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
+  same suite with the MLton build and is the faster loop while iterating. For
+  VM changes also run the suite with the
+  sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
+  and with a collection at (nearly) every allocation, `make test-stress`.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the

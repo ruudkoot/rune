@@ -1,0 +1,4 @@
+tcp is 6, udp is 17
+http is port 80, port 22 is ssh
+localhost resolves: true, hostname is not empty: true
+scan: 10.0.0.1 none

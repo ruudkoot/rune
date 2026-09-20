@@ -21,7 +21,36 @@ struct
     | SWord w => CWord w
     | SReal r => CReal r
     | SString s => CString s
-    | SChar c => CChar (Char.ord c)
+    | SWideString _ => Error.bug "sconConst: a string constant with a code point above 255"
+    | SChar c => CChar c
+
+  (* A special constant at the type elaboration found for it: a constant, or
+     for a type registered with `_overload ... via f` the application of f to
+     the digits (the text, for a real constant). *)
+  fun sconExp (sc, slot : Types.ty option ref) : lexp =
+    let
+      fun via digits =
+        case !slot of
+          SOME t =>
+            (case Types.resolve t of
+               Types.TCon (c, _) =>
+                 (case Overload.literalOf c of
+                    SOME (Overload.Via f) => SOME (App (Global f, Const (CString digits)))
+                  | _ => NONE)
+             | _ => NONE)
+        | NONE => NONE
+      fun digits i = if IntInf.< (i, IntInf.fromInt 0) then "~" ^ IntInf.toString (IntInf.~ i) else IntInf.toString i
+    in
+      case sc of
+        SInt i => (case via (digits i) of SOME e => e | NONE => Const (sconConst sc))
+      | SWord w => (case via (digits w) of SOME e => e | NONE => Const (sconConst sc))
+      | SReal text => (case via text of SOME e => e | NONE => Const (sconConst sc))
+      | SChar c => (case via (Scon.escape c) of SOME e => e | NONE => Const (sconConst sc))
+      | SString s => (case via (Scon.text (List.map Char.ord (String.explode s))) of
+                        SOME e => e
+                      | NONE => Const (sconConst sc))
+      | SWideString s => (case via (Scon.text s) of SOME e => e | NONE => Const (sconConst sc))
+    end
 
   fun info (slot : patinfo option ref, sp) =
     case !slot of
@@ -66,7 +95,7 @@ struct
   fun compilePat (p : pat, v : int, k : lexp) : lexp =
     case p of
       PWild _ => k
-    | PScon (sc, _) => testEq (Var v, Const (sconConst sc), k)
+    | PScon (sc, slot, _) => testEq (Var v, sconExp (sc, slot), k)
     | PVar (_, slot, sp) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, k)

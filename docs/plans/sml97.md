@@ -429,8 +429,8 @@ datatype … in dec end`. Errors: constructor used outside the `with` part,
 
 ```sh
 make check                                        # four builds, identical bytecode, docs, bootstrap
-sh tests/run-tests.sh mod.                        # module rows while iterating
-sh tests/run-tests.sh --rune bin/rune-boot mod.   # the self-hosted compiler agrees
+sh tests/run-tests.sh mod.                        # module rows with bin/rune, the self-hosted compiler
+sh tests/run-tests.sh --rune bin/rune-mlton mod.  # the same, faster, while iterating
 ```
 
 Static-only steps (M1.1, M1.3–M1.5, M2, M4): `--dump-lambda` on every

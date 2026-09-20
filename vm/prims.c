@@ -5,6 +5,8 @@
 #include "vm.h"
 #include <math.h>
 #include <errno.h>
+#include <fenv.h>
+#include "sys.h"
 
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
 
@@ -22,6 +24,9 @@ static Obj *check_obj(VM *vm, Value v, int kind, const char *prim) {
     if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "primitive %s: wrong argument type", prim);
     return v.u.p;
 }
+
+/* String.maxSize: a longer result raises Size. */
+#define MAX_STRING 0x3fffffff
 
 enum { EXN_MATCH = 0, EXN_BIND, EXN_OVERFLOW, EXN_DIV, EXN_SUBSCRIPT, EXN_SIZE, EXN_CHR, EXN_DOMAIN };
 
@@ -69,6 +74,13 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
 
 /* ================================================================ poly */
 static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(ARG(1), ARG(0)))); }
+/* exn values are K_EXN [constructor, payload]; a constructor is K_EXNCON [name]. */
+static int p_exn_name(VM *vm) {
+    Obj *e = check_obj(vm, ARG(0), K_EXN, "exn_name");
+    Value con = OBJ_FIELDS(e)[0];
+    if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) vm_fatal(vm, "primitive exn_name: malformed exception value");
+    return ret(vm, 1, OBJ_FIELDS(con.u.p)[0]);
+}
 static int p_ptr_eq(VM *vm) {
     Value a = ARG(1), b = ARG(0);
     int eq = a.tag == b.tag && (a.tag == T_PTR ? a.u.p == b.u.p : a.u.i == b.u.i);
@@ -173,6 +185,7 @@ static int p_word_andb(VM *vm) { WORD2("word_andb"); return ret(vm, 2, mk_word(x
 static int p_word_orb(VM *vm) { WORD2("word_orb"); return ret(vm, 2, mk_word(x | y)); }
 static int p_word_xorb(VM *vm) { WORD2("word_xorb"); return ret(vm, 2, mk_word(x ^ y)); }
 static int p_word_notb(VM *vm) { WORD1("word_notb"); return ret(vm, 1, mk_word(~x)); }
+static int p_word_neg(VM *vm) { WORD1("word_neg"); return ret(vm, 1, mk_word(0 - x)); }
 static int p_word_lsl(VM *vm) { WORD2("word_lsl"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x << y)); }
 static int p_word_lsr(VM *vm) { WORD2("word_lsr"); return ret(vm, 2, mk_word(y >= 64 ? 0 : x >> y)); }
 static int p_word_to_int(VM *vm) { WORD1("word_to_int"); if (x > (uint64_t)INT64_MAX) return raise_with(vm, 1, EXN_OVERFLOW); return ret(vm, 1, mk_int((int64_t)x)); }
@@ -194,6 +207,19 @@ static int p_real_sub(VM *vm) { REAL2("real_sub"); return ret(vm, 2, mk_real(x -
 static int p_real_mul(VM *vm) { REAL2("real_mul"); return ret(vm, 2, mk_real(x * y)); }
 static int p_real_div(VM *vm) { REAL2("real_div"); return ret(vm, 2, mk_real(x / y)); }
 static int p_real_neg(VM *vm) { REAL1("real_neg"); return ret(vm, 1, mk_real(-x)); }
+/* The 64 bits of a real, IEEE 754 binary64, and back (PackReal). */
+static int p_real_to_bits(VM *vm) {
+    REAL1("real_to_bits");
+    uint64_t w;
+    memcpy(&w, &x, sizeof w);
+    return ret(vm, 1, mk_word(w));
+}
+static int p_real_from_bits(VM *vm) {
+    WORD1("real_from_bits");
+    double d;
+    memcpy(&d, &x, sizeof d);
+    return ret(vm, 1, mk_real(d));
+}
 static int p_real_abs(VM *vm) { REAL1("real_abs"); return ret(vm, 1, mk_real(fabs(x))); }
 static int p_real_lt(VM *vm) { REAL2("real_lt"); return ret(vm, 2, mk_bool(x < y)); }
 static int p_real_le(VM *vm) { REAL2("real_le"); return ret(vm, 2, mk_bool(x <= y)); }
@@ -249,23 +275,38 @@ static int p_real_to_string(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)strlen(buf))));
 }
 
-static int p_real_from_string(VM *vm) {
-    Obj *s = check_obj(vm, ARG(0), K_STRING, "real_from_string");
-    char buf[128];
-    uint32_t n = s->len < sizeof buf - 1 ? s->len : (uint32_t)(sizeof buf - 1);
+/* A numeral in C syntax (~ read as -) to a double, or with single to the
+   nearest binary32 value; NONE when it does not start as a number. */
+static int real_parse(VM *vm, const char *name, int single) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, name);
+    uint32_t n = s->len;
     const char *b = OBJ_BYTES(s);
+    char *buf = malloc((size_t)n + 1);   /* a numeral may have any number of digits */
+    if (!buf) vm_fatal(vm, "out of memory");
     uint32_t i = 0, o = 0;
     while (i < n && (b[i] == ' ' || b[i] == '\t' || b[i] == '\n')) i++;
     for (; i < n; i++) buf[o++] = b[i] == '~' ? '-' : b[i];
     buf[o] = 0;
-    if (o == 0 || !((buf[0] >= '0' && buf[0] <= '9') || buf[0] == '-' || buf[0] == '+' || buf[0] == '.'))
+    if (o == 0 || !((buf[0] >= '0' && buf[0] <= '9') || buf[0] == '-' || buf[0] == '+' || buf[0] == '.')) {
+        free(buf);
         return ret(vm, 1, mk_con0(0));
+    }
     char *end;
     errno = 0;
-    double d = strtod(buf, &end);
-    if (end == buf) return ret(vm, 1, mk_con0(0));
+    double d = single ? (double)strtof(buf, &end) : strtod(buf, &end);
+    int none = end == buf;
+    free(buf);
+    if (none) return ret(vm, 1, mk_con0(0));
     Value r = mk_some(vm, mk_real(d));
     return ret(vm, 1, r);
+}
+static int p_real_from_string(VM *vm) { return real_parse(vm, "real_from_string", 0); }
+static int p_real_single_from_string(VM *vm) { return real_parse(vm, "real_single_from_string", 1); }
+/* Real32: a double rounded to binary32 in the current rounding mode. */
+static int p_real_to_single(VM *vm) {
+    REAL1("real_to_single");
+    volatile float f = (float)x;
+    return ret(vm, 1, mk_real((double)f));
 }
 static int p_real_sqrt(VM *vm) { REAL1("real_sqrt"); return ret(vm, 1, mk_real(sqrt(x))); }
 static int p_real_exp(VM *vm) { REAL1("real_exp"); return ret(vm, 1, mk_real(exp(x))); }
@@ -277,6 +318,85 @@ static int p_real_atan(VM *vm) { REAL1("real_atan"); return ret(vm, 1, mk_real(a
 static int p_real_atan2(VM *vm) { REAL2("real_atan2"); return ret(vm, 2, mk_real(atan2(x, y))); }
 static int p_real_pow(VM *vm) { REAL2("real_pow"); return ret(vm, 2, mk_real(pow(x, y))); }
 static int p_real_is_nan(VM *vm) { REAL1("real_is_nan"); return ret(vm, 1, mk_bool(isnan(x))); }
+
+/* --- the parts of REAL and MATH that need the C library (all ISO C99) --- */
+static int p_real_floor_r(VM *vm) { REAL1("real_floor_r"); return ret(vm, 1, mk_real(floor(x))); }
+static int p_real_ceil_r(VM *vm) { REAL1("real_ceil_r"); return ret(vm, 1, mk_real(ceil(x))); }
+static int p_real_trunc_r(VM *vm) { REAL1("real_trunc_r"); return ret(vm, 1, mk_real(trunc(x))); }
+/* Ties to even whatever the rounding mode is; x - floor x is exact. */
+static int p_real_round_r(VM *vm) {
+    REAL1("real_round_r");
+    if (isnan(x) || isinf(x)) return ret(vm, 1, mk_real(x));
+    double below = floor(x), d = x - below, r;
+    if (d < 0.5) r = below;
+    else if (d > 0.5) r = below + 1.0;
+    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
+    return ret(vm, 1, mk_real(copysign(r, x)));
+}
+static int p_real_sign_bit(VM *vm) { REAL1("real_sign_bit"); return ret(vm, 1, mk_bool(signbit(x) != 0)); }
+static int p_real_copy_sign(VM *vm) { REAL2("real_copy_sign"); return ret(vm, 2, mk_real(copysign(x, y))); }
+static int p_real_frexp_man(VM *vm) { REAL1("real_frexp_man"); int e; return ret(vm, 1, mk_real(frexp(x, &e))); }
+static int p_real_frexp_exp(VM *vm) {
+    REAL1("real_frexp_exp");
+    int e = 0;
+    if (!isnan(x) && !isinf(x) && x != 0.0) (void)frexp(x, &e);
+    return ret(vm, 1, mk_int(e));
+}
+static int p_real_ldexp(VM *vm) {
+    check_tag(vm, ARG(1), T_REAL, "real_ldexp");
+    check_tag(vm, ARG(0), T_INT, "real_ldexp");
+    double x = ARG(1).u.d;
+    int64_t n = ARG(0).u.i;
+    if (n > 100000) n = 100000;
+    if (n < -100000) n = -100000;
+    return ret(vm, 2, mk_real(ldexp(x, (int)n)));
+}
+static int p_real_next_after(VM *vm) { REAL2("real_next_after"); return ret(vm, 2, mk_real(nextafter(x, y))); }
+static int p_real_rem(VM *vm) { REAL2("real_rem"); return ret(vm, 2, mk_real(fmod(x, y))); }
+
+/* printf of a finite real with n digits after the point; the longest result
+   is that of %f for the largest real, 309 digits before the point. */
+static int real_printf(VM *vm, const char *name, const char *format) {
+    check_tag(vm, ARG(1), T_REAL, name);
+    check_tag(vm, ARG(0), T_INT, name);
+    double x = ARG(1).u.d;
+    int64_t n = ARG(0).u.i;
+    if (n < 0 || n > 100000) return raise_with(vm, 2, EXN_SIZE);
+    size_t cap = (size_t)n + 400;
+    char *buf = malloc(cap);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int len = snprintf(buf, cap, format, (int)n, x);
+    Obj *s = vm_string_from(vm, buf, (uint32_t)len);
+    free(buf);
+    return ret(vm, 2, mk_ptr(s));
+}
+static int p_real_fmt_e(VM *vm) { return real_printf(vm, "real_fmt_e", "%.*e"); }
+static int p_real_fmt_f(VM *vm) { return real_printf(vm, "real_fmt_f", "%.*f"); }
+static int p_real_shortest(VM *vm) {
+    REAL1("real_shortest");
+    char buf[64];
+    int len = 0;
+    for (int k = 0; k <= 16; k++) {
+        len = snprintf(buf, sizeof buf, "%.*e", k, x);
+        if (strtod(buf, NULL) == x) break;
+    }
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, buf, (uint32_t)len)));
+}
+static const int rounding_modes[4] = { FE_TONEAREST, FE_DOWNWARD, FE_UPWARD, FE_TOWARDZERO };
+static int p_real_set_round(VM *vm) {
+    INT1("real_set_round");
+    if (x < 0 || x > 3) vm_fatal(vm, "primitive real_set_round: bad mode");
+    fesetround(rounding_modes[x]);
+    return ret(vm, 1, mk_unit());
+}
+static int p_real_get_round(VM *vm) {
+    int mode = fegetround(), k = 0;
+    for (int i = 0; i < 4; i++) if (rounding_modes[i] == mode) k = i;
+    return ret(vm, 1, mk_int(k));
+}
+static int p_real_sinh(VM *vm) { REAL1("real_sinh"); return ret(vm, 1, mk_real(sinh(x))); }
+static int p_real_cosh(VM *vm) { REAL1("real_cosh"); return ret(vm, 1, mk_real(cosh(x))); }
+static int p_real_tanh(VM *vm) { REAL1("real_tanh"); return ret(vm, 1, mk_real(tanh(x))); }
 
 /* ================================================================ char */
 #define CHAR2(name) int64_t x = ARG(1).u.i, y = ARG(0).u.i; check_tag(vm, ARG(1), T_CHAR, name); check_tag(vm, ARG(0), T_CHAR, name)
@@ -307,7 +427,7 @@ static int p_string_sub(VM *vm) {
 static int p_string_concat(VM *vm) {
     STR2("string_concat");
     uint64_t n = (uint64_t)a->len + b->len;
-    if (n > 0x7fffffff) return raise_with(vm, 2, EXN_SIZE);
+    if (n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)n);
     a = ARG(1).u.p; b = ARG(0).u.p;   /* may have moved */
     memcpy(OBJ_BYTES(r), OBJ_BYTES(a), a->len);
@@ -351,10 +471,722 @@ static int64_t list_length(Value l) {
 static Value list_head(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[0]; }
 static Value list_tail(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[1]; }
 
+/* ================================================================ system */
+static int push_string_value(VM *vm, const char *s) {
+    Obj *o = vm_string_from(vm, s, (uint32_t)strlen(s));
+    return ret(vm, 1, mk_ptr(o));
+}
+
+static int p_sys_errno(VM *vm) { return ret(vm, 1, mk_int(sys_errno())); }
+static int p_sys_error_msg(VM *vm) { INT1("sys_error_msg"); return push_string_value(vm, sys_error_msg((int)x)); }
+static int p_sys_error_name(VM *vm) { INT1("sys_error_name"); return push_string_value(vm, sys_error_name((int)x)); }
+static int p_sys_error_of_name(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "sys_error_of_name");
+    char *name = malloc((size_t)s->len + 1);
+    if (!name) vm_fatal(vm, "out of memory");
+    memcpy(name, OBJ_BYTES(s), s->len);
+    name[s->len] = 0;
+    int e = sys_error_of_name(name);
+    free(name);
+    return ret(vm, 1, mk_int(e));
+}
+
+static int p_time_now(VM *vm) { return ret(vm, 1, mk_int(sys_time_now())); }
+static int p_time_user(VM *vm) { return ret(vm, 1, mk_int(sys_time_user())); }
+static int p_time_sys(VM *vm) { return ret(vm, 1, mk_int(sys_time_sys())); }
+static int p_time_sleep(VM *vm) { INT1("time_sleep"); sys_time_sleep(x); return ret(vm, 1, mk_unit()); }
+
+/* A list of the ints in xs, built on the VM stack so that the collector sees
+   every cell while the next one is allocated. */
+static int push_int_list(VM *vm, const int64_t *xs, int n, int arity) {
+    vm_push(vm, mk_con0(0));
+    for (int i = n; i > 0; i--) {
+        vm_push(vm, mk_int(xs[i - 1]));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+
+/* The ints of a list, at most n of them; -1 when the list is malformed or
+   longer than n. */
+static int int_list(Value l, int32_t *out, int n) {
+    int64_t len = list_length(l);
+    if (len < 0 || len > n) return -1;
+    for (int i = 0; i < (int)len; i++) {
+        Value head = list_head(l);
+        if (head.tag != T_INT) return -1;
+        out[i] = (int32_t)head.u.i;
+        l = list_tail(l);
+    }
+    return (int)len;
+}
+
+/* The strings a system call left one after another, as a list. */
+static int push_strings(VM *vm, const char *packed, int arity) {
+    int n = 0;
+    for (const char *p = packed; p && *p; p += strlen(p) + 1) n++;
+    vm_push(vm, mk_con0(0));
+    /* backwards, so that the list comes out in order */
+    for (int i = n; i > 0; i--) {
+        const char *p = packed;
+        for (int k = 1; k < i; k++) p += strlen(p) + 1;
+        Obj *s = vm_string_from(vm, p, (uint32_t)strlen(p));
+        vm_push(vm, mk_ptr(s));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+
+static int p_date_parts(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "date_parts");
+    check_tag(vm, ARG(0), T_INT, "date_parts");
+    int32_t parts[9];
+    if (sys_date_parts(ARG(1).u.i, (int)ARG(0).u.i, parts) != 0) return push_int_list(vm, NULL, 0, 2);
+    int64_t wide[9];
+    for (int i = 0; i < 9; i++) wide[i] = parts[i];
+    return push_int_list(vm, wide, 9, 2);
+}
+
+static int p_date_seconds(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "date_seconds");
+    int32_t parts[9];
+    for (int i = 0; i < 9; i++) parts[i] = 0;
+    parts[8] = -1;
+    if (int_list(ARG(1), parts, 9) < 0) vm_fatal(vm, "primitive date_seconds: malformed list");
+    int64_t t = sys_date_seconds(parts, (int)ARG(0).u.i);
+    if (t == -1) return push_int_list(vm, NULL, 0, 2);
+    int64_t wide[10];
+    wide[0] = t;
+    for (int i = 0; i < 9; i++) wide[i + 1] = parts[i];
+    return push_int_list(vm, wide, 10, 2);
+}
+
+static int p_date_offset(VM *vm) {
+    INT1("date_offset");
+    int32_t offset = 0;
+    if (sys_date_offset(x, &offset) != 0) return raise_with(vm, 1, EXN_DOMAIN);
+    return ret(vm, 1, mk_int(offset));
+}
+
+static int p_date_format(VM *vm) {
+    Obj *f = check_obj(vm, ARG(2), K_STRING, "date_format");
+    check_tag(vm, ARG(0), T_INT, "date_format");
+    int32_t parts[9];
+    for (int i = 0; i < 9; i++) parts[i] = 0;
+    if (int_list(ARG(1), parts, 9) < 0) vm_fatal(vm, "primitive date_format: malformed list");
+    char *format = malloc((size_t)f->len + 1);
+    if (!format) vm_fatal(vm, "out of memory");
+    memcpy(format, OBJ_BYTES(f), f->len);
+    format[f->len] = 0;
+    size_t cap = (size_t)f->len * 16 + 256;
+    char *out = malloc(cap);
+    if (!out) vm_fatal(vm, "out of memory");
+    int n = sys_date_format(format, parts, (int)ARG(0).u.i, out, cap);
+    free(format);
+    Obj *s = vm_string_from(vm, out, n < 0 ? 0 : (uint32_t)n);
+    free(out);
+    return ret(vm, 3, mk_ptr(s));
+}
+
+/* The string of a K_STRING argument, as a C string the caller frees. */
+static char *c_string(VM *vm, Value v, const char *prim) {
+    Obj *s = check_obj(vm, v, K_STRING, prim);
+    char *out = malloc((size_t)s->len + 1);
+    if (!out) vm_fatal(vm, "out of memory");
+    memcpy(out, OBJ_BYTES(s), s->len);
+    out[s->len] = 0;
+    return out;
+}
+
+/* A primitive that takes a path and gives an int. */
+#define PATH_INT(name, call)                                   \
+    static int p_##name(VM *vm) {                              \
+        char *path = c_string(vm, ARG(0), #name);              \
+        int64_t r = call(path);                                \
+        free(path);                                            \
+        return ret(vm, 1, mk_int(r));                          \
+    }
+PATH_INT(os_mkdir, sys_mkdir)
+PATH_INT(os_rmdir, sys_rmdir)
+PATH_INT(os_chdir, sys_chdir)
+PATH_INT(os_remove, sys_remove)
+PATH_INT(os_file_kind, sys_file_kind)
+PATH_INT(os_link_kind, sys_link_kind)
+PATH_INT(os_file_size, sys_file_size)
+PATH_INT(os_mod_time, sys_mod_time)
+
+/* A primitive that takes a path and gives a string, empty on failure. */
+#define PATH_STRING(name, call)                                \
+    static int p_##name(VM *vm) {                              \
+        char *path = c_string(vm, ARG(0), #name);              \
+        const char *r = call(path);                            \
+        free(path);                                            \
+        return push_string_value(vm, r ? r : "");              \
+    }
+PATH_STRING(os_read_link, sys_read_link)
+PATH_STRING(os_real_path, sys_real_path)
+
+static int p_os_getcwd(VM *vm) {
+    const char *dir = sys_getcwd();
+    return push_string_value(vm, dir ? dir : "");
+}
+
+static int p_os_tmp_name(VM *vm) {
+    const char *name = sys_tmp_name();
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_os_rename(VM *vm) {
+    char *from = c_string(vm, ARG(1), "os_rename");
+    char *to = c_string(vm, ARG(0), "os_rename");
+    int r = sys_rename(from, to);
+    free(from);
+    free(to);
+    return ret(vm, 2, mk_int(r));
+}
+
+static int p_os_access(VM *vm) {
+    char *path = c_string(vm, ARG(2), "os_access");
+    check_tag(vm, ARG(1), T_INT, "os_access");
+    check_tag(vm, ARG(0), T_INT, "os_access");
+    int64_t flags = ARG(1).u.i;
+    int r = sys_access(path, (flags & 1) != 0, (flags & 2) != 0, (flags & 4) != 0);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_os_set_time(VM *vm) {
+    char *path = c_string(vm, ARG(2), "os_set_time");
+    check_tag(vm, ARG(1), T_INT, "os_set_time");
+    check_tag(vm, ARG(0), T_INT, "os_set_time");
+    int r = sys_set_time(path, ARG(1).u.i, (int)ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_os_file_id(VM *vm) {
+    char *path = c_string(vm, ARG(0), "os_file_id");
+    int64_t id[2];
+    int ok = sys_file_id(path, &id[0], &id[1]);
+    free(path);
+    return push_int_list(vm, id, ok == 0 ? 2 : 0, 1);
+}
+
+static int p_os_open_dir(VM *vm) {
+    char *path = c_string(vm, ARG(0), "os_open_dir");
+    int r = sys_open_dir(path);
+    free(path);
+    return ret(vm, 1, mk_int(r));
+}
+
+static int p_os_read_dir(VM *vm) {
+    INT1("os_read_dir");
+    const char *name = sys_read_dir((int)x);
+    if (!name) return ret(vm, 1, mk_con0(0));
+    Obj *o = vm_string_from(vm, name, (uint32_t)strlen(name));
+    Value r = mk_some(vm, mk_ptr(o));
+    return ret(vm, 1, r);
+}
+
+static int p_os_rewind_dir(VM *vm) { INT1("os_rewind_dir"); return ret(vm, 1, mk_int(sys_rewind_dir((int)x))); }
+static int p_os_close_dir(VM *vm) { INT1("os_close_dir"); return ret(vm, 1, mk_int(sys_close_dir((int)x))); }
+
+
+/* A handle of the library is the descriptor the system gave, for these
+   primitives; the ones of the VM's own table go through descriptor_of. */
+static int p_posix_openf(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_openf");
+    check_tag(vm, ARG(1), T_INT, "posix_openf");
+    check_tag(vm, ARG(0), T_INT, "posix_openf");
+    int fd = sys_openf(path, (int)ARG(1).u.i, (int)ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(fd));
+}
+
+static int p_posix_close(VM *vm) { INT1("posix_close"); return ret(vm, 1, mk_int(sys_close_fd((int)x))); }
+static int p_posix_dup(VM *vm) { INT1("posix_dup"); return ret(vm, 1, mk_int(sys_dup((int)x))); }
+
+static int p_posix_dup2(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_dup2");
+    check_tag(vm, ARG(0), T_INT, "posix_dup2");
+    return ret(vm, 2, mk_int(sys_dup2((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_posix_pipe(VM *vm) {
+    int fds[2];
+    int ok = sys_pipe(fds);
+    int64_t out[2] = { fds[0], fds[1] };
+    return push_int_list(vm, out, ok == 0 ? 2 : 0, 1);
+}
+
+static int p_posix_read(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_read");
+    check_tag(vm, ARG(0), T_INT, "posix_read");
+    int64_t n = ARG(0).u.i;
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    int64_t got = sys_read_fd((int)ARG(1).u.i, buf, n);
+    Obj *s = vm_string_from(vm, buf, got < 0 ? 0 : (uint32_t)got);
+    free(buf);
+    return ret(vm, 2, mk_ptr(s));
+}
+
+static int p_posix_write(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_write");
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "posix_write");
+    int64_t k = sys_write_fd((int)ARG(1).u.i, OBJ_BYTES(s), s->len);
+    return ret(vm, 2, mk_int(k));
+}
+
+static int p_posix_lseek(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "posix_lseek");
+    check_tag(vm, ARG(1), T_INT, "posix_lseek");
+    check_tag(vm, ARG(0), T_INT, "posix_lseek");
+    return ret(vm, 3, mk_int(sys_lseek_fd((int)ARG(2).u.i, ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_posix_fsync(VM *vm) { INT1("posix_fsync"); return ret(vm, 1, mk_int(sys_fsync((int)x))); }
+
+static int p_posix_fcntl(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "posix_fcntl");
+    check_tag(vm, ARG(1), T_INT, "posix_fcntl");
+    check_tag(vm, ARG(0), T_INT, "posix_fcntl");
+    return ret(vm, 3, mk_int(sys_fcntl((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_posix_ftruncate(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_ftruncate");
+    check_tag(vm, ARG(0), T_INT, "posix_ftruncate");
+    return ret(vm, 2, mk_int(sys_ftruncate((int)ARG(1).u.i, ARG(0).u.i)));
+}
+
+static int p_posix_stat(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_stat");
+    check_tag(vm, ARG(1), T_INT, "posix_stat");
+    check_tag(vm, ARG(0), T_INT, "posix_stat");
+    int64_t out[11];
+    int ok = sys_stat_of(path[0] ? path : NULL, (int)ARG(1).u.i == 0, (int)ARG(0).u.i, out);
+    free(path);
+    return push_int_list(vm, out, ok == 0 ? 11 : 0, 3);
+}
+
+/* posix_lock (fd, command, type, whence, start, length) */
+static int p_posix_lock(VM *vm) {
+    for (int i = 0; i < 6; i++) check_tag(vm, ARG(i), T_INT, "posix_lock");
+    int64_t out[5];
+    int ok = sys_lock((int)ARG(5).u.i, (int)ARG(4).u.i, (int)ARG(3).u.i, (int)ARG(2).u.i,
+                      ARG(1).u.i, ARG(0).u.i, out);
+    return push_int_list(vm, out, ok == 0 ? 5 : 0, 6);
+}
+
+/* posix_pathconf (path, fd, name): of the descriptor when the path is "" */
+static int p_posix_pathconf(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_pathconf");
+    check_tag(vm, ARG(1), T_INT, "posix_pathconf");
+    char *name = c_string(vm, ARG(0), "posix_pathconf");
+    int64_t v;
+    int ok = sys_pathconf(path[0] ? path : NULL, (int)ARG(1).u.i, name, &v);
+    free(path);
+    free(name);
+    return push_int_list(vm, &v, ok == 0 ? 1 : 0, 3);
+}
+
+/* The terminal: posix_tcgetattr fd, posix_tcsetattr (fd, action, numbers),
+   posix_tcop (op, fd, argument); see sys_tcgetattr for the numbers. */
+static int p_posix_tcgetattr(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "posix_tcgetattr");
+    int n = 6 + sys_nccs();
+    int64_t *out = malloc((size_t)n * sizeof *out);
+    if (!out) vm_fatal(vm, "out of memory");
+    int ok = sys_tcgetattr((int)ARG(0).u.i, out);
+    int r = push_int_list(vm, out, ok == 0 ? n : 0, 1);
+    free(out);
+    return r;
+}
+
+static int p_posix_tcsetattr(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "posix_tcsetattr");
+    check_tag(vm, ARG(1), T_INT, "posix_tcsetattr");
+    int n = 6 + sys_nccs();
+    int32_t *narrow = malloc((size_t)n * sizeof *narrow);
+    int64_t *in = malloc((size_t)n * sizeof *in);
+    if (!narrow || !in) vm_fatal(vm, "out of memory");
+    int r;
+    if (int_list(ARG(0), narrow, n) != n) { sys_set_errno(EINVAL); r = -1; }
+    else {
+        for (int i = 0; i < n; i++) in[i] = narrow[i];
+        r = sys_tcsetattr((int)ARG(2).u.i, (int)ARG(1).u.i, in);
+    }
+    free(narrow);
+    free(in);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_posix_tcop(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "posix_tcop");
+    return ret(vm, 3, mk_int(sys_tcop((int)ARG(2).u.i, (int)ARG(1).u.i, ARG(0).u.i)));
+}
+
+/* socket_linger (fd, set, seconds): [seconds] afterwards (~1 when off), []
+   on failure */
+static int p_socket_linger(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "socket_linger");
+    int seconds = (int)ARG(0).u.i;
+    int64_t out = 0;
+    int ok = sys_linger((int)ARG(2).u.i, (int)ARG(1).u.i, &seconds);
+    out = seconds;
+    return push_int_list(vm, &out, ok == 0 ? 1 : 0, 3);
+}
+static int p_socket_query(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_query");
+    check_tag(vm, ARG(0), T_INT, "socket_query");
+    return ret(vm, 2, mk_int(sys_socket_query((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_posix_utime(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_utime");
+    check_tag(vm, ARG(1), T_INT, "posix_utime");
+    check_tag(vm, ARG(0), T_INT, "posix_utime");
+    int r = sys_utime(path, ARG(1).u.i, ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_posix_chmod(VM *vm) {
+    char *path = c_string(vm, ARG(2), "posix_chmod");
+    check_tag(vm, ARG(1), T_INT, "posix_chmod");
+    check_tag(vm, ARG(0), T_INT, "posix_chmod");
+    int r = sys_chmod(path[0] ? path : NULL, (int)ARG(1).u.i, (int)ARG(0).u.i);
+    free(path);
+    return ret(vm, 3, mk_int(r));
+}
+
+static int p_posix_chown(VM *vm) {
+    char *path = c_string(vm, ARG(3), "posix_chown");
+    check_tag(vm, ARG(2), T_INT, "posix_chown");
+    check_tag(vm, ARG(1), T_INT, "posix_chown");
+    check_tag(vm, ARG(0), T_INT, "posix_chown");
+    int r = sys_chown(path[0] ? path : NULL, (int)ARG(2).u.i, ARG(1).u.i, ARG(0).u.i);
+    free(path);
+    return ret(vm, 4, mk_int(r));
+}
+
+#define TWO_PATHS(name, call)                                  \
+    static int p_##name(VM *vm) {                              \
+        char *from = c_string(vm, ARG(1), #name);              \
+        char *to = c_string(vm, ARG(0), #name);                \
+        int r = call(from, to);                                \
+        free(from); free(to);                                  \
+        return ret(vm, 2, mk_int(r));                          \
+    }
+TWO_PATHS(posix_link, sys_link)
+TWO_PATHS(posix_symlink, sys_symlink)
+
+static int p_posix_mkfifo(VM *vm) {
+    char *path = c_string(vm, ARG(1), "posix_mkfifo");
+    check_tag(vm, ARG(0), T_INT, "posix_mkfifo");
+    int r = sys_mkfifo(path, (int)ARG(0).u.i);
+    free(path);
+    return ret(vm, 2, mk_int(r));
+}
+
+static int p_posix_umask(VM *vm) { INT1("posix_umask"); return ret(vm, 1, mk_int(sys_umask((int)x))); }
+
+/* The strings of a user or a group, with the numbers written after them. */
+static int push_strings_and_ints(VM *vm, const char *packed, const int64_t *xs, int n, int arity) {
+    vm_push(vm, mk_con0(0));
+    for (int i = n; i > 0; i--) {
+        char buffer[32];
+        snprintf(buffer, sizeof buffer, "%lld", (long long)xs[i - 1]);
+        vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+        vm_cons(vm);
+    }
+    int count = 0;
+    for (const char *p = packed; p && *p; p += strlen(p) + 1) count++;
+    for (int i = count; i > 0; i--) {
+        const char *p = packed;
+        for (int k = 1; k < i; k++) p += strlen(p) + 1;
+        vm_push(vm, mk_ptr(vm_string_from(vm, p, (uint32_t)strlen(p))));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+
+static int p_posix_getpw(VM *vm) {
+    char *name = c_string(vm, ARG(1), "posix_getpw");
+    check_tag(vm, ARG(0), T_INT, "posix_getpw");
+    int64_t ids[2];
+    const char *packed = sys_getpw(name[0] ? name : NULL, ARG(0).u.i, ids);
+    free(name);
+    if (!packed) return push_int_list(vm, NULL, 0, 2);
+    return push_strings_and_ints(vm, packed, ids, 2, 2);
+}
+
+static int p_posix_getgr(VM *vm) {
+    char *name = c_string(vm, ARG(1), "posix_getgr");
+    check_tag(vm, ARG(0), T_INT, "posix_getgr");
+    int64_t id;
+    const char *packed = sys_getgr(name[0] ? name : NULL, ARG(0).u.i, &id);
+    free(name);
+    if (!packed) return push_int_list(vm, NULL, 0, 2);
+    /* the name, the number, then the members */
+    const char *group_members = sys_group_members();
+    vm_push(vm, mk_con0(0));
+    int count = 0;
+    for (const char *p = group_members; p && *p; p += strlen(p) + 1) count++;
+    for (int i = count; i > 0; i--) {
+        const char *p = group_members;
+        for (int k = 1; k < i; k++) p += strlen(p) + 1;
+        vm_push(vm, mk_ptr(vm_string_from(vm, p, (uint32_t)strlen(p))));
+        vm_cons(vm);
+    }
+    char buffer[32];
+    snprintf(buffer, sizeof buffer, "%lld", (long long)id);
+    vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, packed, (uint32_t)strlen(packed))));
+    vm_cons(vm);
+    Value l = vm_pop(vm);
+    return ret(vm, 2, l);
+}
+
+/* ================================================================ sockets */
+static int push_last_addr(VM *vm, int ok, int arity) {
+    if (ok != 0) return push_string_value(vm, "");
+    Obj *o = vm_string_from(vm, sys_last_addr(), (uint32_t)sys_last_addr_len());
+    return ret(vm, arity, mk_ptr(o));
+}
+
+static int p_socket_create(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_create");
+    check_tag(vm, ARG(1), T_INT, "socket_create");
+    check_tag(vm, ARG(0), T_INT, "socket_create");
+    return ret(vm, 3, mk_int(sys_socket((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_pair(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_pair");
+    check_tag(vm, ARG(1), T_INT, "socket_pair");
+    check_tag(vm, ARG(0), T_INT, "socket_pair");
+    int fds[2];
+    int ok = sys_socketpair((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i, fds);
+    int64_t out[2] = { fds[0], fds[1] };
+    return push_int_list(vm, out, ok == 0 ? 2 : 0, 3);
+}
+
+#define SOCK_ADDR(name, call)                                               \
+    static int p_##name(VM *vm) {                                           \
+        check_tag(vm, ARG(1), T_INT, #name);                                \
+        Obj *a = check_obj(vm, ARG(0), K_STRING, #name);                    \
+        int r = call((int)ARG(1).u.i, OBJ_BYTES(a), (int)a->len);           \
+        return ret(vm, 2, mk_int(r));                                       \
+    }
+SOCK_ADDR(socket_bind, sys_bind)
+SOCK_ADDR(socket_connect, sys_connect)
+
+static int p_socket_listen(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_listen");
+    check_tag(vm, ARG(0), T_INT, "socket_listen");
+    return ret(vm, 2, mk_int(sys_listen((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_accept(VM *vm) { INT1("socket_accept"); return ret(vm, 1, mk_int(sys_accept((int)x))); }
+
+static int p_socket_send(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_send");
+    Obj *b = check_obj(vm, ARG(1), K_STRING, "socket_send");
+    check_tag(vm, ARG(0), T_INT, "socket_send");
+    return ret(vm, 3, mk_int(sys_send((int)ARG(2).u.i, OBJ_BYTES(b), b->len, (int)ARG(0).u.i)));
+}
+
+static int p_socket_sendto(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "socket_sendto");
+    Obj *b = check_obj(vm, ARG(2), K_STRING, "socket_sendto");
+    check_tag(vm, ARG(1), T_INT, "socket_sendto");
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_sendto");
+    int64_t k = sys_sendto((int)ARG(3).u.i, OBJ_BYTES(b), b->len, (int)ARG(1).u.i,
+                           OBJ_BYTES(a), (int)a->len);
+    return ret(vm, 4, mk_int(k));
+}
+
+static char *receive_buffer(VM *vm, int64_t n, const char *prim) {
+    if (n < 0 || n > MAX_STRING) vm_fatal(vm, "primitive %s: bad length", prim);
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    return buf;
+}
+
+static int p_socket_recv(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_recv");
+    check_tag(vm, ARG(1), T_INT, "socket_recv");
+    check_tag(vm, ARG(0), T_INT, "socket_recv");
+    int64_t n = ARG(1).u.i;
+    char *buf = receive_buffer(vm, n, "socket_recv");
+    int64_t got = sys_recv((int)ARG(2).u.i, buf, n, (int)ARG(0).u.i);
+    Obj *s = vm_string_from(vm, buf, got < 0 ? 0 : (uint32_t)got);
+    free(buf);
+    return ret(vm, 3, mk_ptr(s));
+}
+
+static int p_socket_recvfrom(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_recvfrom");
+    check_tag(vm, ARG(1), T_INT, "socket_recvfrom");
+    check_tag(vm, ARG(0), T_INT, "socket_recvfrom");
+    int64_t n = ARG(1).u.i;
+    char *buf = receive_buffer(vm, n, "socket_recvfrom");
+    int64_t got = sys_recvfrom((int)ARG(2).u.i, buf, n, (int)ARG(0).u.i);
+    if (got < 0) { free(buf); return push_int_list(vm, NULL, 0, 3); }
+    /* the bytes, then the address, built on the stack so the collector sees them */
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, sys_last_addr(), (uint32_t)sys_last_addr_len())));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, buf, (uint32_t)got)));
+    vm_cons(vm);
+    free(buf);
+    Value l = vm_pop(vm);
+    return ret(vm, 3, l);
+}
+
+static int p_socket_shutdown(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "socket_shutdown");
+    check_tag(vm, ARG(0), T_INT, "socket_shutdown");
+    return ret(vm, 2, mk_int(sys_shutdown((int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_name(VM *vm) { INT1("socket_name"); return push_last_addr(vm, sys_sock_name((int)x), 1); }
+static int p_socket_peer(VM *vm) { INT1("socket_peer"); return push_last_addr(vm, sys_sock_peer((int)x), 1); }
+
+static int p_socket_getopt(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "socket_getopt");
+    check_tag(vm, ARG(1), T_INT, "socket_getopt");
+    check_tag(vm, ARG(0), T_INT, "socket_getopt");
+    return ret(vm, 3, mk_int(sys_getsockopt((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_setopt(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "socket_setopt");
+    check_tag(vm, ARG(2), T_INT, "socket_setopt");
+    check_tag(vm, ARG(1), T_INT, "socket_setopt");
+    check_tag(vm, ARG(0), T_INT, "socket_setopt");
+    return ret(vm, 4, mk_int(sys_setsockopt((int)ARG(3).u.i, (int)ARG(2).u.i,
+                                            (int)ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_socket_inet_addr(VM *vm) {
+    char *host = c_string(vm, ARG(1), "socket_inet_addr");
+    check_tag(vm, ARG(0), T_INT, "socket_inet_addr");
+    int ok = sys_inet_addr(host, (int)ARG(0).u.i);
+    free(host);
+    return push_last_addr(vm, ok, 2);
+}
+
+static int p_socket_unix_addr(VM *vm) {
+    char *path = c_string(vm, ARG(0), "socket_unix_addr");
+    int ok = sys_unix_addr(path);
+    free(path);
+    return push_last_addr(vm, ok, 1);
+}
+
+static int p_socket_addr_family(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_addr_family");
+    return ret(vm, 1, mk_int(sys_addr_family(OBJ_BYTES(a), (int)a->len)));
+}
+
+static int p_socket_inet_parts(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet_parts");
+    int port = 0;
+    const char *host = sys_inet_parts(OBJ_BYTES(a), (int)a->len, &port);
+    if (!host) return push_int_list(vm, NULL, 0, 1);
+    char buffer[32];
+    snprintf(buffer, sizeof buffer, "%d", port);
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
+    vm_cons(vm);
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+static int p_socket_unix_path(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_unix_path");
+    const char *path = sys_unix_path(OBJ_BYTES(a), (int)a->len);
+    return push_string_value(vm, path ? path : "");
+}
+
+#define NETDB_NAME(name, call)                                  \
+    static int p_##name(VM *vm) {                               \
+        char *arg = c_string(vm, ARG(0), #name);                \
+        const char *packed = call(arg);                         \
+        free(arg);                                              \
+        return push_strings(vm, packed ? packed : "", 1);       \
+    }
+NETDB_NAME(netdb_host_byname, sys_host_byname)
+NETDB_NAME(netdb_host_byaddr, sys_host_byaddr)
+NETDB_NAME(netdb_proto_byname, sys_proto_byname)
+
+static int p_netdb_hostname(VM *vm) {
+    const char *name = sys_hostname();
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_netdb_proto_bynumber(VM *vm) {
+    INT1("netdb_proto_bynumber");
+    const char *packed = sys_proto_bynumber((int)x);
+    return push_strings(vm, packed ? packed : "", 1);
+}
+
+static int p_netdb_serv_byname(VM *vm) {
+    char *name = c_string(vm, ARG(1), "netdb_serv_byname");
+    char *protocol = c_string(vm, ARG(0), "netdb_serv_byname");
+    const char *packed = sys_serv_byname(name, protocol);
+    free(name);
+    free(protocol);
+    return push_strings(vm, packed ? packed : "", 2);
+}
+
+static int p_netdb_serv_byport(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "netdb_serv_byport");
+    char *protocol = c_string(vm, ARG(0), "netdb_serv_byport");
+    const char *packed = sys_serv_byport((int)ARG(1).u.i, protocol);
+    free(protocol);
+    return push_strings(vm, packed ? packed : "", 2);
+}
+
+static int p_os_system(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "os_system");
+    char *command = malloc((size_t)s->len + 1);
+    if (!command) vm_fatal(vm, "out of memory");
+    memcpy(command, OBJ_BYTES(s), s->len);
+    command[s->len] = 0;
+    fflush(stdout);
+    int status = sys_system(command);
+    free(command);
+    return ret(vm, 1, mk_int(status));
+}
+
+static int p_os_getenv(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "os_getenv");
+    char *name = malloc((size_t)s->len + 1);
+    if (!name) vm_fatal(vm, "out of memory");
+    memcpy(name, OBJ_BYTES(s), s->len);
+    name[s->len] = 0;
+    const char *value = sys_getenv(name);
+    free(name);
+    if (!value) return ret(vm, 1, mk_con0(0));
+    Obj *o = vm_string_from(vm, value, (uint32_t)strlen(value));
+    Value r = mk_some(vm, mk_ptr(o));
+    return ret(vm, 1, r);
+}
+
 static int p_string_implode(VM *vm) {
     int64_t n = list_length(ARG(0));
     if (n < 0) vm_fatal(vm, "string_implode: malformed list");
-    if (n > 0x7fffffff) return raise_with(vm, 1, EXN_SIZE);
+    if (n > MAX_STRING) return raise_with(vm, 1, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)n);
     Value l = ARG(0);
     for (int64_t i = 0; i < n; i++) {
@@ -387,7 +1219,7 @@ static int p_string_concat_list(VM *vm) {
         if (s.tag != T_PTR || s.u.p->kind != K_STRING) vm_fatal(vm, "string_concat_list: non-string element");
         total += s.u.p->len;
     }
-    if (total > 0x7fffffff) return raise_with(vm, 1, EXN_SIZE);
+    if (total > MAX_STRING) return raise_with(vm, 1, EXN_SIZE);
     Obj *r = vm_alloc_string(vm, (uint32_t)total);
     uint32_t o = 0;
     for (Value x = ARG(0); x.tag == T_PTR; x = list_tail(x)) {
@@ -561,15 +1393,255 @@ static int p_file_read_all(VM *vm) {
     if (!f) return ret(vm, 1, mk_ptr(vm_string_from(vm, "", 0)));
     return read_all(vm, f, 1);
 }
+/* Read at most n bytes; the empty string at end of file. */
+static int p_file_read_vec(VM *vm) {
+    FILE *f = file_of(vm, ARG(1), "file_read_vec");
+    check_tag(vm, ARG(0), T_INT, "file_read_vec");
+    int64_t n = ARG(0).u.i;
+    if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
+    if (!f) return ret(vm, 2, mk_ptr(vm_string_from(vm, "", 0)));
+    char *buf = malloc((size_t)n ? (size_t)n : 1);
+    if (!buf) vm_fatal(vm, "out of memory");
+    size_t got = fread(buf, 1, (size_t)n, f);
+    Obj *s = vm_string_from(vm, buf, (uint32_t)got);
+    free(buf);
+    return ret(vm, 2, mk_ptr(s));
+}
+
+/* What a seekable file has left; ~1 for anything else, which the library
+   reads as "cannot be told without waiting". */
+static int p_file_avail(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_avail");
+    if (!f) return ret(vm, 1, mk_int(0));
+    long here = ftell(f);
+    if (here < 0) return ret(vm, 1, mk_int(-1));
+    if (fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
+    long end = ftell(f);
+    if (fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
+    return ret(vm, 1, mk_int(end - here));
+}
+
+static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
+
+/* file_tell h: the position of the file, in bytes, or -1 (not a file that
+   has positions, or an invalid handle). */
+static int p_file_tell(VM *vm) {
+    FILE *f = file_of(vm, ARG(0), "file_tell");
+    long here = f ? ftell(f) : -1;
+    if (here < 0) vm->io_errno = errno;
+    return ret(vm, 1, mk_int(here < 0 ? -1 : here));
+}
+
+/* file_seek (h, p): move to byte p from the start (flushing what is
+   written first, as fseek does); 0, or -1 on failure. */
+static int p_file_seek(VM *vm) {
+    FILE *f = file_of(vm, ARG(1), "file_seek");
+    check_tag(vm, ARG(0), T_INT, "file_seek");
+    int ok = f && ARG(0).u.i >= 0 && fseek(f, (long)ARG(0).u.i, SEEK_SET) == 0;
+    if (!ok) vm->io_errno = f ? errno : EBADF;
+    return ret(vm, 2, mk_int(ok ? 0 : -1));
+}
+
+/* The handles of the library are indices of the VM's table; the system
+   knows the descriptors of the files behind them. */
+static int descriptor_of(VM *vm, Value h, const char *prim) {
+    FILE *f = file_of(vm, h, prim);
+    return f ? sys_fileno(f) : -1;
+}
+
+/* ================================================================ POSIX */
+static int p_posix_const(VM *vm) {
+    char *name = c_string(vm, ARG(0), "posix_const");
+    int64_t v = sys_const(name);
+    free(name);
+    return ret(vm, 1, mk_int(v));
+}
+
+/* The strings of a list, as a NULL-terminated array the caller frees. */
+static char **string_array(VM *vm, Value l, const char *prim, const char *first) {
+    int64_t n = list_length(l);
+    if (n < 0) vm_fatal(vm, "primitive %s: malformed list", prim);
+    int extra = first ? 1 : 0;
+    char **out = calloc((size_t)n + (size_t)extra + 1, sizeof *out);
+    if (!out) vm_fatal(vm, "out of memory");
+    if (first) {
+        out[0] = malloc(strlen(first) + 1);
+        if (!out[0]) vm_fatal(vm, "out of memory");
+        strcpy(out[0], first);
+    }
+    for (int64_t i = 0; i < n; i++) {
+        Obj *s = check_obj(vm, list_head(l), K_STRING, prim);
+        out[i + extra] = malloc((size_t)s->len + 1);
+        if (!out[i + extra]) vm_fatal(vm, "out of memory");
+        memcpy(out[i + extra], OBJ_BYTES(s), s->len);
+        out[i + extra][s->len] = 0;
+        l = list_tail(l);
+    }
+    return out;
+}
+
+static void free_array(char **a) {
+    if (!a) return;
+    for (char **p = a; *p; p++) free(*p);
+    free(a);
+}
+
+static int p_posix_fork(VM *vm) { fflush(stdout); fflush(stderr); return ret(vm, 1, mk_int(sys_fork())); }
+
+static int exec_with(VM *vm, Value pathValue, Value argsValue, char **envp, int search, int arity) {
+    char *path = c_string(vm, pathValue, "posix_exec");
+    char **argv = string_array(vm, argsValue, "posix_exec", NULL);
+    fflush(stdout);
+    fflush(stderr);
+    int r = sys_exec(path, argv, envp, search);
+    free(path);
+    free_array(argv);
+    free_array(envp);
+    return ret(vm, arity, mk_int(r));
+}
+
+static int p_posix_exec(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "posix_exec");
+    return exec_with(vm, ARG(2), ARG(1), NULL, (int)ARG(0).u.i, 3);
+}
+
+static int p_posix_exece(VM *vm) {
+    char **envp = string_array(vm, ARG(0), "posix_exece", NULL);
+    return exec_with(vm, ARG(2), ARG(1), envp, 0, 3);
+}
+
+static int p_posix_waitpid(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_waitpid");
+    check_tag(vm, ARG(0), T_INT, "posix_waitpid");
+    int64_t out[3];
+    int ok = sys_waitpid(ARG(1).u.i, (int)ARG(0).u.i, out);
+    return push_int_list(vm, out, ok == 0 ? 3 : 0, 2);
+}
+
+static int p_posix_kill(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_kill");
+    check_tag(vm, ARG(0), T_INT, "posix_kill");
+    return ret(vm, 2, mk_int(sys_kill(ARG(1).u.i, (int)ARG(0).u.i)));
+}
+
+static int p_posix_alarm(VM *vm) { INT1("posix_alarm"); return ret(vm, 1, mk_int(sys_alarm((int)x))); }
+static int p_posix_pause(VM *vm) { return ret(vm, 1, mk_int(sys_pause())); }
+static int p_posix_getpid(VM *vm) { return ret(vm, 1, mk_int(sys_getpid())); }
+static int p_posix_getppid(VM *vm) { return ret(vm, 1, mk_int(sys_getppid())); }
+static int p_posix_getuid(VM *vm) { return ret(vm, 1, mk_int(sys_getuid())); }
+static int p_posix_geteuid(VM *vm) { return ret(vm, 1, mk_int(sys_geteuid())); }
+static int p_posix_getgid(VM *vm) { return ret(vm, 1, mk_int(sys_getgid())); }
+static int p_posix_getegid(VM *vm) { return ret(vm, 1, mk_int(sys_getegid())); }
+static int p_posix_setuid(VM *vm) { INT1("posix_setuid"); return ret(vm, 1, mk_int(sys_setuid(x))); }
+static int p_posix_setgid(VM *vm) { INT1("posix_setgid"); return ret(vm, 1, mk_int(sys_setgid(x))); }
+
+static int p_posix_getgroups(VM *vm) {
+    int64_t groups[256];
+    int n = sys_getgroups(groups, 256);
+    return push_int_list(vm, groups, n < 0 ? 0 : n, 1);
+}
+
+static int p_posix_getlogin(VM *vm) {
+    const char *name = sys_getlogin();
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_posix_getpgrp(VM *vm) { return ret(vm, 1, mk_int(sys_getpgrp())); }
+static int p_posix_setsid(VM *vm) { return ret(vm, 1, mk_int(sys_setsid())); }
+
+static int p_posix_setpgid(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_setpgid");
+    check_tag(vm, ARG(0), T_INT, "posix_setpgid");
+    return ret(vm, 2, mk_int(sys_setpgid(ARG(1).u.i, ARG(0).u.i)));
+}
+
+static int p_posix_uname(VM *vm) { return push_strings(vm, sys_uname(), 1); }
+
+static int p_posix_times(VM *vm) {
+    int64_t out[5];
+    int ok = sys_times(out);
+    return push_int_list(vm, out, ok == 0 ? 5 : 0, 1);
+}
+
+static int p_posix_environ(VM *vm) { return push_strings(vm, sys_environ(), 1); }
+
+static int p_posix_ctermid(VM *vm) {
+    const char *name = sys_ctermid();
+    return push_string_value(vm, name ? name : "");
+}
+
+/* These four take a descriptor of the system, as Posix and the sockets have
+   them; file_descriptor gives the one of a handle of the VM's table. */
+static int p_file_descriptor(VM *vm) {
+    return ret(vm, 1, mk_int(descriptor_of(vm, ARG(0), "file_descriptor")));
+}
+
+static int p_posix_ttyname(VM *vm) {
+    INT1("posix_ttyname");
+    int fd = (int)x;
+    const char *name = fd < 0 ? NULL : sys_ttyname(fd);
+    return push_string_value(vm, name ? name : "");
+}
+
+static int p_posix_isatty(VM *vm) {
+    INT1("posix_isatty");
+    int fd = (int)x;
+    return ret(vm, 1, mk_int(fd < 0 ? 0 : sys_isatty(fd)));
+}
+
+static int p_posix_sysconf(VM *vm) {
+    char *name = c_string(vm, ARG(0), "posix_sysconf");
+    int64_t v = sys_sysconf(name);
+    free(name);
+    return ret(vm, 1, mk_int(v));
+}
+
+static int p_os_desc_kind(VM *vm) {
+    INT1("os_desc_kind");
+    int fd = (int)x;
+    return ret(vm, 1, mk_int(fd < 0 ? -1 : sys_desc_kind(fd)));
+}
+
+static int p_os_poll(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "os_poll");
+    int64_t n = list_length(ARG(2));
+    if (n < 0 || list_length(ARG(1)) != n) vm_fatal(vm, "primitive os_poll: malformed list");
+    int32_t *fds = malloc((size_t)(n > 0 ? n : 1) * sizeof *fds);
+    int32_t *events = malloc((size_t)(n > 0 ? n : 1) * sizeof *events);
+    if (!fds || !events) vm_fatal(vm, "out of memory");
+    if (int_list(ARG(2), fds, (int)n) != n || int_list(ARG(1), events, (int)n) != n)
+        vm_fatal(vm, "primitive os_poll: malformed list");
+    int *wide_fds = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_fds);
+    int *wide_events = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_events);
+    if (!wide_fds || !wide_events) vm_fatal(vm, "out of memory");
+    for (int i = 0; i < (int)n; i++) {
+        wide_fds[i] = fds[i];
+        wide_events[i] = events[i];
+    }
+    int ready = sys_poll(wide_fds, wide_events, (int)n, ARG(0).u.i);
+    int64_t *out = malloc((size_t)(n > 0 ? n : 1) * sizeof *out);
+    if (!out) vm_fatal(vm, "out of memory");
+    for (int i = 0; i < (int)n; i++) out[i] = wide_events[i];
+    free(fds); free(events); free(wide_fds); free(wide_events);
+    int r = push_int_list(vm, out, ready < 0 ? 0 : (int)n, 3);
+    free(out);
+    return r;
+}
+
 static int p_file_error(VM *vm) {
     const char *m = strerror(vm->io_errno);
     return ret(vm, 1, mk_ptr(vm_string_from(vm, m, (uint32_t)strlen(m))));
 }
 static int p_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "exit");
-    fflush(stdout);
-    fflush(stderr);
-    exit((int)ARG(0).u.i);
+    vm_exit(vm, (int)ARG(0).u.i);
+    return 0;
+}
+/* Posix.Process.exit: at once, with nothing flushed (C99's _Exit). */
+static int p_posix_exit(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "posix_exit");
+    _Exit((int)ARG(0).u.i);
+    return 0;
 }
 static int p_command_args(VM *vm) {
     vm_push(vm, mk_con0(0));

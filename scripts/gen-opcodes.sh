@@ -73,10 +73,10 @@ END {
   print "  val table : (string * int * int) list = [" > s
   for (i = 0; i < n; i++) printf("    (\"%s\", %d, %d)%s\n", name[i], i, arity[i], (i < n - 1 ? "," : "")) > s
   print "  ]" > s
-  print "  fun find name =" > s
-  print "    let fun go [] = NONE" > s
-  print "          | go ((n, i, a) :: rest) = if n = name then SOME (i, a) else go rest" > s
-  print "    in go table end" > s
+  print "  val byName =" > s
+  print "    List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table" > s
+  print "  (* find name = SOME (index, arity) *)" > s
+  print "  fun find name = StringMap.find (byName, name)" > s
   print "end" > s
 }' vm/prims.def
 

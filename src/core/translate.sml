@@ -7,13 +7,9 @@ struct
 
   fun sconConst sc = MatchComp.sconConst sc
 
-  fun tyconName (t : Types.ty) : string option =
-    case Types.resolve t of
-      Types.TCon (c, _) => SOME (#name c)
-    | _ => NONE
-
-  (* Domain type of an operator: first component for binary operators. *)
-  fun operandTycon (t : Types.ty) : string =
+  (* Domain type constructor of an operator: that of the first component for
+     binary operators. *)
+  fun operandTycon (t : Types.ty) : Types.tycon =
     let
       val opnd =
         case Types.resolve t of
@@ -21,40 +17,48 @@ struct
         | Types.TArrow (a, _) => a
         | _ => Error.bug "builtin operator without arrow type"
     in
-      case tyconName opnd of
-        SOME n => n
-      | NONE => "int"    (* unconstrained: defaulted *)
+      case Types.resolve opnd of
+        Types.TCon (c, _) => c
+      | _ => Types.intTycon    (* unconstrained: defaulted *)
     end
 
   (* Resolve a builtin operator at its instantiated type to a primitive. *)
   fun builtinPrim (name : string, ty : Types.ty) : string =
-    let
-      val tc = operandTycon ty
-      fun arith (i, w, r) =
-        case tc of "int" => i | "word" => w | "real" => r
-                 | _ => Error.bug ("operator " ^ name ^ " at type " ^ tc)
-      fun cmp base =
-        case tc of
-          "int" => "int_" ^ base | "word" => "word_" ^ base | "real" => "real_" ^ base
-        | "char" => "char_" ^ base | "string" => "string_" ^ base
-        | _ => Error.bug ("comparison " ^ name ^ " at type " ^ tc)
-    in
-      case name of
-        "+" => arith ("int_add", "word_add", "real_add")
-      | "-" => arith ("int_sub", "word_sub", "real_sub")
-      | "*" => arith ("int_mul", "word_mul", "real_mul")
-      | "div" => arith ("int_div", "word_div", "")
-      | "mod" => arith ("int_mod", "word_mod", "")
-      | "/" => "real_div"
-      | "~" => arith ("int_neg", "", "real_neg")
-      | "abs" => arith ("int_abs", "", "real_abs")
-      | "<" => cmp "lt" | "<=" => cmp "le" | ">" => cmp "gt" | ">=" => cmp "ge"
-      | "=" => "poly_eq"
-      | "<>" => "poly_eq"
-      | ":=" => "ref_set"
-      | "!" => "ref_get"
-      | _ => Error.bug ("unknown builtin operator " ^ name)
-    end
+    case name of
+      "=" => "poly_eq"
+    | "<>" => "poly_eq"
+    | ":=" => "ref_set"
+    | "!" => "ref_get"
+    | _ =>
+        let val tc = operandTycon ty
+        in
+          case Overload.implOf (tc, name) of
+            SOME (Overload.Prim prim) => prim
+          | _ => Error.bug ("operator " ^ name ^ " at type " ^ #name tc)
+        end
+
+  (* The top-level variable that implements an overloaded operator at a type
+     registered with _overload, if that is where the operator resolved to. *)
+  fun builtinGlobal (name : string, ty : Types.ty) : int option =
+    case name of
+      "=" => NONE | "<>" => NONE | ":=" => NONE | "!" => NONE
+    | _ => (case Overload.implOf (operandTycon ty, name) of
+              SOME (Overload.Global g) => SOME g
+            | _ => NONE)
+
+  (* Variables bound to a primitive, `val op + = _prim "int_add" : int * int -> int`,
+     or to such a variable, `val size = String.size`, by stamp. An application
+     of one is translated like an application of the primitive itself; the
+     variable still gets its closure, for the uses that are not applications. *)
+  val primAliases : string IntMap.map ref = ref IntMap.empty
+
+  fun primAliasOf (e : exp) : string option =
+    case e of
+      ETyped (e, _, _) => primAliasOf e
+    | EPrim (name, _, _) => SOME name
+    | EVar (_, ref (SOME (VGlobal s)), _) => IntMap.find (!primAliases, s)
+    | EVar (_, ref (SOME (VLocal s)), _) => IntMap.find (!primAliases, s)
+    | _ => NONE
 
   fun primArity name =
     case Prims.find name of
@@ -120,7 +124,7 @@ struct
 
   and transExp (e : exp) : lexp =
     case e of
-      EScon (sc, _) => Const (sconConst sc)
+      EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
     | EVar (_, slot, sp) =>
         (case varinfo (slot, sp) of
            VLocal s => Var s
@@ -130,13 +134,16 @@ struct
          | VExn info => exnExp info
          | VExnVal info => exnExp info
          | VBuiltin (name, ty) =>
-             let val prim = builtinPrim (name, ty)
-             in
-               if name = "<>" then
-                 let val x = MatchComp.freshVar ()
-                 in Fn (x, notExp (Prim (prim, [Select (0, Var x), Select (1, Var x)]))) end
-               else etaPrim prim
-             end)
+             (case builtinGlobal (name, ty) of
+                SOME g => Global g
+              | NONE =>
+                  let val prim = builtinPrim (name, ty)
+                  in
+                    if name = "<>" then
+                      let val x = MatchComp.freshVar ()
+                      in Fn (x, notExp (Prim (prim, [Select (0, Var x), Select (1, Var x)]))) end
+                    else etaPrim prim
+                  end))
     | ERecord (fields, _) =>
         let
           val sorted = Types.sortFields fields
@@ -205,11 +212,20 @@ struct
          | VExn info => exnApp (info, f, a)
          | VExnVal info => exnApp (info, f, a)
          | VBuiltin (name, ty) =>
-             let
-               val prim = builtinPrim (name, ty)
-               val call = applyPrim (prim, a)
-             in if name = "<>" then notExp call else call end
-         | _ => App (transExp f, transExp a))
+             (case builtinGlobal (name, ty) of
+                SOME g =>
+                  (case IntMap.find (!primAliases, g) of
+                     SOME prim => applyPrim (prim, a)
+                   | NONE => App (Global g, transExp a))
+              | NONE =>
+                  let
+                    val prim = builtinPrim (name, ty)
+                    val call = applyPrim (prim, a)
+                  in if name = "<>" then notExp call else call end)
+         | _ =>
+             (case primAliasOf f of
+                SOME prim => applyPrim (prim, a)
+              | NONE => App (transExp f, transExp a)))
     | EPrim (name, _, _) => applyPrim (name, a)
     | ESelect (lab, slot, ssp) => Select (recordIndex (slot, lab, ssp), transExp a)
     | _ => App (transExp f, transExp a)
@@ -242,7 +258,11 @@ struct
             case p of
               PVar (_, slot, sp) =>
                 (case patInfo (slot, sp) of
-                   PIVar (stamp, g) => MatchComp.bindVar (stamp, g, transExp e, k ())
+                   PIVar (stamp, g) =>
+                     (case primAliasOf e of
+                        SOME prim => primAliases := IntMap.insert (!primAliases, stamp, prim)
+                      | NONE => ();
+                      MatchComp.bindVar (stamp, g, transExp e, k ()))
                  | _ => general (p, e, k))
             | PWild _ => Seq (transExp e, k ())
             | _ => general (p, e, k)
@@ -302,6 +322,7 @@ struct
     | DInfix _ => k ()
     | DInfixr _ => k ()
     | DNonfix _ => k ()
+    | DOverload _ => k ()
     | DStructure (binds, _) =>
         let
           fun go [] = k ()

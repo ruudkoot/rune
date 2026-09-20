@@ -1,0 +1,21 @@
+(* signature OPTION, transcribed from https://smlfamily.github.io/Basis/option.html
+
+   NONE and SOME are not among the identifiers the Definition forbids in a
+   datatype specification (Section 2.9), so the datatype is transcribed as the
+   page has it. *)
+signature SPEC_OPTION =
+sig
+  datatype 'a option = NONE | SOME of 'a
+  exception Option
+
+  val getOpt : 'a option * 'a -> 'a
+  val isSome : 'a option -> bool
+  val valOf : 'a option -> 'a
+  val filter : ('a -> bool) -> 'a -> 'a option
+  val join : 'a option option -> 'a option
+  val app : ('a -> unit) -> 'a option -> unit
+  val map : ('a -> 'b) -> 'a option -> 'b option
+  val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
+  val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
+  val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
+end

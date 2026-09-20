@@ -5,19 +5,19 @@ struct
   type char = char
 
   val maxSize = 1073741823
-  val size = _prim "string_size" : string -> int
+  val size = size
   val sub = _prim "string_sub" : string * int -> char
-  val op ^ = _prim "string_concat" : string * string -> string
-  val str = _prim "string_from_char" : char -> string
-  val implode = _prim "string_implode" : char list -> string
-  val explode = _prim "string_explode" : string -> char list
-  val concat = _prim "string_concat_list" : string list -> string
+  val op ^ = op ^
+  val str = str
+  val implode = implode
+  val explode = explode
+  val concat = concat
   val extractN = _prim "string_extract" : string * int * int -> string
 
   fun extract (s, i, NONE) = extractN (s, i, Int.- (size s, i))
     | extract (s, i, SOME n) = extractN (s, i, n)
 
-  fun substring (s, i, n) = extractN (s, i, n)
+  val substring = substring
 
   fun concatWith sep [] = ""
     | concatWith sep (s :: rest) = concat (s :: List.foldr (fn (x, acc) => sep :: x :: acc) [] rest)
@@ -66,36 +66,9 @@ struct
 
   fun toString s = translate Char.toString s
 
-  fun fromString s =
-    let
-      fun go [] = SOME []
-        | go (#"\\" :: rest) =
-          let
-            fun skipGap (c :: cs) = if Char.isSpace c then skipGap cs else c :: cs
-              | skipGap [] = []
-          in
-            case rest of
-              #"a" :: cs => cont (#"\a", cs) | #"b" :: cs => cont (#"\b", cs)
-            | #"t" :: cs => cont (#"\t", cs) | #"n" :: cs => cont (#"\n", cs)
-            | #"v" :: cs => cont (#"\v", cs) | #"f" :: cs => cont (#"\f", cs)
-            | #"r" :: cs => cont (#"\r", cs) | #"\\" :: cs => cont (#"\\", cs)
-            | #"\"" :: cs => cont (#"\"", cs)
-            | #"^" :: d :: cs => cont (Char.chr (Int.- (Char.ord d, 64)), cs)
-            | a :: b :: d :: cs =>
-              if Char.isDigit a andalso Char.isDigit b andalso Char.isDigit d then
-                let val v = Int.+ (Int.* (Int.- (Char.ord a, 48), 100),
-                                   Int.+ (Int.* (Int.- (Char.ord b, 48), 10), Int.- (Char.ord d, 48)))
-                in if Int.> (v, 255) then NONE else cont (Char.chr v, cs) end
-              else if Char.isSpace a then go (skipGapEnd (skipGap (a :: b :: d :: cs)))
-              else NONE
-            | c :: cs => if Char.isSpace c then go (skipGapEnd (skipGap (c :: cs))) else NONE
-            | [] => NONE
-          end
-        | go (c :: cs) = cont (c, cs)
-      and cont (c, cs) = case go cs of NONE => NONE | SOME r => SOME (c :: r)
-      and skipGapEnd (#"\\" :: cs) = cs
-        | skipGapEnd cs = cs
-    in
-      case go (explode s) of NONE => NONE | SOME cs => SOME (implode cs)
-    end
+  (* formatting sequences are skipped around every character *)
+  fun scan getc src = RuneEscape.scanString (RuneEscape.scanSml, true) getc src
+  fun fromString s = StringCvt.scanString scan s
+  fun toCString s = translate Char.toCString s
+  fun fromCString s = StringCvt.scanString (RuneEscape.scanString (RuneEscape.cChar, false)) s
 end

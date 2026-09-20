@@ -2,12 +2,14 @@
 # Run MLton's regression programs (github.com/MLton/mlton, regression/) as an
 # external conformance corpus:
 #   tests/external/run-mlton.sh [--rune BIN] [--vm BIN] [-j N] DIR
+# The default compiler is bin/rune, the self-hosted one; --rune bin/rune-mlton
+# is faster.
 # Every DIR/<name>.sml that has a DIR/<name>.ok is compiled, run with a
 # 20-second limit, and its stdout compared with the .ok file. Programs listed
-# in tests/external/mlton-skip.txt (one name per line, with a reason after
-# a space) are skipped: they need Basis Library parts Rune does not have, or
-# MLton-specific behaviour. Prints one line per program and a summary; exits
-# 1 if a program not on the skip list fails.
+# in tests/external/mlton-skip.txt (one name per line, then a space and
+# CATEGORY: reason; the file's header lists the categories) are skipped.
+# Prints one line per program and a summary; exits 1 if a program not on the
+# skip list fails.
 set -u
 rune=bin/rune
 vm=bin/runevm

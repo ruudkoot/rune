@@ -1,0 +1,8 @@
+isDir: true
+size: 6 access: true
+entries: a.txt
+modTime in the past: true
+same file: true
+chDir: true
+renamed: true
+gone: noent

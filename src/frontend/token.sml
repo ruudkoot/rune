@@ -9,8 +9,9 @@ struct
   | INT of IntInf.int
   | WORD of IntInf.int
   | REAL of string                        (* literal text, SML syntax *)
-  | STRING of string
-  | CHAR of char
+  | STRING of string            (* a constant whose characters fit 8 bits *)
+  | WIDESTRING of int list      (* one with a code point above 255 *)
+  | CHAR of int                 (* the code point of a character constant *)
     (* reserved words *)
   | ABSTYPE | AND | ANDALSO | AS | CASE | DATATYPE | DO | ELSE | END | EXCEPTION
   | FN | FUN | HANDLE | IF | IN | INFIX | INFIXR | LET | LOCAL | NONFIX | OF | OP
@@ -21,6 +22,7 @@ struct
   | SEMI | DOTS | UNDERSCORE | BAR | EQUALS | DARROW | ARROW | HASH
     (* extension *)
   | PRIM                                  (* _prim *)
+  | OVERLOAD                              (* _overload *)
   | EOF
 
   fun toString t =
@@ -32,7 +34,8 @@ struct
     | WORD w => "0w" ^ IntInf.toString w
     | REAL s => s
     | STRING s => "\"" ^ String.toString s ^ "\""
-    | CHAR c => "#\"" ^ Char.toString c ^ "\""
+    | WIDESTRING s => "\"" ^ Scon.text s ^ "\""
+    | CHAR c => "#\"" ^ Scon.escape c ^ "\""
     | ABSTYPE => "abstype" | AND => "and" | ANDALSO => "andalso" | AS => "as"
     | CASE => "case" | DATATYPE => "datatype" | DO => "do" | ELSE => "else"
     | END => "end" | EXCEPTION => "exception" | FN => "fn" | FUN => "fun"
@@ -49,6 +52,7 @@ struct
     | SEMI => ";" | DOTS => "..." | UNDERSCORE => "_" | BAR => "|" | EQUALS => "="
     | DARROW => "=>" | ARROW => "->" | HASH => "#"
     | PRIM => "_prim"
+    | OVERLOAD => "_overload"
     | EOF => "<eof>"
 
   val reserved : (string * token) list =

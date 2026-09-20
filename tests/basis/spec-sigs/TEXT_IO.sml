@@ -1,0 +1,71 @@
+(* signature TEXT_IO, transcribed from
+   https://smlfamily.github.io/Basis/text-io.html and, for the part that it
+   includes, from https://smlfamily.github.io/Basis/imperative-io.html.
+
+   The page writes `include IMPERATIVE_IO` and then respecifies the
+   substructure StreamIO as a TEXT_STREAM_IO, which is not valid SML; it says
+   that the meaning is "a structure matching TEXT_IO also matches
+   IMPERATIVE_IO and has a substructure StreamIO that matches TEXT_STREAM_IO".
+   That is what is written here: the substructure first, with its
+   constraints, then the rest of IMPERATIVE_IO in full, then the members of
+   TEXT_IO. (tests/basis/textio_full_sig.sml also matches TextIO against
+   SPEC_IMPERATIVE_IO.) The substructure has SPEC_TEXT_STREAM_IO of
+   tests/basis/spec-sigs/TEXT_STREAM_IO.sml, which includes SPEC_STREAM_IO of
+   STREAM_IO.sml; a test that uses this file uses those first.
+
+   The optional WideTextIO is left out. *)
+signature SPEC_TEXT_IO =
+sig
+  structure StreamIO : SPEC_TEXT_STREAM_IO
+    where type reader = TextPrimIO.reader
+    where type writer = TextPrimIO.writer
+    where type pos = TextPrimIO.pos
+
+  (* IMPERATIVE_IO *)
+  type vector = StreamIO.vector
+  type elem = StreamIO.elem
+
+  type instream
+  type outstream
+
+  val input : instream -> vector
+  val input1 : instream -> elem option
+  val inputN : instream * int -> vector
+  val inputAll : instream -> vector
+  val canInput : instream * int -> int option
+  val lookahead : instream -> elem option
+  val closeIn : instream -> unit
+  val endOfStream : instream -> bool
+
+  val output : outstream * vector -> unit
+  val output1 : outstream * elem -> unit
+  val flushOut : outstream -> unit
+  val closeOut : outstream -> unit
+
+  val mkInstream : StreamIO.instream -> instream
+  val getInstream : instream -> StreamIO.instream
+  val setInstream : instream * StreamIO.instream -> unit
+
+  val mkOutstream : StreamIO.outstream -> outstream
+  val getOutstream : outstream -> StreamIO.outstream
+  val setOutstream : outstream * StreamIO.outstream -> unit
+  val getPosOut : outstream -> StreamIO.out_pos
+  val setPosOut : outstream * StreamIO.out_pos -> unit
+
+  (* TEXT_IO *)
+  val inputLine : instream -> string option
+  val outputSubstr : outstream * substring -> unit
+  val openIn : string -> instream
+  val openOut : string -> outstream
+  val openAppend : string -> outstream
+  val openString : string -> instream
+
+  val stdIn : instream
+  val stdOut : outstream
+  val stdErr : outstream
+
+  val print : string -> unit
+  val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
+                    -> ('a, StreamIO.instream) StringCvt.reader)
+                   -> instream -> 'a option
+end

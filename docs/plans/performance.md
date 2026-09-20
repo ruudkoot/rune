@@ -1,17 +1,27 @@
 # Performance plan: the compiler on runevm
 
-This document covers the self-hosted compiler (`bin/rune-boot`, i.e.
-`bin/rune.rbc` on `runevm`). `make test-boot`, `make bootstrap` and the boot leg
-of `make check-cross` all spend their time in it. It records where the time goes
-and the remaining work, ordered by expected gain per effort. Numbers are from
-2026-09-18 on a 16-CPU Linux machine.
+This document covers the compiler Rune ships, `bin/rune` (i.e. `bin/rune.rbc`
+on `runevm`; `check-cross` knows it as `bin/rune-boot`). `make test`,
+`make test-basis`, `make bootstrap` and the boot leg of `make check-cross` all
+spend their time in it. It records where the time goes and the remaining work,
+ordered by expected gain per effort. Numbers are from 2026-09-18 on a 16-CPU
+Linux machine.
+
+## Measuring
+
+`runevm --count` prints the instructions executed and the bytes and objects
+allocated; `make perf-check` holds benchmark programs, the hello compile and
+the bootstrap to budgets on those numbers (`tests/perf`). After a change
+that is meant to move them, `sh tests/perf/run-perf.sh --update` and quote the
+old and new numbers in the commit.
 
 ## Where we are
 
-| Workload | MLton build | `bin/rune-boot` |
+| Workload | MLton build | `bin/rune` |
 |---|---|---|
 | Compile the compiler (`BOOT_SRCS` in the Makefile) | 0.08 s | 3.1 s |
 | Compile a one-line program (almost all of it is the basis) | 0.05 s | 0.5 s |
+| `make test` at `-j16` (176 programs) | 3 s | 15 s |
 
 The self-hosted compiler is about 35–40× slower than the native build.
 Two fixes have already landed; together they took the first row from 41 s to 3.1 s:
@@ -86,7 +96,15 @@ These change no instruction or bytecode format. Each is small.
   (`compareInt`, `Int.<`, `Int.>`). Compare with the builtin `<`/`>` at type
   `int`, or have the primitive return an `order`.
 
-### 2. Inline primitives bound with `val`
+### 2. Inline primitives bound with `val` (done)
+
+Done as part of [basis.md](basis.md): `Translate` records the variables bound
+to a primitive, or to such a variable (`val size = String.size`), and
+translates their applications like `applyPrim`. Measured with `runevm --count`
+on the compiler compiling itself: 541.7 M to 491.9 M instructions, 916 MB to
+650 MB allocated, 22.1 M to 15.5 M objects, 4.3 s to 3.5 s. The description
+as it was written:
+
 
 `lib/basis/int.sml` and others bind `val op < = _prim "int_lt" : ...`. This
 makes `Int.<`, `Int.+` and friends global closures. Every qualified use
@@ -187,8 +205,8 @@ shared machine vary by ±30%:
 
 ```sh
 BOOT_SRCS="build/config.sml $(grep -v '^[[:space:]]*#' sources.txt | grep -v '^[[:space:]]*$') src/main/rune-main.sml"
-time bin/rune-boot -o /tmp/x.rbc $BOOT_SRCS
-time bin/rune-boot --typecheck-only $BOOT_SRCS   # front end only
+time bin/rune -o /tmp/x.rbc $BOOT_SRCS
+time bin/rune --typecheck-only $BOOT_SRCS   # front end only
 ```
 
 Where VM time goes:
@@ -198,7 +216,6 @@ cc -std=c99 -O2 -pg -o /tmp/runevm-pg vm/*.c -lm
 /tmp/runevm-pg --heap-size 268435456 bin/rune.rbc -o /tmp/x.rbc $BOOT_SRCS   # writes ./gmon.out
 gprof -b -p /tmp/runevm-pg gmon.out && rm gmon.out
 ```
-
 Where the compiler spends time natively. This usually points at the same
 algorithmic hot spots; some runs crash inside the profiler, so rerun those.
 

@@ -10,4 +10,4 @@ size 15
 bytes 0 255
 Io openIn tests/out/no-such-file.tmp
 closed output
-closed inputLine
+closed reads: eof empty true

@@ -79,9 +79,9 @@ struct
   fun writeFile (path : string, p : program) : unit =
     let
       val chunks = serialize p
-      val out = BinIO.openOut path
+      val out = TextIO.openOut path
     in
-      List.app (fn s => BinIO.output (out, Byte.stringToBytes s)) chunks;
-      BinIO.closeOut out
+      List.app (fn s => TextIO.output (out, s)) chunks;
+      TextIO.closeOut out
     end
 end

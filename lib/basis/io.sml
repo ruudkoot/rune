@@ -1,6 +1,10 @@
-(* IO: exceptions shared by TextIO and BinIO. *)
+(* IO: the exceptions and the buffering modes shared by the I/O structures. *)
 structure IO =
 struct
   exception Io of {name : string, function : string, cause : exn}
+  exception BlockingNotSupported
+  exception NonblockingNotSupported
+  exception RandomAccessNotSupported
   exception ClosedStream
+  datatype buffer_mode = NO_BUF | LINE_BUF | BLOCK_BUF
 end

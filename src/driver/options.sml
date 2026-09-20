@@ -4,8 +4,12 @@ struct
   val output : string option ref = ref NONE
   val inputs : string list ref = ref []
   val noPrelude = ref false
+  val basisAll = ref false         (* --basis all: every file of the basis library *)
+  val basisDeps = ref false        (* --basis-deps: print the files that would be loaded *)
+  val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
   val allowPrim = ref false
-  val libDir = ref Config.defaultLibDir
+  (* No default: every bin/rune* is a wrapper that passes --lib. *)
+  val libDir : string option ref = ref NONE
   val dumpTokens = ref false
   val dumpAst = ref false
   val dumpLambda = ref false
@@ -21,9 +25,14 @@ struct
     \Compile Standard ML source files to Rune bytecode (run with runevm).\n\
     \\n\
     \  -o FILE           write bytecode to FILE (default: first input with .rbc)\n\
-    \  --lib DIR         directory containing the basis library\n\
-    \                    (default: " ^ Config.defaultLibDir ^ ")\n\
+    \  --lib DIR         directory containing the basis library, in DIR/basis\n\
+    \                    (required unless --no-prelude)\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
+    \  --basis MODE      demand (default): compile the files of the basis library\n\
+    \                    that the inputs name, and what those need; all: every file\n\
+    \  --basis-deps      print the basis library files the inputs load, and exit\n\
+    \  --basis-check     check the provides and requires columns of the basis\n\
+    \                    library's MANIFEST against its sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --typecheck-only  stop after type checking\n\
     \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
@@ -41,9 +50,14 @@ struct
       [] => ()
     | "-o" :: f :: rest => (output := SOME f; parse rest)
     | ["-o"] => raise Usage "-o requires an argument"
-    | "--lib" :: d :: rest => (libDir := d; parse rest)
+    | "--lib" :: d :: rest => (libDir := SOME d; parse rest)
     | ["--lib"] => raise Usage "--lib requires an argument"
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
+    | "--basis" :: "all" :: rest => (basisAll := true; parse rest)
+    | "--basis" :: "demand" :: rest => (basisAll := false; parse rest)
+    | "--basis" :: _ => raise Usage "--basis requires all or demand"
+    | "--basis-deps" :: rest => (basisDeps := true; parse rest)
+    | "--basis-check" :: rest => (basisCheck := true; parse rest)
     | "--allow-prim" :: rest => (allowPrim := true; parse rest)
     | "--typecheck-only" :: rest => (typecheckOnly := true; parse rest)
     | "--no-warnings" :: rest => (noWarnings := true; parse rest)

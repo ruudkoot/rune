@@ -1,0 +1,11 @@
+port chosen: true
+acceptNB with nobody waiting: NONE
+from: 127.0.0.1
+same address as the client's own: true
+recvVecNB with nothing sent: NONE
+server got: ping (4 bytes)
+client got: pong
+select: 1 readable
+after the client's shutdown: SOME ""
+datagram: datagram from port true
+recvVecFromNB with nothing sent: NONE

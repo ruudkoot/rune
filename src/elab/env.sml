@@ -64,7 +64,12 @@ struct
       SOME e => StringMap.find (tys e, name)
     | NONE => NONE
 
+  (* The type name a type structure denotes: its own, or the one an
+     abbreviation of no arguments stands for (`where type t = u` leaves an
+     abbreviation behind). *)
   fun tyStrName (TyStr {fcn = TName c, ...}) = SOME c
+    | tyStrName (TyStr {fcn = TAbbrev ([], t), ...}) =
+        (case Types.resolve t of Types.TCon (c, []) => SOME c | _ => NONE)
     | tyStrName _ = NONE
 
   (* --- realisation of environments --- *)

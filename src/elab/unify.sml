@@ -75,7 +75,11 @@ struct
                (case kind of
                   KOverload names =>
                     (case List.filter (fn n => n <> "real") names of
-                       [] => raise Unify "overloaded operator used at a type that does not admit equality"
+                       [] =>
+                         (* a real constant, or an operator at the kind real alone *)
+                         if List.all (fn n => n = "real") names
+                         then raise Unify "type real does not admit equality (an overloaded operator or constant of kind real)"
+                         else raise Unify "overloaded operator used at a type that does not admit equality"
                      | names' => r := Unbound {id = id, level = level, kind = KOverload names', eq = true})
                 | KFlex (fields, _) =>
                     (r := Unbound {id = id, level = level, kind = kind, eq = true};
@@ -124,8 +128,18 @@ struct
                  | Unbound {kind = KRigid n, ...} => raise Unify ("overloaded operator used at the explicit type variable " ^ n)
                  | Bound _ => Error.bug "bindVar: pruned variable is bound")
             | TCon (c, []) =>
-                if isBuiltinTycon c andalso List.exists (fn n => n = #name c) names then r := Bound t
-                else raise Unify ("overloaded operator not defined at type " ^ toString t)
+                let
+                  (* one admissible kind: the variable stands for a constant or
+                     for operands of that kind, and reads like its default type *)
+                  fun mismatch () =
+                    case names of
+                      [kind] => raise Unify ("type constructor mismatch: " ^ kind ^ " vs " ^ #name c)
+                    | _ => raise Unify ("overloaded operator not defined at type " ^ toString t)
+                in
+                  case Overload.kindOf c of
+                    SOME kind => if List.exists (fn n => n = kind) names then r := Bound t else mismatch ()
+                  | NONE => mismatch ()
+                end
             | _ => raise Unify ("overloaded operator used at type " ^ toString t))
        | KFlex (fields, group) =>
            (case t of

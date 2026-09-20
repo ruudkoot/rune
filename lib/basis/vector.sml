@@ -4,11 +4,12 @@ struct
   type 'a vector = 'a vector
   val maxLen = 100000000
 
-  val fromList = _prim "vector_from_list" : 'a list -> 'a vector
+  val fromList = vector
   val length = _prim "vector_length" : 'a vector -> int
   val sub = _prim "vector_sub" : 'a vector * int -> 'a
 
-  fun tabulate (n, f) = fromList (List.tabulate (n, f))
+  (* "If n < 0 or maxLen < n, then the Size exception is raised": before f is applied *)
+  fun tabulate (n, f) = if n > maxLen then raise Size else fromList (List.tabulate (n, f))
 
   fun foldli f init v =
     let val n = length v
@@ -28,7 +29,9 @@ struct
   fun mapi f v = fromList (List.rev (foldli (fn (i, x, acc) => f (i, x) :: acc) [] v))
   fun map f v = mapi (fn (_, x) => f x) v
   fun concat vs = fromList (List.concat (List.map toList vs))
-  fun update (v, i, x) = mapi (fn (j, y) => if i = j then x else y) v
+  fun update (v, i, x) =
+    if i < 0 orelse i >= length v then raise Subscript
+    else mapi (fn (j, y) => if i = j then x else y) v
 
   fun findi p v =
     let val n = length v

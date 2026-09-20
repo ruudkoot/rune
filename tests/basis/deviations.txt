@@ -1,0 +1,582 @@
+# Known failures of the Basis Library suite (tests/basis/README.md).
+#
+#   config-glob | label-glob | CATEGORY | reason
+#
+# config-glob matches a configuration id of tests/basis/run-matrix.sh (rune,
+# native:smlnj@110.79, xc1:polyml@5.9.2, ...), label-glob the label of a failed
+# check; @section/TEST/NAME is the label of a section that does not load,
+# @load/TEST that of a test that does not. The first matching line explains a
+# failure. Categories:
+#   RUNE-DEV        Rune departs from the specification or lacks the member
+#   HOST-BUG        the host departs from the specification
+#   HOST-ABSENT     the host lacks the member
+#   HOST-FLAKY      the host fails the check only sometimes; such a line is
+#                   not required to match
+#   SPEC-AMBIGUOUS  the specification allows both behaviours; the reason names
+#                   the reading the test takes
+#   WIDTH           follows from the precision of a type
+#   XC1-NA          not meaningful for Rune's library on a host
+# A RUNE-DEV or SPEC-AMBIGUOUS line for `rune` holds for the xc1 configurations
+# as well: they run the same library source. A host line that names an xc1
+# configuration records a host defect that reaches Rune's library through a
+# primitive of tests/basis/host/rune-prim.sml written on the host's function.
+# A failure without a line fails the run, and so does a line that matches no
+# failure of a configuration it names: remove a line when its cause is fixed.
+# docs/basis-compat.md describes the differences recorded here.
+
+# ---- General
+native:smlnj*@* | General.exnMessage/contains-exnName-* | HOST-BUG | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
+*:smlnj*@* | General.*/as-value | HOST-BUG | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+
+# ---- Bool
+native:mlton@* | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
+native:mlton@* | Bool.*/ws* | HOST-BUG | Bool.scan and fromString do not skip initial whitespace
+native:mlton@* | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString neither ignore case nor skip initial whitespace
+native:smlnj*@* | Bool.*/case-* | HOST-BUG | Bool.scan and fromString are case-sensitive
+native:smlnj*@* | Bool.*/wsx-* | HOST-BUG | Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
+native:smlnj*@* | Bool.*/mixed-* | HOST-BUG | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
+
+# ---- Vector
+native:smlnj*@* | *Vector.update/[Sm]* | HOST-BUG | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+
+# ---- Array
+native:smlnj*@* | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
+
+# ---- Char
+rune | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote, as Poly/ML; the test takes the reading of MLton and SML/NJ (NONE)
+native:polyml@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+native:* | *.fromCString/unescaped-double-quote* | HOST-BUG | converts an unescaped double quote, which the specification says fromCString does not accept
+native:* | Char.fromCString/hex-huge-does-not-fit | HOST-BUG | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
+native:mlton@* | Char.scan/trailing-format-after-*escape | HOST-BUG | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
+native:smlnj*@* | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
+native:polyml@* | Char.scan/trailing-format* | HOST-BUG | scan leaves an escaped formatting sequence that follows the character in the stream
+native:mlton@* | Char.fromCString/illegal-u | HOST-BUG | fromCString accepts the SML escape \uxxxx
+native:smlnj*@* | *.fromCString/control* | HOST-BUG | fromCString does not accept \^c
+
+# ---- String
+native:mlton@* | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
+native:mlton@* | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
+native:smlnj*@* | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a crash (a segmentation fault on 110.79, a failed allocation on 110.99.9)
+native:smlnj*@* | String.isSubstring/empty-empty | HOST-BUG | isSubstring "" "" is false
+native:smlnj*@* | String.isSubstring/law-39 | HOST-BUG | isSubstring "" "" is false (the law draws two empty strings)
+native:smlnj*@* | String.*/format-then-* | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+native:smlnj*@* | String.fromString/sample-6 | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+native:smlnj*@* | String.fromCString/stops-at-* | HOST-BUG | fromCString returns NONE unless the whole string converts
+
+# ---- Int
+native:smlnj*@* | *.scan/DEC-whitespace-[avfr]* | HOST-BUG | scan does not skip vertical tab, form feed and carriage return
+native:smlnj*@* | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+
+# ---- IntInf
+native:smlnj*@* | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
+native:smlnj*@* | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for | i | = 1 and j < 0
+native:polyml@5.9.2 | IntInf.~>>/* | HOST-BUG | IntInf.~>> of a negative number that does not fit a machine word rounds towards zero, not down (~2^100 ~>> 0w101 is 0, not ~1); 5.7.1 rounds down
+native:smlnj*@110.99.9 | IntInf.scan/BIN-* | HOST-BUG | IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+native:smlnj*@110.99.9 | IntInf.scan/OCT-* | HOST-BUG | IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+
+# ---- Word
+native:polyml@* | Word.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+native:polyml@* | Word.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+
+# ---- TextIO
+native:mlton@* | *IO.output1/Io-closed-stream-function | HOST-BUG | output1 on a closed stream raises Io with function "output"
+native:mlton@* | *IO.*/*-and-inputAll | HOST-BUG | after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+native:mlton@* | *IO.input1/file-grows-after-end-of-stream | HOST-BUG | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+native:smlnj*@* | *IO.inputN/Size-negative* | HOST-BUG | inputN (strm, ~1) raises Subscript, not Size
+native:smlnj*@* | TextIO.openString/empty | HOST-BUG | inputAll (openString "") raises Io {cause = Div, ...}
+native:smlnj*@* | *IO.input1/file-grows-after-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
+native:smlnj*@* | TextIO.outputSubstr/Io-closed-stream-function | SPEC-AMBIGUOUS | reports function "outputSubstr"; the test takes outputSubstr to be "equivalent to" output, as MLton and Poly/ML do
+native:polyml@* | *IO.open*/Io-function | SPEC-AMBIGUOUS | reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
+native:polyml@* | TextIO.closeIn/unread-* | HOST-BUG | characters buffered before closeIn are still read after it
+native:polyml@* | *IO.inputAll/file-grows-after-end-of-stream | SPEC-AMBIGUOUS | inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
+native:polyml@* | TextIO.inputLine/*end-of-stream | SPEC-AMBIGUOUS | inputLine that returned NONE reads on when the file has grown; the test takes the STREAM_IO model, as MLton and SML/NJ do
+
+# ---- BinIO, Byte
+native:mlton@* | Byte.packString/Subscript-*-empty-substring | HOST-BUG | packString of an empty substring does not check the offset
+
+# ---- OS.Process, CommandLine
+native:polyml@5.9.2 | OS.Process.sleep/positive | HOST-FLAKY | sleep 0.2 s sometimes returns a little before 0.2 s have passed (once in a full matrix run; tests/basis/host/rune-prim.sml sleeps again for what is left for this reason)
+xc1:smlnj32@* | OS.Process.sleep/* | WIDTH | Time.now of lib/basis counts microseconds in an int (51 bits today); the host's int has 31 bits, so the shim's time_now raises Overflow
+*:polyml@* | CommandLine.arguments/none-under-the-runner | SPEC-AMBIGUOUS | poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
+
+# ---- Real, Math
+native:mlton@* | Real.rem/zero-by-zero | HOST-BUG | Real.rem (0.0, 0.0) is 0.0, not NaN
+native:mlton@* | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
+native:mlton@* | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
+native:mlton@* | Math.cosh/negInf | SPEC-AMBIGUOUS | Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+native:mlton@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+native:polyml@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+native:polyml@* | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
+native:polyml@* | Real.*ound/just-below-half | HOST-BUG | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+native:polyml@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2
+native:polyml@* | Real.realRound/negzero-sign | HOST-BUG | Real.realRound (~0.25) is 0.0, not ~0.0
+native:polyml@* | Real.fmt/GEN-integral-* | HOST-BUG | GEN prints integral values with ".0" ("1.0")
+native:polyml@* | Real.toString/integral-* | HOST-BUG | toString prints integral values with ".0" ("1.0")
+native:polyml@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
+native:polyml@* | Real.toString/notation-* | HOST-BUG | toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+native:polyml@* | Math.pow/*one-base-*Inf | HOST-BUG | Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
+native:smlnj*@* | Real.rem/*Inf-y | HOST-BUG | Real.rem (x, inf) is NaN, not x
+native:smlnj*@* | Real.rem/law-agrees-with-Int-rem | HOST-BUG | Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
+*:smlnj*@* | Real.fromManExp/minPos | HOST-BUG | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos
+xc1:smlnj32@* | Real.toLargeInt/huge-* | HOST-BUG | toLargeInt loops forever on reals of 2^1023 or more (guarded like Real.fromManExp/huge-man-*)
+xc1:smlnj32@* | Real.toLargeInt/* | WIDTH | lib/basis/real.sml converts through int values of up to 54 bits, and IntInf is the host's (intinf.sml does not load); the host's int has 31 bits, so Overflow
+xc1:smlnj32@* | Real.fromLargeInt/* | WIDTH | lib/basis/real.sml converts numbers below 2^55 through int; the host's int has 31 bits, so Overflow
+native:smlnj*@* | Real.realFloor/zero | HOST-BUG | Real.realFloor 0.0 is ~0.0
+native:smlnj*@* | Real.real*/*huge | HOST-BUG | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
+native:smlnj*@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52
+native:smlnj*@* | Real.real*/negzero-sign | HOST-BUG | realCeil, realTrunc and realRound lose the sign of a zero result
+*:smlnj*@* | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0
+native:smlnj32@* | Real.round/minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+native:smlnj32@* | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+*:smlnj*@* | Real.fmt/GEN-seventeen-digits | HOST-BUG | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
+native:smlnj*@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
+native:smlnj32@* | Real.fmt/EXACT-* | HOST-ABSENT | Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+xc1:smlnj32@* | Real.fmt/EXACT-* | HOST-BUG | EXACT of lib/basis rests on the shim's real_shortest, which is the host's Real.fmt, and that gives at most 15 significant digits
+xc1:smlnj32@* | Real.*Decimal/* | HOST-BUG | toDecimal rests on the host's Real.fmt through the shim (at most 15 digits) and fromDecimal on its Real.fromString (not correctly rounded)
+native:smlnj*@* | Real.fromString/leading-whitespace | HOST-BUG | scan skips only space, tab and newline, not the other Char.isSpace characters (\r, \v, \f)
+*:smlnj*@* | Real.fromString/exact-* | HOST-BUG | scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
+*:smlnj*@* | Math.atan2/*negzero* | HOST-BUG | Math.atan2 ignores the sign of a zero: atan2 (~0.0, 1.0) = 0.0, atan2 (0.0, ~0.0) = 0.0
+*:smlnj*@* | Math.atan2/*Inf-y-*Inf-x | HOST-BUG | Math.atan2 of two infinities is NaN
+*:smlnj*@* | Math.pow/negzero-base-negative-odd | HOST-BUG | Math.pow (~0.0, ~3.0) is posInf, not negInf
+*:smlnj*@* | Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
+*:smlnj*@* | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
+*:smlnj*@* | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
+*:smlnj*@110.99.9 | Real.*/law-* | HOST-FLAKY | on a loaded machine (32 runs at once) about one run in ten gets a result wrong in the last bits: fromManExp (toManExp x) differs from x for x = ~9.69494874253E272; never seen alone
+*:smlnj@110.99.9 | Math.*/law-* | HOST-FLAKY | as the Real laws: Math.ln/law-product-is-sum failed once in a full matrix run and not since
+native:smlnj*@110.99.9 | Real.rem/*Inf-x | HOST-BUG | rem (±inf, y) is a zero, not NaN
+native:smlnj*@110.99.9 | Real.rem/*zero-y | HOST-BUG | rem (x, ±0.0) is a zero, not NaN
+*:smlnj@110.99.9 | Real.*/Overflow-*above-maxInt | HOST-BUG | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+*:smlnj@110.99.9 | Real.*/*minInt* | HOST-BUG | ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+*:smlnj@110.99.9 | Real.*/*near-maxInt | HOST-BUG | ceil of the largest real below 2^62, an integer, is one less than it
+*:smlnj*@110.99.9 | Real.fmt/*-minPos | HOST-BUG | fmt of minPos prints the digits of the shortest representation, 5E~324, padded with zeros instead of the digits asked for
+native:smlnj*@110.99.9 | Real.scan/point-* | HOST-BUG | scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
+native:polyml@5.9.2 | Real.toDecimal/* | HOST-BUG | toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+native:polyml@5.9.2 | Real.fmt/EXACT-*zero | HOST-BUG | fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+*:polyml@5.9.2 | Real.fromManExp/wide-exp-subnormal-to-large | HOST-BUG | fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
+*:polyml@5.9.2 | Real.fromString/exact-round-above-half | HOST-BUG | fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
+
+# Rounding a numeral in the current rounding mode (real_fmt.sml, section
+# scan-rounding-mode); an xc1 configuration reads numerals with the host's
+# Real.fromString (the shim's real_from_string).
+native:smlnj*@* | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+xc1:smlnj*@110.99.9 | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+*:polyml@5.9.2 | Real.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+
+# ---- StringCvt
+native:smlnj*@* | StringCvt.pad*/width-minInt | HOST-BUG | padLeft and padRight raise Overflow for the smallest int (they compute i - | s | ) instead of returning s
+native:smlnj*@* | StringCvt.skipWS/wsx-* | HOST-BUG | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
+
+# ---- Substring
+native:mlton@* | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj*@* | Substring.trim[lr]/Subscript-when-k-is-given | HOST-BUG | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+native:smlnj*@* | Substring.isSubstring/*empty-of-empty* | HOST-BUG | isSubstring "" ss is false when ss is empty
+native:polyml@* | Substring.substring/Subscript-not-Overflow-sum-* | HOST-BUG | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@* | Substring.extract/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
+native:polyml@* | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-BUG | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
+
+# ---- IEEEReal
+native:smlnj*@110.99.9 | IEEEReal.toString/negative-nan | HOST-BUG | toString of a NaN with the sign set is "nan", not "~nan"
+native:smlnj*@110.99.9 | IEEEReal.scan/point-without-fraction | HOST-BUG | scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+native:polyml@5.9.2 | IEEEReal.toString/is-fmt-EXACT | HOST-BUG | follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
+
+# ---- Word8
+xc1:mlton@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+xc1:polyml@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+xc1:smlnj@110.99.9 | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
+native:polyml@* | Word8.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:polyml@* | Word8.~>>/*-by-all-ones | HOST-BUG | Word8.~>> by a shift of all ones does not give the sign-filled byte
+
+# ---- the monomorphic vectors, arrays and slices
+native:polyml@* | *ArraySlice.copy/Subscript-not-Overflow | HOST-BUG | copy with di = Int.maxInt raises Overflow instead of Subscript
+native:polyml@* | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
+native:polyml@* | *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+# ---- Array2
+native:mlton@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:smlnj*@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
+native:mlton@* | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
+native:smlnj*@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
+native:smlnj*@* | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
+native:smlnj*@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
+native:smlnj*@* | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
+native:polyml@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+native:polyml@* | Array2.*/no-rows* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+native:polyml@* | Array2.*/*model-empty-* | HOST-BUG | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+native:polyml@* | Array2.array/Size-negative-columns-no-rows | HOST-BUG | array (0, ~1, x) does not raise Size
+native:polyml@* | Array2.*/zero-length-not-equal | HOST-BUG | two arrays without rows are equal
+
+# ---- OS.Path
+native:mlton@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+native:mlton@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+native:smlnj*@* | OS.Path.splitBaseExt/*empty-arc | HOST-BUG | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+native:smlnj*@* | OS.Path.joinBaseExt/inverts-splitBaseExt-random | HOST-BUG | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+native:smlnj*@* | OS.Path.mkCanonical/._ | HOST-BUG | mkCanonical raises Fail on a relative path that reduces to no arc but ends with an empty one ("./", ".//", "a/../") instead of returning "."
+native:smlnj*@* | OS.Path.mkCanonical/*-random | HOST-BUG | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+native:smlnj*@* | OS.Path.isCanonical/is-mkCanonical-equality-random | HOST-BUG | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+native:smlnj*@* | OS.Path.getParent/keeps-canonical-random | HOST-BUG | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+native:smlnj*@* | OS.Path.mkAbsolute/keeps-canonical-random | HOST-BUG | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+native:smlnj*@* | OS.Path.fromUnixPath/empty | HOST-BUG | fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
+native:polyml@* | OS.Path.toString/relative-only-empty-arc-Path | HOST-BUG | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path ("if isAbs is false and arcs has an initial empty arc")
+native:polyml@* | OS.Path.fromString/inverts-toString-random | HOST-BUG | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path, and fromString "" has no arcs
+native:polyml@* | OS.Path.getParent/a_. | HOST-BUG | getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
+native:polyml@* | OS.Path.fromUnixPath/_* | HOST-BUG | fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
+native:polyml@* | OS.Path.toUnixPath/_ | HOST-BUG | toUnixPath "/" is "" instead of "/"
+
+# ---- OS.FileSys
+xc1:smlnj32@* | OS.FileSys.setTime/* | WIDTH | Time.time of lib/basis is microseconds in an int, and the int of the host has 31 bits: the times the checks set (10^9 seconds and more) raise Time, and Time.now raises Overflow
+xc1:smlnj32@* | OS.FileSys.modTime/* | WIDTH | modTime makes the time of a file (seconds since 1970) a Time.time of lib/basis, microseconds in an int, and the int of the host has 31 bits: Overflow (and Time.now overflows too)
+xc1:smlnj32@* | OS.FileSys.remove/others-kept | WIDTH | new.txt, which the list should hold, is written by OS.FileSys.modTime/new-file-is-now, which raises Overflow at Time.now before it writes the file (microseconds since 1970 in an int of 31 bits)
+xc1:smlnj32@* | OS.FileSys.tmpName/not-for-other-users | WIDTH | Posix.FileSys.stat of lib/basis makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | OS.FileSys:OS_FILE_SYS/Position.int-and-Time.time | WIDTH | modTime and Time.now give microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+
+# ---- OS.IO
+native:mlton@* | OS.IO.poll/closed-SysErr | HOST-BUG | poll of a descriptor that has been closed returns [] instead of raising OS.SysErr
+native:mlton@* | OS.IO.Kind.*/dev-null | HOST-BUG | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+native:smlnj*@* | OS.IO.Kind.*/dev-null | HOST-BUG | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+native:mlton@* | OS.IO.Kind.tty/standard-descriptors | HOST-BUG | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+native:smlnj*@* | OS.IO.Kind.tty/standard-descriptors | HOST-BUG | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+native:smlnj*@* | @section/os.io/input-and-output | HOST-BUG | poll of a descriptor for input and output at once (pollIn (pollOut pd)) ends the runtime with a segmentation fault
+native:polyml@* | OS.IO.poll/*order* | HOST-BUG | poll returns the poll_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
+native:polyml@5.9.2 | OS.IO.compare/TextIO.stdIn-equals-Posix-stdin | HOST-BUG | the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
+xc1:* | OS.IO.pollPri/file | XC1-NA | os_poll of tests/basis/host/rune-prim.sml does not reach the system's poll: it answers at once that every descriptor is ready for every event asked, so a regular file has high-priority data
+xc1:* | OS.IO.poll/empty-pipe | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: the read end of an empty pipe is ready for input
+xc1:* | OS.IO.poll/only-the-ready-ones-in-order | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: the read end of an empty pipe is among the ready ones
+xc1:* | OS.IO.poll/times-out | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: poll of an empty pipe with a timeout neither waits nor gives [] (on SML/NJ 110.79 the check's Time.now raises Overflow first: microseconds since 1970 in a 31-bit int)
+xc1:* | OS.IO.poll/zero-does-not-block | XC1-NA | os_poll of tests/basis/host/rune-prim.sml answers at once that every descriptor is ready for every event asked: poll of an empty pipe with a zero timeout gives it as ready (on SML/NJ 110.79 the check's Time.now raises Overflow first: microseconds since 1970 in a 31-bit int)
+xc1:* | OS.IO.Kind.socket/tcp | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to ask the kind of
+
+# ---- OS
+native:polyml@* | OS.errorName/is-Posix.Error.errorName | HOST-BUG | OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
+
+# ---- Time
+native:* | Time.fromReal/nan | HOST-BUG | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+native:smlnj*@* | Time.*Inf | HOST-BUG | fromReal of an infinite real raises Overflow, not Time
+native:polyml@* | Time.*Inf | HOST-BUG | fromReal of an infinite real raises Overflow, not Time
+native:polyml@* | Time.toSeconds/*negative* | HOST-BUG | toSeconds rounds a negative time towards minus infinity (~2.01 s gives ~3), not "towards 0"
+native:polyml@* | Time.toSeconds/less-than-a-second | HOST-BUG | toSeconds rounds a negative time towards minus infinity (~0.999 s gives ~1), not "towards 0"
+native:polyml@* | Time.toSeconds/is-toMicroseconds-quot | HOST-BUG | toSeconds and toMilliseconds round a negative time towards minus infinity, not "towards 0"
+native:polyml@* | Time.toMilliseconds/rounds-negative-towards-zero | HOST-BUG | toMilliseconds rounds a negative time towards minus infinity (~1500 us gives ~2), not "towards 0"
+native:polyml@* | Time.fmt/Size* | HOST-BUG | fmt with a negative number of digits does not raise Size
+native:polyml@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+native:mlton@* | Time.fmt/fixed-point-semantics | HOST-BUG | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+native:mlton@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+native:smlnj*@* | Time.fromString/trailing-point | HOST-BUG | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+# ---- Date. The suite runs in one time zone on every machine, 3:30 west of UTC
+# with summer time (tests/basis/run-matrix.sh); the hosts other than Poly/ML
+# convert UTC dates with mktime, in local time, which shows in that zone.
+native:mlton@* | Date.offset/* | HOST-BUG | offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
+native:mlton@* | Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | HOST-BUG | date with an offset of more than a day east moves the date a day the wrong way
+native:mlton@* | Date.date/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:mlton@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:mlton@* | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
+native:mlton@* | Date.toTime/last-second-of-1969 | HOST-BUG | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+native:mlton@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
+native:mlton@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj32@* | Date.fromTimeUniv/fraction-of-a-second-1969 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj*@* | Date.toTime/century-from-1900 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj*@* | Date.toTime/1900-to-2200 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj*@* | Date.fromTimeUniv/calendar-1900-2199 | HOST-BUG | toTime of a date before 1970 raises Date
+native:smlnj*@* | Date.offset/*moves-the-date | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24*d) is added to the hours")
+native:smlnj32@* | Date.toTime/offset-modulo-24-hours-*is-the-same-time | HOST-BUG | date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
+native:smlnj*@* | Date.toTime/*inverts-fromTimeUniv* | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+native:smlnj*@* | Date.toTime/fromTimeUniv-inverts-1972-2037 | HOST-BUG | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+native:smlnj*@* | Date.localOffset/west-of-UTC-now | HOST-BUG | localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
+native:smlnj*@* | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
+xc1:smlnj*@110.99.9 | Date.fmt/%%Y | HOST-BUG | fmt "%%Y" gives "1995": date_format of tests/basis/host/rune-prim.sml is the host's Date.fmt, which takes the Y after %% as a directive
+native:smlnj*@* | Date.*/initial-whitespace | HOST-BUG | scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
+native:smlnj*@* | Date.scan/24-characters | HOST-BUG | scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+native:smlnj32@* | Date.date/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:smlnj32@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | date of year 10^8 raises Overflow, not Date
+native:smlnj@110.99.9 | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
+native:smlnj32@* | Date.toTime/century-to-2100-beyond-2038 | HOST-BUG | toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
+native:smlnj32@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UTC date
+native:smlnj*@110.99.9 | Date.toTime/offset-* | HOST-BUG | toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
+native:smlnj*@110.99.9 | Date.date/offset-of-the-local-zone | HOST-BUG | toTime ignores the offset of a date
+native:smlnj*@110.99.9 | Date.fromTimeUniv/* | HOST-BUG | fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+native:polyml@* | Date.toTime/Date-or-a-year-far-away | HOST-BUG | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+*:polyml@* | Date.fmt/empty | HOST-BUG | fmt "" raises Date instead of giving ""
+native:mlton@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+native:smlnj@110.99.9 | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+native:polyml@* | Date.fmt/%Z-UTC | HOST-BUG | fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+xc1:smlnj32@* | Date.fmt/* | WIDTH | date of lib/basis works out the offset of a date in microseconds (a day is 86400 * 1000000 of them) in an int, and the int of the host has 31 bits: every date at an offset raises Date, the UTC dates that fmt is given too
+xc1:smlnj32@* | Date.toString/* | WIDTH | toString is fmt of a UTC date, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits
+xc1:smlnj32@* | Date.fromString/* | WIDTH | the strings the checks read are toString of UTC dates, and date of lib/basis raises Date for every date at an offset: it works out the offset in microseconds in an int, and the int of the host has 31 bits
+
+# ---- Posix.Error, Posix.Signal, Posix.Process, Posix.ProcEnv, Posix.SysDB, Posix (whole), Posix.TTY, Unix (group posix1)
+*:smlnj*@* | Posix.Error.notty/ttyname-of-dev-null | HOST-BUG | ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+*:polyml@* | Posix.Error.badf/close-twice | HOST-BUG | Posix.IO.close of a descriptor that is already closed raises no exception
+*:smlnj*@110.99.9 | Posix.Error.spipe/lseek-on-pipe | HOST-BUG | Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+*:polyml@* | Posix.Signal.pipe/ends-shell | HOST-BUG | the runtime ignores SIGPIPE, and the programs it executes inherit that
+native:mlton@* | Posix.Process.W.untraced/in-all | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+native:mlton@* | Posix.Process.W.allSet/inclusion | HOST-BUG | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+native:mlton@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Posix.Process.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Posix.Process.W.toWord/of-fromWord | HOST-BUG | W.fromWord keeps the bits that are not in W.all
+xc1:* | Posix.Process.exit/no-flush | XC1-NA | the file handles of tests/basis/host/rune-prim.sml write through (file_write), where the VM's keep the block that TextIO leaves them to buffer: what the child wrote before Posix.Process.exit is in the file already (and on SML/NJ 110.79 the check raises Overflow first, at the Time.now of C.waitBounded: microseconds since 1970 in a 31-bit int; on Poly/ML the child's exit fails too, as in Posix.Process.exit/status)
+*:polyml@* | Posix.Process.pause/until-* | HOST-BUG | a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
+*:polyml@5.9.2 | Posix.Process.exit/[szn]* | HOST-BUG | a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
+native:smlnj@110.99.9 | Posix.ProcEnv.time/* | HOST-BUG | time () is negative: the seconds since the Epoch overflow 32 bits
+*:smlnj@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-BUG | the elapsed time of times is negative
+xc1:smlnj32@* | Posix.ProcEnv.times/* | WIDTH | times gives its times as microseconds in an int (posix_times), the elapsed time since a point in the past among them, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.ProcEnv.time/* | WIDTH | time and Time.now give microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.ProcEnv.wordTo[UG]id/no-validation | WIDTH | lib/basis keeps a uid and a gid in an int, and 1999999999 does not fit the host's 31 bits: Overflow
+xc1:smlnj32@* | Posix.ProcEnv.setpgid/*SOME* | WIDTH | the check waits for the child with a deadline (C.waitBounded, C.appears), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.W_STOPPED/stop | WIDTH | the check waits for the child with a deadline (C.stopped), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.kill/term | WIDTH | the check waits for the child with a deadline (C.appears), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.K_*/* | WIDTH | the check waits for the child with a deadline (C.appears, C.stopped), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.pause/until-* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.exit/[szn]* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.waitpid_nh/ended-child | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.Process.waitpid_nh/no-child | WIDTH | no exception: children of earlier checks are left to wait for, because those checks raised Overflow before they reaped them (a deadline from Time.now, microseconds since 1970 in an int of 31 bits)
+xc1:smlnj32@* | Posix.Process.sleep/* | WIDTH | the check times sleep with Time.now, which gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.SysDB.get*id/unknown | WIDTH | raises Overflow, not SysErr: lib/basis keeps a uid and a gid in an int, and 1999999999 does not fit the host's 31 bits
+xc1:smlnj32@* | Posix:POSIX/FileSys.uid-is-ProcEnv.uid | WIDTH | stat of lib/basis makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+native:polyml@* | @section/posix_sig/whole | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:polyml@* | @section/posix_tty/pgrp | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:polyml@* | @section/posix_tty_sig/whole | HOST-ABSENT | Posix.TTY.TC lacks getpgrp and setpgrp
+native:mlton@* | Posix.TTY.getlflag/sample | HOST-BUG | getlflag returns the output flags (those of getoflag)
+native:smlnj*@* | Posix.TTY.TC.getpgrp/not-a-terminal | HOST-BUG | TC.getpgrp of a descriptor that is not a terminal raises no exception
+native:mlton@* | Unix.reap/status | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.reap/twice | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_EXITSTATUS/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_SIGNALED/reap | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.W_STOPPED/reap-waits-for-the-end | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED)
+native:mlton@* | Unix.kill/* | HOST-BUG | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1)
+native:mlton@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:polyml@* | Unix.fromStatus/failure | HOST-BUG | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+native:smlnj*@* | Unix.execute*/no-such-program | HOST-BUG | a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+native:smlnj*@* | Unix.exit/flushes | HOST-BUG | Unix.exit does not flush the output streams that are open
+native:smlnj@110.99.9 | Unix.exit/status | HOST-FLAKY | raised an exception once in a full matrix run (in the parent, which forks the child and waits for it with waitpid_nh and sleep); not seen in 54 runs of the test since, six at a time beside a matrix of the xc1 configurations, nor in 300 rounds of fork, waitpid_nh and sleep
+xc1:smlnj32@* | Unix.execute*/[aed]* | WIDTH | the parent reads the child's output with a stream that Posix.IO.mkTextReader makes, which asks fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Unix.*streamOf/* | WIDTH | the streams on the child's pipes are made by Posix.IO.mkTextReader and the like, which ask fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Unix.streamsOf/* | WIDTH | the streams on the child's pipes are made by Posix.IO.mkTextReader and the like, which ask fstat whether the descriptor is a regular file; fstat makes the times of the pipe Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Unix.kill/* | WIDTH | the check reads the child's answer with a stream that Posix.IO.mkTextReader makes, which asks fstat whether the descriptor is a regular file; fstat makes the times of the pipe microseconds in an int of 31 bits: Overflow
+xc1:smlnj32@* | Unix.W_STOPPED/reap-waits-for-the-end | WIDTH | the check waits for the child's pid with a deadline (PosixChild.until), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Unix.exit/status | WIDTH | the check waits for the child with a deadline (PosixChild.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:polyml@5.9.2 | @load/unix | HOST-BUG | the test does not end: the child of Unix.execute that cannot execute ./no-such-program leaves with posix_exit 126, which tests/basis/host/rune-prim.sml writes with the host's Posix.Process.exit, and a forked child that calls it never ends, so reap waits for ever
+native:polyml@5.9.2 | Unix.exit/status | HOST-BUG | a forked child that calls Unix.exit never ends
+
+*:smlnj*@* | Posix.Process.fromStatus/system-killed | HOST-BUG | OS.Process.system returns failure (W_EXITSTATUS 1) for a command that a signal ended
+native:smlnj*@* | Unix.exit/runs-atExit | HOST-BUG | Unix.exit does not run the actions of OS.Process.atExit
+
+# ---- BIT_FLAGS (posix_bitflags.sml, posix_bitflags_sig.sml)
+native:mlton@* | Posix.*.allSet/* | HOST-BUG | allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
+native:mlton@* | Posix.*.fromWord/random-words-beyond-all | HOST-BUG | all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all)
+native:polyml@* | Posix.*.fromWord/*-all | HOST-BUG | fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all) and fromWord makes flags outside all
+
+# ---- Posix.FileSys (posix_filesys*.sml)
+native:mlton@* | Posix.FileSys.ST.mode/* | HOST-BUG | ST.mode includes the bits of the file type of st_mode (S_IFREG, S_IFDIR, S_IFIFO) besides the protection mode
+native:polyml@* | Posix.FileSys.wordToFD/inverts-fdToWord | HOST-BUG | wordToFD makes a new file_desc that is not equal (=) to the file_desc with the same number: equality of file_desc is that of the object
+native:polyml@5.9.2 | Posix.FileSys.stdin/wordToFD-0 | HOST-BUG | wordToFD 0w0 is not equal (=) to stdin: equality of file_desc is that of the object
+xc1:* | Posix.FileSys.ST.isSock/socket | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to stat
+xc1:smlnj32@* | Posix.FileSys.ST.* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.stat/* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.[fl]stat/* | WIDTH | stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.utime/* | WIDTH | the check reads the times back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.S.*/chmod | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.*chmod/* | WIDTH | the check reads the mode back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.creat*/* | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.umask/removes-permissions | WIDTH | the check reads the mode back with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.mk*/* | WIDTH | the check looks at what it made with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.*chown/* | WIDTH | the check reads the owner back with stat or fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.*link/* | WIDTH | the check looks at the links with stat or lstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.rename/into-directory | WIDTH | the check looks at the file with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.ftruncate/size | WIDTH | the check reads the size back with fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.getcwd/is-the-directory | WIDTH | the check compares the directories with stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.stdout/is-open | WIDTH | the check asks fstat whether the descriptor is open, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.iodToFD/descriptor-of-a-stream | WIDTH | the check looks at the descriptor with fstat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.[di]*ToWord/* | WIDTH | the check takes the device and the inode from stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | Posix.FileSys.wordTo[DI]*/* | WIDTH | the check takes the device and the inode from stat, and stat, lstat and fstat of lib/basis make the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+
+# ---- Posix.IO (posix_io.sml, posix_io_sig.sml)
+*:smlnj*@* | Posix.IO.*getfl* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor
+*:smlnj*@* | Posix.IO.setfl/[ak]* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
+*:smlnj*@* | Posix.IO.O.nonblock/setfl | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
+native:smlnj@110.99.9 | Posix.IO.FLock.* | HOST-BUG | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+xc1:smlnj32@* | Posix.IO.mk*/* | WIDTH | the readers and writers of lib/basis ask fstat whether the descriptor is a regular file, and fstat makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
+
+# ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
+# Rune
+# MLton
+native:mlton@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:mlton@* | *IO.StreamIO.canInput/determined-stream-does-not-block | HOST-BUG | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+native:mlton@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:mlton@* | *IO.StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+native:mlton@* | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
+native:mlton@* | *IO.StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+# SML/NJ
+native:smlnj*@110.99.9 | @load/io_primio* | HOST-BUG | the avail field of TextPrimIO.RD and BinPrimIO.RD has the type unit -> Position.int option, not unit -> int option, so that neither structure matches PRIM_IO
+native:smlnj*@110.99.9 | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:smlnj*@110.99.9 | *IO.StreamIO.canInput/* | HOST-BUG | canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+native:smlnj*@110.99.9 | *IO.StreamIO.getReader/Io-* | HOST-BUG | getReader of a closed or truncated stream raises nothing
+native:smlnj*@110.99.9 | *IO.StreamIO.getWriter/Io-closed | HOST-BUG | getWriter of a closed stream raises nothing
+native:smlnj*@110.99.9 | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
+native:smlnj*@110.99.9 | *IO.StreamIO.inputN/fewer-then-past-the-end-of-stream | HOST-BUG | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+native:smlnj*@110.99.9 | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+native:smlnj*@110.99.9 | *IO.StreamIO.output*/Io-terminated* | HOST-BUG | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+native:smlnj*@110.99.9 | *IO.setPosOut/* | HOST-BUG | setPosOut neither flushes nor moves the writer: output goes on at the end
+native:smlnj*@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
+native:smlnj*@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
+# Poly/ML
+native:polyml@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+native:polyml@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:polyml@* | *IO.StreamIO.input/Io-* | HOST-BUG | input lets the exception of the reader through instead of raising Io with it as the cause
+native:polyml@* | *IO.inputAll/up-to-each-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+native:polyml@* | *IO.StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+native:polyml@* | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+native:polyml@* | *IO.StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+
+# ---- Socket, INetSock, UnixSock, GenericSock (net group)
+native:mlton@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
+native:mlton@* | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER raises Overflow, not Time, for a time too large for the system
+native:mlton@* | Socket.Ctl.getNREAD/* | HOST-BUG | getNREAD answers ~1 whatever there is to read
+native:mlton@* | Socket.Ctl.getATMARK/* | HOST-BUG | getATMARK answers true whether or not the read pointer is at the out-of-band mark
+native:mlton@* | Socket.Ctl.getERROR/closed | HOST-BUG | getERROR of a closed socket answers instead of raising SysErr
+native:mlton@* | Socket.recvVecNB/zero | HOST-BUG | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+native:mlton@* | Socket.recvArrNB/empty-slice | HOST-BUG | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+native:smlnj*@* | Socket.familyOfAddr/* | HOST-BUG | familyOfAddr gives a family that is neither INetSock.inetAF nor UnixSock.unixAF (AF.toString says "<UNKNOWN>")
+native:smlnj*@* | Socket.send*'/don't_route | HOST-BUG | the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+native:smlnj*@* | Socket.send*'/oob | HOST-BUG | the flags are swapped: sendVec' and sendArr' send oob as don't_route (no urgent byte), and recvVec' and recvArr' receive oob as peek
+native:smlnj*@* | Socket.recv*'/oob | HOST-BUG | the flags are swapped: recvVec' and recvArr' receive oob as peek (the byte stays), and sendVec' sends oob as don't_route (no urgent byte)
+native:smlnj*@* | Socket.recv*'/peek | HOST-BUG | the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+native:smlnj*@* | Socket.recvVecNB'/nothing-there | HOST-BUG | the flags are swapped: recvVecNB' takes peek for oob and raises SysErr (EINVAL) instead of giving NONE
+native:smlnj*@* | Socket.Ctl.getATMARK/before-and-at-the-mark | HOST-BUG | sendVec' sends oob as don't_route, so that there is no urgent byte and no mark
+native:smlnj*@* | Socket.select/exceptional-condition | HOST-BUG | sendVec' sends oob as don't_route, so that there is no urgent byte to make an exceptional condition
+native:smlnj*@* | Socket.sendVecTo/empty-message | HOST-BUG | a datagram of no bytes never arrives
+native:smlnj*@* | Socket.recvVecFrom/message-and-address | HOST-BUG | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+native:smlnj*@* | Socket.recvVecFrom/one-message-at-a-time | HOST-BUG | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+native:smlnj*@* | Socket.recvVecFromNB/message | HOST-BUG | the address recvVecFromNB gives is not sameAddr to the sender's (recvArrFromNB's is)
+native:smlnj*@* | Socket.recvArrFrom/empty-slice | HOST-BUG | with an empty slice, the address recvArrFrom gives is not sameAddr to the sender's
+native:smlnj*@* | Socket.recvVecFrom/unix | HOST-BUG | the Unix-domain address recvVecFrom and recvVecFromNB give is garbled: UnixSock.fromAddr of it is not the sender's path
+native:smlnj*@* | UnixSock.fromAddr/sender-of-a-message | HOST-BUG | the Unix-domain address recvVecFromNB gives is garbled: UnixSock.fromAddr of it is not the sender's path
+native:smlnj*@* | Socket.recvVec*/above-maxLen | HOST-BUG | recvVec and recvVecFrom do not raise Size when n > Word8Vector.maxLen
+native:smlnj*@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
+native:smlnj32@* | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER raises Overflow, not Time, for a time too large for the system
+native:smlnj@110.99.9 | Socket.Ctl.setLINGER/too-large | HOST-BUG | setLINGER takes a time too large for the system without raising Time
+native:polyml@* | Socket.AF.list/names-are-toString | HOST-BUG | AF.list names AF_UNIX's value also "LOCAL" (5.9.2: and "FILE"), which toString calls "UNIX"
+native:polyml@* | Socket.connect/already-connected | HOST-BUG | connect on a connected socket returns instead of raising SysErr
+native:polyml@* | Socket.select/negative-timeout | HOST-BUG | select takes a negative timeout for zero instead of raising SysErr
+native:polyml@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER raises SysErr ("Invalid time"), not Time, for a negative time
+native:polyml@* | Socket.recvVecNB/zero | HOST-BUG | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+native:polyml@* | Socket.recvArrNB/empty-slice | HOST-BUG | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+xc1:* | INetSock:INET_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INetSock.any rests on socket_inet_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
+xc1:* | UnixSock:UNIX_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | UnixSock.toAddr rests on socket_unix_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
+xc1:* | Socket.Ctl.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to get or set an option of
+xc1:* | Socket.NO_* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no connection to shut down
+xc1:* | Socket.SOCK.*/type-of-a-*-socket | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to ask the type of
+xc1:* | Socket.[a-z]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket is made, bound, connected or used
+xc1:* | INetSock.[TUaft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no TCP or UDP socket, and no address (socket_inet_addr)
+xc1:* | UnixSock.[DSft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no Unix-domain socket or pair, and no address (socket_unix_addr)
+xc1:* | GenericSock.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket or pair of any family
+
+# ---- NetHostDB, NetProtDB, NetServDB (net group)
+native:mlton@* | NetHostDB.fromString/initial-whitespace | HOST-BUG | fromString and scan do not skip initial whitespace
+native:mlton@* | NetHostDB.scan/whitespace-then-rest | HOST-BUG | fromString and scan do not skip initial whitespace
+native:mlton@* | NetServDB.getByName/* | HOST-BUG | the port of an entry is not converted from network byte order (80 comes out as 5242880)
+native:mlton@* | NetServDB.port/* | HOST-BUG | the port of an entry is not converted from network byte order (22 comes out as 1441792)
+native:mlton@* | NetServDB.getByPort/* | HOST-BUG | getByPort does not convert the port to network byte order and finds nothing
+native:mlton@* | NetServDB.name/http | HOST-BUG | getByPort, which the check looks the entry up with, finds nothing
+native:smlnj*@* | NetServDB.getByPort/* | HOST-BUG | getByPort finds nothing for a port that /etc/services lists
+native:smlnj*@* | NetServDB.name/http | HOST-BUG | getByPort, which the check looks the entry up with, finds nothing
+native:polyml@* | NetHostDB.fromString/two-parts | HOST-BUG | the last number of "a.b" is taken for the last byte, not the last 24 bits ("127.1" is 0.0.127.1)
+native:polyml@* | NetHostDB.fromString/three-parts | HOST-BUG | the last number of "a.b.c" is taken for the last byte, not the last 16 bits ("127.0.1" is 0.127.0.1)
+native:polyml@* | NetHostDB.fromString/same-address | HOST-BUG | "127.1" is read as 0.0.127.1, not 127.0.0.1
+native:polyml@* | NetHostDB.fromString/initial-whitespace | HOST-BUG | fromString and scan do not skip initial whitespace
+native:polyml@* | NetHostDB.scan/whitespace-then-rest | HOST-BUG | fromString and scan do not skip initial whitespace
+xc1:* | NetHostDB.*/localhost | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetHostDB.getByAddr/* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetHostDB.getHostName/* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS (netdb_hostname answers "")
+xc1:* | NetProtDB.* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+xc1:* | NetServDB.* | XC1-NA | tests/basis/host/rune-prim.sml fails every network database primitive with ENOSYS
+
+# ---- the signatures of lib/basis (signatures.sml)
+xc1:smlnj32@* | @section/signatures/int-inf | WIDTH | IntInf is the host's here (intinf.sml does not load: its limb base 2^30 is no 31-bit int constant), and its fmt and scan take the host's StringCvt.radix, not the one of lib/basis that INT_INF names
+xc1:smlnj32@* | @section/signatures/timer | WIDTH | Timer is the host's here (timer.sml does not load: it reads Time.now when it is loaded, microseconds since 1970 in an int, which overflow the host's 31 bits), and its times are the host's Time.time, not the one of lib/basis that TIMER names
+
+# ---- IntN, WordN: what the base structures get wrong shows in the others too
+native:smlnj32@* | Int[0-9]*.sameSign/* | HOST-BUG | sameSign (0, i) is true for positive i
+native:polyml@* | Word[0-9]*.scan/HEX-0w-is-no-prefix | HOST-BUG | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+native:polyml@* | Word[0-9]*.fromString/0w-is-no-prefix | HOST-BUG | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+native:smlnj@* | Int[0-9]*.mod/minInt-by-minus-one | HOST-BUG | mod (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+native:smlnj@* | Int[0-9]*.rem/minInt-by-minus-one | HOST-BUG | rem (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+native:smlnj32@* | Int64.fromString/* | HOST-BUG | Int64.fromString raises an exception for a value that does not fit 32 bits
+native:smlnj32@* | Int64.scan/* | HOST-BUG | Int64.scan raises an exception for a value that does not fit 32 bits
+native:smlnj32@* | Int64.fmt/*HEX* | HOST-BUG | Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+native:smlnj@110.99.9 | Int32.abs/Overflow-minInt | HOST-BUG | Int32.abs minInt gives minInt instead of raising Overflow
+native:smlnj@* | Word[0-9]*.toInt/through-LargeWord-* | HOST-BUG | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+native:polyml@* | Word[0-9]*.~>>/*-by-all-ones | HOST-BUG | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
+native:polyml@* | Word64.~>>/* | HOST-BUG | Word64.~>> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
+xc1:mlton@* | @section/intn_*/constants | XC1-NA | integer and word constants at the IntN and WordN of lib/basis: a host's overloading is closed
+xc1:polyml@* | @section/intn_*/constants | XC1-NA | integer and word constants at the IntN and WordN of lib/basis: a host's overloading is closed
+xc1:smlnj@110.99.9 | Int[0-9]*.+/overloaded-Overflow | XC1-NA | the constants of the section are typed at the host's own int (its overloading is closed), whose + does not overflow at the precision of the IntN of lib/basis
+xc1:smlnj@110.99.9 | Word[0-9]*.+/wraps | XC1-NA | the constants of the section are typed at the host's own word (its overloading is closed), whose + does not wrap at the size of the WordN of lib/basis
+xc1:polyml@* | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
+xc1:polyml@* | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
+xc1:smlnj@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose precision is that of the host's int, 63 bits
+xc1:smlnj@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
+
+# ---- the monomorphic vectors and arrays of other elements
+native:polyml@* | @section/mono.bool*/slices | HOST-ABSENT | Poly/ML has BoolVector, BoolArray and BoolArray2 but not BoolVectorSlice and BoolArraySlice
+native:smlnj*@* | @section/mono.real*/array2* | HOST-ABSENT | SML/NJ has the vectors, arrays and slices of Real and Real64 but not RealArray2 and Real64Array2
+native:smlnj*@* | @section/signatures/mono-array2 | HOST-ABSENT | SML/NJ has no structure that matches MONO_ARRAY2 (no Word8Array2)
+native:mlton@20241230 | Bool*:MONO_*/vector-is-BoolVector.vector | HOST-BUG | BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+native:mlton@* | ?*Array2.copy/overlap-[lr]* | HOST-BUG | as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+native:polyml@* | ?*Array2.*/Subscript-not-Overflow-* | HOST-BUG | as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+native:polyml@* | ?*Array2.*/no-rows* | HOST-BUG | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+native:polyml@* | ?*Array2.*/*model-empty-* | HOST-BUG | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+native:polyml@* | ?*Array2.array/Size-negative-columns-no-rows | HOST-BUG | as Array2.array: array (0, ~1, x) does not raise Size
+native:polyml@* | ?*Array2.*/zero-length-not-equal | HOST-BUG | as in Array2: two arrays without rows are equal
+xc1:smlnj32@* | Word32*.* | WIDTH | Word32 of lib/basis keeps a word of 32 bits in the host's word, which has 31: the largest word loses its top bit and the top bit alone is 0, so the samples of the test are not distinct (the check elem/eight-distinct-samples says so) and every check that tells them apart fails
+
+# ---- PackWord, PackReal
+native:smlnj32@* | PackReal64*.update/element-1 | HOST-BUG | update writes nothing into the array
+native:polyml@* | PackReal*.update/Subscript-past-the-end | HOST-BUG | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
+native:smlnj*@110.99.9 | PackReal64*.* | HOST-BUG | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
+xc1:polyml@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 63
+xc1:smlnj*@* | PackReal*.* | WIDTH | the shim's real_to_bits and real_from_bits pass the 64 bits of a real in the host's word, which has 31 (110.79) or 63 (110.99.9) bits
+native:polyml@* | PackWord*.*/Subscript-maxInt | HOST-BUG | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+
+# ---- SML90. The page of the specification is gone (tests/basis/sml90.sml);
+# the Definition of 1990 says what sqrt, ln, ord and lookahead do.
+native:smlnj*@* | SML90.arctan/zero | HOST-BUG | Math.atan 0.0 is ~0.0
+native:smlnj*@* | SML90.ord/Ord-empty | HOST-BUG | ord "" raises Subscript, not Ord
+native:smlnj*@* | SML90.lookahead/* | HOST-BUG | lookahead raises Io at the end of the stream instead of returning ""
+native:polyml@* | SML90.Sqrt/new | SPEC-AMBIGUOUS | Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
+native:polyml@* | SML90.Ln/new | SPEC-AMBIGUOUS | as SML90.Sqrt/new
+native:polyml@* | SML90.ln/Ln-zero | HOST-BUG | ln 0.0 is ~inf instead of raising Ln
+
+# ---- Real32, PackReal32Big, PackReal32Little (Poly/ML 5.7.1 and SML/NJ have
+# no Real32)
+native:polyml@5.9.2 | PackReal32*.*/Subscript-maxInt | HOST-BUG | subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+native:mlton@* | Real32.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | as Real.nextAfter/equal-zeros-returns-r*: returns t
+native:polyml@5.9.2 | Real32.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | as Real.nextAfter/equal-zeros-returns-r*: returns t
+native:polyml@5.9.2 | PackReal32Big.isBigEndian/value | HOST-BUG | PackReal32Big.isBigEndian is false (it packs the most significant byte first)
+native:polyml@5.9.2 | Real32.fromLargeInt/rounds-once | HOST-BUG | fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
+native:polyml@5.9.2 | Real32.toDecimal/negative-zero | HOST-BUG | toDecimal of a zero has exp 1, not 0
+native:polyml@5.9.2 | Real32.fromString/overflow | HOST-BUG | fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
+native:polyml@5.9.2 | Real32.fromString/above-half-minPos | HOST-BUG | fromString rounds a number just above half of minPos to zero
+native:polyml@5.9.2 | Real32.fromString/TO_* | SPEC-AMBIGUOUS | fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
+xc1:smlnj@110.99.9 | Real32.fmt/GEN-20 | HOST-BUG | fmt rests on the shim's real_fmt_e, which is the host's Real.fmt, and that gives at most 17 significant digits
+
+# ---- SML/NJ built for 32 bits. Int and Word have 31 bits there (the WIDTH
+# lines above), and the parts below are broken in that build alone.
+native:smlnj32@* | @load/intn_int32 | HOST-BUG | Int32.div (minInt, ~1) kills the runtime with the processor's trap (a floating-point exception) instead of raising Overflow, and the test stops there
+native:smlnj32@* | @load/intn_word32 | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of Word32
+native:smlnj32@* | @load/intn_word64 | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of Word64
+native:smlnj32@* | @load/word_large | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of LargeWord
+native:smlnj32@* | Int64.* | HOST-BUG | Int64 is emulated with two words and comes out wrong throughout: Int64.+ (~2, ~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+native:smlnj32@* | PackWord*.update/* | HOST-BUG | update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
+*:smlnj32@* | Real.fromString/minus-exponent | HOST-BUG | fromString "1.5e~2" is not the real nearest 0.015 (under xc1 through the shim's real_from_string, which is the host's Real.fromString)
+native:smlnj32@* | Posix.IO.SEEK_[CE]*/negative | HOST-BUG | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
+xc1:smlnj32@* | Unix.exit/flushes | HOST-FLAKY | what a forked child writes before Unix.exit is now and then not there when the parent has reaped it (about one run in three)
+xc1:smlnj32@* | Unix.exit/runs-atExit | HOST-FLAKY | as Unix.exit/flushes
+
+# ---- WideChar, WideString, WideSubstring, WideText (only MLton has them)
+native:mlton@* | @load/widestring_sig | SPEC-AMBIGUOUS | WideString.scan reads a stream of char, where the signature of the page writes the structure's own character ("val scan : (char, 'a) StringCvt.reader -> (string, 'a) StringCvt.reader"); the test takes the page
+native:mlton@* | @load/widetext_sig | SPEC-AMBIGUOUS | as @load/widestring_sig: the TEXT of the page holds that STRING
+native:mlton@* | @section/widestring/text | SPEC-AMBIGUOUS | as @load/widestring_sig: the section reads a stream of wide characters with scan

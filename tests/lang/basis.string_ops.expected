@@ -5,7 +5,7 @@ truetruetruefalsetrue
 a|b |a||b|
 LGEtruefalse
 tab\there \"quoted\" \\ \^A
-a	bAfalse
+a	bAtrue
 Subscript
 Subscript
 0,1,21073741823
