@@ -1,0 +1,6 @@
+label	kind	exception	file	functor
+Stack.empty/is-empty	check		tests/doc/notes.lib/tests/stack.sml	
+Stack.push/returns-new	check		tests/doc/notes.lib/tests/stack.sml	
+Stack.push/full-*	check		tests/doc/notes.lib/tests/stack.sml	
+Stack.pop/basic	check		tests/doc/notes.lib/tests/stack.sml	
+Stack:STACK/matches	check		tests/doc/notes.lib/tests/stack.sml	

@@ -16,6 +16,8 @@
 #   NAME.lib.labels for a library with a suite in NAME.lib/tests: the checks
 #                   that `runedoc --tests NAME.lib/tests --labels` finds
 #   NAME.lib.cover  and what `--check-coverage` says about them
+#   NAME.lib.notes  the notes.tsv it writes, where the expectation exists
+# A library with a suite is generated with --tests, so that pins are checked.
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -83,7 +85,10 @@ for lib in tests/doc/*.lib; do
   name=$(basename "$lib" .lib)
   case "$name" in *"$filter"*) ;; *) continue ;; esac
   rm -rf "$out/$name.site"
-  "$runedoc" --lib tests/doc --library "$name.lib" --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
+  suite=""
+  [ -d "$lib/tests" ] && suite="--tests $lib/tests"
+  # shellcheck disable=SC2086
+  "$runedoc" --lib tests/doc --library "$name.lib" $suite --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
   if [ -d "$out/$name.site" ]; then (cd "$out/$name.site" && find . -type f | sort) > "$out/$name.lib.files"; else : > "$out/$name.lib.files"; fi
   if [ $update = 1 ]; then
     cp "$out/$name.lib.diag" "tests/doc/$name.lib.diag"
@@ -91,6 +96,11 @@ for lib in tests/doc/*.lib; do
   fi
   same "$name.lib.diag" "$out/$name.lib.diag" "tests/doc/$name.lib.diag"
   same "$name.lib.files" "$out/$name.lib.files" "tests/doc/$name.lib.files"
+  if [ -f "tests/doc/$name.lib.notes" ]; then
+    cp "$out/$name.site/notes.tsv" "$out/$name.lib.notes" 2> /dev/null || : > "$out/$name.lib.notes"
+    [ $update = 1 ] && cp "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
+    same "$name.lib.notes" "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
+  fi
   if [ -d "$lib/tests" ]; then
     "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1
     "$runedoc" --lib tests/doc --library "$name.lib" --tests "$lib/tests" --check-coverage > "$out/$name.lib.cover" 2>&1

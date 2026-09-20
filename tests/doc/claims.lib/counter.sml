@@ -7,7 +7,20 @@ sig
 end
 
 (* Implements: COUNTER where type t = int *)
-structure Good = struct type t = int val zero = 0 fun next c = c + 1 end
+structure Good =
+struct
+  type t = int
+
+  (* Implementation: `Good.zero/is-zero`. Zero; its check pins the note.
+
+     Implementation: `Good.zero/value`. Pinned by checks that exist, and by one that does not.
+
+     Pinned by: `Good.zero/again-*`, `Good.zero/no-such-check`
+
+     Deviation: `Good.zero/is-zero`. The same id again. *)
+  val zero = 0
+  fun next c = c + 1
+end
 
 (* Its next has the wrong type.
 

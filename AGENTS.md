@@ -36,7 +36,11 @@ keep these invariants:
   written as `tests/basis/README.md` describes, with expected values worked
   out from the text of the specification. `make check-docs` wants a check for
   every member the specification's signature names, and `make test-basis` an
-  explanation in `tests/basis/deviations.txt` for every check that fails.
+  explanation in `tests/basis/deviations.txt` for every check that fails. A
+  reading of the specification, a deviation from it or a choice it leaves
+  open is written down once, as a note in the doc comment of the member
+  (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
+  note (`tests/basis/check-notes.sh`).
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
   Poly/ML); `make matrix` adds the suite on each host's own library.

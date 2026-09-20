@@ -1,3 +1,10 @@
-tests/doc/claims.lib/counter.sml:15:11: error: Wrong does not implement COUNTER, as its comment claims: signature mismatch: value next has type int -> string in the structure but int -> int in the signature (type constructor mismatch: string vs int)
-tests/doc/claims.lib/counter.sml:20:11: error: Narrow does not implement COUNTER where type t = string, as its comment claims: signature mismatch: type t is int in the structure but string in the signature
-tests/doc/claims.lib/counter.sml:25:11: error: Missing does not implement COUNTER, as its comment claims: signature mismatch: value zero is not defined in the structure
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Wrong.zero/..." in tests/doc/claims.lib/tests (Wrong implements COUNTER)
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Narrow.zero/..." in tests/doc/claims.lib/tests (Narrow implements COUNTER)
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Missing.zero/..." in tests/doc/claims.lib/tests (Missing implements COUNTER)
+tests/doc/claims.lib/counter.sml:6:7: error: no check labelled "Narrow.next/..." in tests/doc/claims.lib/tests (Narrow implements COUNTER)
+tests/doc/claims.lib/counter.sml:6:7: error: no check labelled "Missing.next/..." in tests/doc/claims.lib/tests (Missing implements COUNTER)
+tests/doc/claims.lib/counter.sml:10:11: error: the note `Good.zero/is-zero` is written twice; an id names one note
+tests/doc/claims.lib/counter.sml:10:11: error: `Pinned by:` names `Good.zero/no-such-check`, and the suite has no check with such a label
+tests/doc/claims.lib/counter.sml:28:11: error: Wrong does not implement COUNTER, as its comment claims: signature mismatch: value next has type int -> string in the structure but int -> int in the signature (type constructor mismatch: string vs int)
+tests/doc/claims.lib/counter.sml:33:11: error: Narrow does not implement COUNTER where type t = string, as its comment claims: signature mismatch: type t is int in the structure but string in the signature
+tests/doc/claims.lib/counter.sml:38:11: error: Missing does not implement COUNTER, as its comment claims: signature mismatch: value zero is not defined in the structure

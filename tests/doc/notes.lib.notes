@@ -1,0 +1,7 @@
+id	kind	suite	signature	member	structure	pins	pinned	source	text
+STACK/page	Erratum		STACK			STACK/page	no	tests/doc/notes.lib/stack.sml	STACK/page. The page calls it a queue.
+Stack.t/list	Implementation		STACK	t		Stack.t/list	no	tests/doc/notes.lib/stack.sml	Stack.t/list. A list, the top first.
+Stack.push/returns-new	Reading		STACK	push		Stack.push/returns-new	yes	tests/doc/notes.lib/stack.sml	Stack.push/returns-new. "Adds x" is read as returning a new stack.
+Stack.push/full	Reading	differs	STACK	push		Stack.push/full-*	yes	tests/doc/notes.lib/stack.sml	Stack.push/full. A stack is never full here.
+Stack.pop/empty	Limitation		STACK	pop		Stack.pop/empty	no	tests/doc/notes.lib/stack.sml	Stack.pop/empty. The empty stack is returned as it is.
+Stack.pop/no-exception	Deviation		STACK	pop	Stack	Stack.pop/no-exception	no	tests/doc/notes.lib/stack.sml	Stack.pop/no-exception. The specification wants an exception.

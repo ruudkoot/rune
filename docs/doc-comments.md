@@ -131,7 +131,16 @@ text that is silent, ambiguous or contradictory; an **erratum** of the
 specification; a **deviation** of Rune from it; a choice the specification
 leaves to the **implementation**, with its value; a **limitation**. A note's
 id is `scope/slug` (`Char.fromString/unescaped-double-quote`,
-`LIST/list-spec`); when one check pins the note, its label is the id.
+`LIST/list-spec`); when one check pins the note, its label is the id, and
+otherwise `Pinned by:` lists the labels, which must exist in the suite. An id
+names one note. The notes are collected in
+`docs/generated/basis/readings.md` and exported as `notes.tsv`, which
+`tests/basis/check-notes.sh` (part of `make check-docs`) holds against
+`tests/basis/deviations.txt`: a check that fails on Rune because Rune reads
+the specification differently needs a `Reading (the suite differs):` that the
+check pins (and the other way round), and what a host reads differently in a
+signature that is documented in full needs a `Reading:` of that member.
+`coverage.md` lists the deviations and limitations that no check pins.
 
 ## The ratchet
 

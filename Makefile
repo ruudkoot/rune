@@ -234,6 +234,7 @@ check-docs: $(RUNE) $(RUNEDOC)
 	$(RUNEDOC) --lint lib/basis/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis and src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	sh tests/basis/check-claims.sh
+	sh tests/basis/check-notes.sh
 
 # The generated documentation (docs/plans/docgen.md): `make docs` writes it,
 # and it is committed; check-docs fails when it is not what the sources give.

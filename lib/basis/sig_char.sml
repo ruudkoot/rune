@@ -185,14 +185,7 @@ sig
      Reading: `Char.scan/formatting`. A formatting sequence, a backslash, white
      space and another backslash, stands for nothing. Such sequences are
      passed over before the character, and after it as well, so that what is
-     left of the stream never begins with one.
-
-     Reading (the suite differs): `Char.fromString/unescaped-double-quote`.
-     The specification says that the text is read "as allowed in an SML
-     program" and names only characters that do not print and bad escapes as
-     what stops a scan. Rune therefore converts a double quote that has no
-     backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
-     and that is what the suite expects. *)
+     left of the stream never begins with one. *)
   val scan : (Char.char, 'a) StringCvt.reader -> (char, 'a) StringCvt.reader
 
   (* `fromString s` is the character that the text `s` begins with, read as
@@ -205,7 +198,14 @@ sig
      a backslash by itself; every other printable character is converted to
      itself.
 
-     Pinned by: `Char.fromString/printable-only-*` *)
+     Pinned by: `Char.fromString/printable-only-*`
+
+     Reading (the suite differs): `Char.fromString/unescaped-double-quote`.
+     The specification says that the text is read "as allowed in an SML
+     program" and names only characters that do not print and bad escapes as
+     what stops a scan. Rune therefore converts a double quote that has no
+     backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
+     and that is what the suite expects. *)
   val fromString : String.string -> char option
 
   (* `toCString c` is the text that stands for `c` inside a C string constant.

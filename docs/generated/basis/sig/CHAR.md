@@ -638,13 +638,6 @@ is malformed or names no character.
 > passed over before the character, and after it as well, so that what is
 > left of the stream never begins with one.
 
-> **Reading** (the suite differs) `Char.fromString/unescaped-double-quote`.
-> The specification says that the text is read "as allowed in an SML
-> program" and names only characters that do not print and bad escapes as
-> what stops a scan. Rune therefore converts a double quote that has no
-> backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
-> and that is what the suite expects.
-
 <details><summary>Tests (28)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `last-character` &middot; `empty` &middot; `space-is-not-skipped` &middot; `escape-n` &middot; `escape-backslash` &middot; `control` &middot; `decimal` &middot; `decimal-three-digits-only` &middot; `u` &middot; `illegal-escape` &middot; `decimal-256` &middot; `not-printable` &middot; `format-before` &middot; `trailing-format` &middot; `trailing-format-twice` &middot; `trailing-format-at-end` &middot; `trailing-format-after-escape` &middot; `trailing-format-after-leading-format` &middot; `trailing-format-after-leading-format-and-escape` &middot; `invalid-format-is-not-scanned` &middot; `format-only` &middot; `format-then-not-printable` &middot; `indexed-reader` &middot; `indexed-reader-end` &middot; `scanString`
@@ -668,6 +661,13 @@ val fromString : String.string -> char option
 > outside the printable range, codes 32 to 126, gives `NONE`, and so does
 > a backslash by itself; every other printable character is converted to
 > itself.
+
+> **Reading** (the suite differs) `Char.fromString/unescaped-double-quote`.
+> The specification says that the text is read "as allowed in an SML
+> program" and names only characters that do not print and bad escapes as
+> what stops a scan. Rune therefore converts a double quote that has no
+> backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
+> and that is what the suite expects.
 
 <details><summary>Tests (98)</summary>
 
