@@ -11,6 +11,7 @@
 | [`CHAR`](sig/CHAR.md) | Characters: their codes and order, the classes they belong to, and their conversion to and from the text of SML and C character constants. | required | 35 of 35 |
 | [`STRING`](sig/STRING.md) | Strings: immutable sequences of characters, with the operations that take them apart, put them together, compare them and write them as the text of a string constant. | required | 31 of 31 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | The types and helpers of the conversions between values and text: the formats of `fmt`, the readers of `scan`. | required | 11 of 11 |
+| [`SUBSTRING`](sig/SUBSTRING.md) | A stretch of a string, without a copy of it: a base string and a start and a length inside it. | required | 39 of 39 |
 | [`TEXT`](sig/TEXT.md) | The structures of one kind of text, gathered so that their types can be named as one: characters, strings, substrings and the vectors and arrays of characters, with the constraints that tie them together. | required | 7 of 7 |
 
 ## The operating system
@@ -30,7 +31,14 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
+| [`IEEE_REAL`](sig/IEEE_REAL.md) | The parts of IEEE 754 arithmetic that are not about one real number: the rounding mode, the classes a number can belong to, and an exact decimal form to convert through. | optional | 10 of 10 |
+| [`INTEGER`](sig/INTEGER.md) | Integers of a fixed precision, with arithmetic that raises [`Overflow`](sig/GENERAL.md#exn-overflow) rather than wrapping round. | required | 30 of 30 |
 | [`INT_INF`](sig/INT_INF.md) | Integers of arbitrary precision: everything [`INTEGER`](sig/INTEGER.md) has, and the operations that make sense only, or mostly, without a bound. | optional | 10 of 10 |
+| [`MATH`](sig/MATH.md) | The elementary functions of a real type: roots, the trigonometric and hyperbolic functions, exponentials and logarithms. | required | 18 of 18 |
+| [`PACK_REAL`](sig/PACK_REAL.md) | Reading and writing a real number in a vector or an array of bytes, in its IEEE 754 encoding and a fixed byte order. | optional | 8 of 8 |
+| [`PACK_WORD`](sig/PACK_WORD.md) | Reading and writing a word in a vector or an array of bytes, in a fixed byte order. | optional | 7 of 7 |
+| [`REAL`](sig/REAL.md) | Floating-point numbers: IEEE 754 arithmetic, the numbers that are not ordinary (the infinities, the NaNs and the negative zero), and the conversions to and from integers and text. | required | 64 of 64 |
+| [`WORD`](sig/WORD.md) | Words: integers of a fixed number of bits, without a sign, whose arithmetic wraps round instead of overflowing, and which can be taken apart bit by bit. | required | 38 of 38 |
 
 ## Lists and options
 
@@ -51,12 +59,9 @@
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | signature BIT\_FLAGS, transcribed from <https://smlfamily.github.io/Basis/bit-flags.html> | required | 0 of 9 |
 | [`DATE`](sig/DATE.md) | signature DATE, transcribed from <https://smlfamily.github.io/Basis/date.html> | required | 0 of 24 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | signature GENERIC\_SOCK, transcribed from <https://smlfamily.github.io/Basis/generic-sock.html> | required | 0 of 4 |
-| [`IEEE_REAL`](sig/IEEE_REAL.md) | signature IEEE\_REAL, transcribed from <https://smlfamily.github.io/Basis/ieee-float.html> | required | 0 of 10 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | signature IMPERATIVE\_IO, transcribed from <https://smlfamily.github.io/Basis/imperative-io.html> | required | 0 of 25 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
-| [`INTEGER`](sig/INTEGER.md) | signature INTEGER, which the IntN structures are sealed with. | required | 0 of 30 |
 | [`IO`](sig/IO.md) | signature IO, transcribed from <https://smlfamily.github.io/Basis/io.html> | required | 0 of 6 |
-| [`MATH`](sig/MATH.md) | signature MATH, transcribed from <https://smlfamily.github.io/Basis/math.html> | required | 0 of 18 |
 | [`MONO_ARRAY`](sig/MONO_ARRAY.md) |  | required | 0 of 26 |
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | signature MONO\_ARRAY2, transcribed from <https://smlfamily.github.io/Basis/mono-array2.html> | required | 0 of 22 |
 | [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) |  | required | 0 of 30 |
@@ -70,8 +75,6 @@
 | [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | signature OS\_FILE\_SYS, transcribed from <https://smlfamily.github.io/Basis/os-file-sys.html> | required | 0 of 26 |
 | [`OS_PATH`](sig/OS_PATH.md) | signature OS\_PATH, transcribed from <https://smlfamily.github.io/Basis/os-path.html> | required | 0 of 27 |
 | [`OS_PROCESS`](sig/OS_PROCESS.md) | signature OS\_PROCESS, transcribed from <https://smlfamily.github.io/Basis/os-process.html> | required | 0 of 10 |
-| [`PACK_REAL`](sig/PACK_REAL.md) | signature PACK\_REAL, transcribed from <https://smlfamily.github.io/Basis/pack-float.html> | required | 0 of 8 |
-| [`PACK_WORD`](sig/PACK_WORD.md) | signature PACK\_WORD, transcribed from <https://smlfamily.github.io/Basis/pack-word.html> | required | 0 of 7 |
 | [`POSIX`](sig/POSIX.md) | signature POSIX, transcribed from <https://smlfamily.github.io/Basis/posix.html> | required | 0 of 8 |
 | [`POSIX_ERROR`](sig/POSIX_ERROR.md) | signature POSIX\_ERROR, transcribed from <https://smlfamily.github.io/Basis/posix-error.html> | required | 0 of 49 |
 | [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | signature POSIX\_FILE\_SYS, transcribed from <https://smlfamily.github.io/Basis/posix-file-sys.html> | required | 0 of 91 |
@@ -82,11 +85,9 @@
 | [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | signature POSIX\_SYS\_DB, transcribed from <https://smlfamily.github.io/Basis/posix-sys-db.html> | required | 0 of 18 |
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | signature POSIX\_TTY, transcribed from <https://smlfamily.github.io/Basis/posix-tty.html> | required | 0 of 110 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | signature PRIM\_IO: the readers and writers under the stream layer. | required | 0 of 14 |
-| [`REAL`](sig/REAL.md) | signature REAL, transcribed from <https://smlfamily.github.io/Basis/real.html> | required | 0 of 64 |
 | [`SML90`](sig/SML90.md) | signature SML90. The page of the specification that defined it (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed from the signature of MLton's basis library, which follows it, in the order of the page. | required | 0 of 36 |
 | [`SOCKET`](sig/SOCKET.md) | signature SOCKET, transcribed from <https://smlfamily.github.io/Basis/socket.html> | required | 0 of 93 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | signature STREAM\_IO: the functional streams. | required | 0 of 29 |
-| [`SUBSTRING`](sig/SUBSTRING.md) | signature SUBSTRING, transcribed from <https://smlfamily.github.io/Basis/substring.html> | required | 0 of 39 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | signature TEXT\_IO, transcribed from <https://smlfamily.github.io/Basis/text-io.html> and, for the part that it includes, from <https://smlfamily.github.io/Basis/imperative-io.html>. | required | 0 of 36 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | signature TEXT\_STREAM\_IO, transcribed from <https://smlfamily.github.io/Basis/text-stream-io.html> | required | 0 of 2 |
 | [`TIME`](sig/TIME.md) | signature TIME, transcribed from <https://smlfamily.github.io/Basis/time.html> | required | 0 of 25 |
@@ -95,7 +96,6 @@
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | signature UNIX\_SOCK, transcribed from <https://smlfamily.github.io/Basis/unix-sock.html> | required | 0 of 14 |
 | [`VECTOR`](sig/VECTOR.md) | signature VECTOR, transcribed from <https://smlfamily.github.io/Basis/vector.html> | required | 0 of 21 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | signature VECTOR\_SLICE, transcribed from <https://smlfamily.github.io/Basis/vector-slice.html> | required | 0 of 24 |
-| [`WORD`](sig/WORD.md) | signature WORD | required | 0 of 38 |
 
 ## Functors
 

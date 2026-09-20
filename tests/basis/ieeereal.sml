@@ -86,6 +86,13 @@ struct
   val nan = Real.posInf - Real.posInf
   val () = T.raises ("IEEEReal.Unordered/raised-by-Real.compare", fn I.Unordered => true | _ => false,
                      fn () => Real.compare (nan, 1.0))
+  (* "Unordered" is one of the identifiers of the top-level environment, so
+     the two names are one exception: a program that handles either catches
+     what Real.compare raises. *)
+  val () = T.raises ("IEEEReal.Unordered/same-as-toplevel", fn Unordered => true | _ => false,
+                     fn () => Real.compare (nan, 1.0))
+  val () = T.raises ("IEEEReal.Unordered/toplevel-handled-by-IEEEReal",
+                     fn I.Unordered => true | _ => false, fn () => raise Unordered)
 
   (* ---- rounding modes ----
      The quotient is computed when the check runs, from numbers the compiler

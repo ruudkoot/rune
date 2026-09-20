@@ -3,9 +3,23 @@
 # without documentation, a function whose description shows no usage, a first
 # paragraph too long for a summary, a reference that leads nowhere.
 BOOL
+BYTE
 CHAR
+COMMAND_LINE
+GENERAL
+IEEE_REAL
+INTEGER
 INT_INF
 LIST
+LIST_PAIR
+MATH
 OPTION
 OS_IO
+PACK_REAL
+PACK_WORD
+REAL
+STRING
 STRING_CVT
+SUBSTRING
+TEXT
+WORD

@@ -23,7 +23,7 @@ CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
-IEEEReal	structure	IEEE_REAL		required	claimed	lib/basis/ieeereal.sml
+IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
 INetSock	structure	INET_SOCK		optional	claimed	lib/basis/inetsock.sml
 IO	structure	IO		required	claimed	lib/basis/io.sml
 Int	structure	INTEGER		required	claimed	lib/basis/int.sml

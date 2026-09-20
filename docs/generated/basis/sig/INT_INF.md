@@ -73,36 +73,36 @@ end
 
 | Member |  |  |
 | --- | --- | --- |
-| [`int`](../sig/INTEGER.md#type-int) | eqtype |  |
-| [`toLarge`](../sig/INTEGER.md#val-tolarge) | val |  |
-| [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | val |  |
-| [`toInt`](../sig/INTEGER.md#val-toint) | val |  |
-| [`fromInt`](../sig/INTEGER.md#val-fromint) | val |  |
-| [`precision`](../sig/INTEGER.md#val-precision) | val |  |
-| [`minInt`](../sig/INTEGER.md#val-minint) | val |  |
-| [`maxInt`](../sig/INTEGER.md#val-maxint) | val |  |
-| [`+`](../sig/INTEGER.md#val-op-plus) | val |  |
-| [`-`](../sig/INTEGER.md#val-op-minus) | val |  |
-| [`*`](../sig/INTEGER.md#val-op-star) | val |  |
-| [`div`](../sig/INTEGER.md#val-div) | val |  |
-| [`mod`](../sig/INTEGER.md#val-mod) | val |  |
-| [`quot`](../sig/INTEGER.md#val-quot) | val |  |
-| [`rem`](../sig/INTEGER.md#val-rem) | val |  |
-| [`compare`](../sig/INTEGER.md#val-compare) | val |  |
-| [`<`](../sig/INTEGER.md#val-op-lt) | val |  |
+| [`int`](../sig/INTEGER.md#type-int) | eqtype | The type of integers of this structure. |
+| [`toLarge`](../sig/INTEGER.md#val-tolarge) | val | `toLarge i` is `i` as an integer of `LargeInt`, which loses nothing. |
+| [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | val | `fromLarge i` is the integer of this structure with the value `i`. |
+| [`toInt`](../sig/INTEGER.md#val-toint) | val | `toInt i` is `i` as an integer of the default structure `Int`. |
+| [`fromInt`](../sig/INTEGER.md#val-fromint) | val | `fromInt i` is the integer of this structure with the value `i`. |
+| [`precision`](../sig/INTEGER.md#val-precision) | val | `precision` is the number of bits of an integer of this structure, sign included, or `NONE` when there is no bound. |
+| [`minInt`](../sig/INTEGER.md#val-minint) | val | `minInt` is the smallest integer of this structure, or `NONE` when there is none. |
+| [`maxInt`](../sig/INTEGER.md#val-maxint) | val | `maxInt` is the largest integer of this structure, or `NONE` when there is none. |
+| [`+`](../sig/INTEGER.md#val-op-plus) | val | `i + j` is the sum. |
+| [`-`](../sig/INTEGER.md#val-op-minus) | val | `i - j` is the difference. |
+| [`*`](../sig/INTEGER.md#val-op-star) | val | `i * j` is the product. |
+| [`div`](../sig/INTEGER.md#val-div) | val | `i div j` is the quotient, rounded towards negative infinity. |
+| [`mod`](../sig/INTEGER.md#val-mod) | val | `i mod j` is what `div` leaves over: it has the sign of `j`. |
+| [`quot`](../sig/INTEGER.md#val-quot) | val | `quot (i, j)` is the quotient, rounded towards zero. |
+| [`rem`](../sig/INTEGER.md#val-rem) | val | `rem (i, j)` is what `quot` leaves over: it has the sign of `i`. |
+| [`compare`](../sig/INTEGER.md#val-compare) | val | `compare (i, j)` orders two integers. |
+| [`<`](../sig/INTEGER.md#val-op-lt) | val | `i < j`, `i <= j`, `i > j` and `i >= j` compare two integers. |
 | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | val |  |
 | [`>`](../sig/INTEGER.md#val-op-gt) | val |  |
 | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | val |  |
-| [`~`](../sig/INTEGER.md#val-op-tilde) | val |  |
-| [`abs`](../sig/INTEGER.md#val-abs) | val |  |
-| [`min`](../sig/INTEGER.md#val-min) | val |  |
-| [`max`](../sig/INTEGER.md#val-max) | val |  |
-| [`sign`](../sig/INTEGER.md#val-sign) | val |  |
-| [`sameSign`](../sig/INTEGER.md#val-samesign) | val |  |
-| [`fmt`](../sig/INTEGER.md#val-fmt) | val |  |
-| [`toString`](../sig/INTEGER.md#val-tostring) | val |  |
-| [`scan`](../sig/INTEGER.md#val-scan) | val |  |
-| [`fromString`](../sig/INTEGER.md#val-fromstring) | val |  |
+| [`~`](../sig/INTEGER.md#val-op-tilde) | val | `~i` is the negation of `i`. |
+| [`abs`](../sig/INTEGER.md#val-abs) | val | `abs i` is the magnitude of `i`. |
+| [`min`](../sig/INTEGER.md#val-min) | val | `min (i, j)` is the smaller of the two. |
+| [`max`](../sig/INTEGER.md#val-max) | val | `max (i, j)` is the larger of the two. |
+| [`sign`](../sig/INTEGER.md#val-sign) | val | `sign i` is \~1, 0 or 1, as `i` is negative, zero or positive. |
+| [`sameSign`](../sig/INTEGER.md#val-samesign) | val | `sameSign (i, j)` is `true` when `i` and `j` have the same sign. |
+| [`fmt`](../sig/INTEGER.md#val-fmt) | val | `fmt radix i` is the text of `i` in the given base, with `~` for a negative number. |
+| [`toString`](../sig/INTEGER.md#val-tostring) | val | `toString i` is the text of `i` in base 10. |
+| [`scan`](../sig/INTEGER.md#val-scan) | val | `scan radix getc strm` reads an integer in the given base from `strm`. |
+| [`fromString`](../sig/INTEGER.md#val-fromstring) | val | `fromString s` is the integer that the text `s` begins with in base 10, or `NONE`. |
 
 ## Division
 

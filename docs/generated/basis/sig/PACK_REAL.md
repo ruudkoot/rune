@@ -1,12 +1,12 @@
 # signature PACK_REAL
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **PACK_REAL**
+[The Standard ML Basis Library](../README.md) &rsaquo; Numbers &rsaquo; **PACK_REAL**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 6 |
-| Documentation | 0 of 8 entries documented |
+| Documentation | 8 of 8 entries documented |
 | Tests | 44 checks of 7 entries |
 | Source | [lib/basis/sig\_pack\_real.sml](../../../../lib/basis/sig_pack_real.sml) |
 
@@ -31,7 +31,18 @@ structure PackRealLittle : PACK_REAL where type real = Real.real  (* optional *)
 | `PackRealBig` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 | `PackRealLittle` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
-signature PACK\_REAL, transcribed from <https://smlfamily.github.io/Basis/pack-float.html>
+Reading and writing a real number in a vector or an array of bytes, in its
+IEEE 754 encoding and a fixed byte order.
+
+[`PackRealBig`](PACK_REAL.md) writes the most significant byte of the encoding first and
+[`PackRealLittle`](PACK_REAL.md) the least, so a program can read or write a binary file
+whose layout is given, whatever the byte order of the machine. The bytes
+are the encoding itself: the sign, the exponent and the significand as
+IEEE 754 lays them out.
+
+> **Implementation** `PackReal/encodings`. `PackReal` and `PackReal64` write
+> the 8 bytes of binary64; `PackReal32` the 4 bytes of binary32, and a NaN
+> becomes the quiet NaN of its sign, so a payload is lost.
 
 ## Interface
 
@@ -39,12 +50,19 @@ signature PACK\_REAL, transcribed from <https://smlfamily.github.io/Basis/pack-f
 signature PACK_REAL =
 sig
   type <a href="#type-real">real</a>
+
   val <a href="#val-bytesperelem">bytesPerElem</a> : int
+
   val <a href="#val-isbigendian">isBigEndian</a> : bool
+
   val <a href="#val-tobytes">toBytes</a> : real -&gt; Word8Vector.vector
+
   val <a href="#val-frombytes">fromBytes</a> : Word8Vector.vector -&gt; real
+
   val <a href="#val-subvec">subVec</a> : Word8Vector.vector * int -&gt; real
+
   val <a href="#val-subarr">subArr</a> : Word8Array.array * int -&gt; real
+
   val <a href="#val-update">update</a> : Word8Array.array * int * real -&gt; unit
 end
 </pre>
@@ -55,11 +73,15 @@ end
 type real
 ```
 
+The type of the reals this structure packs: [`Real.real`](../sig/REAL.md#type-real) for `PackReal`, [`Real32.real`](../sig/REAL.md#type-real) for `PackReal32`.
+
 ### <a name="val-bytesperelem"></a>`bytesPerElem`
 
 ```sml
 val bytesPerElem : int
 ```
+
+The number of bytes of one real: 8 for binary64, 4 for binary32.
 
 <details><summary>Tests (2)</summary>
 
@@ -75,6 +97,8 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 val isBigEndian : bool
 ```
 
+Whether the most significant byte of the encoding comes first.
+
 <details><summary>Tests (2)</summary>
 
 In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `value`
@@ -88,6 +112,8 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 ```sml
 val toBytes : real -> Word8Vector.vector
 ```
+
+`toBytes r` is the encoding of `r` as a vector of [`bytesPerElem`](#val-bytesperelem) bytes.
 
 <details><summary>Tests (4)</summary>
 
@@ -103,6 +129,14 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 val fromBytes : Word8Vector.vector -> real
 ```
 
+`fromBytes v` is the real whose encoding is the bytes of `v`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `v` has fewer than [`bytesPerElem`](#val-bytesperelem) bytes; a longer
+vector is read from its start.
+
+**Law** `fromBytes (toBytes r) = r`, except that a NaN comes back as some
+NaN
+
 <details><summary>Tests (10)</summary>
 
 In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `*` &middot; `nan` &middot; `longer-uses-the-first` &middot; `Subscript-short` (raises) &middot; `inverts-toBytes`
@@ -116,6 +150,10 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 ```sml
 val subVec : Word8Vector.vector * int -> real
 ```
+
+`subVec (v, i)` is the real at position `i` of the byte vector `v`, counting in reals.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
 
 <details><summary>Tests (10)</summary>
 
@@ -131,6 +169,10 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 val subArr : Word8Array.array * int -> real
 ```
 
+`subArr (arr, i)` is the real at position `i` of the byte array `arr`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+
 <details><summary>Tests (8)</summary>
 
 In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `element-0` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
@@ -145,6 +187,10 @@ In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_
 val update : Word8Array.array * int * real -> unit
 ```
 
+`update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+
 <details><summary>Tests (8)</summary>
 
 In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `element-1` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
@@ -152,6 +198,10 @@ In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.s
 In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `element-1` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
 
 </details>
+
+## See also
+
+[`REAL`](../sig/REAL.md), [`PACK_WORD`](../sig/PACK_WORD.md), [`BYTE`](../sig/BYTE.md), [`IEEE_REAL`](../sig/IEEE_REAL.md)
 
 ---
 

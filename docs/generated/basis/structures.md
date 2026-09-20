@@ -32,7 +32,7 @@ signature; `:` that it matches it, which the test suite checks.
 | `Date` | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
 | `General` | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | `GenericSock` | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
-| `IEEEReal` | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | required |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
+| `IEEEReal` | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | optional |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
 | `INetSock` | : [`INET_SOCK`](sig/INET_SOCK.md) |  | optional | is `RuneINetSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | `IO` | : [`IO`](sig/IO.md) |  | required |  | [lib/basis/io.sml](../../../lib/basis/io.sml) |
 | `Int` | : [`INTEGER`](sig/INTEGER.md) |  | required |  | [lib/basis/int.sml](../../../lib/basis/int.sml) |

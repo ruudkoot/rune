@@ -18,15 +18,15 @@ documented when a comment describes it, alone or together with the entry before 
 | [`DATE`](sig/DATE.md) | 24 | 0 | 0% | 20 | 0 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 0 | 0% | 4 | 0 |
-| [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 0 | 0% | 5 | 0 |
+| [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 0 | 0% | 20 | 0 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 0 | 0% | 9 | 0 |
-| [`INTEGER`](sig/INTEGER.md) | 30 | 0 | 0% | 26 | 0 |
+| [`INTEGER`](sig/INTEGER.md) | 30 | 30 | 100% | 26 | 26 |
 | [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
 | [`IO`](sig/IO.md) | 6 | 0 | 0% | 0 | 0 |
 | [`LIST`](sig/LIST.md) | 27 | 27 | 100% | 25 | 25 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 15 | 100% | 14 | 14 |
-| [`MATH`](sig/MATH.md) | 18 | 0 | 0% | 15 | 0 |
+| [`MATH`](sig/MATH.md) | 18 | 18 | 100% | 15 | 15 |
 | [`MONO_ARRAY`](sig/MONO_ARRAY.md) | 26 | 0 | 0% | 22 | 0 |
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | 22 | 0 | 0% | 17 | 0 |
 | [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | 30 | 0 | 0% | 25 | 0 |
@@ -42,8 +42,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`OS_IO`](sig/OS_IO.md) | 26 | 26 | 100% | 13 | 13 |
 | [`OS_PATH`](sig/OS_PATH.md) | 27 | 0 | 0% | 23 | 0 |
 | [`OS_PROCESS`](sig/OS_PROCESS.md) | 10 | 0 | 0% | 7 | 0 |
-| [`PACK_REAL`](sig/PACK_REAL.md) | 8 | 0 | 0% | 5 | 0 |
-| [`PACK_WORD`](sig/PACK_WORD.md) | 7 | 0 | 0% | 5 | 0 |
+| [`PACK_REAL`](sig/PACK_REAL.md) | 8 | 8 | 100% | 5 | 5 |
+| [`PACK_WORD`](sig/PACK_WORD.md) | 7 | 7 | 100% | 5 | 5 |
 | [`POSIX`](sig/POSIX.md) | 8 | 0 | 0% | 0 | 0 |
 | [`POSIX_ERROR`](sig/POSIX_ERROR.md) | 49 | 0 | 0% | 5 | 0 |
 | [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | 91 | 0 | 0% | 55 | 0 |
@@ -54,13 +54,13 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | 18 | 0 | 0% | 12 | 0 |
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 0 | 0% | 25 | 0 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 0 | 0% | 6 | 0 |
-| [`REAL`](sig/REAL.md) | 64 | 0 | 0% | 55 | 0 |
+| [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
 | [`SML90`](sig/SML90.md) | 36 | 0 | 0% | 18 | 0 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 0 | 0% | 76 | 0 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 0 | 0% | 21 | 0 |
 | [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
-| [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 0 | 0% | 36 | 0 |
+| [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 39 | 100% | 36 | 36 |
 | [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 0 | 0% | 28 | 0 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 0 | 0% | 2 | 0 |
@@ -70,8 +70,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 0 | 0% | 6 | 0 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 0 | 0% | 19 | 0 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 0 | 0% | 23 | 0 |
-| [`WORD`](sig/WORD.md) | 38 | 0 | 0% | 36 | 0 |
-| **all** | 1538 | 208 | 13% | 1078 | 157 |
+| [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
+| **all** | 1538 | 422 | 27% | 1078 | 340 |
 
 ## Notes that no check pins
 

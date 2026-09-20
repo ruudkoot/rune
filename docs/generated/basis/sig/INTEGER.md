@@ -1,12 +1,12 @@
 # signature INTEGER
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **INTEGER**
+[The Standard ML Basis Library](../README.md) &rsaquo; Numbers &rsaquo; **INTEGER**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 7 |
-| Documentation | 0 of 30 entries documented |
+| Documentation | 30 of 30 entries documented |
 | Tests | 430 checks of 30 entries |
 | Source | [lib/basis/int\_sig.sml](../../../../lib/basis/int_sig.sml) |
 
@@ -33,51 +33,115 @@ structure LargeInt : INTEGER
 | `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | `LargeInt` | The largest integers are the arbitrary precision ones. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
-signature INTEGER, which the IntN structures are sealed with.
+Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/GENERAL.md#exn-overflow)
+rather than wrapping round.
+
+The structures that implement this signature differ only in how many bits
+they keep: [`Int`](INTEGER.md) is the default one, [`Int8`](INTEGER.md) to [`Int64`](INTEGER.md) are the sized ones,
+[`LargeInt`](INTEGER.md) is the largest there is, and `Position` is what a file position
+is measured in. [`IntInf`](../sig/INT_INF.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
+bounds at all: there [`precision`](#val-precision), [`minInt`](#val-minint) and [`maxInt`](#val-maxint) are `NONE` and
+nothing overflows.
+
+Two integers of different structures are of different types, and the
+conversions between them go through [`Int.int`](#type-int) or [`LargeInt.int`](#type-int)
+([`toInt`](#val-toint), [`fromInt`](#val-fromint), [`toLarge`](#val-tolarge), [`fromLarge`](#val-fromlarge)), each of which raises
+[`Overflow`](../sig/GENERAL.md#exn-overflow) when the value does not fit.
+
+[`div`](#val-div) and [`mod`](#val-mod) round towards negative infinity, so the remainder has the
+sign of the divisor; [`quot`](#val-quot) and [`rem`](#val-rem) round towards zero, so the remainder
+has the sign of the dividend. The first pair is what the language's
+infix [`div`](#val-div) and [`mod`](#val-mod) mean.
+
+## Contents
+
+[The type](#the-type) &middot;
+[Conversions](#conversions) &middot;
+[The range](#the-range) &middot;
+[Arithmetic](#arithmetic) &middot;
+[Comparing](#comparing) &middot;
+[Text](#text)
 
 ## Interface
 
 <pre>
 signature INTEGER =
 sig
+
   eqtype <a href="#type-int">int</a>
+
   val <a href="#val-tolarge">toLarge</a> : int -&gt; LargeInt.int
+
   val <a href="#val-fromlarge">fromLarge</a> : LargeInt.int -&gt; int
+
   val <a href="#val-toint">toInt</a> : int -&gt; Int.int
+
   val <a href="#val-fromint">fromInt</a> : Int.int -&gt; int
+
   val <a href="#val-precision">precision</a> : Int.int option
+
   val <a href="#val-minint">minInt</a> : int option
+
   val <a href="#val-maxint">maxInt</a> : int option
+
   val <a href="#val-op-plus">+</a> : int * int -&gt; int
+
   val <a href="#val-op-minus">-</a> : int * int -&gt; int
+
   val <a href="#val-op-star">*</a> : int * int -&gt; int
+
   val <a href="#val-div">div</a> : int * int -&gt; int
+
   val <a href="#val-mod">mod</a> : int * int -&gt; int
+
   val <a href="#val-quot">quot</a> : int * int -&gt; int
+
   val <a href="#val-rem">rem</a> : int * int -&gt; int
+
   val <a href="#val-compare">compare</a> : int * int -&gt; order
+
   val <a href="#val-op-lt">&lt;</a> : int * int -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : int * int -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : int * int -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : int * int -&gt; bool
+
   val <a href="#val-op-tilde">~</a> : int -&gt; int
+
   val <a href="#val-abs">abs</a> : int -&gt; int
+
   val <a href="#val-min">min</a> : int * int -&gt; int
+
   val <a href="#val-max">max</a> : int * int -&gt; int
+
   val <a href="#val-sign">sign</a> : int -&gt; Int.int
+
   val <a href="#val-samesign">sameSign</a> : int * int -&gt; bool
+
   val <a href="#val-fmt">fmt</a> : StringCvt.radix -&gt; int -&gt; string
+
   val <a href="#val-tostring">toString</a> : int -&gt; string
+
   val <a href="#val-scan">scan</a> : StringCvt.radix -&gt; (char, 'a) StringCvt.reader -&gt; (int, 'a) StringCvt.reader
+
   val <a href="#val-fromstring">fromString</a> : string -&gt; int option
 end
 </pre>
+
+## The type
 
 ### <a name="type-int"></a>`int`
 
 ```sml
 eqtype int
 ```
+
+The type of integers of this structure.
+
+> **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int), of
+> 64 bits, and so are [`Int64`](INTEGER.md), `FixedInt` and `Position`; [`Int8`](INTEGER.md), [`Int16`](INTEGER.md)
+> and [`Int32`](INTEGER.md) keep a value of their own width, and [`LargeInt`](INTEGER.md) is [`IntInf`](../sig/INT_INF.md),
+> which has no width. Constants of each are checked against its range
+> where they are written.
 
 <details><summary>Tests (3)</summary>
 
@@ -87,11 +151,15 @@ For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `is-toplev
 
 </details>
 
+## Conversions
+
 ### <a name="val-tolarge"></a>`toLarge`
 
 ```sml
 val toLarge : int -> LargeInt.int
 ```
+
+`toLarge i` is `i` as an integer of [`LargeInt`](INTEGER.md), which loses nothing.
 
 <details><summary>Tests (9)</summary>
 
@@ -107,6 +175,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val fromLarge : LargeInt.int -> int
 ```
 
+`fromLarge i` is the integer of this structure with the value `i`.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
+
 <details><summary>Tests (14)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `identity`
@@ -120,6 +192,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val toInt : int -> Int.int
 ```
+
+`toInt i` is `i` as an integer of the default structure [`Int`](INTEGER.md).
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of [`Int.int`](#type-int).
 
 <details><summary>Tests (16)</summary>
 
@@ -137,6 +213,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val fromInt : Int.int -> int
 ```
 
+`fromInt i` is the integer of this structure with the value `i`.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
+
 <details><summary>Tests (13)</summary>
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `identity` &middot; `identity-on-bounds`
@@ -147,11 +227,17 @@ In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_sca
 
 </details>
 
+## The range
+
 ### <a name="val-precision"></a>`precision`
 
 ```sml
 val precision : Int.int option
 ```
+
+[`precision`](#val-precision) is the number of bits of an integer of this structure, sign included, or `NONE` when there is no bound.
+
+**Example** `Int.precision = SOME 64` and `IntInf.precision = NONE`.
 
 <details><summary>Tests (7)</summary>
 
@@ -171,6 +257,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val minInt : int option
 ```
 
+[`minInt`](#val-minint) is the smallest integer of this structure, or `NONE` when there is none.
+
+**Law** `minInt = SOME (~(2 ^ (p - 1)))` where `precision = SOME p`
+
 <details><summary>Tests (5)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `no-least-number`
@@ -184,6 +274,11 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val maxInt : int option
 ```
+
+[`maxInt`](#val-maxint) is the largest integer of this structure, or `NONE` when there is none.
+
+**Law** `maxInt = SOME (2 ^ (p - 1) - 1)` where `precision = SOME p`. The
+range is not symmetric: `~minInt` overflows and `abs minInt` does too.
 
 <details><summary>Tests (7)</summary>
 
@@ -199,11 +294,17 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 
 </details>
 
+## Arithmetic
+
 ### <a name="val-op-plus"></a>`+`
 
 ```sml
 val + : int * int -> int
 ```
+
+`i + j` is the sum.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range of this structure.
 
 <details><summary>Tests (30)</summary>
 
@@ -229,6 +330,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val - : int * int -> int
 ```
 
+`i - j` is the difference.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
+
 <details><summary>Tests (20)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30-minus-one` &middot; `one-minus-10^30` &middot; `as-Int*` &middot; `inverse-of-plus*`
@@ -244,6 +349,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val * : int * int -> int
 ```
+
+`i * j` is the product.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
 
 <details><summary>Tests (40)</summary>
 
@@ -261,6 +370,13 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val div : int * int -> int
 ```
 
+`i div j` is the quotient, rounded towards negative infinity.
+
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero; [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the
+range, which happens for `minInt div ~1`.
+
+**Example** `~7 div 2 = ~4`, where `~7 quot 2` is `~3`.
+
 <details><summary>Tests (32)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
@@ -276,6 +392,15 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val mod : int * int -> int
 ```
+
+`i mod j` is what [`div`](#val-div) leaves over: it has the sign of `j`.
+
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
+
+**Law** `(i div j) * j + (i mod j) = i`
+
+> **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
+> although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
 
 <details><summary>Tests (29)</summary>
 
@@ -293,6 +418,12 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val quot : int * int -> int
 ```
 
+`quot (i, j)` is the quotient, rounded towards zero.
+
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero; [`Overflow`](../sig/GENERAL.md#exn-overflow) for `quot (minInt, ~1)`.
+
+**Example** `quot (~7, 2) = ~3`, where `~7 div 2` is `~4`.
+
 <details><summary>Tests (22)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
@@ -307,6 +438,15 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val rem : int * int -> int
 ```
 
+`rem (i, j)` is what [`quot`](#val-quot) leaves over: it has the sign of `i`.
+
+**Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
+
+**Law** `quot (i, j) * j + rem (i, j) = i`
+
+> **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
+> [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
+
 <details><summary>Tests (20)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
@@ -315,11 +455,15 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 
 </details>
 
+## Comparing
+
 ### <a name="val-compare"></a>`compare`
 
 ```sml
 val compare : int * int -> order
 ```
+
+`compare (i, j)` orders two integers.
 
 <details><summary>Tests (15)</summary>
 
@@ -329,67 +473,24 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 
 </details>
 
-### <a name="val-op-lt"></a>`<`
+### <a name="val-op-lt"></a><a name="val-op-lt-eq"></a><a name="val-op-gt"></a><a name="val-op-gt-eq"></a>`<`, `<=`, `>`, `>=`
 
 ```sml
 val < : int * int -> bool
-```
-
-<details><summary>Tests (8)</summary>
-
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
-
-For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*`
-
-In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `minInt-minInt` &middot; `2^200-2^201` &middot; `model*`
-
-</details>
-
-### <a name="val-op-lt-eq"></a>`<=`
-
-```sml
 val <= : int * int -> bool
-```
-
-<details><summary>Tests (8)</summary>
-
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
-
-For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*`
-
-In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `minInt-minInt` &middot; `2^200-2^200` &middot; `model*`
-
-</details>
-
-### <a name="val-op-gt"></a>`>`
-
-```sml
 val > : int * int -> bool
-```
-
-<details><summary>Tests (8)</summary>
-
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
-
-For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*`
-
-In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `maxInt-maxInt` &middot; `2^200-2^201` &middot; `model*`
-
-</details>
-
-### <a name="val-op-gt-eq"></a>`>=`
-
-```sml
 val >= : int * int -> bool
 ```
 
-<details><summary>Tests (8)</summary>
+`i < j`, `i <= j`, `i > j` and `i >= j` compare two integers.
+
+<details><summary>Tests (11)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
 
 For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `toplevel*`
 
-In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `maxInt-maxInt` &middot; `~2^200-~2^201` &middot; `model*`
+In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `minInt-maxInt` &middot; `maxInt-minInt` &middot; `minInt-minInt` &middot; `2^200-2^201` &middot; `model*` &middot; `2^200-2^200` &middot; `maxInt-maxInt` &middot; `~2^200-~2^201`
 
 </details>
 
@@ -398,6 +499,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val ~ : int -> int
 ```
+
+`~i` is the negation of `i`.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `~minInt`, which is not in the range.
 
 <details><summary>Tests (16)</summary>
 
@@ -421,6 +526,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val abs : int -> int
 ```
 
+`abs i` is the magnitude of `i`.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `abs minInt`.
+
 <details><summary>Tests (13)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -437,6 +546,8 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val min : int * int -> int
 ```
 
+`min (i, j)` is the smaller of the two.
+
 <details><summary>Tests (6)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -450,6 +561,8 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 ```sml
 val max : int * int -> int
 ```
+
+`max (i, j)` is the larger of the two.
 
 <details><summary>Tests (6)</summary>
 
@@ -465,6 +578,8 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val sign : int -> Int.int
 ```
 
+`sign i` is \~1, 0 or 1, as `i` is negative, zero or positive.
+
 <details><summary>Tests (12)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -479,6 +594,13 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val sameSign : int * int -> bool
 ```
 
+`sameSign (i, j)` is `true` when `i` and `j` have the same sign.
+
+> **Reading** `Int.sameSign/zero-pos`. It is "equivalent to `sign i = sign j`", so zero has the same sign as zero only, and not as a positive
+> number.
+
+**Law** `sameSign (i, j) = (sign i = sign j)`
+
 <details><summary>Tests (10)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -487,11 +609,20 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 
 </details>
 
+## Text
+
 ### <a name="val-fmt"></a>`fmt`
 
 ```sml
 val fmt : StringCvt.radix -> int -> string
 ```
+
+`fmt radix i` is the text of `i` in the given base, with [`~`](#val-op-tilde) for a negative number.
+
+There is no prefix: a hexadecimal number is written with the digits `A`
+to `F` and nothing before them.
+
+**Example** `fmt StringCvt.HEX 255 = "FF"` and `fmt StringCvt.BIN ~5 = "~101"`
 
 <details><summary>Tests (2)</summary>
 
@@ -504,6 +635,10 @@ In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_sca
 ```sml
 val toString : int -> string
 ```
+
+`toString i` is the text of `i` in base 10.
+
+**Law** `toString i = fmt StringCvt.DEC i`
 
 <details><summary>Tests (12)</summary>
 
@@ -521,6 +656,21 @@ In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_sca
 val scan : StringCvt.radix -> (char, 'a) StringCvt.reader -> (int, 'a) StringCvt.reader
 ```
 
+`scan radix getc strm` reads an integer in the given base from `strm`.
+
+It skips initial white space, takes an optional sign ([`~`](#val-op-tilde) or [`-`](#val-op-minus) for a
+negative number, [`+`](#val-op-plus) for a positive one) and then the digits. In
+[`StringCvt.HEX`](../sig/STRING_CVT.md#con-hex) an optional `0x` or `0X` may stand before them. The
+answer is `SOME (i, rest)`, or `NONE` when no digit is there, and then
+nothing has been consumed.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number outside the range of this
+structure.
+
+> **Reading** `Int.scan/HEX-bare-prefix-0x`. A `0x` that no digit follows is
+> not a prefix, but its `0` is a digit: `"0xg"` scans as 0 and leaves
+> `"xg"` in the stream.
+
 <details><summary>Tests (12)</summary>
 
 In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_scan_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `HEX-0xg-is-zero` &middot; `HEX-0x-123-is-zero` &middot; `string-position` &middot; `string-position-second` &middot; `HEX-minInt-with-prefix` &middot; `HEX-maxInt-lower-case` &middot; `HEX-Overflow-with-prefix` &middot; `HEX-2^300-1-lower-case-with-prefix` &middot; `model*` &middot; `model-lower-case-rest*` &middot; `fmt-round-trip*`
@@ -533,6 +683,12 @@ In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_sca
 val fromString : string -> int option
 ```
 
+`fromString s` is the integer that the text `s` begins with in base 10, or `NONE`.
+
+**Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number outside the range.
+
+**Law** `fromString s = StringCvt.scanString (scan StringCvt.DEC) s`
+
 <details><summary>Tests (27)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^64` &middot; `factorial-30` &middot; `~2^128` &middot; `as-Int*` &middot; `toString*`
@@ -542,6 +698,10 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_scan_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `scanString-*`
 
 </details>
+
+## See also
+
+[`INT_INF`](../sig/INT_INF.md), [`WORD`](../sig/WORD.md), [`REAL`](../sig/REAL.md), [`STRING_CVT`](../sig/STRING_CVT.md)
 
 ---
 
