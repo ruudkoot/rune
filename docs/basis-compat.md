@@ -217,12 +217,14 @@ and SML/NJ (`NONE`); see the table of readings below.
 
 Not implemented:
 
-* `WideTextIO` and `WideTextPrimIO` (no host has them either), and `Windows`;
+* `Windows`;
 * IPv6.
 
 `WideChar` is there: a wide character is a Unicode code point (`maxOrd`
 0x10FFFF), with `WideString`, `WideSubstring`, `WideText` and the vectors and
-arrays of the family. Its classes and case conversions are those of ASCII,
+arrays of the family, and `WideTextIO` over `WideTextPrimIO`, whose files
+hold UTF-8 (the specification names no encoding; no host has a `WideTextIO`
+to compare with). Its classes and case conversions are those of ASCII,
 which the specification leaves to the implementation, and a character above
 255 is written `\uXXXX` or `\UXXXXXXXX`, as MLton writes it.
 
