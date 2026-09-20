@@ -97,7 +97,6 @@ file tests/doc/text.sml
       |sig
       |  type t
       |
-      |
       |  val take : 'a list * int -> 'a list
       |
       |  val @ : 'a list * 'a list -> 'a list

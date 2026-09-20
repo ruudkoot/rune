@@ -1,0 +1,2 @@
+tests/doc/anchors.sml:13:7: warning: `Nowhere.at` names nothing that is documented
+tests/doc/anchors.sml:14:7: error: the anchor val-tostring is on sig/ANCHORS.md twice: two names that differ only in case

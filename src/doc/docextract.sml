@@ -20,7 +20,8 @@ struct
               texts : bool,                       (* false on the first walk, which needs no source text *)
               items : (int * int) list ref,       (* what can be documented *)
               regions : (int * int) list ref,     (* the bodies of the signatures *)
-              tys : Ast.ty IntMap.map ref}        (* the types of the values, by where they begin *)
+              tys : Ast.ty IntMap.map ref,        (* the types of the values, by where they begin *)
+              binds : I.binding IntMap.map ref}   (* what the identifiers of a signature bind, by where they stand *)
 
   (* What a comment documents decides which reserved paragraphs it may have. *)
   datatype place = Value | Entry | Part | SignatureDoc | StructureDoc | FunctorDoc | ProseDoc
@@ -73,6 +74,23 @@ struct
 
   fun docOf (ctx : ctx, place : place, {start, stop, ...} : Source.span) : I.doc = docAt (ctx, place, start, stop)
 
+  (* Note that the identifier `name`, the first in span, binds this. *)
+  fun bind (ctx : ctx, {start, stop, ...} : Source.span, binding as {name, ...} : I.binding) : unit =
+    if not (#texts ctx) then ()
+    else
+      let
+        val src = #src ctx
+        fun find i =
+          if i >= S.numTokens src orelse S.tokenStart (src, i) >= stop then ()
+          else
+            case S.token (src, i) of
+              Token.ID x => if x = name then #binds ctx := IntMap.insert (!(#binds ctx), S.tokenStart (src, i), binding)
+                            else find (i + 1)
+            | _ => find (i + 1)
+      in
+        find (S.indexAt (src, start))
+      end
+
   (* The first record type that a type writes out, outermost and leftmost. *)
   fun recordOf (ty : Ast.ty) : (string * Ast.ty) list option =
     case ty of
@@ -99,20 +117,27 @@ struct
       if i >= 2 andalso S.token (src, i - 1) = Token.COLON then S.tokenStart (src, i - 2) else tyStart
     end
 
-  fun fieldsOf (ctx : ctx, ty : Ast.ty option) : I.field list =
+  (* owner: the path of the fields' anchors, which ends in what has them *)
+  fun fieldsOf (ctx : ctx, owner : string list, ty : Ast.ty option) : I.field list =
     case Option.mapPartial recordOf ty of
       NONE => []
     | SOME fields =>
         List.map (fn (label, t) =>
-                    let val {start, stop, ...} = Ast.spanOfTy t
-                    in {label = label, ty = tyText (ctx, t), doc = docAt (ctx, Part, labelStart (#src ctx, start), stop)} end)
+                    let
+                      val {start, stop, file} = Ast.spanOfTy t
+                      val from = labelStart (#src ctx, start)
+                    in
+                      bind (ctx, {file = file, start = from, stop = stop}, {bound = I.BField, path = owner, name = label});
+                      {label = label, ty = tyText (ctx, t), doc = docAt (ctx, Part, from, stop)}
+                    end)
                  fields
 
-  fun conOf ctx (name, ty : Ast.ty option, span : Source.span) : I.con =
+  fun conOf (ctx : ctx, path : string list) (name, ty : Ast.ty option, span : Source.span) : I.con =
     let val doc = docOf (ctx, Part, span)
     in
+      bind (ctx, span, {bound = I.BCon, path = path, name = name});
       {name = name, arg = Option.map (fn t => tyText (ctx, t)) ty,
-       fields = (case ty of SOME (Ast.TyRecord _) => fieldsOf (ctx, ty) | _ => []), doc = doc}
+       fields = (case ty of SOME (Ast.TyRecord _) => fieldsOf (ctx, path @ [name], ty) | _ => []), doc = doc}
     end
 
   fun sigHead (e : Ast.sigexp) : string option =
@@ -134,11 +159,12 @@ struct
       andalso C.newlines (src, S.tokenStop (src, i - 1), S.tokenStart (src, i)) < 2
     end
 
-  fun entry (ctx : ctx) {kind, name, spec, span, cons, fields, sigref, body} : I.item =
-    I.Item (I.Entry {kind = kind, name = name, spec = spec, span = span, cons = cons, fields = fields,
+  fun entry (ctx : ctx, path : string list) {kind, name, spec, span, cons, fields, sigref, body} : I.item =
+    (if name = "" orelse kind = I.Include then () else bind (ctx, span, {bound = I.BEntry kind, path = path, name = name});
+     I.Item (I.Entry {kind = kind, name = name, path = path, spec = spec, span = span, cons = cons, fields = fields,
                      sigref = sigref, body = body, adjacent = #texts ctx andalso adjacent (#src ctx, #start span),
                      heads = [], leader = NONE,
-                     doc = docOf (ctx, if kind = I.Val then Value else Entry, span)})
+                     doc = docOf (ctx, if kind = I.Val then Value else Entry, span)}))
 
   (* ---- usage heads and groups ---- *)
   fun firstParagraphCode (doc : I.doc) : string list =
@@ -168,9 +194,9 @@ struct
           [] => []
         | I.Item (I.Entry (e as {kind = I.Val, ...})) :: rest =>
             let
-              val {kind, name, spec, span, cons, fields, sigref, body, adjacent, doc, ...} = e
+              val {kind, name, path, spec, span, cons, fields, sigref, body, adjacent, doc, ...} = e
               fun rebuilt (heads, l) =
-                I.Item (I.Entry {kind = kind, name = name, spec = spec, span = span, cons = cons, fields = fields,
+                I.Item (I.Entry {kind = kind, name = name, path = path, spec = spec, span = span, cons = cons, fields = fields,
                                  sigref = sigref, body = body, adjacent = adjacent, heads = heads, leader = l, doc = doc})
             in
               if not (List.null doc) then
@@ -212,17 +238,16 @@ struct
       merge (entries, C.takeStandalone (#table ctx, start, stop))
     end
 
-  fun specItems (ctx : ctx) (spec : Ast.spec) : I.item list =
+  fun specItems (ctx : ctx, path : string list) (spec : Ast.spec) : I.item list =
     let
-      val src = #src ctx
-      val entry = entry ctx
+      val entry = entry (ctx, path)
     in
       case spec of
         Ast.SpecVal (descs, _) =>
           List.map (fn (name, ty, sp) =>
                       (#tys ctx := IntMap.insert (!(#tys ctx), #start sp, ty);
                        entry {kind = I.Val, name = name, spec = described (ctx, "val", sp), span = sp, cons = [],
-                              fields = fieldsOf (ctx, SOME ty), sigref = NONE, body = NONE})) descs
+                              fields = fieldsOf (ctx, path @ [name], SOME ty), sigref = NONE, body = NONE})) descs
       | Ast.SpecType (descs, _) =>
           List.map (fn (_, name, sp) =>
                       entry {kind = I.Type, name = name, spec = described (ctx, "type", sp), span = sp, cons = [],
@@ -234,20 +259,20 @@ struct
       | Ast.SpecDatatype (binds, _) =>
           List.map (fn {name, cons, span, ...} =>
                       entry {kind = I.Datatype, name = name, spec = described (ctx, "datatype", span), span = span,
-                             cons = List.map (conOf ctx) cons, fields = [], sigref = NONE, body = NONE}) binds
+                             cons = List.map (conOf (ctx, path)) cons, fields = [], sigref = NONE, body = NONE}) binds
       | Ast.SpecDatatypeRepl (name, _, sp) =>
           [entry {kind = I.Datatype, name = name, spec = margin (ctx, sp), span = sp, cons = [],
                   fields = [], sigref = NONE, body = NONE}]
       | Ast.SpecException (descs, _) =>
           List.map (fn (name, ty, sp) =>
                       entry {kind = I.Exception, name = name, spec = described (ctx, "exception", sp), span = sp,
-                             cons = [], fields = fieldsOf (ctx, ty), sigref = NONE, body = NONE}) descs
+                             cons = [], fields = fieldsOf (ctx, path @ [name], ty), sigref = NONE, body = NONE}) descs
       | Ast.SpecStructure (descs, _) =>
           List.map (fn (name, sigexp, sp) =>
                       case sigexp of
                         Ast.SigSig (specs, inner) =>
                           entry {kind = I.Structure, name = name, spec = "structure " ^ name ^ " : sig ... end", span = sp,
-                                 cons = [], fields = [], sigref = NONE, body = SOME (body ctx (specs, inner))}
+                                 cons = [], fields = [], sigref = NONE, body = SOME (body (ctx, path @ [name]) (specs, inner))}
                       | _ =>
                           entry {kind = I.Structure, name = name, spec = described (ctx, "structure", sp), span = sp,
                                  cons = [], fields = [], sigref = sigHead sigexp, body = NONE}) descs
@@ -257,10 +282,10 @@ struct
       | Ast.SpecInclude (sigexp as Ast.SigWhere (Ast.SigSig ([Ast.SpecType ([(_, name, _)], _)], inner), wheres, _), sp) =>
           if spanEq (inner, sp) then
             [entry {kind = I.Type, name = name, spec = described (ctx, "type", sp), span = sp, cons = [],
-                    fields = (case wheres of [(_, _, ty, _)] => fieldsOf (ctx, SOME ty) | _ => []),
+                    fields = (case wheres of [(_, _, ty, _)] => fieldsOf (ctx, path @ [name], SOME ty) | _ => []),
                     sigref = NONE, body = NONE}]
-          else includeItems ctx (sigexp, sp)
-      | Ast.SpecInclude (sigexp, sp) => includeItems ctx (sigexp, sp)
+          else includeItems (ctx, path) (sigexp, sp)
+      | Ast.SpecInclude (sigexp, sp) => includeItems (ctx, path) (sigexp, sp)
       | Ast.SpecSharingType (_, sp) =>
           [entry {kind = I.Sharing, name = "", spec = margin (ctx, sp), span = sp, cons = [], fields = [],
                   sigref = NONE, body = NONE}]
@@ -269,10 +294,9 @@ struct
                   sigref = NONE, body = NONE}]
     end
 
-  and includeItems ctx (sigexp : Ast.sigexp, sp : Source.span) : I.item list =
+  and includeItems (ctx, path) (sigexp : Ast.sigexp, sp : Source.span) : I.item list =
     let
-      val src = #src ctx
-      val entry = entry ctx
+      val entry = entry (ctx, path)
     in
       case sigHead sigexp of
         SOME n =>
@@ -282,14 +306,14 @@ struct
           (case sigexp of
              Ast.SigSig (specs, inner) =>
                [entry {kind = I.Include, name = "", spec = "include sig ... end", span = sp, cons = [], fields = [],
-                       sigref = NONE, body = SOME (body ctx (specs, inner))}]
+                       sigref = NONE, body = SOME (body (ctx, path) (specs, inner))}]
            | _ =>
                [entry {kind = I.Include, name = "", spec = described (ctx, "include", Ast.spanOfSigexp sigexp), span = sp,
                        cons = [], fields = [], sigref = NONE, body = NONE}])
     end
 
-  and body ctx (specs : Ast.spec list, span : Source.span) : I.item list =
-    withStandalone (ctx, withHeads (ctx, List.concat (List.map (specItems ctx) specs)), span)
+  and body (ctx, path) (specs : Ast.spec list, span : Source.span) : I.item list =
+    withStandalone (ctx, withHeads (ctx, List.concat (List.map (specItems (ctx, path)) specs)), span)
 
   (* A binding shown whole: from the keyword before it when its span begins
      after that, as the span of `signature S = ...` does at S. *)
@@ -332,16 +356,23 @@ struct
       case dec of
         Ast.DSignature (binds, _) =>
           List.map (fn {name, sigexp, span} =>
-                      let val doc = docOf (ctx, SignatureDoc, span)
+                      let
+                        val doc = docOf (ctx, SignatureDoc, span)
+                        val items = case sigexp of
+                                      Ast.SigSig (specs, inner) => body (ctx, []) (specs, inner)
+                                    | _ => []
+                        val whole = fromKeyword (src, Token.SIGNATURE, span)
                       in
                         I.Signature {name = name, file = S.name src, span = span, doc = doc,
-                                     source = margin (ctx, fromKeyword (src, Token.SIGNATURE, span)),
+                                     source = margin (ctx, whole),
+                                     interface = if #texts ctx
+                                                 then List.map (fn (at, text) => (text, IntMap.find (!(#binds ctx), at)))
+                                                               (S.pieces (src, whole))
+                                                 else [],
                                      sigexp = (case sigexp of
                                                  Ast.SigSig _ => NONE
                                                | _ => SOME (margin (ctx, Ast.spanOfSigexp sigexp))),
-                                     body = (case sigexp of
-                                               Ast.SigSig (specs, inner) => body ctx (specs, inner)
-                                             | _ => [])}
+                                     body = items}
                       end) binds
       | Ast.DStructure (binds, _) => List.map (structOf ctx) binds
       | Ast.DFunctor (binds, _) =>
@@ -361,7 +392,7 @@ struct
       val src = S.load path
       val (prog, _) = Parser.parseTokensWith (#toks src, Fixity.initial)
       fun walk (table, texts) =
-        let val ctx = {src = src, table = table, texts = texts, items = ref [], regions = ref [], tys = ref IntMap.empty}
+        let val ctx = {src = src, table = table, texts = texts, items = ref [], regions = ref [], tys = ref IntMap.empty, binds = ref IntMap.empty}
         in (List.concat (List.map (modulesOf ctx) prog), ctx) end
       val (_, first) = walk (C.empty, false)
       val (modules, _) = walk (C.attach (src, !(#items first), !(#regions first)), true)

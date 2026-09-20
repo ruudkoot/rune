@@ -97,8 +97,6 @@ file tests/doc/attach.sml
       |
       |  exception Failed of {why : string, code : int}
       |
-      |
-      |
       |  val first : t
       |  val second : t
       |

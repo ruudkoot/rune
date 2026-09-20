@@ -47,11 +47,16 @@ elaborator), so what it documents is what the compiler compiles. Nothing of
 | `DocHead` | `src/doc/dochead.sml` | Usage heads: `` `take (l, i)` `` at the start of a value's description is parsed with the compiler's parser and checked against the type of the specification; its arguments name the arguments for the rest of the comment. |
 | `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
 | `DocExtract` | `src/doc/docextract.sml` | Syntax tree and comments to `DocIR`, in two walks: the first notes what can be documented, the second builds the modules with their comments. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
-| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --dump-ir FILE...`, `runedoc --lint FILE...`. |
+| `DocAnchor` | `src/doc/docanchor.sml` | The explicit anchors of a page, `kind-name` in lower case with symbolic identifiers spelled out (`val-op-at`): GitHub's own anchors are useless for SML. |
+| `DocMarkdown` | `src/doc/docmarkdown.sml` | Markdown as GitHub reads it: what must be escaped for text to stay text, blocks, tables. |
+| `DocResolve` | `src/doc/docresolve.sml` | What a code span that is an identifier refers to: an argument of the usage head, a member of the signature (through its substructures and includes), a module; `List.map` leads to the page of `LIST`. |
+| `DocPage` | `src/doc/docpage.sml` | The page of a signature: status, synopsis, overview, contents, the interface with its identifiers linked, the entries with their tables of constructors and fields, notes as quotations. |
+| `DocSite` | `src/doc/docsite.sml` | A library's documentation as a tree of files: the pages, the overview by area, the index of identifiers, `conventions.md`, `coverage.md`; checks that every anchor is unique and every link leads somewhere, that no page is too large for GitHub; writes the tree or compares it with the one on disk. |
+| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --library NAME --out DIR [--check]`, and `--page`, `--dump-ir`, `--lint` on files. |
 
 Its tests are `tests/doc` (`make test-doc`): an input file and, next to it,
-what `runedoc` is expected to make of it (`.ir`) and to complain about
-(`.diag`).
+what `runedoc` is expected to make of it (`.ir`, and `.md` for the page) and
+to complain about (`.diag`).
 
 ## Modules
 

@@ -30,15 +30,18 @@ struct
      them. heads: how the comment shows the value applied (DocHead), its own
      head first. leader: the entry before it whose comment documents this one
      too, because it is adjacent and that comment has a head for it. *)
-  datatype entry = Entry of
-    {kind : kind, name : string, spec : string, span : Source.span,
-     cons : con list, fields : field list,
-     sigref : string option, body : item list option, adjacent : bool,
-     heads : DocHead.head list, leader : string option, doc : doc}
+  datatype entry = Entry of entryRecord
 
   (* A signature body in source order: what it specifies, the headings that
      divide it into sections, and prose that stands between entries. *)
   and item = Item of entry | Section of string | Prose of doc
+
+  withtype entryRecord =
+    {kind : kind, name : string, path : string list,   (* the substructures it is inside, outermost first *)
+     spec : string, span : Source.span,
+     cons : con list, fields : field list,
+     sigref : string option, body : item list option, adjacent : bool,
+     heads : DocHead.head list, leader : string option, doc : doc}
 
   datatype rhs =
       Body                          (* struct ... end *)
@@ -48,11 +51,25 @@ struct
 
   type ascription = {sigexp : string, opaque : bool}
 
+  (* What an identifier of a signature's text binds, for the anchor it links
+     to: a specification, a constructor or a field, inside these
+     substructures. *)
+  datatype bound = BEntry of kind | BCon | BField
+  type binding = {bound : bound, path : string list, name : string}
+
+  (* The text of a declaration in pieces; a piece that binds something says
+     what. *)
+  type piece = string * binding option
+
+  type signatureRecord =
+    {name : string, file : string, span : Source.span, doc : doc,
+     source : string,            (* the declaration without comments *)
+     interface : piece list,     (* the same, with what its identifiers bind *)
+     sigexp : string option,     (* when it is not sig ... end *)
+     body : item list}
+
   datatype module =
-      Signature of {name : string, file : string, span : Source.span, doc : doc,
-                    source : string,            (* the declaration without comments *)
-                    sigexp : string option,     (* when it is not sig ... end *)
-                    body : item list}
+      Signature of signatureRecord
     | Struct of {name : string, file : string, span : Source.span, doc : doc,
                  ascription : ascription option, rhs : rhs, subs : module list}
     | Functor of {name : string, file : string, span : Source.span, doc : doc,

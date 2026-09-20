@@ -6,6 +6,9 @@
 #   NAME.ir    the output of `runedoc --dump-ir tests/doc/NAME.sml`
 #   NAME.diag  the diagnostics of that run (its standard error); a test
 #              without this file must produce none
+#   NAME.md    the output of `runedoc --page tests/doc/NAME.sml`: the pages of
+#              the signatures of the file
+#   NAME.md.diag  the diagnostics of that run; without it there must be none
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -50,6 +53,20 @@ for src in tests/doc/*.sml; do
     elif [ -s "$out/$name.diag" ]; then
       failed=$((failed + 1))
       echo "failed: $name printed diagnostics and has no .diag: $(head -1 "$out/$name.diag")"
+    fi
+  fi
+  if [ -f "tests/doc/$name.md" ]; then
+    "$runedoc" --page "$src" > "$out/$name.md" 2> "$out/$name.md.diag"
+    if [ $update = 1 ]; then
+      cp "$out/$name.md" "tests/doc/$name.md"
+      [ -f "tests/doc/$name.md.diag" ] && cp "$out/$name.md.diag" "tests/doc/$name.md.diag"
+    fi
+    same "$name.md" "$out/$name.md" "tests/doc/$name.md"
+    if [ -f "tests/doc/$name.md.diag" ]; then
+      same "$name.md.diag" "$out/$name.md.diag" "tests/doc/$name.md.diag"
+    elif [ -s "$out/$name.md.diag" ]; then
+      failed=$((failed + 1))
+      echo "failed: $name printed diagnostics for its page and has no .md.diag: $(head -1 "$out/$name.md.diag")"
     fi
   fi
 done

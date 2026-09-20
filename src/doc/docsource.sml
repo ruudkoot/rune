@@ -103,8 +103,12 @@ struct
           else NONE
         fun go (_, []) = []
           | go (k, l :: rest) = (case clean (k, l) of SOME l' => l' :: go (k + 1, rest) | NONE => go (k + 1, rest))
+        (* where a comment stood between two blank lines, one is enough; the
+           last piece is the indentation of the next token, not a line *)
+        fun squeeze (a :: (rest as b :: _ :: _ :: _)) = if isBlank a andalso isBlank b then squeeze rest else a :: squeeze rest
+          | squeeze ls = ls
       in
-        String.concatWith "\n" (go (0, lines))
+        String.concatWith "\n" (squeeze (go (0, lines)))
       end
 
   (* The source text of [a, b), which begins at a token and ends at one,
@@ -126,6 +130,24 @@ struct
     end
 
   fun sliceSpan (src : t, {start, stop, ...} : Source.span) : string = slice (src, start, stop)
+
+  (* The same text in pieces: each token with where it starts, and the gaps
+     between them (without comments) with ~1. *)
+  fun pieces (src : t, {start = a, stop = b, ...} : Source.span) : (int * string) list =
+    let
+      val first = indexAt (src, a)
+      fun go (i, acc) =
+        if i >= numTokens src orelse tokenStart (src, i) >= b orelse tokenStart (src, i) = tokenStop (src, i) then List.rev acc
+        else
+          let
+            val tok = (tokenStart (src, i), substring (src, tokenStart (src, i), tokenStop (src, i)))
+          in
+            go (i + 1, if i = first then tok :: acc
+                       else tok :: (~1, gapWithoutComments (src, tokenStop (src, i - 1), tokenStart (src, i))) :: acc)
+          end
+    in
+      go (first, [])
+    end
 
   (* The same, with the lines after the first moved left by the indentation
      of the line it begins on, so that the text can stand at the margin. *)

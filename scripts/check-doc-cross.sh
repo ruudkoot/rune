@@ -33,5 +33,16 @@ run() {
 run ir-basis --dump-ir $(grep -l '^signature ' lib/basis/*.sml)
 run ir-tests --dump-ir tests/doc/*.sml
 
+# The documentation of the basis library, from every build.
+for c in $builds; do
+  rm -rf "$out/site.$c"
+  "bin/runedoc-$c" --lib lib --library basis --out "$out/site.$c" --title Basis > /dev/null 2> "$out/site.$c.err" ||
+    { echo "FAIL doc-cross site: runedoc-$c failed: $(head -1 "$out/site.$c.err")"; status=1; }
+done
+for c in $builds; do
+  diff -r "$out/site.mlton" "$out/site.$c" > /dev/null && cmp -s "$out/site.mlton.err" "$out/site.$c.err" ||
+    { echo "FAIL doc-cross site: the mlton and $c builds write different documentation (diff -r $out/site.mlton $out/site.$c)"; status=1; }
+done
+
 [ $status = 0 ] && echo "check-doc-cross: the builds of runedoc agree ($builds)"
 exit $status
