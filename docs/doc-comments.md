@@ -114,7 +114,9 @@ id is `scope/slug` (`Char.fromString/unescaped-double-quote`,
 
 ```
 bin/runedoc --lint FILE...      # what is wrong with the comments of the files
-bin/runedoc --dump-ir FILE...   # what the generator makes of them
+bin/runedoc --page FILE...      # the pages of the signatures of the files, on the standard output
+bin/runedoc --dump-ir FILE...   # what the generator makes of them, before any rendering
+make docs                       # write docs/generated/basis; commit the result
 ```
 
 `bin/runedoc-mlton` does the same at once; `bin/runedoc` runs on the VM.

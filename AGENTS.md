@@ -75,7 +75,10 @@ keep these invariants:
   list is a bug.
 * Comments are written in the language of `docs/doc-comments.md`, and in a
   signature every comment documents something, is a `----` heading or is
-  prose; `make check-docs` lints `lib/basis` and `src`.
+  prose; `make check-docs` lints `lib/basis` and `src`. The documentation in
+  `docs/generated/basis` is made from the library's comments: after changing
+  a signature or a comment of `lib/basis`, run `make docs` and commit what it
+  writes (`make check-docs` fails on a stale tree). Never edit it by hand.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

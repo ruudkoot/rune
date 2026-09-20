@@ -96,7 +96,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -233,6 +233,14 @@ check-docs: $(RUNE) $(RUNEDOC)
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
 	$(RUNEDOC) --lint lib/basis/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis and src are in the language of doc comments)"
+	$(RUNEDOC) $(DOCS_BASIS) --check
+
+# The generated documentation (docs/plans/docgen.md): `make docs` writes it,
+# and it is committed; check-docs fails when it is not what the sources give.
+DOCS_BASIS := --lib lib --library basis --out docs/generated/basis --title "The Standard ML Basis Library"
+
+docs: $(RUNEDOC)
+	$(RUNEDOC) $(DOCS_BASIS)
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems

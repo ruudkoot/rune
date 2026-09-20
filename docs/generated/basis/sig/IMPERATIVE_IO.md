@@ -1,0 +1,216 @@
+# signature IMPERATIVE_IO
+
+[The Standard ML Basis Library](../README.md) &rsaquo; **IMPERATIVE_IO**
+
+|  |  |
+| --- | --- |
+| Status | required |
+| Documentation | 0 of 25 entries documented |
+| Source | [lib/basis/sig\_imperative\_io.sml](../../../../lib/basis/sig_imperative_io.sml) |
+
+## Synopsis
+
+```sml
+signature IMPERATIVE_IO
+```
+
+signature IMPERATIVE\_IO, transcribed from
+<https://smlfamily.github.io/Basis/imperative-io.html>
+
+The substructure has STREAM\_IO of tests/basis/spec-sigs/STREAM\_IO.sml,
+which a test that uses this file uses first.
+
+## Interface
+
+<pre>
+signature IMPERATIVE_IO =
+sig
+  structure <a href="#str-streamio">StreamIO</a> : STREAM_IO
+
+  type <a href="#type-vector">vector</a> = StreamIO.vector
+  type <a href="#type-elem">elem</a> = StreamIO.elem
+
+  type <a href="#type-instream">instream</a>
+  type <a href="#type-outstream">outstream</a>
+
+  val <a href="#val-input">input</a> : instream -&gt; vector
+  val <a href="#val-input1">input1</a> : instream -&gt; elem option
+  val <a href="#val-inputn">inputN</a> : instream * int -&gt; vector
+  val <a href="#val-inputall">inputAll</a> : instream -&gt; vector
+  val <a href="#val-caninput">canInput</a> : instream * int -&gt; int option
+  val <a href="#val-lookahead">lookahead</a> : instream -&gt; elem option
+  val <a href="#val-closein">closeIn</a> : instream -&gt; unit
+  val <a href="#val-endofstream">endOfStream</a> : instream -&gt; bool
+
+  val <a href="#val-output">output</a> : outstream * vector -&gt; unit
+  val <a href="#val-output1">output1</a> : outstream * elem -&gt; unit
+  val <a href="#val-flushout">flushOut</a> : outstream -&gt; unit
+  val <a href="#val-closeout">closeOut</a> : outstream -&gt; unit
+
+  val <a href="#val-mkinstream">mkInstream</a> : StreamIO.instream -&gt; instream
+  val <a href="#val-getinstream">getInstream</a> : instream -&gt; StreamIO.instream
+  val <a href="#val-setinstream">setInstream</a> : instream * StreamIO.instream -&gt; unit
+
+  val <a href="#val-mkoutstream">mkOutstream</a> : StreamIO.outstream -&gt; outstream
+  val <a href="#val-getoutstream">getOutstream</a> : outstream -&gt; StreamIO.outstream
+  val <a href="#val-setoutstream">setOutstream</a> : outstream * StreamIO.outstream -&gt; unit
+  val <a href="#val-getposout">getPosOut</a> : outstream -&gt; StreamIO.out_pos
+  val <a href="#val-setposout">setPosOut</a> : outstream * StreamIO.out_pos -&gt; unit
+end
+</pre>
+
+### <a name="str-streamio"></a>`StreamIO`
+
+```sml
+structure StreamIO : STREAM_IO
+```
+
+A substructure: its members are described on the page of [`STREAM_IO`](../sig/STREAM_IO.md).
+
+### <a name="type-vector"></a>`vector`
+
+```sml
+type vector = StreamIO.vector
+```
+
+### <a name="type-elem"></a>`elem`
+
+```sml
+type elem = StreamIO.elem
+```
+
+### <a name="type-instream"></a>`instream`
+
+```sml
+type instream
+```
+
+### <a name="type-outstream"></a>`outstream`
+
+```sml
+type outstream
+```
+
+### <a name="val-input"></a>`input`
+
+```sml
+val input : instream -> vector
+```
+
+### <a name="val-input1"></a>`input1`
+
+```sml
+val input1 : instream -> elem option
+```
+
+### <a name="val-inputn"></a>`inputN`
+
+```sml
+val inputN : instream * int -> vector
+```
+
+### <a name="val-inputall"></a>`inputAll`
+
+```sml
+val inputAll : instream -> vector
+```
+
+### <a name="val-caninput"></a>`canInput`
+
+```sml
+val canInput : instream * int -> int option
+```
+
+### <a name="val-lookahead"></a>`lookahead`
+
+```sml
+val lookahead : instream -> elem option
+```
+
+### <a name="val-closein"></a>`closeIn`
+
+```sml
+val closeIn : instream -> unit
+```
+
+### <a name="val-endofstream"></a>`endOfStream`
+
+```sml
+val endOfStream : instream -> bool
+```
+
+### <a name="val-output"></a>`output`
+
+```sml
+val output : outstream * vector -> unit
+```
+
+### <a name="val-output1"></a>`output1`
+
+```sml
+val output1 : outstream * elem -> unit
+```
+
+### <a name="val-flushout"></a>`flushOut`
+
+```sml
+val flushOut : outstream -> unit
+```
+
+### <a name="val-closeout"></a>`closeOut`
+
+```sml
+val closeOut : outstream -> unit
+```
+
+### <a name="val-mkinstream"></a>`mkInstream`
+
+```sml
+val mkInstream : StreamIO.instream -> instream
+```
+
+### <a name="val-getinstream"></a>`getInstream`
+
+```sml
+val getInstream : instream -> StreamIO.instream
+```
+
+### <a name="val-setinstream"></a>`setInstream`
+
+```sml
+val setInstream : instream * StreamIO.instream -> unit
+```
+
+### <a name="val-mkoutstream"></a>`mkOutstream`
+
+```sml
+val mkOutstream : StreamIO.outstream -> outstream
+```
+
+### <a name="val-getoutstream"></a>`getOutstream`
+
+```sml
+val getOutstream : outstream -> StreamIO.outstream
+```
+
+### <a name="val-setoutstream"></a>`setOutstream`
+
+```sml
+val setOutstream : outstream * StreamIO.outstream -> unit
+```
+
+### <a name="val-getposout"></a>`getPosOut`
+
+```sml
+val getPosOut : outstream -> StreamIO.out_pos
+```
+
+### <a name="val-setposout"></a>`setPosOut`
+
+```sml
+val setPosOut : outstream * StreamIO.out_pos -> unit
+```
+
+---
+
+<sub>Generated by runedoc from lib/basis/sig\_imperative\_io.sml; do not edit.</sub>
