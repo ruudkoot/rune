@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 2 entries documented |
 | Source | [lib/basis/sig\_text\_stream\_io.sml](../../../../lib/basis/sig_text_stream_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature TEXT_STREAM_IO
+structure TextIO.StreamIO : TEXT_STREAM_IO where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `TextIO.StreamIO` | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 signature TEXT\_STREAM\_IO, transcribed from
 <https://smlfamily.github.io/Basis/text-stream-io.html>

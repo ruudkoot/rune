@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 2 entries documented |
 | Source | [lib/basis/sig\_command\_line.sml](../../../../lib/basis/sig_command_line.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature COMMAND_LINE
+structure CommandLine : COMMAND_LINE
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `CommandLine` | CommandLine | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
 
 signature COMMAND\_LINE, transcribed from
 <https://smlfamily.github.io/Basis/command-line.html>

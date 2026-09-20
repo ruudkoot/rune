@@ -1,4 +1,8 @@
-(* Unix: running a program and talking to it through pipes. *)
+(* Unix: running a program and talking to it through pipes.
+
+   Implements: UNIX
+
+   Status: optional *)
 structure Unix =
 struct
   type signal = Posix.Signal.signal

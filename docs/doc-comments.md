@@ -103,6 +103,26 @@ set is closed and case-sensitive.
 | `Reading:` `Erratum:` `Deviation:` `Implementation:` `Limitation:` | anything | a note: its id in backquotes, then prose. `Reading (the suite differs):` is the one modifier |
 | `Pinned by:` | directly after a note | labels (or globs of labels) of the checks of `tests/basis` that pin the note |
 
+A structure says what it implements in the comment above it, because most
+structures of the library are not sealed with their signature:
+
+```sml
+(* Int: fixed precision integers ...
+
+   Implements: INTEGER where type int = int *)
+structure Int = struct ... end
+```
+
+The claim puts `Int` on the page of `INTEGER`, sends `Int.toString` there, and
+is written to `docs/generated/basis/claims.tsv`. `tests/basis/check-claims.sh`
+(part of `make check-docs`) wants every claim to be backed by a line
+`structure C : SPEC_INTEGER = Int` of a `tests/basis/*_sig.sml`, and every such
+line to be claimed. An ascription in the source is a claim by itself. A
+substructure is claimed above its binding (`structure Path = RunePath` in
+`os.sml`). In the body of a structure or a functor, a note in the comment
+above a declaration is shown under that member on the signature's page, as
+what holds "in `Int`"; the notes of a functor hold for its applications.
+
 The notes record how the library reads its specification: a **reading** of
 text that is silent, ambiguous or contradictory; an **erratum** of the
 specification; a **deviation** of Rune from it; a choice the specification

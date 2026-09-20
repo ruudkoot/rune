@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 22 entries documented |
 | Source | [lib/basis/sig\_posix\_process.sml](../../../../lib/basis/sig_posix_process.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_PROCESS
+structure Posix.Process : POSIX_PROCESS
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.Process` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_PROCESS, transcribed from
 <https://smlfamily.github.io/Basis/posix-process.html>

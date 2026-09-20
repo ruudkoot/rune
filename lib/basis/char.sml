@@ -147,7 +147,9 @@ struct
           in implode [#"\\", o' (n div 64), o' (n div 8 mod 8), o' (n mod 8)] end
 end
 
-(* Char: 8-bit characters. *)
+(* Char: 8-bit characters.
+
+   Implements: CHAR where type char = char where type string = String.string *)
 structure Char =
 struct
   type char = char

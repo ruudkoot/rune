@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 6 |
 | Documentation | 0 of 7 entries documented |
 | Source | [lib/basis/sig\_pack\_word.sml](../../../../lib/basis/sig_pack_word.sml) |
 
@@ -12,7 +13,22 @@
 
 ```sml
 signature PACK_WORD
+structure PackWord16Big : PACK_WORD  (* optional *)
+structure PackWord16Little : PACK_WORD  (* optional *)
+structure PackWord32Big : PACK_WORD  (* optional *)
+structure PackWord32Little : PACK_WORD  (* optional *)
+structure PackWord64Big : PACK_WORD  (* optional *)
+structure PackWord64Little : PACK_WORD  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `PackWord16Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| `PackWord16Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| `PackWord32Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| `PackWord32Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| `PackWord64Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| `PackWord64Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
 
 signature PACK\_WORD, transcribed from <https://smlfamily.github.io/Basis/pack-word.html>
 

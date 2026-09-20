@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 5 entries documented |
 | Source | [lib/basis/sig\_bool.sml](../../../../lib/basis/sig_bool.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature BOOL
+structure Bool : BOOL
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Bool` | Bool | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
 
 signature BOOL, transcribed from <https://smlfamily.github.io/Basis/bool.html>
 

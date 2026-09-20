@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 25 entries documented |
 | Source | [lib/basis/sig\_time.sml](../../../../lib/basis/sig_time.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature TIME
+structure Time : TIME
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Time` | Time: a length of time, held as microseconds. | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
 
 signature TIME, transcribed from <https://smlfamily.github.io/Basis/time.html>
 

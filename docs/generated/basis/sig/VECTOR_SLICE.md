@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 24 entries documented |
 | Source | [lib/basis/sig\_vector\_slice.sml](../../../../lib/basis/sig_vector_slice.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature VECTOR_SLICE
+structure VectorSlice : VECTOR_SLICE
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `VectorSlice` | VectorSlice: a vector, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
 
 signature VECTOR\_SLICE, transcribed from
 <https://smlfamily.github.io/Basis/vector-slice.html>

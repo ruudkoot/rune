@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 2 |
 | Documentation | 0 of 31 entries documented |
 | Source | [lib/basis/sig\_string.sml](../../../../lib/basis/sig_string.sml) |
 
@@ -12,12 +13,19 @@
 
 ```sml
 signature STRING
+structure String : STRING where type string = string where type char = Char.char
+structure WideString :> STRING where type string = WideCharVector.vector where type char = WideChar.char  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `String` | String: 8-bit byte strings. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
+| `WideString` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 signature STRING, transcribed from <https://smlfamily.github.io/Basis/string.html>
 
 The page writes the types of toString, scan, fromString, toCString and
-fromCString with `String.string`, because the signature is also that of
+fromCString with [`String.string`](#type-string), because the signature is also that of
 WideString; they are kept as written. The constraints of `structure String :> STRING where type string = string where type string = CharVector.vector where type char = Char.char` are in tests/basis/string\_sig.sml.
 
 ## Interface

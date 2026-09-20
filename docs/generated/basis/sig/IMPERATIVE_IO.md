@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 2 |
 | Documentation | 0 of 25 entries documented |
 | Source | [lib/basis/sig\_imperative\_io.sml](../../../../lib/basis/sig_imperative_io.sml) |
 
@@ -12,7 +13,14 @@
 
 ```sml
 signature IMPERATIVE_IO
+structure BinIO : IMPERATIVE_IO
+structure TextIO : IMPERATIVE_IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| `TextIO` | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 signature IMPERATIVE\_IO, transcribed from
 <https://smlfamily.github.io/Basis/imperative-io.html>

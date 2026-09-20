@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 110 entries documented |
 | Source | [lib/basis/sig\_posix\_tty.sml](../../../../lib/basis/sig_posix_tty.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_TTY
+structure Posix.TTY : POSIX_TTY
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.TTY` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_TTY, transcribed from
 <https://smlfamily.github.io/Basis/posix-tty.html>

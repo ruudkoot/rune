@@ -6,7 +6,11 @@
    code point below 128, up to four above it. A byte sequence that is not
    UTF-8 raises Io with the cause Fail "UTF-8". A stream made with
    mkInstream over a reader of one's own carries wide characters as they are,
-   without an encoding. *)
+   without an encoding.
+
+   Implements: PRIM_IO
+
+   Status: optional *)
 structure WideTextPrimIO =
   RunePrimIOFn (structure V = WideCharVector
                 structure A = WideCharArray

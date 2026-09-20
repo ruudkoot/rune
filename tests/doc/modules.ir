@@ -8,17 +8,22 @@ file tests/doc/modules.sml
       adjacent
     source: signature S = sig type t val x : t end
   structure Plain
+    members: t x
   structure Transparent
     ascribed: S
+    members: t x
   structure Opaque
     sealed with: S where type t = int
+    members: t x
   structure Alias
     alias of: Plain
   structure Nested
+    members: Inner Deeper y
     structure Inner
       ascribed: S
       alias of: Transparent
     structure Deeper
+      members: Innermost
       structure Innermost
         alias of: Plain
   functor Id

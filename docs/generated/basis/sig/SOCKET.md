@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 93 entries documented |
 | Source | [lib/basis/sig\_socket.sml](../../../../lib/basis/sig_socket.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature SOCKET
+structure Socket : SOCKET  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Socket` |  | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
 signature SOCKET, transcribed from
 <https://smlfamily.github.io/Basis/socket.html>

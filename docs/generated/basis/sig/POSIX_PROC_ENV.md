@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 30 entries documented |
 | Source | [lib/basis/sig\_posix\_proc\_env.sml](../../../../lib/basis/sig_posix_proc_env.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_PROC_ENV
+structure Posix.ProcEnv : POSIX_PROC_ENV
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.ProcEnv` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_PROC\_ENV, transcribed from
 <https://smlfamily.github.io/Basis/posix-proc-env.html>

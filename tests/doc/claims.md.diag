@@ -1,0 +1,2 @@
+tests/doc/claims.sml:35:13: error: Counter.Limits claims to implement LIMITS, which is no signature of the library
+tests/doc/claims.sml:35:13: error: Sealed.Limits claims to implement LIMITS, which is no signature of the library

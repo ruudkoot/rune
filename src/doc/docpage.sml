@@ -18,6 +18,9 @@ struct
      the root, for the check that it leads somewhere. anchors: every anchor
      written, as (page, anchor). *)
   type env = {index : R.index, root : string, up : string,
+              claims : DocClaims.claim list,
+              (* the notes of a structure's body, and of the functor it applies, by member *)
+              notesOf : string -> (string * I.doc) list,
               links : (string * string * Source.span) list ref,
               anchors : (string * string * Source.span) list ref}
 
@@ -165,6 +168,18 @@ struct
         case #body e of
           SOME items => items' (env, page, sigName) items
         | NONE => ""
+      (* the notes that the implementations have on these members *)
+      val instanceNotes =
+        String.concat
+          (List.map (fn c : DocClaims.claim =>
+                       String.concat
+                         (List.map (fn (member, doc) =>
+                                      if List.exists (fn g : I.entryRecord =>
+                                                        String.concatWith "." (#path g @ [#name g]) = member) group
+                                      then "In " ^ M.code (#name c) ^ ":\n\n" ^ blocks (env, page, sigName, path, args, #span c) doc
+                                      else "")
+                                   (#notesOf env (#name c))))
+                    (List.filter (fn c : DocClaims.claim => #signat c = sigName andalso not (#isFunctor c)) (#claims env)))
     in
       headingLevel path ^ marks ^ names ^ "\n\n"
       ^ (if #kind e = I.Structure andalso isSome (#body e) then "" else spec)
@@ -176,7 +191,7 @@ struct
              else ""
          | _ => "")
       ^ blocks (env, page, sigName, path, args, span) (#doc e)
-      ^ consTable ^ fieldTable ^ inner
+      ^ consTable ^ fieldTable ^ instanceNotes ^ inner
     end
 
   (* The items of a body: sections, prose, and entries with their followers. *)
@@ -263,16 +278,35 @@ struct
         case R.resolve (#index env, name, [], []) c of
           R.Target t => SOME (href (env, page, t, span))
         | _ => NONE
+      (* the implementations, by name *)
+      fun insert (c : DocClaims.claim, []) = [c]
+        | insert (c, c' :: rest) = if #name c < #name c' then c :: c' :: rest else c' :: insert (c, rest)
+      val mine = List.foldl insert [] (List.filter (fn c : DocClaims.claim => #signat c = name) (#claims env))
+      fun statusOfClaim (c : DocClaims.claim) = case #status c of SOME st => st | NONE => statusOf doc
     in
       "# signature " ^ name ^ "\n\n"
       ^ "[" ^ M.escape library ^ "](" ^ #root env ^ "README.md)"
       ^ (case area of SOME a => " &rsaquo; " ^ M.escape a | NONE => "") ^ " &rsaquo; **" ^ name ^ "**\n\n"
       ^ M.table (["", ""],
                  [["Status", M.escape (statusOf doc)],
+                  ["Implementations", if List.null mine then "none" else Int.toString (List.length mine)],
                   ["Documentation", Int.toString documented ^ " of " ^ Int.toString (List.length es) ^ " entries documented"],
                   ["Source", "[" ^ M.escape (normalise file) ^ "](" ^ #root env ^ #up env ^ normalise file ^ ")"]])
       ^ "## Synopsis\n\n"
-      ^ M.fenced ("sml", "signature " ^ name ^ (case sigexp of SOME s => " = " ^ s | NONE => ""))
+      ^ M.fenced ("sml", String.concatWith "\n"
+                          (("signature " ^ name ^ (case sigexp of SOME s => " = " ^ s | NONE => ""))
+                           :: List.map (fn c : DocClaims.claim =>
+                                          (if #isFunctor c then "functor " ^ #name c ^ " (...)" else "structure " ^ #name c)
+                                          ^ (if #opaque c then " :> " else " : ") ^ name
+                                          ^ (if #realisations c = "" then "" else " " ^ #realisations c)
+                                          ^ (if statusOfClaim c = "required" then "" else "  (* " ^ statusOfClaim c ^ " *)"))
+                                       mine))
+      ^ (if List.null mine then ""
+         else M.table (["Implementation", "", "Source"],
+                       List.map (fn c : DocClaims.claim =>
+                                   [M.code (#name c), M.cell link (#summary c),
+                                    "[" ^ M.escape (normalise (#file c)) ^ "](" ^ #root env ^ #up env ^ normalise (#file c) ^ ")"])
+                                mine))
       ^ blocks (env, page, name, [], [], span) overview
       ^ contents
       ^ (if List.null pieces orelse isSome sigexp then "" else "## Interface\n\n" ^ interface (env, page, pieces, span))

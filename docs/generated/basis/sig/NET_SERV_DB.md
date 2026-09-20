@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 7 entries documented |
 | Source | [lib/basis/sig\_net\_serv\_db.sml](../../../../lib/basis/sig_net_serv_db.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature NET_SERV_DB
+structure NetServDB : NET_SERV_DB  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `NetServDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 signature NET\_SERV\_DB, transcribed from
 <https://smlfamily.github.io/Basis/serv-db.html>

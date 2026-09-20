@@ -1,5 +1,7 @@
 (* Byte: between bytes and characters. A Word8Vector.vector is a string, so
-   the conversions of whole vectors cost nothing. *)
+   the conversions of whole vectors cost nothing.
+
+   Implements: BYTE *)
 structure Byte =
 struct
   fun byteToChar (b : Word8.word) : char = chr (Word8.toInt b)

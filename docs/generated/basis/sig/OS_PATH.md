@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 27 entries documented |
 | Source | [lib/basis/sig\_os\_path.sml](../../../../lib/basis/sig_os_path.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OS_PATH
+structure OS.Path : OS_PATH
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `OS.Path` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 signature OS\_PATH, transcribed from
 <https://smlfamily.github.io/Basis/os-path.html>

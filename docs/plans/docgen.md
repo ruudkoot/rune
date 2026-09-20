@@ -21,7 +21,8 @@ was measured on commit `ea3d166` or is cited with its file and line.
 | M3, comments and what they document | done: `DocComments`, `DocDiag`; only 2 of the corpus's group labels stood in a documented signature (`sig_text_io.sml`), and they are headings now |
 | M4, the comment language | done: `DocText`, `DocHead`, `runedoc --lint` in `make check-docs` (8 s), [doc-comments.md](../doc-comments.md) for authors; the 935 comments of the corpus needed no change |
 | M5, the renderer and the generated tree | done: `DocPage`, `DocResolve`, `DocAnchor`, `DocMarkdown`, `DocSite`; `make docs` writes [docs/generated/basis](../generated/basis/README.md) (95 files, 3.5 s on `runevm`), `runedoc --check` in `make check-docs`; nothing is documented yet, so coverage is 0 of 1,538 entries |
-| M6 to M12 | not started |
+| M7, implementations (done before M6, so that the pilot's references to structures resolve) | done: 190 `Implements:` claims seeded into `lib/basis` from `tests/basis/*_sig.sml`, `Status: optional` on the optional structures, `DocClaims`, Synopsis tables, `structures.md` with the names beyond each signature, the three functor pages, notes of structure and functor bodies under the members, `claims.tsv`, `tests/basis/check-claims.sh` in `make check-docs`; `IntInf : INTEGER` is tested now, and `LargeInt` claims `INTEGER` only, as the specification has it |
+| M6, M8 to M12 | not started |
 
 ## Specification from the Human
 - Rune should have good library documenation that can be automatically generated from the source code.

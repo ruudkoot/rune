@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 7 entries documented |
 | Source | [lib/basis/sig\_byte.sml](../../../../lib/basis/sig_byte.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature BYTE
+structure Byte : BYTE
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Byte` | Byte: between bytes and characters. A Word8Vector.vector is a string, so the conversions of whole vectors cost nothing. | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
 
 signature BYTE, transcribed from <https://smlfamily.github.io/Basis/byte.html>
 

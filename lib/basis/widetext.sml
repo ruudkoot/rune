@@ -1,5 +1,9 @@
 (* WideText: the structures of the wide character (optional in the
-   specification), as Text is of char. *)
+   specification), as Text is of char.
+
+   Implements: TEXT
+
+   Status: optional *)
 structure WideText =
 struct
   structure Char = WideChar

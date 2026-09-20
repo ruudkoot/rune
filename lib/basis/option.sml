@@ -1,4 +1,6 @@
-(* Option *)
+(* Option
+
+   Implements: OPTION *)
 structure Option =
 struct
   datatype option = datatype option

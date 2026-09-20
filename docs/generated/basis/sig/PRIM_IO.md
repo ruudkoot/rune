@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 4 |
 | Documentation | 0 of 14 entries documented |
 | Source | [lib/basis/primio\_sig.sml](../../../../lib/basis/primio_sig.sml) |
 
@@ -12,7 +13,18 @@
 
 ```sml
 signature PRIM_IO
+structure BinPrimIO : PRIM_IO where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int
+functor PrimIO (...) : PRIM_IO
+structure TextPrimIO : PRIM_IO where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char
+structure WideTextPrimIO : PRIM_IO  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `BinPrimIO` | BinPrimIO: readers and writers of bytes. | [lib/basis/binprimio.sml](../../../../lib/basis/binprimio.sml) |
+| `PrimIO` | The optional functors of the specification that build the I/O stack for other element types: PrimIO, StreamIO and ImperativeIO, on the functors TextIO and BinIO are made of. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
+| `TextPrimIO` | TextPrimIO: readers and writers of characters. | [lib/basis/textprimio.sml](../../../../lib/basis/textprimio.sml) |
+| `WideTextPrimIO` | WideTextPrimIO and WideTextIO (optional in the specification): the readers, writers and imperative streams of the wide character. | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 signature PRIM\_IO: the readers and writers under the stream layer.
 

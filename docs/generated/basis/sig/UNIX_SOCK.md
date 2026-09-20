@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
 | Source | [lib/basis/sig\_unix\_sock.sml](../../../../lib/basis/sig_unix_sock.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature UNIX_SOCK
+structure UnixSock : UNIX_SOCK  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `UnixSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 signature UNIX\_SOCK, transcribed from
 <https://smlfamily.github.io/Basis/unix-sock.html>

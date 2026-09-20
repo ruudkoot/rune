@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
 | Source | [lib/basis/sig\_int\_inf.sml](../../../../lib/basis/sig_int_inf.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature INT_INF
+structure IntInf : INT_INF  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 signature INT\_INF, transcribed from <https://smlfamily.github.io/Basis/int-inf.html>
 

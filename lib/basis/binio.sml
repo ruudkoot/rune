@@ -1,8 +1,16 @@
-(* BinIO: the imperative binary streams (signature BIN_IO). *)
+(* BinIO: the imperative binary streams (signature BIN_IO).
+
+   Implements: BIN_IO
+
+   Implements: IMPERATIVE_IO *)
 structure BinIO =
 struct
   (* "For binary streams, LINE_BUF mode should be treated as a synonym for
-     BLOCK_BUF": no element is a newline. *)
+     BLOCK_BUF": no element is a newline.
+
+     Implements: STREAM_IO where type vector = Word8Vector.vector where type
+     elem = Word8.word where type reader = BinPrimIO.reader where type writer
+     = BinPrimIO.writer where type pos = Position.int *)
   structure StreamIO =
     RuneStreamIOFn (structure PIO = BinPrimIO structure V = Word8Vector structure VS = Word8VectorSlice
                     val isNewline = fn (_ : Word8.word) => false)

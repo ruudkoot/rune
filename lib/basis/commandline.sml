@@ -1,4 +1,6 @@
-(* CommandLine *)
+(* CommandLine
+
+   Implements: COMMAND_LINE *)
 structure CommandLine =
 struct
   val name = _prim "command_name" : unit -> string

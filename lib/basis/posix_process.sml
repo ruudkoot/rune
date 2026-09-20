@@ -45,7 +45,9 @@ struct
       else if s >= 512 andalso s < 768 then W_STOPPED (s - 512)
       else W_EXITSTATUS (Word8.fromInt s)
 
-    (* The flags of waitpid. WNOHANG is not one of them: waitpid_nh adds it. *)
+    (* The flags of waitpid. WNOHANG is not one of them: waitpid_nh adds it.
+
+       Implements: BIT_FLAGS *)
     structure W =
     struct
       type flags = word

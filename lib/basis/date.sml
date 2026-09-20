@@ -1,4 +1,6 @@
-(* Date: a moment as a person writes it down. *)
+(* Date: a moment as a person writes it down.
+
+   Implements: DATE *)
 structure Date =
 struct
   datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun

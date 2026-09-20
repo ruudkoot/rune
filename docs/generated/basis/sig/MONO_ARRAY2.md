@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 18 |
 | Documentation | 0 of 22 entries documented |
 | Source | [lib/basis/sig\_mono\_array2.sml](../../../../lib/basis/sig_mono_array2.sml) |
 
@@ -12,7 +13,46 @@
 
 ```sml
 signature MONO_ARRAY2
+structure BoolArray2 : MONO_ARRAY2 where type vector = BoolVector.vector where type elem = bool  (* optional *)
+structure CharArray2 : MONO_ARRAY2 where type vector = CharVector.vector where type elem = char  (* optional *)
+structure Int16Array2 : MONO_ARRAY2 where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
+structure Int32Array2 : MONO_ARRAY2 where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
+structure Int64Array2 : MONO_ARRAY2 where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int8Array2 : MONO_ARRAY2 where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
+structure IntArray2 : MONO_ARRAY2 where type vector = IntVector.vector where type elem = int  (* optional *)
+structure LargeIntArray2 : MONO_ARRAY2 where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
+structure LargeRealArray2 : MONO_ARRAY2 where type vector = LargeRealVector.vector where type elem = LargeReal.real  (* optional *)
+structure LargeWordArray2 : MONO_ARRAY2 where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
+structure Real32Array2 : MONO_ARRAY2 where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
+structure Real64Array2 : MONO_ARRAY2 where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
+structure RealArray2 : MONO_ARRAY2 where type vector = RealVector.vector where type elem = real  (* optional *)
+structure Word16Array2 : MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
+structure Word32Array2 : MONO_ARRAY2 where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
+structure Word64Array2 : MONO_ARRAY2 where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure Word8Array2 : MONO_ARRAY2 where type vector = Word8Vector.vector where type elem = Word8.word  (* optional *)
+structure WordArray2 : MONO_ARRAY2 where type vector = WordVector.vector where type elem = word  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `BoolArray2` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| `CharArray2` | CharArray2: two-dimensional arrays of characters (optional in the specification), whose rows and columns are strings. | [lib/basis/chararray2.sml](../../../../lib/basis/chararray2.sml) |
+| `Int16Array2` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| `Int32Array2` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| `Int64Array2` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| `Int8Array2` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| `IntArray2` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| `LargeIntArray2` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| `LargeRealArray2` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| `LargeWordArray2` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| `Real32Array2` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| `Real64Array2` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| `RealArray2` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| `Word16Array2` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| `Word32Array2` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| `Word64Array2` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| `Word8Array2` | Word8Array2: two-dimensional arrays of bytes (optional in the specification), whose rows and columns are Word8Vector.vector values. | [lib/basis/word8array2.sml](../../../../lib/basis/word8array2.sml) |
+| `WordArray2` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 signature MONO\_ARRAY2, transcribed from
 <https://smlfamily.github.io/Basis/mono-array2.html>

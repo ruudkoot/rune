@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | none |
 | Documentation | 9 of 11 entries documented |
 | Source | [tests/doc/attach.sml](../tests/doc/attach.sml) |
 

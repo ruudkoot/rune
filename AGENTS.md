@@ -16,6 +16,10 @@ keep these invariants:
   *Supported* or *Partial* needs a test file `tests/lang/<id>_<name>.sml` with
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
+* A basis structure says which signature it implements in the comment above
+  it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
+  `tests/basis/<name>_sig.sml` matches it against the transcription;
+  `make check-docs` (`tests/basis/check-claims.sh`) wants both.
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/MANIFEST` with what it provides and requires
   (`rune --basis-check`, part of `make check-docs`, verifies the columns; a

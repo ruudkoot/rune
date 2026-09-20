@@ -1,4 +1,6 @@
-(* Real: IEEE double precision. *)
+(* Real: IEEE double precision.
+
+   Implements: REAL where type real = real *)
 structure Real =
 struct
   infix 4 == !=
@@ -294,6 +296,7 @@ struct
     fun fromString s = StringCvt.scanString scan s
   end
 
+  (* Implements: MATH *)
   structure Math =
   struct
     type real = real
@@ -325,6 +328,8 @@ struct
   end
 end
 
+(* Implements: MATH where type real = Real.real *)
 structure Math = Real.Math
+(* Implements: REAL *)
 structure LargeReal = Real
 structure Real64 = Real

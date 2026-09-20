@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 6 entries documented |
 | Source | [lib/basis/sig\_io.sml](../../../../lib/basis/sig_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature IO
+structure IO : IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `IO` | IO: the exceptions and the buffering modes shared by the I/O structures. | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
 
 signature IO, transcribed from <https://smlfamily.github.io/Basis/io.html>
 

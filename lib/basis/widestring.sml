@@ -145,6 +145,10 @@ struct
   end
 end
 
+(* Implements: STRING where type string = WideCharVector.vector where type
+   char = WideChar.char
+
+   Status: optional *)
 structure WideString :> STRING
   where type string = WideCharVector.vector
   where type char = WideChar.char = RuneWideString

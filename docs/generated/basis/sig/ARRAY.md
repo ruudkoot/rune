@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 25 entries documented |
 | Source | [lib/basis/sig\_array.sml](../../../../lib/basis/sig_array.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature ARRAY
+structure Array : ARRAY
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Array` | Array: mutable arrays with identity equality. | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
 
 signature ARRAY, transcribed from <https://smlfamily.github.io/Basis/array.html>
 

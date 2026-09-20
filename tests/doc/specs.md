@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | none |
 | Documentation | 0 of 2 entries documented |
 | Source | [tests/doc/specs.sml](../tests/doc/specs.sml) |
 
@@ -49,6 +50,7 @@ val compare : t * t -> order
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | none |
 | Documentation | 0 of 22 entries documented |
 | Source | [tests/doc/specs.sml](../tests/doc/specs.sml) |
 
@@ -286,6 +288,7 @@ A substructure: its members are described on the page of [`ORDERED`](../sig/ORDE
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | none |
 | Documentation | 0 of 1 entries documented |
 | Source | [tests/doc/specs.sml](../tests/doc/specs.sml) |
 
@@ -356,6 +359,7 @@ val extra : int
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | none |
 | Documentation | 0 of 0 entries documented |
 | Source | [tests/doc/specs.sml](../tests/doc/specs.sml) |
 

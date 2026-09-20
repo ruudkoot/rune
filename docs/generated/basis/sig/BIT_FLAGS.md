@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 9 |
 | Documentation | 0 of 9 entries documented |
 | Source | [lib/basis/sig\_bit\_flags.sml](../../../../lib/basis/sig_bit_flags.sml) |
 
@@ -12,7 +13,28 @@
 
 ```sml
 signature BIT_FLAGS
+structure Posix.FileSys.O : BIT_FLAGS
+structure Posix.FileSys.S : BIT_FLAGS
+structure Posix.IO.FD : BIT_FLAGS
+structure Posix.IO.O : BIT_FLAGS
+structure Posix.Process.W : BIT_FLAGS
+structure Posix.TTY.C : BIT_FLAGS
+structure Posix.TTY.I : BIT_FLAGS
+structure Posix.TTY.L : BIT_FLAGS
+structure Posix.TTY.O : BIT_FLAGS
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.FileSys.O` | The flags of open and the bits of a mode, as words. "all represents the union of all flags", also those of the system that O does not name (O\_CLOEXEC, and O\_LARGEFILE, which getfl reports): the bits of a C int. fromWord keeps the bits of all, so that "toWord o fromWord" is "fn w =\> SysWord.andb (w, toWord all)". | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| `Posix.FileSys.S` |  | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| `Posix.IO.FD` | The flags of a descriptor, as words; like the flags of open, all of them are the bits of a C int (Posix.FileSys.O). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| `Posix.IO.O` |  | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| `Posix.Process.W` | The flags of waitpid. WNOHANG is not one of them: waitpid\_nh adds it. | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
+| `Posix.TTY.C` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.I` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.L` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.O` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 signature BIT\_FLAGS, transcribed from
 <https://smlfamily.github.io/Basis/bit-flags.html>

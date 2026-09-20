@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 9 entries documented |
 | Source | [lib/basis/sig\_os.sml](../../../../lib/basis/sig_os.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OS
+structure OS : OS
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `OS` | OS: the errors of the system, the file system, paths, the process and the I/O descriptors. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 signature OS, transcribed from <https://smlfamily.github.io/Basis/os.html>
 

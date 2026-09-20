@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 26 entries documented |
 | Source | [lib/basis/sig\_os\_io.sml](../../../../lib/basis/sig_os_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OS_IO
+structure OS.IO : OS_IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `OS.IO` | A descriptor is the handle of the VM's file table. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 signature OS\_IO, transcribed from
 <https://smlfamily.github.io/Basis/os-io.html>

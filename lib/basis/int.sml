@@ -1,7 +1,9 @@
 (* Int: fixed precision integers with Overflow checking: 64 bits on the VM.
    The bounds are found with the arithmetic itself (2n + 1 until it overflows),
    so that this file means the same to a system whose int is narrower; see
-   tests/basis/README.md on the xc1 configurations. *)
+   tests/basis/README.md on the xc1 configurations.
+
+   Implements: INTEGER *)
 structure Int =
 struct
   type int = int

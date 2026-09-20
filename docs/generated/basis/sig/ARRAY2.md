@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 20 entries documented |
 | Source | [lib/basis/sig\_array2.sml](../../../../lib/basis/sig_array2.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature ARRAY2
+structure Array2 : ARRAY2  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Array2` | Array2: two-dimensional arrays, stored row by row in one array. | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
 signature ARRAY2, transcribed from
 <https://smlfamily.github.io/Basis/array2.html>

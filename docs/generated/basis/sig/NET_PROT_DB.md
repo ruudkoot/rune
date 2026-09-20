@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 6 entries documented |
 | Source | [lib/basis/sig\_net\_prot\_db.sml](../../../../lib/basis/sig_net_prot_db.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature NET_PROT_DB
+structure NetProtDB : NET_PROT_DB  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `NetProtDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 signature NET\_PROT\_DB, transcribed from
 <https://smlfamily.github.io/Basis/prot-db.html>

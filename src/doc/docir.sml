@@ -70,10 +70,19 @@ struct
 
   datatype module =
       Signature of signatureRecord
-    | Struct of {name : string, file : string, span : Source.span, doc : doc,
-                 ascription : ascription option, rhs : rhs, subs : module list}
+    | Struct of structRecord
     | Functor of {name : string, file : string, span : Source.span, doc : doc,
-                  param : string, result : ascription option}
+                  param : string, result : ascription option,
+                  notes : (string * doc) list}      (* as for a structure: they hold for every application *)
+
+  (* members: the names a structure body declares, when it is written out
+     (NONE for an alias or a functor application, whose members only
+     elaboration knows). notes: the notes (D5) in the comments above the
+     declarations of a body, by the name declared. *)
+  withtype structRecord =
+    {name : string, file : string, span : Source.span, doc : doc,
+     ascription : ascription option, rhs : rhs, subs : module list,
+     members : string list option, notes : (string * doc) list}
 
   (* ---- the text form ---- *)
   fun indent n = CharVector.tabulate (2 * n, fn _ => #" ")
@@ -136,7 +145,7 @@ struct
         @ docLines (n + 1, doc)
         @ List.concat (List.map (itemLines (n + 1)) body)
         @ textLines (n + 1, "source", source)
-    | Struct {name, doc, ascription, rhs, subs, ...} =>
+    | Struct {name, doc, ascription, rhs, subs, members, notes, ...} =>
         (indent n ^ "structure " ^ name)
         :: ascriptionLines (n + 1) ascription
         @ (case rhs of
@@ -145,12 +154,18 @@ struct
            | Apply (f, arg) => textLines (n + 1, "application of " ^ f ^ " to", arg)
            | Other => [indent (n + 1) ^ "other"])
         @ docLines (n + 1, doc)
+        @ (case members of SOME ms => [indent (n + 1) ^ "members: " ^ String.concatWith " " ms] | NONE => [])
+        @ noteLines (n + 1) notes
         @ List.concat (List.map (moduleLines (n + 1)) subs)
-    | Functor {name, doc, param, result, ...} =>
+    | Functor {name, doc, param, result, notes, ...} =>
         (indent n ^ "functor " ^ name)
         :: textLines (n + 1, "parameter", param)
         @ ascriptionLines (n + 1) result
         @ docLines (n + 1, doc)
+        @ noteLines (n + 1) notes
+
+  and noteLines n (notes : (string * doc) list) =
+    List.concat (List.map (fn (member, doc) => (indent n ^ "notes on " ^ member) :: docLines (n + 1, doc)) notes)
 
   fun dump (file : string, modules : module list) : string =
     String.concat (List.map (fn l => l ^ "\n")

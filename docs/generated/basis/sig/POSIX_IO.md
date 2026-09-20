@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 41 entries documented |
 | Source | [lib/basis/sig\_posix\_io.sml](../../../../lib/basis/sig_posix_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_IO
+structure Posix.IO : POSIX_IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.IO` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_IO, transcribed from
 <https://smlfamily.github.io/Basis/posix-io.html>

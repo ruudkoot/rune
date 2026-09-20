@@ -1,4 +1,8 @@
-(* Array2: two-dimensional arrays, stored row by row in one array. *)
+(* Array2: two-dimensional arrays, stored row by row in one array.
+
+   Implements: ARRAY2
+
+   Status: optional *)
 structure Array2 =
 struct
   (* equality is that of the data array: identity *)

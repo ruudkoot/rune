@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 15 entries documented |
 | Source | [lib/basis/sig\_list\_pair.sml](../../../../lib/basis/sig_list_pair.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature LIST_PAIR
+structure ListPair : LIST_PAIR
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `ListPair` | ListPair | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
 
 signature LIST\_PAIR, transcribed from
 <https://smlfamily.github.io/Basis/list-pair.html>

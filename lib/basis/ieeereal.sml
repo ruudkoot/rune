@@ -1,4 +1,6 @@
-(* IEEEReal: the types of IEEE arithmetic that do not depend on a precision. *)
+(* IEEEReal: the types of IEEE arithmetic that do not depend on a precision.
+
+   Implements: IEEE_REAL *)
 structure IEEEReal =
 struct
   exception Unordered

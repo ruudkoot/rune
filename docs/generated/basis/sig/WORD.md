@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 5 |
 | Documentation | 0 of 38 entries documented |
 | Source | [lib/basis/word\_sig.sml](../../../../lib/basis/word_sig.sml) |
 
@@ -12,7 +13,20 @@
 
 ```sml
 signature WORD
+structure Word : WORD
+structure Word16 : WORD  (* optional *)
+structure Word32 : WORD  (* optional *)
+structure Word64 : WORD  (* optional *)
+structure Word8 :> WORD
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Word` | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| `Word16` | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
+| `Word32` | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
+| `Word64` | Word64 is Word, which has 64 bits. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
+| `Word8` | Word8: 8-bit words. A value is a word whose upper bits are zero; every operation that could set one of them clears it again. (The only member of the WordN family so far; see docs/plans/basis.md.) | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
 
 signature WORD
 

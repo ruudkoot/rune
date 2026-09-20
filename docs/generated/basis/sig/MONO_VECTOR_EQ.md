@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 22 entries documented |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature MONO_VECTOR_EQ
+structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `WideCharVector` | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 The same with a vector that admits equality, for a family whose vector is a
 type of its own: WideCharVector, whose vector is the string of WideString,

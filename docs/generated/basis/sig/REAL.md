@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 3 |
 | Documentation | 0 of 64 entries documented |
 | Source | [lib/basis/sig\_real.sml](../../../../lib/basis/sig_real.sml) |
 
@@ -12,7 +13,16 @@
 
 ```sml
 signature REAL
+structure LargeReal : REAL
+structure Real : REAL where type real = real
+structure Real32 :> REAL  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `LargeReal` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| `Real` | Real: IEEE double precision. | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| `Real32` |  | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
 
 signature REAL, transcribed from <https://smlfamily.github.io/Basis/real.html>
 

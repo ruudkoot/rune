@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 19 |
 | Documentation | 0 of 26 entries documented |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
@@ -12,7 +13,48 @@
 
 ```sml
 signature MONO_VECTOR_SLICE
+structure BoolVectorSlice : MONO_VECTOR_SLICE where type vector = BoolVector.vector where type elem = bool  (* optional *)
+structure CharVectorSlice : MONO_VECTOR_SLICE where type slice = Substring.substring where type vector = String.string where type elem = char
+structure Int16VectorSlice : MONO_VECTOR_SLICE where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
+structure Int32VectorSlice : MONO_VECTOR_SLICE where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
+structure Int64VectorSlice : MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int8VectorSlice : MONO_VECTOR_SLICE where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
+structure IntVectorSlice : MONO_VECTOR_SLICE where type vector = IntVector.vector where type elem = int  (* optional *)
+structure LargeIntVectorSlice : MONO_VECTOR_SLICE where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
+structure LargeRealVectorSlice : MONO_VECTOR_SLICE where type vector = LargeRealVector.vector where type elem = LargeReal.real  (* optional *)
+structure LargeWordVectorSlice : MONO_VECTOR_SLICE where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
+structure Real32VectorSlice : MONO_VECTOR_SLICE where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
+structure Real64VectorSlice : MONO_VECTOR_SLICE where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
+structure RealVectorSlice : MONO_VECTOR_SLICE where type vector = RealVector.vector where type elem = real  (* optional *)
+structure WideCharVectorSlice : MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure Word16VectorSlice : MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
+structure Word32VectorSlice : MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
+structure Word64VectorSlice : MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure Word8VectorSlice : MONO_VECTOR_SLICE where type vector = Word8Vector.vector where type elem = Word8.word
+structure WordVectorSlice : MONO_VECTOR_SLICE where type vector = WordVector.vector where type elem = word  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `BoolVectorSlice` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| `CharVectorSlice` | CharVectorSlice: its slice is the substring of Substring, so it is written on Substring rather than being an instance of RuneMonoVectorSliceFn. The \-i functions pass the index in the slice. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
+| `Int16VectorSlice` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| `Int32VectorSlice` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| `Int64VectorSlice` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| `Int8VectorSlice` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| `IntVectorSlice` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| `LargeIntVectorSlice` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| `LargeRealVectorSlice` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| `LargeWordVectorSlice` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| `Real32VectorSlice` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| `Real64VectorSlice` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| `RealVectorSlice` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| `WideCharVectorSlice` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| `Word16VectorSlice` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| `Word32VectorSlice` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| `Word64VectorSlice` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| `Word8VectorSlice` | Word8VectorSlice: a Word8Vector.vector is a string, so a slice of one is a substring, and taking its vector is one primitive rather than a walk over the elements. | [lib/basis/word8vectorslice.sml](../../../../lib/basis/word8vectorslice.sml) |
+| `WordVectorSlice` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Interface
 

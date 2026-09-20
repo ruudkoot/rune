@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 12 entries documented |
 | Source | [lib/basis/sig\_option.sml](../../../../lib/basis/sig_option.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OPTION
+structure Option : OPTION
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Option` | Option | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
 
 signature OPTION, transcribed from <https://smlfamily.github.io/Basis/option.html>
 

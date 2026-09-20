@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 17 entries documented |
 | Source | [lib/basis/sig\_inet\_sock.sml](../../../../lib/basis/sig_inet_sock.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature INET_SOCK
+structure INetSock : INET_SOCK  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `INetSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 signature INET\_SOCK, transcribed from
 <https://smlfamily.github.io/Basis/inet-sock.html>

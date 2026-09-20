@@ -6,7 +6,13 @@
    This file is compiled before int.sml (Int.toLarge/fromLarge use it), so it
    relies on the builtin overloaded operators and VM primitives only. Every
    helper that uses int arithmetic is defined before the IntInf operators
-   shadow + - * div mod ~ < <= > >= inside the structure. *)
+   shadow + - * div mod ~ < <= > >= inside the structure.
+
+   Implements: INT_INF
+
+   Implements: INTEGER
+
+   Status: optional *)
 structure IntInf =
 struct
   type limb = int                       (* below, `int` means IntInf.int *)
@@ -344,6 +350,9 @@ struct
   fun sameSign (a, b) = sign a = sign b
 end
 
+(* The largest integers are the arbitrary precision ones.
+
+   Implements: INTEGER *)
 structure LargeInt = IntInf
 
 (* Integer constants and the overloaded operators at IntInf.int. A constant

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 6 |
 | Documentation | 0 of 8 entries documented |
 | Source | [lib/basis/sig\_pack\_real.sml](../../../../lib/basis/sig_pack_real.sml) |
 
@@ -12,7 +13,22 @@
 
 ```sml
 signature PACK_REAL
+structure PackReal32Big : PACK_REAL where type real = Real32.real  (* optional *)
+structure PackReal32Little : PACK_REAL where type real = Real32.real  (* optional *)
+structure PackReal64Big : PACK_REAL where type real = Real64.real  (* optional *)
+structure PackReal64Little : PACK_REAL where type real = Real64.real  (* optional *)
+structure PackRealBig : PACK_REAL where type real = Real.real  (* optional *)
+structure PackRealLittle : PACK_REAL where type real = Real.real  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `PackReal32Big` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| `PackReal32Little` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| `PackReal64Big` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| `PackReal64Little` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| `PackRealBig` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| `PackRealLittle` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
 signature PACK\_REAL, transcribed from <https://smlfamily.github.io/Basis/pack-float.html>
 

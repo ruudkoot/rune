@@ -173,6 +173,15 @@ struct
   end
 end
 
+(* Implements: NET_HOST_DB
+
+   Status: optional *)
 structure NetHostDB = RuneNetHostDB
+(* Implements: NET_PROT_DB
+
+   Status: optional *)
 structure NetProtDB = RuneNetProtDB
+(* Implements: NET_SERV_DB
+
+   Status: optional *)
 structure NetServDB = RuneNetServDB

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
 | Source | [lib/basis/sig\_unix.sml](../../../../lib/basis/sig_unix.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature UNIX
+structure Unix : UNIX  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Unix` | Unix: running a program and talking to it through pipes. | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
 
 signature UNIX, transcribed from <https://smlfamily.github.io/Basis/unix.html>
 

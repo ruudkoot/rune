@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 2 |
 | Documentation | 0 of 35 entries documented |
 | Source | [lib/basis/sig\_char.sml](../../../../lib/basis/sig_char.sml) |
 
@@ -12,12 +13,19 @@
 
 ```sml
 signature CHAR
+structure Char : CHAR where type char = char where type string = String.string
+structure WideChar :> CHAR where type char = WideChar.char where type string = WideString.string  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Char` | Char: 8-bit characters. | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
+| `WideChar` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 signature CHAR, transcribed from <https://smlfamily.github.io/Basis/char.html>
 
 The page writes the types of toString, scan, fromString, toCString and
-fromCString with `String.string` and `Char.char`, because the signature
+fromCString with [`String.string`](../sig/STRING.md#type-string) and [`Char.char`](#type-char), because the signature
 is also that of WideChar; they are kept as written. The constraints of
 `structure Char :> CHAR where type char = char where type string = String.string` are in tests/basis/char\_sig.sml.
 

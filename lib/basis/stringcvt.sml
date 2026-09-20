@@ -1,5 +1,7 @@
 (* StringCvt: the types and helpers of the fmt and scan functions. Written on
-   primitives, without another structure, because most others require it. *)
+   primitives, without another structure, because most others require it.
+
+   Implements: STRING_CVT *)
 structure StringCvt =
 struct
   datatype radix = BIN | OCT | DEC | HEX

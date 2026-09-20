@@ -1,4 +1,6 @@
-(* Timer: how long something took. *)
+(* Timer: how long something took.
+
+   Implements: TIMER *)
 structure Timer =
 struct
   type cpu_timer = {user : Time.time, sys : Time.time}

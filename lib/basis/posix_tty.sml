@@ -64,6 +64,7 @@ struct
       fun sub (c : cc, i) = String.sub (c, i)
     end
 
+    (* Implements: BIT_FLAGS *)
     structure I =
     struct
       open IF
@@ -79,11 +80,13 @@ struct
       val ixon = bits "IXON"
       val parmrk = bits "PARMRK"
     end
+    (* Implements: BIT_FLAGS *)
     structure O =
     struct
       open OF
       val opost = bits "OPOST"
     end
+    (* Implements: BIT_FLAGS *)
     structure C =
     struct
       open CF'
@@ -99,6 +102,7 @@ struct
       val parenb = bits "PARENB"
       val parodd = bits "PARODD"
     end
+    (* Implements: BIT_FLAGS *)
     structure L =
     struct
       open LF

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
 | Source | [lib/basis/sig\_ieee\_real.sml](../../../../lib/basis/sig_ieee_real.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature IEEE_REAL
+structure IEEEReal : IEEE_REAL
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `IEEEReal` | IEEEReal: the types of IEEE arithmetic that do not depend on a precision. | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
 
 signature IEEE\_REAL, transcribed from <https://smlfamily.github.io/Basis/ieee-float.html>
 

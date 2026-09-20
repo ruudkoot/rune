@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 2 |
 | Documentation | 0 of 39 entries documented |
 | Source | [lib/basis/sig\_substring.sml](../../../../lib/basis/sig_substring.sml) |
 
@@ -12,7 +13,14 @@
 
 ```sml
 signature SUBSTRING
+structure Substring : SUBSTRING where type string = string where type char = Char.char
+structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Substring` | Substring: a string, a start index and a length. | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
+| `WideSubstring` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 signature SUBSTRING, transcribed from <https://smlfamily.github.io/Basis/substring.html>
 

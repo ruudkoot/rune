@@ -28,11 +28,28 @@ struct
 end
 
 (* Sealed with a vector of its own (MONO_VECTOR_EQ), so that WideString.string
-   is a type name: the constants of a type are overloaded at a name. *)
+   is a type name: the constants of a type are overloaded at a name.
+
+   Implements: MONO_VECTOR where type elem = WideChar.char
+
+   Status: optional *)
 structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
   RuneMonoVectorFn (type elem = RuneWideChar.char)
+(* Implements: MONO_VECTOR_SLICE where type vector = WideCharVector.vector
+   where type elem = WideChar.char
+
+   Status: optional *)
 structure WideCharVectorSlice : MONO_VECTOR_SLICE = RuneMonoVectorSliceFn (structure V = WideCharVector)
+(* Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
+   elem = WideChar.char
+
+   Status: optional *)
 structure WideCharArray : MONO_ARRAY = RuneMonoArrayFn (structure V = WideCharVector)
+(* Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
+   where type vector_slice = WideCharVectorSlice.slice where type array =
+   WideCharArray.array where type elem = WideChar.char
+
+   Status: optional *)
 structure WideCharArraySlice : MONO_ARRAY_SLICE =
   RuneMonoArraySliceFn (structure V = WideCharVector structure A = WideCharArray structure VS = WideCharVectorSlice)
 
@@ -138,6 +155,10 @@ struct
   end
 end
 
+(* Implements: CHAR where type char = WideChar.char where type string =
+   WideString.string
+
+   Status: optional *)
 structure WideChar :> CHAR
   where type char = RuneWideChar.char
   where type string = WideCharVector.vector = RuneWideCharImpl

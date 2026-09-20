@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 18 entries documented |
 | Source | [lib/basis/sig\_posix\_sys\_db.sml](../../../../lib/basis/sig_posix_sys_db.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_SYS_DB
+structure Posix.SysDB : POSIX_SYS_DB
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.SysDB` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_SYS\_DB, transcribed from
 <https://smlfamily.github.io/Basis/posix-sys-db.html>

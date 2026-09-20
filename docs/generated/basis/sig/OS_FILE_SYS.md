@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 26 entries documented |
 | Source | [lib/basis/sig\_os\_file\_sys.sml](../../../../lib/basis/sig_os_file_sys.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OS_FILE_SYS
+structure OS.FileSys : OS_FILE_SYS
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `OS.FileSys` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 signature OS\_FILE\_SYS, transcribed from
 <https://smlfamily.github.io/Basis/os-file-sys.html>

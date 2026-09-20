@@ -1,4 +1,7 @@
-(* Substring: a string, a start index and a length. *)
+(* Substring: a string, a start index and a length.
+
+   Implements: SUBSTRING where type string = string where type char =
+   Char.char *)
 structure Substring =
 struct
   type char = char

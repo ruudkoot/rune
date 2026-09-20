@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 49 entries documented |
 | Source | [lib/basis/sig\_posix\_error.sml](../../../../lib/basis/sig_posix_error.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_ERROR
+structure Posix.Error : POSIX_ERROR
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.Error` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_ERROR, transcribed from
 <https://smlfamily.github.io/Basis/posix-error.html>

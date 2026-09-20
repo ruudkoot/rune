@@ -217,6 +217,9 @@ struct
   end
 end
 
+(* Implements: REAL
+
+   Status: optional *)
 structure Real32 :> REAL = RuneReal32
 
 structure RuneReal32Lit =

@@ -1,4 +1,6 @@
-(* String: 8-bit byte strings. *)
+(* String: 8-bit byte strings.
+
+   Implements: STRING where type string = string where type char = Char.char *)
 structure String =
 struct
   type string = string

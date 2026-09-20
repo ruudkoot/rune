@@ -23,7 +23,19 @@ struct
   end
 end
 
+(* Implements: PACK_REAL where type real = Real.real
+
+   Status: optional *)
 structure PackRealBig = RunePackRealFn (val isBigEndian = true)
+(* Implements: PACK_REAL where type real = Real.real
+
+   Status: optional *)
 structure PackRealLittle = RunePackRealFn (val isBigEndian = false)
+(* Implements: PACK_REAL where type real = Real64.real
+
+   Status: optional *)
 structure PackReal64Big = PackRealBig
+(* Implements: PACK_REAL where type real = Real64.real
+
+   Status: optional *)
 structure PackReal64Little = PackRealLittle

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 36 entries documented |
 | Source | [lib/basis/sig\_text\_io.sml](../../../../lib/basis/sig_text_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature TEXT_IO
+structure TextIO : TEXT_IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `TextIO` | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 signature TEXT\_IO, transcribed from
 <https://smlfamily.github.io/Basis/text-io.html> and, for the part that it

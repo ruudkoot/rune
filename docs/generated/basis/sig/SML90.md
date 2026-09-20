@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 36 entries documented |
 | Source | [lib/basis/sig\_sml90.sml](../../../../lib/basis/sig_sml90.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature SML90
+structure SML90 : SML90  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `SML90` | SML90: the initial basis of the 1990 Definition, over Real.Math, String and TextIO. As in MLton's (unexposed) SML90, which Poly/ML agrees with: the arithmetic exceptions are Overflow and Mod is Div, which the Library raises in their place; Sqrt, Ln, Ord, Io and Interrupt are new, and sqrt, ln, ord and the functions on streams raise them. | [lib/basis/sml90.sml](../../../../lib/basis/sml90.sml) |
 
 signature SML90. The page of the specification that defined it
 (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed

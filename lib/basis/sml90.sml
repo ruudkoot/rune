@@ -2,7 +2,11 @@
    and TextIO. As in MLton's (unexposed) SML90, which Poly/ML agrees with:
    the arithmetic exceptions are Overflow and Mod is Div, which the Library
    raises in their place; Sqrt, Ln, Ord, Io and Interrupt are new, and
-   sqrt, ln, ord and the functions on streams raise them. *)
+   sqrt, ln, ord and the functions on streams raise them.
+
+   Implements: SML90
+
+   Status: optional *)
 structure SML90 =
 struct
   type instream = TextIO.instream

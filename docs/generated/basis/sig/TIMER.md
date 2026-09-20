@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
 | Source | [lib/basis/sig\_timer.sml](../../../../lib/basis/sig_timer.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature TIMER
+structure Timer : TIMER
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Timer` | Timer: how long something took. | [lib/basis/timer.sml](../../../../lib/basis/timer.sml) |
 
 signature TIMER, transcribed from <https://smlfamily.github.io/Basis/timer.html>
 

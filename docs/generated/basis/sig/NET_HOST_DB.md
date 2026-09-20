@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
 | Source | [lib/basis/sig\_net\_host\_db.sml](../../../../lib/basis/sig_net_host_db.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature NET_HOST_DB
+structure NetHostDB : NET_HOST_DB  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `NetHostDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 signature NET\_HOST\_DB, transcribed from
 <https://smlfamily.github.io/Basis/net-host-db.html>

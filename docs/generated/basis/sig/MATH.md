@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 4 |
 | Documentation | 0 of 18 entries documented |
 | Source | [lib/basis/sig\_math.sml](../../../../lib/basis/sig_math.sml) |
 
@@ -12,7 +13,18 @@
 
 ```sml
 signature MATH
+structure LargeReal.Math : MATH
+structure Math : MATH where type real = Real.real
+structure Real.Math : MATH
+structure Real64.Math : MATH
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `LargeReal.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| `Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| `Real.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| `Real64.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 signature MATH, transcribed from <https://smlfamily.github.io/Basis/math.html>
 

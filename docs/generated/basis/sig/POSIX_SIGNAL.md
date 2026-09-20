@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 23 entries documented |
 | Source | [lib/basis/sig\_posix\_signal.sml](../../../../lib/basis/sig_posix_signal.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX_SIGNAL
+structure Posix.Signal : POSIX_SIGNAL
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix.Signal` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX\_SIGNAL, transcribed from
 <https://smlfamily.github.io/Basis/posix-signal.html>

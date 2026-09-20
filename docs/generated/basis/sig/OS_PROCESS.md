@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
 | Source | [lib/basis/sig\_os\_process.sml](../../../../lib/basis/sig_os_process.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature OS_PROCESS
+structure OS.Process : OS_PROCESS
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `OS.Process` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 signature OS\_PROCESS, transcribed from
 <https://smlfamily.github.io/Basis/os-process.html>

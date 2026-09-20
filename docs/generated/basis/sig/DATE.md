@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 24 entries documented |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature DATE
+structure Date : DATE
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Date` | Date: a moment as a person writes it down. | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
 
 signature DATE, transcribed from <https://smlfamily.github.io/Basis/date.html>
 

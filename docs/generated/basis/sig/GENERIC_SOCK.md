@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 4 entries documented |
 | Source | [lib/basis/sig\_generic\_sock.sml](../../../../lib/basis/sig_generic_sock.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature GENERIC_SOCK
+structure GenericSock : GENERIC_SOCK  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `GenericSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 signature GENERIC\_SOCK, transcribed from
 <https://smlfamily.github.io/Basis/generic-sock.html>

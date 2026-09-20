@@ -37,7 +37,9 @@ struct
        the union of all flags", also those of the system that O does not
        name (O_CLOEXEC, and O_LARGEFILE, which getfl reports): the bits of a
        C int. fromWord keeps the bits of all, so that "toWord o fromWord" is
-       "fn w => SysWord.andb (w, toWord all)". *)
+       "fn w => SysWord.andb (w, toWord all)".
+
+       Implements: BIT_FLAGS *)
     structure O =
     struct
       type flags = word
@@ -57,6 +59,7 @@ struct
       fun clear (a, b) = Word.andb (Word.notb a, b)
     end
 
+    (* Implements: BIT_FLAGS *)
     structure S =
     struct
       type mode = word

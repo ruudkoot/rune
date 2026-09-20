@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 11 entries documented |
 | Source | [lib/basis/sig\_string\_cvt.sml](../../../../lib/basis/sig_string_cvt.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature STRING_CVT
+structure StringCvt : STRING_CVT
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `StringCvt` | StringCvt: the types and helpers of the fmt and scan functions. Written on primitives, without another structure, because most others require it. | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
 
 signature STRING\_CVT, transcribed from <https://smlfamily.github.io/Basis/string-cvt.html>
 

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 20 entries documented |
 | Source | [lib/basis/sig\_general.sml](../../../../lib/basis/sig_general.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature GENERAL
+structure General : GENERAL
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `General` | General: the exceptions and combinators of the initial basis as a structure. | [lib/basis/general.sml](../../../../lib/basis/general.sml) |
 
 signature GENERAL, transcribed from <https://smlfamily.github.io/Basis/general.html>
 

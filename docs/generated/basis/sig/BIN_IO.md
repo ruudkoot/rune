@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 3 entries documented |
 | Source | [lib/basis/sig\_bin\_io.sml](../../../../lib/basis/sig_bin_io.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature BIN_IO
+structure BinIO : BIN_IO
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 signature BIN\_IO, transcribed from
 <https://smlfamily.github.io/Basis/bin-io.html>

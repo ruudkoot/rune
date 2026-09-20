@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 21 entries documented |
 | Source | [lib/basis/sig\_vector.sml](../../../../lib/basis/sig_vector.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature VECTOR
+structure Vector : VECTOR
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Vector` | Vector: immutable arrays with structural equality. | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
 
 signature VECTOR, transcribed from <https://smlfamily.github.io/Basis/vector.html>
 

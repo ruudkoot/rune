@@ -1,4 +1,6 @@
-(* Array: mutable arrays with identity equality. *)
+(* Array: mutable arrays with identity equality.
+
+   Implements: ARRAY *)
 structure Array =
 struct
   type 'a array = 'a array

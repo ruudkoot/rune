@@ -87,7 +87,9 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val env = {index = DocResolve.indexOf modules, root = "../", up = "", links = ref [], anchors = ref []}
+      val (claims, index, envAt) = DocSite.envOf (modules, "")
+      val () = DocClaims.checkNames (#signatures index) claims
+      val env = envAt "../"
     in
       List.app (fn DocIR.Signature s => print (DocPage.signaturePage (env, "Library") s ^ "\n") | _ => ()) modules;
       DocSite.verify (env, NONE)

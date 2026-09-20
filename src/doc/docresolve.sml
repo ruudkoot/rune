@@ -167,21 +167,23 @@ struct
 
   fun emptyIndex () : index = {signatures = StringMap.empty, structures = StringMap.empty, functors = StringMap.empty}
 
-  (* The index of some modules: every signature, and every structure that is
-     ascribed a signature that is among them. *)
-  fun indexOf (modules : I.module list) : index =
+  (* The index of some modules: every signature, every structure with the
+     signature it claims first, every public functor. *)
+  fun indexOf (modules : I.module list, claims : DocClaims.claim list, isPublic : string -> bool) : index =
     let
       val signatures =
         List.foldl (fn (m as I.Signature {name, ...}, acc) => StringMap.insert (acc, name, m) | (_, acc) => acc)
                    StringMap.empty modules
       val structures =
-        List.foldl (fn (I.Struct {name, ascription = SOME {sigexp, ...}, ...}, acc) =>
-                        (case sigexpHead sigexp of
-                           SOME s => if StringMap.member (signatures, s) then StringMap.insert (acc, name, s) else acc
-                         | NONE => acc)
+        List.foldl (fn (c : DocClaims.claim, acc) =>
+                      if #isFunctor c orelse StringMap.member (acc, #name c) orelse not (StringMap.member (signatures, #signat c))
+                      then acc else StringMap.insert (acc, #name c, #signat c))
+                   StringMap.empty claims
+      val functors =
+        List.foldl (fn (I.Functor {name, ...}, acc) => if isPublic name then StringMap.insert (acc, name, ()) else acc
                      | (_, acc) => acc)
                    StringMap.empty modules
     in
-      {signatures = signatures, structures = structures, functors = StringMap.empty}
+      {signatures = signatures, structures = structures, functors = functors}
     end
 end

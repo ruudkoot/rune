@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 27 entries documented |
 | Source | [lib/basis/sig\_list.sml](../../../../lib/basis/sig_list.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature LIST
+structure List : LIST
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `List` | List | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
 
 signature LIST, transcribed from <https://smlfamily.github.io/Basis/list.html>
 

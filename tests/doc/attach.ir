@@ -119,8 +119,10 @@ file tests/doc/attach.sml
       |end
   structure Attach
     para: Above a structure.
+    members: x Sub
     structure Sub
       para: Above a substructure binding.
+      members: 
   functor AttachFn
     parameter: X : sig end
     para: Above a functor.

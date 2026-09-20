@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 2 |
 | Documentation | 0 of 7 entries documented |
 | Source | [lib/basis/sig\_text.sml](../../../../lib/basis/sig_text.sml) |
 
@@ -12,7 +13,14 @@
 
 ```sml
 signature TEXT
+structure Text : TEXT where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice
+structure WideText : TEXT  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Text` | Text: the structures of the default character type. | [lib/basis/text.sml](../../../../lib/basis/text.sml) |
+| `WideText` | WideText: the structures of the wide character (optional in the specification), as Text is of char. | [lib/basis/widetext.sml](../../../../lib/basis/widetext.sml) |
 
 signature TEXT, transcribed from <https://smlfamily.github.io/Basis/text.html>
 

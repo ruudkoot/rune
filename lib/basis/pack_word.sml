@@ -42,9 +42,27 @@ struct
   end
 end
 
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord16Big = RunePackWordFn (val bytesPerElem = 2 val isBigEndian = true)
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord16Little = RunePackWordFn (val bytesPerElem = 2 val isBigEndian = false)
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord32Big = RunePackWordFn (val bytesPerElem = 4 val isBigEndian = true)
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord32Little = RunePackWordFn (val bytesPerElem = 4 val isBigEndian = false)
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord64Big = RunePackWordFn (val bytesPerElem = 8 val isBigEndian = true)
+(* Implements: PACK_WORD
+
+   Status: optional *)
 structure PackWord64Little = RunePackWordFn (val bytesPerElem = 8 val isBigEndian = false)

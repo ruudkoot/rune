@@ -123,3 +123,4 @@ file tests/doc/text.sml
     para: A structure says what it implements.
     reserved Implements: TEXT where type t = string
     reserved Status: optional
+    members: 

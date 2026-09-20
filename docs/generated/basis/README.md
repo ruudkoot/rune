@@ -1,6 +1,6 @@
 # The Standard ML Basis Library
 
-[How to read these pages](conventions.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
+[How to read these pages](conventions.md) &middot; [structures and what they implement](structures.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
 ## Not yet assigned to an area
 
@@ -71,6 +71,14 @@
 | [`VECTOR`](sig/VECTOR.md) | signature VECTOR, transcribed from <https://smlfamily.github.io/Basis/vector.html> | required | 0 of 21 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | signature VECTOR\_SLICE, transcribed from <https://smlfamily.github.io/Basis/vector-slice.html> | required | 0 of 24 |
 | [`WORD`](sig/WORD.md) | signature WORD | required | 0 of 38 |
+
+## Functors
+
+| Functor |  |
+| --- | --- |
+| [`PrimIO`](fun/PrimIO.md) | The optional functors of the specification that build the I/O stack for other element types: PrimIO, StreamIO and ImperativeIO, on the functors TextIO and BinIO are made of. |
+| [`StreamIO`](fun/StreamIO.md) |  |
+| [`ImperativeIO`](fun/ImperativeIO.md) |  |
 
 ---
 

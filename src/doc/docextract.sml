@@ -24,13 +24,13 @@ struct
               binds : I.binding IntMap.map ref}   (* what the identifiers of a signature bind, by where they stand *)
 
   (* What a comment documents decides which reserved paragraphs it may have. *)
-  datatype place = Value | Entry | Part | SignatureDoc | StructureDoc | FunctorDoc | ProseDoc
+  datatype place = Value | Entry | Part | SignatureDoc | StructureDoc | FunctorDoc | ProseDoc | DeclarationDoc
 
   fun allowed (place : place, keyword : string) : bool =
     case keyword of
-      "Raises" => place = Value
-    | "Law" => place = Value
-    | "Complexity" => place = Value
+      "Raises" => place = Value orelse place = DeclarationDoc
+    | "Law" => place = Value orelse place = DeclarationDoc
+    | "Complexity" => place = Value orelse place = DeclarationDoc
     | "Area" => place = SignatureDoc orelse place = FunctorDoc
     | "Status" => place = SignatureDoc orelse place = StructureDoc orelse place = FunctorDoc
     | "Implements" => place = StructureDoc orelse place = FunctorDoc
@@ -40,6 +40,7 @@ struct
     case place of
       Value => "a value" | Entry => "this specification" | Part => "a constructor or a field"
     | SignatureDoc => "a signature" | StructureDoc => "a structure" | FunctorDoc => "a functor" | ProseDoc => "prose"
+    | DeclarationDoc => "a declaration"
 
   (* The blocks of a comment, with the complaints about them. *)
   fun blocksOf (ctx : ctx, place : place, {start, stop, text} : C.comment) : T.block list =
@@ -330,24 +331,84 @@ struct
         (SOME {sigexp = margin (ctx, Ast.spanOfSigexp sigexp), opaque = opaque}, e')
     | _ => (NONE, e)
 
+  (* ---- the declarations of a structure body ---- *)
+  fun patternNames (p : Ast.pat) : string list =
+    case p of
+      Ast.PVar (([], x), _, _) => [x]
+    | Ast.PRecord (fields, _, _, _) => List.concat (List.map (fn (_, q) => patternNames q) fields)
+    | Ast.PTuple (ps, _) => List.concat (List.map patternNames ps)
+    | Ast.PList (ps, _) => List.concat (List.map patternNames ps)
+    | Ast.PApp (_, _, q, _) => patternNames q
+    | Ast.PTyped (q, _, _) => patternNames q
+    | Ast.PLayered (x, _, q, _, _) => x :: patternNames q
+    | _ => []
+
+  (* What a declaration declares, by name; nothing for one that declares
+     none. *)
+  fun declared (dec : Ast.dec) : string list =
+    case dec of
+      Ast.DVal (_, binds, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
+    | Ast.DValRec (_, binds, _) => List.concat (List.map (fn (p, _) => patternNames p) binds)
+    | Ast.DFun (_, defs, _) => List.map #name defs
+    | Ast.DType (binds, _) => List.map #name binds
+    | Ast.DDatatype (datbinds, typbinds, _) =>
+        List.concat (List.map (fn {name, cons, ...} => name :: List.map #1 cons) datbinds) @ List.map #name typbinds
+    | Ast.DDatatypeRepl (name, _, _) => [name]
+    | Ast.DAbstype (datbinds, typbinds, decs, _) =>
+        List.map #name datbinds @ List.map #name typbinds @ List.concat (List.map declared decs)
+    | Ast.DException (binds, _) => List.map (fn Ast.ExnDecl (n, _, _, _) => n | Ast.ExnRepl (n, _, _, _) => n) binds
+    | Ast.DLocal (_, decs, _) => List.concat (List.map declared decs)
+    | Ast.DStructure (binds, _) => List.map #name binds
+    | _ => []
+
+  (* The notes in the comment above a declaration, for each name it declares:
+     only the notes (D5) of a structure body are documentation, the rest of
+     its comments are the implementer's. *)
+  fun notesOf (ctx : ctx) (dec : Ast.dec) : (string * I.doc) list =
+    case dec of
+      Ast.DStructure _ => []
+    | Ast.DLocal (_, decs, _) => List.concat (List.map (notesOf ctx) decs)
+    | _ =>
+        (case declared dec of
+           [] => []
+         | names =>
+             let
+               val blocks = docOf (ctx, DeclarationDoc, Ast.spanOfDec dec)
+               fun notes (prev, bs) =
+                 case bs of
+                   [] => []
+                 | (b as T.Reserved {keyword, ...}) :: rest =>
+                     if T.isNote keyword orelse (keyword = "Pinned by" andalso prev) then b :: notes (true, rest)
+                     else notes (false, rest)
+                 | _ :: rest => notes (false, rest)
+             in
+               case notes (false, blocks) of
+                 [] => []
+               | ns => List.map (fn n => (n, ns)) names
+             end)
+
   fun structOf (ctx : ctx) ({name, strexp, span} : Ast.strbind) : I.module =
     let
       val src = #src ctx
       val doc = docOf (ctx, StructureDoc, span)
       val (ascription, e) = ascriptionOf ctx strexp
-      val (rhs, subs) =
+      val (rhs, subs, members, notes) =
         case e of
-          Ast.StrStruct (decs, _) => (I.Body, List.concat (List.map (subStructs ctx) decs))
-        | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [])
-        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [])
-        | _ => (I.Other, [])
+          Ast.StrStruct (decs, _) =>
+            (I.Body, List.concat (List.map (subStructs ctx) decs), SOME (List.concat (List.map declared decs)),
+             List.concat (List.map (notesOf ctx) decs))
+        | Ast.StrId (longid, _) => (I.Alias (Ast.longidToString longid), [], NONE, [])
+        | Ast.StrApp (f, arg, _, _) => (I.Apply (f, margin (ctx, Ast.spanOfStrexp arg)), [], NONE, [])
+        | _ => (I.Other, [], NONE, [])
     in
-      I.Struct {name = name, file = S.name src, span = span, doc = doc, ascription = ascription, rhs = rhs, subs = subs}
+      I.Struct {name = name, file = S.name src, span = span, doc = doc, ascription = ascription, rhs = rhs, subs = subs,
+                members = members, notes = notes}
     end
 
   and subStructs ctx (dec : Ast.dec) : I.module list =
     case dec of
       Ast.DStructure (binds, _) => List.map (structOf ctx) binds
+    | Ast.DLocal (_, decs, _) => List.concat (List.map (subStructs ctx) decs)
     | _ => []
 
   fun modulesOf (ctx : ctx) (dec : Ast.dec) : I.module list =
@@ -381,7 +442,10 @@ struct
                                  param = (case param of
                                             SOME x => x ^ " : " ^ margin (ctx, Ast.spanOfSigexp paramSig)
                                           | NONE => margin (ctx, Ast.spanOfSigexp paramSig)),
-                                 result = #1 (ascriptionOf ctx body)}) binds
+                                 result = #1 (ascriptionOf ctx body),
+                                 notes = (case #2 (ascriptionOf ctx body) of
+                                            Ast.StrStruct (decs, _) => List.concat (List.map (notesOf ctx) decs)
+                                          | _ => [])}) binds
       | _ => []
     end
 

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | optional |
+| Implementations | 1 |
 | Documentation | 11 of 13 entries documented |
 | Source | [tests/doc/text.sml](../tests/doc/text.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature TEXT
+structure Text : TEXT where type t = string  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Text` | A structure says what it implements. | [tests/doc/text.sml](../tests/doc/text.sml) |
 
 The language of doc comments. Plain prose is a paragraph, and so is this
 second sentence; `code` stands between backquotes and may

@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 26 entries documented |
 | Source | [lib/basis/sig\_array\_slice.sml](../../../../lib/basis/sig_array_slice.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature ARRAY_SLICE
+structure ArraySlice : ARRAY_SLICE
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `ArraySlice` | ArraySlice: an array, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/arrayslice.sml](../../../../lib/basis/arrayslice.sml) |
 
 signature ARRAY\_SLICE, transcribed from
 <https://smlfamily.github.io/Basis/array-slice.html>

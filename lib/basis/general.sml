@@ -1,4 +1,6 @@
-(* General: the exceptions and combinators of the initial basis as a structure. *)
+(* General: the exceptions and combinators of the initial basis as a structure.
+
+   Implements: GENERAL *)
 structure General =
 struct
   type unit = unit

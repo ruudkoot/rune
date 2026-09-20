@@ -5,6 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
+| Implementations | 1 |
 | Documentation | 0 of 8 entries documented |
 | Source | [lib/basis/sig\_posix.sml](../../../../lib/basis/sig_posix.sml) |
 
@@ -12,7 +13,12 @@
 
 ```sml
 signature POSIX
+structure Posix : POSIX  (* optional *)
 ```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Posix` | Posix: the interface of the operating system itself. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 signature POSIX, transcribed from
 <https://smlfamily.github.io/Basis/posix.html>

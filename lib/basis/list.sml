@@ -1,4 +1,6 @@
-(* List *)
+(* List
+
+   Implements: LIST *)
 structure List =
 struct
   datatype list = datatype list
