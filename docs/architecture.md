@@ -43,9 +43,11 @@ elaborator), so what it documents is what the compiler compiles. Nothing of
 | `DocSource` | `src/doc/docsource.sml` | A file's tokens, the comments in the gaps between them (the lexer keeps none; every gap is white space and comments, or it is a bug), and source text without comments. |
 | `DocDiag` | `src/doc/docdiag.sml` | Diagnostics that accumulate: a run reports everything, in source order, and fails at the end if there was an error. |
 | `DocComments` | `src/doc/doccomments.sml` | What each comment documents, by line: the item directly below it, or the innermost item that ends on its line; a comment that starts with `----` is a section heading, one followed by a blank line is prose. In a signature a comment that is none of these is an error. |
+| `DocText` | `src/doc/doctext.sml` | The language of doc comments ([doc-comments.md](doc-comments.md)): paragraphs, code between backquotes, code blocks, lists, links and the reserved paragraphs (`Raises:`, `Implements:`, the notes), with what each of those must look like. |
+| `DocHead` | `src/doc/dochead.sml` | Usage heads: `` `take (l, i)` `` at the start of a value's description is parsed with the compiler's parser and checked against the type of the specification; its arguments name the arguments for the rest of the comment. |
 | `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
 | `DocExtract` | `src/doc/docextract.sml` | Syntax tree and comments to `DocIR`, in two walks: the first notes what can be documented, the second builds the modules with their comments. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
-| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --dump-ir FILE...`. |
+| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --dump-ir FILE...`, `runedoc --lint FILE...`. |
 
 Its tests are `tests/doc` (`make test-doc`): an input file and, next to it,
 what `runedoc` is expected to make of it (`.ir`) and to complain about

@@ -73,6 +73,9 @@ keep these invariants:
   programs that need Basis Library parts Rune lacks or MLton-specific
   behaviour, each with its reason. A program that fails and is not on that
   list is a bug.
+* Comments are written in the language of `docs/doc-comments.md`, and in a
+  signature every comment documents something, is a `----` heading or is
+  prose; `make check-docs` lints `lib/basis` and `src`.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

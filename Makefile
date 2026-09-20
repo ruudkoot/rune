@@ -227,11 +227,12 @@ test-all: host-builds vm | build/.doctor-check
 check-cross: host-builds bin/rune-boot bin/runedoc-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
-check-docs: $(RUNE)
+check-docs: $(RUNE) $(RUNEDOC)
 	sh scripts/check-docs.sh
 	sh scripts/check-basis-coverage.sh
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
+	$(RUNEDOC) --lint lib/basis/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis and src are in the language of doc comments)"
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems

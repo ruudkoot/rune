@@ -24,6 +24,8 @@ src/driver/basismanifest.sml
 src/doc/docsource.sml
 src/doc/docdiag.sml
 src/doc/doccomments.sml
+src/doc/doctext.sml
+src/doc/dochead.sml
 src/doc/docir.sml
 src/doc/docextract.sml
 src/doc/docmain.sml

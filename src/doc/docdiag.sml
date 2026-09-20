@@ -31,8 +31,14 @@ struct
     Source.describe sp ^ (case severity of Error => ": error: " | Warning => ": warning: ") ^ msg
 
   (* The diagnostics as lines, in source order; those found first come first
-     among equals. *)
-  fun lines () : string list = List.map format (sorted (!all))
+     among equals, and what was found twice is said once. *)
+  fun lines () : string list =
+    let
+      fun dedup (l :: (rest as l' :: _)) = if l = l' then dedup rest else l :: dedup rest
+        | dedup ls = ls
+    in
+      dedup (List.map format (sorted (!all)))
+    end
 
   fun numErrors () : int = List.length (List.filter (fn (_, s, _) => s = Error) (!all))
 end

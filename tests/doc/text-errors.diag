@@ -1,0 +1,14 @@
+tests/doc/text-errors.sml:1:1: error: `Implements:` does not belong in the comment of a signature
+tests/doc/text-errors.sml:6:3: error: a backquote without a partner: code stands between two backquotes
+tests/doc/text-errors.sml:9:3: error: `Raises:` begins with the exception in backquotes, then says when
+tests/doc/text-errors.sml:12:3: error: `Status:` is one of required, optional and extension
+tests/doc/text-errors.sml:12:3: error: `Status:` does not belong in the comment of this specification
+tests/doc/text-errors.sml:15:3: error: `Reading:` begins with the note's id in backquotes, as in `Reading: `Char.fromString/unescaped-double-quote`. ...`
+tests/doc/text-errors.sml:18:3: error: `Reading (the suite agrees):` is not known: the one modifier is `Reading (the suite differs):`
+tests/doc/text-errors.sml:21:3: error: `Raises:` does not belong in the comment of this specification
+tests/doc/text-errors.sml:24:3: error: `Pinned by:` follows the note it pins directly
+tests/doc/text-errors.sml:27:3: error: `Example:` says nothing
+tests/doc/text-errors.sml:31:7: error: the usage `take (l, i, j)` does not fit the type of take: it has a tuple of 3 where the type has one of 2
+tests/doc/text-errors.sml:34:7: error: the usage `nth l i` does not fit the type of nth: it has more arguments than the type has arrows
+tests/doc/text-errors.sml:37:7: error: the usage `make {size, colour}` does not fit the type of make: its record has the labels size, colour where the type has size, fill
+tests/doc/text-errors.sml:40:7: error: the usage `apply (f, x)` does not fit the type of apply: it has a tuple where the type has none

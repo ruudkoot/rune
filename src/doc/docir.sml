@@ -5,9 +5,9 @@
    form, which the tests of tests/doc compare. *)
 structure DocIR =
 struct
-  (* A comment as it stands in the source, without its delimiters. *)
-  type comment = {text : string, span : Source.span}
-  type doc = comment list
+  (* The documentation of something: the blocks of its comments (DocText),
+     those above it first. *)
+  type doc = DocText.block list
 
   datatype kind = Val | Type | Eqtype | Datatype | Exception | Structure | Include | Sharing
 
@@ -27,11 +27,14 @@ struct
      sigref names the signature of `structure S : SIG` and of `include SIG`;
      body holds the specifications of `structure S : sig ... end`. adjacent:
      it follows the entry before it with no blank line and no comment between
-     them, so that the comment of that entry may be meant for both. *)
+     them. heads: how the comment shows the value applied (DocHead), its own
+     head first. leader: the entry before it whose comment documents this one
+     too, because it is adjacent and that comment has a head for it. *)
   datatype entry = Entry of
     {kind : kind, name : string, spec : string, span : Source.span,
      cons : con list, fields : field list,
-     sigref : string option, body : item list option, adjacent : bool, doc : doc}
+     sigref : string option, body : item list option, adjacent : bool,
+     heads : DocHead.head list, leader : string option, doc : doc}
 
   (* A signature body in source order: what it specifies, the headings that
      divide it into sections, and prose that stands between entries. *)
@@ -66,7 +69,15 @@ struct
     | ls => (indent n ^ label ^ ":") :: List.map (fn l => indent (n + 1) ^ "|" ^ l) ls
 
   fun docLines (n, doc : doc) =
-    List.concat (List.map (fn {text, ...} : comment => textLines (n, "doc", text)) doc)
+    List.concat
+      (List.map (fn DocText.Para is => textLines (n, "para", DocText.inlinesText is)
+                  | DocText.CodeBlock c => textLines (n, "code", c)
+                  | DocText.Bullets items =>
+                      (indent n ^ "list") :: List.concat (List.map (fn is => textLines (n + 1, "item", DocText.inlinesText is)) items)
+                  | DocText.Reserved {keyword, modifier, body} =>
+                      textLines (n, "reserved " ^ keyword ^ (case modifier of SOME m => " (" ^ m ^ ")" | NONE => ""),
+                                 DocText.inlinesText body))
+                doc)
 
   fun fieldLines n ({label, ty, doc} : field) =
     (indent n ^ "field " ^ label ^ " : " ^ ty) :: docLines (n + 1, doc)
@@ -75,10 +86,14 @@ struct
     (indent n ^ "con " ^ name ^ (case arg of SOME t => " of " ^ t | NONE => ""))
     :: docLines (n + 1, doc) @ List.concat (List.map (fieldLines (n + 1)) fields)
 
-  fun entryLines n (Entry {kind, name, spec, cons, fields, sigref, body, adjacent, doc, ...}) =
+  fun entryLines n (Entry {kind, name, spec, cons, fields, sigref, body, adjacent, heads, leader, doc, ...}) =
     (indent n ^ kindName kind ^ (if name = "" then "" else " " ^ name))
     :: textLines (n + 1, "spec", spec)
     @ (if adjacent then [indent (n + 1) ^ "adjacent"] else [])
+    @ (case leader of SOME l => [indent (n + 1) ^ "documented with: " ^ l] | NONE => [])
+    @ List.map (fn {code, name = h, args} : DocHead.head =>
+                  indent (n + 1) ^ "head of " ^ h ^ ": " ^ code ^
+                  (if List.null args then "" else " (arguments: " ^ String.concatWith " " args ^ ")")) heads
     @ (case sigref of SOME s => [indent (n + 1) ^ "signature: " ^ s] | NONE => [])
     @ docLines (n + 1, doc)
     @ List.concat (List.map (conLines (n + 1)) cons)
