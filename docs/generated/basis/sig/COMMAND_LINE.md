@@ -67,6 +67,12 @@ val arguments : unit -> string list
 **Law** `List.length (arguments ()) + 1` is the number of words the command
 was given, name included.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `none-under-the-runner` &middot; `stable`

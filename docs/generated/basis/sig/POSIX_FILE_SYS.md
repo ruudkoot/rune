@@ -298,6 +298,12 @@ val wordToFD : SysWord.word -> file_desc
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; wordToFD makes a new file\_desc that is not equal (=) to the file\_desc with the same number: equality of file\_desc is that of the object
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-fdToWord`
@@ -445,6 +451,12 @@ The descriptor the program reads its input from.
 > **Implementation** `Posix.FileSys.stdin/is-0`. The three standard
 > descriptors are the words 0, 1 and 2, which POSIX fixes and the page
 > does not state.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML 5.9.2** &mdash; wordToFD 0w0 is not equal (=) to stdin: equality of file\_desc is that of the object
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -1243,6 +1255,12 @@ val mode : stat -> S.mode
 ```
 
 `mode st` is the permission bits of the file.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; ST.mode includes the bits of the file type of st\_mode (S\_IFREG, S\_IFDIR, S\_IFIFO) besides the protection mode
+
+</details>
 
 <details><summary>Tests (3)</summary>
 

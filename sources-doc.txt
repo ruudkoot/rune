@@ -34,6 +34,7 @@ src/doc/docclaims.sml
 src/doc/docelab.sml
 src/doc/doctests.sml
 src/doc/docnotes.sml
+src/doc/docannot.sml
 src/doc/docresolve.sml
 src/doc/docpage.sml
 src/doc/docsite.sml

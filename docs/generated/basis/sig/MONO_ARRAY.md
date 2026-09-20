@@ -62,6 +62,12 @@ Mutable sequences of one element type.
 > **Implementation** `Word8Array.array/one-value-per-byte`. A [`Word8Array.array`](#val-array)
 > is an ordinary array with one value of the machine per byte.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+
+</details>
+
 ## Interface
 
 <pre>

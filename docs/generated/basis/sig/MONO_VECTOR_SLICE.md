@@ -63,6 +63,12 @@ A stretch of a vector of one element type, without a copy of it.
 > of characters is [`Substring.substring`](../sig/SUBSTRING.md#val-substring), and the slice of one of bytes is a
 > substring too.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+
+</details>
+
 ## Interface
 
 <pre>
@@ -164,6 +170,12 @@ type slice
 
 The type of slices of one of these.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (42)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `is-a-substring` &middot; `Substring.base` &middot; `String.extract*`
@@ -244,6 +256,12 @@ val slice : vector * int * int option -> slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `v`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (42)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `is-a-substring` &middot; `Substring.base` &middot; `String.extract*`
@@ -267,6 +285,12 @@ val subslice : slice * int * int option -> slice
 The bounds are those of `sl`, not of what it is a slice of.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `sl`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
 
 <details><summary>Tests (34)</summary>
 

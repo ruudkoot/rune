@@ -142,6 +142,35 @@ check pins (and the other way round), and what a host reads differently in a
 signature that is documented in full needs a `Reading:` of that member.
 `coverage.md` lists the deviations and limitations that no check pins.
 
+## Annotations
+
+What is said about a member from outside the library's sources comes in a
+file, `runedoc --annotations FILE`:
+
+```
+# a comment
+@title Other implementations
+@intro what the test suite finds other implementations to do differently.
+Bool.scan/case-* | MLton | scan is case-sensitive
+```
+
+A line is `glob | whom it is about | text`; the text is plain and may hold a
+bar. The glob is that of a check's label, `Structure.member/case`, with `*`,
+`?` and `[...]` as the shell has them, and the text is shown, folded, under
+every member that has such a check: `*Vector.update/[Sm]*` under `update` of
+`VECTOR` and of `MONO_VECTOR`. A constructor counts for its datatype, and a
+label `Structure:SIG/case` for the signature as a whole. A check whose label
+is computed (`"Int.scan/" ^ name`) counts by the beginning that is written
+out, and one of which only the member is known counts when no other check
+has the label. A glob that finds no check of a documented member is an error,
+so an annotation cannot outlive what it is about. `@title` names the block
+and `@intro` describes it on the page "How to read these pages".
+
+For the Basis Library the file is `tests/basis/annotations.txt`, which
+`tests/basis/gen-annotations.sh` makes from the host lines of
+`tests/basis/deviations.txt`. It is committed and `make check-docs` checks
+that it is up to date, so `runedoc` never reads `deviations.txt`.
+
 ## The ratchet
 
 `lib/basis/DOCUMENTED` lists the signatures that are documented in full. For

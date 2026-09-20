@@ -120,6 +120,12 @@ exception Time
 
 Raised when a time cannot be made or converted: the value does not fit.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ, Poly/ML** &mdash; fromReal of an infinite real raises Overflow, not Time
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `raise-and-handle` &middot; `is-its-own-exception` &middot; `fromReal-posInf` (raises)
@@ -154,6 +160,13 @@ val fromReal : LargeReal.real -> time
 
 **Raises** [`Time`](#exn-time) if `r` is not a number, is infinite, or does not fit.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ, Poly/ML** &mdash; fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+- **SML/NJ, Poly/ML** &mdash; fromReal of an infinite real raises Overflow, not Time
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `one-and-a-half` &middot; `binary-fraction` &middot; `negative` &middot; `negative-zero` &middot; `whole-seconds` &middot; `spec-example-1.8` &middot; `fraction-of-a-microsecond-lost` &middot; `milliseconds` &middot; `posInf` (raises) &middot; `negInf` (raises) &middot; `nan` (raises) &middot; `huge-approximately-or-Time` &middot; `huge-negative-approximately-or-Time` &middot; `binary-fractions-exactly` &middot; `toReal-round-trip-within-a-microsecond`
@@ -182,6 +195,14 @@ val toSeconds : time -> LargeInt.int
 
 `toSeconds t` is the whole seconds of `t`, truncated towards zero.
 
+<details><summary>Other implementations (3)</summary>
+
+- **Poly/ML** &mdash; toSeconds rounds a negative time towards minus infinity (\~2.01 s gives \~3), not "towards 0"
+- **Poly/ML** &mdash; toSeconds rounds a negative time towards minus infinity (\~0.999 s gives \~1), not "towards 0"
+- **Poly/ML** &mdash; toSeconds and toMilliseconds round a negative time towards minus infinity, not "towards 0"
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `spec-example-2.01` &middot; `negative-towards-zero` &middot; `rounds-towards-zero` &middot; `rounds-negative-towards-zero` &middot; `less-than-a-second` &middot; `large` &middot; `is-toMicroseconds-quot`
@@ -195,6 +216,12 @@ val toMilliseconds : time -> LargeInt.int
 ```
 
 `toMilliseconds t` is the whole milliseconds of `t`, truncated towards zero.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; toMilliseconds rounds a negative time towards minus infinity (\~1500 us gives \~2), not "towards 0"
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -439,6 +466,14 @@ val fmt : int -> time -> string
 > the digit last kept is rounded to nearest, and since a time holds
 > microseconds every digit past the sixth is a zero.
 
+<details><summary>Other implementations (3)</summary>
+
+- **Poly/ML** &mdash; fmt with a negative number of digits does not raise Size
+- **Poly/ML** &mdash; fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+- **MLton** &mdash; fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+
+</details>
+
 <details><summary>Tests (24)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `spec-example-3` &middot; `spec-example-0` &middot; `spec-example-zeroTime` &middot; `zeroTime-3` &middot; `rounds-down` &middot; `rounds-up` &middot; `carries-into-seconds` &middot; `0-rounds-up` &middot; `0-rounds-down` &middot; `whole-seconds` &middot; `microsecond` &middot; `more-digits-than-microseconds` &middot; `20-digits` &middot; `20-digits-microsecond` &middot; `40-digits` &middot; `negative` &middot; `negative-carries` &middot; `negative-0-digits` &middot; `fixed-point-semantics` &middot; `fixed-point-semantics-rounded` &middot; `large` &middot; `Size` (raises Size) &middot; `Size-zeroTime` (raises Size) &middot; `6-digits-of-microseconds`
@@ -493,6 +528,12 @@ val fromString : string -> time option
 **Law** `fromString s = StringCvt.scanString scan s`
 
 **Raises** [`Time`](#exn-time) if the number does not fit.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+
+</details>
 
 <details><summary>Tests (32)</summary>
 

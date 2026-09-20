@@ -237,7 +237,10 @@ have the shape of `SOCKET` (`Ctl`, the `NB` functions, `sameAddr`).
 
 The `HOST-BUG`, `HOST-ABSENT` and `HOST-FLAKY` lines; the counts in the
 summary above also include the `WIDTH` and `SPEC-AMBIGUOUS` lines of the
-hosts. What follows names the themes, not every line.
+hosts. What follows names the themes, not every line; the library's
+documentation has every line under the member it is about, in a block
+"Other implementations" (`tests/basis/gen-annotations.sh` makes
+`tests/basis/annotations.txt` from `deviations.txt` for it).
 
 * **MLton 20241230** (71 lines). `Bool.scan` and `fromString` are
   case-sensitive and skip no whitespace. `Real.rem (0.0, 0.0)` is 0.0, and

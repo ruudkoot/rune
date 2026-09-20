@@ -161,6 +161,12 @@ val toLarge : int -> LargeInt.int
 
 `toLarge i` is `i` as an integer of [`LargeInt`](INTEGER.md), which loses nothing.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (9)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `identity`
@@ -179,6 +185,12 @@ val fromLarge : LargeInt.int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (14)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `identity`
@@ -196,6 +208,12 @@ val toInt : int -> Int.int
 `toInt i` is `i` as an integer of the default structure [`Int`](INTEGER.md).
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of [`Int.int`](#type-int).
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (16)</summary>
 
@@ -216,6 +234,12 @@ val fromInt : Int.int -> int
 `fromInt i` is the integer of this structure with the value `i`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (13)</summary>
 
@@ -239,6 +263,12 @@ val precision : Int.int option
 
 **Example** `Int.precision = SOME 64` and `IntInf.precision = NONE`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `NONE`
@@ -261,6 +291,12 @@ val minInt : int option
 
 **Law** `minInt = SOME (~(2 ^ (p - 1)))` where `precision = SOME p`
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `no-least-number`
@@ -279,6 +315,12 @@ val maxInt : int option
 
 **Law** `maxInt = SOME (2 ^ (p - 1) - 1)` where `precision = SOME p`. The
 range is not symmetric: `~minInt` overflows and `abs minInt` does too.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -305,6 +347,12 @@ val + : int * int -> int
 `i + j` is the sum.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range of this structure.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (30)</summary>
 
@@ -334,6 +382,12 @@ val - : int * int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `10^30-minus-one` &middot; `one-minus-10^30` &middot; `as-Int*` &middot; `inverse-of-plus*`
@@ -353,6 +407,12 @@ val * : int * int -> int
 `i * j` is the product.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (40)</summary>
 
@@ -376,6 +436,12 @@ val div : int * int -> int
 range, which happens for `minInt div ~1`.
 
 **Example** `~7 div 2 = ~4`, where `~7 quot 2` is `~3`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (32)</summary>
 
@@ -402,6 +468,13 @@ val mod : int * int -> int
 > **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
 > although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (29)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `factorial-30-by-factorial-25` &middot; `2^64-by-10^9` &middot; `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
@@ -423,6 +496,12 @@ val quot : int * int -> int
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero; [`Overflow`](../sig/GENERAL.md#exn-overflow) for `quot (minInt, ~1)`.
 
 **Example** `quot (~7, 2) = ~3`, where `~7 div 2` is `~4`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (22)</summary>
 
@@ -447,6 +526,13 @@ val rem : int * int -> int
 > **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `~2^64-by-10^9` &middot; `2^64-by-~10^9` &middot; `as-Int*` &middot; `of-product*`
@@ -464,6 +550,12 @@ val compare : int * int -> order
 ```
 
 `compare (i, j)` orders two integers.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (15)</summary>
 
@@ -484,6 +576,12 @@ val >= : int * int -> bool
 
 `i < j`, `i <= j`, `i > j` and `i >= j` compare two integers.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (11)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -503,6 +601,12 @@ val ~ : int -> int
 `~i` is the negation of `i`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `~minInt`, which is not in the range.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (16)</summary>
 
@@ -530,6 +634,13 @@ val abs : int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `abs minInt`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (13)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -548,6 +659,12 @@ val min : int * int -> int
 
 `min (i, j)` is the smaller of the two.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -564,6 +681,12 @@ val max : int * int -> int
 
 `max (i, j)` is the larger of the two.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `as-Int*`
@@ -579,6 +702,12 @@ val sign : int -> Int.int
 ```
 
 `sign i` is \~1, 0 or 1, as `i` is negative, zero or positive.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (12)</summary>
 
@@ -600,6 +729,13 @@ val sameSign : int * int -> bool
 > number.
 
 **Law** `sameSign (i, j) = (sign i = sign j)`
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ (32-bit)** &mdash; sameSign (0, i) is true for positive i
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (10)</summary>
 
@@ -624,6 +760,13 @@ to `F` and nothing before them.
 
 **Example** `fmt StringCvt.HEX 255 = "FF"` and `fmt StringCvt.BIN ~5 = "~101"`
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
+- **SML/NJ (32-bit)** &mdash; Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_scan_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `model*`
@@ -639,6 +782,12 @@ val toString : int -> string
 `toString i` is the text of `i` in base 10.
 
 **Law** `toString i = fmt StringCvt.DEC i`
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (12)</summary>
 
@@ -671,6 +820,16 @@ structure.
 > not a prefix, but its `0` is a digit: `"0xg"` scans as 0 and leaves
 > `"xg"` in the stream.
 
+<details><summary>Other implementations (5)</summary>
+
+- **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
+- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+- **SML/NJ (32-bit)** &mdash; Int64.scan raises an exception for a value that does not fit 32 bits
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
+
 <details><summary>Tests (12)</summary>
 
 In [tests/basis/fn/integer\_scan\_fn.sml](../../../../tests/basis/fn/integer_scan_fn.sml), applied to `IntInf`, `Int`, `Int8`, `Int16`, `Int32`, `Int64`: `*` &middot; `HEX-0xg-is-zero` &middot; `HEX-0x-123-is-zero` &middot; `string-position` &middot; `string-position-second` &middot; `HEX-minInt-with-prefix` &middot; `HEX-maxInt-lower-case` &middot; `HEX-Overflow-with-prefix` &middot; `HEX-2^300-1-lower-case-with-prefix` &middot; `model*` &middot; `model-lower-case-rest*` &middot; `fmt-round-trip*`
@@ -688,6 +847,14 @@ val fromString : string -> int option
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number outside the range.
 
 **Law** `fromString s = StringCvt.scanString (scan StringCvt.DEC) s`
+
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+- **SML/NJ (32-bit)** &mdash; Int64.fromString raises an exception for a value that does not fit 32 bits
+- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+
+</details>
 
 <details><summary>Tests (27)</summary>
 

@@ -165,6 +165,12 @@ val errorName : syserror -> string
 > [`Posix.Error`](../sig/POSIX.md#str-error), lower case and without the `E`: `"noent"` rather than
 > `"ENOENT"`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `syserror-inverts` &middot; `unique` &middot; `stable`

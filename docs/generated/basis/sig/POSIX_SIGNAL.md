@@ -126,6 +126,12 @@ val fromWord : SysWord.word -> signal
 
 `fromWord w` is the signal numbered `w`, which need not be one named here.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all) and fromWord makes flags outside all
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `of-toWord-all` &middot; `no-check` &middot; `equal-words-equal-signals`
@@ -255,6 +261,12 @@ val pipe : signal
 A pipe or a socket was written that nobody reads.
 
 **See also** [`POSIX_ERROR`](../sig/POSIX_ERROR.md)
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; the runtime ignores SIGPIPE, and the programs it executes inherit that
+
+</details>
 
 <details><summary>Tests (2)</summary>
 

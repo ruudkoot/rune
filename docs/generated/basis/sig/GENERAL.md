@@ -187,6 +187,12 @@ Raised by `div`, `mod`, `quot` and `rem` when the divisor is zero.
 
 Also in the [top-level environment](../top-level.md): `Div`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `General`, in [tests/basis/general.sml](../../../../tests/basis/general.sml): `*` &middot; `div` (raises) &middot; `mod` (raises Div) &middot; `quot` (raises Div) &middot; `rem` (raises Div) &middot; `zero-by-zero` (raises Div) &middot; `as-value`
@@ -226,6 +232,12 @@ Raised where a program has nothing better to raise; its argument says
 what went wrong.
 
 Also in the [top-level environment](../top-level.md): `Fail`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+
+</details>
 
 <details><summary>Tests (6)</summary>
 
@@ -357,6 +369,12 @@ reports an exception it cannot handle.
 > for a [`Fail`](#exn-fail), and `exnName ex` for everything else.
 
 Also in the [top-level environment](../top-level.md): `exnMessage`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
+
+</details>
 
 <details><summary>Tests (8)</summary>
 

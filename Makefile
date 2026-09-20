@@ -232,13 +232,17 @@ check-docs: $(RUNE) $(RUNEDOC)
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
 	$(RUNEDOC) --lint lib/basis/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis and src are in the language of doc comments)"
+	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
 # The generated documentation (docs/plans/docgen.md): `make docs` writes it,
 # and it is committed; check-docs fails when it is not what the sources give.
-DOCS_BASIS := --lib lib --library basis --tests tests/basis --out docs/generated/basis --title "The Standard ML Basis Library"
+# tests/basis/annotations.txt is what the suite knows about other implementations,
+# made from deviations.txt by tests/basis/gen-annotations.sh and committed.
+DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
+              --out docs/generated/basis --title "The Standard ML Basis Library"
 
 docs: $(RUNEDOC)
 	$(RUNEDOC) $(DOCS_BASIS)

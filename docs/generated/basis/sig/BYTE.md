@@ -163,6 +163,12 @@ val packString : Word8Array.array * int * substring -> unit
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the characters would not fit, that
 is if `i + Substring.size ss > Word8Array.length arr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; packString of an empty substring does not check the offset
+
+</details>
+
 <details><summary>Tests (19)</summary>
 
 For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `at-the-start` &middot; `in-the-middle` &middot; `up-to-the-end` &middot; `whole-array` &middot; `part-of-a-string` &middot; `empty-substring` &middot; `empty-substring-at-the-end` &middot; `empty-array` &middot; `no-translation` &middot; `keeps-the-other-elements` &middot; `twice` &middot; `Subscript-negative-offset` (raises Subscript) &middot; `Subscript-negative-offset-empty-substring` (raises Subscript) &middot; `Subscript-one-too-long` (raises Subscript) &middot; `Subscript-offset-is-the-length` (raises Subscript) &middot; `Subscript-offset-beyond-the-length-empty-substring` (raises Subscript) &middot; `Subscript-longer-than-the-array` (raises Subscript) &middot; `Subscript-empty-array` (raises Subscript) &middot; `random-*`

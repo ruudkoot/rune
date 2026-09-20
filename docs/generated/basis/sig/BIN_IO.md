@@ -94,6 +94,12 @@ val openIn : string -> instream
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be opened, with the system's error as
 the cause.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `reads-the-file` &middot; `Io-file-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `does-not-create-the-file`
@@ -115,6 +121,12 @@ val openOut : string -> outstream
 > way round: on POSIX nothing is translated between the two, for all 256
 > values.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
+
+</details>
+
 <details><summary>Tests (9)</summary>
 
 For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `creates-the-file` &middot; `truncates-an-existing-file` &middot; `truncates-at-open` &middot; `nothing-written` &middot; `Io-directory-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `left-open-at-exit`
@@ -130,6 +142,12 @@ val openAppend : string -> outstream
 `openAppend name` is a stream writing at the end of the file `name`, which it creates if it is not there.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be opened.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
+
+</details>
 
 <details><summary>Tests (10)</summary>
 

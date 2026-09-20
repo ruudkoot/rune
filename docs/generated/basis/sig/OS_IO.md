@@ -130,6 +130,12 @@ val compare : iodesc * iodesc -> order
 `compare (d, e)` orders descriptors in some total order, which has no
 meaning beyond that.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML 5.9.2** &mdash; the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `same` &middot; `EQUAL-iff-equal` &middot; `different-files` &middot; `antisymmetric` &middot; `transitive`
@@ -225,6 +231,13 @@ val tty : iodesc_kind
 
 a terminal
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ** &mdash; kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+- **MLton, SML/NJ** &mdash; kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `dev-null`
@@ -268,6 +281,12 @@ val device : iodesc_kind
 ```
 
 a device
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -420,6 +439,13 @@ for as long as it takes, and `SOME Time.zeroTime` does not wait at all.
 > [`OS.SysErr`](../sig/OS.md#exn-syserr). The operating system itself reports such a descriptor as
 > ready, so every descriptor is looked at before the wait, and a closed one
 > raises [`OS.SysErr`](../sig/OS.md#exn-syserr).
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; poll of a descriptor that has been closed returns \[\] instead of raising OS.SysErr
+- **Poly/ML** &mdash; poll returns the poll\_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
+
+</details>
 
 <details><summary>Tests (13)</summary>
 

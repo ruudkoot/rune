@@ -17,7 +17,10 @@
 #                   that `runedoc --tests NAME.lib/tests --labels` finds
 #   NAME.lib.cover  and what `--check-coverage` says about them
 #   NAME.lib.notes  the notes.tsv it writes, where the expectation exists
-# A library with a suite is generated with --tests, so that pins are checked.
+#   NAME.lib.md     the pages of its signatures, one after another, where the
+#                   expectation exists
+# A library with a suite is generated with --tests, so that pins are checked,
+# and one with a file ANNOTATIONS with --annotations.
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -87,6 +90,7 @@ for lib in tests/doc/*.lib; do
   rm -rf "$out/$name.site"
   suite=""
   [ -d "$lib/tests" ] && suite="--tests $lib/tests"
+  [ -f "$lib/ANNOTATIONS" ] && suite="$suite --annotations $lib/ANNOTATIONS"
   # shellcheck disable=SC2086
   "$runedoc" --lib tests/doc --library "$name.lib" $suite --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
   if [ -d "$out/$name.site" ]; then (cd "$out/$name.site" && find . -type f | sort) > "$out/$name.lib.files"; else : > "$out/$name.lib.files"; fi
@@ -100,6 +104,11 @@ for lib in tests/doc/*.lib; do
     cp "$out/$name.site/notes.tsv" "$out/$name.lib.notes" 2> /dev/null || : > "$out/$name.lib.notes"
     [ $update = 1 ] && cp "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
     same "$name.lib.notes" "$out/$name.lib.notes" "tests/doc/$name.lib.notes"
+  fi
+  if [ -f "tests/doc/$name.lib.md" ]; then
+    cat "$out/$name.site"/sig/*.md > "$out/$name.lib.md" 2> /dev/null || : > "$out/$name.lib.md"
+    [ $update = 1 ] && cp "$out/$name.lib.md" "tests/doc/$name.lib.md"
+    same "$name.lib.md" "$out/$name.lib.md" "tests/doc/$name.lib.md"
   fi
   if [ -d "$lib/tests" ]; then
     "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1

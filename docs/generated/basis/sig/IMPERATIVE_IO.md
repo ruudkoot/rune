@@ -204,6 +204,12 @@ of stream.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `at-least-one-character` &middot; `empty-file` &middot; `pieces-make-the-file` &middot; `empty-again-at-end-of-stream` &middot; `large` &middot; `after-inputLine` &middot; `empty-after-input-and-inputAll` &middot; `closed-stream`
@@ -226,6 +232,14 @@ val input1 : instream -> elem option
 > that returns `NONE` leaves the stream positioned after the end of stream
 > it found, as `StreamIO.inputN (f, 1)` does, so a following [`input1`](#val-input1)
 > delivers what the source has gained since.
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+- **MLton** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+- **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
+
+</details>
 
 <details><summary>Tests (21)</summary>
 
@@ -253,6 +267,13 @@ long.
 > number of elements to be returned exceeds the greatest length of a
 > vector, as [`STREAM_IO`](../sig/STREAM_IO.md) puts it, not when `n` does.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+- **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
+
+</details>
+
 <details><summary>Tests (30)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `pieces-then-empty` &middot; `exactly-the-rest` &middot; `more-than-there-is` &middot; `one` &middot; `zero-reads-nothing` &middot; `empty-after-inputN-and-inputAll` &middot; `empty-file` &middot; `does-not-stop-at-a-newline` &middot; `Size-negative` (raises Size) &middot; `Size-negative-at-end-of-stream` (raises Size) &middot; `negative-reads-nothing` &middot; `more-than-maxSize-of-a-short-file` &middot; `large` &middot; `closed-stream` &middot; `random-mix-of-operations-*` &middot; `random-mix-of-operations-large-*`
@@ -274,6 +295,14 @@ val inputAll : instream -> vector
 > **Reading** `IMPERATIVE_IO.inputAll/file-grows`. Several ends of stream are
 > real for a file: a read after one delivers what was appended since, so a
 > second [`inputAll`](#val-inputall) need not be empty.
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+- **Poly/ML** &mdash; another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
+- **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+
+</details>
 
 <details><summary>Tests (23)</summary>
 
@@ -318,6 +347,12 @@ val lookahead : instream -> elem option
 > stream before that end of stream, which a following [`input`](#val-input) then
 > consumes.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `does-not-remove` &middot; `then-inputAll` &middot; `NONE-after-lookahead-and-inputAll` &middot; `then-inputLine` &middot; `empty-file` &middot; `after-each-line` &middot; `newline-and-NUL` &middot; `closed-stream`
@@ -342,6 +377,12 @@ val closeIn : instream -> unit
 > after [`closeIn`](#val-closein). Closing twice is allowed.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails while closing.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; characters buffered before closeIn are still read after it
+
+</details>
 
 <details><summary>Tests (14)</summary>
 
@@ -368,6 +409,12 @@ val endOfStream : instream -> bool
 > that read gives nothing, and only afterwards is what the source gained
 > seen.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+
+</details>
+
 <details><summary>Tests (16)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `empty-file` &middot; `characters-available` &middot; `removes-nothing` &middot; `true-after-endOfStream-and-inputAll` &middot; `around-each-line` &middot; `after-inputAll` &middot; `true-then-inputLine-is-NONE` &middot; `closed-stream` &middot; `file-grows-after-end-of-stream`
@@ -390,6 +437,12 @@ val output : outstream * vector -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails or the stream is closed.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+
+</details>
+
 <details><summary>Tests (29)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `in-order` &middot; `empty-string` &middot; `every-character` &middot; `no-line-end-translation` &middot; `large` &middot; `large-size` &middot; `Io-closed-stream` (raises) &middot; `Io-closed-stream-cause` &middot; `Io-closed-stream-function` &middot; `Io-closed-stream-name` &middot; `closed-stream-writes-nothing` &middot; `random-chunks-*` &middot; `random-chunks-large`
@@ -409,6 +462,12 @@ val output1 : outstream * elem -> unit
 `output1 (f, x)` writes the single element `x`.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails or the stream is closed.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; output1 on a closed stream raises Io with function "output"
+
+</details>
 
 <details><summary>Tests (17)</summary>
 
@@ -528,6 +587,12 @@ val getOutstream : outstream -> StreamIO.outstream
 
 `getOutstream f` flushes `f` and is the functional stream underneath.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `BinIO`: `the-same-stream` &middot; `flushes`
@@ -541,6 +606,12 @@ val setOutstream : outstream * StreamIO.outstream -> unit
 ```
 
 `setOutstream (f, s)` flushes what `f` holds and then makes it write to `s`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -577,6 +648,12 @@ val setPosOut : outstream * StreamIO.out_pos -> unit
 `setPosOut (f, opos)` flushes `f` and moves it to the position `opos`.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer has no positions, or the flush fails.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+
+</details>
 
 <details><summary>Tests (3)</summary>
 

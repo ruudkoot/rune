@@ -145,6 +145,12 @@ val fromAddr : sock_addr -> string
 
 `fromAddr a` is the path that `a` names.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the Unix-domain address recvVecFromNB gives is garbled: UnixSock.fromAddr of it is not the sender's path
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `bound-socket` &middot; `sender-of-a-message`

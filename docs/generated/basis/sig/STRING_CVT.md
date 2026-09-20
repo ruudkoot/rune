@@ -178,6 +178,12 @@ than `i`.
 > difference `i - size s` does not exist as an `int`; `s` is returned all
 > the same, and [`Overflow`](../sig/GENERAL.md#exn-overflow) is not raised.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; padLeft and padRight raise Overflow for the smallest int (they compute i - \| s \| ) instead of returning s
+
+</details>
+
 <details><summary>Tests (19)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `basic` &middot; `other-character` &middot; `one-short` &middot; `empty-string` &middot; `nul-character` &middot; `width-equals-size` &middot; `width-below-size` &middot; `width-one` &middot; `width-zero` &middot; `width-zero-empty-string` &middot; `width-negative` &middot; `width-negative-empty-string` &middot; `width-minInt` &middot; `partial-application` &middot; `long` &middot; `Size` (raises Size) &middot; `Size-empty-string` (raises Size) &middot; `law-*` &middot; `law-size-*`
@@ -197,6 +203,12 @@ A string that has `i` characters or more is returned as it is.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
 than `i`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; padLeft and padRight raise Overflow for the smallest int (they compute i - \| s \| ) instead of returning s
+
+</details>
 
 <details><summary>Tests (19)</summary>
 
@@ -273,6 +285,12 @@ val skipWS : (char, 'a) reader -> 'a -> 'a
 White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
 
 **Law** `skipWS getc strm = dropl Char.isSpace getc strm`
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
+
+</details>
 
 <details><summary>Tests (15)</summary>
 

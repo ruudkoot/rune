@@ -114,6 +114,12 @@ with `"output"` as the `function` of the [`IO.Io`](../sig/IO.md#exn-io).
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails, or if the stream is closed or
 terminated.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-output-of-the-string` &middot; `empty` &middot; `buffered` &middot; `LINE_BUF` &middot; `Io-closed`

@@ -1484,6 +1484,12 @@ val getlflag : termios -> L.flags
 
 `getlflag t` is the local flags of `t`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; getlflag returns the output flags (those of getoflag)
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
@@ -1842,6 +1848,12 @@ val getpgrp : file_desc -> pid
 `getpgrp fd` is the process group that the terminal sends its signals to.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not a terminal.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; TC.getpgrp of a descriptor that is not a terminal raises no exception
+
+</details>
 
 <details><summary>Tests (1)</summary>
 

@@ -59,6 +59,12 @@ structure WordArraySlice : MONO_ARRAY_SLICE where type vector = WordVector.vecto
 
 A stretch of an array of one element type, without a copy of it.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+
+</details>
+
 ## Interface
 
 <pre>
@@ -155,6 +161,12 @@ type slice
 ```
 
 The type of slices of one of these.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
 
 <details><summary>Tests (40)</summary>
 
@@ -282,6 +294,12 @@ val slice : array * int * int option -> slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `arr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (40)</summary>
 
 For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `high-bytes`
@@ -305,6 +323,12 @@ val subslice : slice * int * int option -> slice
 The bounds are those of `sl`, not of what it is a slice of.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `sl`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
 
 <details><summary>Tests (31)</summary>
 
@@ -373,6 +397,12 @@ copied.
 | <a name="fld-copy.src"></a>`src` | `slice` |  |
 | <a name="fld-copy.dst"></a>`dst` | `array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; copy with di = Int.maxInt raises Overflow instead of Subscript
+
+</details>
 
 <details><summary>Tests (35)</summary>
 

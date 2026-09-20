@@ -153,6 +153,12 @@ The type of substrings: a base string, a start in it and a length.
 > [`CharVectorSlice.slice`](../sig/MONO_VECTOR_SLICE.md#val-slice), the slice of a vector of characters, so the two
 > structures describe one type.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (30)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `whole` &middot; `to-the-end` &middot; `zero-at-start` &middot; `zero-inside` &middot; `zero-at-size` &middot; `empty-string` &middot; `string-middle` &middot; `string-zero` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-end-beyond-size` (raises Subscript) &middot; `Subscript-start-beyond-size` (raises Subscript) &middot; `Subscript-negative-start` (raises Subscript) &middot; `Subscript-negative-start-zero-size` (raises Subscript) &middot; `Subscript-negative-size` (raises Subscript) &middot; `Subscript-negative-size-at-size` (raises Subscript) &middot; `Subscript-negative-size-end-inside` (raises Subscript) &middot; `Subscript-both-negative` (raises Subscript) &middot; `Subscript-empty-string-size` (raises Subscript) &middot; `Subscript-empty-string-start` (raises Subscript) &middot; `Subscript-on-every-invalid-argument` &middot; `Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `Subscript-not-Overflow-start-zero-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-start` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-both` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-and-largest` (raises Subscript)
@@ -256,6 +262,13 @@ given and `i + n > String.size s`.
 > so that they cannot overflow: an `i` and an `n` whose sum is no `int`
 > raise [`Subscript`](../sig/GENERAL.md#exn-subscript), not [`Overflow`](../sig/GENERAL.md#exn-overflow).
 
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
+- **Poly/ML** &mdash; extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (\|s\| - i overflows)
+
+</details>
+
 <details><summary>Tests (33)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `NONE-whole` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-size` &middot; `NONE-empty-string` &middot; `NONE-string` &middot; `NONE-Subscript-beyond-size` (raises Subscript) &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-empty-string` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-whole` &middot; `SOME-zero-inside` &middot; `SOME-zero-at-size` &middot; `SOME-empty-string` &middot; `SOME-string` &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-end-beyond-size` (raises Subscript) &middot; `SOME-Subscript-start-beyond-size` (raises Subscript) &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-negative-size-end-inside` (raises Subscript) &middot; `SOME-is-substring` &middot; `NONE-every-argument` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-smallest-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-smallest` (raises Subscript) &middot; `law-SOME-*` &middot; `law-NONE-*`
@@ -275,6 +288,12 @@ val substring : string * int * int -> substring
 **Law** `substring (s, i, n) = extract (s, i, SOME n)`
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, `n < 0` or `i + n > String.size s`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+
+</details>
 
 <details><summary>Tests (30)</summary>
 
@@ -390,6 +409,12 @@ val triml : int -> substring -> substring
 > substring is given, so a partial application with a negative `k` raises
 > at once.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; triml k and trimr k with k \< 0 raise Subscript only when applied to a substring
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `one` &middot; `zero` &middot; `three` &middot; `size` &middot; `zero-of-empty` &middot; `string` &middot; `beyond-size` &middot; `far-beyond-size` &middot; `beyond-size-of-empty` &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-negative-empty` (raises Subscript) &middot; `Subscript-when-k-is-given` (raises Subscript) &middot; `partial-application` &middot; `largest-k` &middot; `Subscript-smallest-k` (raises Subscript) &middot; `law-*` &middot; `law-beyond-size-*`
@@ -407,6 +432,12 @@ val trimr : int -> substring -> substring
 `trimr k ss` is `ss` without its last `k` characters, or empty when it has at most `k`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `k < 0`, when `trimr k` is evaluated.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; triml k and trimr k with k \< 0 raise Subscript only when applied to a substring
+
+</details>
 
 <details><summary>Tests (20)</summary>
 
@@ -517,6 +548,12 @@ val isSubstring : string -> substring -> bool
 ```
 
 `isSubstring s ss` is `true` when `s` occurs anywhere in `ss`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; isSubstring "" ss is false when ss is empty
+
+</details>
 
 <details><summary>Tests (17)</summary>
 

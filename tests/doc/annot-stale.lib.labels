@@ -1,0 +1,3 @@
+label	kind	exception	file	functor
+Unit.it/is-unit	check		tests/doc/annot-stale.lib/tests/unit.sml	
+Unit.extra/is-unit	check		tests/doc/annot-stale.lib/tests/unit.sml	

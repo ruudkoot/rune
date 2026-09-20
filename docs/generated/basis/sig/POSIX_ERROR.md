@@ -289,6 +289,12 @@ val badf : syserror
 
 The file descriptor is not open, or not open the right way.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; Posix.IO.close of a descriptor that is already closed raises no exception
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `close-twice`
@@ -726,6 +732,12 @@ val notty : syserror
 
 The descriptor is not a terminal.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `ttyname-of-dev-null`
@@ -813,6 +825,12 @@ val spipe : syserror
 ```
 
 The descriptor cannot be positioned: it is a pipe, a socket or a terminal.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+
+</details>
 
 <details><summary>Tests (2)</summary>
 

@@ -267,6 +267,13 @@ val fromStatus : OS.Process.status -> exit_status
 
 `fromStatus st` is what the status `st` says about how the process ended.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **SML/NJ** &mdash; OS.Process.system returns failure (W\_EXITSTATUS 1) for a command that a signal ended
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `success` &middot; `failure` &middot; `system-exit-0` &middot; `system-exit-3` &middot; `system-exit-200` &middot; `system-killed`
@@ -306,6 +313,12 @@ Report a child that has stopped as well as one that has ended.
 > **Implementation** `Posix.Process.W/only-untraced`. It is the only flag
 > here; the `WNOHANG` of POSIX is what [`waitpid_nh`](#val-waitpid_nh) is, and is added by
 > that function itself.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -372,6 +385,12 @@ val exit : Word8.word -> 'a
 Nothing is flushed and no [`OS.Process.atExit`](../sig/OS_PROCESS.md#val-atexit) action runs; it is the
 `_exit` of POSIX.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML 5.9.2** &mdash; a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `status` &middot; `zero` &middot; `no-atExit` &middot; `no-flush` &middot; `result-has-any-type`
@@ -437,6 +456,12 @@ val pause : unit -> unit
 ```
 
 `pause ()` waits until a signal arrives.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
+
+</details>
 
 <details><summary>Tests (2)</summary>
 

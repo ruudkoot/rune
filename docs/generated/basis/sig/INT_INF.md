@@ -163,6 +163,12 @@ For a negative `j` the result is what is left of `1 / i^~j` as an integer:
 
 **Example** `pow (2, 100) = 1267650600228229401496703205376`
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; IntInf.pow (i, j) is 0 for \| i \| = 1 and j \< 0
+
+</details>
+
 <details><summary>Tests (18)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `Div-zero-to-minus-one` (raises Div) &middot; `Div-zero-to-minus-five` (raises Div) &middot; `2-to-64` &middot; `2-to-100` &middot; `2-to-200` &middot; `~2-to-201` &middot; `~2-to-200` &middot; `10-to-30` &middot; `2^64-squared` &middot; `2^100-to-one` &middot; `2^100-to-zero` &middot; `2^100-to-minus-one` &middot; `~2^100-to-minus-two` &middot; `as-Int*` &middot; `cube*` &middot; `sum-of-exponents*` &middot; `of-product*`
@@ -267,6 +273,12 @@ val ~>> : int * Word.word -> int
 ```
 
 `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML 5.9.2** &mdash; IntInf.\~\>\> of a negative number that does not fit a machine word rounds towards zero, not down (\~2^100 \~\>\> 0w101 is 0, not \~1); 5.7.1 rounds down
+
+</details>
 
 <details><summary>Tests (12)</summary>
 

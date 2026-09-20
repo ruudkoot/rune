@@ -25,6 +25,9 @@ struct
               topLevel : string * string -> string option,
               (* the check sites of the test suite, by their scope: List.take *)
               tests : DocTests.site list StringMap.map,
+              (* what is said about a member from outside (DocAnnot), by its name with the structure: the title
+                 of the block, and whom each remark is about with its text *)
+              annotations : string * (string -> (string * string) list),
               (* the notes of a structure's body, and of the functor it applies, by member *)
               notesOf : string -> (string * I.doc) list,
               links : (string * string * Source.span) list ref,
@@ -205,6 +208,28 @@ struct
         ^ "</details>\n\n"
       end
 
+  (* A collapsed list of what the annotations say about the structures that
+     implement the signature. keysOf: what to look up for a structure, its
+     members `List.take` or the structure against the signature, `List:LIST`.
+     A remark that is made about several is there once, with all it is about. *)
+  fun annotationsBlock (env : env, sigName : string, keysOf : string -> string list) : string =
+    let
+      val (title, find) = #annotations env
+      val found =
+        List.concat (List.map (fn c : DocClaims.claim =>
+                                 if #signat c <> sigName orelse #isFunctor c then []
+                                 else List.concat (List.map find (keysOf (#name c))))
+                              (#claims env))
+      val texts = distinct (List.map #2 found)
+      fun line text =
+        "- **" ^ String.concatWith ", " (List.map M.escape (distinct (List.mapPartial (fn (about, t) => if t = text then SOME about else NONE) found)))
+        ^ "** &mdash; " ^ M.escape text ^ "\n"
+    in
+      if List.null texts then ""
+      else "<details><summary>" ^ M.escape title ^ " (" ^ Int.toString (List.length texts) ^ ")</summary>\n\n"
+           ^ String.concat (List.map line texts) ^ "\n</details>\n\n"
+    end
+
   (* ---- entries ---- *)
   fun headingLevel (path : string list) : string = if List.null path then "### " else "#### "
 
@@ -277,6 +302,13 @@ struct
          | tops => "Also in the [top-level environment](" ^ #root env ^ "top-level.md): "
                    ^ String.concatWith ", " (List.map M.code tops) ^ ".\n\n")
       ^ instanceNotes
+      ^ annotationsBlock (env, sigName,
+                          fn structure' =>
+                            List.concat (List.map (fn g : I.entryRecord =>
+                                                     (* a check of a constructor is one of its datatype *)
+                                                     List.map (fn n => String.concatWith "." (structure' :: #path g @ [n]))
+                                                              (#name g :: List.map #name (#cons g)))
+                                                  group))
       ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord =>
                                                   sitesOf (env, sigName, String.concatWith "." (#path g @ [#name g]))) group))
       ^ inner
@@ -405,6 +437,7 @@ struct
                                     "[" ^ M.escape (normalise (#file c)) ^ "](" ^ #root env ^ #up env ^ normalise (#file c) ^ ")"])
                                 mine))
       ^ blocks (env, page, name, [], [], span) overview
+      ^ annotationsBlock (env, name, fn structure' => [structure' ^ ":" ^ name])
       ^ contents
       ^ (if List.null pieces orelse isSome sigexp then "" else "## Interface\n\n" ^ interface (env, page, pieces, span))
       ^ items' (env, page, name) body

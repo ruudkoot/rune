@@ -17,6 +17,9 @@ struct
     \  --title TEXT    the title of the overview page\n\
     \  --tests DIR     the test suite whose checks the pages list (its labels\n\
     \                  name the members they check)\n\
+    \  --annotations FILE  what others say about the members, as lines\n\
+    \                  `label-glob | whom it is about | text`; shown with the\n\
+    \                  members that have a check with such a label\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -40,6 +43,7 @@ struct
   val title : string option ref = ref NONE
   val check = ref false
   val tests : string option ref = ref NONE
+  val annotations : string option ref = ref NONE
   val labels = ref false
   val checkCoverage = ref false
   val lint = ref false
@@ -58,6 +62,7 @@ struct
     | "--out" :: dir :: rest => (out := SOME dir; parse rest)
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
+    | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
     | "--labels" :: rest => (labels := true; parse rest)
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
@@ -99,7 +104,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, envAt) = DocSite.envOf (modules, "", [], [])
+      val (claims, index, envAt) = DocSite.envOf (modules, "", [], [], NONE)
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in
@@ -111,7 +116,7 @@ struct
     let
       val lib = case !libDir of SOME d => d | NONE => raise Usage "no library directory (use --lib DIR)"
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
-      val files = DocSite.build {dir = lib ^ "/" ^ name, out = dir, tests = !tests,
+      val files = DocSite.build {dir = lib ^ "/" ^ name, out = dir, tests = !tests, annotations = !annotations,
                                  title = (case !title of SOME t => t | NONE => name)}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()

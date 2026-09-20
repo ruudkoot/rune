@@ -178,6 +178,12 @@ val compare : pos * pos -> order
 
 `compare (p, q)` orders two positions: earlier in the stream is less.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `TextPrimIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-positions`

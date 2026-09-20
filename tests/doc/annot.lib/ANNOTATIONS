@@ -1,0 +1,20 @@
+# glob | whom it is about | text
+@title Elsewhere
+@intro what two other libraries do.
+# one member, by the label of one check
+Shape.area/circle | Round | takes pi to be 4
+# the same remark from another: shown once, with both
+Shape.area/circle | Square | takes pi to be 4
+# a set, a question mark and a star; the text has a bar, a star and a bracket
+Shape.scale/by-[a-z]er? | Round | scale (s, 0) raises Div: k | 0, and *not* [0]
+Shape.s*/by-one | Round | scale (s, 1) copies
+# a star that runs over the slash
+Shape.are* | Flat | has no areas
+# a computed label, by the beginning that is known of it
+Shape.name/of-sq* | Round | calls a square a box
+# a computed label of which nothing is known: only because nothing else has it
+Shape.*/thrice | Round | grows three times
+# a constructor counts for its datatype
+Shape.Circle/is-* | Flat | has no circles
+# the structure as a whole against its signature
+Shape:SHAPE/* | Flat | is sealed

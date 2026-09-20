@@ -256,6 +256,12 @@ Raised by [`sqrt`](#val-sqrt) of a negative number.
 > exceptions of their own, as MLton and SML/NJ have them. Poly/ML makes
 > all three [`Overflow`](../sig/GENERAL.md#exn-overflow), which loses what went wrong.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
@@ -272,6 +278,12 @@ Raised by [`ln`](#val-ln) of a number that is not positive.
 
 > **Reading** `SML90.Ln/is-its-own-exception`. As [`Sqrt`](#exn-sqrt): an exception of its
 > own, not [`Overflow`](../sig/GENERAL.md#exn-overflow).
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: as SML90.Sqrt/new
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -380,6 +392,12 @@ val ln : real -> real
 
 **Raises** [`Ln`](#exn-ln) if `x` is not positive.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; ln 0.0 is \~inf instead of raising Ln
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `one` &middot; `e` &middot; `Ln-zero` (raises) &middot; `Ln-negative` (raises)
@@ -422,6 +440,12 @@ val arctan : real -> real
 
 `arctan x` is the angle in radians whose tangent is `x`, between `~pi/2` and `pi/2`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Math.atan 0.0 is \~0.0
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `one`
@@ -437,6 +461,12 @@ val ord : string -> int
 `ord s` is the code of the first character of `s`.
 
 **Raises** [`Ord`](#exn-ord) if `s` is empty.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; ord "" raises Subscript, not Ord
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -500,6 +530,12 @@ val lookahead : instream -> string
 `lookahead f` is the next character of `f` as a string, without removing it, or the empty string at the end.
 
 **Raises** [`Io`](#exn-io) if the stream cannot be read.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; lookahead raises Io at the end of the stream instead of returning ""
+
+</details>
 
 <details><summary>Tests (2)</summary>
 

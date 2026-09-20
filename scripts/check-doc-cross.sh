@@ -36,7 +36,8 @@ run ir-tests --dump-ir tests/doc/*.sml
 # The documentation of the basis library, from every build.
 for c in $builds; do
   rm -rf "$out/site.$c"
-  "bin/runedoc-$c" --lib lib --library basis --out "$out/site.$c" --title Basis > /dev/null 2> "$out/site.$c.err" ||
+  "bin/runedoc-$c" --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
+    --out "$out/site.$c" --title Basis > /dev/null 2> "$out/site.$c.err" ||
     { echo "FAIL doc-cross site: runedoc-$c failed: $(head -1 "$out/site.$c.err")"; status=1; }
 done
 for c in $builds; do

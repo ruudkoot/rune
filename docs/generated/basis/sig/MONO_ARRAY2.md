@@ -68,6 +68,12 @@ polymorphic one.
 > element as constraints on the structure; they are checked in the suite
 > instead, structure by structure.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+
+</details>
+
 ## Contents
 
 [Making an array](#making-an-array) &middot;
@@ -136,6 +142,14 @@ eqtype array
 The type of these two-dimensional arrays.
 
 Two are equal when they are the same array.
+
+<details><summary>Other implementations (3)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+- **Poly/ML** &mdash; as Array2.array: array (0, \~1, x) does not raise Size
+- **Poly/ML** &mdash; as in Array2: two arrays without rows are equal
+
+</details>
 
 <details><summary>Tests (28)</summary>
 
@@ -209,6 +223,14 @@ val array : int * int * elem -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0`, or the array would be too large.
 
+<details><summary>Other implementations (3)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+- **Poly/ML** &mdash; as Array2.array: array (0, \~1, x) does not raise Size
+- **Poly/ML** &mdash; as in Array2: two arrays without rows are equal
+
+</details>
+
 <details><summary>Tests (28)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `no-rows` &middot; `Size-negative` (raises Size) &middot; `same-elements-not-equal` &middot; `same-array-is-equal`
@@ -227,6 +249,13 @@ val fromList : elem list list -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length.
 
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+- **Poly/ML** &mdash; as in Array2: two arrays without rows are equal
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Size-ragged` (raises Size)
@@ -244,6 +273,12 @@ val tabulate : traversal -> int * int * (int * int -> elem) -> array
 `tabulate trv (r, c, f)` is a new array whose element at `(i, j)` is `f (i, j)`, applied in the order `trv` gives.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0` or the array would be too large.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
 
 <details><summary>Tests (24)</summary>
 
@@ -269,6 +304,12 @@ val sub : array * int * int -> elem
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+
+</details>
+
 <details><summary>Tests (24)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-row` (raises Subscript) &middot; `Subscript-column` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
@@ -286,6 +327,12 @@ val update : array * int * int * elem -> unit
 `update (arr, i, j, x)` puts `x` in row `i` and column `j`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+
+</details>
 
 <details><summary>Tests (20)</summary>
 
@@ -321,6 +368,12 @@ val nCols : array -> int
 
 `nCols arr` is the number of columns.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
@@ -336,6 +389,12 @@ val nRows : array -> int
 ```
 
 `nRows arr` is the number of rows.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
 
 <details><summary>Tests (6)</summary>
 
@@ -405,6 +464,12 @@ val column : array * int -> vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
+
 <details><summary>Tests (17)</summary>
 
 For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `is-a-string` &middot; `is-CharVector.vector`
@@ -441,6 +506,14 @@ too.
 | <a name="fld-copy.dst_row"></a>`dst_row` | `int` |  |
 | <a name="fld-copy.dst_col"></a>`dst_col` | `int` |  |
 
+<details><summary>Other implementations (3)</summary>
+
+- **MLton** &mdash; as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+
+</details>
+
 <details><summary>Tests (45)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region` &middot; `overlap-down` &middot; `Subscript-dst` (raises Subscript) &middot; `Subscript-src` (raises Subscript)
@@ -461,6 +534,13 @@ val appi : traversal -> (int * int * elem -> unit) -> region -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region-RowMajor` &middot; `region-ColMajor` &middot; `Subscript` (raises Subscript)
@@ -476,6 +556,12 @@ val app : traversal -> (elem -> unit) -> array -> unit
 ```
 
 `app trv f arr` applies `f` to every element, in the order `trv` gives, for its effect.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -495,6 +581,13 @@ val foldi : traversal -> (int * int * elem * 'b -> 'b) -> 'b -> region -> 'b
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+
+</details>
+
 <details><summary>Tests (19)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `RowMajor` &middot; `ColMajor` &middot; `coordinates` &middot; `Subscript` (raises Subscript)
@@ -510,6 +603,12 @@ val fold : traversal -> (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
 `fold trv f init arr` combines every element, in the order `trv` gives.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
 
 <details><summary>Tests (11)</summary>
 
@@ -533,6 +632,13 @@ val modifyi : traversal -> (int * int * elem -> elem) -> region -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+
+</details>
+
 <details><summary>Tests (18)</summary>
 
 For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region` &middot; `Subscript` (raises Subscript)
@@ -548,6 +654,12 @@ val modify : traversal -> (elem -> elem) -> array -> unit
 ```
 
 `modify trv f arr` replaces every element by `f` of it, in the order `trv` gives.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+
+</details>
 
 <details><summary>Tests (12)</summary>
 

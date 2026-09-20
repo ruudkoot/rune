@@ -112,6 +112,12 @@ all in `v`.
 > without the product `bytesPerElem * (i + 1)`, so a huge `i` raises
 > [`Subscript`](../sig/GENERAL.md#exn-subscript) and not [`Overflow`](../sig/GENERAL.md#exn-overflow).
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `element-*` &middot; `high-element-*` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-partial-element` (raises) &middot; `Subscript-maxInt` (raises)
@@ -127,6 +133,12 @@ val subVecX : Word8Vector.vector * int -> LargeWord.word
 `subVecX (v, i)` is the word at position `i` of `v`, with its top bit copied into the bits above it.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -144,6 +156,12 @@ val subArr : Word8Array.array * int -> LargeWord.word
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `element-*` &middot; `high-element-*` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
@@ -159,6 +177,12 @@ val subArrX : Word8Array.array * int -> LargeWord.word
 `subArrX (arr, i)` is the word at position `i` of `arr`, with its top bit copied into the bits above it.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -177,6 +201,13 @@ val update : Word8Array.array * int * LargeWord.word -> unit
 What does not fit in that many bytes is dropped.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **SML/NJ (32-bit)** &mdash; update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
+
+</details>
 
 <details><summary>Tests (5)</summary>
 

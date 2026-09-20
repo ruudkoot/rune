@@ -1,0 +1,5 @@
+tests/doc/annot-stale.lib/ANNOTATIONS:2:1: error: an annotation is `glob | whom it is about | text`
+tests/doc/annot-stale.lib/ANNOTATIONS:3:1: error: an annotation is `glob | whom it is about | text`
+tests/doc/annot-stale.lib/ANNOTATIONS:4:1: error: `Unit.it/is-gone` is the label of no check of a documented member
+tests/doc/annot-stale.lib/ANNOTATIONS:5:1: error: `Unit.extra/is-unit` is the label of no check of a documented member
+tests/doc/annot-stale.lib/ANNOTATIONS:6:1: error: `Unit.i[t/is-unit` is the label of no check of a documented member

@@ -43,6 +43,7 @@ described in [docs/basis-compat.md](../../docs/basis-compat.md).
 | `fn/<name>.sml` | helpers and test functors shared by tests, named in their `uses:` headers |
 | `host/` | what the `xc1` configurations need: `gen-host-basis.sh` and `rune-prim.sml`, the VM's primitives on a host's library |
 | `deviations.txt` | every known failure, with its category and reason |
+| `annotations.txt` | what `deviations.txt` says about the hosts, in the format the documentation generator reads (`runedoc --annotations`); made by `gen-annotations.sh`, committed, and checked by `make check-docs`. After a change to a host line of `deviations.txt`: `sh tests/basis/gen-annotations.sh`, then `make docs` |
 
 ## Writing a test
 

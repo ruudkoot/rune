@@ -209,6 +209,12 @@ val update : 'a vector * int * 'a -> 'a vector
 
 **Complexity** linear in `length v`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+
+</details>
+
 <details><summary>Tests (12)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `first` &middot; `middle` &middot; `last` &middot; `singleton` &middot; `argument-unchanged` &middot; `twice` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`

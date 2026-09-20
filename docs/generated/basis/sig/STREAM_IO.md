@@ -212,6 +212,12 @@ waits.
 > what the fields hold: the exception the reader raised is the `cause` and
 > the reader's own name is the `name`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; input lets the exception of the reader through instead of raising Io with it as the cause
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `the-sequence-of-the-reader` &middot; `up-to-each-end-of-stream` &middot; `one-or-more-elements` &middot; `empty-at-end-of-stream` &middot; `same-result-twice` &middot; `up-to-date-with-the-reader` &middot; `earlier-streams-read-the-same` &middot; `Io-when-the-reader-fails` &middot; `Io-name-is-the-reader's` &middot; `after-a-failure-of-the-reader`
@@ -252,6 +258,16 @@ longer than the greatest length of a vector.
 > the one [`inputAll`](#val-inputall) would give: immediately past that end of stream.
 > Exactly `n` elements that end at one leave the stream before it.
 
+<details><summary>Other implementations (5)</summary>
+
+- **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+- **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
+- **SML/NJ 110.99.9** &mdash; inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+- **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+- **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+
+</details>
+
 <details><summary>Tests (8)</summary>
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `zero` &middot; `Size-negative` (raises Size) &middot; `across-pieces` &middot; `fewer-then-past-the-end-of-stream` &middot; `continues-after-input1-NONE` &middot; `exactly-n-before-end-of-stream` &middot; `empty-stream` &middot; `allAndN-random-*`
@@ -265,6 +281,13 @@ val inputAll : instream -> vector * instream
 ```
 
 `inputAll f` is everything up to the next end of stream, and the stream past it.
+
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+- **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -289,6 +312,13 @@ val canInput : instream * int -> int option
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+- **SML/NJ 110.99.9** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `Size-negative` (raises Size) &middot; `NONE-when-input-would-block` &middot; `elements-available` &middot; `then-inputN-k` &middot; `end-of-stream-is-zero` &middot; `determined-stream-does-not-block` &middot; `removes-nothing`
@@ -306,6 +336,12 @@ val closeIn : instream -> unit
 Closing a truncated or an already closed stream is allowed and does
 nothing more. A closed stream reads as if it ended where what had
 already been read ends.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, Poly/ML** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+
+</details>
 
 <details><summary>Tests (8)</summary>
 
@@ -351,6 +387,12 @@ terminated.
 > closed or terminated stream is `ClosedStream`, from the list of [`IO`](../sig/IO.md),
 > and nothing is written.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+
+</details>
+
 <details><summary>Tests (11)</summary>
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `NO_BUF-writes-at-once` &middot; `partial-writes-are-completed` &middot; `BLOCK_BUF-keeps-a-little` &middot; `LINE_BUF-flushes-at-a-newline` &middot; `LINE_BUF-is-BLOCK_BUF` &middot; `Io-closed` &middot; `Io-closed-name` &middot; `Io-terminated` &middot; `Io-terminated-writes-nothing` &middot; `Io-when-the-writer-fails` &middot; `Io-name-is-the-writer's`
@@ -366,6 +408,13 @@ val output1 : outstream * elem -> unit
 `output1 (f, x)` writes the single element `x`.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) as [`output`](#val-output) does.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+- **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+
+</details>
 
 <details><summary>Tests (6)</summary>
 
@@ -412,6 +461,12 @@ val closeOut : outstream -> unit
 > already closed stream does nothing; a terminated one is not flushed; and
 > when the flush fails the stream stays open, so that the elements it
 > holds are not lost.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -460,6 +515,12 @@ one.
 > stream is one that has given its reader away; the cause is
 > `ClosedStream` for it as for a closed one.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; getReader of a closed or truncated stream raises nothing
+
+</details>
+
 <details><summary>Tests (11)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file`
@@ -486,6 +547,12 @@ truncated or closed.
 > [`IO.Io`](../sig/IO.md#exn-io) is then `RandomAccessNotSupported`, from the list of [`IO`](../sig/IO.md). A reader
 > that has `getPos` may still fail to tell where it is (a pipe), and the
 > chunks read then carry no position, which raises as well.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ 110.99.9** &mdash; filePosIn of a truncated stream raises nothing
+
+</details>
 
 <details><summary>Tests (9)</summary>
 
@@ -529,6 +596,12 @@ val getBufferMode : outstream -> IO.buffer_mode
 ```
 
 `getBufferMode f` is the mode `f` holds back by.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -574,6 +647,12 @@ val getWriter : outstream -> writer * IO.buffer_mode
 > **Reading** `StreamIO.getWriter/terminated-is-not-closed`. A stream that is
 > already terminated gives its writer and its mode again without flushing;
 > only a closed one raises.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; getWriter of a closed stream raises nothing
+
+</details>
 
 <details><summary>Tests (8)</summary>
 
@@ -624,6 +703,12 @@ the stream is terminated or closed.
 > **Reading** `StreamIO.setPosOut/writes-over`. What is written after it
 > replaces what stood at that position; the stream is not truncated
 > there.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+
+</details>
 
 <details><summary>Tests (5)</summary>
 

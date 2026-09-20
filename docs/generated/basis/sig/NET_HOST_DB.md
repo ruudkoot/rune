@@ -244,6 +244,12 @@ val scan : (char, 'a) StringCvt.reader -> (in_addr, 'a) StringCvt.reader
 > is written: `0x` or `0X` begins a hexadecimal number and a leading `0`
 > an octal one.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, Poly/ML** &mdash; fromString and scan do not skip initial whitespace
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `rest` &middot; `whitespace-then-rest` &middot; `one-part-rest` &middot; `nothing-left` &middot; `char-list` &middot; `not-an-address` &middot; `empty`
@@ -259,6 +265,15 @@ val fromString : string -> in_addr option
 `fromString s` is `SOME` of the address that `s` begins with, or `NONE`.
 
 **Law** `fromString s = StringCvt.scanString scan s`
+
+<details><summary>Other implementations (4)</summary>
+
+- **MLton, Poly/ML** &mdash; fromString and scan do not skip initial whitespace
+- **Poly/ML** &mdash; the last number of "a.b" is taken for the last byte, not the last 24 bits ("127.1" is 0.0.127.1)
+- **Poly/ML** &mdash; the last number of "a.b.c" is taken for the last byte, not the last 16 bits ("127.0.1" is 0.127.0.1)
+- **Poly/ML** &mdash; "127.1" is read as 0.0.127.1, not 127.0.0.1
+
+</details>
 
 <details><summary>Tests (11)</summary>
 

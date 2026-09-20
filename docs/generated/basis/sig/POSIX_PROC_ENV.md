@@ -447,6 +447,12 @@ val time : unit -> Time.time
 
 `time ()` is the time now, as [`Time.now`](../sig/TIME.md#val-now) gives it.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `now` &middot; `date`
@@ -477,6 +483,12 @@ val times : unit
 | <a name="fld-times.stime"></a>`stime` | `Time.time` |  |
 | <a name="fld-times.cutime"></a>`cutime` | `Time.time` |  |
 | <a name="fld-times.cstime"></a>`cstime` | `Time.time` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; the elapsed time of times is negative
+
+</details>
 
 <details><summary>Tests (4)</summary>
 

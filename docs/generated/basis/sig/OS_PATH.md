@@ -181,6 +181,12 @@ val fromString : string -> {isAbs : bool, vol : string, arcs : string list}
 | <a name="fld-fromstring.vol"></a>`vol` | `string` |  |
 | <a name="fld-fromstring.arcs"></a>`arcs` | `string list` |  |
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; toString {isAbs = false, vol = "", arcs = \[""\]} returns "" instead of raising Path, and fromString "" has no arcs
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `two-arcs` &middot; `backslash-is-not-a-separator` &middot; `special-arcs` &middot; `inverts-toString-random`
@@ -207,6 +213,12 @@ an arc is not a valid arc.
 | <a name="fld-tostring.isabs"></a>`isAbs` | `bool` |  |
 | <a name="fld-tostring.vol"></a>`vol` | `string` |  |
 | <a name="fld-tostring.arcs"></a>`arcs` | `string list` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; toString {isAbs = false, vol = "", arcs = \[""\]} returns "" instead of raising Path ("if isAbs is false and arcs has an initial empty arc")
+
+</details>
 
 <details><summary>Tests (14)</summary>
 
@@ -260,6 +272,13 @@ It is `p` itself exactly when `p` is a root.
 > **Reading** `OS.Path.getParent/trailing-separator`. For a path that ends in
 > a separator the parent arc is appended after it: `"a/"` gives `"a/.."`
 > and `"a///"` gives `"a///.."`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+- **Poly/ML** &mdash; getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -360,6 +379,12 @@ otherwise there is none.
 | <a name="fld-splitbaseext.base"></a>`base` | `string` |  |
 | <a name="fld-splitbaseext.ext"></a>`ext` | `string option` |  |
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `only-the-last-arc` &middot; `dot-in-directory` &middot; `initial-dot-of-last-arc` &middot; `second-dot-of-last-arc` &middot; `parent-arc` &middot; `trailing-separator` &middot; `empty-arc` &middot; `root-empty-arc` &middot; `never-SOME-empty-random`
@@ -378,6 +403,12 @@ val joinBaseExt : {base : string, ext : string option} -> string
 | --- | --- | --- |
 | <a name="fld-joinbaseext.base"></a>`base` | `string` |  |
 | <a name="fld-joinbaseext.ext"></a>`ext` | `string option` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -426,6 +457,13 @@ val mkCanonical : string -> string
 > specification's list of canonical paths has `"/."` among them; every
 > host agrees on `"/"`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; mkCanonical raises Fail on a relative path that reduces to no arc but ends with an empty one ("./", ".//", "a/../") instead of returning "."
+- **SML/NJ** &mdash; mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `equality-of-paths` &middot; `is-canonical-random` &middot; `never-empty-random` &middot; `keeps-isAbsolute-random`
@@ -439,6 +477,12 @@ val isCanonical : string -> bool
 ```
 
 `isCanonical p` is `true` when `p` is what [`mkCanonical`](#val-mkcanonical) would give.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -463,6 +507,12 @@ already is.
 | --- | --- | --- |
 | <a name="fld-mkabsolute.path"></a>`path` | `string` |  |
 | <a name="fld-mkabsolute.relativeto"></a>`relativeTo` | `string` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -574,6 +624,13 @@ val fromUnixPath : string -> string
 
 **Raises** [`InvalidArc`](#exn-invalidarc) if an arc of `p` cannot be one here.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
+- **Poly/ML** &mdash; fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*`
@@ -589,6 +646,12 @@ val toUnixPath : string -> string
 `toUnixPath p` is `p` written in Unix syntax, `p` itself on Unix.
 
 **Raises** [`Path`](#exn-path) if `p` has a volume that Unix syntax cannot write.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; toUnixPath "/" is "" instead of "/"
+
+</details>
 
 <details><summary>Tests (1)</summary>
 

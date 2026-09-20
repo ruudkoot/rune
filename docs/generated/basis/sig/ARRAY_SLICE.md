@@ -106,6 +106,12 @@ type 'a slice
 
 The type of slices of an array.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (39)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-whole` &middot; `SOME-to-the-end` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-zero-at-length-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-start-zero-size` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-negative-size-at-length` (raises Subscript) &middot; `SOME-Subscript-one-too-many` (raises Subscript) &middot; `SOME-Subscript-whole-and-one` (raises Subscript) &middot; `SOME-Subscript-one-at-length` (raises Subscript) &middot; `SOME-Subscript-zero-size-beyond` (raises Subscript) &middot; `empty-array-NONE` &middot; `empty-array-SOME` &middot; `empty-array-NONE-Subscript` (raises Subscript) &middot; `empty-array-SOME-Subscript` (raises Subscript) &middot; `of-the-array-itself` &middot; `every-argument` &middot; `model-*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-and-most` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
@@ -186,6 +192,12 @@ val slice : 'a Array.array * int * int option -> 'a slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `arr`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
+
 <details><summary>Tests (39)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-whole` &middot; `SOME-to-the-end` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-zero-at-length-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-start-zero-size` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-negative-size-at-length` (raises Subscript) &middot; `SOME-Subscript-one-too-many` (raises Subscript) &middot; `SOME-Subscript-whole-and-one` (raises Subscript) &middot; `SOME-Subscript-one-at-length` (raises Subscript) &middot; `SOME-Subscript-zero-size-beyond` (raises Subscript) &middot; `empty-array-NONE` &middot; `empty-array-SOME` &middot; `empty-array-NONE-Subscript` (raises Subscript) &middot; `empty-array-SOME-Subscript` (raises Subscript) &middot; `of-the-array-itself` &middot; `every-argument` &middot; `model-*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-and-most` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
@@ -203,6 +215,12 @@ val subslice : 'a slice * int * int option -> 'a slice
 The bounds are those of `sl`, not of the array it is a slice of.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `sl`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+
+</details>
 
 <details><summary>Tests (31)</summary>
 
@@ -260,6 +278,12 @@ and then nothing has been copied.
 | <a name="fld-copy.dst"></a>`dst` | `'a Array.array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows
+
+</details>
+
 <details><summary>Tests (31)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `field-order` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `overlap-to-the-right` &middot; `overlap-one-to-the-right` &middot; `overlap-onto-itself` &middot; `overlap-one-to-the-left` &middot; `overlap-to-the-left` &middot; `overlap-to-the-end` &middot; `overlap-Subscript` (raises Subscript) &middot; `same-array-apart` &middot; `full-onto-itself` &middot; `full-onto-itself-shifted-Subscript` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `within-model-*` &middot; `within-model-*` (raises Subscript) &middot; `long-overlap` &middot; `Subscript-not-Overflow-sum` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
@@ -282,6 +306,12 @@ copied.
 | <a name="fld-copyvec.src"></a>`src` | `'a VectorSlice.slice` |  |
 | <a name="fld-copyvec.dst"></a>`dst` | `'a Array.array` |  |
 | <a name="fld-copyvec.di"></a>`di` | `int` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows
+
+</details>
 
 <details><summary>Tests (19)</summary>
 

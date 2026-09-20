@@ -638,6 +638,13 @@ is malformed or names no character.
 > passed over before the character, and after it as well, so that what is
 > left of the stream never begins with one.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
+- **SML/NJ, Poly/ML** &mdash; scan leaves an escaped formatting sequence that follows the character in the stream
+
+</details>
+
 <details><summary>Tests (28)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `last-character` &middot; `empty` &middot; `space-is-not-skipped` &middot; `escape-n` &middot; `escape-backslash` &middot; `control` &middot; `decimal` &middot; `decimal-three-digits-only` &middot; `u` &middot; `illegal-escape` &middot; `decimal-256` &middot; `not-printable` &middot; `format-before` &middot; `trailing-format` &middot; `trailing-format-twice` &middot; `trailing-format-at-end` &middot; `trailing-format-after-escape` &middot; `trailing-format-after-leading-format` &middot; `trailing-format-after-leading-format-and-escape` &middot; `invalid-format-is-not-scanned` &middot; `format-only` &middot; `format-then-not-printable` &middot; `indexed-reader` &middot; `indexed-reader-end` &middot; `scanString`
@@ -668,6 +675,12 @@ val fromString : String.string -> char option
 > what stops a scan. Rune therefore converts a double quote that has no
 > backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
 > and that is what the suite expects.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+
+</details>
 
 <details><summary>Tests (98)</summary>
 
@@ -720,6 +733,15 @@ rejected.
 > **Reading** `Char.fromCString/printable-only-all-converted`. Every printable
 > character but the double quote and the backslash is converted to itself,
 > the single quote included; what does not print is rejected.
+
+<details><summary>Other implementations (4)</summary>
+
+- **MLton, SML/NJ, Poly/ML** &mdash; converts an unescaped double quote, which the specification says fromCString does not accept
+- **MLton, SML/NJ, Poly/ML** &mdash; Overflow instead of NONE for a \\x escape whose value exceeds Int.maxInt
+- **MLton** &mdash; fromCString accepts the SML escape \\uxxxx
+- **SML/NJ** &mdash; fromCString does not accept \\^c
+
+</details>
 
 <details><summary>Tests (72)</summary>
 

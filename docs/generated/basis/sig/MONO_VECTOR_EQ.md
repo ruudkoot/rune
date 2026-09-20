@@ -193,6 +193,12 @@ val update : vector * int * elem -> vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `v`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+
+</details>
+
 <details><summary>Tests (12)</summary>
 
 In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `singleton` &middot; `argument-unchanged` &middot; `twice` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`

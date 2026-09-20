@@ -1,0 +1,6 @@
+Unit.it/is-unit | Other | fine
+no bars here
+Unit.it | only two fields
+Unit.it/is-gone | Other | the check was removed
+Unit.extra/is-unit | Other | a check, of a member that is not documented
+Unit.i[t/is-unit | Other | a set that is not closed is a bracket

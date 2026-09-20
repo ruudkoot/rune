@@ -221,6 +221,13 @@ is zero.
 
 **Example** `toString {class = NORMAL, sign = false, digits = [1, 5], exp = 1} = "0.15E1"`
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ 110.99.9** &mdash; toString of a NaN with the sign set is "nan", not "\~nan"
+- **Poly/ML 5.9.2** &mdash; follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `zero` &middot; `negative-zero` &middot; `zero-ignores-digits-and-exp` &middot; `normal` &middot; `normal-exp` &middot; `normal-negative-exp` &middot; `normal-negative` &middot; `subnormal` &middot; `inf` &middot; `negative-inf` &middot; `inf-ignores-exp` &middot; `nan` &middot; `negative-nan` &middot; `of-toDecimal` &middot; `is-fmt-EXACT`
@@ -245,6 +252,12 @@ there is kept, however many.
 > number too large for an `int` is taken as the largest `int` rather than
 > raising [`Overflow`](../sig/GENERAL.md#exn-overflow): the number it describes is beyond every real
 > anyway.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+
+</details>
 
 <details><summary>Tests (8)</summary>
 

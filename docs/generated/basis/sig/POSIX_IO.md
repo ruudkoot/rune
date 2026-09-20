@@ -361,6 +361,12 @@ What a position given to [`lseek`](#val-lseek) or a lock is counted from.
 | <a name="con-seek_cur"></a>`SEEK_CUR` |  | where the descriptor is now |
 | <a name="con-seek_end"></a>`SEEK_END` |  | the end of the file |
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (32-bit)** &mdash; lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
+
+</details>
+
 ### <a name="str-fd"></a>`FD`
 
 The flags of a descriptor itself, which [`dup`](#val-dup) does not carry over.
@@ -421,6 +427,12 @@ val append : flags
 
 Every write goes to the end of the file.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `getfl-after-openf`
@@ -435,6 +447,12 @@ val nonblock : flags
 
 A read or a write that would wait fails instead.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `setfl` &middot; `new-pipe`
@@ -448,6 +466,12 @@ val sync : flags
 ```
 
 A write returns only once the data have reached the device.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -471,6 +495,12 @@ What a file was opened for.
 | <a name="con-o_rdonly"></a>`O_RDONLY` |  | reading only |
 | <a name="con-o_wronly"></a>`O_WRONLY` |  | writing only |
 | <a name="con-o_rdwr"></a>`O_RDWR` |  | both |
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
+
+</details>
 
 ### <a name="val-dupfd"></a>`dupfd`
 
@@ -537,6 +567,12 @@ val getfl : file_desc -> O.flags * open_mode
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not open.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `pipe-ends` &middot; `no-append`
@@ -554,6 +590,12 @@ val setfl : file_desc * O.flags -> unit
 What a file was opened for cannot be changed this way.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not open.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -627,6 +669,12 @@ type flock
 
 The type of a lock description.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `fields`
@@ -658,6 +706,12 @@ val flock : {
 | <a name="fld-flock.flock.len"></a>`len` | `Position.int` |  |
 | <a name="fld-flock.flock.pid"></a>`pid` | `pid option` |  |
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `fields`
@@ -671,6 +725,12 @@ val ltype : flock -> lock_type
 ```
 
 `ltype fl` is the kind of lock `fl` describes.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -686,6 +746,12 @@ val whence : flock -> whence
 
 `whence fl` is what `start fl` is counted from.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `SEEK_END`
@@ -699,6 +765,12 @@ val start : flock -> Position.int
 ```
 
 `start fl` is where the locked stretch begins.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -714,6 +786,12 @@ val len : flock -> Position.int
 
 `len fl` is how long the locked stretch is, 0 meaning to the end of the file.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `zero`
@@ -727,6 +805,12 @@ val pid : flock -> pid option
 ```
 
 `pid fl` is the process holding the lock, when [`getlk`](#val-getlk) found one.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+
+</details>
 
 <details><summary>Tests (1)</summary>
 

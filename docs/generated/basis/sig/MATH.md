@@ -258,6 +258,13 @@ the answer is continuous as the point crosses an axis.
 
 **Law** `atan2 (y, x) = atan (y / x)` for `x > 0`
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; Math.atan2 ignores the sign of a zero: atan2 (\~0.0, 1.0) = 0.0, atan2 (0.0, \~0.0) = 0.0
+- **SML/NJ** &mdash; Math.atan2 of two infinities is NaN
+
+</details>
+
 <details><summary>Tests (34)</summary>
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `first-quadrant` &middot; `second-quadrant` &middot; `third-quadrant` &middot; `fourth-quadrant` &middot; `ratio` &middot; `zero-y-positive-x` &middot; `negzero-y-positive-x` &middot; `zero-y-zero-x` &middot; `negzero-y-zero-x` &middot; `zero-y-negative-x` &middot; `negzero-y-negative-x` &middot; `zero-y-negzero-x` &middot; `negzero-y-negzero-x` &middot; `positive-y-zero-x` &middot; `positive-y-negzero-x` &middot; `negative-y-zero-x` &middot; `negative-y-negzero-x` &middot; `positive-y-posInf-x` &middot; `negative-y-posInf-x` &middot; `positive-y-negInf-x` &middot; `negative-y-negInf-x` &middot; `posInf-y-finite-x` &middot; `posInf-y-negative-x` &middot; `posInf-y-zero-x` &middot; `negInf-y-finite-x` &middot; `negInf-y-negative-x` &middot; `posInf-y-posInf-x` &middot; `negInf-y-posInf-x` &middot; `posInf-y-negInf-x` &middot; `negInf-y-negInf-x` &middot; `nan-y` &middot; `nan-x` &middot; `nan-both` &middot; `law-quadrant`
@@ -296,6 +303,13 @@ determined.
 > **Reading** `Math.pow/one-base-posInf`. `pow (1.0, y)` is a NaN for an
 > infinite or NaN `y`, as the specification's table says; C99 and IEEE
 > 754-2008 make it 1 instead, and Poly/ML follows them.
+
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
+- **SML/NJ** &mdash; Math.pow (\~0.0, \~3.0) is posInf, not negInf
+
+</details>
 
 <details><summary>Tests (66)</summary>
 
@@ -345,6 +359,12 @@ val sinh : real -> real
 
 It overflows to an infinity of the sign of `x` for a large enough `x`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `negative-overflow` &middot; `law-definition`
@@ -364,6 +384,12 @@ val cosh : real -> real
 > "cosh +-infinity = +-infinity", which cannot be meant, and MLton follows
 > it to the letter.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; another reading of the specification: Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+
+</details>
+
 <details><summary>Tests (9)</summary>
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `law-definition`
@@ -381,6 +407,14 @@ val tanh : real -> real
 It is `~1.0` and `1.0` at the infinities, and for a large enough finite
 `x` it is those values too, although [`sinh`](#val-sinh) and [`cosh`](#val-cosh) both overflow
 there.
+
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
+- **SML/NJ** &mdash; Math.tanh posInf is NaN
+- **SML/NJ** &mdash; Math.tanh 1000.0 is NaN
+
+</details>
 
 <details><summary>Tests (10)</summary>
 

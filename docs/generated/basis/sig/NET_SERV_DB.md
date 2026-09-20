@@ -66,6 +66,12 @@ val name : entry -> string
 
 `name e` is the official name of the service.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, SML/NJ** &mdash; getByPort, which the check looks the entry up with, finds nothing
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http`
@@ -93,6 +99,12 @@ val port : entry -> int
 ```
 
 `port e` is the port the service is reached at.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; the port of an entry is not converted from network byte order (22 comes out as 1441792)
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -125,6 +137,12 @@ val getByName : string * string option -> entry option
 `proto` narrows the search to one protocol; `NONE` takes the first
 entry for `name`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; the port of an entry is not converted from network byte order (80 comes out as 5242880)
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http-tcp` &middot; `ssh-tcp` &middot; `domain-udp` &middot; `alias` &middot; `any-protocol` &middot; `other-protocol` &middot; `unknown`
@@ -138,6 +156,13 @@ val getByPort : int * string option -> entry option
 ```
 
 `getByPort (port, proto)` is `SOME` of what it records about the service at `port`, or `NONE`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; getByPort does not convert the port to network byte order and finds nothing
+- **SML/NJ** &mdash; getByPort finds nothing for a port that /etc/services lists
+
+</details>
 
 <details><summary>Tests (6)</summary>
 

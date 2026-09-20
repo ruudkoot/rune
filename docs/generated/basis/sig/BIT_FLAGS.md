@@ -50,6 +50,12 @@ does not name.
 [`toWord`](#val-toword) and [`fromWord`](#val-fromword) reach the word underneath, for a program that has
 to speak to something that is not SML.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
+
+</details>
+
 ## Interface
 
 <pre>
@@ -103,6 +109,12 @@ val toWord : flags -> SysWord.word
 
 `toWord fl` is the word whose bits are the flags of `fl`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; W.fromWord keeps the bits that are not in W.all
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `of-fromWord`
@@ -124,6 +136,13 @@ val fromWord : SysWord.word -> flags
 > **Reading** `BIT_FLAGS.fromWord/masks-the-rest`. The law `toWord o fromWord = (fn w => andb (w, toWord all))` is required for every word, those with
 > bits that no flag of this structure has included: such bits are dropped
 > rather than kept or refused.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all)
+- **Poly/ML** &mdash; fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all) and fromWord makes flags outside all
+
+</details>
 
 <details><summary>Tests (9)</summary>
 
@@ -214,6 +233,13 @@ val allSet : flags * flags -> bool
 ```
 
 `allSet (fl, gl)` is `true` when every flag of `fl` is in `gl`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+- **MLton** &mdash; allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
+
+</details>
 
 <details><summary>Tests (7)</summary>
 

@@ -189,6 +189,13 @@ The type of a calendar reading.
 > [`hour`](#val-hour), [`minute`](#val-minute), [`second`](#val-second), [`offset`](#val-offset), `wday`, `yday` and [`isDst`](#val-isdst), and
 > the structure is not sealed, so the record shows.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
+- **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date
+
+</details>
+
 <details><summary>Tests (26)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
@@ -243,6 +250,13 @@ val date : {year : int,
 | <a name="fld-date.minute"></a>`minute` | `int` |  |
 | <a name="fld-date.second"></a>`second` | `int` |  |
 | <a name="fld-date.offset"></a>`offset` | `Time.time option` |  |
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
+- **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date
+
+</details>
 
 <details><summary>Tests (26)</summary>
 
@@ -370,6 +384,13 @@ val offset : date -> Time.time option
 
 `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
+- **SML/NJ** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24\*d) is added to the hours")
+
+</details>
+
 <details><summary>Tests (13)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `UTC` &middot; `west` &middot; `east` &middot; `west-keeps-the-fields` &middot; `east-keeps-the-fields` &middot; `modulo-24-hours` &middot; `modulo-24-hours-moves-the-date` &middot; `modulo-24-hours-negative` &middot; `modulo-24-hours-negative-moves-the-date` &middot; `24-hours` &middot; `24-hours-moves-the-date` &middot; `49-hours-and-a-half` &middot; `local-is-NONE`
@@ -405,6 +426,12 @@ val localOffset : unit -> Time.time
 > not say whether daylight saving time counts, and takes offsets modulo
 > twenty-four hours; the suite accepts the offset in force now, or an hour
 > more, reduced modulo a day, west of UTC.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -443,6 +470,13 @@ val fromTimeUniv : Time.time -> date
 > second the time falls in: a fraction of a second is dropped, also for
 > times before the epoch, where dropping is towards the earlier second.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ (32-bit), SML/NJ** &mdash; toTime of a date before 1970 raises Date
+- **SML/NJ 110.99.9** &mdash; fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-SOME-0` &middot; `not-daylight-saving` &middot; `inverts-toTime` &middot; `weekDay` &middot; `yearDay` &middot; `fraction-of-a-second` &middot; `fraction-of-a-second-1969` &middot; `now-is-after-2020` &middot; `calendar-1972-2037` &middot; `calendar-1900-2199`
@@ -462,6 +496,22 @@ val toTime : date -> Time.time
 > its fields plus `t`. A local date is converted by the C library.
 
 **Raises** [`Date`](#exn-date) if the moment does not fit in a [`Time.time`](../sig/TIME.md#type-time).
+
+<details><summary>Other implementations (11)</summary>
+
+- **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
+- **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
+- **MLton** &mdash; toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
+- **MLton** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+- **MLton, SML/NJ** &mdash; toTime of a date before 1970 raises Date
+- **SML/NJ (32-bit)** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
+- **SML/NJ** &mdash; toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+- **SML/NJ 110.99.9 (64-bit)** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
+- **SML/NJ (32-bit)** &mdash; toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
+- **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
+- **Poly/ML** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+
+</details>
 
 <details><summary>Tests (22)</summary>
 
@@ -504,6 +554,16 @@ val fmt : string -> date -> string
 > `%c` gives `c`. The specification names no text for `%Z` on a UTC date,
 > and the suite accepts `"UTC"`, `"GMT"`, `"Z"` or nothing.
 
+<details><summary>Other implementations (5)</summary>
+
+- **SML/NJ** &mdash; fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
+- **SML/NJ (32-bit)** &mdash; fmt "%Z" raises Date for a UTC date
+- **Poly/ML** &mdash; fmt "" raises Date instead of giving ""
+- **MLton, SML/NJ 110.99.9 (64-bit)** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+- **Poly/ML** &mdash; fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+
+</details>
+
 <details><summary>Tests (58)</summary>
 
 For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `%d` &middot; `%H` &middot; `%I` &middot; `%I-morning` &middot; `%I-midnight` &middot; `%I-noon` &middot; `%I-one` &middot; `%j` &middot; `%j-first-day` &middot; `%j-last-day-of-a-leap-year` &middot; `%m` &middot; `%m-December` &middot; `%M` &middot; `%S` &middot; `%S-zero` &middot; `%U` &middot; `%U-Sunday` &middot; `%W` &middot; `%W-Sunday` &middot; `%U-before-the-first-Sunday` &middot; `%W-before-the-first-Monday` &middot; `%W-first-Monday` &middot; `%w` &middot; `%w-Sunday` &middot; `%w-Saturday` &middot; `%y` &middot; `%y-2005` &middot; `%Y` &middot; `%%` &middot; `%%Y` &middot; `text-around-directives` &middot; `no-directive` &middot; `empty` &middot; `several` &middot; `other-character` &middot; `other-character-e` &middot; `other-character-digit` &middot; `other-characters-in-text` &middot; `%Z-UTC` &middot; `numeric-directives` &middot; `prints-no-second-99` &middot; `prints-no-hour-24` &middot; `prints-no-30-February` &middot; `prints-a-valid-date` &middot; `%a` &middot; `%a-Sunday` &middot; `%A` &middot; `%A-Sunday` &middot; `%b` &middot; `%B` &middot; `%B-September` &middot; `%p` &middot; `%p-morning` &middot; `%c` &middot; `%x` &middot; `%X` &middot; `names-of-every-month` &middot; `names-of-every-weekday`
@@ -540,6 +600,13 @@ val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 > both `NONE`). So [`scan`](#val-scan) can give a date that [`fmt`](#val-fmt) and [`toString`](#val-tostring) then
 > refuse.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
+- **SML/NJ** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `rest` &middot; `time-zone-not-parsed` &middot; `24-characters` &middot; `initial-whitespace` &middot; `NONE` &middot; `list-reader`
@@ -555,6 +622,12 @@ val fromString : string -> date option
 `fromString s` is `SOME` of the date that `s` begins with, after whitespace, or `NONE`.
 
 **Law** `fromString s = StringCvt.scanString scan s`
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
+
+</details>
 
 <details><summary>Tests (20)</summary>
 

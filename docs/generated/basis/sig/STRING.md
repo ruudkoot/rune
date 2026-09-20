@@ -492,6 +492,13 @@ The empty string occurs in every string.
 **Complexity** the product of the two sizes in the worst case; the search
 is the straightforward one.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; isSubstring "" "" is false
+- **SML/NJ** &mdash; isSubstring "" "" is false (the law draws two empty strings)
+
+</details>
+
 <details><summary>Tests (18)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `middle` &middot; `prefix` &middot; `suffix` &middot; `not-contiguous` &middot; `empty` &middot; `empty-empty` &middot; `itself` &middot; `longer` &middot; `of-empty` &middot; `after-partial-match` &middot; `after-partial-match-2` &middot; `partial-match-at-end` &middot; `case-matters` &middot; `law-*` &middot; `of-concatenation-*`
@@ -625,6 +632,12 @@ nothing and is passed over, so a stream of one such sequence gives
 > without a backslash converts to itself, as in SML/NJ and Poly/ML; MLton
 > stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) reads it the same way.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+
+</details>
+
 <details><summary>Tests (18)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `printable` &middot; `empty` &middot; `space-is-not-skipped` &middot; `stops-at-control-D` &middot; `stops-at-newline` &middot; `stops-at-illegal-escape` &middot; `stops-at-decimal-256` &middot; `NONE-illegal-escape` &middot; `NONE-control-D` &middot; `NONE-format-unterminated` &middot; `format-only` &middot; `format-then-control-D` &middot; `format-inside-and-last` &middot; `escapes` &middot; `indexed-reader` &middot; `scanString`
@@ -650,6 +663,13 @@ val fromString : String.string -> string option
 
 **Example** `fromString "a\\nb" = SOME "a\nb"`, where the first text has the
 two characters `\` and `n` in it.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; another reading of the specification: stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
+- **SML/NJ** &mdash; NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+
+</details>
 
 <details><summary>Tests (52)</summary>
 
@@ -694,6 +714,15 @@ backslash is not a character of a constant, so it ends the scan.
 > escape takes "the longest sequence" of hexadecimal digits: `"\x42C"` is
 > one escape of the value 1068, which is no character, and not `\x42`
 > followed by `C`.
+
+<details><summary>Other implementations (4)</summary>
+
+- **MLton, SML/NJ, Poly/ML** &mdash; converts an unescaped double quote, which the specification says fromCString does not accept
+- **SML/NJ** &mdash; fromCString does not accept \\^c
+- **MLton** &mdash; SOME "" instead of NONE when no character can be converted
+- **SML/NJ** &mdash; fromCString returns NONE unless the whole string converts
+
+</details>
 
 <details><summary>Tests (30)</summary>
 

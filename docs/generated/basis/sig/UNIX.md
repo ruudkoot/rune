@@ -121,6 +121,13 @@ How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) o
 | <a name="con-w_signaled"></a>`W_SIGNALED` | `signal` | a signal ended it |
 | <a name="con-w_stopped"></a>`W_STOPPED` | `signal` | a signal stopped it; it has not ended |
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED)
+
+</details>
+
 ### <a name="val-fromstatus"></a>`fromStatus`
 
 ```sml
@@ -128,6 +135,12 @@ val fromStatus : OS.Process.status -> exit_status
 ```
 
 `fromStatus st` is what the status `st` says about how the process ended.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -152,6 +165,12 @@ runs another program, so a later child does not hold them open.
 > `exec` fails ends with the status 126, as the page asks; that is what a
 > [`reap`](#val-reap) of it reports, rather than an exception in the parent.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `environment` &middot; `empty-environment` &middot; `arguments` &middot; `no-such-program`
@@ -170,6 +189,12 @@ val execute : string * string list -> ('a, 'b) proc
 
 > **Reading** `Unix.execute/current-directory`. The page does not say which
 > directory the child runs in; it is this process's current one.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -262,6 +287,12 @@ val reap : ('a, 'b) proc -> OS.Process.status
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the wait fails.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `success` &middot; `failure` &middot; `status` &middot; `twice` &middot; `twice-same-status` &middot; `closes-input` &middot; `waits`
@@ -277,6 +308,12 @@ val kill : ('a, 'b) proc * signal -> unit
 `kill (pr, s)` sends the signal `s` to the child `pr`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the signal may not be sent.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1)
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -295,6 +332,14 @@ val exit : Word8.word -> 'a
 > **Reading** `Unix.exit/flushes`. It runs the [`OS.Process.atExit`](../sig/OS_PROCESS.md#val-atexit) actions
 > and then leaves through the VM's exit, which flushes every file; that is
 > taken to satisfy "flushes and closes all I/O streams".
+
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ** &mdash; Unix.exit does not flush the output streams that are open
+- **Poly/ML 5.9.2** &mdash; a forked child that calls Unix.exit never ends
+- **SML/NJ** &mdash; Unix.exit does not run the actions of OS.Process.atExit
+
+</details>
 
 <details><summary>Tests (4)</summary>
 

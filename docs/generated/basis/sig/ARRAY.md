@@ -194,6 +194,12 @@ val tabulate : int * (int -> 'a) -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied at all.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Array.tabulate (n, f) with n \< 0 applies f to 0 before raising Size
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model-*` &middot; `Size-above-maxLen` (raises Size)

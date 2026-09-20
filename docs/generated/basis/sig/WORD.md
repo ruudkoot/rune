@@ -339,6 +339,12 @@ val toInt : word -> int
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is outside the range of [`Int.int`](../sig/INTEGER.md#type-int),
 which a word as wide as an `int` can reach.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ (64-bit)** &mdash; LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+
+</details>
+
 <details><summary>Tests (12)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `constant`
@@ -515,6 +521,14 @@ A shift of [`wordSize`](#val-wordsize) bits or more gives 0 for a word whose top
 clear and a word of all ones for one whose top bit is set: it is the
 division of a signed number by a power of two, rounded towards negative
 infinity.
+
+<details><summary>Other implementations (3)</summary>
+
+- **Poly/ML** &mdash; Word8.\~\>\> by a shift of all ones does not give the sign-filled byte
+- **Poly/ML** &mdash; \~\>\> by a shift of all ones gives 0, not the word filled with its sign bit
+- **Poly/ML** &mdash; Word64.\~\>\> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
+
+</details>
 
 <details><summary>Tests (18)</summary>
 
@@ -764,6 +778,13 @@ bits.
 > is not a prefix, but its leading `0` is a digit: `"0wxg"` scans as 0 and
 > leaves `"wxg"`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
+- **Poly/ML** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 In [tests/basis/fn/word\_scan\_fn.sml](../../../../tests/basis/fn/word_scan_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `string-position` &middot; `model*` &middot; `model-prefix-lower-case-rest*` &middot; `fmt-round-trip*`
@@ -781,6 +802,13 @@ val fromString : string -> word option
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number of more than [`wordSize`](#val-wordsize) bits.
 
 **Law** `fromString s = StringCvt.scanString (scan StringCvt.HEX) s`
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+- **Poly/ML** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+
+</details>
 
 <details><summary>Tests (16)</summary>
 

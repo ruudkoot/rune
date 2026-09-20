@@ -432,6 +432,17 @@ is infinite or `y` is zero; for an infinite `y` it is `x`.
 > remainder is left open: the specification asks for the sign of `x`, and
 > the definition `x - n * y` gives a positive zero.
 
+<details><summary>Other implementations (6)</summary>
+
+- **MLton** &mdash; Real.rem (0.0, 0.0) is 0.0, not NaN
+- **MLton** &mdash; Real.rem computes x - n\*y in floating point: rem (1.5E12, 3.1E\~10) = 2.44140625E\~4, larger than y
+- **SML/NJ** &mdash; Real.rem (x, inf) is NaN, not x
+- **SML/NJ** &mdash; Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
+- **SML/NJ 110.99.9** &mdash; rem (±inf, y) is a zero, not NaN
+- **SML/NJ 110.99.9** &mdash; rem (x, ±0.0) is a zero, not NaN
+
+</details>
+
 <details><summary>Tests (25)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `basic` &middot; `negative-x` &middot; `negative-y` &middot; `both-negative` &middot; `x-smaller-than-y` &middot; `exact-multiple` &middot; `exact-multiple-negative-x` &middot; `fractional-y` &middot; `posInf-x` &middot; `negInf-x` &middot; `zero-y` &middot; `negzero-y` &middot; `zero-by-zero` &middot; `posInf-y` &middot; `negInf-y` &middot; `zero-x-posInf-y` &middot; `both-infinite` &middot; `nan-x` &middot; `nan-y` &middot; `large-quotient` &middot; `huge-exact-quotient` &middot; `law-agrees-with-Int-rem` &middot; `law-sign-and-magnitude`
@@ -854,6 +865,13 @@ val fromManExp : {man : real, exp : int} -> real
 | <a name="fld-frommanexp.man"></a>`man` | `real` |  |
 | <a name="fld-frommanexp.exp"></a>`exp` | `int` |  |
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos
+- **Poly/ML 5.9.2** &mdash; fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
+
+</details>
+
 <details><summary>Tests (25)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `one` &middot; `unnormalized-man` &middot; `negative-man` &middot; `zero-exp` &middot; `maxFinite` &middot; `minPos` &middot; `overflow` &middot; `negative-overflow` &middot; `underflow` &middot; `far-underflow` &middot; `negative-underflow` &middot; `wide-exp-up` &middot; `wide-exp-subnormal-to-large` &middot; `zero-man` &middot; `negzero-man` &middot; `posInf-man` &middot; `negInf-man` &middot; `nan-man` &middot; `law-inverts-toManExp` &middot; `huge-man-wide-exp-down` &middot; `huge-man-zero-exp` &middot; `huge-man-overflow`
@@ -898,6 +916,12 @@ val realMod : real -> real
 
 **Law** `realMod x = #frac (split x)`
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
+
+</details>
+
 <details><summary>Tests (10)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `basic` &middot; `negative` &middot; `integral` &middot; `negative-integral` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-is-frac-of-split`
@@ -918,6 +942,14 @@ val nextAfter : real * real -> real
 > returns `r`": the two zeros are equal, so `nextAfter (~0.0, 0.0)` is
 > `~0.0`. C's `nextafter` returns `t` there, and MLton and Poly/ML follow
 > C.
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLton, Poly/ML** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
+- **Poly/ML** &mdash; Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
+- **MLton, Poly/ML 5.9.2** &mdash; another reading of the specification: as Real.nextAfter/equal-zeros-returns-r\*: returns t
+
+</details>
 
 <details><summary>Tests (34)</summary>
 
@@ -963,6 +995,14 @@ val realFloor : real -> real
 > so `realFloor ~0.5` is `~0.0`. The same holds for [`realCeil`](#val-realceil),
 > [`realTrunc`](#val-realtrunc) and [`realRound`](#val-realround).
 
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ** &mdash; Real.realFloor 0.0 is \~0.0
+- **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
+- **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
+
+</details>
+
 <details><summary>Tests (13)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `positive` &middot; `negative` &middot; `integral` &middot; `small-negative` &middot; `zero` &middot; `huge` &middot; `negative-huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-bounds`
@@ -979,6 +1019,13 @@ val realCeil : real -> real
 
 `realCeil x` is the smallest whole number that is not less than `x`, as a [`real`](#type-real).
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
+- **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
+
+</details>
+
 <details><summary>Tests (11)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `positive` &middot; `negative` &middot; `integral` &middot; `small-positive` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-bounds`
@@ -994,6 +1041,13 @@ val realTrunc : real -> real
 ```
 
 `realTrunc x` is `x` rounded towards zero, as a [`real`](#type-real).
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
+- **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
+
+</details>
 
 <details><summary>Tests (10)</summary>
 
@@ -1016,6 +1070,17 @@ val realRound : real -> real
 > states the rule under [`round`](#val-round) alone, and IEEE 754's rounding to an
 > integral value agrees.
 
+<details><summary>Other implementations (6)</summary>
+
+- **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+- **Poly/ML** &mdash; Real.realRound (2^52 + 1) is 2^52 + 2
+- **Poly/ML** &mdash; Real.realRound (\~0.25) is 0.0, not \~0.0
+- **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
+- **SML/NJ** &mdash; Real.realRound (2^52 + 1) is 2^52
+- **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative-down` &middot; `negative-up` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `large-odd` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-nearest`
@@ -1037,6 +1102,14 @@ val floor : real -> int
 
 Also in the [top-level environment](../top-level.md): `floor`.
 
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
+
 <details><summary>Tests (20)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `positive` &middot; `negative` &middot; `integral` &middot; `negzero` &middot; `small-negative` &middot; `toplevel` &middot; `large-negative` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-huge` &middot; `minInt` &middot; `near-maxInt` &middot; `maxInt-plus-half` &middot; `Overflow-minInt-minus-half` &middot; `law-agrees-with-realFloor`
@@ -1056,6 +1129,15 @@ val ceil : real -> int
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
 Also in the [top-level environment](../top-level.md): `ceil`.
+
+<details><summary>Other implementations (4)</summary>
+
+- **SML/NJ** &mdash; Real.ceil minPos is 0
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
 
 <details><summary>Tests (16)</summary>
 
@@ -1077,6 +1159,14 @@ val trunc : real -> int
 
 Also in the [top-level environment](../top-level.md): `trunc`.
 
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
+
 <details><summary>Tests (14)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `positive` &middot; `negative` &middot; `fraction` &middot; `toplevel` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `minInt` &middot; `minInt-minus-half` &middot; `near-maxInt` &middot; `maxInt-plus-half`
@@ -1097,6 +1187,16 @@ val round : real -> int
 
 Also in the [top-level environment](../top-level.md): `round`.
 
+<details><summary>Other implementations (5)</summary>
+
+- **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
+
 <details><summary>Tests (27)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `toplevel` &middot; `large` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-negative-huge` &middot; `minInt` &middot; `minInt-minus-half-tie-to-even` &middot; `near-maxInt` &middot; `Overflow-maxInt-plus-half-tie-to-even` &middot; `law-halves-to-even`
@@ -1116,6 +1216,14 @@ val toInt : IEEEReal.rounding_mode -> real -> int
 `toInt mode x` is `x` rounded to an `int` in the given rounding mode.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if it does not fit; [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
+
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
 
 <details><summary>Tests (17)</summary>
 
@@ -1138,6 +1246,14 @@ Where [`LargeInt`](../sig/INTEGER.md) has no bounds this loses nothing, however 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `x` is an infinity, or if the result does not fit
 a bounded [`LargeInt.int`](../sig/INTEGER.md#type-int); [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+
+</details>
+
 <details><summary>Tests (22)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `TO_NEGINF-positive` &middot; `TO_NEGINF-negative` &middot; `TO_POSINF-positive` &middot; `TO_POSINF-negative` &middot; `TO_ZERO-positive` &middot; `TO_ZERO-negative` &middot; `TO_NEAREST-tie-even` &middot; `TO_NEAREST-tie-odd` &middot; `TO_NEAREST-tie-negative` &middot; `TO_NEAREST-up` &middot; `ten-to-the-20th` &middot; `two-to-the-100th` &middot; `negative-two-to-the-200th` &middot; `two-to-the-1000th` &middot; `large-with-fraction` &middot; `Overflow-*` (raises Overflow) &middot; `Domain-*` (raises Domain) &middot; `law-agrees-with-toInt` &middot; `huge-maxFinite` &middot; `huge-negative-two-to-the-1023rd`
@@ -1155,6 +1271,12 @@ val fromInt : int -> real
 `fromInt i` is `i` as a real, correctly rounded when the type cannot hold it exactly.
 
 Also in the [top-level environment](../top-level.md): `real`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+
+</details>
 
 <details><summary>Tests (12)</summary>
 
@@ -1176,6 +1298,13 @@ val fromLargeInt : LargeInt.int -> real
 > rounding mode is used; under the default one a value exactly between two
 > reals goes to the one whose last digit is even, and the digits that are
 > dropped decide the rest.
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **Poly/ML 5.9.2** &mdash; fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
+
+</details>
 
 <details><summary>Tests (17)</summary>
 
@@ -1248,6 +1377,19 @@ given, so a partial application already raises.
 > the fixed one: `fmt (GEN NONE) 1.0` is `"1"` and `fmt (GEN NONE) 1000.0`
 > is `"1E3"`.
 
+<details><summary>Other implementations (8)</summary>
+
+- **MLton** &mdash; another reading of the specification: SCI, FIX and GEN print \~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "\~0.0"
+- **Poly/ML** &mdash; GEN prints integral values with ".0" ("1.0")
+- **Poly/ML** &mdash; GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
+- **SML/NJ** &mdash; GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
+- **SML/NJ** &mdash; GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "\~1.5E\~07")
+- **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+- **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
+- **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+
+</details>
+
 <details><summary>Tests (119)</summary>
 
 For `Real`, in [tests/basis/real\_fmt.sml](../../../../tests/basis/real_fmt.sml): `SCI-default-one` &middot; `SCI-default-zero` &middot; `SCI-default-rounds` &middot; `SCI-default-negative` &middot; `SCI-two-digits` &middot; `SCI-zero-digits` &middot; `SCI-zero-digits-one` &middot; `SCI-zero-digits-zero` &middot; `SCI-zero-digits-rounds` &middot; `SCI-negative-exponent` &middot; `SCI-negative-both` &middot; `SCI-pads-with-zeros` &middot; `SCI-ten-digits` &middot; `SCI-twenty-digits` &middot; `SCI-carry` &middot; `SCI-carry-zero-digits` &middot; `SCI-power-of-ten` &middot; `SCI-small-power-of-ten` &middot; `SCI-large-exponent` &middot; `SCI-maxFinite` &middot; `SCI-minPos` &middot; `SCI-minNormalPos` &middot; `FIX-default-one` &middot; `FIX-default-zero` &middot; `FIX-default-rounds` &middot; `FIX-default-negative` &middot; `FIX-zero-digits` &middot; `FIX-zero-digits-rounds-up` &middot; `FIX-zero-digits-rounds-down` &middot; `FIX-zero-digits-negative` &middot; `FIX-zero-digits-fraction-up` &middot; `FIX-zero-digits-fraction-down` &middot; `FIX-zero-digits-zero` &middot; `FIX-one-digit` &middot; `FIX-pads-with-zeros` &middot; `FIX-integral` &middot; `FIX-exact-fraction` &middot; `FIX-power-of-ten` &middot; `FIX-ten-to-the-20th` &middot; `FIX-rounds-to-zero` &middot; `FIX-small` &middot; `FIX-carry` &middot; `FIX-carry-adds-digit` &middot; `FIX-carry-zero-digits` &middot; `FIX-twenty-digits` &middot; `FIX-exact-binary-fraction` &middot; `FIX-exact-binary-fraction-rounded` &middot; `FIX-minPos` &middot; `GEN-half` &middot; `GEN-eighth` &middot; `GEN-negative` &middot; `GEN-nine-digits` &middot; `GEN-tenth` &middot; `GEN-third` &middot; `GEN-two-thirds` &middot; `GEN-pi` &middot; `GEN-notation-hundredth` &middot; `GEN-notation-thousandth` &middot; `GEN-notation-small-tie` &middot; `GEN-notation-small-scientific` &middot; `GEN-notation-large` &middot; `GEN-notation-large-fraction` &middot; `GEN-notation-large-mantissa` &middot; `GEN-notation-huge` &middot; `GEN-notation-tiny` &middot; `GEN-notation-negative` &middot; `GEN-maxFinite` &middot; `GEN-minPos` &middot; `GEN-five-digits` &middot; `GEN-two-digits` &middot; `GEN-no-trailing-zeros` &middot; `GEN-notation-one-digit` &middot; `GEN-seventeen-digits` &middot; `GEN-sixteen-digits` &middot; `GEN-integral-one` &middot; `GEN-integral-zero` &middot; `GEN-integral-negative` &middot; `GEN-integral-hundred` &middot; `GEN-integral-five-digits` &middot; `GEN-integral-rounded` &middot; `GEN-integral-carry` &middot; `GEN-notation-thousand` &middot; `GEN-notation-tie-is-fixed` &middot; `GEN-notation-padded` &middot; `GEN-notation-padded-integer` &middot; `EXACT-half` &middot; `EXACT-quarter` &middot; `EXACT-one` &middot; `EXACT-tenth` &middot; `EXACT-negative` &middot; `EXACT-six-digits` &middot; `EXACT-negative-exponent` &middot; `EXACT-sixteenth` &middot; `EXACT-power-of-ten` &middot; `EXACT-maxFinite` &middot; `EXACT-zero` &middot; `EXACT-negzero` &middot; `*` &middot; `SCI-negzero` &middot; `FIX-negzero` &middot; `GEN-integral-negzero` &middot; `Size-SCI-negative` (raises Size) &middot; `Size-FIX-negative` (raises Size) &middot; `Size-GEN-zero` (raises Size) &middot; `Size-GEN-negative` (raises Size) &middot; `Size-SCI-infinite-argument` (raises Size) &middot; `Size-SCI-when-spec-is-evaluated` (raises Size) &middot; `Size-FIX-when-spec-is-evaluated` (raises Size) &middot; `Size-GEN-when-spec-is-evaluated` (raises Size) &middot; `GEN-one-is-valid` &middot; `EXACT-law-fromString-inverts` &middot; `law-FIX-of-integers` &middot; `law-EXACT-is-IEEEReal.toString-of-toDecimal`
@@ -1265,6 +1407,13 @@ val toString : real -> string
 `toString x` is the text of `x` in the general notation with the default number of digits.
 
 **Law** `toString x = fmt (StringCvt.GEN NONE) x`
+
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML** &mdash; toString prints integral values with ".0" ("1.0")
+- **Poly/ML** &mdash; toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+
+</details>
 
 <details><summary>Tests (17)</summary>
 
@@ -1291,6 +1440,12 @@ A numeral whose value is too large becomes an infinity and one too small
 a zero; nothing is raised. A numeral that no real holds exactly is
 rounded as [`fromString`](#val-fromstring) rounds it.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
+
+</details>
+
 <details><summary>Tests (25)</summary>
 
 For `Real`, in [tests/basis/real\_fmt.sml](../../../../tests/basis/real_fmt.sml): `all` &middot; `rest` &middot; `rest-space` &middot; `none` &middot; `empty` &middot; `point-without-digits` &middot; `point-then-exponent` &middot; `second-point` &middot; `exponent-without-digits` &middot; `exponent-sign-without-digits` &middot; `exponent-letter` &middot; `after-exponent-point` &middot; `after-exponent-letter` &middot; `hexadecimal-is-zero` &middot; `sign-after-number` &middot; `nonfinite-infinity-all` &middot; `nonfinite-infinity-rest` &middot; `nonfinite-inf-rest` &middot; `nonfinite-infinit` &middot; `nonfinite-nan-rest` &middot; `no-number` &middot; `bare-point` &middot; `TO_NEGINF-negative`
@@ -1314,6 +1469,19 @@ val fromString : string -> real option
 > SML/NJ and Poly/ML always round to nearest. [`Real32.fromString`](#val-fromstring) rounds
 > once, straight to binary32, and not first to binary64.
 
+<details><summary>Other implementations (8)</summary>
+
+- **SML/NJ** &mdash; scan skips only space, tab and newline, not the other Char.isSpace characters (\\r, \\v, \\f)
+- **SML/NJ** &mdash; scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
+- **Poly/ML 5.9.2** &mdash; fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
+- **SML/NJ, Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015 (under xc1 through the shim's real\_from\_string, which is the host's Real.fromString)
+- **Poly/ML 5.9.2** &mdash; fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
+- **Poly/ML 5.9.2** &mdash; fromString rounds a number just above half of minPos to zero
+- **Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
+
+</details>
+
 <details><summary>Tests (80)</summary>
 
 For `Real`, in [tests/basis/real\_fmt.sml](../../../../tests/basis/real_fmt.sml): `basic` &middot; `integer` &middot; `zero` &middot; `leading-zeros` &middot; `exact-many-digits` &middot; `tilde` &middot; `minus` &middot; `plus` &middot; `negative-zero` &middot; `minus-zero` &middot; `no-integer-part` &middot; `negative-no-integer-part` &middot; `exponent` &middot; `lowercase-exponent` &middot; `tilde-exponent` &middot; `minus-exponent` &middot; `plus-exponent` &middot; `fraction-and-exponent` &middot; `exponent-leading-zeros` &middot; `zero-exponent` &middot; `small` &middot; `leading-space` &middot; `leading-whitespace` &middot; `trailing-text` &middot; `trailing-space` &middot; `empty` &middot; `only-whitespace` &middot; `letters` &middot; `bare-point` &middot; `only-sign` &middot; `only-exponent` &middot; `bare-point-exponent` &middot; `two-signs` &middot; `sign-then-space` &middot; `nonfinite-inf` &middot; `nonfinite-infinity` &middot; `nonfinite-inf-uppercase` &middot; `nonfinite-infinity-mixed-case` &middot; `nonfinite-tilde-inf` &middot; `nonfinite-minus-infinity` &middot; `nonfinite-plus-inf` &middot; `nonfinite-whitespace-inf` &middot; `nonfinite-nan` &middot; `nonfinite-nan-mixed-case` &middot; `nonfinite-tilde-nan` &middot; `nonfinite-plus-nan` &middot; `in` &middot; `na` &middot; `too-large` &middot; `too-large-negative` &middot; `too-large-digits` &middot; `too-small` &middot; `too-small-negative` &middot; `huge-exponent` &middot; `huge-negative-exponent` &middot; `huge-exponent-of-zero` &middot; `exact-maxFinite` &middot; `exact-minPos` &middot; `exact-minNormalPos` &middot; `exact-subnormal-long-form` &middot; `exact-round-half-even` &middot; `exact-round-above-half` &middot; `law-is-scanString-scan` &middot; `law-inverts-toString-to-12-digits` &middot; `exact-law-inverts-fmt-SCI-16` &middot; `exact-law-inverts-fmt-GEN-17` &middot; `TO_NEGINF-negative` &middot; `TO_POSINF-negative` &middot; `TO_ZERO-negative` &middot; `TO_NEGINF-positive`
@@ -1332,6 +1500,13 @@ val toDecimal : real -> IEEEReal.decimal_approx
 
 Every real has an exact decimal form, so nothing is lost; [`IEEEReal.toString`](../sig/IEEE_REAL.md#val-tostring)
 turns the result into text.
+
+<details><summary>Other implementations (2)</summary>
+
+- **Poly/ML 5.9.2** &mdash; toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+- **Poly/ML 5.9.2** &mdash; toDecimal of a zero has exp 1, not 0
+
+</details>
 
 <details><summary>Tests (26)</summary>
 

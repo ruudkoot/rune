@@ -116,6 +116,17 @@ and leaves `"r"`.
 > accepts, as for [`StringCvt.skipWS`](../sig/STRING_CVT.md#val-skipws): the space, and the characters `\t`,
 > `\n`, `\v`, `\f` and `\r`.
 
+<details><summary>Other implementations (6)</summary>
+
+- **MLton, SML/NJ** &mdash; Bool.scan and fromString are case-sensitive
+- **MLton** &mdash; Bool.scan and fromString do not skip initial whitespace
+- **MLton** &mdash; Bool.scan and fromString neither ignore case nor skip initial whitespace
+- **SML/NJ** &mdash; Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
+- **SML/NJ** &mdash; Bool.scan and fromString are case-sensitive and skip space, tab and newline only
+- **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
+
+</details>
+
 <details><summary>Tests (36)</summary>
 
 For `Bool`, in [tests/basis/bool.sml](../../../../tests/basis/bool.sml): `list-true` &middot; `list-false` &middot; `list-rest` &middot; `list-rest-keeps-whitespace` &middot; `list-rest-is-a-prefix-of-true` &middot; `none-empty` &middot; `none-whitespace-only` &middot; `none-tru` &middot; `none-fals` &middot; `none-xtrue` &middot; `none-tr-ue` &middot; `case-list` &middot; `ws-list` &middot; `wsx-list` &middot; `mixed-list` &middot; `List.getItem` &middot; `string-index` &middot; `string-index-from-the-middle` &middot; `none-string-index-middle-of-word` &middot; `none-string-index-at-end` &middot; `ws-string-index` &middot; `index` &middot; `none-index` &middot; `case-index` &middot; `ws-index` &middot; `wsx-index` &middot; `repeatedly` &middot; `ws-repeatedly` &middot; `*` &middot; `agrees-with-fromString-*` &middot; `scanString-true` &middot; `scanString-false` &middot; `scanString-rest` &middot; `none-scanString-tru` &middot; `none-scanString-empty` &middot; `mixed-scanString`
@@ -137,6 +148,17 @@ it, or `NONE`.
 > codes are next to those of the white space characters (0, 8, 14, 31, 33,
 > 95 and 127) are not white space: a string that begins with one of them
 > gives `NONE`.
+
+<details><summary>Other implementations (6)</summary>
+
+- **MLton, SML/NJ** &mdash; Bool.scan and fromString are case-sensitive
+- **MLton** &mdash; Bool.scan and fromString do not skip initial whitespace
+- **MLton** &mdash; Bool.scan and fromString neither ignore case nor skip initial whitespace
+- **SML/NJ** &mdash; Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
+- **SML/NJ** &mdash; Bool.scan and fromString are case-sensitive and skip space, tab and newline only
+- **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+
+</details>
 
 <details><summary>Tests (50)</summary>
 

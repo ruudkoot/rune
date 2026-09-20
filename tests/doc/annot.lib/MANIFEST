@@ -1,0 +1,3 @@
+# A small library with a suite and annotations: what is said from outside
+# about the members, by the labels of the checks (DocAnnot).
+shape.sml | demand | yes | SHAPE Shape |

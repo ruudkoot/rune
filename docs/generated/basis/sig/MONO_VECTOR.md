@@ -69,6 +69,12 @@ polymorphic signatures, with [`elem`](#type-elem) for the element type; what the
 is the same, and the pages of [`VECTOR`](../sig/VECTOR.md) and [`ARRAY`](../sig/ARRAY.md) describe it at more
 length.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+
+</details>
+
 ## Interface
 
 <pre>
@@ -293,6 +299,12 @@ val update : vector * int * elem -> vector
 `update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `v`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+
+</details>
 
 <details><summary>Tests (20)</summary>
 

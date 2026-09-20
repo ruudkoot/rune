@@ -325,6 +325,12 @@ val list : unit -> (string * addr_family) list
 
 `list ()` is the families this system has, each with its name.
 
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; AF.list names AF\_UNIX's value also "LOCAL" (5.9.2: and "FILE"), which toString calls "UNIX"
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `has-INET` &middot; `has-UNIX` &middot; `names-are-toString` &middot; `inet-is-not-unix`
@@ -594,6 +600,15 @@ val setLINGER : ('af, 'sock_type) sock * Time.time option -> unit
 **Raises** [`Time`](../sig/TIME.md) if `t` is negative or is 2^31 seconds or more, which
 the system's `int` cannot hold.
 
+<details><summary>Other implementations (4)</summary>
+
+- **MLton, SML/NJ** &mdash; setLINGER takes a negative time without raising Time
+- **MLton, SML/NJ (32-bit)** &mdash; setLINGER raises Overflow, not Time, for a time too large for the system
+- **SML/NJ 110.99.9 (64-bit)** &mdash; setLINGER takes a time too large for the system without raising Time
+- **Poly/ML** &mdash; setLINGER raises SysErr ("Invalid time"), not Time, for a negative time
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `some` &middot; `zero` &middot; `none-again` &middot; `negative` (raises) &middot; `too-large` (raises) &middot; `closed`
@@ -738,6 +753,12 @@ val getERROR : ('af, 'sock_type) sock -> bool
 
 `getERROR sock` is `true` when the socket has an error waiting, which reading it clears.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; getERROR of a closed socket answers instead of raising SysErr
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `fresh` &middot; `port-unreachable` &middot; `closed`
@@ -784,6 +805,12 @@ val getNREAD : ('af, 'sock_type) sock -> int
 
 `getNREAD sock` is how many bytes can be read from the socket without waiting.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; getNREAD answers \~1 whatever there is to read
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `nothing` &middot; `five-bytes` &middot; `after-reading-two` &middot; `closed`
@@ -801,6 +828,13 @@ val getATMARK : ('af, active stream) sock -> bool
 > **Implementation** `Socket.Ctl.getATMARK/the-last-byte-is-urgent`. The
 > mark falls where the host's TCP puts it: sending `"abc"` out of band
 > puts it after `"ab"`, the last byte being the urgent one.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLton** &mdash; getATMARK answers true whether or not the read pointer is at the out-of-band mark
+- **SML/NJ** &mdash; sendVec' sends oob as don't\_route, so that there is no urgent byte and no mark
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -829,6 +863,12 @@ val familyOfAddr : 'af sock_addr -> AF.addr_family
 ```
 
 `familyOfAddr a` is the address family that `a` belongs to.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; familyOfAddr gives a family that is neither INetSock.inetAF nor UnixSock.unixAF (AF.toString says "\<UNKNOWN\>")
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -910,6 +950,12 @@ val connect : ('af, 'sock_type) sock * 'af sock_addr -> unit
 `connect (sock, a)` connects the socket to the address `a`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the connection is refused or cannot be made.
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; connect on a connected socket returns instead of raising SysErr
+
+</details>
 
 <details><summary>Tests (6)</summary>
 
@@ -1050,6 +1096,13 @@ A `timeout` of `NONE` waits as long as it must.
 | <a name="fld-select.exs"></a>`exs` | `sock_desc list` |  |
 | <a name="fld-select.timeout"></a>`timeout` | `Time.time option` |  |
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; sendVec' sends oob as don't\_route, so that there is no urgent byte to make an exceptional condition
+- **Poly/ML** &mdash; select takes a negative timeout for zero instead of raising SysErr
+
+</details>
+
 <details><summary>Tests (14)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `timeout` &middot; `timeout-waits` &middot; `zero-timeout` &middot; `no-sockets` &middot; `readable` &middot; `no-timeout` &middot; `writable` &middot; `only-the-ready-ones` &middot; `in-two-lists` &middot; `order-preserved` &middot; `listener-readable-when-a-connection-is-pending` &middot; `closed` (raises) &middot; `negative-timeout` (raises)
@@ -1137,6 +1190,13 @@ val sendVec' : ('af, active stream) sock * Word8VectorSlice.slice * out_flags ->
 
 `sendVec' (sock, sl, flags)` is [`sendVec`](#val-sendvec) with the flags `flags`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't\_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+- **SML/NJ** &mdash; the flags are swapped: sendVec' and sendArr' send oob as don't\_route (no urgent byte), and recvVec' and recvArr' receive oob as peek
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises) &middot; `oob`
@@ -1150,6 +1210,13 @@ val sendArr' : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -> 
 ```
 
 `sendArr' (sock, sl, flags)` is [`sendArr`](#val-sendarr) with the flags `flags`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't\_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+- **SML/NJ** &mdash; the flags are swapped: sendVec' and sendArr' send oob as don't\_route (no urgent byte), and recvVec' and recvArr' receive oob as peek
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1229,6 +1296,12 @@ The empty vector means that the other end has finished sending.
 > vector is returned": it is returned at once, without waiting for
 > anything, where the system's own call would wait.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; recvVec and recvVecFrom do not raise Size when n \> Word8Vector.maxLen
+
+</details>
+
 <details><summary>Tests (8)</summary>
 
 For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `at-most-n` &middot; `unix` &middot; `zero` &middot; `end-of-stream` &middot; `end-of-stream-again` &middot; `negative` (raises Size) &middot; `above-maxLen` (raises Size) &middot; `closed` (raises)
@@ -1242,6 +1315,13 @@ val recvVec' : ('af, active stream) sock * int * in_flags -> Word8Vector.vector
 ```
 
 `recvVec' (sock, n, flags)` is [`recvVec`](#val-recvvec) with the flags `flags`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec' and recvArr' receive oob as peek (the byte stays), and sendVec' sends oob as don't\_route (no urgent byte)
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (6)</summary>
 
@@ -1271,6 +1351,13 @@ val recvArr' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -> i
 
 `recvArr' (sock, sl, flags)` is [`recvArr`](#val-recvarr) with the flags `flags`.
 
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec' and recvArr' receive oob as peek (the byte stays), and sendVec' sends oob as don't\_route (no urgent byte)
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `oob` &middot; `peek` &middot; `end-of-stream` &middot; `closed` (raises)
@@ -1289,6 +1376,12 @@ val recvVecNB : ('af, active stream) sock * int -> Word8Vector.vector option
 > gives the empty vector without waiting, `recvVecNB (sock, 0)` is `SOME`
 > of the empty vector and not `NONE`, however little has arrived.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, Poly/ML** &mdash; recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `data` &middot; `end-of-stream` &middot; `zero` &middot; `negative` (raises Size) &middot; `closed` (raises) &middot; `then-blocking`
@@ -1302,6 +1395,13 @@ val recvVecNB' : ('af, active stream) sock * int * in_flags -> Word8Vector.vecto
 ```
 
 `recvVecNB' (sock, n, flags)` is [`recvVecNB`](#val-recvvecnb) with the flags `flags`.
+
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+- **SML/NJ** &mdash; the flags are swapped: recvVecNB' takes peek for oob and raises SysErr (EINVAL) instead of giving NONE
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1317,6 +1417,12 @@ val recvArrNB : ('af, active stream) sock * Word8ArraySlice.slice -> int option
 
 `recvArrNB (sock, sl)` is [`recvArr`](#val-recvarr) that does not wait.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLton, Poly/ML** &mdash; recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `count-and-place` &middot; `end-of-stream` &middot; `empty-slice` &middot; `closed` (raises)
@@ -1330,6 +1436,12 @@ val recvArrNB' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags ->
 ```
 
 `recvArrNB' (sock, sl, flags)` is [`recvArrNB`](#val-recvarrnb) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -1346,6 +1458,12 @@ val sendVecTo : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice -> un
 `sendVecTo (sock, a, sl)` sends the bytes of `sl` as one message to the address `a`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the message cannot be sent.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; a datagram of no bytes never arrives
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1375,6 +1493,12 @@ val sendVecTo' : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * ou
 
 `sendVecTo' (sock, a, sl, flags)` is [`sendVecTo`](#val-sendvecto) with the flags `flags`.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't\_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises)
@@ -1388,6 +1512,12 @@ val sendArrTo' : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out
 ```
 
 `sendArrTo' (sock, a, sl, flags)` is [`sendArrTo`](#val-sendarrto) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't\_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -1459,6 +1589,14 @@ val recvVecFrom : ('af, dgram) sock * int -> Word8Vector.vector * 'af sock_addr
 
 `recvVecFrom (sock, n)` receives one message of at most `n` bytes, and is it and where it came from.
 
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ** &mdash; the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+- **SML/NJ** &mdash; the Unix-domain address recvVecFrom and recvVecFromNB give is garbled: UnixSock.fromAddr of it is not the sender's path
+- **SML/NJ** &mdash; recvVec and recvVecFrom do not raise Size when n \> Word8Vector.maxLen
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `message-and-address` &middot; `one-message-at-a-time` &middot; `at-most-n` &middot; `unix` &middot; `negative` (raises Size) &middot; `above-maxLen` (raises Size) &middot; `closed` (raises)
@@ -1472,6 +1610,12 @@ val recvVecFrom' : ('af, dgram) sock * int * in_flags -> Word8Vector.vector * 'a
 ```
 
 `recvVecFrom' (sock, n, flags)` is [`recvVecFrom`](#val-recvvecfrom) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1487,6 +1631,12 @@ val recvArrFrom : ('af, dgram) sock * Word8ArraySlice.slice -> int * 'af sock_ad
 
 `recvArrFrom (sock, sl)` receives one message into the stretch `sl`, and is its length and where it came from.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; with an empty slice, the address recvArrFrom gives is not sameAddr to the sender's
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `count-place-and-address` &middot; `at-most-the-slice` &middot; `empty-slice` &middot; `closed` (raises)
@@ -1500,6 +1650,12 @@ val recvArrFrom' : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -> int *
 ```
 
 `recvArrFrom' (sock, sl, flags)` is [`recvArrFrom`](#val-recvarrfrom) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -1515,6 +1671,12 @@ val recvVecFromNB : ('af, dgram) sock * int -> (Word8Vector.vector * 'af sock_ad
 
 `recvVecFromNB (sock, n)` is [`recvVecFrom`](#val-recvvecfrom) that does not wait: `NONE` when no message is there.
 
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the address recvVecFromNB gives is not sameAddr to the sender's (recvArrFromNB's is)
+
+</details>
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `nothing-there` &middot; `message` &middot; `negative` (raises Size) &middot; `closed` (raises)
@@ -1528,6 +1690,12 @@ val recvVecFromNB' : ('af, dgram) sock * int * in_flags -> (Word8Vector.vector *
 ```
 
 `recvVecFromNB' (sock, n, flags)` is [`recvVecFromNB`](#val-recvvecfromnb) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1556,6 +1724,12 @@ val recvArrFromNB' : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -> (in
 ```
 
 `recvArrFromNB' (sock, sl, flags)` is [`recvArrFromNB`](#val-recvarrfromnb) with the flags `flags`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **SML/NJ** &mdash; the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
