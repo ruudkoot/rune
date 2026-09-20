@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 7 entries documented |
+| Tests | 17 checks of 6 entries |
 | Source | [lib/basis/sig\_net\_serv\_db.sml](../../../../lib/basis/sig_net_serv_db.sml) |
 
 ## Synopsis
@@ -50,11 +51,23 @@ type entry
 val name : entry -> string
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http`
+
+</details>
+
 ### <a name="val-aliases"></a>`aliases`
 
 ```sml
 val aliases : entry -> string list
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http`
+
+</details>
 
 ### <a name="val-port"></a>`port`
 
@@ -62,11 +75,23 @@ val aliases : entry -> string list
 val port : entry -> int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `ssh`
+
+</details>
+
 ### <a name="val-protocol"></a>`protocol`
 
 ```sml
 val protocol : entry -> string
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `domain-udp`
+
+</details>
 
 ### <a name="val-getbyname"></a>`getByName`
 
@@ -74,11 +99,23 @@ val protocol : entry -> string
 val getByName : string * string option -> entry option
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http-tcp` &middot; `ssh-tcp` &middot; `domain-udp` &middot; `alias` &middot; `any-protocol` &middot; `other-protocol` &middot; `unknown`
+
+</details>
+
 ### <a name="val-getbyport"></a>`getByPort`
 
 ```sml
 val getByPort : int * string option -> entry option
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `80-tcp` &middot; `22-tcp` &middot; `53-udp` &middot; `any-protocol` &middot; `other-protocol` &middot; `unassigned`
+
+</details>
 
 ---
 

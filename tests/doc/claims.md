@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 3 |
 | Documentation | 0 of 5 entries documented |
+| Tests | not listed |
 | Source | [tests/doc/claims.sml](../tests/doc/claims.sml) |
 
 ## Synopsis

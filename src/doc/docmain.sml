@@ -15,6 +15,12 @@ struct
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
     \  --title TEXT    the title of the overview page\n\
+    \  --tests DIR     the test suite whose checks the pages list (its labels\n\
+    \                  name the members they check)\n\
+    \  --labels        print the checks of the suite of --tests and stop\n\
+    \  --check-coverage  with --library and --tests: every value and exception\n\
+    \                  that a signature specifies has a check for every\n\
+    \                  structure that implements it\n\
     \  --page      print the pages of the signatures that the files declare\n\
     \  --dump-ir   print what is extracted from the files (the intermediate\n\
     \              representation, in the text form the tests compare)\n\
@@ -33,6 +39,9 @@ struct
   val out : string option ref = ref NONE
   val title : string option ref = ref NONE
   val check = ref false
+  val tests : string option ref = ref NONE
+  val labels = ref false
+  val checkCoverage = ref false
   val lint = ref false
   val showHelp = ref false
   val showVersion = ref false
@@ -48,6 +57,9 @@ struct
     | "--library" :: name :: rest => (library := SOME name; parse rest)
     | "--out" :: dir :: rest => (out := SOME dir; parse rest)
     | "--title" :: text :: rest => (title := SOME text; parse rest)
+    | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
+    | "--labels" :: rest => (labels := true; parse rest)
+    | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
@@ -87,7 +99,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, envAt) = DocSite.envOf (modules, "", [])
+      val (claims, index, envAt) = DocSite.envOf (modules, "", [], [])
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in
@@ -99,7 +111,7 @@ struct
     let
       val lib = case !libDir of SOME d => d | NONE => raise Usage "no library directory (use --lib DIR)"
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
-      val files = DocSite.build {dir = lib ^ "/" ^ name, out = dir,
+      val files = DocSite.build {dir = lib ^ "/" ^ name, out = dir, tests = !tests,
                                  title = (case !title of SOME t => t | NONE => name)}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
@@ -116,6 +128,25 @@ struct
     end
 
   fun run () : OS.Process.status =
+    if !labels then
+      (case !tests of
+         SOME dir => (print (DocTests.tsv (DocTests.suite dir)); report ())
+       | NONE => raise Usage "--labels needs the suite (use --tests DIR)")
+    else if !checkCoverage then
+      (case (!library, !tests, !libDir) of
+         (SOME name, SOME suite, SOME lib) =>
+           let
+             val n = DocSite.checkCoverage {dir = lib ^ "/" ^ name, tests = suite}
+                     handle BasisManifest.Usage why => raise Usage why
+             val status = report ()
+           in
+             if OS.Process.isSuccess status
+             then println ("runedoc: every specified member has a check (" ^ Int.toString n ^ " members of structures)")
+             else ();
+             status
+           end
+       | _ => raise Usage "--check-coverage needs --library NAME and --tests DIR")
+    else
     case !library of
       SOME name => generate name
     | NONE =>

@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 4 |
 | Documentation | 0 of 14 entries documented |
+| Tests | 64 checks of 6 entries |
 | Source | [lib/basis/primio\_sig.sml](../../../../lib/basis/primio_sig.sml) |
 
 ## Synopsis
@@ -124,6 +125,16 @@ eqtype pos
 val compare : pos * pos -> order
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `TextPrimIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-positions`
+
+For `BinPrimIO`, in [tests/basis/io\_primio.sml](../../../../tests/basis/io_primio.sml): `less` &middot; `equal` &middot; `greater` &middot; `linear-order-*`
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `of-positions`
+
+</details>
+
 ### <a name="type-reader"></a>`reader`
 
 ```sml
@@ -208,11 +219,27 @@ datatype writer =
 val openVector : vector -> reader
 ```
 
+<details><summary>Tests (14)</summary>
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-a-wide-string`
+
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `content` &middot; `readVec-pieces` &middot; `readVec-zero` &middot; `empty` &middot; `readArr` &middot; `readArr-empty-slice` &middot; `chunkSize-positive` &middot; `avail` &middot; `readVecNB` &middot; `readVec-after-close` (raises) &middot; `readArr-after-close` (raises) &middot; `avail-after-close` (raises) &middot; `close-twice`
+
+</details>
+
 ### <a name="val-nullrd"></a>`nullRd`
 
 ```sml
 val nullRd : unit -> reader
 ```
+
+<details><summary>Tests (8)</summary>
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-nothing`
+
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `always-at-end-of-stream` &middot; `readArr` &middot; `readVecNB` &middot; `chunkSize-positive` &middot; `readVec-after-close` (raises) &middot; `close-twice` &middot; `independent`
+
+</details>
 
 ### <a name="val-nullwr"></a>`nullWr`
 
@@ -220,17 +247,41 @@ val nullRd : unit -> reader
 val nullWr : unit -> writer
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `takes-everything`
+
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `takes-everything` &middot; `writeVecNB` &middot; `chunkSize-positive` &middot; `writeVec-after-close` (raises) &middot; `close-twice`
+
+</details>
+
 ### <a name="val-augmentreader"></a>`augmentReader`
 
 ```sml
 val augmentReader : reader -> reader
 ```
 
+<details><summary>Tests (16)</summary>
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `adds-what-the-reader-lacks`
+
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `keeps-what-the-reader-has` &middot; `keeps-the-other-fields` &middot; `readVec-from-readArr` &middot; `readVec-from-block-and-readVecNB` &middot; `readVec-from-block-and-readArrNB` &middot; `readArr-from-readVec` &middot; `readArr-from-block-and-readArrNB` &middot; `readArr-from-block-and-readVecNB` &middot; `readVecNB-from-readArrNB` &middot; `readVecNB-from-canInput-and-readVec` &middot; `readVecNB-from-canInput-and-readArr` &middot; `readArrNB-from-readVecNB` &middot; `readArrNB-from-canInput-and-readVec` &middot; `no-readVecNB-from-readVec-alone` &middot; `no-readVec-from-readVecNB-alone`
+
+</details>
+
 ### <a name="val-augmentwriter"></a>`augmentWriter`
 
 ```sml
 val augmentWriter : writer -> writer
 ```
+
+<details><summary>Tests (14)</summary>
+
+For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `adds-what-the-writer-lacks`
+
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `keeps-what-the-writer-has` &middot; `keeps-the-other-fields` &middot; `writeVec-from-writeArr` &middot; `writeArr-from-writeVec` &middot; `writeVec-from-block-and-writeVecNB` &middot; `writeVec-from-block-and-writeArrNB` &middot; `writeArr-from-block-and-writeVecNB` &middot; `writeVecNB-from-writeArrNB` &middot; `writeVecNB-from-canOutput-and-writeVec` &middot; `writeArrNB-from-writeVecNB` &middot; `writeArrNB-from-canOutput-and-writeArr` &middot; `no-writeVecNB-from-writeVec-alone` &middot; `no-writeVec-from-writeVecNB-alone`
+
+</details>
 
 ---
 

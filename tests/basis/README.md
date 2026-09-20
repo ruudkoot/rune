@@ -70,14 +70,30 @@ end
   inside the thunk of a check, so that an exception is a failed check and not
   a crash of the program.
 * Labels are `Structure.member/case`, without spaces and unique in the file.
-  Every `val`, `exception` and constructor of the signature has at least one
-  check whose label starts with `Structure.member/`
-  (`scripts/check-basis-coverage.sh`). Checks that hold for every
-  structure of a signature (`Int`, `IntInf`, `Int32`, ...) go in a functor in
-  `fn/`, which takes the structure and its `name` and builds its labels with
-  `lab "member/case"`. A structure that the specification defines as another
-  one (`LargeInt` is `IntInf`) gets `(* alias: LargeInt = IntInf *)` in its
-  `_sig.sml` test, beside checks that its types are those of the other.
+  Every `val` and `exception` of the signature has at least one check whose
+  label starts with `Structure.member/`. `runedoc` reads the labels out of
+  the sources of this suite with the compiler's parser, lists the checks of
+  every member in the library's documentation (`docs/generated/basis`), and
+  fails `make docs` and `make check-docs` for a member of a structure that
+  has none. That makes the form of a label a convention to keep
+  (`bin/runedoc --tests tests/basis --labels` prints what it finds):
+  * the first literal of a label has the structure, the member and the
+    slash; what follows may be computed (`"List.rev/involution-" ^ n`);
+  * a helper or a table that makes several checks of one member is given the
+    beginning of their labels, `"Structure.member/"`, as the first component
+    of its argument or of each row (`named ("Posix.Error.acces/", "acces",
+    E.acces)`, `table (lab "+/", ...)`);
+  * a check that a structure matches a signature is labelled
+    `Structure:SIG/case`, a check of a functor of the library `Functor/case`;
+  * checks that hold for every structure of a signature (`Int`, `IntInf`,
+    `Int32`, ...) go in a functor in `fn/`, which takes the structure and its
+    `name`, a string literal at the application, and builds its labels with
+    `lab "member/case"`.
+
+  A structure that the specification defines as another one (`LargeInt` is
+  `IntInf`) is checked under either name, and gets `(* alias: LargeInt =
+  IntInf *)` in its `_sig.sml` test, beside checks that its types are those
+  of the other.
 * Expected values come from the text of the specification, worked out by
   hand, never from the output of an implementation. Cover the ordinary case,
   the boundary cases, every "raises" clause, the documented order of

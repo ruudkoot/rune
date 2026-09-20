@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 22 entries documented |
+| Tests | 131 checks of 21 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -67,11 +68,23 @@ eqtype vector
 type elem
 ```
 
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `eight-distinct-samples`
+
+</details>
+
 ### <a name="val-maxlen"></a>`maxLen`
 
 ```sml
 val maxLen : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `covers-created-vectors`
+
+</details>
 
 ### <a name="val-fromlist"></a>`fromList`
 
@@ -79,11 +92,23 @@ val maxLen : int
 val fromList : elem list -> vector
 ```
 
+<details><summary>Tests (7)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `nil` &middot; `singleton` &middot; `every-sample` &middot; `length` &middot; `round-trip*` &middot; `long`
+
+</details>
+
 ### <a name="val-tabulate"></a>`tabulate`
 
 ```sml
 val tabulate : int * (int -> elem) -> vector
 ```
+
+<details><summary>Tests (8)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
 
 ### <a name="val-length"></a>`length`
 
@@ -91,11 +116,23 @@ val tabulate : int * (int -> elem) -> vector
 val length : vector -> int
 ```
 
+<details><summary>Tests (5)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `empty` &middot; `five` &middot; `tabulate` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : vector * int -> elem
 ```
+
+<details><summary>Tests (9)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+
+</details>
 
 ### <a name="val-update"></a>`update`
 
@@ -103,11 +140,23 @@ val sub : vector * int -> elem
 val update : vector * int * elem -> vector
 ```
 
+<details><summary>Tests (12)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `singleton` &middot; `argument-unchanged` &middot; `twice` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+
+</details>
+
 ### <a name="val-concat"></a>`concat`
 
 ```sml
 val concat : vector list -> vector
 ```
+
+<details><summary>Tests (10)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `order` &middot; `model*` &middot; `long` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
 
 ### <a name="val-appi"></a>`appi`
 
@@ -115,11 +164,23 @@ val concat : vector list -> vector
 val appi : (int * elem -> unit) -> vector -> unit
 ```
 
+<details><summary>Tests (3)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `order` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-app"></a>`app`
 
 ```sml
 val app : (elem -> unit) -> vector -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `order` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-mapi"></a>`mapi`
 
@@ -127,11 +188,23 @@ val app : (elem -> unit) -> vector -> unit
 val mapi : (int * elem -> elem) -> vector -> vector
 ```
 
+<details><summary>Tests (6)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `index-only` &middot; `empty` &middot; `order` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-map"></a>`map`
 
 ```sml
 val map : (elem -> elem) -> vector -> vector
 ```
+
+<details><summary>Tests (7)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `wraps` &middot; `empty` &middot; `order` &middot; `argument-unchanged` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldli"></a>`foldli`
 
@@ -139,11 +212,23 @@ val map : (elem -> elem) -> vector -> vector
 val foldli : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b
 ```
 
+<details><summary>Tests (4)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-foldri"></a>`foldri`
 
 ```sml
 val foldri : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b
 ```
+
+<details><summary>Tests (4)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-foldl"></a>`foldl`
 
@@ -151,11 +236,23 @@ val foldri : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b
 val foldl : (elem * 'b -> 'b) -> 'b -> vector -> 'b
 ```
 
+<details><summary>Tests (5)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldr"></a>`foldr`
 
 ```sml
 val foldr : (elem * 'b -> 'b) -> 'b -> vector -> 'b
 ```
+
+<details><summary>Tests (5)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-findi"></a>`findi`
 
@@ -163,11 +260,23 @@ val foldr : (elem * 'b -> 'b) -> 'b -> vector -> 'b
 val findi : (int * elem -> bool) -> vector -> (int * elem) option
 ```
 
+<details><summary>Tests (8)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
+
 ### <a name="val-find"></a>`find`
 
 ```sml
 val find : (elem -> bool) -> vector -> elem option
 ```
+
+<details><summary>Tests (6)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model*`
+
+</details>
 
 ### <a name="val-exists"></a>`exists`
 
@@ -175,17 +284,35 @@ val find : (elem -> bool) -> vector -> elem option
 val exists : (elem -> bool) -> vector -> bool
 ```
 
+<details><summary>Tests (6)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
+
 ### <a name="val-all"></a>`all`
 
 ```sml
 val all : (elem -> bool) -> vector -> bool
 ```
 
+<details><summary>Tests (8)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*` &middot; `long`
+
+</details>
+
 ### <a name="val-collate"></a>`collate`
 
 ```sml
 val collate : (elem * elem -> order) -> vector * vector -> order
 ```
+
+<details><summary>Tests (13)</summary>
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `equal` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
+
+</details>
 
 ---
 

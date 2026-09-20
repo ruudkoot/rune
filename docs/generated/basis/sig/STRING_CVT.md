@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 11 of 11 entries documented |
+| Tests | 138 checks of 10 entries |
 | Source | [lib/basis/sig\_string\_cvt.sml](../../../../lib/basis/sig_string_cvt.sml) |
 
 ## Synopsis
@@ -100,6 +101,12 @@ and read a number.
 | <a name="con-dec"></a>`DEC` |  | base 10 |
 | <a name="con-hex"></a>`HEX` |  | base 16; the digits above 9 are written `A` to `F` and read in either case |
 
+<details><summary>Tests (2)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `equal-to-itself` &middot; `four-distinct-values`
+
+</details>
+
 ### <a name="type-realfmt"></a>`realfmt`
 
 ```sml
@@ -125,6 +132,12 @@ The argument is a number of digits; `NONE` asks for the default.
 | <a name="con-gen"></a>`GEN` | `int option` | the shorter of [`SCI`](#con-sci) and [`FIX`](#con-fix), with at most that many significant digits; 12 by default |
 | <a name="con-exact"></a>`EXACT` |  | every digit needed to read the same real back |
 
+<details><summary>Tests (3)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `equality` &middot; `constructors-differ` &middot; `arguments-differ`
+
+</details>
+
 ## Readers
 
 ### <a name="type-reader"></a>`reader`
@@ -135,6 +148,12 @@ type ('a, 'b) reader = 'b -> ('a * 'b) option
 
 A reader of values of type `'a` from a stream of type `'b`: `NONE` at the
 end of the stream, otherwise the next value and the rest of the stream.
+
+<details><summary>Tests (2)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `is-the-function-type` &middot; `Bool.scan-List.getItem`
+
+</details>
 
 ## Padding
 
@@ -159,6 +178,12 @@ than `i`.
 > difference `i - size s` does not exist as an `int`; `s` is returned all
 > the same, and [`Overflow`](../sig/GENERAL.md#exn-overflow) is not raised.
 
+<details><summary>Tests (19)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `basic` &middot; `other-character` &middot; `one-short` &middot; `empty-string` &middot; `nul-character` &middot; `width-equals-size` &middot; `width-below-size` &middot; `width-one` &middot; `width-zero` &middot; `width-zero-empty-string` &middot; `width-negative` &middot; `width-negative-empty-string` &middot; `width-minInt` &middot; `partial-application` &middot; `long` &middot; `Size` (raises Size) &middot; `Size-empty-string` (raises Size) &middot; `law-*` &middot; `law-size-*`
+
+</details>
+
 ### <a name="val-padright"></a>`padRight`
 
 ```sml
@@ -172,6 +197,12 @@ A string that has `i` characters or more is returned as it is.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `i` is larger than [`String.maxSize`](../sig/STRING.md#val-maxsize) and `s` is shorter
 than `i`.
+
+<details><summary>Tests (19)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `basic` &middot; `other-character` &middot; `one-short` &middot; `empty-string` &middot; `character-255` &middot; `width-equals-size` &middot; `width-below-size` &middot; `width-one` &middot; `width-zero` &middot; `width-zero-empty-string` &middot; `width-negative` &middot; `width-negative-empty-string` &middot; `width-minInt` &middot; `partial-application` &middot; `long` &middot; `Size` (raises Size) &middot; `Size-empty-string` (raises Size) &middot; `law-*` &middot; `law-size-*`
+
+</details>
 
 ## Building scanners
 
@@ -191,6 +222,12 @@ The rest begins with the first character that does not satisfy `p`.
 > character that stops the scan is read from the source, and nothing after
 > it.
 
+<details><summary>Tests (24)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `list-none-satisfy` &middot; `list-all-satisfy` &middot; `list-empty-source` &middot; `list-one-satisfies` &middot; `list-one-fails` &middot; `always-true` &middot; `always-false` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `string-to-the-end` &middot; `string-at-the-end` &middot; `string-empty` &middot; `all-256-characters` &middot; `first-of-remainder-is-leftmost-failing` &middot; `other-source` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `reads-from-the-source-given` &middot; `reader-raises` (raises Fail) &middot; `predicate-raises` (raises Div) &middot; `law-string-*` &middot; `law-list-*` &middot; `law-parts-make-the-whole-*`
+
+</details>
+
 ### <a name="val-takel"></a>`takel`
 
 ```sml
@@ -201,6 +238,12 @@ val takel : (char -> bool) -> (char, 'a) reader -> 'a -> string
 that satisfy `p`.
 
 **Law** `takel p getc strm = #1 (splitl p getc strm)`
+
+<details><summary>Tests (10)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `none-satisfy` &middot; `all-satisfy` &middot; `empty-source` &middot; `string-from-the-middle` &middot; `maximal-prefix-only` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `law-*` &middot; `law-is-first-of-splitl-*`
+
+</details>
 
 ### <a name="val-dropl"></a>`dropl`
 
@@ -213,6 +256,12 @@ satisfy `p`.
 
 **Law** `dropl p getc strm = #2 (splitl p getc strm)`
 
+<details><summary>Tests (11)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `none-satisfy` &middot; `all-satisfy` &middot; `empty-source` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `maximal-prefix-only` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `law-*` &middot; `law-is-second-of-splitl-*`
+
+</details>
+
 ### <a name="val-skipws"></a>`skipWS`
 
 ```sml
@@ -224,6 +273,12 @@ val skipWS : (char, 'a) reader -> 'a -> 'a
 White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
 
 **Law** `skipWS getc strm = dropl Char.isSpace getc strm`
+
+<details><summary>Tests (15)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `spaces` &middot; `space-tab-newline` &middot; `wsx-every-whitespace-character` &middot; `no-whitespace` &middot; `only-whitespace` &middot; `empty-source` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `string-at-non-whitespace` &middot; `string-at-the-end` &middot; `wsx-exactly-the-six-characters` &middot; `other-characters-stay` &middot; `reads-no-further-than-first-non-whitespace` &middot; `law-*` &middot; `law-is-dropl-isSpace-*`
+
+</details>
 
 ## Scanning a string
 
@@ -254,6 +309,12 @@ in `s`, and `NONE` when it reads none. This is how every `fromString` of
 the library is made from its `scan`.
 
 **Example** `scanString (Int.scan DEC) "12abc" = SOME 12`
+
+<details><summary>Tests (33)</summary>
+
+For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `page-example-splitl` &middot; `splitl-nothing-satisfies` &middot; `splitl-empty-string` &middot; `source-is-the-string` &middot; `source-of-empty-string` &middot; `source-of-all-256-characters` &middot; `source-of-long-string` &middot; `first-character` &middot; `first-character-of-empty-string` &middot; `NONE` &middot; `nothing-read` &middot; `nothing-read-empty-string` &middot; `rest-is-ignored` &middot; `too-short-for-the-scanner` &middot; `state-can-be-read-again` &middot; `end-can-be-read-again` &middot; `scanner-applied-once` &middot; `scanner-raises` (raises Fail) &middot; `skipWS-then-takel` &middot; `skipWS-then-takel-NONE` &middot; `dropl-then-whole` &middot; `splitl-reads-one-character-ahead` &middot; `Bool.scan` &middot; `Bool.scan-rest-is-ignored` &middot; `Bool.scan-NONE` &middot; `Int.scan` &middot; `Int.scan-rest-is-ignored` &middot; `Int.scan-NONE` &middot; `Int.scan-empty-string` &middot; `composed-scanner` &middot; `law-whole-*` &middot; `law-splitl-*` &middot; `law-skipWS-*`
+
+</details>
 
 ## See also
 

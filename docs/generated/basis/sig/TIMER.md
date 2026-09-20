@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
+| Tests | 26 checks of 8 entries |
 | Source | [lib/basis/sig\_timer.sml](../../../../lib/basis/sig_timer.sml) |
 
 ## Synopsis
@@ -62,6 +63,12 @@ type real_timer
 val startCPUTimer : unit -> cpu_timer
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `starts` &middot; `starts-near-zero` &middot; `later-timer-reads-less`
+
+</details>
+
 ### <a name="val-checkcputimes"></a>`checkCPUTimes`
 
 ```sml
@@ -75,6 +82,12 @@ val checkCPUTimes : cpu_timer
 | <a name="fld-checkcputimes.nongc"></a>`nongc` | `{usr : Time.time, sys : Time.time}` |  |
 | <a name="fld-checkcputimes.gc"></a>`gc` | `{usr : Time.time, sys : Time.time}` |  |
 
+<details><summary>Tests (4)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `sum-is-checkCPUTimer` &middot; `does-not-go-back` &middot; `grows-while-computing`
+
+</details>
+
 ### <a name="val-checkcputimer"></a>`checkCPUTimer`
 
 ```sml
@@ -86,11 +99,23 @@ val checkCPUTimer : cpu_timer -> {usr : Time.time, sys : Time.time}
 | <a name="fld-checkcputimer.usr"></a>`usr` | `Time.time` |  |
 | <a name="fld-checkcputimer.sys"></a>`sys` | `Time.time` |  |
 
+<details><summary>Tests (3)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `grows-while-computing` &middot; `does-not-go-back`
+
+</details>
+
 ### <a name="val-checkgctime"></a>`checkGCTime`
 
 ```sml
 val checkGCTime : cpu_timer -> Time.time
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `is-gc-usr` &middot; `part-of-usr` &middot; `does-not-go-back`
+
+</details>
 
 ### <a name="val-totalcputimer"></a>`totalCPUTimer`
 
@@ -98,11 +123,23 @@ val checkGCTime : cpu_timer -> Time.time
 val totalCPUTimer : unit -> cpu_timer
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `includes-earlier-computation` &middot; `does-not-go-back`
+
+</details>
+
 ### <a name="val-startrealtimer"></a>`startRealTimer`
 
 ```sml
 val startRealTimer : unit -> real_timer
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `starts` &middot; `starts-near-zero`
+
+</details>
 
 ### <a name="val-checkrealtimer"></a>`checkRealTimer`
 
@@ -110,11 +147,23 @@ val startRealTimer : unit -> real_timer
 val checkRealTimer : real_timer -> Time.time
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `does-not-go-back` &middot; `measures-real-time` &middot; `at-most-the-time-around`
+
+</details>
+
 ### <a name="val-totalrealtimer"></a>`totalRealTimer`
 
 ```sml
 val totalRealTimer : unit -> real_timer
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `includes-earlier-time` &middot; `does-not-go-back`
+
+</details>
 
 ---
 

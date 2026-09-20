@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
+| Tests | 37 checks of 10 entries |
 | Source | [lib/basis/sig\_os\_process.sml](../../../../lib/basis/sig_os_process.sml) |
 
 ## Synopsis
@@ -47,11 +48,23 @@ end
 type status
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `list-of-statuses`
+
+</details>
+
 ### <a name="val-success"></a>`success`
 
 ```sml
 val success : status
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `isSuccess`
+
+</details>
 
 ### <a name="val-failure"></a>`failure`
 
@@ -59,11 +72,23 @@ val success : status
 val failure : status
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `not-isSuccess`
+
+</details>
+
 ### <a name="val-issuccess"></a>`isSuccess`
 
 ```sml
 val isSuccess : status -> bool
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `twice` &middot; `killed-by-signal`
+
+</details>
 
 ### <a name="val-system"></a>`system`
 
@@ -71,11 +96,23 @@ val isSuccess : status -> bool
 val system : string -> status
 ```
 
+<details><summary>Tests (15)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `exit-0` &middot; `exit-3` &middot; `exit-1` &middot; `exit-255` &middot; `true` &middot; `false` &middot; `empty-command` &middot; `unknown-command` &middot; `shell-redirection` &middot; `current-directory` &middot; `shell-syntax` &middot; `status-of-last-command` &middot; `status-of-and-list` &middot; `waits-for-the-command` &middot; `keeps-buffered-output`
+
+</details>
+
 ### <a name="val-atexit"></a>`atExit`
 
 ```sml
 val atExit : (unit -> unit) -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `not-run-at-registration` &middot; `action-that-raises` &middot; `action-that-registers`
+
+</details>
 
 ### <a name="val-exit"></a>`exit`
 
@@ -83,11 +120,23 @@ val atExit : (unit -> unit) -> unit
 val exit : status -> 'a
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `result-has-any-type` &middot; `result-has-any-type-string`
+
+</details>
+
 ### <a name="val-terminate"></a>`terminate`
 
 ```sml
 val terminate : status -> 'a
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `result-has-any-type` &middot; `result-has-any-type-string`
+
+</details>
 
 ### <a name="val-getenv"></a>`getEnv`
 
@@ -95,11 +144,23 @@ val terminate : status -> 'a
 val getEnv : string -> string option
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `unset` &middot; `PATH-is-set` &middot; `stable` &middot; `name-that-extends-a-set-name` &middot; `name-with-value-attached` &middot; `agrees-with-the-shell` &middot; `not-set-by-a-command`
+
+</details>
+
 ### <a name="val-sleep"></a>`sleep`
 
 ```sml
 val sleep : Time.time -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `zero` &middot; `positive` &middot; `positive-not-much-longer`
+
+</details>
 
 ---
 

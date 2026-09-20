@@ -29,6 +29,15 @@ cat tests/basis/*_sig.sml |
 awk -F '\t' 'NR > 1 && $2 == "structure" { print $1 " " $3 }' "$claims" | sort -u > "$tmp/all"
 awk -F '\t' 'NR > 1 && $2 == "structure" && $6 == "claimed" { print $1 " " $3 }' "$claims" | sort -u > "$tmp/claimed"
 
+# every transcribed signature is matched by some structure
+for f in tests/basis/spec-sigs/*.sml; do
+  case "$f" in *_IMP.sml) continue ;; esac
+  for sig in $(sed -n 's/^signature SPEC_\([A-Z0-9_]*\).*/\1/p' "$f"); do
+    grep -q " $sig\$" "$tmp/suite" ||
+      { echo "check-claims: no tests/basis/*_sig.sml matches a structure against SPEC_$sig ($f)"; status=1; }
+  done
+done
+
 comm -23 "$tmp/suite" "$tmp/all" > "$tmp/unclaimed"
 comm -13 "$tmp/suite" "$tmp/claimed" > "$tmp/untested"
 if [ -s "$tmp/unclaimed" ]; then

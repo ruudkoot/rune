@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 6 |
 | Documentation | 0 of 8 entries documented |
+| Tests | 44 checks of 7 entries |
 | Source | [lib/basis/sig\_pack\_real.sml](../../../../lib/basis/sig_pack_real.sml) |
 
 ## Synopsis
@@ -60,11 +61,27 @@ type real
 val bytesPerElem : int
 ```
 
+<details><summary>Tests (2)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `eight`
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `four`
+
+</details>
+
 ### <a name="val-isbigendian"></a>`isBigEndian`
 
 ```sml
 val isBigEndian : bool
 ```
+
+<details><summary>Tests (2)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `value`
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `value`
+
+</details>
 
 ### <a name="val-tobytes"></a>`toBytes`
 
@@ -72,11 +89,27 @@ val isBigEndian : bool
 val toBytes : real -> Word8Vector.vector
 ```
 
+<details><summary>Tests (4)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `*` &middot; `nan-exponent`
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `*` &middot; `nan-exponent`
+
+</details>
+
 ### <a name="val-frombytes"></a>`fromBytes`
 
 ```sml
 val fromBytes : Word8Vector.vector -> real
 ```
+
+<details><summary>Tests (10)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `*` &middot; `nan` &middot; `longer-uses-the-first` &middot; `Subscript-short` (raises) &middot; `inverts-toBytes`
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `*` &middot; `nan` &middot; `longer-uses-the-first` &middot; `Subscript-short` (raises) &middot; `inverts-toBytes`
+
+</details>
 
 ### <a name="val-subvec"></a>`subVec`
 
@@ -84,17 +117,41 @@ val fromBytes : Word8Vector.vector -> real
 val subVec : Word8Vector.vector * int -> real
 ```
 
+<details><summary>Tests (10)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `element-1` &middot; `element-2` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `element-1` &middot; `element-2` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
+
 ### <a name="val-subarr"></a>`subArr`
 
 ```sml
 val subArr : Word8Array.array * int -> real
 ```
 
+<details><summary>Tests (8)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `element-0` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `element-0` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
+
 ### <a name="val-update"></a>`update`
 
 ```sml
 val update : Word8Array.array * int * real -> unit
 ```
+
+<details><summary>Tests (8)</summary>
+
+In [tests/basis/fn/pack\_real\_fn.sml](../../../../tests/basis/fn/pack_real_fn.sml), applied to `PackRealBig`, `PackRealLittle`, `PackReal64Big`, `PackReal64Little`: `element-1` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+In [tests/basis/fn/pack\_real32\_fn.sml](../../../../tests/basis/fn/pack_real32_fn.sml), applied to `PackReal32Big`, `PackReal32Little`: `element-1` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
 
 ---
 

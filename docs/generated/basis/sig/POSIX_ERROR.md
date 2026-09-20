@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 49 entries documented |
+| Tests | 81 checks of 49 entries |
 | Source | [lib/basis/sig\_posix\_error.sml](../../../../lib/basis/sig_posix_error.sml) |
 
 ## Synopsis
@@ -94,11 +95,23 @@ end
 type syserror = OS.syserror
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `inverts-errorName-all` &middot; `unknown-name` &middot; `empty-name` &middot; `is-OS.syserror`
+
+</details>
+
 ### <a name="val-toword"></a>`toWord`
 
 ```sml
 val toWord : syserror -> SysWord.word
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `distinct-words` &middot; `nonzero`
+
+</details>
 
 ### <a name="val-fromword"></a>`fromWord`
 
@@ -106,11 +119,23 @@ val toWord : syserror -> SysWord.word
 val fromWord : SysWord.word -> syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `no-validation` &middot; `of-toWord`
+
+</details>
+
 ### <a name="val-errormsg"></a>`errorMsg`
 
 ```sml
 val errorMsg : syserror -> string
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `is-OS.errorMsg` &middot; `nonempty` &middot; `differ` &middot; `of-SysErr`
+
+</details>
 
 ### <a name="val-errorname"></a>`errorName`
 
@@ -118,11 +143,23 @@ val errorMsg : syserror -> string
 val errorName : syserror -> string
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `distinct-errors` &middot; `distinct-names` &middot; `badmsg` &middot; `toobig-not-2big`
+
+</details>
+
 ### <a name="val-syserror"></a>`syserror`
 
 ```sml
 val syserror : string -> syserror option
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `inverts-errorName-all` &middot; `unknown-name` &middot; `empty-name` &middot; `is-OS.syserror`
+
+</details>
 
 ### <a name="val-acces"></a>`acces`
 
@@ -130,11 +167,23 @@ val syserror : string -> syserror option
 val acces : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `open-unreadable-file`
+
+</details>
+
 ### <a name="val-again"></a>`again`
 
 ```sml
 val again : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-badf"></a>`badf`
 
@@ -142,11 +191,23 @@ val again : syserror
 val badf : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `close-twice`
+
+</details>
+
 ### <a name="val-badmsg"></a>`badmsg`
 
 ```sml
 val badmsg : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-busy"></a>`busy`
 
@@ -154,11 +215,23 @@ val badmsg : syserror
 val busy : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-canceled"></a>`canceled`
 
 ```sml
 val canceled : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-child"></a>`child`
 
@@ -166,11 +239,23 @@ val canceled : syserror
 val child : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `wait-without-children`
+
+</details>
+
 ### <a name="val-deadlk"></a>`deadlk`
 
 ```sml
 val deadlk : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-dom"></a>`dom`
 
@@ -178,11 +263,23 @@ val deadlk : syserror
 val dom : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-exist"></a>`exist`
 
 ```sml
 val exist : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `mkDir-twice`
+
+</details>
 
 ### <a name="val-fault"></a>`fault`
 
@@ -190,11 +287,23 @@ val exist : syserror
 val fault : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-fbig"></a>`fbig`
 
 ```sml
 val fbig : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-inprogress"></a>`inprogress`
 
@@ -202,11 +311,23 @@ val fbig : syserror
 val inprogress : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-intr"></a>`intr`
 
 ```sml
 val intr : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-inval"></a>`inval`
 
@@ -214,11 +335,23 @@ val intr : syserror
 val inval : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `rename-into-itself`
+
+</details>
+
 ### <a name="val-io"></a>`io`
 
 ```sml
 val io : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-isdir"></a>`isdir`
 
@@ -226,11 +359,23 @@ val io : syserror
 val isdir : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `open-directory-for-writing`
+
+</details>
+
 ### <a name="val-loop"></a>`loop`
 
 ```sml
 val loop : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `symbolic-link-loop`
+
+</details>
 
 ### <a name="val-mfile"></a>`mfile`
 
@@ -238,11 +383,23 @@ val loop : syserror
 val mfile : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-mlink"></a>`mlink`
 
 ```sml
 val mlink : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-msgsize"></a>`msgsize`
 
@@ -250,11 +407,23 @@ val mlink : syserror
 val msgsize : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-nametoolong"></a>`nametoolong`
 
 ```sml
 val nametoolong : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `long-file-name`
+
+</details>
 
 ### <a name="val-nfile"></a>`nfile`
 
@@ -262,11 +431,23 @@ val nametoolong : syserror
 val nfile : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-nodev"></a>`nodev`
 
 ```sml
 val nodev : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-noent"></a>`noent`
 
@@ -274,11 +455,23 @@ val nodev : syserror
 val noent : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `open-missing-file`
+
+</details>
+
 ### <a name="val-noexec"></a>`noexec`
 
 ```sml
 val noexec : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `exec-of-data`
+
+</details>
 
 ### <a name="val-nolck"></a>`nolck`
 
@@ -286,11 +479,23 @@ val noexec : syserror
 val nolck : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-nomem"></a>`nomem`
 
 ```sml
 val nomem : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-nospc"></a>`nospc`
 
@@ -298,11 +503,23 @@ val nomem : syserror
 val nospc : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-nosys"></a>`nosys`
 
 ```sml
 val nosys : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-notdir"></a>`notdir`
 
@@ -310,11 +527,23 @@ val nosys : syserror
 val notdir : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `path-through-file`
+
+</details>
+
 ### <a name="val-notempty"></a>`notempty`
 
 ```sml
 val notempty : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `rmDir-nonempty`
+
+</details>
 
 ### <a name="val-notsup"></a>`notsup`
 
@@ -322,11 +551,23 @@ val notempty : syserror
 val notsup : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-notty"></a>`notty`
 
 ```sml
 val notty : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `ttyname-of-dev-null`
+
+</details>
 
 ### <a name="val-nxio"></a>`nxio`
 
@@ -334,11 +575,23 @@ val notty : syserror
 val nxio : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-perm"></a>`perm`
 
 ```sml
 val perm : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `setuid-root`
+
+</details>
 
 ### <a name="val-pipe"></a>`pipe`
 
@@ -346,11 +599,23 @@ val perm : syserror
 val pipe : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `write-without-reader`
+
+</details>
+
 ### <a name="val-range"></a>`range`
 
 ```sml
 val range : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ### <a name="val-rofs"></a>`rofs`
 
@@ -358,11 +623,23 @@ val range : syserror
 val rofs : syserror
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
+
 ### <a name="val-spipe"></a>`spipe`
 
 ```sml
 val spipe : syserror
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `lseek-on-pipe`
+
+</details>
 
 ### <a name="val-srch"></a>`srch`
 
@@ -370,17 +647,35 @@ val spipe : syserror
 val srch : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `kill-reaped-child`
+
+</details>
+
 ### <a name="val-toobig"></a>`toobig`
 
 ```sml
 val toobig : syserror
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*` &middot; `exec-huge-argument`
+
+</details>
+
 ### <a name="val-xdev"></a>`xdev`
 
 ```sml
 val xdev : syserror
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
+
+</details>
 
 ---
 

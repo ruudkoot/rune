@@ -85,17 +85,17 @@ struct
   val () = eqK ("IntInf.rem/2^64-by-~10^9", 709551616, fn () => I.rem (p2 64, I.~ (tenTo 9)))
 
   (* ---- divMod (i, j) = (i div j, i mod j); quotRem (i, j) = (i quot j, i rem j) ---- *)
-  fun pairs (member, f) cases =
+  fun pairs (label, f) cases =
     List.app (fn (a, b, q, r) =>
-      eqP ("IntInf." ^ member ^ "/" ^ Int.toString a ^ "-by-" ^ Int.toString b,
+      eqP (label ^ Int.toString a ^ "-by-" ^ Int.toString b,
            fn () => (i q, i r), fn () => f (i a, i b))) cases
-  val () = pairs ("divMod", I.divMod)
+  val () = pairs ("IntInf.divMod/", I.divMod)
     [(7, 2, 3, 1), (~7, 2, ~4, 1), (7, ~2, ~4, ~1), (~7, ~2, 3, ~1),
      (6, 3, 2, 0), (~6, 3, ~2, 0), (6, ~3, ~2, 0), (~6, ~3, 2, 0),
      (0, 5, 0, 0), (0, ~5, 0, 0), (1, 2, 0, 1), (~1, 2, ~1, 1), (1, ~2, ~1, ~1), (~1, ~2, 0, ~1),
      (100, 7, 14, 2), (~100, 7, ~15, 5), (100, ~7, ~15, ~5), (~100, ~7, 14, ~2),
      (5, 1, 5, 0), (5, ~1, ~5, 0), (3, 5, 0, 3), (~3, 5, ~1, 2), (3, ~5, ~1, ~2)]
-  val () = pairs ("quotRem", I.quotRem)
+  val () = pairs ("IntInf.quotRem/", I.quotRem)
     [(7, 2, 3, 1), (~7, 2, ~3, ~1), (7, ~2, ~3, 1), (~7, ~2, 3, ~1),
      (6, 3, 2, 0), (~6, 3, ~2, 0), (6, ~3, ~2, 0), (~6, ~3, 2, 0),
      (0, 5, 0, 0), (0, ~5, 0, 0), (1, 2, 0, 1), (~1, 2, 0, ~1), (1, ~2, 0, 1), (~1, ~2, 0, ~1),

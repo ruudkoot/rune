@@ -7,6 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 11 of 13 entries documented |
+| Tests | not listed |
 | Source | [tests/doc/text.sml](../tests/doc/text.sml) |
 
 ## Synopsis

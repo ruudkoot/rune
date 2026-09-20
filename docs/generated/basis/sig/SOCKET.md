@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 93 entries documented |
+| Tests | 298 checks of 78 entries |
 | Source | [lib/basis/sig\_socket.sml](../../../../lib/basis/sig_socket.sml) |
 
 ## Synopsis
@@ -205,17 +206,35 @@ type addr_family = NetHostDB.addr_family
 val list : unit -> (string * addr_family) list
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `has-INET` &middot; `has-UNIX` &middot; `names-are-toString` &middot; `inet-is-not-unix`
+
+</details>
+
 #### <a name="val-af.tostring"></a>`toString`
 
 ```sml
 val toString : addr_family -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inet` &middot; `unix`
+
+</details>
+
 #### <a name="val-af.fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> addr_family option
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inverts-list` &middot; `INET` &middot; `UNIX` &middot; `unknown` &middot; `empty` &middot; `with-AF_-prefix`
+
+</details>
 
 ### <a name="str-sock"></a>`SOCK`
 
@@ -231,11 +250,23 @@ eqtype sock_type
 val stream : sock_type
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `is-not-dgram` &middot; `type-of-a-TCP-socket`
+
+</details>
+
 #### <a name="val-sock.dgram"></a>`dgram`
 
 ```sml
 val dgram : sock_type
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `type-of-a-UDP-socket`
+
+</details>
 
 #### <a name="val-sock.list"></a>`list`
 
@@ -243,17 +274,35 @@ val dgram : sock_type
 val list : unit -> (string * sock_type) list
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `has-STREAM` &middot; `has-DGRAM` &middot; `names-are-toString`
+
+</details>
+
 #### <a name="val-sock.tostring"></a>`toString`
 
 ```sml
 val toString : sock_type -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `stream` &middot; `dgram`
+
+</details>
+
 #### <a name="val-sock.fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> sock_type option
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inverts-list` &middot; `STREAM` &middot; `DGRAM` &middot; `unknown` &middot; `with-SOCK_-prefix`
+
+</details>
 
 ### <a name="str-ctl"></a>`Ctl`
 
@@ -263,11 +312,23 @@ val fromString : string -> sock_type option
 val getDEBUG : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setdebug"></a>`setDEBUG`
 
 ```sml
 val setDEBUG : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `off` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getreuseaddr"></a>`getREUSEADDR`
 
@@ -275,11 +336,23 @@ val setDEBUG : ('af, 'sock_type) sock * bool -> unit
 val getREUSEADDR : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setreuseaddr"></a>`setREUSEADDR`
 
 ```sml
 val setREUSEADDR : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `on` &middot; `off-again` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getkeepalive"></a>`getKEEPALIVE`
 
@@ -287,11 +360,23 @@ val setREUSEADDR : ('af, 'sock_type) sock * bool -> unit
 val getKEEPALIVE : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setkeepalive"></a>`setKEEPALIVE`
 
 ```sml
 val setKEEPALIVE : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `on` &middot; `off-again` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getdontroute"></a>`getDONTROUTE`
 
@@ -299,11 +384,23 @@ val setKEEPALIVE : ('af, 'sock_type) sock * bool -> unit
 val getDONTROUTE : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setdontroute"></a>`setDONTROUTE`
 
 ```sml
 val setDONTROUTE : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `on` &middot; `off-again` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getlinger"></a>`getLINGER`
 
@@ -311,11 +408,23 @@ val setDONTROUTE : ('af, 'sock_type) sock * bool -> unit
 val getLINGER : ('af, 'sock_type) sock -> Time.time option
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setlinger"></a>`setLINGER`
 
 ```sml
 val setLINGER : ('af, 'sock_type) sock * Time.time option -> unit
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `some` &middot; `zero` &middot; `none-again` &middot; `negative` (raises) &middot; `too-large` (raises) &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getbroadcast"></a>`getBROADCAST`
 
@@ -323,11 +432,23 @@ val setLINGER : ('af, 'sock_type) sock * Time.time option -> unit
 val getBROADCAST : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setbroadcast"></a>`setBROADCAST`
 
 ```sml
 val setBROADCAST : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `on` &middot; `off-again` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getoobinline"></a>`getOOBINLINE`
 
@@ -335,11 +456,23 @@ val setBROADCAST : ('af, 'sock_type) sock * bool -> unit
 val getOOBINLINE : ('af, 'sock_type) sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `default` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setoobinline"></a>`setOOBINLINE`
 
 ```sml
 val setOOBINLINE : ('af, 'sock_type) sock * bool -> unit
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `on` &middot; `off-again` &middot; `urgent-byte-in-the-stream` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getsndbuf"></a>`getSNDBUF`
 
@@ -347,11 +480,23 @@ val setOOBINLINE : ('af, 'sock_type) sock * bool -> unit
 val getSNDBUF : ('af, 'sock_type) sock -> int
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `positive` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setsndbuf"></a>`setSNDBUF`
 
 ```sml
 val setSNDBUF : ('af, 'sock_type) sock * int -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `at-least-the-size` &middot; `larger` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getrcvbuf"></a>`getRCVBUF`
 
@@ -359,11 +504,23 @@ val setSNDBUF : ('af, 'sock_type) sock * int -> unit
 val getRCVBUF : ('af, 'sock_type) sock -> int
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `positive` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.setrcvbuf"></a>`setRCVBUF`
 
 ```sml
 val setRCVBUF : ('af, 'sock_type) sock * int -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `at-least-the-size` &middot; `larger` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.gettype"></a>`getTYPE`
 
@@ -371,11 +528,23 @@ val setRCVBUF : ('af, 'sock_type) sock * int -> unit
 val getTYPE : ('af, 'sock_type) sock -> SOCK.sock_type
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `tcp` &middot; `udp` &middot; `unix-stream` &middot; `unix-dgram` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.geterror"></a>`getERROR`
 
 ```sml
 val getERROR : ('af, 'sock_type) sock -> bool
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `fresh` &middot; `port-unreachable` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getpeername"></a>`getPeerName`
 
@@ -383,11 +552,23 @@ val getERROR : ('af, 'sock_type) sock -> bool
 val getPeerName : ('af, 'sock_type) sock -> 'af sock_addr
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `session-is-peer-of-client` &middot; `loopback` &middot; `dgram-connected` &middot; `unix-pair` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.getsockname"></a>`getSockName`
 
 ```sml
 val getSockName : ('af, 'sock_type) sock -> 'af sock_addr
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `bound` &middot; `client-is-peer-of-session` &middot; `closed`
+
+</details>
 
 #### <a name="val-ctl.getnread"></a>`getNREAD`
 
@@ -395,11 +576,23 @@ val getSockName : ('af, 'sock_type) sock -> 'af sock_addr
 val getNREAD : ('af, 'sock_type) sock -> int
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `nothing` &middot; `five-bytes` &middot; `after-reading-two` &middot; `closed`
+
+</details>
+
 #### <a name="val-ctl.getatmark"></a>`getATMARK`
 
 ```sml
 val getATMARK : ('af, active stream) sock -> bool
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `before-and-at-the-mark` &middot; `no-urgent-data` &middot; `closed`
+
+</details>
 
 ### <a name="val-sameaddr"></a>`sameAddr`
 
@@ -407,11 +600,23 @@ val getATMARK : ('af, active stream) sock -> bool
 val sameAddr : 'af sock_addr * 'af sock_addr -> bool
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `equal-addresses` &middot; `other-port` &middot; `other-host` &middot; `any-is-not-loopback` &middot; `sockname-and-its-parts` &middot; `unix-same-path` &middot; `unix-other-path`
+
+</details>
+
 ### <a name="val-familyofaddr"></a>`familyOfAddr`
 
 ```sml
 val familyOfAddr : 'af sock_addr -> AF.addr_family
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inet-toAddr` &middot; `inet-any` &middot; `inet-sockname` &middot; `unix-toAddr` &middot; `unix-sockname`
+
+</details>
 
 ### <a name="val-bind"></a>`bind`
 
@@ -419,11 +624,23 @@ val familyOfAddr : 'af sock_addr -> AF.addr_family
 val bind : ('af, 'sock_type) sock * 'af sock_addr -> unit
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `port-0-picks-a-port` &middot; `bound-host` &middot; `address-in-use` (raises) &middot; `already-bound` (raises) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-listen"></a>`listen`
 
 ```sml
 val listen : ('af, passive stream) sock * int -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `backlog-above-the-limit` &middot; `then-connections-are-accepted` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-accept"></a>`accept`
 
@@ -431,11 +648,23 @@ val listen : ('af, passive stream) sock * int -> unit
 val accept : ('af, passive stream) sock -> ('af, active stream) sock * 'af sock_addr
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `address-of-the-client` &middot; `new-socket-like-the-listener` &middot; `new-socket-is-connected` &middot; `first-in-the-queue` &middot; `not-listening` (raises) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-acceptnb"></a>`acceptNB`
 
 ```sml
 val acceptNB : ('af, passive stream) sock -> (('af, active stream) sock * 'af sock_addr) option
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `nothing-pending` &middot; `pending` &middot; `queue-emptied` &middot; `not-listening` (raises) &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-connect"></a>`connect`
 
@@ -443,17 +672,35 @@ val acceptNB : ('af, passive stream) sock -> (('af, active stream) sock * 'af so
 val connect : ('af, 'sock_type) sock * 'af sock_addr -> unit
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `refused` (raises) &middot; `already-connected` (raises) &middot; `closed` (raises) &middot; `peer-is-the-listener` &middot; `dgram-peer` &middot; `dgram-receives-from-the-peer-only`
+
+</details>
+
 ### <a name="val-connectnb"></a>`connectNB`
 
 ```sml
 val connectNB : ('af, 'sock_type) sock * 'af sock_addr -> bool
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `stream` &middot; `dgram` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-close"></a>`close`
 
 ```sml
 val close : ('af, 'sock_type) sock -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `twice` (raises) &middot; `twice-unix` (raises) &middot; `peer-sees-the-end` &middot; `peer-gets-the-data-then-the-end` &middot; `listener-stops-listening` (raises)
+
+</details>
 
 ### <a name="type-shutdown_mode"></a>`shutdown_mode`
 
@@ -473,6 +720,12 @@ datatype shutdown_mode = NO_RECVS | NO_SENDS | NO_RECVS_OR_SENDS
 val shutdown : ('af, 'mode stream) sock * shutdown_mode -> unit
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `NO_SENDS-peer-sees-the-end` &middot; `unix-NO_SENDS` &middot; `not-connected` (raises) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="type-sock_desc"></a>`sock_desc`
 
 ```sml
@@ -485,11 +738,23 @@ type sock_desc
 val sockDesc : ('af, 'sock_type) sock -> sock_desc
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `sameDesc-of-itself`
+
+</details>
+
 ### <a name="val-samedesc"></a>`sameDesc`
 
 ```sml
 val sameDesc : sock_desc * sock_desc -> bool
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `same-socket` &middot; `different-sockets` &middot; `pair`
+
+</details>
 
 ### <a name="val-select"></a>`select`
 
@@ -505,11 +770,25 @@ val select : {rds : sock_desc list, wrs : sock_desc list, exs : sock_desc list, 
 | <a name="fld-select.exs"></a>`exs` | `sock_desc list` |  |
 | <a name="fld-select.timeout"></a>`timeout` | `Time.time option` |  |
 
+<details><summary>Tests (14)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `timeout` &middot; `timeout-waits` &middot; `zero-timeout` &middot; `no-sockets` &middot; `readable` &middot; `no-timeout` &middot; `writable` &middot; `only-the-ready-ones` &middot; `in-two-lists` &middot; `order-preserved` &middot; `listener-readable-when-a-connection-is-pending` &middot; `closed` (raises) &middot; `negative-timeout` (raises)
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `exceptional-condition`
+
+</details>
+
 ### <a name="val-iodesc"></a>`ioDesc`
 
 ```sml
 val ioDesc : ('af, 'sock_type) sock -> OS.IO.iodesc
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `kind-is-socket` &middot; `kind-is-socket-unix` &middot; `same-socket` &middot; `different-sockets` &middot; `poll`
+
+</details>
 
 ### <a name="type-out_flags"></a>`out_flags`
 
@@ -539,11 +818,23 @@ type in_flags = {peek : bool, oob : bool}
 val sendVec : ('af, active stream) sock * Word8VectorSlice.slice -> int
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `count` &middot; `arrives` &middot; `slice` &middot; `empty-slice` &middot; `unix-pair-both-ways` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-sendarr"></a>`sendArr`
 
 ```sml
 val sendArr : ('af, active stream) sock * Word8ArraySlice.slice -> int
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `count` &middot; `arrives` &middot; `slice` &middot; `empty-slice` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-sendvec-prime"></a>`sendVec'`
 
@@ -551,11 +842,23 @@ val sendArr : ('af, active stream) sock * Word8ArraySlice.slice -> int
 val sendVec' : ('af, active stream) sock * Word8VectorSlice.slice * out_flags -> int
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises) &middot; `oob`
+
+</details>
+
 ### <a name="val-sendarr-prime"></a>`sendArr'`
 
 ```sml
 val sendArr' : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -> int
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises) &middot; `oob`
+
+</details>
 
 ### <a name="val-sendvecnb"></a>`sendVecNB`
 
@@ -563,11 +866,23 @@ val sendArr' : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -> 
 val sendVecNB : ('af, active stream) sock * Word8VectorSlice.slice -> int option
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `room` &middot; `full` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-sendvecnb-prime"></a>`sendVecNB'`
 
 ```sml
 val sendVecNB' : ('af, active stream) sock * Word8VectorSlice.slice * out_flags -> int option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `room` &middot; `full` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-sendarrnb"></a>`sendArrNB`
 
@@ -575,11 +890,23 @@ val sendVecNB' : ('af, active stream) sock * Word8VectorSlice.slice * out_flags 
 val sendArrNB : ('af, active stream) sock * Word8ArraySlice.slice -> int option
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `room` &middot; `full` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-sendarrnb-prime"></a>`sendArrNB'`
 
 ```sml
 val sendArrNB' : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -> int option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `room` &middot; `full` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvvec"></a>`recvVec`
 
@@ -587,11 +914,23 @@ val sendArrNB' : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -
 val recvVec : ('af, active stream) sock * int -> Word8Vector.vector
 ```
 
+<details><summary>Tests (8)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `at-most-n` &middot; `unix` &middot; `zero` &middot; `end-of-stream` &middot; `end-of-stream-again` &middot; `negative` (raises Size) &middot; `above-maxLen` (raises Size) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvvec-prime"></a>`recvVec'`
 
 ```sml
 val recvVec' : ('af, active stream) sock * int * in_flags -> Word8Vector.vector
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `oob` &middot; `peek` &middot; `no-flags` &middot; `end-of-stream` &middot; `negative` (raises Size) &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvarr"></a>`recvArr`
 
@@ -599,11 +938,23 @@ val recvVec' : ('af, active stream) sock * int * in_flags -> Word8Vector.vector
 val recvArr : ('af, active stream) sock * Word8ArraySlice.slice -> int
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `count-and-place` &middot; `empty-slice` &middot; `end-of-stream` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvarr-prime"></a>`recvArr'`
 
 ```sml
 val recvArr' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -> int
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `oob` &middot; `peek` &middot; `end-of-stream` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvvecnb"></a>`recvVecNB`
 
@@ -611,11 +962,23 @@ val recvArr' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -> i
 val recvVecNB : ('af, active stream) sock * int -> Word8Vector.vector option
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `data` &middot; `end-of-stream` &middot; `zero` &middot; `negative` (raises Size) &middot; `closed` (raises) &middot; `then-blocking`
+
+</details>
+
 ### <a name="val-recvvecnb-prime"></a>`recvVecNB'`
 
 ```sml
 val recvVecNB' : ('af, active stream) sock * int * in_flags -> Word8Vector.vector option
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `peek` &middot; `negative` (raises Size) &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvarrnb"></a>`recvArrNB`
 
@@ -623,11 +986,23 @@ val recvVecNB' : ('af, active stream) sock * int * in_flags -> Word8Vector.vecto
 val recvArrNB : ('af, active stream) sock * Word8ArraySlice.slice -> int option
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `count-and-place` &middot; `end-of-stream` &middot; `empty-slice` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvarrnb-prime"></a>`recvArrNB'`
 
 ```sml
 val recvArrNB' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -> int option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_io.sml](../../../../tests/basis/socket_io.sml): `nothing-there` &middot; `peek` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-sendvecto"></a>`sendVecTo`
 
@@ -635,11 +1010,23 @@ val recvArrNB' : ('af, active stream) sock * Word8ArraySlice.slice * in_flags ->
 val sendVecTo : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice -> unit
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `arrives` &middot; `slice` &middot; `empty-message` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-sendarrto"></a>`sendArrTo`
 
 ```sml
 val sendArrTo : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `arrives` &middot; `slice` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-sendvecto-prime"></a>`sendVecTo'`
 
@@ -647,11 +1034,23 @@ val sendArrTo : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice -> uni
 val sendVecTo' : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * out_flags -> unit
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-sendarrto-prime"></a>`sendArrTo'`
 
 ```sml
 val sendArrTo' : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out_flags -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `no-flags` &middot; `don't_route` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-sendvectonb"></a>`sendVecToNB`
 
@@ -659,11 +1058,23 @@ val sendArrTo' : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out
 val sendVecToNB : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice -> bool
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `room` &middot; `closed` (raises) &middot; `full`
+
+</details>
+
 ### <a name="val-sendvectonb-prime"></a>`sendVecToNB'`
 
 ```sml
 val sendVecToNB' : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * out_flags -> bool
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `room` &middot; `closed` (raises) &middot; `full`
+
+</details>
 
 ### <a name="val-sendarrtonb"></a>`sendArrToNB`
 
@@ -671,11 +1082,23 @@ val sendVecToNB' : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * 
 val sendArrToNB : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice -> bool
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `room` &middot; `closed` (raises) &middot; `full`
+
+</details>
+
 ### <a name="val-sendarrtonb-prime"></a>`sendArrToNB'`
 
 ```sml
 val sendArrToNB' : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out_flags -> bool
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `room` &middot; `closed` (raises) &middot; `full`
+
+</details>
 
 ### <a name="val-recvvecfrom"></a>`recvVecFrom`
 
@@ -683,11 +1106,23 @@ val sendArrToNB' : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * o
 val recvVecFrom : ('af, dgram) sock * int -> Word8Vector.vector * 'af sock_addr
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `message-and-address` &middot; `one-message-at-a-time` &middot; `at-most-n` &middot; `unix` &middot; `negative` (raises Size) &middot; `above-maxLen` (raises Size) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvvecfrom-prime"></a>`recvVecFrom'`
 
 ```sml
 val recvVecFrom' : ('af, dgram) sock * int * in_flags -> Word8Vector.vector * 'af sock_addr
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `peek` &middot; `no-flags` &middot; `negative` (raises Size) &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvarrfrom"></a>`recvArrFrom`
 
@@ -695,11 +1130,23 @@ val recvVecFrom' : ('af, dgram) sock * int * in_flags -> Word8Vector.vector * 'a
 val recvArrFrom : ('af, dgram) sock * Word8ArraySlice.slice -> int * 'af sock_addr
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `count-place-and-address` &middot; `at-most-the-slice` &middot; `empty-slice` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvarrfrom-prime"></a>`recvArrFrom'`
 
 ```sml
 val recvArrFrom' : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -> int * 'af sock_addr
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `no-flags` &middot; `peek` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvvecfromnb"></a>`recvVecFromNB`
 
@@ -707,11 +1154,23 @@ val recvArrFrom' : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -> int *
 val recvVecFromNB : ('af, dgram) sock * int -> (Word8Vector.vector * 'af sock_addr) option
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `nothing-there` &middot; `message` &middot; `negative` (raises Size) &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvvecfromnb-prime"></a>`recvVecFromNB'`
 
 ```sml
 val recvVecFromNB' : ('af, dgram) sock * int * in_flags -> (Word8Vector.vector * 'af sock_addr) option
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `nothing-there` &middot; `peek` &middot; `negative` (raises Size) &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-recvarrfromnb"></a>`recvArrFromNB`
 
@@ -719,11 +1178,23 @@ val recvVecFromNB' : ('af, dgram) sock * int * in_flags -> (Word8Vector.vector *
 val recvArrFromNB : ('af, dgram) sock * Word8ArraySlice.slice -> (int * 'af sock_addr) option
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `nothing-there` &middot; `message` &middot; `closed` (raises)
+
+</details>
+
 ### <a name="val-recvarrfromnb-prime"></a>`recvArrFromNB'`
 
 ```sml
 val recvArrFromNB' : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -> (int * 'af sock_addr) option
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Socket`, in [tests/basis/socket\_dgram.sml](../../../../tests/basis/socket_dgram.sml): `nothing-there` &middot; `message` &middot; `peek` &middot; `closed` (raises)
+
+</details>
 
 ---
 

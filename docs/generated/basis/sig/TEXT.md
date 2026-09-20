@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 0 of 7 entries documented |
+| Tests | 25 checks of 7 entries |
 | Source | [lib/basis/sig\_text.sml](../../../../lib/basis/sig_text.sml) |
 
 ## Synopsis
@@ -62,6 +63,12 @@ structure Char : CHAR
 
 A substructure: its members are described on the page of [`CHAR`](../sig/CHAR.md).
 
+<details><summary>Tests (5)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `ord-of-a-char` &middot; `chr-is-a-char` &middot; `maxOrd-is-that-of-Char` &middot; `same-functions` &middot; `chr-raises-Chr` (raises Chr)
+
+</details>
+
 ### <a name="str-string"></a>`String`
 
 ```sml
@@ -69,6 +76,12 @@ structure String : STRING
 ```
 
 A substructure: its members are described on the page of [`STRING`](../sig/STRING.md).
+
+<details><summary>Tests (4)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `size-of-a-string` &middot; `concat-is-a-string` &middot; `same-functions` &middot; `char-is-char`
+
+</details>
 
 ### <a name="str-substring"></a>`Substring`
 
@@ -78,6 +91,12 @@ structure Substring : SUBSTRING
 
 A substructure: its members are described on the page of [`SUBSTRING`](../sig/SUBSTRING.md).
 
+<details><summary>Tests (3)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-Substring.substring` &middot; `is-a-Substring.substring` &middot; `base`
+
+</details>
+
 ### <a name="str-charvector"></a>`CharVector`
 
 ```sml
@@ -85,6 +104,12 @@ structure CharVector : MONO_VECTOR
 ```
 
 A substructure: its members are described on the page of [`MONO_VECTOR`](../sig/MONO_VECTOR.md).
+
+<details><summary>Tests (3)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `vector-is-a-string` &middot; `of-a-CharVector.vector` &middot; `is-a-CharVector.vector`
+
+</details>
 
 ### <a name="str-chararray"></a>`CharArray`
 
@@ -94,6 +119,12 @@ structure CharArray : MONO_ARRAY
 
 A substructure: its members are described on the page of [`MONO_ARRAY`](../sig/MONO_ARRAY.md).
 
+<details><summary>Tests (3)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-CharArray.array` &middot; `is-a-CharArray.array` &middot; `same-array-is-equal`
+
+</details>
+
 ### <a name="str-charvectorslice"></a>`CharVectorSlice`
 
 ```sml
@@ -102,6 +133,12 @@ structure CharVectorSlice : MONO_VECTOR_SLICE
 
 A substructure: its members are described on the page of [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md).
 
+<details><summary>Tests (4)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-CharVectorSlice.slice` &middot; `is-a-CharVectorSlice.slice` &middot; `is-a-substring` &middot; `of-a-substring`
+
+</details>
+
 ### <a name="str-chararrayslice"></a>`CharArraySlice`
 
 ```sml
@@ -109,6 +146,12 @@ structure CharArraySlice : MONO_ARRAY_SLICE
 ```
 
 A substructure: its members are described on the page of [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md).
+
+<details><summary>Tests (3)</summary>
+
+For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-CharArraySlice.slice` &middot; `is-a-CharArraySlice.slice` &middot; `copyVec-of-a-CharVectorSlice.slice`
+
+</details>
 
 ---
 

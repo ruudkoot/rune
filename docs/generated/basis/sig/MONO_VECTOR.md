@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 0 of 22 entries documented |
+| Tests | 285 checks of 22 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -94,11 +95,25 @@ end
 type vector
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-String.string` &middot; `string-equality`
+
+</details>
+
 ### <a name="type-elem"></a>`elem`
 
 ```sml
 type elem
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-char`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `eight-distinct-samples`
+
+</details>
 
 ### <a name="val-maxlen"></a>`maxLen`
 
@@ -106,11 +121,61 @@ type elem
 val maxLen : int
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-vectors`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `covers-created-vectors`
+
+</details>
+
 ### <a name="val-fromlist"></a>`fromList`
 
 ```sml
 val fromList : elem list -> vector
 ```
+
+<details><summary>Tests (29)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-implode` &middot; `nil-is-the-empty-string` &middot; `explode*`
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `every-byte`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil` &middot; `length`
+
+For `IntVector`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `extremes`
+
+For `Int8Vector`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `extremes`
+
+For `Int16Vector`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `extremes`
+
+For `Int32Vector`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `extremes`
+
+For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `extremes`
+
+For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
+
+For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
+
+For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
+
+For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `specials`
+
+For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
+
+For `LargeWordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
+
+For `Word64Vector`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `extremes`
+
+For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
+
+For `Real64Vector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `specials`
+
+For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `specials`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `nil` &middot; `singleton` &middot; `every-sample` &middot; `length` &middot; `round-trip*` &middot; `long`
+
+</details>
 
 ### <a name="val-tabulate"></a>`tabulate`
 
@@ -118,11 +183,33 @@ val fromList : elem list -> vector
 val tabulate : int * (int -> elem) -> vector
 ```
 
+<details><summary>Tests (15)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `every-byte`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `zero` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
+
 ### <a name="val-length"></a>`length`
 
 ```sml
 val length : vector -> int
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-size` &middot; `empty-string` &middot; `size*`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `empty` &middot; `long`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `empty` &middot; `five` &middot; `tabulate` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-sub"></a>`sub`
 
@@ -130,11 +217,33 @@ val length : vector -> int
 val sub : vector * int -> elem
 ```
 
+<details><summary>Tests (16)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string-constant` &middot; `Subscript-at-size` (raises Subscript)
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `elem-is-Word8.word`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript)
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+
+</details>
+
 ### <a name="val-update"></a>`update`
 
 ```sml
 val update : vector * int * elem -> vector
 ```
+
+<details><summary>Tests (20)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string` &middot; `constant-unchanged`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first` &middot; `middle` &middot; `last` &middot; `argument-unchanged` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `singleton` &middot; `argument-unchanged` &middot; `twice` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+
+</details>
 
 ### <a name="val-concat"></a>`concat`
 
@@ -142,11 +251,29 @@ val update : vector * int * elem -> vector
 val concat : vector list -> vector
 ```
 
+<details><summary>Tests (15)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `strings` &middot; `String.concat*`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil` &middot; `empties`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `order` &middot; `model*` &middot; `long` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : (int * elem -> unit) -> vector -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order` &middot; `empty`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `order` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-app"></a>`app`
 
@@ -154,11 +281,31 @@ val appi : (int * elem -> unit) -> vector -> unit
 val app : (elem -> unit) -> vector -> unit
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `order` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-mapi"></a>`mapi`
 
 ```sml
 val mapi : (int * elem -> elem) -> vector -> vector
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `index`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `order`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `index-only` &middot; `empty` &middot; `order` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-map"></a>`map`
 
@@ -166,11 +313,39 @@ val mapi : (int * elem -> elem) -> vector -> vector
 val map : (elem -> elem) -> vector -> vector
 ```
 
+<details><summary>Tests (17)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `toUpper` &middot; `String.map*`
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `Word8-arithmetic`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not` &middot; `empty` &middot; `order`
+
+For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `Real64Vector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
+
+For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `Real32-arithmetic`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `wraps` &middot; `empty` &middot; `order` &middot; `argument-unchanged` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldli"></a>`foldli`
 
 ```sml
 val foldli : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-foldri"></a>`foldri`
 
@@ -178,11 +353,61 @@ val foldli : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 val foldri : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-in-order` &middot; `nonassociative`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-foldl"></a>`foldl`
 
 ```sml
 val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
+
+<details><summary>Tests (24)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `reverse`
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `sum-of-bytes`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative` &middot; `conses-reversed`
+
+For `IntVector`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `Int-arithmetic`
+
+For `Int8Vector`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `Int8-arithmetic`
+
+For `Int16Vector`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `Int16-arithmetic`
+
+For `Int32Vector`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `Int32-arithmetic`
+
+For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `LargeInt-arithmetic`
+
+For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
+
+For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
+
+For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
+
+For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
+
+For `LargeWordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
+For `Word64Vector`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `Word64-arithmetic`
+
+For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `Real64Vector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
+
+For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `Real32-arithmetic`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldr"></a>`foldr`
 
@@ -190,11 +415,31 @@ val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 val foldr : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
+<details><summary>Tests (8)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `implode`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative` &middot; `conses-in-order`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-findi"></a>`findi`
 
 ```sml
 val findi : (int * elem -> bool) -> vector -> (int * elem) option
 ```
+
+<details><summary>Tests (14)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first-true` &middot; `by-index` &middot; `none` &middot; `empty` &middot; `stops`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
 
 ### <a name="val-find"></a>`find`
 
@@ -202,11 +447,39 @@ val findi : (int * elem -> bool) -> vector -> (int * elem) option
 val find : (elem -> bool) -> vector -> elem option
 ```
 
+<details><summary>Tests (15)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `none` &middot; `stops`
+
+For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `nan`
+
+For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `nan`
+
+For `Real64Vector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `nan`
+
+For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `nan`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model*`
+
+</details>
+
 ### <a name="val-exists"></a>`exists`
 
 ```sml
 val exists : (elem -> bool) -> vector -> bool
 ```
+
+<details><summary>Tests (11)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `empty` &middot; `stops`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
 
 ### <a name="val-all"></a>`all`
 
@@ -214,11 +487,63 @@ val exists : (elem -> bool) -> vector -> bool
 val all : (elem -> bool) -> vector -> bool
 ```
 
+<details><summary>Tests (13)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `empty` &middot; `stops`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*` &middot; `long`
+
+</details>
+
 ### <a name="val-collate"></a>`collate`
 
 ```sml
 val collate : (elem * elem -> order) -> vector * vector -> order
 ```
+
+<details><summary>Tests (40)</summary>
+
+For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `strings` &middot; `high-characters` &middot; `String.compare*`
+
+For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word8vector.sml): `unsigned-bytes`
+
+For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `equal` &middot; `empty-empty` &middot; `empty-less` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering`
+
+For `IntVector`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `Int.compare`
+
+For `Int8Vector`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `Int8.compare`
+
+For `Int16Vector`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `Int16.compare`
+
+For `Int32Vector`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `Int32.compare`
+
+For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `LargeInt.compare`
+
+For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word.compare-unsigned`
+
+For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16.compare-unsigned`
+
+For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32.compare-unsigned`
+
+For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real.compare`
+
+For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64.compare`
+
+For `LargeWordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord.compare-unsigned`
+
+For `Word64Vector`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `Word64.compare-unsigned`
+
+For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal.compare`
+
+For `Real64Vector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64.compare`
+
+For `Real32Vector`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `Real32.compare`
+
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `equal` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
+
+</details>
 
 ---
 

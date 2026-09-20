@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 6 entries documented |
+| Tests | 11 checks of 5 entries |
 | Source | [lib/basis/sig\_net\_prot\_db.sml](../../../../lib/basis/sig_net_prot_db.sml) |
 
 ## Synopsis
@@ -49,11 +50,23 @@ type entry
 val name : entry -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `ip` &middot; `tcp`
+
+</details>
+
 ### <a name="val-aliases"></a>`aliases`
 
 ```sml
 val aliases : entry -> string list
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `tcp`
+
+</details>
 
 ### <a name="val-protocol"></a>`protocol`
 
@@ -61,17 +74,35 @@ val aliases : entry -> string list
 val protocol : entry -> int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `udp`
+
+</details>
+
 ### <a name="val-getbyname"></a>`getByName`
 
 ```sml
 val getByName : string -> entry option
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `tcp` &middot; `udp` &middot; `alias` &middot; `unknown`
+
+</details>
+
 ### <a name="val-getbynumber"></a>`getByNumber`
 
 ```sml
 val getByNumber : int -> entry option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `6` &middot; `17` &middot; `unknown`
+
+</details>
 
 ---
 

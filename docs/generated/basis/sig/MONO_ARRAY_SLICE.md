@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 0 of 30 entries documented |
+| Tests | 383 checks of 28 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -100,6 +101,12 @@ end
 type elem
 ```
 
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `eight-distinct-samples`
+
+</details>
+
 ### <a name="type-array"></a>`array`
 
 ```sml
@@ -112,11 +119,35 @@ type array
 type slice
 ```
 
+<details><summary>Tests (40)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `high-bytes`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `String.extract*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `SOME` &middot; `NONE` &middot; `NONE-at-length` &middot; `Subscript-NONE-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-array` &middot; `of-empty-array-Subscript` (raises Subscript) &middot; `sees-later-updates-of-the-array` &middot; `base-is-the-same-array` &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
+
 ### <a name="type-vector"></a>`vector`
 
 ```sml
 type vector
 ```
+
+<details><summary>Tests (13)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `every-byte`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `is-a-string` &middot; `empty-string` &middot; `is-CharVector.vector` &middot; `String.substring*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `is-a-snapshot`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `middle` &middot; `full` &middot; `empty` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="type-vector_slice"></a>`vector_slice`
 
@@ -130,11 +161,31 @@ type vector_slice
 val length : slice -> int
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `middle` &middot; `full` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : slice * int -> elem
 ```
+
+<details><summary>Tests (16)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `elem-is-Word8.word`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `elem-is-char` &middot; `high-character`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `first` &middot; `last` &middot; `Subscript-length-within-the-array` (raises Subscript) &middot; `Subscript-negative-within-the-array` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
 
 ### <a name="val-update"></a>`update`
 
@@ -142,11 +193,31 @@ val sub : slice * int -> elem
 val update : slice * int * elem -> unit
 ```
 
+<details><summary>Tests (17)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `byte`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `string`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `in-the-base` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `first` &middot; `last` &middot; `seen-by-sub` &middot; `seen-through-an-overlapping-slice` &middot; `Subscript-length-within-the-array` (raises Subscript) &middot; `Subscript-negative-within-the-array` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
+
 ### <a name="val-full"></a>`full`
 
 ```sml
 val full : array -> slice
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `basic` &middot; `base` &middot; `empty-array` &middot; `empty-array-base` &middot; `base-is-the-same-array` &middot; `model*`
+
+</details>
 
 ### <a name="val-slice"></a>`slice`
 
@@ -154,11 +225,31 @@ val full : array -> slice
 val slice : array * int * int option -> slice
 ```
 
+<details><summary>Tests (40)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `high-bytes`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `String.extract*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `SOME` &middot; `NONE` &middot; `NONE-at-length` &middot; `Subscript-NONE-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-array` &middot; `of-empty-array-Subscript` (raises Subscript) &middot; `sees-later-updates-of-the-array` &middot; `base-is-the-same-array` &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
+
 ### <a name="val-subslice"></a>`subslice`
 
 ```sml
 val subslice : slice * int * int option -> slice
 ```
+
+<details><summary>Tests (31)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `NONE` &middot; `SOME` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `of-subslice-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-within-the-array` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty` &middot; `of-empty-Subscript` (raises Subscript) &middot; `base-is-the-same-array` &middot; `every-argument` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
 
 ### <a name="val-base"></a>`base`
 
@@ -166,11 +257,35 @@ val subslice : slice * int * int option -> slice
 val base : slice -> array * int * int
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `is-the-Word8Array`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `is-the-CharArray`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `is-the-array`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `middle` &middot; `empty` &middot; `round-trip` &middot; `model*`
+
+</details>
+
 ### <a name="val-vector"></a>`vector`
 
 ```sml
 val vector : slice -> vector
 ```
+
+<details><summary>Tests (13)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `every-byte`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `is-a-string` &middot; `empty-string` &middot; `is-CharVector.vector` &middot; `String.substring*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `is-a-snapshot`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `middle` &middot; `full` &middot; `empty` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-copy"></a>`copy`
 
@@ -184,6 +299,18 @@ val copy : {src : slice, dst : array, di : int} -> unit
 | <a name="fld-copy.dst"></a>`dst` | `array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
 
+<details><summary>Tests (35)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `to-Word8Array`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `to-CharArray` &middot; `overlapping-string`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `other-array` &middot; `overlap-right` &middot; `overlap-left` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `overlap-to-the-right` &middot; `overlap-to-the-left` &middot; `overlap-by-one` &middot; `onto-itself` &middot; `same-array-no-overlap` &middot; `Subscript-same-array` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `same-array-model*` &middot; `long-overlap-to-the-right` &middot; `long-overlap-to-the-left` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
+
 ### <a name="val-copyvec"></a>`copyVec`
 
 ```sml
@@ -196,11 +323,31 @@ val copyVec : {src : vector_slice, dst : array, di : int} -> unit
 | <a name="fld-copyvec.dst"></a>`dst` | `array` |  |
 | <a name="fld-copyvec.di"></a>`di` | `int` |  |
 
+<details><summary>Tests (25)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `from-Word8VectorSlice`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `from-CharVectorSlice` &middot; `from-a-substring` &middot; `Subscript-substring-too-long` (raises Subscript) &middot; `String.substring*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `full-vector` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `from-vector-of-slice` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
+
+</details>
+
 ### <a name="val-isempty"></a>`isEmpty`
 
 ```sml
 val isEmpty : slice -> bool
 ```
+
+<details><summary>Tests (8)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `false` &middot; `true`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `empty` &middot; `empty-at-length` &middot; `empty-array` &middot; `one` &middot; `middle` &middot; `model*`
+
+</details>
 
 ### <a name="val-getitem"></a>`getItem`
 
@@ -208,11 +355,27 @@ val isEmpty : slice -> bool
 val getItem : slice -> (elem * slice) option
 ```
 
+<details><summary>Tests (11)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first` &middot; `empty`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `first` &middot; `rest` &middot; `rest-base` &middot; `last-rest-is-empty` &middot; `empty` &middot; `every-item` &middot; `rest-is-the-same-array` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : (int * elem -> unit) -> slice -> unit
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `order` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-app"></a>`app`
 
@@ -220,11 +383,29 @@ val appi : (int * elem -> unit) -> slice -> unit
 val app : (elem -> unit) -> slice -> unit
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `order` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-modifyi"></a>`modifyi`
 
 ```sml
 val modifyi : (int * elem -> elem) -> slice -> unit
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `string-index`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `basic` &middot; `index-in-the-slice` &middot; `empty` &middot; `order` &middot; `model*`
+
+</details>
 
 ### <a name="val-modify"></a>`modify`
 
@@ -232,11 +413,31 @@ val modifyi : (int * elem -> elem) -> slice -> unit
 val modify : (elem -> elem) -> slice -> unit
 ```
 
+<details><summary>Tests (11)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `Word8-arithmetic`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `toUpper` &middot; `String.map*`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `basic` &middot; `full-wraps` &middot; `empty` &middot; `order` &middot; `seen-by-the-slice` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldli"></a>`foldli`
 
 ```sml
 val foldli : (int * elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
 
 ### <a name="val-foldr"></a>`foldr`
 
@@ -244,11 +445,59 @@ val foldli : (int * elem * 'b -> 'b) -> 'b -> slice -> 'b
 val foldr : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldl"></a>`foldl`
 
 ```sml
 val foldl : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
+
+<details><summary>Tests (22)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `sum-of-bytes`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
+
+For `IntArraySlice`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `Int-arithmetic`
+
+For `Int8ArraySlice`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `Int8-arithmetic`
+
+For `Int16ArraySlice`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `Int16-arithmetic`
+
+For `Int32ArraySlice`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `Int32-arithmetic`
+
+For `LargeIntArraySlice`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `LargeInt-arithmetic`
+
+For `WordArraySlice`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
+
+For `Word16ArraySlice`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
+
+For `Word32ArraySlice`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
+
+For `RealArraySlice`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `Int64ArraySlice`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
+
+For `LargeWordArraySlice`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
+For `Word64ArraySlice`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `Word64-arithmetic`
+
+For `LargeRealArraySlice`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `Real64ArraySlice`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
+
+For `Real32ArraySlice`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `Real32-arithmetic`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldri"></a>`foldri`
 
@@ -256,11 +505,27 @@ val foldl : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 val foldri : (int * elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model*`
+
+</details>
+
 ### <a name="val-findi"></a>`findi`
 
 ```sml
 val findi : (int * elem -> bool) -> slice -> (int * elem) option
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-index`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
 
 ### <a name="val-find"></a>`find`
 
@@ -268,11 +533,27 @@ val findi : (int * elem -> bool) -> slice -> (int * elem) option
 val find : (elem -> bool) -> slice -> elem option
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `none-in-the-slice`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `first-match` &middot; `last-element` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `model*`
+
+</details>
+
 ### <a name="val-exists"></a>`exists`
 
 ```sml
 val exists : (elem -> bool) -> slice -> bool
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `true` &middot; `false-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
+
+</details>
 
 ### <a name="val-all"></a>`all`
 
@@ -280,11 +561,31 @@ val exists : (elem -> bool) -> slice -> bool
 val all : (elem -> bool) -> slice -> bool
 ```
 
+<details><summary>Tests (8)</summary>
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `only-the-slice`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `true-but-not-outside-the-slice` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*`
+
+</details>
+
 ### <a name="val-collate"></a>`collate`
 
 ```sml
 val collate : (elem * elem -> order) -> slice * slice -> order
 ```
+
+<details><summary>Tests (18)</summary>
+
+For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `unsigned-bytes`
+
+For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `high-characters`
+
+For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `equal` &middot; `greater`
+
+In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `equal-in-different-arrays` &middot; `same-slice` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model*` &middot; `reflexive*` &middot; `long`
+
+</details>
 
 ---
 

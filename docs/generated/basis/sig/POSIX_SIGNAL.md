@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 23 entries documented |
+| Tests | 34 checks of 22 entries |
 | Source | [lib/basis/sig\_posix\_signal.sml](../../../../lib/basis/sig_posix_signal.sml) |
 
 ## Synopsis
@@ -68,11 +69,23 @@ eqtype signal
 val toWord : signal -> SysWord.word
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `distinct`
+
+</details>
+
 ### <a name="val-fromword"></a>`fromWord`
 
 ```sml
 val fromWord : SysWord.word -> signal
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `of-toWord-all` &middot; `no-check` &middot; `equal-words-equal-signals`
+
+</details>
 
 ### <a name="val-abrt"></a>`abrt`
 
@@ -80,11 +93,23 @@ val fromWord : SysWord.word -> signal
 val abrt : signal
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
+
 ### <a name="val-alrm"></a>`alrm`
 
 ```sml
 val alrm : signal
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
 
 ### <a name="val-bus"></a>`bus`
 
@@ -92,11 +117,23 @@ val alrm : signal
 val bus : signal
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
+
 ### <a name="val-fpe"></a>`fpe`
 
 ```sml
 val fpe : signal
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
 
 ### <a name="val-hup"></a>`hup`
 
@@ -104,11 +141,23 @@ val fpe : signal
 val hup : signal
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
+
 ### <a name="val-ill"></a>`ill`
 
 ```sml
 val ill : signal
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
 
 ### <a name="val-int"></a>`int`
 
@@ -116,11 +165,23 @@ val ill : signal
 val int : signal
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
+
 ### <a name="val-kill"></a>`kill`
 
 ```sml
 val kill : signal
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
 
 ### <a name="val-pipe"></a>`pipe`
 
@@ -128,11 +189,23 @@ val kill : signal
 val pipe : signal
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
+
 ### <a name="val-quit"></a>`quit`
 
 ```sml
 val quit : signal
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
 
 ### <a name="val-segv"></a>`segv`
 
@@ -140,11 +213,23 @@ val quit : signal
 val segv : signal
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
+
 ### <a name="val-term"></a>`term`
 
 ```sml
 val term : signal
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
 
 ### <a name="val-usr1"></a>`usr1`
 
@@ -152,11 +237,23 @@ val term : signal
 val usr1 : signal
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
+
 ### <a name="val-usr2"></a>`usr2`
 
 ```sml
 val usr2 : signal
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ends-shell`
+
+</details>
 
 ### <a name="val-chld"></a>`chld`
 
@@ -164,11 +261,23 @@ val usr2 : signal
 val chld : signal
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `ignored-by-default`
+
+</details>
+
 ### <a name="val-cont"></a>`cont`
 
 ```sml
 val cont : signal
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `continues`
+
+</details>
 
 ### <a name="val-stop"></a>`stop`
 
@@ -176,11 +285,23 @@ val cont : signal
 val stop : signal
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*` &middot; `stops-shell`
+
+</details>
+
 ### <a name="val-tstp"></a>`tstp`
 
 ```sml
 val tstp : signal
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
 
 ### <a name="val-ttin"></a>`ttin`
 
@@ -188,11 +309,23 @@ val tstp : signal
 val ttin : signal
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
+
 ### <a name="val-ttou"></a>`ttou`
 
 ```sml
 val ttou : signal
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.Signal`, in [tests/basis/posix\_signal.sml](../../../../tests/basis/posix_signal.sml): `*`
+
+</details>
 
 ---
 

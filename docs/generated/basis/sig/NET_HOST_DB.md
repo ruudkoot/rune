@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
+| Tests | 30 checks of 11 entries |
 | Source | [lib/basis/sig\_net\_host\_db.sml](../../../../lib/basis/sig_net_host_db.sml) |
 
 ## Synopsis
@@ -69,11 +70,23 @@ type entry
 val name : entry -> string
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
+
 ### <a name="val-aliases"></a>`aliases`
 
 ```sml
 val aliases : entry -> string list
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
 
 ### <a name="val-addrtype"></a>`addrType`
 
@@ -81,11 +94,23 @@ val aliases : entry -> string list
 val addrType : entry -> addr_family
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
+
 ### <a name="val-addr"></a>`addr`
 
 ```sml
 val addr : entry -> in_addr
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
 
 ### <a name="val-addrs"></a>`addrs`
 
@@ -93,11 +118,23 @@ val addr : entry -> in_addr
 val addrs : entry -> in_addr list
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
+
 ### <a name="val-getbyname"></a>`getByName`
 
 ```sml
 val getByName : string -> entry option
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `localhost`
+
+</details>
 
 ### <a name="val-getbyaddr"></a>`getByAddr`
 
@@ -105,11 +142,23 @@ val getByName : string -> entry option
 val getByAddr : in_addr -> entry option
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `loopback`
+
+</details>
+
 ### <a name="val-gethostname"></a>`getHostName`
 
 ```sml
 val getHostName : unit -> string
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `not-empty` &middot; `stable` &middot; `uname`
+
+</details>
 
 ### <a name="val-tostring"></a>`toString`
 
@@ -117,17 +166,35 @@ val getHostName : unit -> string
 val toString : in_addr -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `dotted` &middot; `round-trip`
+
+</details>
+
 ### <a name="val-scan"></a>`scan`
 
 ```sml
 val scan : (char, 'a) StringCvt.reader -> (in_addr, 'a) StringCvt.reader
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `rest` &middot; `whitespace-then-rest` &middot; `one-part-rest` &middot; `nothing-left` &middot; `char-list` &middot; `not-an-address` &middot; `empty`
+
+</details>
+
 ### <a name="val-fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> in_addr option
 ```
+
+<details><summary>Tests (11)</summary>
+
+For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `one-part` &middot; `two-parts` &middot; `three-parts` &middot; `hexadecimal` &middot; `octal` &middot; `zeros` &middot; `initial-whitespace` &middot; `prefix` &middot; `not-an-address` &middot; `same-address` &middot; `other-address`
+
+</details>
 
 ---
 

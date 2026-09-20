@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 3 entries documented |
+| Tests | 25 checks of 3 entries |
 | Source | [lib/basis/sig\_bin\_io.sml](../../../../lib/basis/sig_bin_io.sml) |
 
 ## Synopsis
@@ -86,17 +87,35 @@ end
 val openIn : string -> instream
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `reads-the-file` &middot; `Io-file-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `does-not-create-the-file`
+
+</details>
+
 ### <a name="val-openout"></a>`openOut`
 
 ```sml
 val openOut : string -> outstream
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `creates-the-file` &middot; `truncates-an-existing-file` &middot; `truncates-at-open` &middot; `nothing-written` &middot; `Io-directory-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `left-open-at-exit`
+
+</details>
+
 ### <a name="val-openappend"></a>`openAppend`
 
 ```sml
 val openAppend : string -> outstream
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `creates-the-file` &middot; `appends-to-an-existing-file` &middot; `keeps-the-contents` &middot; `three-times` &middot; `Io-directory-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `Io-closed-stream` &middot; `random-pieces`
+
+</details>
 
 ---
 

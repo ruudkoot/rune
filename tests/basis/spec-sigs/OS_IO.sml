@@ -1,10 +1,8 @@
 (* signature OS_IO, transcribed from
    https://smlfamily.github.io/Basis/os-io.html
 
-   Time.time is the type of the top-level structure Time. The signature of
-   the substructure Kind is written on one line: scripts/check-basis-coverage.sh
-   takes every line that starts with `val` for a member of OS_IO itself, and
-   the checks of its members are labelled OS.IO.Kind.file/..., not
+   Time.time is the type of the top-level structure Time. The checks of the
+   members of the substructure Kind are labelled OS.IO.Kind.file/..., not
    OS.IO.file/... (tests/basis/os.io.sml has one for each of the seven). *)
 signature SPEC_OS_IO =
 sig

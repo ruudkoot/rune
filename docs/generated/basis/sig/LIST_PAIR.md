@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 15 entries documented |
+| Tests | 140 checks of 15 entries |
 | Source | [lib/basis/sig\_list\_pair.sml](../../../../lib/basis/sig_list_pair.sml) |
 
 ## Synopsis
@@ -53,11 +54,23 @@ end
 exception UnequalLengths
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `raised-by-zipEq` (raises) &middot; `can-be-raised-and-handled` &middot; `differs-from-Subscript-and-Size`
+
+</details>
+
 ### <a name="val-zip"></a>`zip`
 
 ```sml
 val zip : 'a list * 'b list -> ('a * 'b) list
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil-nil` &middot; `singleton` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `nil-right` &middot; `two-types` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-zipeq"></a>`zipEq`
 
@@ -65,11 +78,23 @@ val zip : 'a list * 'b list -> ('a * 'b) list
 val zipEq : 'a list * 'b list -> ('a * 'b) list
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil-nil` &middot; `singleton` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-left` (raises) &middot; `UnequalLengths-nil-right` (raises) &middot; `model-*` &middot; `long` &middot; `long-UnequalLengths` (raises)
+
+</details>
+
 ### <a name="val-unzip"></a>`unzip`
 
 ```sml
 val unzip : ('a * 'b) list -> 'a list * 'b list
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil` &middot; `singleton` &middot; `two-types` &middot; `inverse-of-zip` &middot; `zip-is-its-inverse` &middot; `zip-*` &middot; `inverse-*` &middot; `long`
+
+</details>
 
 ### <a name="val-app"></a>`app`
 
@@ -77,11 +102,23 @@ val unzip : ('a * 'b) list -> 'a list * 'b list
 val app : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `order` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-right` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-appeq"></a>`appEq`
 
 ```sml
 val appEq : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 ```
+
+<details><summary>Tests (8)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `order` &middot; `nil-nil` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-left` (raises) &middot; `applies-before-raising` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-map"></a>`map`
 
@@ -89,11 +126,23 @@ val appEq : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 val map : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `argument-order` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `order` &middot; `three-types` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-mapeq"></a>`mapEq`
 
 ```sml
 val mapEq : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `basic` &middot; `nil-nil` &middot; `order` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-right` (raises) &middot; `applies-before-raising` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldl"></a>`foldl`
 
@@ -101,11 +150,23 @@ val mapEq : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-reversed` &middot; `nonassociative` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-right` &middot; `order` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldr"></a>`foldr`
 
 ```sml
 val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-in-order` &middot; `nonassociative` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `order` &middot; `order-left-longer` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldleq"></a>`foldlEq`
 
@@ -113,11 +174,23 @@ val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 val foldlEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-reversed` &middot; `nonassociative` &middot; `nil-nil` &middot; `order` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-left` (raises) &middot; `applies-before-raising` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldreq"></a>`foldrEq`
 
 ```sml
 val foldrEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-in-order` &middot; `nonassociative` &middot; `nil-nil` &middot; `order` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-right` (raises) &middot; `raises-before-applying` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-all"></a>`all`
 
@@ -125,17 +198,35 @@ val foldrEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 val all : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `true` &middot; `false` &middot; `nil-nil` &middot; `nil-right` &middot; `excess-ignored` &middot; `stops` &middot; `order` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-exists"></a>`exists`
 
 ```sml
 val exists : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `true` &middot; `false` &middot; `nil-nil` &middot; `nil-left` &middot; `excess-ignored` &middot; `stops` &middot; `order` &middot; `model-*` &middot; `de-morgan-*` &middot; `long`
+
+</details>
+
 ### <a name="val-alleq"></a>`allEq`
 
 ```sml
 val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 ```
+
+<details><summary>Tests (16)</summary>
+
+For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `true` &middot; `false` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `nil-right` &middot; `list-equality` &middot; `list-inequality` &middot; `stops` &middot; `order` &middot; `applies-before-lengths-are-known` &middot; `model-*` &middot; `list-equality-*` &middot; `long` &middot; `long-unequal`
+
+</details>
 
 ---
 

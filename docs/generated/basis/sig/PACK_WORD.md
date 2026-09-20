@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 6 |
 | Documentation | 0 of 7 entries documented |
+| Tests | 26 checks of 7 entries |
 | Source | [lib/basis/sig\_pack\_word.sml](../../../../lib/basis/sig_pack_word.sml) |
 
 ## Synopsis
@@ -53,11 +54,23 @@ end
 val bytesPerElem : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `value`
+
+</details>
+
 ### <a name="val-isbigendian"></a>`isBigEndian`
 
 ```sml
 val isBigEndian : bool
 ```
+
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `value`
+
+</details>
 
 ### <a name="val-subvec"></a>`subVec`
 
@@ -65,11 +78,23 @@ val isBigEndian : bool
 val subVec : Word8Vector.vector * int -> LargeWord.word
 ```
 
+<details><summary>Tests (6)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `element-*` &middot; `high-element-*` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-partial-element` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
+
 ### <a name="val-subvecx"></a>`subVecX`
 
 ```sml
 val subVecX : Word8Vector.vector * int -> LargeWord.word
 ```
+
+<details><summary>Tests (4)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
 
 ### <a name="val-subarr"></a>`subArr`
 
@@ -77,17 +102,35 @@ val subVecX : Word8Vector.vector * int -> LargeWord.word
 val subArr : Word8Array.array * int -> LargeWord.word
 ```
 
+<details><summary>Tests (5)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `element-*` &middot; `high-element-*` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
+
 ### <a name="val-subarrx"></a>`subArrX`
 
 ```sml
 val subArrX : Word8Array.array * int -> LargeWord.word
 ```
 
+<details><summary>Tests (4)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
+
 ### <a name="val-update"></a>`update`
 
 ```sml
 val update : Word8Array.array * int * LargeWord.word -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `element-1` &middot; `read-back` &middot; `Subscript-negative` (raises) &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+
+</details>
 
 ---
 

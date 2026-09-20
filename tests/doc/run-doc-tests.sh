@@ -13,6 +13,9 @@
 # DOCUMENTED). Its documentation is generated into tests/out/doc/NAME.site:
 #   NAME.lib.diag   the diagnostics of `runedoc --lib tests/doc --library NAME.lib`
 #   NAME.lib.files  the files it writes, one on a line (none after an error)
+#   NAME.lib.labels for a library with a suite in NAME.lib/tests: the checks
+#                   that `runedoc --tests NAME.lib/tests --labels` finds
+#   NAME.lib.cover  and what `--check-coverage` says about them
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -88,6 +91,16 @@ for lib in tests/doc/*.lib; do
   fi
   same "$name.lib.diag" "$out/$name.lib.diag" "tests/doc/$name.lib.diag"
   same "$name.lib.files" "$out/$name.lib.files" "tests/doc/$name.lib.files"
+  if [ -d "$lib/tests" ]; then
+    "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1
+    "$runedoc" --lib tests/doc --library "$name.lib" --tests "$lib/tests" --check-coverage > "$out/$name.lib.cover" 2>&1
+    if [ $update = 1 ]; then
+      cp "$out/$name.lib.labels" "tests/doc/$name.lib.labels"
+      cp "$out/$name.lib.cover" "tests/doc/$name.lib.cover"
+    fi
+    same "$name.lib.labels" "$out/$name.lib.labels" "tests/doc/$name.lib.labels"
+    same "$name.lib.cover" "$out/$name.lib.cover" "tests/doc/$name.lib.cover"
+  fi
 done
 
 echo "test-doc: passed $passed, failed $failed"

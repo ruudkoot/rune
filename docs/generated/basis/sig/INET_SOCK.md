@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 17 entries documented |
+| Tests | 29 checks of 10 entries |
 | Source | [lib/basis/sig\_inet\_sock.sml](../../../../lib/basis/sig_inet_sock.sml) |
 
 ## Synopsis
@@ -95,11 +96,23 @@ type sock_addr = inet Socket.sock_addr
 val inetAF : Socket.AF.addr_family
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `named-INET` &middot; `fromString-INET`
+
+</details>
+
 ### <a name="val-toaddr"></a>`toAddr`
 
 ```sml
 val toAddr : NetHostDB.in_addr * int -> sock_addr
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `fromAddr` &middot; `round-trip` &middot; `connect-to-it`
+
+</details>
 
 ### <a name="val-fromaddr"></a>`fromAddr`
 
@@ -107,11 +120,23 @@ val toAddr : NetHostDB.in_addr * int -> sock_addr
 val fromAddr : sock_addr -> NetHostDB.in_addr * int
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `ports` &middot; `hosts` &middot; `bound-socket`
+
+</details>
+
 ### <a name="val-any"></a>`any`
 
 ```sml
 val any : int -> sock_addr
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `fromAddr` &middot; `port-0` &middot; `is-0.0.0.0` &middot; `bind` &middot; `reached-through-loopback`
+
+</details>
 
 ### <a name="str-udp"></a>`UDP`
 
@@ -121,11 +146,23 @@ val any : int -> sock_addr
 val socket : unit -> dgram_sock
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `dgram` &middot; `works` &middot; `new-each-time`
+
+</details>
+
 #### <a name="val-udp.socket-prime"></a>`socket'`
 
 ```sml
 val socket' : int -> dgram_sock
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `zero-dgram` &middot; `zero-works` &middot; `udp-protocol`
+
+</details>
 
 ### <a name="str-tcp"></a>`TCP`
 
@@ -135,11 +172,23 @@ val socket' : int -> dgram_sock
 val socket : unit -> 'mode stream_sock
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `stream` &middot; `works`
+
+</details>
+
 #### <a name="val-tcp.socket-prime"></a>`socket'`
 
 ```sml
 val socket' : int -> 'mode stream_sock
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `zero-stream` &middot; `zero-works` &middot; `tcp-protocol`
+
+</details>
 
 #### <a name="val-tcp.getnodelay"></a>`getNODELAY`
 
@@ -147,11 +196,23 @@ val socket' : int -> 'mode stream_sock
 val getNODELAY : 'mode stream_sock -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `default` &middot; `listener-default`
+
+</details>
+
 #### <a name="val-tcp.setnodelay"></a>`setNODELAY`
 
 ```sml
 val setNODELAY : 'mode stream_sock * bool -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `on` &middot; `off-again` &middot; `connected`
+
+</details>
 
 ---
 

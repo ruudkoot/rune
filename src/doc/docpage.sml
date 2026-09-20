@@ -23,6 +23,8 @@ struct
               ratchet : string -> bool,
               (* the top-level name that a member of a signature also has, through a structure that implements it *)
               topLevel : string * string -> string option,
+              (* the check sites of the test suite, by their scope: List.take *)
+              tests : DocTests.site list StringMap.map,
               (* the notes of a structure's body, and of the functor it applies, by member *)
               notesOf : string -> (string * I.doc) list,
               links : (string * string * Source.span) list ref,
@@ -140,6 +142,69 @@ struct
     let val a = DocAnchor.anchor binding
     in #anchors env := (page, a, span) :: !(#anchors env); M.anchor a end
 
+  (* ---- the checks of an entry ---- *)
+  (* The sites that check the member at path.name of signature sigName: those
+     labelled with a structure that implements it. *)
+  fun sitesOf (env : env, sigName : string, member : string) : (string * DocTests.site) list =
+    List.concat
+      (List.map (fn c : DocClaims.claim =>
+                   if #signat c <> sigName orelse #isFunctor c then []
+                   else List.map (fn s => (#name c, s))
+                                 (Option.getOpt (StringMap.find (#tests env, #name c ^ "." ^ member), [])))
+                (#claims env))
+
+  fun distinct (xs : string list) : string list =
+    List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
+
+  (* The number of different checks among some sites: a check of a test
+     functor is one, however many structures the functor is applied to. *)
+  fun countSites (sites : (string * DocTests.site) list) : int =
+    List.length (distinct (List.map (fn (structure', s : DocTests.site) =>
+                                       case #via s of
+                                         SOME f => f ^ " " ^ #case' s
+                                       | NONE => structure' ^ " " ^ #file s ^ " " ^ #case' s) sites))
+
+  fun siteText (s : DocTests.site) : string =
+    M.code (#case' s)
+    ^ (case (#kind s, #exn s) of
+         ("raises", SOME e) => " (raises " ^ M.escape e ^ ")"
+       | ("raises", NONE) => " (raises)"
+       | _ => "")
+
+  (* A collapsed list: the checks written for one structure by file, then
+     those of test functors, each once with the structures it is applied to. *)
+  fun testsBlock (env : env, sites : (string * DocTests.site) list) : string =
+    if List.null sites then ""
+    else
+      let
+        fun fileLink f = "[" ^ M.escape (normalise f) ^ "](" ^ #root env ^ #up env ^ normalise f ^ ")"
+        val direct = List.filter (fn (_, s : DocTests.site) => not (isSome (#via s))) sites
+        val viaFunctor = List.filter (fn (_, s : DocTests.site) => isSome (#via s)) sites
+        val directGroups = distinct (List.map (fn (st, s : DocTests.site) => st ^ "\t" ^ #file s) direct)
+        val functorFiles = distinct (List.mapPartial (fn (_, s : DocTests.site) => #via s) viaFunctor)
+        fun directLine key =
+          let
+            val mine = List.filter (fn (st, s : DocTests.site) => st ^ "\t" ^ #file s = key) direct
+            val (st, first) = List.hd mine
+          in
+            "For " ^ M.code st ^ ", in " ^ fileLink (#file first) ^ ": "
+            ^ String.concatWith " &middot; " (distinct (List.map (fn (_, s) => siteText s) mine)) ^ "\n\n"
+          end
+        fun functorLine f =
+          let
+            val mine = List.filter (fn (_, s : DocTests.site) => #via s = SOME f) viaFunctor
+          in
+            "In " ^ fileLink f ^ ", applied to "
+            ^ String.concatWith ", " (List.map M.code (distinct (List.map #1 mine))) ^ ": "
+            ^ String.concatWith " &middot; " (distinct (List.map (fn (_, s) => siteText s) mine)) ^ "\n\n"
+          end
+      in
+        "<details><summary>Tests (" ^ Int.toString (countSites sites) ^ ")</summary>\n\n"
+        ^ String.concat (List.map directLine directGroups)
+        ^ String.concat (List.map functorLine functorFiles)
+        ^ "</details>\n\n"
+      end
+
   (* ---- entries ---- *)
   fun headingLevel (path : string list) : string = if List.null path then "### " else "#### "
 
@@ -211,7 +276,10 @@ struct
            [] => ""
          | tops => "Also in the [top-level environment](" ^ #root env ^ "top-level.md): "
                    ^ String.concatWith ", " (List.map M.code tops) ^ ".\n\n")
-      ^ instanceNotes ^ inner
+      ^ instanceNotes
+      ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord =>
+                                                  sitesOf (env, sigName, String.concatWith "." (#path g @ [#name g]))) group))
+      ^ inner
     end
 
   (* The items of a body: sections, prose, and entries with their followers. *)
@@ -311,6 +379,15 @@ struct
                  [["Status", M.escape (statusOf doc)],
                   ["Implementations", if List.null mine then "none" else Int.toString (List.length mine)],
                   ["Documentation", Int.toString documented ^ " of " ^ Int.toString (List.length es) ^ " entries documented"],
+                  ["Tests",
+                   let
+                     val perEntry = List.map (fn e : I.entryRecord => sitesOf (env, name, String.concatWith "." (#path e @ [#name e]))) es
+                     val checked = List.length (List.filter (fn l => not (List.null l)) perEntry)
+                   in
+                     if StringMap.isEmpty (#tests env) then "not listed"
+                     else Int.toString (List.foldl (fn (l, n) => n + countSites l) 0 perEntry) ^ " checks of "
+                          ^ Int.toString checked ^ " entries"
+                   end],
                   ["Source", "[" ^ M.escape (normalise file) ^ "](" ^ #root env ^ #up env ^ normalise file ^ ")"]])
       ^ "## Synopsis\n\n"
       ^ M.fenced ("sml", String.concatWith "\n"

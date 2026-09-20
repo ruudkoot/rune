@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 27 of 27 entries documented |
+| Tests | 99 checks of 27 entries |
 | Source | [lib/basis/sig\_list.sml](../../../../lib/basis/sig_list.sml) |
 
 ## Synopsis
@@ -127,6 +128,12 @@ It admits equality when its element type does. The constructors are
 
 Also in the [top-level environment](../top-level.md): `list`.
 
+<details><summary>Tests (1)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `constructors`
+
+</details>
+
 ### <a name="exn-empty"></a>`Empty`
 
 ```sml
@@ -137,6 +144,12 @@ Raised by [`hd`](#val-hd), [`tl`](#val-tl) and [`last`](#val-last) when they are
 the same exception as the top-level [`Empty`](#exn-empty).
 
 Also in the [top-level environment](../top-level.md): `Empty`.
+
+<details><summary>Tests (1)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `same-as-toplevel` (raises)
+
+</details>
 
 ## Taking lists apart
 
@@ -152,6 +165,12 @@ Unlike `l = []` it does not need an equality type.
 
 Also in the [top-level environment](../top-level.md): `null`.
 
+<details><summary>Tests (2)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `nil` &middot; `cons`
+
+</details>
+
 ### <a name="val-length"></a>`length`
 
 ```sml
@@ -165,6 +184,12 @@ val length : 'a list -> int
 **Complexity** linear in the length; constant stack.
 
 Also in the [top-level environment](../top-level.md): `length`.
+
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `nil` &middot; `five` &middot; `append-*` &middot; `long`
+
+</details>
 
 ### <a name="val-op-at"></a>`@`
 
@@ -183,6 +208,12 @@ reverse at the end, or use [`revAppend`](#val-revappend).
 
 Also in the [top-level environment](../top-level.md): `@`.
 
+<details><summary>Tests (6)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil-left` &middot; `nil-right` &middot; `infix` &middot; `right-assoc` &middot; `long`
+
+</details>
+
 ### <a name="val-hd"></a>`hd`
 
 ```sml
@@ -194,6 +225,12 @@ val hd : 'a list -> 'a
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
 
 Also in the [top-level environment](../top-level.md): `hd`.
+
+<details><summary>Tests (2)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `Empty` (raises Empty)
+
+</details>
 
 ### <a name="val-tl"></a>`tl`
 
@@ -207,6 +244,12 @@ val tl : 'a list -> 'a list
 
 Also in the [top-level environment](../top-level.md): `tl`.
 
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `singleton` &middot; `Empty` (raises Empty)
+
+</details>
+
 ### <a name="val-last"></a>`last`
 
 ```sml
@@ -218,6 +261,12 @@ val last : 'a list -> 'a
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
 
 **Complexity** linear in the length; constant stack.
+
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `singleton` &middot; `Empty` (raises Empty) &middot; `long`
+
+</details>
 
 ### <a name="val-getitem"></a>`getItem`
 
@@ -234,6 +283,12 @@ that a `scan` function reads from.
 **Example** `Int.scan StringCvt.DEC List.getItem (explode "42 rest")` is
 `SOME (42, [#" ", #"r", #"e", #"s", #"t"])`.
 
+<details><summary>Tests (2)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `cons` &middot; `nil`
+
+</details>
+
 ### <a name="val-nth"></a>`nth`
 
 ```sml
@@ -245,6 +300,12 @@ val nth : 'a list * int -> 'a
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length l`.
 
 **Complexity** linear in `i`.
+
+<details><summary>Tests (5)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `first` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-nil` (raises Subscript)
+
+</details>
 
 ### <a name="val-take"></a>`take`
 
@@ -258,6 +319,12 @@ val take : 'a list * int -> 'a list
 
 **Law** `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
 
+<details><summary>Tests (6)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `zero` &middot; `some` &middot; `all` &middot; `Subscript-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `take-drop-*`
+
+</details>
+
 ### <a name="val-drop"></a>`drop`
 
 ```sml
@@ -269,6 +336,12 @@ val drop : 'a list * int -> 'a list
 The result shares its cells with `l`: nothing is copied.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length l`.
+
+<details><summary>Tests (5)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `zero` &middot; `some` &middot; `all` &middot; `Subscript-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+</details>
 
 ## Building lists
 
@@ -284,6 +357,12 @@ val rev : 'a list -> 'a list
 
 Also in the [top-level environment](../top-level.md): `rev`.
 
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil` &middot; `involution-*` &middot; `long`
+
+</details>
+
 ### <a name="val-concat"></a>`concat`
 
 ```sml
@@ -293,6 +372,12 @@ val concat : 'a list list -> 'a list
 `concat ls` appends all the lists of `ls`, in order.
 
 **Law** `concat [l, m, n] = l @ m @ n`
+
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil` &middot; `append-*`
+
+</details>
 
 ### <a name="val-revappend"></a>`revAppend`
 
@@ -308,6 +393,12 @@ front.
 
 **Law** `revAppend (l, m) = rev l @ m`
 
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil-left` &middot; `nil-right` &middot; `law-*`
+
+</details>
+
 ## Transforming
 
 ### <a name="val-app"></a>`app`
@@ -321,6 +412,12 @@ effect.
 
 Also in the [top-level environment](../top-level.md): `app`.
 
+<details><summary>Tests (1)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `order`
+
+</details>
+
 ### <a name="val-map"></a>`map`
 
 ```sml
@@ -333,6 +430,12 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 **Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects
 
 Also in the [top-level environment](../top-level.md): `map`.
+
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `nil` &middot; `order` &middot; `long`
+
+</details>
 
 ### <a name="val-mappartial"></a>`mapPartial`
 
@@ -348,6 +451,12 @@ and a [`filter`](#val-filter) in one pass.
 
 **Law** `mapPartial f l = map valOf (filter isSome (map f l))`
 
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `order` &middot; `map-filter-*`
+
+</details>
+
 ## Searching
 
 ### <a name="val-find"></a>`find`
@@ -361,6 +470,12 @@ val find : ('a -> bool) -> 'a list -> 'a option
 
 `p` is not applied to the elements after `x`.
 
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `first-match` &middot; `none` &middot; `stops`
+
+</details>
+
 ### <a name="val-filter"></a>`filter`
 
 ```sml
@@ -371,6 +486,12 @@ val filter : ('a -> bool) -> 'a list -> 'a list
 original order.
 
 `p` is applied to every element, from left to right.
+
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `order` &middot; `long`
+
+</details>
 
 ### <a name="val-partition"></a>`partition`
 
@@ -386,6 +507,12 @@ element, from left to right.
 
 **Law** `partition p l = (filter p l, filter (not o p) l)` when `p` has no
 effects
+
+<details><summary>Tests (3)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `order` &middot; `filter-*`
+
+</details>
 
 ## Folding and testing the elements
 
@@ -407,6 +534,12 @@ which is `3 - (2 - (1 - 0))`.
 
 Also in the [top-level environment](../top-level.md): `foldl`.
 
+<details><summary>Tests (5)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `conses-reversed` &middot; `nonassociative` &middot; `nil` &middot; `rev-*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldr"></a>`foldr`
 
 ```sml
@@ -422,6 +555,12 @@ which is `1 - (2 - (3 - 0))`.
 
 Also in the [top-level environment](../top-level.md): `foldr`.
 
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `conses-in-order` &middot; `nonassociative` &middot; `nil` &middot; `long`
+
+</details>
+
 ### <a name="val-exists"></a>`exists`
 
 ```sml
@@ -435,6 +574,12 @@ the first one that does.
 
 **Law** `exists p l = not (all (not o p) l)`
 
+<details><summary>Tests (5)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `true` &middot; `false` &middot; `nil` &middot; `stops` &middot; `de-morgan-*`
+
+</details>
+
 ### <a name="val-all"></a>`all`
 
 ```sml
@@ -445,6 +590,12 @@ val all : ('a -> bool) -> 'a list -> bool
 the first one that does not.
 
 `all p []` is `true`.
+
+<details><summary>Tests (4)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `true` &middot; `false` &middot; `nil` &middot; `stops`
+
+</details>
 
 ## Making and comparing
 
@@ -461,6 +612,12 @@ of increasing argument.
 
 **Law** `tabulate (length l, fn i => nth (l, i)) = l`
 
+<details><summary>Tests (5)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `basic` &middot; `zero` &middot; `order` &middot; `Size` (raises Size) &middot; `nth-*`
+
+</details>
+
 ### <a name="val-collate"></a>`collate`
 
 ```sml
@@ -476,6 +633,12 @@ is `LESS`, and lists of the same length are `EQUAL`. `cmp` is not applied
 beyond the deciding pair.
 
 **Example** `collate Int.compare ([1, 2], [1, 2, 0]) = LESS`
+
+<details><summary>Tests (7)</summary>
+
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `equal` &middot; `nil-nil` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `less` &middot; `reflexive-*`
+
+</details>
 
 ## See also
 

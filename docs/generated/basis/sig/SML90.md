@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 36 entries documented |
+| Tests | 57 checks of 34 entries |
 | Source | [lib/basis/sig\_sml90.sml](../../../../lib/basis/sig_sml90.sml) |
 
 ## Synopsis
@@ -87,11 +88,23 @@ type outstream
 exception Abs
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
+
 ### <a name="exn-quot"></a>`Quot`
 
 ```sml
 exception Quot
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `handled`
+
+</details>
 
 ### <a name="exn-prod"></a>`Prod`
 
@@ -99,11 +112,23 @@ exception Quot
 exception Prod
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
+
 ### <a name="exn-neg"></a>`Neg`
 
 ```sml
 exception Neg
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
 
 ### <a name="exn-sum"></a>`Sum`
 
@@ -111,11 +136,23 @@ exception Neg
 exception Sum
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
+
 ### <a name="exn-diff"></a>`Diff`
 
 ```sml
 exception Diff
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
 
 ### <a name="exn-floor"></a>`Floor`
 
@@ -123,11 +160,23 @@ exception Diff
 exception Floor
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
+
 ### <a name="exn-exp"></a>`Exp`
 
 ```sml
 exception Exp
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
+
+</details>
 
 ### <a name="exn-sqrt"></a>`Sqrt`
 
@@ -135,11 +184,23 @@ exception Exp
 exception Sqrt
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
+
+</details>
+
 ### <a name="exn-ln"></a>`Ln`
 
 ```sml
 exception Ln
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
+
+</details>
 
 ### <a name="exn-ord"></a>`Ord`
 
@@ -147,11 +208,23 @@ exception Ln
 exception Ord
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
+
+</details>
+
 ### <a name="exn-mod"></a>`Mod`
 
 ```sml
 exception Mod
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Div`
+
+</details>
 
 ### <a name="exn-io"></a>`Io`
 
@@ -159,11 +232,23 @@ exception Mod
 exception Io of string
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `carries-a-string`
+
+</details>
+
 ### <a name="exn-interrupt"></a>`Interrupt`
 
 ```sml
 exception Interrupt
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
+
+</details>
 
 ### <a name="val-sqrt"></a>`sqrt`
 
@@ -171,11 +256,23 @@ exception Interrupt
 val sqrt : real -> real
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `4` &middot; `zero` &middot; `Sqrt-negative` (raises)
+
+</details>
+
 ### <a name="val-exp"></a>`exp`
 
 ```sml
 val exp : real -> real
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `underflow-is-zero` &middot; `Exp-overflow` (raises)
+
+</details>
 
 ### <a name="val-ln"></a>`ln`
 
@@ -183,11 +280,23 @@ val exp : real -> real
 val ln : real -> real
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `one` &middot; `e` &middot; `Ln-zero` (raises) &middot; `Ln-negative` (raises)
+
+</details>
+
 ### <a name="val-sin"></a>`sin`
 
 ```sml
 val sin : real -> real
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `half-pi`
+
+</details>
 
 ### <a name="val-cos"></a>`cos`
 
@@ -195,11 +304,23 @@ val sin : real -> real
 val cos : real -> real
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `pi`
+
+</details>
+
 ### <a name="val-arctan"></a>`arctan`
 
 ```sml
 val arctan : real -> real
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `one`
+
+</details>
 
 ### <a name="val-ord"></a>`ord`
 
@@ -207,11 +328,23 @@ val arctan : real -> real
 val ord : string -> int
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `first-character` &middot; `255` &middot; `Ord-empty` (raises)
+
+</details>
+
 ### <a name="val-chr"></a>`chr`
 
 ```sml
 val chr : int -> string
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `97` &middot; `zero` &middot; `Chr-256` (raises Chr) &middot; `Chr-negative` (raises Chr)
+
+</details>
 
 ### <a name="val-explode"></a>`explode`
 
@@ -219,11 +352,23 @@ val chr : int -> string
 val explode : string -> string list
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `letters` &middot; `empty`
+
+</details>
+
 ### <a name="val-implode"></a>`implode`
 
 ```sml
 val implode : string list -> string
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `strings` &middot; `empty`
+
+</details>
 
 ### <a name="val-lookahead"></a>`lookahead`
 
@@ -231,11 +376,23 @@ val implode : string list -> string
 val lookahead : instream -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `does-not-consume` &middot; `empty-file`
+
+</details>
+
 ### <a name="val-std_in"></a>`std_in`
 
 ```sml
 val std_in : instream
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-open`
+
+</details>
 
 ### <a name="val-std_out"></a>`std_out`
 
@@ -243,11 +400,23 @@ val std_in : instream
 val std_out : outstream
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `writes`
+
+</details>
+
 ### <a name="val-open_in"></a>`open_in`
 
 ```sml
 val open_in : string -> instream
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `Io-missing` (raises)
+
+</details>
 
 ### <a name="val-open_out"></a>`open_out`
 
@@ -255,11 +424,23 @@ val open_in : string -> instream
 val open_out : string -> outstream
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `truncates` &middot; `Io-bad-directory` (raises)
+
+</details>
+
 ### <a name="val-close_in"></a>`close_in`
 
 ```sml
 val close_in : instream -> unit
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `then-input-is-empty` &middot; `twice`
+
+</details>
 
 ### <a name="val-close_out"></a>`close_out`
 
@@ -267,11 +448,23 @@ val close_in : instream -> unit
 val close_out : outstream -> unit
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `twice`
+
+</details>
+
 ### <a name="val-input"></a>`input`
 
 ```sml
 val input : instream * int -> string
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `at-most-n` &middot; `zero`
+
+</details>
 
 ### <a name="val-output"></a>`output`
 
@@ -279,11 +472,23 @@ val input : instream * int -> string
 val output : outstream * string -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `then-input` &middot; `Io-closed` (raises)
+
+</details>
+
 ### <a name="val-end_of_stream"></a>`end_of_stream`
 
 ```sml
 val end_of_stream : instream -> bool
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `before-and-after` &middot; `closed`
+
+</details>
 
 ---
 

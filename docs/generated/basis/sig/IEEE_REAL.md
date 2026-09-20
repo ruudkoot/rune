@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 10 entries documented |
+| Tests | 48 checks of 6 entries |
 | Source | [lib/basis/sig\_ieee\_real.sml](../../../../lib/basis/sig_ieee_real.sml) |
 
 ## Synopsis
@@ -45,6 +46,12 @@ end
 ```sml
 exception Unordered
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `raised-by-Real.compare` (raises)
+
+</details>
 
 ### <a name="type-real_order"></a>`real_order`
 
@@ -92,11 +99,23 @@ datatype rounding_mode = TO_NEAREST | TO_NEGINF | TO_POSINF | TO_ZERO
 val setRoundingMode : rounding_mode -> unit
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `then-get-*` &middot; `up-is-above-down` &middot; `zero-is-down-for-positive` &middot; `nearest-is-one-of-them`
+
+</details>
+
 ### <a name="val-getroundingmode"></a>`getRoundingMode`
 
 ```sml
 val getRoundingMode : unit -> rounding_mode
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `default` &middot; `restored`
+
+</details>
 
 ### <a name="type-decimal_approx"></a>`decimal_approx`
 
@@ -117,17 +136,35 @@ type decimal_approx = {class : float_class, sign : bool, digits : int list, exp 
 val toString : decimal_approx -> string
 ```
 
+<details><summary>Tests (15)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `zero` &middot; `negative-zero` &middot; `zero-ignores-digits-and-exp` &middot; `normal` &middot; `normal-exp` &middot; `normal-negative-exp` &middot; `normal-negative` &middot; `subnormal` &middot; `inf` &middot; `negative-inf` &middot; `inf-ignores-exp` &middot; `nan` &middot; `negative-nan` &middot; `of-toDecimal` &middot; `is-fmt-EXACT`
+
+</details>
+
 ### <a name="val-scan"></a>`scan`
 
 ```sml
 val scan : (char, 'a) StringCvt.reader -> (decimal_approx, 'a) StringCvt.reader
 ```
 
+<details><summary>Tests (8)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `rest` &middot; `incomplete-exponent` &middot; `incomplete-exponent-sign` &middot; `point-without-fraction` &middot; `second-point` &middot; `inf-then-letters` &middot; `whitespace` &middot; `NONE`
+
+</details>
+
 ### <a name="val-fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> decimal_approx option
 ```
+
+<details><summary>Tests (18)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `integer-and-fraction` &middot; `integer` &middot; `leading-zeros` &middot; `small-fraction` &middot; `point-first` &middot; `trailing-zeros` &middot; `exponent` &middot; `negative-exponent` &middot; `plus-signs` &middot; `zero` &middot; `zero-with-exponent` &middot; `inf` &middot; `infinity-any-case` &middot; `nan` &middot; `NONE-letters` &middot; `NONE-empty` &middot; `NONE-bare-point` &middot; `NONE-sign-only`
+
+</details>
 
 ---
 

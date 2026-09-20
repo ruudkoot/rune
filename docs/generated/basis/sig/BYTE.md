@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 7 entries documented |
+| Tests | 67 checks of 7 entries |
 | Source | [lib/basis/sig\_byte.sml](../../../../lib/basis/sig_byte.sml) |
 
 ## Synopsis
@@ -43,11 +44,23 @@ end
 val byteToChar : Word8.word -> char
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `zero` &middot; `255` &middot; `newline` &middot; `every-byte` &middot; `inverts-charToByte` &middot; `high-bytes-are-not-negative`
+
+</details>
+
 ### <a name="val-chartobyte"></a>`charToByte`
 
 ```sml
 val charToByte : char -> Word8.word
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `zero` &middot; `255` &middot; `newline` &middot; `every-character` &middot; `inverts-byteToChar`
+
+</details>
 
 ### <a name="val-bytestostring"></a>`bytesToString`
 
@@ -55,11 +68,23 @@ val charToByte : char -> Word8.word
 val bytesToString : Word8Vector.vector -> string
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `empty` &middot; `one` &middot; `no-translation` &middot; `every-byte` &middot; `size` &middot; `random-inverts-stringToBytes-*`
+
+</details>
+
 ### <a name="val-stringtobytes"></a>`stringToBytes`
 
 ```sml
 val stringToBytes : string -> Word8Vector.vector
 ```
+
+<details><summary>Tests (8)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `empty` &middot; `one` &middot; `no-translation` &middot; `every-character` &middot; `length` &middot; `random-elementwise-*` &middot; `random-inverts-bytesToString-*`
+
+</details>
 
 ### <a name="val-unpackstringvec"></a>`unpackStringVec`
 
@@ -67,17 +92,35 @@ val stringToBytes : string -> Word8Vector.vector
 val unpackStringVec : Word8VectorSlice.slice -> string
 ```
 
+<details><summary>Tests (11)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `full` &middot; `middle` &middot; `to-the-end` &middot; `first` &middot; `last` &middot; `empty-slice` &middot; `empty-slice-at-the-end` &middot; `empty-vector` &middot; `no-translation` &middot; `slice-of-a-slice` &middot; `random-*`
+
+</details>
+
 ### <a name="val-unpackstring"></a>`unpackString`
 
 ```sml
 val unpackString : Word8ArraySlice.slice -> string
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `full` &middot; `middle` &middot; `to-the-end` &middot; `empty-slice` &middot; `empty-slice-at-the-end` &middot; `empty-array` &middot; `no-translation` &middot; `sees-the-current-contents` &middot; `random-*`
+
+</details>
+
 ### <a name="val-packstring"></a>`packString`
 
 ```sml
 val packString : Word8Array.array * int * substring -> unit
 ```
+
+<details><summary>Tests (19)</summary>
+
+For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `at-the-start` &middot; `in-the-middle` &middot; `up-to-the-end` &middot; `whole-array` &middot; `part-of-a-string` &middot; `empty-substring` &middot; `empty-substring-at-the-end` &middot; `empty-array` &middot; `no-translation` &middot; `keeps-the-other-elements` &middot; `twice` &middot; `Subscript-negative-offset` (raises Subscript) &middot; `Subscript-negative-offset-empty-substring` (raises Subscript) &middot; `Subscript-one-too-long` (raises Subscript) &middot; `Subscript-offset-is-the-length` (raises Subscript) &middot; `Subscript-offset-beyond-the-length-empty-substring` (raises Subscript) &middot; `Subscript-longer-than-the-array` (raises Subscript) &middot; `Subscript-empty-array` (raises Subscript) &middot; `random-*`
+
+</details>
 
 ---
 

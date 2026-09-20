@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
+| Tests | 32 checks of 11 entries |
 | Source | [lib/basis/sig\_unix.sml](../../../../lib/basis/sig_unix.sml) |
 
 ## Synopsis
@@ -93,11 +94,23 @@ datatype exit_status
 val fromStatus : OS.Process.status -> exit_status
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `success` &middot; `failure` &middot; `system` &middot; `signaled`
+
+</details>
+
 ### <a name="val-executeinenv"></a>`executeInEnv`
 
 ```sml
 val executeInEnv : string * string list * string list -> ('a, 'b) proc
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `environment` &middot; `empty-environment` &middot; `arguments` &middot; `no-such-program`
+
+</details>
 
 ### <a name="val-execute"></a>`execute`
 
@@ -105,11 +118,23 @@ val executeInEnv : string * string list * string list -> ('a, 'b) proc
 val execute : string * string list -> ('a, 'b) proc
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `echo` &middot; `argument-list` &middot; `environment` &middot; `directory` &middot; `no-such-program`
+
+</details>
+
 ### <a name="val-textinstreamof"></a>`textInstreamOf`
 
 ```sml
 val textInstreamOf : (TextIO.instream, 'a) proc -> TextIO.instream
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `lines`
+
+</details>
 
 ### <a name="val-bininstreamof"></a>`binInstreamOf`
 
@@ -117,11 +142,23 @@ val textInstreamOf : (TextIO.instream, 'a) proc -> TextIO.instream
 val binInstreamOf : (BinIO.instream, 'a) proc -> BinIO.instream
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `bytes`
+
+</details>
+
 ### <a name="val-textoutstreamof"></a>`textOutstreamOf`
 
 ```sml
 val textOutstreamOf : ('a, TextIO.outstream) proc -> TextIO.outstream
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `to-cat`
+
+</details>
 
 ### <a name="val-binoutstreamof"></a>`binOutstreamOf`
 
@@ -129,11 +166,23 @@ val textOutstreamOf : ('a, TextIO.outstream) proc -> TextIO.outstream
 val binOutstreamOf : ('a, BinIO.outstream) proc -> BinIO.outstream
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `to-cat` &middot; `text-back`
+
+</details>
+
 ### <a name="val-streamsof"></a>`streamsOf`
 
 ```sml
 val streamsOf : (TextIO.instream, TextIO.outstream) proc -> TextIO.instream * TextIO.outstream
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `conversation`
+
+</details>
 
 ### <a name="val-reap"></a>`reap`
 
@@ -141,17 +190,35 @@ val streamsOf : (TextIO.instream, TextIO.outstream) proc -> TextIO.instream * Te
 val reap : ('a, 'b) proc -> OS.Process.status
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `success` &middot; `failure` &middot; `status` &middot; `twice` &middot; `twice-same-status` &middot; `closes-input` &middot; `waits`
+
+</details>
+
 ### <a name="val-kill"></a>`kill`
 
 ```sml
 val kill : ('a, 'b) proc * signal -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `term` &middot; `kill`
+
+</details>
+
 ### <a name="val-exit"></a>`exit`
 
 ```sml
 val exit : Word8.word -> 'a
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Unix`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `status` &middot; `flushes` &middot; `runs-atExit` &middot; `result-has-any-type`
+
+</details>
 
 ---
 

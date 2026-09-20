@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 2 entries documented |
+| Tests | 16 checks of 2 entries |
 | Source | [lib/basis/sig\_text\_stream\_io.sml](../../../../lib/basis/sig_text_stream_io.sml) |
 
 ## Synopsis
@@ -81,11 +82,23 @@ end
 val inputLine : instream -> (string * instream) option
 ```
 
+<details><summary>Tests (11)</summary>
+
+For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `lines-then-NONE` &middot; `last-line-gets-a-newline` &middot; `empty-stream` &middot; `at-end-of-stream` &middot; `line-ends-at-end-of-stream` &middot; `empty-lines` &middot; `same-result-twice` &middot; `residual-stream` &middot; `does-not-change-the-stream` &middot; `long-line` &middot; `carriage-return-is-kept`
+
+</details>
+
 ### <a name="val-outputsubstr"></a>`outputSubstr`
 
 ```sml
 val outputSubstr : outstream * substring -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-output-of-the-string` &middot; `empty` &middot; `buffered` &middot; `LINE_BUF` &middot; `Io-closed`
+
+</details>
 
 ---
 

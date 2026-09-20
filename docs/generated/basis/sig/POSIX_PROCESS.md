@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 22 entries documented |
+| Tests | 50 checks of 16 entries |
 | Source | [lib/basis/sig\_posix\_process.sml](../../../../lib/basis/sig_posix_process.sml) |
 
 ## Synopsis
@@ -100,11 +101,23 @@ eqtype pid
 val wordToPid : SysWord.word -> pid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `no-validation`
+
+</details>
+
 ### <a name="val-pidtoword"></a>`pidToWord`
 
 ```sml
 val pidToWord : pid -> SysWord.word
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `wordToPid` &middot; `positive`
+
+</details>
 
 ### <a name="val-fork"></a>`fork`
 
@@ -112,11 +125,23 @@ val pidToWord : pid -> SysWord.word
 val fork : unit -> pid option
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `pid-of-child` &middot; `parent-keeps-pid` &middot; `child-is-a-copy` &middot; `child-changes-are-its-own`
+
+</details>
+
 ### <a name="val-exec"></a>`exec`
 
 ```sml
 val exec : string * string list -> 'a
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `status` &middot; `args` &middot; `argument-0` &middot; `same-process` &middot; `same-environment` &middot; `not-searched` &middot; `missing-file-raises`
+
+</details>
 
 ### <a name="val-exece"></a>`exece`
 
@@ -124,11 +149,23 @@ val exec : string * string list -> 'a
 val exece : string * string list * string list -> 'a
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `environment` &middot; `empty-environment` &middot; `missing-file-raises`
+
+</details>
+
 ### <a name="val-execp"></a>`execp`
 
 ```sml
 val execp : string * string list -> 'a
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `searched` &middot; `with-slash` &middot; `missing-raises`
+
+</details>
 
 ### <a name="type-waitpid_arg"></a>`waitpid_arg`
 
@@ -170,6 +207,12 @@ datatype exit_status
 val fromStatus : OS.Process.status -> exit_status
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `success` &middot; `failure` &middot; `system-exit-0` &middot; `system-exit-3` &middot; `system-exit-200` &middot; `system-killed`
+
+</details>
+
 ### <a name="str-w"></a>`W`
 
 **Included from [`BIT_FLAGS`](../sig/BIT_FLAGS.md)**: `include BIT_FLAGS`
@@ -192,11 +235,23 @@ val fromStatus : OS.Process.status -> exit_status
 val untraced : flags
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `in-all` &middot; `nonempty` &middot; `waitpid-without-it`
+
+</details>
+
 ### <a name="val-wait"></a>`wait`
 
 ```sml
 val wait : unit -> pid * exit_status
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `child` &middot; `already-ended` &middot; `no-child` (raises)
+
+</details>
 
 ### <a name="val-waitpid"></a>`waitpid`
 
@@ -204,17 +259,35 @@ val wait : unit -> pid * exit_status
 val waitpid : waitpid_arg * W.flags list -> pid * exit_status
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `no-child` (raises)
+
+</details>
+
 ### <a name="val-waitpid_nh"></a>`waitpid_nh`
 
 ```sml
 val waitpid_nh : waitpid_arg * W.flags list -> (pid * exit_status) option
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `running-child` &middot; `ended-child` &middot; `no-child` (raises)
+
+</details>
+
 ### <a name="val-exit"></a>`exit`
 
 ```sml
 val exit : Word8.word -> 'a
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `status` &middot; `zero` &middot; `no-atExit` &middot; `no-flush` &middot; `result-has-any-type`
+
+</details>
 
 ### <a name="type-killpid_arg"></a>`killpid_arg`
 
@@ -237,11 +310,23 @@ datatype killpid_arg
 val kill : killpid_arg * signal -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `term` &middot; `no-such-process` (raises)
+
+</details>
+
 ### <a name="val-alarm"></a>`alarm`
 
 ```sml
 val alarm : Time.time -> Time.time
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `none-outstanding` &middot; `remaining` &middot; `cancelled`
+
+</details>
 
 ### <a name="val-pause"></a>`pause`
 
@@ -249,11 +334,23 @@ val alarm : Time.time -> Time.time
 val pause : unit -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `until-alarm` &middot; `until-signal`
+
+</details>
+
 ### <a name="val-sleep"></a>`sleep`
 
 ```sml
 val sleep : Time.time -> Time.time
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `one-second` &middot; `zero`
+
+</details>
 
 ---
 

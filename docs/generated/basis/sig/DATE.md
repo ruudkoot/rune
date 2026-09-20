@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 24 entries documented |
+| Tests | 232 checks of 23 entries |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
 ## Synopsis
@@ -129,17 +130,35 @@ datatype month
 | <a name="con-nov"></a>`Nov` |  |  |
 | <a name="con-dec"></a>`Dec` |  |  |
 
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
+
 ### <a name="type-date"></a>`date`
 
 ```sml
 type date
 ```
 
+<details><summary>Tests (26)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
+
+</details>
+
 ### <a name="exn-date"></a>`Date`
 
 ```sml
 exception Date
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `raise-and-handle` &middot; `is-its-own-exception`
+
+</details>
 
 ### <a name="val-date"></a>`date`
 
@@ -163,11 +182,23 @@ val date : {year : int,
 | <a name="fld-date.second"></a>`second` | `int` |  |
 | <a name="fld-date.offset"></a>`offset` | `Time.time option` |  |
 
+<details><summary>Tests (26)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
+
+</details>
+
 ### <a name="val-year"></a>`year`
 
 ```sml
 val year : date -> int
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `base-0`
+
+</details>
 
 ### <a name="val-month"></a>`month`
 
@@ -175,11 +206,23 @@ val year : date -> int
 val month : date -> month
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
+
 ### <a name="val-day"></a>`day`
 
 ```sml
 val day : date -> int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
 
 ### <a name="val-hour"></a>`hour`
 
@@ -187,11 +230,23 @@ val day : date -> int
 val hour : date -> int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
+
 ### <a name="val-minute"></a>`minute`
 
 ```sml
 val minute : date -> int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
 
 ### <a name="val-second"></a>`second`
 
@@ -199,11 +254,23 @@ val minute : date -> int
 val second : date -> int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
+
+</details>
+
 ### <a name="val-weekday"></a>`weekDay`
 
 ```sml
 val weekDay : date -> weekday
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `2000-01-01` &middot; `2000-02-29` &middot; `1900-01-01` &middot; `2200-01-01`
+
+</details>
 
 ### <a name="val-yearday"></a>`yearDay`
 
@@ -211,11 +278,23 @@ val weekDay : date -> weekday
 val yearDay : date -> int
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `1-January-is-0` &middot; `31-December` &middot; `31-December-leap` &middot; `1-March-leap` &middot; `1-March`
+
+</details>
+
 ### <a name="val-offset"></a>`offset`
 
 ```sml
 val offset : date -> Time.time option
 ```
+
+<details><summary>Tests (13)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `UTC` &middot; `west` &middot; `east` &middot; `west-keeps-the-fields` &middot; `east-keeps-the-fields` &middot; `modulo-24-hours` &middot; `modulo-24-hours-moves-the-date` &middot; `modulo-24-hours-negative` &middot; `modulo-24-hours-negative-moves-the-date` &middot; `24-hours` &middot; `24-hours-moves-the-date` &middot; `49-hours-and-a-half` &middot; `local-is-NONE`
+
+</details>
 
 ### <a name="val-isdst"></a>`isDst`
 
@@ -223,11 +302,23 @@ val offset : date -> Time.time option
 val isDst : date -> bool option
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `UTC-is-not-daylight-saving` &middot; `not-both-January-and-July`
+
+</details>
+
 ### <a name="val-localoffset"></a>`localOffset`
 
 ```sml
 val localOffset : unit -> Time.time
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `west-of-UTC-now` &middot; `less-than-a-day` &middot; `whole-minutes`
+
+</details>
 
 ### <a name="val-fromtimelocal"></a>`fromTimeLocal`
 
@@ -235,11 +326,23 @@ val localOffset : unit -> Time.time
 val fromTimeLocal : Time.time -> date
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-NONE` &middot; `toTime-inverts` &middot; `differs-from-UTC-by-less-than-a-day` &middot; `differs-from-UTC-by-whole-minutes` &middot; `same-weekDay-and-yearDay-as-the-fields`
+
+</details>
+
 ### <a name="val-fromtimeuniv"></a>`fromTimeUniv`
 
 ```sml
 val fromTimeUniv : Time.time -> date
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-SOME-0` &middot; `not-daylight-saving` &middot; `inverts-toTime` &middot; `weekDay` &middot; `yearDay` &middot; `fraction-of-a-second` &middot; `fraction-of-a-second-1969` &middot; `now-is-after-2020` &middot; `calendar-1972-2037` &middot; `calendar-1900-2199`
+
+</details>
 
 ### <a name="val-totime"></a>`toTime`
 
@@ -247,11 +350,23 @@ val fromTimeUniv : Time.time -> date
 val toTime : date -> Time.time
 ```
 
+<details><summary>Tests (22)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-west` &middot; `offset-east` &middot; `offset-west-in-UTC` &middot; `offset-east-in-UTC` &middot; `offset-modulo-24-hours-is-the-same-time` &middot; `offset-modulo-24-hours-negative-is-the-same-time` &middot; `a-day` &middot; `a-second` &middot; `leap-day` &middot; `no-leap-day` &middot; `leap-year` &middot; `year` &middot; `1972-to-2037` &middot; `last-second-of-1969` &middot; `century-from-1900` &middot; `century-to-2100-beyond-2038` &middot; `1900-to-2200` &middot; `Date-or-a-year-far-away` &middot; `inverts-fromTimeUniv` &middot; `fromTimeUniv-inverts-1972-2037` &middot; `local-date` &middot; `local-date-in-January`
+
+</details>
+
 ### <a name="val-compare"></a>`compare`
 
 ```sml
 val compare : date * date -> order
 ```
+
+<details><summary>Tests (11)</summary>
+
+For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `equal` &middot; `year` &middot; `month` &middot; `day` &middot; `hour` &middot; `minute` &middot; `second` &middot; `ignores-the-offset` &middot; `ignores-the-offset-not-the-time` &middot; `local-and-UTC` &middot; `agrees-with-toTime-for-UTC`
+
+</details>
 
 ### <a name="val-fmt"></a>`fmt`
 
@@ -259,11 +374,23 @@ val compare : date * date -> order
 val fmt : string -> date -> string
 ```
 
+<details><summary>Tests (58)</summary>
+
+For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `%d` &middot; `%H` &middot; `%I` &middot; `%I-morning` &middot; `%I-midnight` &middot; `%I-noon` &middot; `%I-one` &middot; `%j` &middot; `%j-first-day` &middot; `%j-last-day-of-a-leap-year` &middot; `%m` &middot; `%m-December` &middot; `%M` &middot; `%S` &middot; `%S-zero` &middot; `%U` &middot; `%U-Sunday` &middot; `%W` &middot; `%W-Sunday` &middot; `%U-before-the-first-Sunday` &middot; `%W-before-the-first-Monday` &middot; `%W-first-Monday` &middot; `%w` &middot; `%w-Sunday` &middot; `%w-Saturday` &middot; `%y` &middot; `%y-2005` &middot; `%Y` &middot; `%%` &middot; `%%Y` &middot; `text-around-directives` &middot; `no-directive` &middot; `empty` &middot; `several` &middot; `other-character` &middot; `other-character-e` &middot; `other-character-digit` &middot; `other-characters-in-text` &middot; `%Z-UTC` &middot; `numeric-directives` &middot; `prints-no-second-99` &middot; `prints-no-hour-24` &middot; `prints-no-30-February` &middot; `prints-a-valid-date` &middot; `%a` &middot; `%a-Sunday` &middot; `%A` &middot; `%A-Sunday` &middot; `%b` &middot; `%B` &middot; `%B-September` &middot; `%p` &middot; `%p-morning` &middot; `%c` &middot; `%x` &middot; `%X` &middot; `names-of-every-month` &middot; `names-of-every-weekday`
+
+</details>
+
 ### <a name="val-tostring"></a>`toString`
 
 ```sml
 val toString : date -> string
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `prints-no-31-April` &middot; `prints-no-minute-60` &middot; `spec-example` &middot; `morning` &middot; `midnight` &middot; `end-of-year` &middot; `every-month` &middot; `every-weekday` &middot; `24-characters-as-fmt`
+
+</details>
 
 ### <a name="val-scan"></a>`scan`
 
@@ -271,11 +398,23 @@ val toString : date -> string
 val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `rest` &middot; `time-zone-not-parsed` &middot; `24-characters` &middot; `initial-whitespace` &middot; `NONE` &middot; `list-reader`
+
+</details>
+
 ### <a name="val-fromstring"></a>`fromString`
 
 ```sml
 val fromString : string -> date option
 ```
+
+<details><summary>Tests (20)</summary>
+
+For `Date`, in [tests/basis/date\_fmt.sml](../../../../tests/basis/date_fmt.sml): `spec-example` &middot; `weekDay` &middot; `yearDay` &middot; `initial-whitespace` &middot; `rest-ignored` &middot; `morning` &middot; `no-consistency-check-of-the-weekday` &middot; `empty` &middot; `blank` &middot; `letters` &middot; `weekday-only` &middot; `no-year` &middot; `no-seconds` &middot; `unknown-weekday` &middot; `unknown-month` &middot; `dashes` &middot; `numeric-date` &middot; `every-month` &middot; `every-weekday` &middot; `inverts-toString`
+
+</details>
 
 ---
 

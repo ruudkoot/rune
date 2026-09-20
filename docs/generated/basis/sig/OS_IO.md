@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 26 of 26 entries documented |
+| Tests | 80 checks of 21 entries |
 | Source | [lib/basis/sig\_os\_io.sml](../../../../lib/basis/sig_os_io.sml) |
 
 ## Synopsis
@@ -28,10 +29,6 @@ program. The readers and writers of [`PRIM_IO`](../sig/PRIM_IO.md) give theirs (
 socket gives its own ([`Socket.ioDesc`](../sig/SOCKET.md#val-iodesc)). [`poll`](#val-poll) waits for several descriptors
 at once, which is how a program serves more than one connection without
 threads. The structure is [`OS.IO`](../sig/OS.md#str-io).
-
-> **Erratum** `OS_IO/kind-on-one-line`. The transcription of this signature in
-> the test suite writes the substructure [`Kind`](#str-kind) on one line, for the sake of
-> the script that reads it; here it is written out.
 
 ## Contents
 
@@ -116,6 +113,14 @@ val hash : iodesc -> word
 `hash d` is a word that is the same for equal descriptors, for use in a
 hash table.
 
+<details><summary>Tests (6)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `same-descriptor` &middot; `equal-descriptors` &middot; `not-constant`
+
+For `OS.IO`, in [tests/basis/os.io\_std.sml](../../../../tests/basis/os.io_std.sml): `TextIO.stdIn` &middot; `standard-descriptors` &middot; `TextIO.stdIn-is-Posix-stdin`
+
+</details>
+
 ### <a name="val-compare"></a>`compare`
 
 ```sml
@@ -124,6 +129,14 @@ val compare : iodesc * iodesc -> order
 
 `compare (d, e)` orders descriptors in some total order, which has no
 meaning beyond that.
+
+<details><summary>Tests (10)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `same` &middot; `EQUAL-iff-equal` &middot; `different-files` &middot; `antisymmetric` &middot; `transitive`
+
+For `OS.IO`, in [tests/basis/os.io\_std.sml](../../../../tests/basis/os.io_std.sml): `TextIO.stdIn` &middot; `TextIO.stdIn-twice` &middot; `TextIO.stdIn-is-Posix-stdin` &middot; `TextIO.stdIn-equals-Posix-stdin` &middot; `standard-descriptors`
+
+</details>
 
 ### <a name="type-iodesc_kind"></a>`iodesc_kind`
 
@@ -150,6 +163,14 @@ descriptor that is closed.
 > An [`iodesc_kind`](#type-iodesc_kind) is a name here, and a descriptor of something else has
 > a name that [`Kind`](#str-kind) does not list.
 
+<details><summary>Tests (7)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `setup` &middot; `TextIO.openIn` &middot; `BinIO.openOut` &middot; `closed-SysErr` (raises) &middot; `cleanup`
+
+For `OS.IO`, in [tests/basis/os.io\_std.sml](../../../../tests/basis/os.io_std.sml): `TextIO.stdIn` &middot; `standard-descriptors`
+
+</details>
+
 ### <a name="str-kind"></a>`Kind`
 
 The kinds of descriptor that every system knows.
@@ -162,6 +183,12 @@ val file : iodesc_kind
 
 a regular file
 
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `TextIO.openOut` &middot; `BinIO.openAppend`
+
+</details>
+
 #### <a name="val-kind.dir"></a>`dir`
 
 ```sml
@@ -169,6 +196,12 @@ val dir : iodesc_kind
 ```
 
 a directory
+
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `directory`
+
+</details>
 
 #### <a name="val-kind.symlink"></a>`symlink`
 
@@ -178,6 +211,12 @@ val symlink : iodesc_kind
 
 a symbolic link
 
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `opening-follows-the-link`
+
+</details>
+
 #### <a name="val-kind.tty"></a>`tty`
 
 ```sml
@@ -185,6 +224,14 @@ val tty : iodesc_kind
 ```
 
 a terminal
+
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `dev-null`
+
+For `OS.IO`, in [tests/basis/os.io\_std.sml](../../../../tests/basis/os.io_std.sml): `standard-descriptors`
+
+</details>
 
 #### <a name="val-kind.pipe"></a>`pipe`
 
@@ -194,6 +241,12 @@ val pipe : iodesc_kind
 
 a pipe
 
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `read-end` &middot; `write-end`
+
+</details>
+
 #### <a name="val-kind.socket"></a>`socket`
 
 ```sml
@@ -202,6 +255,12 @@ val socket : iodesc_kind
 
 a socket
 
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `tcp`
+
+</details>
+
 #### <a name="val-kind.device"></a>`device`
 
 ```sml
@@ -209,6 +268,12 @@ val device : iodesc_kind
 ```
 
 a device
+
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `*` &middot; `dev-null`
+
+</details>
 
 ## Polling
 
@@ -242,6 +307,14 @@ val pollDesc : iodesc -> poll_desc option
 > **Implementation** `OS.IO.pollDesc/always`. Every descriptor can be polled:
 > the answer is never `NONE`.
 
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file` &middot; `pipe`
+
+For `OS.IO`, in [tests/basis/os.io\_std.sml](../../../../tests/basis/os.io_std.sml): `TextIO.stdIn`
+
+</details>
+
 ### <a name="val-polltoiodesc"></a>`pollToIODesc`
 
 ```sml
@@ -249,6 +322,12 @@ val pollToIODesc : poll_desc -> iodesc
 ```
 
 `pollToIODesc pd` is the descriptor that `pd` was made from.
+
+<details><summary>Tests (5)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `of-pollDesc` &middot; `of-pollIn` &middot; `of-pollOut` &middot; `of-pollPri` &middot; `pipe`
+
+</details>
 
 ### <a name="exn-poll"></a>`Poll`
 
@@ -262,6 +341,12 @@ support that kind of event.
 > **Implementation** `OS.IO.Poll/never`. It is never raised: the operating
 > system is asked about every event, and answers when [`poll`](#val-poll) is called.
 
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `raise-handle` (raises) &middot; `is-not-SysErr`
+
+</details>
+
 ### <a name="val-pollin"></a>`pollIn`
 
 ```sml
@@ -272,6 +357,12 @@ val pollIn : poll_desc -> poll_desc
 read, or the end of the stream.
 
 **Raises** [`Poll`](#exn-poll) if the descriptor does not support input.
+
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `adds-a-condition` &middot; `twice` &middot; `file-no-Poll`
+
+</details>
 
 ### <a name="val-pollout"></a>`pollOut`
 
@@ -284,6 +375,12 @@ write without waiting.
 
 **Raises** [`Poll`](#exn-poll) if the descriptor does not support output.
 
+<details><summary>Tests (4)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `adds-a-condition` &middot; `file-no-Poll` &middot; `commutes-with-pollIn` &middot; `differs-from-pollIn`
+
+</details>
+
 ### <a name="val-pollpri"></a>`pollPri`
 
 ```sml
@@ -294,6 +391,12 @@ val pollPri : poll_desc -> poll_desc
 such as the out-of-band data of a socket.
 
 **Raises** [`Poll`](#exn-poll) if the descriptor does not support it.
+
+<details><summary>Tests (1)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file`
+
+</details>
 
 ### <a name="val-poll"></a>`poll`
 
@@ -318,6 +421,12 @@ for as long as it takes, and `SOME Time.zeroTime` does not wait at all.
 > ready, so every descriptor is looked at before the wait, and a closed one
 > raises [`OS.SysErr`](../sig/OS.md#exn-syserr).
 
+<details><summary>Tests (13)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file-ready-for-input` &middot; `file-ready-for-output` &middot; `order-of-the-arguments` &middot; `nothing` &middot; `NONE` &middot; `timeout` &middot; `closed-SysErr` (raises) &middot; `empty-pipe` &middot; `only-the-ready-ones-in-order` &middot; `times-out` &middot; `zero-does-not-block` &middot; `nonempty-subset` &middot; `cleanup`
+
+</details>
+
 ### <a name="val-isin"></a>`isIn`
 
 ```sml
@@ -325,6 +434,12 @@ val isIn : poll_info -> bool
 ```
 
 `isIn info` is `true` when the descriptor has input, or is at its end.
+
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file` &middot; `not-asked` &middot; `pipe-with-data`
+
+</details>
 
 ### <a name="val-isout"></a>`isOut`
 
@@ -334,6 +449,12 @@ val isOut : poll_info -> bool
 
 `isOut info` is `true` when the descriptor can take output.
 
+<details><summary>Tests (3)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `not-asked` &middot; `file` &middot; `pipe-write-end`
+
+</details>
+
 ### <a name="val-ispri"></a>`isPri`
 
 ```sml
@@ -342,6 +463,12 @@ val isPri : poll_info -> bool
 
 `isPri info` is `true` when the descriptor has urgent input.
 
+<details><summary>Tests (2)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `not-asked` &middot; `pipe-with-data`
+
+</details>
+
 ### <a name="val-infotopolldesc"></a>`infoToPollDesc`
 
 ```sml
@@ -349,6 +476,12 @@ val infoToPollDesc : poll_info -> poll_desc
 ```
 
 `infoToPollDesc info` is the [`poll_desc`](#type-poll_desc) that `info` answers.
+
+<details><summary>Tests (1)</summary>
+
+For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file`
+
+</details>
 
 ## See also
 

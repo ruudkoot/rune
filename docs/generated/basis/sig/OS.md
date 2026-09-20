@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 9 entries documented |
+| Tests | 45 checks of 5 entries |
 | Source | [lib/basis/sig\_os.sml](../../../../lib/basis/sig_os.sml) |
 
 ## Synopsis
@@ -85,11 +86,27 @@ A substructure: its members are described on the page of [`OS_PROCESS`](../sig/O
 eqtype syserror
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `inverts-errorName-notdir` &middot; `unknown-name` &middot; `empty-name`
+
+For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `errorName-*` &middot; `same-condition` &middot; `not-a-name` &middot; `Posix-errors`
+
+</details>
+
 ### <a name="exn-syserr"></a>`SysErr`
 
 ```sml
 exception SysErr of string * syserror option
 ```
+
+<details><summary>Tests (17)</summary>
+
+For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `carries-message` &middot; `is-raised` (raises) &middot; `is-not-Fail` &middot; `syserror-option-type` &middot; `cause-of-failed-open` &middot; `failed-open-has-syserror` &middot; `carries-syserror`
+
+For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `setup` &middot; `*` &middot; `NONE-form` &middot; `SOME-form` &middot; `exnName` &middot; `is-not-IO.Io` &middot; `remove-missing-is-noent` &middot; `mkDir-existing-is-exist` &middot; `chDir-to-a-file-is-notdir` &middot; `cleanup`
+
+</details>
 
 ### <a name="val-errormsg"></a>`errorMsg`
 
@@ -97,17 +114,41 @@ exception SysErr of string * syserror option
 val errorMsg : syserror -> string
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `is-the-message-of-SysErr` &middot; `is-the-message-of-SysErr-notdir` &middot; `nonempty`
+
+For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `*` &middot; `nonempty-*` &middot; `same-error-same-message` &middot; `is-Posix.Error.errorMsg`
+
+</details>
+
 ### <a name="val-errorname"></a>`errorName`
 
 ```sml
 val errorName : syserror -> string
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `syserror-inverts` &middot; `unique` &middot; `stable`
+
+For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `same-condition` &middot; `different-errors` &middot; `nonempty` &middot; `is-Posix.Error.errorName`
+
+</details>
+
 ### <a name="val-syserror"></a>`syserror`
 
 ```sml
 val syserror : string -> syserror option
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `inverts-errorName-notdir` &middot; `unknown-name` &middot; `empty-name`
+
+For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `errorName-*` &middot; `same-condition` &middot; `not-a-name` &middot; `Posix-errors`
+
+</details>
 
 ---
 

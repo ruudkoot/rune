@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 30 entries documented |
+| Tests | 65 checks of 26 entries |
 | Source | [lib/basis/sig\_posix\_proc\_env.sml](../../../../lib/basis/sig_posix_proc_env.sml) |
 
 ## Synopsis
@@ -109,11 +110,23 @@ eqtype file_desc
 val uidToWord : uid -> SysWord.word
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `wordToUid`
+
+</details>
+
 ### <a name="val-wordtouid"></a>`wordToUid`
 
 ```sml
 val wordToUid : SysWord.word -> uid
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `no-validation`
+
+</details>
 
 ### <a name="val-gidtoword"></a>`gidToWord`
 
@@ -121,11 +134,23 @@ val wordToUid : SysWord.word -> uid
 val gidToWord : gid -> SysWord.word
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `wordToGid`
+
+</details>
+
 ### <a name="val-wordtogid"></a>`wordToGid`
 
 ```sml
 val wordToGid : SysWord.word -> gid
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `no-validation`
+
+</details>
 
 ### <a name="val-getpid"></a>`getpid`
 
@@ -133,11 +158,23 @@ val wordToGid : SysWord.word -> gid
 val getpid : unit -> pid
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `PPID-of-shell` &middot; `stable` &middot; `of-child-differs`
+
+</details>
+
 ### <a name="val-getppid"></a>`getppid`
 
 ```sml
 val getppid : unit -> pid
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `of-child` &middot; `not-self`
+
+</details>
 
 ### <a name="val-getuid"></a>`getuid`
 
@@ -145,11 +182,23 @@ val getppid : unit -> pid
 val getuid : unit -> uid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `id-ru`
+
+</details>
+
 ### <a name="val-geteuid"></a>`geteuid`
 
 ```sml
 val geteuid : unit -> uid
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `id-u`
+
+</details>
 
 ### <a name="val-getgid"></a>`getgid`
 
@@ -157,11 +206,23 @@ val geteuid : unit -> uid
 val getgid : unit -> gid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `id-rg`
+
+</details>
+
 ### <a name="val-getegid"></a>`getegid`
 
 ```sml
 val getegid : unit -> gid
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `id-g`
+
+</details>
 
 ### <a name="val-setuid"></a>`setuid`
 
@@ -169,11 +230,23 @@ val getegid : unit -> gid
 val setuid : uid -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `own` &middot; `root-raises`
+
+</details>
+
 ### <a name="val-setgid"></a>`setgid`
 
 ```sml
 val setgid : gid -> unit
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `own` &middot; `root-raises`
+
+</details>
 
 ### <a name="val-getgroups"></a>`getgroups`
 
@@ -181,11 +254,23 @@ val setgid : gid -> unit
 val getgroups : unit -> gid list
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `in-id-G` &middot; `id-G-in-them`
+
+</details>
+
 ### <a name="val-getlogin"></a>`getlogin`
 
 ```sml
 val getlogin : unit -> string
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `user-or-SysErr`
+
+</details>
 
 ### <a name="val-getpgrp"></a>`getpgrp`
 
@@ -193,11 +278,23 @@ val getlogin : unit -> string
 val getpgrp : unit -> pid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `inherited`
+
+</details>
+
 ### <a name="val-setsid"></a>`setsid`
 
 ```sml
 val setsid : unit -> pid
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `child` &middot; `group-leader-raises`
+
+</details>
 
 ### <a name="val-setpgid"></a>`setpgid`
 
@@ -210,17 +307,35 @@ val setpgid : {pid : pid option, pgid : pid option} -> unit
 | <a name="fld-setpgid.pid"></a>`pid` | `pid option` |  |
 | <a name="fld-setpgid.pgid"></a>`pgid` | `pid option` |  |
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `NONE-NONE` &middot; `SOME-NONE` &middot; `NONE-SOME` &middot; `SOME-SOME` &middot; `no-such-process` (raises)
+
+</details>
+
 ### <a name="val-uname"></a>`uname`
 
 ```sml
 val uname : unit -> (string * string) list
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `sysname` &middot; `nodename` &middot; `release` &middot; `version` &middot; `machine` &middot; `names-once`
+
+</details>
+
 ### <a name="val-time"></a>`time`
 
 ```sml
 val time : unit -> Time.time
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `now` &middot; `date`
+
+</details>
 
 ### <a name="val-times"></a>`times`
 
@@ -241,11 +356,23 @@ val times : unit
 | <a name="fld-times.cutime"></a>`cutime` | `Time.time` |  |
 | <a name="fld-times.cstime"></a>`cstime` | `Time.time` |  |
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `not-negative` &middot; `elapsed-is-wall-time` &middot; `cpu-time-grows` &middot; `children`
+
+</details>
+
 ### <a name="val-getenv"></a>`getenv`
 
 ```sml
 val getenv : string -> string option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `PATH` &middot; `unset` &middot; `shell`
+
+</details>
 
 ### <a name="val-environ"></a>`environ`
 
@@ -253,11 +380,23 @@ val getenv : string -> string option
 val environ : unit -> string list
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `has-PATH` &middot; `name-value` &middot; `getenv-agrees` &middot; `no-unset`
+
+</details>
+
 ### <a name="val-ctermid"></a>`ctermid`
 
 ```sml
 val ctermid : unit -> string
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `pathname`
+
+</details>
 
 ### <a name="val-ttyname"></a>`ttyname`
 
@@ -265,17 +404,35 @@ val ctermid : unit -> string
 val ttyname : file_desc -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `dev-null` (raises) &middot; `bad-descriptor` (raises)
+
+</details>
+
 ### <a name="val-isatty"></a>`isatty`
 
 ```sml
 val isatty : file_desc -> bool
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `dev-null` &middot; `bad-descriptor` &middot; `pipe`
+
+</details>
+
 ### <a name="val-sysconf"></a>`sysconf`
 
 ```sml
 val sysconf : string -> SysWord.word
 ```
+
+<details><summary>Tests (12)</summary>
+
+For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `ARG_MAX` &middot; `CHILD_MAX` &middot; `CLK_TCK` &middot; `NGROUPS_MAX` &middot; `OPEN_MAX` &middot; `STREAM_MAX` &middot; `JOB_CONTROL` &middot; `SAVED_IDS` &middot; `VERSION` &middot; `TZNAME_MAX` &middot; `CLK_TCK-positive` &middot; `unknown` (raises)
+
+</details>
 
 ---
 

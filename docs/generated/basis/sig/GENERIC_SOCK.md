@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 4 entries documented |
+| Tests | 12 checks of 4 entries |
 | Source | [lib/basis/sig\_generic\_sock.sml](../../../../lib/basis/sig_generic_sock.sml) |
 
 ## Synopsis
@@ -45,6 +46,12 @@ end
 val socket : Socket.AF.addr_family * Socket.SOCK.sock_type -> ('af, 'sock_type) Socket.sock
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `inet-stream` &middot; `inet-dgram` &middot; `unix-stream` &middot; `unix-dgram`
+
+</details>
+
 ### <a name="val-socketpair"></a>`socketPair`
 
 ```sml
@@ -52,11 +59,23 @@ val socketPair : Socket.AF.addr_family * Socket.SOCK.sock_type
                  -> ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream` &middot; `unix-dgram`
+
+</details>
+
 ### <a name="val-socket-prime"></a>`socket'`
 
 ```sml
 val socket' : Socket.AF.addr_family * Socket.SOCK.sock_type * int -> ('af, 'sock_type) Socket.sock
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `inet-stream-0` &middot; `inet-stream-tcp` &middot; `inet-dgram-udp` &middot; `unix-stream-0`
+
+</details>
 
 ### <a name="val-socketpair-prime"></a>`socketPair'`
 
@@ -64,6 +83,12 @@ val socket' : Socket.AF.addr_family * Socket.SOCK.sock_type * int -> ('af, 'sock
 val socketPair' : Socket.AF.addr_family * Socket.SOCK.sock_type * int
                   -> ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream-0` &middot; `unix-dgram-0`
+
+</details>
 
 ---
 

@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 18 |
 | Documentation | 0 of 22 entries documented |
+| Tests | 340 checks of 19 entries |
 | Source | [lib/basis/sig\_mono\_array2.sml](../../../../lib/basis/sig_mono_array2.sml) |
 
 ## Synopsis
@@ -104,11 +105,25 @@ end
 eqtype array
 ```
 
+<details><summary>Tests (28)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `no-rows` &middot; `Size-negative` (raises Size) &middot; `same-elements-not-equal` &middot; `same-array-is-equal`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
+
+</details>
+
 ### <a name="type-elem"></a>`elem`
 
 ```sml
 type elem
 ```
+
+<details><summary>Tests (1)</summary>
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `sixteen-distinct-samples`
+
+</details>
 
 ### <a name="type-vector"></a>`vector`
 
@@ -142,11 +157,27 @@ datatype traversal = datatype Array2.traversal
 val array : int * int * elem -> array
 ```
 
+<details><summary>Tests (28)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `no-rows` &middot; `Size-negative` (raises Size) &middot; `same-elements-not-equal` &middot; `same-array-is-equal`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
+
+</details>
+
 ### <a name="val-fromlist"></a>`fromList`
 
 ```sml
 val fromList : elem list list -> array
 ```
+
+<details><summary>Tests (20)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Size-ragged` (raises Size)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `dimensions` &middot; `second-row-first-column` &middot; `first-row-last-column` &middot; `one-row` &middot; `one-column` &middot; `one-element` &middot; `every-sample` &middot; `no-rows` &middot; `empty-rows` &middot; `Size-second-shorter` (raises Size) &middot; `Size-second-longer` (raises Size) &middot; `Size-last-shorter` (raises Size) &middot; `Size-first-empty` (raises Size) &middot; `Size-second-empty` (raises Size) &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `*`
+
+</details>
 
 ### <a name="val-tabulate"></a>`tabulate`
 
@@ -154,11 +185,31 @@ val fromList : elem list list -> array
 val tabulate : traversal -> int * int * (int * int -> elem) -> array
 ```
 
+<details><summary>Tests (24)</summary>
+
+For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `high-characters`
+
+For `Word8Array2`, in [tests/basis/word8array2.sml](../../../../tests/basis/word8array2.sml): `every-byte`
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `RowMajor` &middot; `ColMajor-order` &middot; `Size-negative` (raises Size)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `RowMajor` &middot; `ColMajor` &middot; `dimensions` &middot; `RowMajor-order` &middot; `ColMajor-order` &middot; `RowMajor-counter` &middot; `ColMajor-counter` &middot; `one` &middot; `no-rows` &middot; `no-columns` &middot; `no-elements-no-f` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-ColMajor` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `*` &middot; `Size-too-large-RowMajor` (raises Size) &middot; `Size-too-large-ColMajor` (raises Size)
+
+</details>
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : array * int * int -> elem
 ```
+
+<details><summary>Tests (24)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-row` (raises Subscript) &middot; `Subscript-column` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `first` &middot; `end-of-first-row` &middot; `start-of-last-row` &middot; `middle` &middot; `last` &middot; `Subscript-row-nRows` (raises Subscript) &middot; `Subscript-column-nCols` (raises Subscript) &middot; `Subscript-column-nCols-last-row` (raises Subscript) &middot; `Subscript-negative-row` (raises Subscript) &middot; `Subscript-negative-column` (raises Subscript) &middot; `Subscript-negative-row-column-beyond` (raises Subscript) &middot; `Subscript-column-is-a-row-index` (raises Subscript) &middot; `Subscript-row-is-a-column-index` (raises Subscript) &middot; `Subscript-no-rows` (raises Subscript) &middot; `Subscript-no-columns` (raises Subscript) &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow-row` (raises Subscript) &middot; `Subscript-not-Overflow-column` (raises Subscript) &middot; `Subscript-not-Overflow-both` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
 
 ### <a name="val-update"></a>`update`
 
@@ -166,11 +217,27 @@ val sub : array * int * int -> elem
 val update : array * int * int * elem -> unit
 ```
 
+<details><summary>Tests (20)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Subscript` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `first` &middot; `end-of-first-row` &middot; `start-of-last-row` &middot; `last` &middot; `twice-same-element` &middot; `seen-through-alias` &middot; `every-sample` &middot; `Subscript-row-nRows` (raises Subscript) &middot; `Subscript-column-nCols` (raises Subscript) &middot; `Subscript-negative-row` (raises Subscript) &middot; `Subscript-negative-column` (raises Subscript) &middot; `Subscript-no-rows` (raises Subscript) &middot; `Subscript-no-columns` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow-row` (raises Subscript) &middot; `Subscript-not-Overflow-column` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+
+</details>
+
 ### <a name="val-dimensions"></a>`dimensions`
 
 ```sml
 val dimensions : array -> int * int
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `rows-then-columns` &middot; `one-row` &middot; `*`
+
+</details>
 
 ### <a name="val-ncols"></a>`nCols`
 
@@ -178,11 +245,27 @@ val dimensions : array -> int * int
 val nCols : array -> int
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `no-rows` &middot; `no-columns` &middot; `is-second-of-dimensions` &middot; `*`
+
+</details>
+
 ### <a name="val-nrows"></a>`nRows`
 
 ```sml
 val nRows : array -> int
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `no-rows` &middot; `no-columns` &middot; `is-first-of-dimensions` &middot; `*`
+
+</details>
 
 ### <a name="val-row"></a>`row`
 
@@ -190,11 +273,63 @@ val nRows : array -> int
 val row : array * int -> vector
 ```
 
+<details><summary>Tests (30)</summary>
+
+For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `is-a-string`
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Subscript` (raises Subscript)
+
+For `IntArray2`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `extremes`
+
+For `Int8Array2`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `extremes`
+
+For `Int16Array2`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `extremes`
+
+For `Int32Array2`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `extremes`
+
+For `LargeIntArray2`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `extremes`
+
+For `WordArray2`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
+
+For `Word16Array2`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
+
+For `Word32Array2`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
+
+For `RealArray2`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `specials`
+
+For `Int64Array2`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
+
+For `LargeWordArray2`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
+
+For `Word64Array2`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `extremes`
+
+For `LargeRealArray2`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
+
+For `Real64Array2`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `specials`
+
+For `Real32Array2`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `specials`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `first` &middot; `middle` &middot; `last` &middot; `no-columns` &middot; `is-a-snapshot` &middot; `every-sample` &middot; `Subscript-nRows` (raises Subscript) &middot; `Subscript-is-a-column-index` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-no-rows` (raises Subscript) &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript)
+
+</details>
+
 ### <a name="val-column"></a>`column`
 
 ```sml
 val column : array * int -> vector
 ```
+
+<details><summary>Tests (17)</summary>
+
+For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `is-a-string` &middot; `is-CharVector.vector`
+
+For `Word8Array2`, in [tests/basis/word8array2.sml](../../../../tests/basis/word8array2.sml): `Word8Vector`
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `Subscript` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `first` &middot; `middle` &middot; `last` &middot; `no-rows` &middot; `is-a-snapshot` &middot; `every-sample` &middot; `Subscript-nCols` (raises Subscript) &middot; `Subscript-is-a-row-index` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-no-columns` (raises Subscript) &middot; `*` &middot; `*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript)
+
+</details>
 
 ### <a name="val-copy"></a>`copy`
 
@@ -209,11 +344,27 @@ val copy : {src : region, dst : array, dst_row : int, dst_col : int} -> unit
 | <a name="fld-copy.dst_row"></a>`dst_row` | `int` |  |
 | <a name="fld-copy.dst_col"></a>`dst_col` | `int` |  |
 
+<details><summary>Tests (45)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region` &middot; `overlap-down` &middot; `Subscript-dst` (raises Subscript) &middot; `Subscript-src` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `region` &middot; `to-the-first-corner` &middot; `to-the-last-corner` &middot; `whole-NONE` &middot; `whole-same-dimensions` &middot; `NONE-rows-SOME-cols` &middot; `SOME-rows-NONE-cols` &middot; `field-order` &middot; `src-unchanged` &middot; `copies-elements-not-the-array` &middot; `Subscript-src-*` (raises Subscript) &middot; `Subscript-dst-negative-row` (raises Subscript) &middot; `Subscript-dst-negative-col` (raises Subscript) &middot; `Subscript-dst-one-row-too-far` (raises Subscript) &middot; `Subscript-dst-one-col-too-far` (raises Subscript) &middot; `Subscript-dst-row-nRows` (raises Subscript) &middot; `Subscript-dst-col-nCols` (raises Subscript) &middot; `Subscript-dst-smaller` (raises Subscript) &middot; `Subscript-dst-no-rows` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `overlap-down-right` &middot; `overlap-up-left` &middot; `overlap-down-left` &middot; `overlap-up-right` &middot; `overlap-right` &middot; `overlap-left` &middot; `overlap-down` &middot; `overlap-up` &middot; `overlap-onto-itself` &middot; `same-array-apart` &middot; `overlap-Subscript` (raises Subscript) &middot; `*` &middot; `within-*` &middot; `nothing-*` &middot; `nothing-to-the-end-of-dst` &middot; `Subscript-dst-nothing-row-beyond` (raises Subscript) &middot; `Subscript-dst-nothing-cols-too-far` (raises Subscript) &middot; `Subscript-not-Overflow-src-*` (raises Subscript) &middot; `Subscript-not-Overflow-dst-sum-row` (raises Subscript) &middot; `Subscript-not-Overflow-dst-sum-col` (raises Subscript) &middot; `Subscript-not-Overflow-dst-least` (raises Subscript)
+
+</details>
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : traversal -> (int * int * elem -> unit) -> region -> unit
 ```
+
+<details><summary>Tests (20)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region-RowMajor` &middot; `region-ColMajor` &middot; `Subscript` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `whole-RowMajor` &middot; `whole-ColMajor` &middot; `region-RowMajor` &middot; `region-ColMajor` &middot; `NONE-to-the-end-RowMajor` &middot; `NONE-to-the-end-ColMajor` &middot; `one-row` &middot; `one-column` &middot; `last-element` &middot; `Subscript-*` (raises Subscript) &middot; `Subscript-ColMajor-too-many-rows` (raises Subscript) &middot; `Subscript-ColMajor-too-many-cols` (raises Subscript) &middot; `Subscript-before-f` &middot; `*` &middot; `nothing-RowMajor-*` &middot; `nothing-ColMajor-*` &middot; `Subscript-not-Overflow-*` (raises Subscript)
+
+</details>
 
 ### <a name="val-app"></a>`app`
 
@@ -221,11 +372,27 @@ val appi : traversal -> (int * int * elem -> unit) -> region -> unit
 val app : traversal -> (elem -> unit) -> array -> unit
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `ColMajor`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `RowMajor` &middot; `ColMajor` &middot; `no-rows` &middot; `no-columns` &middot; `array-unchanged` &middot; `*`
+
+</details>
+
 ### <a name="val-foldi"></a>`foldi`
 
 ```sml
 val foldi : traversal -> (int * int * elem * 'b -> 'b) -> 'b -> region -> 'b
 ```
+
+<details><summary>Tests (19)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `RowMajor` &middot; `ColMajor` &middot; `coordinates` &middot; `Subscript` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `whole-RowMajor-conses-reversed` &middot; `whole-ColMajor-conses-reversed` &middot; `region-RowMajor` &middot; `region-ColMajor` &middot; `nonassociative-RowMajor` &middot; `nonassociative-ColMajor` &middot; `NONE-to-the-end` &middot; `Subscript-*` (raises Subscript) &middot; `Subscript-ColMajor-too-many-rows` (raises Subscript) &middot; `Subscript-ColMajor-too-many-cols` (raises Subscript) &middot; `Subscript-before-f` &middot; `*` &middot; `nothing-RowMajor-*` &middot; `nothing-ColMajor-*` &middot; `Subscript-not-Overflow-*` (raises Subscript)
+
+</details>
 
 ### <a name="val-fold"></a>`fold`
 
@@ -233,17 +400,49 @@ val foldi : traversal -> (int * int * elem * 'b -> 'b) -> 'b -> region -> 'b
 val fold : traversal -> (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
+<details><summary>Tests (11)</summary>
+
+For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `implode-ColMajor`
+
+For `Word8Array2`, in [tests/basis/word8array2.sml](../../../../tests/basis/word8array2.sml): `sum-of-bytes`
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `RowMajor` &middot; `ColMajor`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `RowMajor-conses-reversed` &middot; `ColMajor-conses-reversed` &middot; `nonassociative-RowMajor` &middot; `nonassociative-ColMajor` &middot; `no-rows` &middot; `no-columns` &middot; `*`
+
+</details>
+
 ### <a name="val-modifyi"></a>`modifyi`
 
 ```sml
 val modifyi : traversal -> (int * int * elem -> elem) -> region -> unit
 ```
 
+<details><summary>Tests (18)</summary>
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `region` &middot; `Subscript` (raises Subscript)
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `region` &middot; `region-ColMajor` &middot; `whole` &middot; `NONE-to-the-end` &middot; `order-RowMajor` &middot; `order-ColMajor` &middot; `RowMajor-counter` &middot; `ColMajor-counter` &middot; `Subscript-*` (raises Subscript) &middot; `Subscript-ColMajor-too-many-rows` (raises Subscript) &middot; `Subscript-ColMajor-too-many-cols` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `*` &middot; `nothing-RowMajor-*` &middot; `nothing-ColMajor-*` &middot; `Subscript-not-Overflow-*` (raises Subscript)
+
+</details>
+
 ### <a name="val-modify"></a>`modify`
 
 ```sml
 val modify : traversal -> (elem -> elem) -> array -> unit
 ```
+
+<details><summary>Tests (12)</summary>
+
+For `CharArray2`, in [tests/basis/chararray2.sml](../../../../tests/basis/chararray2.sml): `toUpper`
+
+For `Word8Array2`, in [tests/basis/word8array2.sml](../../../../tests/basis/word8array2.sml): `Word8-arithmetic`
+
+For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not` &middot; `order-ColMajor`
+
+In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `RowMajor` &middot; `ColMajor` &middot; `order-RowMajor` &middot; `order-ColMajor` &middot; `ColMajor-counter` &middot; `no-rows` &middot; `twice` &middot; `*`
+
+</details>
 
 ---
 

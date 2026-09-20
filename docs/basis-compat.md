@@ -236,7 +236,7 @@ The signatures of the specification are all there (row `basis.signatures`
 of [language.md](language.md)), and every structure that Rune has matches
 its signature. The suite checks every
 value and exception those signatures specify, on Rune and on the hosts:
-`scripts/check-basis-coverage.sh` counts 1,481 of them.
+`runedoc` counts them when it makes the documentation (`make docs`): 3,908 members of structures, each with a check.
 
 Fixed along the way, each with the deviation lines it removed: the
 `fromString` of `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String`

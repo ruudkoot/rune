@@ -9,11 +9,7 @@
 
    Area: The operating system
 
-   See also: `OS`, `PRIM_IO`, `SOCKET`, `TIME`
-
-   Erratum: `OS_IO/kind-on-one-line`. The transcription of this signature in
-   the test suite writes the substructure `Kind` on one line, for the sake of
-   the script that reads it; here it is written out. *)
+   See also: `OS`, `PRIM_IO`, `SOCKET`, `TIME` *)
 signature OS_IO =
 sig
   (* ---- Descriptors ---- *)

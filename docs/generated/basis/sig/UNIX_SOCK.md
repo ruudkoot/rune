@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 14 entries documented |
+| Tests | 18 checks of 7 entries |
 | Source | [lib/basis/sig\_unix\_sock.sml](../../../../lib/basis/sig_unix_sock.sml) |
 
 ## Synopsis
@@ -92,17 +93,35 @@ type sock_addr = unix Socket.sock_addr
 val unixAF : Socket.AF.addr_family
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `named-UNIX` &middot; `fromString-UNIX`
+
+</details>
+
 ### <a name="val-toaddr"></a>`toAddr`
 
 ```sml
 val toAddr : string -> sock_addr
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `fromAddr` &middot; `not-checked` &middot; `bind-creates-the-file`
+
+</details>
+
 ### <a name="val-fromaddr"></a>`fromAddr`
 
 ```sml
 val fromAddr : sock_addr -> string
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `bound-socket` &middot; `sender-of-a-message`
+
+</details>
 
 ### <a name="str-strm"></a>`Strm`
 
@@ -112,11 +131,23 @@ val fromAddr : sock_addr -> string
 val socket : unit -> 'mode stream_sock
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `stream` &middot; `listen-connect-accept`
+
+</details>
+
 #### <a name="val-strm.socketpair"></a>`socketPair`
 
 ```sml
 val socketPair : unit -> 'mode stream_sock * 'mode stream_sock
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `bidirectional` &middot; `stream` &middot; `two-sockets` &middot; `connected-to-each-other`
+
+</details>
 
 ### <a name="str-dgrm"></a>`DGrm`
 
@@ -126,11 +157,23 @@ val socketPair : unit -> 'mode stream_sock * 'mode stream_sock
 val socket : unit -> dgram_sock
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `dgram` &middot; `to-a-name`
+
+</details>
+
 #### <a name="val-dgrm.socketpair"></a>`socketPair`
 
 ```sml
 val socketPair : unit -> dgram_sock * dgram_sock
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `dgram` &middot; `connected-to-each-other` &middot; `named-peer`
+
+</details>
 
 ---
 

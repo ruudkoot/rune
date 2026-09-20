@@ -69,8 +69,12 @@ struct
     end
 
   (* An environment for pages in the directory that `root` leads out of. *)
-  fun envOf (modules : I.module list, out : string, ratchet : string list) =
+  fun envOf (modules : I.module list, out : string, ratchet : string list, sites : DocTests.site list) =
     let
+      val tests = List.foldl (fn (s : DocTests.site, m) =>
+                                StringMap.insert (m, #scope s, (case StringMap.find (m, #scope s) of
+                                                                  SOME l => l @ [s] | NONE => [s])))
+                             StringMap.empty sites
       val claims = DocClaims.ofModules isPublic modules
       val index = R.indexOf (modules, claims, isPublic)
       val links = ref []
@@ -96,7 +100,7 @@ struct
     in
       (claims, index,
        fn root => {index = index, root = root, up = out, claims = claims, notesOf = notesOf modules,
-                   topLevel = topLevel,
+                   topLevel = topLevel, tests = tests,
                    ratchet = fn s => List.exists (fn r => r = s) ratchet,
                    links = links, anchors = anchors} : P.env)
     end
@@ -496,6 +500,7 @@ struct
                                "[" ^ #signat o' ^ "](" ^ P.href ({index = #index env, root = "../", up = #up env,
                                                                   claims = #claims env, notesOf = #notesOf env,
                                                                   ratchet = #ratchet env, topLevel = #topLevel env,
+                                                                  tests = #tests env,
                                                                   links = #links env, anchors = #anchors env},
                                                                  path, {page = R.sigPage (#signat o'), anchor = #anchor o'},
                                                                  Source.noSpan) ^ ")") g) ^ "\n"
@@ -561,6 +566,57 @@ struct
                (List.rev (!(#links env)))
     end
 
+  (* ---- every specified member has a check ---- *)
+  (* For every structure that claims a signature, every value and exception
+     that the signature specifies itself (what it includes is the business of
+     the claim to the included signature) has a check whose label begins with
+     `Structure.member/`. A structure that is another structure by name
+     (`structure LargeInt = IntInf`) is checked under either name. Returns the
+     number of members that have checks; the missing ones are errors. *)
+  fun coverageOf (modules : I.module list, claims : DocClaims.claim list, index : R.index,
+                  sites : DocTests.site list, tests : string) : int =
+    let
+      val scopes = List.foldl (fn (s : DocTests.site, m) => StringMap.insert (m, #scope s, ())) StringMap.empty sites
+      fun structAt (ms : I.module list, names) =
+        case names of
+          [] => NONE
+        | n :: rest =>
+            (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
+               SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
+             | _ => NONE)
+      fun aliasOf name =
+        case structAt (modules, String.fields (fn c => c = #".") name) of
+          SOME {rhs = I.Alias t, ...} => SOME t
+        | _ => NONE
+      (* the public structures that are bound to this one by name: Math is Real.Math *)
+      fun aliasesOf name =
+        List.mapPartial (fn I.Struct {name = n, rhs = I.Alias t, ...} => if t = name andalso isPublic n then SOME n else NONE
+                          | _ => NONE) modules
+      val covered = ref 0
+      (* only what a comment claims: the suite matches those structures
+         against the signature (check-claims.sh), so they are what it tests *)
+      fun check (c : DocClaims.claim) =
+        if #isFunctor c orelse #origin c <> "claimed" then ()
+        else
+          List.app (fn e : I.entryRecord =>
+                      if #kind e <> I.Val andalso #kind e <> I.Exception then ()
+                      else
+                        let
+                          val member = String.concatWith "." (#path e @ [#name e])
+                          fun has n = StringMap.member (scopes, n ^ "." ^ member)
+                        in
+                          if has (#name c) orelse (case aliasOf (#name c) of SOME t => has t | NONE => false)
+                             orelse List.exists has (aliasesOf (#name c))
+                          then covered := !covered + 1
+                          else DocDiag.error (#span e, "no check labelled \"" ^ #name c ^ "." ^ member ^ "/...\" in " ^ tests
+                                                       ^ " (" ^ #name c ^ " implements " ^ #signat c ^ ")")
+                        end)
+                   (P.entriesOf (R.bodyOf (index, #signat c)))
+    in
+      List.app check claims;
+      !covered
+    end
+
   (* ---- the ratchet ---- *)
   (* DOCUMENTED, in the directory of the library, lists the signatures that are
      documented in full, one on a line (# begins a comment). For them what is
@@ -606,14 +662,17 @@ struct
                              (P.entriesOf (#body s))))
               sigs)
 
-  fun build {dir : string, title : string, out : string} : file list =
+  fun build {dir : string, title : string, out : string, tests : string option} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
       val ratchet = ratchetOf dir
-      val (claims, index, env) = envOf (modules, upFrom out, ratchet)
+      val sites = case tests of SOME t => DocTests.suite t | NONE => []
+      val (claims, index, env) = envOf (modules, upFrom out, ratchet, sites)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkRatchet (dir, sigs, ratchet)
+      (* with a suite: every specified member of a claimed structure has a check *)
+      val () = case tests of SOME t => ignore (coverageOf (modules, claims, index, sites, t)) | NONE => ()
       (* the claims that name a signature of the library, checked by the compiler *)
       val () =
         case DocElab.library dir of
@@ -670,6 +729,14 @@ struct
                     else ()) files
     in
       files
+    end
+
+  fun checkCoverage {dir : string, tests : string} : int =
+    let
+      val modules = load dir
+      val (claims, index, _) = envOf (modules, "", [], [])
+    in
+      coverageOf (modules, claims, index, DocTests.suite tests, tests)
     end
 
   (* ---- on disk ---- *)

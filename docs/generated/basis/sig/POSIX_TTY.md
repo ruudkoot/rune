@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 110 entries documented |
+| Tests | 115 checks of 97 entries |
 | Source | [lib/basis/sig\_posix\_tty.sml](../../../../lib/basis/sig_posix_tty.sml) |
 
 ## Synopsis
@@ -213,11 +214,23 @@ eqtype file_desc
 val eof : int
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index` &middot; `distinct`
+
+</details>
+
 #### <a name="val-v.eol"></a>`eol`
 
 ```sml
 val eol : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
 
 #### <a name="val-v.erase"></a>`erase`
 
@@ -225,11 +238,23 @@ val eol : int
 val erase : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
+
 #### <a name="val-v.intr"></a>`intr`
 
 ```sml
 val intr : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
 
 #### <a name="val-v.kill"></a>`kill`
 
@@ -237,11 +262,23 @@ val intr : int
 val kill : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
+
 #### <a name="val-v.min"></a>`min`
 
 ```sml
 val min : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
 
 #### <a name="val-v.quit"></a>`quit`
 
@@ -249,11 +286,23 @@ val min : int
 val quit : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
+
 #### <a name="val-v.susp"></a>`susp`
 
 ```sml
 val susp : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
 
 #### <a name="val-v.time"></a>`time`
 
@@ -261,11 +310,23 @@ val susp : int
 val time : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
+
 #### <a name="val-v.start"></a>`start`
 
 ```sml
 val start : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
 
 #### <a name="val-v.stop"></a>`stop`
 
@@ -273,11 +334,23 @@ val start : int
 val stop : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `index`
+
+</details>
+
 #### <a name="val-v.nccs"></a>`nccs`
 
 ```sml
 val nccs : int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `positive`
+
+</details>
 
 #### <a name="type-v.cc"></a>`cc`
 
@@ -285,11 +358,23 @@ val nccs : int
 type cc
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `given` &middot; `unspecified-nul` &middot; `empty` &middot; `several`
+
+</details>
+
 #### <a name="val-v.cc"></a>`cc`
 
 ```sml
 val cc : (int * char) list -> cc
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `given` &middot; `unspecified-nul` &middot; `empty` &middot; `several`
+
+</details>
 
 #### <a name="val-v.update"></a>`update`
 
@@ -297,11 +382,23 @@ val cc : (int * char) list -> cc
 val update : cc * (int * char) list -> cc
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `overwrites` &middot; `empty-list`
+
+</details>
+
 #### <a name="val-v.sub"></a>`sub`
 
 ```sml
 val sub : cc * int -> char
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `last` &middot; `negative` (raises Subscript) &middot; `nccs` (raises Subscript)
+
+</details>
 
 ### <a name="str-i"></a>`I`
 
@@ -325,11 +422,23 @@ val sub : cc * int -> char
 val brkint : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit` &middot; `disjoint`
+
+</details>
+
 #### <a name="val-i.icrnl"></a>`icrnl`
 
 ```sml
 val icrnl : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-i.ignbrk"></a>`ignbrk`
 
@@ -337,11 +446,23 @@ val icrnl : flags
 val ignbrk : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-i.igncr"></a>`igncr`
 
 ```sml
 val igncr : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-i.ignpar"></a>`ignpar`
 
@@ -349,11 +470,23 @@ val igncr : flags
 val ignpar : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-i.inlcr"></a>`inlcr`
 
 ```sml
 val inlcr : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-i.inpck"></a>`inpck`
 
@@ -361,11 +494,23 @@ val inlcr : flags
 val inpck : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-i.istrip"></a>`istrip`
 
 ```sml
 val istrip : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-i.ixoff"></a>`ixoff`
 
@@ -373,17 +518,35 @@ val istrip : flags
 val ixoff : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-i.ixon"></a>`ixon`
 
 ```sml
 val ixon : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-i.parmrk"></a>`parmrk`
 
 ```sml
 val parmrk : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 ### <a name="str-o"></a>`O`
 
@@ -407,6 +570,12 @@ val parmrk : flags
 val opost : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 ### <a name="str-c"></a>`C`
 
 **Included from [`BIT_FLAGS`](../sig/BIT_FLAGS.md)**: `include BIT_FLAGS`
@@ -429,11 +598,23 @@ val opost : flags
 val clocal : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit` &middot; `disjoint`
+
+</details>
+
 #### <a name="val-c.cread"></a>`cread`
 
 ```sml
 val cread : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-c.cs5"></a>`cs5`
 
@@ -441,11 +622,23 @@ val cread : flags
 val cs5 : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `in-csize`
+
+</details>
+
 #### <a name="val-c.cs6"></a>`cs6`
 
 ```sml
 val cs6 : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `in-csize`
+
+</details>
 
 #### <a name="val-c.cs7"></a>`cs7`
 
@@ -453,11 +646,23 @@ val cs6 : flags
 val cs7 : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `in-csize`
+
+</details>
+
 #### <a name="val-c.cs8"></a>`cs8`
 
 ```sml
 val cs8 : flags
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `in-csize` &middot; `distinct-sizes`
+
+</details>
 
 #### <a name="val-c.csize"></a>`csize`
 
@@ -465,11 +670,23 @@ val cs8 : flags
 val csize : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit` &middot; `union-of-sizes`
+
+</details>
+
 #### <a name="val-c.cstopb"></a>`cstopb`
 
 ```sml
 val cstopb : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-c.hupcl"></a>`hupcl`
 
@@ -477,17 +694,35 @@ val cstopb : flags
 val hupcl : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-c.parenb"></a>`parenb`
 
 ```sml
 val parenb : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-c.parodd"></a>`parodd`
 
 ```sml
 val parodd : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 ### <a name="str-l"></a>`L`
 
@@ -511,11 +746,23 @@ val parodd : flags
 val echo : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit` &middot; `disjoint`
+
+</details>
+
 #### <a name="val-l.echoe"></a>`echoe`
 
 ```sml
 val echoe : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-l.echok"></a>`echok`
 
@@ -523,11 +770,23 @@ val echoe : flags
 val echok : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-l.echonl"></a>`echonl`
 
 ```sml
 val echonl : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-l.icanon"></a>`icanon`
 
@@ -535,11 +794,23 @@ val echonl : flags
 val icanon : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-l.iexten"></a>`iexten`
 
 ```sml
 val iexten : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 #### <a name="val-l.isig"></a>`isig`
 
@@ -547,17 +818,35 @@ val iexten : flags
 val isig : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-l.noflsh"></a>`noflsh`
 
 ```sml
 val noflsh : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
+
 #### <a name="val-l.tostop"></a>`tostop`
 
 ```sml
 val tostop : flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `own-bit`
+
+</details>
 
 ### <a name="type-speed"></a>`speed`
 
@@ -571,11 +860,23 @@ eqtype speed
 val compareSpeed : speed * speed -> order
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `basic` &middot; `antisymmetric`
+
+</details>
+
 ### <a name="val-speedtoword"></a>`speedToWord`
 
 ```sml
 val speedToWord : speed -> SysWord.word
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `distinct`
+
+</details>
 
 ### <a name="val-wordtospeed"></a>`wordToSpeed`
 
@@ -583,11 +884,23 @@ val speedToWord : speed -> SysWord.word
 val wordToSpeed : SysWord.word -> speed
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `of-speedToWord` &middot; `no-check`
+
+</details>
+
 ### <a name="val-b0"></a>`b0`
 
 ```sml
 val b0 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `slowest`
+
+</details>
 
 ### <a name="val-b50"></a>`b50`
 
@@ -595,11 +908,23 @@ val b0 : speed
 val b50 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b75"></a>`b75`
 
 ```sml
 val b75 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b110"></a>`b110`
 
@@ -607,11 +932,23 @@ val b75 : speed
 val b110 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b134"></a>`b134`
 
 ```sml
 val b134 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b150"></a>`b150`
 
@@ -619,11 +956,23 @@ val b134 : speed
 val b150 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b200"></a>`b200`
 
 ```sml
 val b200 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b300"></a>`b300`
 
@@ -631,11 +980,23 @@ val b200 : speed
 val b300 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b600"></a>`b600`
 
 ```sml
 val b600 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b1200"></a>`b1200`
 
@@ -643,11 +1004,23 @@ val b600 : speed
 val b1200 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b1800"></a>`b1800`
 
 ```sml
 val b1800 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b2400"></a>`b2400`
 
@@ -655,11 +1028,23 @@ val b1800 : speed
 val b2400 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b4800"></a>`b4800`
 
 ```sml
 val b4800 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b9600"></a>`b9600`
 
@@ -667,11 +1052,23 @@ val b4800 : speed
 val b9600 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
+
 ### <a name="val-b19200"></a>`b19200`
 
 ```sml
 val b19200 : speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `rank`
+
+</details>
 
 ### <a name="val-b38400"></a>`b38400`
 
@@ -679,11 +1076,23 @@ val b19200 : speed
 val b38400 : speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `fastest`
+
+</details>
+
 ### <a name="type-termios"></a>`termios`
 
 ```sml
 type termios
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `fieldsOf`
+
+</details>
 
 ### <a name="val-termios"></a>`termios`
 
@@ -708,6 +1117,12 @@ val termios : {iflag : I.flags,
 | <a name="fld-termios.ispeed"></a>`ispeed` | `speed` |  |
 | <a name="fld-termios.ospeed"></a>`ospeed` | `speed` |  |
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `fieldsOf`
+
+</details>
+
 ### <a name="val-fieldsof"></a>`fieldsOf`
 
 ```sml
@@ -731,11 +1146,23 @@ val fieldsOf : termios
 | <a name="fld-fieldsof.ispeed"></a>`ispeed` | `speed` |  |
 | <a name="fld-fieldsof.ospeed"></a>`ospeed` | `speed` |  |
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `termios`
+
+</details>
+
 ### <a name="val-getiflag"></a>`getiflag`
 
 ```sml
 val getiflag : termios -> I.flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
 
 ### <a name="val-getoflag"></a>`getoflag`
 
@@ -743,11 +1170,23 @@ val getiflag : termios -> I.flags
 val getoflag : termios -> O.flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
+
 ### <a name="val-getcflag"></a>`getcflag`
 
 ```sml
 val getcflag : termios -> C.flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
 
 ### <a name="val-getlflag"></a>`getlflag`
 
@@ -755,11 +1194,23 @@ val getcflag : termios -> C.flags
 val getlflag : termios -> L.flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
+
 ### <a name="val-getcc"></a>`getcc`
 
 ```sml
 val getcc : termios -> V.cc
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
 
 ### <a name="str-cf"></a>`CF`
 
@@ -769,11 +1220,23 @@ val getcc : termios -> V.cc
 val getospeed : termios -> speed
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
+
 #### <a name="val-cf.getispeed"></a>`getispeed`
 
 ```sml
 val getispeed : termios -> speed
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `sample`
+
+</details>
 
 #### <a name="val-cf.setospeed"></a>`setospeed`
 
@@ -781,11 +1244,23 @@ val getispeed : termios -> speed
 val setospeed : termios * speed -> termios
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `copy`
+
+</details>
+
 #### <a name="val-cf.setispeed"></a>`setispeed`
 
 ```sml
 val setispeed : termios * speed -> termios
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `copy`
+
+</details>
 
 ### <a name="str-tc"></a>`TC`
 
@@ -801,17 +1276,35 @@ eqtype set_action
 val sanow : set_action
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `distinct`
+
+</details>
+
 #### <a name="val-tc.sadrain"></a>`sadrain`
 
 ```sml
 val sadrain : set_action
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-sanow`
+
+</details>
+
 #### <a name="val-tc.saflush"></a>`saflush`
 
 ```sml
 val saflush : set_action
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-sadrain`
+
+</details>
 
 #### <a name="type-tc.flow_action"></a>`flow_action`
 
@@ -825,11 +1318,23 @@ eqtype flow_action
 val ooff : flow_action
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `distinct`
+
+</details>
+
 #### <a name="val-tc.oon"></a>`oon`
 
 ```sml
 val oon : flow_action
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-ooff`
+
+</details>
 
 #### <a name="val-tc.ioff"></a>`ioff`
 
@@ -837,11 +1342,23 @@ val oon : flow_action
 val ioff : flow_action
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-ion`
+
+</details>
+
 #### <a name="val-tc.ion"></a>`ion`
 
 ```sml
 val ion : flow_action
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-oon`
+
+</details>
 
 #### <a name="type-tc.queue_sel"></a>`queue_sel`
 
@@ -855,11 +1372,23 @@ eqtype queue_sel
 val iflush : queue_sel
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `distinct`
+
+</details>
+
 #### <a name="val-tc.oflush"></a>`oflush`
 
 ```sml
 val oflush : queue_sel
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-iflush`
+
+</details>
 
 #### <a name="val-tc.ioflush"></a>`ioflush`
 
@@ -867,11 +1396,23 @@ val oflush : queue_sel
 val ioflush : queue_sel
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-oflush`
+
+</details>
+
 #### <a name="val-tc.getattr"></a>`getattr`
 
 ```sml
 val getattr : file_desc -> termios
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises) &middot; `bad-descriptor` (raises)
+
+</details>
 
 #### <a name="val-tc.setattr"></a>`setattr`
 
@@ -879,11 +1420,23 @@ val getattr : file_desc -> termios
 val setattr : file_desc * set_action * termios -> unit
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
+
 #### <a name="val-tc.sendbreak"></a>`sendbreak`
 
 ```sml
 val sendbreak : file_desc * int -> unit
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
 
 #### <a name="val-tc.drain"></a>`drain`
 
@@ -891,11 +1444,23 @@ val sendbreak : file_desc * int -> unit
 val drain : file_desc -> unit
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
+
 #### <a name="val-tc.flush"></a>`flush`
 
 ```sml
 val flush : file_desc * queue_sel -> unit
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
 
 #### <a name="val-tc.flow"></a>`flow`
 
@@ -903,17 +1468,35 @@ val flush : file_desc * queue_sel -> unit
 val flow : file_desc * flow_action -> unit
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
+
 #### <a name="val-tc.getpgrp"></a>`getpgrp`
 
 ```sml
 val getpgrp : file_desc -> pid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
+
 #### <a name="val-tc.setpgrp"></a>`setpgrp`
 
 ```sml
 val setpgrp : file_desc * pid -> unit
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `not-a-terminal` (raises)
+
+</details>
 
 ---
 

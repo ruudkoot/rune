@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 9 |
 | Documentation | 0 of 9 entries documented |
+| Tests | 70 checks of 9 entries |
 | Source | [lib/basis/sig\_bit\_flags.sml](../../../../lib/basis/sig_bit_flags.sml) |
 
 ## Synopsis
@@ -68,11 +69,31 @@ end
 eqtype flags
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty` &middot; `one` &middot; `union`
+
+For `Posix.FileSys.O`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `append-and-sync`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-list` &middot; `singleton` &middot; `idempotent` &middot; `commutative` &middot; `three` &middot; `of-all-named`
+
+</details>
+
 ### <a name="val-toword"></a>`toWord`
 
 ```sml
 val toWord : flags -> SysWord.word
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `of-fromWord`
+
+For `Posix.FileSys.S`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `values-of-the-C-binding`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-set-is-zero` &middot; `union-is-orb` &middot; `fromWord-of-named` &middot; `union-is-orb-random`
+
+</details>
 
 ### <a name="val-fromword"></a>`fromWord`
 
@@ -80,11 +101,27 @@ val toWord : flags -> SysWord.word
 val fromWord : SysWord.word -> flags
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `of-toWord`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `inverts-toWord-on-named` &middot; `inverts-toWord-on-all-and-empty` &middot; `inverts-toWord-random` &middot; `zero-is-empty` &middot; `word-of-all` &middot; `bits-beyond-all` &middot; `random-words-beyond-all` &middot; `result-within-all`
+
+</details>
+
 ### <a name="val-all"></a>`all`
 
 ```sml
 val all : flags
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `union-of-all`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `contains-named` &middot; `union-with-named` &middot; `not-empty`
+
+</details>
 
 ### <a name="val-flags"></a>`flags`
 
@@ -92,11 +129,29 @@ val all : flags
 val flags : flags list -> flags
 ```
 
+<details><summary>Tests (10)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty` &middot; `one` &middot; `union`
+
+For `Posix.FileSys.O`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `append-and-sync`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-list` &middot; `singleton` &middot; `idempotent` &middot; `commutative` &middot; `three` &middot; `of-all-named`
+
+</details>
+
 ### <a name="val-intersect"></a>`intersect`
 
 ```sml
 val intersect : flags list -> flags
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty-is-all` &middot; `two`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-list-is-all` &middot; `singleton` &middot; `with-empty` &middot; `with-all` &middot; `is-andb` &middot; `is-andb-random` &middot; `three`
+
+</details>
 
 ### <a name="val-clear"></a>`clear`
 
@@ -104,17 +159,41 @@ val intersect : flags list -> flags
 val clear : flags * flags -> flags
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `difference` &middot; `formula`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `definition` &middot; `definition-random` &middot; `self-is-empty` &middot; `empty-clears-nothing` &middot; `all-clears-everything` &middot; `is-set-difference` &middot; `order-of-arguments`
+
+</details>
+
 ### <a name="val-allset"></a>`allSet`
 
 ```sml
 val allSet : flags * flags -> bool
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `inclusion`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-in-anything` &middot; `reflexive` &middot; `in-union` &middot; `is-inclusion` &middot; `is-inclusion-random` &middot; `order-of-arguments`
+
+</details>
+
 ### <a name="val-anyset"></a>`anySet`
 
 ```sml
 val anySet : flags * flags -> bool
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `intersection`
+
+In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-meets-nothing` &middot; `nonempty-meets-itself` &middot; `is-nonempty-intersection` &middot; `is-nonempty-intersection-random` &middot; `symmetric-random`
+
+</details>
 
 ---
 

@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 41 entries documented |
+| Tests | 86 checks of 33 entries |
 | Source | [lib/basis/sig\_posix\_io.sml](../../../../lib/basis/sig_posix_io.sml) |
 
 ## Synopsis
@@ -160,11 +161,23 @@ val pipe : unit -> {infd : file_desc, outfd : file_desc}
 | <a name="fld-pipe.infd"></a>`infd` | `file_desc` |  |
 | <a name="fld-pipe.outfd"></a>`outfd` | `file_desc` |  |
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `write-then-read` &middot; `distinct-ends` &middot; `end-of-stream-when-writer-closed` &middot; `read-end-cannot-write` (raises) &middot; `kind`
+
+</details>
+
 ### <a name="val-dup"></a>`dup`
 
 ```sml
 val dup : file_desc -> file_desc
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `same-file-pointer` &middot; `new-descriptor` &middot; `same-access-mode` (raises) &middot; `lowest-available`
+
+</details>
 
 ### <a name="val-dup2"></a>`dup2`
 
@@ -177,11 +190,23 @@ val dup2 : {old : file_desc, new : file_desc} -> unit
 | <a name="fld-dup2.old"></a>`old` | `file_desc` |  |
 | <a name="fld-dup2.new"></a>`new` | `file_desc` |  |
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `redirects` &middot; `same-descriptor`
+
+</details>
+
 ### <a name="val-close"></a>`close`
 
 ```sml
 val close : file_desc -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `then-read` (raises) &middot; `then-write` (raises) &middot; `other-end-sees-end-of-stream`
+
+</details>
 
 ### <a name="val-readvec"></a>`readVec`
 
@@ -189,11 +214,23 @@ val close : file_desc -> unit
 val readVec : file_desc * int -> Word8Vector.vector
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `at-most-n` &middot; `continues` &middot; `zero` &middot; `empty-file` &middot; `binary` &middot; `negative` (raises) &middot; `write-only` (raises)
+
+</details>
+
 ### <a name="val-readarr"></a>`readArr`
 
 ```sml
 val readArr : file_desc * Word8ArraySlice.slice -> int
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `into-slice` &middot; `short` &middot; `end-of-file` &middot; `empty-slice` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="val-writevec"></a>`writeVec`
 
@@ -201,11 +238,23 @@ val readArr : file_desc * Word8ArraySlice.slice -> int
 val writeVec : file_desc * Word8VectorSlice.slice -> int
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `slice` &middot; `empty-slice` &middot; `twice` &middot; `closed` (raises) &middot; `read-only` (raises)
+
+</details>
+
 ### <a name="val-writearr"></a>`writeArr`
 
 ```sml
 val writeArr : file_desc * Word8ArraySlice.slice -> int
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `slice` &middot; `binary` &middot; `closed` (raises)
+
+</details>
 
 ### <a name="type-whence"></a>`whence`
 
@@ -244,6 +293,12 @@ datatype whence
 val cloexec : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `not-inherited-by-dup` &middot; `per-descriptor`
+
+</details>
+
 ### <a name="str-o"></a>`O`
 
 **Included from [`BIT_FLAGS`](../sig/BIT_FLAGS.md)**: `include BIT_FLAGS`
@@ -266,17 +321,35 @@ val cloexec : flags
 val append : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `getfl-after-openf`
+
+</details>
+
 #### <a name="val-o.nonblock"></a>`nonblock`
 
 ```sml
 val nonblock : flags
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `setfl` &middot; `new-pipe`
+
+</details>
+
 #### <a name="val-o.sync"></a>`sync`
 
 ```sml
 val sync : flags
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `getfl-after-openf` &middot; `not-set`
+
+</details>
 
 ### <a name="type-open_mode"></a>`open_mode`
 
@@ -305,11 +378,23 @@ val dupfd : {old : file_desc, base : file_desc}
 | <a name="fld-dupfd.old"></a>`old` | `file_desc` |  |
 | <a name="fld-dupfd.base"></a>`base` | `file_desc` |  |
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `base-0-is-dup` &middot; `at-least-base` &middot; `same-file`
+
+</details>
+
 ### <a name="val-getfd"></a>`getfd`
 
 ```sml
 val getfd : file_desc -> FD.flags
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `new-descriptor`
+
+</details>
 
 ### <a name="val-setfd"></a>`setfd`
 
@@ -317,17 +402,35 @@ val getfd : file_desc -> FD.flags
 val setfd : file_desc * FD.flags -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `cloexec` &middot; `clear`
+
+</details>
+
 ### <a name="val-getfl"></a>`getfl`
 
 ```sml
 val getfl : file_desc -> O.flags * open_mode
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `pipe-ends` &middot; `no-append`
+
+</details>
+
 ### <a name="val-setfl"></a>`setfl`
 
 ```sml
 val setfl : file_desc * O.flags -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `append` &middot; `append-writes-at-end` &middot; `clear` &middot; `cleared-append-writes-at-offset` &middot; `keeps-access-mode`
+
+</details>
 
 ### <a name="val-lseek"></a>`lseek`
 
@@ -336,11 +439,23 @@ val lseek : file_desc * Position.int * whence
             -> Position.int
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `current-position` &middot; `then-write` &middot; `beyond-the-end`
+
+</details>
+
 ### <a name="val-fsync"></a>`fsync`
 
 ```sml
 val fsync : file_desc -> unit
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `written-file`
+
+</details>
 
 ### <a name="type-lock_type"></a>`lock_type`
 
@@ -365,6 +480,12 @@ datatype lock_type
 type flock
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `fields`
+
+</details>
+
 #### <a name="val-flock.flock"></a>`flock`
 
 ```sml
@@ -385,11 +506,23 @@ val flock : {
 | <a name="fld-flock.flock.len"></a>`len` | `Position.int` |  |
 | <a name="fld-flock.flock.pid"></a>`pid` | `pid option` |  |
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `fields`
+
+</details>
+
 #### <a name="val-flock.ltype"></a>`ltype`
 
 ```sml
 val ltype : flock -> lock_type
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `read-lock`
+
+</details>
 
 #### <a name="val-flock.whence"></a>`whence`
 
@@ -397,11 +530,23 @@ val ltype : flock -> lock_type
 val whence : flock -> whence
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `SEEK_END`
+
+</details>
+
 #### <a name="val-flock.start"></a>`start`
 
 ```sml
 val start : flock -> Position.int
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `negative`
+
+</details>
 
 #### <a name="val-flock.len"></a>`len`
 
@@ -409,11 +554,23 @@ val start : flock -> Position.int
 val len : flock -> Position.int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `zero`
+
+</details>
+
 #### <a name="val-flock.pid"></a>`pid`
 
 ```sml
 val pid : flock -> pid option
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `SOME`
+
+</details>
 
 ### <a name="val-getlk"></a>`getlk`
 
@@ -421,17 +578,35 @@ val pid : flock -> pid option
 val getlk : file_desc * FLock.flock -> FLock.flock
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `own-lock-does-not-block` &middot; `no-lock`
+
+</details>
+
 ### <a name="val-setlk"></a>`setlk`
 
 ```sml
 val setlk : file_desc * FLock.flock -> FLock.flock
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `write-lock`
+
+</details>
+
 ### <a name="val-setlkw"></a>`setlkw`
 
 ```sml
 val setlkw : file_desc * FLock.flock -> FLock.flock
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `write-lock`
+
+</details>
 
 ### <a name="val-mkbinreader"></a>`mkBinReader`
 
@@ -449,6 +624,12 @@ val mkBinReader : {
 | <a name="fld-mkbinreader.name"></a>`name` | `string` |  |
 | <a name="fld-mkbinreader.initblkmode"></a>`initBlkMode` | `bool` |  |
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `readVec` &middot; `name` &middot; `stream` &middot; `from-a-pipe`
+
+</details>
+
 ### <a name="val-mktextreader"></a>`mkTextReader`
 
 ```sml
@@ -464,6 +645,12 @@ val mkTextReader : {
 | <a name="fld-mktextreader.fd"></a>`fd` | `file_desc` |  |
 | <a name="fld-mktextreader.name"></a>`name` | `string` |  |
 | <a name="fld-mktextreader.initblkmode"></a>`initBlkMode` | `bool` |  |
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `readVec` &middot; `name` &middot; `stream-lines` &middot; `from-a-pipe`
+
+</details>
 
 ### <a name="val-mkbinwriter"></a>`mkBinWriter`
 
@@ -485,6 +672,12 @@ val mkBinWriter : {
 | <a name="fld-mkbinwriter.initblkmode"></a>`initBlkMode` | `bool` |  |
 | <a name="fld-mkbinwriter.chunksize"></a>`chunkSize` | `int` |  |
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `writeVec` &middot; `name-and-chunkSize` &middot; `stream` &middot; `append-mode` &middot; `into-a-pipe`
+
+</details>
+
 ### <a name="val-mktextwriter"></a>`mkTextWriter`
 
 ```sml
@@ -504,6 +697,12 @@ val mkTextWriter : {
 | <a name="fld-mktextwriter.appendmode"></a>`appendMode` | `bool` |  |
 | <a name="fld-mktextwriter.initblkmode"></a>`initBlkMode` | `bool` |  |
 | <a name="fld-mktextwriter.chunksize"></a>`chunkSize` | `int` |  |
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `writeVec` &middot; `name-and-chunkSize` &middot; `stream` &middot; `into-a-pipe`
+
+</details>
 
 ---
 

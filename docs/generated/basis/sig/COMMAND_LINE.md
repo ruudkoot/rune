@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 2 entries documented |
+| Tests | 4 checks of 2 entries |
 | Source | [lib/basis/sig\_command\_line.sml](../../../../lib/basis/sig_command_line.sml) |
 
 ## Synopsis
@@ -39,11 +40,23 @@ end
 val name : unit -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `nonempty` &middot; `stable`
+
+</details>
+
 ### <a name="val-arguments"></a>`arguments`
 
 ```sml
 val arguments : unit -> string list
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `none-under-the-runner` &middot; `stable`
+
+</details>
 
 ---
 

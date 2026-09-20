@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 25 entries documented |
+| Tests | 235 checks of 25 entries |
 | Source | [lib/basis/sig\_array.sml](../../../../lib/basis/sig_array.sml) |
 
 ## Synopsis
@@ -68,11 +69,23 @@ end
 type 'a array = 'a array
 ```
 
+<details><summary>Tests (23)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `in-a-list` &middot; `is-toplevel` &middot; `model-*` &middot; `identity-*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
+
 ### <a name="type-vector"></a>`vector`
 
 ```sml
 type 'a vector = 'a Vector.vector
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `empty` &middot; `equals-tabulate` &middot; `after-update` &middot; `is-a-snapshot` &middot; `is-Vector.vector` &middot; `structural-equality` &middot; `model-*` &middot; `fromList-*` &middot; `long`
+
+</details>
 
 ### <a name="val-maxlen"></a>`maxLen`
 
@@ -80,11 +93,23 @@ type 'a vector = 'a Vector.vector
 val maxLen : int
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `covers-created-arrays`
+
+</details>
+
 ### <a name="val-array"></a>`array`
 
 ```sml
 val array : int * 'a -> 'a array
 ```
+
+<details><summary>Tests (23)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `in-a-list` &middot; `is-toplevel` &middot; `model-*` &middot; `identity-*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
 
 ### <a name="val-fromlist"></a>`fromList`
 
@@ -92,11 +117,23 @@ val array : int * 'a -> 'a array
 val fromList : 'a list -> 'a array
 ```
 
+<details><summary>Tests (9)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `nil` &middot; `singleton` &middot; `length` &middot; `strings` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `round-trip-*` &middot; `long`
+
+</details>
+
 ### <a name="val-tabulate"></a>`tabulate`
 
 ```sml
 val tabulate : int * (int -> 'a) -> 'a array
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model-*` &middot; `Size-above-maxLen` (raises Size)
+
+</details>
 
 ### <a name="val-length"></a>`length`
 
@@ -104,11 +141,23 @@ val tabulate : int * (int -> 'a) -> 'a array
 val length : 'a array -> int
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `empty` &middot; `five` &middot; `tabulate` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-sub"></a>`sub`
 
 ```sml
 val sub : 'a array * int -> 'a
 ```
+
+<details><summary>Tests (9)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`
+
+</details>
 
 ### <a name="val-update"></a>`update`
 
@@ -116,11 +165,23 @@ val sub : 'a array * int -> 'a
 val update : 'a array * int * 'a -> unit
 ```
 
+<details><summary>Tests (12)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first` &middot; `middle` &middot; `last` &middot; `twice-same-index` &middot; `seen-by-sub` &middot; `seen-through-alias` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model-*` &middot; `model-*` (raises Subscript)
+
+</details>
+
 ### <a name="val-vector"></a>`vector`
 
 ```sml
 val vector : 'a array -> 'a vector
 ```
+
+<details><summary>Tests (10)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `empty` &middot; `equals-tabulate` &middot; `after-update` &middot; `is-a-snapshot` &middot; `is-Vector.vector` &middot; `structural-equality` &middot; `model-*` &middot; `fromList-*` &middot; `long`
+
+</details>
 
 ### <a name="val-copy"></a>`copy`
 
@@ -134,6 +195,12 @@ val copy : {src : 'a array, dst : 'a array, di : int} -> unit
 | <a name="fld-copy.dst"></a>`dst` | `'a array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
 
+<details><summary>Tests (21)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `field-order` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `copies-elements-not-the-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`
+
+</details>
+
 ### <a name="val-copyvec"></a>`copyVec`
 
 ```sml
@@ -146,11 +213,23 @@ val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 | <a name="fld-copyvec.dst"></a>`dst` | `'a array` |  |
 | <a name="fld-copyvec.di"></a>`di` | `int` |  |
 
+<details><summary>Tests (19)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `field-order` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `from-Array.vector` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`
+
+</details>
+
 ### <a name="val-appi"></a>`appi`
 
 ```sml
 val appi : (int * 'a -> unit) -> 'a array -> unit
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `order` &middot; `empty` &middot; `model-*`
+
+</details>
 
 ### <a name="val-app"></a>`app`
 
@@ -158,11 +237,23 @@ val appi : (int * 'a -> unit) -> 'a array -> unit
 val app : ('a -> unit) -> 'a array -> unit
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `order` &middot; `empty` &middot; `array-unchanged` &middot; `model-*`
+
+</details>
+
 ### <a name="val-modifyi"></a>`modifyi`
 
 ```sml
 val modifyi : (int * 'a -> 'a) -> 'a array -> unit
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `index-and-element` &middot; `empty` &middot; `order` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-modify"></a>`modify`
 
@@ -170,11 +261,23 @@ val modifyi : (int * 'a -> 'a) -> 'a array -> unit
 val modify : ('a -> 'a) -> 'a array -> unit
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `empty` &middot; `order` &middot; `twice` &middot; `is-modifyi-of-second` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-foldli"></a>`foldli`
 
 ```sml
 val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
+
+</details>
 
 ### <a name="val-foldri"></a>`foldri`
 
@@ -182,11 +285,23 @@ val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
 val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
+
+</details>
+
 ### <a name="val-foldl"></a>`foldl`
 
 ```sml
 val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `array-unchanged` &middot; `model-*` &middot; `long`
+
+</details>
 
 ### <a name="val-foldr"></a>`foldr`
 
@@ -194,11 +309,23 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model-*` &middot; `long` &middot; `long-list`
+
+</details>
+
 ### <a name="val-findi"></a>`findi`
 
 ```sml
 val findi : (int * 'a -> bool) -> 'a array -> (int * 'a) option
 ```
+
+<details><summary>Tests (8)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
+
+</details>
 
 ### <a name="val-find"></a>`find`
 
@@ -206,11 +333,23 @@ val findi : (int * 'a -> bool) -> 'a array -> (int * 'a) option
 val find : ('a -> bool) -> 'a array -> 'a option
 ```
 
+<details><summary>Tests (7)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model-*` &middot; `long`
+
+</details>
+
 ### <a name="val-exists"></a>`exists`
 
 ```sml
 val exists : ('a -> bool) -> 'a array -> bool
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
+
+</details>
 
 ### <a name="val-all"></a>`all`
 
@@ -218,11 +357,23 @@ val exists : ('a -> bool) -> 'a array -> bool
 val all : ('a -> bool) -> 'a array -> bool
 ```
 
+<details><summary>Tests (8)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*` &middot; `de-morgan-*` &middot; `long`
+
+</details>
+
 ### <a name="val-collate"></a>`collate`
 
 ```sml
 val collate : ('a * 'a -> order) -> 'a array * 'a array -> order
 ```
+
+<details><summary>Tests (14)</summary>
+
+For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `equal` &middot; `same-array` &middot; `empty-empty` &middot; `empty-less` &middot; `empty-greater` &middot; `prefix-less` &middot; `prefix-greater` &middot; `first-difference` &middot; `not-by-length` &middot; `given-ordering` &middot; `argument-order` &middot; `model-*` &middot; `reflexive-*` &middot; `long`
+
+</details>
 
 ---
 

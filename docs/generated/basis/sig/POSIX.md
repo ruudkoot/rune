@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 8 entries documented |
+| Tests | 0 checks of 0 entries |
 | Source | [lib/basis/sig\_posix.sml](../../../../lib/basis/sig_posix.sml) |
 
 ## Synopsis

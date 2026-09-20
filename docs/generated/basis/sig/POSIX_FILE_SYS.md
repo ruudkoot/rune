@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 91 entries documented |
+| Tests | 196 checks of 78 entries |
 | Source | [lib/basis/sig\_posix\_file\_sys.sml](../../../../lib/basis/sig_posix_file_sys.sml) |
 
 ## Synopsis
@@ -194,11 +195,23 @@ eqtype file_desc
 val fdToWord : file_desc -> SysWord.word
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-wordToFD` &middot; `distinct-descriptors`
+
+</details>
+
 ### <a name="val-wordtofd"></a>`wordToFD`
 
 ```sml
 val wordToFD : SysWord.word -> file_desc
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-fdToWord`
+
+</details>
 
 ### <a name="val-fdtoiod"></a>`fdToIOD`
 
@@ -206,11 +219,23 @@ val wordToFD : SysWord.word -> file_desc
 val fdToIOD : file_desc -> OS.IO.iodesc
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `same-descriptor` &middot; `kind-of-a-file`
+
+</details>
+
 ### <a name="val-iodtofd"></a>`iodToFD`
 
 ```sml
 val iodToFD : OS.IO.iodesc -> file_desc option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-fdToIOD` &middot; `stdout` &middot; `descriptor-of-a-stream`
+
+</details>
 
 ### <a name="type-dirstream"></a>`dirstream`
 
@@ -224,11 +249,23 @@ type dirstream
 val opendir : string -> dirstream
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `positioned-at-first-entry` &middot; `missing` (raises) &middot; `a-file` (raises)
+
+</details>
+
 ### <a name="val-readdir"></a>`readdir`
 
 ```sml
 val readdir : dirstream -> string option
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `entries` &middot; `empty-directory` &middot; `NONE-at-end`
+
+</details>
 
 ### <a name="val-rewinddir"></a>`rewinddir`
 
@@ -236,11 +273,23 @@ val readdir : dirstream -> string option
 val rewinddir : dirstream -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `reads-again` &middot; `after-one-entry`
+
+</details>
+
 ### <a name="val-closedir"></a>`closedir`
 
 ```sml
 val closedir : dirstream -> unit
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `twice` &middot; `then-opendir-again`
+
+</details>
 
 ### <a name="val-chdir"></a>`chdir`
 
@@ -248,11 +297,23 @@ val closedir : dirstream -> unit
 val chdir : string -> unit
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `into-subdirectory` &middot; `relative-names` &middot; `back-up` &middot; `absolute` &middot; `missing` (raises) &middot; `failure-keeps-directory`
+
+</details>
+
 ### <a name="val-getcwd"></a>`getcwd`
 
 ```sml
 val getcwd : unit -> string
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `absolute` &middot; `is-the-directory`
+
+</details>
 
 ### <a name="val-stdin"></a>`stdin`
 
@@ -260,17 +321,35 @@ val getcwd : unit -> string
 val stdin : file_desc
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-0` &middot; `wordToFD-0`
+
+</details>
+
 ### <a name="val-stdout"></a>`stdout`
 
 ```sml
 val stdout : file_desc
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-1` &middot; `is-open`
+
+</details>
+
 ### <a name="val-stderr"></a>`stderr`
 
 ```sml
 val stderr : file_desc
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-2` &middot; `dup`
+
+</details>
 
 ### <a name="str-s"></a>`S`
 
@@ -301,11 +380,23 @@ eqtype mode
 val irwxu : mode
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-irusr-iwusr-ixusr` &middot; `chmod`
+
+</details>
+
 #### <a name="val-s.irusr"></a>`irusr`
 
 ```sml
 val irusr : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.iwusr"></a>`iwusr`
 
@@ -313,11 +404,23 @@ val irusr : mode
 val iwusr : mode
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
+
 #### <a name="val-s.ixusr"></a>`ixusr`
 
 ```sml
 val ixusr : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.irwxg"></a>`irwxg`
 
@@ -325,11 +428,23 @@ val ixusr : mode
 val irwxg : mode
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-irgrp-iwgrp-ixgrp` &middot; `chmod`
+
+</details>
+
 #### <a name="val-s.irgrp"></a>`irgrp`
 
 ```sml
 val irgrp : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.iwgrp"></a>`iwgrp`
 
@@ -337,11 +452,23 @@ val irgrp : mode
 val iwgrp : mode
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
+
 #### <a name="val-s.ixgrp"></a>`ixgrp`
 
 ```sml
 val ixgrp : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.irwxo"></a>`irwxo`
 
@@ -349,11 +476,23 @@ val ixgrp : mode
 val irwxo : mode
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-iroth-iwoth-ixoth` &middot; `chmod`
+
+</details>
+
 #### <a name="val-s.iroth"></a>`iroth`
 
 ```sml
 val iroth : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.iwoth"></a>`iwoth`
 
@@ -361,11 +500,23 @@ val iroth : mode
 val iwoth : mode
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
+
 #### <a name="val-s.ixoth"></a>`ixoth`
 
 ```sml
 val ixoth : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 #### <a name="val-s.isuid"></a>`isuid`
 
@@ -373,11 +524,23 @@ val ixoth : mode
 val isuid : mode
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `distinct-from-the-others` &middot; `chmod`
+
+</details>
+
 #### <a name="val-s.isgid"></a>`isgid`
 
 ```sml
 val isgid : mode
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
+
+</details>
 
 ### <a name="str-o"></a>`O`
 
@@ -401,11 +564,23 @@ val isgid : mode
 val append : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `writes-at-end`
+
+</details>
+
 #### <a name="val-o.excl"></a>`excl`
 
 ```sml
 val excl : flags
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `existing-file` (raises) &middot; `new-file`
+
+</details>
 
 #### <a name="val-o.noctty"></a>`noctty`
 
@@ -413,11 +588,23 @@ val excl : flags
 val noctty : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `regular-file`
+
+</details>
+
 #### <a name="val-o.nonblock"></a>`nonblock`
 
 ```sml
 val nonblock : flags
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `regular-file` &middot; `fifo-opens-at-once` &middot; `fifo-without-reader` (raises)
+
+</details>
 
 #### <a name="val-o.sync"></a>`sync`
 
@@ -425,11 +612,23 @@ val nonblock : flags
 val sync : flags
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `writes`
+
+</details>
+
 #### <a name="val-o.trunc"></a>`trunc`
 
 ```sml
 val trunc : flags
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `truncates` &middot; `then-writes`
+
+</details>
 
 ### <a name="type-open_mode"></a>`open_mode`
 
@@ -452,6 +651,12 @@ datatype open_mode
 val openf : string * open_mode * O.flags -> file_desc
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `missing-file` (raises) &middot; `reads-the-file` &middot; `keeps-contents`
+
+</details>
+
 ### <a name="val-createf"></a>`createf`
 
 ```sml
@@ -459,17 +664,35 @@ val createf : string * open_mode * O.flags * S.mode
               -> file_desc
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `mode-less-umask` &middot; `mode-with-empty-umask` &middot; `open-mode` &middot; `existing-file` &middot; `existing-mode-kept` &middot; `with-trunc`
+
+</details>
+
 ### <a name="val-creat"></a>`creat`
 
 ```sml
 val creat : string * S.mode -> file_desc
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `truncates` &middot; `mode-less-umask` &middot; `writes` &middot; `write-only` (raises)
+
+</details>
+
 ### <a name="val-umask"></a>`umask`
 
 ```sml
 val umask : S.mode -> S.mode
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `returns-previous` &middot; `set-then-read` &middot; `removes-permissions`
+
+</details>
 
 ### <a name="val-link"></a>`link`
 
@@ -482,11 +705,23 @@ val link : {old : string, new : string} -> unit
 | <a name="fld-link.old"></a>`old` | `string` |  |
 | <a name="fld-link.new"></a>`new` | `string` |  |
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `same-contents` &middot; `shared-file` &middot; `same-inode` &middot; `link-count` &middot; `directory` (raises) &middot; `missing-file` (raises)
+
+</details>
+
 ### <a name="val-mkdir"></a>`mkdir`
 
 ```sml
 val mkdir : string * S.mode -> unit
 ```
+
+<details><summary>Tests (7)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `makes-a-directory` &middot; `mode` &middot; `mode-less-umask` &middot; `owner-only` &middot; `mask-unchanged` &middot; `existing` (raises) &middot; `missing-parent` (raises)
+
+</details>
 
 ### <a name="val-mkfifo"></a>`mkfifo`
 
@@ -494,17 +729,35 @@ val mkdir : string * S.mode -> unit
 val mkfifo : string * S.mode -> unit
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `makes-a-fifo` &middot; `mode-less-umask` &middot; `existing` (raises)
+
+</details>
+
 ### <a name="val-unlink"></a>`unlink`
 
 ```sml
 val unlink : string -> unit
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `removes` &middot; `decrements-link-count` &middot; `symbolic-link` &middot; `open-file` &middot; `missing` (raises)
+
+</details>
+
 ### <a name="val-rmdir"></a>`rmdir`
 
 ```sml
 val rmdir : string -> unit
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `removes` &middot; `not-empty` (raises) &middot; `a-file` (raises) &middot; `missing` (raises)
+
+</details>
 
 ### <a name="val-rename"></a>`rename`
 
@@ -517,6 +770,12 @@ val rename : {old : string, new : string} -> unit
 | <a name="fld-rename.old"></a>`old` | `string` |  |
 | <a name="fld-rename.new"></a>`new` | `string` |  |
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `file` &middot; `directory` &middot; `into-directory` &middot; `missing` (raises)
+
+</details>
+
 ### <a name="val-symlink"></a>`symlink`
 
 ```sml
@@ -528,11 +787,23 @@ val symlink : {old : string, new : string} -> unit
 | <a name="fld-symlink.old"></a>`old` | `string` |  |
 | <a name="fld-symlink.new"></a>`new` | `string` |  |
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `follows` &middot; `dangling` &middot; `through-a-directory` &middot; `existing-name` (raises)
+
+</details>
+
 ### <a name="val-readlink"></a>`readlink`
 
 ```sml
 val readlink : string -> string
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `text-of-the-link` &middot; `relative-path-kept` &middot; `absolute-path` &middot; `not-a-link` (raises) &middot; `missing` (raises)
+
+</details>
 
 ### <a name="type-dev"></a>`dev`
 
@@ -546,11 +817,23 @@ eqtype dev
 val wordToDev : SysWord.word -> dev
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-devToWord`
+
+</details>
+
 ### <a name="val-devtoword"></a>`devToWord`
 
 ```sml
 val devToWord : dev -> SysWord.word
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-wordToDev` &middot; `same-device`
+
+</details>
 
 ### <a name="type-ino"></a>`ino`
 
@@ -564,11 +847,23 @@ eqtype ino
 val wordToIno : SysWord.word -> ino
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-inoToWord`
+
+</details>
+
 ### <a name="val-inotoword"></a>`inoToWord`
 
 ```sml
 val inoToWord : ino -> SysWord.word
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-wordToIno` &middot; `distinct-files`
+
+</details>
 
 ### <a name="str-st"></a>`ST`
 
@@ -584,11 +879,23 @@ type stat
 val isDir : stat -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `directory` &middot; `current-directory`
+
+</details>
+
 #### <a name="val-st.ischr"></a>`isChr`
 
 ```sml
 val isChr : stat -> bool
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `dev-null`
+
+</details>
 
 #### <a name="val-st.isblk"></a>`isBlk`
 
@@ -596,11 +903,23 @@ val isChr : stat -> bool
 val isBlk : stat -> bool
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `none-of-the-others`
+
+</details>
+
 #### <a name="val-st.isreg"></a>`isReg`
 
 ```sml
 val isReg : stat -> bool
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `regular-file`
+
+</details>
 
 #### <a name="val-st.isfifo"></a>`isFIFO`
 
@@ -608,11 +927,23 @@ val isReg : stat -> bool
 val isFIFO : stat -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `mkfifo` &middot; `pipe`
+
+</details>
+
 #### <a name="val-st.islink"></a>`isLink`
 
 ```sml
 val isLink : stat -> bool
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `lstat-of-a-link` &middot; `dangling-link`
+
+</details>
 
 #### <a name="val-st.issock"></a>`isSock`
 
@@ -620,11 +951,23 @@ val isLink : stat -> bool
 val isSock : stat -> bool
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `none-of-the-others` &middot; `socket`
+
+</details>
+
 #### <a name="val-st.mode"></a>`mode`
 
 ```sml
 val mode : stat -> S.mode
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `regular-file` &middot; `directory` &middot; `fifo`
+
+</details>
 
 #### <a name="val-st.ino"></a>`ino`
 
@@ -632,11 +975,23 @@ val mode : stat -> S.mode
 val ino : stat -> ino
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `distinct-files` &middot; `same-file`
+
+</details>
+
 #### <a name="val-st.dev"></a>`dev`
 
 ```sml
 val dev : stat -> dev
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `same-directory`
+
+</details>
 
 #### <a name="val-st.nlink"></a>`nlink`
 
@@ -644,11 +999,23 @@ val dev : stat -> dev
 val nlink : stat -> int
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `new-file` &middot; `three-links`
+
+</details>
+
 #### <a name="val-st.uid"></a>`uid`
 
 ```sml
 val uid : stat -> uid
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `new-file`
+
+</details>
 
 #### <a name="val-st.gid"></a>`gid`
 
@@ -656,11 +1023,23 @@ val uid : stat -> uid
 val gid : stat -> gid
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `new-file`
+
+</details>
+
 #### <a name="val-st.size"></a>`size`
 
 ```sml
 val size : stat -> Position.int
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `bytes` &middot; `empty` &middot; `lstat-of-a-link-is-its-text`
+
+</details>
 
 #### <a name="val-st.atime"></a>`atime`
 
@@ -668,11 +1047,23 @@ val size : stat -> Position.int
 val atime : stat -> Time.time
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `utime`
+
+</details>
+
 #### <a name="val-st.mtime"></a>`mtime`
 
 ```sml
 val mtime : stat -> Time.time
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `utime` &middot; `new-file`
+
+</details>
 
 #### <a name="val-st.ctime"></a>`ctime`
 
@@ -680,11 +1071,23 @@ val mtime : stat -> Time.time
 val ctime : stat -> Time.time
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `after-utime`
+
+</details>
+
 ### <a name="val-stat"></a>`stat`
 
 ```sml
 val stat : string -> ST.stat
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `empty-string` (raises) &middot; `missing` (raises) &middot; `follows-a-link` &middot; `dangling-link` (raises)
+
+</details>
 
 ### <a name="val-lstat"></a>`lstat`
 
@@ -692,11 +1095,23 @@ val stat : string -> ST.stat
 val lstat : string -> ST.stat
 ```
 
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `empty-string` (raises) &middot; `missing` (raises) &middot; `regular-file` &middot; `the-link-itself`
+
+</details>
+
 ### <a name="val-fstat"></a>`fstat`
 
 ```sml
 val fstat : file_desc -> ST.stat
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `same-file` &middot; `kind` &middot; `directory`
+
+</details>
 
 ### <a name="type-access_mode"></a>`access_mode`
 
@@ -716,11 +1131,23 @@ datatype access_mode = A_READ | A_WRITE | A_EXEC
 val access : string * access_mode list -> bool
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `exists` &middot; `missing` &middot; `missing-read` &middot; `every-mode-of-the-list` &middot; `directory`
+
+</details>
+
 ### <a name="val-chmod"></a>`chmod`
 
 ```sml
 val chmod : string * S.mode -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `sets-mode` &middot; `not-masked` &middot; `no-permissions` &middot; `missing-file` (raises) &middot; `empty-path` (raises)
+
+</details>
 
 ### <a name="val-fchmod"></a>`fchmod`
 
@@ -728,17 +1155,35 @@ val chmod : string * S.mode -> unit
 val fchmod : file_desc * S.mode -> unit
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `sets-mode` &middot; `fstat-agrees`
+
+</details>
+
 ### <a name="val-chown"></a>`chown`
 
 ```sml
 val chown : string * uid * gid -> unit
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `to-current-owner` &middot; `owner-is-process` &middot; `missing-file` (raises)
+
+</details>
+
 ### <a name="val-fchown"></a>`fchown`
 
 ```sml
 val fchown : file_desc * uid * gid -> unit
 ```
+
+<details><summary>Tests (1)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `to-current-owner`
+
+</details>
 
 ### <a name="val-utime"></a>`utime`
 
@@ -753,11 +1198,23 @@ val utime : string
 | <a name="fld-utime.actime"></a>`actime` | `Time.time` |  |
 | <a name="fld-utime.modtime"></a>`modtime` | `Time.time` |  |
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `actime` &middot; `modtime` &middot; `fstat-agrees` &middot; `NONE-sets-mtime-to-now` &middot; `NONE-sets-atime-to-now` &middot; `missing` (raises)
+
+</details>
+
 ### <a name="val-ftruncate"></a>`ftruncate`
 
 ```sml
 val ftruncate : file_desc * Position.int -> unit
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `shorter` &middot; `longer` &middot; `zero` &middot; `same` &middot; `size`
+
+</details>
 
 ### <a name="val-pathconf"></a>`pathconf`
 
@@ -765,11 +1222,23 @@ val ftruncate : file_desc * Position.int -> unit
 val pathconf : string * string -> SysWord.word option
 ```
 
+<details><summary>Tests (6)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `NAME_MAX` &middot; `PATH_MAX` &middot; `LINK_MAX` &middot; `boolean-properties` &middot; `not-a-property` (raises) &middot; `missing-file` (raises)
+
+</details>
+
 ### <a name="val-fpathconf"></a>`fpathconf`
 
 ```sml
 val fpathconf : file_desc * string -> SysWord.word option
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `NAME_MAX-of-the-directory` &middot; `PIPE_BUF-of-a-pipe` &middot; `boolean-property` &middot; `not-a-property` (raises)
+
+</details>
 
 ---
 

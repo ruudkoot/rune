@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 35 of 35 entries documented |
+| Tests | 484 checks of 33 entries |
 | Source | [lib/basis/sig\_char.sml](../../../../lib/basis/sig_char.sml) |
 
 ## Synopsis
@@ -156,6 +157,14 @@ val minChar : char
 
 The character with the smallest code, 0.
 
+<details><summary>Tests (3)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `chr-0` &middot; `ord`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `is-zero`
+
+</details>
+
 ### <a name="val-maxchar"></a>`maxChar`
 
 ```sml
@@ -163,6 +172,14 @@ val maxChar : char
 ```
 
 The character with the largest code, [`maxOrd`](#val-maxord).
+
+<details><summary>Tests (3)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `chr-255` &middot; `chr-maxOrd`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `is-maxOrd`
+
+</details>
 
 ### <a name="val-maxord"></a>`maxOrd`
 
@@ -174,6 +191,14 @@ The largest code of a character.
 
 > **Implementation** `Char.maxOrd/value`. 255 for [`Char`](CHAR.md), and 1114111, the
 > last code point of Unicode, for [`WideChar`](CHAR.md).
+
+<details><summary>Tests (3)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `255` &middot; `ord-maxChar`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `0x10FFFF`
+
+</details>
 
 ## Codes and order
 
@@ -187,6 +212,14 @@ val ord : char -> int
 
 Also in the [top-level environment](../top-level.md): `ord`.
 
+<details><summary>Tests (10)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `A` &middot; `a` &middot; `zero` &middot; `space` &middot; `newline` &middot; `nul` &middot; `non-negative-128` &middot; `non-negative-255`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `ascii` &middot; `beyond-the-basic-plane`
+
+</details>
+
 ### <a name="val-chr"></a>`chr`
 
 ```sml
@@ -199,6 +232,14 @@ val chr : int -> char
 
 Also in the [top-level environment](../top-level.md): `chr`.
 
+<details><summary>Tests (15)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `A` &middot; `zero` &middot; `maxOrd` &middot; `ord-all` &middot; `Chr-negative` (raises Chr) &middot; `Chr-above-maxOrd` (raises Chr) &middot; `Chr-maxOrd-plus-1` (raises Chr) &middot; `Chr-large` (raises Chr) &middot; `Chr-large-negative` (raises Chr) &middot; `Chr-maxInt` (raises Chr) &middot; `Chr-minInt` (raises Chr) &middot; `Chr-is-General.Chr` (raises)
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `round-trip` &middot; `Chr-negative` (raises) &middot; `Chr-above-maxOrd` (raises)
+
+</details>
+
 ### <a name="val-succ"></a>`succ`
 
 ```sml
@@ -209,6 +250,14 @@ val succ : char -> char
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`maxChar`](#val-maxchar).
 
+<details><summary>Tests (9)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `a` &middot; `minChar` &middot; `127` &middot; `254` &middot; `Chr-maxChar` (raises Chr) &middot; `Chr-255` (raises Chr) &middot; `all`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `next-code-point` &middot; `Chr-at-maxChar` (raises)
+
+</details>
+
 ### <a name="val-pred"></a>`pred`
 
 ```sml
@@ -218,6 +267,14 @@ val pred : char -> char
 `pred c` is the character before `c`, the one with the code `ord c - 1`.
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`minChar`](#val-minchar).
+
+<details><summary>Tests (9)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `b` &middot; `maxChar` &middot; `128` &middot; `1` &middot; `Chr-minChar` (raises Chr) &middot; `Chr-0` (raises Chr) &middot; `all`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `previous-code-point` &middot; `Chr-at-minChar` (raises)
+
+</details>
 
 ### <a name="val-compare"></a>`compare`
 
@@ -230,6 +287,14 @@ val compare : char * char -> order
 > **Reading** `Char.compare/127-128`. The codes are not negative, so 127 comes
 > before 128 and 255 after 0: a character is not a signed byte.
 
+<details><summary>Tests (13)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `less` &middot; `equal` &middot; `greater` &middot; `upper-before-lower` &middot; `127-128` &middot; `255-0` &middot; `min-max` &middot; `all-pairs` &middot; `law-*` &middot; `antisymmetric-*`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `less` &middot; `equal` &middot; `greater`
+
+</details>
+
 ### <a name="val-op-lt"></a><a name="val-op-lt-eq"></a><a name="val-op-gt"></a><a name="val-op-gt-eq"></a>`<`, `<=`, `>`, `>=`
 
 ```sml
@@ -241,6 +306,14 @@ val >= : char * char -> bool
 
 `c < d`, `c <= d`, `c > d` and `c >= d` compare the codes of two
 characters.
+
+<details><summary>Tests (10)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `less` &middot; `equal` &middot; `greater` &middot; `127-128` &middot; `255-0` &middot; `all-pairs` &middot; `128-127`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `by-code-point` &middot; `not-less` &middot; `equal`
+
+</details>
 
 ## Membership
 
@@ -255,6 +328,14 @@ val contains : string -> char -> bool
 Applied to `s` alone it gives a predicate, which suits the functions that
 take one: `String.tokens (contains " ,;")`.
 
+<details><summary>Tests (15)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `first` &middot; `last` &middot; `absent` &middot; `case-matters` &middot; `empty-string` &middot; `repeated` &middot; `nul` &middot; `255` &middot; `254-absent` &middot; `all-characters` &middot; `every-character` &middot; `law-*`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `present` &middot; `absent` &middot; `empty`
+
+</details>
+
 ### <a name="val-notcontains"></a>`notContains`
 
 ```sml
@@ -262,6 +343,14 @@ val notContains : string -> char -> bool
 ```
 
 `notContains s c` is `true` when `c` does not occur in `s`.
+
+<details><summary>Tests (10)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `first` &middot; `last` &middot; `absent` &middot; `empty-string` &middot; `255` &middot; `all-characters` &middot; `empty-string-all` &middot; `law-*`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `absent` &middot; `present`
+
+</details>
 
 ## Classes and case
 
@@ -278,6 +367,14 @@ val isAscii : char -> bool
 > above 127 is in any of them, and [`toLower`](#val-tolower) and [`toUpper`](#val-toupper) change the 52
 > letters of ASCII only.
 
+<details><summary>Tests (6)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `127` &middot; `128`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `below-128` &middot; `above-127`
+
+</details>
+
 ### <a name="val-tolower"></a>`toLower`
 
 ```sml
@@ -286,6 +383,14 @@ val toLower : char -> char
 
 `toLower c` is the lower case letter for an upper case letter `c`, and `c`
 otherwise.
+
+<details><summary>Tests (10)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `A` &middot; `Z` &middot; `a` &middot; `at-sign` &middot; `bracket` &middot; `digit` &middot; `A-grave` &middot; `all`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `ascii` &middot; `leaves-a-wide-character`
+
+</details>
 
 ### <a name="val-toupper"></a>`toUpper`
 
@@ -296,6 +401,14 @@ val toUpper : char -> char
 `toUpper c` is the upper case letter for a lower case letter `c`, and `c`
 otherwise.
 
+<details><summary>Tests (11)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `a` &middot; `z` &middot; `A` &middot; `backquote` &middot; `brace` &middot; `a-grave` &middot; `y-diaeresis` &middot; `all` &middot; `toLower-*`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `ascii` &middot; `leaves-a-wide-character`
+
+</details>
+
 ### <a name="val-isalpha"></a>`isAlpha`
 
 ```sml
@@ -303,6 +416,14 @@ val isAlpha : char -> bool
 ```
 
 `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`.
+
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `m` &middot; `underscore` &middot; `e-acute`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `letter` &middot; `e-acute`
+
+</details>
 
 ### <a name="val-isalphanum"></a>`isAlphaNum`
 
@@ -312,6 +433,14 @@ val isAlphaNum : char -> bool
 
 `isAlphaNum c` is `true` for a letter or a decimal digit.
 
+<details><summary>Tests (6)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `0` &middot; `underscore`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `digit` &middot; `emoji`
+
+</details>
+
 ### <a name="val-iscntrl"></a>`isCntrl`
 
 ```sml
@@ -320,6 +449,14 @@ val isCntrl : char -> bool
 
 `isCntrl c` is `true` for a control character: a code below 32, or 127.
 
+<details><summary>Tests (8)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `nul` &middot; `del` &middot; `space` &middot; `128-not-ascii`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `newline` &middot; `next-line-0x85`
+
+</details>
+
 ### <a name="val-isdigit"></a>`isDigit`
 
 ```sml
@@ -327,6 +464,14 @@ val isDigit : char -> bool
 ```
 
 `isDigit c` is `true` for a decimal digit, `0` to `9`.
+
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `9` &middot; `colon` &middot; `superscript-two`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `five` &middot; `arabic-indic`
+
+</details>
 
 ### <a name="val-isgraph"></a>`isGraph`
 
@@ -337,6 +482,14 @@ val isGraph : char -> bool
 `isGraph c` is `true` for a character that leaves a mark when printed:
 codes 33 to 126.
 
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `space` &middot; `tilde` &middot; `del`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `letter` &middot; `e-acute`
+
+</details>
+
 ### <a name="val-ishexdigit"></a>`isHexDigit`
 
 ```sml
@@ -346,6 +499,14 @@ val isHexDigit : char -> bool
 `isHexDigit c` is `true` for a hexadecimal digit: `0` to `9`, `a` to `f`
 and `A` to `F`.
 
+<details><summary>Tests (8)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `F` &middot; `f` &middot; `G` &middot; `g`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `f` &middot; `fullwidth-f`
+
+</details>
+
 ### <a name="val-islower"></a>`isLower`
 
 ```sml
@@ -353,6 +514,14 @@ val isLower : char -> bool
 ```
 
 `isLower c` is `true` for a lower case letter, `a` to `z`.
+
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `z` &middot; `Z` &middot; `a-grave`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `small-a` &middot; `small-e-acute`
+
+</details>
 
 ### <a name="val-isprint"></a>`isPrint`
 
@@ -363,6 +532,14 @@ val isPrint : char -> bool
 `isPrint c` is `true` for a printable character, the space included: codes
 32 to 126.
 
+<details><summary>Tests (8)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `space` &middot; `tab` &middot; `del` &middot; `no-break-space`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `space` &middot; `emoji`
+
+</details>
+
 ### <a name="val-isspace"></a>`isSpace`
 
 ```sml
@@ -371,6 +548,14 @@ val isSpace : char -> bool
 
 `isSpace c` is `true` for white space: the space and the characters `\t`,
 `\n`, `\v`, `\f` and `\r`.
+
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `vertical-tab` &middot; `backspace` &middot; `no-break-space`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `tab` &middot; `line-separator`
+
+</details>
 
 ### <a name="val-ispunct"></a>`isPunct`
 
@@ -381,6 +566,14 @@ val isPunct : char -> bool
 `isPunct c` is `true` for a graphical character that is neither a letter
 nor a digit.
 
+<details><summary>Tests (8)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `underscore` &middot; `space` &middot; `inverted-question-mark` &middot; `law-*`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `comma` &middot; `em-dash`
+
+</details>
+
 ### <a name="val-isupper"></a>`isUpper`
 
 ```sml
@@ -388,6 +581,14 @@ val isUpper : char -> bool
 ```
 
 `isUpper c` is `true` for an upper case letter, `A` to `Z`.
+
+<details><summary>Tests (7)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `ascii` &middot; `latin1` &middot; `A` &middot; `a` &middot; `A-grave`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `capital-a` &middot; `capital-e-acute`
+
+</details>
 
 ## The text of character constants
 
@@ -407,6 +608,14 @@ are written `\^@` to `\^_`, and codes from 127 up as a backslash and three
 decimal digits.
 
 **Example** `toString #"\n" = "\\n"` and `toString #"\255" = "\\255"`
+
+<details><summary>Tests (36)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `space` &middot; `tilde` &middot; `single-quote` &middot; `question-mark` &middot; `backslash` &middot; `double-quote` &middot; `alert` &middot; `backspace` &middot; `tab` &middot; `newline` &middot; `vertical-tab` &middot; `form-feed` &middot; `carriage-return` &middot; `nul` &middot; `control-A` &middot; `control-Z` &middot; `escape` &middot; `control-backslash` &middot; `control-underscore` &middot; `control-size` &middot; `del` &middot; `128` &middot; `255` &middot; `all-below-32` &middot; `all-printable` &middot; `all-above-126`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `printable` &middot; `newline` &middot; `backslash` &middot; `double-quote` &middot; `latin-1` &middot; `above-255` &middot; `largest-of-four-digits` &middot; `above-0xFFFF` &middot; `maxChar`
+
+</details>
 
 ### <a name="val-scan"></a>`scan`
 
@@ -436,6 +645,14 @@ is malformed or names no character.
 > backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
 > and that is what the suite expects.
 
+<details><summary>Tests (28)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `last-character` &middot; `empty` &middot; `space-is-not-skipped` &middot; `escape-n` &middot; `escape-backslash` &middot; `control` &middot; `decimal` &middot; `decimal-three-digits-only` &middot; `u` &middot; `illegal-escape` &middot; `decimal-256` &middot; `not-printable` &middot; `format-before` &middot; `trailing-format` &middot; `trailing-format-twice` &middot; `trailing-format-at-end` &middot; `trailing-format-after-escape` &middot; `trailing-format-after-leading-format` &middot; `trailing-format-after-leading-format-and-escape` &middot; `invalid-format-is-not-scanned` &middot; `format-only` &middot; `format-then-not-printable` &middot; `indexed-reader` &middot; `indexed-reader-end` &middot; `scanString`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `takes-the-escape-and-leaves-the-rest` &middot; `NONE-on-nothing-to-read`
+
+</details>
+
 ### <a name="val-fromstring"></a>`fromString`
 
 ```sml
@@ -452,6 +669,14 @@ val fromString : String.string -> char option
 > a backslash by itself; every other printable character is converted to
 > itself.
 
+<details><summary>Tests (98)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `rest-ignored` &middot; `space` &middot; `empty` &middot; `single-quote` &middot; `printable-only-newline` &middot; `printable-only-tab` &middot; `printable-only-del` &middot; `printable-only-128` &middot; `printable-only-255` &middot; `printable-only-all-converted` &middot; `printable-only-all-rejected` &middot; `unescaped-double-quote` &middot; `escape-a` &middot; `escape-b` &middot; `escape-t` &middot; `escape-n` &middot; `escape-v` &middot; `escape-f` &middot; `escape-r` &middot; `escape-backslash` &middot; `escape-double-quote` &middot; `escape-rest-ignored` &middot; `two-character-escapes` &middot; `illegal-q` &middot; `illegal-lone-backslash` &middot; `illegal-question-mark` &middot; `illegal-single-quote` &middot; `illegal-x` &middot; `illegal-upper-N` &middot; `control-at` &middot; `control-A` &middot; `control-H-is-backspace` &middot; `control-Z` &middot; `control-bracket` &middot; `control-backslash` &middot; `control-underscore` &middot; `control-rest-ignored` &middot; `control-range-63` &middot; `control-range-96` &middot; `control-range-lowercase` &middot; `control-incomplete` &middot; `control-all` &middot; `control-range-all` &middot; `decimal-065` &middot; `decimal-000` &middot; `decimal-255` &middot; `decimal-256` &middot; `decimal-999` &middot; `decimal-one-digit` &middot; `decimal-two-digits` &middot; `decimal-two-digits-letter` &middot; `decimal-fourth-digit-ignored` &middot; `decimal-all` &middot; `decimal-above-255` &middot; `u-0041` &middot; `u-0000` &middot; `u-00ff` &middot; `u-00FF` &middot; `u-007e` &middot; `u-0100-does-not-fit` &middot; `u-ffff-does-not-fit` &middot; `u-three-digits` &middot; `u-three-digits-letter` &middot; `u-incomplete` &middot; `u-fifth-digit-ignored` &middot; `u-uppercase-U` &middot; `u-all` &middot; `format-space` &middot; `format-newline` &middot; `format-tab` &middot; `format-several` &middot; `format-form-feed` &middot; `format-twice` &middot; `format-then-escape` &middot; `format-then-decimal` &middot; `format-after` &middot; `format-unterminated` &middot; `format-letter-inside` &middot; `sample-1` &middot; `sample-2` &middot; `sample-3` &middot; `sample-4` &middot; `sample-5` &middot; `sample-6` &middot; `sample-7` &middot; `toString-all`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `printable` &middot; `escape-u` &middot; `escape-u-upper-case-digits` &middot; `escape-U` &middot; `escape-decimal` &middot; `escape-decimal-above-255` &middot; `escape-control` &middot; `formatting-sequence-first` &middot; `NONE-empty` &middot; `NONE-short-escape` &middot; `NONE-above-maxOrd`
+
+</details>
+
 ### <a name="val-tocstring"></a>`toCString`
 
 ```sml
@@ -465,6 +690,14 @@ quote, the single quote and the question mark get a backslash in front.
 The control characters with a name in C are `\a`, `\b`, `\t`, `\n`, `\v`,
 `\f` and `\r`; every other character is a backslash and three octal
 digits.
+
+<details><summary>Tests (27)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `space` &middot; `backslash` &middot; `double-quote` &middot; `question-mark` &middot; `single-quote` &middot; `alert` &middot; `backspace` &middot; `tab` &middot; `newline` &middot; `vertical-tab` &middot; `form-feed` &middot; `carriage-return` &middot; `nul` &middot; `1` &middot; `escape` &middot; `31` &middot; `del` &middot; `128` &middot; `255` &middot; `nul-and-all-below-32` &middot; `all-printable` &middot; `all-above-126`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `printable` &middot; `latin-1-is-octal` &middot; `above-255` &middot; `above-0xFFFF`
+
+</details>
 
 ### <a name="val-fromcstring"></a>`fromCString`
 
@@ -487,6 +720,14 @@ rejected.
 > **Reading** `Char.fromCString/printable-only-all-converted`. Every printable
 > character but the double quote and the backslash is converted to itself,
 > the single quote included; what does not print is rejected.
+
+<details><summary>Tests (72)</summary>
+
+For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `rest-ignored` &middot; `space` &middot; `empty` &middot; `unescaped-single-quote` &middot; `unescaped-double-quote` &middot; `unescaped-question-mark` &middot; `printable-only-newline` &middot; `printable-only-del` &middot; `printable-only-128` &middot; `printable-only-all-converted` &middot; `printable-only-all-rejected` &middot; `escape-a` &middot; `escape-b` &middot; `escape-t` &middot; `escape-n` &middot; `escape-v` &middot; `escape-f` &middot; `escape-r` &middot; `escape-question-mark` &middot; `escape-backslash` &middot; `escape-double-quote` &middot; `escape-single-quote` &middot; `escape-rest-ignored` &middot; `two-character-escapes` &middot; `illegal-q` &middot; `illegal-lone-backslash` &middot; `illegal-u` &middot; `illegal-format` &middot; `control-H-is-backspace` &middot; `control-at` &middot; `control-underscore` &middot; `control-range-96` &middot; `control-incomplete` &middot; `control-all` &middot; `octal-101` &middot; `octal-one-digit` &middot; `octal-zero` &middot; `octal-two-digits` &middot; `octal-012` &middot; `octal-377` &middot; `octal-400-does-not-fit` &middot; `octal-777-does-not-fit` &middot; `octal-8-is-no-digit` &middot; `octal-stops-at-8` &middot; `octal-stops-at-9` &middot; `octal-stops-at-letter` &middot; `octal-all` &middot; `hex-41` &middot; `hex-4a` &middot; `hex-4A` &middot; `hex-ff` &middot; `hex-FF` &middot; `hex-one-digit` &middot; `hex-0` &middot; `hex-longest-sequence` &middot; `hex-longest-sequence-does-not-fit` &middot; `hex-100-does-not-fit` &middot; `hex-leading-zeros` &middot; `hex-fffff-does-not-fit` &middot; `hex-huge-does-not-fit` &middot; `hex-no-digit` &middot; `hex-no-digit-g` &middot; `hex-stops-at-g` &middot; `hex-uppercase-X` &middot; `hex-all` &middot; `toCString-all`
+
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `octal` &middot; `hex` &middot; `escape-u` &middot; `escape-U` &middot; `NONE-empty`
+
+</details>
 
 ## See also
 

@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 18 entries documented |
+| Tests | 29 checks of 12 entries |
 | Source | [lib/basis/sig\_posix\_sys\_db.sml](../../../../lib/basis/sig_posix_sys_db.sml) |
 
 ## Synopsis
@@ -85,11 +86,23 @@ type passwd
 val name : passwd -> string
 ```
 
+<details><summary>Tests (1)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root`
+
+</details>
+
 #### <a name="val-passwd.uid"></a>`uid`
 
 ```sml
 val uid : passwd -> uid
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
+
+</details>
 
 #### <a name="val-passwd.gid"></a>`gid`
 
@@ -97,17 +110,35 @@ val uid : passwd -> uid
 val gid : passwd -> gid
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
+
+</details>
+
 #### <a name="val-passwd.home"></a>`home`
 
 ```sml
 val home : passwd -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
+
+</details>
+
 #### <a name="val-passwd.shell"></a>`shell`
 
 ```sml
 val shell : passwd -> string
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user`
+
+</details>
 
 ### <a name="str-group"></a>`Group`
 
@@ -123,11 +154,23 @@ type group
 val name : group -> string
 ```
 
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group`
+
+</details>
+
 #### <a name="val-group.gid"></a>`gid`
 
 ```sml
 val gid : group -> gid
 ```
+
+<details><summary>Tests (2)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group`
+
+</details>
 
 #### <a name="val-group.members"></a>`members`
 
@@ -135,11 +178,23 @@ val gid : group -> gid
 val members : group -> string list
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group` &middot; `with-members`
+
+</details>
+
 ### <a name="val-getgrgid"></a>`getgrgid`
 
 ```sml
 val getgrgid : gid -> Group.group
 ```
+
+<details><summary>Tests (3)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group` &middot; `unknown` (raises)
+
+</details>
 
 ### <a name="val-getgrnam"></a>`getgrnam`
 
@@ -147,17 +202,35 @@ val getgrgid : gid -> Group.group
 val getgrnam : string -> Group.group
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group` &middot; `unknown` (raises)
+
+</details>
+
 ### <a name="val-getpwuid"></a>`getpwuid`
 
 ```sml
 val getpwuid : uid -> Passwd.passwd
 ```
 
+<details><summary>Tests (3)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user` &middot; `unknown` (raises)
+
+</details>
+
 ### <a name="val-getpwnam"></a>`getpwnam`
 
 ```sml
 val getpwnam : string -> Passwd.passwd
 ```
+
+<details><summary>Tests (4)</summary>
+
+For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user` &middot; `unknown` (raises) &middot; `empty` (raises)
+
+</details>
 
 ---
 

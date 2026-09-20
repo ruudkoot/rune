@@ -7,6 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 0 of 6 entries documented |
+| Tests | 32 checks of 6 entries |
 | Source | [lib/basis/sig\_io.sml](../../../../lib/basis/sig_io.sml) |
 
 ## Synopsis
@@ -48,11 +49,23 @@ exception Io of {name : string, function : string, cause : exn}
 | <a name="fld-io.function"></a>`function` | `string` |  |
 | <a name="fld-io.cause"></a>`cause` | `exn` |  |
 
+<details><summary>Tests (10)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `carries-name-function-cause` &middot; `fields-in-any-order` &middot; `cause-is-any-exn` &middot; `cause-may-be-Io` &middot; `empty-strings` &middot; `is-raised` (raises) &middot; `is-not-its-cause` &middot; `value-of-type-exn` &middot; `distinct` &middot; `exnName`
+
+</details>
+
 ### <a name="exn-blockingnotsupported"></a>`BlockingNotSupported`
 
 ```sml
 exception BlockingNotSupported
 ```
+
+<details><summary>Tests (5)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `raise-handle` &middot; `as-cause` &middot; `is-not-ClosedStream` &middot; `distinct` &middot; `exnName`
+
+</details>
 
 ### <a name="exn-nonblockingnotsupported"></a>`NonblockingNotSupported`
 
@@ -60,17 +73,35 @@ exception BlockingNotSupported
 exception NonblockingNotSupported
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `raise-handle` &middot; `as-cause` &middot; `is-not-ClosedStream` &middot; `distinct` &middot; `exnName`
+
+</details>
+
 ### <a name="exn-randomaccessnotsupported"></a>`RandomAccessNotSupported`
 
 ```sml
 exception RandomAccessNotSupported
 ```
 
+<details><summary>Tests (5)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `raise-handle` &middot; `as-cause` &middot; `is-not-ClosedStream` &middot; `distinct` &middot; `exnName`
+
+</details>
+
 ### <a name="exn-closedstream"></a>`ClosedStream`
 
 ```sml
 exception ClosedStream
 ```
+
+<details><summary>Tests (6)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `raise-handle` &middot; `as-cause` &middot; `is-not-Io` &middot; `is-not-a-General-exception` &middot; `distinct` &middot; `exnName`
+
+</details>
 
 ### <a name="type-buffer_mode"></a>`buffer_mode`
 
@@ -83,6 +114,12 @@ datatype buffer_mode = NO_BUF | LINE_BUF | BLOCK_BUF
 | <a name="con-no_buf"></a>`NO_BUF` |  |  |
 | <a name="con-line_buf"></a>`LINE_BUF` |  |  |
 | <a name="con-block_buf"></a>`BLOCK_BUF` |  |  |
+
+<details><summary>Tests (1)</summary>
+
+For `IO`, in [tests/basis/io.sml](../../../../tests/basis/io.sml): `type`
+
+</details>
 
 ---
 
