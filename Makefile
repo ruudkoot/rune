@@ -193,7 +193,7 @@ check-cross: host-builds bin/rune-boot | build/.doctor-check
 check-docs: $(RUNE)
 	sh scripts/check-docs.sh
 	sh scripts/check-basis-coverage.sh
-	sh scripts/gen-basis-sigs.sh --check
+	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
 
 # ---------------------------------------------------------------- Basis Library suite
