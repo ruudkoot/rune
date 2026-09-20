@@ -25,5 +25,6 @@ src/core/matchcomp.sml
 src/core/translate.sml
 src/backend/codegen.sml
 src/backend/emit.sml
+src/driver/basismanifest.sml
 src/driver/options.sml
 src/driver/main.sml
