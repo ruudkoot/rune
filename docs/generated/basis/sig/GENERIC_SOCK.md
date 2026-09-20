@@ -1,12 +1,12 @@
 # signature GENERIC_SOCK
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **GENERIC_SOCK**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **GENERIC_SOCK**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
-| Documentation | 0 of 4 entries documented |
+| Documentation | 4 of 4 entries documented |
 | Tests | 12 checks of 4 entries |
 | Source | [lib/basis/sig\_generic\_sock.sml](../../../../lib/basis/sig_generic_sock.sml) |
 
@@ -21,10 +21,16 @@ structure GenericSock : GENERIC_SOCK  (* optional *)
 | --- | --- | --- |
 | `GenericSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
-signature GENERIC\_SOCK, transcribed from
-<https://smlfamily.github.io/Basis/generic-sock.html>
+Making a socket of any family the system has, when the family is not known
+until the program runs.
 
-Socket is the top-level structure.
+[`INET_SOCK`](../sig/INET_SOCK.md) and [`UNIX_SOCK`](../sig/UNIX_SOCK.md) make sockets of one family and give them the
+type of it; these take the family as a value, so the type variables of
+what they give are free and the program has to say what it means them to
+be. That is the price of choosing the family at run time.
+
+> **Implementation** `GenericSock.socket'/protocol-numbers`. The protocol
+> numbers are IANA's, so 6 is TCP and 17 is UDP.
 
 ## Interface
 
@@ -32,9 +38,12 @@ Socket is the top-level structure.
 signature GENERIC_SOCK =
 sig
   val <a href="#val-socket">socket</a> : Socket.AF.addr_family * Socket.SOCK.sock_type -&gt; ('af, 'sock_type) Socket.sock
+
   val <a href="#val-socketpair">socketPair</a> : Socket.AF.addr_family * Socket.SOCK.sock_type
                    -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
+
   val <a href="#val-socket-prime">socket'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int -&gt; ('af, 'sock_type) Socket.sock
+
   val <a href="#val-socketpair-prime">socketPair'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int
                     -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 end
@@ -45,6 +54,10 @@ end
 ```sml
 val socket : Socket.AF.addr_family * Socket.SOCK.sock_type -> ('af, 'sock_type) Socket.sock
 ```
+
+`socket (af, st)` is a new socket of the family `af` and the kind `st`.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the system has no such socket.
 
 <details><summary>Tests (4)</summary>
 
@@ -59,6 +72,11 @@ val socketPair : Socket.AF.addr_family * Socket.SOCK.sock_type
                  -> ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 ```
 
+`socketPair (af, st)` is two sockets of that family and kind, already connected to each other.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the family does not allow it, as the internet
+family does not.
+
 <details><summary>Tests (2)</summary>
 
 For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream` &middot; `unix-dgram`
@@ -70,6 +88,10 @@ For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basi
 ```sml
 val socket' : Socket.AF.addr_family * Socket.SOCK.sock_type * int -> ('af, 'sock_type) Socket.sock
 ```
+
+`socket' (af, st, n)` is `socket (af, st)` using the protocol numbered `n`; 0 lets the system choose.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the system has no such socket.
 
 <details><summary>Tests (4)</summary>
 
@@ -84,11 +106,19 @@ val socketPair' : Socket.AF.addr_family * Socket.SOCK.sock_type * int
                   -> ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 ```
 
+`socketPair' (af, st, n)` is `socketPair (af, st)` using the protocol numbered `n`.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the family does not allow it.
+
 <details><summary>Tests (2)</summary>
 
 For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream-0` &middot; `unix-dgram-0`
 
 </details>
+
+## See also
+
+[`SOCKET`](../sig/SOCKET.md), [`INET_SOCK`](../sig/INET_SOCK.md), [`UNIX_SOCK`](../sig/UNIX_SOCK.md)
 
 ---
 

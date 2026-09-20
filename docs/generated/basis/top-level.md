@@ -37,7 +37,7 @@ of that structure's signature.
 | `getOpt` | [`Option.getOpt`](sig/OPTION.md#val-getopt) | `getOpt (opt, a)` is the value that `opt` carries, or the default `a` if it carries none. |
 | `isSome` | [`Option.isSome`](sig/OPTION.md#val-issome) | `isSome opt` is `true` when `opt` carries a value. |
 | `valOf` | [`Option.valOf`](sig/OPTION.md#val-valof) | `valOf opt` is the value that `opt` carries. |
-| `print` |  |  |
+| `print` |  | `print s` writes `s` to the standard output and flushes it. |
 | `null` | [`List.null`](sig/LIST.md#val-null) | `null l` is `true` exactly when `l` is empty. |
 | `hd` | [`List.hd`](sig/LIST.md#val-hd) | `hd l` is the first element of `l`. |
 | `tl` | [`List.tl`](sig/LIST.md#val-tl) | `tl l` is `l` without its first element. |

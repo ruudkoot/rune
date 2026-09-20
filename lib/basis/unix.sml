@@ -114,9 +114,10 @@ struct
   fun kill (Proc {pid, ...}, signal) = Posix.Process.kill (Posix.Process.K_PROC pid, signal)
   (* "executes all actions registered with OS.Process.atExit, flushes and
      closes all I/O streams opened using the Library, then terminates": the
-     VM's exit flushes the files, which is all a stream has to write unless
-     its buffer mode was changed (streams are unbuffered, NO_BUF, by
-     default). *)
+     VM's exit flushes the files, which is all a stream over one has to
+     write, since such a stream holds nothing of its own whatever mode it
+     reports. A stream over a writer a program supplied is flushed by the
+     library. *)
   local
     val exit' = _prim "exit" : int -> 'a
   in

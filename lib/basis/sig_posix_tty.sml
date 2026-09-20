@@ -18,6 +18,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_IO`, `POSIX_PROC_ENV`, `POSIX`, `BIT_FLAGS`
 
    Erratum: `POSIX_TTY/flexible-types`. The types `pid` and `file_desc` are

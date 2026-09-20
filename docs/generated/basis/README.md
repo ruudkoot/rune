@@ -1,5 +1,29 @@
 # The Standard ML Basis Library
 
+The library every Standard ML program starts with: lists and options,
+sequences, text, numbers, input and output, and the operating system.
+
+These pages describe Rune's Basis Library. They are generated from the
+signatures the library is built from, so what stands here is what the
+compiler enforces; where the specification is silent, ambiguous or wrong, a
+note on the member says how Rune reads it, and the page of readings,
+linked below, collects them all.
+
+Start at a signature, not at a structure. [`LIST`](sig/LIST.md) describes what [`List`](sig/LIST.md) does,
+[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and `Position` all do, and
+[`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](sig/MONO_VECTOR.md) and [`CharVector`](sig/MONO_VECTOR.md) do; the page of structures
+says which structure implements which signature. A name that needs no
+structure in front of it, such as [`hd`](sig/LIST.md#val-hd) or `print`, is on the page of the
+top-level environment, also linked below.
+
+Three things are worth knowing before reading further. Sequences are indexed
+from 0, and a slice is a stretch of one that costs nothing to pass. A
+function that can fail either returns an [`option`](sig/OPTION.md#type-option) or raises an exception, and
+which it does is said for every one. And the optional parts of the library,
+the wide characters, the sized integers, [`POSIX`](sig/POSIX.md) and the sockets, are marked
+as optional, because a program that uses them is not bound to run on every
+implementation.
+
 [How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
 ## Sequences
@@ -34,26 +58,33 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | A set of flags held as the bits of a word: what every collection of system flags in [`POSIX`](sig/POSIX.md) has in common. | required | 9 of 9 |
+| [`BIT_FLAGS`](sig/BIT_FLAGS.md) | A set of flags held as the bits of a word: what every collection of system flags in [`POSIX`](sig/POSIX.md) has in common. | optional | 9 of 9 |
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
 | [`DATE`](sig/DATE.md) | A moment as a person writes it down: a year, a month, a day and a time of day, in some time zone. | required | 24 of 24 |
+| [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | Making a socket of any family the system has, when the family is not known until the program runs. | optional | 4 of 4 |
+| [`INET_SOCK`](sig/INET_SOCK.md) | Sockets of the internet family: an address is a host and a port. | optional | 17 of 17 |
+| [`NET_HOST_DB`](sig/NET_HOST_DB.md) | The host database: turning a host name into an address, and back. | optional | 14 of 14 |
+| [`NET_PROT_DB`](sig/NET_PROT_DB.md) | The protocol database: turning the name of a network protocol into its number, and back. | optional | 6 of 6 |
+| [`NET_SERV_DB`](sig/NET_SERV_DB.md) | The service database: turning the name of a network service into its port, and back. | optional | 7 of 7 |
 | [`OS`](sig/OS.md) | The operating system: its errors, its file system, its paths, its processes and its I/O descriptors, gathered into one structure. | required | 9 of 9 |
 | [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | The file system: reading directories, moving about in them, and asking what a file is and when it changed. | required | 26 of 26 |
 | [`OS_IO`](sig/OS_IO.md) | Descriptors of open files, devices, pipes and sockets, and waiting until some of them are ready for input or output. | required | 26 of 26 |
 | [`OS_PATH`](sig/OS_PATH.md) | Paths as text: taking them apart, putting them together, and nothing else. | required | 27 of 27 |
 | [`OS_PROCESS`](sig/OS_PROCESS.md) | The process itself: its environment, the commands it runs, and how it ends. | required | 10 of 10 |
-| [`POSIX`](sig/POSIX.md) | The POSIX interface: the system calls of a Unix-like system, gathered into eight substructures. | required | 8 of 8 |
-| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | The conditions the system reports when a call fails, and their names. | required | 49 of 49 |
-| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | Files and directories as POSIX has them: opening them, linking and removing them, and reading and setting what the system records about them. | required | 91 of 91 |
-| [`POSIX_IO`](sig/POSIX_IO.md) | File descriptors: reading and writing them, duplicating them, positioning them, locking them, and turning them into readers and writers. | required | 41 of 41 |
-| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | Processes: making them, replacing them, waiting for them and ending them. | required | 22 of 22 |
-| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | The process's own identity: who it is, who owns it, which group and session it belongs to, and what its environment holds. | required | 30 of 30 |
-| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | The signals a process may be sent, by name. | required | 23 of 23 |
-| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | The password and group databases: turning a user or group name into a number, and back. | required | 18 of 18 |
-| [`POSIX_TTY`](sig/POSIX_TTY.md) | Terminals: their modes, their speeds and the characters that control them. | required | 110 of 110 |
+| [`POSIX`](sig/POSIX.md) | The POSIX interface: the system calls of a Unix-like system, gathered into eight substructures. | optional | 8 of 8 |
+| [`POSIX_ERROR`](sig/POSIX_ERROR.md) | The conditions the system reports when a call fails, and their names. | optional | 49 of 49 |
+| [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) | Files and directories as POSIX has them: opening them, linking and removing them, and reading and setting what the system records about them. | optional | 91 of 91 |
+| [`POSIX_IO`](sig/POSIX_IO.md) | File descriptors: reading and writing them, duplicating them, positioning them, locking them, and turning them into readers and writers. | optional | 41 of 41 |
+| [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) | Processes: making them, replacing them, waiting for them and ending them. | optional | 22 of 22 |
+| [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) | The process's own identity: who it is, who owns it, which group and session it belongs to, and what its environment holds. | optional | 30 of 30 |
+| [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) | The signals a process may be sent, by name. | optional | 23 of 23 |
+| [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) | The password and group databases: turning a user or group name into a number, and back. | optional | 18 of 18 |
+| [`POSIX_TTY`](sig/POSIX_TTY.md) | Terminals: their modes, their speeds and the characters that control them. | optional | 110 of 110 |
+| [`SOCKET`](sig/SOCKET.md) | Sockets: connections between processes, on one machine or across a network. | optional | 93 of 93 |
 | [`TIME`](sig/TIME.md) | A length of time, and a point in time counted from a fixed reference. | required | 25 of 25 |
 | [`TIMER`](sig/TIMER.md) | Stopwatches: how much processor time and how much wall-clock time have passed since a timer was started. | required | 10 of 10 |
-| [`UNIX`](sig/UNIX.md) | Running another program and talking to it: a child process with a pipe each way. | required | 14 of 14 |
+| [`UNIX`](sig/UNIX.md) | Running another program and talking to it: a child process with a pipe each way. | optional | 14 of 14 |
+| [`UNIX_SOCK`](sig/UNIX_SOCK.md) | Sockets of the Unix family: an address is a path in the file system, and the connection never leaves the machine. | optional | 14 of 14 |
 
 ## Text and characters
 
@@ -72,6 +103,7 @@
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
 | [`GENERAL`](sig/GENERAL.md) | The types, exceptions and values of the top-level environment that belong to no other structure. | required | 20 of 20 |
+| [`SML90`](sig/SML90.md) | What the 1990 library looked like, kept so that old programs still run. | optional | 36 of 36 |
 
 ## Numbers
 
@@ -94,26 +126,13 @@
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
 
-## Not yet assigned to an area
-
-| Signature |  | Status | Documented |
-| --- | --- | --- | --- |
-| [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | signature GENERIC\_SOCK, transcribed from <https://smlfamily.github.io/Basis/generic-sock.html> | required | 0 of 4 |
-| [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
-| [`NET_HOST_DB`](sig/NET_HOST_DB.md) | signature NET\_HOST\_DB, transcribed from <https://smlfamily.github.io/Basis/net-host-db.html> | required | 0 of 14 |
-| [`NET_PROT_DB`](sig/NET_PROT_DB.md) | signature NET\_PROT\_DB, transcribed from <https://smlfamily.github.io/Basis/prot-db.html> | required | 0 of 6 |
-| [`NET_SERV_DB`](sig/NET_SERV_DB.md) | signature NET\_SERV\_DB, transcribed from <https://smlfamily.github.io/Basis/serv-db.html> | required | 0 of 7 |
-| [`SML90`](sig/SML90.md) | signature SML90. The page of the specification that defined it (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed from the signature of MLton's basis library, which follows it, in the order of the page. | required | 0 of 36 |
-| [`SOCKET`](sig/SOCKET.md) | signature SOCKET, transcribed from <https://smlfamily.github.io/Basis/socket.html> | required | 0 of 93 |
-| [`UNIX_SOCK`](sig/UNIX_SOCK.md) | signature UNIX\_SOCK, transcribed from <https://smlfamily.github.io/Basis/unix-sock.html> | required | 0 of 14 |
-
 ## Functors
 
 | Functor |  |
 | --- | --- |
-| [`PrimIO`](fun/PrimIO.md) | The optional functors of the specification that build the I/O stack for other element types: PrimIO, StreamIO and ImperativeIO, on the functors TextIO and BinIO are made of. |
-| [`StreamIO`](fun/StreamIO.md) |  |
-| [`ImperativeIO`](fun/ImperativeIO.md) |  |
+| [`PrimIO`](fun/PrimIO.md) | Readers and writers of a new element type: the [`PRIM_IO`](sig/PRIM_IO.md) of it, built from the vectors, arrays and slices of that type. |
+| [`StreamIO`](fun/StreamIO.md) | Functional streams over a [`PRIM_IO`](sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](sig/STREAM_IO.md) of it. |
+| [`ImperativeIO`](fun/ImperativeIO.md) | Imperative streams over a [`STREAM_IO`](sig/STREAM_IO.md) of a new element type: what [`TEXT_IO`](sig/TEXT_IO.md) and [`BIN_IO`](sig/BIN_IO.md) are for characters and bytes. |
 
 ---
 

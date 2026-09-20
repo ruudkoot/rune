@@ -5,7 +5,7 @@
    (arr, i, j)` is the element in row `i` and column `j`. An array of no rows
    or no columns holds nothing but still has its dimensions.
 
-   The traversals take a **region**, a rectangle inside an array: its `base`,
+   The traversals take a region, a rectangle inside an array: its `base`,
    the `row` and `col` it starts at, and how many rows and columns it covers,
    where `NONE` means "to the edge". They also take a `traversal`, which says
    whether they go along the rows or down the columns; that decides the order

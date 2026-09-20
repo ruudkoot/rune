@@ -1,12 +1,12 @@
 # signature SML90
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **SML90**
+[The Standard ML Basis Library](../README.md) &rsaquo; The language &rsaquo; **SML90**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
-| Documentation | 0 of 36 entries documented |
+| Documentation | 36 of 36 entries documented |
 | Tests | 57 checks of 34 entries |
 | Source | [lib/basis/sig\_sml90.sml](../../../../lib/basis/sig_sml90.sml) |
 
@@ -21,10 +21,21 @@ structure SML90 : SML90  (* optional *)
 | --- | --- | --- |
 | `SML90` | SML90: the initial basis of the 1990 Definition, over Real.Math, String and TextIO. As in MLton's (unexposed) SML90, which Poly/ML agrees with: the arithmetic exceptions are Overflow and Mod is Div, which the Library raises in their place; Sqrt, Ln, Ord, Io and Interrupt are new, and sqrt, ln, ord and the functions on streams raise them. | [lib/basis/sml90.sml](../../../../lib/basis/sml90.sml) |
 
-signature SML90. The page of the specification that defined it
-(sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed
-from the signature of MLton's basis library, which follows it, in the
-order of the page.
+What the 1990 library looked like, kept so that old programs still run.
+
+Before the Basis Library there was the library of the first Definition:
+[`std_in`](#val-std_in) and [`open_in`](#val-open_in) instead of [`TextIO`](../sig/TEXT_IO.md), [`explode`](#val-explode) giving a list of
+one-character strings instead of a list of characters, and an exception
+for every arithmetic fault instead of [`Overflow`](../sig/GENERAL.md#exn-overflow) and [`Div`](../sig/GENERAL.md#exn-div). This signature
+is that library, and nothing here is meant for a new program.
+
+The exceptions are raised where the new library raises [`Overflow`](../sig/GENERAL.md#exn-overflow), [`Div`](../sig/GENERAL.md#exn-div)
+or [`Domain`](../sig/GENERAL.md#exn-domain), and the arithmetic and text functions are the old spellings
+of what [`MATH`](../sig/MATH.md), [`CHAR`](../sig/CHAR.md) and [`STRING`](../sig/STRING.md) now offer.
+
+> **Limitation** `SML90/is-history`. The page that defined this signature is no
+> longer among the specification's pages; it is transcribed from MLton's
+> library, which follows it, in the order the page had.
 
 ## Interface
 
@@ -32,40 +43,75 @@ order of the page.
 signature SML90 =
 sig
   type <a href="#type-instream">instream</a>
+
   type <a href="#type-outstream">outstream</a>
+
   exception <a href="#exn-abs">Abs</a>
+
   exception <a href="#exn-quot">Quot</a>
+
   exception <a href="#exn-prod">Prod</a>
+
   exception <a href="#exn-neg">Neg</a>
+
   exception <a href="#exn-sum">Sum</a>
+
   exception <a href="#exn-diff">Diff</a>
+
   exception <a href="#exn-floor">Floor</a>
+
   exception <a href="#exn-exp">Exp</a>
+
   exception <a href="#exn-sqrt">Sqrt</a>
+
   exception <a href="#exn-ln">Ln</a>
+
   exception <a href="#exn-ord">Ord</a>
+
   exception <a href="#exn-mod">Mod</a>
+
   exception <a href="#exn-io">Io</a> of string
+
   exception <a href="#exn-interrupt">Interrupt</a>
+
   val <a href="#val-sqrt">sqrt</a> : real -&gt; real
+
   val <a href="#val-exp">exp</a> : real -&gt; real
+
   val <a href="#val-ln">ln</a> : real -&gt; real
+
   val <a href="#val-sin">sin</a> : real -&gt; real
+
   val <a href="#val-cos">cos</a> : real -&gt; real
+
   val <a href="#val-arctan">arctan</a> : real -&gt; real
+
   val <a href="#val-ord">ord</a> : string -&gt; int
+
   val <a href="#val-chr">chr</a> : int -&gt; string
+
   val <a href="#val-explode">explode</a> : string -&gt; string list
+
   val <a href="#val-implode">implode</a> : string list -&gt; string
+
   val <a href="#val-lookahead">lookahead</a> : instream -&gt; string
+
   val <a href="#val-std_in">std_in</a> : instream
+
   val <a href="#val-std_out">std_out</a> : outstream
+
   val <a href="#val-open_in">open_in</a> : string -&gt; instream
+
   val <a href="#val-open_out">open_out</a> : string -&gt; outstream
+
   val <a href="#val-close_in">close_in</a> : instream -&gt; unit
+
   val <a href="#val-close_out">close_out</a> : outstream -&gt; unit
+
   val <a href="#val-input">input</a> : instream * int -&gt; string
+
   val <a href="#val-output">output</a> : outstream * string -&gt; unit
+
   val <a href="#val-end_of_stream">end_of_stream</a> : instream -&gt; bool
 end
 </pre>
@@ -76,17 +122,23 @@ end
 type instream
 ```
 
+The type of an input stream, as the old library had it.
+
 ### <a name="type-outstream"></a>`outstream`
 
 ```sml
 type outstream
 ```
 
+The type of an output stream, as the old library had it.
+
 ### <a name="exn-abs"></a>`Abs`
 
 ```sml
 exception Abs
 ```
+
+Raised where `abs` of the least integer would overflow.
 
 <details><summary>Tests (1)</summary>
 
@@ -100,6 +152,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 exception Quot
 ```
 
+Raised by division that overflows, and by division by zero.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `handled`
@@ -111,6 +165,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `han
 ```sml
 exception Prod
 ```
+
+Raised by multiplication that overflows.
 
 <details><summary>Tests (1)</summary>
 
@@ -124,6 +180,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 exception Neg
 ```
 
+Raised by negation that overflows.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
@@ -135,6 +193,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 ```sml
 exception Sum
 ```
+
+Raised by addition that overflows.
 
 <details><summary>Tests (1)</summary>
 
@@ -148,6 +208,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 exception Diff
 ```
 
+Raised by subtraction that overflows.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
@@ -159,6 +221,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 ```sml
 exception Floor
 ```
+
+Raised by [`floor`](../sig/REAL.md#val-floor) of a number no integer can hold.
 
 <details><summary>Tests (1)</summary>
 
@@ -172,6 +236,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 exception Exp
 ```
 
+Raised by [`exp`](#val-exp) when the result is too large.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
@@ -183,6 +249,12 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 ```sml
 exception Sqrt
 ```
+
+Raised by [`sqrt`](#val-sqrt) of a negative number.
+
+> **Reading** `SML90.Sqrt/is-its-own-exception`. [`Sqrt`](#exn-sqrt), [`Ln`](#exn-ln) and [`Ord`](#exn-ord) are
+> exceptions of their own, as MLton and SML/NJ have them. Poly/ML makes
+> all three [`Overflow`](../sig/GENERAL.md#exn-overflow), which loses what went wrong.
 
 <details><summary>Tests (1)</summary>
 
@@ -196,6 +268,11 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new
 exception Ln
 ```
 
+Raised by [`ln`](#val-ln) of a number that is not positive.
+
+> **Reading** `SML90.Ln/is-its-own-exception`. As [`Sqrt`](#exn-sqrt): an exception of its
+> own, not [`Overflow`](../sig/GENERAL.md#exn-overflow).
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
@@ -207,6 +284,11 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new
 ```sml
 exception Ord
 ```
+
+Raised by [`ord`](#val-ord) of the empty string.
+
+> **Reading** `SML90.Ord/is-its-own-exception`. As [`Sqrt`](#exn-sqrt): an exception of
+> its own, not [`Overflow`](../sig/GENERAL.md#exn-overflow) and not [`Subscript`](../sig/GENERAL.md#exn-subscript).
 
 <details><summary>Tests (1)</summary>
 
@@ -220,6 +302,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new
 exception Mod
 ```
 
+Raised by the remainder of a division by zero.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Div`
@@ -231,6 +315,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 ```sml
 exception Io of string
 ```
+
+Raised when an I/O operation fails, carrying the message alone.
 
 <details><summary>Tests (1)</summary>
 
@@ -244,6 +330,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `car
 exception Interrupt
 ```
 
+Raised when the program is interrupted.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new`
@@ -255,6 +343,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `new
 ```sml
 val sqrt : real -> real
 ```
+
+`sqrt x` is the square root of `x`.
+
+**Raises** [`Sqrt`](#exn-sqrt) if `x` is negative.
 
 <details><summary>Tests (3)</summary>
 
@@ -268,6 +360,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `4` 
 val exp : real -> real
 ```
 
+`exp x` is `e` to the power `x`.
+
+**Raises** [`Exp`](#exn-exp) if the result is too large.
+
 <details><summary>Tests (3)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `underflow-is-zero` &middot; `Exp-overflow` (raises)
@@ -279,6 +375,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zer
 ```sml
 val ln : real -> real
 ```
+
+`ln x` is the natural logarithm of `x`.
+
+**Raises** [`Ln`](#exn-ln) if `x` is not positive.
 
 <details><summary>Tests (4)</summary>
 
@@ -292,6 +392,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `one
 val sin : real -> real
 ```
 
+`sin x` is the sine of `x` radians.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `half-pi`
@@ -303,6 +405,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zer
 ```sml
 val cos : real -> real
 ```
+
+`cos x` is the cosine of `x` radians.
 
 <details><summary>Tests (2)</summary>
 
@@ -316,6 +420,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zer
 val arctan : real -> real
 ```
 
+`arctan x` is the angle in radians whose tangent is `x`, between `~pi/2` and `pi/2`.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zero` &middot; `one`
@@ -327,6 +433,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `zer
 ```sml
 val ord : string -> int
 ```
+
+`ord s` is the code of the first character of `s`.
+
+**Raises** [`Ord`](#exn-ord) if `s` is empty.
 
 <details><summary>Tests (3)</summary>
 
@@ -340,6 +450,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `fir
 val chr : int -> string
 ```
 
+`chr n` is the one-character string whose character has the code `n`.
+
+**Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `n` is no character's code.
+
 <details><summary>Tests (4)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `97` &middot; `zero` &middot; `Chr-256` (raises Chr) &middot; `Chr-negative` (raises Chr)
@@ -351,6 +465,11 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `97`
 ```sml
 val explode : string -> string list
 ```
+
+`explode s` is the characters of `s`, each as a string of its own.
+
+The [`explode`](#val-explode) of [`STRING`](../sig/STRING.md) gives a list of characters; this is the older
+one.
 
 <details><summary>Tests (2)</summary>
 
@@ -364,6 +483,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `let
 val implode : string list -> string
 ```
 
+`implode l` is the strings of `l`, one after another.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `strings` &middot; `empty`
@@ -375,6 +496,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `str
 ```sml
 val lookahead : instream -> string
 ```
+
+`lookahead f` is the next character of `f` as a string, without removing it, or the empty string at the end.
+
+**Raises** [`Io`](#exn-io) if the stream cannot be read.
 
 <details><summary>Tests (2)</summary>
 
@@ -388,6 +513,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `doe
 val std_in : instream
 ```
 
+The standard input of the program.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-open`
@@ -399,6 +526,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-
 ```sml
 val std_out : outstream
 ```
+
+The standard output of the program.
 
 <details><summary>Tests (1)</summary>
 
@@ -412,6 +541,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `wri
 val open_in : string -> instream
 ```
 
+`open_in name` is a stream reading the file `name`.
+
+**Raises** [`Io`](#exn-io) if the file cannot be opened.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `Io-missing` (raises)
@@ -423,6 +556,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `Io-
 ```sml
 val open_out : string -> outstream
 ```
+
+`open_out name` is a stream writing the file `name`, which it empties or creates.
+
+**Raises** [`Io`](#exn-io) if the file cannot be opened.
 
 <details><summary>Tests (2)</summary>
 
@@ -436,6 +573,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `tru
 val close_in : instream -> unit
 ```
 
+`close_in f` closes the input stream `f`.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `then-input-is-empty` &middot; `twice`
@@ -447,6 +586,8 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `the
 ```sml
 val close_out : outstream -> unit
 ```
+
+`close_out f` closes the output stream `f`.
 
 <details><summary>Tests (1)</summary>
 
@@ -460,6 +601,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `twi
 val input : instream * int -> string
 ```
 
+`input (f, n)` is at most `n` characters read from `f`, and fewer at the end of the stream.
+
+**Raises** [`Io`](#exn-io) if the stream cannot be read.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `at-most-n` &middot; `zero`
@@ -471,6 +616,10 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `at-
 ```sml
 val output : outstream * string -> unit
 ```
+
+`output (f, s)` writes `s` to `f`.
+
+**Raises** [`Io`](#exn-io) if the stream cannot be written.
 
 <details><summary>Tests (2)</summary>
 
@@ -484,11 +633,17 @@ For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `the
 val end_of_stream : instream -> bool
 ```
 
+`end_of_stream f` is `true` when nothing is left to read in `f`.
+
 <details><summary>Tests (2)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `before-and-after` &middot; `closed`
 
 </details>
+
+## See also
+
+[`MATH`](../sig/MATH.md), [`STRING`](../sig/STRING.md), [`TEXT_IO`](../sig/TEXT_IO.md), [`GENERAL`](../sig/GENERAL.md)
 
 ---
 

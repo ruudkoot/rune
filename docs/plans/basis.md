@@ -19,7 +19,7 @@ implementations differ ([docs/basis-compat.md](../basis-compat.md)), and
 | M4, the I/O stack | done |
 | M5, time and the system | done |
 | M6, Posix and Unix | done (`Posix.TTY` and file locking came after M8) |
-| M7, sockets and the network databases | done; `getNREAD`, `getATMARK` and the linger time are stubs (below) |
+| M7, sockets and the network databases | done |
 | M8, current-release matrix, wall-clock table, final compatibility document | done; the specification's signatures are still to add (below) |
 
 M0 delivered the harness and conventions (`tests/basis/README.md`), 45 test
@@ -118,8 +118,9 @@ the addresses of both families with a `socketPair`, and lookups in the three
 databases. The `xc1` configurations leave the sockets out (see the
 compatibility document), so these tests run on Rune only.
 
-Left of M7: `getNREAD` answers 0, `getATMARK` answers `false`, and
-`getLINGER` reports only whether lingering is on, not for how long.
+`getNREAD`, `getATMARK` and `getLINGER` were stubs when M7 was written;
+`lib/basis/socket.sml` implements all three now, and
+`tests/basis/socket_ctl.sml` pins them.
 
 M6 delivered `Posix` with seven of its eight substructures (`Error`,
 `Signal`, `Process`, `ProcEnv`, `FileSys`, `IO`, `SysDB`) and `Unix`, on

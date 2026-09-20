@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 14 of 14 entries documented |
 | Tests | 32 checks of 11 entries |

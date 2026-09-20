@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 9 |
 | Documentation | 9 of 9 entries documented |
 | Tests | 70 checks of 9 entries |
@@ -14,15 +14,15 @@
 
 ```sml
 signature BIT_FLAGS
-structure Posix.FileSys.O : BIT_FLAGS
-structure Posix.FileSys.S : BIT_FLAGS
-structure Posix.IO.FD : BIT_FLAGS
-structure Posix.IO.O : BIT_FLAGS
-structure Posix.Process.W : BIT_FLAGS
-structure Posix.TTY.C : BIT_FLAGS
-structure Posix.TTY.I : BIT_FLAGS
-structure Posix.TTY.L : BIT_FLAGS
-structure Posix.TTY.O : BIT_FLAGS
+structure Posix.FileSys.O : BIT_FLAGS  (* optional *)
+structure Posix.FileSys.S : BIT_FLAGS  (* optional *)
+structure Posix.IO.FD : BIT_FLAGS  (* optional *)
+structure Posix.IO.O : BIT_FLAGS  (* optional *)
+structure Posix.Process.W : BIT_FLAGS  (* optional *)
+structure Posix.TTY.C : BIT_FLAGS  (* optional *)
+structure Posix.TTY.I : BIT_FLAGS  (* optional *)
+structure Posix.TTY.L : BIT_FLAGS  (* optional *)
+structure Posix.TTY.O : BIT_FLAGS  (* optional *)
 ```
 
 | Implementation |  | Source |

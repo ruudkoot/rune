@@ -14,6 +14,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `OS`, `UNIX`, `BIT_FLAGS`, `PRIM_IO`
 
    Erratum: `POSIX/opaque-in-the-page`. The page declares

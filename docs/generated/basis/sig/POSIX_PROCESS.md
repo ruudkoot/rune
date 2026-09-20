@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 22 of 22 entries documented |
 | Tests | 50 checks of 16 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_PROCESS
-structure Posix.Process : POSIX_PROCESS
+structure Posix.Process : POSIX_PROCESS  (* optional *)
 ```
 
 | Implementation |  | Source |

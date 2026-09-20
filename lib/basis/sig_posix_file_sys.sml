@@ -15,6 +15,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `OS_FILE_SYS`, `POSIX_IO`, `POSIX`, `BIT_FLAGS`, `TIME`
 
    Erratum: `POSIX_FILE_SYS/flexible-types`. The types are kept as the page

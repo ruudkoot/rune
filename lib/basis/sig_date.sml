@@ -7,8 +7,8 @@
    that a time does not, and a time carries a fraction of a second that a
    date does not.
 
-   The `offset` of a date is the time zone it is read in, as a duration
-   **west** of UTC: `NONE` means the local zone of the machine, `SOME
+   The `offset` of a date is the time zone it is read in, as a duration west
+   of UTC: `NONE` means the local zone of the machine, `SOME
    zeroTime` means UTC. A date with an offset is arithmetic; a local date is
    whatever the system's calendar says, daylight saving time and all.
 

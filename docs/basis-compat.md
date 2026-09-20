@@ -188,37 +188,21 @@ Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `B
 
 ## Representation choices in Rune
 
-| Type | Representation |
-|---|---|
-| `int`, `Int.int`, `LargeInt`... | `int`: 64-bit two's complement, `Overflow` checked; `LargeInt` is `IntInf` |
-| `word`, `Word.word` | 64 bits; `LargeWord` and `SysWord` are `Word` |
-| `Int8.int`, `Int16.int`, `Int32.int` | an `int` kept in the range of the precision (`Overflow` beyond it); `Int64` and `FixedInt` are `Int` |
-| `Word8.word`, `Word16.word`, `Word32.word` | a `word` whose upper bits are zero; `Word64` is `Word` |
-| `real` | IEEE double; `LargeReal` is `Real` |
-| `Real32.real` | abstract: an IEEE double that binary32 represents, every result rounded to binary32 in the current rounding mode |
-| `char`, `string` | 8-bit characters; strings are immutable byte sequences |
-| `IntInf.int` | a datatype in SML: sign and base-2^30 limbs |
-| `Word8Vector.vector`, `CharVector.vector` | `string` (not abstract) |
-| `Word8Array.array` | an `array` of `Word8.word`, one VM value per byte |
-| `BoolVector.vector`, `IntVector.vector`, `RealVector.vector`, ... | a `Vector.vector` of the elements (`RuneMonoVectorFn`); the arrays are `Array.array` values, the slices a triple of their own |
-| `BoolArray2.array`, `CharArray2.array`, ... | an `Array2.array` of the elements; rows and columns are the vectors of the family |
-| `Int64Vector`, `Word64Vector`, `LargeWordVector`, `Real64Vector`, `LargeRealVector` and their families | the structures of `Int`, `Word` and `Real` (`Int64` is `Int`, `Word64` and `LargeWord` are `Word`, `Real64` and `LargeReal` are `Real`) |
-| `TextIO.instream`, `BinIO.instream` | a reference to a functional stream (so it admits equality); an `outstream` holds a function and does not |
-| `Time.time` | microseconds in an `int`; the conversions take and give `LargeInt.int` |
-| `OS.IO.iodesc`, `Posix.FileSys.file_desc` | the descriptor of the system |
-| `Socket.sock` | the descriptor of the system, with the family and the mode as phantom types; a `sock_addr` is the bytes of the `sockaddr` |
-| `NetHostDB.in_addr` | the dotted text of an IPv4 address |
+What the specification leaves to the implementation is written on the member
+it belongs to, as an `Implementation:` note, and collected in
+[generated/basis/readings.md](generated/basis/readings.md). The widths are in
+the table at the top of this page.
 
 ## Where Rune departs from the specification
 
+Every departure is written on the member it is about, as a `Deviation:` or a
+`Limitation:` note, and is collected in
+[generated/basis/readings.md](generated/basis/readings.md). What is not
+implemented at all: `Windows`, and IPv6.
+
 One check fails on Rune, a reading of the specification: `Char.fromString
 "\""` converts the double quote, where the test takes the reading of MLton
-and SML/NJ (`NONE`); see the table of readings below.
-
-Not implemented:
-
-* `Windows`;
-* IPv6.
+and SML/NJ (`NONE`).
 
 `WideChar` is there: a wide character is a Unicode code point (`maxOrd`
 0x10FFFF), with `WideString`, `WideSubstring`, `WideText` and the vectors and
@@ -228,15 +212,11 @@ to compare with). Its classes and case conversions are those of ASCII,
 which the specification leaves to the implementation, and a character above
 255 is written `\uXXXX` or `\UXXXXXXXX`, as MLton writes it.
 
-The functor `StreamIO` takes `VectorSlice` and `ArraySlice` besides the
-arguments of the specification, as MLton's does, and its `PrimIO` must have
-positions of type `Position.int`.
-
 The signatures of the specification are all there (row `basis.signatures`
 of [language.md](language.md)), and every structure that Rune has matches
-its signature. The suite checks every
-value and exception those signatures specify, on Rune and on the hosts:
-`runedoc` counts them when it makes the documentation (`make docs`): 3,908 members of structures, each with a check.
+its signature. The suite checks every value and exception those signatures
+specify, on Rune and on the hosts; `runedoc` counts them when it makes the
+documentation (`make docs`).
 
 Fixed along the way, each with the deviation lines it removed: the
 `fromString` of `Bool`, `Int`, `Word`, `IntInf`, `Char` and `String`
@@ -244,13 +224,14 @@ Fixed along the way, each with the deviation lines it removed: the
 `Vector.update`, `Array.copy` and `tabulate`; `IntInf` with a zero first
 operand and a second operand of two or more limbs, which gave a zero that was
 not equal to 0; `exnName` and `exnMessage`; the input functions of a closed
-`TextIO` stream. Found by MLton's regression programs (M8): `OS.Path.mkRelative`
-canonicalised its `path` and dropped its trailing `/`, `mkAbsolute` and
-`mkRelative` did not raise `Path` for a relative `relativeTo`,
-`joinDirFile` doubled the `/` of the root, `Posix.Process.exit` flushed
-the buffers, `OS.IO.poll` and `Socket.select` took a descriptor of the
-system for a handle of the VM, and `Socket` did not have the shape of
-`SOCKET` (`Ctl`, the `NB` functions, `sameAddr`).
+`TextIO` stream; `IEEEReal.Unordered`, which was an exception of its own and
+not the `Unordered` of the top-level environment. Found by MLton's regression
+programs (M8): `OS.Path.mkRelative` canonicalised its `path` and dropped its
+trailing `/`, `mkAbsolute` and `mkRelative` did not raise `Path` for a
+relative `relativeTo`, `joinDirFile` doubled the `/` of the root,
+`Posix.Process.exit` flushed the buffers, `OS.IO.poll` and `Socket.select`
+took a descriptor of the system for a handle of the VM, and `Socket` did not
+have the shape of `SOCKET` (`Ctl`, the `NB` functions, `sameAddr`).
 
 ## Where the hosts depart from the specification
 
@@ -328,35 +309,11 @@ hosts. What follows names the themes, not every line.
 
 ## Readings of the specification
 
-The `SPEC-AMBIGUOUS` lines, and places where the suite had to choose without
-a host disagreeing. The suite takes the reading of the majority of the hosts
-and says so in a comment at the check.
-
-| Where | The text | Reading taken |
-|---|---|---|
-| `Char.fromString "\""`, `String.fromString "a\"b"` | names only non-printing characters and improper escapes as reasons to stop | per function, the majority: `Char` gives `NONE` (MLton, SML/NJ; Poly/ML and Rune convert), `String` converts the quote (SML/NJ, Poly/ML, Rune; MLton stops) |
-| `Real.fmt` of `~0.0` | the formats say only `[~]?` | the sign is printed (SML/NJ, Poly/ML; MLton omits it) |
-| `Real.nextAfter (~0.0, 0.0)`, `(0.0, ~0.0)` | "If r = t then it returns r", where comparisons ignore the sign of a zero | `r`, the zero with its sign, in `Real` and `Real32` (SML/NJ; MLton and Poly/ML return `t`, as C's `nextafter` does) |
-| `Math.cosh negInf` | "cosh ±infinity = ±infinity" beside the definition (e^x + e^-x)/2 | `posInf`, the definition (MLton follows the table) |
-| `Math.pow (±1, ±inf)`, `pow (1, NaN)` | the table says NaN; C99 and IEEE 754-2008 say 1 | NaN, the page (MLton, SML/NJ) |
-| `Io {function}` of `outputSubstr` | "equivalent to output (strm, Substring.string ss)" against "the name of the function raising the exception" | `"output"` (MLton, Poly/ML) |
-| `Io {function}` | does not say whether the name is qualified | unqualified (MLton, SML/NJ; Poly/ML reports `"TextIO.openIn"`) |
-| input after an end-of-stream of a file that grows | "it is possible that ... input operations will deliver new elements" | the `STREAM_IO` model: `inputLine` and `endOfStream` do not consume the end-of-stream, `input`, `input1` and `inputAll` do (MLton, SML/NJ) |
-| `ListPair.allEq` | the "equivalent" expression applies `f` to nothing when the lengths differ; the implementation note applies it to the common prefix | the implementation note (all hosts) |
-| `tabulate` beyond `maxLen` | "equivalent to fromList (List.tabulate (n, f))" against "if maxLen < n, then Size is raised" | `Size` before `f` is applied |
-| `Array.copy` raising `Subscript` | does not say whether `dst` may be partly modified | nothing is copied (all hosts) |
-| `Word.scan` with a bare prefix | no note like INTEGER's `"0xg"` | INTEGER's: the number is the `0` |
-| `Bool.scan` whitespace | "initial whitespace" | `Char.isSpace`, as `StringCvt.skipWS` |
-| `CommandLine.arguments` | "operating system and implementation-specific" | `[]` under the runner; `poly --use` reports the compiler's own options |
-
-Errata noticed: the REAL and STRING_CVT pages lose the grouping of their
-grammars; CHAR's sample table has the illegal string `"a\\ \\\q"`; WORD's
-`fmt` writes "Ow" with a letter O; `datatype bool = false | true` and
-`datatype 'a list = nil | ::` are not legal specifications (Definition,
-Section 2.9) and `eqtype 'a vector = 'a vector` is none either, so
-`tests/basis/spec-sigs` uses replication and `type`; General says `Domain` is
-raised by MATH functions, which never raise it; the `exnMessage Div = "Div"`
-example contradicts "may vary".
+Where the specification is silent, ambiguous or contradictory, the reading
+Rune takes is written on the member it is about, in the library's
+documentation; [generated/basis/readings.md](generated/basis/readings.md)
+collects them all, with the checks that pin each one. The errata of the
+specification are there too, under the members they belong to.
 
 ## What XC1 cannot check
 

@@ -15,6 +15,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `OS`, `POSIX`, `POSIX_FILE_SYS`, `POSIX_IO`
 
    Erratum: `POSIX_ERROR.syserror/spec-writes-OS.Process`. The

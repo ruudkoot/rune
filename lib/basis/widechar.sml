@@ -2,17 +2,7 @@
    specification): a character is a Unicode code point, 0 to 0x10FFFF, as
    MLton's WideChar has it. The code point sits in a type of its own, so that
    WideChar.char, char and int stay apart and the families of the wide
-   character carry it.
-
-   "In WideChar, the functions toLower, toUpper, isAlpha, ... and, in general,
-   the definition of a letter are locale-dependent": here they are those of
-   ASCII, and a character above 127 is in no class and is its own upper and
-   lower case (MLton reads it so too).
-
-   toString and toCString write a character above 255 as \uXXXX, or \UXXXXXXXX
-   above 0xFFFF; fromString and fromCString read those escapes, and \ddd up to
-   three decimal digits. The text they take and give is of char, the 8-bit
-   one, as the signature of the specification writes it. *)
+   character carry it. *)
 structure RuneWideChar :>
 sig
   eqtype char
@@ -158,7 +148,27 @@ end
 (* Implements: CHAR where type char = WideChar.char where type string =
    WideString.string
 
-   Status: optional *)
+   Status: optional
+
+   Reading: `WideChar.isAlpha/ascii-classes`. "In WideChar, the functions
+   toLower, toUpper, isAlpha, ... and, in general, the definition of a letter
+   are locale-dependent": here they are those of ASCII, so a character above
+   127 is in no class and is its own upper and lower case. MLton reads it so
+   too.
+
+   Pinned by: `WideChar.isAscii/above-127`, `WideChar.isAlpha/e-acute`,
+   `WideChar.toLower/leaves-a-wide-character`,
+   `WideChar.toUpper/leaves-a-wide-character`
+
+   Implementation: `WideChar.toString/escapes-above-255`. `toString` and
+   `toCString` write a character above 255 as `\uXXXX`, or `\UXXXXXXXX` above
+   0xFFFF, as MLton writes them; `fromString` and `fromCString` read those
+   escapes and `\ddd` of up to three decimal digits. The text they take and
+   give is of `char`, the 8-bit one, as the signature writes it, and `scan`
+   reads from a stream of `char` and yields a wide character.
+
+   Pinned by: `WideChar:CHAR/toString-gives-a-string-of-char`,
+   `WideChar.scan/takes-the-escape-and-leaves-the-rest` *)
 structure WideChar :> CHAR
   where type char = RuneWideChar.char
   where type string = WideCharVector.vector = RuneWideCharImpl

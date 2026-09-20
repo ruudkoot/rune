@@ -1,12 +1,12 @@
 # signature NET_PROT_DB
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **NET_PROT_DB**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **NET_PROT_DB**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
-| Documentation | 0 of 6 entries documented |
+| Documentation | 6 of 6 entries documented |
 | Tests | 11 checks of 5 entries |
 | Source | [lib/basis/sig\_net\_prot\_db.sml](../../../../lib/basis/sig_net_prot_db.sml) |
 
@@ -21,8 +21,12 @@ structure NetProtDB : NET_PROT_DB  (* optional *)
 | --- | --- | --- |
 | `NetProtDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
-signature NET\_PROT\_DB, transcribed from
-<https://smlfamily.github.io/Basis/prot-db.html>
+The protocol database: turning the name of a network protocol into its
+number, and back.
+
+This is what the system knows from `/etc/protocols`: that `"tcp"` is 6 and
+`"udp"` is 17. The numbers are the ones [`Socket`](../sig/SOCKET.md)'s `socket'` functions
+take.
 
 ## Interface
 
@@ -30,10 +34,15 @@ signature NET\_PROT\_DB, transcribed from
 signature NET_PROT_DB =
 sig
   type <a href="#type-entry">entry</a>
+
   val <a href="#val-name">name</a> : entry -&gt; string
+
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
+
   val <a href="#val-protocol">protocol</a> : entry -&gt; int
+
   val <a href="#val-getbyname">getByName</a> : string -&gt; entry option
+
   val <a href="#val-getbynumber">getByNumber</a> : int -&gt; entry option
 end
 </pre>
@@ -44,11 +53,15 @@ end
 type entry
 ```
 
+The type of what the database records about one protocol.
+
 ### <a name="val-name"></a>`name`
 
 ```sml
 val name : entry -> string
 ```
+
+`name e` is the official name of the protocol.
 
 <details><summary>Tests (2)</summary>
 
@@ -62,6 +75,8 @@ For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val aliases : entry -> string list
 ```
 
+`aliases e` is the other names it goes by.
+
 <details><summary>Tests (1)</summary>
 
 For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `tcp`
@@ -73,6 +88,8 @@ For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 ```sml
 val protocol : entry -> int
 ```
+
+`protocol e` is the number of the protocol.
 
 <details><summary>Tests (1)</summary>
 
@@ -86,6 +103,8 @@ For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val getByName : string -> entry option
 ```
 
+`getByName name` is `SOME` of what the database records about the protocol `name`, or `NONE`.
+
 <details><summary>Tests (4)</summary>
 
 For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `tcp` &middot; `udp` &middot; `alias` &middot; `unknown`
@@ -98,11 +117,17 @@ For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val getByNumber : int -> entry option
 ```
 
+`getByNumber n` is `SOME` of what it records about the protocol numbered `n`, or `NONE`.
+
 <details><summary>Tests (3)</summary>
 
 For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `6` &middot; `17` &middot; `unknown`
 
 </details>
+
+## See also
+
+[`SOCKET`](../sig/SOCKET.md), [`NET_SERV_DB`](../sig/NET_SERV_DB.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md)
 
 ---
 

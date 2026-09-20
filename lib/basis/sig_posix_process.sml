@@ -11,6 +11,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX`, `UNIX`, `POSIX_SIGNAL`, `OS_PROCESS`
 
    Erratum: `POSIX_PROCESS/flexible-types`. The types `signal` and

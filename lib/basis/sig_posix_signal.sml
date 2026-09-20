@@ -10,6 +10,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_PROCESS`, `UNIX`, `POSIX`
 
    Implementation: `Posix.Signal/numbers-are-the-systems`. A signal is the

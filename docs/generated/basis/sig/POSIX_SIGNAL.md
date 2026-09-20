@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 23 of 23 entries documented |
 | Tests | 34 checks of 22 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_SIGNAL
-structure Posix.Signal : POSIX_SIGNAL
+structure Posix.Signal : POSIX_SIGNAL  (* optional *)
 ```
 
 | Implementation |  | Source |

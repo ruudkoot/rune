@@ -11,6 +11,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_FILE_SYS`, `PRIM_IO`, `POSIX`, `TEXT_IO`, `BIN_IO`
 
    Erratum: `POSIX_IO/flexible-types`. The types are kept as the page writes

@@ -1,0 +1,23 @@
+The library every Standard ML program starts with: lists and options,
+sequences, text, numbers, input and output, and the operating system.
+
+These pages describe Rune's Basis Library. They are generated from the
+signatures the library is built from, so what stands here is what the
+compiler enforces; where the specification is silent, ambiguous or wrong, a
+note on the member says how Rune reads it, and the page of readings,
+linked below, collects them all.
+
+Start at a signature, not at a structure. `LIST` describes what `List` does,
+`INTEGER` what `Int`, `Int32`, `LargeInt` and `Position` all do, and
+`MONO_VECTOR` what `Word8Vector` and `CharVector` do; the page of structures
+says which structure implements which signature. A name that needs no
+structure in front of it, such as `hd` or `print`, is on the page of the
+top-level environment, also linked below.
+
+Three things are worth knowing before reading further. Sequences are indexed
+from 0, and a slice is a stretch of one that costs nothing to pass. A
+function that can fail either returns an `option` or raises an exception, and
+which it does is said for every one. And the optional parts of the library,
+the wide characters, the sized integers, `POSIX` and the sockets, are marked
+as optional, because a program that uses them is not bound to run on every
+implementation.

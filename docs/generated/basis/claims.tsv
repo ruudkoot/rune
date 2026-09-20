@@ -101,24 +101,24 @@ PackWord32Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 Posix	structure	POSIX		optional	claimed	lib/basis/posix.sml
-Posix.Error	structure	POSIX_ERROR		required	claimed	lib/basis/posix.sml
-Posix.FileSys	structure	POSIX_FILE_SYS		required	claimed	lib/basis/posix.sml
-Posix.FileSys.O	structure	BIT_FLAGS		required	claimed	lib/basis/posix_filesys.sml
-Posix.FileSys.S	structure	BIT_FLAGS		required	claimed	lib/basis/posix_filesys.sml
-Posix.IO	structure	POSIX_IO		required	claimed	lib/basis/posix.sml
-Posix.IO.FD	structure	BIT_FLAGS		required	claimed	lib/basis/posix_io.sml
-Posix.IO.O	structure	BIT_FLAGS		required	claimed	lib/basis/posix_io.sml
-Posix.ProcEnv	structure	POSIX_PROC_ENV		required	claimed	lib/basis/posix.sml
-Posix.Process	structure	POSIX_PROCESS		required	claimed	lib/basis/posix.sml
-Posix.Process.W	structure	BIT_FLAGS		required	claimed	lib/basis/posix_process.sml
-Posix.Signal	structure	POSIX_SIGNAL		required	claimed	lib/basis/posix.sml
-Posix.SysDB	structure	POSIX_SYS_DB		required	claimed	lib/basis/posix.sml
-Posix.TTY	structure	POSIX_TTY		required	claimed	lib/basis/posix.sml
-Posix.TTY.C	structure	BIT_FLAGS		required	claimed	lib/basis/posix_tty.sml
-Posix.TTY.I	structure	BIT_FLAGS		required	claimed	lib/basis/posix_tty.sml
-Posix.TTY.L	structure	BIT_FLAGS		required	claimed	lib/basis/posix_tty.sml
-Posix.TTY.O	structure	BIT_FLAGS		required	claimed	lib/basis/posix_tty.sml
-PrimIO	functor	PRIM_IO		required	ascribed	lib/basis/io_functors.sml
+Posix.Error	structure	POSIX_ERROR		optional	claimed	lib/basis/posix.sml
+Posix.FileSys	structure	POSIX_FILE_SYS		optional	claimed	lib/basis/posix.sml
+Posix.FileSys.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_filesys.sml
+Posix.FileSys.S	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_filesys.sml
+Posix.IO	structure	POSIX_IO		optional	claimed	lib/basis/posix.sml
+Posix.IO.FD	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_io.sml
+Posix.IO.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_io.sml
+Posix.ProcEnv	structure	POSIX_PROC_ENV		optional	claimed	lib/basis/posix.sml
+Posix.Process	structure	POSIX_PROCESS		optional	claimed	lib/basis/posix.sml
+Posix.Process.W	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_process.sml
+Posix.Signal	structure	POSIX_SIGNAL		optional	claimed	lib/basis/posix.sml
+Posix.SysDB	structure	POSIX_SYS_DB		optional	claimed	lib/basis/posix.sml
+Posix.TTY	structure	POSIX_TTY		optional	claimed	lib/basis/posix.sml
+Posix.TTY.C	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
+Posix.TTY.I	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
+Posix.TTY.L	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
+Posix.TTY.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_tty.sml
+PrimIO	functor	PRIM_IO		optional	ascribed	lib/basis/io_functors.sml
 Real	structure	REAL	where type real = real	required	claimed	lib/basis/real.sml
 Real.Math	structure	MATH		required	claimed	lib/basis/real.sml
 Real32	structure	REAL		optional	claimed	lib/basis/real32.sml
@@ -140,7 +140,7 @@ RealVector	structure	MONO_VECTOR	where type elem = real	optional	claimed	lib/bas
 RealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = RealVector.vector where type elem = real	optional	claimed	lib/basis/mono_real.sml
 SML90	structure	SML90		optional	claimed	lib/basis/sml90.sml
 Socket	structure	SOCKET		optional	claimed	lib/basis/socket.sml
-StreamIO	functor	STREAM_IO		required	ascribed	lib/basis/io_functors.sml
+StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml
 String	structure	STRING	where type string = string where type char = Char.char	required	claimed	lib/basis/string.sml
 StringCvt	structure	STRING_CVT		required	claimed	lib/basis/stringcvt.sml
 Substring	structure	SUBSTRING	where type string = string where type char = Char.char	required	claimed	lib/basis/substring.sml

@@ -14,6 +14,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_PROCESS`, `OS_PROCESS`, `TEXT_IO`, `BIN_IO`, `POSIX`
 
    Erratum: `UNIX/opaque-in-the-page`. The page declares `structure Unix :>

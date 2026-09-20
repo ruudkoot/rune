@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 91 of 91 entries documented |
 | Tests | 196 checks of 78 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_FILE_SYS
-structure Posix.FileSys : POSIX_FILE_SYS
+structure Posix.FileSys : POSIX_FILE_SYS  (* optional *)
 ```
 
 | Implementation |  | Source |

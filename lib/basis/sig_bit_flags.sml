@@ -13,6 +13,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_FILE_SYS`, `POSIX_IO`, `POSIX_PROCESS`, `POSIX_TTY`,
    `WORD` *)
 signature BIT_FLAGS =

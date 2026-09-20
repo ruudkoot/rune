@@ -15,14 +15,14 @@
 ```sml
 signature STREAM_IO
 structure BinIO.StreamIO : STREAM_IO where type vector = Word8Vector.vector where type elem = Word8.word where type reader = BinPrimIO.reader where type writer = BinPrimIO.writer where type pos = Position.int
-functor StreamIO (...) : STREAM_IO
+functor StreamIO (...) : STREAM_IO  (* optional *)
 structure TextIO.StreamIO : STREAM_IO
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | `BinIO.StreamIO` | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
-| `StreamIO` |  | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
+| `StreamIO` | Functional streams over a [`PRIM_IO`](../sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](STREAM_IO.md) of it. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
 | `TextIO.StreamIO` | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams as values: reading gives the elements and the stream that is left,

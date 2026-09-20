@@ -17,10 +17,10 @@ documented when a comment describes it, alone or together with the entry before 
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`DATE`](sig/DATE.md) | 24 | 24 | 100% | 20 | 20 |
 | [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
-| [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 0 | 0% | 4 | 0 |
+| [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 4 | 100% | 4 | 4 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 25 | 100% | 20 | 20 |
-| [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 0 | 0% | 9 | 0 |
+| [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 17 | 100% | 9 | 9 |
 | [`INTEGER`](sig/INTEGER.md) | 30 | 30 | 100% | 26 | 26 |
 | [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
 | [`IO`](sig/IO.md) | 6 | 6 | 100% | 0 | 0 |
@@ -33,9 +33,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`MONO_VECTOR`](sig/MONO_VECTOR.md) | 22 | 22 | 100% | 19 | 19 |
 | [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | 22 | 22 | 100% | 19 | 19 |
 | [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | 26 | 26 | 100% | 23 | 23 |
-| [`NET_HOST_DB`](sig/NET_HOST_DB.md) | 14 | 0 | 0% | 11 | 0 |
-| [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 0 | 0% | 5 | 0 |
-| [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 0 | 0% | 6 | 0 |
+| [`NET_HOST_DB`](sig/NET_HOST_DB.md) | 14 | 14 | 100% | 11 | 11 |
+| [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 6 | 100% | 5 | 5 |
+| [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 7 | 100% | 6 | 6 |
 | [`OPTION`](sig/OPTION.md) | 12 | 12 | 100% | 10 | 10 |
 | [`OS`](sig/OS.md) | 9 | 9 | 100% | 3 | 3 |
 | [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) | 26 | 26 | 100% | 23 | 23 |
@@ -55,8 +55,8 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
-| [`SML90`](sig/SML90.md) | 36 | 0 | 0% | 18 | 0 |
-| [`SOCKET`](sig/SOCKET.md) | 93 | 0 | 0% | 76 | 0 |
+| [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
+| [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
 | [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
@@ -67,11 +67,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`TIME`](sig/TIME.md) | 25 | 25 | 100% | 22 | 22 |
 | [`TIMER`](sig/TIMER.md) | 10 | 10 | 100% | 8 | 8 |
 | [`UNIX`](sig/UNIX.md) | 14 | 14 | 100% | 11 | 11 |
-| [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 0 | 0% | 6 | 0 |
+| [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 14 | 100% | 6 | 6 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 1347 | 87% | 1078 | 943 |
+| **all** | 1538 | 1538 | 100% | 1078 | 1078 |
 
 ## Notes that no check pins
 
@@ -79,12 +79,17 @@ A deviation or a limitation that the test suite does not show. A reading or an e
 be pinned: many are about the text and not about behaviour.
 
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
+- `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
+- `ImperativeIO/not-sealed` (Deviation), in `ImperativeIO`
 - `DATE.date/not-abstract` (Deviation), DATE
 - `IMPERATIVE_IO/functor-not-sealed` (Deviation), IMPERATIVE_IO
 - `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
+- `INET_SOCK/ipv4-only` (Limitation), INET_SOCK
+- `NetHostDB.in_addr/not-abstract` (Deviation), NET_HOST_DB
 - `OS.FileSys.file_id/is-a-pair` (Deviation), OS_FILE_SYS
 - `OS.Process.status/is-an-int` (Deviation), OS_PROCESS
 - `Posix.ProcEnv.uid/is-an-int` (Deviation), POSIX_PROC_ENV
+- `SML90/is-history` (Limitation), SML90
 - `StringCvt.cs/transparent` (Deviation), STRING_CVT
 - `TIME.time/not-abstract` (Deviation), TIME
 - `TIMER.cpu_timer/not-abstract` (Deviation), TIMER
@@ -93,6 +98,7 @@ be pinned: many are about the text and not about behaviour.
 - `Posix.IO.file_desc/is-an-int` (Deviation), POSIX_IO
 - `OS.syserror/is-an-int` (Deviation), OS
 - `UNIX/extra-members` (Deviation), UNIX
+- `SOCKET/no-ipv6` (Limitation), SOCKET
 - `Posix.Process.pid/is-an-int` (Deviation), POSIX_PROCESS
 - `Posix.Error.syserror/is-an-int` (Deviation), POSIX_ERROR
 

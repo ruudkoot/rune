@@ -136,9 +136,8 @@ struct
     fun inoToWord (i : ino) = Word.fromInt i
 
     (* What stat reports. The kind is posix_stat's: 0 regular file, 1
-       directory, 2 symbolic link, 3 anything else; 4 FIFO, 5 socket, 6
-       character device and 7 block device where the primitive tells them
-       apart (the VM does not yet: it reports them as 3). *)
+       directory, 2 symbolic link, 4 FIFO, 5 socket, 6 character device, 7
+       block device, and 3 anything else (vm/sys_posix.c, kind_of). *)
     structure ST =
     struct
       type stat = {kind : int, mode : word, ino : ino, dev : dev, nlink : int,

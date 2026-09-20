@@ -27,7 +27,7 @@ was measured on commit `ea3d166` or is cited with its file and line.
 | M9, the test inventory | done: `DocTests` reads the 31,694 check sites of `tests/basis` with the compiler's parser (test functors expanded by their `name`), every one of the 136,063 labels of a run matches a literal or a pattern of it, and the 535 literals that did not run are the conditional ones; the 20 sites that computed the member were rewritten to the convention (label beginnings as literals) without changing one printed label; every entry lists its checks in a collapsed block, a functor's check once with the structures it is applied to; generation fails for a specified member without a check (3,908 members of claimed structures), so `scripts/check-basis-coverage.sh` is gone. The label list is not committed (`runedoc --tests tests/basis --labels` prints it). |
 | M10, the notes | done: `DocNotes` collects the notes (26 so far, all of the pilot) with their pins, checks that an id names one note and that every `Pinned by:` glob matches a check of the suite, and writes `notes.tsv` and [readings.md](../generated/basis/readings.md); `coverage.md` lists the deviations and limitations that no check pins; `tests/basis/check-notes.sh` in `make check-docs` holds the export against `deviations.txt` (deleting the CHAR note, or the `rune` line, fails it). `runedoc` never reads `deviations.txt`. **The page layout is ready for the owner's review** |
 | The gap M9 found | closed: `Word8` was sealed with `WORD` and had no `_sig` test and no check for eight of its members; `tests/basis/word8.sml` applies the two missing test functors (7,741 checks now), `word8_sig.sml` matches it against the transcription, and the coverage check covers a structure that is ascribed its signature as well as one that claims it in a comment (4,001 members). `Word8` was also the one member of the WordN family written out by hand, character for character the body of `RuneWordNFn`; it is an application of that functor now, like `Word16` and `Word32`, which costs a program that uses it 1.3% more to compile (one file more to load) and removes 55 lines |
-| M11, the waves W1 to W8 | not started: 1,412 entries and about 410 notes of [docgen-notes.tsv](docgen-notes.tsv) to go; the last wave replaces the three sections of `docs/basis-compat.md` by links |
+| M11, the waves W1 to W8 | done: all 65 signatures are documented in full and on the ratchet list, 1,538 of 1,538 entries and 1,078 of 1,078 functions with a checked usage head. W8 also wrote `lib/basis/overview.doc` and the description of the top level's `print`, and replaced the three sections "Representation choices in Rune", "Where Rune departs from the specification" and "Readings of the specification" of `docs/basis-compat.md` by links to [readings.md](../generated/basis/readings.md). Writing the pages found four library defects and a check that was too weak: `IEEEReal.Unordered` was an exception of its own where the specification asks for the top level's; `check-notes.sh` resolved a structure to one signature where it may claim several; six header notes were written `Transcription-fix:`, which the comment language does not reserve, and said nothing; the inventory's claim that a `TextIO` outstream does not admit equality is wrong, and its claim that `WideString.scan` stops at an unescaped quote is stale. The stale comments of `runefile.sml`, `unix.sml`, `posix_filesys.sml`, `docs/plans/basis.md` and `docs/language.md` (`WideTextIO`, `iodesc`) are corrected |
 | M12, optional | not started |
 
 ## Specification from the Human
@@ -796,17 +796,17 @@ besides types and constructors; `MONO_VECTOR_EQ` is documented with
 `Status: extension`. "100%" in `coverage.md` means every member of those 65.
 The waves, by area (values and exceptions):
 
-| Wave | Signatures | Members |
-|---|---|---:|
-| W0, pilot | LIST, OPTION, BOOL, STRING_CVT, CHAR, INT_INF, OS_IO | 112 |
-| W1, text and lists | LIST_PAIR, STRING, SUBSTRING, GENERAL, BYTE, TEXT, COMMAND_LINE | 106 |
-| W2, numbers | INTEGER, WORD, REAL, MATH, IEEE_REAL, PACK_REAL, PACK_WORD | 165 |
-| W3, sequences | VECTOR, VECTOR_SLICE, ARRAY, ARRAY_SLICE, ARRAY2, the five MONO signatures, MONO_VECTOR_EQ | 216 |
-| W4, input and output | IO, PRIM_IO, STREAM_IO, TEXT_STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO | 88 |
-| W5, time and the system | TIME, DATE, TIMER, OS, OS_FILE_SYS, OS_PATH, OS_PROCESS | 116 |
-| W6, Posix and Unix | POSIX and its eight parts, BIT_FLAGS, UNIX | 348 |
-| W7, sockets | SOCKET, the three socket families, the three databases | 121 |
-| W8, the rest | SML90, the top-level page, the functor pages, `overview.doc`, instance notes of the Wide and sized structures | 34 + |
+| Wave | Signatures | Members | State |
+|---|---|---:|---|
+| W0, pilot | LIST, OPTION, BOOL, STRING_CVT, CHAR, INT_INF, OS_IO | 112 | done (M6) |
+| W1, text and lists | LIST_PAIR, STRING, SUBSTRING, GENERAL, BYTE, TEXT, COMMAND_LINE | 106 | done |
+| W2, numbers | INTEGER, WORD, REAL, MATH, IEEE_REAL, PACK_REAL, PACK_WORD | 165 | done |
+| W3, sequences | VECTOR, VECTOR_SLICE, ARRAY, ARRAY_SLICE, ARRAY2, the five MONO signatures, MONO_VECTOR_EQ | 216 | done |
+| W4, input and output | IO, PRIM_IO, STREAM_IO, TEXT_STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO | 88 | done |
+| W5, time and the system | TIME, DATE, TIMER, OS, OS_FILE_SYS, OS_PATH, OS_PROCESS | 116 | done |
+| W6, Posix and Unix | POSIX and its eight parts, BIT_FLAGS, UNIX | 348 | done |
+| W7, sockets | SOCKET, the three socket families, the three databases | 121 | done |
+| W8, the rest | SML90, the top-level page, the functor pages, `overview.doc`, instance notes of the Wide and sized structures | 34 + | done |
 
 * The pilot is chosen for what it exercises: CHAR brings the one `rune`
   entry of `deviations.txt` and 18 notes, STRING_CVT a datatype with

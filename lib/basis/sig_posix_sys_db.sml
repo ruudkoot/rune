@@ -7,6 +7,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX_PROC_ENV`, `POSIX`, `POSIX_FILE_SYS`
 
    Erratum: `POSIX_SYS_DB/flexible-types`. The types `uid` and `gid` are left

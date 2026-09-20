@@ -25,17 +25,16 @@ functor PrimIO (structure Vector : MONO_VECTOR
 
 Its result implements [`PRIM_IO`](../sig/PRIM_IO.md).
 
-The optional functors of the specification that build the I/O stack for
-other element types: PrimIO, StreamIO and ImperativeIO, on the functors
-TextIO and BinIO are made of.
+Readers and writers of a new element type: the [`PRIM_IO`](../sig/PRIM_IO.md) of it, built from
+the vectors, arrays and slices of that type.
 
-ImperativeIO and PrimIO take the arguments of the specification. The
-specification's StreamIO gets no slice structures, yet it must hand its
-writer vector slices (PRIM\_IO has no way to make one); like MLton's, this
-one also takes VectorSlice and ArraySlice, and its PrimIO has positions of
-type Position.int, which filePosIn counts with. ImperativeIO is not
-ascribed IMPERATIVE\_IO, a signature of the specification that the library
-declares after its structures; it matches it.
+[`TextPrimIO`](../sig/PRIM_IO.md) and [`BinPrimIO`](../sig/PRIM_IO.md) are what this functor would give for `char`
+and [`Word8.word`](../sig/WORD.md#type-word); it is here for a program that wants the stack over
+elements of its own. `someElem` is a value of the type, which the reader
+needs to make an array to read into, and `pos` and `compare` say what a
+position in such a source is.
+
+**See also** [`PRIM_IO`](../sig/PRIM_IO.md), [`STREAM_IO`](../sig/STREAM_IO.md)
 
 ---
 

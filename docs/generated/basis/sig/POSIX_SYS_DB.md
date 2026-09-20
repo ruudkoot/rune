@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 18 of 18 entries documented |
 | Tests | 29 checks of 12 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_SYS_DB
-structure Posix.SysDB : POSIX_SYS_DB
+structure Posix.SysDB : POSIX_SYS_DB  (* optional *)
 ```
 
 | Implementation |  | Source |

@@ -27,7 +27,7 @@ and a column.
 Rows and columns are counted from 0, and the first index is the row: `sub (arr, i, j)` is the element in row `i` and column `j`. An array of no rows
 or no columns holds nothing but still has its dimensions.
 
-The traversals take a \*\*region\*\*, a rectangle inside an array: its `base`,
+The traversals take a region, a rectangle inside an array: its `base`,
 the [`row`](#val-row) and `col` it starts at, and how many rows and columns it covers,
 where `NONE` means "to the edge". They also take a [`traversal`](#type-traversal), which says
 whether they go along the rows or down the columns; that decides the order

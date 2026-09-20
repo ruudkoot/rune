@@ -1,12 +1,12 @@
 # signature NET_SERV_DB
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **NET_SERV_DB**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **NET_SERV_DB**
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
-| Documentation | 0 of 7 entries documented |
+| Documentation | 7 of 7 entries documented |
 | Tests | 17 checks of 6 entries |
 | Source | [lib/basis/sig\_net\_serv\_db.sml](../../../../lib/basis/sig_net_serv_db.sml) |
 
@@ -21,8 +21,13 @@ structure NetServDB : NET_SERV_DB  (* optional *)
 | --- | --- | --- |
 | `NetServDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
-signature NET\_SERV\_DB, transcribed from
-<https://smlfamily.github.io/Basis/serv-db.html>
+The service database: turning the name of a network service into its port,
+and back.
+
+This is what the system knows from `/etc/services`: that `"http"` over
+`"tcp"` is port 80. A name may be listed for more than one protocol, so
+the lookups take an optional protocol to narrow the search; `NONE` takes
+whichever entry comes first.
 
 ## Interface
 
@@ -30,11 +35,17 @@ signature NET\_SERV\_DB, transcribed from
 signature NET_SERV_DB =
 sig
   type <a href="#type-entry">entry</a>
+
   val <a href="#val-name">name</a> : entry -&gt; string
+
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
+
   val <a href="#val-port">port</a> : entry -&gt; int
+
   val <a href="#val-protocol">protocol</a> : entry -&gt; string
+
   val <a href="#val-getbyname">getByName</a> : string * string option -&gt; entry option
+
   val <a href="#val-getbyport">getByPort</a> : int * string option -&gt; entry option
 end
 </pre>
@@ -45,11 +56,15 @@ end
 type entry
 ```
 
+The type of what the database records about one service.
+
 ### <a name="val-name"></a>`name`
 
 ```sml
 val name : entry -> string
 ```
+
+`name e` is the official name of the service.
 
 <details><summary>Tests (1)</summary>
 
@@ -63,6 +78,8 @@ For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val aliases : entry -> string list
 ```
 
+`aliases e` is the other names it goes by.
+
 <details><summary>Tests (1)</summary>
 
 For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `http`
@@ -74,6 +91,8 @@ For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 ```sml
 val port : entry -> int
 ```
+
+`port e` is the port the service is reached at.
 
 <details><summary>Tests (1)</summary>
 
@@ -87,6 +106,8 @@ For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val protocol : entry -> string
 ```
 
+`protocol e` is the name of the protocol it is reached over.
+
 <details><summary>Tests (1)</summary>
 
 For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `domain-udp`
@@ -98,6 +119,11 @@ For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 ```sml
 val getByName : string * string option -> entry option
 ```
+
+`getByName (name, proto)` is `SOME` of what the database records about the service `name`, or `NONE`.
+
+`proto` narrows the search to one protocol; `NONE` takes the first
+entry for `name`.
 
 <details><summary>Tests (7)</summary>
 
@@ -111,11 +137,17 @@ For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val getByPort : int * string option -> entry option
 ```
 
+`getByPort (port, proto)` is `SOME` of what it records about the service at `port`, or `NONE`.
+
 <details><summary>Tests (6)</summary>
 
 For `NetServDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `80-tcp` &middot; `22-tcp` &middot; `53-udp` &middot; `any-protocol` &middot; `other-protocol` &middot; `unassigned`
 
 </details>
+
+## See also
+
+[`SOCKET`](../sig/SOCKET.md), [`NET_PROT_DB`](../sig/NET_PROT_DB.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`INET_SOCK`](../sig/INET_SOCK.md)
 
 ---
 

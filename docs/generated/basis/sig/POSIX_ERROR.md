@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 49 of 49 entries documented |
 | Tests | 81 checks of 49 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_ERROR
-structure Posix.Error : POSIX_ERROR
+structure Posix.Error : POSIX_ERROR  (* optional *)
 ```
 
 | Implementation |  | Source |

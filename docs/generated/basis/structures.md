@@ -110,23 +110,23 @@ signature; `:` that it matches it, which the test suite checks.
 | `PackWord64Big` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `PackWord64Little` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `Posix` | : [`POSIX`](sig/POSIX.md) |  | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.Error` | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | required | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.FileSys` | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | required | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.FileSys.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
-| `Posix.FileSys.S` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
-| `Posix.IO` | : [`POSIX_IO`](sig/POSIX_IO.md) |  | required | is `RunePosixIO` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.IO.FD` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
-| `Posix.IO.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
-| `Posix.ProcEnv` | : [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) |  | required | is `RunePosixProcEnv` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.Process` | : [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) |  | required | is `RunePosixProcess` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.Process.W` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_process.sml](../../../lib/basis/posix_process.sml) |
-| `Posix.Signal` | : [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) |  | required | is `RunePosixSignal` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.SysDB` | : [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | required | is `RunePosixSysDB` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.TTY` | : [`POSIX_TTY`](sig/POSIX_TTY.md) |  | required | is `RunePosixTTY` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| `Posix.TTY.C` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.I` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.L` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | required |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| `Posix.Error` | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.FileSys` | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.FileSys.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
+| `Posix.FileSys.S` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
+| `Posix.IO` | : [`POSIX_IO`](sig/POSIX_IO.md) |  | optional | is `RunePosixIO` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.IO.FD` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
+| `Posix.IO.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
+| `Posix.ProcEnv` | : [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) |  | optional | is `RunePosixProcEnv` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.Process` | : [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) |  | optional | is `RunePosixProcess` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.Process.W` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_process.sml](../../../lib/basis/posix_process.sml) |
+| `Posix.Signal` | : [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) |  | optional | is `RunePosixSignal` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.SysDB` | : [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | optional | is `RunePosixSysDB` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.TTY` | : [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional | is `RunePosixTTY` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix.TTY.C` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.I` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.L` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| `Posix.TTY.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
 | `Real` | : [`REAL`](sig/REAL.md) | `where type real = real` | required |  | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | `Real.Math` | : [`MATH`](sig/MATH.md) |  | required |  | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | `Real32` | :> [`REAL`](sig/REAL.md) |  | optional | is `RuneReal32` | [lib/basis/real32.sml](../../../lib/basis/real32.sml) |

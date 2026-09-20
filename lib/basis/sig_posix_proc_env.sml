@@ -12,6 +12,8 @@
 
    Area: The operating system
 
+   Status: optional
+
    See also: `POSIX`, `POSIX_SYS_DB`, `POSIX_PROCESS`, `OS_PROCESS`, `TIME`
 
    Erratum: `POSIX_PROC_ENV/flexible-types`. The types `pid` and `file_desc`

@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 41 of 41 entries documented |
 | Tests | 86 checks of 33 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_IO
-structure Posix.IO : POSIX_IO
+structure Posix.IO : POSIX_IO  (* optional *)
 ```
 
 | Implementation |  | Source |

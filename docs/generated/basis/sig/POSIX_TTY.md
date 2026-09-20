@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 110 of 110 entries documented |
 | Tests | 115 checks of 97 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_TTY
-structure Posix.TTY : POSIX_TTY
+structure Posix.TTY : POSIX_TTY  (* optional *)
 ```
 
 | Implementation |  | Source |

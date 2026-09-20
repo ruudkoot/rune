@@ -4,7 +4,7 @@
 
 |  |  |
 | --- | --- |
-| Status | required |
+| Status | optional |
 | Implementations | 1 |
 | Documentation | 30 of 30 entries documented |
 | Tests | 65 checks of 26 entries |
@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX_PROC_ENV
-structure Posix.ProcEnv : POSIX_PROC_ENV
+structure Posix.ProcEnv : POSIX_PROC_ENV  (* optional *)
 ```
 
 | Implementation |  | Source |
