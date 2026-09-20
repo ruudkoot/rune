@@ -149,12 +149,21 @@ struct
     let
       val file = Source.load path
                  handle IO.Io _ => raise Options.Usage ("cannot read " ^ path)
-      val toks = Lexer.tokenize file
     in
-      if !Options.dumpTokens then
-        Vector.app (fn (t, sp) => println (Source.describe sp ^ " " ^ Token.toString t)) toks
-      else ();
-      toks
+      Lexer.tokenize file
+    end
+
+  (* --dump-tokens: the tokens of the named files and nothing else; no basis
+     is loaded, nothing is compiled and nothing is written. *)
+  fun dumpTokens () : OS.Process.status =
+    let
+      val inputs = !Options.inputs
+      val () = if List.null inputs then raise Options.Usage "no input files" else ()
+    in
+      List.app (fn path =>
+        Vector.app (fn (t, sp) => println (Source.describe sp ^ " " ^ Token.toString t))
+                   (loadTokens path)) inputs;
+      OS.Process.success
     end
 
   fun parseTokens (toks : Lexer.item vector) : Ast.program =
@@ -268,6 +277,7 @@ struct
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
+     else if !Options.dumpTokens then dumpTokens ()
      else compile ())
     handle Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Error.CompileError (sp, msg) => (eprintln (Error.format (sp, msg)); OS.Process.failure)
