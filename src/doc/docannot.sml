@@ -109,7 +109,8 @@ struct
                             val c = #case' s
                             val c = if #computed s andalso String.isSuffix "*" c then String.substring (c, 0, String.size c - 1) else c
                           in
-                            StringMap.insert (m, #scope s, (c, #computed s) :: Option.getOpt (StringMap.find (m, #scope s), []))
+                            StringMap.insert (m, #scope s, (c, #computed s, Option.getOpt (#via s, #file s))
+                                                           :: Option.getOpt (StringMap.find (m, #scope s), []))
                           end)
                        StringMap.empty ss
       val scopes = List.filter (fn s => StringMap.member (known, s)) (List.map #1 (StringMap.listItemsi byScope))
@@ -117,9 +118,57 @@ struct
       (* The members with a check that the glob names. A label that is written
          out decides; a computed one counts when the glob agrees with the
          beginning that is known, and one of which nothing is known only when
-         the glob would name no member otherwise. *)
+         the glob would name no member otherwise and there is reason to take
+         it (below). *)
       fun isWild c = c = #"*" orelse c = #"?" orelse c = #"[" orelse c = #"]"
-      fun withSuite glob =
+      (* ---- a check of which only the member is known ----
+         Its label is computed in full, so whether the glob names it cannot
+         be seen. It is taken to when there is reason to: the words of the
+         glob's case are found at the beginning of a part of a string constant
+         of the file that makes the label (`"whitespace-tab"` for the glob
+         `whitespace-*`), and what the text says of `X.member` by name is
+         said of the structures that begin with X only. A glob that writes
+         the structure and the member out is taken at its word. *)
+      val constants : string list StringMap.map ref = ref StringMap.empty
+      fun constantsOf file =
+        case StringMap.find (!constants, file) of
+          SOME cs => cs
+        | NONE =>
+            let
+              val toks = Lexer.tokenize (Source.load file) handle _ => Vector.fromList []
+              val cs = Vector.foldr (fn ((Token.STRING c, _), acc) => c :: acc | (_, acc) => acc) [] toks
+            in
+              constants := StringMap.insert (!constants, file, cs); cs
+            end
+      fun wordsOf (caseGlob : string) : string list =
+        List.filter (fn w => String.size w >= 3)
+                    (String.tokens (fn c => isWild c orelse c = #"-")
+                                   (* what stands between brackets is no word *)
+                                   (let
+                                      fun strip (cs, inSet, acc) =
+                                        case cs of
+                                          [] => String.implode (List.rev acc)
+                                        | #"[" :: rest => strip (rest, true, #"*" :: acc)
+                                        | #"]" :: rest => strip (rest, false, acc)
+                                        | c :: rest => strip (rest, inSet, if inSet then acc else c :: acc)
+                                    in strip (String.explode caseGlob, false, []) end))
+      fun begins (word : string, constant : string) : bool =
+        let val last = List.last (String.fields (fn c => c = #"/") constant)
+        in List.exists (String.isPrefix word) (String.fields (fn c => c = #"-") last) end
+      fun fileMakes (file : string, caseGlob : string) : bool =
+        let val cs = constantsOf file
+        in List.all (fn w => List.exists (fn c => begins (w, c)) cs) (wordsOf caseGlob) end
+      (* the structures X of which the text speaks as `X.member` *)
+      fun spokenOf (text : string, member : string) : string list =
+        List.mapPartial (fn t =>
+                           let val parts = String.fields (fn c => c = #".") t
+                           in
+                             if List.length parts >= 2 andalso List.last parts = member
+                             then SOME (String.concatWith "." (List.take (parts, List.length parts - 1)))
+                             else NONE
+                           end)
+                        (String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"." orelse c = #"_" orelse c = #"'")) text)
+      fun withSuite (glob, text) =
         let
           val (scopeGlob, caseGlob) = case DocTests.split glob of SOME (s, c) => (s, SOME c) | NONE => (glob, NONE)
           (* what a scope must begin and end with, so that most are not looked at twice *)
@@ -132,14 +181,26 @@ struct
             then (if StringMap.member (known, scopeGlob) andalso StringMap.member (byScope, scopeGlob) then [scopeGlob] else [])
             else List.filter (fn scope => (String.isPrefix front scope orelse String.isPrefix scope front)
                                           andalso String.isSuffix back scope) scopes
+          (* whether the text, where it names structures for this member, names this one *)
+          fun spoken scope =
+            let
+              val parts = String.fields (fn c => c = #".") scope
+              val structure' = String.concatWith "." (List.take (parts, List.length parts - 1))
+            in
+              case spokenOf (text, List.last parts) of
+                [] => true
+              | xs => List.exists (fn x => String.isPrefix x structure') xs
+            end
           fun named sure scope =
             case caseGlob of
-              NONE => List.exists (fn (c, computed) => not computed andalso matches (glob, scope ^ "/" ^ c, false)) (casesOf scope)
+              NONE => List.exists (fn (c, computed, _) => not computed andalso matches (glob, scope ^ "/" ^ c, false)) (casesOf scope)
             | SOME cg =>
                 matches (scopeGlob, scope, false)
-                andalso List.exists (fn (c, computed) =>
+                andalso List.exists (fn (c, computed, file) =>
                                        if not computed then matches (cg, c, false)
-                                       else if c = "" then not sure
+                                       else if c = "" then
+                                         (* a glob that writes the member out needs no more reason *)
+                                         not sure andalso (Substring.isEmpty rest orelse (fileMakes (file, cg) andalso spoken scope))
                                        else matches (cg, c, true))
                                     (casesOf scope)
         in
@@ -149,22 +210,22 @@ struct
         end
       (* the members that a glob names; one glob is often on several lines *)
       val cache : string list StringMap.map ref = ref StringMap.empty
-      fun membersOf glob =
-        case StringMap.find (!cache, glob) of
+      fun membersOf (glob, text) =
+        case StringMap.find (!cache, glob ^ "\t" ^ text) of
           SOME ms => ms
         | NONE =>
             let
               val ms =
                 case sites of
-                  SOME _ => withSuite glob
+                  SOME _ => withSuite (glob, text)
                 | NONE =>
                     let val scopeGlob = case DocTests.split glob of SOME (s, _) => s | NONE => glob
                     in List.filter (fn m => matches (scopeGlob, m, false)) members end
             in
-              cache := StringMap.insert (!cache, glob, ms); ms
+              cache := StringMap.insert (!cache, glob ^ "\t" ^ text, ms); ms
             end
       fun add (a : annotation, m) =
-        case membersOf (#glob a) of
+        case membersOf (#glob a, #text a) of
           [] => (DocDiag.error (#span a, "`" ^ #glob a ^ "` is the label of no check of a documented member"); m)
         | ms =>
             List.foldl (fn (member, m) =>

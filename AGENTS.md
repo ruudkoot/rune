@@ -41,7 +41,10 @@ keep these invariants:
   reading of the specification, a deviation from it or a choice it leaves
   open is written down once, as a note in the doc comment of the member
   (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
-  note (`tests/basis/check-notes.sh`).
+  note (`tests/basis/check-notes.sh`). After changing a line of
+  `deviations.txt` about a host, run `sh tests/basis/gen-annotations.sh` and
+  `make docs`: the documentation shows those lines under the members, from
+  the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
   Poly/ML); `make matrix` adds the suite on each host's own library.
@@ -92,6 +95,9 @@ keep these invariants:
   `docs/generated/basis` is made from the library's comments: after changing
   a signature or a comment of `lib/basis`, run `make docs` and commit what it
   writes (`make check-docs` fails on a stale tree). Never edit it by hand.
+  An `Example:` that is an equation, `e = v`, is compiled by `make docs` and
+  run by `make test-basis`; give a description an example where it shows
+  what prose cannot, and find its value by running it.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

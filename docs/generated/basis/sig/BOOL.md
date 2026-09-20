@@ -118,14 +118,13 @@ and leaves `"r"`.
 > accepts, as for [`StringCvt.skipWS`](../sig/STRING_CVT.md#val-skipws): the space, and the characters `\t`,
 > `\n`, `\v`, `\f` and `\r`.
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **MLton, SML/NJ** &mdash; Bool.scan and fromString are case-sensitive
 - **MLton** &mdash; Bool.scan and fromString do not skip initial whitespace
 - **MLton** &mdash; Bool.scan and fromString neither ignore case nor skip initial whitespace
 - **SML/NJ** &mdash; Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
 - **SML/NJ** &mdash; Bool.scan and fromString are case-sensitive and skip space, tab and newline only
-- **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 
 </details>
 
@@ -154,14 +153,13 @@ it, or `NONE`.
 **Example** `fromString " TRUE" = SOME true` for the case does not matter and
 blanks are skipped.
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **MLton, SML/NJ** &mdash; Bool.scan and fromString are case-sensitive
 - **MLton** &mdash; Bool.scan and fromString do not skip initial whitespace
 - **MLton** &mdash; Bool.scan and fromString neither ignore case nor skip initial whitespace
 - **SML/NJ** &mdash; Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
 - **SML/NJ** &mdash; Bool.scan and fromString are case-sensitive and skip space, tab and newline only
-- **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
 
 </details>
 

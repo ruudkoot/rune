@@ -4,3 +4,9 @@ Unit.it | only two fields
 Unit.it/is-gone | Other | the check was removed
 Unit.extra/is-unit | Other | a check, of a member that is not documented
 Unit.i[t/is-unit | Other | a set that is not closed is a bracket
+# a label that is computed in full is taken to only with reason: the words of
+# the glob begin a part of a string constant of the file, and the text does
+# not speak of another structure by name
+Unit.a*/made-* | Other | fine: "made-here" is a constant of the test
+Unit.a*/never-written | Other | no constant of the test begins so
+Unit.a*/made-* | Other | Elsewhere.again is made there, which is not Unit

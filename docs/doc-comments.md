@@ -186,8 +186,11 @@ every member that has such a check: `*Vector.update/[Sm]*` under `update` of
 `VECTOR` and of `MONO_VECTOR`. A constructor counts for its datatype, and a
 label `Structure:SIG/case` for the signature as a whole. A check whose label
 is computed (`"Int.scan/" ^ name`) counts by the beginning that is written
-out, and one of which only the member is known counts when no other check
-has the label. A glob that finds no check of a documented member is an error,
+out. One of which only the member is known counts when no other check has
+the label, and then only with reason: the glob writes the structure and the
+member out, or the words of its case begin a part of a string constant of
+the test's file (`"whitespace-tab"` for `*.scan/DEC-whitespace-*`) and the
+text, where it speaks of `X.member` by name, speaks of that structure. A glob that finds no check of a documented member is an error,
 so an annotation does not outlive the check it is about; the exception is a
 member with a check whose label is computed in full, which may be any label. `@title` names the block
 and `@intro` describes it on the page "How to read these pages".
@@ -215,6 +218,8 @@ in the commit that finishes its documentation.
 bin/runedoc --lint FILE...      # what is wrong with the comments of the files
 bin/runedoc --page FILE...      # the pages of the signatures of the files, on the standard output
 bin/runedoc --dump-ir FILE...   # what the generator makes of them, before any rendering
+bin/runedoc --library basis --examples DIR   # the examples that are equations, as programs
+sh tests/basis/run-examples.sh  # write them, compile them and run them
 make docs                       # write docs/generated/basis; commit the result
 ```
 
