@@ -73,6 +73,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
 | **all** | 1538 | 1538 | 100% | 1078 | 1078 |
 
+## Examples that are run
+
+An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the
+test suite: 26 of them, in [`CHAR`](sig/CHAR.md) (2), [`GENERAL`](sig/GENERAL.md) (2), [`IEEE_REAL`](sig/IEEE_REAL.md) (1), [`INTEGER`](sig/INTEGER.md) (6), [`INT_INF`](sig/INT_INF.md) (1), [`LIST`](sig/LIST.md) (3), [`PACK_WORD`](sig/PACK_WORD.md) (1), [`STRING`](sig/STRING.md) (4), [`STRING_CVT`](sig/STRING_CVT.md) (2), [`WORD`](sig/WORD.md) (4).
+
 ## Notes that no check pins
 
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not

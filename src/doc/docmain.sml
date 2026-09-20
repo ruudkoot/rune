@@ -9,6 +9,7 @@ struct
 
   val usage =
     "usage: runedoc --library NAME --out DIR [--check] [--title TEXT]\n\
+    \       runedoc --library NAME --examples DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
     \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST\n\
     \  --out DIR       write the documentation there, and remove the pages\n\
@@ -20,6 +21,8 @@ struct
     \  --annotations FILE  what others say about the members, as lines\n\
     \                  `label-glob | whom it is about | text`; shown with the\n\
     \                  members that have a check with such a label\n\
+    \  --examples DIR  write the examples of the comments that are equations,\n\
+    \                  `e = v`, as a program for each signature, and stop\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -44,6 +47,7 @@ struct
   val check = ref false
   val tests : string option ref = ref NONE
   val annotations : string option ref = ref NONE
+  val examples : string option ref = ref NONE
   val labels = ref false
   val checkCoverage = ref false
   val lint = ref false
@@ -63,6 +67,7 @@ struct
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
+    | "--examples" :: dir :: rest => (examples := SOME dir; parse rest)
     | "--labels" :: rest => (labels := true; parse rest)
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
@@ -151,6 +156,21 @@ struct
              status
            end
        | _ => raise Usage "--check-coverage needs --library NAME and --tests DIR")
+    else if isSome (!examples) then
+      (case (!library, !libDir) of
+         (SOME name, SOME lib) =>
+           let
+             val dir = valOf (!examples)
+             val files = DocSite.examples {dir = lib ^ "/" ^ name} handle BasisManifest.Usage why => raise Usage why
+             val status = report ()
+           in
+             if OS.Process.isSuccess status
+             then (DocSite.write (dir, files);
+                   println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " programs to " ^ dir))
+             else ();
+             status
+           end
+       | _ => raise Usage "--examples needs --library NAME")
     else
     case !library of
       SOME name => generate name

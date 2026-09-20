@@ -251,9 +251,12 @@ docs: $(RUNEDOC)
 # tests/basis/README.md. The matrix targets compare Rune with other systems
 # and are not part of `make check`.
 # run-matrix.sh runs each program in its own directory, so $(RUNE) goes in absolute.
-test-basis: $(RUNE) vm | build/.doctor-check
+# Then the examples of the documentation that are equations are tried
+# (tests/basis/run-examples.sh).
+test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 	RUNE=$(abspath $(RUNE)) RUNEVM=$(abspath $(RUNEVM)) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-examples.sh
 
 # Deterministic budgets on what `runevm --count` reports, for benchmark
 # programs, the hello compile and the bootstrap (tests/perf/run-perf.sh;

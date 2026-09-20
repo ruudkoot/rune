@@ -207,6 +207,15 @@ struct
       ^ "(a value whose type shows an arrow) is expected to begin its description with a usage head.\n\n"
       ^ M.table (["Signature", "Entries", "Documented", "", "Functions", "With a usage head"],
                  List.map row rows @ [["**all**", Int.toString te, Int.toString td, percent (td, te), Int.toString tf, Int.toString th]])
+      ^ (case List.filter (fn (_, n) => n > 0) (List.map (fn s : I.signatureRecord => (#name s, List.length (DocExamples.ofSignature s))) sigs) of
+           [] => ""
+         | withExamples =>
+             "## Examples that are run\n\n"
+             ^ "An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the\n"
+             ^ "test suite: " ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, in "
+             ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
+                                                withExamples)
+             ^ ".\n\n")
       ^ (if List.null unpinned then ""
          else "## Notes that no check pins\n\n"
               ^ "A deviation or a limitation that the test suite does not show. A reading or an erratum need not\n"
@@ -234,7 +243,9 @@ struct
     ^ "  specification and then its description, which for a function begins with the function applied\n"
     ^ "  to arguments, such as `take (l, i)`: those names are the names of the arguments in what follows.\n"
     ^ "  **Raises** names an exception and says when it is raised; **Law** is an equation that holds;\n"
-    ^ "  **Example**, **Complexity** and **See also** are what they say.\n"
+    ^ "  **Example**, **Complexity** and **See also** are what they say. An example that is an equation,\n"
+    ^ "  `e = v`, is more than an illustration: it is compiled when the pages are made, with the members of\n"
+    ^ "  the signature in scope, and the test suite tries it.\n"
     ^ "- A datatype has a table of its constructors, a record one of its fields.\n"
     ^ "- A quoted block is a note on how the library reads its specification: a **Reading** of text that is\n"
     ^ "  silent, ambiguous or contradictory, an **Erratum** of the specification, a **Deviation** of the\n"
@@ -771,6 +782,10 @@ struct
                              (P.entriesOf (#body s))))
               sigs)
 
+  (* The structure that the examples of a signature are read in. *)
+  fun exampleStructureOf (claims : DocClaims.claim list, sigStatus : string -> string) : string -> string option =
+    DocExamples.structureOf (claims, fn c : DocClaims.claim => case #status c of SOME st => st | NONE => sigStatus (#signat c))
+
   fun build {dir : string, title : string, out : string, tests : string option, annotations : string option} : file list =
     let
       val modules = load dir
@@ -787,6 +802,10 @@ struct
       val labels = case tests of SOME _ => SOME (DocNotes.labelsOf sites) | NONE => NONE
       val () = DocNotes.checkIds notes
       val () = case labels of SOME ls => DocNotes.checkPins ls notes | NONE => ()
+      fun sigStatus s = case StringMap.find (#signatures index, s) of
+                          SOME (I.Signature {doc, ...}) => P.statusOf doc
+                        | _ => "required"
+      val exampleStructure = exampleStructureOf (claims, sigStatus)
       (* the claims that name a signature of the library, checked by the compiler *)
       val () =
         case DocElab.library dir of
@@ -801,11 +820,13 @@ struct
                                      then List.app (fn h => DocElab.checkHead (#name s, #name e, h, #span e)) (#heads e)
                                      else ())
                                   (P.entriesOf (#body s)))
+                      sigs;
+             (* the examples that are equations, under the structure they are read in *)
+             List.app (fn s : I.signatureRecord =>
+                         List.app (fn e => DocElab.checkExample lib (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
+                                  (DocExamples.ofSignature s))
                       sigs)
         | NONE => ()
-      fun sigStatus s = case StringMap.find (#signatures index, s) of
-                          SOME (I.Signature {doc, ...}) => P.statusOf doc
-                        | _ => "required"
       val functors = List.mapPartial (fn I.Functor f => if isPublic (#name f) then SOME f else NONE | _ => NONE) modules
       val sigPages = List.map (fn s : I.signatureRecord => (R.sigPage (#name s), P.signaturePage (env "../", title) s)) sigs
       val funPages = List.map (fn {name, file, span, doc, param, result, ...} =>
@@ -851,6 +872,24 @@ struct
       files
     end
 
+  (* The programs that try the examples of the signatures, one for each
+     signature that has an example that is an equation. *)
+  fun examples {dir : string} : file list =
+    let
+      val modules = load dir
+      val (claims, index, _) = envOf (modules, "", [], [], NONE)
+      fun sigStatus s = case StringMap.find (#signatures index, s) of
+                          SOME (I.Signature {doc, ...}) => P.statusOf doc
+                        | _ => "required"
+      val structureOf = exampleStructureOf (claims, sigStatus)
+    in
+      List.mapPartial (fn s : I.signatureRecord =>
+                         case DocExamples.ofSignature s of
+                           [] => NONE
+                         | es => SOME (#name s ^ ".sml", DocExamples.program (#name s, P.normalise (#file s), structureOf (#name s), es)))
+                      (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
+    end
+
   fun checkCoverage {dir : string, tests : string} : int =
     let
       val modules = load dir
@@ -887,7 +926,7 @@ struct
                                    let val r = if rel = "" then n else rel ^ "/" ^ n
                                    in
                                      if isDir (out ^ "/" ^ r) then walk r
-                                     else if String.isSuffix ".md" n orelse String.isSuffix ".tsv" n then [r] else []
+                                     else if String.isSuffix ".md" n orelse String.isSuffix ".tsv" n orelse String.isSuffix ".sml" n then [r] else []
                                    end) names)
         end
     in

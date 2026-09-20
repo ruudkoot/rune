@@ -13,7 +13,9 @@ There is a page for every signature. A structure is documented by the signature 
   specification and then its description, which for a function begins with the function applied
   to arguments, such as `take (l, i)`: those names are the names of the arguments in what follows.
   **Raises** names an exception and says when it is raised; **Law** is an equation that holds;
-  **Example**, **Complexity** and **See also** are what they say.
+  **Example**, **Complexity** and **See also** are what they say. An example that is an equation,
+  `e = v`, is more than an illustration: it is compiled when the pages are made, with the members of
+  the signature in scope, and the test suite tries it.
 - A datatype has a table of its constructors, a record one of its fields.
 - A quoted block is a note on how the library reads its specification: a **Reading** of text that is
   silent, ambiguous or contradictory, an **Erratum** of the specification, a **Deviation** of the

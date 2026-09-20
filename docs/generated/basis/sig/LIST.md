@@ -527,8 +527,9 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 The accumulator is the second component of the argument of `f`, and
 `foldl f init [] = init`.
 
-**Example** `foldl (op ::) [] l = rev l`, and `foldl (op -) 0 [1, 2, 3] = 2`,
-which is `3 - (2 - (1 - 0))`.
+**Law** `foldl (op ::) [] l = rev l`
+
+**Example** `foldl (op -) 0 [1, 2, 3] = 2`, which is `3 - (2 - (1 - 0))`.
 
 **Complexity** one application of `f` per element; constant stack.
 
@@ -550,8 +551,9 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 
 `foldr f init [] = init`.
 
-**Example** `foldr (op ::) [] l = l`, and `foldr (op -) 0 [1, 2, 3] = 2`,
-which is `1 - (2 - (3 - 0))`.
+**Law** `foldr (op ::) [] l = l`
+
+**Example** `foldr (op -) 0 [1, 2, 3] = 2`, which is `1 - (2 - (3 - 0))`.
 
 Also in the [top-level environment](../top-level.md): `foldr`.
 

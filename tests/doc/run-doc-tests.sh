@@ -19,6 +19,8 @@
 #   NAME.lib.notes  the notes.tsv it writes, where the expectation exists
 #   NAME.lib.md     the pages of its signatures, one after another, where the
 #                   expectation exists
+#   NAME.lib.examples  the programs that `--examples` writes for it, one after
+#                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
 # and one with a file ANNOTATIONS with --annotations.
 # --update rewrites the expectations that exist; review them line by line as
@@ -109,6 +111,13 @@ for lib in tests/doc/*.lib; do
     cat "$out/$name.site"/sig/*.md > "$out/$name.lib.md" 2> /dev/null || : > "$out/$name.lib.md"
     [ $update = 1 ] && cp "$out/$name.lib.md" "tests/doc/$name.lib.md"
     same "$name.lib.md" "$out/$name.lib.md" "tests/doc/$name.lib.md"
+  fi
+  if [ -f "tests/doc/$name.lib.examples" ]; then
+    rm -rf "$out/$name.examples"
+    "$runedoc" --lib tests/doc --library "$name.lib" --examples "$out/$name.examples" > /dev/null 2>&1
+    cat "$out/$name.examples"/*.sml > "$out/$name.lib.examples" 2> /dev/null || : > "$out/$name.lib.examples"
+    [ $update = 1 ] && cp "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
+    same "$name.lib.examples" "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
   fi
   if [ -d "$lib/tests" ]; then
     "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1

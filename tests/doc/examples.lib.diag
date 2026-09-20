@@ -1,0 +1,3 @@
+tests/doc/examples.lib/money.sml:27:7: error: the example `show zero = 0` is not one that can be run: function argument: type mismatch between string * string and string * int (type constructor mismatch: int vs string)
+tests/doc/examples.lib/money.sml:27:7: error: the example `show nothing = "0"` is not one that can be run: unbound variable or constructor: nothing
+tests/doc/examples.lib/money.sml:27:7: error: the example `show = show` is not one that can be run: function argument: type mismatch between ''a * ''a and (int -> string) * (int -> string) (function types do not admit equality)

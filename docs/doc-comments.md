@@ -95,7 +95,7 @@ set is closed and case-sensitive.
 | `Raises:` | a value | the exception in backquotes, then when it is raised; one paragraph per exception |
 | `Law:` | a value | an equation, in backquotes |
 | `Complexity:` | a value | prose |
-| `Example:` | anything | code |
+| `Example:` | anything | code; a piece that is an equation, `e = v`, is run (below) |
 | `See also:` | anything | references in backquotes |
 | `Area:` | a signature, a functor | the area of the library's overview page that lists it |
 | `Status:` | a signature, structure or functor | `required`, `optional` or `extension`; a signature without one is required, a structure without one has the status of its signature |
@@ -141,6 +141,31 @@ the specification differently needs a `Reading (the suite differs):` that the
 check pins (and the other way round), and what a host reads differently in a
 signature that is documented in full needs a `Reading:` of that member.
 `coverage.md` lists the deviations and limitations that no check pins.
+
+## Examples that run
+
+A piece of code in an `Example:` paragraph that is an equation, `e = v`, is a
+claim, and it is checked twice. When the documentation is made it is
+elaborated against the library, so that an example that is no Standard ML,
+names what is not there or compares what has no equality is an error at its
+comment. And `runedoc --examples DIR` writes the examples of each signature
+as a program, which `make test-basis` compiles and runs
+(`tests/basis/run-examples.sh`): an example that is false, or raises an
+exception, fails it.
+
+The members of the signature are in scope as they are inside a structure that
+implements it: the example is read under `open S`, where `S` is the structure
+with the shortest name among those the specification requires (`Int` for
+`INTEGER`, `String` for `STRING`), and for a member of a substructure under
+`open S.Sub` as well. Name any other structure in full: `Word8.toIntX 0wxFF =
+~1`. The fixity is that of the top level, so `Real.== (x, y)` and not `x ==
+y`. What holds for every argument is a `Law:`, which is not run; an example
+has no free variables. Code that is no equation is only shown, so a value of
+a type without equality is compared through its text: `Real.fmt (StringCvt.FIX
+(SOME 1)) (Math.sqrt 4.0) = "2.0"`.
+
+An example says what this library does, so `Int.precision = SOME 64` is a
+fine example; the programs are not tried on other implementations.
 
 ## Annotations
 

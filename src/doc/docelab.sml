@@ -71,4 +71,15 @@ struct
         DocDiag.error (#span c, #name c ^ " does not implement " ^ #signat c
                                 ^ (if #realisations c = "" then "" else " " ^ #realisations c)
                                 ^ ", as its comment claims: " ^ msg)
+
+  (* An example against the library: `val it : bool = ...` has to elaborate. *)
+  fun checkExample ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
+    let
+      val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<example>", "val it : bool = " ^ expression)), fixity)
+    in
+      Elaborate.elabTop (ref env, prog);
+      Elaborate.finish ();
+      Error.warnings := []
+    end
+    handle Error.CompileError (_, msg) => DocDiag.error (span, "the example `" ^ what ^ "` is not one that can be run: " ^ msg)
 end
