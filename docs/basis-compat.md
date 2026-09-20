@@ -57,15 +57,15 @@ not load the file of lib/basis it needs.
 
 | Configuration | Checks | Pass | Explained | Tests absent | Tests N/A |
 |---|---:|---:|---:|---:|---:|
-| `rune` | 132,672 | 132,671 | 1 | 0 | 0 |
-| `native:mlton@20241230` | 132,560 | 132,216 | 344 | 2 | 0 |
-| `native:smlnj@110.99.9` | 60,598 | 59,943 | 655 | 45 | 0 |
-| `native:smlnj32@110.99.9` | 51,190 | 49,731 | 1,459 | 45 | 0 |
-| `native:polyml@5.9.2` | 67,182 | 66,466 | 716 | 36 | 0 |
-| `xc1:mlton@20241230` | 132,652 | 132,344 | 308 | 0 | 0 |
-| `xc1:smlnj@110.99.9` | 132,665 | 132,259 | 406 | 0 | 0 |
-| `xc1:smlnj32@110.99.9` | 89,870 | 87,770 | 2,100 | 0 | 35 |
-| `xc1:polyml@5.9.2` | 132,624 | 132,266 | 358 | 0 | 0 |
+| `rune` | 136,062 | 136,061 | 1 | 0 | 0 |
+| `native:mlton@20241230` | 135,890 | 135,543 | 347 | 4 | 0 |
+| `native:smlnj@110.99.9` | 60,598 | 59,944 | 654 | 56 | 0 |
+| `native:smlnj32@110.99.9` | 51,190 | 49,731 | 1,459 | 56 | 0 |
+| `native:polyml@5.9.2` | 67,182 | 66,467 | 715 | 47 | 0 |
+| `xc1:mlton@20241230` | 136,042 | 135,734 | 308 | 0 | 0 |
+| `xc1:smlnj@110.99.9` | 136,055 | 135,648 | 407 | 0 | 0 |
+| `xc1:smlnj32@110.99.9` | 93,260 | 91,160 | 2,100 | 0 | 35 |
+| `xc1:polyml@5.9.2` | 136,014 | 135,656 | 358 | 0 | 0 |
 
 On Rune the one failure is a reading of the specification (below). The
 `xc1` configurations fail it too, the checks the shim cannot run (sockets,

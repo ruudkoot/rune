@@ -27,7 +27,10 @@ struct
   fun chr i = if Int.< (i, 0) orelse Int.> (i, maxOrd) then raise Chr else i
 end
 
-structure WideCharVector : MONO_VECTOR = RuneMonoVectorFn (type elem = RuneWideChar.char)
+(* Sealed with a vector of its own (MONO_VECTOR_EQ), so that WideString.string
+   is a type name: the constants of a type are overloaded at a name. *)
+structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
+  RuneMonoVectorFn (type elem = RuneWideChar.char)
 structure WideCharVectorSlice : MONO_VECTOR_SLICE = RuneMonoVectorSliceFn (structure V = WideCharVector)
 structure WideCharArray : MONO_ARRAY = RuneMonoArrayFn (structure V = WideCharVector)
 structure WideCharArraySlice : MONO_ARRAY_SLICE =
@@ -138,3 +141,12 @@ end
 structure WideChar :> CHAR
   where type char = RuneWideChar.char
   where type string = WideCharVector.vector = RuneWideCharImpl
+
+(* A character constant of the type WideChar.char is read from its text where
+   it is evaluated, as the constants of IntInf and Real32 are. *)
+structure RuneWideCharLit =
+struct
+  fun fromLit s = case WideChar.fromString s of SOME c => c | NONE => raise Fail ("wide character constant " ^ s)
+end
+
+_overload char WideChar via RuneWideCharLit.fromLit

@@ -206,7 +206,7 @@ struct
       (* Patterns                                                          *)
       fun startsAtPat t =
         case t of
-          UNDERSCORE => true | INT _ => true | WORD _ => true | STRING _ => true | CHAR _ => true
+          UNDERSCORE => true | INT _ => true | WORD _ => true | STRING _ => true | WIDESTRING _ => true | CHAR _ => true
         | REAL _ => true | ID _ => true | LONGID _ => true | OP => true | LBRACE => true
         | LPAREN => true | LBRACKET => true | _ => false
 
@@ -261,6 +261,7 @@ struct
           | INT i => (advance (); PScon (SInt i, ref NONE, start))
           | WORD w => (advance (); PScon (SWord w, ref NONE, start))
           | STRING s => (advance (); PScon (SString s, ref NONE, start))
+          | WIDESTRING s => (advance (); PScon (SWideString s, ref NONE, start))
           | CHAR c => (advance (); PScon (SChar c, ref NONE, start))
           | REAL _ => err "real constants are not allowed in patterns"
           | ID s => (advance (); PVar (([], s), ref NONE, start))
@@ -338,7 +339,7 @@ struct
 
       fun startsAtExp t =
         case t of
-          INT _ => true | WORD _ => true | REAL _ => true | STRING _ => true | CHAR _ => true
+          INT _ => true | WORD _ => true | REAL _ => true | STRING _ => true | WIDESTRING _ => true | CHAR _ => true
         | ID _ => true | LONGID _ => true | OP => true | LBRACE => true | HASH => true
         | LPAREN => true | LBRACKET => true | LET => true | PRIM => true | EQUALS => true
         | _ => false
@@ -450,6 +451,7 @@ struct
           | WORD w => (advance (); EScon (SWord w, ref NONE, start))
           | REAL r => (advance (); EScon (SReal r, ref NONE, start))
           | STRING s => (advance (); EScon (SString s, ref NONE, start))
+          | WIDESTRING s => (advance (); EScon (SWideString s, ref NONE, start))
           | CHAR c => (advance (); EScon (SChar c, ref NONE, start))
           | ID s => (advance (); EVar (([], s), ref NONE, start))
           | LONGID (p, s) => (advance (); EVar ((p, s), ref NONE, start))
@@ -680,7 +682,9 @@ struct
               (* _overload <kind> <longstrid> [<bits> | via <longvid>] *)
               let
                 val () = advance ()
-                val kind = case next () of ID s => s | _ => err "expected a kind (int, word or real) after _overload"
+                val kind = case next () of
+                             ID s => s
+                           | _ => err "expected a kind (int, word, real, char or string) after _overload"
                 val strid = case next () of
                               ID s => [s]
                             | LONGID (p, s) => p @ [s]

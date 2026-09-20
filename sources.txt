@@ -2,6 +2,7 @@
 # Every SML build file (MLton .mlb, SML/NJ .cm, Poly/ML use-script) is
 # generated from this list by scripts/gen-build-files.sh -- edit only this file.
 # Files must contain only structure/signature/functor declarations.
+src/util/scon.sml
 src/util/ordmap.sml
 src/util/source.sml
 src/util/error.sml

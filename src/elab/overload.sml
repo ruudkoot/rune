@@ -63,7 +63,6 @@ struct
      register (Types.realTycon, "real",
                prims ("real", [("+", "add"), ("-", "sub"), ("*", "mul"), ("/", "div"), ("~", "neg"),
                                ("abs", "abs")] @ cmp), Bits 64);
-     (* char and string constants are not overloaded *)
-     register (Types.charTycon, "char", prims ("char", cmp), Bits 0);
-     register (Types.stringTycon, "string", prims ("string", cmp), Bits 0))
+        register (Types.charTycon, "char", prims ("char", cmp), Bits 8);
+     register (Types.stringTycon, "string", prims ("string", cmp), Bits 8))
 end

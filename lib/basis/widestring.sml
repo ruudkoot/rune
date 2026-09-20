@@ -149,6 +149,14 @@ structure WideString :> STRING
   where type string = WideCharVector.vector
   where type char = WideChar.char = RuneWideString
 
+(* as RuneWideCharLit for a string constant *)
+structure RuneWideStringLit =
+struct
+  fun fromLit s = case WideString.fromString s of SOME v => v | NONE => raise Fail ("wide string constant " ^ s)
+end
+
+_overload string WideString via RuneWideStringLit.fromLit
+
 structure RuneWideSubstring =
 struct
   structure V = WideCharVector

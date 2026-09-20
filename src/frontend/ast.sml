@@ -11,8 +11,9 @@ struct
       SInt of IntInf.int
     | SWord of IntInf.int
     | SReal of string
-    | SString of string
-    | SChar of char
+    | SString of string           (* a constant whose characters fit 8 bits *)
+    | SWideString of int list     (* one with a code point above 255 *)
+    | SChar of int                (* the code point of a character constant *)
 
   (* The constants of a type registered with _overload (Overload.literal). *)
   datatype ovliteral = OvBits of int | OvVia of string list * string
@@ -265,7 +266,8 @@ struct
     | SWord w => "0w" ^ IntInf.toString w
     | SReal r => r
     | SString s => "\"" ^ String.toString s ^ "\""
-    | SChar c => "#\"" ^ Char.toString c ^ "\""
+    | SWideString s => "\"" ^ Scon.text s ^ "\""
+    | SChar c => "#\"" ^ Scon.escape c ^ "\""
 
   fun expToString e =
     case e of

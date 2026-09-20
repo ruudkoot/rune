@@ -63,6 +63,12 @@ struct
                check ("integer", v, IntInf.~ (power2 (n - 1)), IntInf.- (power2 (n - 1), IntInf.fromInt 1))
            | (SWord v, SOME (Overload.Bits n)) =>
                check ("word", v, IntInf.fromInt 0, IntInf.- (power2 n, IntInf.fromInt 1))
+           | (SChar v, SOME (Overload.Bits n)) =>
+               check ("character", IntInf.fromInt v, IntInf.fromInt 0, IntInf.- (power2 n, IntInf.fromInt 1))
+           | (SWideString cs, SOME (Overload.Bits n)) =>
+               List.app (fn v => check ("string", IntInf.fromInt v, IntInf.fromInt 0,
+                                        IntInf.- (power2 n, IntInf.fromInt 1)))
+                        cs
            | _ => ())
       | _ => ()
     end
@@ -83,6 +89,8 @@ struct
                          if List.exists (fn n => n = "int") names then intTy
                          else if List.exists (fn n => n = "real") names then realTy
                          else if List.exists (fn n => n = "word") names then wordTy
+                         else if List.exists (fn n => n = "char") names then charTy
+                         else if List.exists (fn n => n = "string") names then stringTy
                          else Error.bug "resolvePending: empty overload class"
                      in Unify.unify (TVar r, default) end
                  | _ => ()) (!pendingOverloads);
@@ -136,8 +144,9 @@ struct
         SInt _ => overloaded "int"
       | SWord _ => overloaded "word"
       | SReal _ => overloaded "real"
-      | SString _ => stringTy
-      | SChar _ => charTy
+      | SString _ => overloaded "string"
+      | SWideString _ => overloaded "string"
+      | SChar _ => overloaded "char"
     end
 
   type scope = ty StringMap.map ref
@@ -790,7 +799,7 @@ struct
         let
           val () = if !allowPrim then () else err (sp, "_overload is only allowed when compiling with --allow-prim")
           val name = String.concatWith "." strid
-          val () = if List.exists (fn k => k = kind) ["int", "word", "real"] then ()
+          val () = if List.exists (fn k => k = kind) ["int", "word", "real", "char", "string"] then ()
                    else err (sp, "_overload: unknown kind " ^ kind)
           val str = case Env.findStr (env, strid) of
                       SOME e => e

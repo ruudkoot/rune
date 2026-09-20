@@ -89,12 +89,12 @@ struct
         if i >= n orelse ch i = #"\n" then err (start, i, "unterminated string literal")
         else
           case ch i of
-            #"\"" => (String.implode (List.rev acc), i + 1)
+            #"\"" => (List.rev acc, i + 1)
           | #"\\" => lexEscape (start, i + 1, acc)
           | c => if Char.ord c < 32 then err (i, i + 1, "control character in string literal")
-                 else lexStringBody (start, i + 1, c :: acc)
+                 else lexStringBody (start, i + 1, Char.ord c :: acc)
       and lexEscape (start, i, acc) =
-        let fun cont c = lexStringBody (start, i + 1, c :: acc)
+        let fun cont c = lexStringBody (start, i + 1, Char.ord c :: acc)
         in
           case ch i of
             #"a" => cont #"\a" | #"b" => cont #"\b" | #"t" => cont #"\t"
@@ -103,22 +103,28 @@ struct
           | #"^" =>
             let val c = ch (i + 1)
             in if Char.ord c >= 64 andalso Char.ord c <= 95 then
-                 lexStringBody (start, i + 2, Char.chr (Char.ord c - 64) :: acc)
+                 lexStringBody (start, i + 2, Char.ord c - 64 :: acc)
                else err (i - 1, i + 2, "invalid control escape in string literal")
             end
+          (* A code point, which only a wide character or string can hold
+             above 255 (elaboration decides, with the type). *)
           | #"u" =>
             if isHex (ch (i + 1)) andalso isHex (ch (i + 2)) andalso isHex (ch (i + 3)) andalso isHex (ch (i + 4)) then
-              let val v = IntInf.toInt (parseInt (String.substring (text, i + 1, 4), 16))
-              in if v > 255 then err (i - 1, i + 5, "\\u escape out of range for 8-bit strings")
-                 else lexStringBody (start, i + 5, Char.chr v :: acc)
-              end
+              lexStringBody (start, i + 5, IntInf.toInt (parseInt (String.substring (text, i + 1, 4), 16)) :: acc)
             else err (i - 1, i + 1, "invalid \\u escape")
+          | #"U" =>
+            if List.all (fn k => isHex (ch (i + k))) [1, 2, 3, 4, 5, 6, 7, 8] then
+              let val v = IntInf.toInt (parseInt (String.substring (text, i + 1, 8), 16))
+              in if v > 1114111 then err (i - 1, i + 9, "\\U escape out of range (the largest code point is 0x10FFFF)")
+                 else lexStringBody (start, i + 9, v :: acc)
+              end
+            else err (i - 1, i + 1, "invalid \\U escape")
           | c =>
             if Char.isDigit c then
               (if Char.isDigit (ch (i + 1)) andalso Char.isDigit (ch (i + 2)) then
                  let val v = IntInf.toInt (parseInt (String.substring (text, i, 3), 10))
                  in if v > 255 then err (i - 1, i + 3, "\\ddd escape out of range")
-                    else lexStringBody (start, i + 3, Char.chr v :: acc)
+                    else lexStringBody (start, i + 3, v :: acc)
                  end
                else err (i - 1, i + 1, "invalid numeric escape"))
             else if Char.isSpace c then
@@ -189,11 +195,15 @@ struct
               in (TYVAR (String.substring (text, i, j - i)), span (i, j), j) end
             else if c = #"\"" then
               let val (s, j) = lexStringBody (i, i + 1, [])
-              in (STRING s, span (i, j), j) end
+              in (if List.all (fn c => c <= 255) s then STRING (String.implode (List.map Char.chr s))
+                  else WIDESTRING s,
+                  span (i, j), j)
+              end
             else if c = #"#" andalso ch (i + 1) = #"\"" then
               let val (s, j) = lexStringBody (i, i + 2, [])
-              in if String.size s <> 1 then err (i, j, "character literal must contain exactly one character")
-                 else (CHAR (String.sub (s, 0)), span (i, j), j)
+              in case s of
+                   [c] => (CHAR c, span (i, j), j)
+                 | _ => err (i, j, "character literal must contain exactly one character")
               end
             else if c = #"_" then
               (if String.size text >= i + 5 andalso String.substring (text, i, 5) = "_prim"

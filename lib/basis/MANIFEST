@@ -54,7 +54,7 @@ vector.sml      | demand | yes  | Vector                | List Option
 array.sml       | demand | yes  | Array                 | List Option Vector
 vectorslice.sml | demand | yes  | VectorSlice           | List Vector
 arrayslice.sml  | demand | yes  | ArraySlice            | Array Vector VectorSlice
-mono_sigs.sml   | demand | yes  | MONO_VECTOR MONO_ARRAY MONO_VECTOR_SLICE MONO_ARRAY_SLICE |
+mono_sigs.sml   | demand | yes  | MONO_VECTOR MONO_VECTOR_EQ MONO_ARRAY MONO_VECTOR_SLICE MONO_ARRAY_SLICE |
 mono_vector_fn.sml | demand | yes | RuneStringVectorFn | List String
 mono_poly_vector_fn.sml | demand | yes | RuneMonoVectorFn | Vector
 mono_array_fn.sml | demand | yes | RuneMonoArrayFn     | Array MONO_VECTOR
@@ -191,8 +191,8 @@ sig_posix.sml | demand | yes  | POSIX | IO POSIX_ERROR POSIX_FILE_SYS POSIX_IO P
 real32.sml      | demand | yes  | Real32 RuneReal32 RuneReal32Lit | Char IEEEReal Int IntInf List Math REAL Real String StringCvt Word
 pack_real32.sml | demand | yes  | PackReal32Big PackReal32Little RunePackReal32Fn | IEEEReal Real Real32 RunePackWordFn Word Word8 Word8Array
 mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real32 RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice | CHAR Char Int MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneEscape RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn String StringCvt
-widestring.sml  | demand | yes  | RuneWideString RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
+widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl RuneWideCharLit WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice | CHAR Char Int MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR_EQ MONO_VECTOR_SLICE RuneEscape RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn String StringCvt
+widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
 widetext.sml    | demand | yes  | WideText              | -Char -CharArray -CharArraySlice -CharVector -CharVectorSlice -String -Substring WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
 widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char IO Int List Position RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn -StreamIO String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
 epilogue.sml    | final  | no   |                       | RuneExit
