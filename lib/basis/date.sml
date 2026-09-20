@@ -184,9 +184,14 @@ struct
 
     (* strftime is given the year less 1900 as an int of C, which has 32
        bits, and adds the 1900 again in one: a year that either does not fit
-       would be printed as another year. *)
+       would be printed as another year. The largest int of C is worked out,
+       for a system whose own int is smaller cannot read it as a constant;
+       there every year fits. *)
+    val cIntMax = SOME (65536 * 32768 - 1) handle Overflow => NONE
     fun yearFitsC (d : date) =
-      #year d - 1900 >= ~2147483648 andalso #year d <= 2147483647
+      case cIntMax of
+        SOME most => #year d <= most andalso #year d - 1900 >= ~most - 1
+      | NONE => true
 
     fun fmt format (d : date) =
       if valid d andalso yearFitsC d

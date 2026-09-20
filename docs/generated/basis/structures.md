@@ -218,7 +218,7 @@ one by name has the names of that one, and an application of a functor those of 
 | `BinIO` | `Imperative` |
 | `BinIO.StreamIO` | `Active`, `Chunk`, `Closed`, `Eos`, `In`, `Out`, `Terminated`, `Unread`, `flushAll`, `flushBuffer`, `flushDevice`, `force`, `guarded`, `hasNewline`, `here`, `ioError`, `mkOutstreamOver`, `outputWith`, `readerName`, `segment`, `state`, `status`, `writeAll`, `writerName` |
 | `BinPrimIO` | `blocking`, `copyIn`, `first`, `guard`, `mapOpt`, `nonBlocking` |
-| `Date` | `months`, `weekdays`, `monthNumber`, `monthOf`, `weekdayNumber`, `weekdayOf`, `partsOf`, `listOf`, `daysFromCivil`, `civilFromDays`, `monthLength`, `fixed`, `valid`, `directives`, `zoneName`, `yearFitsC`, `dayName`, `monthName` |
+| `Date` | `months`, `weekdays`, `monthNumber`, `monthOf`, `weekdayNumber`, `weekdayOf`, `partsOf`, `listOf`, `daysFromCivil`, `civilFromDays`, `monthLength`, `fixed`, `valid`, `directives`, `zoneName`, `cIntMax`, `yearFitsC`, `dayName`, `monthName` |
 | `IEEEReal` | `scanNumeral` |
 | `Int` | `digitValue`, `base` |
 | `Int64` | `base`, `digitValue` |
