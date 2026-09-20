@@ -603,10 +603,10 @@ struct
         List.mapPartial (fn I.Struct {name = n, rhs = I.Alias t, ...} => if t = name andalso isPublic n then SOME n else NONE
                           | _ => NONE) modules
       val covered = ref 0
-      (* only what a comment claims: the suite matches those structures
-         against the signature (check-claims.sh), so they are what it tests *)
+      (* a structure that claims a signature in a comment or is ascribed it;
+         not one that has it only through `structure A = B`, which is B's *)
       fun check (c : DocClaims.claim) =
-        if #isFunctor c orelse #origin c <> "claimed" then ()
+        if #isFunctor c orelse #origin c = "inherited" then ()
         else
           List.app (fn e : I.entryRecord =>
                       if #kind e <> I.Val andalso #kind e <> I.Exception then ()

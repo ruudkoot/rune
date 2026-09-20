@@ -1,12 +1,12 @@
 # signature TEXT
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **TEXT**
+[The Standard ML Basis Library](../README.md) &rsaquo; Text and characters &rsaquo; **TEXT**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 2 |
-| Documentation | 0 of 7 entries documented |
+| Documentation | 7 of 7 entries documented |
 | Tests | 25 checks of 7 entries |
 | Source | [lib/basis/sig\_text.sml](../../../../lib/basis/sig_text.sml) |
 
@@ -23,13 +23,14 @@ structure WideText : TEXT  (* optional *)
 | `Text` | Text: the structures of the default character type. | [lib/basis/text.sml](../../../../lib/basis/text.sml) |
 | `WideText` | WideText: the structures of the wide character (optional in the specification), as Text is of char. | [lib/basis/widetext.sml](../../../../lib/basis/widetext.sml) |
 
-signature TEXT, transcribed from <https://smlfamily.github.io/Basis/text.html>
+The structures of one kind of text, gathered so that their types can be
+named as one: characters, strings, substrings and the vectors and arrays
+of characters, with the constraints that tie them together.
 
-The signatures of the substructures are those of tests/basis/spec-sigs:
-CHAR.sml, STRING.sml, SUBSTRING.sml, MONO\_VECTOR.sml, MONO\_ARRAY.sml,
-MONO\_VECTOR\_SLICE.sml and MONO\_ARRAY\_SLICE.sml. The constraints of
-`structure Text :> TEXT where type Char.char = Char.char ...` are in
-tests/basis/text\_sig.sml.
+[`Text`](TEXT.md) is the text of 8-bit characters, whose [`Text.Char`](#str-char) is [`Char`](#str-char) and
+whose [`Text.String`](#str-string) is [`String`](#str-string); the optional [`WideText`](TEXT.md) is the same for
+[`WideChar`](../sig/CHAR.md). A program that is to work at either kind takes the structure as
+a functor argument and names the types through it.
 
 ## Interface
 
@@ -37,19 +38,29 @@ tests/basis/text\_sig.sml.
 signature TEXT =
 sig
   structure <a href="#str-char">Char</a> : CHAR
+
   structure <a href="#str-string">String</a> : STRING
+
   structure <a href="#str-substring">Substring</a> : SUBSTRING
+
   structure <a href="#str-charvector">CharVector</a> : MONO_VECTOR
+
   structure <a href="#str-chararray">CharArray</a> : MONO_ARRAY
+
   structure <a href="#str-charvectorslice">CharVectorSlice</a> : MONO_VECTOR_SLICE
+
   structure <a href="#str-chararrayslice">CharArraySlice</a> : MONO_ARRAY_SLICE
+
   sharing type Char.char = String.char = Substring.char
     = CharVector.elem = CharArray.elem = CharVectorSlice.elem
     = CharArraySlice.elem
+
   sharing type Char.string = String.string = Substring.string
     = CharVector.vector = CharArray.vector
     = CharVectorSlice.vector = CharArraySlice.vector
+
   sharing type CharArray.array = CharArraySlice.array
+
   sharing type CharVectorSlice.slice
     = CharArraySlice.vector_slice
 end
@@ -62,6 +73,8 @@ structure Char : CHAR
 ```
 
 A substructure: its members are described on the page of [`CHAR`](../sig/CHAR.md).
+
+The characters: [`Char`](#str-char) for [`Text`](TEXT.md), [`WideChar`](../sig/CHAR.md) for [`WideText`](TEXT.md).
 
 <details><summary>Tests (5)</summary>
 
@@ -77,6 +90,8 @@ structure String : STRING
 
 A substructure: its members are described on the page of [`STRING`](../sig/STRING.md).
 
+The strings of those characters.
+
 <details><summary>Tests (4)</summary>
 
 For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `size-of-a-string` &middot; `concat-is-a-string` &middot; `same-functions` &middot; `char-is-char`
@@ -90,6 +105,8 @@ structure Substring : SUBSTRING
 ```
 
 A substructure: its members are described on the page of [`SUBSTRING`](../sig/SUBSTRING.md).
+
+Their substrings.
 
 <details><summary>Tests (3)</summary>
 
@@ -105,6 +122,8 @@ structure CharVector : MONO_VECTOR
 
 A substructure: its members are described on the page of [`MONO_VECTOR`](../sig/MONO_VECTOR.md).
 
+Their strings seen as immutable sequences.
+
 <details><summary>Tests (3)</summary>
 
 For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `vector-is-a-string` &middot; `of-a-CharVector.vector` &middot; `is-a-CharVector.vector`
@@ -118,6 +137,8 @@ structure CharArray : MONO_ARRAY
 ```
 
 A substructure: its members are described on the page of [`MONO_ARRAY`](../sig/MONO_ARRAY.md).
+
+Mutable sequences of those characters.
 
 <details><summary>Tests (3)</summary>
 
@@ -133,6 +154,8 @@ structure CharVectorSlice : MONO_VECTOR_SLICE
 
 A substructure: its members are described on the page of [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md).
 
+Slices of the vectors: the substrings, under their sequence interface.
+
 <details><summary>Tests (4)</summary>
 
 For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-CharVectorSlice.slice` &middot; `is-a-CharVectorSlice.slice` &middot; `is-a-substring` &middot; `of-a-substring`
@@ -147,11 +170,17 @@ structure CharArraySlice : MONO_ARRAY_SLICE
 
 A substructure: its members are described on the page of [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md).
 
+Slices of the arrays.
+
 <details><summary>Tests (3)</summary>
 
 For `Text`, in [tests/basis/text.sml](../../../../tests/basis/text.sml): `of-a-CharArraySlice.slice` &middot; `is-a-CharArraySlice.slice` &middot; `copyVec-of-a-CharVectorSlice.slice`
 
 </details>
+
+## See also
+
+[`CHAR`](../sig/CHAR.md), [`STRING`](../sig/STRING.md), [`SUBSTRING`](../sig/SUBSTRING.md), [`MONO_VECTOR`](../sig/MONO_VECTOR.md), [`MONO_ARRAY`](../sig/MONO_ARRAY.md)
 
 ---
 

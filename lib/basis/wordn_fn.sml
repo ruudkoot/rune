@@ -1,6 +1,6 @@
 (* WordN: words of `wordSize` bits (less than 64), kept in a word of the VM
    whose upper bits are zero; every operation that could set one of them
-   clears it again, as Word8 does. One file per instance (word16.sml,
+   clears it again. One file per instance (word8.sml, word16.sml,
    word32.sml); Word64 is Word itself. *)
 functor RuneWordNFn (val wordSize : int) :> WORD =
 struct

@@ -1,12 +1,12 @@
 # signature COMMAND_LINE
 
-[The Standard ML Basis Library](../README.md) &rsaquo; **COMMAND_LINE**
+[The Standard ML Basis Library](../README.md) &rsaquo; The operating system &rsaquo; **COMMAND_LINE**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 0 of 2 entries documented |
+| Documentation | 2 of 2 entries documented |
 | Tests | 4 checks of 2 entries |
 | Source | [lib/basis/sig\_command\_line.sml](../../../../lib/basis/sig_command_line.sml) |
 
@@ -21,8 +21,7 @@ structure CommandLine : COMMAND_LINE
 | --- | --- | --- |
 | `CommandLine` | CommandLine | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
 
-signature COMMAND\_LINE, transcribed from
-<https://smlfamily.github.io/Basis/command-line.html>
+The name of the program and the arguments it was given.
 
 ## Interface
 
@@ -30,6 +29,7 @@ signature COMMAND\_LINE, transcribed from
 signature COMMAND_LINE =
 sig
   val <a href="#val-name">name</a> : unit -&gt; string
+
   val <a href="#val-arguments">arguments</a> : unit -&gt; string list
 end
 </pre>
@@ -39,6 +39,11 @@ end
 ```sml
 val name : unit -> string
 ```
+
+`name ()` is the name under which the program was called.
+
+> **Implementation** `CommandLine.name/system`. What the operating system
+> passed to the program, which need not be a path that leads to it.
 
 <details><summary>Tests (2)</summary>
 
@@ -52,11 +57,25 @@ For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/comm
 val arguments : unit -> string list
 ```
 
+`arguments ()` is the list of the arguments that follow the name, in order.
+
+> **Reading** `CommandLine.arguments/none-under-the-runner`. Which arguments
+> a program sees is "operating system and implementation-specific": what
+> the system passes after the name, with nothing taken away, and the empty
+> list when it passes none.
+
+**Law** `List.length (arguments ()) + 1` is the number of words the command
+was given, name included.
+
 <details><summary>Tests (2)</summary>
 
 For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `none-under-the-runner` &middot; `stable`
 
 </details>
+
+## See also
+
+[`OS`](../sig/OS.md), [`UNIX`](../sig/UNIX.md)
 
 ---
 

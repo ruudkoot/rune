@@ -11,8 +11,9 @@ From the **Raises** paragraphs of the documented entries.
 - `OS.SysErr`: [`kind`](sig/OS_IO.md#val-kind) of OS_IO, [`poll`](sig/OS_IO.md#val-poll) of OS_IO
 - `Option`: [`valOf`](sig/OPTION.md#val-valof) of OPTION
 - `Poll`: [`pollIn`](sig/OS_IO.md#val-pollin) of OS_IO, [`pollOut`](sig/OS_IO.md#val-pollout) of OS_IO, [`pollPri`](sig/OS_IO.md#val-pollpri) of OS_IO
-- `Size`: [`tabulate`](sig/LIST.md#val-tabulate) of LIST, [`padLeft`](sig/STRING_CVT.md#val-padleft) of STRING_CVT, [`padRight`](sig/STRING_CVT.md#val-padright) of STRING_CVT
-- `Subscript`: [`nth`](sig/LIST.md#val-nth) of LIST, [`take`](sig/LIST.md#val-take) of LIST, [`drop`](sig/LIST.md#val-drop) of LIST
+- `Size`: [`tabulate`](sig/LIST.md#val-tabulate) of LIST, [`^`](sig/STRING.md#val-op-caret) of STRING, [`concat`](sig/STRING.md#val-concat) of STRING, [`concatWith`](sig/STRING.md#val-concatwith) of STRING, [`implode`](sig/STRING.md#val-implode) of STRING, [`translate`](sig/STRING.md#val-translate) of STRING, [`padLeft`](sig/STRING_CVT.md#val-padleft) of STRING_CVT, [`padRight`](sig/STRING_CVT.md#val-padright) of STRING_CVT
+- `Subscript`: [`packString`](sig/BYTE.md#val-packstring) of BYTE, [`nth`](sig/LIST.md#val-nth) of LIST, [`take`](sig/LIST.md#val-take) of LIST, [`drop`](sig/LIST.md#val-drop) of LIST, [`sub`](sig/STRING.md#val-sub) of STRING, [`extract`](sig/STRING.md#val-extract) of STRING, [`substring`](sig/STRING.md#val-substring) of STRING
+- `UnequalLengths`: [`zipEq`](sig/LIST_PAIR.md#val-zipeq) of LIST_PAIR, [`appEq`](sig/LIST_PAIR.md#val-appeq) of LIST_PAIR, [`mapEq`](sig/LIST_PAIR.md#val-mapeq) of LIST_PAIR, [`foldlEq`](sig/LIST_PAIR.md#val-foldleq) of LIST_PAIR, [`foldrEq`](sig/LIST_PAIR.md#val-foldreq) of LIST_PAIR
 
 ---
 

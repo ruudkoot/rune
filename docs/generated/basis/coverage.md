@@ -12,11 +12,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`BIN_IO`](sig/BIN_IO.md) | 3 | 0 | 0% | 3 | 0 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | 9 | 0 | 0% | 7 | 0 |
 | [`BOOL`](sig/BOOL.md) | 5 | 5 | 100% | 4 | 4 |
-| [`BYTE`](sig/BYTE.md) | 7 | 0 | 0% | 7 | 0 |
+| [`BYTE`](sig/BYTE.md) | 7 | 7 | 100% | 7 | 7 |
 | [`CHAR`](sig/CHAR.md) | 35 | 35 | 100% | 30 | 30 |
-| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 0 | 0% | 2 | 0 |
+| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`DATE`](sig/DATE.md) | 24 | 0 | 0% | 20 | 0 |
-| [`GENERAL`](sig/GENERAL.md) | 20 | 0 | 0% | 7 | 0 |
+| [`GENERAL`](sig/GENERAL.md) | 20 | 20 | 100% | 7 | 7 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 0 | 0% | 4 | 0 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 0 | 0% | 5 | 0 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 0 | 0% | 20 | 0 |
@@ -25,7 +25,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
 | [`IO`](sig/IO.md) | 6 | 0 | 0% | 0 | 0 |
 | [`LIST`](sig/LIST.md) | 27 | 27 | 100% | 25 | 25 |
-| [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 0 | 0% | 14 | 0 |
+| [`LIST_PAIR`](sig/LIST_PAIR.md) | 15 | 15 | 100% | 14 | 14 |
 | [`MATH`](sig/MATH.md) | 18 | 0 | 0% | 15 | 0 |
 | [`MONO_ARRAY`](sig/MONO_ARRAY.md) | 26 | 0 | 0% | 22 | 0 |
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | 22 | 0 | 0% | 17 | 0 |
@@ -58,10 +58,10 @@ documented when a comment describes it, alone or together with the entry before 
 | [`SML90`](sig/SML90.md) | 36 | 0 | 0% | 18 | 0 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 0 | 0% | 76 | 0 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 0 | 0% | 21 | 0 |
-| [`STRING`](sig/STRING.md) | 31 | 0 | 0% | 28 | 0 |
+| [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 0 | 0% | 36 | 0 |
-| [`TEXT`](sig/TEXT.md) | 7 | 0 | 0% | 0 | 0 |
+| [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 0 | 0% | 28 | 0 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 0 | 0% | 2 | 0 |
 | [`TIME`](sig/TIME.md) | 25 | 0 | 0% | 22 | 0 |
@@ -71,7 +71,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR`](sig/VECTOR.md) | 21 | 0 | 0% | 19 | 0 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 0 | 0% | 23 | 0 |
 | [`WORD`](sig/WORD.md) | 38 | 0 | 0% | 36 | 0 |
-| **all** | 1538 | 126 | 8% | 1078 | 99 |
+| **all** | 1538 | 208 | 13% | 1078 | 157 |
 
 ## Notes that no check pins
 

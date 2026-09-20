@@ -7,8 +7,24 @@
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
 | [`BOOL`](sig/BOOL.md) | Booleans: negation, and conversion to and from text. | required | 5 of 5 |
+| [`BYTE`](sig/BYTE.md) | Between bytes and characters: the same eight bits read as a [`Word8.word`](sig/WORD.md#type-word) and as a `char`. | required | 7 of 7 |
 | [`CHAR`](sig/CHAR.md) | Characters: their codes and order, the classes they belong to, and their conversion to and from the text of SML and C character constants. | required | 35 of 35 |
+| [`STRING`](sig/STRING.md) | Strings: immutable sequences of characters, with the operations that take them apart, put them together, compare them and write them as the text of a string constant. | required | 31 of 31 |
 | [`STRING_CVT`](sig/STRING_CVT.md) | The types and helpers of the conversions between values and text: the formats of `fmt`, the readers of `scan`. | required | 11 of 11 |
+| [`TEXT`](sig/TEXT.md) | The structures of one kind of text, gathered so that their types can be named as one: characters, strings, substrings and the vectors and arrays of characters, with the constraints that tie them together. | required | 7 of 7 |
+
+## The operating system
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
+| [`OS_IO`](sig/OS_IO.md) | Descriptors of open files, devices, pipes and sockets, and waiting until some of them are ready for input or output. | required | 26 of 26 |
+
+## The language
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`GENERAL`](sig/GENERAL.md) | The types, exceptions and values of the top-level environment that belong to no other structure. | required | 20 of 20 |
 
 ## Numbers
 
@@ -21,13 +37,8 @@
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
 | [`LIST`](sig/LIST.md) | Polymorphic, immutable, singly linked lists. | required | 27 of 27 |
+| [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
-
-## The operating system
-
-| Signature |  | Status | Documented |
-| --- | --- | --- | --- |
-| [`OS_IO`](sig/OS_IO.md) | Descriptors of open files, devices, pipes and sockets, and waiting until some of them are ready for input or output. | required | 26 of 26 |
 
 ## Not yet assigned to an area
 
@@ -38,17 +49,13 @@
 | [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) | signature ARRAY\_SLICE, transcribed from <https://smlfamily.github.io/Basis/array-slice.html> | required | 0 of 26 |
 | [`BIN_IO`](sig/BIN_IO.md) | signature BIN\_IO, transcribed from <https://smlfamily.github.io/Basis/bin-io.html> | required | 0 of 3 |
 | [`BIT_FLAGS`](sig/BIT_FLAGS.md) | signature BIT\_FLAGS, transcribed from <https://smlfamily.github.io/Basis/bit-flags.html> | required | 0 of 9 |
-| [`BYTE`](sig/BYTE.md) | signature BYTE, transcribed from <https://smlfamily.github.io/Basis/byte.html> | required | 0 of 7 |
-| [`COMMAND_LINE`](sig/COMMAND_LINE.md) | signature COMMAND\_LINE, transcribed from <https://smlfamily.github.io/Basis/command-line.html> | required | 0 of 2 |
 | [`DATE`](sig/DATE.md) | signature DATE, transcribed from <https://smlfamily.github.io/Basis/date.html> | required | 0 of 24 |
-| [`GENERAL`](sig/GENERAL.md) | signature GENERAL, transcribed from <https://smlfamily.github.io/Basis/general.html> | required | 0 of 20 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | signature GENERIC\_SOCK, transcribed from <https://smlfamily.github.io/Basis/generic-sock.html> | required | 0 of 4 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | signature IEEE\_REAL, transcribed from <https://smlfamily.github.io/Basis/ieee-float.html> | required | 0 of 10 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | signature IMPERATIVE\_IO, transcribed from <https://smlfamily.github.io/Basis/imperative-io.html> | required | 0 of 25 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | signature INET\_SOCK, transcribed from <https://smlfamily.github.io/Basis/inet-sock.html> | required | 0 of 17 |
 | [`INTEGER`](sig/INTEGER.md) | signature INTEGER, which the IntN structures are sealed with. | required | 0 of 30 |
 | [`IO`](sig/IO.md) | signature IO, transcribed from <https://smlfamily.github.io/Basis/io.html> | required | 0 of 6 |
-| [`LIST_PAIR`](sig/LIST_PAIR.md) | signature LIST\_PAIR, transcribed from <https://smlfamily.github.io/Basis/list-pair.html> | required | 0 of 15 |
 | [`MATH`](sig/MATH.md) | signature MATH, transcribed from <https://smlfamily.github.io/Basis/math.html> | required | 0 of 18 |
 | [`MONO_ARRAY`](sig/MONO_ARRAY.md) |  | required | 0 of 26 |
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | signature MONO\_ARRAY2, transcribed from <https://smlfamily.github.io/Basis/mono-array2.html> | required | 0 of 22 |
@@ -79,9 +86,7 @@
 | [`SML90`](sig/SML90.md) | signature SML90. The page of the specification that defined it (sml90.html) is no longer at <https://smlfamily.github.io/Basis/>; transcribed from the signature of MLton's basis library, which follows it, in the order of the page. | required | 0 of 36 |
 | [`SOCKET`](sig/SOCKET.md) | signature SOCKET, transcribed from <https://smlfamily.github.io/Basis/socket.html> | required | 0 of 93 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | signature STREAM\_IO: the functional streams. | required | 0 of 29 |
-| [`STRING`](sig/STRING.md) | signature STRING, transcribed from <https://smlfamily.github.io/Basis/string.html> | required | 0 of 31 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | signature SUBSTRING, transcribed from <https://smlfamily.github.io/Basis/substring.html> | required | 0 of 39 |
-| [`TEXT`](sig/TEXT.md) | signature TEXT, transcribed from <https://smlfamily.github.io/Basis/text.html> | required | 0 of 7 |
 | [`TEXT_IO`](sig/TEXT_IO.md) | signature TEXT\_IO, transcribed from <https://smlfamily.github.io/Basis/text-io.html> and, for the part that it includes, from <https://smlfamily.github.io/Basis/imperative-io.html>. | required | 0 of 36 |
 | [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | signature TEXT\_STREAM\_IO, transcribed from <https://smlfamily.github.io/Basis/text-stream-io.html> | required | 0 of 2 |
 | [`TIME`](sig/TIME.md) | signature TIME, transcribed from <https://smlfamily.github.io/Basis/time.html> | required | 0 of 25 |

@@ -192,7 +192,7 @@ signature; `:` that it matches it, which the test suite checks.
 | `Word64ArraySlice` | : [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Word64Vector.vector where type vector_slice = Word64VectorSlice.slice where type array = Word64Array.array where type elem = Word64.word` | optional | is `WordArraySlice` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |
 | `Word64Vector` | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = Word64.word` | optional | is `WordVector` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |
 | `Word64VectorSlice` | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = Word64Vector.vector where type elem = Word64.word` | optional | is `WordVectorSlice` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |
-| `Word8` | :> [`WORD`](sig/WORD.md) |  | required |  | [lib/basis/word8.sml](../../../lib/basis/word8.sml) |
+| `Word8` | : [`WORD`](sig/WORD.md) |  | required | an application of `RuneWordNFn` | [lib/basis/word8.sml](../../../lib/basis/word8.sml) |
 | `Word8Array` | : [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = Word8Vector.vector where type elem = Word8.word` | required | an application of `RuneMonoArrayFn` | [lib/basis/word8array.sml](../../../lib/basis/word8array.sml) |
 | `Word8Array2` | : [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = Word8Vector.vector where type elem = Word8.word` | optional | an application of `RuneMonoArray2Fn` | [lib/basis/word8array2.sml](../../../lib/basis/word8array2.sml) |
 | `Word8ArraySlice` | : [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word` | required | an application of `RuneMonoArraySliceFn` | [lib/basis/word8arrayslice.sml](../../../lib/basis/word8arrayslice.sml) |
@@ -229,7 +229,6 @@ sealed, so these names are visible; a program that uses them is not portable.
 | `Vector` | `toList` |
 | `VectorSlice` | `Slice` |
 | `Word` | `two64`, `two63`, `base` |
-| `Word8` | `low`, `keep`, `extend` |
 
 ---
 
