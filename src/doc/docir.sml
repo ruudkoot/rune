@@ -1,0 +1,183 @@
+(* The intermediate representation of the documentation generator: what was
+   extracted from the sources, before any output format is chosen
+   (docs/plans/docgen.md, D9). Extraction fills it, the later passes resolve
+   what it names, and a renderer reads nothing else. `dump` is its stable text
+   form, which the tests of tests/doc compare. *)
+structure DocIR =
+struct
+  (* The documentation of something: the blocks of its comments (DocText),
+     those above it first. *)
+  type doc = DocText.block list
+
+  datatype kind = Val | Type | Eqtype | Datatype | Exception | Structure | Include | Sharing
+
+  fun kindName k =
+    case k of
+      Val => "val" | Type => "type" | Eqtype => "eqtype" | Datatype => "datatype"
+    | Exception => "exception" | Structure => "structure" | Include => "include" | Sharing => "sharing"
+
+  (* A field of a record type that a specification writes out. *)
+  type field = {label : string, ty : string, doc : doc}
+
+  (* A constructor of a datatype specification. *)
+  type con = {name : string, arg : string option, fields : field list, doc : doc}
+
+  (* One thing a signature specifies. spec is its source text without
+     comments, beginning with its keyword also where the source has `and`.
+     sigref names the signature of `structure S : SIG` and of `include SIG`;
+     body holds the specifications of `structure S : sig ... end`. adjacent:
+     it follows the entry before it with no blank line and no comment between
+     them. heads: how the comment shows the value applied (DocHead), its own
+     head first. leader: the entry before it whose comment documents this one
+     too, because it is adjacent and that comment has a head for it. *)
+  datatype entry = Entry of entryRecord
+
+  (* A signature body in source order: what it specifies, the headings that
+     divide it into sections, and prose that stands between entries. *)
+  and item = Item of entry | Section of string | Prose of doc
+
+  withtype entryRecord =
+    {kind : kind, name : string, path : string list,   (* the substructures it is inside, outermost first *)
+     spec : string, span : Source.span,
+     cons : con list, fields : field list,
+     sigref : string option, body : item list option, adjacent : bool,
+     heads : DocHead.head list, leader : string option, doc : doc}
+
+  datatype rhs =
+      Body                          (* struct ... end *)
+    | Alias of string               (* another structure *)
+    | Apply of string * string      (* a functor and the text of its argument *)
+    | Other
+
+  type ascription = {sigexp : string, opaque : bool}
+
+  (* What an identifier of a signature's text binds, for the anchor it links
+     to: a specification, a constructor or a field, inside these
+     substructures. *)
+  datatype bound = BEntry of kind | BCon | BField
+  type binding = {bound : bound, path : string list, name : string}
+
+  (* The text of a declaration in pieces; a piece that binds something says
+     what. *)
+  type piece = string * binding option
+
+  type signatureRecord =
+    {name : string, file : string, span : Source.span, doc : doc,
+     source : string,            (* the declaration without comments *)
+     interface : piece list,     (* the same, with what its identifiers bind *)
+     sigexp : string option,     (* when it is not sig ... end *)
+     body : item list}
+
+  datatype module =
+      Signature of signatureRecord
+    | Struct of structRecord
+    | Functor of {name : string, file : string, span : Source.span, doc : doc,
+                  param : string, result : ascription option,
+                  notes : (string * doc) list}      (* as for a structure: they hold for every application *)
+      (* a declaration at the top level that is no module: what the top-level
+         environment has. kind: val, type, exception, infix 5, ... *)
+    | Decl of {kind : string, names : string list, file : string, span : Source.span, doc : doc}
+
+  (* members: the names a structure body declares, when it is written out
+     (NONE for an alias or a functor application, whose members only
+     elaboration knows). notes: the notes (D5) in the comments above the
+     declarations of a body, by the name declared. *)
+  withtype structRecord =
+    {name : string, file : string, span : Source.span, doc : doc,
+     ascription : ascription option, rhs : rhs, subs : module list,
+     members : string list option, notes : (string * doc) list,
+     (* the members that are declared to be something else by name: `val null
+        = null`, `exception Empty = Empty`, `datatype list = datatype list` *)
+     twins : (string * string) list}
+
+  (* ---- the text form ---- *)
+  fun indent n = CharVector.tabulate (2 * n, fn _ => #" ")
+
+  (* Text that may have several lines: each after a `|`, so that the blanks
+     at the start of a line are part of it. *)
+  fun textLines (n, label, s) =
+    case String.fields (fn c => c = #"\n") s of
+      [l] => [indent n ^ label ^ ": " ^ l]
+    | ls => (indent n ^ label ^ ":") :: List.map (fn l => indent (n + 1) ^ "|" ^ l) ls
+
+  fun docLines (n, doc : doc) =
+    List.concat
+      (List.map (fn DocText.Para is => textLines (n, "para", DocText.inlinesText is)
+                  | DocText.CodeBlock c => textLines (n, "code", c)
+                  | DocText.Bullets items =>
+                      (indent n ^ "list") :: List.concat (List.map (fn is => textLines (n + 1, "item", DocText.inlinesText is)) items)
+                  | DocText.Reserved {keyword, modifier, body} =>
+                      textLines (n, "reserved " ^ keyword ^ (case modifier of SOME m => " (" ^ m ^ ")" | NONE => ""),
+                                 DocText.inlinesText body))
+                doc)
+
+  fun fieldLines n ({label, ty, doc} : field) =
+    (indent n ^ "field " ^ label ^ " : " ^ ty) :: docLines (n + 1, doc)
+
+  fun conLines n ({name, arg, fields, doc} : con) =
+    (indent n ^ "con " ^ name ^ (case arg of SOME t => " of " ^ t | NONE => ""))
+    :: docLines (n + 1, doc) @ List.concat (List.map (fieldLines (n + 1)) fields)
+
+  fun entryLines n (Entry {kind, name, spec, cons, fields, sigref, body, adjacent, heads, leader, doc, ...}) =
+    (indent n ^ kindName kind ^ (if name = "" then "" else " " ^ name))
+    :: textLines (n + 1, "spec", spec)
+    @ (if adjacent then [indent (n + 1) ^ "adjacent"] else [])
+    @ (case leader of SOME l => [indent (n + 1) ^ "documented with: " ^ l] | NONE => [])
+    @ List.map (fn {code, name = h, args, ...} : DocHead.head =>
+                  indent (n + 1) ^ "head of " ^ h ^ ": " ^ code ^
+                  (if List.null args then "" else " (arguments: " ^ String.concatWith " " args ^ ")")) heads
+    @ (case sigref of SOME s => [indent (n + 1) ^ "signature: " ^ s] | NONE => [])
+    @ docLines (n + 1, doc)
+    @ List.concat (List.map (conLines (n + 1)) cons)
+    @ List.concat (List.map (fieldLines (n + 1)) fields)
+    @ (case body of SOME items => List.concat (List.map (itemLines (n + 1)) items) | NONE => [])
+
+  and itemLines n item =
+    case item of
+      Item e => entryLines n e
+    | Section title => [indent n ^ "section " ^ title]
+    | Prose doc => (indent n ^ "prose") :: docLines (n + 1, doc)
+
+  fun ascriptionLines n (a : ascription option) =
+    case a of
+      SOME {sigexp, opaque} => textLines (n, if opaque then "sealed with" else "ascribed", sigexp)
+    | NONE => []
+
+  fun moduleLines n m =
+    case m of
+      Signature {name, doc, source, sigexp, body, ...} =>
+        (indent n ^ "signature " ^ name)
+        :: (case sigexp of SOME s => textLines (n + 1, "is", s) | NONE => [])
+        @ docLines (n + 1, doc)
+        @ List.concat (List.map (itemLines (n + 1)) body)
+        @ textLines (n + 1, "source", source)
+    | Struct {name, doc, ascription, rhs, subs, members, notes, twins, ...} =>
+        (indent n ^ "structure " ^ name)
+        :: ascriptionLines (n + 1) ascription
+        @ (case rhs of
+             Body => []
+           | Alias s => [indent (n + 1) ^ "alias of: " ^ s]
+           | Apply (f, arg) => textLines (n + 1, "application of " ^ f ^ " to", arg)
+           | Other => [indent (n + 1) ^ "other"])
+        @ docLines (n + 1, doc)
+        @ (case members of SOME ms => [indent (n + 1) ^ "members: " ^ String.concatWith " " ms] | NONE => [])
+        @ List.map (fn (m, other) => indent (n + 1) ^ "twin: " ^ m ^ " = " ^ other) twins
+        @ noteLines (n + 1) notes
+        @ List.concat (List.map (moduleLines (n + 1)) subs)
+    | Functor {name, doc, param, result, notes, ...} =>
+        (indent n ^ "functor " ^ name)
+        :: textLines (n + 1, "parameter", param)
+        @ ascriptionLines (n + 1) result
+        @ docLines (n + 1, doc)
+        @ noteLines (n + 1) notes
+
+    | Decl {kind, names, doc, ...} =>
+        (indent n ^ "declaration " ^ kind ^ " " ^ String.concatWith " " names) :: docLines (n + 1, doc)
+
+  and noteLines n (notes : (string * doc) list) =
+    List.concat (List.map (fn (member, doc) => (indent n ^ "notes on " ^ member) :: docLines (n + 1, doc)) notes)
+
+  fun dump (file : string, modules : module list) : string =
+    String.concat (List.map (fn l => l ^ "\n")
+                            (("file " ^ file) :: List.concat (List.map (moduleLines 1) modules)))
+end

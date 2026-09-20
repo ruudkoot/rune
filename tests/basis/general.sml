@@ -39,24 +39,25 @@ struct
 
   (* ---- the exceptions: General.X and the top-level X are one exception,
           and the ten are distinct ---- *)
-  val standard : (string * exn * (exn -> bool) * (exn -> bool)) list =
-    [("Bind", General.Bind, T.isBind, fn General.Bind => true | _ => false),
-     ("Match", General.Match, T.isMatch, fn General.Match => true | _ => false),
-     ("Chr", General.Chr, T.isChr, fn General.Chr => true | _ => false),
-     ("Div", General.Div, T.isDiv, fn General.Div => true | _ => false),
-     ("Domain", General.Domain, T.isDomain, fn General.Domain => true | _ => false),
-     ("Fail", General.Fail "reason", T.isFail, fn General.Fail _ => true | _ => false),
-     ("Overflow", General.Overflow, T.isOverflow, fn General.Overflow => true | _ => false),
-     ("Size", General.Size, T.isSize, fn General.Size => true | _ => false),
-     ("Span", General.Span, T.isSpan, fn General.Span => true | _ => false),
-     ("Subscript", General.Subscript, T.isSubscript, fn General.Subscript => true | _ => false)]
+  val standard : (string * string * exn * (exn -> bool) * (exn -> bool)) list =
+    [("General.Bind/", "Bind", General.Bind, T.isBind, fn General.Bind => true | _ => false),
+     ("General.Match/", "Match", General.Match, T.isMatch, fn General.Match => true | _ => false),
+     ("General.Chr/", "Chr", General.Chr, T.isChr, fn General.Chr => true | _ => false),
+     ("General.Div/", "Div", General.Div, T.isDiv, fn General.Div => true | _ => false),
+     ("General.Domain/", "Domain", General.Domain, T.isDomain, fn General.Domain => true | _ => false),
+     ("General.Fail/", "Fail", General.Fail "reason", T.isFail, fn General.Fail _ => true | _ => false),
+     ("General.Overflow/", "Overflow", General.Overflow, T.isOverflow, fn General.Overflow => true | _ => false),
+     ("General.Size/", "Size", General.Size, T.isSize, fn General.Size => true | _ => false),
+     ("General.Span/", "Span", General.Span, T.isSpan, fn General.Span => true | _ => false),
+     ("General.Subscript/", "Subscript", General.Subscript, T.isSubscript, fn General.Subscript => true | _ => false)]
 
-  val () = List.app (fn (name, e, isTop, isGeneral) =>
-    (T.raises ("General." ^ name ^ "/toplevel-handles-General", isTop, fn () => raise e);
-     T.check ("General." ^ name ^ "/General-handles-General", fn () => isGeneral e);
+  (* label: the beginning of the labels of a row, "General.Bind/" *)
+  val () = List.app (fn (label, name, e, isTop, isGeneral) =>
+    (T.raises (label ^ "toplevel-handles-General", isTop, fn () => raise e);
+     T.check (label ^ "General-handles-General", fn () => isGeneral e);
      (* of the ten predicates, only its own accepts the exception *)
-     T.eq (T.list T.string) ("General." ^ name ^ "/distinct", [name],
-       fn () => List.mapPartial (fn (other, _, isOther, _) => if isOther e then SOME other else NONE)
+     T.eq (T.list T.string) (label ^ "distinct", [name],
+       fn () => List.mapPartial (fn (_, other, _, isOther, _) => if isOther e then SOME other else NONE)
                                 standard)))
     standard
 
@@ -169,7 +170,7 @@ struct
 
   (*<< exnName *)
   (* exnName ex "returns a name for the exception ex" *)
-  val () = List.app (fn (name, e, _, _) =>
+  val () = List.app (fn (_, name, e, _, _) =>
     eqS ("General.exnName/" ^ name, name, fn () => General.exnName e)) standard
   val () = eqS ("General.exnName/toplevel", "Div", fn () => exnName Div)
   val () = eqS ("General.exnName/Fail-ignores-argument", "Fail", fn () => exnName (Fail "Size"))
@@ -207,7 +208,7 @@ struct
   (*<< exnMessage *)
   (* exnMessage ex "returns a message ... The precise format of the message may
      vary between implementations and locales": it returns, and does not raise. *)
-  val () = List.app (fn (name, e, _, _) =>
+  val () = List.app (fn (_, name, e, _, _) =>
     T.check ("General.exnMessage/returns-" ^ name, fn () => String.size (General.exnMessage e) >= 0))
     standard
   val () = T.check ("General.exnMessage/toplevel", fn () => String.size (exnMessage Div) >= 0)
@@ -218,7 +219,7 @@ struct
 
   (*<< exnMessage-exnName *)
   (* "... but will at least contain the string exnName ex" *)
-  val () = List.app (fn (name, e, _, _) =>
+  val () = List.app (fn (_, name, e, _, _) =>
     T.check ("General.exnMessage/contains-exnName-" ^ name,
              fn () => String.isSubstring (exnName e) (exnMessage e)))
     standard

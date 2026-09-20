@@ -1,4 +1,6 @@
-(* IO: the exceptions and the buffering modes shared by the I/O structures. *)
+(* IO: the exceptions and the buffering modes shared by the I/O structures.
+
+   Implements: IO *)
 structure IO =
 struct
   exception Io of {name : string, function : string, cause : exn}

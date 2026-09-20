@@ -1,0 +1,42 @@
+# Ordered list of the sources of runedoc, the documentation generator
+# (docs/plans/docgen.md): the compiler's utilities, frontend and elaborator,
+# which it shares with sources.txt in the same order, and src/doc.
+# scripts/gen-build-files.sh makes the build files of every host from this
+# list -- edit only this file. The rules of sources.txt hold here too.
+src/util/scon.sml
+src/util/ordmap.sml
+src/util/source.sml
+src/util/error.sml
+src/frontend/token.sml
+src/frontend/lexer.sml
+src/elab/types.sml
+src/elab/overload.sml
+src/frontend/ast.sml
+src/frontend/fixity.sml
+src/frontend/parser.sml
+src/elab/unify.sml
+src/elab/env.sml
+src/elab/sigmatch.sml
+src/elab/exhaust.sml
+src/backend/prims.sml
+src/elab/elaborate.sml
+src/driver/basismanifest.sml
+src/doc/docsource.sml
+src/doc/docdiag.sml
+src/doc/doccomments.sml
+src/doc/doctext.sml
+src/doc/dochead.sml
+src/doc/docir.sml
+src/doc/docextract.sml
+src/doc/docanchor.sml
+src/doc/docmarkdown.sml
+src/doc/docclaims.sml
+src/doc/docelab.sml
+src/doc/doctests.sml
+src/doc/docnotes.sml
+src/doc/docannot.sml
+src/doc/docresolve.sml
+src/doc/docpage.sml
+src/doc/docexamples.sml
+src/doc/docsite.sml
+src/doc/docmain.sml

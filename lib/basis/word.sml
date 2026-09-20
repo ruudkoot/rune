@@ -1,6 +1,8 @@
 (* Word: unsigned words: 64 bits on the VM. The size is found by shifting a
    bit out, so that this file means the same to a system whose word is
-   narrower. *)
+   narrower.
+
+   Implements: WORD *)
 structure Word =
 struct
   type word = word

@@ -138,21 +138,22 @@ struct
   val () = eqK (lab "fromLarge/round-trip", ~127, fn () => I.fromLarge (I.toLarge (i ~127)))
 
   (* ---- arithmetic on small numbers ---- *)
-  fun table (member, f) cases =
-    List.app (fn (c, a, b, r) => eqK (lab (member ^ "/" ^ c), r, fn () => f (i a, i b))) cases
+  (* label: the beginning of the labels, lab "member/" *)
+  fun table (label, f) cases =
+    List.app (fn (c, a, b, r) => eqK (label ^ c, r, fn () => f (i a, i b))) cases
 
-  val () = table ("+", fn p => I.+ p)
+  val () = table (lab "+/", fn p => I.+ p)
     [("basic", 2, 3, 5), ("negative", ~2, ~3, ~5), ("mixed", ~2, 3, 1), ("zero", 0, 0, 0),
      ("identity", 42, 0, 42), ("inverse", 42, ~42, 0)]
-  val () = table ("-", fn p => I.- p)
+  val () = table (lab "-/", fn p => I.- p)
     [("basic", 5, 3, 2), ("below-zero", 5, 7, ~2), ("negative", ~5, ~7, 2), ("zero", 0, 0, 0),
      ("identity", 42, 0, 42), ("from-zero", 0, 42, ~42), ("self", 42, 42, 0)]
-  val () = table ("*", fn p => I.* p)
+  val () = table (lab "*/", fn p => I.* p)
     [("basic", 6, 7, 42), ("neg-pos", ~6, 7, ~42), ("pos-neg", 6, ~7, ~42), ("neg-neg", ~6, ~7, 42),
      ("zero", 42, 0, 0), ("zero-left", 0, ~42, 0), ("identity", 1, ~42, ~42), ("minus-one", ~1, 42, ~42)]
 
   (* i div j is floor (i / j), and i mod j = i - j * floor (i / j) has the sign of j. *)
-  val () = table ("div", I.div)
+  val () = table (lab "div/", I.div)
     [("pos-pos", 7, 2, 3), ("neg-pos", ~7, 2, ~4), ("pos-neg", 7, ~2, ~4), ("neg-neg", ~7, ~2, 3),
      ("exact-pos-pos", 6, 3, 2), ("exact-neg-pos", ~6, 3, ~2), ("exact-pos-neg", 6, ~3, ~2),
      ("exact-neg-neg", ~6, ~3, 2),
@@ -161,7 +162,7 @@ struct
      ("100-7", 100, 7, 14), ("~100-7", ~100, 7, ~15), ("100-~7", 100, ~7, ~15), ("~100-~7", ~100, ~7, 14),
      ("by-one", 5, 1, 5), ("by-minus-one", 5, ~1, ~5), ("small-by-large", 3, 5, 0),
      ("small-neg-by-large", ~3, 5, ~1), ("small-by-large-neg", 3, ~5, ~1)]
-  val () = table ("mod", I.mod)
+  val () = table (lab "mod/", I.mod)
     [("pos-pos", 7, 2, 1), ("neg-pos", ~7, 2, 1), ("pos-neg", 7, ~2, ~1), ("neg-neg", ~7, ~2, ~1),
      ("exact-pos-pos", 6, 3, 0), ("exact-neg-pos", ~6, 3, 0), ("exact-pos-neg", 6, ~3, 0),
      ("exact-neg-neg", ~6, ~3, 0),
@@ -171,7 +172,7 @@ struct
      ("by-one", 5, 1, 0), ("by-minus-one", 5, ~1, 0), ("small-by-large", 3, 5, 3),
      ("small-neg-by-large", ~3, 5, 2), ("small-by-large-neg", 3, ~5, ~2)]
   (* quot drops the fractional part, and i rem j = i - j * quot (i, j) has the sign of i. *)
-  val () = table ("quot", I.quot)
+  val () = table (lab "quot/", I.quot)
     [("pos-pos", 7, 2, 3), ("neg-pos", ~7, 2, ~3), ("pos-neg", 7, ~2, ~3), ("neg-neg", ~7, ~2, 3),
      ("exact-pos-pos", 6, 3, 2), ("exact-neg-pos", ~6, 3, ~2), ("exact-pos-neg", 6, ~3, ~2),
      ("exact-neg-neg", ~6, ~3, 2),
@@ -180,7 +181,7 @@ struct
      ("100-7", 100, 7, 14), ("~100-7", ~100, 7, ~14), ("100-~7", 100, ~7, ~14), ("~100-~7", ~100, ~7, 14),
      ("by-one", 5, 1, 5), ("by-minus-one", 5, ~1, ~5), ("small-by-large", 3, 5, 0),
      ("small-neg-by-large", ~3, 5, 0), ("small-by-large-neg", 3, ~5, 0)]
-  val () = table ("rem", I.rem)
+  val () = table (lab "rem/", I.rem)
     [("pos-pos", 7, 2, 1), ("neg-pos", ~7, 2, ~1), ("pos-neg", 7, ~2, 1), ("neg-neg", ~7, ~2, ~1),
      ("exact-pos-pos", 6, 3, 0), ("exact-neg-pos", ~6, 3, 0), ("exact-pos-neg", 6, ~3, 0),
      ("exact-neg-neg", ~6, ~3, 0),
@@ -209,20 +210,20 @@ struct
     [("less", 1, 2), ("equal", 2, 2), ("greater", 2, 1), ("neg-pos", ~1, 1), ("pos-neg", 1, ~1),
      ("neg-neg-less", ~2, ~1), ("neg-neg-greater", ~1, ~2), ("neg-equal", ~2, ~2),
      ("zero-zero", 0, 0), ("zero-neg", 0, ~1), ("neg-zero", ~1, 0), ("far", ~127, 127)]
-  fun orderTable (member, f, expect : int * int -> bool) =
-    List.app (fn (c, a, b) => eqB (lab (member ^ "/" ^ c), expect (a, b), fn () => f (i a, i b))) orderCases
+  fun orderTable (label, f, expect : int * int -> bool) =
+    List.app (fn (c, a, b) => eqB (label ^ c, expect (a, b), fn () => f (i a, i b))) orderCases
   val () = List.app (fn (c, a, b) =>
              eqOrd (lab ("compare/" ^ c), if a < b then LESS else if a = b then EQUAL else GREATER,
                     fn () => I.compare (i a, i b))) orderCases
-  val () = orderTable ("<", I.<, fn (a, b) => a < b)
-  val () = orderTable ("<=", I.<=, fn (a, b) => a <= b)
-  val () = orderTable (">", I.>, fn (a, b) => a > b)
-  val () = orderTable (">=", I.>=, fn (a, b) => a >= b)
+  val () = orderTable (lab "</", I.<, fn (a, b) => a < b)
+  val () = orderTable (lab "<=/", I.<=, fn (a, b) => a <= b)
+  val () = orderTable (lab ">/", I.>, fn (a, b) => a > b)
+  val () = orderTable (lab ">=/", I.>=, fn (a, b) => a >= b)
 
-  val () = table ("min", I.min)
+  val () = table (lab "min/", I.min)
     [("first", 1, 2, 1), ("second", 2, 1, 1), ("equal", 2, 2, 2), ("negative", ~1, ~2, ~2),
      ("mixed", ~1, 1, ~1), ("zero", 0, ~1, ~1)]
-  val () = table ("max", I.max)
+  val () = table (lab "max/", I.max)
     [("first", 2, 1, 2), ("second", 1, 2, 2), ("equal", 2, 2, 2), ("negative", ~1, ~2, ~1),
      ("mixed", ~1, 1, 1), ("zero", 0, ~1, 0)]
 

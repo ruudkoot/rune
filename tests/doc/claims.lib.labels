@@ -1,0 +1,9 @@
+label	kind	exception	file	functor
+Good.zero/is-zero	eq		tests/doc/claims.lib/tests/counter.sml	
+Good.zero/never-raises	raises	Overflow	tests/doc/claims.lib/tests/counter.sml	
+Good.zero/again-*	eq		tests/doc/claims.lib/tests/counter.sml	
+Good:COUNTER/matches	check		tests/doc/claims.lib/tests/counter.sml	
+Good.next/moves	check		tests/doc/claims.lib/tests/counter.sml	tests/doc/claims.lib/tests/fn/counter_fn.sml
+Good.next/*	check		tests/doc/claims.lib/tests/counter.sml	tests/doc/claims.lib/tests/fn/counter_fn.sml
+Wrong.next/moves	check		tests/doc/claims.lib/tests/counter.sml	tests/doc/claims.lib/tests/fn/counter_fn.sml
+Wrong.next/*	check		tests/doc/claims.lib/tests/counter.sml	tests/doc/claims.lib/tests/fn/counter_fn.sml

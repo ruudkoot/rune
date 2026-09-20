@@ -21,6 +21,14 @@ fun isSome (SOME _) = true
 fun valOf (SOME v) = v
   | valOf NONE = raise Option
 
+(* `print s` writes `s` to the standard output and flushes it.
+
+   It is `TextIO.print`, and the two reach the file in the order they were
+   called in: the VM holds what is written and the stream holds nothing of
+   its own.
+
+   Implementation: `print/is-a-primitive`. Here it is the VM's own write,
+   because `pervasive.sml` is compiled before `TextIO` exists. *)
 val print = _prim "print" : string -> unit
 
 (* ---- lists ---- *)

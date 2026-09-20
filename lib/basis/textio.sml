@@ -1,4 +1,8 @@
-(* TextIO: the imperative text streams (signature TEXT_IO). *)
+(* TextIO: the imperative text streams (signature TEXT_IO).
+
+   Implements: TEXT_IO
+
+   Implements: IMPERATIVE_IO *)
 structure TextIO =
 struct
   local
@@ -6,7 +10,12 @@ struct
       RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice
                       val isNewline = fn c => c = #"\n")
   in
-    (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings. *)
+    (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings.
+
+       Implements: TEXT_STREAM_IO where type reader = TextPrimIO.reader where
+       type writer = TextPrimIO.writer where type pos = TextPrimIO.pos
+
+       Implements: STREAM_IO *)
     structure StreamIO =
     struct
       open SI

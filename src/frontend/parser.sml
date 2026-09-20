@@ -1035,12 +1035,20 @@ struct
                 | ID _ =>
                     (* include sigid1 ... sigidn (derived form), or one signature identifier with where clauses *)
                     let
-                      fun ids acc = case peek () of ID n => (advance (); ids (n :: acc)) | _ => List.rev acc
+                      fun ids acc =
+                        case peek () of
+                          ID n => let val sp = peekSpan () in advance (); ids ((n, sp) :: acc) end
+                        | _ => List.rev acc
                       val names = ids []
                     in
+                      (* Each signature identifier has the span of its name,
+                         and the first specification begins at `include`. *)
                       case names of
-                        [n] => [SpecInclude (parseWhere (SigId (n, start), start), spanFrom start)]
-                      | _ => List.map (fn n => SpecInclude (SigId (n, start), start)) names
+                        [(n, sp)] => [SpecInclude (parseWhere (SigId (n, sp), sp), spanFrom start)]
+                      | (n, sp) :: rest =>
+                          SpecInclude (SigId (n, sp), Source.join (start, sp))
+                          :: List.map (fn (n, sp) => SpecInclude (SigId (n, sp), sp)) rest
+                      | [] => []
                     end
                 | t => err ("expected signature after 'include' but found '" ^ toString t ^ "'")
               end

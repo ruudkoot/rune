@@ -1,11 +1,13 @@
-(* requires: Word8 LargeInt *)
-(* uses: fn/numstr.sml fn/word_fn.sml *)
+(* requires: Word8 LargeWord LargeInt StringCvt *)
+(* uses: fn/numstr.sml fn/word_fn.sml fn/word_large_fn.sml fn/word_scan_fn.sml *)
 (* Word8 (signature WORD): the checks that hold for every WORD structure,
-   from fn/word_fn.sml, and word constants and the overloaded operators at
-   the type. *)
+   from fn/word_fn.sml, fn/word_large_fn.sml and fn/word_scan_fn.sml, and
+   word constants and the overloaded operators at the type. *)
 structure TestWord8 =
 struct
   structure Generic = TestWordFn (structure W = Word8 val name = "Word8")
+  structure Large = TestWordLargeFn (structure W = Word8 val name = "Word8")
+  structure Scan = TestWordScanFn (structure W = Word8 val name = "Word8")
 
   (* Word constants and the overloaded operators at Word8.word. A host that
      compiles lib/basis (xc1) has its own, closed overloading, which does not

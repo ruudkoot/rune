@@ -1,6 +1,9 @@
 (* CharVectorSlice: its slice is the substring of Substring, so it is written
    on Substring rather than being an instance of RuneMonoVectorSliceFn. The
-   -i functions pass the index in the slice. *)
+   -i functions pass the index in the slice.
+
+   Implements: MONO_VECTOR_SLICE where type slice = Substring.substring where
+   type vector = String.string where type elem = char *)
 structure CharVectorSlice : MONO_VECTOR_SLICE =
 struct
   type elem = char

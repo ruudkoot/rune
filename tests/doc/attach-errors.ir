@@ -1,0 +1,29 @@
+file tests/doc/attach-errors.sml
+  signature LOST
+    para: Comments that document nothing, in a signature: each is an error.
+    val f
+      spec: val f : (int -> int) -> int
+    val g
+      spec: val g : int
+      para: the second
+    datatype t
+      spec: datatype t = A | B
+      con A
+      con B
+    structure S
+      spec:
+        |structure S : ORD
+        |  where type t = int
+      signature: ORD
+    source:
+      |signature LOST =
+      |sig
+      |  val f : (int -> int) -> int
+      |
+      |  val g : int
+      |
+      |  datatype t = A | B
+      |
+      |  structure S : ORD
+      |    where type t = int
+      |end

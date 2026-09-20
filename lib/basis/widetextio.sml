@@ -1,12 +1,27 @@
 (* WideTextPrimIO and WideTextIO (optional in the specification): the readers,
    writers and imperative streams of the wide character.
 
-   The specification does not say how a wide character reaches a file, so a
-   stream of WideTextIO is a stream of TextIO encoded in UTF-8: one byte for a
-   code point below 128, up to four above it. A byte sequence that is not
-   UTF-8 raises Io with the cause Fail "UTF-8". A stream made with
-   mkInstream over a reader of one's own carries wide characters as they are,
-   without an encoding. *)
+   Implementation: `WideTextIO/files-hold-utf-8`. The specification names no
+   encoding, so a stream of `WideTextIO` is a stream of `TextIO` encoded in
+   UTF-8: one byte for a code point below 128, up to four above it. A byte
+   sequence that is not UTF-8 raises `IO.Io` with the cause `Fail "UTF-8"`. A
+   stream made with `mkInstream` over a reader of one's own carries wide
+   characters as they are, without an encoding. No host has a `WideTextIO` to
+   compare with.
+
+   Pinned by: `WideTextIO.output/writes-utf-8`,
+   `WideTextIO.inputAll/reads-utf-8`,
+   `WideTextIO.inputN/counts-characters-not-bytes`
+
+   Limitation: `WideTextIO/file-streams-have-no-positions`. The reader and
+   the writer of a file of wide characters have no positions, no `ioDesc`,
+   no operations that do not block, and neither `canInput` nor `avail`: a
+   position in the file is one of bytes and not of characters. Their
+   `chunkSize` is 1024 characters, where a file of `TextIO` has 4096.
+
+   Implements: PRIM_IO
+
+   Status: optional *)
 structure WideTextPrimIO =
   RunePrimIOFn (structure V = WideCharVector
                 structure A = WideCharArray

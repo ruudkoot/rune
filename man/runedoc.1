@@ -1,0 +1,188 @@
+.TH RUNEDOC 1 "2026" "runedoc 0.3.0" "Rune Manual"
+.SH NAME
+runedoc \- generate the documentation of a Standard ML library
+.SH SYNOPSIS
+.B runedoc
+.BI \-\-library " NAME"
+.BI \-\-out " DIR"
+.RB [ \-\-check ]
+.RI [ options ]
+.br
+.B runedoc
+.BI \-\-library " NAME"
+.BI \-\-examples " DIR"
+.br
+.B runedoc
+.RB ( \-\-page | \-\-dump\-ir | \-\-lint )
+.IR file.sml " ..."
+.SH DESCRIPTION
+.B runedoc
+makes cross-linked Markdown pages from the signatures of a library and the
+comments in them: a page for every signature with an entry for each type,
+value, exception and substructure it specifies, a page for every functor, an
+overview, the structures with the signatures they implement, the top-level
+environment, the exceptions and who raises them, an index of identifiers, how
+the library reads its specification, and how much is documented. It uses the
+lexer, the parser and the elaborator of
+.BR rune (1).
+.PP
+A library is a directory with a
+.B MANIFEST
+that lists its files in the order they are compiled in; the names that begin
+with
+.B Rune
+are internal and the rest is documented. A structure is documented on the page
+of the signature it implements, which the comment above it claims with
+.B Implements:
+and the elaborator checks.
+.PP
+A comment documents the declaration that follows it, or the constructor or
+field it follows on the same line. Plain prose is a valid comment. Code stands
+between backquotes, and a name in backquotes that is documented becomes a
+link. A description of a function begins with the function applied to
+arguments. Paragraphs that begin with a reserved word
+.RB ( Raises: ,
+.BR Law: ,
+.BR Example: ,
+.BR Complexity: ,
+.BR "See also:" ,
+.BR Area: ,
+.BR Status: ,
+.BR Implements: ,
+the notes
+.BR Reading: ,
+.BR Erratum: ,
+.BR Deviation: ,
+.B Implementation:
+and
+.BR Limitation: ,
+and
+.BR "Pinned by:" )
+are checked. The file
+.I docs/doc\-comments.md
+of the Rune sources describes the language in full.
+.PP
+The library's file
+.B DOCUMENTED
+lists the signatures that are documented in full. For them what is only
+counted elsewhere is an error: an entry without a comment, a function without
+a usage, a reference that leads nowhere.
+.PP
+Like
+.BR rune (1),
+the
+.B runedoc
+on your
+.B PATH
+is a wrapper script that supplies
+.B \-\-lib
+for the installed libraries.
+.SH OPTIONS
+.TP
+.BI \-\-library " NAME"
+Document the library in
+.IR LIBDIR / NAME .
+A
+.I NAME
+with a slash in it is the directory of the library itself. A library other
+than
+.IR LIBDIR /basis
+is elaborated on top of the Basis Library, so that it may use it.
+.TP
+.BI \-\-out " DIR"
+Write the pages to
+.I DIR
+and remove the pages there that are no longer generated.
+.TP
+.B \-\-check
+Write nothing: fail if
+.I DIR
+is not what would be written. For a tree of generated pages that is kept under
+version control.
+.TP
+.BI \-\-title " TEXT"
+The title of the overview page (default: the name of the library).
+.TP
+.BI \-\-tests " DIR"
+A test suite whose checks are labelled
+.IB Structure . member / case \fR.\fP
+Every entry lists the checks of its member,
+.B Pinned by:
+must name checks that exist, and a value or exception of a signature that has
+no check for a structure that implements it is an error.
+.TP
+.BI \-\-annotations " FILE"
+Remarks about the members that are made outside the library's sources, as
+lines
+.IB glob " | " "whom it is about" " | " text \fR,\fP
+where the glob is that of the label of a check
+.RB ( * ,
+.B ?
+and
+.BR [...] ).
+Each is shown under every member that has such a check. A line
+.BI @title " TEXT"
+names the block they are shown in. A glob that finds no check of a documented
+member is an error.
+.TP
+.BI \-\-examples " DIR"
+Write the examples of the comments that are equations,
+.IB e " = " v \fR,\fP
+as one program for each signature into
+.I DIR
+and stop. Each program prints a line
+.B PASS
+or
+.B FAIL
+for every example and exits with a failure if one does not hold. The same
+examples are elaborated whenever the documentation is made.
+.TP
+.B \-\-labels
+With
+.BR \-\-tests :
+print the checks of the suite, one on a line, and stop.
+.TP
+.B \-\-check\-coverage
+With
+.B \-\-library
+and
+.BR \-\-tests :
+check only that every specified value and exception has a check.
+.TP
+.B \-\-page
+Print the pages of the signatures that the files declare. References between
+them resolve, and nothing else does.
+.TP
+.B \-\-dump\-ir
+Print what is extracted from the files, before any rendering.
+.TP
+.B \-\-lint
+Check that every comment of the files is in the language of doc comments,
+also those that document nothing.
+.TP
+.BI \-\-lib " DIR"
+The directory that holds the libraries. The wrapper script passes it; a later
+one wins.
+.TP
+.B \-\-version
+Print the version and exit.
+.TP
+.BR \-h ", " \-\-help
+Print a usage summary and exit.
+.SH EXIT STATUS
+.B runedoc
+reports everything it finds, in the order of the sources, on standard error.
+It exits 0 when there was no error (warnings do not count) and 1 otherwise, in
+which case it has written nothing.
+.SH EXAMPLES
+Document a library that uses the Basis Library, and keep the pages checked:
+.PP
+.nf
+.RS
+runedoc \-\-library ./mylib \-\-out docs/mylib \-\-title "My library"
+runedoc \-\-library ./mylib \-\-out docs/mylib \-\-check
+.RE
+.fi
+.SH SEE ALSO
+.BR rune (1),
+.BR runevm (1)

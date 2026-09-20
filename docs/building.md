@@ -58,25 +58,28 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | Command | Result |
 |---|---|
 | `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit) and Poly/ML 5.9.2 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
-| `make` | `bin/rune` (the self-hosted compiler) and `bin/runevm` |
+| `make` | `bin/rune` (the self-hosted compiler), `bin/runevm` and `bin/runedoc` |
 | `make mlton` / `make smlnj` / `make smlnj32` / `make polyml` | `bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml`; none of them is `bin/rune` |
-| `make host-builds` | all four host builds |
+| `make host-builds` | all four host builds, of the compiler and of `runedoc` |
+| `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
 | `make vm` | `bin/runevm` |
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune` |
 | `make test-all` | run the suite with each of the four host builds |
-| `make check-cross` | compile every test, example and Basis Library suite program with all five builds and compare the bytecode |
-| `make check-docs` | verify docs, tests and `.def` files are in sync, and that the Basis Library suite has a check for every specified member |
+| `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
+| `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
+| `make check-cross` | compile every test, example and Basis Library suite program, the compiler and `runedoc` with all five builds and compare the bytecode; run the five builds of `runedoc` on the same input and compare what they write (`scripts/check-doc-cross.sh`) |
+| `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/generated/basis` is up to date (which includes that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`tests/basis/check-claims.sh`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`tests/basis/check-notes.sh`) |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
-| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml` and by the bootstrap, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
+| `make perf-check` | verify the performance budgets of `tests/perf`: instructions executed and bytes and objects allocated (`runevm --count`) by benchmark programs, by the compiler compiling `examples/hello.sml`, by the bootstrap and by `runedoc`, each at most 10 % above the recorded value, and the growth of the instruction count from n to 4n. The numbers are the same on every machine. `sh tests/perf/run-perf.sh --update` records new values after a deliberate change |
 | `make bootstrap` | compile the compiler with `bin/rune` and check the result equals `bin/rune.rbc` |
 | `make check` | all of the above (about 3 minutes on 16 CPUs, most of it spent running the compiler on the interpreter) |
 | `make doctor` | check that the tools of all targets are installed and work; print how to install missing ones |
 | `make matrix-quick` | the Basis Library suite on Rune and on Rune's library compiled by each host (the `xc1` configurations); not part of `make check` |
 | `make matrix` | `matrix-quick` and the suite on each host's own library |
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
-| `make install` | install `rune`, `runevm`, the basis library, the man pages and the shell completions under `PREFIX` |
+| `make install` | install `rune`, `runevm`, `runedoc`, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
@@ -105,16 +108,24 @@ host build that compiles stage 1 of the bootstrap.
 
 ```
 $PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
+$PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
 $PREFIX/bin/runevm                   the VM
 $PREFIX/lib/rune/rune.rbc            the compiler
-$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources
-$PREFIX/share/man/man1/              rune.1, runevm.1
-$PREFIX/share/bash-completion/completions/rune
-$PREFIX/share/zsh/site-functions/    _rune, _runevm
+$PREFIX/lib/rune/runedoc.rbc         the documentation generator
+$PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
+                                     overview.doc and DOCUMENTED for runedoc
+$PREFIX/share/man/man1/              rune.1, runevm.1, runedoc.1
+$PREFIX/share/bash-completion/completions/rune, runedoc
+$PREFIX/share/zsh/site-functions/    _rune, _runevm, _runedoc
 ```
 
-The installed `rune` derives the library path from its own location
-(`$(dirname $0)/../lib/rune`), so the tree can be moved or staged.
+The installed `rune` and `runedoc` derive the library path from their own
+location (`$(dirname $0)/../lib/rune`), so the tree can be moved or staged.
+`runedoc` is installed when it is built, which `make install` sees to:
+`runedoc --library ./mylib --out docs/mylib` documents a library of your own
+on top of the installed Basis Library (`man runedoc`), and `runedoc --library
+basis --out DIR` writes the pages of the Basis Library, without the test
+inventory, which needs the suite of the sources.
 
 * As a normal user `make install` builds whatever is missing first.
 * As root it builds **nothing** — it installs `bin/` as it stands and fails if
@@ -140,6 +151,14 @@ The installed `rune` derives the library path from its own location
   `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script)
   and `build/config.sml` (the version) from it.
   **Add new source files to `sources.txt` only.**
+* `sources-doc.txt` is the same for `runedoc`: the compiler's utilities,
+  frontend and elaborator in the order of `sources.txt`, then `src/doc`. The
+  script makes `build/runedoc.mlb`, `build/runedoc.cm` and
+  `build/runedoc-polyml-build.sml` from it; the entry points are
+  `src/main/runedoc-*-main.sml`. A file that both lists name is compiled into
+  both programs, so the rules below hold for `src/doc` as well. The SML/NJ
+  builds run one after another, because CM keeps its results for all of them
+  in the same `.cm` directories.
 * `vm/opcodes.def` and `vm/prims.def` are the single source of truth for the
   instruction set and primitive table. `scripts/gen-opcodes.sh` generates
   `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml` and

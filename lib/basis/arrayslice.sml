@@ -1,5 +1,7 @@
 (* ArraySlice: an array, a start index and a length. The -i functions pass
-   the index in the slice. *)
+   the index in the slice.
+
+   Implements: ARRAY_SLICE *)
 structure ArraySlice =
 struct
   datatype 'a slice = Slice of 'a array * int * int

@@ -1,4 +1,7 @@
-(* TextPrimIO: readers and writers of characters. *)
+(* TextPrimIO: readers and writers of characters.
+
+   Implements: PRIM_IO where type array = CharArray.array where type vector =
+   CharVector.vector where type elem = Char.char *)
 structure TextPrimIO =
   RunePrimIOFn (structure V = CharVector
                 structure A = CharArray

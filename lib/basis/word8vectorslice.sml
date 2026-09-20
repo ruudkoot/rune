@@ -1,6 +1,9 @@
 (* Word8VectorSlice: a Word8Vector.vector is a string, so a slice of one is a
    substring, and taking its vector is one primitive rather than a walk over
-   the elements. *)
+   the elements.
+
+   Implements: MONO_VECTOR_SLICE where type vector = Word8Vector.vector where
+   type elem = Word8.word *)
 structure Word8VectorSlice : MONO_VECTOR_SLICE =
 struct
   type elem = Word8.word

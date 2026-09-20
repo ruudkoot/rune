@@ -1,4 +1,6 @@
-(* Vector: immutable arrays with structural equality. *)
+(* Vector: immutable arrays with structural equality.
+
+   Implements: VECTOR *)
 structure Vector =
 struct
   type 'a vector = 'a vector

@@ -22,11 +22,47 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `BinIO`. |
-| Driver | `src/driver/options.sml`, `main.sml` | CLI | Tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
+| Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
 `error.sml` (`CompileError`, `Bug`).
+
+
+## The documentation generator
+
+`runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built
+from the same sources: `sources-doc.txt` lists the utilities, the frontend and
+the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
+library the way the compiler does (the same lexer, parser and, later,
+elaborator), so what it documents is what the compiler compiles. Nothing of
+`src/doc` is part of the compiler, so it costs the bootstrap nothing.
+
+| Structure | File | Purpose |
+|---|---|---|
+| `DocSource` | `src/doc/docsource.sml` | A file's tokens, the comments in the gaps between them (the lexer keeps none; every gap is white space and comments, or it is a bug), and source text without comments. |
+| `DocDiag` | `src/doc/docdiag.sml` | Diagnostics that accumulate: a run reports everything, in source order, and fails at the end if there was an error. |
+| `DocComments` | `src/doc/doccomments.sml` | What each comment documents, by line: the item directly below it, or the innermost item that ends on its line; a comment that starts with `----` is a section heading, one followed by a blank line is prose. In a signature a comment that is none of these is an error. |
+| `DocText` | `src/doc/doctext.sml` | The language of doc comments ([doc-comments.md](doc-comments.md)): paragraphs, code between backquotes, code blocks, lists, links and the reserved paragraphs (`Raises:`, `Implements:`, the notes), with what each of those must look like. |
+| `DocHead` | `src/doc/dochead.sml` | Usage heads: `` `take (l, i)` `` at the start of a value's description is parsed with the compiler's parser and checked against the type of the specification; its arguments name the arguments for the rest of the comment. |
+| `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
+| `DocExtract` | `src/doc/docextract.sml` | Syntax tree and comments to `DocIR`, in two walks: the first notes what can be documented, the second builds the modules with their comments. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
+| `DocAnchor` | `src/doc/docanchor.sml` | The explicit anchors of a page, `kind-name` in lower case with symbolic identifiers spelled out (`val-op-at`): GitHub's own anchors are useless for SML. |
+| `DocMarkdown` | `src/doc/docmarkdown.sml` | Markdown as GitHub reads it: what must be escaped for text to stay text, blocks, tables. |
+| `DocClaims` | `src/doc/docclaims.sml` | What implements what: the `Implements:` paragraphs of structures and functors, the ascriptions of the source, and the substructures a structure has through `structure A = B`. They give the signature pages their implementations and are written to `claims.tsv`, which `tests/basis/check-claims.sh` compares with what the suite matches against the specification's signatures. |
+| `DocElab` | `src/doc/docelab.sml` | The library through the compiler's elaborator, file by file as the driver does it. A claim is checked by elaborating `structure Claim : SIG where type ... = S` on top, and the compiler's complaint is the diagnostic; a usage head is checked against the elaborated type of its value, with abbreviations expanded. It also answers what only elaboration knows: whether an example that is an equation is well typed (`checkExample`), what a structure without a body in the source declares and what a signature specifies with its includes (`namesOf`, `specifiedBy`, for the names beyond the signature of `structures.md`), and which types have one type name (`typeNames`, for `types.md`). A library other than the Basis Library is elaborated on top of it. |
+| `DocTests` | `src/doc/doctests.sml` | The checks of a test suite, read out of its sources with the compiler's parser: the labels `Structure.member/case` (literal, or literal and computed), what kind of check each is and which exception a `raises` expects, test functors expanded by the `name` each application gives. The pages list the checks of every member, and generation fails for a specified member of a claimed structure that has none. |
+| `DocNotes` | `src/doc/docnotes.sml` | The notes of the doc comments (readings, errata, deviations, implementation choices, limitations) with what pins them: the `Pinned by:` globs, which must match checks of the suite, or the check whose label is the note's id. They are written to `notes.tsv` and `readings.md`; `tests/basis/check-notes.sh` compares the export with `deviations.txt`, so that the suite depends on the documentation and not the other way round. |
+| `DocAnnot` | `src/doc/docannot.sml` | Annotations: what a file made elsewhere says about the members, `glob \| whom it is about \| text`, where the glob is that of a check's label (`*`, `?`, `[...]`). An annotation is shown under every member with such a check, and one that finds none is an error. The Basis Library's file is `tests/basis/annotations.txt`, the host lines of `deviations.txt` as `tests/basis/gen-annotations.sh` writes them. |
+| `DocExamples` | `src/doc/docexamples.sml` | The pieces of `Example:` paragraphs that are equations, `e = v`: which structure they are read in (`open Int` for `INTEGER`), the expression that `DocElab` elaborates when the documentation is made, and the program for each signature that `runedoc --examples` writes and `tests/basis/run-examples.sh` runs. |
+| `DocResolve` | `src/doc/docresolve.sml` | What a code span that is an identifier refers to: an argument of the usage head, a member of the signature (through its substructures and includes), a module; `List.map` leads to the page of `LIST`. |
+| `DocPage` | `src/doc/docpage.sml` | The page of a signature: status, synopsis, overview, contents, the interface with its identifiers linked, the entries with their tables of constructors and fields, notes as quotations. |
+| `DocSite` | `src/doc/docsite.sml` | A library's documentation as a tree of files: the pages, the overview by area, the index of identifiers, `conventions.md`, `coverage.md`, `structures.md` (with the names a structure declares beyond its signature), the pages of the functors, `top-level.md` (what the files that every program loads declare, each name with the structure member it is and that member's description), `exceptions.md` (from the `Raises:` paragraphs), `readings.md`, `claims.tsv`, `notes.tsv`; the ratchet of `DOCUMENTED`; checks that every anchor is unique and every link leads somewhere, that no page is too large for GitHub; writes the tree or compares it with the one on disk. |
+| `DocMain` | `src/doc/docmain.sml` | The command line: `runedoc --library NAME --out DIR [--check]`, and `--page`, `--dump-ir`, `--lint` on files. |
+
+Its tests are `tests/doc` (`make test-doc`): an input file and, next to it,
+what `runedoc` is expected to make of it (`.ir`, and `.md` for the page) and
+to complain about (`.diag`).
 
 ## Modules
 

@@ -95,6 +95,15 @@ struct
   fun socketPair' (af, ty, protocol) = RuneSocket.socketPair' (af, ty, protocol)
 end
 
+(* Implements: INET_SOCK
+
+   Status: optional *)
 structure INetSock = RuneINetSock
+(* Implements: UNIX_SOCK
+
+   Status: optional *)
 structure UnixSock = RuneUnixSock
+(* Implements: GENERIC_SOCK
+
+   Status: optional *)
 structure GenericSock = RuneGenericSock

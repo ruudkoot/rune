@@ -1,0 +1,9 @@
+label	kind	exception	file	functor
+Shape.area/circle	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.area/square	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.scale/by-zero	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.scale/by-one	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.name/of-*	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.grow/*	check		tests/doc/annot.lib/tests/shape.sml	
+Shape.Circle/is-a-constructor	check		tests/doc/annot.lib/tests/shape.sml	
+Shape:SHAPE/matches	check		tests/doc/annot.lib/tests/shape.sml	

@@ -1,0 +1,350 @@
+# What other implementations of the Basis Library do differently, by the label
+# of the check that shows it. Made by tests/basis/gen-annotations.sh from
+# tests/basis/deviations.txt; do not edit. The format is that of
+# `runedoc --annotations` (docs/doc-comments.md):
+#   label-glob | whom it is about | text
+@title Other implementations
+@intro what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
+General.exnMessage/contains-exnName-* | SML/NJ | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
+General.*/as-value | SML/NJ | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+Bool.*/case-* | MLton | Bool.scan and fromString are case-sensitive
+Bool.*/ws* | MLton | Bool.scan and fromString do not skip initial whitespace
+Bool.*/mixed-* | MLton | Bool.scan and fromString neither ignore case nor skip initial whitespace
+Bool.*/case-* | SML/NJ | Bool.scan and fromString are case-sensitive
+Bool.*/wsx-* | SML/NJ | Bool.scan and fromString skip space, tab and newline only, not carriage return, vertical tab and formfeed
+Bool.*/mixed-* | SML/NJ | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
+*Vector.update/[Sm]* | SML/NJ | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
+Array.tabulate/Size-before-f | SML/NJ | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
+Char.fromString/unescaped-double-quote | Poly/ML | another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+*.fromCString/unescaped-double-quote* | MLton, SML/NJ, Poly/ML | converts an unescaped double quote, which the specification says fromCString does not accept
+Char.fromCString/hex-huge-does-not-fit | MLton, SML/NJ, Poly/ML | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
+Char.scan/trailing-format-after-*escape | MLton | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
+Char.scan/trailing-format* | SML/NJ | scan leaves an escaped formatting sequence that follows the character in the stream
+Char.scan/trailing-format* | Poly/ML | scan leaves an escaped formatting sequence that follows the character in the stream
+Char.fromCString/illegal-u | MLton | fromCString accepts the SML escape \uxxxx
+*.fromCString/control* | SML/NJ | fromCString does not accept \^c
+String.fromString/unescaped-double-quote* | MLton | another reading of the specification: stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
+String.fromCString/NONE-* | MLton | SOME "" instead of NONE when no character can be converted
+String.isSubstring/empty-empty | SML/NJ | isSubstring "" "" is false
+String.isSubstring/law-39 | SML/NJ | isSubstring "" "" is false (the law draws two empty strings)
+String.*/format-then-* | SML/NJ | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+String.fromString/sample-6 | SML/NJ | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
+String.fromCString/stops-at-* | SML/NJ | fromCString returns NONE unless the whole string converts
+*.scan/DEC-whitespace-[avfr]* | SML/NJ | scan does not skip vertical tab, form feed and carriage return
+*.fromString/whitespace-[avfr]* | SML/NJ | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+IntInf.fmt/*HEX* | SML/NJ | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
+IntInf.pow/*1-to-~* | SML/NJ | IntInf.pow (i, j) is 0 for | i | = 1 and j < 0
+IntInf.~>>/* | Poly/ML 5.9.2 | IntInf.~>> of a negative number that does not fit a machine word rounds towards zero, not down (~2^100 ~>> 0w101 is 0, not ~1); 5.7.1 rounds down
+IntInf.scan/BIN-* | SML/NJ 110.99.9 | IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+IntInf.scan/OCT-* | SML/NJ 110.99.9 | IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+Word.scan/HEX-0w-is-no-prefix | Poly/ML | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+Word.fromString/0w-is-no-prefix | Poly/ML | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+*IO.output1/Io-closed-stream-function | MLton | output1 on a closed stream raises Io with function "output"
+*IO.*/*-and-inputAll | MLton | after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+*IO.input1/file-grows-after-end-of-stream | MLton | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+*IO.inputN/Size-negative* | SML/NJ | inputN (strm, ~1) raises Subscript, not Size
+TextIO.openString/empty | SML/NJ | inputAll (openString "") raises Io {cause = Div, ...}
+*IO.input1/file-grows-after-end-of-stream | SML/NJ | input1 never moves past an end-of-stream
+TextIO.outputSubstr/Io-closed-stream-function | SML/NJ | another reading of the specification: reports function "outputSubstr"; the test takes outputSubstr to be "equivalent to" output, as MLton and Poly/ML do
+*IO.open*/Io-function | Poly/ML | another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
+TextIO.closeIn/unread-* | Poly/ML | characters buffered before closeIn are still read after it
+*IO.inputAll/file-grows-after-end-of-stream | Poly/ML | another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
+TextIO.inputLine/*end-of-stream | Poly/ML | another reading of the specification: inputLine that returned NONE reads on when the file has grown; the test takes the STREAM_IO model, as MLton and SML/NJ do
+Byte.packString/Subscript-*-empty-substring | MLton | packString of an empty substring does not check the offset
+CommandLine.arguments/none-under-the-runner | Poly/ML | another reading of the specification: poly --use runs the test inside the compiler, whose own options are the arguments ("operating system and implementation-specific")
+Real.rem/zero-by-zero | MLton | Real.rem (0.0, 0.0) is 0.0, not NaN
+Real.rem/law-sign-and-magnitude | MLton | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
+Real.fmt/*-negzero | MLton | another reading of the specification: SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
+Math.cosh/negInf | MLton | another reading of the specification: Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+Real.nextAfter/equal-zeros-returns-r* | MLton | another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+Real.nextAfter/equal-zeros-returns-r* | Poly/ML | another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+Real.nextAfter/*Inf-towards-zero | Poly/ML | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
+Real.*ound/just-below-half | Poly/ML | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+Real.realRound/large-odd | Poly/ML | Real.realRound (2^52 + 1) is 2^52 + 2
+Real.realRound/negzero-sign | Poly/ML | Real.realRound (~0.25) is 0.0, not ~0.0
+Real.fmt/GEN-integral-* | Poly/ML | GEN prints integral values with ".0" ("1.0")
+Real.toString/integral-* | Poly/ML | toString prints integral values with ".0" ("1.0")
+Real.fmt/GEN-notation-* | Poly/ML | GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
+Real.toString/notation-* | Poly/ML | toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+Math.pow/*one-base-*Inf | Poly/ML | Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
+Real.rem/*Inf-y | SML/NJ | Real.rem (x, inf) is NaN, not x
+Real.rem/law-agrees-with-Int-rem | SML/NJ | Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
+Real.fromManExp/minPos | SML/NJ | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos
+Real.realFloor/zero | SML/NJ | Real.realFloor 0.0 is ~0.0
+Real.real*/*huge | SML/NJ | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
+Real.realRound/large-odd | SML/NJ | Real.realRound (2^52 + 1) is 2^52
+Real.real*/negzero-sign | SML/NJ | realCeil, realTrunc and realRound lose the sign of a zero result
+Real.ceil/small-positive | SML/NJ | Real.ceil minPos is 0
+Real.round/minInt-minus-half-tie-to-even | SML/NJ (32-bit) | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+Real.fromLargeInt/sticky-bit | SML/NJ (32-bit) | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+Real.fmt/GEN-seventeen-digits | SML/NJ | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
+Real.fmt/GEN-notation-* | SML/NJ | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
+Real.fmt/EXACT-* | SML/NJ (32-bit) | not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+Real.fromString/leading-whitespace | SML/NJ | scan skips only space, tab and newline, not the other Char.isSpace characters (\r, \v, \f)
+Real.fromString/exact-* | SML/NJ | scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
+Math.atan2/*negzero* | SML/NJ | Math.atan2 ignores the sign of a zero: atan2 (~0.0, 1.0) = 0.0, atan2 (0.0, ~0.0) = 0.0
+Math.atan2/*Inf-y-*Inf-x | SML/NJ | Math.atan2 of two infinities is NaN
+Math.pow/negzero-base-negative-odd | SML/NJ | Math.pow (~0.0, ~3.0) is posInf, not negInf
+Math.*nh/negzero | SML/NJ | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
+Math.tanh/posInf | SML/NJ | Math.tanh posInf is NaN
+Math.tanh/large | SML/NJ | Math.tanh 1000.0 is NaN
+Real.rem/*Inf-x | SML/NJ 110.99.9 | rem (±inf, y) is a zero, not NaN
+Real.rem/*zero-y | SML/NJ 110.99.9 | rem (x, ±0.0) is a zero, not NaN
+Real.*/Overflow-*above-maxInt | SML/NJ 110.99.9 (64-bit) | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
+Real.*/*minInt* | SML/NJ 110.99.9 (64-bit) | ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+Real.*/*near-maxInt | SML/NJ 110.99.9 (64-bit) | ceil of the largest real below 2^62, an integer, is one less than it
+Real.fmt/*-minPos | SML/NJ 110.99.9 | fmt of minPos prints the digits of the shortest representation, 5E~324, padded with zeros instead of the digits asked for
+Real.scan/point-* | SML/NJ 110.99.9 | scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
+Real.toDecimal/* | Poly/ML 5.9.2 | toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+Real.fmt/EXACT-*zero | Poly/ML 5.9.2 | fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+Real.fromManExp/wide-exp-subnormal-to-large | Poly/ML 5.9.2 | fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
+Real.fromString/exact-round-above-half | Poly/ML 5.9.2 | fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
+Real.fromString/TO_* | SML/NJ | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+Real.fromString/TO_* | Poly/ML 5.9.2 | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+StringCvt.pad*/width-minInt | SML/NJ | padLeft and padRight raise Overflow for the smallest int (they compute i - | s | ) instead of returning s
+StringCvt.skipWS/wsx-* | SML/NJ | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
+Substring.trim[lr]/Subscript-when-k-is-given | MLton | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+Substring.trim[lr]/Subscript-when-k-is-given | SML/NJ | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
+Substring.isSubstring/*empty-of-empty* | SML/NJ | isSubstring "" ss is false when ss is empty
+Substring.substring/Subscript-not-Overflow-sum-* | Poly/ML | substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
+Substring.extract/SOME-Subscript-not-Overflow-sum-* | Poly/ML | extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
+Substring.extract/NONE-Subscript-not-Overflow-smallest | Poly/ML | extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (|s| - i overflows)
+IEEEReal.toString/negative-nan | SML/NJ 110.99.9 | toString of a NaN with the sign set is "nan", not "~nan"
+IEEEReal.scan/point-without-fraction | SML/NJ 110.99.9 | scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+IEEEReal.toString/is-fmt-EXACT | Poly/ML 5.9.2 | follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
+Word8.fromString/0w-is-no-prefix | Poly/ML | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+Word8.~>>/*-by-all-ones | Poly/ML | Word8.~>> by a shift of all ones does not give the sign-filled byte
+*ArraySlice.copy/Subscript-not-Overflow | Poly/ML | copy with di = Int.maxInt raises Overflow instead of Subscript
+*ArraySlice.copy*/Subscript-not-Overflow-sum | Poly/ML | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
+*Slice.*slice/SOME-Subscript-not-Overflow-sum-* | Poly/ML | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+Array2.copy/overlap-[lr]* | MLton | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+Array2.*/no-[rc]* | SML/NJ | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
+Array2.row/Subscript-no-rows | SML/NJ | row (a, 0) of an array without rows is an empty vector instead of Subscript
+Array2.*/nothing-* | SML/NJ | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
+Array2.*/Subscript-not-Overflow-* | SML/NJ | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
+Array2.row/Subscript-not-Overflow | SML/NJ | row (a, Int.maxInt) raises Overflow instead of Subscript
+Array2.*/Subscript-not-Overflow-* | Poly/ML | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+Array2.*/no-rows* | Poly/ML | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+Array2.*/*model-empty-* | Poly/ML | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+Array2.array/Size-negative-columns-no-rows | Poly/ML | array (0, ~1, x) does not raise Size
+Array2.*/zero-length-not-equal | Poly/ML | two arrays without rows are equal
+OS.Path.splitBaseExt/*empty-arc | MLton | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+OS.Path.joinBaseExt/inverts-splitBaseExt-random | MLton | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+OS.Path.splitBaseExt/*empty-arc | SML/NJ | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+OS.Path.joinBaseExt/inverts-splitBaseExt-random | SML/NJ | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+OS.Path.mkCanonical/._ | SML/NJ | mkCanonical raises Fail on a relative path that reduces to no arc but ends with an empty one ("./", ".//", "a/../") instead of returning "."
+OS.Path.mkCanonical/*-random | SML/NJ | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+OS.Path.isCanonical/is-mkCanonical-equality-random | SML/NJ | mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
+OS.Path.getParent/keeps-canonical-random | SML/NJ | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+OS.Path.mkAbsolute/keeps-canonical-random | SML/NJ | the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
+OS.Path.fromUnixPath/empty | SML/NJ | fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
+OS.Path.toString/relative-only-empty-arc-Path | Poly/ML | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path ("if isAbs is false and arcs has an initial empty arc")
+OS.Path.fromString/inverts-toString-random | Poly/ML | toString {isAbs = false, vol = "", arcs = [""]} returns "" instead of raising Path, and fromString "" has no arcs
+OS.Path.getParent/a_. | Poly/ML | getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
+OS.Path.fromUnixPath/_* | Poly/ML | fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
+OS.Path.toUnixPath/_ | Poly/ML | toUnixPath "/" is "" instead of "/"
+OS.IO.poll/closed-SysErr | MLton | poll of a descriptor that has been closed returns [] instead of raising OS.SysErr
+OS.IO.Kind.*/dev-null | MLton | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+OS.IO.Kind.*/dev-null | SML/NJ | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+OS.IO.Kind.tty/standard-descriptors | MLton | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+OS.IO.Kind.tty/standard-descriptors | SML/NJ | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
+OS.IO.poll/*order* | Poly/ML | poll returns the poll_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
+OS.IO.compare/TextIO.stdIn-equals-Posix-stdin | Poly/ML 5.9.2 | the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
+OS.errorName/is-Posix.Error.errorName | Poly/ML | OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
+Time.fromReal/nan | MLton, SML/NJ, Poly/ML | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+Time.*Inf | SML/NJ | fromReal of an infinite real raises Overflow, not Time
+Time.*Inf | Poly/ML | fromReal of an infinite real raises Overflow, not Time
+Time.toSeconds/*negative* | Poly/ML | toSeconds rounds a negative time towards minus infinity (~2.01 s gives ~3), not "towards 0"
+Time.toSeconds/less-than-a-second | Poly/ML | toSeconds rounds a negative time towards minus infinity (~0.999 s gives ~1), not "towards 0"
+Time.toSeconds/is-toMicroseconds-quot | Poly/ML | toSeconds and toMilliseconds round a negative time towards minus infinity, not "towards 0"
+Time.toMilliseconds/rounds-negative-towards-zero | Poly/ML | toMilliseconds rounds a negative time towards minus infinity (~1500 us gives ~2), not "towards 0"
+Time.fmt/Size* | Poly/ML | fmt with a negative number of digits does not raise Size
+Time.fmt/fixed-point-semantics | Poly/ML | fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+Time.fmt/fixed-point-semantics | MLton | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
+Time.fromString/trailing-point | MLton | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+Time.fromString/trailing-point | SML/NJ | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+Date.offset/* | MLton | offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
+Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | MLton | date with an offset of more than a day east moves the date a day the wrong way
+Date.date/Date-or-a-year-far-away | MLton | date of year 10^8 raises Overflow, not Date
+Date.toTime/Date-or-a-year-far-away | MLton | date of year 10^8 raises Overflow, not Date
+Date.toTime/century-to-2100-beyond-2038 | MLton | toTime of a date after 2038 raises Overflow ("A conforming Date structure should support date values ranging from around 1900 to 2200")
+Date.toTime/last-second-of-1969 | MLton | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200")
+Date.fromTimeUniv/fraction-of-a-second-1969 | MLton | toTime of a date before 1970 raises Date
+Date.toTime/century-from-1900 | MLton | toTime of a date before 1970 raises Date
+Date.toTime/1900-to-2200 | MLton | toTime of a date before 1970 raises Date
+Date.fromTimeUniv/calendar-1900-2199 | MLton | toTime of a date before 1970 raises Date
+Date.fromTimeUniv/fraction-of-a-second-1969 | SML/NJ (32-bit) | toTime of a date before 1970 raises Date
+Date.toTime/century-from-1900 | SML/NJ | toTime of a date before 1970 raises Date
+Date.toTime/1900-to-2200 | SML/NJ | toTime of a date before 1970 raises Date
+Date.fromTimeUniv/calendar-1900-2199 | SML/NJ | toTime of a date before 1970 raises Date
+Date.offset/*moves-the-date | SML/NJ | date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24*d) is added to the hours")
+Date.toTime/offset-modulo-24-hours-*is-the-same-time | SML/NJ (32-bit) | date does not add the whole days of an offset of 24 hours or more to the hours, so that the date is another time
+Date.toTime/*inverts-fromTimeUniv* | SML/NJ | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+Date.toTime/fromTimeUniv-inverts-1972-2037 | SML/NJ | toTime of a UTC date from fromTimeUniv is not the time converted: it is off by the local offset
+Date.localOffset/west-of-UTC-now | SML/NJ | localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal
+Date.fmt/%%Y | SML/NJ | fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
+Date.*/initial-whitespace | SML/NJ | scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
+Date.scan/24-characters | SML/NJ | scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+Date.date/Date-or-a-year-far-away | SML/NJ (32-bit) | date of year 10^8 raises Overflow, not Date
+Date.toTime/Date-or-a-year-far-away | SML/NJ (32-bit) | date of year 10^8 raises Overflow, not Date
+Date.toTime/Date-or-a-year-far-away | SML/NJ 110.99.9 (64-bit) | toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
+Date.toTime/century-to-2100-beyond-2038 | SML/NJ (32-bit) | toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
+Date.fmt/%Z-UTC | SML/NJ (32-bit) | fmt "%Z" raises Date for a UTC date
+Date.toTime/offset-* | SML/NJ 110.99.9 | toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
+Date.date/offset-of-the-local-zone | SML/NJ 110.99.9 | toTime ignores the offset of a date
+Date.fromTimeUniv/* | SML/NJ 110.99.9 | fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+Date.toTime/Date-or-a-year-far-away | Poly/ML | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+Date.fmt/empty | Poly/ML | fmt "" raises Date instead of giving ""
+Date.fmt/%Z-UTC | MLton | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+Date.fmt/%Z-UTC | SML/NJ 110.99.9 (64-bit) | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
+Date.fmt/%Z-UTC | Poly/ML | fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+Posix.Error.notty/ttyname-of-dev-null | SML/NJ | ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+Posix.Error.badf/close-twice | Poly/ML | Posix.IO.close of a descriptor that is already closed raises no exception
+Posix.Error.spipe/lseek-on-pipe | SML/NJ 110.99.9 | Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+Posix.Signal.pipe/ends-shell | Poly/ML | the runtime ignores SIGPIPE, and the programs it executes inherit that
+Posix.Process.W.untraced/in-all | MLton | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+Posix.Process.W.allSet/inclusion | MLton | W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
+Posix.Process.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Posix.Process.fromStatus/failure | Poly/ML | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Posix.Process.W.toWord/of-fromWord | Poly/ML | W.fromWord keeps the bits that are not in W.all
+Posix.Process.pause/until-* | Poly/ML | a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
+Posix.Process.exit/[szn]* | Poly/ML 5.9.2 | a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
+Posix.ProcEnv.time/* | SML/NJ 110.99.9 (64-bit) | time () is negative: the seconds since the Epoch overflow 32 bits
+Posix.ProcEnv.times/not-negative | SML/NJ 110.99.9 (64-bit) | the elapsed time of times is negative
+Posix.TTY.getlflag/sample | MLton | getlflag returns the output flags (those of getoflag)
+Posix.TTY.TC.getpgrp/not-a-terminal | SML/NJ | TC.getpgrp of a descriptor that is not a terminal raises no exception
+Unix.reap/status | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+Unix.reap/twice | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+Unix.W_EXITSTATUS/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+Unix.W_SIGNALED/reap | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1)
+Unix.W_STOPPED/reap-waits-for-the-end | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 5 is W_SIGNALED)
+Unix.kill/* | MLton | Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W_SIGNALED of signal 1)
+Unix.fromStatus/failure | MLton | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Unix.fromStatus/failure | Poly/ML | fromStatus OS.Process.failure is W_SIGNALED, not W_EXITSTATUS of a non-zero value
+Unix.execute*/no-such-program | SML/NJ | a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+Unix.exit/flushes | SML/NJ | Unix.exit does not flush the output streams that are open
+Unix.exit/status | Poly/ML 5.9.2 | a forked child that calls Unix.exit never ends
+Posix.Process.fromStatus/system-killed | SML/NJ | OS.Process.system returns failure (W_EXITSTATUS 1) for a command that a signal ended
+Unix.exit/runs-atExit | SML/NJ | Unix.exit does not run the actions of OS.Process.atExit
+Posix.*.allSet/* | MLton | allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
+Posix.*.fromWord/random-words-beyond-all | MLton | all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all)
+Posix.*.fromWord/*-all | Poly/ML | fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all) and fromWord makes flags outside all
+Posix.FileSys.ST.mode/* | MLton | ST.mode includes the bits of the file type of st_mode (S_IFREG, S_IFDIR, S_IFIFO) besides the protection mode
+Posix.FileSys.wordToFD/inverts-fdToWord | Poly/ML | wordToFD makes a new file_desc that is not equal (=) to the file_desc with the same number: equality of file_desc is that of the object
+Posix.FileSys.stdin/wordToFD-0 | Poly/ML 5.9.2 | wordToFD 0w0 is not equal (=) to stdin: equality of file_desc is that of the object
+Posix.IO.*getfl* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor
+Posix.IO.setfl/[ak]* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
+Posix.IO.O.nonblock/setfl | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
+Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+*IO.[gs]etOutstream/flushes* | MLton | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+*IO.StreamIO.canInput/determined-stream-does-not-block | MLton | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | MLton | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*IO.StreamIO.closeOut/terminated-closes-the-writer | MLton | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+*IO.StreamIO.filePosIn/Io-truncated | MLton | filePosIn of a truncated stream raises nothing
+*IO.StreamIO.output1/Io-when-the-writer-fails | MLton | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+*IO.[gs]etOutstream/flushes* | SML/NJ 110.99.9 | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+*IO.StreamIO.canInput/* | SML/NJ 110.99.9 | canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+*IO.StreamIO.getReader/Io-* | SML/NJ 110.99.9 | getReader of a closed or truncated stream raises nothing
+*IO.StreamIO.getWriter/Io-closed | SML/NJ 110.99.9 | getWriter of a closed stream raises nothing
+*IO.StreamIO.filePosIn/Io-truncated | SML/NJ 110.99.9 | filePosIn of a truncated stream raises nothing
+*IO.StreamIO.inputN/fewer-then-past-the-end-of-stream | SML/NJ 110.99.9 | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+*IO.StreamIO.inputN/allAndN-random-* | SML/NJ 110.99.9 | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+*IO.StreamIO.output*/Io-terminated* | SML/NJ 110.99.9 | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+*IO.setPosOut/* | SML/NJ 110.99.9 | setPosOut neither flushes nor moves the writer: output goes on at the end
+*IO.input1/passes-an-end-of-stream | SML/NJ 110.99.9 | input1 never moves past an end-of-stream
+TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ 110.99.9 | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
+*IO.[gs]etOutstream/flushes* | Poly/ML | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | Poly/ML | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*IO.StreamIO.input/Io-* | Poly/ML | input lets the exception of the reader through instead of raising Io with it as the cause
+*IO.inputAll/up-to-each-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+*IO.StreamIO.inputAll/is-input-to-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+*IO.StreamIO.inputN/allAndN-random-* | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+*IO.StreamIO.inputN/exactly-n-before-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+TextIO.StreamIO.outputSubstr/LINE_BUF | Poly/ML | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+Socket.Ctl.setLINGER/negative | MLton | setLINGER takes a negative time without raising Time
+Socket.Ctl.setLINGER/too-large | MLton | setLINGER raises Overflow, not Time, for a time too large for the system
+Socket.Ctl.getNREAD/* | MLton | getNREAD answers ~1 whatever there is to read
+Socket.Ctl.getATMARK/* | MLton | getATMARK answers true whether or not the read pointer is at the out-of-band mark
+Socket.Ctl.getERROR/closed | MLton | getERROR of a closed socket answers instead of raising SysErr
+Socket.recvVecNB/zero | MLton | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+Socket.recvArrNB/empty-slice | MLton | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+Socket.familyOfAddr/* | SML/NJ | familyOfAddr gives a family that is neither INetSock.inetAF nor UnixSock.unixAF (AF.toString says "<UNKNOWN>")
+Socket.send*'/don't_route | SML/NJ | the flags of sendVec', sendArr', sendVecTo' and sendArrTo' are swapped: don't_route sends out of band (the last byte of a stream goes out of band, a datagram is refused)
+Socket.send*'/oob | SML/NJ | the flags are swapped: sendVec' and sendArr' send oob as don't_route (no urgent byte), and recvVec' and recvArr' receive oob as peek
+Socket.recv*'/oob | SML/NJ | the flags are swapped: recvVec' and recvArr' receive oob as peek (the byte stays), and sendVec' sends oob as don't_route (no urgent byte)
+Socket.recv*'/peek | SML/NJ | the flags are swapped: recvVec', recvArr', recvVecFrom', recvArrFrom' and their NB forms receive peek as oob (SysErr EINVAL on a stream without urgent data; a datagram is taken off the queue)
+Socket.recvVecNB'/nothing-there | SML/NJ | the flags are swapped: recvVecNB' takes peek for oob and raises SysErr (EINVAL) instead of giving NONE
+Socket.Ctl.getATMARK/before-and-at-the-mark | SML/NJ | sendVec' sends oob as don't_route, so that there is no urgent byte and no mark
+Socket.select/exceptional-condition | SML/NJ | sendVec' sends oob as don't_route, so that there is no urgent byte to make an exceptional condition
+Socket.sendVecTo/empty-message | SML/NJ | a datagram of no bytes never arrives
+Socket.recvVecFrom/message-and-address | SML/NJ | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+Socket.recvVecFrom/one-message-at-a-time | SML/NJ | the address recvVecFrom gives is not sameAddr to the sender's (recvArrFrom's is)
+Socket.recvVecFromNB/message | SML/NJ | the address recvVecFromNB gives is not sameAddr to the sender's (recvArrFromNB's is)
+Socket.recvArrFrom/empty-slice | SML/NJ | with an empty slice, the address recvArrFrom gives is not sameAddr to the sender's
+Socket.recvVecFrom/unix | SML/NJ | the Unix-domain address recvVecFrom and recvVecFromNB give is garbled: UnixSock.fromAddr of it is not the sender's path
+UnixSock.fromAddr/sender-of-a-message | SML/NJ | the Unix-domain address recvVecFromNB gives is garbled: UnixSock.fromAddr of it is not the sender's path
+Socket.recvVec*/above-maxLen | SML/NJ | recvVec and recvVecFrom do not raise Size when n > Word8Vector.maxLen
+Socket.Ctl.setLINGER/negative | SML/NJ | setLINGER takes a negative time without raising Time
+Socket.Ctl.setLINGER/too-large | SML/NJ (32-bit) | setLINGER raises Overflow, not Time, for a time too large for the system
+Socket.Ctl.setLINGER/too-large | SML/NJ 110.99.9 (64-bit) | setLINGER takes a time too large for the system without raising Time
+Socket.AF.list/names-are-toString | Poly/ML | AF.list names AF_UNIX's value also "LOCAL" (5.9.2: and "FILE"), which toString calls "UNIX"
+Socket.connect/already-connected | Poly/ML | connect on a connected socket returns instead of raising SysErr
+Socket.select/negative-timeout | Poly/ML | select takes a negative timeout for zero instead of raising SysErr
+Socket.Ctl.setLINGER/negative | Poly/ML | setLINGER raises SysErr ("Invalid time"), not Time, for a negative time
+Socket.recvVecNB/zero | Poly/ML | recvVecNB (sock, 0) is NONE while nothing is there to read, instead of SOME of the empty vector (the system waits for a byte even when none is asked for)
+Socket.recvArrNB/empty-slice | Poly/ML | recvArrNB with an empty slice is NONE while nothing is there to read, instead of SOME 0 (the system waits for a byte even when none is asked for)
+NetHostDB.fromString/initial-whitespace | MLton | fromString and scan do not skip initial whitespace
+NetHostDB.scan/whitespace-then-rest | MLton | fromString and scan do not skip initial whitespace
+NetServDB.getByName/* | MLton | the port of an entry is not converted from network byte order (80 comes out as 5242880)
+NetServDB.port/* | MLton | the port of an entry is not converted from network byte order (22 comes out as 1441792)
+NetServDB.getByPort/* | MLton | getByPort does not convert the port to network byte order and finds nothing
+NetServDB.name/http | MLton | getByPort, which the check looks the entry up with, finds nothing
+NetServDB.getByPort/* | SML/NJ | getByPort finds nothing for a port that /etc/services lists
+NetServDB.name/http | SML/NJ | getByPort, which the check looks the entry up with, finds nothing
+NetHostDB.fromString/two-parts | Poly/ML | the last number of "a.b" is taken for the last byte, not the last 24 bits ("127.1" is 0.0.127.1)
+NetHostDB.fromString/three-parts | Poly/ML | the last number of "a.b.c" is taken for the last byte, not the last 16 bits ("127.0.1" is 0.127.0.1)
+NetHostDB.fromString/same-address | Poly/ML | "127.1" is read as 0.0.127.1, not 127.0.0.1
+NetHostDB.fromString/initial-whitespace | Poly/ML | fromString and scan do not skip initial whitespace
+NetHostDB.scan/whitespace-then-rest | Poly/ML | fromString and scan do not skip initial whitespace
+Int[0-9]*.sameSign/* | SML/NJ (32-bit) | sameSign (0, i) is true for positive i
+Word[0-9]*.scan/HEX-0w-is-no-prefix | Poly/ML | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+Word[0-9]*.fromString/0w-is-no-prefix | Poly/ML | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+Int[0-9]*.mod/minInt-by-minus-one | SML/NJ (64-bit) | mod (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+Int[0-9]*.rem/minInt-by-minus-one | SML/NJ (64-bit) | rem (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
+Int64.fromString/* | SML/NJ (32-bit) | Int64.fromString raises an exception for a value that does not fit 32 bits
+Int64.scan/* | SML/NJ (32-bit) | Int64.scan raises an exception for a value that does not fit 32 bits
+Int64.fmt/*HEX* | SML/NJ (32-bit) | Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+Int32.abs/Overflow-minInt | SML/NJ 110.99.9 (64-bit) | Int32.abs minInt gives minInt instead of raising Overflow
+Word[0-9]*.toInt/through-LargeWord-* | SML/NJ (64-bit) | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+Word[0-9]*.~>>/*-by-all-ones | Poly/ML | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
+Word64.~>>/* | Poly/ML | Word64.~>> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
+Bool*:MONO_*/vector-is-BoolVector.vector | MLton 20241230 | BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+?*Array2.copy/overlap-[lr]* | MLton | as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+?*Array2.*/Subscript-not-Overflow-* | Poly/ML | as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)
+?*Array2.*/no-rows* | Poly/ML | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList [] and tabulate tr (0, c, f)
+?*Array2.*/*model-empty-* | Poly/ML | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+?*Array2.array/Size-negative-columns-no-rows | Poly/ML | as Array2.array: array (0, ~1, x) does not raise Size
+?*Array2.*/zero-length-not-equal | Poly/ML | as in Array2: two arrays without rows are equal
+PackReal64*.update/element-1 | SML/NJ (32-bit) | update writes nothing into the array
+PackReal*.update/Subscript-past-the-end | Poly/ML | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
+PackReal64*.* | SML/NJ 110.99.9 | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
+PackWord*.*/Subscript-maxInt | Poly/ML | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+SML90.arctan/zero | SML/NJ | Math.atan 0.0 is ~0.0
+SML90.ord/Ord-empty | SML/NJ | ord "" raises Subscript, not Ord
+SML90.lookahead/* | SML/NJ | lookahead raises Io at the end of the stream instead of returning ""
+SML90.Sqrt/new | Poly/ML | another reading of the specification: Sqrt, Ln and Ord are Overflow; the test takes MLton's and SML/NJ's reading, exceptions of their own
+SML90.Ln/new | Poly/ML | another reading of the specification: as SML90.Sqrt/new
+SML90.ln/Ln-zero | Poly/ML | ln 0.0 is ~inf instead of raising Ln
+PackReal32*.*/Subscript-maxInt | Poly/ML 5.9.2 | subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+Real32.nextAfter/equal-zeros-returns-r* | MLton | another reading of the specification: as Real.nextAfter/equal-zeros-returns-r*: returns t
+Real32.nextAfter/equal-zeros-returns-r* | Poly/ML 5.9.2 | another reading of the specification: as Real.nextAfter/equal-zeros-returns-r*: returns t
+PackReal32Big.isBigEndian/value | Poly/ML 5.9.2 | PackReal32Big.isBigEndian is false (it packs the most significant byte first)
+Real32.fromLargeInt/rounds-once | Poly/ML 5.9.2 | fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
+Real32.toDecimal/negative-zero | Poly/ML 5.9.2 | toDecimal of a zero has exp 1, not 0
+Real32.fromString/overflow | Poly/ML 5.9.2 | fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
+Real32.fromString/above-half-minPos | Poly/ML 5.9.2 | fromString rounds a number just above half of minPos to zero
+Real32.fromString/TO_* | Poly/ML 5.9.2 | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
+Int64.* | SML/NJ (32-bit) | Int64 is emulated with two words and comes out wrong throughout: Int64.+ (~2, ~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+PackWord*.update/* | SML/NJ (32-bit) | update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
+Real.fromString/minus-exponent | SML/NJ (32-bit) | fromString "1.5e~2" is not the real nearest 0.015 (under xc1 through the shim's real_from_string, which is the host's Real.fromString)
+Posix.IO.SEEK_[CE]*/negative | SML/NJ (32-bit) | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to

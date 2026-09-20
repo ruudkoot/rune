@@ -1,0 +1,4 @@
+tests/doc/attach-errors.sml:4:24: error: this comment follows nothing that can be documented: put it above what it describes
+tests/doc/attach-errors.sml:6:3: error: two comments above one item: join them, or put a blank line between them
+tests/doc/attach-errors.sml:10:16: error: this comment follows nothing that can be documented: put it above what it describes
+tests/doc/attach-errors.sml:13:5: error: this comment stands above nothing that can be documented: a blank line after it makes it a paragraph of its section

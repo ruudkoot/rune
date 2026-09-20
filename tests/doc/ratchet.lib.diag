@@ -1,0 +1,8 @@
+tests/doc/ratchet.lib/DOCUMENTED: error: NOWHERE is no signature of the library
+tests/doc/ratchet.lib/partial.sml:4:8: error: type t is not documented, and DOCUMENTED lists PARTIAL
+tests/doc/ratchet.lib/partial.sml:7:7: error: val move is a function whose description shows no usage, such as `move x`
+tests/doc/ratchet.lib/partial.sml:10:7: error: the first paragraph of val far has 224 characters; it is the summary, of at most 160
+tests/doc/ratchet.lib/partial.sml:19:7: error: the usage `scan2 strm more` has 2 arguments, and scan2 takes 1: its type is int -> (t * int) list
+tests/doc/ratchet.lib/partial.sml:24:7: error: `Raises:` names `Nothing`, which is no exception that is documented
+tests/doc/ratchet.lib/partial.sml:27:7: error: `Done.nothing` names nothing that is documented
+tests/doc/ratchet.lib/partial.sml:27:7: error: `Nowhere.at` names nothing that is documented

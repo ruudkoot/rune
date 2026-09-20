@@ -6,7 +6,8 @@ struct
   val actions : (unit -> unit) list ref = ref []
   val running = ref false
 
-  fun atExit f = actions := f :: !actions
+  (* "Calls in f to atExit are ignored": once the actions run, none is added. *)
+  fun atExit f = if !running then () else actions := f :: !actions
 
   (* "exit ... flushes and closes all I/O streams opened using the Library":
      a stream over a writer of the program's own keeps its output until it

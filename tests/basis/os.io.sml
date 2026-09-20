@@ -53,11 +53,14 @@ struct
 
   (* ---- Kind: "the various kinds of system objects that an I/O descriptor
      might represent", each a different value ---- *)
-  fun distinct name =
-    eqB ("OS.IO.Kind." ^ name ^ "/distinct", true,
+  fun distinct (label, name) =
+    eqB (label ^ "distinct", true,
          fn () => let val k = #2 (valOf (List.find (fn (n, _) => n = name) kinds))
                   in List.all (fn (n, k') => (k = k') = (n = name)) kinds end)
-  val () = List.app distinct ["file", "dir", "symlink", "tty", "pipe", "socket", "device"]
+  val () = List.app distinct
+    [("OS.IO.Kind.file/", "file"), ("OS.IO.Kind.dir/", "dir"), ("OS.IO.Kind.symlink/", "symlink"),
+     ("OS.IO.Kind.tty/", "tty"), ("OS.IO.Kind.pipe/", "pipe"), ("OS.IO.Kind.socket/", "socket"),
+     ("OS.IO.Kind.device/", "device")]
 
   (* ---- kind: "The I/O descriptor associated with a stream produced by one
      of the BinIO or TextIO file opening operations will always have this

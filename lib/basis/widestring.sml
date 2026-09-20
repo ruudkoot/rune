@@ -1,11 +1,6 @@
 (* WideString and WideSubstring (optional in the specification): the strings
    of WideChar, which are the vectors of WideCharVector, and their substrings,
-   which are the slices of WideCharVectorSlice.
-
-   As the signatures of the specification write them, `scan` reads a stream of
-   the structure's own characters while `toString`, `fromString`, `toCString`
-   and `fromCString` take and give text of char, the 8-bit one; a character
-   above 255 appears there as the escape \uXXXX or \UXXXXXXXX (widechar.sml). *)
+   which are the slices of WideCharVectorSlice. *)
 structure RuneWideString =
 struct
   structure V = WideCharVector
@@ -145,6 +140,29 @@ struct
   end
 end
 
+(* Implements: STRING where type string = WideCharVector.vector where type
+   char = WideChar.char
+
+   Status: optional
+
+   Reading: `WideString.scan/reads-wide-characters`. As the signature of the
+   specification writes it, `scan` reads a stream of the structure's own
+   characters, where MLton's reads 8-bit ones; `toString`, `fromString`,
+   `toCString` and `fromCString` take and give text of `char`, the 8-bit one,
+   in which a character above 255 appears as the escape `\uXXXX` or
+   `\UXXXXXXXX` (widechar.sml).
+
+   Pinned by: `WideString.scan/reads-wide-characters`,
+   `WideString.scan/stops-at-a-character-it-cannot-read`
+
+   Reading: `WideString.scan/an-unescaped-double-quote-ends-it`. In the
+   stream of wide characters an escape is written with the characters of
+   ASCII, and a character that needs none stands for itself, those above 255
+   too. A double quote that no backslash precedes cannot be read and ends the
+   string, where `String.scan`, and `WideString.fromString` on its text of
+   `char`, convert it to itself.
+
+   Pinned by: `WideString.scan/stops-at-a-character-it-cannot-read` *)
 structure WideString :> STRING
   where type string = WideCharVector.vector
   where type char = WideChar.char = RuneWideString
@@ -247,6 +265,10 @@ struct
   val foldr = VS.foldr
 end
 
+(* Implements: SUBSTRING where type substring = WideCharVectorSlice.slice where
+   type string = WideCharVector.vector where type char = WideChar.char
+
+   Status: optional *)
 structure WideSubstring :> SUBSTRING
   where type substring = WideCharVectorSlice.slice
   where type string = WideCharVector.vector

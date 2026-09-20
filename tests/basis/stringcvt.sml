@@ -126,11 +126,12 @@ struct
   val () = eqS ("StringCvt.GEN/Real.fmt-3", "0.333", fn () => Real.fmt (StringCvt.GEN (SOME 3)) (1.0 / 3.0))
   (* "In all cases, positive and negative infinities are converted to "inf" and
      "~inf", respectively, and NaN values are converted to the string "nan"." *)
-  val () = List.app (fn (name, f) =>
-    (eqS ("StringCvt." ^ name ^ "/Real.fmt-inf", "inf", fn () => Real.fmt f Real.posInf);
-     eqS ("StringCvt." ^ name ^ "/Real.fmt-neg-inf", "~inf", fn () => Real.fmt f Real.negInf);
-     eqS ("StringCvt." ^ name ^ "/Real.fmt-nan", "nan", fn () => Real.fmt f (Real.posInf - Real.posInf))))
-    [("SCI", StringCvt.SCI NONE), ("FIX", StringCvt.FIX (SOME 2)), ("GEN", StringCvt.GEN NONE)]
+  val () = List.app (fn (label, f) =>
+    (eqS (label ^ "Real.fmt-inf", "inf", fn () => Real.fmt f Real.posInf);
+     eqS (label ^ "Real.fmt-neg-inf", "~inf", fn () => Real.fmt f Real.negInf);
+     eqS (label ^ "Real.fmt-nan", "nan", fn () => Real.fmt f (Real.posInf - Real.posInf))))
+    [("StringCvt.SCI/", StringCvt.SCI NONE), ("StringCvt.FIX/", StringCvt.FIX (SOME 2)),
+     ("StringCvt.GEN/", StringCvt.GEN NONE)]
   (*>> Real.fmt *)
 
   (* ---- reader: "type ('a,'b) reader = 'b -> ('a * 'b) option" ---- *)

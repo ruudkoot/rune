@@ -85,7 +85,9 @@ struct
     end
 
     (* The flags of a descriptor, as words; like the flags of open, all of
-       them are the bits of a C int (Posix.FileSys.O). *)
+       them are the bits of a C int (Posix.FileSys.O).
+
+       Implements: BIT_FLAGS *)
     structure FD =
     struct
       type flags = word
@@ -100,6 +102,7 @@ struct
       fun clear (a, b) = Word.andb (Word.notb a, b)
     end
 
+    (* Implements: BIT_FLAGS *)
     structure O = RunePosixFileSys.O
     datatype open_mode = datatype RunePosixFileSys.open_mode
 

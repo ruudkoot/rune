@@ -1,0 +1,126 @@
+file tests/doc/text.sml
+  signature TEXT
+    para:
+      |The language of doc comments. Plain prose is a paragraph, and so is this
+      |second sentence; `code` stands between backquotes and may
+      |`wrap over the end of a line`. A bare URL such as
+      |<https://smlfamily.github.io/Basis/list.html> is a link (the full stop after
+      |it is not part of it). Characters that Markdown takes for markup are text:
+      |*stars*, _underscores_, <angles>, [brackets], a | bar, 'a and "quotes".
+    para:
+      |Subject: an explanation. A word and a colon at the start of a paragraph is
+      |the house style and means nothing, unless the word is reserved.
+    para: A list follows a blank line:
+    list
+      item:
+        |the first item, which goes on
+        |over a second line;
+      item: the second item, with `code`.
+    para: Code is indented by four, after a blank line:
+    code:
+      |val xs = List.tabulate (3, fn i => i)
+      |
+      |val ys = List.rev xs
+    reserved Area: Lists
+    reserved Status: optional
+    reserved See also: `OTHER`, `List.map`
+    type t
+      spec: type t
+      para: A reading of the specification, pinned by checks.
+      reserved Reading:
+        |`Text.t/abstract`. The page says nothing about equality; the type
+        |is taken to be abstract.
+      reserved Pinned by: `Text.t/*`, `Text:TEXT/matches`
+      reserved Reading (the suite differs): `Text.size/empty`. Rune answers 0.
+      reserved Erratum: `TEXT/typo`. The page says "Ow".
+      reserved Deviation: `Text.t/transparent`. The type is a string here.
+      reserved Implementation: `Text.maxSize/value`. 1073741823.
+      reserved Limitation: `Text.locale/none`. There are no locales.
+    section Usage heads
+    val take
+      spec: val take : 'a list * int -> 'a list
+      head of take: take (l, i) (arguments: l i)
+      para: `take (l, i)` is the first `i` elements of `l`; `take (l, length l)` is `l`.
+      reserved Raises: `Subscript` if `i < 0` or `i > length l`.
+      reserved Law: `take (l, i) @ drop (l, i) = l`
+      reserved Complexity: linear in `i`.
+      reserved Example: `take ([1, 2, 3], 2) = [1, 2]`
+    val @
+      spec: val @ : 'a list * 'a list -> 'a list
+      head of @: l @ m (arguments: l m)
+      para: `l @ m` is `l` followed by `m`: an infix identifier is applied infix.
+    val <<
+      spec: val << : word * word -> word
+      head of <<: << (w, n) (arguments: w n)
+      para: `<< (w, n)` shifts left: a symbolic identifier that is not infix.
+    val foldl
+      spec: val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
+      head of foldl: foldl f init l (arguments: f init l)
+      para: `foldl f init l` has three arguments.
+    val scan
+      spec: val scan : (char, 'a) reader -> (int, 'a) reader
+      head of scan: scan getc strm (arguments: getc strm)
+      para:
+        |`scan getc strm` has an argument more than the type shows arrows: the
+        |result may abbreviate a function type.
+    val make
+      spec: val make : {size : int, fill : char} -> t
+      head of make: make {size, fill} (arguments: size fill)
+      para: `make {size, fill}` takes a record.
+      field size : int
+      field fill : char
+    val maxSize
+      spec: val maxSize : int
+      para: The largest size; a constant has no head.
+    val toLarge
+      spec: val toLarge : int -> IntInf.int
+      head of toLarge: toLarge i (arguments: i)
+      para:
+        |`toLarge i` and `fromLarge i` convert to and from the largest integers;
+        |the two that follow are documented by this comment.
+    val fromLarge
+      spec: val fromLarge : IntInf.int -> int
+      adjacent
+      documented with: toLarge
+      head of fromLarge: fromLarge i (arguments: i)
+    val unrelated
+      spec: val unrelated : int
+      adjacent
+    val first
+      spec: val first : int -> int
+      head of first: first x (arguments: x)
+      para: `first x` is documented; the next value is not adjacent.
+    val second
+      spec: val second : int -> int
+    source:
+      |signature TEXT =
+      |sig
+      |  type t
+      |
+      |  val take : 'a list * int -> 'a list
+      |
+      |  val @ : 'a list * 'a list -> 'a list
+      |
+      |  val << : word * word -> word
+      |
+      |  val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
+      |
+      |  val scan : (char, 'a) reader -> (int, 'a) reader
+      |
+      |  val make : {size : int, fill : char} -> t
+      |
+      |  val maxSize : int
+      |
+      |  val toLarge : int -> IntInf.int
+      |  val fromLarge : IntInf.int -> int
+      |  val unrelated : int
+      |
+      |  val first : int -> int
+      |
+      |  val second : int -> int
+      |end
+  structure Text
+    para: A structure says what it implements.
+    reserved Implements: TEXT where type t = string
+    reserved Status: optional
+    members: 

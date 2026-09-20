@@ -1,0 +1,3 @@
+# A library that is written on the Basis Library: it is named as a directory,
+# and lib/basis is elaborated before it (ON-BASIS says so to the test script).
+words.sml | demand | yes | WORDS Words |

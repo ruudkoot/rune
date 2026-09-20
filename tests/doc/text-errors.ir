@@ -1,0 +1,73 @@
+file tests/doc/text-errors.sml
+  signature WRONG
+    para: Doc comments that are wrong: each paragraph below is an error.
+    reserved Implements: TEXT
+    type a
+      spec: type a
+      para: A backquote `without a partner.
+    val b
+      spec: val b : int -> int
+      reserved Raises: Subscript if it is not in backquotes.
+    type c
+      spec: type c
+      reserved Status: sometimes
+    type d
+      spec: type d
+      reserved Reading: no id in backquotes.
+    type e
+      spec: type e
+      reserved Reading (the suite agrees): `X.y/z`. An unknown modifier.
+    type f
+      spec: type f
+      reserved Raises: `Subscript` on a type.
+    type g
+      spec: type g
+      reserved Pinned by: `X.y/z`
+    type h
+      spec: type h
+      reserved Example: 
+    val take
+      spec: val take : 'a list * int -> 'a list
+      head of take: take (l, i, j) (arguments: l i j)
+      para: `take (l, i, j)` has a tuple of three.
+    val nth
+      spec: val nth : 'a list * int -> 'a
+      head of nth: nth l i (arguments: l i)
+      para: `nth l i` is curried where the type is not.
+    val make
+      spec: val make : {size : int, fill : char} -> int
+      head of make: make {size, colour} (arguments: size colour)
+      para: `make {size, colour}` has the wrong labels.
+      field size : int
+      field fill : char
+    val apply
+      spec: val apply : (int -> int) -> int
+      head of apply: apply (f, x) (arguments: f x)
+      para: `apply (f, x)` has a tuple where the type has a function.
+    source:
+      |signature WRONG =
+      |sig
+      |  type a
+      |
+      |  val b : int -> int
+      |
+      |  type c
+      |
+      |  type d
+      |
+      |  type e
+      |
+      |  type f
+      |
+      |  type g
+      |
+      |  type h
+      |
+      |  val take : 'a list * int -> 'a list
+      |
+      |  val nth : 'a list * int -> 'a
+      |
+      |  val make : {size : int, fill : char} -> int
+      |
+      |  val apply : (int -> int) -> int
+      |end

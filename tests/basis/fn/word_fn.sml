@@ -199,15 +199,16 @@ struct
   val () = eqW (lab "fromLargeInt/minus-top-bit", fn () => top, fn () => W.fromLargeInt (L.~ (lpow2 (ws - 1))))
 
   (* ---- bit-wise operations ---- *)
-  fun table (member, f) cases =
-    List.app (fn (c, a, b, r) => eqK (lab (member ^ "/" ^ c), r, fn () => f (w a, w b))) cases
-  val () = table ("andb", W.andb)
+  (* label: the beginning of the labels, lab "member/" *)
+  fun table (label, f) cases =
+    List.app (fn (c, a, b, r) => eqK (label ^ c, r, fn () => f (w a, w b))) cases
+  val () = table (lab "andb/", W.andb)
     [("1100-1010", 12, 10, 8), ("11110000-00111100", 240, 60, 48), ("zero", 171, 0, 0),
      ("self", 171, 171, 171), ("disjoint", 170, 85, 0)]
-  val () = table ("orb", W.orb)
+  val () = table (lab "orb/", W.orb)
     [("1100-1010", 12, 10, 14), ("11110000-00111100", 240, 60, 252), ("zero", 171, 0, 171),
      ("self", 171, 171, 171), ("disjoint", 170, 85, 255)]
-  val () = table ("xorb", W.xorb)
+  val () = table (lab "xorb/", W.xorb)
     [("1100-1010", 12, 10, 6), ("11110000-00111100", 240, 60, 204), ("zero", 171, 0, 171),
      ("self", 171, 171, 0), ("disjoint", 170, 85, 255)]
   val () = eqK (lab "andb/all-ones", 171, fn () => W.andb (allOnes, w 171))
@@ -265,19 +266,19 @@ struct
              hugeAmounts
 
   (* ---- arithmetic modulo 2^wordSize ---- *)
-  val () = table ("+", fn p => W.+ p) [("basic", 2, 3, 5), ("zero", 0, 0, 0), ("identity", 200, 0, 200), ("255", 200, 55, 255)]
+  val () = table (lab "+/", fn p => W.+ p) [("basic", 2, 3, 5), ("zero", 0, 0, 0), ("identity", 200, 0, 200), ("255", 200, 55, 255)]
   val () = eqK (lab "+/all-ones-plus-one", 0, fn () => W.+ (allOnes, one))
   val () = eqK (lab "+/one-plus-all-ones", 0, fn () => W.+ (one, allOnes))
   val () = eqW (lab "+/all-ones-twice", fn () => W.- (allOnes, one), fn () => W.+ (allOnes, allOnes))
   val () = eqK (lab "+/top-bit-twice", 0, fn () => W.+ (top, top))
   val () = eqW (lab "+/below-top-bit-plus-one", fn () => top, fn () => W.+ (belowTop, one))
-  val () = table ("-", fn p => W.- p) [("basic", 5, 3, 2), ("zero", 0, 0, 0), ("identity", 200, 0, 200), ("self", 200, 200, 0)]
+  val () = table (lab "-/", fn p => W.- p) [("basic", 5, 3, 2), ("zero", 0, 0, 0), ("identity", 200, 0, 200), ("self", 200, 200, 0)]
   val () = eqW (lab "-/zero-minus-one", fn () => allOnes, fn () => W.- (zero, one))
   val () = eqW (lab "-/three-minus-five", fn () => W.notb one, fn () => W.- (w 3, w 5))
   val () = eqW (lab "-/top-bit-minus-one", fn () => belowTop, fn () => W.- (top, one))
   val () = eqK (lab "-/zero-minus-all-ones", 1, fn () => W.- (zero, allOnes))
   val () = eqW (lab "-/below-top-bit-minus-all-ones", fn () => top, fn () => W.- (belowTop, allOnes))
-  val () = table ("*", fn p => W.* p) [("basic", 6, 7, 42), ("zero", 200, 0, 0), ("identity", 1, 200, 200), ("156", 12, 13, 156)]
+  val () = table (lab "*/", fn p => W.* p) [("basic", 6, 7, 42), ("zero", 200, 0, 0), ("identity", 1, 200, 200), ("156", 12, 13, 156)]
   val () = eqK (lab "*/all-ones-squared", 1, fn () => W.* (allOnes, allOnes))
   val () = eqW (lab "*/all-ones-times-two", fn () => W.- (allOnes, one), fn () => W.* (allOnes, w 2))
   val () = eqK (lab "*/top-bit-times-two", 0, fn () => W.* (top, w 2))
@@ -285,10 +286,10 @@ struct
   val () = eqK (lab "*/top-bit-squared", 0, fn () => W.* (top, top))
   val () = eqW (lab "*/all-ones-times-five", fn () => W.- (allOnes, w 4), fn () => W.* (allOnes, w 5))
   (* unsigned division *)
-  val () = table ("div", W.div)
+  val () = table (lab "div/", W.div)
     [("basic", 7, 2, 3), ("200-7", 200, 7, 28), ("zero-dividend", 0, 5, 0), ("small-by-large", 5, 7, 0),
      ("by-one", 200, 1, 200), ("self", 200, 200, 1), ("exact", 255, 5, 51)]
-  val () = table ("mod", W.mod)
+  val () = table (lab "mod/", W.mod)
     [("basic", 7, 2, 1), ("200-7", 200, 7, 4), ("zero-dividend", 0, 5, 0), ("small-by-large", 5, 7, 5),
      ("by-one", 200, 1, 0), ("self", 200, 200, 0), ("exact", 255, 5, 0)]
   val () = eqW (lab "div/all-ones-by-one", fn () => allOnes, fn () => W.div (allOnes, one))

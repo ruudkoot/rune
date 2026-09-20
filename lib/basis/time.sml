@@ -1,4 +1,6 @@
-(* Time: a length of time, held as microseconds. *)
+(* Time: a length of time, held as microseconds.
+
+   Implements: TIME *)
 structure Time =
 struct
   type time = int                       (* microseconds *)

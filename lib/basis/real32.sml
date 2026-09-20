@@ -217,6 +217,17 @@ struct
   end
 end
 
+(* Implements: REAL
+
+   Status: optional
+
+   Implementation: `Real32.real/binary32-in-a-double`. A `Real32.real` is
+   kept as a binary64 whose value is one of binary32: an operation computes
+   in binary64 and rounds what it gets to binary32, in the rounding mode that
+   is set. That is the correctly rounded result for `+`, `-`, `*`, `/` and
+   `sqrt`; `*+` and `*-` round twice. The type is abstract and is not `real`,
+   and a real constant at this type is rounded once, as C's `strtof` reads
+   it. *)
 structure Real32 :> REAL = RuneReal32
 
 structure RuneReal32Lit =

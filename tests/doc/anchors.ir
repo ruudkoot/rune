@@ -1,0 +1,43 @@
+file tests/doc/anchors.sml
+  signature ANCHORS
+    para:
+      |Anchors: symbolic and primed identifiers, members of substructures, and two
+      |names that GitHub cannot tell apart.
+    val @
+      spec: val @ : 'a list * 'a list -> 'a list
+    val :=
+      spec: val := : 'a ref * 'a -> unit
+      adjacent
+    val socket
+      spec: val socket : unit -> int
+      adjacent
+    val socket'
+      spec: val socket' : int -> int
+      adjacent
+    val file_desc
+      spec: val file_desc : int
+      adjacent
+    structure Ctl
+      spec: structure Ctl : sig ... end
+      adjacent
+      val getDEBUG
+        spec: val getDEBUG : unit -> bool
+    val toString
+      spec: val toString : int -> string
+      para: See `socket'`, `Ctl.getDEBUG`, `@` and `ANCHORS`; `Nowhere.at` leads nowhere.
+    val tostring
+      spec: val tostring : int -> string
+      adjacent
+    source:
+      |signature ANCHORS =
+      |sig
+      |  val @ : 'a list * 'a list -> 'a list
+      |  val := : 'a ref * 'a -> unit
+      |  val socket : unit -> int
+      |  val socket' : int -> int
+      |  val file_desc : int
+      |  structure Ctl : sig val getDEBUG : unit -> bool end
+      |
+      |  val toString : int -> string
+      |  val tostring : int -> string
+      |end

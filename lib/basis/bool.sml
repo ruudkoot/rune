@@ -1,4 +1,6 @@
-(* Bool *)
+(* Bool
+
+   Implements: BOOL *)
 structure Bool =
 struct
   datatype bool = datatype bool

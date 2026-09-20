@@ -1,4 +1,6 @@
-(* ListPair *)
+(* ListPair
+
+   Implements: LIST_PAIR *)
 structure ListPair =
 struct
   exception UnequalLengths

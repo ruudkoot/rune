@@ -1,4 +1,6 @@
-(* Date: a moment as a person writes it down. *)
+(* Date: a moment as a person writes it down.
+
+   Implements: DATE *)
 structure Date =
 struct
   datatype weekday = Mon | Tue | Wed | Thu | Fri | Sat | Sun
@@ -180,8 +182,20 @@ struct
     fun zoneName (d : date) =
       Option.map (fn t => if Time.micros t = 0 then "UTC" else "") (#offset d)
 
+    (* strftime is given the year less 1900 as an int of C, which has 32
+       bits, and adds the 1900 again in one: a year that either does not fit
+       would be printed as another year. The largest int of C is worked out,
+       for a system whose own int is smaller cannot read it as a constant;
+       there every year fits. *)
+    val cIntMax = SOME (65536 * 32768 - 1) handle Overflow => NONE
+    fun yearFitsC (d : date) =
+      case cIntMax of
+        SOME most => #year d <= most andalso #year d - 1900 >= ~most - 1
+      | NONE => true
+
     fun fmt format (d : date) =
-      if valid d then format' (directives (format, zoneName d), listOf d, if Option.isSome (#offset d) then 0 else 1)
+      if valid d andalso yearFitsC d
+      then format' (directives (format, zoneName d), listOf d, if Option.isSome (#offset d) then 0 else 1)
       else raise Date
 
     (* strftime's %c, as the specification prescribes for toString:

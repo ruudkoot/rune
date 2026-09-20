@@ -1,0 +1,3 @@
+# What only elaboration knows: the names of a structure that has no body in
+# the source, and the types that are one type.
+box.sml | demand | yes | BOX Box Crate Chest RuneBoxFn |

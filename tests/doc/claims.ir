@@ -1,0 +1,51 @@
+file tests/doc/claims.sml
+  signature COUNTER
+    para: Claims: what a structure says it implements, and the notes of its body.
+    type t
+      spec: type t
+    val zero
+      spec: val zero : t
+      adjacent
+    val next
+      spec: val next : t -> t
+      adjacent
+    structure Limits
+      spec: structure Limits : sig ... end
+      adjacent
+      val max
+        spec: val max : int
+    source:
+      |signature COUNTER =
+      |sig
+      |  type t
+      |  val zero : t
+      |  val next : t -> t
+      |  structure Limits : sig val max : int end
+      |end
+  structure Counter
+    para: A counter of machine integers.
+    reserved Implements: COUNTER where type t = int
+    reserved Status: optional
+    members: t zero next helper Limits extra
+    twin: extra = hidden
+    notes on zero
+      reserved Implementation: `Counter.zero/value`. 0.
+    notes on next
+      reserved Limitation: `Counter.next/overflow`. Raises Overflow at the largest int.
+      reserved Pinned by: `Counter.next/Overflow`
+    notes on extra
+      reserved Deviation: `Counter.extra/beyond`. Not in COUNTER.
+    structure Limits
+      para: The limits of this counter.
+      reserved Implements: LIMITS
+      members: max
+  functor CounterFn
+    parameter: val start : int
+    reserved Implements: COUNTER
+    notes on zero
+      reserved Implementation: `COUNTER.zero/start`. The start given.
+  structure Sealed
+    sealed with: COUNTER
+    alias of: Counter
+  structure FromFunctor
+    application of CounterFn to: val start = 1

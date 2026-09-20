@@ -23,10 +23,17 @@ records, let-polymorphism, refs, proper tail calls), the Modules language
 (structures, signatures, transparent and opaque ascription, `where type`,
 `sharing`, functors) and the Basis Library: the required structures, and of
 the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
-the monomorphic vectors, arrays, slices and two-dimensional arrays of every
-element type but wide characters, `Posix`, `Unix`, the sockets and the
-network databases, the fixed-width `IntN` and `WordN`, `Pack*`). Not there yet:
-`Real32` and `WideChar` ([docs/basis-compat.md](docs/basis-compat.md)).
+the monomorphic vectors, arrays, slices and two-dimensional arrays, `Posix`,
+`Unix`, the sockets and the network databases, the fixed-width `IntN` and
+`WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`). Not there:
+`Windows` ([docs/basis-compat.md](docs/basis-compat.md)).
+
+**[docs/generated/basis](docs/generated/basis/README.md)** is the
+documentation of the library: a page for every signature, with what each
+member does, how Rune reads the specification where it leaves a choice, the
+checks of the test suite that pin it, and what MLton, SML/NJ and Poly/ML do
+differently. `runedoc` generates it from the comments of `lib/basis`
+([docs/doc-comments.md](docs/doc-comments.md)).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed
 description of the supported language. Every feature row there has an id
@@ -41,7 +48,7 @@ description of the supported language. Every feature row there has an id
 | `vm/` | the virtual machine; `opcodes.def` and `prims.def` define the instruction set |
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
-| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md) |
+| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
 | `examples/` | small programs |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh`, `install.sh` |
 | `man/`, `completions/` | man pages and shell completions, installed by `make install` |
@@ -71,8 +78,9 @@ make install       # install under PREFIX; sudo make install goes to /usr/local
 is the faster loop while iterating; every target that runs the compiler takes
 the same `RUNE=` override.
 
-`make install` copies `rune`, `runevm`, the basis library, the man pages and
-the shell completions to `~/.local` (or `/usr/local` when run as root, which
+`make install` copies `rune`, `runevm`, `runedoc` (the documentation
+generator), the basis library, the man pages and the shell completions to
+`~/.local` (or `/usr/local` when run as root, which
 installs what is in `bin/` and never builds). `make install HOST=mlton`
 installs a host build instead of the bytecode compiler. Each `rune` is a
 wrapper that passes `--lib`, so no path is baked into the compiler.

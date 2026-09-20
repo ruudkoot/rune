@@ -1,5 +1,7 @@
 (* VectorSlice: a vector, a start index and a length. The -i functions pass
-   the index in the slice. *)
+   the index in the slice.
+
+   Implements: VECTOR_SLICE *)
 structure VectorSlice =
 struct
   datatype 'a slice = Slice of 'a vector * int * int

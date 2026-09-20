@@ -1,7 +1,11 @@
-(* IEEEReal: the types of IEEE arithmetic that do not depend on a precision. *)
+(* IEEEReal: the types of IEEE arithmetic that do not depend on a precision.
+
+   Implements: IEEE_REAL *)
 structure IEEEReal =
 struct
-  exception Unordered
+  (* the Unordered of the top-level environment (initial.sml): a program
+     that handles one handles the other *)
+  exception Unordered = Unordered
   datatype real_order = LESS | EQUAL | GREATER | UNORDERED
   datatype float_class = NAN | INF | ZERO | NORMAL | SUBNORMAL
   datatype rounding_mode = TO_NEAREST | TO_NEGINF | TO_POSINF | TO_ZERO

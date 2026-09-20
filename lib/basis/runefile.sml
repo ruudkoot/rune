@@ -57,8 +57,10 @@ struct
          fn () => last := (tell () handle _ => !last))
       end
   (* The VM holds what is written to a file until it is flushed, and flushes
-     every file when the program ends, so a stream that buffers nothing of
-     its own (the default NO_BUF) loses nothing. *)
+     every file when the program ends. A stream over such a file reports the
+     mode the specification asks for (BLOCK_BUF, or LINE_BUF on a terminal)
+     but holds nothing of its own, so nothing is lost and what a program
+     writes through print and through a stream stays in order. *)
   fun writeString (fd, name) s =
     if fileWrite (fd, s) then size s else raise sysError ()
   fun close (fd : int) () = fileClose fd

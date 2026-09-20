@@ -6,8 +6,8 @@
    it ("the semantics of floating-point numbers should follow the IEEE standard
    754-1985"), IEEE 754 double precision.
 
-   Members that need IEEEReal, LargeInt or LargeReal, and members that Rune
-   lacks, are in sections of their own. *)
+   Members that need IEEEReal, LargeInt or LargeReal, and members that one of
+   the systems lacks, are in sections of their own: Rune has them all. *)
 structure TestReal =
 struct
   val eqI = T.eq T.int

@@ -35,7 +35,6 @@ intinf.sml      | demand | yes  | IntInf LargeInt RuneIntInf | List StringCvt
 int.sml         | demand | yes  | Int                   | IntInf StringCvt
 word.sml        | demand | yes  | Word LargeWord SysWord | Int IntInf List StringCvt
 word_sig.sml    | demand | yes  | WORD                  | LargeInt LargeWord StringCvt Word
-word8.sml       | demand | yes  | Word8                 | StringCvt WORD Word
 int_sig.sml     | demand | yes  | INTEGER               | Int LargeInt StringCvt
 intn_fn.sml     | demand | yes  | RuneIntNFn            | INTEGER Int StringCvt
 int8.sml        | demand | yes  | Int8                  | RuneIntNFn
@@ -43,6 +42,7 @@ int16.sml       | demand | yes  | Int16                 | RuneIntNFn
 int32.sml       | demand | yes  | Int32                 | RuneIntNFn
 int64.sml       | demand | yes  | FixedInt Int64        | Int
 wordn_fn.sml    | demand | yes  | RuneWordNFn           | Int StringCvt WORD Word
+word8.sml       | demand | yes  | Word8                 | RuneWordNFn
 word16.sml      | demand | yes  | Word16                | RuneWordNFn
 word32.sml      | demand | yes  | Word32                | RuneWordNFn
 word64.sml      | demand | yes  | Word64                | Word

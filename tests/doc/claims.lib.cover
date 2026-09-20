@@ -1,0 +1,5 @@
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Wrong.zero/..." in tests/doc/claims.lib/tests (Wrong implements COUNTER)
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Narrow.zero/..." in tests/doc/claims.lib/tests (Narrow implements COUNTER)
+tests/doc/claims.lib/counter.sml:5:7: error: no check labelled "Missing.zero/..." in tests/doc/claims.lib/tests (Missing implements COUNTER)
+tests/doc/claims.lib/counter.sml:6:7: error: no check labelled "Narrow.next/..." in tests/doc/claims.lib/tests (Narrow implements COUNTER)
+tests/doc/claims.lib/counter.sml:6:7: error: no check labelled "Missing.next/..." in tests/doc/claims.lib/tests (Missing implements COUNTER)

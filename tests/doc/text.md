@@ -1,0 +1,213 @@
+# signature TEXT
+
+[Library](../README.md) &rsaquo; Lists &rsaquo; **TEXT**
+
+|  |  |
+| --- | --- |
+| Status | optional |
+| Implementations | 1 |
+| Documentation | 11 of 13 entries documented |
+| Tests | not listed |
+| Source | [tests/doc/text.sml](../tests/doc/text.sml) |
+
+## Synopsis
+
+```sml
+signature TEXT
+structure Text : TEXT where type t = string  (* optional *)
+```
+
+| Implementation |  | Source |
+| --- | --- | --- |
+| `Text` | A structure says what it implements. | [tests/doc/text.sml](../tests/doc/text.sml) |
+
+The language of doc comments. Plain prose is a paragraph, and so is this
+second sentence; `code` stands between backquotes and may
+`wrap over the end of a line`. A bare URL such as
+<https://smlfamily.github.io/Basis/list.html> is a link (the full stop after
+it is not part of it). Characters that Markdown takes for markup are text:
+\*stars\*, \_underscores\_, \<angles\>, \[brackets\], a \| bar, 'a and "quotes".
+
+Subject: an explanation. A word and a colon at the start of a paragraph is
+the house style and means nothing, unless the word is reserved.
+
+A list follows a blank line:
+
+- the first item, which goes on
+  over a second line;
+- the second item, with `code`.
+
+Code is indented by four, after a blank line:
+
+```sml
+val xs = List.tabulate (3, fn i => i)
+
+val ys = List.rev xs
+```
+
+## Contents
+
+[Usage heads](#usage-heads)
+
+## Interface
+
+<pre>
+signature TEXT =
+sig
+  type <a href="#type-t">t</a>
+
+  val <a href="#val-take">take</a> : 'a list * int -&gt; 'a list
+
+  val <a href="#val-op-at">@</a> : 'a list * 'a list -&gt; 'a list
+
+  val <a href="#val-op-lt-lt">&lt;&lt;</a> : word * word -&gt; word
+
+  val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
+
+  val <a href="#val-scan">scan</a> : (char, 'a) reader -&gt; (int, 'a) reader
+
+  val <a href="#val-make">make</a> : {<a href="#fld-make.size">size</a> : int, <a href="#fld-make.fill">fill</a> : char} -&gt; t
+
+  val <a href="#val-maxsize">maxSize</a> : int
+
+  val <a href="#val-tolarge">toLarge</a> : int -&gt; IntInf.int
+  val <a href="#val-fromlarge">fromLarge</a> : IntInf.int -&gt; int
+  val <a href="#val-unrelated">unrelated</a> : int
+
+  val <a href="#val-first">first</a> : int -&gt; int
+
+  val <a href="#val-second">second</a> : int -&gt; int
+end
+</pre>
+
+### <a name="type-t"></a>`t`
+
+```sml
+type t
+```
+
+A reading of the specification, pinned by checks.
+
+> **Reading** `Text.t/abstract`. The page says nothing about equality; the type
+> is taken to be abstract.
+
+> **Reading** (the suite differs) `Text.size/empty`. Rune answers 0.
+
+> **Erratum** `TEXT/typo`. The page says "Ow".
+
+> **Deviation** `Text.t/transparent`. The type is a string here.
+
+> **Implementation** `Text.maxSize/value`. 1073741823.
+
+> **Limitation** `Text.locale/none`. There are no locales.
+
+## Usage heads
+
+### <a name="val-take"></a>`take`
+
+```sml
+val take : 'a list * int -> 'a list
+```
+
+`take (l, i)` is the first `i` elements of `l`; `take (l, length l)` is `l`.
+
+**Raises** `Subscript` if `i < 0` or `i > length l`.
+
+**Law** `take (l, i) @ drop (l, i) = l`
+
+**Complexity** linear in `i`.
+
+**Example** `take ([1, 2, 3], 2) = [1, 2]`
+
+### <a name="val-op-at"></a>`@`
+
+```sml
+val @ : 'a list * 'a list -> 'a list
+```
+
+`l @ m` is `l` followed by `m`: an infix identifier is applied infix.
+
+### <a name="val-op-lt-lt"></a>`<<`
+
+```sml
+val << : word * word -> word
+```
+
+`<< (w, n)` shifts left: a symbolic identifier that is not infix.
+
+### <a name="val-foldl"></a>`foldl`
+
+```sml
+val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
+```
+
+`foldl f init l` has three arguments.
+
+### <a name="val-scan"></a>`scan`
+
+```sml
+val scan : (char, 'a) reader -> (int, 'a) reader
+```
+
+`scan getc strm` has an argument more than the type shows arrows: the
+result may abbreviate a function type.
+
+### <a name="val-make"></a>`make`
+
+```sml
+val make : {size : int, fill : char} -> t
+```
+
+`make {size, fill}` takes a record.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-make.size"></a>`size` | `int` |  |
+| <a name="fld-make.fill"></a>`fill` | `char` |  |
+
+### <a name="val-maxsize"></a>`maxSize`
+
+```sml
+val maxSize : int
+```
+
+The largest size; a constant has no head.
+
+### <a name="val-tolarge"></a><a name="val-fromlarge"></a>`toLarge`, `fromLarge`
+
+```sml
+val toLarge : int -> IntInf.int
+val fromLarge : IntInf.int -> int
+```
+
+`toLarge i` and `fromLarge i` convert to and from the largest integers;
+the two that follow are documented by this comment.
+
+### <a name="val-unrelated"></a>`unrelated`
+
+```sml
+val unrelated : int
+```
+
+### <a name="val-first"></a>`first`
+
+```sml
+val first : int -> int
+```
+
+`first x` is documented; the next value is not adjacent.
+
+### <a name="val-second"></a>`second`
+
+```sml
+val second : int -> int
+```
+
+## See also
+
+`OTHER`, `List.map`
+
+---
+
+<sub>Generated by runedoc from tests/doc/text.sml; do not edit.</sub>
+

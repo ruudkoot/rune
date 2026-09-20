@@ -290,4 +290,7 @@ struct
   end
 end
 
+(* Implements: SOCKET
+
+   Status: optional *)
 structure Socket = RuneSocket

@@ -1,5 +1,7 @@
 (* OS: the errors of the system, the file system, paths, the process and the
-   I/O descriptors. *)
+   I/O descriptors.
+
+   Implements: OS *)
 structure OS =
 struct
   type syserror = RuneError.syserror
@@ -8,9 +10,12 @@ struct
   val errorName = RuneError.errorName
   val syserror = RuneError.syserror
 
+  (* Implements: OS_FILE_SYS *)
   structure FileSys = RuneFileSys
+  (* Implements: OS_PATH *)
   structure Path = RunePath
 
+  (* Implements: OS_PROCESS *)
   structure Process =
   struct
     type status = int
@@ -44,6 +49,8 @@ struct
     end
   end
 
-  (* A descriptor is the handle of the VM's file table. *)
+  (* A descriptor is the system's own file descriptor, wrapped (`RuneIODesc.FD`).
+
+     Implements: OS_IO *)
   structure IO = RuneIODesc
 end

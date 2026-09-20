@@ -1,0 +1,4 @@
+runedoc --page tests/basis/spec-sigs/*.sml
+instructions 173545428
+bytes 279065318
+objects 6463514

@@ -16,15 +16,35 @@ keep these invariants:
   *Supported* or *Partial* needs a test file `tests/lang/<id>_<name>.sml` with
   a hand-verified `.expected` file; a test needs a row. New ids use the
   prefixes `lex. dec. exp. pat. ty. mod. rt. basis.`. Ids contain no `_`.
+* `lib/basis/DOCUMENTED` lists the signatures that are documented in full,
+  which is all 65 of them. A member added to one needs a doc comment, a
+  function among them a usage head (`docs/doc-comments.md`): `make docs` and
+  `make check-docs` fail otherwise. A new signature joins the list in the
+  commit that finishes documenting it, and none should be added without one.
+* A basis structure says which signature it implements in the comment above
+  it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
+  `tests/basis/<name>_sig.sml` matches it against the transcription;
+  `make check-docs` (`tests/basis/check-claims.sh`) wants both.
 * When adding a basis structure, add a `basis.<name>` row listing its members
   and add the file to `lib/basis/MANIFEST` with what it provides and requires
   (`rune --basis-check`, part of `make check-docs`, verifies the columns; a
-  file loaded on demand declares modules and types only, all in its provides column). Its test belongs to the Basis
+  file loaded on demand declares modules and types only, all in its provides column). A signature of the
+  specification is transcribed in `tests/basis/spec-sigs` first;
+  `scripts/gen-basis-sigs.sh` then makes `lib/basis/sig_<sig>.sml` and its
+  MANIFEST line, and from there on the library's file is edited by hand
+  (`make check-docs` wants the same tokens in both). Its test belongs to the Basis
   Library suite: `tests/basis/<name>.sml` and `tests/basis/<name>_sig.sml`,
   written as `tests/basis/README.md` describes, with expected values worked
   out from the text of the specification. `make check-docs` wants a check for
   every member the specification's signature names, and `make test-basis` an
-  explanation in `tests/basis/deviations.txt` for every check that fails.
+  explanation in `tests/basis/deviations.txt` for every check that fails. A
+  reading of the specification, a deviation from it or a choice it leaves
+  open is written down once, as a note in the doc comment of the member
+  (`docs/doc-comments.md`); a `rune` line of `deviations.txt` needs such a
+  note (`tests/basis/check-notes.sh`). After changing a line of
+  `deviations.txt` about a host, run `sh tests/basis/gen-annotations.sh` and
+  `make docs`: the documentation shows those lines under the members, from
+  the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
   Poly/ML); `make matrix` adds the suite on each host's own library.
@@ -39,8 +59,9 @@ keep these invariants:
 
 ## Build and verification
 
-* Compiler sources are listed in `sources.txt` (ordered); the MLton, SML/NJ and
-  Poly/ML build files are generated from it — never edit `build/`.
+* Compiler sources are listed in `sources.txt` (ordered), those of the
+  documentation generator `runedoc` in `sources-doc.txt`; the MLton, SML/NJ and
+  Poly/ML build files are generated from them — never edit `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
 * The compiler has no built-in library path: `--lib DIR` is required, and each
@@ -68,6 +89,18 @@ keep these invariants:
   programs that need Basis Library parts Rune lacks or MLton-specific
   behaviour, each with its reason. A program that fails and is not on that
   list is a bug.
+* Comments are written in the language of `docs/doc-comments.md`, and in a
+  signature every comment documents something, is a `----` heading or is
+  prose; `make check-docs` lints `lib/basis` and `src`. The documentation in
+  `docs/generated/basis` is made from the library's comments: after changing
+  a signature or a comment of `lib/basis`, run `make docs` and commit what it
+  writes (`make check-docs` fails on a stale tree). Never edit it by hand.
+  An `Example:` that is an equation, `e = v`, is compiled by `make docs` and
+  run by `make test-basis`; give a description an example where it shows
+  what prose cannot, and find its value by running it.
+* A change to the documentation generator (`src/doc`) needs a test in
+  `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
+  reviewed line by line like any `.expected` file.
 * `.expected` files are written by hand or reviewed line by line after
   `tests/run-tests.sh --update <filter>`; never accept generated output
   blindly.
