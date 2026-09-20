@@ -874,6 +874,58 @@ can be done in any order; M10 needs M9 (its check 3 needs the labels). The
 waves need M6 and can run beside M7 to M10; a note written before M10 is
 parsed and rendered from M4 and M5 on, and checked from M10 on.
 
+## How to do a wave (M11)
+
+What M6 did for the pilot, step by step; `docs/doc-comments.md` has the
+rules of the comments, and the pilot's seven files in `lib/basis` are the
+examples to follow (`sig_list.sml`, `sig_char.sml`, `sig_string_cvt.sml`,
+`sig_os_io.sml`, `sig_int_inf.sml`, `sig_option.sml`, `sig_bool.sml`).
+
+1. Take the signatures of the wave (the table of D10). For each, open
+   `lib/basis/sig_<name>.sml` (or the hand-written file for `INTEGER`, `WORD`,
+   `PRIM_IO`, `STREAM_IO` and the `MONO_*` ones), the structures that implement
+   it (`docs/generated/basis/structures.md` says which), its tests
+   (`tests/basis/<name>*.sml`, `tests/basis/fn/*_fn.sml`) and its rows of
+   [docgen-notes.tsv](docgen-notes.tsv) (`awk -F '\t' '$2 == "REAL"'`).
+2. Replace the transcription header by an overview: what the signature is
+   for, conventions that hold for all its members, an `Area:`, a `Status:
+   optional` where the specification has it so, `See also:`. Turn the header's
+   remarks about the page into `Erratum:` notes.
+3. Divide the body with `(* ---- Heading ---- *)` comments. The order of the
+   specifications is fixed: `make check-docs` compares the tokens with the
+   transcription in `tests/basis/spec-sigs`, so only comments and layout may
+   change.
+4. Document every entry. A function begins with its usage head (`` `take (l,
+   i)` is ... ``); the first paragraph is the summary, at most 160 characters;
+   then what a reader needs: `Raises:` for every exception (the tests' `raises`
+   checks and the library's `raise`s tell which), `Law:`, `Example:`,
+   `Complexity:` where they say something. Write from the behaviour of the
+   library and its tests, in your own words: the pages of the specification
+   and the book are copyrighted, and are quoted only inside a note, briefly.
+   Adjacent values may share one comment that has a head for each.
+5. Move the notes in: every row of the inventory for the signature becomes a
+   `Reading:`, `Erratum:`, `Deviation:`, `Implementation:` or `Limitation:` on
+   the member it is about, with the label of the check that pins it as its id
+   where there is one, or a `Pinned by:`. A note that is about one structure
+   only (the precision of `Int`, `Array.maxLen`) goes above the declaration in
+   that structure's body, or into the structure's header comment. Skip the
+   rows marked quote-only. Where a test or library comment only restated the
+   note, shorten it to a reference to the id. Check each claim against the
+   code or a run (`bin/rune` on a three-line program): the inventory has
+   mistakes, and the sweeps found comments that contradict the code.
+6. Add the signatures to `lib/basis/DOCUMENTED`, run `make docs` (use
+   `make docs RUNEDOC=bin/runedoc-mlton` while iterating: 2 s instead of 25)
+   and fix what the ratchet reports. Read the generated pages.
+7. `make check`, one commit per wave, with `docs/generated/basis` in it.
+
+The last wave (W8) also writes `lib/basis/overview.doc` (the text at the top
+of `README.md`, in the comment language), documents what `initial.sml` and
+`pervasive.sml` declare that is no member of a structure (`print`, ...),
+replaces the sections "Representation choices in Rune", "Where Rune departs
+from the specification" and "Readings of the specification" of
+`docs/basis-compat.md` by links to `readings.md`, and resolves the
+contradictions listed under "Where we are".
+
 ## Risks
 
 1. **The writing is most of the work and stalls.** Waves, the ratchet and
