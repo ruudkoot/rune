@@ -108,9 +108,24 @@ struct
                     fn () => case WideString.scan WideCharVectorSlice.getItem (WideCharVectorSlice.full (ws [104, 105])) of
                                SOME (s, _) => s = ws [104, 105]
                              | NONE => false)
+  (* "stopping when they reach the end of the source or a non-printing
+     character": the bell (7) is one *)
   val () = T.check ("WideString.scan/stops-at-a-character-it-cannot-read",
-                    fn () => case WideString.scan WideCharVectorSlice.getItem (WideCharVectorSlice.full (ws [104, 34, 105])) of
+                    fn () => case WideString.scan WideCharVectorSlice.getItem (WideCharVectorSlice.full (ws [104, 7, 105])) of
                                SOME (s, rest) => s = ws [104] andalso WideCharVectorSlice.length rest = 2
                              | NONE => false)
+  (* A double quote that is not escaped prints, and is no improper escape: it
+     converts to itself, the reading that string.sml takes for String.scan
+     (String.fromString/unescaped-double-quote) and that WideString.fromString
+     has always had. *)
+  val () = T.check ("WideString.scan/unescaped-double-quote",
+                    fn () => case WideString.scan WideCharVectorSlice.getItem (WideCharVectorSlice.full (ws [104, 34, 105])) of
+                               SOME (s, rest) => s = ws [104, 34, 105] andalso WideCharVectorSlice.length rest = 0
+                             | NONE => false)
+  val () = T.check ("WideString.scan/unescaped-double-quote-first",
+                    fn () => case WideString.scan WideCharVectorSlice.getItem (WideCharVectorSlice.full (ws [34])) of
+                               SOME (s, _) => s = ws [34]
+                             | NONE => false)
+  val () = eqWO ("WideString.fromString/unescaped-double-quote", SOME (ws [97, 34, 98]), fn () => WideString.fromString "a\"b")
   (*>> text *)
 end
