@@ -118,6 +118,8 @@ typedef struct VM {
     size_t heap_size;        /* size of one semispace */
     size_t heap_used;
     size_t gc_count;
+    int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
+    int64_t gc_sys_us;
     size_t bytes_allocated;
     uint64_t objects_allocated;
     uint64_t instructions;   /* executed so far */

@@ -5,9 +5,9 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 2 |
+| Implementations | 3 |
 | Documentation | 25 of 25 entries documented |
-| Tests | 244 checks of 24 entries |
+| Tests | 245 checks of 24 entries |
 | Source | [lib/basis/sig\_imperative\_io.sml](../../../../lib/basis/sig_imperative_io.sml) |
 
 ## Synopsis
@@ -15,12 +15,14 @@
 ```sml
 signature IMPERATIVE_IO
 structure BinIO : IMPERATIVE_IO
+functor ImperativeIO (...) : IMPERATIVE_IO  (* optional *)
 structure TextIO : IMPERATIVE_IO
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| `ImperativeIO` | Imperative streams over a [`STREAM_IO`](../sig/STREAM_IO.md) of a new element type: what [`TEXT_IO`](../sig/TEXT_IO.md) and [`BIN_IO`](../sig/BIN_IO.md) are for characters and bytes. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
 | `TextIO` | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams that remember where they are: a cell holding a functional stream,
@@ -41,10 +43,11 @@ The end of a stream is not a state: an imperative stream sits at a place
 in the chain of its functional stream, and a file that grows delivers what
 it gained, as [`STREAM_IO`](../sig/STREAM_IO.md) describes.
 
-> **Deviation** `IMPERATIVE_IO/functor-not-sealed`. The functor
-> [`ImperativeIO`](../fun/ImperativeIO.md) is not ascribed this signature, because the library
-> declares the signature after the structures that would need it; its result
-> matches it, which `tests/basis` checks.
+> **Implementation** `IMPERATIVE_IO/functor-is-sealed`. The functor
+> [`ImperativeIO`](../fun/ImperativeIO.md) is ascribed this signature, so what it gives a program is
+> what the signature names. The library's own `RuneImperativeIOFn`, which it
+> is built on, is not: [`TextIO`](../sig/TEXT_IO.md), [`BinIO`](../sig/BIN_IO.md) and `WideTextIO` take the streams
+> apart, and the constructors are not in this signature.
 
 ## Contents
 
@@ -165,9 +168,9 @@ The type of the input streams.
 > instreams and is true exactly when they are the same stream; the same
 > holds for [`outstream`](#type-outstream).
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `two-on-one-file`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `equal-when-the-same-stream` &middot; `two-on-one-file`
 
 For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `two-on-one-file`
 

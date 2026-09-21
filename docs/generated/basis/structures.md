@@ -36,6 +36,7 @@ is listed at the end of this page.
 | `General` | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | `GenericSock` | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | `IEEEReal` | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | optional |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
+| `INet6Sock` | : [`INET6_SOCK`](sig/INET6_SOCK.md) |  | extension | is `RuneINet6Sock` | [lib/basis/inet6sock.sml](../../../lib/basis/inet6sock.sml) |
 | `INetSock` | : [`INET_SOCK`](sig/INET_SOCK.md) |  | optional | is `RuneINetSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | `IO` | : [`IO`](sig/IO.md) |  | required |  | [lib/basis/io.sml](../../../lib/basis/io.sml) |
 | `Int` | : [`INTEGER`](sig/INTEGER.md) |  | required |  | [lib/basis/int.sml](../../../lib/basis/int.sml) |

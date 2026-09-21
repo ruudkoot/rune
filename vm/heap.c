@@ -2,6 +2,7 @@
    is rounded up to a multiple of 16 bytes and is at least 16 bytes so that a
    forwarding pointer always fits. */
 #include "vm.h"
+#include "sys.h"
 
 static size_t payload_size(size_t bytes) {
     size_t s = (bytes + 15) & ~(size_t)15;
@@ -19,6 +20,8 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->heap_to = NULL;
     vm->heap_used = 0;
     vm->gc_count = 0;
+    vm->gc_user_us = 0;
+    vm->gc_sys_us = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
@@ -114,10 +117,16 @@ static void collect_into(VM *vm, size_t new_size) {
 }
 
 void vm_gc(VM *vm, size_t needed) {
+    /* The processor time of a collection, for Timer.checkCPUTimes and
+       checkGCTime: read once around the whole of it, so that growing the
+       heap counts as one collection and not two. */
+    int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
     /* live data always fits in a semispace of the current size */
     collect_into(vm, vm->heap_size);
     /* keep the heap at most half full after collection to avoid thrashing */
     size_t want = vm->heap_size;
     while (vm->heap_used + needed > want / 2) want *= 2;
     if (want != vm->heap_size) collect_into(vm, want);
+    vm->gc_user_us += sys_time_user() - user0;
+    vm->gc_sys_us += sys_time_sys() - sys0;
 }

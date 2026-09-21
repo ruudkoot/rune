@@ -20,10 +20,11 @@
 
    See also: `STREAM_IO`, `TEXT_IO`, `BIN_IO`, `PRIM_IO`
 
-   Deviation: `IMPERATIVE_IO/functor-not-sealed`. The functor
-   `ImperativeIO` is not ascribed this signature, because the library
-   declares the signature after the structures that would need it; its result
-   matches it, which `tests/basis` checks. *)
+   Implementation: `IMPERATIVE_IO/functor-is-sealed`. The functor
+   `ImperativeIO` is ascribed this signature, so what it gives a program is
+   what the signature names. The library's own `RuneImperativeIOFn`, which it
+   is built on, is not: `TextIO`, `BinIO` and `WideTextIO` take the streams
+   apart, and the constructors are not in this signature. *)
 signature IMPERATIVE_IO =
 sig
   (* The functional streams these are built on. *)
@@ -41,7 +42,9 @@ sig
      leaves the type abstract, and a program should not rely on more. In Rune
      it is a datatype holding a `ref`, so `=` may be written between two
      instreams and is true exactly when they are the same stream; the same
-     holds for `outstream`. *)
+     holds for `outstream`.
+
+     Pinned by: `TextIO.instream/equal-when-the-same-stream` *)
   type instream
 
   (* The type of the output streams. *)

@@ -170,9 +170,11 @@ int sys_last_addr_len(void) { return 0; }
 int sys_getsockopt(int fd, int l, int n) { (void)fd; (void)l; (void)n; return fail(); }
 int sys_setsockopt(int fd, int l, int n, int v) { (void)fd; (void)l; (void)n; (void)v; return fail(); }
 int sys_inet_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
+int sys_inet6_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
 int sys_unix_addr(const char *p) { (void)p; return fail(); }
 int sys_addr_family(const char *a, int n) { (void)a; (void)n; return fail(); }
 const char *sys_inet_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
+const char *sys_inet6_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
 const char *sys_unix_path(const char *a, int n) { (void)a; (void)n; fail(); return NULL; }
 const char *sys_host_byname(const char *n) { (void)n; fail(); return NULL; }
 const char *sys_host_byaddr(const char *d) { (void)d; fail(); return NULL; }

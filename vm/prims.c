@@ -494,6 +494,8 @@ static int p_sys_error_of_name(VM *vm) {
 static int p_time_now(VM *vm) { return ret(vm, 1, mk_int(sys_time_now())); }
 static int p_time_user(VM *vm) { return ret(vm, 1, mk_int(sys_time_user())); }
 static int p_time_sys(VM *vm) { return ret(vm, 1, mk_int(sys_time_sys())); }
+static int p_time_gc_user(VM *vm) { return ret(vm, 1, mk_int(vm->gc_user_us)); }
+static int p_time_gc_sys(VM *vm) { return ret(vm, 1, mk_int(vm->gc_sys_us)); }
 static int p_time_sleep(VM *vm) { INT1("time_sleep"); sys_time_sleep(x); return ret(vm, 1, mk_unit()); }
 
 /* A list of the ints in xs, built on the VM stack so that the collector sees
@@ -1084,6 +1086,14 @@ static int p_socket_inet_addr(VM *vm) {
     return push_last_addr(vm, ok, 2);
 }
 
+static int p_socket_inet6_addr(VM *vm) {
+    char *host = c_string(vm, ARG(1), "socket_inet6_addr");
+    check_tag(vm, ARG(0), T_INT, "socket_inet6_addr");
+    int ok = sys_inet6_addr(host, (int)ARG(0).u.i);
+    free(host);
+    return push_last_addr(vm, ok, 2);
+}
+
 static int p_socket_unix_addr(VM *vm) {
     char *path = c_string(vm, ARG(0), "socket_unix_addr");
     int ok = sys_unix_addr(path);
@@ -1100,6 +1110,22 @@ static int p_socket_inet_parts(VM *vm) {
     Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet_parts");
     int port = 0;
     const char *host = sys_inet_parts(OBJ_BYTES(a), (int)a->len, &port);
+    if (!host) return push_int_list(vm, NULL, 0, 1);
+    char buffer[32];
+    snprintf(buffer, sizeof buffer, "%d", port);
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
+    vm_cons(vm);
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+static int p_socket_inet6_parts(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet6_parts");
+    int port = 0;
+    const char *host = sys_inet6_parts(OBJ_BYTES(a), (int)a->len, &port);
     if (!host) return push_int_list(vm, NULL, 0, 1);
     char buffer[32];
     snprintf(buffer, sizeof buffer, "%d", port);

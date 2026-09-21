@@ -13,7 +13,7 @@
 - `dev` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-dev)
 - `devToWord` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-devtoword)
 - `dgram` (type): [SOCKET](../sig/SOCKET.md#type-dgram)
-- `dgram_sock` (type): [INET_SOCK](../sig/INET_SOCK.md#type-dgram_sock), [UNIX_SOCK](../sig/UNIX_SOCK.md#type-dgram_sock)
+- `dgram_sock` (type): [INET6_SOCK](../sig/INET6_SOCK.md#type-dgram_sock), [INET_SOCK](../sig/INET_SOCK.md#type-dgram_sock), [UNIX_SOCK](../sig/UNIX_SOCK.md#type-dgram_sock)
 - `DGrm` (str): [UNIX_SOCK](../sig/UNIX_SOCK.md#str-dgrm)
 - `Diff` (exn): [SML90](../sig/SML90.md#exn-diff)
 - `dimensions` (val): [ARRAY2](../sig/ARRAY2.md#val-dimensions), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-dimensions)

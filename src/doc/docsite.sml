@@ -16,7 +16,12 @@ struct
 
   val pageLimit = 150000               (* GitHub renders larger pages lazily, or not at all *)
 
-  fun isPublic (name : string) : bool = not (String.isPrefix "Rune" name)
+  (* The library's own plumbing is named for it and is not documented: a
+     structure or functor `RuneFoo`, a signature `RUNE_FOO`. A program can
+     still name one, as it can any top-level declaration of the library, but
+     it is no part of what the library offers. *)
+  fun isPublic (name : string) : bool =
+    not (String.isPrefix "Rune" name orelse String.isPrefix "RUNE_" name)
 
   fun sort (less : 'a * 'a -> bool) (xs : 'a list) : 'a list =
     let
@@ -1081,7 +1086,9 @@ struct
         :: ("claims.tsv", DocClaims.tsv (sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                                                 case String.compare (#name a, #name b) of
                                                   LESS => true | GREATER => false | EQUAL => #signat a < #signat b) claims,
-                                         sigStatus))
+                                         sigStatus,
+                                         List.map (fn s : I.signatureRecord => (#name s, #file s))
+                                                  (List.filter (fn s : I.signatureRecord => isPublic (#name s)) sigs)))
         :: sigPages @ funPages @ indexFiles
         (* what only elaboration knows *)
         @ (case elaborated of

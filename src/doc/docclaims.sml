@@ -116,10 +116,18 @@ struct
              claims
 
   (* claims.tsv: name, kind, signature, realisations, status, origin, source. *)
-  fun tsv (claims : claim list, statusOfSignature : string -> string) : string =
+  (* The signatures come first, so that a reader of the file sees what the
+     library declares before what implements it; a signature has no signature
+     of its own and no realisations, and its origin is where it is declared. *)
+  fun tsv (claims : claim list, statusOfSignature : string -> string,
+           signatures : (string * string) list) : string =
     String.concat
       ("name\tkind\tsignature\trealisations\tstatus\torigin\tsource\n"
-       :: List.map (fn c : claim =>
+       :: List.map (fn (name, file) =>
+                      String.concatWith "\t"
+                        [name, "signature", "", "", statusOfSignature name, "declared", file] ^ "\n")
+                   signatures
+       @ List.map (fn c : claim =>
                       String.concatWith "\t"
                         [#name c, if #isFunctor c then "functor" else "structure", #signat c, #realisations c,
                          (case #status c of SOME s => s | NONE => statusOfSignature (#signat c)), #origin c, #file c] ^ "\n")

@@ -24,12 +24,17 @@ structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char  
 The same as [`MONO_VECTOR`](../sig/MONO_VECTOR.md), with a vector type that admits equality.
 
 > **Deviation** `MONO_VECTOR_EQ/not-in-the-specification`. This signature is
-> not in the specification. [`MONO_VECTOR`](../sig/MONO_VECTOR.md) writes `type vector`, not
-> `eqtype`, so that a family whose elements do not admit equality (the reals)
-> can have one; a family whose vector is a type of its own and does admit it
-> is sealed with this instead. [`WideCharVector`](../sig/MONO_VECTOR.md) needs that, because
-> [`WideString.string`](../sig/STRING.md#type-string) must be a type name of its own for wide string
-> constants to be overloaded at it.
+> not in the specification, and it is here because the specification asks
+> for something it gives no way to say: [`WideCharVector.vector`](../sig/MONO_VECTOR.md#type-vector) has to admit
+> equality, and the declaration the page gives [`WideCharVector`](../sig/MONO_VECTOR.md) cannot make
+> it -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.
+> [`MONO_VECTOR`](../sig/MONO_VECTOR.md) writes `type vector`, not `eqtype`, so that a family whose
+> elements do not admit equality can have a vector; a family whose vector is
+> a type of its own and does admit it is sealed with this instead. The
+> specification's own way out is `where type vector = WideString.string` on
+> the instance, which Rune cannot use because [`WideString`](../sig/STRING.md) is declared after
+> [`WideCharVector`](../sig/MONO_VECTOR.md) and is built on it -- [`WideString.string`](../sig/STRING.md#type-string) must be a type
+> name of its own for wide string constants to be overloaded at it.
 
 ## Interface
 

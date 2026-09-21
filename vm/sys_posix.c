@@ -432,7 +432,7 @@ static const struct { const char *name; int64_t value; } constants[] = {
     C(_PC_SYNC_IO) C(_PC_ASYNC_IO) C(_PC_PRIO_IO) C(_PC_FILESIZEBITS)
     C(WNOHANG) C(WUNTRACED)
     /* sockets */
-    C(AF_INET) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
+    C(AF_INET) C(AF_INET6) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
     C(SO_DEBUG) C(SO_REUSEADDR) C(SO_KEEPALIVE) C(SO_DONTROUTE) C(SO_LINGER)
     C(SO_BROADCAST) C(SO_OOBINLINE) C(SO_SNDBUF) C(SO_RCVBUF) C(SO_TYPE) C(SO_ERROR)
     C(MSG_OOB) C(MSG_PEEK) C(MSG_DONTROUTE)
@@ -862,6 +862,20 @@ int sys_inet_addr(const char *host, int port) {
     return 0;
 }
 
+/* An IPv6 address, in the text form of inet_pton: "::1", "fe80::1%eth0" is
+   not taken (no scope id). An empty host is the address of no interface. */
+int sys_inet6_addr(const char *host, int port) {
+    struct sockaddr_in6 in6;
+    memset(&in6, 0, sizeof in6);
+    in6.sin6_family = AF_INET6;
+    in6.sin6_port = htons((unsigned short)port);
+    if (!host || !*host) in6.sin6_addr = in6addr_any;
+    else if (inet_pton(AF_INET6, host, &in6.sin6_addr) != 1) { errno = EINVAL; return -1; }
+    memcpy(address, &in6, sizeof in6);
+    address_length = (int)sizeof in6;
+    return 0;
+}
+
 int sys_unix_addr(const char *path) {
     struct sockaddr_un un;
     memset(&un, 0, sizeof un);
@@ -888,6 +902,16 @@ const char *sys_inet_parts(const char *addr, int n, int *port) {
     if (in.sin_family != AF_INET) return NULL;
     if (!inet_ntop(AF_INET, &in.sin_addr, path_buffer, sizeof path_buffer)) return NULL;
     *port = ntohs(in.sin_port);
+    return path_buffer;
+}
+
+const char *sys_inet6_parts(const char *addr, int n, int *port) {
+    if (n < (int)sizeof(struct sockaddr_in6)) return NULL;
+    struct sockaddr_in6 in6;
+    memcpy(&in6, addr, sizeof in6);
+    if (in6.sin6_family != AF_INET6) return NULL;
+    if (!inet_ntop(AF_INET6, &in6.sin6_addr, path_buffer, sizeof path_buffer)) return NULL;
+    *port = ntohs(in6.sin6_port);
     return path_buffer;
 }
 

@@ -1,4 +1,70 @@
 name	kind	signature	realisations	status	origin	source
+ARRAY	signature			required	declared	lib/basis/sig_array.sml
+ARRAY2	signature			optional	declared	lib/basis/sig_array2.sml
+ARRAY_SLICE	signature			required	declared	lib/basis/sig_array_slice.sml
+BIN_IO	signature			required	declared	lib/basis/sig_bin_io.sml
+BIT_FLAGS	signature			optional	declared	lib/basis/sig_bit_flags.sml
+BOOL	signature			required	declared	lib/basis/sig_bool.sml
+BYTE	signature			required	declared	lib/basis/sig_byte.sml
+CHAR	signature			required	declared	lib/basis/sig_char.sml
+COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
+DATE	signature			required	declared	lib/basis/sig_date.sml
+GENERAL	signature			required	declared	lib/basis/sig_general.sml
+GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
+IEEE_REAL	signature			optional	declared	lib/basis/sig_ieee_real.sml
+IMPERATIVE_IO	signature			required	declared	lib/basis/sig_imperative_io.sml
+INET6_SOCK	signature			extension	declared	lib/basis/inet6sock_sig.sml
+INET_SOCK	signature			optional	declared	lib/basis/sig_inet_sock.sml
+INTEGER	signature			required	declared	lib/basis/int_sig.sml
+INT_INF	signature			optional	declared	lib/basis/sig_int_inf.sml
+IO	signature			required	declared	lib/basis/sig_io.sml
+LIST	signature			required	declared	lib/basis/sig_list.sml
+LIST_PAIR	signature			required	declared	lib/basis/sig_list_pair.sml
+MATH	signature			required	declared	lib/basis/sig_math.sml
+MONO_ARRAY	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_ARRAY2	signature			optional	declared	lib/basis/sig_mono_array2.sml
+MONO_ARRAY_SLICE	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR_EQ	signature			extension	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR_SLICE	signature			required	declared	lib/basis/mono_sigs.sml
+NET_HOST_DB	signature			optional	declared	lib/basis/sig_net_host_db.sml
+NET_PROT_DB	signature			optional	declared	lib/basis/sig_net_prot_db.sml
+NET_SERV_DB	signature			optional	declared	lib/basis/sig_net_serv_db.sml
+OPTION	signature			required	declared	lib/basis/sig_option.sml
+OS	signature			required	declared	lib/basis/sig_os.sml
+OS_FILE_SYS	signature			required	declared	lib/basis/sig_os_file_sys.sml
+OS_IO	signature			required	declared	lib/basis/sig_os_io.sml
+OS_PATH	signature			required	declared	lib/basis/sig_os_path.sml
+OS_PROCESS	signature			required	declared	lib/basis/sig_os_process.sml
+PACK_REAL	signature			optional	declared	lib/basis/sig_pack_real.sml
+PACK_WORD	signature			optional	declared	lib/basis/sig_pack_word.sml
+POSIX	signature			optional	declared	lib/basis/sig_posix.sml
+POSIX_ERROR	signature			optional	declared	lib/basis/sig_posix_error.sml
+POSIX_FILE_SYS	signature			optional	declared	lib/basis/sig_posix_file_sys.sml
+POSIX_IO	signature			optional	declared	lib/basis/sig_posix_io.sml
+POSIX_PROCESS	signature			optional	declared	lib/basis/sig_posix_process.sml
+POSIX_PROC_ENV	signature			optional	declared	lib/basis/sig_posix_proc_env.sml
+POSIX_SIGNAL	signature			optional	declared	lib/basis/sig_posix_signal.sml
+POSIX_SYS_DB	signature			optional	declared	lib/basis/sig_posix_sys_db.sml
+POSIX_TTY	signature			optional	declared	lib/basis/sig_posix_tty.sml
+PRIM_IO	signature			required	declared	lib/basis/primio_sig.sml
+REAL	signature			required	declared	lib/basis/sig_real.sml
+SML90	signature			optional	declared	lib/basis/sig_sml90.sml
+SOCKET	signature			optional	declared	lib/basis/sig_socket.sml
+STREAM_IO	signature			required	declared	lib/basis/streamio_sig.sml
+STRING	signature			required	declared	lib/basis/sig_string.sml
+STRING_CVT	signature			required	declared	lib/basis/sig_string_cvt.sml
+SUBSTRING	signature			required	declared	lib/basis/sig_substring.sml
+TEXT	signature			required	declared	lib/basis/sig_text.sml
+TEXT_IO	signature			required	declared	lib/basis/sig_text_io.sml
+TEXT_STREAM_IO	signature			required	declared	lib/basis/sig_text_stream_io.sml
+TIME	signature			required	declared	lib/basis/sig_time.sml
+TIMER	signature			required	declared	lib/basis/sig_timer.sml
+UNIX	signature			optional	declared	lib/basis/sig_unix.sml
+UNIX_SOCK	signature			optional	declared	lib/basis/sig_unix_sock.sml
+VECTOR	signature			required	declared	lib/basis/sig_vector.sml
+VECTOR_SLICE	signature			required	declared	lib/basis/sig_vector_slice.sml
+WORD	signature			required	declared	lib/basis/word_sig.sml
 Array	structure	ARRAY		required	claimed	lib/basis/array.sml
 Array2	structure	ARRAY2		optional	ascribed	lib/basis/array2.sml
 ArraySlice	structure	ARRAY_SLICE		required	claimed	lib/basis/arrayslice.sml
@@ -25,8 +91,10 @@ FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
 IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
+INet6Sock	structure	INET6_SOCK		extension	claimed	lib/basis/inet6sock.sml
 INetSock	structure	INET_SOCK		optional	claimed	lib/basis/inetsock.sml
 IO	structure	IO		required	claimed	lib/basis/io.sml
+ImperativeIO	functor	IMPERATIVE_IO		optional	ascribed	lib/basis/io_functors.sml
 Int	structure	INTEGER		required	claimed	lib/basis/int.sml
 Int16	structure	INTEGER		optional	claimed	lib/basis/int16.sml
 Int16Array	structure	MONO_ARRAY	where type vector = Int16Vector.vector where type elem = Int16.int	optional	claimed	lib/basis/mono_int16.sml

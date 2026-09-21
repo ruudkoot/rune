@@ -198,7 +198,13 @@ the table at the top of this page.
 Every departure is written on the member it is about, as a `Deviation:` or a
 `Limitation:` note, and is collected in
 [generated/basis/readings.md](generated/basis/readings.md). What is not
-implemented at all: `Windows`, and IPv6.
+implemented at all: `Windows`. IPv6 is not in the specification either -- it
+was written before the protocol, and its `NetHostDB` gives the four dotted
+numbers of IPv4 -- so Rune adds it as `INet6Sock` with a signature of its own,
+`INET6_SOCK`, which is `INET_SOCK` read for 128-bit addresses. `Socket.AF`
+knows the family, which the page allows (`AF.list` "returns a list of all the
+available address families"), and `NetHostDB` stays what the specification
+defines.
 
 No check of the suite fails on Rune.
 
@@ -315,6 +321,37 @@ Rune takes is written on the member it is about, in the library's
 documentation; [generated/basis/readings.md](generated/basis/readings.md)
 collects them all, with the checks that pin each one. The errata of the
 specification are there too, under the members they belong to.
+
+### `WideCharVector` must admit equality, and its declaration cannot say so
+
+`MONO_VECTOR` writes `type vector`, not `eqtype`, so that `RealVector` can
+exist. Where a vector has to admit equality the page says so on the instance:
+`CharVector` is declared `where type vector = String.string`, and `STRING`
+writes `eqtype string`. `WideCharVector` is declared `where type elem =
+WideChar.char` and nothing more.
+
+That is not enough. `TEXT` shares `String.string` with `CharVector.vector`,
+and `WideText` is declared `where type String.string = WideString.string`, so
+`WideText.CharVector.vector` is `WideString.string` and admits equality. Any
+implementation whose `WideText.CharVector` is the top-level `WideCharVector`
+-- every one that provides both -- must give `WideCharVector.vector`
+equality, and the declaration the page gives it cannot. The omission is
+`where type vector = WideString.string`.
+
+The whole of the defect is that one missing constraint, which makes it a
+milder fault than the `ARRAY2` one below: there, no constraint can help,
+because there is no type to pin to; here `WideString.string` is already there
+and `STRING` already makes it an equality type.
+
+**What Rune does:** seals `WideCharVector` with `MONO_VECTOR_EQ`, a signature
+of its own that is `MONO_VECTOR` with `eqtype vector`. That follows from this
+library's order rather than from the fault: `WideString` is built on
+`WideCharVector`, so `WideCharVector` is where the type name is born and
+there is nothing yet to pin it to. Following the page as it should have been
+written would mean giving `WideString` a representation of its own and
+pinning `WideCharVector` to it, and then `MONO_VECTOR_EQ` would be
+unnecessary. The notes are `MONO_VECTOR/WideCharVector-must-admit-equality`
+and `MONO_VECTOR_EQ/not-in-the-specification`.
 
 ### The largest one: `ARRAY2` cannot be sealed and keep its equality
 

@@ -8,9 +8,9 @@
    of the library crosses, and the seal file keeps them from a program. *)
 
 (* The slice, as the library sees it: the members of the specification and
-   the two conversions to and from a substring. `MONO_VECTOR_BYTES`, the
+   the two conversions to and from a substring. `RUNE_MONO_VECTOR_BYTES`, the
    vector's, is in mono_sigs.sml, where `Substring` is not yet in scope. *)
-signature MONO_VECTOR_SLICE_BYTES =
+signature RUNE_MONO_VECTOR_SLICE_BYTES =
 sig
   include MONO_VECTOR_SLICE
   val toSubstring : slice -> Substring.substring
@@ -23,8 +23,8 @@ end
    converts. *)
 structure RuneByteVector :>
 sig
-  structure V : MONO_VECTOR_BYTES where type elem = Word8.word
-  structure S : MONO_VECTOR_SLICE_BYTES where type vector = V.vector where type elem = Word8.word
+  structure V : RUNE_MONO_VECTOR_BYTES where type elem = Word8.word
+  structure S : RUNE_MONO_VECTOR_SLICE_BYTES where type vector = V.vector where type elem = Word8.word
 end =
 struct
   structure Impl = RuneStringVectorFn (type elem = Word8.word

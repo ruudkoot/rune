@@ -49,10 +49,14 @@ struct
     struct
       type addr_family = RuneNet.addr_family
       val inet = RuneNet.familyFromInt (named "AF_INET")
+      val inet6 = RuneNet.familyFromInt (named "AF_INET6")
       val unix = RuneNet.familyFromInt (named "AF_UNIX")
-      fun list () = [("INET", inet), ("UNIX", unix)]
-      fun toString af = if af = inet then "INET" else if af = unix then "UNIX" else "?"
+      fun list () = [("INET", inet), ("INET6", inet6), ("UNIX", unix)]
+      fun toString af =
+        if af = inet then "INET" else if af = inet6 then "INET6"
+        else if af = unix then "UNIX" else "?"
       fun fromString "INET" = SOME inet
+        | fromString "INET6" = SOME inet6
         | fromString "UNIX" = SOME unix
         | fromString _ = NONE
     end

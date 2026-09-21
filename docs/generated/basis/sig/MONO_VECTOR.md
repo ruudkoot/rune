@@ -69,6 +69,34 @@ polymorphic signatures, with [`elem`](#type-elem) for the element type; what the
 is the same, and the pages of [`VECTOR`](../sig/VECTOR.md) and [`ARRAY`](../sig/ARRAY.md) describe it at more
 length.
 
+> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes
+> `type vector`, not `eqtype`, so that a family whose elements do not admit
+> equality can have a vector -- [`RealVector`](MONO_VECTOR.md) needs that. Where a vector has
+> to admit equality the page says so on the instance instead: [`CharVector`](MONO_VECTOR.md)
+> is declared `where type vector = String.string`, and [`STRING`](../sig/STRING.md) writes
+> `eqtype string`. \*\*[`WideCharVector`](MONO_VECTOR.md) is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\*\* [`TEXT`](../sig/TEXT.md) shares
+> [`String.string`](../sig/STRING.md#type-string) with [`CharVector.vector`](#type-vector), and [`WideText`](../sig/TEXT.md) is declared
+> `where type String.string = WideString.string`, so
+> [`WideText.CharVector.vector`](#type-vector) is [`WideString.string`](../sig/STRING.md#type-string), which [`STRING`](../sig/STRING.md) makes
+> an equality type. Any implementation whose [`WideText.CharVector`](../sig/TEXT.md#str-charvector) is the
+> top-level [`WideCharVector`](MONO_VECTOR.md) \-- every one that has both -- must therefore
+> give [`WideCharVector.vector`](#type-vector) equality, and the declaration the page gives
+> it cannot. \*\*The whole of the defect is one missing constraint\*\*:
+> `where type vector = WideString.string`, which [`CharVector`](MONO_VECTOR.md) has and
+> [`WideCharVector`](MONO_VECTOR.md) does not. That makes this a milder fault than the one on
+> the page of [`ARRAY2`](../sig/ARRAY2.md), where no constraint can help because there is no
+> type to pin to; here [`WideString.string`](../sig/STRING.md#type-string) is already there and [`STRING`](../sig/STRING.md)
+> already makes it an equality type.
+
+Rune gives the equality the other way, by sealing with [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md).
+That is a consequence of \*this\* library's order and not of the fault:
+[`WideString`](../sig/STRING.md) is built on [`WideCharVector`](MONO_VECTOR.md) (`type string = V.vector`, and
+every operation delegates), so [`WideCharVector`](MONO_VECTOR.md) is where the type name is
+born and there is nothing yet to pin it to. Following the page as it
+should have been written would mean giving [`WideString`](../sig/STRING.md) a representation
+of its own and pinning [`WideCharVector`](MONO_VECTOR.md) to it -- a change to two files,
+not a rename -- and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) would then be unnecessary.
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
@@ -134,12 +162,18 @@ type vector
 
 The type of these vectors.
 
-> **Deviation** `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
-> characters and of bytes, which are strings, a monomorphic vector is the
-> polymorphic vector of its elements, and the types are not made abstract: an
-> [`IntVector.vector`](#type-vector) is an `int vector`, and a program that relies on it is
-> not portable. The arrays are the same ([`IntArray.array`](../sig/MONO_ARRAY.md#val-array) is `int array`),
-> and so are those of [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md).
+> **Implementation** `MONO_VECTOR.vector/abstract-over-the-polymorphic-one`.
+> A monomorphic vector is the polymorphic vector of its elements
+> underneath -- the vectors of characters are strings, which the
+> specification requires -- but the type is abstract: an [`IntVector.vector`](#type-vector)
+> is no `int vector` for a program, as it is none in MLton or SML/NJ. The
+> arrays and the two-dimensional arrays are the same. Sealing them costs
+> nothing: the instruction counts of `runevm --count` do not change at
+> all, because no file of the library goes between the two. No check of
+> the suite can pin this -- that a type is abstract is not something a
+> program can observe at run time -- and what holds it is the page of the
+> types that are one type, which `make check` compares with the library as
+> it stands.
 
 <details><summary>Tests (2)</summary>
 
@@ -656,7 +690,7 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ## See also
 
 [`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md), [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md),
-[`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
+[`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md), [`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
 
 ---
 

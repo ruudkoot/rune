@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 36 of 36 entries documented |
-| Tests | 233 checks of 35 entries |
+| Tests | 234 checks of 35 entries |
 | Source | [lib/basis/sig\_text\_io.sml](../../../../lib/basis/sig_text_io.sml) |
 
 ## Synopsis
@@ -189,9 +189,9 @@ type instream
 
 The type of the input streams.
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `two-on-one-file`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `equal-when-the-same-stream` &middot; `two-on-one-file`
 
 </details>
 

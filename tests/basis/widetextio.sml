@@ -21,6 +21,19 @@ struct
   fun bytes name = let val ins = TextIO.openIn name in TextIO.inputAll ins before TextIO.closeIn ins end
 
   (*<< files *)
+  (* the reader of a file of wide characters has no positions, no ioDesc and
+     nothing that does not block: a position in the file is one of bytes and
+     not of characters (WideTextIO/file-streams-have-no-positions) *)
+  val () = eqB ("WideTextIO.openIn/the-reader-has-no-positions", true,
+                fn () => (write (file, sample);
+                          let
+                            val ins = WideTextIO.openIn file
+                            val (rd, _) = WideTextIO.StreamIO.getReader (WideTextIO.getInstream ins)
+                            val WideTextPrimIO.RD {getPos, setPos, endPos, ioDesc, readVecNB, ...} = rd
+                          in
+                            not (isSome getPos) andalso not (isSome setPos) andalso not (isSome endPos)
+                            andalso not (isSome ioDesc) andalso not (isSome readVecNB)
+                          end))
   val () = eqI ("WideTextIO.output/writes-utf-8", 8, fn () => (write (file, sample); size (bytes file)))
   val () = eqW ("WideTextIO.inputAll/reads-utf-8", sample,
                 fn () => (write (file, sample);

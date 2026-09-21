@@ -31,8 +31,11 @@
    family of the socket, as it is for `recvArrFrom`, and as the description
    says. It is written `'af` here.
 
-   Limitation: `SOCKET/no-ipv6`. There is no IPv6: `INetSock` is IPv4 only,
-   and an `in_addr` is the dotted text of an IPv4 address.
+   Implementation: `SOCKET/ipv6-is-a-family-of-the-system`. The page names
+   no address family: "AF.list returns a list of all the available address
+   families", so the set is the system's. `INET6` is among them here, and
+   `INET6_SOCK`, which is Rune's own, has the sockets and addresses of it;
+   `NetHostDB` stays the IPv4 database the specification defines
 
    Implementation: `Socket.sock/is-a-descriptor`. A socket is the system's
    descriptor and a `sock_addr` the bytes of a `sockaddr`; the type variables

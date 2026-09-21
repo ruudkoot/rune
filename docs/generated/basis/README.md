@@ -62,6 +62,7 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
 | [`DATE`](sig/DATE.md) | A moment as a person writes it down: a year, a month, a day and a time of day, in some time zone. | required | 24 of 24 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | Making a socket of any family the system has, when the family is not known until the program runs. | optional | 4 of 4 |
+| [`INET6_SOCK`](sig/INET6_SOCK.md) | Sockets of the Internet protocol version 6, as [`INET_SOCK`](sig/INET_SOCK.md) describes them for version 4. | extension | 20 of 20 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | Sockets of the internet family: an address is a host and a port. | optional | 17 of 17 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | The host database: turning a host name into an address, and back. | optional | 14 of 14 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | The protocol database: turning the name of a network protocol into its number, and back. | optional | 6 of 6 |
@@ -125,13 +126,6 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`LIST`](sig/LIST.md) | Polymorphic, immutable, singly linked lists. | required | 27 of 27 |
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
-
-## Not yet assigned to an area
-
-| Signature |  | Status | Documented |
-| --- | --- | --- | --- |
-| [`MONO_VECTOR_BYTES`](sig/MONO_VECTOR_BYTES.md) | [`Word8Vector`](sig/MONO_VECTOR.md), as the library sees it: the members of the specification and the two conversions that say a vector of bytes is a string underneath. A program sees [`MONO_VECTOR`](sig/MONO_VECTOR.md), which the seal file gives it. The slice's own signature is in word8vector.sml, where [`Substring`](sig/SUBSTRING.md) is in scope. | required | 0 of 2 |
-| [`MONO_VECTOR_SLICE_BYTES`](sig/MONO_VECTOR_SLICE_BYTES.md) | The slice, as the library sees it: the members of the specification and the two conversions to and from a substring. [`MONO_VECTOR_BYTES`](sig/MONO_VECTOR_BYTES.md), the vector's, is in mono\_sigs.sml, where [`Substring`](sig/SUBSTRING.md) is not yet in scope. | required | 0 of 2 |
 
 ## Functors
 

@@ -72,7 +72,7 @@
 - `ST.gid` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.gid)
 - `TC.getattr` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.getattr)
 - `TC.getpgrp` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.getpgrp)
-- `TCP.getNODELAY` (val): [INET_SOCK](../sig/INET_SOCK.md#val-tcp.getnodelay)
+- `TCP.getNODELAY` (val): [INET6_SOCK](../sig/INET6_SOCK.md#val-tcp.getnodelay), [INET_SOCK](../sig/INET_SOCK.md#val-tcp.getnodelay)
 
 ---
 

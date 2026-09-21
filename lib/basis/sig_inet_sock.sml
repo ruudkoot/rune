@@ -13,8 +13,13 @@
 
    See also: `SOCKET`, `NET_HOST_DB`, `UNIX_SOCK`, `GENERIC_SOCK`
 
-   Limitation: `INET_SOCK/ipv4-only`. There is no IPv6: an address here is
-   an IPv4 address and a port. *)
+   Implementation: `INET_SOCK/ipv4-only`. This signature is the
+   specification's, and the specification's Internet sockets are IPv4: an
+   address here is an `in_addr` of `NetHostDB` and a port. IPv6 is in
+   `INET6_SOCK`, which is Rune's own and has the same shape for 128-bit
+   addresses.
+
+   See also: `INET6_SOCK` *)
 signature INET_SOCK =
 sig
   (* The type that marks the internet family, and holds nothing. *)

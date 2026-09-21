@@ -561,6 +561,9 @@ struct
   val cpu = Timer.totalCPUTimer ()
   fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer cpu)))
   fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer cpu)))
+  (* the host's own collector, where it accounts for one *)
+  fun time_gc_user () = Int.fromLarge (Time.toMicroseconds (#usr (#gc (Timer.checkCPUTimes cpu))))
+  fun time_gc_sys () = Int.fromLarge (Time.toMicroseconds (#sys (#gc (Timer.checkCPUTimes cpu))))
   (* At least n microseconds, as the VM waits: Poly/ML 5.9.2 can return a
      little early, so sleep again for what is left. *)
   fun time_sleep n =
@@ -775,7 +778,7 @@ struct
        ("WNOHANG", 1), ("WUNTRACED", 2),
        (* the sockets fail with ENOSYS, but their families and types are
           values of the library all the same *)
-       ("AF_UNIX", 1), ("AF_INET", 2), ("SOCK_STREAM", 1), ("SOCK_DGRAM", 2), ("SOL_SOCKET", 1),
+       ("AF_UNIX", 1), ("AF_INET", 2), ("AF_INET6", 10), ("SOCK_STREAM", 1), ("SOCK_DGRAM", 2), ("SOL_SOCKET", 1),
        ("SO_DEBUG", 1), ("SO_REUSEADDR", 2), ("SO_TYPE", 3), ("SO_ERROR", 4), ("SO_DONTROUTE", 5),
        ("SO_BROADCAST", 6), ("SO_SNDBUF", 7), ("SO_RCVBUF", 8), ("SO_KEEPALIVE", 9), ("SO_OOBINLINE", 10),
        ("SO_LINGER", 13), ("MSG_OOB", 1), ("MSG_PEEK", 2), ("MSG_DONTROUTE", 4),
@@ -1165,9 +1168,11 @@ struct
   fun socket_getopt (_ : int, _ : int, _ : int) = unsupported ~1
   fun socket_setopt (_ : int, _ : int, _ : int, _ : int) = unsupported ~1
   fun socket_inet_addr (_ : string, _ : int) = unsupported ""
+  fun socket_inet6_addr (_ : string, _ : int) = unsupported ""
   fun socket_unix_addr (_ : string) = unsupported ""
   fun socket_addr_family (_ : string) = unsupported ~1
   fun socket_inet_parts (_ : string) : string list = unsupported []
+  fun socket_inet6_parts (_ : string) : string list = unsupported []
   fun socket_unix_path (_ : string) = unsupported ""
   fun socket_linger (_ : int, _ : int, _ : int) : int list = unsupported []
   fun socket_query (_ : int, _ : int) = unsupported ~1

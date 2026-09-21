@@ -1,0 +1,5 @@
+::1 ::1 ::
+fe80::1 ::ffff:127.0.0.1
+none none
+family INET6, known: true
+address ::1 port 8080, any ::

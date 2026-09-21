@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 26 checks of 8 entries |
+| Tests | 27 checks of 8 entries |
 | Source | [lib/basis/sig\_timer.sml](../../../../lib/basis/sig_timer.sml) |
 
 ## Synopsis
@@ -112,18 +112,19 @@ val checkCPUTimes : cpu_timer
 `usr` is the time the program itself ran, `sys` the time the system
 spent for it.
 
-> **Limitation** `Timer.checkCPUTimes/no-gc-accounting`. The collector's time
-> is not measured on its own: `gc` is zero in both fields and everything
-> is reported under `nongc`.
+> **Implementation** `Timer.checkCPUTimes/gc-from-the-collector`. The VM adds
+> up the processor time of every collection, user and system apart, and
+> `gc` is how much of that has passed since the timer started; `nongc` is
+> the rest. A collection that grows the heap counts once.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-checkcputimes.nongc"></a>`nongc` | `{usr : Time.time, sys : Time.time}` |  |
 | <a name="fld-checkcputimes.gc"></a>`gc` | `{usr : Time.time, sys : Time.time}` |  |
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
-For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `sum-is-checkCPUTimer` &middot; `does-not-go-back` &middot; `grows-while-computing`
+For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `sum-is-checkCPUTimer` &middot; `does-not-go-back` &middot; `gc-is-part-of-the-whole` &middot; `grows-while-computing`
 
 </details>
 
@@ -157,8 +158,9 @@ val checkGCTime : cpu_timer -> Time.time
 
 `checkGCTime t` is the processor time the collector took since `t` was started.
 
-> **Limitation** `Timer.checkGCTime/always-zero`. It is always `zeroTime`,
-> because the collector's time is not measured on its own.
+> **Implementation** `Timer.checkGCTime/user-time-of-the-collections`. It is
+> the `usr` field of what [`checkCPUTimes`](#val-checkcputimes) reports under `gc`; the system
+> time of a collection is in that record and not here.
 
 <details><summary>Tests (4)</summary>
 

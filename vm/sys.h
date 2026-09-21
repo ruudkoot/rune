@@ -175,10 +175,12 @@ int sys_getsockopt(int fd, int level, int name);
 int sys_setsockopt(int fd, int level, int name, int value);
 /* Building and taking apart the addresses. */
 int sys_inet_addr(const char *host, int port);      /* into sys_last_addr */
+int sys_inet6_addr(const char *host, int port);     /* the same, for IPv6 */
 int sys_unix_addr(const char *path);
 int sys_addr_family(const char *addr, int n);
 /* The host of an INET address, dotted, and its port; NULL when it is not one. */
 const char *sys_inet_parts(const char *addr, int n, int *port);
+const char *sys_inet6_parts(const char *addr, int n, int *port);
 const char *sys_unix_path(const char *addr, int n);
 /* The databases: the entries come back as strings one after another, as for
    uname, and NULL when there is none. */

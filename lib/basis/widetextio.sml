@@ -19,6 +19,8 @@
    position in the file is one of bytes and not of characters. Their
    `chunkSize` is 1024 characters, where a file of `TextIO` has 4096.
 
+   Pinned by: `WideTextIO.openIn/the-reader-has-no-positions`
+
    Implements: PRIM_IO where type array = WideCharArray.array where type vector
    = WideCharVector.vector where type elem = WideChar.char where type
    vector_slice = WideCharVectorSlice.slice where type array_slice =

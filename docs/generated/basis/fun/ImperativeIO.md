@@ -14,15 +14,13 @@ functor ImperativeIO (structure StreamIO : STREAM_IO
                       structure Vector : MONO_VECTOR
                       structure Array : MONO_ARRAY
                       sharing type StreamIO.elem = Vector.elem = Array.elem
-                      sharing type StreamIO.vector = Vector.vector = Array.vector)
+                      sharing type StreamIO.vector = Vector.vector = Array.vector) : IMPERATIVE_IO
 ```
+
+Its result implements [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md).
 
 Imperative streams over a [`STREAM_IO`](../sig/STREAM_IO.md) of a new element type: what
 [`TEXT_IO`](../sig/TEXT_IO.md) and [`BIN_IO`](../sig/BIN_IO.md) are for characters and bytes.
-
-> **Deviation** `ImperativeIO/not-sealed`. The result is not ascribed
-> [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md): the library declares that signature after the structures
-> that would need it. It matches it, which the suite checks.
 
 **See also** [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md), [`STREAM_IO`](../sig/STREAM_IO.md), [`TEXT_IO`](../sig/TEXT_IO.md), [`BIN_IO`](../sig/BIN_IO.md)
 

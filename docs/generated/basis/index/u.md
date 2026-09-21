@@ -4,7 +4,7 @@
 
 - `Passwd.uid` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-passwd.uid)
 - `ST.uid` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.uid)
-- `UDP` (str): [INET_SOCK](../sig/INET_SOCK.md#str-udp)
+- `UDP` (str): [INET6_SOCK](../sig/INET6_SOCK.md#str-udp), [INET_SOCK](../sig/INET_SOCK.md#str-udp)
 - `uid` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-uid), [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#type-uid), [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#type-uid)
 - `uidToWord` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-uidtoword)
 - `umask` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-umask)

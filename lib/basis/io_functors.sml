@@ -68,10 +68,6 @@ functor StreamIO (structure PrimIO : PRIM_IO
 (* Imperative streams over a `STREAM_IO` of a new element type: what
    `TEXT_IO` and `BIN_IO` are for characters and bytes.
 
-   Deviation: `ImperativeIO/not-sealed`. The result is not ascribed
-   `IMPERATIVE_IO`: the library declares that signature after the structures
-   that would need it. It matches it, which the suite checks.
-
    Status: optional
 
    See also: `IMPERATIVE_IO`, `STREAM_IO`, `TEXT_IO`, `BIN_IO` *)
@@ -79,5 +75,5 @@ functor ImperativeIO (structure StreamIO : STREAM_IO
                       structure Vector : MONO_VECTOR
                       structure Array : MONO_ARRAY
                       sharing type StreamIO.elem = Vector.elem = Array.elem
-                      sharing type StreamIO.vector = Vector.vector = Array.vector) =
+                      sharing type StreamIO.vector = Vector.vector = Array.vector) : IMPERATIVE_IO =
   RuneImperativeIOFn (structure SIO = StreamIO structure V = Vector)
