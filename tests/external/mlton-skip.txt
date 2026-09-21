@@ -18,7 +18,6 @@ binio SLOW: too slow on the interpreter (passes in about 100 s)
 callcc EXTENSION: MLton.Cont
 callcc2 EXTENSION: SMLofNJ.Cont.callcc
 callcc3 EXTENSION: MLton
-char.scan READING: Char.fromString converts an unescaped double quote, a reading of the specification (docs/basis-compat.md); MLton gives NONE
 cmdline HARNESS: prints CommandLine.name, which MLton's run gives as ./cmdline
 command-line HARNESS: prints CommandLine.name, which MLton's run gives as ./command-line
 conv WIDTH: assumes a 32-bit int, MLton's default; Rune's has 64 bits

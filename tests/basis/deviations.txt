@@ -43,8 +43,7 @@ native:smlnj*@* | *Vector.update/[Sm]* | HOST-BUG | Vector.update, Word8Vector.u
 native:smlnj*@* | Array.tabulate/Size-before-f | HOST-BUG | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
 
 # ---- Char
-rune | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote, as Poly/ML; the test takes the reading of MLton and SML/NJ (NONE)
-native:polyml@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+native:polyml@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 native:* | *.fromCString/unescaped-double-quote* | HOST-BUG | converts an unescaped double quote, which the specification says fromCString does not accept
 native:* | Char.fromCString/hex-huge-does-not-fit | HOST-BUG | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
 native:mlton@* | Char.scan/trailing-format-after-*escape | HOST-BUG | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)

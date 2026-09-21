@@ -200,9 +200,7 @@ Every departure is written on the member it is about, as a `Deviation:` or a
 [generated/basis/readings.md](generated/basis/readings.md). What is not
 implemented at all: `Windows`, and IPv6.
 
-One check fails on Rune, a reading of the specification: `Char.fromString
-"\""` converts the double quote, where the test takes the reading of MLton
-and SML/NJ (`NONE`).
+No check of the suite fails on Rune.
 
 `WideChar` is there: a wide character is a Unicode code point (`maxOrd`
 0x10FFFF), with `WideString`, `WideSubstring`, `WideText` and the vectors and

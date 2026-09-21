@@ -86,7 +86,7 @@ struct
     (* from text of char: the escapes of widechar.sml, with the formatting
        sequences around a character skipped as WideChar.scan does *)
     fun narrowOne sml getc src =
-      if sml then RuneWideCharImpl.scan getc src else RuneWideCharImpl.scanWide (false, getc, src)
+      if sml then RuneWideCharImpl.scanInString getc src else RuneWideCharImpl.scanWide (false, getc, src)
     fun narrowSkip (getc, src) = RuneEscape.skipFormat getc src
     fun noSkip (_, src) = (false, src)
 

@@ -126,6 +126,11 @@ struct
                     fn () => case WideChar.scan Substring.getc (Substring.full "\\u0100rest") of
                                SOME (c, rest) => c = C 0x100 andalso Substring.string rest = "rest"
                              | NONE => false)
+  (* as Char.fromString/unescaped-double-quote (char.sml): no character "as
+     allowed in an SML program" *)
+  val () = T.check ("WideChar.fromString/unescaped-double-quote", fn () => not (isSome (WideChar.fromString "\"")))
+  val () = T.check ("WideChar.fromString/escape-double-quote",
+                    fn () => Option.map WideChar.ord (WideChar.fromString "\\\"") = SOME 34)
   val () = T.check ("WideChar.scan/NONE-on-nothing-to-read",
                     fn () => not (isSome (WideChar.scan Substring.getc (Substring.full "\\q"))))
   (*>> text *)

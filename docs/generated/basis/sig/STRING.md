@@ -659,7 +659,8 @@ nothing and is passed over, so a stream of one such sequence gives
 
 > **Reading** `String.fromString/unescaped-double-quote`. A double quote
 > without a backslash converts to itself, as in SML/NJ and Poly/ML; MLton
-> stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) reads it the same way.
+> stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) gives `NONE` for it, for the page of [`CHAR`](../sig/CHAR.md) has
+> the text read "as allowed in an SML program" and this one does not.
 
 > **Reading** `String.scan/empty-input-is-SOME-empty`. Nothing to read is no
 > failure: `fromString ""` is `SOME ""`. `NONE` is for a first character
