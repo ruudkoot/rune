@@ -31,9 +31,9 @@ structure WideTextPrimIO =
                 structure VS = WideCharVectorSlice
                 structure AS = WideCharArraySlice
                 val someElem = WideChar.chr 0
-                type pos = Position.int
-                val compare = Position.compare
-                val index = SOME {fromInt = Position.fromInt, toInt = Position.toInt})
+                type pos = RuneWideTextPos.pos
+                val compare = RuneWideTextPos.compare
+                val index = SOME {fromInt = RuneWideTextPos.fromInt, toInt = RuneWideTextPos.toInt})
 
 structure WideTextIO =
 struct
@@ -41,6 +41,7 @@ struct
     structure SI =
       RuneStreamIOFn (structure PIO = WideTextPrimIO structure V = WideCharVector
                       structure VS = WideCharVectorSlice
+                      val advance = RuneWideTextPos.advance
                       val isNewline = fn c => WideChar.ord c = 10)
   in
     (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings. *)

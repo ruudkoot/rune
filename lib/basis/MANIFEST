@@ -113,25 +113,27 @@ primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARR
 streamio_sig.sml | demand | yes | STREAM_IO            | IO
 streamio_fn.sml | demand | yes  | RuneStreamIOFn        | IO List MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO RuneExit
 runefile.sml    | demand | yes  | RuneFile              | IO RuneError Word8
-textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice Position RunePrimIOFn
+runepos.sml     | demand | yes  | RuneTextPos RuneWideTextPos | Position
+textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySlice CharVector CharVectorSlice RunePrimIOFn RuneTextPos
 binprimio.sml   | demand | yes  | BinPrimIO             | Position RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 posix_error.sml | demand | yes  | RunePosixError        | RuneError Word
 posix_signal.sml | demand | yes | RunePosixSignal       | Word
 posix_process.sml | demand | yes | RunePosixProcess     | Int IntInf List RuneError RunePosixSignal RuneStatus Time Word Word8
 posix_procenv.sml | demand | yes | RunePosixProcEnv     | RuneError RunePosixProcess Time Word
 posix_filesys.sml | demand | yes | RunePosixFileSys     | List RuneError RuneFileSys RuneIODesc RunePosixProcEnv Time Word
-posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List RuneError RuneIODesc RunePosixFileSys RunePosixProcess TextPrimIO Word Word8Array Word8ArraySlice Word8VectorSlice
+posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List Option RuneError RuneIODesc RunePosixFileSys RunePosixProcess RuneTextPos TextPrimIO Word Word8Array Word8ArraySlice Word8VectorSlice
 posix_sysdb.sml | demand | yes  | RunePosixSysDB        | Int RuneError RunePosixProcEnv
 posix_tty.sml   | demand | yes  | RunePosixTTY RunePosixTTYFlagsFn | Char CharVector Int List RuneError RunePosixFileSys RunePosixProcess String Word
 posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
 imperativeio_fn.sml | demand | yes | RuneImperativeIOFn | MONO_VECTOR STREAM_IO -StreamIO
-io_functors.sml | demand | yes  | ImperativeIO PrimIO StreamIO | -Array -ArraySlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE PRIM_IO Position RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn STREAM_IO -Vector -VectorSlice
-textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn -StreamIO String Substring TextPrimIO
+io_functors.sml | demand | yes  | ImperativeIO PrimIO StreamIO | -Array -ArraySlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Position PRIM_IO RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn STREAM_IO -Vector -VectorSlice
+textio.sml      | demand | yes  | TextIO                | CharVector CharVectorSlice IO List Option RuneFile RuneImperativeIOFn RuneIODesc RuneStreamIOFn RuneTextPos -StreamIO String Substring TextPrimIO
 byte.sml        | demand | yes  | Byte                  | Substring Word8 Word8Array Word8ArraySlice Word8Vector Word8VectorSlice substring
-binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile RuneIODesc RuneImperativeIOFn RuneStreamIOFn -StreamIO Word8 Word8Vector Word8VectorSlice
-socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
-netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int String StringCvt
-inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
+binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO Position RuneFile RuneImperativeIOFn RuneIODesc RuneStreamIOFn -StreamIO Word8 Word8Vector Word8VectorSlice
+runenet.sml     | demand | yes  | RuneNet               |
+socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc RuneNet Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
+netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int RuneNet String StringCvt
+inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNet RuneNetHostDB RuneSocket
 unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneStatus SysWord TextIO Word8
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
@@ -199,7 +201,7 @@ mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real
 widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl RuneWideCharLit WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice | CHAR Char Int MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR_EQ MONO_VECTOR_SLICE RuneEscape RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn String StringCvt
 widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
 widetext.sml    | demand | yes  | WideText              | -Char -CharArray -CharArraySlice -CharVector -CharVectorSlice -String -Substring WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
-widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char IO Int List Position RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn -StreamIO String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
+widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char Int IO List RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn RuneWideTextPos -StreamIO String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
 # ---- what a program sees of the structures
 # A seal file binds the structures of a file again, each as its signature
 # shows it (`structure List : LIST = List`), so that a program has the members

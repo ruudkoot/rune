@@ -133,6 +133,18 @@ struct
          verifyPos = SOME (fn () => lseek (fd, 0, SEEK_CUR))}
       else {getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE}
 
+    (* The same offsets as a position of TextPrimIO, which is abstract. *)
+    fun textPositions fd =
+      let
+        val {getPos, setPos, endPos, verifyPos} = positions fd
+        fun out f = fn () => RuneTextPos.fromInt (f ())
+      in
+        {getPos = Option.map out getPos,
+         setPos = Option.map (fn f => fn p => f (RuneTextPos.toInt p)) setPos,
+         endPos = Option.map out endPos,
+         verifyPos = Option.map out verifyPos}
+      end
+
     fun mkBinReader {fd, name, initBlkMode} =
       let val {getPos, setPos, endPos, verifyPos} = positions fd
       in
@@ -155,7 +167,7 @@ struct
       end
 
     fun mkTextReader {fd, name, initBlkMode} =
-      let val {getPos, setPos, endPos, verifyPos} = positions fd
+      let val {getPos, setPos, endPos, verifyPos} = textPositions fd
       in
         TextPrimIO.RD {name = name, chunkSize = 4096,
                        readVec = SOME (fn n => readVec (fd, n)), readArr = NONE,
@@ -166,7 +178,7 @@ struct
       end
 
     fun mkTextWriter {fd, name, initBlkMode, appendMode, chunkSize} =
-      let val {getPos, setPos, endPos, verifyPos} = positions fd
+      let val {getPos, setPos, endPos, verifyPos} = textPositions fd
       in
         TextPrimIO.WR {name = name, chunkSize = chunkSize,
                        writeVec = SOME (fn sl => check (write' (fd, CharVectorSlice.vector sl))),

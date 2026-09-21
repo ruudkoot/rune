@@ -1,11 +1,12 @@
 (* INetSock and UnixSock: making addresses and taking them apart, and a pair
    of connected sockets in the file system's family. *)
-val a : INetSock.sock_addr = INetSock.toAddr ("192.0.2.7", 8080)
+(* an in_addr is abstract: NetHostDB reads and writes the dotted text *)
+val a : INetSock.sock_addr = INetSock.toAddr (valOf (NetHostDB.fromString "192.0.2.7"), 8080)
 val (host, port) = INetSock.fromAddr a
-val () = print (host ^ ":" ^ Int.toString port ^ " family is INET: "
+val () = print (NetHostDB.toString host ^ ":" ^ Int.toString port ^ " family is INET: "
                 ^ Bool.toString (Socket.familyOfAddr a = INetSock.inetAF) ^ "\n")
 val (anyHost, anyPort) = INetSock.fromAddr (INetSock.any 0)
-val () = print ("any: " ^ anyHost ^ " " ^ Int.toString anyPort ^ "\n")
+val () = print ("any: " ^ NetHostDB.toString anyHost ^ " " ^ Int.toString anyPort ^ "\n")
 val path = OS.FileSys.tmpName ()
 val u : UnixSock.sock_addr = UnixSock.toAddr path
 val () = print ("unix address round trip: " ^ Bool.toString (UnixSock.fromAddr u = path)

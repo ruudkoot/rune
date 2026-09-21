@@ -35,9 +35,10 @@ dotted form of an address.
 > canonical dotted text of an IPv4 address, so `=` compares addresses and
 > not the text they were written as; there is no IPv6 here.
 
-> **Deviation** `NetHostDB.in_addr/not-abstract`. The specification leaves
-> [`in_addr`](#type-in_addr) and [`addr_family`](#type-addr_family) abstract; in Rune they are `string` and `int`,
-> and the types are not made abstract.
+> **Implementation** `NetHostDB.in_addr/abstract`. The specification leaves
+> [`in_addr`](#type-in_addr) and [`addr_family`](#type-addr_family) abstract, and so are they here: [`toString`](#val-tostring) and
+> [`fromString`](#val-fromstring) are the way in and out of an address, and [`Socket.AF`](../sig/SOCKET.md#str-af) names
+> the families.
 
 ## Interface
 

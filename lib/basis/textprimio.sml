@@ -9,6 +9,6 @@ structure TextPrimIO =
                 structure VS = CharVectorSlice
                 structure AS = CharArraySlice
                 val someElem = #"\000"
-                type pos = Position.int
-                val compare = Position.compare
-                val index = SOME {fromInt = Position.fromInt, toInt = Position.toInt})
+                type pos = RuneTextPos.pos
+                val compare = RuneTextPos.compare
+                val index = SOME {fromInt = RuneTextPos.fromInt, toInt = RuneTextPos.toInt})

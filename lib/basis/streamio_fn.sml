@@ -16,10 +16,14 @@
 
    isNewline tells the element at which LINE_BUF flushes; "For binary
    streams, LINE_BUF mode should be treated as a synonym for BLOCK_BUF". *)
-functor RuneStreamIOFn (structure PIO : PRIM_IO where type pos = int
+functor RuneStreamIOFn (structure PIO : PRIM_IO
                         structure V : MONO_VECTOR where type elem = PIO.elem where type vector = PIO.vector
                         structure VS : MONO_VECTOR_SLICE where type elem = PIO.elem
                                        where type vector = PIO.vector where type slice = PIO.vector_slice
+                        (* where a position lands after so many elements:
+                           the positions of a reader are of any type, so the
+                           one who knows them says how to count in them *)
+                        val advance : PIO.pos * int -> PIO.pos
                         val isNewline : PIO.elem -> bool) =
 struct
   type elem = PIO.elem
@@ -77,7 +81,7 @@ struct
       (* the elements of v were read from the reader just before it is at *)
       val start =
         if V.length v = 0 then NONE
-        else case getPos of SOME f => (SOME (f () - V.length v) handle _ => NONE) | NONE => NONE
+        else case getPos of SOME f => (SOME (advance (f (), ~(V.length v))) handle _ => NONE) | NONE => NONE
       val first = ref (if V.length v = 0 then Unread else Chunk (v, start, ref Unread))
     in
       In {segment = first, offset = 0,
@@ -205,7 +209,7 @@ struct
     else
       case (getPos, !segment) of
         (NONE, _) => ioError (name, "filePosIn", IO.RandomAccessNotSupported)
-      | (_, Chunk (_, SOME p, _)) => p + offset
+      | (_, Chunk (_, SOME p, _)) => advance (p, offset)
       | (_, Eos (SOME p, _)) => p
       | (SOME f, Unread) => guarded (name, "filePosIn") f ()
       | _ => ioError (name, "filePosIn", IO.RandomAccessNotSupported)

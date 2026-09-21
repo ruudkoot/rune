@@ -18,9 +18,10 @@
    canonical dotted text of an IPv4 address, so `=` compares addresses and
    not the text they were written as; there is no IPv6 here.
 
-   Deviation: `NetHostDB.in_addr/not-abstract`. The specification leaves
-   `in_addr` and `addr_family` abstract; in Rune they are `string` and `int`,
-   and the types are not made abstract. *)
+   Implementation: `NetHostDB.in_addr/abstract`. The specification leaves
+   `in_addr` and `addr_family` abstract, and so are they here: `toString` and
+   `fromString` are the way in and out of an address, and `Socket.AF` names
+   the families. *)
 signature NET_HOST_DB =
 sig
   (* The type of the address of a host.

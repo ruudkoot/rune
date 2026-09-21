@@ -35,8 +35,21 @@ struct
   val () = T.check ("WideTextPrimIO.augmentWriter/adds-what-the-writer-lacks",
                     fn () => case WideTextPrimIO.augmentWriter (WideTextPrimIO.nullWr ()) of
                                WideTextPrimIO.WR {writeArr, ...} => isSome writeArr)
+  (* pos is abstract: the positions come from a reader that has them *)
   val () = T.check ("WideTextPrimIO.compare/of-positions",
-                    fn () => WideTextPrimIO.compare (Position.fromInt 1, Position.fromInt 2) = LESS)
+                    fn () =>
+                      case WideTextPrimIO.openVector (WideString.implode [WideChar.chr 97, WideChar.chr 98]) of
+                        WideTextPrimIO.RD {getPos = SOME getPos, readVec = SOME readVec, ...} =>
+                          let
+                            val first = getPos ()
+                            val _ = readVec 1
+                            val next = getPos ()
+                          in
+                            WideTextPrimIO.compare (first, next) = LESS
+                            andalso WideTextPrimIO.compare (next, first) = GREATER
+                            andalso WideTextPrimIO.compare (first, first) = EQUAL
+                          end
+                      | _ => false)
   val () = T.check ("WideTextIO.StreamIO.reader/is-that-of-WideTextPrimIO",
                     fn () => let val rd = WideTextPrimIO.openVector (WideString.str (WideChar.chr 97))
                                  val s = WideTextIO.StreamIO.mkInstream (rd, WideString.implode [])

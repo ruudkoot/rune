@@ -92,7 +92,6 @@ be pinned: many are about the text and not about behaviour.
 - `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
 - `INET_SOCK/ipv4-only` (Limitation), INET_SOCK
 - `MONO_ARRAY2.array/not-abstract` (Deviation), MONO_ARRAY2
-- `NetHostDB.in_addr/not-abstract` (Deviation), NET_HOST_DB
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `Timer.checkCPUTimes/no-gc-accounting` (Limitation), TIMER

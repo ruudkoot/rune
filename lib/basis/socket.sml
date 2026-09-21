@@ -47,9 +47,9 @@ struct
 
     structure AF =
     struct
-      type addr_family = int
-      val inet = named "AF_INET"
-      val unix = named "AF_UNIX"
+      type addr_family = RuneNet.addr_family
+      val inet = RuneNet.familyFromInt (named "AF_INET")
+      val unix = RuneNet.familyFromInt (named "AF_UNIX")
       fun list () = [("INET", inet), ("UNIX", unix)]
       fun toString af = if af = inet then "INET" else if af = unix then "UNIX" else "?"
       fun fromString "INET" = SOME inet
@@ -59,9 +59,9 @@ struct
 
     structure SOCK =
     struct
-      type sock_type = int
-      val stream = named "SOCK_STREAM"
-      val dgram = named "SOCK_DGRAM"
+      type sock_type = RuneNet.sock_type
+      val stream = RuneNet.typeFromInt (named "SOCK_STREAM")
+      val dgram = RuneNet.typeFromInt (named "SOCK_DGRAM")
       fun list () = [("STREAM", stream), ("DGRAM", dgram)]
       fun toString t = if t = stream then "STREAM" else if t = dgram then "DGRAM" else "?"
       fun fromString "STREAM" = SOME stream
@@ -77,12 +77,13 @@ struct
     fun sameDesc (a, b) = RuneIODesc.compare (a, b) = EQUAL
     fun ioDesc (SOCK fd) = RuneIODesc.FD fd
     fun 'af sameAddr (ADDR a : 'af sock_addr, ADDR b : 'af sock_addr) = a = b
-    fun familyOfAddr (ADDR a) = family' a
+    fun familyOfAddr (ADDR a) = RuneNet.familyFromInt (family' a)
 
-    fun socket' (af, ty, protocol) = SOCK (check (create' (af, ty, protocol)))
+    fun socket' (af, ty, protocol) =
+      SOCK (check (create' (RuneNet.familyToInt af, RuneNet.typeToInt ty, protocol)))
     fun socket (af, ty) = socket' (af, ty, 0)
     fun socketPair' (af, ty, protocol) =
-      case pair' (af, ty, protocol) of
+      case pair' (RuneNet.familyToInt af, RuneNet.typeToInt ty, protocol) of
         [a, b] => (SOCK a, SOCK b)
       | _ => raise RuneError.lastError ()
     fun socketPair (af, ty) = socketPair' (af, ty, 0)
@@ -242,7 +243,7 @@ struct
         fun setSNDBUF (s, v) = setInt (s, "SO_SNDBUF", v)
         fun getRCVBUF s = getInt (s, "SO_RCVBUF")
         fun setRCVBUF (s, v) = setInt (s, "SO_RCVBUF", v)
-        fun getTYPE s : SOCK.sock_type = getInt (s, "SO_TYPE")
+        fun getTYPE s : SOCK.sock_type = RuneNet.typeFromInt (getInt (s, "SO_TYPE"))
         fun getERROR s = getInt (s, "SO_ERROR") <> 0
         (* SO_LINGER is a struct linger: whether the socket lingers, and for
            how many seconds *)

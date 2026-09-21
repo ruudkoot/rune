@@ -17,10 +17,10 @@ struct
     type dgram_sock = RuneSocket.dgram sock
     type sock_addr = inet RuneSocket.sock_addr
 
-    val inetAF = named "AF_INET"
+    val inetAF = RuneNet.familyFromInt (named "AF_INET")
 
     fun toAddr (host : RuneNetHostDB.in_addr, port) : sock_addr =
-      case inetAddr (host, port) of
+      case inetAddr (RuneNet.toText host, port) of
         "" => raise RuneError.lastError ()
       | a => RuneSocket.ADDR a
 
@@ -28,7 +28,7 @@ struct
 
     fun fromAddr (RuneSocket.ADDR a : sock_addr) =
       case inetParts a of
-        [host, port] => (host, number port)
+        [host, port] => (RuneNet.ofText host, number port)
       | _ => raise RuneError.lastError ()
 
     structure UDP =
@@ -64,7 +64,7 @@ struct
     type dgram_sock = RuneSocket.dgram sock
     type sock_addr = unix RuneSocket.sock_addr
 
-    val unixAF = named "AF_UNIX"
+    val unixAF = RuneNet.familyFromInt (named "AF_UNIX")
 
     fun toAddr path : sock_addr =
       case unixAddr path of
