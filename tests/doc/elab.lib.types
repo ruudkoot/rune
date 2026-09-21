@@ -4,17 +4,24 @@
 
 Types with several names: a value of one is a value of the others, and a function on one takes
 them all. They are found by elaborating the library and comparing the type names, so the table
-says what is the case and not only what is meant. Much of it the specification requires
-(`String.string` is `string`, `CharVector.vector` is `string`); the rest is a choice of this
-library, and where the specification keeps a type abstract that is one of these here, a program
-that relies on it is not portable: the type's own entry has a note that says so. A type that
-abbreviates more than a name, such as a reader or a record, is not listed.
+says what is the case and not only what is meant. A type that abbreviates more than a name, such
+as a reader or a record, is not listed. Every name says why it is a name of its type:
+
+- **required by the signature** (3): the signature of the structure, with the `where type`
+  of its declaration in the specification, says which type it is, as `CharVector.vector` is `string`;
+- **required of the top level** (0): the top level is defined to have the type of that
+  structure, as `int` is `Int.int`;
+- **the implementation's choice** (2): the structure is another structure by name, which the
+  specification leaves open, as `Position` is `Int` here; a program that relies on it is not portable;
+- **abstract in the specification** (4): nothing says which type it is, and the library shows
+  what it is made of. A program that relies on it is not portable, and the type checker of another
+  system rejects it. There should be none of these.
 
 | Type | Also |
 | --- | --- |
-| [`Box.side`](sig/BOX.md#type-side) | [`Chest.side`](sig/BOX.md#type-side), [`Crate.side`](sig/BOX.md#type-side) |
-| `int` | [`Box.elem`](sig/BOX.md#type-elem), [`Crate.elem`](sig/BOX.md#type-elem) |
-| `string` | [`Chest.box`](sig/BOX.md#type-box), [`Chest.elem`](sig/BOX.md#type-elem), [`Box.Label.label`](sig/BOX.md#type-label.label), [`Chest.Label.label`](sig/BOX.md#type-label.label), [`Crate.Label.label`](sig/BOX.md#type-label.label) |
+| [`Box.side`](sig/BOX.md#type-side) | *the implementation's choice:* [`Crate.side`](sig/BOX.md#type-side)<br>*abstract in the specification:* [`Chest.side`](sig/BOX.md#type-side) |
+| `int` | *required by the signature:* [`Box.elem`](sig/BOX.md#type-elem), [`Crate.elem`](sig/BOX.md#type-elem) |
+| `string` | *required by the signature:* [`Chest.elem`](sig/BOX.md#type-elem)<br>*the implementation's choice:* [`Crate.Label.label`](sig/BOX.md#type-label.label)<br>*abstract in the specification:* [`Chest.box`](sig/BOX.md#type-box), [`Box.Label.label`](sig/BOX.md#type-label.label), [`Chest.Label.label`](sig/BOX.md#type-label.label) |
 
 ---
 

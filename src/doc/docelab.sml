@@ -131,6 +131,47 @@ struct
       walk ("", env)
     end
 
+  (* What a signature expression, a signature's name with its `where type`s,
+     says of the type at a path in it: that it is some type that only the
+     structure decides (Abstract), or which type it is (Determined): by a
+     `where type`, by a definition in the signature, by sharing. NONE when the
+     expression does not elaborate or has no such type. After `library`. *)
+  datatype typeSpec = Abstract | Determined
+
+  val probed : SigMatch.sigma option StringMap.map ref = ref StringMap.empty
+
+  fun typeSpecOf ({env, fixity} : library) (sigexp : string, sub : string list, ty : string) : typeSpec option =
+    let
+      val sigma =
+        case StringMap.find (!probed, sigexp) of
+          SOME s => s
+        | NONE =>
+            let
+              val saved = !Elaborate.sigs
+              val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<probe>", "signature DocgenProbe = " ^ sigexp)), fixity)
+              val found =
+                (Elaborate.elabTop (ref env, prog); Elaborate.finish (); Error.warnings := [];
+                 StringMap.find (!Elaborate.sigs, "DocgenProbe"))
+                handle Error.CompileError _ => NONE
+            in
+              Elaborate.sigs := saved;
+              probed := StringMap.insert (!probed, sigexp, found);
+              found
+            end
+    in
+      case sigma of
+        NONE => NONE
+      | SOME {bound, env = sigEnv} =>
+          (case Env.findStr (sigEnv, sub) of
+             SOME (Env.Env {tys, ...}) =>
+               (case StringMap.find (tys, ty) of
+                  SOME (Env.TyStr {fcn = Types.TName c, ...}) =>
+                    SOME (if SigMatch.isBound (bound, c) then Abstract else Determined)
+                | SOME _ => SOME Determined
+                | NONE => NONE)
+           | NONE => NONE)
+    end
+
   (* An example against the library: `val it : bool = ...` has to elaborate. *)
   fun checkExample ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
     let

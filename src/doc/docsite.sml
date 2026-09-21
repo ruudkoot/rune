@@ -702,9 +702,58 @@ struct
   (* names: every type of the library with the stamp of its type name and its
      arity (DocElab.typeNames). A type name that has several names is a row:
      the name of the top level first, or else the shortest. *)
-  fun typesPage (env : P.env, title : string, names : (string * int * int) list) : string =
+  (* Why a name is a name of its type (D7, and the owner's decision of
+     2026-09-21 that types are one type only where the specification has it
+     so): the signature of the structure, with the `where type`s of its
+     claim, says which type it is; or the top level is defined to have the
+     type of that structure; or the structure is another structure by name,
+     which the specification leaves to the implementation; or nothing says
+     so, the specification keeps the type abstract, and the library shows
+     what it is made of. *)
+  datatype reason = BySignature | ByTopLevel | ByChoice | Leak
+
+  fun typesPage (env : P.env, title : string, modules : I.module list, lib : DocElab.library,
+                 names : (string * int * int) list) : string =
     let
       val page = "types.md"
+      fun structAt (ms : I.module list, path) =
+        case path of
+          [] => NONE
+        | n :: rest =>
+            (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
+               SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
+             | _ => NONE)
+      (* a structure on the way to the type is another public structure by name *)
+      fun isAlias (path : string list) =
+        let
+          fun upTo k = k >= 1 andalso
+                       ((case structAt (modules, List.take (path, k)) of
+                           SOME {rhs = I.Alias t, ...} => isPublic (List.hd (String.fields (fn c => c = #".") t))
+                         | _ => false)
+                        orelse upTo (k - 1))
+        in
+          upTo (List.length path)
+        end
+      fun reasonOf (name : string, topLevel : string list) : reason =
+        let
+          val parts = String.fields (fn c => c = #".") name
+          val path = List.take (parts, List.length parts - 1)
+          val ty = List.last parts
+          (* what the claims of the structures on the way say *)
+          fun determined k =
+            k >= 1 andalso
+            (List.exists (fn c : DocClaims.claim =>
+                            #name c = String.concatWith "." (List.take (path, k)) andalso not (#isFunctor c)
+                            andalso DocElab.typeSpecOf lib (#signat c ^ (if #realisations c = "" then "" else " " ^ #realisations c),
+                                                            List.drop (path, k), ty) = SOME DocElab.Determined)
+                         (#claims env)
+             orelse determined (k - 1))
+        in
+          if determined (List.length path) then BySignature
+          else if isAlias path then ByChoice
+          else if List.exists (fn t => t = ty) topLevel then ByTopLevel
+          else Leak
+        end
       (* Where a type is documented: with the signature that the structure
          claims, or one around it; the longest structure first. A type of a
          structure that no signature specifies is not the library's to show. *)
@@ -742,14 +791,31 @@ struct
                                                  SOME (a, ns) => (a, name :: ns)
                                                | NONE => (arity, [name])))
                    IntMap.empty names
+      (* The name a row stands under: that of the top level, or else the type
+         that nothing else determines, which is where it is defined
+         (`Word8.word`, not `BinIO.elem`); the shortest of several. *)
+      fun defines n = not (qualified n) orelse reasonOf (n, []) = Leak
+      fun first (a : string, b : string) =
+        if qualified a <> qualified b then not (qualified a)
+        else if defines a <> defines b then defines a
+        else better (a, b)
       val rows =
         List.mapPartial (fn (arity, ns) =>
-                           case sort better ns of
+                           case sort first ns of
                              first :: (rest as _ :: _) => SOME (arity, first, rest)
                            | _ => NONE)
                         (IntMap.listItems groups)
       val rows = sort (fn ((_, a : string, _), (_, b, _)) => String.map Char.toLower a < String.map Char.toLower b
                                                            orelse (String.map Char.toLower a = String.map Char.toLower b andalso a < b)) rows
+      (* every other name of a row with its reason; the names of the top level in the row *)
+      val reasoned =
+        List.map (fn (arity, first, rest) =>
+                    let val top = List.filter (not o qualified) (first :: rest)
+                    in (arity, first, List.map (fn n => (n, if qualified n then reasonOf (n, top) else ByTopLevel)) rest) end)
+                 rows
+      fun count r = List.length (List.filter (fn (_, r') => r' = r) (List.concat (List.map #3 reasoned)))
+      val labels = [(BySignature, "required by the signature"), (ByTopLevel, "required of the top level"),
+                    (ByChoice, "the implementation's choice"), (Leak, "abstract in the specification")]
       fun vars 0 = ""
         | vars 1 = "'a "
         | vars n = "(" ^ String.concatWith ", " (List.tabulate (n, fn i => "'" ^ String.str (Char.chr (Char.ord #"a" + i)))) ^ ") "
@@ -761,13 +827,27 @@ struct
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
       ^ "Types with several names: a value of one is a value of the others, and a function on one takes\n"
       ^ "them all. They are found by elaborating the library and comparing the type names, so the table\n"
-      ^ "says what is the case and not only what is meant. Much of it the specification requires\n"
-      ^ "(`String.string` is `string`, `CharVector.vector` is `string`); the rest is a choice of this\n"
-      ^ "library, and where the specification keeps a type abstract that is one of these here, a program\n"
-      ^ "that relies on it is not portable: the type's own entry has a note that says so. A type that\n"
-      ^ "abbreviates more than a name, such as a reader or a record, is not listed.\n\n"
-      ^ M.table (["Type", "Also"], List.map (fn (arity, first, rest) =>
-                                               [shown arity first, String.concatWith ", " (List.map (shown arity) rest)]) rows)
+      ^ "says what is the case and not only what is meant. A type that abbreviates more than a name, such\n"
+      ^ "as a reader or a record, is not listed. Every name says why it is a name of its type:\n\n"
+      ^ "- **required by the signature** (" ^ Int.toString (count BySignature) ^ "): the signature of the structure, with the `where type`\n"
+      ^ "  of its declaration in the specification, says which type it is, as `CharVector.vector` is `string`;\n"
+      ^ "- **required of the top level** (" ^ Int.toString (count ByTopLevel) ^ "): the top level is defined to have the type of that\n"
+      ^ "  structure, as `int` is `Int.int`;\n"
+      ^ "- **the implementation's choice** (" ^ Int.toString (count ByChoice) ^ "): the structure is another structure by name, which the\n"
+      ^ "  specification leaves open, as `Position` is `Int` here; a program that relies on it is not portable;\n"
+      ^ "- **abstract in the specification** (" ^ Int.toString (count Leak) ^ "): nothing says which type it is, and the library shows\n"
+      ^ "  what it is made of. A program that relies on it is not portable, and the type checker of another\n"
+      ^ "  system rejects it. There should be none of these.\n\n"
+      ^ M.table (["Type", "Also"],
+                 List.map (fn (arity, first, rest) =>
+                             [shown arity first,
+                              String.concatWith "<br>"
+                                (List.mapPartial (fn (r, label) =>
+                                                    case List.filter (fn (_, r') => r' = r) rest of
+                                                      [] => NONE
+                                                    | ns => SOME ("*" ^ label ^ ":* " ^ String.concatWith ", " (List.map (shown arity o #1) ns)))
+                                                 labels)])
+                          reasoned)
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
 
@@ -955,7 +1035,7 @@ struct
         :: sigPages @ funPages @ indexFiles
         (* what only elaboration knows *)
         @ (case elaborated of
-             SOME lib => [("types.md", typesPage (env "", title, DocElab.typeNames (lib, isPublic)))]
+             SOME lib => [("types.md", typesPage (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
            | NONE => [])
       val () = verify (env "", SOME (List.map #1 files))
       (* file names differ in more than case, for the file systems that ignore it *)
