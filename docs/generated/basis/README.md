@@ -10,7 +10,7 @@ note on the member says how Rune reads it, and the page of readings,
 linked below, collects them all.
 
 Start at a signature, not at a structure. [`LIST`](sig/LIST.md) describes what [`List`](sig/LIST.md) does,
-[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and `Position` all do, and
+[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and [`Position`](sig/INTEGER.md) all do, and
 [`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](sig/MONO_VECTOR.md) and [`CharVector`](sig/MONO_VECTOR.md) do; the page of structures
 says which structure implements which signature. A name that needs no
 structure in front of it, such as [`hd`](sig/LIST.md#val-hd) or `print`, is on the page of the

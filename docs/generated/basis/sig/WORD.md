@@ -5,15 +5,17 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 5 |
+| Implementations | 7 |
 | Documentation | 38 of 38 entries documented |
-| Tests | 286 checks of 38 entries |
+| Tests | 288 checks of 38 entries |
 | Source | [lib/basis/word\_sig.sml](../../../../lib/basis/word_sig.sml) |
 
 ## Synopsis
 
 ```sml
 signature WORD
+structure LargeWord : WORD
+structure SysWord : WORD  (* optional *)
 structure Word : WORD
 structure Word16 : WORD  (* optional *)
 structure Word32 : WORD  (* optional *)
@@ -23,6 +25,8 @@ structure Word8 : WORD
 
 | Implementation |  | Source |
 | --- | --- | --- |
+| `LargeWord` |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| `SysWord` |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | `Word` | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | `Word16` | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
 | `Word32` | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
@@ -44,8 +48,8 @@ top bit is the sign, as in two's complement. The functions with an `X` in
 their name are those that sign-extend; the others fill with zeros.
 
 The structures differ in their width: [`Word`](WORD.md) is the default one and
-[`Word8`](WORD.md), [`Word16`](WORD.md), [`Word32`](WORD.md) and [`Word64`](WORD.md) are the sized ones; `LargeWord`
-is the widest, and `SysWord` is what the operating system's flags are
+[`Word8`](WORD.md), [`Word16`](WORD.md), [`Word32`](WORD.md) and [`Word64`](WORD.md) are the sized ones; [`LargeWord`](WORD.md)
+is the widest, and [`SysWord`](WORD.md) is what the operating system's flags are
 counted in.
 
 ## Contents
@@ -150,7 +154,7 @@ eqtype word
 The type of words of this structure.
 
 > **Implementation** `Word.word/64-bits`. [`Word.word`](#type-word) is the top-level
-> [`word`](#type-word), of 64 bits, and so are `LargeWord`, `SysWord` and [`Word64`](WORD.md);
+> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](WORD.md), [`SysWord`](WORD.md) and [`Word64`](WORD.md);
 > [`Word8`](WORD.md), [`Word16`](WORD.md) and [`Word32`](WORD.md) are kept in a word of the machine whose
 > upper bits are zero.
 
@@ -177,7 +181,9 @@ val wordSize : int
 
 **Example** `Word8.wordSize = 8` and `Word.wordSize = 64`
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (11)</summary>
+
+For `LargeWord`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
 
 For `Word8`, in [tests/basis/word8.sml](../../../../tests/basis/word8.sml): `eight`
 
@@ -201,7 +207,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLarge : word -> LargeWord.word
 ```
 
-`toLarge w` is `w` as a word of `LargeWord`, with zeros in the bits above [`wordSize`](#val-wordsize).
+`toLarge w` is `w` as a word of [`LargeWord`](WORD.md), with zeros in the bits above [`wordSize`](#val-wordsize).
 
 <details><summary>Tests (5)</summary>
 
@@ -215,7 +221,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLargeX : word -> LargeWord.word
 ```
 
-`toLargeX w` is `w` as a word of `LargeWord`, with the top bit of `w` copied into the bits above it.
+`toLargeX w` is `w` as a word of [`LargeWord`](WORD.md), with the top bit of `w` copied into the bits above it.
 
 **Law** `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
 

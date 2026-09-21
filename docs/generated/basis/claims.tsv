@@ -21,6 +21,7 @@ CharVector	structure	MONO_VECTOR	where type vector = String.string where type el
 CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substring where type vector = String.string where type elem = char	required	claimed	lib/basis/charvectorslice.sml
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
+FixedInt	structure	INTEGER		optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
 IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
@@ -71,6 +72,7 @@ LargeRealArray2	structure	MONO_ARRAY2	where type vector = LargeRealVector.vector
 LargeRealArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeRealVector.vector where type vector_slice = LargeRealVectorSlice.slice where type array = LargeRealArray.array where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVector	structure	MONO_VECTOR	where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = LargeRealVector.vector where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
+LargeWord	structure	WORD		required	claimed	lib/basis/word.sml
 LargeWordArray	structure	MONO_ARRAY	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArray2	structure	MONO_ARRAY2	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeWordVector.vector where type vector_slice = LargeWordVectorSlice.slice where type array = LargeWordArray.array where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
@@ -100,6 +102,7 @@ PackWord32Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord32Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
+Position	structure	INTEGER		required	claimed	lib/basis/position.sml
 Posix	structure	POSIX	where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode	optional	claimed	lib/basis/posix.sml
 Posix.Error	structure	POSIX_ERROR		optional	claimed	lib/basis/posix.sml
 Posix.FileSys	structure	POSIX_FILE_SYS		optional	claimed	lib/basis/posix.sml
@@ -127,6 +130,7 @@ Real32Array2	structure	MONO_ARRAY2	where type vector = Real32Vector.vector where
 Real32ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Real32Vector.vector where type vector_slice = Real32VectorSlice.slice where type array = Real32Array.array where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32Vector	structure	MONO_VECTOR	where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
+Real64	structure	REAL		optional	claimed	lib/basis/real.sml
 Real64.Math	structure	MATH		required	inherited	lib/basis/real.sml
 Real64Array	structure	MONO_ARRAY	where type vector = Real64Vector.vector where type elem = Real64.real	optional	claimed	lib/basis/mono_real64.sml
 Real64Array2	structure	MONO_ARRAY2	where type vector = Real64Vector.vector where type elem = Real64.real	optional	claimed	lib/basis/mono_real64.sml
@@ -144,6 +148,7 @@ StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml
 String	structure	STRING	where type string = string where type char = Char.char	required	claimed	lib/basis/string.sml
 StringCvt	structure	STRING_CVT		required	claimed	lib/basis/stringcvt.sml
 Substring	structure	SUBSTRING	where type string = string where type char = Char.char	required	claimed	lib/basis/substring.sml
+SysWord	structure	WORD		optional	claimed	lib/basis/word.sml
 Text	structure	TEXT	where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice	required	claimed	lib/basis/text.sml
 TextIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/textio.sml
 TextIO	structure	TEXT_IO		required	claimed	lib/basis/textio.sml

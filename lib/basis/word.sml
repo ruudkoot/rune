@@ -120,5 +120,9 @@ struct
   val fromLargeWord = fromLarge
 end
 
+(* Implements: WORD *)
 structure LargeWord = Word
+(* Implements: WORD
+
+   Status: optional *)
 structure SysWord = Word

@@ -332,4 +332,7 @@ end
 structure Math = Real.Math
 (* Implements: REAL *)
 structure LargeReal = Real
+(* Implements: REAL
+
+   Status: optional *)
 structure Real64 = Real

@@ -5,4 +5,7 @@
 
    Status: optional *)
 structure Int64 = Int
+(* Implements: INTEGER
+
+   Status: optional *)
 structure FixedInt = Int

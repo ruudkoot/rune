@@ -1,4 +1,4 @@
-(* requires: Real *)
+(* requires: Real Real64 *)
 (* uses: spec-sigs/MATH.sml spec-sigs/REAL.sml *)
 (* Real matches REAL "where type real = real", its substructure Math shares
    that type, and LargeReal matches REAL. On the four systems of the matrix
@@ -21,6 +21,9 @@ struct
   (*<< largereal *)
   structure L : SPEC_REAL = LargeReal
   val () = T.check ("LargeReal:REAL/matches", fn () => true)
+  structure S : SPEC_REAL = Real64
+  val () = T.check ("Real64:REAL/matches", fn () => true)
+  val () = T.check ("Real64:REAL/is-the-64-bit-one", fn () => S.precision = 53)
   val () = T.check ("LargeReal:REAL/Math-shares-real", fn () => L.== (L.Math.sqrt (L.fromInt 4), L.fromInt 2))
   val () = T.check ("LargeReal:REAL/toLarge-gives-LargeReal.real",
                     fn () => L.== (Real.toLarge 1.5, L./ (L.fromInt 3, L.fromInt 2)))

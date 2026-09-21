@@ -5,7 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 3 |
+| Implementations | 4 |
 | Documentation | 64 of 64 entries documented |
 | Tests | 1038 checks of 62 entries |
 | Source | [lib/basis/sig\_real.sml](../../../../lib/basis/sig_real.sml) |
@@ -17,6 +17,7 @@ signature REAL
 structure LargeReal : REAL
 structure Real : REAL where type real = real
 structure Real32 :> REAL  (* optional *)
+structure Real64 : REAL  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -24,13 +25,14 @@ structure Real32 :> REAL  (* optional *)
 | `LargeReal` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 | `Real` | Real: IEEE double precision. | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 | `Real32` |  | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
+| `Real64` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 Floating-point numbers: IEEE 754 arithmetic, the numbers that are not
 ordinary (the infinities, the NaNs and the negative zero), and the
 conversions to and from integers and text.
 
 [`Real`](REAL.md) is the default structure, [`LargeReal`](REAL.md) the widest, and the sized
-ones are [`Real32`](REAL.md) and `Real64`. A NaN, "not a number", is what an
+ones are [`Real32`](REAL.md) and [`Real64`](REAL.md). A NaN, "not a number", is what an
 operation answers where there is no value to give: it is equal to nothing,
 itself included, so [`==`](#val-op-eq-eq) is `false` for it and [`compare`](#val-compare) raises
 [`Unordered`](../sig/IEEE_REAL.md#exn-unordered). Because of that the equality of the language is not available
@@ -46,7 +48,7 @@ would not fit.
 
 > **Implementation** `Real.real/binary64`. [`Real.real`](#type-real) is the top-level [`real`](#type-real),
 > the 64-bit IEEE double ([`radix`](#val-radix) 2, [`precision`](#val-precision) 53\), and so are [`LargeReal`](REAL.md)
-> and `Real64`; the optional [`Real32`](REAL.md) is binary32. The conversions to and
+> and [`Real64`](REAL.md); the optional [`Real32`](REAL.md) is binary32. The conversions to and
 > from text are correctly rounded, through the C library.
 
 ## Contents

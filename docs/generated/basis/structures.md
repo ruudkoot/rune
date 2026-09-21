@@ -32,6 +32,7 @@ is listed at the end of this page.
 | `CharVectorSlice` | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type slice = Substring.substring where type vector = String.string where type elem = char` | required |  | [lib/basis/charvectorslice.sml](../../../lib/basis/charvectorslice.sml) |
 | `CommandLine` | : [`COMMAND_LINE`](sig/COMMAND_LINE.md) |  | required |  | [lib/basis/commandline.sml](../../../lib/basis/commandline.sml) |
 | `Date` | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
+| `FixedInt` | : [`INTEGER`](sig/INTEGER.md) |  | optional | is `Int` | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | `General` | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | `GenericSock` | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | `IEEEReal` | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | optional |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
@@ -82,6 +83,7 @@ is listed at the end of this page.
 | `LargeRealArraySlice` | : [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = LargeRealVector.vector where type vector_slice = LargeRealVectorSlice.slice where type array = LargeRealArray.array where type elem = LargeReal.real` | optional | is `RealArraySlice` | [lib/basis/mono\_largereal.sml](../../../lib/basis/mono_largereal.sml) |
 | `LargeRealVector` | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = LargeReal.real` | optional | is `RealVector` | [lib/basis/mono\_largereal.sml](../../../lib/basis/mono_largereal.sml) |
 | `LargeRealVectorSlice` | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = LargeRealVector.vector where type elem = LargeReal.real` | optional | is `RealVectorSlice` | [lib/basis/mono\_largereal.sml](../../../lib/basis/mono_largereal.sml) |
+| `LargeWord` | : [`WORD`](sig/WORD.md) |  | required | is `Word` | [lib/basis/word.sml](../../../lib/basis/word.sml) |
 | `LargeWordArray` | : [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = LargeWordVector.vector where type elem = LargeWord.word` | optional | is `WordArray` | [lib/basis/mono\_largeword.sml](../../../lib/basis/mono_largeword.sml) |
 | `LargeWordArray2` | : [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = LargeWordVector.vector where type elem = LargeWord.word` | optional | is `WordArray2` | [lib/basis/mono\_largeword.sml](../../../lib/basis/mono_largeword.sml) |
 | `LargeWordArraySlice` | : [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = LargeWordVector.vector where type vector_slice = LargeWordVectorSlice.slice where type array = LargeWordArray.array where type elem = LargeWord.word` | optional | is `WordArraySlice` | [lib/basis/mono\_largeword.sml](../../../lib/basis/mono_largeword.sml) |
@@ -111,6 +113,7 @@ is listed at the end of this page.
 | `PackWord32Little` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `PackWord64Big` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `PackWord64Little` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
+| `Position` | : [`INTEGER`](sig/INTEGER.md) |  | required | is `Int` | [lib/basis/position.sml](../../../lib/basis/position.sml) |
 | `Posix` | : [`POSIX`](sig/POSIX.md) | `where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode` | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | `Posix.Error` | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | `Posix.FileSys` | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
@@ -137,6 +140,7 @@ is listed at the end of this page.
 | `Real32ArraySlice` | : [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Real32Vector.vector where type vector_slice = Real32VectorSlice.slice where type array = Real32Array.array where type elem = Real32.real` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_real32.sml](../../../lib/basis/mono_real32.sml) |
 | `Real32Vector` | : [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = Real32.real` | optional | an application of `RuneMonoVectorFn` | [lib/basis/mono\_real32.sml](../../../lib/basis/mono_real32.sml) |
 | `Real32VectorSlice` | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = Real32Vector.vector where type elem = Real32.real` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_real32.sml](../../../lib/basis/mono_real32.sml) |
+| `Real64` | : [`REAL`](sig/REAL.md) |  | optional | is `Real` | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | `Real64.Math` | : [`MATH`](sig/MATH.md) |  | required |  | [lib/basis/real.sml](../../../lib/basis/real.sml) |
 | `Real64Array` | : [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = Real64Vector.vector where type elem = Real64.real` | optional | is `RealArray` | [lib/basis/mono\_real64.sml](../../../lib/basis/mono_real64.sml) |
 | `Real64Array2` | : [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = Real64Vector.vector where type elem = Real64.real` | optional | is `RealArray2` | [lib/basis/mono\_real64.sml](../../../lib/basis/mono_real64.sml) |
@@ -153,6 +157,7 @@ is listed at the end of this page.
 | `String` | : [`STRING`](sig/STRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/string.sml](../../../lib/basis/string.sml) |
 | `StringCvt` | : [`STRING_CVT`](sig/STRING_CVT.md) |  | required |  | [lib/basis/stringcvt.sml](../../../lib/basis/stringcvt.sml) |
 | `Substring` | : [`SUBSTRING`](sig/SUBSTRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/substring.sml](../../../lib/basis/substring.sml) |
+| `SysWord` | : [`WORD`](sig/WORD.md) |  | optional | is `Word` | [lib/basis/word.sml](../../../lib/basis/word.sml) |
 | `Text` | : [`TEXT`](sig/TEXT.md) | `where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice` | required |  | [lib/basis/text.sml](../../../lib/basis/text.sml) |
 | `TextIO` | : [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | `TextIO` | : [`TEXT_IO`](sig/TEXT_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |

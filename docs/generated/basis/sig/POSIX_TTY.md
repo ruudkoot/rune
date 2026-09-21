@@ -585,7 +585,7 @@ A break sends the interrupt signal.
 > **Reading** `Posix.TTY.I/bits-are-posix's`. The page says nothing about
 > what bits these flags have; the suite follows POSIX and asks that
 > every named flag of [`I`](#str-i) and [`L`](#str-l) have non-zero bits of its own inside
-> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through `SysWord` rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
+> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through [`SysWord`](../sig/WORD.md) rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
 
 <details><summary>Tests (2)</summary>
 
