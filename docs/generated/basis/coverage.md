@@ -31,8 +31,10 @@ documented when a comment describes it, alone or together with the entry before 
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | 22 | 22 | 100% | 17 | 17 |
 | [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | 30 | 30 | 100% | 25 | 25 |
 | [`MONO_VECTOR`](sig/MONO_VECTOR.md) | 22 | 22 | 100% | 19 | 19 |
+| [`MONO_VECTOR_BYTES`](sig/MONO_VECTOR_BYTES.md) | 2 | 0 | 0% | 2 | 0 |
 | [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | 22 | 22 | 100% | 19 | 19 |
 | [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | 26 | 26 | 100% | 23 | 23 |
+| [`MONO_VECTOR_SLICE_BYTES`](sig/MONO_VECTOR_SLICE_BYTES.md) | 2 | 0 | 0% | 2 | 0 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | 14 | 14 | 100% | 11 | 11 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | 6 | 6 | 100% | 5 | 5 |
 | [`NET_SERV_DB`](sig/NET_SERV_DB.md) | 7 | 7 | 100% | 6 | 6 |
@@ -71,7 +73,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 1538 | 100% | 1078 | 1078 |
+| **all** | 1542 | 1538 | 99% | 1082 | 1078 |
 
 ## Examples that are run
 
@@ -85,13 +87,12 @@ be pinned: many are about the text and not about behaviour.
 
 - `MONO_VECTOR.vector/not-abstract` (Deviation), MONO_VECTOR
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
-- `Word8Vector.vector/is-string` (Deviation), MONO_VECTOR, in `Word8Vector`
+- `MONO_ARRAY2.array/not-abstract` (Deviation), MONO_ARRAY2
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `ImperativeIO/not-sealed` (Deviation), in `ImperativeIO`
 - `IMPERATIVE_IO/functor-not-sealed` (Deviation), IMPERATIVE_IO
 - `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
 - `INET_SOCK/ipv4-only` (Limitation), INET_SOCK
-- `MONO_ARRAY2.array/not-abstract` (Deviation), MONO_ARRAY2
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `Timer.checkCPUTimes/no-gc-accounting` (Limitation), TIMER

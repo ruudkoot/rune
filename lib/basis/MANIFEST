@@ -56,7 +56,7 @@ vector.sml      | demand | yes  | Vector                | List Option
 array.sml       | demand | yes  | Array                 | List Option Vector
 vectorslice.sml | demand | yes  | VectorSlice           | List Vector
 arrayslice.sml  | demand | yes  | ArraySlice            | Array Vector VectorSlice
-mono_sigs.sml   | demand | yes  | MONO_VECTOR MONO_VECTOR_EQ MONO_ARRAY MONO_VECTOR_SLICE MONO_ARRAY_SLICE |
+mono_sigs.sml   | demand | yes  | MONO_VECTOR MONO_VECTOR_EQ MONO_ARRAY MONO_VECTOR_SLICE MONO_ARRAY_SLICE MONO_VECTOR_BYTES |
 mono_vector_fn.sml | demand | yes | RuneStringVectorFn | List String
 mono_poly_vector_fn.sml | demand | yes | RuneMonoVectorFn | Vector
 mono_array_fn.sml | demand | yes | RuneMonoArrayFn     | Array MONO_VECTOR
@@ -65,28 +65,28 @@ mono_array_slice_fn.sml | demand | yes | RuneMonoArraySliceFn | MONO_ARRAY MONO_
 charvector.sml  | demand | yes  | CharVector            | MONO_VECTOR RuneStringVectorFn
 substring.sml   | demand | yes  | Substring substring   | List String
 charvectorslice.sml | demand | yes | CharVectorSlice     | CharVector MONO_VECTOR_SLICE Substring
-word8vector.sml | demand | yes  | Word8Vector           | MONO_VECTOR RuneStringVectorFn Word8
-word8vectorslice.sml | demand | yes | Word8VectorSlice   | MONO_VECTOR_SLICE Substring Word8 Word8Vector
-word8array.sml  | demand | yes  | Word8Array            | MONO_ARRAY RuneMonoArrayFn Word8Vector
-word8arrayslice.sml | demand | yes | Word8ArraySlice     | MONO_ARRAY_SLICE RuneMonoArraySliceFn Word8Array Word8Vector Word8VectorSlice
+word8vector.sml | demand | yes  | RuneByteVector Word8Vector Word8VectorSlice MONO_VECTOR_SLICE_BYTES | MONO_VECTOR_BYTES MONO_VECTOR_SLICE RuneStringVectorFn Substring Word8
+word8array.sml  | demand | yes  | Word8Array            | MONO_ARRAY RuneMonoArrayFn Word8 Word8Vector
+word8arrayslice.sml | demand | yes | Word8ArraySlice     | MONO_ARRAY_SLICE RuneMonoArraySliceFn Word8 Word8Array Word8Vector Word8VectorSlice
 pack_word.sml   | demand | yes  | PackWord16Big PackWord16Little PackWord32Big PackWord32Little PackWord64Big PackWord64Little RunePackWordFn | Int Word Word8 Word8Array Word8Vector
 pack_real.sml   | demand | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle RunePackRealFn | Real RunePackWordFn Word8 Word8Array
 chararray.sml   | demand | yes  | CharArray             | CharVector MONO_ARRAY RuneMonoArrayFn
 chararrayslice.sml | demand | yes | CharArraySlice       | CharArray CharVector CharVectorSlice MONO_ARRAY_SLICE RuneMonoArraySliceFn
 array2.sml      | demand | yes  | Array2                | Array List Vector
+sig_mono_array2.sml | demand | yes  | MONO_ARRAY2 | Array2
 mono_array2_fn.sml | demand | yes | RuneMonoArray2Fn | Array2 MONO_VECTOR
-chararray2.sml  | demand | yes  | CharArray2            | CharVector RuneMonoArray2Fn
-word8array2.sml | demand | yes  | Word8Array2           | RuneMonoArray2Fn Word8Vector
-mono_bool.sml | demand | yes | BoolArray BoolArray2 BoolArraySlice BoolVector BoolVectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_int.sml | demand | yes | IntArray IntArray2 IntArraySlice IntVector IntVectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_int8.sml | demand | yes | Int8Array Int8Array2 Int8ArraySlice Int8Vector Int8VectorSlice | Int8 MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_int16.sml | demand | yes | Int16Array Int16Array2 Int16ArraySlice Int16Vector Int16VectorSlice | Int16 MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_int32.sml | demand | yes | Int32Array Int32Array2 Int32ArraySlice Int32Vector Int32VectorSlice | Int32 MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_largeint.sml | demand | yes | LargeIntArray LargeIntArray2 LargeIntArraySlice LargeIntVector LargeIntVectorSlice | LargeInt MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_word.sml | demand | yes | WordArray WordArray2 WordArraySlice WordVector WordVectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
-mono_word16.sml | demand | yes | Word16Array Word16Array2 Word16ArraySlice Word16Vector Word16VectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word16
-mono_word32.sml | demand | yes | Word32Array Word32Array2 Word32ArraySlice Word32Vector Word32VectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word32
-mono_real.sml | demand | yes | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+chararray2.sml  | demand | yes  | CharArray2            | CharVector MONO_ARRAY2 RuneMonoArray2Fn
+word8array2.sml | demand | yes  | Word8Array2           | MONO_ARRAY2 RuneMonoArray2Fn Word8 Word8Vector
+mono_bool.sml | demand | yes | BoolArray BoolArray2 BoolArraySlice BoolVector BoolVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_int.sml | demand | yes | IntArray IntArray2 IntArraySlice IntVector IntVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_int8.sml | demand | yes | Int8Array Int8Array2 Int8ArraySlice Int8Vector Int8VectorSlice | Int8 MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_int16.sml | demand | yes | Int16Array Int16Array2 Int16ArraySlice Int16Vector Int16VectorSlice | Int16 MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_int32.sml | demand | yes | Int32Array Int32Array2 Int32ArraySlice Int32Vector Int32VectorSlice | Int32 MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_largeint.sml | demand | yes | LargeIntArray LargeIntArray2 LargeIntArraySlice LargeIntVector LargeIntVectorSlice | LargeInt MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_word.sml | demand | yes | WordArray WordArray2 WordArraySlice WordVector WordVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_word16.sml | demand | yes | Word16Array Word16Array2 Word16ArraySlice Word16Vector Word16VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word16
+mono_word32.sml | demand | yes | Word32Array Word32Array2 Word32ArraySlice Word32Vector Word32VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn Word32
+mono_real.sml | demand | yes | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
 mono_int64.sml | demand | yes | Int64Array Int64Array2 Int64ArraySlice Int64Vector Int64VectorSlice | IntArray IntArray2 IntArraySlice IntVector IntVectorSlice
 mono_largeword.sml | demand | yes | LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector LargeWordVectorSlice | WordArray WordArray2 WordArraySlice WordVector WordVectorSlice
 mono_word64.sml | demand | yes | Word64Array Word64Array2 Word64ArraySlice Word64Vector Word64VectorSlice | WordArray WordArray2 WordArraySlice WordVector WordVectorSlice
@@ -121,7 +121,7 @@ posix_signal.sml | demand | yes | RunePosixSignal       | Word
 posix_process.sml | demand | yes | RunePosixProcess     | Int IntInf List RuneError RunePosixSignal RuneStatus Time Word Word8
 posix_procenv.sml | demand | yes | RunePosixProcEnv     | RuneError RunePosixProcess Time Word
 posix_filesys.sml | demand | yes | RunePosixFileSys     | List RuneError RuneFileSys RuneIODesc RunePosixProcEnv Time Word
-posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List Option RuneError RuneIODesc RunePosixFileSys RunePosixProcess RuneTextPos TextPrimIO Word Word8Array Word8ArraySlice Word8VectorSlice
+posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List Option RuneError RuneIODesc RunePosixFileSys RunePosixProcess RuneTextPos TextPrimIO Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 posix_sysdb.sml | demand | yes  | RunePosixSysDB        | Int RuneError RunePosixProcEnv
 posix_tty.sml   | demand | yes  | RunePosixTTY RunePosixTTYFlagsFn | Char CharVector Int List RuneError RunePosixFileSys RunePosixProcess String Word
 posix.sml       | demand | yes  | Posix                 | -IO RunePosixError RunePosixFileSys RunePosixIO RunePosixProcEnv RunePosixProcess RunePosixSignal RunePosixSysDB RunePosixTTY
@@ -134,7 +134,7 @@ runenet.sml     | demand | yes  | RuneNet               |
 socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc RuneNet Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int RuneNet String StringCvt
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNet RuneNetHostDB RuneSocket
-unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneStatus SysWord TextIO Word8
+unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneStatus SysWord TextIO Word8 Word8Vector
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
@@ -157,7 +157,6 @@ sig_io.sml | demand | yes  | IO |
 sig_list.sml | demand | yes  | LIST |
 sig_list_pair.sml | demand | yes  | LIST_PAIR |
 sig_math.sml | demand | yes  | MATH |
-sig_mono_array2.sml | demand | yes  | MONO_ARRAY2 | Array2
 sig_net_host_db.sml | demand | yes  | NET_HOST_DB | StringCvt
 sig_net_prot_db.sml | demand | yes  | NET_PROT_DB |
 sig_net_serv_db.sml | demand | yes  | NET_SERV_DB |
@@ -197,7 +196,7 @@ sig_posix.sml | demand | yes  | POSIX | IO POSIX_ERROR POSIX_FILE_SYS POSIX_IO P
 # After the signatures, which they are sealed with or name.
 real32.sml      | demand | yes  | Real32 RuneReal32 RuneReal32Lit | Char IEEEReal Int IntInf List Math REAL Real String StringCvt Word
 pack_real32.sml | demand | yes  | PackReal32Big PackReal32Little RunePackReal32Fn | IEEEReal Real Real32 RunePackWordFn Word Word8 Word8Array
-mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice | MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real32 RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
+mono_real32.sml | demand | yes  | Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real32 RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
 widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl RuneWideCharLit WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice | CHAR Char Int MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR_EQ MONO_VECTOR_SLICE RuneEscape RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn String StringCvt
 widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
 widetext.sml    | demand | yes  | WideText              | -Char -CharArray -CharArraySlice -CharVector -CharVectorSlice -String -Substring WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
@@ -223,6 +222,7 @@ seal_int16.sml          | seal   | yes  | Int16 | INTEGER
 seal_int32.sml          | seal   | yes  | Int32 | INTEGER
 seal_int64.sml          | seal   | yes  | Int64 FixedInt | INTEGER
 seal_word8.sml          | seal   | yes  | Word8 | WORD
+seal_word8vector.sml    | seal   | yes  | Word8Vector Word8VectorSlice | MONO_VECTOR MONO_VECTOR_SLICE Word8
 seal_word16.sml         | seal   | yes  | Word16 | WORD
 seal_word32.sml         | seal   | yes  | Word32 | WORD
 seal_word64.sml         | seal   | yes  | Word64 | WORD

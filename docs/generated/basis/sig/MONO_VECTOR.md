@@ -14,25 +14,25 @@
 
 ```sml
 signature MONO_VECTOR
-structure BoolVector : MONO_VECTOR where type elem = bool  (* optional *)
+structure BoolVector :> MONO_VECTOR where type elem = bool  (* optional *)
 structure CharVector : MONO_VECTOR where type vector = String.string where type elem = char
-structure Int16Vector : MONO_VECTOR where type elem = Int16.int  (* optional *)
-structure Int32Vector : MONO_VECTOR where type elem = Int32.int  (* optional *)
+structure Int16Vector :> MONO_VECTOR where type elem = Int16.int  (* optional *)
+structure Int32Vector :> MONO_VECTOR where type elem = Int32.int  (* optional *)
 structure Int64Vector : MONO_VECTOR where type elem = Int64.int  (* optional *)
-structure Int8Vector : MONO_VECTOR where type elem = Int8.int  (* optional *)
-structure IntVector : MONO_VECTOR where type elem = int  (* optional *)
-structure LargeIntVector : MONO_VECTOR where type elem = LargeInt.int  (* optional *)
+structure Int8Vector :> MONO_VECTOR where type elem = Int8.int  (* optional *)
+structure IntVector :> MONO_VECTOR where type elem = int  (* optional *)
+structure LargeIntVector :> MONO_VECTOR where type elem = LargeInt.int  (* optional *)
 structure LargeRealVector : MONO_VECTOR where type elem = LargeReal.real  (* optional *)
 structure LargeWordVector : MONO_VECTOR where type elem = LargeWord.word  (* optional *)
-structure Real32Vector : MONO_VECTOR where type elem = Real32.real  (* optional *)
+structure Real32Vector :> MONO_VECTOR where type elem = Real32.real  (* optional *)
 structure Real64Vector : MONO_VECTOR where type elem = Real64.real  (* optional *)
-structure RealVector : MONO_VECTOR where type elem = real  (* optional *)
+structure RealVector :> MONO_VECTOR where type elem = real  (* optional *)
 structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char  (* optional *)
-structure Word16Vector : MONO_VECTOR where type elem = Word16.word  (* optional *)
-structure Word32Vector : MONO_VECTOR where type elem = Word32.word  (* optional *)
+structure Word16Vector :> MONO_VECTOR where type elem = Word16.word  (* optional *)
+structure Word32Vector :> MONO_VECTOR where type elem = Word32.word  (* optional *)
 structure Word64Vector : MONO_VECTOR where type elem = Word64.word  (* optional *)
 structure Word8Vector : MONO_VECTOR where type elem = Word8.word
-structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
+structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -54,7 +54,7 @@ structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
 | `Word16Vector` | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | `Word32Vector` | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | `Word64Vector` | Word64 is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8Vector` | Word8Vector: a vector of bytes is a string. | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
+| `Word8Vector` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 | `WordVector` | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 The sequences of one element type: vectors, arrays and their slices, as

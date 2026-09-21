@@ -36,14 +36,15 @@ struct
     fun close fd = ignore (check (close' fd))
 
     (* "reads at most n bytes"; the empty vector at the end of the file *)
-    fun readVec (fd, n) = if n < 0 then raise Size else read (fd, n)
-    fun writeVec (fd, slice) = check (write' (fd, Word8VectorSlice.vector slice))
+    fun readText (fd, n) = if n < 0 then raise Size else read (fd, n)
+    fun readVec (fd, n) = Word8Vector.fromString (readText (fd, n))
+    fun writeVec (fd, slice) = check (write' (fd, Word8Vector.toString (Word8VectorSlice.vector slice)))
     fun readArr (fd, slice) =
       let
         val got = read (fd, Word8ArraySlice.length slice)
         val (a, i, _) = Word8ArraySlice.base slice
-      in Word8Array.copyVec {src = got, dst = a, di = i}; size got end
-    fun writeArr (fd, slice) = check (write' (fd, Word8ArraySlice.vector slice))
+      in Word8Array.copyVec {src = Word8Vector.fromString got, dst = a, di = i}; size got end
+    fun writeArr (fd, slice) = check (write' (fd, Word8Vector.toString (Word8ArraySlice.vector slice)))
 
     datatype whence = SEEK_SET | SEEK_CUR | SEEK_END
     fun whenceBits SEEK_SET = named "SEEK_SET"
@@ -170,7 +171,7 @@ struct
       let val {getPos, setPos, endPos, verifyPos} = textPositions fd
       in
         TextPrimIO.RD {name = name, chunkSize = 4096,
-                       readVec = SOME (fn n => readVec (fd, n)), readArr = NONE,
+                       readVec = SOME (fn n => readText (fd, n)), readArr = NONE,
                        readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                        avail = fn () => NONE,
                        getPos = getPos, setPos = setPos, endPos = endPos, verifyPos = verifyPos,

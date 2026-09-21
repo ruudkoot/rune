@@ -14,25 +14,25 @@
 
 ```sml
 signature MONO_ARRAY
-structure BoolArray : MONO_ARRAY where type vector = BoolVector.vector where type elem = bool  (* optional *)
-structure CharArray : MONO_ARRAY where type vector = CharVector.vector where type elem = char
-structure Int16Array : MONO_ARRAY where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
-structure Int32Array : MONO_ARRAY where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
+structure BoolArray :> MONO_ARRAY where type vector = BoolVector.vector where type elem = bool  (* optional *)
+structure CharArray :> MONO_ARRAY where type vector = CharVector.vector where type elem = char
+structure Int16Array :> MONO_ARRAY where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
+structure Int32Array :> MONO_ARRAY where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
 structure Int64Array : MONO_ARRAY where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
-structure Int8Array : MONO_ARRAY where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
-structure IntArray : MONO_ARRAY where type vector = IntVector.vector where type elem = int  (* optional *)
-structure LargeIntArray : MONO_ARRAY where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
+structure Int8Array :> MONO_ARRAY where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
+structure IntArray :> MONO_ARRAY where type vector = IntVector.vector where type elem = int  (* optional *)
+structure LargeIntArray :> MONO_ARRAY where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
 structure LargeRealArray : MONO_ARRAY where type vector = LargeRealVector.vector where type elem = LargeReal.real  (* optional *)
 structure LargeWordArray : MONO_ARRAY where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
-structure Real32Array : MONO_ARRAY where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
+structure Real32Array :> MONO_ARRAY where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64Array : MONO_ARRAY where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
-structure RealArray : MONO_ARRAY where type vector = RealVector.vector where type elem = real  (* optional *)
-structure WideCharArray : MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
-structure Word16Array : MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
-structure Word32Array : MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
+structure RealArray :> MONO_ARRAY where type vector = RealVector.vector where type elem = real  (* optional *)
+structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure Word16Array :> MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
+structure Word32Array :> MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
 structure Word64Array : MONO_ARRAY where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
-structure Word8Array : MONO_ARRAY where type vector = Word8Vector.vector where type elem = Word8.word
-structure WordArray : MONO_ARRAY where type vector = WordVector.vector where type elem = word  (* optional *)
+structure Word8Array :> MONO_ARRAY where type vector = Word8Vector.vector where type elem = Word8.word
+structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where type elem = word  (* optional *)
 ```
 
 | Implementation |  | Source |

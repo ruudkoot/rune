@@ -2,7 +2,18 @@
 
    Implements: ARRAY2
 
-   Status: optional *)
+   Status: optional
+
+   Implementation: `ARRAY2.array/a-record-of-necessity`. The type is a record
+   of the data, the rows and the columns, and is not made abstract, because
+   the specification asks for more than Standard ML can give
+   (`ARRAY2/sealed-and-equal-at-any-element`). The record is what satisfies
+   "the type ty array admits equality even if ty does not": record equality
+   is decided field by field, and the field is the built-in array. A program
+   can take the record apart, and should not; the monomorphic
+   two-dimensional arrays, which are built on this one, are abstract.
+
+   Pinned by: `Array2.array/of-reals-same`, `Array2.array/of-functions-same` *)
 structure Array2 =
 struct
   (* equality is that of the data array: identity *)

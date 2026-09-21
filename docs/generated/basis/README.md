@@ -126,6 +126,13 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
 
+## Not yet assigned to an area
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`MONO_VECTOR_BYTES`](sig/MONO_VECTOR_BYTES.md) | [`Word8Vector`](sig/MONO_VECTOR.md), as the library sees it: the members of the specification and the two conversions that say a vector of bytes is a string underneath. A program sees [`MONO_VECTOR`](sig/MONO_VECTOR.md), which the seal file gives it. The slice's own signature is in word8vector.sml, where [`Substring`](sig/SUBSTRING.md) is in scope. | required | 0 of 2 |
+| [`MONO_VECTOR_SLICE_BYTES`](sig/MONO_VECTOR_SLICE_BYTES.md) | The slice, as the library sees it: the members of the specification and the two conversions to and from a substring. [`MONO_VECTOR_BYTES`](sig/MONO_VECTOR_BYTES.md), the vector's, is in mono\_sigs.sml, where [`Substring`](sig/SUBSTRING.md) is not yet in scope. | required | 0 of 2 |
+
 ## Functors
 
 | Functor |  |

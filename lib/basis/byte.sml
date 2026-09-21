@@ -6,10 +6,10 @@ structure Byte =
 struct
   fun byteToChar (b : Word8.word) : char = chr (Word8.toInt b)
   fun charToByte (c : char) : Word8.word = Word8.fromInt (ord c)
-  fun bytesToString (v : Word8Vector.vector) : string = v
-  fun stringToBytes (s : string) : Word8Vector.vector = s
-  fun unpackStringVec (sl : Word8VectorSlice.slice) : string = Word8VectorSlice.vector sl
-  fun unpackString (sl : Word8ArraySlice.slice) : string = Word8ArraySlice.vector sl
+  val bytesToString : Word8Vector.vector -> string = Word8Vector.toString
+  val stringToBytes : string -> Word8Vector.vector = Word8Vector.fromString
+  fun unpackStringVec (sl : Word8VectorSlice.slice) : string = Word8Vector.toString (Word8VectorSlice.vector sl)
+  fun unpackString (sl : Word8ArraySlice.slice) : string = Word8Vector.toString (Word8ArraySlice.vector sl)
   (* "raises Subscript if i < 0 or size s + i > |arr|" *)
   fun packString (arr : Word8Array.array, i : int, ss : substring) : unit =
     if i < 0 orelse i > Word8Array.length arr - Substring.size ss then raise Subscript

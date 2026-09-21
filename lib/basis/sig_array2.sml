@@ -19,7 +19,22 @@
 
    Erratum: `ARRAY2/sub-indices`. The specification's description of `sub`
    says that "`i` gives the row index, and gives the column index"; the
-   second is `j`. *)
+   second is `j`.
+
+   Erratum: `ARRAY2/sealed-and-equal-at-any-element`. The page asks for three
+   things that Standard ML cannot give together: `structure Array2 :> ARRAY2`,
+   `eqtype 'a array`, and "the type `ty array` admits equality even if `ty`
+   does not". Only the built-in type names of the language admit equality
+   whatever they hold -- `ref`, and the `array` of the top level -- and no
+   signature can specify one: through `eqtype 'a t`, a `ty t` admits equality
+   only when `ty` does. So an opaque seal makes a fresh type name and the
+   third clause fails. `ARRAY` escapes it because the top level pins `'a array`
+   to `Array.array`, which is the built-in; `Array2` has no such anchor. Rune
+   keeps the third clause and gives up the seal, as Poly/ML does, because it
+   is the one a program can depend on and the suite can check; MLton and
+   SML/NJ keep the seal, and `real Array2.array` admits no equality there.
+
+   See also: `ARRAY2.array` *)
 signature ARRAY2 =
 sig
   (* The type of two-dimensional arrays.

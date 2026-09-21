@@ -37,6 +37,19 @@ the elements are visited in, and so what an effect sees.
 > says that "`i` gives the row index, and gives the column index"; the
 > second is `j`.
 
+> **Erratum** `ARRAY2/sealed-and-equal-at-any-element`. The page asks for three
+> things that Standard ML cannot give together: `structure Array2 :> ARRAY2`,
+> `eqtype 'a array`, and "the type `ty array` admits equality even if `ty`
+> does not". Only the built-in type names of the language admit equality
+> whatever they hold -- `ref`, and the [`array`](#val-array) of the top level -- and no
+> signature can specify one: through `eqtype 'a t`, a `ty t` admits equality
+> only when `ty` does. So an opaque seal makes a fresh type name and the
+> third clause fails. [`ARRAY`](../sig/ARRAY.md) escapes it because the top level pins `'a array`
+> to [`Array.array`](../sig/ARRAY.md#val-array), which is the built-in; [`Array2`](ARRAY2.md) has no such anchor. Rune
+> keeps the third clause and gives up the seal, as Poly/ML does, because it
+> is the one a program can depend on and the suite can check; MLton and
+> SML/NJ keep the seal, and `real Array2.array` admits no equality there.
+
 ## Contents
 
 [Making an array](#making-an-array) &middot;
@@ -609,7 +622,7 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 
 ## See also
 
-[`ARRAY`](../sig/ARRAY.md), [`VECTOR`](../sig/VECTOR.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md)
+[`ARRAY`](../sig/ARRAY.md), [`VECTOR`](../sig/VECTOR.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) &middot; [`ARRAY2.array`](#val-array)
 
 ---
 

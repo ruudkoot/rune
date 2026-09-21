@@ -535,3 +535,14 @@ sig
   (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`. *)
   val collate : (elem * elem -> order) -> slice * slice -> order
 end
+
+(* `Word8Vector`, as the library sees it: the members of the specification and
+   the two conversions that say a vector of bytes is a string underneath. A
+   program sees `MONO_VECTOR`, which the seal file gives it. The slice's own
+   signature is in word8vector.sml, where `Substring` is in scope. *)
+signature MONO_VECTOR_BYTES =
+sig
+  include MONO_VECTOR_EQ
+  val toString : vector -> string
+  val fromString : string -> vector
+end

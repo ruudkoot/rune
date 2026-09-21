@@ -80,7 +80,7 @@ struct
 
   fun binInstreamOf (Proc {infd, ...}) =
     BinIO.mkInstream (BinIO.StreamIO.mkInstream
-      (Posix.IO.mkBinReader {fd = infd, name = "<process>", initBlkMode = true}, ""))
+      (Posix.IO.mkBinReader {fd = infd, name = "<process>", initBlkMode = true}, Word8Vector.fromList []))
   fun binOutstreamOf (Proc {outfd, ...}) =
     BinIO.mkOutstream (BinIO.StreamIO.mkOutstream
       (Posix.IO.mkBinWriter {fd = outfd, name = "<process>", initBlkMode = true,

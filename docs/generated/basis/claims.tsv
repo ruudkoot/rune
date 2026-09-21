@@ -195,7 +195,7 @@ Word8Array	structure	MONO_ARRAY	where type vector = Word8Vector.vector where typ
 Word8Array2	structure	MONO_ARRAY2	where type vector = Word8Vector.vector where type elem = Word8.word	optional	claimed	lib/basis/word8array2.sml
 Word8ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word	required	claimed	lib/basis/word8arrayslice.sml
 Word8Vector	structure	MONO_VECTOR	where type elem = Word8.word	required	claimed	lib/basis/word8vector.sml
-Word8VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Word8Vector.vector where type elem = Word8.word	required	claimed	lib/basis/word8vectorslice.sml
+Word8VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Word8Vector.vector where type elem = Word8.word	required	claimed	lib/basis/word8vector.sml
 WordArray	structure	MONO_ARRAY	where type vector = WordVector.vector where type elem = word	optional	claimed	lib/basis/mono_word.sml
 WordArray2	structure	MONO_ARRAY2	where type vector = WordVector.vector where type elem = word	optional	claimed	lib/basis/mono_word.sml
 WordArraySlice	structure	MONO_ARRAY_SLICE	where type vector = WordVector.vector where type vector_slice = WordVectorSlice.slice where type array = WordArray.array where type elem = word	optional	claimed	lib/basis/mono_word.sml

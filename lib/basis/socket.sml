@@ -141,8 +141,8 @@ struct
                             if oob then Word.fromInt (named "MSG_OOB") else 0w0))
     val noOut = {don't_route = false, oob = false}
     val noIn = {peek = false, oob = false}
-    fun arrBytes sl = Word8ArraySlice.vector sl
-    fun vecBytes sl = Word8VectorSlice.vector sl
+    fun arrBytes sl = Word8Vector.toString (Word8ArraySlice.vector sl)
+    fun vecBytes sl = Word8Vector.toString (Word8VectorSlice.vector sl)
 
     fun 'af sendVec' (SOCK fd : ('af, active stream) sock, sl, flags) = check (send' (fd, vecBytes sl, outFlags flags))
     fun 'af sendArr' (SOCK fd : ('af, active stream) sock, sl, flags) = check (send' (fd, arrBytes sl, outFlags flags))
@@ -182,12 +182,12 @@ struct
       else true
     val none = Word8Vector.fromList []
     fun 'af recvVec' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if wanted (fd, n) then received (recv' (fd, n, inFlags flags)) else none
+      if wanted (fd, n) then Word8Vector.fromString (received (recv' (fd, n, inFlags flags))) else none
     fun recvVec (s, n) = recvVec' (s, n, noIn)
     fun recvArr' (s, sl, flags) = intoArray (sl, recvVec' (s, Word8ArraySlice.length sl, flags))
     fun recvArr (s, sl) = recvArr' (s, sl, noIn)
     fun 'af recvVecNB' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if wanted (fd, n) then nonBlocking (fd, fn () => receivedNB (recv' (fd, n, inFlags flags))) else SOME none
+      if wanted (fd, n) then nonBlocking (fd, fn () => Option.map Word8Vector.fromString (receivedNB (recv' (fd, n, inFlags flags)))) else SOME none
     fun recvVecNB (s, n) = recvVecNB' (s, n, noIn)
     fun recvArrNB' (s, sl, flags) =
       Option.map (fn v => intoArray (sl, v)) (recvVecNB' (s, Word8ArraySlice.length sl, flags))
@@ -197,7 +197,7 @@ struct
       if n < 0 orelse n > Word8Vector.maxLen then raise Size
       else
         (case recvfrom' (fd, n, inFlags flags) of
-           [bytes, addr] => (bytes, ADDR addr)
+           [bytes, addr] => (Word8Vector.fromString bytes, ADDR addr)
          | _ => raise RuneError.lastError ())
     fun recvVecFrom (s, n) = recvVecFrom' (s, n, noIn)
     fun recvArrFrom' (s, sl, flags) =
@@ -209,7 +209,7 @@ struct
       else
         nonBlocking (fd, fn () =>
           case recvfrom' (fd, n, inFlags flags) of
-            [bytes, addr] => SOME (bytes, ADDR addr)
+            [bytes, addr] => SOME (Word8Vector.fromString bytes, ADDR addr)
           | _ => if wouldBlock () then NONE else raise RuneError.lastError ())
     fun recvVecFromNB (s, n) = recvVecFromNB' (s, n, noIn)
     fun recvArrFromNB' (s, sl, flags) =

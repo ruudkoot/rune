@@ -5,4 +5,4 @@
    elem = char
 
    Status: optional *)
-structure CharArray2 = RuneMonoArray2Fn (structure V = CharVector)
+structure CharArray2 :> MONO_ARRAY2 where type vector = CharVector.vector where type elem = char = RuneMonoArray2Fn (structure V = CharVector)

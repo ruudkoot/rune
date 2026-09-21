@@ -29,18 +29,22 @@ structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
    where type elem = WideChar.char
 
    Status: optional *)
-structure WideCharVectorSlice : MONO_VECTOR_SLICE = RuneMonoVectorSliceFn (structure V = WideCharVector)
+structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector
+  where type elem = RuneWideChar.char = RuneMonoVectorSliceFn (structure V = WideCharVector)
 (* Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
    elem = WideChar.char
 
    Status: optional *)
-structure WideCharArray : MONO_ARRAY = RuneMonoArrayFn (structure V = WideCharVector)
+structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector
+  where type elem = RuneWideChar.char = RuneMonoArrayFn (structure V = WideCharVector)
 (* Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
    where type vector_slice = WideCharVectorSlice.slice where type array =
    WideCharArray.array where type elem = WideChar.char
 
    Status: optional *)
-structure WideCharArraySlice : MONO_ARRAY_SLICE =
+structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVector.vector
+  where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array
+  where type elem = RuneWideChar.char =
   RuneMonoArraySliceFn (structure V = WideCharVector structure A = WideCharArray structure VS = WideCharVectorSlice)
 
 structure RuneWideCharImpl =
