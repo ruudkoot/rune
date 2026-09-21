@@ -18,7 +18,7 @@ structure BoolArray :> MONO_ARRAY where type vector = BoolVector.vector where ty
 structure CharArray :> MONO_ARRAY where type vector = CharVector.vector where type elem = char
 structure Int16Array :> MONO_ARRAY where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
 structure Int32Array :> MONO_ARRAY where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
-structure Int64Array : MONO_ARRAY where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int64Array :> MONO_ARRAY where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
 structure Int8Array :> MONO_ARRAY where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
 structure IntArray :> MONO_ARRAY where type vector = IntVector.vector where type elem = int  (* optional *)
 structure LargeIntArray :> MONO_ARRAY where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
@@ -30,7 +30,7 @@ structure RealArray :> MONO_ARRAY where type vector = RealVector.vector where ty
 structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16Array :> MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32Array :> MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
-structure Word64Array : MONO_ARRAY where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure Word64Array :> MONO_ARRAY where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
 structure Word8Array :> MONO_ARRAY where type vector = Word8Vector.vector where type elem = Word8.word
 structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where type elem = word  (* optional *)
 ```

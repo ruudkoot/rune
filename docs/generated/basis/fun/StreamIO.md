@@ -10,7 +10,7 @@
 ## Synopsis
 
 ```sml
-functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
+functor StreamIO (structure PrimIO : PRIM_IO
                   structure Vector : MONO_VECTOR
                   structure VectorSlice : MONO_VECTOR_SLICE
                   structure Array : MONO_ARRAY

@@ -21,7 +21,7 @@ CharVector	structure	MONO_VECTOR	where type vector = String.string where type el
 CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substring where type vector = String.string where type elem = char	required	claimed	lib/basis/charvectorslice.sml
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
-FixedInt	structure	INTEGER		optional	claimed	lib/basis/int64.sml
+FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
 IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
@@ -59,7 +59,7 @@ IntInf	structure	INTEGER		optional	claimed	lib/basis/intinf.sml
 IntInf	structure	INT_INF		optional	claimed	lib/basis/intinf.sml
 IntVector	structure	MONO_VECTOR	where type elem = int	optional	claimed	lib/basis/mono_int.sml
 IntVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = IntVector.vector where type elem = int	optional	claimed	lib/basis/mono_int.sml
-LargeInt	structure	INTEGER		required	claimed	lib/basis/intinf.sml
+LargeInt	structure	INTEGER	where type int = IntInf.int	required	claimed	lib/basis/intinf.sml
 LargeIntArray	structure	MONO_ARRAY	where type vector = LargeIntVector.vector where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
 LargeIntArray2	structure	MONO_ARRAY2	where type vector = LargeIntVector.vector where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
 LargeIntArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeIntVector.vector where type vector_slice = LargeIntVectorSlice.slice where type array = LargeIntArray.array where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
@@ -169,7 +169,7 @@ WideCharVector	structure	MONO_VECTOR_EQ	where type elem = RuneWideChar.char	opti
 WideCharVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideString	structure	STRING	where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
-WideText	structure	TEXT		optional	claimed	lib/basis/widetext.sml
+WideText	structure	TEXT	where type Char.char = WideChar.char where type String.string = WideString.string where type Substring.substring = WideSubstring.substring where type CharArray.array = WideCharArray.array where type CharVectorSlice.slice = WideCharVectorSlice.slice where type CharArraySlice.slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetext.sml
 WideTextPrimIO	structure	PRIM_IO	where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetextio.sml
 Word	structure	WORD		required	claimed	lib/basis/word.sml
 Word16	structure	WORD		optional	claimed	lib/basis/word16.sml

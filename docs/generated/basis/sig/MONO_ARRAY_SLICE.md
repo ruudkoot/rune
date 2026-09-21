@@ -18,7 +18,7 @@ structure BoolArraySlice :> MONO_ARRAY_SLICE where type vector = BoolVector.vect
 structure CharArraySlice :> MONO_ARRAY_SLICE where type vector = CharVector.vector where type vector_slice = CharVectorSlice.slice where type array = CharArray.array where type elem = char
 structure Int16ArraySlice :> MONO_ARRAY_SLICE where type vector = Int16Vector.vector where type vector_slice = Int16VectorSlice.slice where type array = Int16Array.array where type elem = Int16.int  (* optional *)
 structure Int32ArraySlice :> MONO_ARRAY_SLICE where type vector = Int32Vector.vector where type vector_slice = Int32VectorSlice.slice where type array = Int32Array.array where type elem = Int32.int  (* optional *)
-structure Int64ArraySlice : MONO_ARRAY_SLICE where type vector = Int64Vector.vector where type vector_slice = Int64VectorSlice.slice where type array = Int64Array.array where type elem = Int64.int  (* optional *)
+structure Int64ArraySlice :> MONO_ARRAY_SLICE where type vector = Int64Vector.vector where type vector_slice = Int64VectorSlice.slice where type array = Int64Array.array where type elem = Int64.int  (* optional *)
 structure Int8ArraySlice :> MONO_ARRAY_SLICE where type vector = Int8Vector.vector where type vector_slice = Int8VectorSlice.slice where type array = Int8Array.array where type elem = Int8.int  (* optional *)
 structure IntArraySlice :> MONO_ARRAY_SLICE where type vector = IntVector.vector where type vector_slice = IntVectorSlice.slice where type array = IntArray.array where type elem = int  (* optional *)
 structure LargeIntArraySlice :> MONO_ARRAY_SLICE where type vector = LargeIntVector.vector where type vector_slice = LargeIntVectorSlice.slice where type array = LargeIntArray.array where type elem = LargeInt.int  (* optional *)
@@ -30,7 +30,7 @@ structure RealArraySlice :> MONO_ARRAY_SLICE where type vector = RealVector.vect
 structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVector.vector where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array where type elem = WideChar.char  (* optional *)
 structure Word16ArraySlice :> MONO_ARRAY_SLICE where type vector = Word16Vector.vector where type vector_slice = Word16VectorSlice.slice where type array = Word16Array.array where type elem = Word16.word  (* optional *)
 structure Word32ArraySlice :> MONO_ARRAY_SLICE where type vector = Word32Vector.vector where type vector_slice = Word32VectorSlice.slice where type array = Word32Array.array where type elem = Word32.word  (* optional *)
-structure Word64ArraySlice : MONO_ARRAY_SLICE where type vector = Word64Vector.vector where type vector_slice = Word64VectorSlice.slice where type array = Word64Array.array where type elem = Word64.word  (* optional *)
+structure Word64ArraySlice :> MONO_ARRAY_SLICE where type vector = Word64Vector.vector where type vector_slice = Word64VectorSlice.slice where type array = Word64Array.array where type elem = Word64.word  (* optional *)
 structure Word8ArraySlice :> MONO_ARRAY_SLICE where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word
 structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vector where type vector_slice = WordVectorSlice.slice where type array = WordArray.array where type elem = word  (* optional *)
 ```

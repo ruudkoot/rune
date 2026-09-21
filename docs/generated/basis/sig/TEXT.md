@@ -15,7 +15,7 @@
 ```sml
 signature TEXT
 structure Text : TEXT where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice
-structure WideText : TEXT  (* optional *)
+structure WideText : TEXT where type Char.char = WideChar.char where type String.string = WideString.string where type Substring.substring = WideSubstring.substring where type CharArray.array = WideCharArray.array where type CharVectorSlice.slice = WideCharVectorSlice.slice where type CharArraySlice.slice = WideCharArraySlice.slice  (* optional *)
 ```
 
 | Implementation |  | Source |

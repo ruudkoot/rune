@@ -14,27 +14,27 @@
 
 ```sml
 signature INTEGER
-structure FixedInt : INTEGER  (* optional *)
+structure FixedInt : INTEGER where type int = Int64.int  (* optional *)
 structure Int : INTEGER
 structure Int16 : INTEGER  (* optional *)
 structure Int32 : INTEGER  (* optional *)
-structure Int64 : INTEGER  (* optional *)
+structure Int64 :> INTEGER  (* optional *)
 structure Int8 : INTEGER  (* optional *)
 structure IntInf : INTEGER  (* optional *)
-structure LargeInt : INTEGER
+structure LargeInt : INTEGER where type int = IntInf.int
 structure Position : INTEGER
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `FixedInt` |  | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| `FixedInt` | The largest fixed-precision integer: [`Int`](INTEGER.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | `Int` | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
 | `Int16` | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
 | `Int32` | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
-| `Int64` | Int64 is Int, which has 64 bits, and so is FixedInt, the largest of the fixed-precision integers. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| `Int64` | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | `Int8` | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
 | `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
-| `LargeInt` | The largest integers are the arbitrary precision ones. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| `LargeInt` | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | `Position` | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
 Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/GENERAL.md#exn-overflow)

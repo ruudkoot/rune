@@ -18,7 +18,7 @@ structure BoolVectorSlice :> MONO_VECTOR_SLICE where type vector = BoolVector.ve
 structure CharVectorSlice : MONO_VECTOR_SLICE where type slice = Substring.substring where type vector = String.string where type elem = char
 structure Int16VectorSlice :> MONO_VECTOR_SLICE where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
 structure Int32VectorSlice :> MONO_VECTOR_SLICE where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
-structure Int64VectorSlice : MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int64VectorSlice :> MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
 structure Int8VectorSlice :> MONO_VECTOR_SLICE where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
 structure IntVectorSlice :> MONO_VECTOR_SLICE where type vector = IntVector.vector where type elem = int  (* optional *)
 structure LargeIntVectorSlice :> MONO_VECTOR_SLICE where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
@@ -30,7 +30,7 @@ structure RealVectorSlice :> MONO_VECTOR_SLICE where type vector = RealVector.ve
 structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16VectorSlice :> MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32VectorSlice :> MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
-structure Word64VectorSlice : MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure Word64VectorSlice :> MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
 structure Word8VectorSlice : MONO_VECTOR_SLICE where type vector = Word8Vector.vector where type elem = Word8.word
 structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.vector where type elem = word  (* optional *)
 ```

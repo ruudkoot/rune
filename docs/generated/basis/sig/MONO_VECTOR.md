@@ -18,7 +18,7 @@ structure BoolVector :> MONO_VECTOR where type elem = bool  (* optional *)
 structure CharVector : MONO_VECTOR where type vector = String.string where type elem = char
 structure Int16Vector :> MONO_VECTOR where type elem = Int16.int  (* optional *)
 structure Int32Vector :> MONO_VECTOR where type elem = Int32.int  (* optional *)
-structure Int64Vector : MONO_VECTOR where type elem = Int64.int  (* optional *)
+structure Int64Vector :> MONO_VECTOR where type elem = Int64.int  (* optional *)
 structure Int8Vector :> MONO_VECTOR where type elem = Int8.int  (* optional *)
 structure IntVector :> MONO_VECTOR where type elem = int  (* optional *)
 structure LargeIntVector :> MONO_VECTOR where type elem = LargeInt.int  (* optional *)
@@ -30,7 +30,7 @@ structure RealVector :> MONO_VECTOR where type elem = real  (* optional *)
 structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char  (* optional *)
 structure Word16Vector :> MONO_VECTOR where type elem = Word16.word  (* optional *)
 structure Word32Vector :> MONO_VECTOR where type elem = Word32.word  (* optional *)
-structure Word64Vector : MONO_VECTOR where type elem = Word64.word  (* optional *)
+structure Word64Vector :> MONO_VECTOR where type elem = Word64.word  (* optional *)
 structure Word8Vector : MONO_VECTOR where type elem = Word8.word
 structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 ```
@@ -41,7 +41,7 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 | `CharVector` | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
 | `Int16Vector` | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | `Int32Vector` | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64Vector` | Int64 is Int, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| `Int64Vector` | The vectors, arrays, slices and two-dimensional arrays of Int64 (optional in the specification). Int64.int is a type of its own, so these are their own structures and not those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 | `Int8Vector` | The monomorphic vectors and arrays of Int8.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 | `IntVector` | The monomorphic vectors and arrays of int, their slices and the two-dimensional arrays (optional in the specification). Int64Vector and the rest of that family are these (mono\_int64.sml). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | `LargeIntVector` | The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
@@ -53,7 +53,7 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 | `WideCharVector` | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 | `Word16Vector` | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | `Word32Vector` | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64Vector` | Word64 is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| `Word64Vector` | The vectors, arrays, slices and two-dimensional arrays of Word64 (optional in the specification). Word64.word is a type of its own, so these are their own structures and not those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
 | `Word8Vector` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 | `WordVector` | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 

@@ -47,7 +47,7 @@ functor PrimIO (structure Vector : MONO_VECTOR
    Status: optional
 
    See also: `STREAM_IO`, `PRIM_IO`, `IMPERATIVE_IO` *)
-functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
+functor StreamIO (structure PrimIO : PRIM_IO
                   structure Vector : MONO_VECTOR
                   structure VectorSlice : MONO_VECTOR_SLICE
                   structure Array : MONO_ARRAY
@@ -60,7 +60,7 @@ functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
   RuneStreamIOFn (structure PIO = PrimIO
                   structure V = Vector
                   structure VS = VectorSlice
-                  val advance = fn (p, n) => Position.+ (p, Position.fromInt n)
+                  val advance = NONE
                   (* "For binary streams, LINE_BUF mode should be treated as a
                      synonym for BLOCK_BUF": no element is a newline *)
                   val isNewline = fn _ => false)

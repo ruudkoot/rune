@@ -8,7 +8,7 @@ struct
   local
     structure SI =
       RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice
-                      val advance = RuneTextPos.advance
+                      val advance = SOME RuneTextPos.advance
                       val isNewline = fn c => c = #"\n")
   in
     (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings.

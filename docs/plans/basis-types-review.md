@@ -1,8 +1,36 @@
-# The types of the Basis: what is left to decide
+# The types of the Basis: what was decided
 
 A review document for the owner, written 2026-09-21 on branch `docgen`, after
 the sealing of the Basis structures (the decisions of 2026-09-21 in
-[docgen.md](docgen.md)). It holds three things:
+[docgen.md](docgen.md)).
+
+**Everything below has been decided and carried out.** The owner chose: seal
+the monomorphic families; seal the byte vector with the merged group; relabel
+2A and 2B, which the specification requires; follow MLton on `Array2`; and
+let `Int` and `Word` be no `Int<N>` or `Word<N>`, so that the VM may choose
+their width. What the counts came to:
+
+| | before the sealing | now |
+| --- | ---: | ---: |
+| abstract in the specification (leaks) | 47 | **0** |
+| types that show what they are made of | 64 | **0** |
+| the implementation's choice | 33 | **20** |
+| required by the signature | 226 | 348 |
+| structures showing names beyond their signature | 40 | **0** |
+
+The twenty that are left are `Position.int` (an `int`), the reals
+(`Real64` and `LargeReal` are `Real`, with their five monomorphic families)
+and `LargeWord` with `SysWord` (which are `Word`, with `LargeWord`'s five
+families). The specification allows each. One consequence to note:
+**`LargeWord` being `Word` pins the VM's word to at least 64 bits**, because
+`LargeWord.word` must be the largest word type and `Word64` exists. Giving
+the VM freedom below 64 needs `LargeWord` to become `Word64`, which means
+declaring the largest word before `Word` in `word.sml` with a signature
+written out by hand, since `WORD` itself names `LargeWord.word` and cannot
+come first. That is a contained change and has not been made.
+
+The rest of this document is the evidence the decisions were taken on. It
+holds three things:
 
 1. what the network and position change did (done, on the branch);
 2. every equality that `docs/generated/basis/types.md` calls **the
@@ -12,7 +40,7 @@ the sealing of the Basis structures (the decisions of 2026-09-21 in
    vectors and arrays abstract, with a module restructure that removes almost
    all of it.
 
-Nothing in section 2 or 3 has been changed in the library. Section 1 is done.
+Sections 2 and 3 record the evidence; everything they recommend has since been carried out.
 
 ## Where the numbers come from
 
@@ -37,8 +65,11 @@ subject of section 3.
 | `NetHostDB.in_addr`, `NetHostDB.addr_family`, `Socket.SOCK.sock_type` | a new `lib/basis/runenet.sml` declares all three in one opaque structure with the conversions the library needs. `socket.sml` is compiled before `netdb.sml`, so neither file could be the one that declares them, and `SOCKET` says `AF.addr_family` is `NetHostDB`'s. |
 | `TextPrimIO.pos`, `WideTextPrimIO.pos` | a new `lib/basis/runepos.sml` declares `RuneTextPos` and `RuneWideTextPos`, two abstract types (nothing says a position in a stream of wide characters is one of a stream of characters). `RuneStreamIOFn` no longer demands `pos = int`; it takes `advance : pos * int -> pos`, which is the only arithmetic it did. |
 
-The public `StreamIO` functor still takes a `PrimIO` with `pos = Position.int`,
-which is a deviation it already documented.
+The public `StreamIO` functor no longer constrains `PrimIO.pos` either: with
+no way to count in a position it puts the reader back at the start of the
+chunk, reads the elements again and asks where it is, as MLton's does, and
+raises `Io` with `RandomAccessNotSupported` for a reader that cannot. That
+deviation is gone.
 
 Three programs of `tests/lang` and one check of `tests/basis` were written
 against the leak and now go through `NetHostDB.fromString`/`toString` and
@@ -59,7 +90,7 @@ is what the decision asks for, but a program that compiles everywhere else may
 stop compiling here. Reverting the position half is a two-line change if you
 would rather follow the hosts.
 
-## 2. The implementation's choice: 37 equalities
+## 2. The implementation's choice: 37 equalities (now 20)
 
 Five structures were invisible to `types.md` until now, because they are plain
 aliases with no `Implements:` claim: `Real64`, `LargeWord`, `SysWord`,

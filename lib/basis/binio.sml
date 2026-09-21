@@ -13,7 +13,7 @@ struct
      = BinPrimIO.writer where type pos = Position.int *)
   structure StreamIO =
     RuneStreamIOFn (structure PIO = BinPrimIO structure V = Word8Vector structure VS = Word8VectorSlice
-                    val advance = fn (p, n) => Position.+ (p, Position.fromInt n)
+                    val advance = SOME (fn (p, n) => Position.+ (p, Position.fromInt n))
                     val isNewline = fn (_ : Word8.word) => false)
 
   structure Imperative = RuneImperativeIOFn (structure SIO = StreamIO structure V = Word8Vector)

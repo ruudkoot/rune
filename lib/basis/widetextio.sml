@@ -41,7 +41,7 @@ struct
     structure SI =
       RuneStreamIOFn (structure PIO = WideTextPrimIO structure V = WideCharVector
                       structure VS = WideCharVectorSlice
-                      val advance = RuneWideTextPos.advance
+                      val advance = SOME RuneWideTextPos.advance
                       val isNewline = fn c => WideChar.ord c = 10)
   in
     (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings. *)
