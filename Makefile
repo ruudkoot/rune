@@ -27,6 +27,8 @@
 #   make matrix-quick  the Basis Library suite on Rune and on Rune's library
 #                   compiled by each of the hosts
 #   make matrix     matrix-quick and the suite on each host's own library
+#   make windows    the VM for Windows with mingw-w64 (docs/building.md); it
+#                   and make test-windows are apart from every other target
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
 #
@@ -96,7 +98,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -212,6 +214,33 @@ vm-asan: bin/runevm-asan
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
+
+# ---------------------------------------------------------- Windows (apart)
+# `make windows` builds the VM for Windows with mingw-w64, and
+# `make test-windows` runs the language suite on it. Neither is part of any
+# other target, and nothing else in the tree depends on vm/sys_win.c: the
+# toolchain is only on a machine that has it, and running the result needs
+# Windows, or WSL, which starts an .exe for you. The library, the compiler
+# and the bytecode are the same as everywhere else -- only the VM differs --
+# so the suite is run with the ordinary bin/rune and this VM.
+#
+# What the system layer of Windows does and does not do is in the header of
+# vm/sys_win.c; tests/windows-skip.txt lists the programs that need what it
+# does not (fork, signals, the terminal, sockets, users) and why.
+WINCC     ?= x86_64-w64-mingw32-gcc
+WINCFLAGS ?= -std=c99 -O2 -Wall -Wextra
+WIN_SRCS  := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_win.c
+
+windows: bin/runevm.exe
+
+bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c
+	@mkdir -p bin
+	@command -v $(WINCC) > /dev/null 2>&1 || \
+	  { echo "make windows: $(WINCC) is not installed (mingw-w64)"; exit 1; }
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) -Ivm
+
+test-windows: bin/runevm.exe $(RUNE)
+	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.

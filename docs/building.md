@@ -20,6 +20,7 @@ lives next to it as `bin/rune-mlton.bin`, `bin/rune-polyml.bin`,
 `--lib` of yours comes later on the command line and wins. Nothing absolute is
 baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
+
 ## Prerequisites
 
 * A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`.
@@ -100,6 +101,33 @@ name their commands one by one.
 
 `CC=clang make vm` selects another C compiler. `BOOTHOST=smlnj make` picks the
 host build that compiles stage 1 of the bootstrap.
+
+## Windows
+
+`make windows` builds the VM for Windows with mingw-w64 and `make
+test-windows` runs the language suite on it. Neither is part of any other
+target: `make check` never compiles `vm/sys_win.c`, and nothing else in the
+tree depends on it. The toolchain has to be installed
+(`x86_64-w64-mingw32-gcc`, which `WINCC` overrides), and running the result
+needs Windows -- or WSL, which starts an `.exe` for you, which is how it was
+developed and tested.
+
+Only the VM differs: the compiler, the library and the bytecode are the ones
+everything else uses, so the suite runs with the ordinary `bin/rune` and
+`bin/runevm.exe`.
+
+`vm/sys_win.c` gives what Windows has -- the clock, the calendar, files,
+directories, descriptors, the environment and running a command -- and
+answers `ENOSYS` for what belongs to POSIX and has no counterpart worth
+faking: fork, signals, pipes between processes, the terminal settings, users
+and groups, and the sockets, which on Windows are Winsock. Paths come back
+with `/` for a separator, because Rune's `OS.Path` is the one of POSIX and
+the C runtime of Windows takes either. The standard streams are put in
+binary mode before `main` runs, since a Rune string is bytes and a `\n` must
+stay one.
+
+127 of the 136 programs of `tests/lang` pass; the nine that do not are in
+`tests/windows-skip.txt` with the reason for each.
 
 ## Installing
 
