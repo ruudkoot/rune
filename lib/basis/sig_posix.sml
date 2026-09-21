@@ -23,10 +23,10 @@
    abstract; the suite matches `Posix` against this signature both
    transparently and opaquely.
 
-   Deviation: `POSIX/not-sealed`. The structure is bound to this signature
-   without making its types its own, so the representations show: `uid`, `gid`, `pid`, `file_desc`, `signal` and
-   `speed` are `int`, and a set of flags is a word. A program should not rely
-   on that.
+   Deviation: `POSIX/signal-is-an-int`. The types of the structure are its
+   own, as the specification has them, but for `Signal.signal`, which is
+   visibly an `int`: `Unix` has the same type, and the library does not make
+   it abstract where it is declared. A program should not rely on that.
 
    Pinned by: `Posix:POSIX/*` *)
 signature POSIX =

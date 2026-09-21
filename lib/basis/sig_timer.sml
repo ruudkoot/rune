@@ -22,11 +22,7 @@
    real time here. *)
 signature TIMER =
 sig
-  (* The type of a processor-time timer.
-
-     Deviation: `TIMER.cpu_timer/not-abstract`. The specification leaves the
-     type abstract; in Rune it is a record of the two times read when the
-     timer was started, and the type is not made abstract. *)
+  (* The type of a processor-time timer. *)
   type cpu_timer
 
   (* The type of a wall-clock timer, a `Time.time` in the same way. *)

@@ -16,7 +16,7 @@ is listed at the end of this page.
 | `BinIO` | : [`BIN_IO`](sig/BIN_IO.md) |  | required |  | [lib/basis/binio.sml](../../../lib/basis/binio.sml) |
 | `BinIO` | : [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) |  | required |  | [lib/basis/binio.sml](../../../lib/basis/binio.sml) |
 | `BinIO.StreamIO` | : [`STREAM_IO`](sig/STREAM_IO.md) | `where type vector = Word8Vector.vector where type elem = Word8.word where type reader = BinPrimIO.reader where type writer = BinPrimIO.writer where type pos = Position.int` | required | an application of `RuneStreamIOFn` | [lib/basis/binio.sml](../../../lib/basis/binio.sml) |
-| `BinPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int` | required | an application of `RunePrimIOFn` | [lib/basis/binprimio.sml](../../../lib/basis/binprimio.sml) |
+| `BinPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int where type vector_slice = Word8VectorSlice.slice where type array_slice = Word8ArraySlice.slice` | required | an application of `RunePrimIOFn` | [lib/basis/binprimio.sml](../../../lib/basis/binprimio.sml) |
 | `Bool` | : [`BOOL`](sig/BOOL.md) |  | required |  | [lib/basis/bool.sml](../../../lib/basis/bool.sml) |
 | `BoolArray` | : [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = BoolVector.vector where type elem = bool` | optional | an application of `RuneMonoArrayFn` | [lib/basis/mono\_bool.sml](../../../lib/basis/mono_bool.sml) |
 | `BoolArray2` | : [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = BoolVector.vector where type elem = bool` | optional | an application of `RuneMonoArray2Fn` | [lib/basis/mono\_bool.sml](../../../lib/basis/mono_bool.sml) |
@@ -111,7 +111,7 @@ is listed at the end of this page.
 | `PackWord32Little` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `PackWord64Big` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | `PackWord64Little` | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
-| `Posix` | : [`POSIX`](sig/POSIX.md) |  | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| `Posix` | : [`POSIX`](sig/POSIX.md) | `where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode` | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | `Posix.Error` | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | `Posix.FileSys` | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | `Posix.FileSys.O` | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
@@ -158,10 +158,10 @@ is listed at the end of this page.
 | `TextIO` | : [`TEXT_IO`](sig/TEXT_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | `TextIO.StreamIO` | : [`STREAM_IO`](sig/STREAM_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | `TextIO.StreamIO` | : [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | `where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos` | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
-| `TextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char` | required | an application of `RunePrimIOFn` | [lib/basis/textprimio.sml](../../../lib/basis/textprimio.sml) |
+| `TextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char where type vector_slice = CharVectorSlice.slice where type array_slice = CharArraySlice.slice` | required | an application of `RunePrimIOFn` | [lib/basis/textprimio.sml](../../../lib/basis/textprimio.sml) |
 | `Time` | : [`TIME`](sig/TIME.md) |  | required |  | [lib/basis/time.sml](../../../lib/basis/time.sml) |
 | `Timer` | : [`TIMER`](sig/TIMER.md) |  | required |  | [lib/basis/timer.sml](../../../lib/basis/timer.sml) |
-| `Unix` | : [`UNIX`](sig/UNIX.md) |  | optional |  | [lib/basis/unix.sml](../../../lib/basis/unix.sml) |
+| `Unix` | : [`UNIX`](sig/UNIX.md) | `where type exit_status = Posix.Process.exit_status where type signal = Posix.Signal.signal` | optional |  | [lib/basis/unix.sml](../../../lib/basis/unix.sml) |
 | `UnixSock` | : [`UNIX_SOCK`](sig/UNIX_SOCK.md) |  | optional | is `RuneUnixSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | `Vector` | : [`VECTOR`](sig/VECTOR.md) |  | required |  | [lib/basis/vector.sml](../../../lib/basis/vector.sml) |
 | `VectorSlice` | : [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) |  | required |  | [lib/basis/vectorslice.sml](../../../lib/basis/vectorslice.sml) |
@@ -174,7 +174,7 @@ is listed at the end of this page.
 | `WideString` | :> [`STRING`](sig/STRING.md) | `where type string = WideCharVector.vector where type char = WideChar.char` | optional | is `RuneWideString` | [lib/basis/widestring.sml](../../../lib/basis/widestring.sml) |
 | `WideSubstring` | :> [`SUBSTRING`](sig/SUBSTRING.md) | `where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char` | optional | is `RuneWideSubstring` | [lib/basis/widestring.sml](../../../lib/basis/widestring.sml) |
 | `WideText` | : [`TEXT`](sig/TEXT.md) |  | optional |  | [lib/basis/widetext.sml](../../../lib/basis/widetext.sml) |
-| `WideTextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) |  | optional | an application of `RunePrimIOFn` | [lib/basis/widetextio.sml](../../../lib/basis/widetextio.sml) |
+| `WideTextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice` | optional | an application of `RunePrimIOFn` | [lib/basis/widetextio.sml](../../../lib/basis/widetextio.sml) |
 | `Word` | : [`WORD`](sig/WORD.md) |  | required |  | [lib/basis/word.sml](../../../lib/basis/word.sml) |
 | `Word16` | : [`WORD`](sig/WORD.md) |  | optional | an application of `RuneWordNFn` | [lib/basis/word16.sml](../../../lib/basis/word16.sml) |
 | `Word16Array` | : [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = Word16Vector.vector where type elem = Word16.word` | optional | an application of `RuneMonoArrayFn` | [lib/basis/mono\_word16.sml](../../../lib/basis/mono_word16.sml) |

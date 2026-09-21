@@ -77,10 +77,6 @@ type cpu_timer
 
 The type of a processor-time timer.
 
-> **Deviation** `TIMER.cpu_timer/not-abstract`. The specification leaves the
-> type abstract; in Rune it is a record of the two times read when the
-> timer was started, and the type is not made abstract.
-
 ### <a name="type-real_timer"></a>`real_timer`
 
 ```sml

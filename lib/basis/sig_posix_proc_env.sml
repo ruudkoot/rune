@@ -32,10 +32,7 @@ sig
   (* The type of the number that names a process, the one of `Posix.Process`. *)
   eqtype pid
 
-  (* The type of the number that names a user.
-
-     Deviation: `Posix.ProcEnv.uid/is-an-int`. The specification leaves the
-     type abstract; in Rune it is `int`, and the type is not made abstract. *)
+  (* The type of the number that names a user. *)
   eqtype uid
 
   (* The type of the number that names a group. *)

@@ -172,6 +172,35 @@ struct
            | NONE => NONE)
     end
 
+  (* The types that a signature expression leaves abstract, each with the
+     substructures on the way to it. *)
+  fun abstractTypesOf (lib : library) (sigexp : string) : (string list * string) list =
+    (ignore (typeSpecOf lib (sigexp, [], ""));
+     case StringMap.find (!probed, sigexp) of
+       SOME (SOME {bound, env = sigEnv}) =>
+         let
+           fun walk (path, Env.Env {tys, strs, ...}) =
+             List.mapPartial (fn (name, Env.TyStr {fcn = Types.TName c, ...}) =>
+                                   if SigMatch.isBound (bound, c) then SOME (path, name) else NONE
+                               | _ => NONE)
+                             (StringMap.listItemsi tys)
+             @ List.concat (List.map (fn (name, sub) => walk (path @ [name], sub)) (StringMap.listItemsi strs))
+         in
+           walk ([], sigEnv)
+         end
+     | _ => [])
+
+  (* Whether the type at a path of the library, as a program sees it, shows
+     what it is made of: it abbreviates a record, a tuple, a function or an
+     application of a type, and is no type name of its own. *)
+  fun showsItsMaking ({env, ...} : library) (path : string list, ty : string) : bool =
+    case Env.findStr (env, path) of
+      SOME (Env.Env {tys, ...}) =>
+        (case StringMap.find (tys, ty) of
+           SOME (Env.TyStr {fcn, ...}) => not (isSome (tyconOf fcn))
+         | NONE => false)
+    | NONE => false
+
   (* An example against the library: `val it : bool = ...` has to elaborate. *)
   fun checkExample ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
     let

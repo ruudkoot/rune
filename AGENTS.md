@@ -27,8 +27,11 @@ keep these invariants:
   (`seal_list.sml`: `structure List : LIST = List`), which is loaded for the
   programs that mention the structure and for no file of the library, so the
   library keeps its helpers. `make docs` fails for a structure that shows a
-  program more. A type that the specification keeps abstract is made
-  abstract where it is declared, not by the seal, which is transparent.
+  program more. A seal is opaque (`:>`) where it makes abstract a type that
+  the specification keeps so, with a `where type` for every type that another
+  signature names, since that signature was read with the structure whole; a
+  type that several structures share has to be made abstract where it is
+  declared instead. `docs/generated/basis/types.md` lists what still leaks.
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;

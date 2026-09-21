@@ -1,6 +1,7 @@
 (* Unix: running a program and talking to it through pipes.
 
-   Implements: UNIX
+   Implements: UNIX where type exit_status = Posix.Process.exit_status
+   where type signal = Posix.Signal.signal
 
    Status: optional *)
 structure Unix =

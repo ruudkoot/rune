@@ -5,7 +5,7 @@ ArraySlice	structure	ARRAY_SLICE		required	claimed	lib/basis/arrayslice.sml
 BinIO	structure	BIN_IO		required	claimed	lib/basis/binio.sml
 BinIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/binio.sml
 BinIO.StreamIO	structure	STREAM_IO	where type vector = Word8Vector.vector where type elem = Word8.word where type reader = BinPrimIO.reader where type writer = BinPrimIO.writer where type pos = Position.int	required	claimed	lib/basis/binio.sml
-BinPrimIO	structure	PRIM_IO	where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int	required	claimed	lib/basis/binprimio.sml
+BinPrimIO	structure	PRIM_IO	where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int where type vector_slice = Word8VectorSlice.slice where type array_slice = Word8ArraySlice.slice	required	claimed	lib/basis/binprimio.sml
 Bool	structure	BOOL		required	claimed	lib/basis/bool.sml
 BoolArray	structure	MONO_ARRAY	where type vector = BoolVector.vector where type elem = bool	optional	claimed	lib/basis/mono_bool.sml
 BoolArray2	structure	MONO_ARRAY2	where type vector = BoolVector.vector where type elem = bool	optional	claimed	lib/basis/mono_bool.sml
@@ -100,7 +100,7 @@ PackWord32Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord32Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
-Posix	structure	POSIX		optional	claimed	lib/basis/posix.sml
+Posix	structure	POSIX	where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode	optional	claimed	lib/basis/posix.sml
 Posix.Error	structure	POSIX_ERROR		optional	claimed	lib/basis/posix.sml
 Posix.FileSys	structure	POSIX_FILE_SYS		optional	claimed	lib/basis/posix.sml
 Posix.FileSys.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_filesys.sml
@@ -149,10 +149,10 @@ TextIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/textio.sml
 TextIO	structure	TEXT_IO		required	claimed	lib/basis/textio.sml
 TextIO.StreamIO	structure	STREAM_IO		required	claimed	lib/basis/textio.sml
 TextIO.StreamIO	structure	TEXT_STREAM_IO	where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos	required	claimed	lib/basis/textio.sml
-TextPrimIO	structure	PRIM_IO	where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char	required	claimed	lib/basis/textprimio.sml
+TextPrimIO	structure	PRIM_IO	where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char where type vector_slice = CharVectorSlice.slice where type array_slice = CharArraySlice.slice	required	claimed	lib/basis/textprimio.sml
 Time	structure	TIME		required	claimed	lib/basis/time.sml
 Timer	structure	TIMER		required	claimed	lib/basis/timer.sml
-Unix	structure	UNIX		optional	claimed	lib/basis/unix.sml
+Unix	structure	UNIX	where type exit_status = Posix.Process.exit_status where type signal = Posix.Signal.signal	optional	claimed	lib/basis/unix.sml
 UnixSock	structure	UNIX_SOCK		optional	claimed	lib/basis/inetsock.sml
 Vector	structure	VECTOR		required	claimed	lib/basis/vector.sml
 VectorSlice	structure	VECTOR_SLICE		required	claimed	lib/basis/vectorslice.sml
@@ -165,7 +165,7 @@ WideCharVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = WideCharVect
 WideString	structure	STRING	where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideText	structure	TEXT		optional	claimed	lib/basis/widetext.sml
-WideTextPrimIO	structure	PRIM_IO		optional	claimed	lib/basis/widetextio.sml
+WideTextPrimIO	structure	PRIM_IO	where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetextio.sml
 Word	structure	WORD		required	claimed	lib/basis/word.sml
 Word16	structure	WORD		optional	claimed	lib/basis/word16.sml
 Word16Array	structure	MONO_ARRAY	where type vector = Word16Vector.vector where type elem = Word16.word	optional	claimed	lib/basis/mono_word16.sml

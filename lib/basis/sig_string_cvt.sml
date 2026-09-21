@@ -122,11 +122,7 @@ sig
   (* ---- Scanning a string ---- *)
 
   (* The stream that `scanString` makes of a string: a scanner can do nothing
-     with it but read it.
-
-     Deviation: `StringCvt.cs/transparent`. The specification keeps the type
-     abstract. `cs` is not made abstract and is visibly `int`, the index
-     of the next character; a program that uses that is not portable. *)
+     with it but read it. *)
   type cs
 
   (* `scanString scan s` applies the scanner `scan` to the characters of `s`,

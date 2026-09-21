@@ -134,8 +134,10 @@ binds the structures of one file again, ascribed to their signatures
 (`structure List : LIST = List`), and is loaded for a program that names one
 of them, never for a file of the library. So the library is compiled with
 every structure whole, its helpers included, and a program sees what the
-specification names; the ascription is transparent, and a type that the
-specification keeps abstract is made so where it is declared. A `final` file (`epilogue.sml`, which runs the
+specification names. A seal is opaque where it makes a type abstract that no
+other signature names (`Date.date`, the ids of `Posix`), and keeps the types
+that other signatures name by `where type`, because those signatures were
+elaborated with the structure whole. A `final` file (`epilogue.sml`, which runs the
 `OS.Process.atExit` actions) is compiled after the program, and only when
 the files it requires are loaded already. Primitives are bound with
 `_prim "name" : ty`. The tags of `option` and `order` are relied upon by

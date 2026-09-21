@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX
-structure Posix : POSIX  (* optional *)
+structure Posix : POSIX where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -40,10 +40,10 @@ others without conversion.
 > abstract; the suite matches [`Posix`](POSIX.md) against this signature both
 > transparently and opaquely.
 
-> **Deviation** `POSIX/not-sealed`. The structure is bound to this signature
-> without making its types its own, so the representations show: `uid`, `gid`, `pid`, `file_desc`, `signal` and
-> `speed` are `int`, and a set of flags is a word. A program should not rely
-> on that.
+> **Deviation** `POSIX/signal-is-an-int`. The types of the structure are its
+> own, as the specification has them, but for [`Signal.signal`](../sig/POSIX_SIGNAL.md#type-signal), which is
+> visibly an `int`: [`Unix`](../sig/UNIX.md) has the same type, and the library does not make
+> it abstract where it is declared. A program should not rely on that.
 
 ## Interface
 

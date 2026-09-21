@@ -14,7 +14,7 @@
 
 ```sml
 signature UNIX
-structure Unix : UNIX  (* optional *)
+structure Unix : UNIX where type exit_status = Posix.Process.exit_status where type signal = Posix.Signal.signal  (* optional *)
 ```
 
 | Implementation |  | Source |
