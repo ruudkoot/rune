@@ -94,15 +94,19 @@ mono_largereal.sml | demand | yes | LargeRealArray LargeRealArray2 LargeRealArra
 mono_real64.sml | demand | yes | Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice | RealArray RealArray2 RealArraySlice RealVector RealVectorSlice
 text.sml        | demand | yes  | Text                  | Char CharArray CharArraySlice CharVector CharVectorSlice String Substring
 position.sml    | demand | yes  | Position              | Int
-time.sml        | demand | yes  | Time                  | Char IEEEReal Int IntInf LargeInt List Real String StringCvt
+# TIME comes before Time, which is sealed with it where it is declared: `time`
+# is abstract for the library too, and the other files go through
+# `Time.micros` and `Time.ofMicros`, which the seal file hides from a program.
+sig_time.sml    | demand | yes  | TIME                  | LargeInt LargeReal StringCvt -Time
+time.sml        | demand | yes  | Time                  | Char IEEEReal Int IntInf LargeInt List Real String StringCvt TIME
 timer.sml       | demand | yes  | Timer                 | Time
 date.sml        | demand | yes  | Date                  | Char Int List Option String StringCvt Time
 runeerror.sml   | demand | yes  | RuneError             | Int
-runeexit.sml    | demand | yes  | RuneExit              |
+runeexit.sml    | demand | yes  | RuneExit RuneStatus   |
 ospath.sml      | demand | yes  | RunePath              | List String
 osfilesys.sml   | demand | yes  | RuneFileSys           | Int IntInf List RuneError RunePath Time Word
 osio.sml        | demand | yes  | RuneIODesc            | Int List RuneError Time Word
-os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath Time -IO
+os.sml          | demand | yes  | OS                    | RuneError RuneExit RuneFileSys RuneIODesc RunePath RuneStatus Time -IO
 io.sml          | demand | yes  | IO                    |
 primio_sig.sml  | demand | yes  | PRIM_IO               | RuneIODesc
 primio_fn.sml   | demand | yes  | RunePrimIOFn          | IO MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Option RuneIODesc
@@ -113,7 +117,7 @@ textprimio.sml  | demand | yes  | TextPrimIO            | CharArray CharArraySli
 binprimio.sml   | demand | yes  | BinPrimIO             | Position RuneFile RunePrimIOFn Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 posix_error.sml | demand | yes  | RunePosixError        | RuneError Word
 posix_signal.sml | demand | yes | RunePosixSignal       | Word
-posix_process.sml | demand | yes | RunePosixProcess     | Int IntInf List RuneError RunePosixSignal Time Word Word8
+posix_process.sml | demand | yes | RunePosixProcess     | Int IntInf List RuneError RunePosixSignal RuneStatus Time Word Word8
 posix_procenv.sml | demand | yes | RunePosixProcEnv     | RuneError RunePosixProcess Time Word
 posix_filesys.sml | demand | yes | RunePosixFileSys     | List RuneError RuneFileSys RuneIODesc RunePosixProcEnv Time Word
 posix_io.sml    | demand | yes  | RunePosixIO           | BinPrimIO CharVectorSlice List RuneError RuneIODesc RunePosixFileSys RunePosixProcess TextPrimIO Word Word8Array Word8ArraySlice Word8VectorSlice
@@ -128,7 +132,7 @@ binio.sml       | demand | yes  | BinIO                 | BinPrimIO IO RuneFile 
 socket.sml      | demand | yes  | RuneSocket Socket     | IntInf List Option RuneError RuneIODesc Time Word Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
 netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB RuneNetProtDB RuneNetServDB | Char Int String StringCvt
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNetHostDB RuneSocket
-unix.sml        | demand | yes  | Unix                  | BinIO IO Posix RuneExit TextIO Word8
+unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneStatus SysWord TextIO Word8
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
@@ -170,7 +174,6 @@ sig_string.sml | demand | yes  | STRING | String StringCvt substring
 sig_string_cvt.sml | demand | yes  | STRING_CVT |
 sig_substring.sml | demand | yes  | SUBSTRING | substring
 sig_text_stream_io.sml | demand | yes  | TEXT_STREAM_IO | Char CharVector STREAM_IO substring
-sig_time.sml | demand | yes  | TIME | LargeInt LargeReal StringCvt Time
 sig_timer.sml | demand | yes  | TIMER | Time
 sig_unix_sock.sml | demand | yes  | UNIX_SOCK | Socket
 sig_vector.sml | demand | yes  | VECTOR |

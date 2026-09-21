@@ -37,7 +37,8 @@ struct
       fun stop i = if i < String.size s andalso isName (String.sub (s, i)) then stop (i + 1) else i
       val n = stop 0
     in
-      if n = 0 then NONE
+      (* `sig ... end` written out is no name: there is nothing to link to *)
+      if n = 0 orelse String.substring (s, 0, n) = "sig" then NONE
       else SOME (String.substring (s, 0, n), T.oneLine (String.extract (s, n, NONE)))
     end
 

@@ -159,7 +159,7 @@ is listed at the end of this page.
 | `TextIO.StreamIO` | : [`STREAM_IO`](sig/STREAM_IO.md) |  | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | `TextIO.StreamIO` | : [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | `where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos` | required |  | [lib/basis/textio.sml](../../../lib/basis/textio.sml) |
 | `TextPrimIO` | : [`PRIM_IO`](sig/PRIM_IO.md) | `where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char where type vector_slice = CharVectorSlice.slice where type array_slice = CharArraySlice.slice` | required | an application of `RunePrimIOFn` | [lib/basis/textprimio.sml](../../../lib/basis/textprimio.sml) |
-| `Time` | : [`TIME`](sig/TIME.md) |  | required |  | [lib/basis/time.sml](../../../lib/basis/time.sml) |
+| `Time` | :> [`TIME`](sig/TIME.md) |  | required |  | [lib/basis/time.sml](../../../lib/basis/time.sml) |
 | `Timer` | : [`TIMER`](sig/TIMER.md) |  | required |  | [lib/basis/timer.sml](../../../lib/basis/timer.sml) |
 | `Unix` | : [`UNIX`](sig/UNIX.md) | `where type exit_status = Posix.Process.exit_status where type signal = Posix.Signal.signal` | optional |  | [lib/basis/unix.sml](../../../lib/basis/unix.sml) |
 | `UnixSock` | : [`UNIX_SOCK`](sig/UNIX_SOCK.md) |  | optional | is `RuneUnixSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |

@@ -18,10 +18,10 @@ struct
   (* Implements: OS_PROCESS *)
   structure Process =
   struct
-    type status = int
-    val success = 0
-    val failure = 1
-    fun isSuccess s = s = 0
+    type status = RuneStatus.status
+    val success = RuneStatus.fromInt 0
+    val failure = RuneStatus.fromInt 1
+    fun isSuccess s = s = success
 
     local
       val system' = _prim "os_system" : string -> int
@@ -33,7 +33,7 @@ struct
       fun system command =
         case system' command of
           ~1 => raise RuneError.lastError ()
-        | status => status
+        | status => RuneStatus.fromInt status
 
       fun getEnv name = getenv' name
 
@@ -44,8 +44,8 @@ struct
       val atExit = RuneExit.atExit
 
       (* exit runs the actions registered with atExit; terminate does not. *)
-      fun exit status = (RuneExit.run (); exit' status)
-      fun terminate status = exit' status
+      fun exit status = (RuneExit.run (); exit' (RuneStatus.toInt status))
+      fun terminate status = exit' (RuneStatus.toInt status)
     end
   end
 

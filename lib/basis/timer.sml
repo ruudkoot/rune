@@ -7,8 +7,11 @@ struct
   type real_timer = Time.time
 
   local
-    val user = _prim "time_user" : unit -> int
-    val system = _prim "time_sys" : unit -> int
+    val user' = _prim "time_user" : unit -> int
+    val system' = _prim "time_sys" : unit -> int
+    (* the primitives count in microseconds *)
+    fun user () = Time.ofMicros (user' ())
+    fun system () = Time.ofMicros (system' ())
   in
     fun startCPUTimer () = {user = user (), sys = system ()}
     fun checkCPUTimes {user = u, sys = s} =

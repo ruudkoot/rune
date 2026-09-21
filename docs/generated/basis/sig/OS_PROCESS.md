@@ -63,9 +63,6 @@ type status
 
 The type of what a program ends with, and what a command it ran ended with.
 
-> **Deviation** `OS.Process.status/is-an-int`. The specification leaves the
-> type abstract; in Rune it is `int`, and the type is not made abstract.
-
 > **Implementation** `OS.Process.status/of-a-command`. The status of a
 > command that [`system`](#val-system) ran is its exit code, or 256 plus the number of
 > the signal that ended it, which [`Posix.Process.fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) decodes.

@@ -1,3 +1,3 @@
 val () = print "exiting with 3\n"
-val () = OS.Process.exit 3
+val () = Unix.exit 0w3
 val () = print "never\n"

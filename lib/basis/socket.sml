@@ -29,7 +29,7 @@ struct
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
     fun named name = case const name of ~1 => 0 | v => v
-    fun invalid () = let val e = named "EINVAL" in RuneError.SysErr (RuneError.errorMsg e, SOME e) end
+    fun invalid () = let val e = RuneError.fromInt (named "EINVAL") in RuneError.SysErr (RuneError.errorMsg e, SOME e) end
     (* distinct types without values, so that the checker keeps them apart *)
     datatype dgram' = DGRAM
     datatype 'mode stream' = STREAM

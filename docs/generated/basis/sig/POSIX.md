@@ -40,11 +40,6 @@ others without conversion.
 > abstract; the suite matches [`Posix`](POSIX.md) against this signature both
 > transparently and opaquely.
 
-> **Deviation** `POSIX/signal-is-an-int`. The types of the structure are its
-> own, as the specification has them, but for [`Signal.signal`](../sig/POSIX_SIGNAL.md#type-signal), which is
-> visibly an `int`: [`Unix`](../sig/UNIX.md) has the same type, and the library does not make
-> it abstract where it is declared. A program should not rely on that.
-
 ## Interface
 
 <pre>

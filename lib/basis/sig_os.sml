@@ -31,10 +31,7 @@ sig
   (* The process: its environment, its exit and the commands it runs. *)
   structure Process : OS_PROCESS
 
-  (* The type of a condition the system reports.
-
-     Deviation: `OS.syserror/is-an-int`. The specification leaves the type
-     abstract; in Rune it is the `errno` of the system, an `int`, and the type is not made abstract, so that shows. *)
+  (* The type of a condition the system reports. *)
   eqtype syserror
 
   (* Raised when the system refuses an operation: the message it gave, and the condition when there is one. *)

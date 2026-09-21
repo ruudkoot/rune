@@ -91,10 +91,11 @@ struct
   local
     (* The OS.Process.status of an exit_status, which Posix.Process.fromStatus
        turns back into it. *)
-    fun toStatus W_EXITED = 0
-      | toStatus (W_EXITSTATUS w) = Word8.toInt w
-      | toStatus (W_SIGNALED s) = 256 + s
-      | toStatus (W_STOPPED s) = 512 + s
+    fun number s = SysWord.toInt (Posix.Signal.toWord s)
+    fun toStatus W_EXITED = OS.Process.success
+      | toStatus (W_EXITSTATUS w) = RuneStatus.fromInt (Word8.toInt w)
+      | toStatus (W_SIGNALED s) = RuneStatus.fromInt (256 + number s)
+      | toStatus (W_STOPPED s) = RuneStatus.fromInt (512 + number s)
   in
     (* "closes the input and output streams associated with pr, and then
        suspends the current process until the system process corresponding

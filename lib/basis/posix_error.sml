@@ -29,8 +29,8 @@ struct
        ("range", "ERANGE"), ("rofs", "EROFS"), ("spipe", "ESPIPE"), ("srch", "ESRCH"),
        ("stale", "ESTALE"), ("timedout", "ETIMEDOUT"), ("txtbsy", "ETXTBSY"), ("xdev", "EXDEV")]
   in
-    fun toWord (e : syserror) = Word.fromInt e
-    fun fromWord w = Word.toInt w
+    fun toWord (e : syserror) = Word.fromInt (RuneError.toInt e)
+    fun fromWord w = RuneError.fromInt (Word.toInt w)
     val errorMsg = RuneError.errorMsg
     fun errorName e =
       let
@@ -43,12 +43,12 @@ struct
     fun syserror name =
       let
         fun go [] = RuneError.syserror name
-          | go ((n, c) :: rest) = if n = name then (case const c of ~1 => NONE | v => SOME v) else go rest
+          | go ((n, c) :: rest) = if n = name then (case const c of ~1 => NONE | v => SOME (RuneError.fromInt v)) else go rest
       in go table end
 
     (* The named errors, as the specification lists them. *)
-    fun named name = case syserror name of SOME e => e | NONE => 0
-    val noerr = 0
+    fun named name = case syserror name of SOME e => e | NONE => RuneError.fromInt 0
+    val noerr = RuneError.fromInt 0
     val toobig = named "toobig"       val acces = named "acces"
     val addrinuse = named "addrinuse" val addrnotavail = named "addrnotavail"
     val afnosupport = named "afnosupport" val again = named "again"

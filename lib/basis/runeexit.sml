@@ -1,6 +1,21 @@
 (* What a program does when it ends: the actions of OS.Process.atExit, and
    the flushing of the streams that hold output, run by the epilogue that
    every program is compiled with, and by OS.Process.exit and Unix.exit. *)
+(* OS.Process.status: abstract, as the specification has it. It is an int: 0
+   is success, 1 to 255 what the process exited with, 256 and the signal that
+   ended it, 512 and the one that stopped it. *)
+structure RuneStatus :>
+sig
+  eqtype status
+  val toInt : status -> int
+  val fromInt : int -> status
+end =
+struct
+  type status = int
+  fun toInt (s : status) = s
+  fun fromInt (s : int) : status = s
+end
+
 structure RuneExit =
 struct
   val actions : (unit -> unit) list ref = ref []

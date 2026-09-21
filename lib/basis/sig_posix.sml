@@ -23,11 +23,6 @@
    abstract; the suite matches `Posix` against this signature both
    transparently and opaquely.
 
-   Deviation: `POSIX/signal-is-an-int`. The types of the structure are its
-   own, as the specification has them, but for `Signal.signal`, which is
-   visibly an `int`: `Unix` has the same type, and the library does not make
-   it abstract where it is declared. A program should not rely on that.
-
    Pinned by: `Posix:POSIX/*` *)
 signature POSIX =
 sig

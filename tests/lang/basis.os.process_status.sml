@@ -1,2 +1,2 @@
-val () = print (Int.toString OS.Process.success ^ Int.toString OS.Process.failure ^ Bool.toString (OS.Process.isSuccess OS.Process.success) ^ "\n")
+val () = print (Bool.toString (OS.Process.isSuccess OS.Process.success) ^ " " ^ Bool.toString (OS.Process.isSuccess OS.Process.failure) ^ " " ^ Bool.toString (OS.Process.success = OS.Process.failure) ^ "\n")
 val () = OS.Process.exit OS.Process.failure

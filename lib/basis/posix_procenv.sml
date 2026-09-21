@@ -79,7 +79,9 @@ struct
     fun sysconf name =
       case sysconf' name of
         ~1 => (case RuneError.lastError () of
-                 RuneError.SysErr (_, SOME 0) => raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
+                 (e as RuneError.SysErr (_, SOME n)) =>
+                   if RuneError.toInt n = 0 then raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
+                   else raise e
                | e => raise e)
       | v => Word.fromInt v
   end

@@ -109,9 +109,6 @@ eqtype syserror
 
 The type of a condition the system reports.
 
-> **Deviation** `OS.syserror/is-an-int`. The specification leaves the type
-> abstract; in Rune it is the `errno` of the system, an `int`, and the type is not made abstract, so that shows.
-
 <details><summary>Tests (7)</summary>
 
 For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `inverts-errorName-notdir` &middot; `unknown-name` &middot; `empty-name`

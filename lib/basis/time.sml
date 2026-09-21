@@ -1,7 +1,13 @@
 (* Time: a length of time, held as microseconds.
 
    Implements: TIME *)
-structure Time =
+structure Time :>
+sig
+  include TIME
+  (* for the library: a time in microseconds. The seal file hides them. *)
+  val micros : time -> int
+  val ofMicros : int -> time
+end =
 struct
   type time = int                       (* microseconds *)
   exception Time

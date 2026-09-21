@@ -4,10 +4,24 @@
    used for the syserror value"): the C name in lower case without its
    initial E ("noent" for ENOENT, "toobig" for E2BIG), or "error" and the
    number for an errno the system has no name for. *)
-structure RuneError =
+structure RuneError :>
+sig
+  (* abstract, as the specification has `OS.syserror`: the errno goes in and
+     out through fromInt and toInt, which only the library names *)
+  eqtype syserror
+  exception SysErr of string * syserror option
+  val errorMsg : syserror -> string
+  val errorName : syserror -> string
+  val syserror : string -> syserror option
+  val lastError : unit -> exn
+  val toInt : syserror -> int
+  val fromInt : int -> syserror
+end =
 struct
   type syserror = int
   exception SysErr of string * syserror option
+  fun toInt (e : syserror) = e
+  fun fromInt (e : int) : syserror = e
 
   local
     val errno = _prim "sys_errno" : unit -> int
