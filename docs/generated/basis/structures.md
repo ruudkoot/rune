@@ -11,7 +11,7 @@ is listed at the end of this page.
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
 | `Array` | : [`ARRAY`](sig/ARRAY.md) |  | required |  | [lib/basis/array.sml](../../../lib/basis/array.sml) |
-| `Array2` | : [`ARRAY2`](sig/ARRAY2.md) |  | optional |  | [lib/basis/array2.sml](../../../lib/basis/array2.sml) |
+| `Array2` | :> [`ARRAY2`](sig/ARRAY2.md) |  | optional | is `RuneArray2` | [lib/basis/array2.sml](../../../lib/basis/array2.sml) |
 | `ArraySlice` | : [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) |  | required |  | [lib/basis/arrayslice.sml](../../../lib/basis/arrayslice.sml) |
 | `BinIO` | : [`BIN_IO`](sig/BIN_IO.md) |  | required |  | [lib/basis/binio.sml](../../../lib/basis/binio.sml) |
 | `BinIO` | : [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) |  | required |  | [lib/basis/binio.sml](../../../lib/basis/binio.sml) |

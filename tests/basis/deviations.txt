@@ -190,8 +190,6 @@ native:polyml@* | *ArraySlice.copy*/Subscript-not-Overflow-sum | HOST-BUG | copy
 native:polyml@* | *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | HOST-BUG | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 
 # ---- Array2
-native:mlton@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
-native:smlnj*@* | @section/array2*/eq-any-element | HOST-BUG | real Array2.array and (int -> int) Array2.array do not admit equality, against "the type ty array admits equality even if ty does not"
 native:mlton@* | Array2.copy/overlap-[lr]* | HOST-BUG | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
 native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript

@@ -72,9 +72,10 @@ pack_word.sml   | demand | yes  | PackWord16Big PackWord16Little PackWord32Big P
 pack_real.sml   | demand | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle RunePackRealFn | Real RunePackWordFn Word8 Word8Array
 chararray.sml   | demand | yes  | CharArray             | CharVector MONO_ARRAY RuneMonoArrayFn
 chararrayslice.sml | demand | yes | CharArraySlice       | CharArray CharVector CharVectorSlice MONO_ARRAY_SLICE RuneMonoArraySliceFn
-array2.sml      | demand | yes  | Array2                | Array List Vector
+sig_array2.sml | demand | yes  | ARRAY2 | Vector
+array2.sml      | demand | yes  | Array2 RuneArray2    | ARRAY2 Array List Vector
 sig_mono_array2.sml | demand | yes  | MONO_ARRAY2 | Array2
-mono_array2_fn.sml | demand | yes | RuneMonoArray2Fn | Array2 MONO_VECTOR
+mono_array2_fn.sml | demand | yes | RuneMonoArray2Fn | Array2 MONO_VECTOR RuneArray2
 chararray2.sml  | demand | yes  | CharArray2            | CharVector MONO_ARRAY2 RuneMonoArray2Fn
 word8array2.sml | demand | yes  | Word8Array2           | MONO_ARRAY2 RuneMonoArray2Fn Word8 Word8Vector
 mono_bool.sml | demand | yes | BoolArray BoolArray2 BoolArraySlice BoolVector BoolVectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE RuneMonoArray2Fn RuneMonoArrayFn RuneMonoArraySliceFn RuneMonoVectorFn RuneMonoVectorSliceFn
@@ -139,7 +140,6 @@ commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
-sig_array2.sml | demand | yes  | ARRAY2 | Vector
 sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice
 sig_bit_flags.sml | demand | yes  | BIT_FLAGS | SysWord
 sig_bool.sml | demand | yes  | BOOL | StringCvt

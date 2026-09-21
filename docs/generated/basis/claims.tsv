@@ -1,6 +1,6 @@
 name	kind	signature	realisations	status	origin	source
 Array	structure	ARRAY		required	claimed	lib/basis/array.sml
-Array2	structure	ARRAY2		optional	claimed	lib/basis/array2.sml
+Array2	structure	ARRAY2		optional	ascribed	lib/basis/array2.sml
 ArraySlice	structure	ARRAY_SLICE		required	claimed	lib/basis/arrayslice.sml
 BinIO	structure	BIN_IO		required	claimed	lib/basis/binio.sml
 BinIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/binio.sml

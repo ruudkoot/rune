@@ -22,19 +22,37 @@
    second is `j`.
 
    Erratum: `ARRAY2/sealed-and-equal-at-any-element`. The page asks for three
-   things that Standard ML cannot give together: `structure Array2 :> ARRAY2`,
-   `eqtype 'a array`, and "the type `ty array` admits equality even if `ty`
-   does not". Only the built-in type names of the language admit equality
-   whatever they hold -- `ref`, and the `array` of the top level -- and no
-   signature can specify one: through `eqtype 'a t`, a `ty t` admits equality
-   only when `ty` does. So an opaque seal makes a fresh type name and the
-   third clause fails. `ARRAY` escapes it because the top level pins `'a array`
-   to `Array.array`, which is the built-in; `Array2` has no such anchor. Rune
-   keeps the third clause and gives up the seal, as Poly/ML does, because it
-   is the one a program can depend on and the suite can check; MLton and
-   SML/NJ keep the seal, and `real Array2.array` admits no equality there.
+   things that Standard ML cannot give together: it declares `structure
+   Array2 :> ARRAY2`, it writes `eqtype 'a array`, and it says "Thus, the
+   type `ty array` admits equality even if `ty` does not". Any two hold; all
+   three cannot, because only the built-in type names of the language admit
+   equality whatever they hold -- `ref`, which the Definition names in
+   Section 4.4, and the `array` of the top level -- and no signature can
+   specify such a type name: through `eqtype 'a t`, a `ty t` admits equality
+   exactly when `ty` does, so an opaque seal makes a fresh type name and the
+   third clause fails at `real` and at a function type. The reading taken
+   here is that the seal and `eqtype 'a array` stand and the sentence does
+   not apply, as it is read in MLton and in SML/NJ: `Array2.array` is
+   abstract, and `real Array2.array` admits no equality. Poly/ML takes the
+   other reading and leaves the type a record, which lets a program reach
+   into it.
 
-   See also: `ARRAY2.array` *)
+   Pinned by: `Array2:ARRAY2/eqtype`, `RealArray2:MONO_ARRAY2/eqtype`
+
+   Why the sentence is taken to be a slip rather than a requirement: `ARRAY`
+   carries it too and has no defect there, because the top level pins `'a
+   array` to `Array.array`, so that type *is* the built-in and the seal
+   settles nothing. `Array2` is optional and has no such anchor -- no system
+   has a top-level `'a array2` -- so its seal bites. The paragraph it sits in
+   opens "As with 1-dimensional arrays", which is how adapted text reads;
+   `VECTOR` writes `eqtype 'a vector` and says nothing of the kind, so the
+   sentence is not boilerplate attached to every equality type; and
+   `MONO_ARRAY2` has no defect at all, because its `eqtype array` is
+   monomorphic and a record over a built-in array satisfies it. The
+   monomorphic two-dimensional arrays therefore do admit equality whatever
+   they hold, and are built on the implementation under the seal.
+
+   See also: `MONO_ARRAY2`, `ARRAY` *)
 signature ARRAY2 =
 sig
   (* The type of two-dimensional arrays.

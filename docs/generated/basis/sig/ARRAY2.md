@@ -7,19 +7,19 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 20 of 20 entries documented |
-| Tests | 273 checks of 18 entries |
+| Tests | 271 checks of 18 entries |
 | Source | [lib/basis/sig\_array2.sml](../../../../lib/basis/sig_array2.sml) |
 
 ## Synopsis
 
 ```sml
 signature ARRAY2
-structure Array2 : ARRAY2  (* optional *)
+structure Array2 :> ARRAY2  (* optional *)
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Array2` | Array2: two-dimensional arrays, stored row by row in one array. | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
+| `Array2` |  | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
 Two-dimensional arrays: mutable rectangles of elements, indexed by a row
 and a column.
@@ -38,17 +38,31 @@ the elements are visited in, and so what an effect sees.
 > second is `j`.
 
 > **Erratum** `ARRAY2/sealed-and-equal-at-any-element`. The page asks for three
-> things that Standard ML cannot give together: `structure Array2 :> ARRAY2`,
-> `eqtype 'a array`, and "the type `ty array` admits equality even if `ty`
-> does not". Only the built-in type names of the language admit equality
-> whatever they hold -- `ref`, and the [`array`](#val-array) of the top level -- and no
-> signature can specify one: through `eqtype 'a t`, a `ty t` admits equality
-> only when `ty` does. So an opaque seal makes a fresh type name and the
-> third clause fails. [`ARRAY`](../sig/ARRAY.md) escapes it because the top level pins `'a array`
-> to [`Array.array`](../sig/ARRAY.md#val-array), which is the built-in; [`Array2`](ARRAY2.md) has no such anchor. Rune
-> keeps the third clause and gives up the seal, as Poly/ML does, because it
-> is the one a program can depend on and the suite can check; MLton and
-> SML/NJ keep the seal, and `real Array2.array` admits no equality there.
+> things that Standard ML cannot give together: it declares `structure Array2 :> ARRAY2`, it writes `eqtype 'a array`, and it says "Thus, the
+> type `ty array` admits equality even if `ty` does not". Any two hold; all
+> three cannot, because only the built-in type names of the language admit
+> equality whatever they hold -- `ref`, which the Definition names in
+> Section 4.4, and the [`array`](#val-array) of the top level -- and no signature can
+> specify such a type name: through `eqtype 'a t`, a `ty t` admits equality
+> exactly when `ty` does, so an opaque seal makes a fresh type name and the
+> third clause fails at [`real`](../sig/REAL.md#val-fromint) and at a function type. The reading taken
+> here is that the seal and `eqtype 'a array` stand and the sentence does
+> not apply, as it is read in MLton and in SML/NJ: [`Array2.array`](#val-array) is
+> abstract, and `real Array2.array` admits no equality. Poly/ML takes the
+> other reading and leaves the type a record, which lets a program reach
+> into it.
+
+Why the sentence is taken to be a slip rather than a requirement: [`ARRAY`](../sig/ARRAY.md)
+carries it too and has no defect there, because the top level pins `'a array` to [`Array.array`](../sig/ARRAY.md#val-array), so that type \*is\* the built-in and the seal
+settles nothing. [`Array2`](ARRAY2.md) is optional and has no such anchor -- no system
+has a top-level `'a array2` \-- so its seal bites. The paragraph it sits in
+opens "As with 1-dimensional arrays", which is how adapted text reads;
+[`VECTOR`](../sig/VECTOR.md) writes `eqtype 'a vector` and says nothing of the kind, so the
+sentence is not boilerplate attached to every equality type; and
+[`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) has no defect at all, because its `eqtype array` is
+monomorphic and a record over a built-in array satisfies it. The
+monomorphic two-dimensional arrays therefore do admit equality whatever
+they hold, and are built on the implementation under the seal.
 
 ## Contents
 
@@ -130,9 +144,9 @@ Two are equal when they are the same array, as for [`Array.array`](../sig/ARRAY.
 
 </details>
 
-<details><summary>Tests (27)</summary>
+<details><summary>Tests (26)</summary>
 
-For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
+For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `same-array-equal` &middot; `updated-still-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
 
 </details>
 
@@ -209,9 +223,9 @@ val array : int * int * 'a -> 'a array
 
 </details>
 
-<details><summary>Tests (27)</summary>
+<details><summary>Tests (26)</summary>
 
-For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
+For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `same-array-equal` &middot; `updated-still-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
 
 </details>
 
@@ -622,7 +636,7 @@ For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `
 
 ## See also
 
-[`ARRAY`](../sig/ARRAY.md), [`VECTOR`](../sig/VECTOR.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) &middot; [`ARRAY2.array`](#val-array)
+[`ARRAY`](../sig/ARRAY.md), [`VECTOR`](../sig/VECTOR.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) &middot; [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md), [`ARRAY`](../sig/ARRAY.md)
 
 ---
 

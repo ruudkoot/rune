@@ -316,6 +316,35 @@ documentation; [generated/basis/readings.md](generated/basis/readings.md)
 collects them all, with the checks that pin each one. The errata of the
 specification are there too, under the members they belong to.
 
+### The largest one: `ARRAY2` cannot be sealed and keep its equality
+
+The page of `ARRAY2` asks for three things that Standard ML cannot give
+together. It declares `structure Array2 :> ARRAY2`; it writes
+`eqtype 'a array`; and it says "Thus, the type `ty array` admits equality
+even if `ty` does not". Any two of those hold, and all three cannot: only the
+built-in type names of the language admit equality whatever they hold --
+`ref`, named in Section 4.4 of the Definition, and the `array` of the top
+level -- and no signature can specify one. Through `eqtype 'a t`, a `ty t`
+admits equality exactly when `ty` does, so an opaque seal makes a fresh type
+name and the third clause fails at `real` and at a function type.
+
+`ARRAY` carries the same sentence without the defect, because the top level
+pins `'a array` to `Array.array`: that type *is* the built-in, and the seal
+settles nothing. `Array2` is optional and has no such anchor -- no system has
+a top-level `'a array2` -- so its seal bites. `VECTOR` writes
+`eqtype 'a vector` and says nothing of the kind, and `MONO_ARRAY2` has no
+defect at all, because its `eqtype array` is monomorphic and a record over a
+built-in array satisfies it.
+
+**The reading Rune takes:** the seal and `eqtype 'a array` stand, and the
+sentence does not apply. `Array2.array` is abstract, `real Array2.array`
+admits no equality, and the monomorphic two-dimensional arrays do admit it
+whatever they hold, because `MONO_ARRAY2` asks only for a monomorphic
+`eqtype array`. MLton and SML/NJ read it the same way. Poly/ML takes the
+other reading and leaves `'a Array2.array` a record, which lets a program
+reach inside it. The note is
+`ARRAY2/sealed-and-equal-at-any-element`.
+
 ## What XC1 cannot check
 
 * A file of `lib/basis` that a host does not load is left out of the `xc1`
