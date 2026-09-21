@@ -37,7 +37,7 @@ dotted form of an address.
 
 > **Deviation** `NetHostDB.in_addr/not-abstract`. The specification leaves
 > [`in_addr`](#type-in_addr) and [`addr_family`](#type-addr_family) abstract; in Rune they are `string` and `int`,
-> and the structure is not sealed.
+> and the types are not made abstract.
 
 ## Interface
 

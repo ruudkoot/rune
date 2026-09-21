@@ -110,8 +110,7 @@ eqtype syserror
 The type of a condition the system reports.
 
 > **Deviation** `OS.syserror/is-an-int`. The specification leaves the type
-> abstract; in Rune it is the `errno` of the system, an `int`, and the
-> structure is not sealed, so that shows.
+> abstract; in Rune it is the `errno` of the system, an `int`, and the type is not made abstract, so that shows.
 
 <details><summary>Tests (7)</summary>
 

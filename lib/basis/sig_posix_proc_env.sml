@@ -35,7 +35,7 @@ sig
   (* The type of the number that names a user.
 
      Deviation: `Posix.ProcEnv.uid/is-an-int`. The specification leaves the
-     type abstract; in Rune it is `int`, and the structure is not sealed. *)
+     type abstract; in Rune it is `int`, and the type is not made abstract. *)
   eqtype uid
 
   (* The type of the number that names a group. *)

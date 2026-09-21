@@ -162,7 +162,7 @@ type syserror = OS.syserror
 The type of a condition the system reports: the [`syserror`](#val-syserror) of [`OS`](../sig/OS.md).
 
 > **Deviation** `Posix.Error.syserror/is-an-int`. It is the `errno` of the
-> system, an `int`, and the structure is not sealed, so that shows.
+> system, an `int`, and the type is not made abstract, so that shows.
 
 <details><summary>Tests (4)</summary>
 

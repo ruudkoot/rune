@@ -27,9 +27,8 @@ sig
 
      Deviation: `TIME.time/not-abstract`. The specification leaves the type
      abstract. In Rune it is `int`, the number of microseconds, and the
-     structure is not sealed, so the representation shows; `Time` also has
-     `micros` and `ofMicros` beyond the signature, for the parts of the
-     library that count in microseconds. *)
+     structure is bound to this signature without making its types its own,
+     so the representation shows. *)
   eqtype time
 
   (* Raised when a time cannot be made or converted: the value does not fit. *)

@@ -129,7 +129,13 @@ the exceptions that are not built in) and `pervasive.sml` (the values of the
 top-level environment, written on primitives; `List.map` is the top-level
 `map`, not the other way round, so that these 90 lines need no other file). The
 driver loads a file on demand when the program names something it provides,
-with the files it requires. A `final` file (`epilogue.sml`, which runs the
+with the files it requires. The last files of the list are `seal` files: each
+binds the structures of one file again, ascribed to their signatures
+(`structure List : LIST = List`), and is loaded for a program that names one
+of them, never for a file of the library. So the library is compiled with
+every structure whole, its helpers included, and a program sees what the
+specification names; the ascription is transparent, and a type that the
+specification keeps abstract is made so where it is declared. A `final` file (`epilogue.sml`, which runs the
 `OS.Process.atExit` actions) is compiled after the program, and only when
 the files it requires are loaded already. Primitives are bound with
 `_prim "name" : ty`. The tags of `option` and `order` are relied upon by

@@ -29,7 +29,7 @@ sig
   (* The type of the number that names a process.
 
      Deviation: `Posix.Process.pid/is-an-int`. The specification leaves the
-     type abstract; in Rune it is `int`, and the structure is not sealed. *)
+     type abstract; in Rune it is `int`, and the type is not made abstract. *)
   eqtype pid
 
   (* `wordToPid w` is the process whose number is `w`. *)

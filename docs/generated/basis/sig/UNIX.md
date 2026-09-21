@@ -38,11 +38,7 @@ restriction being what it is.
 > **Erratum** `UNIX/opaque-in-the-page`. The page declares `structure Unix :> UNIX`, so [`signal`](#type-signal) is abstract there; the suite checks that it is
 > [`Posix.Signal.signal`](../sig/POSIX_SIGNAL.md#type-signal) and that [`exit_status`](#type-exit_status) is
 > [`Posix.Process.exit_status`](../sig/POSIX_PROCESS.md#type-exit_status), which the page requires where both structures
-> exist.
-
-> **Deviation** `UNIX/extra-members`. [`Unix`](UNIX.md) is not sealed, so it shows two
-> members beyond this signature, `protect` and `streamsOf'`, and the
-> identity of [`signal`](#type-signal) with [`Posix.Signal.signal`](../sig/POSIX_SIGNAL.md#type-signal).
+> exist
 
 ## Interface
 

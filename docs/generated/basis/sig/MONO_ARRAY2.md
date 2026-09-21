@@ -145,8 +145,8 @@ Two are equal when they are the same array.
 
 > **Deviation** `MONO_ARRAY2.array/not-abstract`. An [`IntArray2.array`](#val-array) is an
 > `int Array2.array`: the structures are applications of one functor over
-> [`Array2`](../sig/ARRAY2.md) and are not sealed with this signature, which the library loads
-> after them; they match it, as the suite checks.
+> [`Array2`](../sig/ARRAY2.md), and they are bound to this signature without making their
+> types their own.
 
 <details><summary>Other implementations (3)</summary>
 

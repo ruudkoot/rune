@@ -494,7 +494,7 @@ The type that tells one file from another, whatever path leads to it.
 
 > **Deviation** `OS.FileSys.file_id/is-a-pair`. The specification leaves the
 > type abstract; in Rune it is the pair of the device number and the inode
-> number of the file, and the structure is not sealed.
+> number of the file, and the type is not made abstract.
 
 ### <a name="val-fileid"></a>`fileId`
 

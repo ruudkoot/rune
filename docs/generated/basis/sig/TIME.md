@@ -108,9 +108,8 @@ Two times are equal when they are the same length.
 
 > **Deviation** `TIME.time/not-abstract`. The specification leaves the type
 > abstract. In Rune it is `int`, the number of microseconds, and the
-> structure is not sealed, so the representation shows; [`Time`](#exn-time) also has
-> `micros` and `ofMicros` beyond the signature, for the parts of the
-> library that count in microseconds.
+> structure is bound to this signature without making its types its own,
+> so the representation shows.
 
 ### <a name="exn-time"></a>`Time`
 

@@ -4,7 +4,9 @@
 
 Every public structure of the library that says which signature it implements. A structure is
 documented on the page of its signature. `:>` means that the source seals the structure with the
-signature; `:` that it matches it, which the test suite checks.
+signature, so that its types are its own; `:` that it matches it, which the test suite checks.
+Either way a program sees the members that the signature names and no others, unless the structure
+is listed at the end of this page.
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
@@ -14,14 +16,12 @@ signature; `:` that it matches it, which the test suite checks.
 
 ## Names beyond the signature
 
-What a structure declares and its signatures do not specify. Most structures are not sealed, so
-these names are visible; a program that uses them is not portable. A structure that is another
-one by name has the names of that one, and an application of a functor those of the functor's body.
+What a program can name in a structure although its signatures do not specify it: these structures
+are not bound to their signature for the program. A program that uses such a name is not portable.
 
 | Structure | Also declares |
 | --- | --- |
 | `Box` | `full` |
-| `Chest` | `spare` |
 | `Crate` | `full` |
 
 ---

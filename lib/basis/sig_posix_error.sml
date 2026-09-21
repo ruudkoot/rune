@@ -35,7 +35,7 @@ sig
   (* The type of a condition the system reports: the `syserror` of `OS`.
 
      Deviation: `Posix.Error.syserror/is-an-int`. It is the `errno` of the
-     system, an `int`, and the structure is not sealed, so that shows. *)
+     system, an `int`, and the type is not made abstract, so that shows. *)
   type syserror = OS.syserror
 
   (* `toWord e` is the number the system gives `e`, its `errno` value. *)

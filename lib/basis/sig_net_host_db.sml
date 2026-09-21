@@ -20,7 +20,7 @@
 
    Deviation: `NetHostDB.in_addr/not-abstract`. The specification leaves
    `in_addr` and `addr_family` abstract; in Rune they are `string` and `int`,
-   and the structure is not sealed. *)
+   and the types are not made abstract. *)
 signature NET_HOST_DB =
 sig
   (* The type of the address of a host.

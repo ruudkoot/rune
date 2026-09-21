@@ -21,6 +21,14 @@ keep these invariants:
   function among them a usage head (`docs/doc-comments.md`): `make docs` and
   `make check-docs` fail otherwise. A new signature joins the list in the
   commit that finishes documenting it, and none should be added without one.
+* A program sees of a basis structure what its signature names and nothing
+  else: a structure that is not ascribed its signature where it is declared
+  is bound to it again in a seal file at the end of `lib/basis/MANIFEST`
+  (`seal_list.sml`: `structure List : LIST = List`), which is loaded for the
+  programs that mention the structure and for no file of the library, so the
+  library keeps its helpers. `make docs` fails for a structure that shows a
+  program more. A type that the specification keeps abstract is made
+  abstract where it is declared, not by the seal, which is transparent.
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;

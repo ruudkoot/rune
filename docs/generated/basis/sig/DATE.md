@@ -186,8 +186,7 @@ The type of a calendar reading.
 
 > **Deviation** `DATE.date/not-abstract`. The specification leaves the type
 > abstract. In Rune it is a record of the fields [`year`](#val-year), [`month`](#val-month), [`day`](#val-day),
-> [`hour`](#val-hour), [`minute`](#val-minute), [`second`](#val-second), [`offset`](#val-offset), `wday`, `yday` and [`isDst`](#val-isdst), and
-> the structure is not sealed, so the record shows.
+> [`hour`](#val-hour), [`minute`](#val-minute), [`second`](#val-second), [`offset`](#val-offset), `wday`, `yday` and [`isDst`](#val-isdst), and the type is not made abstract, so the record shows.
 
 <details><summary>Other implementations (2)</summary>
 

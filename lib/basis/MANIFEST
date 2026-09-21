@@ -7,6 +7,8 @@
 #           when it ends
 # demand    it is compiled before the programs that mention a name it
 #           provides, and before the files that require it
+# seal      it is compiled before the programs that mention a name it
+#           provides, and for no file of the library: see the end of the list
 # host      how tests/basis/host/gen-host-basis.sh gives the file to MLton,
 #           SML/NJ and Poly/ML: yes (as it is), swap (without the types and
 #           exceptions a host must keep its own of) or no
@@ -195,4 +197,79 @@ widechar.sml    | demand | yes  | RuneWideChar RuneWideCharImpl RuneWideCharLit 
 widestring.sml  | demand | yes  | RuneWideString RuneWideStringLit RuneWideSubstring WideString WideSubstring | Char Int List RuneEscape RuneWideCharImpl STRING String StringCvt SUBSTRING -substring WideChar WideCharVector WideCharVectorSlice
 widetext.sml    | demand | yes  | WideText              | -Char -CharArray -CharArraySlice -CharVector -CharVectorSlice -String -Substring WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
 widetextio.sml  | demand | yes  | WideTextIO WideTextPrimIO | Char IO Int List Position RuneImperativeIOFn RunePrimIOFn RuneStreamIOFn -StreamIO String TextIO WideChar WideCharArray WideCharArraySlice WideCharVector WideCharVectorSlice WideString WideSubstring
+# ---- what a program sees of the structures
+# A seal file binds the structures of a file again, each as its signature
+# shows it (`structure List : LIST = List`), so that a program has the members
+# the specification names and no others. The files above are compiled before
+# these and have every structure whole. The ascription is transparent: a type
+# that the specification keeps abstract is made so where it is declared.
+seal_general.sml        | seal   | yes  | General | GENERAL
+seal_stringcvt.sml      | seal   | yes  | StringCvt | STRING_CVT
+seal_bool.sml           | seal   | yes  | Bool | BOOL
+seal_option.sml         | seal   | yes  | Option | OPTION
+seal_list.sml           | seal   | yes  | List | LIST
+seal_listpair.sml       | seal   | yes  | ListPair | LIST_PAIR
+seal_intinf.sml         | seal   | yes  | IntInf LargeInt | INTEGER INT_INF
+seal_int.sml            | seal   | yes  | Int | INTEGER
+seal_word.sml           | seal   | yes  | Word LargeWord SysWord | WORD
+seal_int8.sml           | seal   | yes  | Int8 | INTEGER
+seal_int16.sml          | seal   | yes  | Int16 | INTEGER
+seal_int32.sml          | seal   | yes  | Int32 | INTEGER
+seal_int64.sml          | seal   | yes  | Int64 FixedInt | INTEGER
+seal_word8.sml          | seal   | yes  | Word8 | WORD
+seal_word16.sml         | seal   | yes  | Word16 | WORD
+seal_word32.sml         | seal   | yes  | Word32 | WORD
+seal_word64.sml         | seal   | yes  | Word64 | WORD
+seal_char.sml           | seal   | yes  | Char | CHAR String
+seal_string.sml         | seal   | yes  | String | Char STRING
+seal_ieeereal.sml       | seal   | yes  | IEEEReal | IEEE_REAL
+seal_real.sml           | seal   | yes  | LargeReal Math Real Real64 | MATH REAL
+seal_vector.sml         | seal   | yes  | Vector | VECTOR
+seal_array.sml          | seal   | yes  | Array | ARRAY
+seal_vectorslice.sml    | seal   | yes  | VectorSlice | VECTOR_SLICE
+seal_arrayslice.sml     | seal   | yes  | ArraySlice | ARRAY_SLICE
+seal_substring.sml      | seal   | yes  | Substring | Char SUBSTRING
+seal_pack_word.sml      | seal   | yes  | PackWord16Big PackWord16Little PackWord32Big PackWord32Little PackWord64Big PackWord64Little | PACK_WORD
+seal_pack_real.sml      | seal   | yes  | PackReal64Big PackReal64Little PackRealBig PackRealLittle | PACK_REAL Real Real64
+seal_array2.sml         | seal   | yes  | Array2 | ARRAY2
+seal_chararray2.sml     | seal   | yes  | CharArray2 | CharVector MONO_ARRAY2
+seal_word8array2.sml    | seal   | yes  | Word8Array2 | MONO_ARRAY2 Word8 Word8Vector
+seal_mono_bool.sml      | seal   | yes  | BoolArray2 | BoolVector MONO_ARRAY2
+seal_mono_int.sml       | seal   | yes  | IntArray2 | IntVector MONO_ARRAY2
+seal_mono_int8.sml      | seal   | yes  | Int8Array2 | Int8 Int8Vector MONO_ARRAY2
+seal_mono_int16.sml     | seal   | yes  | Int16Array2 | Int16 Int16Vector MONO_ARRAY2
+seal_mono_int32.sml     | seal   | yes  | Int32Array2 | Int32 Int32Vector MONO_ARRAY2
+seal_mono_largeint.sml  | seal   | yes  | LargeIntArray2 | LargeInt LargeIntVector MONO_ARRAY2
+seal_mono_word.sml      | seal   | yes  | WordArray2 | MONO_ARRAY2 WordVector
+seal_mono_word16.sml    | seal   | yes  | Word16Array2 | MONO_ARRAY2 Word16 Word16Vector
+seal_mono_word32.sml    | seal   | yes  | Word32Array2 | MONO_ARRAY2 Word32 Word32Vector
+seal_mono_real.sml      | seal   | yes  | RealArray2 | MONO_ARRAY2 RealVector
+seal_mono_int64.sml     | seal   | yes  | Int64Array Int64Array2 Int64ArraySlice Int64Vector Int64VectorSlice | Int64 MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE
+seal_mono_largeword.sml | seal   | yes  | LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector LargeWordVectorSlice | LargeWord MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE
+seal_mono_word64.sml    | seal   | yes  | Word64Array Word64Array2 Word64ArraySlice Word64Vector Word64VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Word64
+seal_mono_largereal.sml | seal   | yes  | LargeRealArray LargeRealArray2 LargeRealArraySlice LargeRealVector LargeRealVectorSlice | LargeReal MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE
+seal_mono_real64.sml    | seal   | yes  | Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice | MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE Real64
+seal_text.sml           | seal   | yes  | Text | Char CharArray CharArraySlice CharVectorSlice String Substring TEXT
+seal_position.sml       | seal   | yes  | Position | INTEGER
+seal_time.sml           | seal   | yes  | Time | TIME
+seal_timer.sml          | seal   | yes  | Timer | TIMER
+seal_date.sml           | seal   | yes  | Date | DATE
+seal_os.sml             | seal   | yes  | OS | 
+seal_io.sml             | seal   | yes  | IO | 
+seal_textprimio.sml     | seal   | yes  | TextPrimIO | Char CharArray CharVector PRIM_IO
+seal_binprimio.sml      | seal   | yes  | BinPrimIO | PRIM_IO Position Word8 Word8Array Word8Vector
+seal_posix.sml          | seal   | yes  | Posix | POSIX
+seal_textio.sml         | seal   | yes  | TextIO | TEXT_IO
+seal_byte.sml           | seal   | yes  | Byte | BYTE
+seal_binio.sml          | seal   | yes  | BinIO | BIN_IO
+seal_socket.sml         | seal   | yes  | Socket | SOCKET
+seal_netdb.sml          | seal   | yes  | NetHostDB NetProtDB NetServDB | NET_HOST_DB NET_PROT_DB NET_SERV_DB
+seal_inetsock.sml       | seal   | yes  | GenericSock INetSock UnixSock | GENERIC_SOCK INET_SOCK UNIX_SOCK
+seal_unix.sml           | seal   | yes  | Unix | UNIX
+seal_commandline.sml    | seal   | yes  | CommandLine | COMMAND_LINE
+seal_sml90.sml          | seal   | yes  | SML90 | 
+seal_pack_real32.sml    | seal   | yes  | PackReal32Big PackReal32Little | PACK_REAL Real32
+seal_mono_real32.sml    | seal   | yes  | Real32Array2 | MONO_ARRAY2 Real32 Real32Vector
+seal_widetext.sml       | seal   | yes  | WideText | TEXT
+seal_widetextio.sml     | seal   | yes  | WideTextPrimIO | PRIM_IO
 epilogue.sml    | final  | no   |                       | RuneExit

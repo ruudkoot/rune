@@ -20,7 +20,7 @@ sig
 
      Deviation: `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
      characters and of bytes, which are strings, a monomorphic vector is the
-     polymorphic vector of its elements, and the structures are not sealed: an
+     polymorphic vector of its elements, and the types are not made abstract: an
      `IntVector.vector` is an `int vector`, and a program that relies on it is
      not portable. The arrays are the same (`IntArray.array` is `int array`),
      and so are those of `MONO_ARRAY2`. *)

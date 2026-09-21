@@ -106,7 +106,6 @@ be pinned: many are about the text and not about behaviour.
 - `Timer.checkGCTime/always-zero` (Limitation), TIMER
 - `Posix.IO.file_desc/is-an-int` (Deviation), POSIX_IO
 - `OS.syserror/is-an-int` (Deviation), OS
-- `UNIX/extra-members` (Deviation), UNIX
 - `SOCKET/no-ipv6` (Limitation), SOCKET
 - `Posix.Process.pid/is-an-int` (Deviation), POSIX_PROCESS
 - `Posix.Error.syserror/is-an-int` (Deviation), POSIX_ERROR

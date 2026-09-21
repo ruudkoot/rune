@@ -33,10 +33,17 @@ struct
 
 
   (* ---- the library ---- *)
+  (* A structure bound to itself under a signature, `structure List : LIST =
+     List`: a seal file of the MANIFEST shows a program the structure as its
+     signature has it. It declares nothing to document; what it hides is known
+     from elaboration, which has the structure as the program sees it. *)
+  fun isSeal (I.Struct {name, rhs = I.Alias other, ascription = SOME _, ...}) = name = other
+    | isSeal _ = false
+
   (* The modules of the files of the MANIFEST, in its order. *)
   fun load (dir : string) : I.module list =
     List.concat (List.map (fn e : BasisManifest.entry =>
-                             let val ms = DocExtract.file (dir ^ "/" ^ #file e)
+                             let val ms = List.filter (not o isSeal) (DocExtract.file (dir ^ "/" ^ #file e))
                              in
                                (* only a file that every program loads declares the top-level environment *)
                                if #when e = BasisManifest.Always then ms
@@ -287,8 +294,11 @@ struct
 
   (* namesOf: what elaboration knows a structure to declare, if the library
      was elaborated. *)
+  (* strict: the library has a list of what is documented in full, and then a
+     structure that shows a program more than its signatures name is an error:
+     it needs a seal file in the MANIFEST. *)
   fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string,
-                      namesOf : (string list -> string list option) option) : string =
+                      namesOf : (string list -> string list option) option, strict : bool) : string =
     let
       val claims = sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                            case String.compare (#name a, #name b) of
@@ -320,10 +330,12 @@ struct
       fun extras (c : DocClaims.claim) =
         let
           val path = String.fields (fn ch => ch = #".") (#name c)
+          (* elaboration has the structure as a program sees it, sealed or
+             not; without it, what the body of a written-out one declares *)
           val declared =
-            case (structAt (modules, path), namesOf) of
-              (SOME {members = SOME ms, ...}, _) => ms
-            | (_, SOME f) => Option.getOpt (f path, [])
+            case (namesOf, structAt (modules, path)) of
+              (SOME f, _) => Option.getOpt (f path, [])
+            | (NONE, SOME {members = SOME ms, ...}) => ms
             | _ => []
           (* what the signatures that a structure claims specify at a path
              below it: elaboration knows it with what is included and
@@ -352,18 +364,28 @@ struct
       val beyondRows = List.mapPartial (fn c => case extras c of [] => NONE
                                                                | ms => SOME [M.code (#name c), String.concatWith ", " (List.map M.code ms)])
                                        firstClaims
+      val () =
+        if not strict then ()
+        else List.app (fn c : DocClaims.claim =>
+                         case extras c of
+                           [] => ()
+                         | ms => DocDiag.error (#span c, #name c ^ " shows a program " ^ String.concatWith ", " ms
+                                                         ^ ", which " ^ #signat c ^ " does not name: bind it to its signature"
+                                                         ^ " in a seal file of the MANIFEST"))
+                      firstClaims
     in
       "# Structures and what they implement\n\n"
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
       ^ "Every public structure of the library that says which signature it implements. A structure is\n"
       ^ "documented on the page of its signature. `:>` means that the source seals the structure with the\n"
-      ^ "signature; `:` that it matches it, which the test suite checks.\n\n"
+      ^ "signature, so that its types are its own; `:` that it matches it, which the test suite checks.\n"
+      ^ "Either way a program sees the members that the signature names and no others, unless the structure\n"
+      ^ "is listed at the end of this page.\n\n"
       ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"], List.map row claims)
       ^ (if List.null beyondRows then ""
          else "## Names beyond the signature\n\n"
-              ^ "What a structure declares and its signatures do not specify. Most structures are not sealed, so\n"
-              ^ "these names are visible; a program that uses them is not portable. A structure that is another\n"
-              ^ "one by name has the names of that one, and an application of a functor those of the functor's body.\n\n"
+              ^ "What a program can name in a structure although its signatures do not specify it: these structures\n"
+              ^ "are not bound to their signature for the program. A program that uses such a name is not portable.\n\n"
               ^ M.table (["Structure", "Also declares"], beyondRows))
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
@@ -1023,7 +1045,8 @@ struct
                                                                             (#kind n = "Deviation" orelse #kind n = "Limitation")
                                                                             andalso not (DocNotes.isPinned ls n)) notes
                                                 | NONE => []))
-        :: ("structures.md", structuresPage (env "", title, modules, sigStatus, Option.map DocElab.namesOf elaborated))
+        :: ("structures.md", structuresPage (env "", title, modules, sigStatus, Option.map DocElab.namesOf elaborated,
+                                             not (List.null ratchet)))
         :: ("top-level.md", topLevelPage (env "", title, modules))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
         :: ("readings.md", readingsPage (env "", title, notes, labels))

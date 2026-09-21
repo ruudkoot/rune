@@ -173,7 +173,7 @@ sig
 
      Deviation: `OS.FileSys.file_id/is-a-pair`. The specification leaves the
      type abstract; in Rune it is the pair of the device number and the inode
-     number of the file, and the structure is not sealed. *)
+     number of the file, and the type is not made abstract. *)
   eqtype file_id
 
   (* `fileId p` is the identity of what `p` names: two paths to one file give the same `file_id`.

@@ -316,7 +316,7 @@ The stream that [`scanString`](#val-scanstring) makes of a string: a scanner can
 with it but read it.
 
 > **Deviation** `StringCvt.cs/transparent`. The specification keeps the type
-> abstract. [`StringCvt`](STRING_CVT.md) is not sealed, so [`cs`](#type-cs) is visibly `int`, the index
+> abstract. [`cs`](#type-cs) is not made abstract and is visibly `int`, the index
 > of the next character; a program that uses that is not portable.
 
 ### <a name="val-scanstring"></a>`scanString`

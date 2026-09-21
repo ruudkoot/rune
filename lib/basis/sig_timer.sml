@@ -26,7 +26,7 @@ sig
 
      Deviation: `TIMER.cpu_timer/not-abstract`. The specification leaves the
      type abstract; in Rune it is a record of the two times read when the
-     timer was started, and the structure is not sealed. *)
+     timer was started, and the type is not made abstract. *)
   type cpu_timer
 
   (* The type of a wall-clock timer, a `Time.time` in the same way. *)

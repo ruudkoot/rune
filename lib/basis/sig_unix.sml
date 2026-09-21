@@ -22,11 +22,7 @@
    UNIX`, so `signal` is abstract there; the suite checks that it is
    `Posix.Signal.signal` and that `exit_status` is
    `Posix.Process.exit_status`, which the page requires where both structures
-   exist.
-
-   Deviation: `UNIX/extra-members`. `Unix` is not sealed, so it shows two
-   members beyond this signature, `protect` and `streamsOf'`, and the
-   identity of `signal` with `Posix.Signal.signal`. *)
+   exist *)
 signature UNIX =
 sig
   (* The type of a running child process, with the streams that talk to it.
