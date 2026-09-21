@@ -66,6 +66,18 @@
 # its host loads (the probe, a job of its own that runs first); its result is
 # kept for as long as lib/basis, the shim and the host stay the same.
 #
+# A test that does not load whole is cut down by halving its sections, and
+# each try compiles the library again: on a host that is most of what a run
+# costs. What the halving finds depends on the library, the tools and the test
+# and on nothing else, so it is kept in $out/CONFIG/TEST.sections against a
+# checksum of those (of the compiler too for the rune configuration), and a
+# later run goes straight to the sections that load. --refresh looks again.
+#
+# A host that keeps a session -- SML/NJ and Poly/ML -- gets a heap image with
+# the library in it once the probe has found which of its files load, so that
+# a program uses only its own sources: that is what most of a run costs there.
+# RUNE_MATRIX_NO_IMAGE=1 turns it off.
+#
 # --perf times the programs of tests/perf instead (`make perf`), one at a
 # time, in the same configurations. A program's top-level declarations become
 # the body of a function that is called R times, R from the `wall R` line of
@@ -83,6 +95,7 @@ set -u
 
 jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
+refresh=0
 configs=rune
 filter=""
 one_config=""
@@ -93,7 +106,8 @@ while [ $# -gt 0 ]; do
     --configs) configs=$2; shift 2 ;;
     --one) one_config=$2; one_test=$3; shift 3 ;;
     --perf) perf=1; shift ;;
-    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
+    --refresh) refresh=1; shift ;;
+    -*) echo "usage: tests/basis/run-matrix.sh [-j N] [--perf] [--refresh] [--configs C1,C2,...] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -199,11 +213,25 @@ load() {
       (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
       ;;
     *:smlnj|*:smlnj32)
-      write_driver "$loaddir/driver.sml" "$@"
-      (cd "$loaddir" && timeout "$limit" "$cmd1" driver.sml > stdout 2> log < /dev/null)
+      # With a heap image of the library the program starts from it and uses
+      # only its own files; the image itself uses what it is given.
+      if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
+        shift $(prefix | wc -w)
+        write_driver "$loaddir/driver.sml" "$@"
+        (cd "$loaddir" && timeout "$limit" "$cmd1" "@SMLload=$cfgout/basis.heap" > stdout 2> log < /dev/null)
+      else
+        write_driver "$loaddir/driver.sml" "$@"
+        (cd "$loaddir" && timeout "$limit" "$cmd1" driver.sml > stdout 2> log < /dev/null)
+      fi
       ;;
     *:polyml)
-      write_driver "$loaddir/driver.sml" "$@"
+      if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
+        shift $(prefix | wc -w)
+        write_driver "$loaddir/driver.sml" "$@"
+        sed -i "1i val () = PolyML.SaveState.loadState \"$cfgout/basis.state\";" "$loaddir/driver.sml"
+      else
+        write_driver "$loaddir/driver.sml" "$@"
+      fi
       (cd "$loaddir" && timeout "$limit" "$cmd1" -q --error-exit --use driver.sml > stdout 2> log < /dev/null)
       ;;
     *) echo "unknown configuration kind $kind:$host" > "$loaddir/log"; return 1 ;;
@@ -213,10 +241,35 @@ load() {
   grep -q '^SUMMARY ' "$loaddir/stdout"
 }
 
-# prefix: the files every program of the configuration starts with.
+# prefix: the files a program of the configuration starts with. For MLton,
+# which compiles a program whole and keeps no session, that is only the part
+# of the library the program loads: `rune --basis-deps` says which, and a
+# test of List compiles 49 files of the 241 instead of all of them. $needed
+# holds them when it could be worked out, and is cleared to fall back.
 prefix() {
   [ "$kind" = xc1 ] || return 0
-  cat "$cfgout/basis/prelude" "$cfgout/basis.loaded"
+  cat "$cfgout/basis/prelude"
+  if [ -n "${needed:-}" ]; then printf '%s\n' "$needed"; else cat "$cfgout/basis.loaded"; fi
+}
+
+# set_needed: the part of the configuration's library this test loads.
+set_needed() {
+  needed=""
+  [ "$kind" = xc1 ] && [ "$host" = mlton ] || return 0
+  [ "${RUNE_MATRIX_NO_SUBSET:-0}" = 0 ] || return 0
+  runebin=${RUNE:-$root/bin/rune}
+  [ -x "$runebin" ] || return 0
+  deps=$cfgout/$test.deps
+  # shellcheck disable=SC2086
+  if ! "$runebin" --basis-deps "$suite/harness.sml" $(for u in $uses; do echo "$suite/$u"; done) \
+         "$src" "$suite/finish.sml" > "$deps" 2>/dev/null; then
+    rm -f "$deps"; return 0
+  fi
+  needed=$(awk 'NR == FNR { want[$0] = 1; next }
+                { n = $0; sub(/.*\//, "", n); if (n in want) print }' "$deps" "$cfgout/basis.loaded")
+  rm -f "$deps"
+  [ -n "$needed" ] || needed=""
+  return 0
 }
 
 # has_structure NAME: the configuration has a structure NAME (cached).
@@ -306,9 +359,51 @@ run_one_body() {
   fi
 
   final=$src
+  # What the halving below finds depends on the library, the tools and the
+  # test, so it is kept: looking again costs a compilation of the library per
+  # group, which is most of what a run spends on a host.
+  toolkey=$libkey
+  [ "$kind" = rune ] && toolkey="$libkey.$runekey"
+  seckey="$toolkey-$(cksum < "$src" | cut -d " " -f 1)-$(echo "$cmd1 $cmd2 $limit" | cksum | cut -d " " -f 1)"
+  kept=$cfgout/$test.sections
+  if [ "$refresh" = 0 ] && [ -f "$kept" ] && [ "$(head -1 "$kept")" = "$seckey" ]; then
+    set_needed
+    keep=$(sed -n '2p' "$kept")
+    if [ "$keep" = "@all" ]; then
+      final=$src
+    else
+      tail -n +3 "$kept" >> "$result.tmp"
+      final=$cfgout/$test.final.sml
+      variant "$src" "$final" "$keep"
+    fi
+    # shellcheck disable=SC2046
+    if load "$work" run $(sources "$final"); then
+      t_first=$(now)
+      grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
+      claimed=$(sed -n 's/^SUMMARY \([0-9]*\) checks.*/\1/p' "$work/stdout")
+      counted=$(grep -c -E '^(PASS|FAIL) ' "$work/stdout")
+      [ "$claimed" = "$counted" ] ||
+        echo "FAIL @load/$test -- SUMMARY reports $claimed checks but $counted were printed" >> "$result.tmp"
+      mv "$result.tmp" "$result"
+      return
+    fi
+    # what was kept no longer holds: look again
+    : > "$result.tmp"
+    rm -f "$kept"
+    needed=""
+    final=$src
+  fi
+  set_needed
   # shellcheck disable=SC2046
   load "$work" run $(sources "$src")
   loaded=$?
+  if [ $loaded != 0 ] && [ -n "$needed" ]; then
+    # the part of the library it seemed to need was not enough: try it whole
+    needed=""
+    # shellcheck disable=SC2046
+    load "$work" run $(sources "$src")
+    loaded=$?
+  fi
   t_first=$(now)
   if [ $loaded != 0 ]; then
     why=$(first_error "$work/log" "$work/stdout")
@@ -368,6 +463,7 @@ run_one_body() {
           mv "$stack.new" "$stack"
         done
         rm -f "$stack"
+        { printf '%s\n%s\n' "$seckey" "$keep"; grep '^FAIL @section/' "$result.tmp" || true; } > "$kept"
         final=$cfgout/$test.final.sml
         variant "$src" "$final" "$keep"
         # shellcheck disable=SC2046
@@ -388,6 +484,8 @@ run_one_body() {
     fi
   fi
 
+  # a program that loaded whole has nothing to leave out next time
+  [ "$loaded" = 0 ] && printf '%s\n@all\n' "$seckey" > "$kept"
   grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
   claimed=$(sed -n 's/^SUMMARY \([0-9]*\) checks.*/\1/p' "$work/stdout")
   counted=$(grep -c -E '^(PASS|FAIL) ' "$work/stdout")
@@ -521,6 +619,70 @@ session_probe() {
   return 1
 }
 
+# libkey: the checksum of everything that decides a test's sections apart
+# from the test and the tools, computed once for the run.
+libkey=${RUNE_MATRIX_LIBKEY:-}
+if [ -z "$libkey" ]; then
+  libkey=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* vm/prims.def 2>/dev/null |
+           cksum | cut -d " " -f 1)
+fi
+export RUNE_MATRIX_LIBKEY=$libkey
+# The compiler decides the sections of the rune configuration and nothing of a
+# host's, whose version is in the name of its output directory already.
+runekey=${RUNE_MATRIX_RUNEKEY:-}
+if [ -z "$runekey" ]; then
+  runekey=$(cat src/*/*.sml vm/*.c vm/*.h 2>/dev/null | cksum | cut -d " " -f 1)
+fi
+export RUNE_MATRIX_RUNEKEY=$runekey
+
+# save_image PRELUDE FILES: for a host that keeps a session, a heap image
+# with the library already in it, so that a program does not use its sources
+# again -- which is most of what a run of the matrix costs on such a host.
+# SML/NJ exports one that uses the files it is given when it resumes; Poly/ML
+# saves a state that a program loads first. basis.image says there is one.
+save_image() {
+  rm -f "$cfgout/basis.image" "$cfgout/basis.heap".* "$cfgout/basis.state"
+  [ "${RUNE_MATRIX_NO_IMAGE:-0}" = 0 ] || return 0
+  case "$host" in
+    smlnj|smlnj32)
+      { printf 'val () = ('
+        sep=""
+        for f in $1 $2; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
+        printf ');\n'
+        printf 'val resumed__ = SMLofNJ.exportML "%s";\n' "$cfgout/basis.heap"
+        # The program is driver.sml of the directory the test runs in and
+        # not an argument: CommandLine.arguments is one of the things the
+        # suite checks, and it must be empty under the runner.
+        printf 'val () =\n'
+        printf '  if resumed__ then\n'
+        printf '    ((use "driver.sml"\n'
+        printf '        handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\\n");\n'
+        printf '                     OS.Process.exit OS.Process.failure));\n'
+        printf '     OS.Process.exit OS.Process.success)\n'
+        printf '  else OS.Process.exit OS.Process.success;\n'
+      } > "$cfgout/basis.export.sml"
+      if timeout $((limit * 8)) "$cmd1" "$cfgout/basis.export.sml" > "$cfgout/basis.export.log" 2>&1 &&
+         ls "$cfgout/basis.heap".* > /dev/null 2>&1; then
+        echo ok > "$cfgout/basis.image"
+      fi
+      ;;
+    polyml)
+      { printf 'val () = ('
+        sep=""
+        for f in $1 $2; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
+        printf ');\n'
+        printf 'val () = PolyML.SaveState.saveState "%s";\n' "$cfgout/basis.state"
+        printf 'val () = OS.Process.exit OS.Process.success;\n'
+      } > "$cfgout/basis.export.sml"
+      if timeout $((limit * 8)) "$cmd1" -q --error-exit --use "$cfgout/basis.export.sml" \
+           > "$cfgout/basis.export.log" 2>&1 < /dev/null && [ -f "$cfgout/basis.state" ]; then
+        echo ok > "$cfgout/basis.image"
+      fi
+      ;;
+  esac
+  return 0
+}
+
 # probe_basis ID: generate the library sources of xc1 configuration ID and
 # find the files of lib/basis that load on its host, in
 #   basis.loaded    their paths, in load order
@@ -540,6 +702,9 @@ probe_basis() {
      [ -d "$cfgout/basis" ]; then
     echo "cached 0 $(since "$t_probe")" > "$cfgout/basis.time"
     echo ok > "$cfgout/basis.done"
+    if [ ! -f "$cfgout/basis.image" ]; then
+      save_image "$(cat "$cfgout/basis/prelude")" "$(cat "$cfgout/basis.loaded")"
+    fi
     return
   fi
   rm -f "$cfgout/basis.key"
@@ -593,6 +758,7 @@ probe_basis() {
     awk -F '\t' -v f="$f" '$1 == f { n = split($2, m, " "); for (i = 1; i <= n; i++) print m[i] }' "$gen/files" >> "$cfgout/basis.provides"
   done
   rm -rf "$cfgout/basis.work"
+  save_image "$prelude" "$accepted"
   echo "probed $tried $(since "$t_probe")" > "$cfgout/basis.time"
   echo "$key" > "$cfgout/basis.key"
   echo ok > "$cfgout/basis.done"
