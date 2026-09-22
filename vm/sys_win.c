@@ -798,14 +798,19 @@ int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
     return 0;
 }
 /* Directories, on FindFirstFile: a stream is a slot of this table. "." and
-   ".." are left out, as readdir's caller expects of OS.FileSys.readDir. */
+   ".." are left out, as readdir's caller expects of OS.FileSys.readDir.
+   reads counts the FindNextFile calls since the start, which a fork's
+   child makes again. */
 #define DIRS 64
-static struct { int used; HANDLE find; WIN32_FIND_DATAA data; int pending; char pattern[MAX_PATH * 4]; } dirs[DIRS];
+static struct {
+    int used; HANDLE find; WIN32_FIND_DATAA data; int pending; int64_t reads; char pattern[MAX_PATH * 4];
+} dirs[DIRS];
 
 static int dir_start(int i) {
     dirs[i].find = FindFirstFileA(dirs[i].pattern, &dirs[i].data);
     if (dirs[i].find == INVALID_HANDLE_VALUE) return win_failed(NULL);
     dirs[i].pending = 1;
+    dirs[i].reads = 0;
     return 0;
 }
 int sys_open_dir(const char *path) {
@@ -830,6 +835,7 @@ const char *sys_read_dir(int dir) {
     for (;;) {
         if (!dirs[dir].pending) {
             if (!FindNextFileA(dirs[dir].find, &dirs[dir].data)) return NULL;
+            dirs[dir].reads++;
         }
         dirs[dir].pending = 0;
         const char *name = dirs[dir].data.cFileName;
@@ -1243,9 +1249,11 @@ int64_t sys_sysconf(const char *name) {
    the status flags append, non-blocking and synchronous (which POSIX keeps
    with the open file, and which a duplicate gets a copy of here), and
    close-on-exec, which is the descriptor's own. The access mode is asked of
-   Windows (access_of). */
+   Windows (access_of). crt_append is msvcrt's own append, which fopen's
+   "a" asks for and msvcrt cannot be asked about: a fork's child opens the
+   descriptor again with it. */
 #define FD_TABLE 2048
-typedef struct { int append, nonblocking, sync, cloexec; } FdFlags;
+typedef struct { int append, nonblocking, sync, cloexec, crt_append; } FdFlags;
 static FdFlags fd_flags[FD_TABLE];
 static FdFlags *flags_of(int fd) { return fd >= 0 && fd < FD_TABLE ? &fd_flags[fd] : NULL; }
 static void set_flags(int fd, int append, int nonblocking, int sync) {
@@ -1255,6 +1263,7 @@ static void set_flags(int fd, int append, int nonblocking, int sync) {
     f->nonblocking = nonblocking;
     f->sync = sync;
     f->cloexec = 0;
+    f->crt_append = 0;
 }
 /* the access of a handle, O_RDONLY, O_WRONLY or O_RDWR, from the rights it
    was opened with (NtQueryInformationFile, FileAccessInformation) */
@@ -1304,6 +1313,7 @@ static int open_fd(const char *path, int flags, int mode, int crt_append) {
     if (fd < 0) { CloseHandle(h); return failed(); }
     /* append is this layer's (sys_write_fd), so that fcntl can turn it off */
     set_flags(fd, append && !crt_append, (flags & 04000) != 0, (flags & 04010000) == 04010000);
+    if (flags_of(fd)) flags_of(fd)->crt_append = crt_append;
     return fd;
 }
 int sys_openf(const char *path, int flags, int mode) { return open_fd(path, flags, mode, 0); }
@@ -1394,6 +1404,8 @@ int64_t sys_write_fd(int fd, const char *buf, int64_t n) {
     FdFlags *f = flags_of(fd);
     if (f && f->append) _lseeki64(fd, 0, SEEK_END);
     int r = _write(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
+    /* msvcrt has no errno for a pipe whose reader is gone (ERROR_NO_DATA) */
+    if (r < 0 && (_doserrno == ERROR_NO_DATA || _doserrno == ERROR_BROKEN_PIPE)) { last = EPIPE; return -1; }
     if (r < 0) return failed();
     if (f && f->sync) _commit(fd);
     return r;
@@ -2252,11 +2264,12 @@ const char *sys_serv_byport(int port, const char *protocol) {
 }
 
 /* ---------------------------------------------------------------- processes */
-/* Windows has no fork. A program is started by CreateProcess (sys_spawn),
-   which gives it only the three handles it is to have as its standard
-   streams; exec without a fork is a program started so, waited for, and
-   ended with; and the children are kept here, with the handles that
-   waitpid waits on. A signal is not a thing of Windows: Rune has no
+/* Windows has no fork: sys_fork fails, and the core forks by a second VM
+   instead (vm/image.c, and the section "fork" below). A program is started
+   by CreateProcess (sys_spawn), which gives it only the three handles it is
+   to have as its standard streams; exec without a fork is a program
+   started so, waited for, and ended with; and the children are kept here,
+   with the handles that waitpid waits on. A signal is not a thing of Windows: Rune has no
    handlers for them, so a program can only see a signal's default action,
    and that is the end of the process, which TerminateProcess gives, with an
    exit code no program gives (SIGNALLED_BY with the signal in its low bits)
@@ -2350,18 +2363,22 @@ static HANDLE handle_of(int fd) {
     return s ? (HANDLE)s->s : (HANDLE)_get_osfhandle(fd);
 }
 /* Start the program; its process handle is kept as a child's, and a job,
-   when one is given, gets it before it runs. */
+   when one is given, gets it before it runs. extra, when given, is an
+   inheritable handle the program inherits besides its standard ones. */
 static int64_t spawn(const char *path, char *const argv[], char *const envp[], int search,
-                     const int fds[3], HANDLE job, const char *raw) {
+                     const int fds[3], HANDLE job, const char *raw, HANDLE extra) {
+    /* raw: a command line given whole, for a program that reads it its own
+       way (cmd.exe). Windows takes 32767 characters at most, which is
+       E2BIG before the program is looked for, as execve counts the
+       arguments before it opens the file. */
+    char *line = raw ? _strdup(raw) : command_line(argv);
+    if (!line) { last = ENOMEM; return -1; }
+    if (strlen(line) > 32766) { free(line); last = E2BIG; return -1; }
     char program[MAX_PATH * 4];
-    if (find_program(native(path), search, program, sizeof program) != 0) return -1;
+    if (find_program(native(path), search, program, sizeof program) != 0) { free(line); return -1; }
     /* a batch file is run by the command interpreter */
     const char *dot = strrchr(program, '.');
     int batch = !raw && dot && (_stricmp(dot, ".bat") == 0 || _stricmp(dot, ".cmd") == 0);
-    /* raw: a command line given whole, for a program that reads it its own
-       way (cmd.exe) */
-    char *line = raw ? _strdup(raw) : command_line(argv);
-    if (!line) { last = ENOMEM; return -1; }
     char *app = program;
     char comspec[MAX_PATH * 4];
     if (batch) {
@@ -2387,7 +2404,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
         if (o == block + 1) *o = 0;
     }
     /* the three handles, as inheritable copies, and only they inherited */
-    HANDLE std[3], list[3];
+    HANDLE std[3], list[4];
     int nlist = 0;
     for (int i = 0; i < 3; i++) {
         HANDLE h = handle_of(fds[i] >= 0 ? fds[i] : i);
@@ -2396,6 +2413,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
             DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &std[i], 0, TRUE, DUPLICATE_SAME_ACCESS))
             list[nlist++] = std[i];
     }
+    if (extra) list[nlist++] = extra;
     SIZE_T size = 0;
     InitializeProcThreadAttributeList(NULL, 1, 0, &size);
     LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);
@@ -2432,7 +2450,7 @@ static int64_t spawn(const char *path, char *const argv[], char *const envp[], i
     return (int64_t)pi.dwProcessId;
 }
 int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
-    return spawn(path, argv, envp, search, fds, NULL, NULL);
+    return spawn(path, argv, envp, search, fds, NULL, NULL, NULL);
 }
 
 /* How a process ended, as waitpid tells it: 0 exited with a status, or 1
@@ -2550,6 +2568,13 @@ int sys_alarm(int seconds) {
     }
     return left;
 }
+/* _exit and _Exit end in ExitProcess, which lets msvcrt.dll flush every
+   stream as it is unloaded; a process that ends itself does not unload
+   anything. */
+void sys_exit_now(int status) {
+    TerminateProcess(GetCurrentProcess(), (UINT)status);
+    _exit(status);
+}
 /* pause: only a signal ends it, and every signal ends the process */
 int sys_pause(void) {
     for (;;) Sleep(INFINITE);
@@ -2558,8 +2583,10 @@ int sys_pause(void) {
 /* exec, without a fork: the program is started with this one's standard
    streams, in a job that ends it when this process ends (so that a kill of
    this one reaches it), and this process waits for it and ends with its
-   status, which its parent then sees. The descriptors a real exec would
-   close (close-on-exec) are closed before the wait. */
+   status, which its parent then sees. The program gets nothing but its
+   standard streams, so every other descriptor and socket is closed before
+   the wait, or this process would hold, say, the writing end of a pipe
+   whose reader then waits for its end as long as the program runs. */
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     HANDLE job = CreateJobObjectA(NULL, NULL);
     if (job) {
@@ -2569,15 +2596,16 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
         SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof limits);
     }
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL);
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL, NULL);
     if (pid < 0) { if (job) CloseHandle(job); return -1; }
     HANDLE process = children[nchildren - 1].process;
-    for (int fd = 3; fd < FD_TABLE; fd++) if (fd_flags[fd].cloexec) _close(fd);
-    for (int i = 0; i < nsocks; i++) if (socks[i].used && socks[i].cloexec) { closesocket(socks[i].s); socks[i].used = 0; }
+    for (int fd = 3; fd < FD_TABLE; fd++) if (_get_osfhandle(fd) != -1) _close(fd);
+    for (int i = 0; i < nsocks; i++) if (socks[i].used) { closesocket(socks[i].s); socks[i].used = 0; }
     WaitForSingleObject(process, INFINITE);
     DWORD code = 0;
     GetExitCodeProcess(process, &code);
-    _exit((int)code);
+    sys_exit_now((int)code);
+    return -1;   /* not reached */
 }
 
 /* system: the command interpreter of Windows (COMSPEC) runs the command,
@@ -2593,12 +2621,206 @@ int sys_system(const char *command) {
     sprintf(line, "cmd /d /s /c \"%s\"", command);
     char *argv[] = { (char *)comspec, NULL };
     int fds[3] = { -1, -1, -1 };
-    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line);
+    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line, NULL);
     free(line);
     if (pid < 0) return -1;
     int64_t out[3];
     if (sys_waitpid(pid, 0, out) != 0) return -1;
     return out[1] == 0 ? (int)out[2] : 256 + (int)out[2];
+}
+
+/* ---------------------------------------------------------------- fork */
+/* fork by a second VM (vm/image.c), there being no fork. The child is this
+   runevm, started as `runevm --resume HANDLE` with this one's standard
+   handles and the reading end of a pipe, which is all it inherits. The
+   rest it gets as Windows hands things to another process: each
+   descriptor's handle by DuplicateHandle and each socket by
+   WSADuplicateSocket, the close-on-exec ones as well, since close-on-exec
+   matters only at exec. Through the pipe go first this layer's part --
+   the handles by descriptor with the flags kept here, the sockets with
+   what their table knows, each directory stream by its pattern and how
+   far it has read, and the umask -- and then the core's image. The child
+   gives each descriptor and socket its number again, which SML values
+   hold. msvcrt's own way of handing on descriptors (lpReserved2) is not
+   used: it names handles, which the kernel copies only if they are
+   inheritable. */
+int sys_has_fork(void) { return 0; }
+FILE *sys_fdopen(int fd, const char *mode) { return _fdopen(fd, mode); }
+
+typedef struct { int fd; uint64_t handle; FdFlags flags; } ForkFd;
+typedef struct { int slot; WSAPROTOCOL_INFOW info; Sock sock; } ForkSock;
+typedef struct { int slot, pending; int64_t reads; char pattern[MAX_PATH * 4]; } ForkDir;
+static int64_t fork_child = -1;
+
+FILE *sys_fork_start(void) {
+    char self[MAX_PATH * 4];
+    DWORD length = GetModuleFileNameA(NULL, self, sizeof self);
+    if (length == 0 || length >= sizeof self) { win_failed(NULL); return NULL; }
+    HANDLE rd, wr, inherited;
+    if (!CreatePipe(&rd, &wr, NULL, 1 << 16)) { win_failed(NULL); return NULL; }
+    int ok = DuplicateHandle(GetCurrentProcess(), rd, GetCurrentProcess(), &inherited, 0, TRUE, DUPLICATE_SAME_ACCESS);
+    CloseHandle(rd);
+    if (!ok) { win_failed(NULL); CloseHandle(wr); return NULL; }
+    char token[32];
+    snprintf(token, sizeof token, "%llu", (unsigned long long)(uintptr_t)inherited);
+    char resume[] = "--resume";
+    char *argv[] = { self, resume, token, NULL };
+    int fds[3] = { -1, -1, -1 };
+    int64_t pid = spawn(self, argv, NULL, 0, fds, NULL, NULL, inherited);
+    CloseHandle(inherited);
+    if (pid < 0) { CloseHandle(wr); return NULL; }
+    HANDLE child = children[nchildren - 1].process;
+    int image = _open_osfhandle((intptr_t)wr, _O_BINARY | _O_WRONLY);
+    FILE *out = image >= 0 ? _fdopen(image, "wb") : NULL;
+    if (!out) {
+        if (image >= 0) _close(image); else CloseHandle(wr);
+        last = ENOMEM;
+        return NULL;
+    }
+    fork_child = pid;
+    setvbuf(out, NULL, _IOFBF, 1 << 20);   /* the image is the whole heap */
+
+    ForkFd *given = malloc(FD_TABLE * sizeof *given);
+    uint32_t n = 0;
+    for (int fd = 0; given && fd < FD_TABLE; fd++) {
+        HANDLE h = (HANDLE)_get_osfhandle(fd);
+        HANDLE copy;
+        if (fd == image || h == INVALID_HANDLE_VALUE || h == NULL || h == (HANDLE)(intptr_t)-2) continue;
+        if (!DuplicateHandle(GetCurrentProcess(), h, child, &copy, 0, FALSE, DUPLICATE_SAME_ACCESS)) continue;
+        given[n].fd = fd;
+        given[n].handle = (uint64_t)(uintptr_t)copy;
+        given[n].flags = fd_flags[fd];
+        n++;
+    }
+    fwrite(&n, sizeof n, 1, out);
+    if (n > 0) fwrite(given, sizeof *given, n, out);
+    free(given);
+
+    uint32_t nsock = 0;
+    for (int i = 0; i < nsocks; i++) if (socks[i].used) nsock++;
+    fwrite(&nsock, sizeof nsock, 1, out);
+    for (int i = 0; i < nsocks; i++) {
+        if (!socks[i].used) continue;
+        ForkSock f;
+        memset(&f, 0, sizeof f);
+        f.slot = i;
+        f.sock = socks[i];
+        /* one that cannot be handed on goes as a slot the child leaves closed */
+        if (WSADuplicateSocketW(socks[i].s, (DWORD)pid, &f.info) != 0) f.slot = -1;
+        fwrite(&f, sizeof f, 1, out);
+    }
+
+    uint32_t ndirs = 0;
+    for (int i = 0; i < DIRS; i++) if (dirs[i].used) ndirs++;
+    fwrite(&ndirs, sizeof ndirs, 1, out);
+    for (int i = 0; i < DIRS; i++) {
+        if (!dirs[i].used) continue;
+        ForkDir d;
+        d.slot = i;
+        d.pending = dirs[i].pending;
+        d.reads = dirs[i].reads;
+        memcpy(d.pattern, dirs[i].pattern, sizeof d.pattern);
+        fwrite(&d, sizeof d, 1, out);
+    }
+    fwrite(&creation_mask, sizeof creation_mask, 1, out);
+    return out;
+}
+
+int64_t sys_fork_finish(FILE *image) {
+    fclose(image);
+    return fork_child;
+}
+
+/* This layer's part is read from the pipe's handle itself, before any
+   descriptor is made for it, so that the descriptor cannot take a number
+   that one of the parent's is to have. */
+static int read_exactly(HANDLE h, void *p, DWORD n) {
+    char *at = p;
+    while (n > 0) {
+        DWORD got = 0;
+        if (!ReadFile(h, at, n, &got, NULL) || got == 0) return 0;
+        at += got;
+        n -= got;
+    }
+    return 1;
+}
+/* the socket table with a slot i, the new ones unused */
+static int sock_slot(int i) {
+    while (nsocks <= i) {
+        if (nsocks == socks_cap) {
+            int cap = socks_cap ? socks_cap * 2 : 16;
+            Sock *bigger = realloc(socks, (size_t)cap * sizeof *socks);
+            if (!bigger) return -1;
+            socks = bigger;
+            socks_cap = cap;
+        }
+        socks[nsocks++].used = 0;
+    }
+    return 0;
+}
+FILE *sys_resume(const char *token) {
+    char *end;
+    unsigned long long value = strtoull(token, &end, 10);
+    if (end == token || *end != 0) { last = EINVAL; return NULL; }
+    HANDLE h = (HANDLE)(uintptr_t)value;
+
+    uint32_t n = 0;
+    if (!read_exactly(h, &n, sizeof n) || n > FD_TABLE) { last = EIO; return NULL; }
+    int have[3] = { 0, 0, 0 };
+    for (uint32_t k = 0; k < n; k++) {
+        ForkFd f;
+        if (!read_exactly(h, &f, sizeof f)) { last = EIO; return NULL; }
+        if (f.fd < 0 || f.fd >= FD_TABLE) continue;
+        HANDLE given = (HANDLE)(uintptr_t)f.handle;
+        int fd = _open_osfhandle((intptr_t)given, _O_BINARY | (f.flags.crt_append ? _O_APPEND : 0));
+        if (fd < 0) { CloseHandle(given); continue; }
+        if (fd != f.fd) {
+            int moved = _dup2(fd, f.fd) == 0;
+            _close(fd);
+            if (!moved) continue;
+        }
+        fd_flags[f.fd] = f.flags;
+        if (f.fd < 3) have[f.fd] = 1;
+    }
+    /* a standard descriptor the parent had closed */
+    for (int fd = 0; fd < 3; fd++) if (!have[fd]) _close(fd);
+
+    uint32_t nsock = 0;
+    if (!read_exactly(h, &nsock, sizeof nsock)) { last = EIO; return NULL; }
+    for (uint32_t k = 0; k < nsock; k++) {
+        ForkSock f;
+        if (!read_exactly(h, &f, sizeof f)) { last = EIO; return NULL; }
+        if (f.slot < 0 || winsock() != 0 || sock_slot(f.slot) != 0) continue;
+        SOCKET s = WSASocketW(FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, &f.info, 0,
+                              WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+        if (s == INVALID_SOCKET) continue;
+        socks[f.slot] = f.sock;
+        socks[f.slot].s = s;
+        socks[f.slot].used = 1;
+    }
+
+    uint32_t ndirs = 0;
+    if (!read_exactly(h, &ndirs, sizeof ndirs)) { last = EIO; return NULL; }
+    for (uint32_t k = 0; k < ndirs; k++) {
+        ForkDir d;
+        if (!read_exactly(h, &d, sizeof d)) { last = EIO; return NULL; }
+        if (d.slot < 0 || d.slot >= DIRS) continue;
+        int i = d.slot;
+        memcpy(dirs[i].pattern, d.pattern, sizeof d.pattern);
+        dirs[i].pattern[sizeof dirs[i].pattern - 1] = 0;
+        if (dir_start(i) != 0) continue;
+        for (int64_t r = 0; r < d.reads && FindNextFileA(dirs[i].find, &dirs[i].data); r++) dirs[i].reads++;
+        dirs[i].pending = d.pending;
+        dirs[i].used = 1;
+    }
+    if (!read_exactly(h, &creation_mask, sizeof creation_mask)) { last = EIO; return NULL; }
+
+    int fd = _open_osfhandle((intptr_t)h, _O_BINARY | _O_RDONLY);
+    if (fd < 0) { last = EMFILE; return NULL; }
+    FILE *in = _fdopen(fd, "rb");
+    if (!in) { _close(fd); last = ENOMEM; return NULL; }
+    setvbuf(in, NULL, _IOFBF, 1 << 20);
+    return in;
 }
 
 /* ---------------------------------------------------------------- Windows */
@@ -2778,7 +3000,7 @@ int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) {
     if (!line) { last = ENOMEM; return -1; }
     sprintf(line, "\"%s\"%s%s", command, *arg ? " " : "", arg);
     char *argv[] = { (char *)command, NULL };
-    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line);
+    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line, NULL);
     free(line);
     return pid;
 }

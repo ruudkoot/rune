@@ -1,0 +1,39 @@
+two laps: 999000
+the last node's reference is the global one: true
+a ring in the heap: the child exited 1
+the parent's ring is whole: true
+Mine is Mine: true
+a generative exception is itself: true
+and not another made by the same code: true
+Div: true
+Option: true
+exceptions: the child exited 2
+raised to in the child
+a handler pushed before the fork: the child exited 3
+the working directory: true
+the child reads on at line 00003
+and then 19996 more
+a file half read: the child exited 4
+a file half written: the child exited 5
+the parent, before
+the child
+the parent, after
+close-on-exec kept: true
+and not given: true
+a pipe: the child exited 6
+through the pipe
+a socket: the child exited 7
+through a socket
+the child reads 2 more: a b c
+a directory half read: the child exited 8
+the rounding mode: true
+the arguments: one two
+the name: true
+the parent: true
+a process of its own: true
+the rest: the child exited 9
+the child allocates: 599994
+the grandchild runs
+the grandchild: the child exited B
+a fork of the child: the child exited A
+done

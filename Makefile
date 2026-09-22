@@ -76,7 +76,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.ml
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
 SYS ?= posix
-VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_$(SYS).c
+VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_$(SYS).c
 VM_HDRS := vm/vm.h vm/sys.h $(GEN_C)
 
 # The host SML systems (`make hosts`).
@@ -243,7 +243,7 @@ WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
-WIN_SRCS    := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_win.c
+WIN_SRCS    := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib

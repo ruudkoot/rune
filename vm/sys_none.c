@@ -86,6 +86,11 @@ int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
 
 int64_t sys_const(const char *name) { (void)name; return -1; }
 int sys_fork(void) { return fail(); }
+int sys_has_fork(void) { return 0; }
+FILE *sys_fork_start(void) { fail(); return NULL; }
+int64_t sys_fork_finish(FILE *image) { (void)image; return fail(); }
+FILE *sys_resume(const char *token) { (void)token; fail(); return NULL; }
+FILE *sys_fdopen(int fd, const char *mode) { (void)fd; (void)mode; fail(); return NULL; }
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     (void)path; (void)argv; (void)envp; (void)search; return fail();
 }
@@ -96,6 +101,7 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags
 int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
 int sys_alarm(int seconds) { (void)seconds; return fail(); }
 int sys_pause(void) { return fail(); }
+void sys_exit_now(int status) { _Exit(status); }
 int64_t sys_getpid(void) { return fail(); }
 int64_t sys_getppid(void) { return fail(); }
 int64_t sys_getuid(void) { return fail(); }

@@ -129,14 +129,17 @@ typedef struct VM {
     int trace;
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
+    int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
     const char *progname;
+    int owns_args;           /* argv and progname were read from an image (vm/image.c) */
 
     /* open files indexed by handle: 0 stdin, 1 stdout, 2 stderr (never closed);
        handles are never reused, a closed slot is NULL */
     FILE **files;
+    uint8_t *file_modes;     /* each file's mode of file_open, which an image of the VM carries */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
 } VM;
@@ -148,6 +151,7 @@ Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);
 Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
 void vm_gc(VM *vm, size_t needed);
+int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 
 /* interp.c */
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
@@ -164,8 +168,13 @@ void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
 int vm_run(VM *vm);
+int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
 int values_equal(Value a, Value b);
+
+/* image.c: fork as a second VM that is handed this one's state */
+int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
+int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the child */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);

@@ -108,8 +108,9 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), disassembler. |
 | `vm/interp.c` | Stacks, frames, handlers, `vm_run` dispatch loop, structural equality, exception raising. |
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
+| `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
 | `vm/prims.c` | One function per primitive; the dispatch table is generated from `prims.def`. |
-| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems; `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
+| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
 | `vm/main.c` | Command line handling. |
 
 GC discipline in C: an allocation may move every heap object, so primitives

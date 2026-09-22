@@ -197,12 +197,19 @@ struct
                            C.until (10, fn () => (ignore (work (100000, 1)); Time.> (cpu (), t0)))
                          end)
   (* A child that works and has been waited for adds to cutime and cstime;
-     one that sleeps does not add to utime. *)
+     one that sleeps does not add to utime. The child works in SML until its
+     own processor time has grown by 50 ms, which a clock that counts in
+     ticks of 15.6 ms (Windows) sees as well, and which needs no shell. *)
   val () = eqB ("Posix.ProcEnv.times/children", true,
                 fn () => let
                            val t0 = children ()
-                           val _ = C.status (C.fork (fn () =>
-                                     P.exec ("/bin/sh", ["sh", "-c", "i=0; while [ $i -lt 300000 ]; do i=$((i+1)); done"])))
+                           fun work (n, acc) = if n = 0 then acc else work (n - 1, (acc * 31 + n) mod 1000003)
+                           val _ = C.run (fn () =>
+                                     let val start = cpu ()
+                                     in
+                                       if C.until (10, fn () => (ignore (work (100000, 1)); Time.> (cpu (), Time.+ (start, C.ms 50))))
+                                       then C.w8 0 else C.w8 1
+                                     end)
                          in
                            Time.> (children (), t0)
                          end)

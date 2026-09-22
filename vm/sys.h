@@ -93,6 +93,22 @@ int64_t sys_const(const char *name);
 
 /* Processes and their environment. A call that fails gives -1. */
 int sys_fork(void);
+/* fork where the system has none (Windows), or where runevm is given
+   --emulate-fork: a second VM is started as `runevm --resume TOKEN` and
+   handed this one's state (vm/image.c). sys_has_fork says whether sys_fork
+   is the system's own. sys_fork_start starts the child, gives it the
+   descriptors and sockets and writes it this layer's own state (directory
+   streams, close-on-exec), and returns the stream the core writes its
+   image to, or NULL; sys_fork_finish closes that stream and returns the
+   child's process, or -1. In the child, sys_resume takes the TOKEN,
+   rebuilds this layer's state and returns the stream the core's image is
+   read from, or NULL. sys_fdopen is fdopen, for the files of the core that
+   the child opens again on the same descriptors. */
+int sys_has_fork(void);
+FILE *sys_fork_start(void);
+int64_t sys_fork_finish(FILE *image);
+FILE *sys_resume(const char *token);
+FILE *sys_fdopen(int fd, const char *mode);
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search);
 /* Wait for a child: out[] gets the process, then 0 exited, 1 signalled or
    2 stopped, then the status or the signal. */
@@ -107,6 +123,9 @@ int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int 
 int sys_kill(int64_t pid, int signal);
 int sys_alarm(int seconds);
 int sys_pause(void);
+/* End the process at once with the status, flushing nothing and running
+   nothing registered to run at exit (Posix.Process.exit). */
+void sys_exit_now(int status);
 int64_t sys_getpid(void);
 int64_t sys_getppid(void);
 int64_t sys_getuid(void);

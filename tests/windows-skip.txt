@@ -3,12 +3,9 @@
 #   NAME CATEGORY: reason
 #
 # Categories:
-#   FORK      a child made by fork, which Windows does not have (M12 of
-#             docs/plans/windows.md would carry the VM across instead)
 #   LINUX     what only Linux prints, which a Mac would not print either
 #
 # Everything else runs on both Windows VMs, bin/runevm.exe and
-# bin/runevm32.exe. docs/plans/windows.md is the roadmap that shortens this
-# list.
-basis.posix_fork FORK: two children made by fork
+# bin/runevm32.exe. docs/plans/windows.md is the roadmap that took this list
+# from nine programs to the one that only Linux can pass.
 basis.posix_linux LINUX: uname says Linux

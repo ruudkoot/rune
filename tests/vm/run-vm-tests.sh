@@ -75,5 +75,10 @@ expect heap-size "usage:" --heap-size 18446744073709551616 empty.rbc
 expect heap-size-text "usage:" --heap-size 64M empty.rbc
 expect gc-stress "usage:" --gc-stress 18446744073709551616 empty.rbc
 
+# the child of a fork by a second VM (vm/image.c) with no image to read:
+# standard input is empty, and x names no descriptor or handle
+expect resume "no image to resume from" --resume 0
+expect resume-token "no image to resume from" --resume x
+
 echo "vm: passed $pass, failed $fail"
 [ "$fail" = 0 ]

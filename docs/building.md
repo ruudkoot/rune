@@ -138,6 +138,13 @@ goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
 and `/dev/tty` the console. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
+Windows has no `fork`. `Posix.Process.fork` starts a second VM instead and
+hands it everything of this one: the heap, the stacks, the program, and the
+descriptors, sockets and directory streams (`vm/image.c`); the child carries
+on from the `fork` as a copied process would. `runevm --emulate-fork` takes
+the same path on Linux, so that `make check` tests the image
+(`tests/lang/rt.fork_image`), which the Windows suites cannot do under ASan.
+
 The programs of `tests/lang` that do not pass on the VMs of Windows are in
 `tests/windows-skip.txt`, with the reason for each; the checks of the Basis
 Library suite that do not are the `WINDOWS` lines of

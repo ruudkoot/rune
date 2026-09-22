@@ -186,6 +186,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | rt.closure | Closures capture variables by value (refs for mutation), mutual recursion | Supported | |
 | rt.args | Command line arguments after the bytecode file | Supported | |
 | rt.stdin | Reading standard input | Supported | |
+| rt.fork | `Posix.Process.fork` where the system has none: a second VM is handed the whole state of this one and goes on from the `fork` | Supported | Windows, and `runevm --emulate-fork` elsewhere (`vm/image.c`). A child shares the parent's open files, as after a real `fork`; what a pipe has buffered for the parent does not follow. |
 
 ## Basis library
 

@@ -16,9 +16,10 @@
 #                   the reading the test takes
 #   WIDTH           follows from the precision of a type
 #   XC1-NA          not meaningful for Rune's library on a host
-#   WINDOWS         the system layer of Windows (vm/sys_win.c) does not do
-#                   it yet, or msvcrt does it differently; the line names
-#                   the milestone of docs/plans/windows.md that takes it
+#   WINDOWS         what Windows does not have or does otherwise, which the
+#                   system layer (vm/sys_win.c) cannot make good, or a check
+#                   that asks sh or starts another program of POSIX; each
+#                   line says so after `stays:` (docs/plans/windows.md)
 # A RUNE-DEV or SPEC-AMBIGUOUS line for `rune` holds for the xc1 configurations
 # as well: they run the same library source; and for rune:windows and
 # rune:windows32, which run it with the same compiler on the VMs of Windows. A host line that names an xc1
@@ -612,9 +613,7 @@ rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows ha
 rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
 rune:windows* | OS.Process.getEnv/agrees-with-the-shell | WINDOWS | stays: the test asks sh, and the shell of Windows is cmd.exe
-rune:windows* | Posix.Error.srch/kill-reaped-child | WINDOWS | M12: the child is made by fork
 rune:windows* | Posix.Error.acces/open-unreadable-file | WINDOWS | stays: Windows cannot make a file unreadable to its owner
-rune:windows* | Posix.Error.* | WINDOWS | M12: the check runs in a child made by fork
 rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.*/*fifo* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.ST.is*/none-of-the-others | WINDOWS | stays: the check makes a named pipe, which Windows does not have in the file system
@@ -622,19 +621,20 @@ rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Wind
 rune:windows* | Posix.FileSys.A_READ/not-readable | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | Posix.FileSys.* | WINDOWS | stays: a mode of Windows is whether the owner may write, and an extension that makes a file executable; the owner always reads, and a group or others have no bits
 rune:windows* | Posix.ProcEnv.getpid/PPID-of-shell | WINDOWS | stays: the test asks sh
-rune:windows* | Posix.ProcEnv.getppid/of-child | WINDOWS | M12: fork
-rune:windows* | Posix.ProcEnv.getpid/of-child-differs | WINDOWS | M12: fork
-rune:windows* | Posix.ProcEnv.getpgrp/* | WINDOWS | M12: fork (and Windows has no process groups)
-rune:windows* | Posix.ProcEnv.setpgid/* | WINDOWS | M12: fork (and Windows has no process groups)
-rune:windows* | Posix.ProcEnv.setsid/* | WINDOWS | M12: fork (and Windows has no sessions)
-rune:windows* | Posix.ProcEnv.times/children | WINDOWS | M12: fork
+rune:windows* | Posix.ProcEnv.setpgid/* | WINDOWS | stays: Windows has no process groups
+rune:windows* | Posix.ProcEnv.setsid/* | WINDOWS | stays: Windows has no sessions
 rune:windows* | Posix.ProcEnv.environ/has-PATH | WINDOWS | stays: Windows spells it Path
 rune:windows* | Posix.ProcEnv.* | WINDOWS | stays: the test compares with what sh says (id, uname, date, getconf), and the shell of Windows is cmd.exe
 rune:windows* | Posix.SysDB.*/root | WINDOWS | stays: Windows has no user or group called root
 rune:windows* | Posix.SysDB.* | WINDOWS | stays: the test compares with what sh says (id, getent), and the shell of Windows is cmd.exe
 rune:windows* | Posix.Process.fromStatus/system-killed | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
-rune:windows* | Posix.Process.* | WINDOWS | M12: fork
+rune:windows* | Posix.Process.W_GROUP/* | WINDOWS | stays: Windows has no process groups
+rune:windows* | Posix.Process.K_GROUP/* | WINDOWS | stays: Windows has no process groups
+rune:windows* | Posix.Process.K_SAME_GROUP/* | WINDOWS | stays: Windows has no process groups, and cannot stop a process
+rune:windows* | Posix.Process.waitpid/no-child | WINDOWS | stays: a child of the W_GROUP checks before it is still there, which waiting for its group would have reaped
+rune:windows* | Posix.Process.W_STOPPED/* | WINDOWS | stays: Windows cannot stop a process
+rune:windows* | Posix.Process.W.untraced/* | WINDOWS | stays: Windows cannot stop a process
+rune:windows* | Posix.Process.* | WINDOWS | stays: the child the test forks runs /bin/sh or /usr/bin/env, which Windows does not have
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
-rune:windows* | Posix.Signal.* | WINDOWS | M12: the test signals a /bin/sh started by fork
+rune:windows* | Posix.Signal.* | WINDOWS | stays: the test signals a /bin/sh that a child made by fork runs, and Windows has no /bin/sh
 rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows
-rune:windows* | Windows.exit/code | WINDOWS | M12: the check runs in a child made by fork

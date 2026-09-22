@@ -28,7 +28,7 @@ estimate.
 | M7, a spawn primitive | done: `posix_spawn` starts a program with three descriptors, `Unix.execute` uses it everywhere (fork, dup2 and exec in C on POSIX, so 126 stays; `CreateProcess` handing on only the three handles on Windows); `exec` without a fork, `waitpid`, `kill`, `alarm`, `pause` and `OS.Process.system` on Windows. `basis.unix_pipes` runs `cmd.exe` on Windows and `basis.posix_process` keeps what every system has; `basis.posix_fork` (FORK) and `basis.posix_linux` (LINUX) are the skip list. Basis suite: 232 checks fail on either VM, the rest of them fork or start the programs of POSIX |
 | M8, `poll` beyond sockets and files | done: the reading end of a pipe by `PeekNamedPipe` (its writer gone is the end, ready to be read), the writing end always, the console by a key waiting in its input, `NUL` always; a set of more than sockets is looked at every 10 milliseconds until something is ready or the time is up. Basis suite: 225 checks fail on either VM (232 before), the `poll` of a pipe no longer among them |
 | M9 to M11, the `Windows` structure | done, in one commit, since a signature of the library that nothing implements fails `check-claims`: `WINDOWS` transcribed, documented in full and on the ratchet list; `Windows` with the registry, `Config`, DDE, the volume, the shell, programs started with one command line and reaped with their whole code, and `Status`; sixteen primitives `win_*`, which every other system answers with `ENOSYS`. The suite has 93 checks, which pass on Linux (as `ENOSYS`), under the three hosts that compile the library (`xc1`), and on both VMs of Windows but `exit`, which forks: 226 checks of the Basis suite fail on either VM |
-| M12, `fork` by carrying the VM across (optional) | not started |
+| M12, `fork` by carrying the VM across (optional) | done: `vm/image.c` writes the whole VM to a second `runevm` started as `runevm --resume`, which moves the heap's pointers to its own heap and goes on from the `fork`; the layer of Windows hands it every descriptor (`DuplicateHandle`), socket (`WSADuplicateSocket`) and directory stream, and `runevm --emulate-fork` takes the same path on Linux, where `tests/lang/rt.fork_image` runs under ASan and `make test-stress`. A fork costs 12 ms and about 3 ms for each MB of live heap on both VMs. `basis.posix_fork` leaves the skip list, which is the Linux-only test alone. Found on the way: `Posix.Process.exit` flushed every stream on Windows (msvcrt.dll does so as it is unloaded, which `_exit` lets happen; the process now ends itself), a write to a pipe with no reader gave `EINVAL` instead of `EPIPE`, and a command line too long for Windows gave `ENOENT` for a program that does not exist instead of `E2BIG`; and the child of `Posix.ProcEnv.times/children` now works in SML, not in `sh`, so that the check holds on every system. Basis suite: 194 checks fail on either VM (226 before), and every `WINDOWS` line says why it stays: no process groups, no stopped processes, and children that run `/bin/sh` |
 
 ## Where it stands
 
@@ -174,6 +174,8 @@ worth having for its own sake.
 The skip list ends with two lines:
 * the Linux-only test, category `LINUX`;
 * `basis.posix_fork`, category `FORK`, which goes too if M12 is done.
+
+M12 was done, and the skip list is the Linux-only test alone.
 
 ## Constraints for all items
 
@@ -563,15 +565,19 @@ the process had been copied. Cygwin copies the address space of a native
 program to do the same. Here the state is only what the collector already
 knows how to list.
 
-**The estimate:** about 2,000 lines and three to five weeks, in four
-commits or more:
+**The estimate** was about 2,000 lines and three to five weeks, in four
+commits or more. It went in as one commit of about 1,000 lines:
 
-| Part | Lines |
-| --- | ---: |
-| The image in the core | 500 to 700 |
-| The POSIX side | about 150 |
-| The Windows side | 900 to 1,200 |
-| Tests and documents | about 300 |
+| Part | Lines, estimated | Lines, written |
+| --- | ---: | ---: |
+| The image in the core | 500 to 700 | 377 |
+| The POSIX side | about 150 | 133 |
+| The Windows side | 900 to 1,200 | 227 |
+| Tests and documents | about 300 | about 220 |
+
+The Windows side came out small because M5 to M7 had already built what it
+leans on: the socket table, the flags the layer keeps for each descriptor,
+and a `spawn` that hands a child a list of handles.
 
 It comes last because M7 already gives every program that only starts
 other programs. M12 adds `Posix.Process.fork` itself, which
@@ -598,27 +604,37 @@ other programs. M12 adds `Posix.Process.fork` itself, which
   is synchronised with `fseek(f, 0, SEEK_CUR)`, so the child reads on from
   where the program stopped. What a pipe has buffered cannot follow. That is
   documented.
-* **The system layer's own state** goes through a new pair,
-  `sys_image_save`/`sys_image_restore`: open directory streams, M5's
-  sockets, the `FD_CLOEXEC` bits, the `umask`.
+* **The system layer's own state** goes first, through three new calls of
+  `vm/sys.h`: `sys_fork_start` starts the child and writes it the open
+  directory streams, M5's sockets, the `FD_CLOEXEC` bits and the `umask`,
+  and hands the core the stream for the image; `sys_fork_finish` closes
+  it; `sys_resume` rebuilds all that in the child.
 * **The child** is started as `runevm --resume`, and `vm_run` is split so it
   does not make the built-in exceptions again or push a second top-level
   frame. It rebuilds its state and returns 0 from `fork`.
 * **On Windows**:
-  * the child is made with `CreateProcess`, suspended, and inherits nothing;
+  * the child is made with M7's `spawn`, and inherits only its standard
+    handles and the reading end of the pipe the image goes through, whose
+    number is its argument;
   * each descriptor's handle is given to it with `DuplicateHandle`, and each
     socket with `WSADuplicateSocket`, cloexec ones included, since cloexec
-    matters only at `exec`;
-  * the image goes through a pipe handle given the same way;
-  * the child rebuilds the exact descriptor numbers with `_open_osfhandle`
-    and `_dup2`, because SML values hold them.
+    matters only at `exec`. The child need not be suspended for this: it
+    waits on the pipe, which tells it the handles' numbers;
+  * the child reads the layer's part from the pipe's handle before it makes
+    a descriptor of it, and then rebuilds the exact descriptor numbers with
+    `_open_osfhandle` and `_dup2`, because SML values hold them. msvcrt's
+    own append, which it cannot be asked about, is kept with the other
+    flags of a descriptor for this;
+  * a directory stream is found again from its pattern and read on as far
+    as the parent's had read.
   * msvcrt's own passing of descriptors (`lpReserved2`) is not used: it
     names handles the kernel only copies if they are inheritable.
 * **`exec` in a child made this way** is M7's spawn, and then the child
   waits and exits with the program's status.
-  * Before it waits, it closes every descriptor and socket and frees its
-    heap. Otherwise it holds, for example, the write end of a sibling's
-    input, and two `Unix.execute`s deadlock.
+  * Before it waits, it closes every descriptor and socket but the three it
+    handed on. Otherwise it holds, for example, the write end of a pipe
+    whose reader then waits as long as the program runs. Its heap stays:
+    `vm/sys.h` does not reach it, and `exec` returns when it fails.
   * The program runs in a job object with `KILL_ON_JOB_CLOSE`, so a `kill`
     of the child reaches it.
 * **The other signal calls.**
@@ -628,7 +644,8 @@ other programs. M12 adds `Posix.Process.fork` itself, which
 * **Tested on Linux too.** A VM option `--emulate-fork` makes the POSIX layer
   take the same path. Before starting `/proc/self/exe` it clears
   `FD_CLOEXEC` on every descriptor, and the child restores the bits from the
-  image.
+  image. The child opens each directory stream again through
+  `/proc/self/fd` and reads on to where the parent's stood.
   * A program of `tests/lang` runs with it in its `.vmargs`, so it also runs
     under ASan and `make test-stress`.
   * The program forks with a cycle in the heap, an exception compared by
@@ -637,6 +654,11 @@ other programs. M12 adds `Posix.Process.fork` itself, which
     `chdir`.
   * This tests the image and the resumption. The handles, the job and the
     exec emulation are tested only under `make test-windows`.
+  * `tests/lang/rt.fork_image` is that program. It also forks with a pipe, a
+    socket pair, a file half written, a directory stream half read, the
+    rounding mode set, arguments, and a grandchild. Its output is the same
+    under a real `fork`, under `--emulate-fork`, under ASan and on both
+    Windows VMs.
 
 *Removes* `basis.posix_fork`. The skip list is then the Linux-only test
 alone.
@@ -676,6 +698,10 @@ alone.
    starts a process.
    * *Mitigation:* measure it when M12 is built. M7 already keeps
      `Unix.execute` off `fork` entirely.
+   * *Measured* (20 forks, each child ending at once): 12 ms with no live
+     data, 62 ms with 16 MB and 208 ms with 64 MB on the 64-bit VM, the
+     32-bit one within a few ms of it. A real `fork` on Linux takes 0, 4 and
+     16 ms.
 
 ## Out of scope
 

@@ -1685,9 +1685,11 @@ static int p_file_open(VM *vm) {
     if (vm->nfiles == vm->files_cap) {
         vm->files_cap *= 2;
         vm->files = realloc(vm->files, vm->files_cap * sizeof(FILE *));
-        if (!vm->files) vm_fatal(vm, "out of memory");
+        vm->file_modes = realloc(vm->file_modes, vm->files_cap);
+        if (!vm->files || !vm->file_modes) vm_fatal(vm, "out of memory");
     }
     int64_t h = (int64_t)vm->nfiles;
+    vm->file_modes[vm->nfiles] = (uint8_t)mode;
     vm->files[vm->nfiles++] = f;
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
@@ -1814,7 +1816,15 @@ static void free_array(char **a) {
     free(a);
 }
 
-static int p_posix_fork(VM *vm) { fflush(stdout); fflush(stderr); return ret(vm, 1, mk_int(sys_fork())); }
+/* Where the system has no fork, or runevm is given --emulate-fork, the child
+   is a second VM handed this one's state (vm/image.c), which is written
+   while the argument is still on the stack. */
+static int p_posix_fork(VM *vm) {
+    fflush(stdout);
+    fflush(stderr);
+    if (vm->emulate_fork || !sys_has_fork()) return ret(vm, 1, mk_int(vm_fork(vm)));
+    return ret(vm, 1, mk_int(sys_fork()));
+}
 
 static int exec_with(VM *vm, Value pathValue, Value argsValue, char **envp, int search, int arity) {
     char *path = c_string(vm, pathValue, "posix_exec");
@@ -1984,10 +1994,10 @@ static int p_exit(VM *vm) {
     vm_exit(vm, (int)ARG(0).u.i);
     return 0;
 }
-/* Posix.Process.exit: at once, with nothing flushed (C99's _Exit). */
+/* Posix.Process.exit: at once, with nothing flushed. */
 static int p_posix_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "posix_exit");
-    _Exit((int)ARG(0).u.i);
+    sys_exit_now((int)ARG(0).u.i);
     return 0;
 }
 static int p_command_args(VM *vm) {

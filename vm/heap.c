@@ -134,3 +134,48 @@ void vm_gc(VM *vm, size_t needed) {
     vm->gc_user_us += sys_time_user() - user0;
     vm->gc_sys_us += sys_time_sys() - sys0;
 }
+
+/* --- relocation, for an image of the VM (vm/image.c) --- */
+
+/* The heap and every root were read as the parent had them, its addresses
+   in them: each pointer moves by the distance between the two heaps. A
+   pointer that is not into the heap's used part, or an object that is not
+   one, makes the image unsound (0). */
+static uintptr_t reloc_old;
+static int reloc_ok;
+
+static Obj *relocate_obj(VM *vm, Obj *o) {
+    uintptr_t at = (uintptr_t)o;
+    if (at < reloc_old || at - reloc_old >= vm->heap_used) { reloc_ok = 0; return NULL; }
+    return (Obj *)(vm->heap_from + (at - reloc_old));
+}
+
+static void relocate_value(VM *vm, Value *v) {
+    if (v->tag == T_PTR && v->u.p) v->u.p = relocate_obj(vm, v->u.p);
+}
+
+int heap_relocate(VM *vm, uintptr_t old_base) {
+    reloc_old = old_base;
+    reloc_ok = 1;
+    size_t scan = 0;
+    while (reloc_ok && scan < vm->heap_used) {
+        Obj *o = (Obj *)(vm->heap_from + scan);
+        if (vm->heap_used - scan < sizeof(Obj) || o->kind < K_TUPLE || o->kind > K_EXNCON) return 0;
+        size_t size = obj_size(o);
+        if (size > vm->heap_used - scan) return 0;
+        if (o->kind != K_STRING) {
+            Value *f = OBJ_FIELDS(o);
+            for (uint32_t i = 0; i < o->len; i++) relocate_value(vm, &f[i]);
+        }
+        scan += size;
+    }
+    for (size_t i = 0; i < vm->sp; i++) relocate_value(vm, &vm->stack[i]);
+    for (uint32_t i = 0; i < vm->prog.nglobals; i++) relocate_value(vm, &vm->globals[i]);
+    for (uint32_t i = 0; i < vm->prog.nconsts; i++) relocate_value(vm, &vm->prog.consts[i]);
+    if (vm->frames_active)
+        for (size_t i = 0; i <= vm->fp; i++)
+            if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
+    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
+        if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
+    return reloc_ok;
+}

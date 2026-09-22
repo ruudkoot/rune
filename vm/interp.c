@@ -175,7 +175,6 @@ static Obj *expect_obj(VM *vm, Value v, int kind, const char *what) {
 /* --- main loop --- */
 int vm_run(VM *vm) {
     Program *p = &vm->prog;
-    const uint8_t *code = p->code;
 
     /* builtin exception constructors */
     static const char *const builtin_names[NUM_BUILTIN_EXNS] =
@@ -194,7 +193,14 @@ int vm_run(VM *vm) {
     for (uint32_t i = 1; i < p->funcs[0].nlocals; i++) vm_push(vm, mk_unit());
     push_frame(vm, 0, NULL, 0, 0);
     vm->pc = p->funcs[0].code_offset;
+    return vm_loop(vm);
+}
 
+/* The loop alone: a VM resumed from an image (vm/image.c) enters it here,
+   its built-in exceptions and frames being those of the image. */
+int vm_loop(VM *vm) {
+    Program *p = &vm->prog;
+    const uint8_t *code = p->code;
     for (;;) {
         uint32_t pc = vm->pc;
         uint8_t op = code[pc];
