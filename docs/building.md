@@ -145,10 +145,10 @@ on from the `fork` as a copied process would. `runevm --emulate-fork` takes
 the same path on Linux, so that `make check` tests the image
 (`tests/lang/rt.fork_image`), which the Windows suites cannot do under ASan.
 
-The programs of `tests/lang` that do not pass on the VMs of Windows are in
-`tests/windows-skip.txt`, with the reason for each; the checks of the Basis
-Library suite that do not are the `WINDOWS` lines of
-`tests/basis/deviations.txt`.
+Both VMs run every program of `tests/lang`; `tests/windows-skip.txt` names
+those to leave out, with a reason for each, and is empty. The checks of the
+Basis Library suite that do not pass are the `WINDOWS` lines of
+`tests/basis/deviations.txt`, each saying what Windows does instead.
 
 [docs/plans/windows.md](plans/windows.md) is the roadmap of what is left.
 

@@ -6,8 +6,7 @@ roadmap does four things:
 
 * builds and tests a 32-bit VM beside the 64-bit one;
 * runs the Basis Library suite on both;
-* cuts `tests/windows-skip.txt` from nine programs to the one or two that
-  print what only Linux prints;
+* cuts `tests/windows-skip.txt` from nine programs to none;
 * then adds the `Windows` structure.
 
 Every number below was measured on that commit unless it is marked as an
@@ -25,7 +24,7 @@ estimate.
 | M4, a C-locale `strftime`, reals in the rounding mode, local time in any year | done: `Date.fmt` is formatted in the core as glibc formats it in the C locale (780 lines of edge years and every directive agree with glibc), only `%Z` of a local date asks the system; `Real.fromString` reads in the rounding mode on every C library (132 numerals in four modes agree with glibc, subnormals and overflow included); the layer of Windows reaches local time outside 1970 to 3000 by 400-year cycles. `basis.date_year_of_c` leaves the skip list and `basis.date_local_before_1970` joins `tests/lang`; Basis suite: 661 failures on either VM, all explained. Found on the way: glibc keeps no summer time before 1970 under a POSIX `TZ` rule, where the layer of Windows follows the rule in every year |
 | M5, sockets over Winsock | done: sockets in a table beside the descriptors of msvcrt, `WSAPoll`, the databases of ws2_32, AF_UNIX streams and their pairs, and five differences of Winsock found by the tests and made good (below); `basis.inetsock_addresses`, `basis.netdb_lookup` and `basis.socket_loopback` leave the skip list. In the Basis suite what stays is Windows' own: no datagrams in the Unix domain, `SIOCATMARK`, and a resolver that names `localhost` after the machine |
 | M6, POSIX counterparts short of processes | done: ids from the token, the user and groups of the process, `uname`, `times`, `sysconf`, `pathconf`; the console as a terminal; paths of a drive as `/C:/...`, `/dev/null` and `/dev/tty`; `stat` from handles (inode, device, links), owner modes, executables by `PATHEXT`; hard and symbolic links and `readlink`; files that can be removed while open; `fcntl` of files (close-on-exec, append, non-blocking pipes, synchronous), `F_DUPFD`, locks by `LockFileEx`. `basis.posix_files` leaves the skip list as it is. Basis suite: 236 checks fail on either VM (398 before), and what stays is Windows' own -- no bits for a group or others, a file its owner cannot fail to read, no FIFOs, no user `root`, the root of a drive -- or asks `sh` |
-| M7, a spawn primitive | done: `posix_spawn` starts a program with three descriptors, `Unix.execute` uses it everywhere (fork, dup2 and exec in C on POSIX, so 126 stays; `CreateProcess` handing on only the three handles on Windows); `exec` without a fork, `waitpid`, `kill`, `alarm`, `pause` and `OS.Process.system` on Windows. `basis.unix_pipes` runs `cmd.exe` on Windows and `basis.posix_process` keeps what every system has; `basis.posix_fork` (FORK) and `basis.posix_linux` (LINUX) are the skip list. Basis suite: 232 checks fail on either VM, the rest of them fork or start the programs of POSIX |
+| M7, a spawn primitive | done: `posix_spawn` starts a program with three descriptors, `Unix.execute` uses it everywhere (fork, dup2 and exec in C on POSIX, so 126 stays; `CreateProcess` handing on only the three handles on Windows); `exec` without a fork, `waitpid`, `kill`, `alarm`, `pause` and `OS.Process.system` on Windows. `basis.unix_pipes` runs `cmd.exe` on Windows and `basis.posix_process` keeps what every system has; `basis.posix_fork` (FORK) and `basis.posix_linux` (LINUX) are the skip list (M12 takes the first, and the second was later deleted: the Basis suite compares every name of `uname` with the system's own). Basis suite: 232 checks fail on either VM, the rest of them fork or start the programs of POSIX |
 | M8, `poll` beyond sockets and files | done: the reading end of a pipe by `PeekNamedPipe` (its writer gone is the end, ready to be read), the writing end always, the console by a key waiting in its input, `NUL` always; a set of more than sockets is looked at every 10 milliseconds until something is ready or the time is up. Basis suite: 225 checks fail on either VM (232 before), the `poll` of a pipe no longer among them |
 | M9 to M11, the `Windows` structure | done, in one commit, since a signature of the library that nothing implements fails `check-claims`: `WINDOWS` transcribed, documented in full and on the ratchet list; `Windows` with the registry, `Config`, DDE, the volume, the shell, programs started with one command line and reaped with their whole code, and `Status`; sixteen primitives `win_*`, which every other system answers with `ENOSYS`. The suite has 93 checks, which pass on Linux (as `ENOSYS`), under the three hosts that compile the library (`xc1`), and on both VMs of Windows but `exit`, which forks: 226 checks of the Basis suite fail on either VM |
 | M12, `fork` by carrying the VM across (optional) | done: `vm/image.c` writes the whole VM to a second `runevm` started as `runevm --resume`, which moves the heap's pointers to its own heap and goes on from the `fork`; the layer of Windows hands it every descriptor (`DuplicateHandle`), socket (`WSADuplicateSocket`) and directory stream, and `runevm --emulate-fork` takes the same path on Linux, where `tests/lang/rt.fork_image` runs under ASan and `make test-stress`. A fork costs 12 ms and about 3 ms for each MB of live heap on both VMs. `basis.posix_fork` leaves the skip list, which is the Linux-only test alone. Found on the way: `Posix.Process.exit` flushed every stream on Windows (msvcrt.dll does so as it is unloaded, which `_exit` lets happen; the process now ends itself), a write to a pipe with no reader gave `EINVAL` instead of `EPIPE`, and a command line too long for Windows gave `ENOENT` for a program that does not exist instead of `E2BIG`; and the child of `Posix.ProcEnv.times/children` now works in SML, not in `sh`, so that the check holds on every system. Basis suite: 194 checks fail on either VM (226 before), and every `WINDOWS` line says why it stays: no process groups, no stopped processes, and children that run `/bin/sh` |
@@ -175,7 +174,11 @@ The skip list ends with two lines:
 * the Linux-only test, category `LINUX`;
 * `basis.posix_fork`, category `FORK`, which goes too if M12 is done.
 
-M12 was done, and the skip list is the Linux-only test alone.
+M12 was done, and the Linux-only test was deleted after it: it pinned the
+name of the machine it ran on rather than anything of the library, and the
+Basis suite already compares every name of `uname` with what the system's
+own `uname` prints (`tests/basis/posix_procenv.sml`). The skip list is
+empty, and both VMs run every program of `tests/lang`.
 
 ## Constraints for all items
 
@@ -510,7 +513,9 @@ most of what M10 and M12 need.
     * `basis.posix_fork`, category `FORK`: `fork` with `exec` and
       `waitpid`, and `fork` with `pause` and `kill`;
     * the Linux-only test, category `LINUX`: `uname` giving `Linux`, and
-      the home directory from M6.
+      the home directory from M6. (M6 left the home directory where it was,
+      since `/C:/Users/...` starts with `/`, and the test was deleted after
+      M12: see "The skip list" above.)
 
 *Removes* `basis.unix_pipes` and `basis.posix_process`, and adds
 `basis.posix_fork` and the Linux-only test.
@@ -724,5 +729,5 @@ alone.
   `test-stress` for the VM.
 * At the end, `make test-windows` reports both VMs over `tests/lang` and
   `tests/basis`.
-* `tests/windows-skip.txt` holds the Linux-only test, and `basis.posix_fork`
-  too if M12 is not done. Every category in its header still has a program.
+* `tests/windows-skip.txt` is empty, and its header has no category without a
+  program under it.

@@ -2,10 +2,7 @@
 #
 #   NAME CATEGORY: reason
 #
-# Categories:
-#   LINUX     what only Linux prints, which a Mac would not print either
-#
-# Everything else runs on both Windows VMs, bin/runevm.exe and
-# bin/runevm32.exe. docs/plans/windows.md is the roadmap that took this list
-# from nine programs to the one that only Linux can pass.
-basis.posix_linux LINUX: uname says Linux
+# The list is empty: both Windows VMs, bin/runevm.exe and bin/runevm32.exe,
+# run every program of tests/lang. docs/plans/windows.md is the roadmap that
+# took this list from nine programs to none; a category is added here again
+# only with a program to go under it.
