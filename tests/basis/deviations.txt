@@ -16,8 +16,12 @@
 #                   the reading the test takes
 #   WIDTH           follows from the precision of a type
 #   XC1-NA          not meaningful for Rune's library on a host
+#   WINDOWS         the system layer of Windows (vm/sys_win.c) does not do
+#                   it yet, or msvcrt does it differently; the line names
+#                   the milestone of docs/plans/windows.md that takes it
 # A RUNE-DEV or SPEC-AMBIGUOUS line for `rune` holds for the xc1 configurations
-# as well: they run the same library source. A host line that names an xc1
+# as well: they run the same library source; and for rune:windows and
+# rune:windows32, which run it with the same compiler on the VMs of Windows. A host line that names an xc1
 # configuration records a host defect that reaches Rune's library through a
 # primitive of tests/basis/host/rune-prim.sml written on the host's function.
 # A failure without a line fails the run, and so does a line that matches no

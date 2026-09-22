@@ -221,13 +221,14 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
 # (bin/runevm.exe) and for 32 bits (bin/runevm32.exe), and `make
-# test-windows` runs the language suite and tests/vm on both. Neither is
-# part of any other target, and nothing else in the tree depends on
-# vm/sys_win.c: the toolchain is only on a machine that has it, and running
-# the result needs Windows, or WSL, which starts an .exe for you. The
-# library, the compiler and the bytecode are the same as everywhere else --
-# only the VM differs -- so the suite is compiled once, with the ordinary
-# bin/rune, and run on each VM.
+# test-windows` runs the language suite, tests/vm and the Basis Library
+# suite (the rune:windows configurations of tests/basis/run-matrix.sh) on
+# both. Neither is part of any other target, and nothing else in the tree
+# depends on vm/sys_win.c: the toolchain is only on a machine that has it,
+# and running the result needs Windows, or WSL, which starts an .exe for
+# you. The library, the compiler and the bytecode are the same as
+# everywhere else -- only the VM differs -- so the suites are compiled with
+# the ordinary bin/rune and run on each VM.
 #
 # The 32-bit VM computes with SSE2 as the 64-bit one does (x87 arithmetic
 # rounds differently) and is linked large-address-aware, which gives it
@@ -267,6 +268,7 @@ bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 
 test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
+	RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.

@@ -45,6 +45,12 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `vm/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
+* `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
+  Windows (`make windows`, `make test-windows`; [building.md](building.md)).
+  Their lines of `deviations.txt` are `WINDOWS`: what the system layer of
+  Windows does not do yet, each naming the milestone of
+  [plans/windows.md](plans/windows.md) that takes it. They are not
+  differences of the library, and are not described below.
 
 ## Summary
 

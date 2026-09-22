@@ -6,6 +6,13 @@
 # Configurations (default: rune):
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
+#   rune:windows  rune:windows32
+#                          bin/rune + bin/runevm.exe or bin/runevm32.exe, the
+#                          VMs of make windows (RUNEVM_WINDOWS=,
+#                          RUNEVM_WINDOWS32=); a program runs in a directory
+#                          on the Windows side (tests/windows-dir.sh), and
+#                          needs Windows, or WSL, which starts an .exe
+#   windows                rune:windows and rune:windows32
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
 #                          the suite against the host's own Basis Library
 #   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml
@@ -13,7 +20,7 @@
 #                          compiled by the host; see below
 #   hosts                  native:HOST for the four hosts
 #   xc1                    xc1:HOST for the four hosts
-#   all                    rune, hosts and xc1
+#   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
 # ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ built
 # for 64 bits (smlnj) and for 32 (smlnj32: 31-bit int and word) and Poly/ML;
@@ -47,7 +54,8 @@
 # Every failed check must be explained by a line of tests/basis/deviations.txt,
 #   config-glob | label-glob | CATEGORY | reason
 # A RUNE-DEV or SPEC-AMBIGUOUS line for the configuration `rune` also explains
-# the same failure in an xc1 configuration, which shares the library source.
+# the same failure in an xc1 configuration, which shares the library source,
+# and in a rune:windows one, which shares the library and the compiler.
 # Exit status 1: an unexplained failure, or a line that matches no failure of
 # a configuration it names (so the file never goes stale; not checked when a
 # FILTER is given, nor, in a configuration where a test timed out, for a line
@@ -121,6 +129,8 @@ self=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
 # a host gets wrong about local time is the same on every machine.
 TZ='NST3:30NDT,M3.2.0,M11.1.0'
 export TZ
+# A program of Windows started from WSL sees a variable only if WSLENV names it.
+case ":${WSLENV:-}:" in *:TZ:*) ;; *) WSLENV="TZ${WSLENV:+:$WSLENV}"; export WSLENV ;; esac
 cd "$(dirname "$0")/../.."
 root=$(pwd)
 suite=$root/tests/basis
@@ -197,7 +207,17 @@ load() {
         return
       fi
       "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
-      (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < /dev/null)
+      case $host in
+        windows*)
+          # in the same place on the Windows side, with the program beside it
+          windows_dir=$RUNE_WINDOWS_DIR/matrix/${loaddir#"$out"/}
+          rm -rf "$windows_dir"
+          mkdir -p "$windows_dir"
+          cp "$loaddir/prog.rbc" "$windows_dir/prog.rbc"
+          (cd "$windows_dir" && timeout "$limit" "$cmd2" prog.rbc > "$loaddir/stdout" 2>> "$loaddir/log" < /dev/null)
+          ;;
+        *) (cd "$loaddir" && timeout "$limit" "$cmd2" prog.rbc > stdout 2>> log < /dev/null) ;;
+      esac
       ;;
     *:mlton)
       write_mlb "$loaddir/prog.mlb" "$@"
@@ -781,6 +801,7 @@ expand() {
       hosts) echo native:mlton native:smlnj native:smlnj32 native:polyml ;;
       xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
+      windows) echo rune:windows rune:windows32 ;;
       *) echo "$c" ;;
     esac
   done
@@ -799,6 +820,19 @@ resolve() {
       cmd2=${RUNEVM:-$root/bin/runevm}
       id=rune
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      ;;
+    rune:windows|rune:windows32)
+      cmd1=${RUNE:-$root/bin/rune}
+      if [ "$host" = windows ]; then cmd2=${RUNEVM_WINDOWS:-$root/bin/runevm.exe}
+      else cmd2=${RUNEVM_WINDOWS32:-$root/bin/runevm32.exe}
+      fi
+      id=rune:$host
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make windows)" >&2; return 1; }
+      "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here; Windows or WSL is needed" >&2; return 1; }
+      if [ -z "${RUNE_WINDOWS_DIR:-}" ]; then
+        RUNE_WINDOWS_DIR=$(sh "$root/tests/windows-dir.sh") || { echo "run-matrix: no directory on the Windows side; set RUNE_WINDOWS_DIR" >&2; return 1; }
+        export RUNE_WINDOWS_DIR
+      fi
       ;;
     native:mlton|xc1:mlton)
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}
@@ -856,7 +890,7 @@ for id in $ids; do
   for t in $tests; do rm -f "$d/$t.result"; done
   # What a host has does not change between runs; what Rune's library has does.
   case "$id" in
-    rune|xc1:*) rm -rf "$d/probe" ;;
+    rune|rune:*|xc1:*) rm -rf "$d/probe" ;;
     *) [ -n "$filter" ] || rm -rf "$d/probe" ;;
   esac
 done
@@ -999,7 +1033,7 @@ function explain(id, label,   k, i, ln) {
 function candidates(id,   i) {
   for (i = 1; i <= ndev; i++)
     if (id ~ cre[i] ||
-        (id ~ /^xc1:/ && cglob[i] == "rune" && (cat[i] == "RUNE-DEV" || cat[i] == "SPEC-AMBIGUOUS")))
+        (id ~ /^(xc1|rune):/ && cglob[i] == "rune" && (cat[i] == "RUNE-DEV" || cat[i] == "SPEC-AMBIGUOUS")))
       cand[id, ++ncand[id]] = i
 }
 function secs(x) { return sprintf("%.1f", x) }
@@ -1061,7 +1095,7 @@ BEGIN {
       if (na != "") tna++
       if (absent != "") {
         tab++
-        if (id == "rune") {
+        if (id ~ /^rune(:|$)/) {
           e = explain(id, "@absent/" t)
           if (e != "") {
             ln = e; sub(/\|.*/, "", ln); if (ln > 0) used[ln, id] = 1
