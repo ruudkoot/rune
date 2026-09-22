@@ -2,10 +2,14 @@
    machine, dynamic data exchange, programs started with a pipe each way, and
    the codes a process ends with.
 
-   The structure is there on every system, and every call of it that asks
-   Windows raises `OS.SysErr` on a system that is not Windows, with the error
-   `ENOSYS`; the flags of `Key`, the platforms of `Config` and the codes of
-   `Status` are the same everywhere.
+   The structure is there on every system, so a program that names it
+   compiles anywhere. What asks Windows raises `OS.SysErr` on a system that
+   is not Windows, with the error `ENOSYS`: all of `Reg`, the values
+   `Config` reads from the machine, `DDE`, `execute` and the group around
+   it, `getVolumeInformation`, `findExecutable`, `launchApplication` and
+   `openDocument`. What asks nothing of Windows works everywhere: the flags
+   of `Key`, the platforms of `Config`, the codes of `Status`, `fromStatus`
+   and `exit` (below).
 
    Area: The operating system
 
@@ -384,6 +388,12 @@ sig
   (* `fromStatus s` is the code of Windows that the status `s` stands for. *)
   val fromStatus : OS.Process.status -> Status.status
 
-  (* `exit st` runs the actions of `OS.Process.atExit`, flushes and closes the files, and ends this program with the code `st`. *)
+  (* `exit st` runs the actions of `OS.Process.atExit`, flushes and closes the files, and ends this program with the code `st`.
+
+     Implementation: `Windows.exit/the-code-off-windows`. This is one of the
+     values that need no Windows, and the program ends with `st` wherever it
+     runs; but a system of POSIX gives a parent the low eight bits of a code
+     alone, where Windows gives the whole of it, which is what `reap` reads
+     back. *)
   val exit : Status.status -> 'a
 end

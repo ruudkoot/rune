@@ -25,10 +25,14 @@ The operating system Windows: the registry, the configuration of the
 machine, dynamic data exchange, programs started with a pipe each way, and
 the codes a process ends with.
 
-The structure is there on every system, and every call of it that asks
-Windows raises [`OS.SysErr`](../sig/OS.md#exn-syserr) on a system that is not Windows, with the error
-`ENOSYS`; the flags of [`Key`](#str-key), the platforms of [`Config`](#str-config) and the codes of
-[`Status`](#str-status) are the same everywhere.
+The structure is there on every system, so a program that names it
+compiles anywhere. What asks Windows raises [`OS.SysErr`](../sig/OS.md#exn-syserr) on a system that
+is not Windows, with the error `ENOSYS`: all of [`Reg`](#str-reg), the values
+[`Config`](#str-config) reads from the machine, [`DDE`](#str-dde), [`execute`](#val-execute) and the group around
+it, [`getVolumeInformation`](#val-getvolumeinformation), [`findExecutable`](#val-findexecutable), [`launchApplication`](#val-launchapplication) and
+[`openDocument`](#val-opendocument). What asks nothing of Windows works everywhere: the flags
+of [`Key`](#str-key), the platforms of [`Config`](#str-config), the codes of [`Status`](#str-status), [`fromStatus`](#val-fromstatus)
+and [`exit`](#val-exit) (below).
 
 > **Implementation** `WINDOWS/code-page`. Names, strings of the registry and
 > paths go to Windows through its code page (the `A` functions of Win32),
@@ -1520,6 +1524,12 @@ val exit : Status.status -> 'a
 ```
 
 `exit st` runs the actions of [`OS.Process.atExit`](../sig/OS_PROCESS.md#val-atexit), flushes and closes the files, and ends this program with the code `st`.
+
+> **Implementation** `Windows.exit/the-code-off-windows`. This is one of the
+> values that need no Windows, and the program ends with `st` wherever it
+> runs; but a system of POSIX gives a parent the low eight bits of a code
+> alone, where Windows gives the whole of it, which is what [`reap`](#val-reap) reads
+> back.
 
 <details><summary>Tests (1)</summary>
 
