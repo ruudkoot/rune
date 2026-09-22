@@ -17,7 +17,12 @@
 
    Implementation: `OS.Path/unix-syntax`. Rune's paths are Unix paths: the
    separator is `/`, the only volume is the empty string, and
-   `fromUnixPath` and `toUnixPath` are the identity.
+   `fromUnixPath` and `toUnixPath` are the identity. That holds on Windows
+   as well, where the system layer of the VM hands the library a path of a
+   drive as `/C:/Users/...`, which is absolute by these rules since no name
+   of Windows has a colon in it, and gives Windows back `C:/...`. The syntax
+   the specification describes for Windows, with the volume `C:` and `\`
+   between the arcs, is not implemented.
 
    Pinned by: `OS.Path.parentArc/unix`, `OS.Path.currentArc/unix`,
    `OS.Path.validVolume/*` *)

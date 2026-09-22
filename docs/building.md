@@ -150,7 +150,16 @@ those to leave out, with a reason for each, and is empty. The checks of the
 Basis Library suite that do not pass are the `WINDOWS` lines of
 `tests/basis/deviations.txt`, each saying what Windows does instead.
 
-[docs/plans/windows.md](plans/windows.md) is the roadmap of what is left.
+A healthy `make test-windows` takes about 8 minutes and reports, for each
+VM, all 141 programs of `tests/lang` passing with none skipped, `tests/vm`
+11 of 11, and 194 of the 137,240 checks of the Basis Library suite failing,
+every one of them explained by a `WINDOWS` line.
+
+What Windows does not get: `OS.Path` keeps the rules of POSIX rather than
+the drive letters and backslashes of Windows, which is why a path of a drive
+reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
+VMs, only the VM is built and tested there; and nothing of this runs in
+continuous integration.
 
 ## Installing
 

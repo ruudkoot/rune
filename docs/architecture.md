@@ -118,6 +118,10 @@ read their arguments from the stack (not popped) until the result exists, and
 temporaries that must survive an allocation are pushed on the value stack
 (`vm_cons` shows the pattern).
 
+[runtime.md](runtime.md) is the same machine seen from a running program:
+the layout of a value, when the collector moves it, the limits, what makes a
+run reproducible, and where the platform shows through.
+
 ## Basis library
 
 `lib/basis/*.sml` is ordinary SML compiled before a program that needs it; the

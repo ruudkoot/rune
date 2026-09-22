@@ -209,7 +209,9 @@ load() {
       "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
       case $host in
         windows*)
-          # in the same place on the Windows side, with the program beside it
+          # in the same place on the Windows side, with the program beside it.
+          # timeout kills the process WSL starts for the .exe, and the
+          # program of Windows behind it dies with that one.
           windows_dir=$RUNE_WINDOWS_DIR/matrix/${loaddir#"$out"/}
           rm -rf "$windows_dir"
           mkdir -p "$windows_dir"

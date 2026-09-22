@@ -19,7 +19,7 @@
 #   WINDOWS         what Windows does not have or does otherwise, which the
 #                   system layer (vm/sys_win.c) cannot make good, or a check
 #                   that asks sh or starts another program of POSIX; each
-#                   line says so after `stays:` (docs/plans/windows.md)
+#                   line says so after `stays:` (docs/building.md)
 # A RUNE-DEV or SPEC-AMBIGUOUS line for `rune` holds for the xc1 configurations
 # as well: they run the same library source; and for rune:windows and
 # rune:windows32, which run it with the same compiler on the VMs of Windows. A host line that names an xc1
@@ -595,9 +595,9 @@ xc1:* | INet6Sock.sock_addr/* | XC1-NA | INet6Sock.any rests on socket_inet6_add
 xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 
 # ---- Windows: Rune on bin/runevm.exe and bin/runevm32.exe (make test-windows).
-# What the system layer of Windows, vm/sys_win.c, does not do yet, with the
-# milestone of docs/plans/windows.md that takes it, and what Windows cannot
-# do as POSIX does, which stays. The two VMs fail the same checks.
+# What Windows cannot do as POSIX does, and the checks that ask sh or start
+# another program of POSIX, which Windows has not: every line says which
+# after `stays:`, and the two VMs fail the same checks.
 rune:windows* | Socket.Ctl.getTYPE/unix-dgram | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.recvVecFrom/unix | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.send*ToNB*/full | WINDOWS | stays: the check fills the queue of a datagram socket in the Unix domain, which Windows does not have

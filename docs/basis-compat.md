@@ -51,9 +51,8 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   have or does otherwise, which its system layer cannot make good (the
   modes of a group and of others, named pipes, datagrams in the Unix
   domain, process groups, stopping a process), and the checks that ask `sh`
-  or start another program of POSIX; each says why it stays
-  ([plans/windows.md](plans/windows.md)). They are not differences of the
-  library, and are not described below.
+  or start another program of POSIX; each says why it stays. They are not
+  differences of the library, and are not described below.
 
 ## Summary
 

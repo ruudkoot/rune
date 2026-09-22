@@ -61,7 +61,12 @@ keep these invariants:
   Poly/ML); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through `vm/opcodes.def` and
   `vm/prims.def` (then `make gen`), with the corresponding implementation in
-  `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
+  `vm/` and a description in `docs/bytecode.md`. A primitive that needs the
+  operating system goes behind a new call of `vm/sys.h` that every layer
+  answers -- `sys_posix.c`, `sys_win.c` and `sys_none.c`, with `ENOSYS` where
+  there is nothing to do -- and is written on the hosts in
+  `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
+  Basis Library suite run. Bump the `.rbc` version in
   `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
@@ -94,6 +99,12 @@ keep these invariants:
   VM changes also run the suite with the
   sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
+* `make check` never compiles `vm/sys_win.c`, so a green `make check` says
+  nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
+  system layers is done only once `make windows` builds both VMs and
+  `make test-windows` passes on both (`tests/lang`, `tests/vm` and the Basis
+  Library suite; about 8 minutes). It needs the mingw-w64 toolchains and a
+  Windows to run the `.exe`s, which is what `make doctor` reports.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the

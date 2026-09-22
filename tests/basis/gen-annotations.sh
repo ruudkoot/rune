@@ -11,8 +11,8 @@
 # A line of deviations.txt, `config-glob | label-glob | CATEGORY | reason`,
 # becomes `label-glob | implementation | text`. Left out are
 #   * the lines about Rune: they are notes of the doc comments; and those
-#     about Rune on the VMs of Windows (rune:windows...), which say what the
-#     system layer of Windows does not do yet (docs/plans/windows.md);
+#     about Rune on the VMs of Windows (rune:windows...), which say what
+#     Windows does otherwise (docs/building.md);
 #   * WIDTH, XC1-NA and HOST-FLAKY, which describe the suite and not a host;
 #   * the lines for xc1 configurations only: Rune's library on a host;
 #   * the labels @section/..., @load/... and @absent/..., which name no member.

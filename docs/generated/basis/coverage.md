@@ -90,6 +90,7 @@ be pinned: many are about the text and not about behaviour.
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
+- `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
 
 ---
 
