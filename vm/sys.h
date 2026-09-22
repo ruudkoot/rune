@@ -68,6 +68,11 @@ int sys_close_dir(int dir);
 /* I/O descriptors. The descriptor of an open file, which is what the two
    calls below take; -1 when there is none. */
 int sys_fileno(FILE *file);
+/* The position of an open file in bytes, and moving it, with offsets of 64
+   bits even where the C library's long has 32 (Windows). -1 on failure,
+   with the reason in errno, as ftell and fseek leave it. */
+int64_t sys_ftell(FILE *file);
+int sys_fseek(FILE *file, int64_t offset, int whence);
 /* The kind of a descriptor: 0 file, 1 directory, 2 symbolic link,
    3 terminal, 4 pipe, 5 socket, 6 device; -1 on failure. */
 int sys_desc_kind(int fd);

@@ -285,6 +285,10 @@ int sys_close_dir(int dir) {
 }
 
 int sys_fileno(FILE *file) { return _fileno(file); }
+int64_t sys_ftell(FILE *file) { __int64 r = _ftelli64(file); return r < 0 ? -1 : (int64_t)r; }
+int sys_fseek(FILE *file, int64_t offset, int whence) {
+    return _fseeki64(file, (__int64)offset, whence) == 0 ? 0 : -1;
+}
 /* 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device */
 int sys_desc_kind(int fd) {
     HANDLE h = (HANDLE)_get_osfhandle(fd);

@@ -1,5 +1,7 @@
 /* The system layer on POSIX. */
 #define _POSIX_C_SOURCE 200809L
+/* off_t of 64 bits on a 32-bit system as well: file positions, sizes */
+#define _FILE_OFFSET_BITS 64
 #include "sys.h"
 
 #include <errno.h>
@@ -350,6 +352,10 @@ int sys_close_dir(int dir) {
 
 /* ---------------------------------------------------------------- descriptors */
 int sys_fileno(FILE *file) { return file ? fileno(file) : -1; }
+int64_t sys_ftell(FILE *file) { off_t r = ftello(file); return r < 0 ? -1 : (int64_t)r; }
+int sys_fseek(FILE *file, int64_t offset, int whence) {
+    return fseeko(file, (off_t)offset, whence) == 0 ? 0 : -1;
+}
 
 int sys_desc_kind(int fd) {
     struct stat st;

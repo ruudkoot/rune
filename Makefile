@@ -246,6 +246,7 @@ test-windows: bin/runevm.exe $(RUNE)
 # Depending on $(RUNE) builds whichever compiler the override names.
 test: $(RUNE) vm | build/.doctor-check
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm $(RUNEVM)
+	sh tests/vm/run-vm-tests.sh --vm $(RUNEVM)
 
 test-all: host-builds vm | build/.doctor-check
 	@for c in mlton smlnj smlnj32 polyml; do \

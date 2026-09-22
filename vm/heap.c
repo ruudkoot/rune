@@ -29,7 +29,7 @@ void heap_init(VM *vm, size_t semispace_bytes) {
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = sizeof(Obj) + payload_size(payload_bytes);
-    if (vm->heap_used + size > vm->heap_size ||
+    if (size > vm->heap_size - vm->heap_used ||
         (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0)) {
         vm_gc(vm, size);
     }
@@ -123,9 +123,13 @@ void vm_gc(VM *vm, size_t needed) {
     int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
     /* live data always fits in a semispace of the current size */
     collect_into(vm, vm->heap_size);
-    /* keep the heap at most half full after collection to avoid thrashing */
+    /* keep the heap at most half full after collection to avoid thrashing;
+       written so that nothing wraps where a size_t is 32 bits */
     size_t want = vm->heap_size;
-    while (vm->heap_used + needed > want / 2) want *= 2;
+    while (vm->heap_used > want / 2 || needed > want / 2 - vm->heap_used) {
+        if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        want *= 2;
+    }
     if (want != vm->heap_size) collect_into(vm, want);
     vm->gc_user_us += sys_time_user() - user0;
     vm->gc_sys_us += sys_time_sys() - sys0;

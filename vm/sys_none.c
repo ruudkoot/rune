@@ -3,6 +3,7 @@
 #include "sys.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -70,6 +71,12 @@ int sys_rewind_dir(int dir) { (void)dir; return fail(); }
 int sys_close_dir(int dir) { (void)dir; return fail(); }
 
 int sys_fileno(FILE *file) { (void)file; return fail(); }
+/* ISO C has only the positions a long can hold. */
+int64_t sys_ftell(FILE *file) { long r = ftell(file); return r < 0 ? -1 : (int64_t)r; }
+int sys_fseek(FILE *file, int64_t offset, int whence) {
+    if (offset > LONG_MAX || offset < LONG_MIN) { errno = ERANGE; return -1; }
+    return fseek(file, (long)offset, whence) == 0 ? 0 : -1;
+}
 int sys_desc_kind(int fd) { (void)fd; return fail(); }
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
     (void)fds; (void)events; (void)n; (void)microseconds; return fail();

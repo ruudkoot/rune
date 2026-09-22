@@ -1,6 +1,8 @@
 /* runevm: portable interpreter for Rune bytecode. */
 #include "vm.h"
 
+#include <errno.h>
+
 static void usage(void) {
     fprintf(stderr,
         "usage: runevm [options] file.rbc [args ...]\n"
@@ -38,11 +40,22 @@ void vm_exit(VM *vm, int status) {
                 (unsigned long long)vm->instructions, (unsigned long long)vm->bytes_allocated,
                 (unsigned long long)vm->objects_allocated);
     if (vm->stats)
-        fprintf(stderr, "runevm: %zu collections, %zu bytes allocated, semispace %zu bytes, %zu live\n",
-                vm->gc_count, vm->bytes_allocated, vm->heap_size, vm->heap_used);
+        fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live\n",
+                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used);
     fflush(stderr);
     vm_destroy(vm);
     exit(status);
+}
+
+/* A size in bytes or a count: a decimal number that fits a size_t, which is
+   32 bits on a 32-bit VM. 0 when the text is not one. */
+static int size_arg(const char *text, size_t *out) {
+    char *end;
+    errno = 0;
+    unsigned long long v = strtoull(text, &end, 10);
+    if (errno != 0 || end == text || *end != 0 || text[0] == '-' || v > SIZE_MAX) return 0;
+    *out = (size_t)v;
+    return 1;
 }
 
 int main(int argc, char **argv) {
@@ -51,15 +64,14 @@ int main(int argc, char **argv) {
     int i = 1;
     for (; i < argc; i++) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
-            heap = (size_t)strtoull(argv[++i], NULL, 10);
+            if (!size_arg(argv[++i], &heap)) { usage(); return 2; }
             if (heap < 4096) heap = 4096;
         } else if (strcmp(argv[i], "--disasm") == 0) disasm = 1;
         else if (strcmp(argv[i], "--trace") == 0) trace = 1;
         else if (strcmp(argv[i], "--stats") == 0) stats = 1;
         else if (strcmp(argv[i], "--count") == 0) count = 1;
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
-            gc_stress = (size_t)strtoull(argv[++i], NULL, 10);
-            if (gc_stress == 0) { usage(); return 2; }
+            if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm 0.2.0\n"); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }

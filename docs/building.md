@@ -66,7 +66,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make vm` | `bin/runevm` |
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
-| `make test` | run `tests/run-tests.sh` with `bin/rune` |
+| `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the four host builds |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
 | `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |

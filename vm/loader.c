@@ -7,8 +7,10 @@ typedef struct Reader {
     int error;
 } Reader;
 
+/* pos never exceeds len, so this cannot wrap even where size_t is 32 bits
+   and n is a length read from the file */
 static int need(Reader *r, size_t n) {
-    if (r->pos + n > r->len) { r->error = 1; return 0; }
+    if (n > r->len - r->pos) { r->error = 1; return 0; }
     return 1;
 }
 
@@ -27,19 +29,34 @@ static int fail(char *err, size_t errlen, const char *msg) {
     return 0;
 }
 
+/* The whole file, read to its end: its size is never asked, since ftell
+   gives a long, which is 32 bits on Windows. */
+static uint8_t *read_file(FILE *f, size_t *size) {
+    size_t cap = 1 << 16, n = 0;
+    uint8_t *data = malloc(cap);
+    while (data) {
+        n += fread(data + n, 1, cap - n, f);
+        if (n < cap) break;
+        if (cap > SIZE_MAX / 2) { free(data); return NULL; }
+        uint8_t *bigger = realloc(data, cap * 2);
+        if (!bigger) { free(data); return NULL; }
+        data = bigger;
+        cap *= 2;
+    }
+    if (data && ferror(f)) { free(data); return NULL; }
+    *size = n;
+    return data;
+}
+
 int load_program(VM *vm, const char *path, char *err, size_t errlen) {
     FILE *f = fopen(path, "rb");
     if (!f) return fail(err, errlen, "cannot open file");
-    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return fail(err, errlen, "cannot read file"); }
-    long size = ftell(f);
-    if (size < 0) { fclose(f); return fail(err, errlen, "cannot read file"); }
-    rewind(f);
-    uint8_t *data = malloc((size_t)size + 1);
-    if (!data) { fclose(f); return fail(err, errlen, "out of memory"); }
-    if (fread(data, 1, (size_t)size, f) != (size_t)size) { fclose(f); free(data); return fail(err, errlen, "cannot read file"); }
+    size_t size = 0;
+    uint8_t *data = read_file(f, &size);
     fclose(f);
+    if (!data) return fail(err, errlen, "cannot read file");
 
-    Reader r = { data, (size_t)size, 0, 0 };
+    Reader r = { data, size, 0, 0 };
     Program *p = &vm->prog;
     memset(p, 0, sizeof *p);
 

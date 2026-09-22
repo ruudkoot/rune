@@ -1439,11 +1439,11 @@ static int p_file_read_vec(VM *vm) {
 static int p_file_avail(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_avail");
     if (!f) return ret(vm, 1, mk_int(0));
-    long here = ftell(f);
+    int64_t here = sys_ftell(f);
     if (here < 0) return ret(vm, 1, mk_int(-1));
-    if (fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
-    long end = ftell(f);
-    if (fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
+    if (sys_fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
+    int64_t end = sys_ftell(f);
+    if (sys_fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
     return ret(vm, 1, mk_int(end - here));
 }
 
@@ -1453,7 +1453,7 @@ static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
    has positions, or an invalid handle). */
 static int p_file_tell(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_tell");
-    long here = f ? ftell(f) : -1;
+    int64_t here = f ? sys_ftell(f) : -1;
     if (here < 0) vm->io_errno = errno;
     return ret(vm, 1, mk_int(here < 0 ? -1 : here));
 }
@@ -1463,7 +1463,7 @@ static int p_file_tell(VM *vm) {
 static int p_file_seek(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_seek");
     check_tag(vm, ARG(0), T_INT, "file_seek");
-    int ok = f && ARG(0).u.i >= 0 && fseek(f, (long)ARG(0).u.i, SEEK_SET) == 0;
+    int ok = f && ARG(0).u.i >= 0 && sys_fseek(f, ARG(0).u.i, SEEK_SET) == 0;
     if (!ok) vm->io_errno = f ? errno : EBADF;
     return ret(vm, 2, mk_int(ok ? 0 : -1));
 }
