@@ -238,7 +238,7 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 #
 # What the system layer of Windows does and does not do is in the header of
 # vm/sys_win.c; tests/windows-skip.txt lists the programs that need what it
-# does not and why, and docs/plans/windows.md what is left to do.
+# does not and why, and docs/runtime.md what a program can count on.
 WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1

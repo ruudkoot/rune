@@ -238,7 +238,12 @@ load() {
       # With a heap image of the library the program starts from it and uses
       # only its own files; the image itself uses what it is given.
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
-        shift $(prefix | wc -w)
+        prefix_count=$(prefix | wc -w)
+        if [ "$prefix_count" -gt "$#" ]; then
+          echo "error: saved basis image has $prefix_count prefix files, but load received only $# source files" >> "$loaddir/log"
+          return 1
+        fi
+        shift "$prefix_count"
         write_driver "$loaddir/driver.sml" "$@"
         (cd "$loaddir" && timeout "$limit" "$cmd1" "@SMLload=$cfgout/basis.heap" > stdout 2> log < /dev/null)
       else
@@ -248,7 +253,12 @@ load() {
       ;;
     *:polyml)
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
-        shift $(prefix | wc -w)
+        prefix_count=$(prefix | wc -w)
+        if [ "$prefix_count" -gt "$#" ]; then
+          echo "error: saved basis image has $prefix_count prefix files, but load received only $# source files" >> "$loaddir/log"
+          return 1
+        fi
+        shift "$prefix_count"
         write_driver "$loaddir/driver.sml" "$@"
         sed -i "1i val () = PolyML.SaveState.loadState \"$cfgout/basis.state\";" "$loaddir/driver.sml"
       else
@@ -657,13 +667,19 @@ if [ -z "$runekey" ]; then
 fi
 export RUNE_MATRIX_RUNEKEY=$runekey
 
+# discard_image: remove a saved host session and the marker that makes load
+# use it. The image is valid only while basis.key matches the current library.
+discard_image() {
+  rm -f "$cfgout/basis.image" "$cfgout/basis.heap".* "$cfgout/basis.state"
+}
+
 # save_image PRELUDE FILES: for a host that keeps a session, a heap image
 # with the library already in it, so that a program does not use its sources
 # again -- which is most of what a run of the matrix costs on such a host.
 # SML/NJ exports one that uses the files it is given when it resumes; Poly/ML
 # saves a state that a program loads first. basis.image says there is one.
 save_image() {
-  rm -f "$cfgout/basis.image" "$cfgout/basis.heap".* "$cfgout/basis.state"
+  discard_image
   [ "${RUNE_MATRIX_NO_IMAGE:-0}" = 0 ] || return 0
   case "$host" in
     smlnj|smlnj32)
@@ -718,6 +734,12 @@ probe_basis() {
   cmd1=$(config_field "$1" 4)
   cfgout=$out/$(dirname_of "$1")
   mkdir -p "$cfgout"
+  # A shell error in a probe must release the test jobs waiting below. In
+  # particular, dash exits the whole worker when shift is given too large a
+  # count; without this marker every job slot can wait for ever.
+  probe_status=0
+  trap 'probe_status=$?; if [ ! -f "$cfgout/basis.done" ]; then printf "probe exited before completion (status %s)\n" "$probe_status" > "$cfgout/basis.done"; fi' 0
+  trap 'exit 1' HUP INT TERM
   t_probe=$(now)
   key=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* vm/prims.def | cksum | cut -d ' ' -f 1)-$(echo "$cmd1" | cksum | cut -d ' ' -f 1)
   if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/basis.loaded" ] &&
@@ -729,7 +751,12 @@ probe_basis() {
     fi
     return
   fi
-  rm -f "$cfgout/basis.key"
+  # basis.loaded and the saved session describe the library named by
+  # basis.key. Do not let load mistake either for the library being probed
+  # after a source or host change.
+  rm -f "$cfgout/basis.done" "$cfgout/basis.key" "$cfgout/basis.loaded" \
+        "$cfgout/basis.provides" "$cfgout/basis.dropped" "$cfgout/basis.time"
+  discard_image
   gen=$cfgout/basis
   rm -rf "$gen"
   if ! sh tests/basis/host/gen-host-basis.sh "$gen"; then

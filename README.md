@@ -29,17 +29,17 @@ the monomorphic vectors, arrays, slices and two-dimensional arrays, `Posix`,
 `Windows`, whose calls of the system answer on the VMs of Windows (`make
 windows`; [docs/basis-compat.md](docs/basis-compat.md)).
 
+**[docs/language.md](docs/language.md)** is the authoritative, test-backed
+description of the supported language. Every feature row there has an id
+(`exp.case`, `basis.list`, ...) that names a test in `tests/lang/`, and
+`make check-docs` fails when the two drift apart.
+
 **[docs/generated/basis](docs/generated/basis/README.md)** is the
 documentation of the library: a page for every signature, with what each
 member does, how Rune reads the specification where it leaves a choice, the
 checks of the test suite that pin it, and what MLton, SML/NJ and Poly/ML do
 differently. `runedoc` generates it from the comments of `lib/basis`
 ([docs/doc-comments.md](docs/doc-comments.md)).
-
-**[docs/language.md](docs/language.md)** is the authoritative, test-backed
-description of the supported language. Every feature row there has an id
-(`exp.case`, `basis.list`, ...) that names a test in `tests/lang/`, and
-`make check-docs` fails when the two drift apart.
 
 ## Layout
 
