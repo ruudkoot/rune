@@ -116,7 +116,8 @@ struct
     fun entryOf l =
       case l of
         name :: address :: others =>
-          SOME ({name = name, aliases = others, addrType = RuneNet.familyFromInt (const "AF_INET"),
+          SOME ({name = name, aliases = others,
+                 addrType = RuneNet.familyFromInt (case const "AF_INET" of ~1 => 0 | v => v),
                  addrs = map RuneNet.ofText (String.tokens (fn c => c = #" ") address)} : entry)
       | _ => NONE
 

@@ -66,7 +66,7 @@ struct
       fun anySet (a, b) = Word.andb (a, b) <> 0w0
     end
 
-    val wnohang = Word.fromInt (const "WNOHANG")
+    val wnohang = Word.fromInt (case const "WNOHANG" of ~1 => 0 | v => v)
     fun flagBits flags = Word.toInt (W.flags flags)
 
     fun pidOf W_ANY_CHILD = ~1

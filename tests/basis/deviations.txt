@@ -591,3 +591,51 @@ xc1:* | INet6Sock.stream_sock/* | XC1-NA | the check opens a socket, which tests
 xc1:* | INet6Sock.dgram_sock/* | XC1-NA | the check opens a socket, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock.sock_addr/* | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
+
+# ---- Windows: Rune on bin/runevm.exe and bin/runevm32.exe (make test-windows).
+# What the system layer of Windows, vm/sys_win.c, does not do yet, with the
+# milestone of docs/plans/windows.md that takes it, and what Windows cannot
+# do as POSIX does, which stays. The two VMs fail the same checks.
+rune:windows* | Socket.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | INetSock.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | INet6Sock.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | UnixSock.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | GenericSock.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | Net*DB.* | WINDOWS | M5: the protocol, service and host databases are Winsock's
+rune:windows* | OS.IO.Kind.socket/* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
+rune:windows* | Real.fromString/TO_* | WINDOWS | M4: msvcrt's strtod rounds to the nearest whatever the rounding mode
+rune:windows* | Real32.fromString/TO_* | WINDOWS | M4: msvcrt's strtof rounds to the nearest whatever the rounding mode
+rune:windows* | Date.fmt/%c | WINDOWS | M4: msvcrt's strftime writes %c as %m/%d/%y %H:%M:%S
+rune:windows* | OS.IO.poll/* | WINDOWS | M8: poll of a pipe
+rune:windows* | OS.IO.is*/pipe-* | WINDOWS | M8: poll of a pipe
+rune:windows* | OS.IO.Kind.* | WINDOWS | M6: /dev/null, a directory and a symbolic link as descriptors
+rune:windows* | OS.FileSys.* | WINDOWS | M6: a path of Windows (C:/...) is not absolute to OS.Path, which is POSIX's; links, file modes and the errors of POSIX
+rune:windows* | OS.SysErr/chDir-to-a-file-is-notdir | WINDOWS | M6: Windows says ENOENT where POSIX says ENOTDIR
+rune:windows* | OS.errorName/unique | WINDOWS | M6: Windows says ENOENT where POSIX says ENOTDIR
+rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
+rune:windows* | OS.Process.getEnv/agrees-with-the-shell | WINDOWS | stays: the test asks sh, and the shell of Windows is cmd.exe
+rune:windows* | Posix.Error.child/* | WINDOWS | M7: waitpid
+rune:windows* | Posix.Error.* | WINDOWS | M6: Windows says ENOENT or EACCES where POSIX names the cause, and has no links or terminal yet
+rune:windows* | @load/posix_error | WINDOWS | M6: a part of the test the system layer fails with ENOSYS
+rune:windows* | Posix.FileSys:POSIX_FILE_SYS/* | WINDOWS | M6: user and group ids
+rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
+rune:windows* | Posix.FileSys.*/*fifo* | WINDOWS | stays: Windows has no named pipes in the file system
+rune:windows* | Posix.FileSys.* | WINDOWS | M6: file modes, links, owners, umask, pathconf and the paths of Windows
+rune:windows* | Posix.IO:POSIX_IO/* | WINDOWS | M6: process ids
+rune:windows* | Posix.IO.* | WINDOWS | M6: fcntl, dup of a descriptor at a base, and locks
+rune:windows* | Posix.ProcEnv:POSIX_PROC_ENV/* | WINDOWS | M6: process ids
+rune:windows* | Posix.ProcEnv.* | WINDOWS | M6: user and group ids
+rune:windows* | @load/posix_procenv | WINDOWS | M6: a part of the test the system layer fails with ENOSYS
+rune:windows* | Posix.SysDB.*/root | WINDOWS | stays: Windows has no user or group called root
+rune:windows* | Posix.SysDB:POSIX_SYS_DB/* | WINDOWS | M6: user and group ids
+rune:windows* | Posix.SysDB.* | WINDOWS | M6: the user and group of the process
+rune:windows* | Posix.TTY:POSIX_TTY/* | WINDOWS | M6: process ids
+rune:windows* | Posix.TTY.* | WINDOWS | M6: the control characters (NCCS is 0 here)
+rune:windows* | @load/posix_tty | WINDOWS | M6: the control characters (NCCS is 0 here)
+rune:windows* | Posix:POSIX/* | WINDOWS | M6: process, user and group ids
+rune:windows* | Posix.Process:POSIX_PROCESS/* | WINDOWS | M6: process ids
+rune:windows* | Posix.Process.fromStatus/system-killed | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
+rune:windows* | Posix.Process.* | WINDOWS | M12: fork; M7: exec, wait and kill without it
+rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
+rune:windows* | Posix.Signal.* | WINDOWS | M12: the test signals a /bin/sh started by fork
+rune:windows* | Unix.* | WINDOWS | M7: Unix.execute; the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's

@@ -136,9 +136,10 @@ separator, because Rune's `OS.Path` is the one of POSIX and the C runtime of
 Windows takes either. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
-127 of the 136 programs of `tests/lang` pass on both VMs, and so does
-`tests/vm`; the nine programs that do not are in `tests/windows-skip.txt`
-with the reason for each.
+The programs of `tests/lang` that do not pass on the VMs of Windows are in
+`tests/windows-skip.txt`, with the reason for each; the checks of the Basis
+Library suite that do not are the `WINDOWS` lines of
+`tests/basis/deviations.txt`.
 
 [docs/plans/windows.md](plans/windows.md) is the roadmap of what is left.
 

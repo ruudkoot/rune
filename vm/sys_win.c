@@ -3,12 +3,13 @@
    nothing else in the tree depends on it.
 
    What Windows has, this gives: the clock, the calendar, files and
-   directories, descriptors, the environment, and running a command. What
-   belongs to POSIX and has no Windows counterpart worth faking -- fork,
-   signals, the terminal settings, users and groups, and the sockets -- fails
-   with ENOSYS, as it does in `make vm SYS=none`, and the library turns that
-   into OS.SysErr. A program of the language suite that only reads and writes
-   files and asks the time runs here.
+   directories, descriptors, the environment, running a command, the named
+   constants and errors of POSIX (numbered as Linux numbers them where this
+   layer decodes them itself, as Winsock does where they go to Winsock), and
+   the addresses of sockets. What it does not do yet fails with ENOSYS, as in
+   `make vm SYS=none`, and the library turns that into OS.SysErr;
+   docs/plans/windows.md says which milestone takes what, and
+   tests/basis/deviations.txt which checks of the suite fail meanwhile.
 
    Paths come to and from the library as the library writes them; the CRT of
    mingw takes both separators. */
@@ -24,6 +25,10 @@
 #include <direct.h>
 #include <sys/stat.h>
 #include <sys/utime.h>
+/* Winsock before windows.h, which would bring in its first version */
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <afunix.h>
 #include <windows.h>
 
 static int last = 0;
@@ -53,26 +58,72 @@ static int failed(void) { last = errno; return -1; }
 
 int sys_errno(void) { return last; }
 void sys_set_errno(int e) { last = e; }
-const char *sys_error_msg(int e) { return strerror(e); }
+/* The errors of POSIX, as mingw numbers them: msvcrt's own below 100, the
+   rest (the sockets' among them) from 100 as the later runtime of Microsoft
+   has them. Three that mingw does not name get numbers of their own. The
+   texts are glibc's, so that OS.errorMsg says the same as on Linux: msvcrt
+   has none from 100 on. */
+#ifndef EDQUOT
+#define EDQUOT 150
+#endif
+#ifndef EMULTIHOP
+#define EMULTIHOP 151
+#endif
+#ifndef ESTALE
+#define ESTALE 152
+#endif
+static const struct { const char *name; int number; const char *text; } errors[] = {
+#define E(n, t) { #n, n, t },
+    E(E2BIG, "Argument list too long") E(EACCES, "Permission denied")
+    E(EADDRINUSE, "Address already in use") E(EADDRNOTAVAIL, "Cannot assign requested address")
+    E(EAFNOSUPPORT, "Address family not supported by protocol")
+    E(EAGAIN, "Resource temporarily unavailable") E(EWOULDBLOCK, "Resource temporarily unavailable")
+    E(EALREADY, "Operation already in progress") E(EBADF, "Bad file descriptor")
+    E(EBADMSG, "Bad message") E(EBUSY, "Device or resource busy") E(ECANCELED, "Operation canceled")
+    E(ECHILD, "No child processes") E(ECONNABORTED, "Software caused connection abort")
+    E(ECONNREFUSED, "Connection refused") E(ECONNRESET, "Connection reset by peer")
+    E(EDEADLK, "Resource deadlock avoided") E(EDESTADDRREQ, "Destination address required")
+    E(EDOM, "Numerical argument out of domain") E(EDQUOT, "Disk quota exceeded")
+    E(EEXIST, "File exists") E(EFAULT, "Bad address") E(EFBIG, "File too large")
+    E(EHOSTUNREACH, "No route to host") E(EIDRM, "Identifier removed")
+    E(EILSEQ, "Invalid or incomplete multibyte or wide character")
+    E(EINPROGRESS, "Operation now in progress") E(EINTR, "Interrupted system call")
+    E(EINVAL, "Invalid argument") E(EIO, "Input/output error")
+    E(EISCONN, "Transport endpoint is already connected") E(EISDIR, "Is a directory")
+    E(ELOOP, "Too many levels of symbolic links") E(EMFILE, "Too many open files")
+    E(EMLINK, "Too many links") E(EMSGSIZE, "Message too long") E(EMULTIHOP, "Multihop attempted")
+    E(ENAMETOOLONG, "File name too long") E(ENETDOWN, "Network is down")
+    E(ENETRESET, "Network dropped connection on reset") E(ENETUNREACH, "Network is unreachable")
+    E(ENFILE, "Too many open files in system") E(ENOBUFS, "No buffer space available")
+    E(ENODEV, "No such device") E(ENOENT, "No such file or directory")
+    E(ENOEXEC, "Exec format error") E(ENOLCK, "No locks available")
+    E(ENOLINK, "Link has been severed") E(ENOMEM, "Cannot allocate memory")
+    E(ENOMSG, "No message of desired type") E(ENOPROTOOPT, "Protocol not available")
+    E(ENOSPC, "No space left on device") E(ENOSYS, "Function not implemented")
+    E(ENOTCONN, "Transport endpoint is not connected") E(ENOTDIR, "Not a directory")
+    E(ENOTEMPTY, "Directory not empty") E(ENOTSOCK, "Socket operation on non-socket")
+    E(ENOTSUP, "Operation not supported") E(ENOTTY, "Inappropriate ioctl for device")
+    E(ENXIO, "No such device or address") E(EOVERFLOW, "Value too large for defined data type")
+    E(EPERM, "Operation not permitted") E(EPIPE, "Broken pipe") E(EPROTO, "Protocol error")
+    E(EPROTONOSUPPORT, "Protocol not supported") E(EPROTOTYPE, "Protocol wrong type for socket")
+    E(ERANGE, "Numerical result out of range") E(EROFS, "Read-only file system")
+    E(ESPIPE, "Illegal seek") E(ESRCH, "No such process") E(ESTALE, "Stale file handle")
+    E(ETIMEDOUT, "Connection timed out") E(ETXTBSY, "Text file busy")
+    E(EXDEV, "Invalid cross-device link")
+#undef E
+};
+#define N_ERRORS (sizeof errors / sizeof errors[0])
 
-/* The errno values mingw's CRT has, by name. */
-#define ERRORS(E) \
-    E(E2BIG) E(EACCES) E(EAGAIN) E(EBADF) E(EBUSY) E(ECHILD) E(EDEADLK) E(EDOM) \
-    E(EEXIST) E(EFAULT) E(EFBIG) E(EILSEQ) E(EINTR) E(EINVAL) E(EIO) E(EISDIR) \
-    E(EMFILE) E(EMLINK) E(ENAMETOOLONG) E(ENFILE) E(ENODEV) E(ENOENT) E(ENOEXEC) \
-    E(ENOLCK) E(ENOMEM) E(ENOSPC) E(ENOSYS) E(ENOTDIR) E(ENOTEMPTY) E(ENOTTY) \
-    E(ENXIO) E(EPERM) E(EPIPE) E(ERANGE) E(EROFS) E(ESPIPE) E(ESRCH) E(EXDEV)
-
+const char *sys_error_msg(int e) {
+    for (size_t i = 0; i < N_ERRORS; i++) if (errors[i].number == e) return errors[i].text;
+    return strerror(e);
+}
 const char *sys_error_name(int e) {
-#define NAME(x) if (e == x) return #x;
-    ERRORS(NAME)
-#undef NAME
+    for (size_t i = 0; i < N_ERRORS; i++) if (errors[i].number == e) return errors[i].name;
     return "";
 }
 int sys_error_of_name(const char *name) {
-#define OF(x) if (strcmp(name, #x) == 0) return x;
-    ERRORS(OF)
-#undef OF
+    for (size_t i = 0; i < N_ERRORS; i++) if (strcmp(errors[i].name, name) == 0) return errors[i].number;
     return -1;
 }
 
@@ -303,7 +354,10 @@ int sys_open_dir(const char *path) {
     dirs[i].used = 1;
     return i;
 }
+/* The end of a directory is NULL with the error cleared, as POSIX's readdir
+   leaves it: the library tells the end from a failure by it. */
 const char *sys_read_dir(int dir) {
+    last = 0;
     if (dir < 0 || dir >= DIRS || !dirs[dir].used) { errno = EBADF; failed(); return NULL; }
     for (;;) {
         if (!dirs[dir].pending) {
@@ -342,11 +396,83 @@ int sys_desc_kind(int fd) {
         default: return 6;
     }
 }
+/* A file on disk is always ready, for reading and for writing, as POSIX's
+   poll says of a regular file; nothing else can be waited for yet. No
+   descriptors at all is a wait for the time given. */
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
-    (void)fds; (void)events; (void)n; (void)microseconds; return fail();
+    int ready = 0;
+    for (int i = 0; i < n; i++) {
+        HANDLE h = (HANDLE)_get_osfhandle(fds[i]);
+        if (h == INVALID_HANDLE_VALUE) { errno = EBADF; return failed(); }
+        if (GetFileType(h) != FILE_TYPE_DISK) return fail();
+    }
+    for (int i = 0; i < n; i++) {
+        events[i] &= 1 | 2;
+        if (events[i]) ready++;
+    }
+    if (ready == 0) {
+        if (microseconds < 0) Sleep(INFINITE);
+        else sys_time_sleep(microseconds);
+    }
+    return ready;
 }
 
-int64_t sys_const(const char *name) { (void)name; return -1; }
+/* The named constants. What this layer decodes or emulates itself has the
+   numbers of Linux: the flags of open (sys_openf), of fcntl, of waitpid,
+   and the signals. What goes to Winsock unchanged has Winsock's numbers.
+   The errors are the table above. The terminal's size of the control
+   characters, NCCS, is left out: it is sys_nccs, 0 here. */
+static const struct { const char *name; int64_t value; } constants[] = {
+    /* signals */
+    { "SIGHUP", 1 }, { "SIGINT", 2 }, { "SIGQUIT", 3 }, { "SIGILL", 4 }, { "SIGABRT", 6 },
+    { "SIGBUS", 7 }, { "SIGFPE", 8 }, { "SIGKILL", 9 }, { "SIGUSR1", 10 }, { "SIGSEGV", 11 },
+    { "SIGUSR2", 12 }, { "SIGPIPE", 13 }, { "SIGALRM", 14 }, { "SIGTERM", 15 }, { "SIGCHLD", 17 },
+    { "SIGCONT", 18 }, { "SIGSTOP", 19 }, { "SIGTSTP", 20 }, { "SIGTTIN", 21 }, { "SIGTTOU", 22 },
+    /* opening a file */
+    { "O_RDONLY", 0 }, { "O_WRONLY", 1 }, { "O_RDWR", 2 }, { "O_CREAT", 0100 }, { "O_EXCL", 0200 },
+    { "O_NOCTTY", 0400 }, { "O_TRUNC", 01000 }, { "O_APPEND", 02000 }, { "O_NONBLOCK", 04000 },
+    { "O_SYNC", 04010000 },
+    /* the bits of a file mode */
+    { "S_IRUSR", 0400 }, { "S_IWUSR", 0200 }, { "S_IXUSR", 0100 }, { "S_IRWXU", 0700 },
+    { "S_IRGRP", 040 }, { "S_IWGRP", 020 }, { "S_IXGRP", 010 }, { "S_IRWXG", 070 },
+    { "S_IROTH", 04 }, { "S_IWOTH", 02 }, { "S_IXOTH", 01 }, { "S_IRWXO", 07 },
+    { "S_ISUID", 04000 }, { "S_ISGID", 02000 },
+    /* where a seek starts, what fcntl does, how to wait */
+    { "SEEK_SET", 0 }, { "SEEK_CUR", 1 }, { "SEEK_END", 2 },
+    { "F_DUPFD", 0 }, { "F_GETFD", 1 }, { "F_SETFD", 2 }, { "F_GETFL", 3 }, { "F_SETFL", 4 },
+    { "F_GETLK", 5 }, { "F_SETLK", 6 }, { "F_SETLKW", 7 }, { "FD_CLOEXEC", 1 },
+    { "F_RDLCK", 0 }, { "F_WRLCK", 1 }, { "F_UNLCK", 2 },
+    { "WNOHANG", 1 }, { "WUNTRACED", 2 },
+    /* the terminal (Posix.TTY) */
+    { "BRKINT", 2 }, { "ICRNL", 256 }, { "IGNBRK", 1 }, { "IGNCR", 128 }, { "IGNPAR", 4 },
+    { "INLCR", 64 }, { "INPCK", 16 }, { "ISTRIP", 32 }, { "IXOFF", 4096 }, { "IXON", 1024 },
+    { "PARMRK", 8 }, { "OPOST", 1 }, { "CLOCAL", 2048 }, { "CREAD", 128 }, { "CS5", 0 },
+    { "CS6", 16 }, { "CS7", 32 }, { "CS8", 48 }, { "CSIZE", 48 }, { "CSTOPB", 64 },
+    { "HUPCL", 1024 }, { "PARENB", 256 }, { "PARODD", 512 }, { "ECHO", 8 }, { "ECHOE", 16 },
+    { "ECHOK", 32 }, { "ECHONL", 64 }, { "ICANON", 2 }, { "IEXTEN", 32768 }, { "ISIG", 1 },
+    { "NOFLSH", 128 }, { "TOSTOP", 256 }, { "VEOF", 4 }, { "VEOL", 11 }, { "VERASE", 2 },
+    { "VINTR", 0 }, { "VKILL", 3 }, { "VMIN", 6 }, { "VQUIT", 1 }, { "VSUSP", 10 },
+    { "VTIME", 5 }, { "VSTART", 8 }, { "VSTOP", 9 },
+    { "B0", 0 }, { "B50", 1 }, { "B75", 2 }, { "B110", 3 }, { "B134", 4 }, { "B150", 5 },
+    { "B200", 6 }, { "B300", 7 }, { "B600", 8 }, { "B1200", 9 }, { "B1800", 10 }, { "B2400", 11 },
+    { "B4800", 12 }, { "B9600", 13 }, { "B19200", 14 }, { "B38400", 15 },
+    { "TCSANOW", 0 }, { "TCSADRAIN", 1 }, { "TCSAFLUSH", 2 }, { "TCOOFF", 0 }, { "TCOON", 1 },
+    { "TCIOFF", 2 }, { "TCION", 3 }, { "TCIFLUSH", 0 }, { "TCOFLUSH", 1 }, { "TCIOFLUSH", 2 },
+    /* sockets, as Winsock numbers them */
+#define C(n) { #n, (int64_t)n },
+    C(AF_INET) C(AF_INET6) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
+    C(SO_DEBUG) C(SO_REUSEADDR) C(SO_KEEPALIVE) C(SO_DONTROUTE) C(SO_LINGER)
+    C(SO_BROADCAST) C(SO_OOBINLINE) C(SO_SNDBUF) C(SO_RCVBUF) C(SO_TYPE) C(SO_ERROR)
+    C(MSG_OOB) C(MSG_PEEK) C(MSG_DONTROUTE) C(IPPROTO_TCP) C(TCP_NODELAY)
+#undef C
+    { "SHUT_RD", SD_RECEIVE }, { "SHUT_WR", SD_SEND }, { "SHUT_RDWR", SD_BOTH },
+};
+
+int64_t sys_const(const char *name) {
+    for (size_t i = 0; i < sizeof constants / sizeof constants[0]; i++)
+        if (strcmp(constants[i].name, name) == 0) return constants[i].value;
+    return sys_error_of_name(name);
+}
 int sys_fork(void) { return fail(); }
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     (void)path; (void)argv; (void)envp; (void)search; return fail();
@@ -392,7 +518,7 @@ const char *sys_environ(void) {
 const char *sys_ctermid(void) { fail(); return NULL; }
 const char *sys_ttyname(int fd) { (void)fd; fail(); return NULL; }
 int sys_isatty(int fd) { return _isatty(fd) ? 1 : 0; }
-int64_t sys_sysconf(const char *name) { (void)name; return fail(); }
+int64_t sys_sysconf(const char *name) { (void)name; last = 0; return fail(); }
 
 /* The flags the library passes are POSIX's; mingw's CRT has the ones that
    mean anything here, and every file is opened in binary mode, because a
@@ -413,7 +539,9 @@ int sys_close_fd(int fd) { return _close(fd) == 0 ? 0 : failed(); }
 int sys_dup(int fd) { int r = _dup(fd); return r < 0 ? failed() : r; }
 int sys_dup2(int fd, int to) { return _dup2(fd, to) == 0 ? to : failed(); }
 int sys_pipe(int out[2]) { return _pipe(out, 65536, _O_BINARY) == 0 ? 0 : failed(); }
+/* the end of a file is 0 bytes with the error cleared, as on POSIX */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
+    last = 0;
     int r = _read(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
     return r < 0 ? failed() : r;
 }
@@ -431,7 +559,7 @@ int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t l
     (void)fd; (void)command; (void)type; (void)whence; (void)start; (void)length; (void)out; return fail();
 }
 int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
-    (void)path; (void)fd; (void)name; (void)out; return fail();
+    (void)path; (void)fd; (void)name; (void)out; last = 0; return fail();
 }
 int sys_tcgetattr(int fd, int64_t *out) { (void)fd; (void)out; return fail(); }
 int sys_tcsetattr(int fd, int action, const int64_t *in) { (void)fd; (void)action; (void)in; return fail(); }
@@ -496,22 +624,99 @@ int64_t sys_send(int fd, const char *b, int64_t n, int f) { (void)fd; (void)b; (
 int64_t sys_sendto(int fd, const char *b, int64_t n, int f, const char *a, int al) {
     (void)fd; (void)b; (void)n; (void)f; (void)a; (void)al; return fail();
 }
-int64_t sys_recv(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
-int64_t sys_recvfrom(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
+int64_t sys_recv(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; last = 0; return fail(); }
+int64_t sys_recvfrom(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; last = 0; return fail(); }
 int sys_shutdown(int fd, int how) { (void)fd; (void)how; return fail(); }
 int sys_sock_name(int fd) { (void)fd; return fail(); }
 int sys_sock_peer(int fd) { (void)fd; return fail(); }
-const char *sys_last_addr(void) { return ""; }
-int sys_last_addr_len(void) { return 0; }
+/* The addresses of sockets are the bytes of a sockaddr of Winsock, which has
+   the layout of POSIX's (family, then port and address); making and taking
+   them apart needs no socket. */
+static char address[128];
+static int address_length = 0;
+const char *sys_last_addr(void) { return address; }
+int sys_last_addr_len(void) { return address_length; }
+/* Winsock is started the first time something of it is used. */
+static int winsock(void) {
+    static int started = 0;
+    if (!started) {
+        WSADATA data;
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) { last = ENOSYS; return -1; }
+        started = 1;
+    }
+    return 0;
+}
 int sys_getsockopt(int fd, int l, int n) { (void)fd; (void)l; (void)n; return fail(); }
 int sys_setsockopt(int fd, int l, int n, int v) { (void)fd; (void)l; (void)n; (void)v; return fail(); }
-int sys_inet_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
-int sys_inet6_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
-int sys_unix_addr(const char *p) { (void)p; return fail(); }
-int sys_addr_family(const char *a, int n) { (void)a; (void)n; return fail(); }
-const char *sys_inet_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
-const char *sys_inet6_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
-const char *sys_unix_path(const char *a, int n) { (void)a; (void)n; fail(); return NULL; }
+int sys_inet_addr(const char *host, int port) {
+    struct sockaddr_in in;
+    if (winsock() != 0) return -1;
+    memset(&in, 0, sizeof in);
+    in.sin_family = AF_INET;
+    in.sin_port = htons((unsigned short)port);
+    if (!host || !*host) in.sin_addr.s_addr = htonl(INADDR_ANY);
+    else if (inet_pton(AF_INET, host, &in.sin_addr) != 1) { last = EINVAL; return -1; }
+    memcpy(address, &in, sizeof in);
+    address_length = (int)sizeof in;
+    return 0;
+}
+/* no scope id is taken, as on POSIX */
+int sys_inet6_addr(const char *host, int port) {
+    struct sockaddr_in6 in6;
+    if (winsock() != 0) return -1;
+    memset(&in6, 0, sizeof in6);
+    in6.sin6_family = AF_INET6;
+    in6.sin6_port = htons((unsigned short)port);
+    if (!host || !*host) in6.sin6_addr = in6addr_any;
+    else if (inet_pton(AF_INET6, host, &in6.sin6_addr) != 1) { last = EINVAL; return -1; }
+    memcpy(address, &in6, sizeof in6);
+    address_length = (int)sizeof in6;
+    return 0;
+}
+int sys_unix_addr(const char *path) {
+    struct sockaddr_un un;
+    memset(&un, 0, sizeof un);
+    un.sun_family = AF_UNIX;
+    if (strlen(path) >= sizeof un.sun_path) { last = ENAMETOOLONG; return -1; }
+    strcpy(un.sun_path, path);
+    size_t n = offsetof(struct sockaddr_un, sun_path) + strlen(path) + 1;
+    memcpy(address, &un, n);
+    address_length = (int)n;
+    return 0;
+}
+int sys_addr_family(const char *addr, int n) {
+    unsigned short family;
+    if (n < (int)sizeof family) { last = EINVAL; return -1; }
+    memcpy(&family, addr, sizeof family);
+    return family;
+}
+const char *sys_inet_parts(const char *addr, int n, int *port) {
+    struct sockaddr_in in;
+    if (n < (int)sizeof in || winsock() != 0) return NULL;
+    memcpy(&in, addr, sizeof in);
+    if (in.sin_family != AF_INET) return NULL;
+    if (!inet_ntop(AF_INET, &in.sin_addr, path_buffer, sizeof path_buffer)) return NULL;
+    *port = ntohs(in.sin_port);
+    return path_buffer;
+}
+const char *sys_inet6_parts(const char *addr, int n, int *port) {
+    struct sockaddr_in6 in6;
+    if (n < (int)sizeof in6 || winsock() != 0) return NULL;
+    memcpy(&in6, addr, sizeof in6);
+    if (in6.sin6_family != AF_INET6) return NULL;
+    if (!inet_ntop(AF_INET6, &in6.sin6_addr, path_buffer, sizeof path_buffer)) return NULL;
+    *port = ntohs(in6.sin6_port);
+    return path_buffer;
+}
+const char *sys_unix_path(const char *addr, int n) {
+    struct sockaddr_un un;
+    if (n < (int)offsetof(struct sockaddr_un, sun_path)) return NULL;
+    memset(&un, 0, sizeof un);
+    memcpy(&un, addr, (size_t)n < sizeof un ? (size_t)n : sizeof un);
+    if (un.sun_family != AF_UNIX) return NULL;
+    snprintf(path_buffer, sizeof path_buffer, "%s", un.sun_path);
+    return path_buffer;
+}
 const char *sys_host_byname(const char *n) { (void)n; fail(); return NULL; }
 const char *sys_host_byaddr(const char *d) { (void)d; fail(); return NULL; }
 const char *sys_hostname(void) { fail(); return NULL; }
