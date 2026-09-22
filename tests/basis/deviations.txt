@@ -613,8 +613,7 @@ rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows ha
 rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
 rune:windows* | OS.Process.getEnv/agrees-with-the-shell | WINDOWS | stays: the test asks sh, and the shell of Windows is cmd.exe
-rune:windows* | Posix.Error.child/* | WINDOWS | M7: waitpid
-rune:windows* | Posix.Error.srch/kill-reaped-child | WINDOWS | M7: kill
+rune:windows* | Posix.Error.srch/kill-reaped-child | WINDOWS | M12: the child is made by fork
 rune:windows* | Posix.Error.acces/open-unreadable-file | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | Posix.Error.* | WINDOWS | M12: the check runs in a child made by fork
 rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
@@ -635,7 +634,7 @@ rune:windows* | Posix.ProcEnv.* | WINDOWS | stays: the test compares with what s
 rune:windows* | Posix.SysDB.*/root | WINDOWS | stays: Windows has no user or group called root
 rune:windows* | Posix.SysDB.* | WINDOWS | stays: the test compares with what sh says (id, getent), and the shell of Windows is cmd.exe
 rune:windows* | Posix.Process.fromStatus/system-killed | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
-rune:windows* | Posix.Process.* | WINDOWS | M12: fork; M7: exec, wait and kill without it
+rune:windows* | Posix.Process.* | WINDOWS | M12: fork
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | M12: the test signals a /bin/sh started by fork
-rune:windows* | Unix.* | WINDOWS | M7: Unix.execute; the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's
+rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows

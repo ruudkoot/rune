@@ -89,6 +89,9 @@ int sys_fork(void) { return fail(); }
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     (void)path; (void)argv; (void)envp; (void)search; return fail();
 }
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
+    (void)path; (void)argv; (void)envp; (void)search; (void)fds; return fail();
+}
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags; (void)out; return fail(); }
 int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
 int sys_alarm(int seconds) { (void)seconds; return fail(); }

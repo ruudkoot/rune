@@ -881,6 +881,20 @@ struct
     (Posix.Process.exece (path, args, env); ~1)
     handle OS.SysErr (_, e) => (noteError e; ~1)
 
+  (* fork, the descriptors onto 0, 1 and 2, exec, and 126 if that fails *)
+  fun posix_spawn (path, args, env, flags, fds) =
+    case Posix.Process.fork () of
+      NONE =>
+        ((List.app (fn (to, from) => if from >= 0 andalso from <> to
+                                     then Posix.IO.dup2 {old = fdOf from, new = fdOf to} else ())
+                   (ListPair.zip ([0, 1, 2], fds));
+          if Int.rem (Int.quot (flags, 2), 2) = 1 then Posix.Process.exece (path, args, env)
+          else if Int.rem (flags, 2) = 1 then Posix.Process.execp (path, args)
+          else Posix.Process.exec (path, args))
+         handle _ => ();
+         Posix.Process.exit 0w126)
+    | SOME pid => SysWord.toInt (Posix.Process.pidToWord pid)
+
   fun posix_waitpid (pid, flags) =
     let
       val arg = if pid = ~1 then Posix.Process.W_ANY_CHILD

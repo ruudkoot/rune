@@ -25,38 +25,39 @@ struct
              status : Posix.Process.exit_status option ref}
 
   local
-    fun start (path, args, run) =
+    val spawn = _prim "posix_spawn" : string * string list * string list * int * int list -> int
+    fun number fd = SysWord.toInt (Posix.FileSys.fdToWord fd)
+    (* The program is started with the ends of two pipes as its standard
+       input and output, as fork, dup2 and exec would start it, but by the
+       system, without the fork, which not every system has (Windows). Our
+       ends are closed in every program started later, so that this child
+       sees the end of its input when we close ours. "If the child process
+       fails to execute the command (i.e., the execve call fails), then it
+       should exit with a status code of 126": so it does where the system
+       forks a child first (POSIX); where it knows at once that the program
+       cannot be run (Windows), this raises SysErr, which the specification
+       of executeInEnv allows too. *)
+    fun start (path, args, env) =
       let
         val {infd = fromChildRead, outfd = fromChildWrite} = Posix.IO.pipe ()
         val {infd = toChildRead, outfd = toChildWrite} = Posix.IO.pipe ()
-        (* Our ends are closed in every program started later, so that this
-           child sees the end of its input when we close ours. *)
         val () = Posix.IO.setfd (fromChildRead, Posix.IO.FD.cloexec)
         val () = Posix.IO.setfd (toChildWrite, Posix.IO.FD.cloexec)
+        val pid = spawn (path, path :: args, getOpt (env, []), if isSome env then 2 else 0,
+                         [number toChildRead, number fromChildWrite, ~1])
+        val failure = if pid < 0 then SOME (RuneError.lastError ()) else NONE
       in
-        case Posix.Process.fork () of
-          NONE =>
-            ((Posix.IO.dup2 {old = toChildRead, new = 0};
-              Posix.IO.dup2 {old = fromChildWrite, new = 1};
-              Posix.IO.close fromChildRead;
-              Posix.IO.close toChildWrite;
-              run (path, path :: args))
-             handle _ => ();
-             (* "If the child process fails to execute the command (i.e.,
-                the execve call fails), then it should exit with a status
-                code of 126." *)
-             Posix.Process.exit (Word8.fromInt 126))
-        | SOME pid =>
-            (Posix.IO.close fromChildWrite;
-             Posix.IO.close toChildRead;
-             Proc {pid = pid, infd = fromChildRead, outfd = toChildWrite,
-                   ins = ref NONE, outs = ref NONE, status = ref NONE})
+        Posix.IO.close fromChildWrite;
+        Posix.IO.close toChildRead;
+        case failure of
+          SOME e => (Posix.IO.close fromChildRead; Posix.IO.close toChildWrite; raise e)
+        | NONE =>
+            Proc {pid = Posix.Process.wordToPid (SysWord.fromInt pid), infd = fromChildRead,
+                  outfd = toChildWrite, ins = ref NONE, outs = ref NONE, status = ref NONE}
       end
   in
-    fun executeInEnv (path, args, env) =
-      start (path, args, fn (p, a) => Posix.Process.exece (p, a, env))
-    fun execute (path, args) =
-      start (path, args, fn (p, a) => Posix.Process.exec (p, a))
+    fun executeInEnv (path, args, env) = start (path, args, SOME env)
+    fun execute (path, args) = start (path, args, NONE)
   end
 
   fun streamsOf (Proc {infd, outfd, ins, outs, ...}) =

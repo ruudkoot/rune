@@ -1,9 +1,7 @@
 pid > 0: true
-uname: Linux
+uname names the system: true
 groups: true
 environ has PATH: true
 isatty of stdin: false
 errorName: noent true
 sigkill: 9
-child true exited 7
-signalled with term: true

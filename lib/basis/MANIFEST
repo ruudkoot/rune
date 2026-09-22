@@ -143,7 +143,7 @@ netdb.sml       | demand | yes  | NetHostDB NetProtDB NetServDB RuneNetHostDB Ru
 inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetSock RuneUnixSock UnixSock | Int RuneError RuneNet RuneNetHostDB RuneSocket
 inet6sock_sig.sml | demand | yes | INET6_SOCK | Socket
 inet6sock.sml   | demand | yes  | INet6Sock RuneINet6Sock | Char Int List Option RuneError RuneNet RuneSocket String
-unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneStatus SysWord TextIO Word8 Word8Vector
+unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneError RuneStatus SysWord TextIO Word8 Word8Vector
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)

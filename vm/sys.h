@@ -97,6 +97,13 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
 /* Wait for a child: out[] gets the process, then 0 exited, 1 signalled or
    2 stopped, then the status or the signal. */
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]);
+/* Start a program as fork, dup2 and exec would, without the fork, which not
+   every system has: fds[] are the descriptors that become its standard
+   input, output and error (-1: this process's own), and search looks for
+   the program on PATH. The process, or -1. A program that cannot be run is
+   a child that exits with 126 where the child is forked first (POSIX), and
+   -1 where the system knows at once (Windows). */
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]);
 int sys_kill(int64_t pid, int signal);
 int sys_alarm(int seconds);
 int sys_pause(void);

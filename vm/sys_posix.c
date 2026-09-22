@@ -468,6 +468,23 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
     return -1;
 }
 
+/* fork, then in the child the descriptors dup2'ed onto 0, 1 and 2 (and
+   closed where they were others), then exec, and 126 if that fails, as a
+   shell has it. */
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
+    pid_t pid = fork();
+    if (pid != 0) return pid < 0 ? -1 : (int64_t)pid;
+    for (int i = 0; i < 3; i++)
+        if (fds[i] >= 0 && fds[i] != i && dup2(fds[i], i) < 0) _exit(126);
+    for (int i = 0; i < 3; i++) {
+        int later = 0;
+        for (int j = i + 1; j < 3; j++) later |= fds[j] == fds[i];
+        if (fds[i] > 2 && !later) close(fds[i]);
+    }
+    sys_exec(path, argv, envp, search);
+    _exit(126);
+}
+
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
     int status = 0;
     pid_t got = waitpid((pid_t)pid, &status, flags);

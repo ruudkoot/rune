@@ -1690,6 +1690,25 @@ static int p_posix_exec(VM *vm) {
     return exec_with(vm, ARG(2), ARG(1), NULL, (int)ARG(0).u.i, 3);
 }
 
+/* posix_spawn (path, args, env, flags, fds) */
+static int p_posix_spawn(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_spawn");
+    int32_t given[3];
+    if (int_list(ARG(0), given, 3) != 3) vm_fatal(vm, "primitive posix_spawn: malformed descriptors");
+    int64_t flags = ARG(1).u.i;
+    char *path = c_string(vm, ARG(4), "posix_spawn");
+    char **argv = string_array(vm, ARG(3), "posix_spawn", NULL);
+    char **envp = (flags & 2) ? string_array(vm, ARG(2), "posix_spawn", NULL) : NULL;
+    int fds[3] = { given[0], given[1], given[2] };
+    fflush(stdout);
+    fflush(stderr);
+    int64_t pid = sys_spawn(path, argv, envp, (int)(flags & 1), fds);
+    free(path);
+    free_array(argv);
+    free_array(envp);
+    return ret(vm, 5, mk_int(pid));
+}
+
 static int p_posix_exece(VM *vm) {
     char **envp = string_array(vm, ARG(0), "posix_exece", NULL);
     return exec_with(vm, ARG(2), ARG(1), envp, 0, 3);

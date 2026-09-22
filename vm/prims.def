@@ -200,6 +200,7 @@ posix_const      1  string -> int             The value of a named constant of P
 posix_fork       1  unit -> int               Make a child process: 0 in it, its number in the parent, ~1 on failure.
 posix_exec       3  string * string list * int -> int  Replace this program with another: the path (searched for on PATH when the third argument is 1) and the arguments; returns ~1, or not at all.
 posix_exece      3  string * string list * string list -> int  The same with the environment given.
+posix_spawn      5  string * string list * string list * int * int list -> int  Start a program as fork, dup2 and exec would, without the fork: the path, the arguments, the environment (given when bit 1 of the fourth argument is set; bit 0 searches PATH) and the descriptors of its standard input, output and error (~1: this process's own); its process, or ~1.
 posix_waitpid    2  int * int -> int list     Wait for a child: [process, 0 exited or 1 signalled or 2 stopped, status or signal]; [] on failure.
 posix_kill       2  int * int -> int          Send a signal to a process.
 posix_alarm      1  int -> int                Ask for SIGALRM in that many seconds; what was left of an earlier one.

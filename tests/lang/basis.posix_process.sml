@@ -1,24 +1,15 @@
-(* Posix.Process, ProcEnv, Error and Signal: a child that exits with a
-   status, and one that a signal ends. *)
-structure P = Posix.Process
+(* Posix.Process, ProcEnv, Error and Signal, as far as every system has
+   them: the numbers of the process, its groups and its environment, and
+   the names of errors and signals. A child made by fork is
+   basis.posix_fork, and the name of the system basis.posix_linux. *)
 val () = print ("pid > 0: " ^ Bool.toString (SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())) > 0) ^ "\n")
-val () = print ("uname: " ^ (case Posix.ProcEnv.uname () of (_, s) :: _ => s | [] => "?") ^ "\n")
+val () = print ("uname names the system: "
+                ^ Bool.toString (List.exists (fn (k, v) => k = "sysname" andalso v <> "") (Posix.ProcEnv.uname ())) ^ "\n")
 val () = print ("groups: " ^ Bool.toString (not (List.null (Posix.ProcEnv.getgroups ()))) ^ "\n")
-val () = print ("environ has PATH: " ^ Bool.toString (List.exists (String.isPrefix "PATH=") (Posix.ProcEnv.environ ())) ^ "\n")
+(* Windows writes it Path *)
+val () = print ("environ has PATH: "
+                ^ Bool.toString (List.exists (String.isPrefix "PATH=" o String.map Char.toUpper) (Posix.ProcEnv.environ ())) ^ "\n")
 val () = print ("isatty of stdin: " ^ Bool.toString (Posix.ProcEnv.isatty Posix.FileSys.stdin) ^ "\n")
 val () = print ("errorName: " ^ Posix.Error.errorName Posix.Error.noent ^ " "
                 ^ Bool.toString (Posix.Error.syserror "noent" = SOME Posix.Error.noent) ^ "\n")
 val () = print ("sigkill: " ^ SysWord.fmt StringCvt.DEC (Posix.Signal.toWord Posix.Signal.kill) ^ "\n")
-val () = case P.fork () of
-           NONE => P.exec ("/bin/sh", ["sh", "-c", "exit 7"])
-         | SOME pid =>
-             (case P.waitpid (P.W_CHILD pid, []) of
-                (p, P.W_EXITSTATUS w) => print ("child " ^ Bool.toString (p = pid) ^ " exited " ^ Word8.toString w ^ "\n")
-              | _ => print "other\n")
-val () = case P.fork () of
-           NONE => (P.pause (); P.exit 0w0)
-         | SOME pid =>
-             (P.kill (P.K_PROC pid, Posix.Signal.term);
-              case P.waitpid (P.W_CHILD pid, []) of
-                (_, P.W_SIGNALED s) => print ("signalled with term: " ^ Bool.toString (s = Posix.Signal.term) ^ "\n")
-              | _ => print "other\n")

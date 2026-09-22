@@ -321,10 +321,7 @@ int sys_date_format(const char *format, const int32_t parts[9], int local, char 
     return (int)k;
 }
 
-int sys_system(const char *command) {
-    int r = system(command);
-    return r < 0 ? failed() : r;
-}
+int sys_system(const char *command);   /* with the processes, below */
 const char *sys_getenv(const char *name) { return getenv(name); }
 
 /* ---------------------------------------------------------------- paths */
@@ -970,14 +967,6 @@ int64_t sys_const(const char *name) {
         if (strcmp(constants[i].name, name) == 0) return constants[i].value;
     return sys_error_of_name(name);
 }
-int sys_fork(void) { return fail(); }
-int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
-    (void)path; (void)argv; (void)envp; (void)search; return fail();
-}
-int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags; (void)out; return fail(); }
-int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
-int sys_alarm(int seconds) { (void)seconds; return fail(); }
-int sys_pause(void) { return fail(); }
 /* ---------------------------------------------------------------- ids */
 int64_t sys_getpid(void) { return (int64_t)GetCurrentProcessId(); }
 /* the process that made this one, from a snapshot of all of them */
@@ -1107,7 +1096,7 @@ const char *sys_uname(void) {
     return uname_strings;
 }
 /* The processor time of the children the process has waited for, which
-   sys_waitpid adds to (M7), in microseconds. */
+   sys_waitpid adds to, in microseconds. */
 static int64_t children_user = 0, children_sys = 0;
 int sys_times(int64_t out[5]) {
     FILETIME creation, exited, kernel, user;
@@ -2187,4 +2176,354 @@ const char *sys_serv_byname(const char *name, const char *protocol) {
 const char *sys_serv_byport(int port, const char *protocol) {
     if (winsock() != 0) return NULL;
     return pack_serv(getservbyport(htons((unsigned short)port), protocol && *protocol ? protocol : NULL));
+}
+
+/* ---------------------------------------------------------------- processes */
+/* Windows has no fork. A program is started by CreateProcess (sys_spawn),
+   which gives it only the three handles it is to have as its standard
+   streams; exec without a fork is a program started so, waited for, and
+   ended with; and the children are kept here, with the handles that
+   waitpid waits on. A signal is not a thing of Windows: Rune has no
+   handlers for them, so a program can only see a signal's default action,
+   and that is the end of the process, which TerminateProcess gives, with an
+   exit code no program gives (SIGNALLED_BY with the signal in its low bits)
+   for waitpid to tell apart. */
+#define SIGNALLED_BY 0xE0520000u
+int sys_fork(void) { return fail(); }
+
+typedef struct { DWORD pid; HANDLE process; } Child;
+static Child *children = NULL;
+static int nchildren = 0, children_cap = 0;
+static int add_child(DWORD pid, HANDLE process) {
+    if (nchildren == children_cap) {
+        int cap = children_cap ? children_cap * 2 : 16;
+        Child *bigger = realloc(children, (size_t)cap * sizeof *children);
+        if (!bigger) return -1;
+        children = bigger;
+        children_cap = cap;
+    }
+    children[nchildren].pid = pid;
+    children[nchildren].process = process;
+    nchildren++;
+    return 0;
+}
+
+/* The command line of Windows, which the program splits into arguments
+   again: an argument with a blank or a quote in it is quoted as msvcrt reads
+   quotes, a run of backslashes doubled before a quote. */
+static char *command_line(char *const argv[]) {
+    size_t cap = 16;
+    for (char *const *a = argv; *a; a++) cap += 2 * strlen(*a) + 3;
+    char *line = malloc(cap), *o = line;
+    if (!line) return NULL;
+    for (char *const *a = argv; *a; a++) {
+        const char *s = *a;
+        if (a != argv) *o++ = ' ';
+        if (*s && !strpbrk(s, " \t\n\v\"")) { strcpy(o, s); o += strlen(s); continue; }
+        *o++ = '"';
+        for (;; s++) {
+            size_t slashes = 0;
+            while (*s == '\\') { slashes++; s++; }
+            if (!*s) { while (slashes--) { *o++ = '\\'; *o++ = '\\'; } break; }
+            if (*s == '"') { for (size_t i = 0; i < 2 * slashes + 1; i++) *o++ = '\\'; }
+            else while (slashes--) *o++ = '\\';
+            *o++ = *s;
+        }
+        *o++ = '"';
+    }
+    *o = 0;
+    return line;
+}
+/* the file a program is: the path, or with an extension of PATHEXT when it
+   has none; searched for on PATH when search is set and it has no
+   directory. out gets it; 0, or -1 with ENOENT. */
+static int find_program(const char *path, int search, char *out, size_t n) {
+    const char *exts = getenv("PATHEXT");
+    if (!exts) exts = ".COM;.EXE;.BAT;.CMD";
+    const char *slash = strpbrk(path, "/\\"), *dot = strrchr(path, '.');
+    int has_ext = dot && (!slash || dot > strrchr(path, slash[0]));
+    const char *dirs = search && !slash && !is_drive(path) ? getenv("PATH") : NULL;
+    const char *d = dirs ? dirs : "";
+    for (;;) {
+        const char *end = dirs ? strchr(d, ';') : NULL;
+        size_t k = dirs ? (end ? (size_t)(end - d) : strlen(d)) : 0;
+        char base[MAX_PATH * 4];
+        if (dirs) snprintf(base, sizeof base, "%.*s\\%s", (int)k, d, path);
+        else snprintf(base, sizeof base, "%s", path);
+        DWORD a = GetFileAttributesA(base);
+        if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY) && (has_ext || !dirs)) {
+            snprintf(out, n, "%s", base);
+            return 0;
+        }
+        if (!has_ext)
+            for (const char *e = exts; *e; ) {
+                const char *eend = strchr(e, ';');
+                size_t ek = eend ? (size_t)(eend - e) : strlen(e);
+                snprintf(out, n, "%s%.*s", base, (int)ek, e);
+                a = GetFileAttributesA(out);
+                if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) return 0;
+                if (!eend) break;
+                e = eend + 1;
+            }
+        if (!dirs || !end) break;
+        d = end + 1;
+    }
+    last = ENOENT;
+    return -1;
+}
+/* the handle a descriptor of the library stands for */
+static HANDLE handle_of(int fd) {
+    Sock *s = sock_of(fd);
+    return s ? (HANDLE)s->s : (HANDLE)_get_osfhandle(fd);
+}
+/* Start the program; its process handle is kept as a child's, and a job,
+   when one is given, gets it before it runs. */
+static int64_t spawn(const char *path, char *const argv[], char *const envp[], int search,
+                     const int fds[3], HANDLE job, const char *raw) {
+    char program[MAX_PATH * 4];
+    if (find_program(native(path), search, program, sizeof program) != 0) return -1;
+    /* a batch file is run by the command interpreter */
+    const char *dot = strrchr(program, '.');
+    int batch = !raw && dot && (_stricmp(dot, ".bat") == 0 || _stricmp(dot, ".cmd") == 0);
+    /* raw: a command line given whole, for a program that reads it its own
+       way (cmd.exe) */
+    char *line = raw ? _strdup(raw) : command_line(argv);
+    if (!line) { last = ENOMEM; return -1; }
+    char *app = program;
+    char comspec[MAX_PATH * 4];
+    if (batch) {
+        const char *c = getenv("COMSPEC");
+        snprintf(comspec, sizeof comspec, "%s", c ? c : "C:\\Windows\\System32\\cmd.exe");
+        char *wrapped = malloc(strlen(line) + strlen(program) + 32);
+        if (!wrapped) { free(line); last = ENOMEM; return -1; }
+        sprintf(wrapped, "cmd /d /s /c \"\"%s\" %s\"", program, strchr(line, ' ') ? strchr(line, ' ') + 1 : "");
+        free(line);
+        line = wrapped;
+        app = comspec;
+    }
+    /* the environment: the variables, each NUL-terminated, then an empty one */
+    char *block = NULL;
+    if (envp) {
+        size_t size = 2;
+        for (char *const *e = envp; *e; e++) size += strlen(*e) + 1;
+        block = malloc(size);
+        if (!block) { free(line); last = ENOMEM; return -1; }
+        char *o = block;
+        for (char *const *e = envp; *e; e++) { strcpy(o, *e); o += strlen(*e) + 1; }
+        *o++ = 0;
+        if (o == block + 1) *o = 0;
+    }
+    /* the three handles, as inheritable copies, and only they inherited */
+    HANDLE std[3], list[3];
+    int nlist = 0;
+    for (int i = 0; i < 3; i++) {
+        HANDLE h = handle_of(fds[i] >= 0 ? fds[i] : i);
+        std[i] = INVALID_HANDLE_VALUE;
+        if (h != INVALID_HANDLE_VALUE && h != NULL &&
+            DuplicateHandle(GetCurrentProcess(), h, GetCurrentProcess(), &std[i], 0, TRUE, DUPLICATE_SAME_ACCESS))
+            list[nlist++] = std[i];
+    }
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    LPPROC_THREAD_ATTRIBUTE_LIST attributes = malloc(size);
+    STARTUPINFOEXA si;
+    memset(&si, 0, sizeof si);
+    si.StartupInfo.cb = sizeof si;
+    si.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    si.StartupInfo.hStdInput = std[0];
+    si.StartupInfo.hStdOutput = std[1];
+    si.StartupInfo.hStdError = std[2];
+    int ok = attributes && InitializeProcThreadAttributeList(attributes, 1, 0, &size);
+    if (ok && nlist > 0)
+        ok = UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, list,
+                                       (SIZE_T)nlist * sizeof(HANDLE), NULL, NULL);
+    si.lpAttributeList = attributes;
+    PROCESS_INFORMATION pi;
+    DWORD flags = EXTENDED_STARTUPINFO_PRESENT | (job ? CREATE_SUSPENDED : 0);
+    if (ok) ok = CreateProcessA(app, line, NULL, NULL, nlist > 0, flags, block, NULL, &si.StartupInfo, &pi);
+    DWORD error = GetLastError();
+    for (int i = 0; i < 3; i++) if (std[i] != INVALID_HANDLE_VALUE) CloseHandle(std[i]);
+    if (attributes) { DeleteProcThreadAttributeList(attributes); free(attributes); }
+    free(line);
+    free(block);
+    if (!ok) {
+        last = error == ERROR_BAD_EXE_FORMAT ? ENOEXEC : errno_of_win(error);
+        return -1;
+    }
+    if (job) {
+        AssignProcessToJobObject(job, pi.hProcess);
+        ResumeThread(pi.hThread);
+    }
+    CloseHandle(pi.hThread);
+    if (add_child(pi.dwProcessId, pi.hProcess) != 0) { last = ENOMEM; return -1; }
+    return (int64_t)pi.dwProcessId;
+}
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
+    return spawn(path, argv, envp, search, fds, NULL, NULL);
+}
+
+/* How a process ended, as waitpid tells it: 0 exited with a status, or 1
+   ended by a signal. An exception of Windows that ends a program is the
+   signal POSIX would have sent for it. */
+static void status_of(DWORD code, int64_t out[2]) {
+    if ((code & 0xFFFF0000u) == SIGNALLED_BY) { out[0] = 1; out[1] = (int64_t)(code & 0xFFFFu); return; }
+    int signal = 0;
+    switch (code) {
+    case 0xC0000005: case 0xC00000FD: signal = 11; break;   /* access violation, stack overflow: SEGV */
+    case 0xC000013A: signal = 2; break;                     /* ^C: INT */
+    case 0xC0000094: case 0xC000008E: case 0xC0000091: signal = 8; break;   /* FPE */
+    case 0xC000001D: case 0xC0000096: signal = 4; break;    /* ILL */
+    case 0xC0000409: case 0x80000003: signal = 6; break;    /* fail fast, breakpoint: ABRT */
+    }
+    if (signal) { out[0] = 1; out[1] = signal; }
+    else { out[0] = 0; out[1] = (int64_t)(code & 0xFF); }
+}
+/* a child that has ended: its status, its processor time added to the
+   children's, and its handle closed */
+static void reap_child(int i, int64_t out[3]) {
+    DWORD code = 0;
+    GetExitCodeProcess(children[i].process, &code);
+    FILETIME c, e, k, u;
+    if (GetProcessTimes(children[i].process, &c, &e, &k, &u)) {
+        children_user += of_filetime(u);
+        children_sys += of_filetime(k);
+    }
+    out[0] = (int64_t)children[i].pid;
+    status_of(code, out + 1);
+    CloseHandle(children[i].process);
+    children[i] = children[--nchildren];
+}
+/* waitpid: a child by its number, or any (-1; a group, which Windows does
+   not have, is taken for all of them); WNOHANG (1) does not wait, and says
+   0 when none has ended. */
+int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
+    int nohang = flags & 1;
+    if (pid > 0) {
+        int i;
+        for (i = 0; i < nchildren; i++) if ((int64_t)children[i].pid == pid) break;
+        if (i == nchildren) { last = ECHILD; return -1; }
+        DWORD r = WaitForSingleObject(children[i].process, nohang ? 0 : INFINITE);
+        if (r == WAIT_TIMEOUT) { out[0] = 0; out[1] = out[2] = 0; return 0; }
+        if (r != WAIT_OBJECT_0) return win_failed(NULL);
+        reap_child(i, out);
+        return 0;
+    }
+    if (nchildren == 0) { last = ECHILD; return -1; }
+    for (;;) {
+        /* WaitForMultipleObjects takes 64 at a time */
+        for (int from = 0; from < nchildren; from += MAXIMUM_WAIT_OBJECTS) {
+            int n = nchildren - from < MAXIMUM_WAIT_OBJECTS ? nchildren - from : MAXIMUM_WAIT_OBJECTS;
+            HANDLE hs[MAXIMUM_WAIT_OBJECTS];
+            for (int k = 0; k < n; k++) hs[k] = children[from + k].process;
+            DWORD wait = nohang || nchildren > MAXIMUM_WAIT_OBJECTS ? 0 : INFINITE;
+            DWORD r = WaitForMultipleObjects((DWORD)n, hs, FALSE, wait);
+            if (r < WAIT_OBJECT_0 + (DWORD)n) { reap_child(from + (int)(r - WAIT_OBJECT_0), out); return 0; }
+            if (r == WAIT_FAILED) return win_failed(NULL);
+        }
+        if (nohang) { out[0] = 0; out[1] = out[2] = 0; return 0; }
+        Sleep(10);
+    }
+}
+
+/* kill: the default action of the signal. 0 asks whether the process is
+   there; CHLD and CONT do nothing to a process that runs; the signals that
+   stop one (STOP, TSTP, TTIN, TTOU) Windows cannot give; every other ends
+   it. A process group is not a thing of Windows. */
+int sys_kill(int64_t pid, int signal) {
+    if (signal < 0 || signal > 64) { last = EINVAL; return -1; }
+    if (pid <= 0) { last = ENOSYS; return -1; }
+    if (signal >= 19 && signal <= 22) { last = ENOSYS; return -1; }
+    HANDLE h = NULL;
+    int own = 0;
+    if ((DWORD)pid == GetCurrentProcessId()) h = GetCurrentProcess();
+    for (int i = 0; !h && i < nchildren; i++) if ((int64_t)children[i].pid == pid) { h = children[i].process; own = 1; }
+    if (!h) {
+        h = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, (DWORD)pid);
+        if (!h) { last = GetLastError() == ERROR_ACCESS_DENIED ? EPERM : ESRCH; return -1; }
+    }
+    DWORD code = 0;
+    int running = GetExitCodeProcess(h, &code) && code == STILL_ACTIVE;
+    int r = 0;
+    if (!running && !own && h != GetCurrentProcess()) { last = ESRCH; r = -1; }
+    else if (running && signal != 0 && signal != 17 && signal != 18) {
+        /* nothing is flushed, as nothing is when a signal ends a process */
+        if (!TerminateProcess(h, SIGNALLED_BY | (DWORD)signal)) r = win_failed(NULL);
+    }
+    if (!own && h != GetCurrentProcess()) CloseHandle(h);
+    return r;
+}
+
+/* alarm: a timer that ends the process as SIGALRM would, there being no
+   handler; the seconds that were left of the one before. */
+static HANDLE alarm_timer = NULL;
+static ULONGLONG alarm_due = 0;
+__attribute__((force_align_arg_pointer))
+static VOID CALLBACK ring(PVOID data, BOOLEAN fired) {
+    (void)data; (void)fired;
+    TerminateProcess(GetCurrentProcess(), SIGNALLED_BY | 14);
+}
+int sys_alarm(int seconds) {
+    int left = 0;
+    if (alarm_timer) {
+        ULONGLONG now = GetTickCount64();
+        if (alarm_due > now) left = (int)((alarm_due - now + 999) / 1000);
+        DeleteTimerQueueTimer(NULL, alarm_timer, NULL);
+        alarm_timer = NULL;
+    }
+    if (seconds > 0) {
+        if (!CreateTimerQueueTimer(&alarm_timer, NULL, ring, NULL, (DWORD)seconds * 1000, 0, WT_EXECUTEONLYONCE))
+            return win_failed(NULL);
+        alarm_due = GetTickCount64() + (ULONGLONG)seconds * 1000;
+    }
+    return left;
+}
+/* pause: only a signal ends it, and every signal ends the process */
+int sys_pause(void) {
+    for (;;) Sleep(INFINITE);
+}
+
+/* exec, without a fork: the program is started with this one's standard
+   streams, in a job that ends it when this process ends (so that a kill of
+   this one reaches it), and this process waits for it and ends with its
+   status, which its parent then sees. The descriptors a real exec would
+   close (close-on-exec) are closed before the wait. */
+int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
+    HANDLE job = CreateJobObjectA(NULL, NULL);
+    if (job) {
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits;
+        memset(&limits, 0, sizeof limits);
+        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(job, JobObjectExtendedLimitInformation, &limits, sizeof limits);
+    }
+    int fds[3] = { -1, -1, -1 };
+    int64_t pid = spawn(path, argv, envp, search, fds, job, NULL);
+    if (pid < 0) { if (job) CloseHandle(job); return -1; }
+    HANDLE process = children[nchildren - 1].process;
+    for (int fd = 3; fd < FD_TABLE; fd++) if (fd_flags[fd].cloexec) _close(fd);
+    for (int i = 0; i < nsocks; i++) if (socks[i].used && socks[i].cloexec) { closesocket(socks[i].s); socks[i].used = 0; }
+    WaitForSingleObject(process, INFINITE);
+    DWORD code = 0;
+    GetExitCodeProcess(process, &code);
+    _exit((int)code);
+}
+
+/* system: the command interpreter of Windows (COMSPEC) runs the command,
+   which it is given whole, as /s /c "command" keeps it; the status as the
+   POSIX layer gives it, what the command exited with or 256 and the signal
+   that ended it. msvcrt's own system would hand the command every
+   descriptor of msvcrt this process has open. */
+int sys_system(const char *command) {
+    const char *comspec = getenv("COMSPEC");
+    if (!comspec) comspec = "C:\\Windows\\System32\\cmd.exe";
+    char *line = malloc(strlen(command) + 32);
+    if (!line) { last = ENOMEM; return -1; }
+    sprintf(line, "cmd /d /s /c \"%s\"", command);
+    char *argv[] = { (char *)comspec, NULL };
+    int fds[3] = { -1, -1, -1 };
+    int64_t pid = spawn(comspec, argv, NULL, 0, fds, NULL, line);
+    free(line);
+    if (pid < 0) return -1;
+    int64_t out[3];
+    if (sys_waitpid(pid, 0, out) != 0) return -1;
+    return out[1] == 0 ? (int)out[2] : 256 + (int)out[2];
 }

@@ -28,7 +28,9 @@ each way.
 taken: what the child writes is read through [`textInstreamOf`](#val-textinstreamof), and what it
 is to read is written through [`textOutstreamOf`](#val-textoutstreamof). [`reap`](#val-reap) waits for it and
 is its status. This is [`Posix.Process`](../sig/POSIX.md#str-process)'s fork, exec and waitpid put
-together, with the pipes made and the descriptors handed over.
+together, with the pipes made and the descriptors handed over; the
+system starts the program itself, without a fork, which Windows does
+not have.
 
 The two type variables of [`proc`](#type-proc) say what its streams are, text or binary;
 they are decided by which of the four functions is used on it, so a
@@ -159,7 +161,10 @@ runs another program, so a later child does not hold them open.
 
 > **Implementation** `Unix.executeInEnv/exec-failure-is-126`. A child whose
 > `exec` fails ends with the status 126, as the page asks; that is what a
-> [`reap`](#val-reap) of it reports, rather than an exception in the parent.
+> [`reap`](#val-reap) of it reports, rather than an exception in the parent. On
+> Windows, which starts a program without a child of this one's and
+> knows at once that it cannot be run, this raises [`OS.SysErr`](../sig/OS.md#exn-syserr), which
+> the page allows as well.
 
 <details><summary>Other implementations (1)</summary>
 
