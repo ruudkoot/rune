@@ -3,8 +3,10 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) **u** [v](v.md) [w](w.md) [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
 - `Passwd.uid` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-passwd.uid)
+- `Reg.users` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.users)
 - `ST.uid` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.uid)
-- `UDP` (str): [INET_SOCK](../sig/INET_SOCK.md#str-udp)
+- `Status.userAPC` (val): [WINDOWS](../sig/WINDOWS.md#val-status.userapc)
+- `UDP` (str): [INET6_SOCK](../sig/INET6_SOCK.md#str-udp), [INET_SOCK](../sig/INET_SOCK.md#str-udp)
 - `uid` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-uid), [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#type-uid), [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#type-uid)
 - `uidToWord` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-uidtoword)
 - `umask` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-umask)

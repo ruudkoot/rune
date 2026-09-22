@@ -11,7 +11,11 @@
 #   sys     POSIX headers of the VM's system layer (vm/sys_posix.c)
 #   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
 #   perf    optional profiling tools
-#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml      all = everything
+#   windows mingw-w64 for both Windows VMs (make windows), and whether an
+#           .exe runs here (make test-windows); not part of all, since
+#           nothing else needs it
+#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml
+#   all = everything but windows
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
 # Exit status: 0 when everything required by the scopes is present, else 1.
 # Optional tools only produce warnings. With --quiet only problems are printed.
@@ -32,7 +36,7 @@ for s in $scopes; do
     all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf" ;;
     build) expanded="$expanded vm mlton" ;;
     hosts) expanded="$expanded mlton smlnj smlnj32 polyml" ;;
-    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf) expanded="$expanded $s" ;;
+    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|windows) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -52,6 +56,8 @@ SMLNJ=${SMLNJ:-$hosts/smlnj/bin/sml}
 SMLNJ32=${SMLNJ32:-$hosts/smlnj32/bin/sml}
 POLYC=${POLYC:-$hosts/polyml/bin/polyc}
 POLY=${POLY:-$(dirname "$POLYC")/poly}
+WINCC=${WINCC:-x86_64-w64-mingw32-gcc}
+WINCC32=${WINCC32:-i686-w64-mingw32-gcc}
 
 # ---------------------------------------------------------------- packages
 if command -v apt-get > /dev/null 2>&1; then pm=apt
@@ -73,6 +79,9 @@ pkg() {
     apt:gmp) echo libgmp-dev ;;           dnf:gmp) echo gmp-devel ;;
     pacman:gmp) echo gmp ;;               brew:gmp) echo gmp ;;
     apt:m32) echo gcc-multilib ;;         dnf:m32) echo glibc-devel.i686 libgcc.i686 ;;
+    apt:mingw64) echo gcc-mingw-w64-x86-64 ;;  dnf:mingw64) echo mingw64-gcc ;;
+    apt:mingw32) echo gcc-mingw-w64-i686 ;;    dnf:mingw32) echo mingw32-gcc ;;
+    pacman:mingw*) echo mingw-w64-gcc ;;       brew:mingw*) echo mingw-w64 ;;
     apt:coreutils) echo coreutils ;;      dnf:coreutils) echo coreutils ;;
     pacman:coreutils) echo coreutils ;;   brew:coreutils) echo coreutils ;;
     apt:findutils) echo findutils ;;      dnf:findutils) echo findutils ;;
@@ -298,6 +307,33 @@ if in_scope perf; then
   for t in gprof valgrind; do
     if path=$(command -v $t 2> /dev/null); then ok $t "$path"
     else warn $t "not found (optional; package: $(pkg $t))"
+    fi
+  done
+fi
+
+# ---------------------------------------------------------------- windows
+if in_scope windows; then
+  section "mingw-w64 (make windows, make test-windows)"
+  cat > "$tmp/win.c" << 'EOF'
+#include <stdint.h>
+#include <stdio.h>
+#include <windows.h>
+int main(void) { int64_t t = (int64_t)GetTickCount64(); printf("%d\n", t >= 0); return 0; }
+EOF
+  runs=""
+  for w in "64:$WINCC:mingw64" "32:$WINCC32:mingw32"; do
+    bits=${w%%:*}; rest=${w#*:}; cc=${rest%:*}; thing=${rest#*:}
+    if ! command -v "$cc" > /dev/null 2>&1; then bad "$cc" "not found on PATH (the $bits-bit VM)" "$thing"
+    elif "$cc" -std=c99 -O2 -o "$tmp/win$bits.exe" "$tmp/win.c" > "$tmp/win$bits.log" 2>&1; then
+      ok "$cc" "$("$cc" --version 2> /dev/null | head -1)"
+      runs="$runs $tmp/win$bits.exe"
+    else bad "$cc" "cannot compile a C99 program for Windows: $(head -1 "$tmp/win$bits.log")" "$thing"
+    fi
+  done
+  # Running one is only for make test-windows, and only Windows or WSL can.
+  for exe in $runs; do
+    if [ "$("$exe" 2> /dev/null | tr -d '\r')" = 1 ]; then ok run "$(basename "$exe") runs here"
+    else warn run "$(basename "$exe") does not run here: make test-windows needs Windows or WSL"
     fi
   done
 fi

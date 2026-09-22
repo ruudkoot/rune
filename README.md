@@ -25,8 +25,9 @@ records, let-polymorphism, refs, proper tail calls), the Modules language
 the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
 the monomorphic vectors, arrays, slices and two-dimensional arrays, `Posix`,
 `Unix`, the sockets and the network databases, the fixed-width `IntN` and
-`WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`). Not there:
-`Windows` ([docs/basis-compat.md](docs/basis-compat.md)).
+`WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`), and
+`Windows`, whose calls of the system answer on the VMs of Windows (`make
+windows`; [docs/basis-compat.md](docs/basis-compat.md)).
 
 **[docs/generated/basis](docs/generated/basis/README.md)** is the
 documentation of the library: a page for every signature, with what each
@@ -48,7 +49,7 @@ description of the supported language. Every feature row there has an id
 | `vm/` | the virtual machine; `opcodes.def` and `prims.def` define the instruction set |
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
-| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
+| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
 | `examples/` | small programs |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh`, `install.sh` |
 | `man/`, `completions/` | man pages and shell completions, installed by `make install` |

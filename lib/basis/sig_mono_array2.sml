@@ -22,10 +22,14 @@ sig
 
      Two are equal when they are the same array.
 
-     Deviation: `MONO_ARRAY2.array/not-abstract`. An `IntArray2.array` is an
-     `int Array2.array`: the structures are applications of one functor over
-     `Array2` and are not sealed with this signature, which the library loads
-     after them; they match it, as the suite checks. *)
+     Implementation: `MONO_ARRAY2.array/abstract-over-Array2`. An
+     `IntArray2.array` is an `Array2.array` of its elements underneath, but
+     the type is abstract. It is built on the implementation beneath the
+     sealed `Array2` rather than on `Array2` itself, because this signature
+     asks for an `eqtype array` and a sealed `'a Array2.array` gives none at
+     `real` -- see the erratum `ARRAY2/sealed-and-equal-at-any-element`. As
+     for `MONO_VECTOR.vector`, no check can pin an abstract type; what holds
+     it is the page of the types that are one type. *)
   eqtype array
 
   (* The type of the elements. *)

@@ -20,6 +20,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | 4 | 4 | 100% | 4 | 4 |
 | [`IEEE_REAL`](sig/IEEE_REAL.md) | 10 | 10 | 100% | 5 | 5 |
 | [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) | 25 | 25 | 100% | 20 | 20 |
+| [`INET6_SOCK`](sig/INET6_SOCK.md) | 20 | 20 | 100% | 11 | 11 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | 17 | 17 | 100% | 9 | 9 |
 | [`INTEGER`](sig/INTEGER.md) | 30 | 30 | 100% | 26 | 26 |
 | [`INT_INF`](sig/INT_INF.md) | 10 | 10 | 100% | 10 | 10 |
@@ -70,47 +71,26 @@ documented when a comment describes it, alone or together with the entry before 
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 14 | 100% | 6 | 6 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
+| [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1538 | 1538 | 100% | 1078 | 1078 |
+| **all** | 1646 | 1646 | 100% | 1119 | 1119 |
 
 ## Examples that are run
 
 An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the
-test suite: 247 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.md) (5), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (4), [`BOOL`](sig/BOOL.md) (2), [`BYTE`](sig/BYTE.md) (4), [`CHAR`](sig/CHAR.md) (13), [`DATE`](sig/DATE.md) (7), [`GENERAL`](sig/GENERAL.md) (5), [`IEEE_REAL`](sig/IEEE_REAL.md) (3), [`INET_SOCK`](sig/INET_SOCK.md) (1), [`INTEGER`](sig/INTEGER.md) (15), [`INT_INF`](sig/INT_INF.md) (8), [`LIST`](sig/LIST.md) (14), [`LIST_PAIR`](sig/LIST_PAIR.md) (6), [`MATH`](sig/MATH.md) (6), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (2), [`OPTION`](sig/OPTION.md) (6), [`OS`](sig/OS.md) (1), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (2), [`OS_PATH`](sig/OS_PATH.md) (22), [`OS_PROCESS`](sig/OS_PROCESS.md) (2), [`PACK_REAL`](sig/PACK_REAL.md) (2), [`PACK_WORD`](sig/PACK_WORD.md) (5), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (2), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`REAL`](sig/REAL.md) (26), [`SML90`](sig/SML90.md) (4), [`STREAM_IO`](sig/STREAM_IO.md) (1), [`STRING`](sig/STRING.md) (15), [`STRING_CVT`](sig/STRING_CVT.md) (5), [`SUBSTRING`](sig/SUBSTRING.md) (9), [`TEXT_IO`](sig/TEXT_IO.md) (4), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (8), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (1), [`VECTOR`](sig/VECTOR.md) (8), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (4), [`WORD`](sig/WORD.md) (16).
+test suite: 251 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.md) (5), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (4), [`BOOL`](sig/BOOL.md) (2), [`BYTE`](sig/BYTE.md) (4), [`CHAR`](sig/CHAR.md) (15), [`DATE`](sig/DATE.md) (7), [`GENERAL`](sig/GENERAL.md) (5), [`IEEE_REAL`](sig/IEEE_REAL.md) (3), [`INET6_SOCK`](sig/INET6_SOCK.md) (2), [`INET_SOCK`](sig/INET_SOCK.md) (1), [`INTEGER`](sig/INTEGER.md) (15), [`INT_INF`](sig/INT_INF.md) (8), [`LIST`](sig/LIST.md) (14), [`LIST_PAIR`](sig/LIST_PAIR.md) (6), [`MATH`](sig/MATH.md) (6), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (2), [`OPTION`](sig/OPTION.md) (6), [`OS`](sig/OS.md) (1), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (2), [`OS_PATH`](sig/OS_PATH.md) (22), [`OS_PROCESS`](sig/OS_PROCESS.md) (2), [`PACK_REAL`](sig/PACK_REAL.md) (2), [`PACK_WORD`](sig/PACK_WORD.md) (5), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (2), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`REAL`](sig/REAL.md) (26), [`SML90`](sig/SML90.md) (4), [`STREAM_IO`](sig/STREAM_IO.md) (1), [`STRING`](sig/STRING.md) (15), [`STRING_CVT`](sig/STRING_CVT.md) (5), [`SUBSTRING`](sig/SUBSTRING.md) (9), [`TEXT_IO`](sig/TEXT_IO.md) (4), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (8), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (1), [`VECTOR`](sig/VECTOR.md) (8), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (4), [`WORD`](sig/WORD.md) (16).
 
 ## Notes that no check pins
 
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not
 be pinned: many are about the text and not about behaviour.
 
-- `MONO_VECTOR.vector/not-abstract` (Deviation), MONO_VECTOR
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
-- `Word8Vector.vector/is-string` (Deviation), MONO_VECTOR, in `Word8Vector`
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
-- `ImperativeIO/not-sealed` (Deviation), in `ImperativeIO`
-- `DATE.date/not-abstract` (Deviation), DATE
-- `IMPERATIVE_IO/functor-not-sealed` (Deviation), IMPERATIVE_IO
-- `IMPERATIVE_IO.instream/admits-equality` (Deviation), IMPERATIVE_IO
-- `INET_SOCK/ipv4-only` (Limitation), INET_SOCK
-- `MONO_ARRAY2.array/not-abstract` (Deviation), MONO_ARRAY2
-- `NetHostDB.in_addr/not-abstract` (Deviation), NET_HOST_DB
-- `OS.FileSys.file_id/is-a-pair` (Deviation), OS_FILE_SYS
-- `OS.Process.status/is-an-int` (Deviation), OS_PROCESS
-- `Posix.ProcEnv.uid/is-an-int` (Deviation), POSIX_PROC_ENV
+- `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
-- `StringCvt.cs/transparent` (Deviation), STRING_CVT
-- `TIME.time/not-abstract` (Deviation), TIME
-- `TIMER.cpu_timer/not-abstract` (Deviation), TIMER
-- `Timer.checkCPUTimes/no-gc-accounting` (Limitation), TIMER
-- `Timer.checkGCTime/always-zero` (Limitation), TIMER
-- `Posix.IO.file_desc/is-an-int` (Deviation), POSIX_IO
-- `OS.syserror/is-an-int` (Deviation), OS
-- `UNIX/extra-members` (Deviation), UNIX
-- `SOCKET/no-ipv6` (Limitation), SOCKET
-- `Posix.Process.pid/is-an-int` (Deviation), POSIX_PROCESS
-- `Posix.Error.syserror/is-an-int` (Deviation), POSIX_ERROR
-- `WideTextIO/file-streams-have-no-positions` (Limitation), PRIM_IO, in `WideTextPrimIO`
+- `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
 
 ---
 

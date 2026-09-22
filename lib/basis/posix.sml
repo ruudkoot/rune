@@ -1,6 +1,7 @@
 (* Posix: the interface of the operating system itself.
 
-   Implements: POSIX
+   Implements: POSIX where type FileSys.dirstream = OS.FileSys.dirstream where
+   type FileSys.access_mode = OS.FileSys.access_mode
 
    Status: optional *)
 structure Posix =

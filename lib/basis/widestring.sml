@@ -86,14 +86,13 @@ struct
     (* from text of char: the escapes of widechar.sml, with the formatting
        sequences around a character skipped as WideChar.scan does *)
     fun narrowOne sml getc src =
-      if sml then RuneWideCharImpl.scan getc src else RuneWideCharImpl.scanWide (false, getc, src)
+      if sml then RuneWideCharImpl.scanInString getc src else RuneWideCharImpl.scanWide (false, getc, src)
     fun narrowSkip (getc, src) = RuneEscape.skipFormat getc src
     fun noSkip (_, src) = (false, src)
 
     (* from a stream of wide characters: an escape is written with the
        characters of ASCII, and a character that needs none stands for itself *)
     val backslash = WideChar.chr 92
-    val quote = WideChar.chr 34
     fun isFormatW c = WideChar.isSpace c
     fun wideSkip (getc, src) =
       let
@@ -128,7 +127,8 @@ struct
               (case RuneWideCharImpl.scanWide (true, narrowReader, src) of
                  SOME (w, rest') => SOME (w, #2 (wideSkip (getc, rest')))
                | NONE => NONE)
-            else if c = quote then NONE
+            (* a double quote that no backslash precedes prints, and converts
+               to itself as it does for String.scan *)
             else if WideChar.isPrint c orelse Int.> (WideChar.ord c, 255) then
               SOME (c, #2 (wideSkip (getc, rest)))
             else NONE
@@ -155,14 +155,15 @@ end
    Pinned by: `WideString.scan/reads-wide-characters`,
    `WideString.scan/stops-at-a-character-it-cannot-read`
 
-   Reading: `WideString.scan/an-unescaped-double-quote-ends-it`. In the
-   stream of wide characters an escape is written with the characters of
-   ASCII, and a character that needs none stands for itself, those above 255
-   too. A double quote that no backslash precedes cannot be read and ends the
-   string, where `String.scan`, and `WideString.fromString` on its text of
-   `char`, convert it to itself.
+   Reading: `WideString.scan/unescaped-double-quote`. In the stream of wide
+   characters an escape is written with the characters of ASCII, and a
+   character that needs none stands for itself, those above 255 too. A
+   double quote that no backslash precedes converts to itself, as it does
+   for `String.scan` and for `WideString.fromString` on its text of `char`:
+   what ends a scan is the end of the stream, a character that does not
+   print and a bad escape, and a double quote is none of these.
 
-   Pinned by: `WideString.scan/stops-at-a-character-it-cannot-read` *)
+   Pinned by: `WideString.scan/unescaped-double-quote*` *)
 structure WideString :> STRING
   where type string = WideCharVector.vector
   where type char = WideChar.char = RuneWideString

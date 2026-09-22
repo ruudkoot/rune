@@ -50,7 +50,7 @@ elaborator), so what it documents is what the compiler compiles. Nothing of
 | `DocAnchor` | `src/doc/docanchor.sml` | The explicit anchors of a page, `kind-name` in lower case with symbolic identifiers spelled out (`val-op-at`): GitHub's own anchors are useless for SML. |
 | `DocMarkdown` | `src/doc/docmarkdown.sml` | Markdown as GitHub reads it: what must be escaped for text to stay text, blocks, tables. |
 | `DocClaims` | `src/doc/docclaims.sml` | What implements what: the `Implements:` paragraphs of structures and functors, the ascriptions of the source, and the substructures a structure has through `structure A = B`. They give the signature pages their implementations and are written to `claims.tsv`, which `tests/basis/check-claims.sh` compares with what the suite matches against the specification's signatures. |
-| `DocElab` | `src/doc/docelab.sml` | The library through the compiler's elaborator, file by file as the driver does it. A claim is checked by elaborating `structure Claim : SIG where type ... = S` on top, and the compiler's complaint is the diagnostic; a usage head is checked against the elaborated type of its value, with abbreviations expanded. It also answers what only elaboration knows: whether an example that is an equation is well typed (`checkExample`), what a structure without a body in the source declares and what a signature specifies with its includes (`namesOf`, `specifiedBy`, for the names beyond the signature of `structures.md`), and which types have one type name (`typeNames`, for `types.md`). A library other than the Basis Library is elaborated on top of it. |
+| `DocElab` | `src/doc/docelab.sml` | The library through the compiler's elaborator, file by file as the driver does it. A claim is checked by elaborating `structure Claim : SIG where type ... = S` on top, and the compiler's complaint is the diagnostic; a usage head is checked against the elaborated type of its value, with abbreviations expanded. It also answers what only elaboration knows: whether an example that is an equation is well typed (`checkExample`), what a structure without a body in the source declares and what a signature specifies with its includes (`namesOf`, `specifiedBy`, for the names beyond the signature of `structures.md`), which types have one type name (`typeNames`, for `types.md`), and whether a signature with its `where type`s says which type one of its types is or leaves it abstract (`typeSpecOf`, for the reason that `types.md` gives with every name). A library other than the Basis Library is elaborated on top of it. |
 | `DocTests` | `src/doc/doctests.sml` | The checks of a test suite, read out of its sources with the compiler's parser: the labels `Structure.member/case` (literal, or literal and computed), what kind of check each is and which exception a `raises` expects, test functors expanded by the `name` each application gives. The pages list the checks of every member, and generation fails for a specified member of a claimed structure that has none. |
 | `DocNotes` | `src/doc/docnotes.sml` | The notes of the doc comments (readings, errata, deviations, implementation choices, limitations) with what pins them: the `Pinned by:` globs, which must match checks of the suite, or the check whose label is the note's id. They are written to `notes.tsv` and `readings.md`; `tests/basis/check-notes.sh` compares the export with `deviations.txt`, so that the suite depends on the documentation and not the other way round. |
 | `DocAnnot` | `src/doc/docannot.sml` | Annotations: what a file made elsewhere says about the members, `glob \| whom it is about \| text`, where the glob is that of a check's label (`*`, `?`, `[...]`). An annotation is shown under every member with such a check, and one that finds none is an error. The Basis Library's file is `tests/basis/annotations.txt`, the host lines of `deviations.txt` as `tests/basis/gen-annotations.sh` writes them. |
@@ -108,14 +108,19 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), disassembler. |
 | `vm/interp.c` | Stacks, frames, handlers, `vm_run` dispatch loop, structural equality, exception raising. |
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
+| `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
 | `vm/prims.c` | One function per primitive; the dispatch table is generated from `prims.def`. |
-| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems; `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
+| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
 | `vm/main.c` | Command line handling. |
 
 GC discipline in C: an allocation may move every heap object, so primitives
 read their arguments from the stack (not popped) until the result exists, and
 temporaries that must survive an allocation are pushed on the value stack
 (`vm_cons` shows the pattern).
+
+[runtime.md](runtime.md) is the same machine seen from a running program:
+the layout of a value, when the collector moves it, the limits, what makes a
+run reproducible, and where the platform shows through.
 
 ## Basis library
 
@@ -129,7 +134,15 @@ the exceptions that are not built in) and `pervasive.sml` (the values of the
 top-level environment, written on primitives; `List.map` is the top-level
 `map`, not the other way round, so that these 90 lines need no other file). The
 driver loads a file on demand when the program names something it provides,
-with the files it requires. A `final` file (`epilogue.sml`, which runs the
+with the files it requires. The last files of the list are `seal` files: each
+binds the structures of one file again, ascribed to their signatures
+(`structure List : LIST = List`), and is loaded for a program that names one
+of them, never for a file of the library. So the library is compiled with
+every structure whole, its helpers included, and a program sees what the
+specification names. A seal is opaque where it makes a type abstract that no
+other signature names (`Date.date`, the ids of `Posix`), and keeps the types
+that other signatures name by `where type`, because those signatures were
+elaborated with the structure whole. A `final` file (`epilogue.sml`, which runs the
 `OS.Process.atExit` actions) is compiled after the program, and only when
 the files it requires are loaded already. Primitives are bound with
 `_prim "name" : ty`. The tags of `option` and `order` are relied upon by

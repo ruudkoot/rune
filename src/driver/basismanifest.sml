@@ -14,8 +14,10 @@ struct
      the scan below looks at identifiers only, so it may load a file the
      program does not need, never miss one it does. A name can have several
      files, as IO and OS do (the structure and the signature of the
-     specification); naming it loads them all. *)
-  datatype when = Always | Demand | Final
+     specification); naming it loads them all. A seal file binds structures
+     again as their signatures show them; it is loaded for a program that
+     mentions one, never because a file of the library requires the name. *)
+  datatype when = Always | Demand | Seal | Final
   (* requires is read from the text when it is asked for: most programs need
      it of few files *)
   type entry = {file : string, when : when, provides : string list, requires : unit -> string list}
@@ -63,7 +65,7 @@ struct
               (case (one (i, b1), one (b1 + 1, b2)) of
                  (SOME file, SOME mode) =>
                    {file = file,
-                    when = (case mode of "always" => Always | "demand" => Demand | "final" => Final | _ => bad (i, e)),
+                    when = (case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final | _ => bad (i, e)),
                     provides = words (b3 + 1, b4), requires = fn () => words (b4 + 1, e)}
                | _ => bad (i, e))
           | _ => bad (i, e)
@@ -106,7 +108,10 @@ struct
       (* The files that provide a name: a scan of the entries, compared with
          the primitive =, for the few names the chosen files require (a map of
          every name would cost more to build than a program needs). *)
-      fun providersOf n = List.filter (fn e : entry => List.exists (fn p => p = n) (#provides e)) entries
+      (* A seal file binds a structure again, as its signature shows it: that
+         is for the program that mentions the structure. The files of the
+         library that need it have it whole, from the file that declares it. *)
+      fun providersOf n = List.filter (fn e : entry => #when e <> Seal andalso List.exists (fn p => p = n) (#provides e)) entries
       fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
       fun add (e : entry, chosen : names) : names =
         if StringMap.member (chosen, #file e) then chosen

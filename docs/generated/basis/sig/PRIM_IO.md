@@ -14,10 +14,10 @@
 
 ```sml
 signature PRIM_IO
-structure BinPrimIO : PRIM_IO where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int
+structure BinPrimIO : PRIM_IO where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int where type vector_slice = Word8VectorSlice.slice where type array_slice = Word8ArraySlice.slice
 functor PrimIO (...) : PRIM_IO  (* optional *)
-structure TextPrimIO : PRIM_IO where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char
-structure WideTextPrimIO : PRIM_IO  (* optional *)
+structure TextPrimIO : PRIM_IO where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char where type vector_slice = CharVectorSlice.slice where type array_slice = CharArraySlice.slice
+structure WideTextPrimIO : PRIM_IO where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -165,10 +165,13 @@ eqtype pos
 The type of positions in the source or the sink.
 
 > **Implementation** `PRIM_IO.pos/of-the-instances`. [`BinPrimIO.pos`](#type-pos) is the
-> integer type of `Position`, and a position is the offset of a byte from
+> integer type of [`Position`](../sig/INTEGER.md), and a position is the offset of a byte from
 > the start of the file, so [`compare`](#val-compare) is the order of those numbers.
-> [`TextPrimIO.pos`](#type-pos) is abstract: a program can compare positions and give
-> them back to `setPos`, and nothing more.
+> [`TextPrimIO.pos`](#type-pos) is abstract, as the specification leaves it: a program
+> can compare positions and give them back to `setPos`, and nothing more.
+> [`WideTextPrimIO.pos`](#type-pos) is abstract as well, and a type of its own: nothing
+> says that a position in a stream of wide characters is one of a stream
+> of characters.
 
 ### <a name="val-compare"></a>`compare`
 

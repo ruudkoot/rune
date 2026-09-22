@@ -23,13 +23,7 @@ signature TIME =
 sig
   (* The type of a length of time.
 
-     Two times are equal when they are the same length.
-
-     Deviation: `TIME.time/not-abstract`. The specification leaves the type
-     abstract. In Rune it is `int`, the number of microseconds, and the
-     structure is not sealed, so the representation shows; `Time` also has
-     `micros` and `ofMicros` beyond the signature, for the parts of the
-     library that count in microseconds. *)
+     Two times are equal when they are the same length. *)
   eqtype time
 
   (* Raised when a time cannot be made or converted: the value does not fit. *)

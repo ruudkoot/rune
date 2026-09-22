@@ -211,19 +211,23 @@ sig
 
      Reading: `Char.fromString/printable-only-all-rejected`. A first character
      outside the printable range, codes 32 to 126, gives `NONE`, and so does
-     a backslash by itself; every other printable character is converted to
-     itself.
+     a backslash by itself; every other printable character but the double
+     quote, of which below, is converted to itself.
 
      Pinned by: `Char.fromString/printable-only-*`
 
-     Reading (the suite differs): `Char.fromString/unescaped-double-quote`.
-     The specification says that the text is read "as allowed in an SML
-     program" and names only characters that do not print and bad escapes as
-     what stops a scan. Rune therefore converts a double quote that has no
-     backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
-     and that is what the suite expects.
+     Reading: `Char.fromString/unescaped-double-quote`. The specification
+     has the text read "as allowed in an SML program", where a double quote
+     that no backslash precedes ends a constant and is no character, and
+     names only characters that do not print and bad escapes as what gives
+     `NONE`. The first is followed: a double quote by itself gives `NONE`, as
+     in MLton and SML/NJ, where Poly/ML converts it. The page of `STRING` has
+     no such words and lists what stops a scan, so `String.scan` converts the
+     same double quote; the two pages differ, and each is followed.
 
-     Example: `fromString "\\n" = SOME #"\n"` *)
+     Example: `fromString "\\n" = SOME #"\n"`
+
+     Example: `fromString "\"" = NONE`, where `fromString "\\\"" = SOME #"\""`. *)
   val fromString : String.string -> char option
 
   (* `toCString c` is the text that stands for `c` inside a C string constant.

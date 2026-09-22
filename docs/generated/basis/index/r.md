@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
+- `Key.read` (val): [WINDOWS](../sig/WINDOWS.md#val-key.read)
 - `radix` (type): [STRING_CVT](../sig/STRING_CVT.md#type-radix)
 - `radix` (val): [REAL](../sig/REAL.md#val-radix)
 - `RandomAccessNotSupported` (exn): [IO](../sig/IO.md#exn-randomaccessnotsupported)
@@ -24,7 +25,7 @@
 - `realPath` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-realpath)
 - `realRound` (val): [REAL](../sig/REAL.md#val-realround)
 - `realTrunc` (val): [REAL](../sig/REAL.md#val-realtrunc)
-- `reap` (val): [UNIX](../sig/UNIX.md#val-reap)
+- `reap` (val): [UNIX](../sig/UNIX.md#val-reap), [WINDOWS](../sig/WINDOWS.md#val-reap)
 - `recvArr` (val): [SOCKET](../sig/SOCKET.md#val-recvarr)
 - `recvArr'` (val): [SOCKET](../sig/SOCKET.md#val-recvarr-prime)
 - `recvArrFrom` (val): [SOCKET](../sig/SOCKET.md#val-recvarrfrom)
@@ -41,6 +42,7 @@
 - `recvVecFromNB'` (val): [SOCKET](../sig/SOCKET.md#val-recvvecfromnb-prime)
 - `recvVecNB` (val): [SOCKET](../sig/SOCKET.md#val-recvvecnb)
 - `recvVecNB'` (val): [SOCKET](../sig/SOCKET.md#val-recvvecnb-prime)
+- `Reg` (str): [WINDOWS](../sig/WINDOWS.md#str-reg)
 - `region` (type): [ARRAY2](../sig/ARRAY2.md#type-region), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-region)
 - `rem` (val): [INTEGER](../sig/INTEGER.md#val-rem), [REAL](../sig/REAL.md#val-rem)
 - `remove` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-remove)

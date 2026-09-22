@@ -6,6 +6,7 @@
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
+#include <float.h>
 #include "sys.h"
 
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
@@ -277,6 +278,92 @@ static int p_real_to_string(VM *vm) {
 
 /* A numeral in C syntax (~ read as -) to a double, or with single to the
    nearest binary32 value; NONE when it does not start as a number. */
+/* Reading a numeral in the current rounding mode. glibc's strtod and strtof
+   round in the mode; mingw's round to the nearest whatever it is. So the
+   numeral is read to the nearest, and then stepped to the other neighbour
+   when the mode asks for it: the exact decimal expansion of the nearest,
+   which printf gives with enough digits, is compared with the numeral. The
+   result is the same with every C library. */
+
+/* The significant digits of a decimal numeral [s, end), into digits (which
+   has room for end - s + 1), and the exponent of the first one: the numeral
+   is d.ddd * 10^exp. "" for zero. An exponent is kept to what cannot
+   overflow; a numeral that needs more is not finite and not zero, and is
+   not compared. */
+static void decimal_digits(const char *s, const char *end, char *digits, long long *exp) {
+    size_t n = 0;
+    long long e = 0, point = -1, first = -1, pos = 0;
+    for (; s < end && (*s == '-' || *s == '+'); s++) {}
+    for (; s < end && ((*s >= '0' && *s <= '9') || *s == '.'); s++) {
+        if (*s == '.') { point = pos; continue; }
+        if (first < 0 && *s == '0') { pos++; continue; }
+        if (first < 0) first = pos;
+        digits[n++] = *s;
+        pos++;
+    }
+    if (s < end && (*s == 'e' || *s == 'E')) {
+        e = strtoll(s + 1, NULL, 10);
+        if (e > 1000000000LL) e = 1000000000LL;
+        if (e < -1000000000LL) e = -1000000000LL;
+    }
+    while (n > 0 && digits[n - 1] == '0') n--;
+    digits[n] = 0;
+    if (point < 0) point = pos;
+    *exp = first < 0 ? 0 : e + point - first - 1;
+}
+
+/* -1, 0 or 1 as the magnitude of the numeral [s, end) is below, equal to or
+   above |x|. */
+static int decimal_compare(const char *s, const char *end, double x) {
+    /* 767 significant digits are the most a double has */
+    char x_text[1200];
+    int n = snprintf(x_text, sizeof x_text, "%.780e", fabs(x));
+    char *a = malloc((size_t)(end - s) + 1), *b = malloc((size_t)n + 1);
+    if (!a || !b) { free(a); free(b); return 0; }
+    long long ea, eb;
+    decimal_digits(s, end, a, &ea);
+    decimal_digits(x_text, x_text + n, b, &eb);
+    int c;
+    if (!a[0] || !b[0]) c = (a[0] != 0) - (b[0] != 0);
+    else if (ea != eb) c = ea < eb ? -1 : 1;
+    else { c = strcmp(a, b); c = c < 0 ? -1 : c > 0 ? 1 : 0; }
+    free(a);
+    free(b);
+    return c;
+}
+
+static double parse_rounded(const char *buf, char **end, int single) {
+    int mode = fegetround();
+    fesetround(FE_TONEAREST);
+    errno = 0;
+    double x = single ? (double)strtof(buf, end) : strtod(buf, end);
+    int range = errno == ERANGE;
+    fesetround(mode);
+    if (mode == FE_TONEAREST || *end == buf || isnan(x)) return x;
+    for (const char *c = buf; c < *end; c++)
+        if (!((*c >= '0' && *c <= '9') || *c == '.' || *c == '-' || *c == '+' || *c == 'e' || *c == 'E'))
+            return x;   /* inf, nan, hexadecimal: nothing to round */
+    int negative = buf[0] == '-';
+    double big = single ? FLT_MAX : DBL_MAX;
+    if (isinf(x)) {
+        /* beyond the largest finite number: where the mode rounds toward
+           zero, the result is that number */
+        if (range && (mode == FE_TOWARDZERO || (mode == FE_DOWNWARD && !negative) || (mode == FE_UPWARD && negative)))
+            return negative ? -big : big;
+        return x;
+    }
+    int c = decimal_compare(buf, *end, x);   /* the numeral against |x| */
+    if (c == 0) return x;
+    /* the numeral is further from zero than x (c > 0), or nearer */
+    int above = negative ? c < 0 : c > 0;    /* the numeral is above x */
+    double toward;
+    if (mode == FE_UPWARD) { if (!above) return x; toward = INFINITY; }
+    else if (mode == FE_DOWNWARD) { if (above) return x; toward = -INFINITY; }
+    else { if (c > 0) return x; toward = 0.0; }   /* FE_TOWARDZERO */
+    if (single) return (double)nextafterf((float)x, (float)toward);
+    return nextafter(x, toward);
+}
+
 static int real_parse(VM *vm, const char *name, int single) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, name);
     uint32_t n = s->len;
@@ -292,8 +379,7 @@ static int real_parse(VM *vm, const char *name, int single) {
         return ret(vm, 1, mk_con0(0));
     }
     char *end;
-    errno = 0;
-    double d = single ? (double)strtof(buf, &end) : strtod(buf, &end);
+    double d = parse_rounded(buf, &end, single);
     int none = end == buf;
     free(buf);
     if (none) return ret(vm, 1, mk_con0(0));
@@ -494,6 +580,8 @@ static int p_sys_error_of_name(VM *vm) {
 static int p_time_now(VM *vm) { return ret(vm, 1, mk_int(sys_time_now())); }
 static int p_time_user(VM *vm) { return ret(vm, 1, mk_int(sys_time_user())); }
 static int p_time_sys(VM *vm) { return ret(vm, 1, mk_int(sys_time_sys())); }
+static int p_time_gc_user(VM *vm) { return ret(vm, 1, mk_int(vm->gc_user_us)); }
+static int p_time_gc_sys(VM *vm) { return ret(vm, 1, mk_int(vm->gc_sys_us)); }
 static int p_time_sleep(VM *vm) { INT1("time_sleep"); sys_time_sleep(x); return ret(vm, 1, mk_unit()); }
 
 /* A list of the ints in xs, built on the VM stack so that the collector sees
@@ -570,6 +658,78 @@ static int p_date_offset(VM *vm) {
     return ret(vm, 1, mk_int(offset));
 }
 
+/* Date.fmt: strftime of the C locale, written here so that every platform
+   formats the same. The library passes only the directives of the
+   specification, aAbBcdHIjmMpSUwWxXyYZ% (lib/basis/date.sml), and a date
+   that is valid, with a year that fits a C int. The rules are glibc's: %Y
+   without padding and with a sign ("-5"), %y the year modulo 100 counted
+   from below (95 for -5), %c as %a %b %e %H:%M:%S %Y. Only %Z, the name of
+   the local zone, is asked of the system (sys_date_format), and only for a
+   local date: the library writes the zone of any other. parts[] is as
+   sys_date_parts fills it. */
+typedef struct { char *out; size_t n, cap; } Text;
+static void put(Text *t, const char *s) {
+    for (; *s; s++) if (t->n + 1 < t->cap) t->out[t->n++] = *s;
+}
+static void put_number(Text *t, long long v, int width, char pad) {
+    char buf[32];
+    int k = snprintf(buf, sizeof buf, "%lld", v);
+    for (; k < width; k++) { char p[2] = { pad, 0 }; put(t, p); }
+    put(t, buf);
+}
+static const char *const day_names[7] =
+    { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+static const char *const month_names[12] =
+    { "January", "February", "March", "April", "May", "June", "July", "August",
+      "September", "October", "November", "December" };
+static void put_name(Text *t, const char *const *names, int n, int i, int abbreviated) {
+    if (i < 0 || i >= n) { put(t, "?"); return; }
+    char buf[16];
+    snprintf(buf, sizeof buf, abbreviated ? "%.3s" : "%s", names[i]);
+    put(t, buf);
+}
+static void format_date(Text *t, const char *format, const int32_t parts[9], int local) {
+    long long year = (long long)parts[5] + 1900;
+    int hour = parts[2], wday = parts[6], yday = parts[7];
+    for (const char *f = format; *f; f++) {
+        if (*f != '%' || !f[1]) { char c[2] = { *f, 0 }; put(t, c); continue; }
+        switch (*++f) {
+        case 'a': put_name(t, day_names, 7, wday, 1); break;
+        case 'A': put_name(t, day_names, 7, wday, 0); break;
+        case 'b': put_name(t, month_names, 12, parts[4], 1); break;
+        case 'B': put_name(t, month_names, 12, parts[4], 0); break;
+        case 'c':
+            format_date(t, "%a %b ", parts, local);
+            put_number(t, parts[3], 2, ' ');
+            format_date(t, " %H:%M:%S %Y", parts, local);
+            break;
+        case 'd': put_number(t, parts[3], 2, '0'); break;
+        case 'H': put_number(t, hour, 2, '0'); break;
+        case 'I': put_number(t, hour % 12 == 0 ? 12 : hour % 12, 2, '0'); break;
+        case 'j': put_number(t, yday + 1, 3, '0'); break;
+        case 'm': put_number(t, parts[4] + 1, 2, '0'); break;
+        case 'M': put_number(t, parts[1], 2, '0'); break;
+        case 'p': put(t, hour < 12 ? "AM" : "PM"); break;
+        case 'S': put_number(t, parts[0], 2, '0'); break;
+        case 'U': put_number(t, (yday + 7 - wday) / 7, 2, '0'); break;
+        case 'w': put_number(t, wday, 1, '0'); break;
+        case 'W': put_number(t, (yday + 7 - (wday + 6) % 7) / 7, 2, '0'); break;
+        case 'x': format_date(t, "%m/%d/%y", parts, local); break;
+        case 'X': format_date(t, "%H:%M:%S", parts, local); break;
+        case 'y': put_number(t, (year % 100 + 100) % 100, 2, '0'); break;
+        case 'Y': put_number(t, year, 1, '0'); break;
+        case 'Z': {
+            char zone[128];
+            int k = local ? sys_date_format("%Z", parts, 1, zone, sizeof zone) : 0;
+            if (k > 0 && (size_t)k < sizeof zone) { zone[k] = 0; put(t, zone); }
+            break;
+        }
+        case '%': put(t, "%"); break;
+        default: { char c[3] = { '%', *f, 0 }; put(t, c); }
+        }
+    }
+}
+
 static int p_date_format(VM *vm) {
     Obj *f = check_obj(vm, ARG(2), K_STRING, "date_format");
     check_tag(vm, ARG(0), T_INT, "date_format");
@@ -583,9 +743,10 @@ static int p_date_format(VM *vm) {
     size_t cap = (size_t)f->len * 16 + 256;
     char *out = malloc(cap);
     if (!out) vm_fatal(vm, "out of memory");
-    int n = sys_date_format(format, parts, (int)ARG(0).u.i, out, cap);
+    Text t = { out, 0, cap };
+    format_date(&t, format, parts, (int)ARG(0).u.i);
     free(format);
-    Obj *s = vm_string_from(vm, out, n < 0 ? 0 : (uint32_t)n);
+    Obj *s = vm_string_from(vm, out, (uint32_t)t.n);
     free(out);
     return ret(vm, 3, mk_ptr(s));
 }
@@ -954,6 +1115,149 @@ static int p_posix_getgr(VM *vm) {
     return ret(vm, 2, l);
 }
 
+/* ================================================================ Windows */
+/* A list of n strings of the given lengths (bytes, NULs among them), built
+   on the VM stack so that the collector sees every cell. */
+static int push_byte_strings(VM *vm, const char *const *strs, const size_t *lens, int n, int arity) {
+    vm_push(vm, mk_con0(0));
+    for (int i = n; i > 0; i--) {
+        vm_push(vm, mk_ptr(vm_string_from(vm, strs[i - 1], (uint32_t)lens[i - 1])));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+static int push_c_strings(VM *vm, const char *const *strs, int n, int arity) {
+    size_t lens[8] = { 0 };
+    for (int i = 0; i < n; i++) lens[i] = strlen(strs[i]);
+    return push_byte_strings(vm, strs, lens, n, arity);
+}
+static int p_win_reg_open(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_reg_open");
+    check_tag(vm, ARG(1), T_INT, "win_reg_open");
+    check_tag(vm, ARG(0), T_INT, "win_reg_open");
+    char *name = c_string(vm, ARG(2), "win_reg_open");
+    int64_t out[2];
+    int r = sys_win_reg_open((int)ARG(3).u.i, name, (int)ARG(1).u.i, (int)ARG(0).u.i, out);
+    free(name);
+    return push_int_list(vm, out, r == 0 ? 2 : 0, 4);
+}
+static int p_win_reg_close(VM *vm) { INT1("win_reg_close"); return ret(vm, 1, mk_int(sys_win_reg_close((int)x))); }
+static int p_win_reg_delete(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "win_reg_delete");
+    check_tag(vm, ARG(0), T_INT, "win_reg_delete");
+    char *name = c_string(vm, ARG(1), "win_reg_delete");
+    int r = sys_win_reg_delete((int)ARG(2).u.i, name, (int)ARG(0).u.i);
+    free(name);
+    return ret(vm, 3, mk_int(r));
+}
+static int p_win_reg_enum(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "win_reg_enum");
+    const char *name = sys_win_reg_enum((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i);
+    return push_c_strings(vm, &name, name ? 1 : 0, 3);
+}
+static int p_win_reg_query(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "win_reg_query");
+    char *name = c_string(vm, ARG(0), "win_reg_query");
+    int type = 0;
+    int64_t length = 0;
+    const char *data = sys_win_reg_query((int)ARG(1).u.i, name, &type, &length);
+    free(name);
+    if (!data || length < 0) return push_c_strings(vm, NULL, 0, 2);
+    char kind[16];
+    snprintf(kind, sizeof kind, "%d", type);
+    const char *strs[2] = { kind, data };
+    size_t lens[2] = { strlen(kind), (size_t)length };
+    return push_byte_strings(vm, strs, lens, 2, 2);
+}
+static int p_win_reg_set(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_reg_set");
+    check_tag(vm, ARG(1), T_INT, "win_reg_set");
+    char *name = c_string(vm, ARG(2), "win_reg_set");
+    Obj *data = check_obj(vm, ARG(0), K_STRING, "win_reg_set");
+    int r = sys_win_reg_set((int)ARG(3).u.i, name, (int)ARG(1).u.i, OBJ_BYTES(data), (int64_t)data->len);
+    free(name);
+    return ret(vm, 4, mk_int(r));
+}
+static int p_win_config(VM *vm) {
+    INT1("win_config");
+    const char *s = sys_win_config((int)x);
+    return push_string_value(vm, s ? s : "");
+}
+static int p_win_version(VM *vm) {
+    int64_t out[4];
+    const char *csd = sys_win_version(out);
+    if (!csd) return push_c_strings(vm, NULL, 0, 1);
+    char n[4][24];
+    for (int i = 0; i < 4; i++) snprintf(n[i], sizeof n[i], "%lld", (long long)out[i]);
+    const char *strs[5] = { n[0], n[1], n[2], n[3], csd };
+    return push_c_strings(vm, strs, 5, 1);
+}
+static int p_win_volume(VM *vm) {
+    char *root = c_string(vm, ARG(0), "win_volume");
+    int64_t out[2];
+    const char *names = sys_win_volume(root, out);
+    free(root);
+    if (!names) return push_c_strings(vm, NULL, 0, 1);
+    char serial[24], longest[24];
+    snprintf(serial, sizeof serial, "%lld", (long long)out[0]);
+    snprintf(longest, sizeof longest, "%lld", (long long)out[1]);
+    const char *strs[4] = { names, names + strlen(names) + 1, serial, longest };
+    return push_c_strings(vm, strs, 4, 1);
+}
+static int p_win_find_executable(VM *vm) {
+    char *name = c_string(vm, ARG(0), "win_find_executable");
+    const char *path = sys_win_find_executable(name);
+    free(name);
+    return push_c_strings(vm, &path, path ? 1 : 0, 1);
+}
+static int p_win_shell_execute(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "win_shell_execute");
+    char *file = c_string(vm, ARG(2), "win_shell_execute");
+    char *arg = c_string(vm, ARG(1), "win_shell_execute");
+    int r = sys_win_shell_execute(file, arg, (int)ARG(0).u.i);
+    free(file);
+    free(arg);
+    return ret(vm, 3, mk_int(r));
+}
+static int p_win_spawn(VM *vm) {
+    int32_t given[3];
+    if (int_list(ARG(0), given, 3) != 3) vm_fatal(vm, "primitive win_spawn: malformed descriptors");
+    char *command = c_string(vm, ARG(2), "win_spawn");
+    char *arg = c_string(vm, ARG(1), "win_spawn");
+    int fds[3] = { given[0], given[1], given[2] };
+    fflush(stdout);
+    fflush(stderr);
+    int64_t pid = sys_win_spawn(command, arg, fds);
+    free(command);
+    free(arg);
+    return ret(vm, 3, mk_int(pid));
+}
+static int p_win_wait(VM *vm) {
+    INT1("win_wait");
+    int64_t code = 0;
+    int r = sys_win_wait(x, &code);
+    return push_int_list(vm, &code, r == 0 ? 1 : 0, 1);
+}
+static int p_win_dde_start(VM *vm) {
+    char *service = c_string(vm, ARG(1), "win_dde_start");
+    char *topic = c_string(vm, ARG(0), "win_dde_start");
+    int r = sys_win_dde_start(service, topic);
+    free(service);
+    free(topic);
+    return ret(vm, 2, mk_int(r));
+}
+static int p_win_dde_execute(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_dde_execute");
+    check_tag(vm, ARG(1), T_INT, "win_dde_execute");
+    check_tag(vm, ARG(0), T_INT, "win_dde_execute");
+    char *command = c_string(vm, ARG(2), "win_dde_execute");
+    int r = sys_win_dde_execute((int)ARG(3).u.i, command, (int)ARG(1).u.i, ARG(0).u.i);
+    free(command);
+    return ret(vm, 4, mk_int(r));
+}
+static int p_win_dde_stop(VM *vm) { INT1("win_dde_stop"); return ret(vm, 1, mk_int(sys_win_dde_stop((int)x))); }
+
 /* ================================================================ sockets */
 static int push_last_addr(VM *vm, int ok, int arity) {
     if (ok != 0) return push_string_value(vm, "");
@@ -1084,6 +1388,14 @@ static int p_socket_inet_addr(VM *vm) {
     return push_last_addr(vm, ok, 2);
 }
 
+static int p_socket_inet6_addr(VM *vm) {
+    char *host = c_string(vm, ARG(1), "socket_inet6_addr");
+    check_tag(vm, ARG(0), T_INT, "socket_inet6_addr");
+    int ok = sys_inet6_addr(host, (int)ARG(0).u.i);
+    free(host);
+    return push_last_addr(vm, ok, 2);
+}
+
 static int p_socket_unix_addr(VM *vm) {
     char *path = c_string(vm, ARG(0), "socket_unix_addr");
     int ok = sys_unix_addr(path);
@@ -1100,6 +1412,22 @@ static int p_socket_inet_parts(VM *vm) {
     Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet_parts");
     int port = 0;
     const char *host = sys_inet_parts(OBJ_BYTES(a), (int)a->len, &port);
+    if (!host) return push_int_list(vm, NULL, 0, 1);
+    char buffer[32];
+    snprintf(buffer, sizeof buffer, "%d", port);
+    vm_push(vm, mk_con0(0));
+    vm_push(vm, mk_ptr(vm_string_from(vm, buffer, (uint32_t)strlen(buffer))));
+    vm_cons(vm);
+    vm_push(vm, mk_ptr(vm_string_from(vm, host, (uint32_t)strlen(host))));
+    vm_cons(vm);
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+static int p_socket_inet6_parts(VM *vm) {
+    Obj *a = check_obj(vm, ARG(0), K_STRING, "socket_inet6_parts");
+    int port = 0;
+    const char *host = sys_inet6_parts(OBJ_BYTES(a), (int)a->len, &port);
     if (!host) return push_int_list(vm, NULL, 0, 1);
     char buffer[32];
     snprintf(buffer, sizeof buffer, "%d", port);
@@ -1351,15 +1679,17 @@ static int p_file_open(VM *vm) {
     path[s->len] = 0;
     FILE *f = NULL;
     if (strlen(path) != s->len) vm->io_errno = EINVAL;   /* embedded NUL */
-    else { f = fopen(path, m); if (!f) vm->io_errno = errno; }
+    else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
     free(path);
     if (!f) return ret(vm, 2, mk_con0(0));
     if (vm->nfiles == vm->files_cap) {
         vm->files_cap *= 2;
         vm->files = realloc(vm->files, vm->files_cap * sizeof(FILE *));
-        if (!vm->files) vm_fatal(vm, "out of memory");
+        vm->file_modes = realloc(vm->file_modes, vm->files_cap);
+        if (!vm->files || !vm->file_modes) vm_fatal(vm, "out of memory");
     }
     int64_t h = (int64_t)vm->nfiles;
+    vm->file_modes[vm->nfiles] = (uint8_t)mode;
     vm->files[vm->nfiles++] = f;
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
@@ -1413,11 +1743,11 @@ static int p_file_read_vec(VM *vm) {
 static int p_file_avail(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_avail");
     if (!f) return ret(vm, 1, mk_int(0));
-    long here = ftell(f);
+    int64_t here = sys_ftell(f);
     if (here < 0) return ret(vm, 1, mk_int(-1));
-    if (fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
-    long end = ftell(f);
-    if (fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
+    if (sys_fseek(f, 0, SEEK_END) != 0) return ret(vm, 1, mk_int(-1));
+    int64_t end = sys_ftell(f);
+    if (sys_fseek(f, here, SEEK_SET) != 0 || end < 0) return ret(vm, 1, mk_int(-1));
     return ret(vm, 1, mk_int(end - here));
 }
 
@@ -1427,7 +1757,7 @@ static int p_file_errno(VM *vm) { return ret(vm, 1, mk_int(vm->io_errno)); }
    has positions, or an invalid handle). */
 static int p_file_tell(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_tell");
-    long here = f ? ftell(f) : -1;
+    int64_t here = f ? sys_ftell(f) : -1;
     if (here < 0) vm->io_errno = errno;
     return ret(vm, 1, mk_int(here < 0 ? -1 : here));
 }
@@ -1437,7 +1767,7 @@ static int p_file_tell(VM *vm) {
 static int p_file_seek(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_seek");
     check_tag(vm, ARG(0), T_INT, "file_seek");
-    int ok = f && ARG(0).u.i >= 0 && fseek(f, (long)ARG(0).u.i, SEEK_SET) == 0;
+    int ok = f && ARG(0).u.i >= 0 && sys_fseek(f, ARG(0).u.i, SEEK_SET) == 0;
     if (!ok) vm->io_errno = f ? errno : EBADF;
     return ret(vm, 2, mk_int(ok ? 0 : -1));
 }
@@ -1486,7 +1816,15 @@ static void free_array(char **a) {
     free(a);
 }
 
-static int p_posix_fork(VM *vm) { fflush(stdout); fflush(stderr); return ret(vm, 1, mk_int(sys_fork())); }
+/* Where the system has no fork, or runevm is given --emulate-fork, the child
+   is a second VM handed this one's state (vm/image.c), which is written
+   while the argument is still on the stack. */
+static int p_posix_fork(VM *vm) {
+    fflush(stdout);
+    fflush(stderr);
+    if (vm->emulate_fork || !sys_has_fork()) return ret(vm, 1, mk_int(vm_fork(vm)));
+    return ret(vm, 1, mk_int(sys_fork()));
+}
 
 static int exec_with(VM *vm, Value pathValue, Value argsValue, char **envp, int search, int arity) {
     char *path = c_string(vm, pathValue, "posix_exec");
@@ -1503,6 +1841,25 @@ static int exec_with(VM *vm, Value pathValue, Value argsValue, char **envp, int 
 static int p_posix_exec(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "posix_exec");
     return exec_with(vm, ARG(2), ARG(1), NULL, (int)ARG(0).u.i, 3);
+}
+
+/* posix_spawn (path, args, env, flags, fds) */
+static int p_posix_spawn(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "posix_spawn");
+    int32_t given[3];
+    if (int_list(ARG(0), given, 3) != 3) vm_fatal(vm, "primitive posix_spawn: malformed descriptors");
+    int64_t flags = ARG(1).u.i;
+    char *path = c_string(vm, ARG(4), "posix_spawn");
+    char **argv = string_array(vm, ARG(3), "posix_spawn", NULL);
+    char **envp = (flags & 2) ? string_array(vm, ARG(2), "posix_spawn", NULL) : NULL;
+    int fds[3] = { given[0], given[1], given[2] };
+    fflush(stdout);
+    fflush(stderr);
+    int64_t pid = sys_spawn(path, argv, envp, (int)(flags & 1), fds);
+    free(path);
+    free_array(argv);
+    free_array(envp);
+    return ret(vm, 5, mk_int(pid));
 }
 
 static int p_posix_exece(VM *vm) {
@@ -1637,10 +1994,10 @@ static int p_exit(VM *vm) {
     vm_exit(vm, (int)ARG(0).u.i);
     return 0;
 }
-/* Posix.Process.exit: at once, with nothing flushed (C99's _Exit). */
+/* Posix.Process.exit: at once, with nothing flushed. */
 static int p_posix_exit(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "posix_exit");
-    _Exit((int)ARG(0).u.i);
+    sys_exit_now((int)ARG(0).u.i);
     return 0;
 }
 static int p_command_args(VM *vm) {

@@ -23,11 +23,6 @@
    abstract; the suite matches `Posix` against this signature both
    transparently and opaquely.
 
-   Deviation: `POSIX/not-sealed`. The structure is not sealed, so the
-   representations show: `uid`, `gid`, `pid`, `file_desc`, `signal` and
-   `speed` are `int`, and a set of flags is a word. A program should not rely
-   on that.
-
    Pinned by: `Posix:POSIX/*` *)
 signature POSIX =
 sig

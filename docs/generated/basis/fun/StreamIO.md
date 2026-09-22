@@ -10,7 +10,7 @@
 ## Synopsis
 
 ```sml
-functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
+functor StreamIO (structure PrimIO : PRIM_IO
                   structure Vector : MONO_VECTOR
                   structure VectorSlice : MONO_VECTOR_SLICE
                   structure Array : MONO_ARRAY
@@ -31,7 +31,7 @@ of it.
 > this functor no slice structures, yet it has to hand its writer vector
 > slices, and [`PRIM_IO`](../sig/PRIM_IO.md) offers no way to make one. Like MLton's, this one
 > also takes [`VectorSlice`](../sig/VECTOR_SLICE.md) and [`ArraySlice`](../sig/ARRAY_SLICE.md), and its [`PrimIO`](../fun/PrimIO.md) must have
-> positions of the integer type of `Position`, which `filePosIn` counts with.
+> positions of the integer type of [`Position`](../sig/INTEGER.md), which `filePosIn` counts with.
 
 > **Implementation** `StreamIO/LINE_BUF-is-BLOCK_BUF`. No element of an
 > arbitrary type is known to be a newline, so a stream built here treats

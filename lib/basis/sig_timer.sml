@@ -22,11 +22,7 @@
    real time here. *)
 signature TIMER =
 sig
-  (* The type of a processor-time timer.
-
-     Deviation: `TIMER.cpu_timer/not-abstract`. The specification leaves the
-     type abstract; in Rune it is a record of the two times read when the
-     timer was started, and the structure is not sealed. *)
+  (* The type of a processor-time timer. *)
   type cpu_timer
 
   (* The type of a wall-clock timer, a `Time.time` in the same way. *)
@@ -40,9 +36,14 @@ sig
      `usr` is the time the program itself ran, `sys` the time the system
      spent for it.
 
-     Limitation: `Timer.checkCPUTimes/no-gc-accounting`. The collector's time
-     is not measured on its own: `gc` is zero in both fields and everything
-     is reported under `nongc`. *)
+     Implementation: `Timer.checkCPUTimes/gc-from-the-collector`. The VM adds
+     up the processor time of every collection, user and system apart, and
+     `gc` is how much of that has passed since the timer started; `nongc` is
+     the rest. A collection that grows the heap counts once.
+
+     Pinned by: `Timer.checkCPUTimes/sum-is-checkCPUTimer`,
+     `Timer.checkCPUTimes/does-not-go-back`,
+     `Timer.checkCPUTimes/gc-is-part-of-the-whole` *)
   val checkCPUTimes : cpu_timer
                       -> {nongc : {usr : Time.time, sys : Time.time},
                           gc : {usr : Time.time, sys : Time.time}}
@@ -55,8 +56,11 @@ sig
 
   (* `checkGCTime t` is the processor time the collector took since `t` was started.
 
-     Limitation: `Timer.checkGCTime/always-zero`. It is always `zeroTime`,
-     because the collector's time is not measured on its own. *)
+     Implementation: `Timer.checkGCTime/user-time-of-the-collections`. It is
+     the `usr` field of what `checkCPUTimes` reports under `gc`; the system
+     time of a collection is in that record and not here.
+
+     Pinned by: `Timer.checkGCTime/is-gc-usr` *)
   val checkGCTime : cpu_timer -> Time.time
 
   (* `totalCPUTimer ()` is the timer that was started when the program was.

@@ -20,6 +20,7 @@ lives next to it as `bin/rune-mlton.bin`, `bin/rune-polyml.bin`,
 `--lib` of yours comes later on the command line and wins. Nothing absolute is
 baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
+
 ## Prerequisites
 
 * A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`.
@@ -65,7 +66,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make vm` | `bin/runevm` |
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
-| `make test` | run `tests/run-tests.sh` with `bin/rune` |
+| `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the four host builds |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
 | `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
@@ -100,6 +101,65 @@ name their commands one by one.
 
 `CC=clang make vm` selects another C compiler. `BOOTHOST=smlnj make` picks the
 host build that compiles stage 1 of the bootstrap.
+
+## Windows
+
+`make windows` builds the VM for Windows with mingw-w64 twice: for 64 bits,
+`bin/runevm.exe`, and for 32 bits, `bin/runevm32.exe`. `make test-windows`
+runs the language suite and `tests/vm` on both (`tests/run-windows.sh`).
+Neither is part of any other target: `make check` never compiles
+`vm/sys_win.c`, and nothing else in the tree depends on it. The toolchains
+have to be installed (`x86_64-w64-mingw32-gcc` and `i686-w64-mingw32-gcc`,
+which `WINCC` and `WINCC32` override; `make doctor` says whether they are),
+and running the result needs Windows -- or WSL, which starts an `.exe` for
+you, which is how it was developed and tested.
+
+Only the VM differs: the compiler, the library and the bytecode are the ones
+everything else uses, so the suite is compiled once, with the ordinary
+`bin/rune`, and run on each VM. A value is 64 bits wide on both VMs, so
+`Int`, `Word` and the positions of files are the same as on any other; the
+32-bit VM computes with SSE2, as the 64-bit one does, and is linked
+large-address-aware, which gives it 4 GiB of address space under 64-bit
+Windows. The link is refused if an `.exe` imports a DLL of the toolchain
+rather than of Windows.
+
+The runner starts the VMs in a directory on the Windows side
+(`$RUNE_WINDOWS_DIR`, or `rune-test-windows` in the `TEMP` directory of
+Windows), not in the tree, which WSL would hand them as a network path, and
+passes `TZ` to them through `WSLENV`. It also runs a few programs with
+`--count` on each VM and on `bin/runevm`: the counts must agree.
+
+`vm/sys_win.c` gives what Windows has -- the clock, the calendar, files,
+directories, descriptors, the environment and running a command -- and
+answers `ENOSYS` for what it does not do. A path of a drive comes back as
+`/C:/Users/...`, because Rune's `OS.Path` is the one of POSIX, to which
+that is absolute (no name of Windows has a colon in it), and a path that
+goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
+and `/dev/tty` the console. The standard streams are put in binary mode before
+`main` runs, since a Rune string is bytes and a `\n` must stay one.
+
+Windows has no `fork`. `Posix.Process.fork` starts a second VM instead and
+hands it everything of this one: the heap, the stacks, the program, and the
+descriptors, sockets and directory streams (`vm/image.c`); the child carries
+on from the `fork` as a copied process would. `runevm --emulate-fork` takes
+the same path on Linux, so that `make check` tests the image
+(`tests/lang/rt.fork_image`), which the Windows suites cannot do under ASan.
+
+Both VMs run every program of `tests/lang`; `tests/windows-skip.txt` names
+those to leave out, with a reason for each, and is empty. The checks of the
+Basis Library suite that do not pass are the `WINDOWS` lines of
+`tests/basis/deviations.txt`, each saying what Windows does instead.
+
+A healthy `make test-windows` takes about 8 minutes and reports, for each
+VM, all 141 programs of `tests/lang` passing with none skipped, `tests/vm`
+11 of 11, and 194 of the 137,240 checks of the Basis Library suite failing,
+every one of them explained by a `WINDOWS` line.
+
+What Windows does not get: `OS.Path` keeps the rules of POSIX rather than
+the drive letters and backslashes of Windows, which is why a path of a drive
+reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
+VMs, only the VM is built and tested there; and nothing of this runs in
+continuous integration.
 
 ## Installing
 

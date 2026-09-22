@@ -65,9 +65,19 @@ const char *sys_read_dir(int dir);            /* NULL at the end and on failure 
 int sys_rewind_dir(int dir);
 int sys_close_dir(int dir);
 
+/* fopen, for the files the core opens (TextIO and BinIO, the bytecode): a
+   system whose paths are not those of the library translates them here.
+   NULL on failure, with the reason in errno, as fopen leaves it. */
+FILE *sys_fopen(const char *path, const char *mode);
+
 /* I/O descriptors. The descriptor of an open file, which is what the two
    calls below take; -1 when there is none. */
 int sys_fileno(FILE *file);
+/* The position of an open file in bytes, and moving it, with offsets of 64
+   bits even where the C library's long has 32 (Windows). -1 on failure,
+   with the reason in errno, as ftell and fseek leave it. */
+int64_t sys_ftell(FILE *file);
+int sys_fseek(FILE *file, int64_t offset, int whence);
 /* The kind of a descriptor: 0 file, 1 directory, 2 symbolic link,
    3 terminal, 4 pipe, 5 socket, 6 device; -1 on failure. */
 int sys_desc_kind(int fd);
@@ -83,13 +93,39 @@ int64_t sys_const(const char *name);
 
 /* Processes and their environment. A call that fails gives -1. */
 int sys_fork(void);
+/* fork where the system has none (Windows), or where runevm is given
+   --emulate-fork: a second VM is started as `runevm --resume TOKEN` and
+   handed this one's state (vm/image.c). sys_has_fork says whether sys_fork
+   is the system's own. sys_fork_start starts the child, gives it the
+   descriptors and sockets and writes it this layer's own state (directory
+   streams, close-on-exec), and returns the stream the core writes its
+   image to, or NULL; sys_fork_finish closes that stream and returns the
+   child's process, or -1. In the child, sys_resume takes the TOKEN,
+   rebuilds this layer's state and returns the stream the core's image is
+   read from, or NULL. sys_fdopen is fdopen, for the files of the core that
+   the child opens again on the same descriptors. */
+int sys_has_fork(void);
+FILE *sys_fork_start(void);
+int64_t sys_fork_finish(FILE *image);
+FILE *sys_resume(const char *token);
+FILE *sys_fdopen(int fd, const char *mode);
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search);
 /* Wait for a child: out[] gets the process, then 0 exited, 1 signalled or
    2 stopped, then the status or the signal. */
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]);
+/* Start a program as fork, dup2 and exec would, without the fork, which not
+   every system has: fds[] are the descriptors that become its standard
+   input, output and error (-1: this process's own), and search looks for
+   the program on PATH. The process, or -1. A program that cannot be run is
+   a child that exits with 126 where the child is forked first (POSIX), and
+   -1 where the system knows at once (Windows). */
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]);
 int sys_kill(int64_t pid, int signal);
 int sys_alarm(int seconds);
 int sys_pause(void);
+/* End the process at once with the status, flushing nothing and running
+   nothing registered to run at exit (Posix.Process.exit). */
+void sys_exit_now(int status);
 int64_t sys_getpid(void);
 int64_t sys_getppid(void);
 int64_t sys_getuid(void);
@@ -175,10 +211,12 @@ int sys_getsockopt(int fd, int level, int name);
 int sys_setsockopt(int fd, int level, int name, int value);
 /* Building and taking apart the addresses. */
 int sys_inet_addr(const char *host, int port);      /* into sys_last_addr */
+int sys_inet6_addr(const char *host, int port);     /* the same, for IPv6 */
 int sys_unix_addr(const char *path);
 int sys_addr_family(const char *addr, int n);
 /* The host of an INET address, dotted, and its port; NULL when it is not one. */
 const char *sys_inet_parts(const char *addr, int n, int *port);
+const char *sys_inet6_parts(const char *addr, int n, int *port);
 const char *sys_unix_path(const char *addr, int n);
 /* The databases: the entries come back as strings one after another, as for
    uname, and NULL when there is none. */
@@ -189,6 +227,31 @@ const char *sys_proto_byname(const char *name);
 const char *sys_proto_bynumber(int number);
 const char *sys_serv_byname(const char *name, const char *protocol);
 const char *sys_serv_byport(int port, const char *protocol);
+
+/* The structure Windows (lib/basis/windows.sml): Windows' own, which every
+   other system fails with ENOSYS. A key of the registry is a number, the
+   seven at its roots 0 to 6; a failure is -1 or NULL, and a lookup that
+   finds nothing is NULL with the error cleared. */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]);
+int sys_win_reg_close(int key);
+int sys_win_reg_delete(int key, const char *name, int value);
+const char *sys_win_reg_enum(int key, int index, int value);
+/* a value's bytes, its type in *type and its length in *length (-1: none) */
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length);
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length);
+const char *sys_win_config(int what);
+/* major, minor, build and platform in out[], and the service pack */
+const char *sys_win_version(int64_t out[4]);
+/* the name of the volume and of its file system, one after the other; the
+   serial and the longest name in out[] */
+const char *sys_win_volume(const char *root, int64_t out[2]);
+const char *sys_win_find_executable(const char *name);
+int sys_win_shell_execute(const char *file, const char *arg, int document);
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]);
+int sys_win_wait(int64_t pid, int64_t *code);
+int sys_win_dde_start(const char *service, const char *topic);
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms);
+int sys_win_dde_stop(int info);
 
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */

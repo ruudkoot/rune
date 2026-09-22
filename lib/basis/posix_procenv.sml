@@ -36,12 +36,14 @@ struct
     fun gidToWord (g : gid) = Word.fromInt g
     fun wordToGid w = Word.toInt w
 
-    fun getpid () = getpid' ()
-    fun getppid () = getppid' ()
-    fun getuid () = getuid' ()
-    fun geteuid () = geteuid' ()
-    fun getgid () = getgid' ()
-    fun getegid () = getegid' ()
+    (* POSIX never fails these, but a system without them gives -1, which is
+       no process or user *)
+    fun getpid () = check (getpid' ())
+    fun getppid () = check (getppid' ())
+    fun getuid () = check (getuid' ())
+    fun geteuid () = check (geteuid' ())
+    fun getgid () = check (getgid' ())
+    fun getegid () = check (getegid' ())
     fun setuid u = ignore (check (setuid' u))
     fun setgid g = ignore (check (setgid' g))
     fun getgroups () = getgroups' ()
@@ -79,7 +81,9 @@ struct
     fun sysconf name =
       case sysconf' name of
         ~1 => (case RuneError.lastError () of
-                 RuneError.SysErr (_, SOME 0) => raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
+                 (e as RuneError.SysErr (_, SOME n)) =>
+                   if RuneError.toInt n = 0 then raise RuneError.SysErr ("sysconf: " ^ name ^ " has no limit", NONE)
+                   else raise e
                | e => raise e)
       | v => Word.fromInt v
   end

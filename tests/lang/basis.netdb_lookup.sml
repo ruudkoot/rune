@@ -9,7 +9,7 @@ val () = print ("http is port " ^ Int.toString (case NetServDB.getByName ("http"
                                        SOME e => NetServDB.name e | NONE => "?") ^ "\n")
 val () = print ("localhost resolves: "
                 ^ Bool.toString (case NetHostDB.getByName "localhost" of
-                                   SOME e => NetHostDB.addr e = "127.0.0.1" | NONE => false)
+                                   SOME e => NetHostDB.toString (NetHostDB.addr e) = "127.0.0.1" | NONE => false)
                 ^ ", hostname is not empty: " ^ Bool.toString (NetHostDB.getHostName () <> "") ^ "\n")
 val () = print ("scan: " ^ (case NetHostDB.fromString "10.0.0.1 rest" of
                               SOME a => NetHostDB.toString a | NONE => "none")

@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 35 of 35 entries documented |
-| Tests | 484 checks of 33 entries |
+| Tests | 486 checks of 33 entries |
 | Source | [lib/basis/sig\_char.sml](../../../../lib/basis/sig_char.sml) |
 
 ## Synopsis
@@ -682,29 +682,33 @@ val fromString : String.string -> char option
 
 > **Reading** `Char.fromString/printable-only-all-rejected`. A first character
 > outside the printable range, codes 32 to 126, gives `NONE`, and so does
-> a backslash by itself; every other printable character is converted to
-> itself.
+> a backslash by itself; every other printable character but the double
+> quote, of which below, is converted to itself.
 
-> **Reading** (the suite differs) `Char.fromString/unescaped-double-quote`.
-> The specification says that the text is read "as allowed in an SML
-> program" and names only characters that do not print and bad escapes as
-> what stops a scan. Rune therefore converts a double quote that has no
-> backslash to itself, as Poly/ML does; MLton and SML/NJ answer `NONE`,
-> and that is what the suite expects.
+> **Reading** `Char.fromString/unescaped-double-quote`. The specification
+> has the text read "as allowed in an SML program", where a double quote
+> that no backslash precedes ends a constant and is no character, and
+> names only characters that do not print and bad escapes as what gives
+> `NONE`. The first is followed: a double quote by itself gives `NONE`, as
+> in MLton and SML/NJ, where Poly/ML converts it. The page of [`STRING`](../sig/STRING.md) has
+> no such words and lists what stops a scan, so [`String.scan`](../sig/STRING.md#val-scan) converts the
+> same double quote; the two pages differ, and each is followed.
 
 **Example** `fromString "\\n" = SOME #"\n"`
 
+**Example** `fromString "\"" = NONE`, where `fromString "\\\"" = SOME #"\""`.
+
 <details><summary>Other implementations (1)</summary>
 
-- **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+- **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 
 </details>
 
-<details><summary>Tests (98)</summary>
+<details><summary>Tests (100)</summary>
 
 For `Char`, in [tests/basis/char.sml](../../../../tests/basis/char.sml): `letter` &middot; `rest-ignored` &middot; `space` &middot; `empty` &middot; `single-quote` &middot; `printable-only-newline` &middot; `printable-only-tab` &middot; `printable-only-del` &middot; `printable-only-128` &middot; `printable-only-255` &middot; `printable-only-all-converted` &middot; `printable-only-all-rejected` &middot; `unescaped-double-quote` &middot; `escape-a` &middot; `escape-b` &middot; `escape-t` &middot; `escape-n` &middot; `escape-v` &middot; `escape-f` &middot; `escape-r` &middot; `escape-backslash` &middot; `escape-double-quote` &middot; `escape-rest-ignored` &middot; `two-character-escapes` &middot; `illegal-q` &middot; `illegal-lone-backslash` &middot; `illegal-question-mark` &middot; `illegal-single-quote` &middot; `illegal-x` &middot; `illegal-upper-N` &middot; `control-at` &middot; `control-A` &middot; `control-H-is-backspace` &middot; `control-Z` &middot; `control-bracket` &middot; `control-backslash` &middot; `control-underscore` &middot; `control-rest-ignored` &middot; `control-range-63` &middot; `control-range-96` &middot; `control-range-lowercase` &middot; `control-incomplete` &middot; `control-all` &middot; `control-range-all` &middot; `decimal-065` &middot; `decimal-000` &middot; `decimal-255` &middot; `decimal-256` &middot; `decimal-999` &middot; `decimal-one-digit` &middot; `decimal-two-digits` &middot; `decimal-two-digits-letter` &middot; `decimal-fourth-digit-ignored` &middot; `decimal-all` &middot; `decimal-above-255` &middot; `u-0041` &middot; `u-0000` &middot; `u-00ff` &middot; `u-00FF` &middot; `u-007e` &middot; `u-0100-does-not-fit` &middot; `u-ffff-does-not-fit` &middot; `u-three-digits` &middot; `u-three-digits-letter` &middot; `u-incomplete` &middot; `u-fifth-digit-ignored` &middot; `u-uppercase-U` &middot; `u-all` &middot; `format-space` &middot; `format-newline` &middot; `format-tab` &middot; `format-several` &middot; `format-form-feed` &middot; `format-twice` &middot; `format-then-escape` &middot; `format-then-decimal` &middot; `format-after` &middot; `format-unterminated` &middot; `format-letter-inside` &middot; `sample-1` &middot; `sample-2` &middot; `sample-3` &middot; `sample-4` &middot; `sample-5` &middot; `sample-6` &middot; `sample-7` &middot; `toString-all`
 
-For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `printable` &middot; `escape-u` &middot; `escape-u-upper-case-digits` &middot; `escape-U` &middot; `escape-decimal` &middot; `escape-decimal-above-255` &middot; `escape-control` &middot; `formatting-sequence-first` &middot; `NONE-empty` &middot; `NONE-short-escape` &middot; `NONE-above-maxOrd`
+For `WideChar`, in [tests/basis/widechar.sml](../../../../tests/basis/widechar.sml): `printable` &middot; `escape-u` &middot; `escape-u-upper-case-digits` &middot; `escape-U` &middot; `escape-decimal` &middot; `escape-decimal-above-255` &middot; `escape-control` &middot; `formatting-sequence-first` &middot; `NONE-empty` &middot; `NONE-short-escape` &middot; `NONE-above-maxOrd` &middot; `unescaped-double-quote` &middot; `escape-double-quote`
 
 </details>
 

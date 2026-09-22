@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) **n** [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
 - `Group.name` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-group.name)
+- `Key.notify` (val): [WINDOWS](../sig/WINDOWS.md#val-key.notify)
 - `L.noflsh` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-l.noflsh)
 - `name` (val): [COMMAND_LINE](../sig/COMMAND_LINE.md#val-name), [NET_HOST_DB](../sig/NET_HOST_DB.md#val-name), [NET_PROT_DB](../sig/NET_PROT_DB.md#val-name), [NET_SERV_DB](../sig/NET_SERV_DB.md#val-name)
 - `nametoolong` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-nametoolong)
@@ -45,6 +46,7 @@
 - `O.nonblock` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-o.nonblock), [POSIX_IO](../sig/POSIX_IO.md#val-o.nonblock)
 - `Passwd.name` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-passwd.name)
 - `ST.nlink` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.nlink)
+- `Status.noncontinuableException` (val): [WINDOWS](../sig/WINDOWS.md#val-status.noncontinuableexception)
 - `V.nccs` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-v.nccs)
 
 ---

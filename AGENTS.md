@@ -21,6 +21,17 @@ keep these invariants:
   function among them a usage head (`docs/doc-comments.md`): `make docs` and
   `make check-docs` fail otherwise. A new signature joins the list in the
   commit that finishes documenting it, and none should be added without one.
+* A program sees of a basis structure what its signature names and nothing
+  else: a structure that is not ascribed its signature where it is declared
+  is bound to it again in a seal file at the end of `lib/basis/MANIFEST`
+  (`seal_list.sml`: `structure List : LIST = List`), which is loaded for the
+  programs that mention the structure and for no file of the library, so the
+  library keeps its helpers. `make docs` fails for a structure that shows a
+  program more. A seal is opaque (`:>`) where it makes abstract a type that
+  the specification keeps so, with a `where type` for every type that another
+  signature names, since that signature was read with the structure whole; a
+  type that several structures share has to be made abstract where it is
+  declared instead. `docs/generated/basis/types.md` lists what still leaks.
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;
@@ -50,7 +61,12 @@ keep these invariants:
   Poly/ML); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through `vm/opcodes.def` and
   `vm/prims.def` (then `make gen`), with the corresponding implementation in
-  `vm/` and a description in `docs/bytecode.md`. Bump the `.rbc` version in
+  `vm/` and a description in `docs/bytecode.md`. A primitive that needs the
+  operating system goes behind a new call of `vm/sys.h` that every layer
+  answers -- `sys_posix.c`, `sys_win.c` and `sys_none.c`, with `ENOSYS` where
+  there is nothing to do -- and is written on the hosts in
+  `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
+  Basis Library suite run. Bump the `.rbc` version in
   `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
@@ -83,6 +99,12 @@ keep these invariants:
   VM changes also run the suite with the
   sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
+* `make check` never compiles `vm/sys_win.c`, so a green `make check` says
+  nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
+  system layers is done only once `make windows` builds both VMs and
+  `make test-windows` passes on both (`tests/lang`, `tests/vm` and the Basis
+  Library suite; about 8 minutes). It needs the mingw-w64 toolchains and a
+  Windows to run the `.exe`s, which is what `make doctor` reports.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the

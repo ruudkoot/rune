@@ -45,6 +45,14 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `vm/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
+* `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
+  Windows (`make windows`, `make test-windows`; [building.md](building.md)).
+  Their lines of `deviations.txt` are `WINDOWS`: what Windows does not
+  have or does otherwise, which its system layer cannot make good (the
+  modes of a group and of others, named pipes, datagrams in the Unix
+  domain, process groups, stopping a process), and the checks that ask `sh`
+  or start another program of POSIX; each says why it stays. They are not
+  differences of the library, and are not described below.
 
 ## Summary
 
@@ -160,7 +168,7 @@ library of the 64-bit one):
 | `WideText` | yes | yes | | |
 | `WideTextIO` | yes | | | |
 | `WideTextPrimIO` | yes | | | |
-| `Windows` | | | | |
+| `Windows` | yes | | | |
 | `WordArray` | yes | yes | | |
 | `WordArray2` | yes | yes | | |
 | `WordArraySlice` | yes | yes | | |
@@ -197,12 +205,18 @@ the table at the top of this page.
 
 Every departure is written on the member it is about, as a `Deviation:` or a
 `Limitation:` note, and is collected in
-[generated/basis/readings.md](generated/basis/readings.md). What is not
-implemented at all: `Windows`, and IPv6.
+[generated/basis/readings.md](generated/basis/readings.md). Every structure
+of the specification is implemented; `Windows`, which is Windows' own,
+raises `OS.SysErr` with `ENOSYS` for every call of the system on another
+system. IPv6 is not in the specification either -- it
+was written before the protocol, and its `NetHostDB` gives the four dotted
+numbers of IPv4 -- so Rune adds it as `INet6Sock` with a signature of its own,
+`INET6_SOCK`, which is `INET_SOCK` read for 128-bit addresses. `Socket.AF`
+knows the family, which the page allows (`AF.list` "returns a list of all the
+available address families"), and `NetHostDB` stays what the specification
+defines.
 
-One check fails on Rune, a reading of the specification: `Char.fromString
-"\""` converts the double quote, where the test takes the reading of MLton
-and SML/NJ (`NONE`).
+No check of the suite fails on Rune.
 
 `WideChar` is there: a wide character is a Unicode code point (`maxOrd`
 0x10FFFF), with `WideString`, `WideSubstring`, `WideText` and the vectors and
@@ -317,6 +331,66 @@ Rune takes is written on the member it is about, in the library's
 documentation; [generated/basis/readings.md](generated/basis/readings.md)
 collects them all, with the checks that pin each one. The errata of the
 specification are there too, under the members they belong to.
+
+### `WideCharVector` must admit equality, and its declaration cannot say so
+
+`MONO_VECTOR` writes `type vector`, not `eqtype`, so that `RealVector` can
+exist. Where a vector has to admit equality the page says so on the instance:
+`CharVector` is declared `where type vector = String.string`, and `STRING`
+writes `eqtype string`. `WideCharVector` is declared `where type elem =
+WideChar.char` and nothing more.
+
+That is not enough. `TEXT` shares `String.string` with `CharVector.vector`,
+and `WideText` is declared `where type String.string = WideString.string`, so
+`WideText.CharVector.vector` is `WideString.string` and admits equality. Any
+implementation whose `WideText.CharVector` is the top-level `WideCharVector`
+-- every one that provides both -- must give `WideCharVector.vector`
+equality, and the declaration the page gives it cannot. The omission is
+`where type vector = WideString.string`.
+
+The whole of the defect is that one missing constraint, which makes it a
+milder fault than the `ARRAY2` one below: there, no constraint can help,
+because there is no type to pin to; here `WideString.string` is already there
+and `STRING` already makes it an equality type.
+
+**What Rune does:** seals `WideCharVector` with `MONO_VECTOR_EQ`, a signature
+of its own that is `MONO_VECTOR` with `eqtype vector`. That follows from this
+library's order rather than from the fault: `WideString` is built on
+`WideCharVector`, so `WideCharVector` is where the type name is born and
+there is nothing yet to pin it to. Following the page as it should have been
+written would mean giving `WideString` a representation of its own and
+pinning `WideCharVector` to it, and then `MONO_VECTOR_EQ` would be
+unnecessary. The notes are `MONO_VECTOR/WideCharVector-must-admit-equality`
+and `MONO_VECTOR_EQ/not-in-the-specification`.
+
+### The largest one: `ARRAY2` cannot be sealed and keep its equality
+
+The page of `ARRAY2` asks for three things that Standard ML cannot give
+together. It declares `structure Array2 :> ARRAY2`; it writes
+`eqtype 'a array`; and it says "Thus, the type `ty array` admits equality
+even if `ty` does not". Any two of those hold, and all three cannot: only the
+built-in type names of the language admit equality whatever they hold --
+`ref`, named in Section 4.4 of the Definition, and the `array` of the top
+level -- and no signature can specify one. Through `eqtype 'a t`, a `ty t`
+admits equality exactly when `ty` does, so an opaque seal makes a fresh type
+name and the third clause fails at `real` and at a function type.
+
+`ARRAY` carries the same sentence without the defect, because the top level
+pins `'a array` to `Array.array`: that type *is* the built-in, and the seal
+settles nothing. `Array2` is optional and has no such anchor -- no system has
+a top-level `'a array2` -- so its seal bites. `VECTOR` writes
+`eqtype 'a vector` and says nothing of the kind, and `MONO_ARRAY2` has no
+defect at all, because its `eqtype array` is monomorphic and a record over a
+built-in array satisfies it.
+
+**The reading Rune takes:** the seal and `eqtype 'a array` stand, and the
+sentence does not apply. `Array2.array` is abstract, `real Array2.array`
+admits no equality, and the monomorphic two-dimensional arrays do admit it
+whatever they hold, because `MONO_ARRAY2` asks only for a monomorphic
+`eqtype array`. MLton and SML/NJ read it the same way. Poly/ML takes the
+other reading and leaves `'a Array2.array` a record, which lets a program
+reach inside it. The note is
+`ARRAY2/sealed-and-equal-at-any-element`.
 
 ## What XC1 cannot check
 

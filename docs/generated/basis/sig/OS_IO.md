@@ -318,9 +318,7 @@ urgent input.
 > **Implementation** `OS.IO.poll_desc/a-descriptor-and-its-conditions`. A
 > [`poll_desc`](#type-poll_desc) is the descriptor with the set of conditions asked for, so
 > asking twice is asking once, the order of asking does not matter, and one
-> that asks for input is not equal to one that asks for output. [`OS.IO`](../sig/OS.md#str-io) is
-> not sealed and shows it: the constructor is `PollDesc`, with the bits 1
-> for input, 2 for output and 4 for priority.
+> that asks for input is not equal to one that asks for output.
 
 ### <a name="type-poll_info"></a>`poll_info`
 

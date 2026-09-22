@@ -4,6 +4,11 @@
 
 - `CF.getispeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-cf.getispeed)
 - `CF.getospeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-cf.getospeed)
+- `Config.getComputerName` (val): [WINDOWS](../sig/WINDOWS.md#val-config.getcomputername)
+- `Config.getSystemDirectory` (val): [WINDOWS](../sig/WINDOWS.md#val-config.getsystemdirectory)
+- `Config.getUserName` (val): [WINDOWS](../sig/WINDOWS.md#val-config.getusername)
+- `Config.getVersionEx` (val): [WINDOWS](../sig/WINDOWS.md#val-config.getversionex)
+- `Config.getWindowsDirectory` (val): [WINDOWS](../sig/WINDOWS.md#val-config.getwindowsdirectory)
 - `Ctl.getATMARK` (val): [SOCKET](../sig/SOCKET.md#val-ctl.getatmark)
 - `Ctl.getBROADCAST` (val): [SOCKET](../sig/SOCKET.md#val-ctl.getbroadcast)
 - `Ctl.getDEBUG` (val): [SOCKET](../sig/SOCKET.md#val-ctl.getdebug)
@@ -61,6 +66,7 @@
 - `getRoundingMode` (val): [IEEE_REAL](../sig/IEEE_REAL.md#val-getroundingmode)
 - `getuid` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-getuid)
 - `getVolume` (val): [OS_PATH](../sig/OS_PATH.md#val-getvolume)
+- `getVolumeInformation` (val): [WINDOWS](../sig/WINDOWS.md#val-getvolumeinformation)
 - `getWriter` (val): [STREAM_IO](../sig/STREAM_IO.md#val-getwriter)
 - `gid` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-gid), [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#type-gid), [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#type-gid)
 - `gidToWord` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-gidtoword)
@@ -70,9 +76,10 @@
 - `Group.group` (type): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#type-group.group)
 - `Passwd.gid` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-passwd.gid)
 - `ST.gid` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.gid)
+- `Status.guardPageViolation` (val): [WINDOWS](../sig/WINDOWS.md#val-status.guardpageviolation)
 - `TC.getattr` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.getattr)
 - `TC.getpgrp` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.getpgrp)
-- `TCP.getNODELAY` (val): [INET_SOCK](../sig/INET_SOCK.md#val-tcp.getnodelay)
+- `TCP.getNODELAY` (val): [INET6_SOCK](../sig/INET6_SOCK.md#val-tcp.getnodelay), [INET_SOCK](../sig/INET_SOCK.md#val-tcp.getnodelay)
 
 ---
 

@@ -5,7 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 7 |
+| Implementations | 9 |
 | Documentation | 30 of 30 entries documented |
 | Tests | 430 checks of 30 entries |
 | Source | [lib/basis/int\_sig.sml](../../../../lib/basis/int_sig.sml) |
@@ -14,31 +14,35 @@
 
 ```sml
 signature INTEGER
+structure FixedInt : INTEGER where type int = Int64.int  (* optional *)
 structure Int : INTEGER
 structure Int16 : INTEGER  (* optional *)
 structure Int32 : INTEGER  (* optional *)
-structure Int64 : INTEGER  (* optional *)
+structure Int64 :> INTEGER  (* optional *)
 structure Int8 : INTEGER  (* optional *)
 structure IntInf : INTEGER  (* optional *)
-structure LargeInt : INTEGER
+structure LargeInt : INTEGER where type int = IntInf.int
+structure Position : INTEGER
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
+| `FixedInt` | The largest fixed-precision integer: [`Int`](INTEGER.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | `Int` | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
 | `Int16` | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
 | `Int32` | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
-| `Int64` | Int64 is Int, which has 64 bits, and so is FixedInt, the largest of the fixed-precision integers. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| `Int64` | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | `Int8` | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
 | `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
-| `LargeInt` | The largest integers are the arbitrary precision ones. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| `LargeInt` | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| `Position` | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
 Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/GENERAL.md#exn-overflow)
 rather than wrapping round.
 
 The structures that implement this signature differ only in how many bits
 they keep: [`Int`](INTEGER.md) is the default one, [`Int8`](INTEGER.md) to [`Int64`](INTEGER.md) are the sized ones,
-[`LargeInt`](INTEGER.md) is the largest there is, and `Position` is what a file position
+[`LargeInt`](INTEGER.md) is the largest there is, and [`Position`](INTEGER.md) is what a file position
 is measured in. [`IntInf`](../sig/INT_INF.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
 bounds at all: there [`precision`](#val-precision), [`minInt`](#val-minint) and [`maxInt`](#val-maxint) are `NONE` and
 nothing overflows.
@@ -138,7 +142,7 @@ eqtype int
 The type of integers of this structure.
 
 > **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int), of
-> 64 bits, and so are [`Int64`](INTEGER.md), `FixedInt` and `Position`; [`Int8`](INTEGER.md), [`Int16`](INTEGER.md)
+> 64 bits, and so are [`Int64`](INTEGER.md), [`FixedInt`](INTEGER.md) and [`Position`](INTEGER.md); [`Int8`](INTEGER.md), [`Int16`](INTEGER.md)
 > and [`Int32`](INTEGER.md) keep a value of their own width, and [`LargeInt`](INTEGER.md) is [`IntInf`](../sig/INT_INF.md),
 > which has no width. Constants of each are checked against its range
 > where they are written.

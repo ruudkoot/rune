@@ -13,6 +13,7 @@ struct
      = BinPrimIO.writer where type pos = Position.int *)
   structure StreamIO =
     RuneStreamIOFn (structure PIO = BinPrimIO structure V = Word8Vector structure VS = Word8VectorSlice
+                    val advance = SOME (fn (p, n) => Position.+ (p, Position.fromInt n))
                     val isNewline = fn (_ : Word8.word) => false)
 
   structure Imperative = RuneImperativeIOFn (structure SIO = StreamIO structure V = Word8Vector)
@@ -52,7 +53,7 @@ struct
       let
         val closed = ref false
         val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
-        fun readVec n = if !closed then closedIo (name, "readVec") else RuneFile.readVec fd n
+        fun readVec n = if !closed then closedIo (name, "readVec") else Word8Vector.fromString (RuneFile.readVec fd n)
       in
         BinPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
                       readVec = SOME readVec, readArr = NONE,
@@ -66,7 +67,7 @@ struct
       let
         val closed = ref false
         val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
-        fun put v = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) v)
+        fun put v = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) (Word8Vector.toString v))
         fun writeVec sl =
           let val v = Word8VectorSlice.vector sl in put v; RuneFile.flush fd (); Word8Vector.length v end
       in

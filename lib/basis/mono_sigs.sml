@@ -12,18 +12,53 @@
 
    Area: Sequences
 
+   Erratum: `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes
+   `type vector`, not `eqtype`, so that a family whose elements do not admit
+   equality can have a vector -- `RealVector` needs that. Where a vector has
+   to admit equality the page says so on the instance instead: `CharVector`
+   is declared `where type vector = String.string`, and `STRING` writes
+   `eqtype string`. **`WideCharVector` is declared `where type elem =
+   WideChar.char` and nothing more, and that is not enough.** `TEXT` shares
+   `String.string` with `CharVector.vector`, and `WideText` is declared
+   `where type String.string = WideString.string`, so
+   `WideText.CharVector.vector` is `WideString.string`, which `STRING` makes
+   an equality type. Any implementation whose `WideText.CharVector` is the
+   top-level `WideCharVector` -- every one that has both -- must therefore
+   give `WideCharVector.vector` equality, and the declaration the page gives
+   it cannot. **The whole of the defect is one missing constraint**:
+   `where type vector = WideString.string`, which `CharVector` has and
+   `WideCharVector` does not. That makes this a milder fault than the one on
+   the page of `ARRAY2`, where no constraint can help because there is no
+   type to pin to; here `WideString.string` is already there and `STRING`
+   already makes it an equality type.
+
+   Rune gives the equality the other way, by sealing with `MONO_VECTOR_EQ`.
+   That is a consequence of *this* library's order and not of the fault:
+   `WideString` is built on `WideCharVector` (`type string = V.vector`, and
+   every operation delegates), so `WideCharVector` is where the type name is
+   born and there is nothing yet to pin it to. Following the page as it
+   should have been written would mean giving `WideString` a representation
+   of its own and pinning `WideCharVector` to it -- a change to two files,
+   not a rename -- and `MONO_VECTOR_EQ` would then be unnecessary.
+
    See also: `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,
-   `TEXT`, `BYTE` *)
+   `MONO_VECTOR_EQ`, `TEXT`, `BYTE` *)
 signature MONO_VECTOR =
 sig
   (* The type of these vectors.
 
-     Deviation: `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
-     characters and of bytes, which are strings, a monomorphic vector is the
-     polymorphic vector of its elements, and the structures are not sealed: an
-     `IntVector.vector` is an `int vector`, and a program that relies on it is
-     not portable. The arrays are the same (`IntArray.array` is `int array`),
-     and so are those of `MONO_ARRAY2`. *)
+     Implementation: `MONO_VECTOR.vector/abstract-over-the-polymorphic-one`.
+     A monomorphic vector is the polymorphic vector of its elements
+     underneath -- the vectors of characters are strings, which the
+     specification requires -- but the type is abstract: an `IntVector.vector`
+     is no `int vector` for a program, as it is none in MLton or SML/NJ. The
+     arrays and the two-dimensional arrays are the same. Sealing them costs
+     nothing: the instruction counts of `runevm --count` do not change at
+     all, because no file of the library goes between the two. No check of
+     the suite can pin this -- that a type is abstract is not something a
+     program can observe at run time -- and what holds it is the page of the
+     types that are one type, which `make check` compares with the library as
+     it stands. *)
   type vector
 
   (* The type of the elements: `Word8.word` for `Word8Vector`, `char` for `CharVector`. *)
@@ -227,12 +262,17 @@ end
    Status: extension
 
    Deviation: `MONO_VECTOR_EQ/not-in-the-specification`. This signature is
-   not in the specification. `MONO_VECTOR` writes `type vector`, not
-   `eqtype`, so that a family whose elements do not admit equality (the reals)
-   can have one; a family whose vector is a type of its own and does admit it
-   is sealed with this instead. `WideCharVector` needs that, because
-   `WideString.string` must be a type name of its own for wide string
-   constants to be overloaded at it. *)
+   not in the specification, and it is here because the specification asks
+   for something it gives no way to say: `WideCharVector.vector` has to admit
+   equality, and the declaration the page gives `WideCharVector` cannot make
+   it -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.
+   `MONO_VECTOR` writes `type vector`, not `eqtype`, so that a family whose
+   elements do not admit equality can have a vector; a family whose vector is
+   a type of its own and does admit it is sealed with this instead. The
+   specification's own way out is `where type vector = WideString.string` on
+   the instance, which Rune cannot use because `WideString` is declared after
+   `WideCharVector` and is built on it -- `WideString.string` must be a type
+   name of its own for wide string constants to be overloaded at it. *)
 signature MONO_VECTOR_EQ =
 sig
   (* The type of these vectors, which admits equality. *)
@@ -534,4 +574,15 @@ sig
 
   (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`. *)
   val collate : (elem * elem -> order) -> slice * slice -> order
+end
+
+(* `Word8Vector`, as the library sees it: the members of the specification and
+   the two conversions that say a vector of bytes is a string underneath. A
+   program sees `MONO_VECTOR`, which the seal file gives it. The slice's own
+   signature is in word8vector.sml, where `Substring` is in scope. *)
+signature RUNE_MONO_VECTOR_BYTES =
+sig
+  include MONO_VECTOR_EQ
+  val toString : vector -> string
+  val fromString : string -> vector
 end

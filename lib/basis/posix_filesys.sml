@@ -21,7 +21,7 @@ struct
     (* The primitives take the path "" for "the descriptor"; a path that is
        empty is refused as the system refuses it ("an empty string causes an
        exception"). *)
-    fun nonEmpty "" = let val e = named "ENOENT" in raise RuneError.SysErr (RuneError.errorMsg e, SOME e) end
+    fun nonEmpty "" = let val e = RuneError.fromInt (named "ENOENT") in raise RuneError.SysErr (RuneError.errorMsg e, SOME e) end
       | nonEmpty p = p
   in
     fun fdToWord (fd : file_desc) = Word.fromInt fd

@@ -91,7 +91,7 @@ struct
                                      else complain (e, "requires " ^ n ^ ", which is not provided by an earlier file"))
                             (#requires e ())
           val () =
-            if #when e <> Demand then ()
+            if #when e <> Demand andalso #when e <> Seal then ()
             else List.app (fn Ast.DStructure _ => () | Ast.DSignature _ => () | Ast.DFunctor _ => ()
                             | Ast.DType _ => () | Ast.DOverload _ => ()
                             | d => complain (e, "a demand file may declare modules and types only, but has: " ^

@@ -9,9 +9,10 @@ struct
     val inetParts = _prim "socket_inet_parts" : string -> string list
     val const = _prim "posix_const" : string -> int
   in
-    (* An address is the dotted text, which is what the system takes. *)
-    type in_addr = string
-    type addr_family = int
+    (* An address is the dotted text, which is what the system takes; both
+       types are abstract, and `RuneNet` is where they are declared. *)
+    type in_addr = RuneNet.in_addr
+    type addr_family = RuneNet.addr_family
     type entry = {name : string, aliases : string list, addrType : addr_family, addrs : in_addr list}
 
     fun name (e : entry) = #name e
@@ -20,7 +21,7 @@ struct
     fun addrs (e : entry) = #addrs e
     fun addr (e : entry) = case #addrs e of a :: _ => a | [] => raise Empty
 
-    fun toString (a : in_addr) = a
+    val toString = RuneNet.toText
 
     (* The notation of inet_addr in C: "a", "a.b", "a.b.c" or "a.b.c.d", where
        the last number fills the bytes the others leave (32, 24, 16 or 8
@@ -103,7 +104,7 @@ struct
         fun longest [] = NONE
           | longest (found as (_, after) :: shorter) =
               case address found of
-                SOME quad => SOME (String.concatWith "." (map Int.toString quad), after)
+                SOME quad => SOME (RuneNet.ofText (String.concatWith "." (map Int.toString quad)), after)
               | NONE => longest shorter
       in
         case number (StringCvt.skipWS getc src) of
@@ -115,12 +116,13 @@ struct
     fun entryOf l =
       case l of
         name :: address :: others =>
-          SOME ({name = name, aliases = others, addrType = const "AF_INET",
-                 addrs = String.tokens (fn c => c = #" ") address} : entry)
+          SOME ({name = name, aliases = others,
+                 addrType = RuneNet.familyFromInt (case const "AF_INET" of ~1 => 0 | v => v),
+                 addrs = map RuneNet.ofText (String.tokens (fn c => c = #" ") address)} : entry)
       | _ => NONE
 
     fun getByName name = entryOf (byname name)
-    fun getByAddr (a : in_addr) = entryOf (byaddr a)
+    fun getByAddr (a : in_addr) = entryOf (byaddr (RuneNet.toText a))
     fun getHostName () = hostname ()
   end
 end

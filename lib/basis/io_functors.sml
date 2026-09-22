@@ -47,7 +47,7 @@ functor PrimIO (structure Vector : MONO_VECTOR
    Status: optional
 
    See also: `STREAM_IO`, `PRIM_IO`, `IMPERATIVE_IO` *)
-functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
+functor StreamIO (structure PrimIO : PRIM_IO
                   structure Vector : MONO_VECTOR
                   structure VectorSlice : MONO_VECTOR_SLICE
                   structure Array : MONO_ARRAY
@@ -60,16 +60,13 @@ functor StreamIO (structure PrimIO : PRIM_IO where type pos = Position.int
   RuneStreamIOFn (structure PIO = PrimIO
                   structure V = Vector
                   structure VS = VectorSlice
+                  val advance = NONE
                   (* "For binary streams, LINE_BUF mode should be treated as a
                      synonym for BLOCK_BUF": no element is a newline *)
                   val isNewline = fn _ => false)
 
 (* Imperative streams over a `STREAM_IO` of a new element type: what
    `TEXT_IO` and `BIN_IO` are for characters and bytes.
-
-   Deviation: `ImperativeIO/not-sealed`. The result is not ascribed
-   `IMPERATIVE_IO`: the library declares that signature after the structures
-   that would need it. It matches it, which the suite checks.
 
    Status: optional
 
@@ -78,5 +75,5 @@ functor ImperativeIO (structure StreamIO : STREAM_IO
                       structure Vector : MONO_VECTOR
                       structure Array : MONO_ARRAY
                       sharing type StreamIO.elem = Vector.elem = Array.elem
-                      sharing type StreamIO.vector = Vector.vector = Array.vector) =
+                      sharing type StreamIO.vector = Vector.vector = Array.vector) : IMPERATIVE_IO =
   RuneImperativeIOFn (structure SIO = StreamIO structure V = Vector)

@@ -3,6 +3,7 @@
 #include "sys.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -69,7 +70,15 @@ const char *sys_read_dir(int dir) { (void)dir; fail(); return NULL; }
 int sys_rewind_dir(int dir) { (void)dir; return fail(); }
 int sys_close_dir(int dir) { (void)dir; return fail(); }
 
+/* ISO C opens files */
+FILE *sys_fopen(const char *path, const char *mode) { return fopen(path, mode); }
 int sys_fileno(FILE *file) { (void)file; return fail(); }
+/* ISO C has only the positions a long can hold. */
+int64_t sys_ftell(FILE *file) { long r = ftell(file); return r < 0 ? -1 : (int64_t)r; }
+int sys_fseek(FILE *file, int64_t offset, int whence) {
+    if (offset > LONG_MAX || offset < LONG_MIN) { errno = ERANGE; return -1; }
+    return fseek(file, (long)offset, whence) == 0 ? 0 : -1;
+}
 int sys_desc_kind(int fd) { (void)fd; return fail(); }
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
     (void)fds; (void)events; (void)n; (void)microseconds; return fail();
@@ -77,13 +86,22 @@ int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
 
 int64_t sys_const(const char *name) { (void)name; return -1; }
 int sys_fork(void) { return fail(); }
+int sys_has_fork(void) { return 0; }
+FILE *sys_fork_start(void) { fail(); return NULL; }
+int64_t sys_fork_finish(FILE *image) { (void)image; return fail(); }
+FILE *sys_resume(const char *token) { (void)token; fail(); return NULL; }
+FILE *sys_fdopen(int fd, const char *mode) { (void)fd; (void)mode; fail(); return NULL; }
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     (void)path; (void)argv; (void)envp; (void)search; return fail();
+}
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
+    (void)path; (void)argv; (void)envp; (void)search; (void)fds; return fail();
 }
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags; (void)out; return fail(); }
 int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
 int sys_alarm(int seconds) { (void)seconds; return fail(); }
 int sys_pause(void) { return fail(); }
+void sys_exit_now(int status) { _Exit(status); }
 int64_t sys_getpid(void) { return fail(); }
 int64_t sys_getppid(void) { return fail(); }
 int64_t sys_getuid(void) { return fail(); }
@@ -170,9 +188,11 @@ int sys_last_addr_len(void) { return 0; }
 int sys_getsockopt(int fd, int l, int n) { (void)fd; (void)l; (void)n; return fail(); }
 int sys_setsockopt(int fd, int l, int n, int v) { (void)fd; (void)l; (void)n; (void)v; return fail(); }
 int sys_inet_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
+int sys_inet6_addr(const char *h, int p) { (void)h; (void)p; return fail(); }
 int sys_unix_addr(const char *p) { (void)p; return fail(); }
 int sys_addr_family(const char *a, int n) { (void)a; (void)n; return fail(); }
 const char *sys_inet_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
+const char *sys_inet6_parts(const char *a, int n, int *p) { (void)a; (void)n; (void)p; fail(); return NULL; }
 const char *sys_unix_path(const char *a, int n) { (void)a; (void)n; fail(); return NULL; }
 const char *sys_host_byname(const char *n) { (void)n; fail(); return NULL; }
 const char *sys_host_byaddr(const char *d) { (void)d; fail(); return NULL; }
@@ -181,3 +201,30 @@ const char *sys_proto_byname(const char *n) { (void)n; fail(); return NULL; }
 const char *sys_proto_bynumber(int n) { (void)n; fail(); return NULL; }
 const char *sys_serv_byname(const char *n, const char *p) { (void)n; (void)p; fail(); return NULL; }
 const char *sys_serv_byport(int p, const char *pr) { (void)p; (void)pr; fail(); return NULL; }
+
+#define NOSYS_INT fail()
+/* The structure Windows: Windows' own. */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]) {
+    (void)key; (void)name; (void)access; (void)create; (void)out; return NOSYS_INT;
+}
+int sys_win_reg_close(int key) { (void)key; return NOSYS_INT; }
+int sys_win_reg_delete(int key, const char *name, int value) { (void)key; (void)name; (void)value; return NOSYS_INT; }
+const char *sys_win_reg_enum(int key, int index, int value) { (void)key; (void)index; (void)value; NOSYS_INT; return NULL; }
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length) {
+    (void)key; (void)name; (void)type; (void)length; NOSYS_INT; return NULL;
+}
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length) {
+    (void)key; (void)name; (void)type; (void)data; (void)length; return NOSYS_INT;
+}
+const char *sys_win_config(int what) { (void)what; NOSYS_INT; return NULL; }
+const char *sys_win_version(int64_t out[4]) { (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_volume(const char *root, int64_t out[2]) { (void)root; (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_find_executable(const char *name) { (void)name; NOSYS_INT; return NULL; }
+int sys_win_shell_execute(const char *file, const char *arg, int document) { (void)file; (void)arg; (void)document; return NOSYS_INT; }
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) { (void)command; (void)arg; (void)fds; return NOSYS_INT; }
+int sys_win_wait(int64_t pid, int64_t *code) { (void)pid; (void)code; return NOSYS_INT; }
+int sys_win_dde_start(const char *service, const char *topic) { (void)service; (void)topic; return NOSYS_INT; }
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms) {
+    (void)info; (void)command; (void)retries; (void)delay_ms; return NOSYS_INT;
+}
+int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }

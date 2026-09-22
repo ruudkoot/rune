@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 31 of 31 entries documented |
-| Tests | 382 checks of 29 entries |
+| Tests | 385 checks of 29 entries |
 | Source | [lib/basis/sig\_string.sml](../../../../lib/basis/sig_string.sml) |
 
 ## Synopsis
@@ -659,7 +659,8 @@ nothing and is passed over, so a stream of one such sequence gives
 
 > **Reading** `String.fromString/unescaped-double-quote`. A double quote
 > without a backslash converts to itself, as in SML/NJ and Poly/ML; MLton
-> stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) reads it the same way.
+> stops at it. [`Char.scan`](../sig/CHAR.md#val-scan) gives `NONE` for it, for the page of [`CHAR`](../sig/CHAR.md) has
+> the text read "as allowed in an SML program" and this one does not.
 
 > **Reading** `String.scan/empty-input-is-SOME-empty`. Nothing to read is no
 > failure: `fromString ""` is `SOME ""`. `NONE` is for a first character
@@ -673,11 +674,11 @@ nothing and is passed over, so a stream of one such sequence gives
 
 </details>
 
-<details><summary>Tests (18)</summary>
+<details><summary>Tests (20)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `printable` &middot; `empty` &middot; `space-is-not-skipped` &middot; `stops-at-control-D` &middot; `stops-at-newline` &middot; `stops-at-illegal-escape` &middot; `stops-at-decimal-256` &middot; `NONE-illegal-escape` &middot; `NONE-control-D` &middot; `NONE-format-unterminated` &middot; `format-only` &middot; `format-then-control-D` &middot; `format-inside-and-last` &middot; `escapes` &middot; `indexed-reader` &middot; `scanString`
 
-For `WideString`, in [tests/basis/widestring.sml](../../../../tests/basis/widestring.sml): `reads-wide-characters` &middot; `stops-at-a-character-it-cannot-read`
+For `WideString`, in [tests/basis/widestring.sml](../../../../tests/basis/widestring.sml): `reads-wide-characters` &middot; `stops-at-a-character-it-cannot-read` &middot; `unescaped-double-quote` &middot; `unescaped-double-quote-first`
 
 </details>
 
@@ -706,11 +707,11 @@ two characters `\` and `n` in it.
 
 </details>
 
-<details><summary>Tests (52)</summary>
+<details><summary>Tests (53)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `empty` &middot; `printable` &middot; `spaces-are-kept` &middot; `single-quote` &middot; `escape-n` &middot; `two-character-escapes` &middot; `control-escapes` &middot; `u-escape-and-decimal` &middot; `decimal-three-digits-only` &middot; `u-escape-four-digits-only` &middot; `not-printable-stops-at-newline` &middot; `not-printable-stops-at-del` &middot; `not-printable-stops-at-200` &middot; `not-printable-first-newline` &middot; `not-printable-first-control-D` &middot; `not-printable-first-200` &middot; `bad-escape-stops-at-q` &middot; `bad-escape-stops-at-decimal-256` &middot; `bad-escape-stops-at-two-digits` &middot; `bad-escape-stops-at-control-96` &middot; `bad-escape-stops-at-u-0100` &middot; `bad-escape-stops-at-lone-backslash` &middot; `bad-escape-stops-at-C-escape` &middot; `bad-escape-first-q` &middot; `bad-escape-first-lone-backslash` &middot; `bad-escape-first-decimal-256` &middot; `format-inside` &middot; `format-first` &middot; `format-last` &middot; `format-twice` &middot; `format-form-feed` &middot; `format-then-escape` &middot; `format-then-illegal-escape` &middot; `format-unterminated` &middot; `sample-1` &middot; `sample-2` &middot; `sample-3` &middot; `sample-4` &middot; `sample-5` &middot; `sample-6` &middot; `sample-7` &middot; `toString-all-characters` &middot; `unescaped-double-quote` &middot; `unescaped-double-quote-first` &middot; `toString-*`
 
-For `WideString`, in [tests/basis/widestring.sml](../../../../tests/basis/widestring.sml): `plain` &middot; `escapes` &middot; `escape-u` &middot; `formatting-sequence` &middot; `empty` &middot; `stops-at-what-it-cannot-read` &middot; `round-trip`
+For `WideString`, in [tests/basis/widestring.sml](../../../../tests/basis/widestring.sml): `plain` &middot; `escapes` &middot; `escape-u` &middot; `formatting-sequence` &middot; `empty` &middot; `stops-at-what-it-cannot-read` &middot; `round-trip` &middot; `unescaped-double-quote`
 
 </details>
 

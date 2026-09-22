@@ -28,11 +28,7 @@
    reports `F_UNLCK` for it. *)
 signature POSIX_IO =
 sig
-  (* The type of an open file descriptor.
-
-     Deviation: `Posix.IO.file_desc/is-an-int`. The specification leaves the
-     type abstract; in Rune it is `int`, the number the system uses, and the
-     structure is not sealed. *)
+  (* The type of an open file descriptor. *)
   eqtype file_desc
 
   (* The type of the number that names a process, the one of `Posix.Process`. *)

@@ -30,8 +30,11 @@ address on every interface of this machine.
 
 [`UDP`](#str-udp) makes sockets that send messages, [`TCP`](#str-tcp) sockets that carry a stream.
 
-> **Limitation** `INET_SOCK/ipv4-only`. There is no IPv6: an address here is
-> an IPv4 address and a port.
+> **Implementation** `INET_SOCK/ipv4-only`. This signature is the
+> specification's, and the specification's Internet sockets are IPv4: an
+> address here is an `in_addr` of [`NetHostDB`](../sig/NET_HOST_DB.md) and a port. IPv6 is in
+> [`INET6_SOCK`](../sig/INET6_SOCK.md), which is Rune's own and has the same shape for 128-bit
+> addresses.
 
 ## Interface
 
@@ -284,7 +287,7 @@ For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.s
 
 ## See also
 
-[`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`UNIX_SOCK`](../sig/UNIX_SOCK.md), [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md)
+[`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`UNIX_SOCK`](../sig/UNIX_SOCK.md), [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md) &middot; [`INET6_SOCK`](../sig/INET6_SOCK.md)
 
 ---
 

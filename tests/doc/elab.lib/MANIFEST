@@ -1,3 +1,6 @@
 # What only elaboration knows: the names of a structure that has no body in
 # the source, and the types that are one type.
 box.sml | demand | yes | BOX Box Crate Chest RuneBoxFn |
+# a seal file: what a program sees of Chest is what BOX names, so its `spare`
+# is no name beyond the signature, and the binding is no second claim
+seal_box.sml | seal | yes | Chest | BOX

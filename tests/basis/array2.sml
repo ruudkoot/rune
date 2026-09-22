@@ -474,12 +474,12 @@ struct
   val () = eqB ("Array2.array/zero-length-not-equal", false, fn () => zeros (0, 0) = zeros (0, 0))
   val () = eqB ("Array2.fromList/zero-length-not-equal", false,
                 fn () => A.fromList ([] : int list list) = A.fromList ([] : int list list))
-  (*<< eq-any-element *)
-  (* "Thus, the type ty array admits equality even if ty does not." *)
-  val () = eqB ("Array2.array/of-reals-same", true, fn () => let val a = A.array (2, 2, 1.5) in a = a end)
-  val () = eqB ("Array2.array/of-reals-not-equal", false, fn () => A.array (2, 2, 1.5) = A.array (2, 2, 1.5))
-  val () = eqB ("Array2.array/of-functions-same", true, fn () => let val a = A.array (2, 2, fn (x : int) => x) in a = a end)
-  (*>> eq-any-element *)
+  (* "the type ty array admits equality even if ty does not" cannot hold of a
+     sealed structure (ARRAY2/sealed-and-equal-at-any-element); an array of a
+     type that admits equality has one, and the elements are not looked at *)
+  val () = eqB ("Array2.array/same-array-equal", true, fn () => let val a = zeros (2, 2) in a = a end)
+  val () = eqB ("Array2.array/updated-still-equal", true,
+                fn () => let val a = zeros (2, 2) in A.update (a, 0, 0, 1); a = a end)
 
   (* ---- laws, on pseudo-random arrays and regions, against lists of rows ---- *)
   fun el (m : int list list) (i, j) = List.nth (List.nth (m, i), j)

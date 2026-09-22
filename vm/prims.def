@@ -165,6 +165,8 @@ time_now         1  unit -> int               Microseconds since the epoch.
 time_user        1  unit -> int               Processor time of this program in user mode, in microseconds.
 time_sys         1  unit -> int               The same in system mode.
 time_sleep       1  int -> unit               Wait for that many microseconds; a negative time waits not at all.
+time_gc_user     1  unit -> int               Processor time this program has spent collecting, in user mode, in microseconds.
+time_gc_sys      1  unit -> int               The same in system mode.
 date_parts       2  int * int -> int list     Broken-down time (second, minute, hour, day, month, year - 1900, weekday, yearday, daylight saving) of a time in seconds, local when the second argument is 1; [] on failure.
 date_seconds     2  int list * int -> int list  The reverse: the seconds, followed by the parts normalised; [] on failure.
 date_offset      1  int -> int                Seconds by which local time is ahead of UTC at that time; raises Domain on failure.
@@ -198,6 +200,7 @@ posix_const      1  string -> int             The value of a named constant of P
 posix_fork       1  unit -> int               Make a child process: 0 in it, its number in the parent, ~1 on failure.
 posix_exec       3  string * string list * int -> int  Replace this program with another: the path (searched for on PATH when the third argument is 1) and the arguments; returns ~1, or not at all.
 posix_exece      3  string * string list * string list -> int  The same with the environment given.
+posix_spawn      5  string * string list * string list * int * int list -> int  Start a program as fork, dup2 and exec would, without the fork: the path, the arguments, the environment (given when bit 1 of the fourth argument is set; bit 0 searches PATH) and the descriptors of its standard input, output and error (~1: this process's own); its process, or ~1.
 posix_waitpid    2  int * int -> int list     Wait for a child: [process, 0 exited or 1 signalled or 2 stopped, status or signal]; [] on failure.
 posix_kill       2  int * int -> int          Send a signal to a process.
 posix_alarm      1  int -> int                Ask for SIGALRM in that many seconds; what was left of an earlier one.
@@ -285,3 +288,23 @@ socket_linger    3  int * int * int -> int list  SO_LINGER of a socket: set it t
 socket_query     2  int * int -> int          0: the bytes a socket can read at once (FIONREAD); 1: whether it is at the out-of-band mark; ~1 on failure.
 real_to_single   1  real -> real              The IEEE 754 binary32 value nearest the argument in the current rounding mode (an infinity beyond the range), as a real.
 real_single_from_string 1  string -> real option  Parse a real literal to the nearest binary32 value (C strtof), as a real.
+socket_inet6_addr 2 string * int -> string   The bytes of an IPv6 sockaddr for a host in the text of inet_pton and a port; "" on failure.
+socket_inet6_parts 1 string -> string list  The host and the port of such a sockaddr, as two strings; [] when it is not one.
+
+# --- Windows (lib/basis/windows.sml; vm/sys_win.c, ENOSYS on other systems) ---
+win_reg_open     4  int * string * int * int -> int list  Open (or with the fourth argument 1, create) a subkey of the registry with the given rights: [1 created or 2 opened, the key]; [] on failure.
+win_reg_close    1  int -> int               Close a key of the registry.
+win_reg_delete   3  int * string * int -> int  Delete a subkey (third argument 0) or a value (1) of a key.
+win_reg_enum     3  int * int * int -> string list  The name of the subkey (third argument 0) or value (1) of that index: [name], or [] when there are no more (sys_errno 0) or on failure.
+win_reg_query    2  int * string -> string list  A value of a key: [its type of the registry, its bytes], or [] when there is none (sys_errno 0) or on failure.
+win_reg_set      4  int * string * int * string -> int  Set a value of a key to the bytes given, of the type of the registry given.
+win_config       1  int -> string            The directory of Windows (0), its system directory (1), the name of the computer (2) or of the user (3); "" on failure.
+win_version      1  unit -> string list      The version of Windows: [major, minor, build, platform, service pack]; [] on failure.
+win_volume       1  string -> string list    The volume of a root: [name, file system, serial number, longest name]; [] on failure.
+win_find_executable 1  string -> string list  The program Windows opens a file with: [path], or [] when there is none (sys_errno 0) or on failure.
+win_shell_execute 3  string * string * int -> int  ShellExecute "open": a program with an argument (third argument 0) or a document (1).
+win_spawn        3  string * string * int list -> int  Start a program with its arguments as one command line and three descriptors as its standard streams (~1: this process's); its process, or ~1.
+win_wait         1  int -> int list          Wait for a child: [the code it ended with, all 32 bits]; [] on failure.
+win_dde_start    2  string * string -> int   Start a conversation of DDE with a service on a topic.
+win_dde_execute  4  int * string * int * int -> int  Execute a command in a conversation, trying again that many times while the service is busy, that many milliseconds apart.
+win_dde_stop     1  int -> int               End a conversation of DDE.

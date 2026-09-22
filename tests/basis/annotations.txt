@@ -15,7 +15,7 @@ Bool.*/wsx-* | SML/NJ | Bool.scan and fromString skip space, tab and newline onl
 Bool.*/mixed-* | SML/NJ | Bool.scan and fromString are case-sensitive and skip space, tab and newline only
 *Vector.update/[Sm]* | SML/NJ | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
 Array.tabulate/Size-before-f | SML/NJ | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
-Char.fromString/unescaped-double-quote | Poly/ML | another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton and SML/NJ (NONE)
+Char.fromString/unescaped-double-quote | Poly/ML | another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 *.fromCString/unescaped-double-quote* | MLton, SML/NJ, Poly/ML | converts an unescaped double quote, which the specification says fromCString does not accept
 Char.fromCString/hex-huge-does-not-fit | MLton, SML/NJ, Poly/ML | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
 Char.scan/trailing-format-after-*escape | MLton | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)

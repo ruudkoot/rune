@@ -10,7 +10,7 @@ note on the member says how Rune reads it, and the page of readings,
 linked below, collects them all.
 
 Start at a signature, not at a structure. [`LIST`](sig/LIST.md) describes what [`List`](sig/LIST.md) does,
-[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and `Position` all do, and
+[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and [`Position`](sig/INTEGER.md) all do, and
 [`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](sig/MONO_VECTOR.md) and [`CharVector`](sig/MONO_VECTOR.md) do; the page of structures
 says which structure implements which signature. A name that needs no
 structure in front of it, such as [`hd`](sig/LIST.md#val-hd) or `print`, is on the page of the
@@ -22,7 +22,8 @@ function that can fail either returns an [`option`](sig/OPTION.md#type-option) o
 which it does is said for every one. And the optional parts of the library,
 the wide characters, the sized integers, [`POSIX`](sig/POSIX.md) and the sockets, are marked
 as optional, because a program that uses them is not bound to run on every
-implementation. Of the optional parts only `Windows` is missing.
+implementation. Every optional part is there, [`Windows`](sig/WINDOWS.md) too, whose calls of
+the system answer on Windows only.
 
 [How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
@@ -62,6 +63,7 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`COMMAND_LINE`](sig/COMMAND_LINE.md) | The name of the program and the arguments it was given. | required | 2 of 2 |
 | [`DATE`](sig/DATE.md) | A moment as a person writes it down: a year, a month, a day and a time of day, in some time zone. | required | 24 of 24 |
 | [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) | Making a socket of any family the system has, when the family is not known until the program runs. | optional | 4 of 4 |
+| [`INET6_SOCK`](sig/INET6_SOCK.md) | Sockets of the Internet protocol version 6, as [`INET_SOCK`](sig/INET_SOCK.md) describes them for version 4. | extension | 20 of 20 |
 | [`INET_SOCK`](sig/INET_SOCK.md) | Sockets of the internet family: an address is a host and a port. | optional | 17 of 17 |
 | [`NET_HOST_DB`](sig/NET_HOST_DB.md) | The host database: turning a host name into an address, and back. | optional | 14 of 14 |
 | [`NET_PROT_DB`](sig/NET_PROT_DB.md) | The protocol database: turning the name of a network protocol into its number, and back. | optional | 6 of 6 |
@@ -85,6 +87,7 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`TIMER`](sig/TIMER.md) | Stopwatches: how much processor time and how much wall-clock time have passed since a timer was started. | required | 10 of 10 |
 | [`UNIX`](sig/UNIX.md) | Running another program and talking to it: a child process with a pipe each way. | optional | 14 of 14 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | Sockets of the Unix family: an address is a path in the file system, and the connection never leaves the machine. | optional | 14 of 14 |
+| [`WINDOWS`](sig/WINDOWS.md) | The operating system Windows: the registry, the configuration of the machine, dynamic data exchange, programs started with a pipe each way, and the codes a process ends with. | optional | 88 of 88 |
 
 ## Text and characters
 

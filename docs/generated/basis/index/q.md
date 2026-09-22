@@ -2,10 +2,12 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) **q** [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
+- `Key.queryValue` (val): [WINDOWS](../sig/WINDOWS.md#val-key.queryvalue)
 - `quit` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-quit)
 - `Quot` (exn): [SML90](../sig/SML90.md#exn-quot)
 - `quot` (val): [INTEGER](../sig/INTEGER.md#val-quot)
 - `quotRem` (val): [INT_INF](../sig/INT_INF.md#val-quotrem)
+- `Reg.queryValueEx` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.queryvalueex)
 - `TC.queue_sel` (type): [POSIX_TTY](../sig/POSIX_TTY.md#type-tc.queue_sel)
 - `V.quit` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-v.quit)
 

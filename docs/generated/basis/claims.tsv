@@ -1,11 +1,78 @@
 name	kind	signature	realisations	status	origin	source
+ARRAY	signature			required	declared	lib/basis/sig_array.sml
+ARRAY2	signature			optional	declared	lib/basis/sig_array2.sml
+ARRAY_SLICE	signature			required	declared	lib/basis/sig_array_slice.sml
+BIN_IO	signature			required	declared	lib/basis/sig_bin_io.sml
+BIT_FLAGS	signature			optional	declared	lib/basis/sig_bit_flags.sml
+BOOL	signature			required	declared	lib/basis/sig_bool.sml
+BYTE	signature			required	declared	lib/basis/sig_byte.sml
+CHAR	signature			required	declared	lib/basis/sig_char.sml
+COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
+DATE	signature			required	declared	lib/basis/sig_date.sml
+GENERAL	signature			required	declared	lib/basis/sig_general.sml
+GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
+IEEE_REAL	signature			optional	declared	lib/basis/sig_ieee_real.sml
+IMPERATIVE_IO	signature			required	declared	lib/basis/sig_imperative_io.sml
+INET6_SOCK	signature			extension	declared	lib/basis/inet6sock_sig.sml
+INET_SOCK	signature			optional	declared	lib/basis/sig_inet_sock.sml
+INTEGER	signature			required	declared	lib/basis/int_sig.sml
+INT_INF	signature			optional	declared	lib/basis/sig_int_inf.sml
+IO	signature			required	declared	lib/basis/sig_io.sml
+LIST	signature			required	declared	lib/basis/sig_list.sml
+LIST_PAIR	signature			required	declared	lib/basis/sig_list_pair.sml
+MATH	signature			required	declared	lib/basis/sig_math.sml
+MONO_ARRAY	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_ARRAY2	signature			optional	declared	lib/basis/sig_mono_array2.sml
+MONO_ARRAY_SLICE	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR	signature			required	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR_EQ	signature			extension	declared	lib/basis/mono_sigs.sml
+MONO_VECTOR_SLICE	signature			required	declared	lib/basis/mono_sigs.sml
+NET_HOST_DB	signature			optional	declared	lib/basis/sig_net_host_db.sml
+NET_PROT_DB	signature			optional	declared	lib/basis/sig_net_prot_db.sml
+NET_SERV_DB	signature			optional	declared	lib/basis/sig_net_serv_db.sml
+OPTION	signature			required	declared	lib/basis/sig_option.sml
+OS	signature			required	declared	lib/basis/sig_os.sml
+OS_FILE_SYS	signature			required	declared	lib/basis/sig_os_file_sys.sml
+OS_IO	signature			required	declared	lib/basis/sig_os_io.sml
+OS_PATH	signature			required	declared	lib/basis/sig_os_path.sml
+OS_PROCESS	signature			required	declared	lib/basis/sig_os_process.sml
+PACK_REAL	signature			optional	declared	lib/basis/sig_pack_real.sml
+PACK_WORD	signature			optional	declared	lib/basis/sig_pack_word.sml
+POSIX	signature			optional	declared	lib/basis/sig_posix.sml
+POSIX_ERROR	signature			optional	declared	lib/basis/sig_posix_error.sml
+POSIX_FILE_SYS	signature			optional	declared	lib/basis/sig_posix_file_sys.sml
+POSIX_IO	signature			optional	declared	lib/basis/sig_posix_io.sml
+POSIX_PROCESS	signature			optional	declared	lib/basis/sig_posix_process.sml
+POSIX_PROC_ENV	signature			optional	declared	lib/basis/sig_posix_proc_env.sml
+POSIX_SIGNAL	signature			optional	declared	lib/basis/sig_posix_signal.sml
+POSIX_SYS_DB	signature			optional	declared	lib/basis/sig_posix_sys_db.sml
+POSIX_TTY	signature			optional	declared	lib/basis/sig_posix_tty.sml
+PRIM_IO	signature			required	declared	lib/basis/primio_sig.sml
+REAL	signature			required	declared	lib/basis/sig_real.sml
+SML90	signature			optional	declared	lib/basis/sig_sml90.sml
+SOCKET	signature			optional	declared	lib/basis/sig_socket.sml
+STREAM_IO	signature			required	declared	lib/basis/streamio_sig.sml
+STRING	signature			required	declared	lib/basis/sig_string.sml
+STRING_CVT	signature			required	declared	lib/basis/sig_string_cvt.sml
+SUBSTRING	signature			required	declared	lib/basis/sig_substring.sml
+TEXT	signature			required	declared	lib/basis/sig_text.sml
+TEXT_IO	signature			required	declared	lib/basis/sig_text_io.sml
+TEXT_STREAM_IO	signature			required	declared	lib/basis/sig_text_stream_io.sml
+TIME	signature			required	declared	lib/basis/sig_time.sml
+TIMER	signature			required	declared	lib/basis/sig_timer.sml
+UNIX	signature			optional	declared	lib/basis/sig_unix.sml
+UNIX_SOCK	signature			optional	declared	lib/basis/sig_unix_sock.sml
+VECTOR	signature			required	declared	lib/basis/sig_vector.sml
+VECTOR_SLICE	signature			required	declared	lib/basis/sig_vector_slice.sml
+WINDOWS	signature			optional	declared	lib/basis/sig_windows.sml
+WORD	signature			required	declared	lib/basis/word_sig.sml
 Array	structure	ARRAY		required	claimed	lib/basis/array.sml
-Array2	structure	ARRAY2		optional	claimed	lib/basis/array2.sml
+Array2	structure	ARRAY2		optional	ascribed	lib/basis/array2.sml
 ArraySlice	structure	ARRAY_SLICE		required	claimed	lib/basis/arrayslice.sml
 BinIO	structure	BIN_IO		required	claimed	lib/basis/binio.sml
 BinIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/binio.sml
 BinIO.StreamIO	structure	STREAM_IO	where type vector = Word8Vector.vector where type elem = Word8.word where type reader = BinPrimIO.reader where type writer = BinPrimIO.writer where type pos = Position.int	required	claimed	lib/basis/binio.sml
-BinPrimIO	structure	PRIM_IO	where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int	required	claimed	lib/basis/binprimio.sml
+BinPrimIO	structure	PRIM_IO	where type array = Word8Array.array where type vector = Word8Vector.vector where type elem = Word8.word where type pos = Position.int where type vector_slice = Word8VectorSlice.slice where type array_slice = Word8ArraySlice.slice	required	claimed	lib/basis/binprimio.sml
 Bool	structure	BOOL		required	claimed	lib/basis/bool.sml
 BoolArray	structure	MONO_ARRAY	where type vector = BoolVector.vector where type elem = bool	optional	claimed	lib/basis/mono_bool.sml
 BoolArray2	structure	MONO_ARRAY2	where type vector = BoolVector.vector where type elem = bool	optional	claimed	lib/basis/mono_bool.sml
@@ -21,11 +88,14 @@ CharVector	structure	MONO_VECTOR	where type vector = String.string where type el
 CharVectorSlice	structure	MONO_VECTOR_SLICE	where type slice = Substring.substring where type vector = String.string where type elem = char	required	claimed	lib/basis/charvectorslice.sml
 CommandLine	structure	COMMAND_LINE		required	claimed	lib/basis/commandline.sml
 Date	structure	DATE		required	claimed	lib/basis/date.sml
+FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
 IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
+INet6Sock	structure	INET6_SOCK		extension	claimed	lib/basis/inet6sock.sml
 INetSock	structure	INET_SOCK		optional	claimed	lib/basis/inetsock.sml
 IO	structure	IO		required	claimed	lib/basis/io.sml
+ImperativeIO	functor	IMPERATIVE_IO		optional	ascribed	lib/basis/io_functors.sml
 Int	structure	INTEGER		required	claimed	lib/basis/int.sml
 Int16	structure	INTEGER		optional	claimed	lib/basis/int16.sml
 Int16Array	structure	MONO_ARRAY	where type vector = Int16Vector.vector where type elem = Int16.int	optional	claimed	lib/basis/mono_int16.sml
@@ -58,7 +128,7 @@ IntInf	structure	INTEGER		optional	claimed	lib/basis/intinf.sml
 IntInf	structure	INT_INF		optional	claimed	lib/basis/intinf.sml
 IntVector	structure	MONO_VECTOR	where type elem = int	optional	claimed	lib/basis/mono_int.sml
 IntVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = IntVector.vector where type elem = int	optional	claimed	lib/basis/mono_int.sml
-LargeInt	structure	INTEGER		required	claimed	lib/basis/intinf.sml
+LargeInt	structure	INTEGER	where type int = IntInf.int	required	claimed	lib/basis/intinf.sml
 LargeIntArray	structure	MONO_ARRAY	where type vector = LargeIntVector.vector where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
 LargeIntArray2	structure	MONO_ARRAY2	where type vector = LargeIntVector.vector where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
 LargeIntArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeIntVector.vector where type vector_slice = LargeIntVectorSlice.slice where type array = LargeIntArray.array where type elem = LargeInt.int	optional	claimed	lib/basis/mono_largeint.sml
@@ -71,6 +141,7 @@ LargeRealArray2	structure	MONO_ARRAY2	where type vector = LargeRealVector.vector
 LargeRealArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeRealVector.vector where type vector_slice = LargeRealVectorSlice.slice where type array = LargeRealArray.array where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVector	structure	MONO_VECTOR	where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
 LargeRealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = LargeRealVector.vector where type elem = LargeReal.real	optional	claimed	lib/basis/mono_largereal.sml
+LargeWord	structure	WORD		required	claimed	lib/basis/word.sml
 LargeWordArray	structure	MONO_ARRAY	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArray2	structure	MONO_ARRAY2	where type vector = LargeWordVector.vector where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
 LargeWordArraySlice	structure	MONO_ARRAY_SLICE	where type vector = LargeWordVector.vector where type vector_slice = LargeWordVectorSlice.slice where type array = LargeWordArray.array where type elem = LargeWord.word	optional	claimed	lib/basis/mono_largeword.sml
@@ -100,7 +171,8 @@ PackWord32Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord32Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Big	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
 PackWord64Little	structure	PACK_WORD		optional	claimed	lib/basis/pack_word.sml
-Posix	structure	POSIX		optional	claimed	lib/basis/posix.sml
+Position	structure	INTEGER		required	claimed	lib/basis/position.sml
+Posix	structure	POSIX	where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode	optional	claimed	lib/basis/posix.sml
 Posix.Error	structure	POSIX_ERROR		optional	claimed	lib/basis/posix.sml
 Posix.FileSys	structure	POSIX_FILE_SYS		optional	claimed	lib/basis/posix.sml
 Posix.FileSys.O	structure	BIT_FLAGS		optional	claimed	lib/basis/posix_filesys.sml
@@ -127,6 +199,7 @@ Real32Array2	structure	MONO_ARRAY2	where type vector = Real32Vector.vector where
 Real32ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Real32Vector.vector where type vector_slice = Real32VectorSlice.slice where type array = Real32Array.array where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32Vector	structure	MONO_VECTOR	where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
+Real64	structure	REAL		optional	claimed	lib/basis/real.sml
 Real64.Math	structure	MATH		required	inherited	lib/basis/real.sml
 Real64Array	structure	MONO_ARRAY	where type vector = Real64Vector.vector where type elem = Real64.real	optional	claimed	lib/basis/mono_real64.sml
 Real64Array2	structure	MONO_ARRAY2	where type vector = Real64Vector.vector where type elem = Real64.real	optional	claimed	lib/basis/mono_real64.sml
@@ -144,15 +217,16 @@ StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml
 String	structure	STRING	where type string = string where type char = Char.char	required	claimed	lib/basis/string.sml
 StringCvt	structure	STRING_CVT		required	claimed	lib/basis/stringcvt.sml
 Substring	structure	SUBSTRING	where type string = string where type char = Char.char	required	claimed	lib/basis/substring.sml
+SysWord	structure	WORD		optional	claimed	lib/basis/word.sml
 Text	structure	TEXT	where type Char.char = Char.char where type String.string = String.string where type Substring.substring = Substring.substring where type CharArray.array = CharArray.array where type CharVectorSlice.slice = CharVectorSlice.slice where type CharArraySlice.slice = CharArraySlice.slice	required	claimed	lib/basis/text.sml
 TextIO	structure	IMPERATIVE_IO		required	claimed	lib/basis/textio.sml
 TextIO	structure	TEXT_IO		required	claimed	lib/basis/textio.sml
 TextIO.StreamIO	structure	STREAM_IO		required	claimed	lib/basis/textio.sml
 TextIO.StreamIO	structure	TEXT_STREAM_IO	where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos	required	claimed	lib/basis/textio.sml
-TextPrimIO	structure	PRIM_IO	where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char	required	claimed	lib/basis/textprimio.sml
+TextPrimIO	structure	PRIM_IO	where type array = CharArray.array where type vector = CharVector.vector where type elem = Char.char where type vector_slice = CharVectorSlice.slice where type array_slice = CharArraySlice.slice	required	claimed	lib/basis/textprimio.sml
 Time	structure	TIME		required	claimed	lib/basis/time.sml
 Timer	structure	TIMER		required	claimed	lib/basis/timer.sml
-Unix	structure	UNIX		optional	claimed	lib/basis/unix.sml
+Unix	structure	UNIX	where type exit_status = Posix.Process.exit_status where type signal = Posix.Signal.signal	optional	claimed	lib/basis/unix.sml
 UnixSock	structure	UNIX_SOCK		optional	claimed	lib/basis/inetsock.sml
 Vector	structure	VECTOR		required	claimed	lib/basis/vector.sml
 VectorSlice	structure	VECTOR_SLICE		required	claimed	lib/basis/vectorslice.sml
@@ -164,8 +238,9 @@ WideCharVector	structure	MONO_VECTOR_EQ	where type elem = RuneWideChar.char	opti
 WideCharVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideString	structure	STRING	where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
-WideText	structure	TEXT		optional	claimed	lib/basis/widetext.sml
-WideTextPrimIO	structure	PRIM_IO		optional	claimed	lib/basis/widetextio.sml
+WideText	structure	TEXT	where type Char.char = WideChar.char where type String.string = WideString.string where type Substring.substring = WideSubstring.substring where type CharArray.array = WideCharArray.array where type CharVectorSlice.slice = WideCharVectorSlice.slice where type CharArraySlice.slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetext.sml
+WideTextPrimIO	structure	PRIM_IO	where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetextio.sml
+Windows	structure	WINDOWS		optional	claimed	lib/basis/windows.sml
 Word	structure	WORD		required	claimed	lib/basis/word.sml
 Word16	structure	WORD		optional	claimed	lib/basis/word16.sml
 Word16Array	structure	MONO_ARRAY	where type vector = Word16Vector.vector where type elem = Word16.word	optional	claimed	lib/basis/mono_word16.sml
@@ -190,7 +265,7 @@ Word8Array	structure	MONO_ARRAY	where type vector = Word8Vector.vector where typ
 Word8Array2	structure	MONO_ARRAY2	where type vector = Word8Vector.vector where type elem = Word8.word	optional	claimed	lib/basis/word8array2.sml
 Word8ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word	required	claimed	lib/basis/word8arrayslice.sml
 Word8Vector	structure	MONO_VECTOR	where type elem = Word8.word	required	claimed	lib/basis/word8vector.sml
-Word8VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Word8Vector.vector where type elem = Word8.word	required	claimed	lib/basis/word8vectorslice.sml
+Word8VectorSlice	structure	MONO_VECTOR_SLICE	where type vector = Word8Vector.vector where type elem = Word8.word	required	claimed	lib/basis/word8vector.sml
 WordArray	structure	MONO_ARRAY	where type vector = WordVector.vector where type elem = word	optional	claimed	lib/basis/mono_word.sml
 WordArray2	structure	MONO_ARRAY2	where type vector = WordVector.vector where type elem = word	optional	claimed	lib/basis/mono_word.sml
 WordArraySlice	structure	MONO_ARRAY_SLICE	where type vector = WordVector.vector where type vector_slice = WordVectorSlice.slice where type array = WordArray.array where type elem = word	optional	claimed	lib/basis/mono_word.sml

@@ -7,7 +7,7 @@ val got = Posix.IO.readVec (infd, 100)
 val () = print (Int.toString n ^ ": " ^ Byte.bytesToString got ^ "\n")
 val () = Posix.IO.close infd
 val path = OS.FileSys.tmpName ()
-val fd = Posix.FileSys.createf (path, Posix.FileSys.O_RDWR, Posix.FileSys.O.flags [], Posix.FileSys.defaultMode)
+val fd = Posix.FileSys.createf (path, Posix.FileSys.O_RDWR, Posix.FileSys.O.flags [], Posix.FileSys.S.flags [Posix.FileSys.S.irusr, Posix.FileSys.S.iwusr, Posix.FileSys.S.irgrp, Posix.FileSys.S.iroth])
 val _ = Posix.IO.writeVec (fd, Word8VectorSlice.full (Byte.stringToBytes "0123456789"))
 val () = print ("seek: " ^ Int.toString (Posix.IO.lseek (fd, 3, Posix.IO.SEEK_SET)) ^ " read: "
                 ^ Byte.bytesToString (Posix.IO.readVec (fd, 4)) ^ "\n")
@@ -17,7 +17,7 @@ val () = print ("size " ^ Int.toString (Posix.FileSys.ST.size st) ^ " reg "
                 ^ Bool.toString (Posix.FileSys.ST.uid st = Posix.ProcEnv.getuid ()) ^ "\n")
 val () = Posix.IO.close fd
 val () = Posix.FileSys.chmod (path, Posix.FileSys.S.flags [Posix.FileSys.S.irusr])
-val () = print ("mode: " ^ Word.toString (Posix.FileSys.ST.mode (Posix.FileSys.stat path)) ^ "\n")
+val () = print ("mode: " ^ SysWord.toString (Posix.FileSys.S.toWord (Posix.FileSys.ST.mode (Posix.FileSys.stat path))) ^ "\n")
 val () = Posix.FileSys.unlink path
 val me = Posix.SysDB.getpwuid (Posix.ProcEnv.getuid ())
 val () = print ("user has a home: " ^ Bool.toString (String.isPrefix "/" (Posix.SysDB.Passwd.home me)) ^ "\n")

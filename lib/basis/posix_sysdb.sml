@@ -12,7 +12,8 @@ struct
        or name": the C library reports that without an errno. *)
     fun failure what =
       case RuneError.lastError () of
-        RuneError.SysErr (_, SOME 0) => RuneError.SysErr ("no such " ^ what, NONE)
+        (e as RuneError.SysErr (_, SOME n)) =>
+          if RuneError.toInt n = 0 then RuneError.SysErr ("no such " ^ what, NONE) else e
       | e => e
   in
     structure Passwd =

@@ -75,6 +75,15 @@ struct
       SOME (c, rest) => SOME (c, #2 (skipFormat getc rest))
     | NONE => NONE
 
+  (* Char.scan: a character "as allowed in an SML program", where a double
+     quote that no backslash precedes ends a constant and is no character.
+     String.scan goes on over it (scanSml): its page names what stops a
+     scan, and a double quote is none of that. *)
+  fun scanSmlChar getc src =
+    case getc (#2 (skipFormat getc src)) of
+      SOME (#"\"", _) => NONE
+    | _ => scanSml getc src
+
   (* One character of a C constant: no formatting sequences, no unescaped
      double quote; \ooo has one to three octal digits, \xh... any number. *)
   fun cChar (getc : (char, 'a) StringCvt.reader) src =
@@ -221,7 +230,7 @@ struct
         else str c
     end
 
-  val scan = RuneEscape.scanSml
+  val scan = RuneEscape.scanSmlChar
   fun fromString s = StringCvt.scanString scan s
   val toCString = RuneEscape.toC
   fun fromCString s = StringCvt.scanString RuneEscape.cChar s

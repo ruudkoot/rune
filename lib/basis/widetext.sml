@@ -1,7 +1,11 @@
 (* WideText: the structures of the wide character (optional in the
    specification), as Text is of char.
 
-   Implements: TEXT
+   Implements: TEXT where type Char.char = WideChar.char where type
+   String.string = WideString.string where type Substring.substring =
+   WideSubstring.substring where type CharArray.array = WideCharArray.array
+   where type CharVectorSlice.slice = WideCharVectorSlice.slice where type
+   CharArraySlice.slice = WideCharArraySlice.slice
 
    Status: optional *)
 structure WideText =

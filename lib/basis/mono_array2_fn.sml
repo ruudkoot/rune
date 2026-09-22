@@ -11,18 +11,21 @@ struct
   type elem = V.elem
   type vector = V.vector
   (* equality is that of Array2.array: identity *)
-  type array = elem Array2.array
+  type array = elem RuneArray2.array
   type region = {base : array, row : int, col : int, nrows : int option, ncols : int option}
   datatype traversal = datatype Array2.traversal
+  (* the sealed Array2 has a traversal of its own: these are the same two *)
+  fun inner Array2.RowMajor = RuneArray2.RowMajor
+    | inner Array2.ColMajor = RuneArray2.ColMajor
 
-  val array : int * int * elem -> array = Array2.array
-  val fromList : elem list list -> array = Array2.fromList
-  val tabulate : traversal -> int * int * (int * int -> elem) -> array = Array2.tabulate
-  val sub : array * int * int -> elem = Array2.sub
-  val update : array * int * int * elem -> unit = Array2.update
-  val dimensions : array -> int * int = Array2.dimensions
-  val nCols : array -> int = Array2.nCols
-  val nRows : array -> int = Array2.nRows
+  val array : int * int * elem -> array = RuneArray2.array
+  val fromList : elem list list -> array = RuneArray2.fromList
+  fun tabulate trv arg : array = RuneArray2.tabulate (inner trv) arg
+  val sub : array * int * int -> elem = RuneArray2.sub
+  val update : array * int * int * elem -> unit = RuneArray2.update
+  val dimensions : array -> int * int = RuneArray2.dimensions
+  val nCols : array -> int = RuneArray2.nCols
+  val nRows : array -> int = RuneArray2.nRows
 
   (* "It raises Subscript if i < 0 or nRows arr <= i", and the same for j and
      nCols arr *)
@@ -33,11 +36,11 @@ struct
     if j < 0 orelse j >= nCols arr then raise Subscript
     else V.tabulate (nRows arr, fn i => sub (arr, i, j))
 
-  val copy : {src : region, dst : array, dst_row : int, dst_col : int} -> unit = Array2.copy
-  val appi : traversal -> (int * int * elem -> unit) -> region -> unit = Array2.appi
-  val app : traversal -> (elem -> unit) -> array -> unit = Array2.app
-  fun foldi trv f init (reg : region) = Array2.foldi trv f init reg
-  fun fold trv f init (arr : array) = Array2.fold trv f init arr
-  val modifyi : traversal -> (int * int * elem -> elem) -> region -> unit = Array2.modifyi
-  val modify : traversal -> (elem -> elem) -> array -> unit = Array2.modify
+  val copy : {src : region, dst : array, dst_row : int, dst_col : int} -> unit = RuneArray2.copy
+  fun appi trv f (reg : region) = RuneArray2.appi (inner trv) f reg
+  fun app trv f (arr : array) = RuneArray2.app (inner trv) f arr
+  fun foldi trv f init (reg : region) = RuneArray2.foldi (inner trv) f init reg
+  fun fold trv f init (arr : array) = RuneArray2.fold (inner trv) f init arr
+  fun modifyi trv f (reg : region) = RuneArray2.modifyi (inner trv) f reg
+  fun modify trv f (arr : array) = RuneArray2.modify (inner trv) f arr
 end

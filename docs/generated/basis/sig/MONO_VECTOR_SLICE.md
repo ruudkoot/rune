@@ -14,25 +14,25 @@
 
 ```sml
 signature MONO_VECTOR_SLICE
-structure BoolVectorSlice : MONO_VECTOR_SLICE where type vector = BoolVector.vector where type elem = bool  (* optional *)
+structure BoolVectorSlice :> MONO_VECTOR_SLICE where type vector = BoolVector.vector where type elem = bool  (* optional *)
 structure CharVectorSlice : MONO_VECTOR_SLICE where type slice = Substring.substring where type vector = String.string where type elem = char
-structure Int16VectorSlice : MONO_VECTOR_SLICE where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
-structure Int32VectorSlice : MONO_VECTOR_SLICE where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
-structure Int64VectorSlice : MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
-structure Int8VectorSlice : MONO_VECTOR_SLICE where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
-structure IntVectorSlice : MONO_VECTOR_SLICE where type vector = IntVector.vector where type elem = int  (* optional *)
-structure LargeIntVectorSlice : MONO_VECTOR_SLICE where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
+structure Int16VectorSlice :> MONO_VECTOR_SLICE where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
+structure Int32VectorSlice :> MONO_VECTOR_SLICE where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
+structure Int64VectorSlice :> MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int8VectorSlice :> MONO_VECTOR_SLICE where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
+structure IntVectorSlice :> MONO_VECTOR_SLICE where type vector = IntVector.vector where type elem = int  (* optional *)
+structure LargeIntVectorSlice :> MONO_VECTOR_SLICE where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
 structure LargeRealVectorSlice : MONO_VECTOR_SLICE where type vector = LargeRealVector.vector where type elem = LargeReal.real  (* optional *)
 structure LargeWordVectorSlice : MONO_VECTOR_SLICE where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
-structure Real32VectorSlice : MONO_VECTOR_SLICE where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
+structure Real32VectorSlice :> MONO_VECTOR_SLICE where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64VectorSlice : MONO_VECTOR_SLICE where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
-structure RealVectorSlice : MONO_VECTOR_SLICE where type vector = RealVector.vector where type elem = real  (* optional *)
-structure WideCharVectorSlice : MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
-structure Word16VectorSlice : MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
-structure Word32VectorSlice : MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
-structure Word64VectorSlice : MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure RealVectorSlice :> MONO_VECTOR_SLICE where type vector = RealVector.vector where type elem = real  (* optional *)
+structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure Word16VectorSlice :> MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
+structure Word32VectorSlice :> MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
+structure Word64VectorSlice :> MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
 structure Word8VectorSlice : MONO_VECTOR_SLICE where type vector = Word8Vector.vector where type elem = Word8.word
-structure WordVectorSlice : MONO_VECTOR_SLICE where type vector = WordVector.vector where type elem = word  (* optional *)
+structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.vector where type elem = word  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -54,7 +54,7 @@ structure WordVectorSlice : MONO_VECTOR_SLICE where type vector = WordVector.vec
 | `Word16VectorSlice` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | `Word32VectorSlice` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | `Word64VectorSlice` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8VectorSlice` | Word8VectorSlice: a Word8Vector.vector is a string, so a slice of one is a substring, and taking its vector is one primitive rather than a walk over the elements. | [lib/basis/word8vectorslice.sml](../../../../lib/basis/word8vectorslice.sml) |
+| `Word8VectorSlice` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 | `WordVectorSlice` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 A stretch of a vector of one element type, without a copy of it.

@@ -4,26 +4,25 @@
    Implements: MONO_VECTOR where type elem = Word16.word
 
    Status: optional *)
-structure Word16Vector : MONO_VECTOR = RuneMonoVectorFn (type elem = Word16.word)
+structure Word16Vector :> MONO_VECTOR where type elem = Word16.word = RuneMonoVectorFn (type elem = Word16.word)
 (* Implements: MONO_VECTOR_SLICE where type vector = Word16Vector.vector where
    type elem = Word16.word
 
    Status: optional *)
-structure Word16VectorSlice : MONO_VECTOR_SLICE = RuneMonoVectorSliceFn (structure V = Word16Vector)
+structure Word16VectorSlice :> MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word = RuneMonoVectorSliceFn (structure V = Word16Vector)
 (* Implements: MONO_ARRAY where type vector = Word16Vector.vector where type
    elem = Word16.word
 
    Status: optional *)
-structure Word16Array : MONO_ARRAY = RuneMonoArrayFn (structure V = Word16Vector)
+structure Word16Array :> MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word = RuneMonoArrayFn (structure V = Word16Vector)
 (* Implements: MONO_ARRAY_SLICE where type vector = Word16Vector.vector where
    type vector_slice = Word16VectorSlice.slice where type array =
    Word16Array.array where type elem = Word16.word
 
    Status: optional *)
-structure Word16ArraySlice : MONO_ARRAY_SLICE =
-  RuneMonoArraySliceFn (structure V = Word16Vector structure A = Word16Array structure VS = Word16VectorSlice)
+structure Word16ArraySlice :> MONO_ARRAY_SLICE where type vector = Word16Vector.vector where type vector_slice = Word16VectorSlice.slice where type array = Word16Array.array where type elem = Word16.word = RuneMonoArraySliceFn (structure V = Word16Vector structure A = Word16Array structure VS = Word16VectorSlice)
 (* Implements: MONO_ARRAY2 where type vector = Word16Vector.vector where type
    elem = Word16.word
 
    Status: optional *)
-structure Word16Array2 = RuneMonoArray2Fn (structure V = Word16Vector)
+structure Word16Array2 :> MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word = RuneMonoArray2Fn (structure V = Word16Vector)

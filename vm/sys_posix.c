@@ -1,5 +1,7 @@
 /* The system layer on POSIX. */
 #define _POSIX_C_SOURCE 200809L
+/* off_t of 64 bits on a 32-bit system as well: file positions, sizes */
+#define _FILE_OFFSET_BITS 64
 #include "sys.h"
 
 #include <errno.h>
@@ -297,20 +299,34 @@ int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
     return 0;
 }
 
-/* The open directory streams, indexed by the number the library holds. */
+/* The open directory streams, indexed by the number the library holds,
+   and how many entries each has read, which a fork by a second VM reads
+   again (sys_resume). */
 static DIR **dirs = NULL;
+static long *dir_reads = NULL;
 static int dirs_length = 0;
+
+static int grow_dirs(int length) {
+    if (length <= dirs_length) return 0;
+    DIR **grown = realloc(dirs, (size_t)length * sizeof(DIR *));
+    if (grown) dirs = grown;
+    long *reads = grown ? realloc(dir_reads, (size_t)length * sizeof(long)) : NULL;
+    if (reads) dir_reads = reads;
+    if (!grown || !reads) { errno = ENOMEM; return -1; }
+    for (int i = dirs_length; i < length; i++) { dirs[i] = NULL; dir_reads[i] = 0; }
+    dirs_length = length;
+    return 0;
+}
 
 int sys_open_dir(const char *path) {
     DIR *d = opendir(path);
     if (!d) return -1;
-    for (int i = 0; i < dirs_length; i++)
-        if (dirs[i] == NULL) { dirs[i] = d; return i; }
-    DIR **grown = realloc(dirs, (size_t)(dirs_length + 1) * sizeof(DIR *));
-    if (!grown) { closedir(d); errno = ENOMEM; return -1; }
-    dirs = grown;
-    dirs[dirs_length] = d;
-    return dirs_length++;
+    int i;
+    for (i = 0; i < dirs_length; i++) if (dirs[i] == NULL) break;
+    if (i == dirs_length && grow_dirs(dirs_length + 1) != 0) { closedir(d); return -1; }
+    dirs[i] = d;
+    dir_reads[i] = 0;
+    return i;
 }
 
 static DIR *dir_of(int dir) {
@@ -327,6 +343,7 @@ const char *sys_read_dir(int dir) {
         errno = 0;
         struct dirent *entry = readdir(d);
         if (!entry) return NULL;
+        dir_reads[dir]++;
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             snprintf(path_buffer, sizeof path_buffer, "%s", entry->d_name);
             return path_buffer;
@@ -338,6 +355,7 @@ int sys_rewind_dir(int dir) {
     DIR *d = dir_of(dir);
     if (!d) return -1;
     rewinddir(d);
+    dir_reads[dir] = 0;
     return 0;
 }
 
@@ -349,7 +367,12 @@ int sys_close_dir(int dir) {
 }
 
 /* ---------------------------------------------------------------- descriptors */
+FILE *sys_fopen(const char *path, const char *mode) { return fopen(path, mode); }
 int sys_fileno(FILE *file) { return file ? fileno(file) : -1; }
+int64_t sys_ftell(FILE *file) { off_t r = ftello(file); return r < 0 ? -1 : (int64_t)r; }
+int sys_fseek(FILE *file, int64_t offset, int whence) {
+    return fseeko(file, (off_t)offset, whence) == 0 ? 0 : -1;
+}
 
 int sys_desc_kind(int fd) {
     struct stat st;
@@ -432,7 +455,7 @@ static const struct { const char *name; int64_t value; } constants[] = {
     C(_PC_SYNC_IO) C(_PC_ASYNC_IO) C(_PC_PRIO_IO) C(_PC_FILESIZEBITS)
     C(WNOHANG) C(WUNTRACED)
     /* sockets */
-    C(AF_INET) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
+    C(AF_INET) C(AF_INET6) C(AF_UNIX) C(SOCK_STREAM) C(SOCK_DGRAM) C(SOL_SOCKET)
     C(SO_DEBUG) C(SO_REUSEADDR) C(SO_KEEPALIVE) C(SO_DONTROUTE) C(SO_LINGER)
     C(SO_BROADCAST) C(SO_OOBINLINE) C(SO_SNDBUF) C(SO_RCVBUF) C(SO_TYPE) C(SO_ERROR)
     C(MSG_OOB) C(MSG_PEEK) C(MSG_DONTROUTE)
@@ -451,6 +474,117 @@ int64_t sys_const(const char *name) {
 /* ---------------------------------------------------------------- processes */
 int sys_fork(void) { return (int)fork(); }
 
+/* fork by a second VM (vm/image.c): POSIX has fork, and this is only taken
+   under runevm --emulate-fork, to test on POSIX what Windows has to do.
+   The child is this process forked and made runevm again from
+   /proc/self/exe (so Linux alone), which keeps the descriptors, the
+   working directory and the umask. What exec loses is carried: each
+   descriptor's close-on-exec is cleared before it and set again in the
+   child, and each directory stream is opened anew there and read on to
+   where the parent's stood. */
+int sys_has_fork(void) { return 1; }
+static pid_t fork_child = -1;
+static struct sigaction fork_pipe_action;
+FILE *sys_fork_start(void) {
+    long limit = sysconf(_SC_OPEN_MAX);
+    if (limit < 0 || limit > 65536) limit = 65536;
+    int *cloexec = malloc((size_t)limit * sizeof(int));
+    if (!cloexec) { errno = ENOMEM; return NULL; }
+    uint32_t n = 0;
+    for (int fd = 0; fd < limit; fd++) {
+        int flags = fcntl(fd, F_GETFD);
+        if (flags >= 0 && (flags & FD_CLOEXEC)) cloexec[n++] = fd;
+    }
+    int p[2];
+    if (pipe(p) != 0) { free(cloexec); return NULL; }
+    fcntl(p[1], F_SETFD, FD_CLOEXEC);
+    char token[32];
+    snprintf(token, sizeof token, "%d", p[0]);
+    pid_t pid = fork();
+    if (pid < 0) { int e = errno; close(p[0]); close(p[1]); free(cloexec); errno = e; return NULL; }
+    if (pid == 0) {
+        for (uint32_t i = 0; i < n; i++) fcntl(cloexec[i], F_SETFD, 0);
+        execl("/proc/self/exe", "runevm", "--resume", token, (char *)NULL);
+        _exit(127);
+    }
+    close(p[0]);
+    /* a child that is gone before it has read everything must not end
+       this process by SIGPIPE */
+    struct sigaction ignore;
+    memset(&ignore, 0, sizeof ignore);
+    ignore.sa_handler = SIG_IGN;
+    sigemptyset(&ignore.sa_mask);
+    sigaction(SIGPIPE, &ignore, &fork_pipe_action);
+    FILE *out = fdopen(p[1], "wb");
+    if (!out) {
+        int e = errno;
+        close(p[1]);
+        waitpid(pid, NULL, 0);
+        sigaction(SIGPIPE, &fork_pipe_action, NULL);
+        free(cloexec);
+        errno = e;
+        return NULL;
+    }
+    fork_child = pid;
+    setvbuf(out, NULL, _IOFBF, 1 << 20);   /* the image is the whole heap */
+    fwrite(&n, sizeof n, 1, out);
+    fwrite(cloexec, sizeof(int), n, out);
+    free(cloexec);
+    uint32_t ndirs = 0;
+    for (int i = 0; i < dirs_length; i++) if (dirs[i]) ndirs++;
+    fwrite(&ndirs, sizeof ndirs, 1, out);
+    for (int i = 0; i < dirs_length; i++) {
+        if (!dirs[i]) continue;
+        int fd = dirfd(dirs[i]);
+        fwrite(&i, sizeof i, 1, out);
+        fwrite(&fd, sizeof fd, 1, out);
+        fwrite(&dir_reads[i], sizeof dir_reads[i], 1, out);
+    }
+    return out;
+}
+int64_t sys_fork_finish(FILE *image) {
+    fclose(image);
+    sigaction(SIGPIPE, &fork_pipe_action, NULL);
+    return fork_child;
+}
+FILE *sys_resume(const char *token) {
+    char *end;
+    errno = 0;
+    long fd = strtol(token, &end, 10);
+    if (errno != 0 || end == token || *end != 0 || fd < 0 || fd > INT_MAX) { errno = EINVAL; return NULL; }
+    FILE *in = fdopen((int)fd, "rb");
+    if (!in) return NULL;
+    setvbuf(in, NULL, _IOFBF, 1 << 20);
+    uint32_t n = 0;
+    if (fread(&n, sizeof n, 1, in) != 1) { fclose(in); errno = EIO; return NULL; }
+    for (uint32_t i = 0; i < n; i++) {
+        int cloexec;
+        if (fread(&cloexec, sizeof cloexec, 1, in) != 1) { fclose(in); errno = EIO; return NULL; }
+        fcntl(cloexec, F_SETFD, FD_CLOEXEC);
+    }
+    uint32_t ndirs = 0;
+    if (fread(&ndirs, sizeof ndirs, 1, in) != 1) { fclose(in); errno = EIO; return NULL; }
+    for (uint32_t k = 0; k < ndirs; k++) {
+        int i, dfd;
+        long reads;
+        if (fread(&i, sizeof i, 1, in) != 1 || fread(&dfd, sizeof dfd, 1, in) != 1 ||
+            fread(&reads, sizeof reads, 1, in) != 1 || i < 0) { fclose(in); errno = EIO; return NULL; }
+        char proc[64];
+        snprintf(proc, sizeof proc, "/proc/self/fd/%d", dfd);
+        int again = open(proc, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        DIR *d = again >= 0 ? fdopendir(again) : NULL;
+        if (!d && again >= 0) close(again);
+        close(dfd);
+        if (!d || grow_dirs(i + 1) != 0) continue;
+        long r = 0;
+        while (r < reads && readdir(d)) r++;
+        dirs[i] = d;
+        dir_reads[i] = r;
+    }
+    return in;
+}
+FILE *sys_fdopen(int fd, const char *mode) { return fdopen(fd, mode); }
+
 int sys_exec(const char *path, char *const argv[], char *const envp[], int search) {
     if (search) {
         if (envp) environ = (char **)envp;
@@ -459,6 +593,23 @@ int sys_exec(const char *path, char *const argv[], char *const envp[], int searc
         execve(path, argv, envp ? envp : environ);
     }
     return -1;
+}
+
+/* fork, then in the child the descriptors dup2'ed onto 0, 1 and 2 (and
+   closed where they were others), then exec, and 126 if that fails, as a
+   shell has it. */
+int64_t sys_spawn(const char *path, char *const argv[], char *const envp[], int search, const int fds[3]) {
+    pid_t pid = fork();
+    if (pid != 0) return pid < 0 ? -1 : (int64_t)pid;
+    for (int i = 0; i < 3; i++)
+        if (fds[i] >= 0 && fds[i] != i && dup2(fds[i], i) < 0) _exit(126);
+    for (int i = 0; i < 3; i++) {
+        int later = 0;
+        for (int j = i + 1; j < 3; j++) later |= fds[j] == fds[i];
+        if (fds[i] > 2 && !later) close(fds[i]);
+    }
+    sys_exec(path, argv, envp, search);
+    _exit(126);
 }
 
 int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
@@ -476,6 +627,7 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) {
 int sys_kill(int64_t pid, int signal) { return kill((pid_t)pid, signal); }
 int sys_alarm(int seconds) { return (int)alarm((unsigned)seconds); }
 int sys_pause(void) { pause(); return 0; }
+void sys_exit_now(int status) { _exit(status); }
 int64_t sys_getpid(void) { return (int64_t)getpid(); }
 int64_t sys_getppid(void) { return (int64_t)getppid(); }
 int64_t sys_getuid(void) { return (int64_t)getuid(); }
@@ -862,6 +1014,20 @@ int sys_inet_addr(const char *host, int port) {
     return 0;
 }
 
+/* An IPv6 address, in the text form of inet_pton: "::1", "fe80::1%eth0" is
+   not taken (no scope id). An empty host is the address of no interface. */
+int sys_inet6_addr(const char *host, int port) {
+    struct sockaddr_in6 in6;
+    memset(&in6, 0, sizeof in6);
+    in6.sin6_family = AF_INET6;
+    in6.sin6_port = htons((unsigned short)port);
+    if (!host || !*host) in6.sin6_addr = in6addr_any;
+    else if (inet_pton(AF_INET6, host, &in6.sin6_addr) != 1) { errno = EINVAL; return -1; }
+    memcpy(address, &in6, sizeof in6);
+    address_length = (int)sizeof in6;
+    return 0;
+}
+
 int sys_unix_addr(const char *path) {
     struct sockaddr_un un;
     memset(&un, 0, sizeof un);
@@ -888,6 +1054,16 @@ const char *sys_inet_parts(const char *addr, int n, int *port) {
     if (in.sin_family != AF_INET) return NULL;
     if (!inet_ntop(AF_INET, &in.sin_addr, path_buffer, sizeof path_buffer)) return NULL;
     *port = ntohs(in.sin_port);
+    return path_buffer;
+}
+
+const char *sys_inet6_parts(const char *addr, int n, int *port) {
+    if (n < (int)sizeof(struct sockaddr_in6)) return NULL;
+    struct sockaddr_in6 in6;
+    memcpy(&in6, addr, sizeof in6);
+    if (in6.sin6_family != AF_INET6) return NULL;
+    if (!inet_ntop(AF_INET6, &in6.sin6_addr, path_buffer, sizeof path_buffer)) return NULL;
+    *port = ntohs(in6.sin6_port);
     return path_buffer;
 }
 
@@ -997,3 +1173,31 @@ const char *sys_serv_byname(const char *name, const char *protocol) {
 const char *sys_serv_byport(int port, const char *protocol) {
     return pack_serv(getservbyport(htons((unsigned short)port), protocol && *protocol ? protocol : NULL));
 }
+
+static int nosys(void) { errno = ENOSYS; return -1; }
+#define NOSYS_INT nosys()
+/* The structure Windows: Windows' own. */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]) {
+    (void)key; (void)name; (void)access; (void)create; (void)out; return NOSYS_INT;
+}
+int sys_win_reg_close(int key) { (void)key; return NOSYS_INT; }
+int sys_win_reg_delete(int key, const char *name, int value) { (void)key; (void)name; (void)value; return NOSYS_INT; }
+const char *sys_win_reg_enum(int key, int index, int value) { (void)key; (void)index; (void)value; NOSYS_INT; return NULL; }
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length) {
+    (void)key; (void)name; (void)type; (void)length; NOSYS_INT; return NULL;
+}
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length) {
+    (void)key; (void)name; (void)type; (void)data; (void)length; return NOSYS_INT;
+}
+const char *sys_win_config(int what) { (void)what; NOSYS_INT; return NULL; }
+const char *sys_win_version(int64_t out[4]) { (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_volume(const char *root, int64_t out[2]) { (void)root; (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_find_executable(const char *name) { (void)name; NOSYS_INT; return NULL; }
+int sys_win_shell_execute(const char *file, const char *arg, int document) { (void)file; (void)arg; (void)document; return NOSYS_INT; }
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) { (void)command; (void)arg; (void)fds; return NOSYS_INT; }
+int sys_win_wait(int64_t pid, int64_t *code) { (void)pid; (void)code; return NOSYS_INT; }
+int sys_win_dde_start(const char *service, const char *topic) { (void)service; (void)topic; return NOSYS_INT; }
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms) {
+    (void)info; (void)command; (void)retries; (void)delay_ms; return NOSYS_INT;
+}
+int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }

@@ -2,8 +2,20 @@
 
    Implements: ARRAY2
 
-   Status: optional *)
-structure Array2 =
+   Status: optional
+
+   Implementation: `Array2.array/abstract-and-not-equal-at-any-element`. The
+   type is abstract, as `structure Array2 :> ARRAY2` asks. The sentence of
+   the page that would have made `real Array2.array` an equality type cannot
+   be honoured by any sealed structure and is read as not applying here
+   (`ARRAY2/sealed-and-equal-at-any-element`); MLton and SML/NJ read it the
+   same way, Poly/ML does not. `RuneArray2` is the implementation under the
+   seal, which `RuneMonoArray2Fn` builds the monomorphic two-dimensional
+   arrays on: their `array` is monomorphic, so it admits equality however it
+   is made, which is what `MONO_ARRAY2` asks for.
+
+   Pinned by: `Array2.array/same-array-equal`, `Array2:ARRAY2/eqtype` *)
+structure RuneArray2 =
 struct
   (* equality is that of the data array: identity *)
   type 'a array = {data : 'a Array.array, rows : int, cols : int}
@@ -115,3 +127,5 @@ struct
           update (dst, dst_row + i, dst_col + j, sub (base, r0 + i, c0 + j))))
     end
 end
+
+structure Array2 :> ARRAY2 = RuneArray2

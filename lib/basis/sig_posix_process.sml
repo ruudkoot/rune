@@ -26,10 +26,7 @@ sig
   (* The type of a signal, the one of `Posix.Signal`. *)
   eqtype signal
 
-  (* The type of the number that names a process.
-
-     Deviation: `Posix.Process.pid/is-an-int`. The specification leaves the
-     type abstract; in Rune it is `int`, and the structure is not sealed. *)
+  (* The type of the number that names a process. *)
   eqtype pid
 
   (* `wordToPid w` is the process whose number is `w`. *)
@@ -43,7 +40,22 @@ sig
      The child has a copy of everything the parent had: its memory, its open
      descriptors and its current directory.
 
-     Raises: `OS.SysErr` if no process can be made. *)
+     Raises: `OS.SysErr` if no process can be made.
+
+     Implementation: `Posix.Process.fork/a-second-vm-where-there-is-none`.
+     Windows has no `fork`. There the VM starts a second one of itself and
+     hands it this one's whole state -- the heap, the stacks, the program,
+     the open files, the sockets and the directory streams -- and the child
+     carries on from the `fork` as a copy of the process would. That costs
+     about 12 milliseconds, and 3 more for each megabyte of live data, where
+     a `fork` the kernel makes costs almost nothing.
+
+     Limitation: `Posix.Process.fork/read-ahead-of-a-pipe`. Where the `fork`
+     is that second VM, what the C library has read ahead from a pipe or a
+     terminal, and the program has not taken yet, stays with the parent
+     alone: an input that can seek is put back to where the program had
+     read, and a pipe cannot be. A `fork` the kernel makes gives the child a
+     copy of it. *)
   val fork : unit -> pid option
 
   (* `exec (path, args)` replaces the running program by the one at `path`, and does not return.

@@ -5,7 +5,9 @@
    taken: what the child writes is read through `textInstreamOf`, and what it
    is to read is written through `textOutstreamOf`. `reap` waits for it and
    is its status. This is `Posix.Process`'s fork, exec and waitpid put
-   together, with the pipes made and the descriptors handed over.
+   together, with the pipes made and the descriptors handed over; the
+   system starts the program itself, without a fork, which Windows does
+   not have.
 
    The two type variables of `proc` say what its streams are, text or binary;
    they are decided by which of the four functions is used on it, so a
@@ -22,11 +24,7 @@
    UNIX`, so `signal` is abstract there; the suite checks that it is
    `Posix.Signal.signal` and that `exit_status` is
    `Posix.Process.exit_status`, which the page requires where both structures
-   exist.
-
-   Deviation: `UNIX/extra-members`. `Unix` is not sealed, so it shows two
-   members beyond this signature, `protect` and `streamsOf'`, and the
-   identity of `signal` with `Posix.Signal.signal`. *)
+   exist *)
 signature UNIX =
 sig
   (* The type of a running child process, with the streams that talk to it.
@@ -57,7 +55,10 @@ sig
 
      Implementation: `Unix.executeInEnv/exec-failure-is-126`. A child whose
      `exec` fails ends with the status 126, as the page asks; that is what a
-     `reap` of it reports, rather than an exception in the parent.
+     `reap` of it reports, rather than an exception in the parent. On
+     Windows, which starts a program without a child of this one's and
+     knows at once that it cannot be run, this raises `OS.SysErr`, which
+     the page allows as well.
 
      Pinned by: `Unix.executeInEnv/no-such-program`,
      `Unix.execute/no-such-program` *)

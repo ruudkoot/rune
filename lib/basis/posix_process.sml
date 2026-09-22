@@ -39,11 +39,14 @@ struct
     (* OS.Process.status is an int: 0 is success, 1 to 255 what the process
        exited with, 256 plus the signal that ended it and 512 plus the one
        that stopped it (Unix.reap and OS.Process.system both say so). *)
-    fun fromStatus (s : int) =
-      if s = 0 then W_EXITED
-      else if s >= 256 andalso s < 512 then W_SIGNALED (s - 256)
-      else if s >= 512 andalso s < 768 then W_STOPPED (s - 512)
-      else W_EXITSTATUS (Word8.fromInt s)
+    fun fromStatus (st : RuneStatus.status) =
+      let val s = RuneStatus.toInt st
+      in
+        if s = 0 then W_EXITED
+        else if s >= 256 andalso s < 512 then W_SIGNALED (RunePosixSignal.fromInt (s - 256))
+        else if s >= 512 andalso s < 768 then W_STOPPED (RunePosixSignal.fromInt (s - 512))
+        else W_EXITSTATUS (Word8.fromInt s)
+      end
 
     (* The flags of waitpid. WNOHANG is not one of them: waitpid_nh adds it.
 
@@ -63,7 +66,7 @@ struct
       fun anySet (a, b) = Word.andb (a, b) <> 0w0
     end
 
-    val wnohang = Word.fromInt (const "WNOHANG")
+    val wnohang = Word.fromInt (case const "WNOHANG" of ~1 => 0 | v => v)
     fun flagBits flags = Word.toInt (W.flags flags)
 
     fun pidOf W_ANY_CHILD = ~1
@@ -74,8 +77,8 @@ struct
     fun statusOf (kind, value) =
       case kind of
         0 => if value = 0 then W_EXITED else W_EXITSTATUS (Word8.fromInt value)
-      | 1 => W_SIGNALED value
-      | _ => W_STOPPED value
+      | 1 => W_SIGNALED (RunePosixSignal.fromInt value)
+      | _ => W_STOPPED (RunePosixSignal.fromInt value)
 
     fun waitpid (arg, flags) =
       case waitpid' (pidOf arg, flagBits flags) of
@@ -90,9 +93,9 @@ struct
 
     fun wait () = waitpid (W_ANY_CHILD, [])
 
-    fun kill (K_PROC pid, signal) = ignore (check (kill' (pid, signal)))
-      | kill (K_SAME_GROUP, signal) = ignore (check (kill' (0, signal)))
-      | kill (K_GROUP pid, signal) = ignore (check (kill' (Int.~ pid, signal)))
+    fun kill (K_PROC pid, signal) = ignore (check (kill' (pid, RunePosixSignal.toInt signal)))
+      | kill (K_SAME_GROUP, signal) = ignore (check (kill' (0, RunePosixSignal.toInt signal)))
+      | kill (K_GROUP pid, signal) = ignore (check (kill' (Int.~ pid, RunePosixSignal.toInt signal)))
 
     fun alarm t = Time.ofMicros (check (alarm' (IntInf.toInt (Time.toSeconds t))) * 1000000)
     fun pause () = ignore (pause' ())

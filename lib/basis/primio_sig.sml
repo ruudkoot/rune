@@ -48,8 +48,11 @@ sig
      Implementation: `PRIM_IO.pos/of-the-instances`. `BinPrimIO.pos` is the
      integer type of `Position`, and a position is the offset of a byte from
      the start of the file, so `compare` is the order of those numbers.
-     `TextPrimIO.pos` is abstract: a program can compare positions and give
-     them back to `setPos`, and nothing more.
+     `TextPrimIO.pos` is abstract, as the specification leaves it: a program
+     can compare positions and give them back to `setPos`, and nothing more.
+     `WideTextPrimIO.pos` is abstract as well, and a type of its own: nothing
+     says that a position in a stream of wide characters is one of a stream
+     of characters.
 
      Pinned by: `BinPrimIO.compare/*` `TextPrimIO.compare/*` *)
   eqtype pos

@@ -14,24 +14,24 @@
 
 ```sml
 signature MONO_ARRAY2
-structure BoolArray2 : MONO_ARRAY2 where type vector = BoolVector.vector where type elem = bool  (* optional *)
-structure CharArray2 : MONO_ARRAY2 where type vector = CharVector.vector where type elem = char  (* optional *)
-structure Int16Array2 : MONO_ARRAY2 where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
-structure Int32Array2 : MONO_ARRAY2 where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
-structure Int64Array2 : MONO_ARRAY2 where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
-structure Int8Array2 : MONO_ARRAY2 where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
-structure IntArray2 : MONO_ARRAY2 where type vector = IntVector.vector where type elem = int  (* optional *)
-structure LargeIntArray2 : MONO_ARRAY2 where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
+structure BoolArray2 :> MONO_ARRAY2 where type vector = BoolVector.vector where type elem = bool  (* optional *)
+structure CharArray2 :> MONO_ARRAY2 where type vector = CharVector.vector where type elem = char  (* optional *)
+structure Int16Array2 :> MONO_ARRAY2 where type vector = Int16Vector.vector where type elem = Int16.int  (* optional *)
+structure Int32Array2 :> MONO_ARRAY2 where type vector = Int32Vector.vector where type elem = Int32.int  (* optional *)
+structure Int64Array2 :> MONO_ARRAY2 where type vector = Int64Vector.vector where type elem = Int64.int  (* optional *)
+structure Int8Array2 :> MONO_ARRAY2 where type vector = Int8Vector.vector where type elem = Int8.int  (* optional *)
+structure IntArray2 :> MONO_ARRAY2 where type vector = IntVector.vector where type elem = int  (* optional *)
+structure LargeIntArray2 :> MONO_ARRAY2 where type vector = LargeIntVector.vector where type elem = LargeInt.int  (* optional *)
 structure LargeRealArray2 : MONO_ARRAY2 where type vector = LargeRealVector.vector where type elem = LargeReal.real  (* optional *)
 structure LargeWordArray2 : MONO_ARRAY2 where type vector = LargeWordVector.vector where type elem = LargeWord.word  (* optional *)
-structure Real32Array2 : MONO_ARRAY2 where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
+structure Real32Array2 :> MONO_ARRAY2 where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64Array2 : MONO_ARRAY2 where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
-structure RealArray2 : MONO_ARRAY2 where type vector = RealVector.vector where type elem = real  (* optional *)
-structure Word16Array2 : MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
-structure Word32Array2 : MONO_ARRAY2 where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
-structure Word64Array2 : MONO_ARRAY2 where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
-structure Word8Array2 : MONO_ARRAY2 where type vector = Word8Vector.vector where type elem = Word8.word  (* optional *)
-structure WordArray2 : MONO_ARRAY2 where type vector = WordVector.vector where type elem = word  (* optional *)
+structure RealArray2 :> MONO_ARRAY2 where type vector = RealVector.vector where type elem = real  (* optional *)
+structure Word16Array2 :> MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
+structure Word32Array2 :> MONO_ARRAY2 where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
+structure Word64Array2 :> MONO_ARRAY2 where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
+structure Word8Array2 :> MONO_ARRAY2 where type vector = Word8Vector.vector where type elem = Word8.word  (* optional *)
+structure WordArray2 :> MONO_ARRAY2 where type vector = WordVector.vector where type elem = word  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -143,10 +143,14 @@ The type of these two-dimensional arrays.
 
 Two are equal when they are the same array.
 
-> **Deviation** `MONO_ARRAY2.array/not-abstract`. An [`IntArray2.array`](#val-array) is an
-> `int Array2.array`: the structures are applications of one functor over
-> [`Array2`](../sig/ARRAY2.md) and are not sealed with this signature, which the library loads
-> after them; they match it, as the suite checks.
+> **Implementation** `MONO_ARRAY2.array/abstract-over-Array2`. An
+> [`IntArray2.array`](#val-array) is an [`Array2.array`](../sig/ARRAY2.md#val-array) of its elements underneath, but
+> the type is abstract. It is built on the implementation beneath the
+> sealed [`Array2`](../sig/ARRAY2.md) rather than on [`Array2`](../sig/ARRAY2.md) itself, because this signature
+> asks for an `eqtype array` and a sealed `'a Array2.array` gives none at
+> [`real`](../sig/REAL.md#val-fromint) \-- see the erratum `ARRAY2/sealed-and-equal-at-any-element`. As
+> for [`MONO_VECTOR.vector`](../sig/MONO_VECTOR.md#type-vector), no check can pin an abstract type; what holds
+> it is the page of the types that are one type.
 
 <details><summary>Other implementations (3)</summary>
 

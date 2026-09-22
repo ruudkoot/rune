@@ -561,6 +561,9 @@ struct
   val cpu = Timer.totalCPUTimer ()
   fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer cpu)))
   fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer cpu)))
+  (* the host's own collector, where it accounts for one *)
+  fun time_gc_user () = Int.fromLarge (Time.toMicroseconds (#usr (#gc (Timer.checkCPUTimes cpu))))
+  fun time_gc_sys () = Int.fromLarge (Time.toMicroseconds (#sys (#gc (Timer.checkCPUTimes cpu))))
   (* At least n microseconds, as the VM waits: Poly/ML 5.9.2 can return a
      little early, so sleep again for what is left. *)
   fun time_sleep n =
@@ -775,7 +778,7 @@ struct
        ("WNOHANG", 1), ("WUNTRACED", 2),
        (* the sockets fail with ENOSYS, but their families and types are
           values of the library all the same *)
-       ("AF_UNIX", 1), ("AF_INET", 2), ("SOCK_STREAM", 1), ("SOCK_DGRAM", 2), ("SOL_SOCKET", 1),
+       ("AF_UNIX", 1), ("AF_INET", 2), ("AF_INET6", 10), ("SOCK_STREAM", 1), ("SOCK_DGRAM", 2), ("SOL_SOCKET", 1),
        ("SO_DEBUG", 1), ("SO_REUSEADDR", 2), ("SO_TYPE", 3), ("SO_ERROR", 4), ("SO_DONTROUTE", 5),
        ("SO_BROADCAST", 6), ("SO_SNDBUF", 7), ("SO_RCVBUF", 8), ("SO_KEEPALIVE", 9), ("SO_OOBINLINE", 10),
        ("SO_LINGER", 13), ("MSG_OOB", 1), ("MSG_PEEK", 2), ("MSG_DONTROUTE", 4),
@@ -877,6 +880,20 @@ struct
   fun posix_exece (path, args, env) =
     (Posix.Process.exece (path, args, env); ~1)
     handle OS.SysErr (_, e) => (noteError e; ~1)
+
+  (* fork, the descriptors onto 0, 1 and 2, exec, and 126 if that fails *)
+  fun posix_spawn (path, args, env, flags, fds) =
+    case Posix.Process.fork () of
+      NONE =>
+        ((List.app (fn (to, from) => if from >= 0 andalso from <> to
+                                     then Posix.IO.dup2 {old = fdOf from, new = fdOf to} else ())
+                   (ListPair.zip ([0, 1, 2], fds));
+          if Int.rem (Int.quot (flags, 2), 2) = 1 then Posix.Process.exece (path, args, env)
+          else if Int.rem (flags, 2) = 1 then Posix.Process.execp (path, args)
+          else Posix.Process.exec (path, args))
+         handle _ => ();
+         Posix.Process.exit 0w126)
+    | SOME pid => SysWord.toInt (Posix.Process.pidToWord pid)
 
   fun posix_waitpid (pid, flags) =
     let
@@ -1165,9 +1182,11 @@ struct
   fun socket_getopt (_ : int, _ : int, _ : int) = unsupported ~1
   fun socket_setopt (_ : int, _ : int, _ : int, _ : int) = unsupported ~1
   fun socket_inet_addr (_ : string, _ : int) = unsupported ""
+  fun socket_inet6_addr (_ : string, _ : int) = unsupported ""
   fun socket_unix_addr (_ : string) = unsupported ""
   fun socket_addr_family (_ : string) = unsupported ~1
   fun socket_inet_parts (_ : string) : string list = unsupported []
+  fun socket_inet6_parts (_ : string) : string list = unsupported []
   fun socket_unix_path (_ : string) = unsupported ""
   fun socket_linger (_ : int, _ : int, _ : int) : int list = unsupported []
   fun socket_query (_ : int, _ : int) = unsupported ~1
@@ -1178,6 +1197,25 @@ struct
   fun netdb_proto_bynumber (_ : int) : string list = unsupported []
   fun netdb_serv_byname (_ : string, _ : string) : string list = unsupported []
   fun netdb_serv_byport (_ : int, _ : string) : string list = unsupported []
+
+  (* ---- the structure Windows: Windows' own, which fails with ENOSYS on
+     every host, as on a VM of another system ---- *)
+  fun win_reg_open (_ : int, _ : string, _ : int, _ : int) : int list = unsupported []
+  fun win_reg_close (_ : int) = unsupported ~1
+  fun win_reg_delete (_ : int, _ : string, _ : int) = unsupported ~1
+  fun win_reg_enum (_ : int, _ : int, _ : int) : string list = unsupported []
+  fun win_reg_query (_ : int, _ : string) : string list = unsupported []
+  fun win_reg_set (_ : int, _ : string, _ : int, _ : string) = unsupported ~1
+  fun win_config (_ : int) = unsupported ""
+  fun win_version () : string list = unsupported []
+  fun win_volume (_ : string) : string list = unsupported []
+  fun win_find_executable (_ : string) : string list = unsupported []
+  fun win_shell_execute (_ : string, _ : string, _ : int) = unsupported ~1
+  fun win_spawn (_ : string, _ : string, _ : int list) = unsupported ~1
+  fun win_wait (_ : int) : int list = unsupported []
+  fun win_dde_start (_ : string, _ : string) = unsupported ~1
+  fun win_dde_execute (_ : int, _ : string, _ : int, _ : int) = unsupported ~1
+  fun win_dde_stop (_ : int) = unsupported ~1
 
   fun posix_getgr (name, gid) =
     let

@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) **w** [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
 - `FLock.whence` (val): [POSIX_IO](../sig/POSIX_IO.md#val-flock.whence)
+- `Key.write` (val): [WINDOWS](../sig/WINDOWS.md#val-key.write)
 - `W` (str): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#str-w)
 - `W_ANY_CHILD` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-w_any_child)
 - `W_CHILD` (con): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#con-w_child)

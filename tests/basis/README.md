@@ -12,19 +12,35 @@ written in portable Standard ML '97 so that the same files run
   configurations), which checks that Rune's implementation does not depend on
   accidents of Rune.
 
-Worth looking into, not done: in an `xc1` configuration every test program
-compiles the whole of lib/basis before its own code, so no test there costs
-less than about 13 s on MLton and SML/NJ and 6 s on Poly/ML — 38% of the work
-of a full matrix, and 56% to 65% of those configurations. SML/NJ
-(`exportML`) and Poly/ML (`PolyML.SaveState`) can save an image with the
-library already loaded and start each test from it, which would leave about a
-second per test; MLton compiles whole programs and has no such way.
+An `xc1` test used to compile the whole of lib/basis before its own code,
+which was most of what a run cost. Three things now keep that down, and a
+filtered run of four tests went from 1 m 18 s to 5 s on SML/NJ, 1 m 40 s to
+5 s on its 32-bit build, 16 s to 4 s on Poly/ML and 51 s to 10 s on MLton:
+
+* SML/NJ (`exportML`) and Poly/ML (`PolyML.SaveState`) save an image with the
+  library in it once the probe has found which of its files load, and each
+  test starts from that image with only its own sources.
+* MLton compiles whole programs and has no session, so it is given only the
+  part of the library the test loads, which `rune --basis-deps` works out: a
+  test of `List` compiles 49 files of the 241 rather than all of them. A
+  program that then fails to compile is tried once more with the library
+  whole, so a wrong subset costs time and never a wrong result.
+* A test that does not load whole is cut down by halving its sections, and
+  each try compiles the library again. What the halving finds depends only on
+  the library, the tools and the test, so it is kept in
+  `tests/out/matrix/CONFIG/TEST.sections` against a checksum of those and
+  looked for again only when one of them changes: `word8` on Poly/ML went
+  from 1 m 37 s to 16 s. `--refresh` looks again and rewrites them.
+
+`RUNE_MATRIX_NO_IMAGE=1` and `RUNE_MATRIX_NO_SUBSET=1` turn the first two
+off, which is how the numbers above were measured.
 
 The hosts are the releases `make hosts` installs (scripts/fetch-hosts.sh):
 MLton, SML/NJ built for 64 and for 32 bits (its 31-bit `int` and `word` have
 found many portability bugs), and Poly/ML, never the machine's own.
 `make matrix` runs every configuration, `make matrix-quick` Rune and the
-`xc1` ones, and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
+`xc1` ones, `make test-windows` Rune on the two VMs of Windows
+(`--configs windows`), and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
 the tests whose names contain FILTER; the script's header describes the
 configurations, the report, the timing statistics it ends with and the exit
 status.

@@ -185,10 +185,6 @@ eqtype file_desc
 
 The type of an open file descriptor.
 
-> **Deviation** `Posix.IO.file_desc/is-an-int`. The specification leaves the
-> type abstract; in Rune it is `int`, the number the system uses, and the
-> structure is not sealed.
-
 ### <a name="type-pid"></a>`pid`
 
 ```sml

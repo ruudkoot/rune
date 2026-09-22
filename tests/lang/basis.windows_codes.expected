@@ -1,0 +1,5 @@
+allAccess 0x3F = the six: true
+read 0x19 write 0x6 execute = read: true
+accessViolation 0xC0000005 stackOverflow 0xC00000FD controlCExit 0xC000013A
+fromStatus success 0x0
+NT is 2

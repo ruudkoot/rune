@@ -29,7 +29,7 @@ struct
     fun check r = if r < 0 then raise RuneError.lastError () else r
     fun checkString s = if s = "" then raise RuneError.lastError () else s
     fun named name = case const name of ~1 => 0 | v => v
-    fun invalid () = let val e = named "EINVAL" in RuneError.SysErr (RuneError.errorMsg e, SOME e) end
+    fun invalid () = let val e = RuneError.fromInt (named "EINVAL") in RuneError.SysErr (RuneError.errorMsg e, SOME e) end
     (* distinct types without values, so that the checker keeps them apart *)
     datatype dgram' = DGRAM
     datatype 'mode stream' = STREAM
@@ -47,21 +47,25 @@ struct
 
     structure AF =
     struct
-      type addr_family = int
-      val inet = named "AF_INET"
-      val unix = named "AF_UNIX"
-      fun list () = [("INET", inet), ("UNIX", unix)]
-      fun toString af = if af = inet then "INET" else if af = unix then "UNIX" else "?"
+      type addr_family = RuneNet.addr_family
+      val inet = RuneNet.familyFromInt (named "AF_INET")
+      val inet6 = RuneNet.familyFromInt (named "AF_INET6")
+      val unix = RuneNet.familyFromInt (named "AF_UNIX")
+      fun list () = [("INET", inet), ("INET6", inet6), ("UNIX", unix)]
+      fun toString af =
+        if af = inet then "INET" else if af = inet6 then "INET6"
+        else if af = unix then "UNIX" else "?"
       fun fromString "INET" = SOME inet
+        | fromString "INET6" = SOME inet6
         | fromString "UNIX" = SOME unix
         | fromString _ = NONE
     end
 
     structure SOCK =
     struct
-      type sock_type = int
-      val stream = named "SOCK_STREAM"
-      val dgram = named "SOCK_DGRAM"
+      type sock_type = RuneNet.sock_type
+      val stream = RuneNet.typeFromInt (named "SOCK_STREAM")
+      val dgram = RuneNet.typeFromInt (named "SOCK_DGRAM")
       fun list () = [("STREAM", stream), ("DGRAM", dgram)]
       fun toString t = if t = stream then "STREAM" else if t = dgram then "DGRAM" else "?"
       fun fromString "STREAM" = SOME stream
@@ -77,12 +81,13 @@ struct
     fun sameDesc (a, b) = RuneIODesc.compare (a, b) = EQUAL
     fun ioDesc (SOCK fd) = RuneIODesc.FD fd
     fun 'af sameAddr (ADDR a : 'af sock_addr, ADDR b : 'af sock_addr) = a = b
-    fun familyOfAddr (ADDR a) = family' a
+    fun familyOfAddr (ADDR a) = RuneNet.familyFromInt (family' a)
 
-    fun socket' (af, ty, protocol) = SOCK (check (create' (af, ty, protocol)))
+    fun socket' (af, ty, protocol) =
+      SOCK (check (create' (RuneNet.familyToInt af, RuneNet.typeToInt ty, protocol)))
     fun socket (af, ty) = socket' (af, ty, 0)
     fun socketPair' (af, ty, protocol) =
-      case pair' (af, ty, protocol) of
+      case pair' (RuneNet.familyToInt af, RuneNet.typeToInt ty, protocol) of
         [a, b] => (SOCK a, SOCK b)
       | _ => raise RuneError.lastError ()
     fun socketPair (af, ty) = socketPair' (af, ty, 0)
@@ -140,8 +145,8 @@ struct
                             if oob then Word.fromInt (named "MSG_OOB") else 0w0))
     val noOut = {don't_route = false, oob = false}
     val noIn = {peek = false, oob = false}
-    fun arrBytes sl = Word8ArraySlice.vector sl
-    fun vecBytes sl = Word8VectorSlice.vector sl
+    fun arrBytes sl = Word8Vector.toString (Word8ArraySlice.vector sl)
+    fun vecBytes sl = Word8Vector.toString (Word8VectorSlice.vector sl)
 
     fun 'af sendVec' (SOCK fd : ('af, active stream) sock, sl, flags) = check (send' (fd, vecBytes sl, outFlags flags))
     fun 'af sendArr' (SOCK fd : ('af, active stream) sock, sl, flags) = check (send' (fd, arrBytes sl, outFlags flags))
@@ -181,12 +186,12 @@ struct
       else true
     val none = Word8Vector.fromList []
     fun 'af recvVec' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if wanted (fd, n) then received (recv' (fd, n, inFlags flags)) else none
+      if wanted (fd, n) then Word8Vector.fromString (received (recv' (fd, n, inFlags flags))) else none
     fun recvVec (s, n) = recvVec' (s, n, noIn)
     fun recvArr' (s, sl, flags) = intoArray (sl, recvVec' (s, Word8ArraySlice.length sl, flags))
     fun recvArr (s, sl) = recvArr' (s, sl, noIn)
     fun 'af recvVecNB' (SOCK fd : ('af, active stream) sock, n, flags) =
-      if wanted (fd, n) then nonBlocking (fd, fn () => receivedNB (recv' (fd, n, inFlags flags))) else SOME none
+      if wanted (fd, n) then nonBlocking (fd, fn () => Option.map Word8Vector.fromString (receivedNB (recv' (fd, n, inFlags flags)))) else SOME none
     fun recvVecNB (s, n) = recvVecNB' (s, n, noIn)
     fun recvArrNB' (s, sl, flags) =
       Option.map (fn v => intoArray (sl, v)) (recvVecNB' (s, Word8ArraySlice.length sl, flags))
@@ -196,7 +201,7 @@ struct
       if n < 0 orelse n > Word8Vector.maxLen then raise Size
       else
         (case recvfrom' (fd, n, inFlags flags) of
-           [bytes, addr] => (bytes, ADDR addr)
+           [bytes, addr] => (Word8Vector.fromString bytes, ADDR addr)
          | _ => raise RuneError.lastError ())
     fun recvVecFrom (s, n) = recvVecFrom' (s, n, noIn)
     fun recvArrFrom' (s, sl, flags) =
@@ -208,7 +213,7 @@ struct
       else
         nonBlocking (fd, fn () =>
           case recvfrom' (fd, n, inFlags flags) of
-            [bytes, addr] => SOME (bytes, ADDR addr)
+            [bytes, addr] => SOME (Word8Vector.fromString bytes, ADDR addr)
           | _ => if wouldBlock () then NONE else raise RuneError.lastError ())
     fun recvVecFromNB (s, n) = recvVecFromNB' (s, n, noIn)
     fun recvArrFromNB' (s, sl, flags) =
@@ -242,7 +247,7 @@ struct
         fun setSNDBUF (s, v) = setInt (s, "SO_SNDBUF", v)
         fun getRCVBUF s = getInt (s, "SO_RCVBUF")
         fun setRCVBUF (s, v) = setInt (s, "SO_RCVBUF", v)
-        fun getTYPE s : SOCK.sock_type = getInt (s, "SO_TYPE")
+        fun getTYPE s : SOCK.sock_type = RuneNet.typeFromInt (getInt (s, "SO_TYPE"))
         fun getERROR s = getInt (s, "SO_ERROR") <> 0
         (* SO_LINGER is a struct linger: whether the socket lingers, and for
            how many seconds *)

@@ -9,10 +9,11 @@ val () = print ("port chosen: " ^ Bool.toString (port > 0) ^ "\n")
 val () = print ("acceptNB with nobody waiting: "
                 ^ (case Socket.acceptNB server of NONE => "NONE" | SOME _ => "SOME") ^ "\n")
 val client : Socket.active INetSock.stream_sock = INetSock.TCP.socket ()
-val () = Socket.connect (client, INetSock.toAddr ("127.0.0.1", port))
+val loopback = valOf (NetHostDB.fromString "127.0.0.1")   (* an in_addr is abstract *)
+val () = Socket.connect (client, INetSock.toAddr (loopback, port))
 val (session, from) = Socket.accept server
 val (host, _) = INetSock.fromAddr from
-val () = print ("from: " ^ host ^ "\n")
+val () = print ("from: " ^ NetHostDB.toString host ^ "\n")
 val () = print ("same address as the client's own: "
                 ^ Bool.toString (Socket.sameAddr (from, Socket.Ctl.getSockName client)) ^ "\n")
 val () = print ("recvVecNB with nothing sent: "
@@ -34,7 +35,7 @@ val () = (Socket.close client; Socket.close session; Socket.close server)
 val udp : INetSock.dgram_sock = INetSock.UDP.socket ()
 val () = Socket.bind (udp, INetSock.any 0)
 val (_, uport) = INetSock.fromAddr (Socket.Ctl.getSockName udp)
-val () = Socket.sendVecTo (udp, INetSock.toAddr ("127.0.0.1", uport),
+val () = Socket.sendVecTo (udp, INetSock.toAddr (loopback, uport),
                            Word8VectorSlice.full (Byte.stringToBytes "datagram"))
 val (bytes, whence) = Socket.recvVecFrom (udp, 32)
 val () = print ("datagram: " ^ Byte.bytesToString bytes ^ " from port "

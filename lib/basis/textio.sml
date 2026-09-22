@@ -8,6 +8,7 @@ struct
   local
     structure SI =
       RuneStreamIOFn (structure PIO = TextPrimIO structure V = CharVector structure VS = CharVectorSlice
+                      val advance = SOME RuneTextPos.advance
                       val isNewline = fn c => c = #"\n")
   in
     (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings.
@@ -80,13 +81,24 @@ struct
 
   local
     fun closedIo (name, function) = raise IO.Io {name = name, function = function, cause = IO.ClosedStream}
+    (* The file counts bytes; a position of TextPrimIO is abstract. *)
+    fun positions (fd, name, closed) =
+      let
+        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        fun out f = fn () => RuneTextPos.fromInt (f ())
+      in
+        ({getPos = Option.map out getPos,
+          setPos = Option.map (fn f => fn p => f (RuneTextPos.toInt p)) setPos,
+          endPos = Option.map out endPos,
+          verifyPos = Option.map out verifyPos}, remember)
+      end
     (* A file of the VM as a reader, with the positions of the file when it
        has them; "Further operations on the reader (besides close and
        getPos) raise" Io with the cause ClosedStream. *)
     fun reader (fd, name) =
       let
         val closed = ref false
-        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
         fun readVec n = if !closed then closedIo (name, "readVec") else RuneFile.readVec fd n
       in
         TextPrimIO.RD {name = name, chunkSize = RuneFile.chunkSize,
@@ -102,7 +114,7 @@ struct
     fun writer (fd, name) =
       let
         val closed = ref false
-        val ({getPos, setPos, endPos, verifyPos}, remember) = RuneFile.positions (fd, name, closed)
+        val ({getPos, setPos, endPos, verifyPos}, remember) = positions (fd, name, closed)
         fun put s = if !closed then closedIo (name, "writeVec") else ignore (RuneFile.writeString (fd, name) s)
         fun writeVec sl = let val s = CharVectorSlice.vector sl in put s; RuneFile.flush fd (); size s end
       in

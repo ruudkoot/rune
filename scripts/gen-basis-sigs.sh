@@ -43,8 +43,10 @@ awk -v b="$begin" -v e="$end" '$0 == b { skip = 1; print "@BLOCK@"; next } $0 ==
 awk -F '|' '!/^[[:space:]]*(#|$|@BLOCK@)/ { n = split($4, p, " "); for (i = 1; i <= n; i++) print p[i] }' "$tmp/manifest.base" | sort -u > "$tmp/provided"
 # The signatures lib/basis declares itself (a structure and a signature can
 # have the same name, IO and OS: only these count).
+# A sig_ file that the MANIFEST lists outside the block is the library's own
+# too: its structure is sealed with it where it is declared, so it comes
+# before the structure and not with the others (sig_time.sml).
 for f in $(awk -F '|' '!/^[[:space:]]*(#|$|@BLOCK@)/ { gsub(/ /, "", $1); print $1 }' "$tmp/manifest.base"); do
-  case "$f" in sig_*) continue ;; esac
   sed -n 's/^signature \([A-Z0-9_]*\).*/\1/p' "$basis/$f"
 done | sort -u > "$tmp/own"
 
@@ -157,7 +159,10 @@ if [ $check = 1 ]; then
   compare || status=1
   for f in "$basis"/sig_*.sml; do
     [ -f "$f" ] || continue
-    [ -f "$tmp/out/$(basename "$f")" ] || { echo "gen-basis-sigs: $f has no transcription any more (remove it, and rerun scripts/gen-basis-sigs.sh)"; status=1; }
+    # one that the MANIFEST lists outside the block is compared by its tokens, as the library's own are
+    sig=$(sed -n 's/^signature \([A-Z0-9_]*\).*/\1/p' "$f" | head -1)
+    [ -f "$tmp/out/$(basename "$f")" ] || grep -q "^signature SPEC_$sig\b" tests/basis/spec-sigs/*.sml ||
+      { echo "gen-basis-sigs: $f has no transcription any more (remove it, and rerun scripts/gen-basis-sigs.sh)"; status=1; }
   done
   [ $status = 0 ] && echo "gen-basis-sigs: OK ($(cut -f 1 "$tmp/spec.tok" | sort -u | wc -l | tr -d ' ') signatures have the tokens of their transcriptions)"
   exit $status

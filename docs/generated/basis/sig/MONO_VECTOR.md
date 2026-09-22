@@ -14,25 +14,25 @@
 
 ```sml
 signature MONO_VECTOR
-structure BoolVector : MONO_VECTOR where type elem = bool  (* optional *)
+structure BoolVector :> MONO_VECTOR where type elem = bool  (* optional *)
 structure CharVector : MONO_VECTOR where type vector = String.string where type elem = char
-structure Int16Vector : MONO_VECTOR where type elem = Int16.int  (* optional *)
-structure Int32Vector : MONO_VECTOR where type elem = Int32.int  (* optional *)
-structure Int64Vector : MONO_VECTOR where type elem = Int64.int  (* optional *)
-structure Int8Vector : MONO_VECTOR where type elem = Int8.int  (* optional *)
-structure IntVector : MONO_VECTOR where type elem = int  (* optional *)
-structure LargeIntVector : MONO_VECTOR where type elem = LargeInt.int  (* optional *)
+structure Int16Vector :> MONO_VECTOR where type elem = Int16.int  (* optional *)
+structure Int32Vector :> MONO_VECTOR where type elem = Int32.int  (* optional *)
+structure Int64Vector :> MONO_VECTOR where type elem = Int64.int  (* optional *)
+structure Int8Vector :> MONO_VECTOR where type elem = Int8.int  (* optional *)
+structure IntVector :> MONO_VECTOR where type elem = int  (* optional *)
+structure LargeIntVector :> MONO_VECTOR where type elem = LargeInt.int  (* optional *)
 structure LargeRealVector : MONO_VECTOR where type elem = LargeReal.real  (* optional *)
 structure LargeWordVector : MONO_VECTOR where type elem = LargeWord.word  (* optional *)
-structure Real32Vector : MONO_VECTOR where type elem = Real32.real  (* optional *)
+structure Real32Vector :> MONO_VECTOR where type elem = Real32.real  (* optional *)
 structure Real64Vector : MONO_VECTOR where type elem = Real64.real  (* optional *)
-structure RealVector : MONO_VECTOR where type elem = real  (* optional *)
+structure RealVector :> MONO_VECTOR where type elem = real  (* optional *)
 structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char  (* optional *)
-structure Word16Vector : MONO_VECTOR where type elem = Word16.word  (* optional *)
-structure Word32Vector : MONO_VECTOR where type elem = Word32.word  (* optional *)
-structure Word64Vector : MONO_VECTOR where type elem = Word64.word  (* optional *)
+structure Word16Vector :> MONO_VECTOR where type elem = Word16.word  (* optional *)
+structure Word32Vector :> MONO_VECTOR where type elem = Word32.word  (* optional *)
+structure Word64Vector :> MONO_VECTOR where type elem = Word64.word  (* optional *)
 structure Word8Vector : MONO_VECTOR where type elem = Word8.word
-structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
+structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -41,7 +41,7 @@ structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
 | `CharVector` | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
 | `Int16Vector` | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | `Int32Vector` | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64Vector` | Int64 is Int, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| `Int64Vector` | The vectors, arrays, slices and two-dimensional arrays of Int64 (optional in the specification). Int64.int is a type of its own, so these are their own structures and not those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 | `Int8Vector` | The monomorphic vectors and arrays of Int8.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 | `IntVector` | The monomorphic vectors and arrays of int, their slices and the two-dimensional arrays (optional in the specification). Int64Vector and the rest of that family are these (mono\_int64.sml). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | `LargeIntVector` | The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
@@ -53,8 +53,8 @@ structure WordVector : MONO_VECTOR where type elem = word  (* optional *)
 | `WideCharVector` | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 | `Word16Vector` | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | `Word32Vector` | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64Vector` | Word64 is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8Vector` | Word8Vector: a vector of bytes is a string. | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
+| `Word64Vector` | The vectors, arrays, slices and two-dimensional arrays of Word64 (optional in the specification). Word64.word is a type of its own, so these are their own structures and not those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| `Word8Vector` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 | `WordVector` | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 The sequences of one element type: vectors, arrays and their slices, as
@@ -68,6 +68,34 @@ byte- and character-oriented parts of the library ([`BYTE`](../sig/BYTE.md), [`T
 polymorphic signatures, with [`elem`](#type-elem) for the element type; what they mean
 is the same, and the pages of [`VECTOR`](../sig/VECTOR.md) and [`ARRAY`](../sig/ARRAY.md) describe it at more
 length.
+
+> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes
+> `type vector`, not `eqtype`, so that a family whose elements do not admit
+> equality can have a vector -- [`RealVector`](MONO_VECTOR.md) needs that. Where a vector has
+> to admit equality the page says so on the instance instead: [`CharVector`](MONO_VECTOR.md)
+> is declared `where type vector = String.string`, and [`STRING`](../sig/STRING.md) writes
+> `eqtype string`. \*\*[`WideCharVector`](MONO_VECTOR.md) is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\*\* [`TEXT`](../sig/TEXT.md) shares
+> [`String.string`](../sig/STRING.md#type-string) with [`CharVector.vector`](#type-vector), and [`WideText`](../sig/TEXT.md) is declared
+> `where type String.string = WideString.string`, so
+> [`WideText.CharVector.vector`](#type-vector) is [`WideString.string`](../sig/STRING.md#type-string), which [`STRING`](../sig/STRING.md) makes
+> an equality type. Any implementation whose [`WideText.CharVector`](../sig/TEXT.md#str-charvector) is the
+> top-level [`WideCharVector`](MONO_VECTOR.md) \-- every one that has both -- must therefore
+> give [`WideCharVector.vector`](#type-vector) equality, and the declaration the page gives
+> it cannot. \*\*The whole of the defect is one missing constraint\*\*:
+> `where type vector = WideString.string`, which [`CharVector`](MONO_VECTOR.md) has and
+> [`WideCharVector`](MONO_VECTOR.md) does not. That makes this a milder fault than the one on
+> the page of [`ARRAY2`](../sig/ARRAY2.md), where no constraint can help because there is no
+> type to pin to; here [`WideString.string`](../sig/STRING.md#type-string) is already there and [`STRING`](../sig/STRING.md)
+> already makes it an equality type.
+
+Rune gives the equality the other way, by sealing with [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md).
+That is a consequence of \*this\* library's order and not of the fault:
+[`WideString`](../sig/STRING.md) is built on [`WideCharVector`](MONO_VECTOR.md) (`type string = V.vector`, and
+every operation delegates), so [`WideCharVector`](MONO_VECTOR.md) is where the type name is
+born and there is nothing yet to pin it to. Following the page as it
+should have been written would mean giving [`WideString`](../sig/STRING.md) a representation
+of its own and pinning [`WideCharVector`](MONO_VECTOR.md) to it -- a change to two files,
+not a rename -- and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) would then be unnecessary.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -134,12 +162,18 @@ type vector
 
 The type of these vectors.
 
-> **Deviation** `MONO_VECTOR.vector/not-abstract`. Except for the vectors of
-> characters and of bytes, which are strings, a monomorphic vector is the
-> polymorphic vector of its elements, and the structures are not sealed: an
-> [`IntVector.vector`](#type-vector) is an `int vector`, and a program that relies on it is
-> not portable. The arrays are the same ([`IntArray.array`](../sig/MONO_ARRAY.md#val-array) is `int array`),
-> and so are those of [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md).
+> **Implementation** `MONO_VECTOR.vector/abstract-over-the-polymorphic-one`.
+> A monomorphic vector is the polymorphic vector of its elements
+> underneath -- the vectors of characters are strings, which the
+> specification requires -- but the type is abstract: an [`IntVector.vector`](#type-vector)
+> is no `int vector` for a program, as it is none in MLton or SML/NJ. The
+> arrays and the two-dimensional arrays are the same. Sealing them costs
+> nothing: the instruction counts of `runevm --count` do not change at
+> all, because no file of the library goes between the two. No check of
+> the suite can pin this -- that a type is abstract is not something a
+> program can observe at run time -- and what holds it is the page of the
+> types that are one type, which `make check` compares with the library as
+> it stands.
 
 <details><summary>Tests (2)</summary>
 
@@ -656,7 +690,7 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ## See also
 
 [`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md), [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md),
-[`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
+[`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md), [`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
 
 ---
 

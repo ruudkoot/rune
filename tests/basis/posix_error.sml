@@ -200,7 +200,11 @@ struct
                                         Posix.FileSys.chmod ("not-a-program", Posix.FileSys.S.irwxu);
                                         execError (E.noexec, fn () => Posix.Process.exec ("./not-a-program", ["not-a-program"]))))
   val () = T.eq C.showStatus ("Posix.Error.toobig/exec-huge-argument", Posix.Process.W_EXITSTATUS (C.w8 3),
-                              fn () => let val huge = CharVector.tabulate (4194304, fn _ => #"x")
+                              (* 4 MiB, built from one 64 KiB chunk: CharVector.tabulate of
+                                 4194304 is as many allocations, and make test-stress collects
+                                 after every 1009th of them *)
+                              fn () => let val chunk = CharVector.tabulate (65536, fn _ => #"x")
+                                           val huge = String.concat (List.tabulate (64, fn _ => chunk))
                                        in execError (E.toobig, fn () => Posix.Process.exec ("/bin/sh", ["sh", huge])) end)
   (* A write on a pipe that nobody reads ends the writer with Signal.pipe
      or, if that signal is ignored or caught, fails with pipe. *)

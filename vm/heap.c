@@ -2,6 +2,7 @@
    is rounded up to a multiple of 16 bytes and is at least 16 bytes so that a
    forwarding pointer always fits. */
 #include "vm.h"
+#include "sys.h"
 
 static size_t payload_size(size_t bytes) {
     size_t s = (bytes + 15) & ~(size_t)15;
@@ -19,6 +20,8 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->heap_to = NULL;
     vm->heap_used = 0;
     vm->gc_count = 0;
+    vm->gc_user_us = 0;
+    vm->gc_sys_us = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
@@ -26,7 +29,7 @@ void heap_init(VM *vm, size_t semispace_bytes) {
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = sizeof(Obj) + payload_size(payload_bytes);
-    if (vm->heap_used + size > vm->heap_size ||
+    if (size > vm->heap_size - vm->heap_used ||
         (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0)) {
         vm_gc(vm, size);
     }
@@ -114,10 +117,65 @@ static void collect_into(VM *vm, size_t new_size) {
 }
 
 void vm_gc(VM *vm, size_t needed) {
+    /* The processor time of a collection, for Timer.checkCPUTimes and
+       checkGCTime: read once around the whole of it, so that growing the
+       heap counts as one collection and not two. */
+    int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
     /* live data always fits in a semispace of the current size */
     collect_into(vm, vm->heap_size);
-    /* keep the heap at most half full after collection to avoid thrashing */
+    /* keep the heap at most half full after collection to avoid thrashing;
+       written so that nothing wraps where a size_t is 32 bits */
     size_t want = vm->heap_size;
-    while (vm->heap_used + needed > want / 2) want *= 2;
+    while (vm->heap_used > want / 2 || needed > want / 2 - vm->heap_used) {
+        if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        want *= 2;
+    }
     if (want != vm->heap_size) collect_into(vm, want);
+    vm->gc_user_us += sys_time_user() - user0;
+    vm->gc_sys_us += sys_time_sys() - sys0;
+}
+
+/* --- relocation, for an image of the VM (vm/image.c) --- */
+
+/* The heap and every root were read as the parent had them, its addresses
+   in them: each pointer moves by the distance between the two heaps. A
+   pointer that is not into the heap's used part, or an object that is not
+   one, makes the image unsound (0). */
+static uintptr_t reloc_old;
+static int reloc_ok;
+
+static Obj *relocate_obj(VM *vm, Obj *o) {
+    uintptr_t at = (uintptr_t)o;
+    if (at < reloc_old || at - reloc_old >= vm->heap_used) { reloc_ok = 0; return NULL; }
+    return (Obj *)(vm->heap_from + (at - reloc_old));
+}
+
+static void relocate_value(VM *vm, Value *v) {
+    if (v->tag == T_PTR && v->u.p) v->u.p = relocate_obj(vm, v->u.p);
+}
+
+int heap_relocate(VM *vm, uintptr_t old_base) {
+    reloc_old = old_base;
+    reloc_ok = 1;
+    size_t scan = 0;
+    while (reloc_ok && scan < vm->heap_used) {
+        Obj *o = (Obj *)(vm->heap_from + scan);
+        if (vm->heap_used - scan < sizeof(Obj) || o->kind < K_TUPLE || o->kind > K_EXNCON) return 0;
+        size_t size = obj_size(o);
+        if (size > vm->heap_used - scan) return 0;
+        if (o->kind != K_STRING) {
+            Value *f = OBJ_FIELDS(o);
+            for (uint32_t i = 0; i < o->len; i++) relocate_value(vm, &f[i]);
+        }
+        scan += size;
+    }
+    for (size_t i = 0; i < vm->sp; i++) relocate_value(vm, &vm->stack[i]);
+    for (uint32_t i = 0; i < vm->prog.nglobals; i++) relocate_value(vm, &vm->globals[i]);
+    for (uint32_t i = 0; i < vm->prog.nconsts; i++) relocate_value(vm, &vm->prog.consts[i]);
+    if (vm->frames_active)
+        for (size_t i = 0; i <= vm->fp; i++)
+            if (vm->frames[i].closure) vm->frames[i].closure = relocate_obj(vm, vm->frames[i].closure);
+    for (int i = 0; i < NUM_BUILTIN_EXNS; i++)
+        if (vm->builtin_exns[i]) vm->builtin_exns[i] = relocate_obj(vm, vm->builtin_exns[i]);
+    return reloc_ok;
 }

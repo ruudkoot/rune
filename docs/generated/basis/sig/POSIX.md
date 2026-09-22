@@ -14,7 +14,7 @@
 
 ```sml
 signature POSIX
-structure Posix : POSIX  (* optional *)
+structure Posix : POSIX where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode  (* optional *)
 ```
 
 | Implementation |  | Source |
@@ -39,11 +39,6 @@ others without conversion.
 > `structure Posix :> POSIX`, so the types that no `where` clause fixes are
 > abstract; the suite matches [`Posix`](POSIX.md) against this signature both
 > transparently and opaquely.
-
-> **Deviation** `POSIX/not-sealed`. The structure is not sealed, so the
-> representations show: `uid`, `gid`, `pid`, `file_desc`, `signal` and
-> `speed` are `int`, and a set of flags is a word. A program should not rely
-> on that.
 
 ## Interface
 

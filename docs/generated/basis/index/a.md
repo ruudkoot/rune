@@ -29,7 +29,7 @@
 - `allSet` (val): [BIT_FLAGS](../sig/BIT_FLAGS.md#val-allset)
 - `alrm` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-alrm)
 - `andb` (val): [INT_INF](../sig/INT_INF.md#val-andb), [WORD](../sig/WORD.md#val-andb)
-- `any` (val): [INET_SOCK](../sig/INET_SOCK.md#val-any)
+- `any` (val): [INET6_SOCK](../sig/INET6_SOCK.md#val-any), [INET_SOCK](../sig/INET_SOCK.md#val-any)
 - `anySet` (val): [BIT_FLAGS](../sig/BIT_FLAGS.md#val-anyset)
 - `app` (val): [ARRAY](../sig/ARRAY.md#val-app), [ARRAY2](../sig/ARRAY2.md#val-app), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-app), [LIST](../sig/LIST.md#val-app), [LIST_PAIR](../sig/LIST_PAIR.md#val-app), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-app), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-app), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-app), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-app), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-app), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-app), [OPTION](../sig/OPTION.md#val-app), [SUBSTRING](../sig/SUBSTRING.md#val-app), [VECTOR](../sig/VECTOR.md#val-app), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-app)
 - `appEq` (val): [LIST_PAIR](../sig/LIST_PAIR.md#val-appeq)
@@ -47,8 +47,11 @@
 - `Aug` (con): [DATE](../sig/DATE.md#con-aug)
 - `augmentReader` (val): [PRIM_IO](../sig/PRIM_IO.md#val-augmentreader)
 - `augmentWriter` (val): [PRIM_IO](../sig/PRIM_IO.md#val-augmentwriter)
+- `Key.allAccess` (val): [WINDOWS](../sig/WINDOWS.md#val-key.allaccess)
 - `O.append` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-o.append), [POSIX_IO](../sig/POSIX_IO.md#val-o.append)
 - `ST.atime` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.atime)
+- `Status.accessViolation` (val): [WINDOWS](../sig/WINDOWS.md#val-status.accessviolation)
+- `Status.arrayBoundsExceeded` (val): [WINDOWS](../sig/WINDOWS.md#val-status.arrayboundsexceeded)
 
 ---
 

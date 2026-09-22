@@ -37,7 +37,8 @@ struct
       fun stop i = if i < String.size s andalso isName (String.sub (s, i)) then stop (i + 1) else i
       val n = stop 0
     in
-      if n = 0 then NONE
+      (* `sig ... end` written out is no name: there is nothing to link to *)
+      if n = 0 orelse String.substring (s, 0, n) = "sig" then NONE
       else SOME (String.substring (s, 0, n), T.oneLine (String.extract (s, n, NONE)))
     end
 
@@ -115,10 +116,18 @@ struct
              claims
 
   (* claims.tsv: name, kind, signature, realisations, status, origin, source. *)
-  fun tsv (claims : claim list, statusOfSignature : string -> string) : string =
+  (* The signatures come first, so that a reader of the file sees what the
+     library declares before what implements it; a signature has no signature
+     of its own and no realisations, and its origin is where it is declared. *)
+  fun tsv (claims : claim list, statusOfSignature : string -> string,
+           signatures : (string * string) list) : string =
     String.concat
       ("name\tkind\tsignature\trealisations\tstatus\torigin\tsource\n"
-       :: List.map (fn c : claim =>
+       :: List.map (fn (name, file) =>
+                      String.concatWith "\t"
+                        [name, "signature", "", "", statusOfSignature name, "declared", file] ^ "\n")
+                   signatures
+       @ List.map (fn c : claim =>
                       String.concatWith "\t"
                         [#name c, if #isFunctor c then "functor" else "structure", #signat c, #realisations c,
                          (case #status c of SOME s => s | NONE => statusOfSignature (#signat c)), #origin c, #file c] ^ "\n")

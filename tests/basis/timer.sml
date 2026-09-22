@@ -98,6 +98,14 @@ struct
                            val _ = work 50000
                            val b = Timer.checkCPUTimes t
                          in notLess (#nongc a, #nongc b) andalso notLess (#gc a, #gc b) end)
+  (* the collector's share is part of the whole and not beside it *)
+  val () = eqB ("Timer.checkCPUTimes/gc-is-part-of-the-whole", true,
+                fn () => let
+                           val t = Timer.startCPUTimer ()
+                           val _ = List.length (List.tabulate (200000, fn i => (i, i)))
+                           val {nongc, gc} = Timer.checkCPUTimes t
+                           val whole = cpu (total {nongc = nongc, gc = gc})
+                         in Time.<= (Time.+ (#usr gc, #sys gc), whole) end)
   val () = eqB ("Timer.checkCPUTimes/grows-while-computing", true,
                 fn () => let val t = Timer.startCPUTimer ()
                          in burn (fn () => Time.>= (cpu (total (Timer.checkCPUTimes t)), ms 50), 20) end)

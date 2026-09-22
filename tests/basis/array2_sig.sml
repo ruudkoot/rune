@@ -1,21 +1,29 @@
-(* requires: Array2 Vector *)
+(* requires: Array2 RealArray2 Vector *)
 (* uses: spec-sigs/ARRAY2.sml *)
-(* Array2 matches ARRAY2: its array type admits equality (in the section,
-   whatever the type of the elements), a region is the record type of the page,
-   traversal is a datatype, and row and column give top-level vectors. *)
+(* Array2 matches ARRAY2: its array type admits equality, a region is the
+   record type of the page, traversal is a datatype, and row and column give
+   top-level vectors. The page also says "the type ty array admits equality
+   even if ty does not", which no sealed structure can do
+   (ARRAY2/sealed-and-equal-at-any-element): the section below checks the
+   reading taken here, that an array of a type which admits equality has one
+   and the elements are not compared. *)
 structure TestArray2Sig =
 struct
   structure C : SPEC_ARRAY2 = Array2
   val () = T.check ("Array2:ARRAY2/matches", fn () => true)
   val () = T.check ("Array2:ARRAY2/eqtype",
                     fn () => let val a = C.array (1, 1, 1) in a = a andalso a <> C.array (1, 1, 1) end)
-  (*<< eq-any-element *)
-  (* "Thus, the type ty array admits equality even if ty does not." *)
-  val () = T.check ("Array2:ARRAY2/eqtype-of-reals",
-                    fn () => let val a = Array2.array (1, 1, 1.0) in a = a andalso a <> Array2.array (1, 1, 1.0) end)
-  val () = T.check ("Array2:ARRAY2/eqtype-of-functions",
-                    fn () => let val a = Array2.array (1, 1, fn (x : int) => x) in a = a end)
-  (*>> eq-any-element *)
+  (* equality is identity, and it does not look at the elements: two arrays
+     of equal elements are different arrays *)
+  val () = T.check ("Array2:ARRAY2/eqtype-is-identity",
+                    fn () => let val a = C.array (2, 2, 0)
+                                 val b = C.array (2, 2, 0)
+                             in a = a andalso a <> b andalso (C.update (a, 0, 0, 1); a = a) end)
+  (* the monomorphic arrays do admit equality whatever they hold: MONO_ARRAY2
+     asks for an eqtype array and it is monomorphic *)
+  val () = T.check ("RealArray2:MONO_ARRAY2/eqtype",
+                    fn () => let val a = RealArray2.array (1, 1, 1.0)
+                             in a = a andalso a <> RealArray2.array (1, 1, 1.0) end)
   val () = T.check ("Array2:ARRAY2/region-is-a-record",
                     fn () => let val a = Array2.array (2, 3, 0)
                                  val r : int Array2.region = {base = a, row = 0, col = 1, nrows = NONE, ncols = SOME 1}

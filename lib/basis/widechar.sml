@@ -29,18 +29,22 @@ structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
    where type elem = WideChar.char
 
    Status: optional *)
-structure WideCharVectorSlice : MONO_VECTOR_SLICE = RuneMonoVectorSliceFn (structure V = WideCharVector)
+structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector
+  where type elem = RuneWideChar.char = RuneMonoVectorSliceFn (structure V = WideCharVector)
 (* Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
    elem = WideChar.char
 
    Status: optional *)
-structure WideCharArray : MONO_ARRAY = RuneMonoArrayFn (structure V = WideCharVector)
+structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector
+  where type elem = RuneWideChar.char = RuneMonoArrayFn (structure V = WideCharVector)
 (* Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
    where type vector_slice = WideCharVectorSlice.slice where type array =
    WideCharArray.array where type elem = WideChar.char
 
    Status: optional *)
-structure WideCharArraySlice : MONO_ARRAY_SLICE =
+structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVector.vector
+  where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array
+  where type elem = RuneWideChar.char =
   RuneMonoArraySliceFn (structure V = WideCharVector structure A = WideCharArray structure VS = WideCharVectorSlice)
 
 structure RuneWideCharImpl =
@@ -138,10 +142,17 @@ struct
           SOME (c, rest) => SOME (c, #2 (RuneEscape.skipFormat getc rest))
         | NONE => NONE
       end
+    (* the scanner of a wide string, one character at a time: a double quote
+       that is not escaped is a character of a string (String.scan) *)
+    val scanInString = scan
+    fun scanWide (sml, getc, src) = wide getc (sml, src)
+    (* WideChar.scan: as Char.scan, it is no character constant *)
+    val scan = fn getc => fn src =>
+      case getc (#2 (RuneEscape.skipFormat getc src)) of
+        SOME (#"\"", _) => NONE
+      | _ => scan getc src
     fun fromString s = StringCvt.scanString scan s
     fun fromCString s = StringCvt.scanString (fn getc => fn src => wide getc (false, src)) s
-    (* the scanner of a wide string, one character at a time *)
-    fun scanWide (sml, getc, src) = wide getc (sml, src)
   end
 end
 

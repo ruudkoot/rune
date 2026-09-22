@@ -350,9 +350,13 @@ struct
   fun sameSign (a, b) = sign a = sign b
 end
 
-(* The largest integers are the arbitrary precision ones.
+(* The largest integers are the arbitrary precision ones: "If an
+   implementation provides the IntInf structure, then LargeInt must be the
+   same structure as IntInf (viewed through a thinning INTEGER signature)",
+   which is why the seal file shows a program only what INTEGER names, as
+   MLton, SML/NJ and Poly/ML do.
 
-   Implements: INTEGER *)
+   Implements: INTEGER where type int = IntInf.int *)
 structure LargeInt = IntInf
 
 (* Integer constants and the overloaded operators at IntInf.int. A constant

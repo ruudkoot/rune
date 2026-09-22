@@ -32,10 +32,7 @@
    Pinned by: `Posix.Error.notempty/rmDir-nonempty` *)
 signature POSIX_ERROR =
 sig
-  (* The type of a condition the system reports: the `syserror` of `OS`.
-
-     Deviation: `Posix.Error.syserror/is-an-int`. It is the `errno` of the
-     system, an `int`, and the structure is not sealed, so that shows. *)
+  (* The type of a condition the system reports: the `syserror` of `OS`. *)
   type syserror = OS.syserror
 
   (* `toWord e` is the number the system gives `e`, its `errno` value. *)

@@ -45,12 +45,7 @@ sig
     | Nov
     | Dec
 
-  (* The type of a calendar reading.
-
-     Deviation: `DATE.date/not-abstract`. The specification leaves the type
-     abstract. In Rune it is a record of the fields `year`, `month`, `day`,
-     `hour`, `minute`, `second`, `offset`, `wday`, `yday` and `isDst`, and
-     the structure is not sealed, so the record shows. *)
+  (* The type of a calendar reading. *)
   type date
 
   (* Raised when a date cannot be made, converted or printed: a field is out of range, or the time does not fit. *)
