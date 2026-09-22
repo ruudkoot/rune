@@ -3,8 +3,6 @@
 #   NAME CATEGORY: reason
 #
 # Categories:
-#   SOCKETS   the sockets of Windows are Winsock's, which vm/sys_win.c does
-#             not use yet (the addresses it makes without them)
 #   POSIX     fork, exec, wait, signals, pipes between processes, the file
 #             modes and owners of POSIX, and the terminal settings: Windows
 #             has none of them in this shape
@@ -12,9 +10,6 @@
 # Everything else runs on both Windows VMs, bin/runevm.exe and
 # bin/runevm32.exe. docs/plans/windows.md is the roadmap that shortens this
 # list.
-basis.inetsock_addresses SOCKETS: UnixSock.Strm.socketPair and sending on the pair
-basis.netdb_lookup SOCKETS: the protocol, service and host databases are Winsock's
-basis.socket_loopback SOCKETS: a TCP and a UDP socket on the loopback interface
 basis.posix_files POSIX: the modes and owners of POSIX, and a home directory under /
 basis.posix_process POSIX: getpid, uname and getgroups; then fork, exec and waitpid
 basis.unix_pipes POSIX: Unix.execute sets FD_CLOEXEC with fcntl, then forks

@@ -6,9 +6,9 @@
    directories, descriptors, the environment, running a command, the named
    constants and errors of POSIX (numbered as Linux numbers them where this
    layer decodes them itself, as Winsock does where they go to Winsock), and
-   the addresses of sockets. What it does not do yet fails with ENOSYS, as in
-   `make vm SYS=none`, and the library turns that into OS.SysErr;
-   docs/plans/windows.md says which milestone takes what, and
+   the sockets, which are Winsock's. What it does not do yet fails with
+   ENOSYS, as in `make vm SYS=none`, and the library turns that into
+   OS.SysErr; docs/plans/windows.md says which milestone takes what, and
    tests/basis/deviations.txt which checks of the suite fail meanwhile.
 
    Paths come to and from the library as the library writes them; the CRT of
@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <time.h>
 #include <fcntl.h>
 #include <io.h>
@@ -29,6 +30,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <afunix.h>
+#include <mstcpip.h>
+#ifndef SIO_UDP_CONNRESET
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+#endif
 #include <windows.h>
 
 static int last = 0;
@@ -126,6 +131,103 @@ int sys_error_of_name(const char *name) {
     for (size_t i = 0; i < N_ERRORS; i++) if (strcmp(errors[i].name, name) == 0) return errors[i].number;
     return -1;
 }
+
+/* ---------------------------------------------------------------- sockets */
+/* A socket of Winsock is a SOCKET, not a descriptor of the C runtime, while
+   the library holds every descriptor as an int (lib/basis/socket.sml). So a
+   socket gets a number of its own, SOCKET_BASE and its slot in this table,
+   which no descriptor of the C runtime reaches, and every call that takes a
+   descriptor looks here first. Winsock cannot say whether a socket blocks,
+   so the table remembers it; close-on-exec is kept here too, for M7, and
+   SO_REUSEADDR (sys_setsockopt). So are how the socket was made and the
+   options set on it, for sys_connect to make it again. */
+#define SOCKET_BASE 0x40000000
+#define SOCK_OPTIONS 16
+typedef struct { int level, name, value; } SockOption;
+typedef struct {
+    SOCKET s;
+    int used, nonblocking, cloexec, reuseaddr;
+    int domain, type, protocol, bound, noptions;
+    int pair;                  /* made by sys_socketpair: its addresses are unnamed */
+    int connected;             /* a datagram socket given a peer by sys_connect */
+    SockOption options[SOCK_OPTIONS];
+} Sock;
+static Sock *socks = NULL;
+static int nsocks = 0, socks_cap = 0;
+
+static Sock *sock_of(int fd) {
+    if (fd < SOCKET_BASE || fd - SOCKET_BASE >= nsocks) return NULL;
+    Sock *s = &socks[fd - SOCKET_BASE];
+    return s->used ? s : NULL;
+}
+/* the lowest free number, as POSIX gives descriptors */
+static int new_sock(SOCKET s) {
+    int i;
+    for (i = 0; i < nsocks; i++) if (!socks[i].used) break;
+    if (i == nsocks) {
+        if (nsocks == socks_cap) {
+            int cap = socks_cap ? socks_cap * 2 : 16;
+            Sock *bigger = realloc(socks, (size_t)cap * sizeof *socks);
+            if (!bigger) { closesocket(s); last = ENOMEM; return -1; }
+            socks = bigger;
+            socks_cap = cap;
+        }
+        nsocks++;
+    }
+    socks[i].s = s;
+    socks[i].used = 1;
+    socks[i].nonblocking = 0;
+    socks[i].cloexec = 0;
+    socks[i].reuseaddr = 0;
+    socks[i].domain = socks[i].type = socks[i].protocol = -1;
+    socks[i].bound = 0;
+    socks[i].noptions = 0;
+    socks[i].pair = 0;
+    socks[i].connected = 0;
+    return SOCKET_BASE + i;
+}
+
+/* Winsock is started the first time something of it is used: vm/sys.h has
+   no call for starting. */
+static int winsock(void) {
+    static int started = 0;
+    if (!started) {
+        WSADATA data;
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) { last = ENOSYS; return -1; }
+        started = 1;
+    }
+    return 0;
+}
+
+/* The error of the last call of Winsock, as the errno of POSIX. */
+static int errno_of_wsa(int e) {
+    switch (e) {
+    case WSAEINTR: return EINTR;              case WSAEBADF: return EBADF;
+    case WSAEACCES: return EACCES;            case WSAEFAULT: return EFAULT;
+    case WSAEINVAL: return EINVAL;            case WSAEMFILE: return EMFILE;
+    case WSAEWOULDBLOCK: return EWOULDBLOCK;  case WSAEINPROGRESS: return EINPROGRESS;
+    case WSAEALREADY: return EALREADY;        case WSAENOTSOCK: return ENOTSOCK;
+    case WSAEDESTADDRREQ: return EDESTADDRREQ; case WSAEMSGSIZE: return EMSGSIZE;
+    case WSAEPROTOTYPE: return EPROTOTYPE;    case WSAENOPROTOOPT: return ENOPROTOOPT;
+    case WSAEPROTONOSUPPORT: return EPROTONOSUPPORT;
+    case WSAESOCKTNOSUPPORT: return EPROTONOSUPPORT;
+    case WSAEOPNOTSUPP: return ENOTSUP;       case WSAEPFNOSUPPORT: return EAFNOSUPPORT;
+    case WSAEAFNOSUPPORT: return EAFNOSUPPORT; case WSAEADDRINUSE: return EADDRINUSE;
+    case WSAEADDRNOTAVAIL: return EADDRNOTAVAIL; case WSAENETDOWN: return ENETDOWN;
+    case WSAENETUNREACH: return ENETUNREACH;  case WSAENETRESET: return ENETRESET;
+    case WSAECONNABORTED: return ECONNABORTED; case WSAECONNRESET: return ECONNRESET;
+    case WSAENOBUFS: return ENOBUFS;          case WSAEISCONN: return EISCONN;
+    case WSAENOTCONN: return ENOTCONN;        case WSAESHUTDOWN: return EPIPE;
+    case WSAETIMEDOUT: return ETIMEDOUT;      case WSAECONNREFUSED: return ECONNREFUSED;
+    case WSAELOOP: return ELOOP;              case WSAENAMETOOLONG: return ENAMETOOLONG;
+    case WSAEHOSTDOWN: return EHOSTUNREACH;   case WSAEHOSTUNREACH: return EHOSTUNREACH;
+    case WSAENOTEMPTY: return ENOTEMPTY;      case WSANOTINITIALISED: return ENOSYS;
+    default: return EIO;
+    }
+}
+static int wsa_failed(void) { last = errno_of_wsa(WSAGetLastError()); return -1; }
+/* the socket of fd, or ENOTSOCK */
+#define SOCK_OR_FAIL(s, fd) Sock *s = sock_of(fd); if (!s) { last = ENOTSOCK; return -1; }
 
 int64_t sys_time_now(void) {
     FILETIME ft;
@@ -406,6 +508,7 @@ int sys_fseek(FILE *file, int64_t offset, int whence) {
 }
 /* 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device */
 int sys_desc_kind(int fd) {
+    if (sock_of(fd)) return 5;
     HANDLE h = (HANDLE)_get_osfhandle(fd);
     if (h == INVALID_HANDLE_VALUE) { errno = EBADF; return failed(); }
     switch (GetFileType(h)) {
@@ -416,23 +519,48 @@ int sys_desc_kind(int fd) {
     }
 }
 /* A file on disk is always ready, for reading and for writing, as POSIX's
-   poll says of a regular file; nothing else can be waited for yet. No
+   poll says of a regular file, and sockets are asked with WSAPoll, which
+   waits when nothing else is ready. Nothing else can be waited for yet. No
    descriptors at all is a wait for the time given. */
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
-    int ready = 0;
+    int ready = 0, nsock = 0;
+    WSAPOLLFD *items = calloc((size_t)(n > 0 ? n : 1), sizeof *items);
+    int *which = calloc((size_t)(n > 0 ? n : 1), sizeof *which);
+    if (!items || !which) { free(items); free(which); last = ENOMEM; return -1; }
     for (int i = 0; i < n; i++) {
+        Sock *s = sock_of(fds[i]);
+        if (s) {
+            items[nsock].fd = s->s;
+            items[nsock].events = (short)(((events[i] & 1) ? POLLRDNORM : 0) | ((events[i] & 2) ? POLLWRNORM : 0) |
+                                          ((events[i] & 4) ? POLLRDBAND : 0));
+            which[nsock++] = i;
+            continue;
+        }
         HANDLE h = (HANDLE)_get_osfhandle(fds[i]);
-        if (h == INVALID_HANDLE_VALUE) { errno = EBADF; return failed(); }
-        if (GetFileType(h) != FILE_TYPE_DISK) return fail();
-    }
-    for (int i = 0; i < n; i++) {
+        if (h == INVALID_HANDLE_VALUE) { free(items); free(which); errno = EBADF; return failed(); }
+        if (GetFileType(h) != FILE_TYPE_DISK) { free(items); free(which); return fail(); }
         events[i] &= 1 | 2;
         if (events[i]) ready++;
     }
-    if (ready == 0) {
+    if (nsock > 0) {
+        int timeout = ready > 0 ? 0 : microseconds < 0 ? -1
+                    : microseconds / 1000 >= INT_MAX ? INT_MAX : (int)((microseconds + 999) / 1000);
+        if (WSAPoll(items, (ULONG)nsock, timeout) == SOCKET_ERROR) {
+            free(items); free(which); return wsa_failed();
+        }
+        for (int k = 0; k < nsock; k++) {
+            short r = items[k].revents;
+            int i = which[k];
+            /* the end of the stream is ready to be read, as POLLHUP is on POSIX */
+            events[i] = ((r & (POLLRDNORM | POLLHUP)) ? 1 : 0) | ((r & POLLWRNORM) ? 2 : 0) | ((r & POLLRDBAND) ? 4 : 0);
+            if (events[i]) ready++;
+        }
+    } else if (ready == 0) {
         if (microseconds < 0) Sleep(INFINITE);
         else sys_time_sleep(microseconds);
     }
+    free(items);
+    free(which);
     return ready;
 }
 
@@ -536,7 +664,7 @@ const char *sys_environ(void) {
 }
 const char *sys_ctermid(void) { fail(); return NULL; }
 const char *sys_ttyname(int fd) { (void)fd; fail(); return NULL; }
-int sys_isatty(int fd) { return _isatty(fd) ? 1 : 0; }
+int sys_isatty(int fd) { return !sock_of(fd) && _isatty(fd) ? 1 : 0; }
 int64_t sys_sysconf(const char *name) { (void)name; last = 0; return fail(); }
 
 /* The flags the library passes are POSIX's; mingw's CRT has the ones that
@@ -554,28 +682,82 @@ int sys_openf(const char *path, int flags, int mode) {
     int fd = _open(path, f, mode ? mode : _S_IREAD | _S_IWRITE);
     return fd < 0 ? failed() : fd;
 }
-int sys_close_fd(int fd) { return _close(fd) == 0 ? 0 : failed(); }
-int sys_dup(int fd) { int r = _dup(fd); return r < 0 ? failed() : r; }
-int sys_dup2(int fd, int to) { return _dup2(fd, to) == 0 ? to : failed(); }
+int sys_close_fd(int fd) {
+    Sock *s = sock_of(fd);
+    if (s) {
+        s->used = 0;
+        return closesocket(s->s) == 0 ? 0 : wsa_failed();
+    }
+    return _close(fd) == 0 ? 0 : failed();
+}
+/* A socket is duplicated as Winsock hands a socket to another process,
+   here to this one. */
+int sys_dup(int fd) {
+    Sock *s = sock_of(fd);
+    if (s) {
+        WSAPROTOCOL_INFOW info;
+        int nonblocking = s->nonblocking;
+        if (WSADuplicateSocketW(s->s, GetCurrentProcessId(), &info) != 0) return wsa_failed();
+        SOCKET copy = WSASocketW(FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, &info, 0,
+                                 WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+        if (copy == INVALID_SOCKET) return wsa_failed();
+        int r = new_sock(copy);
+        if (r >= 0) sock_of(r)->nonblocking = nonblocking;
+        return r;
+    }
+    int r = _dup(fd);
+    return r < 0 ? failed() : r;
+}
+/* A socket cannot take the number of a descriptor of the C runtime, nor
+   the other way round. */
+int sys_dup2(int fd, int to) {
+    if (sock_of(fd) || sock_of(to)) { last = EBADF; return -1; }
+    return _dup2(fd, to) == 0 ? to : failed();
+}
 int sys_pipe(int out[2]) { return _pipe(out, 65536, _O_BINARY) == 0 ? 0 : failed(); }
 /* the end of a file is 0 bytes with the error cleared, as on POSIX */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     last = 0;
+    if (sock_of(fd)) return sys_recv(fd, buf, n, 0);
     int r = _read(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
     return r < 0 ? failed() : r;
 }
 int64_t sys_write_fd(int fd, const char *buf, int64_t n) {
+    if (sock_of(fd)) return sys_send(fd, buf, n, 0);
     int r = _write(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
     return r < 0 ? failed() : r;
 }
 int64_t sys_lseek_fd(int fd, int64_t offset, int whence) {
+    if (sock_of(fd)) { last = ESPIPE; return -1; }
     __int64 r = _lseeki64(fd, offset, whence);
     return r < 0 ? failed() : (int64_t)r;
 }
-int sys_fsync(int fd) { return _commit(fd) == 0 ? 0 : failed(); }
-int sys_fcntl(int fd, int command, int argument) { (void)fd; (void)command; (void)argument; return fail(); }
+int sys_fsync(int fd) {
+    if (sock_of(fd)) { last = EINVAL; return -1; }
+    return _commit(fd) == 0 ? 0 : failed();
+}
+/* The commands of fcntl, as Linux numbers them (sys_const). A socket is
+   read and written (O_RDWR), and blocks or not as FIONBIO last said. */
+int sys_fcntl(int fd, int command, int argument) {
+    Sock *s = sock_of(fd);
+    if (!s) return fail();
+    switch (command) {
+    case 1: return s->cloexec;                                   /* F_GETFD */
+    case 2: s->cloexec = argument & 1; return 0;                 /* F_SETFD */
+    case 3: return 2 | (s->nonblocking ? 04000 : 0);             /* F_GETFL */
+    case 4: {                                                    /* F_SETFL */
+        u_long on = (argument & 04000) != 0;
+        if (ioctlsocket(s->s, FIONBIO, &on) != 0) return wsa_failed();
+        s->nonblocking = (int)on;
+        return 0;
+    }
+    default: last = EINVAL; return -1;
+    }
+}
 int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t length, int64_t out[5]) {
-    (void)fd; (void)command; (void)type; (void)whence; (void)start; (void)length; (void)out; return fail();
+    (void)command; (void)type; (void)whence; (void)start; (void)length; (void)out;
+    if (sock_of(fd)) { last = EINVAL; return -1; }
+    return fail();
 }
 int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
     (void)path; (void)fd; (void)name; (void)out; last = 0; return fail();
@@ -584,16 +766,50 @@ int sys_tcgetattr(int fd, int64_t *out) { (void)fd; (void)out; return fail(); }
 int sys_tcsetattr(int fd, int action, const int64_t *in) { (void)fd; (void)action; (void)in; return fail(); }
 int64_t sys_tcop(int op, int fd, int64_t argument) { (void)op; (void)fd; (void)argument; return fail(); }
 int sys_nccs(void) { return 0; }
-int sys_linger(int fd, int set, int *seconds) { (void)fd; (void)set; (void)seconds; return fail(); }
-int sys_socket_query(int fd, int what) { (void)fd; (void)what; return fail(); }
+/* SO_LINGER, as sys_posix.c has it: *seconds is -1 when off. */
+int sys_linger(int fd, int set, int *seconds) {
+    struct linger l;
+    int len = sizeof l;
+    SOCK_OR_FAIL(s, fd);
+    if (set) {
+        l.l_onoff = *seconds >= 0;
+        l.l_linger = (u_short)(*seconds >= 0 ? *seconds : 0);
+        if (setsockopt(s->s, SOL_SOCKET, SO_LINGER, (const char *)&l, sizeof l) != 0) return wsa_failed();
+    }
+    if (getsockopt(s->s, SOL_SOCKET, SO_LINGER, (char *)&l, &len) != 0) return wsa_failed();
+    *seconds = l.l_onoff ? l.l_linger : -1;
+    return 0;
+}
+/* 0: the bytes that can be read at once; 1: whether the next byte is the
+   out-of-band mark. Winsock's SIOCATMARK says whether no urgent byte is
+   waiting at all, which is the other way round. */
+int sys_socket_query(int fd, int what) {
+    u_long v = 0;
+    SOCK_OR_FAIL(s, fd);
+    if (what == 0) return ioctlsocket(s->s, FIONREAD, &v) == 0 ? (int)v : wsa_failed();
+    if (what == 1) return ioctlsocket(s->s, SIOCATMARK, &v) == 0 ? !v : wsa_failed();
+    last = EINVAL;
+    return -1;
+}
 int sys_utime(const char *path, int64_t access, int64_t modification) {
     return set_file_times(path, access, modification);
 }
-int sys_ftruncate(int fd, int64_t length) { return _chsize_s(fd, length) == 0 ? 0 : failed(); }
+int sys_ftruncate(int fd, int64_t length) {
+    if (sock_of(fd)) { last = EINVAL; return -1; }
+    return _chsize_s(fd, length) == 0 ? 0 : failed();
+}
 /* kind, mode, inode, device, links, user, group, size, access, modification,
    change. Windows has no inode, user or group: they are 0. */
 int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {
     (void)follow;
+    if (!path && sock_of(fd)) {
+        /* a socket, readable and writable by all, as Linux has it */
+        for (int i = 0; i < 11; i++) out[i] = 0;
+        out[0] = 5;
+        out[1] = 0777;
+        out[2] = (int64_t)sock_of(fd)->s;
+        return 0;
+    }
     struct __stat64 st;
     if (path ? _stat64(path, &st) != 0 : _fstat64(fd, &st) != 0) return failed();
     int kind = (st.st_mode & _S_IFDIR) ? 1 : (st.st_mode & _S_IFCHR) ? 6 : 0;
@@ -633,40 +849,329 @@ const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
 }
 const char *sys_group_members(void) { return ""; }
 
-int sys_socket(int d, int t, int p) { (void)d; (void)t; (void)p; return fail(); }
-int sys_socketpair(int d, int t, int p, int out[2]) { (void)d; (void)t; (void)p; (void)out; return fail(); }
-int sys_bind(int fd, const char *a, int n) { (void)fd; (void)a; (void)n; return fail(); }
-int sys_connect(int fd, const char *a, int n) { (void)fd; (void)a; (void)n; return fail(); }
-int sys_listen(int fd, int b) { (void)fd; (void)b; return fail(); }
-int sys_accept(int fd) { (void)fd; return fail(); }
-int64_t sys_send(int fd, const char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; return fail(); }
-int64_t sys_sendto(int fd, const char *b, int64_t n, int f, const char *a, int al) {
-    (void)fd; (void)b; (void)n; (void)f; (void)a; (void)al; return fail();
-}
-int64_t sys_recv(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; last = 0; return fail(); }
-int64_t sys_recvfrom(int fd, char *b, int64_t n, int f) { (void)fd; (void)b; (void)n; (void)f; last = 0; return fail(); }
-int sys_shutdown(int fd, int how) { (void)fd; (void)how; return fail(); }
-int sys_sock_name(int fd) { (void)fd; return fail(); }
-int sys_sock_peer(int fd) { (void)fd; return fail(); }
 /* The addresses of sockets are the bytes of a sockaddr of Winsock, which has
-   the layout of POSIX's (family, then port and address); making and taking
-   them apart needs no socket. */
+   the layout of POSIX's (family, then port and address). */
 static char address[128];
 static int address_length = 0;
 const char *sys_last_addr(void) { return address; }
 int sys_last_addr_len(void) { return address_length; }
-/* Winsock is started the first time something of it is used. */
-static int winsock(void) {
-    static int started = 0;
-    if (!started) {
-        WSADATA data;
-        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) { last = ENOSYS; return -1; }
-        started = 1;
+
+/* Sockets are made as socket() makes them, but not to be inherited by the
+   programs this one starts (M7 hands on what a program asks for). A UDP
+   socket does not report, on its next receive, that an earlier datagram
+   found no one listening: POSIX has no such failure. */
+int sys_socket(int domain, int type, int protocol) {
+    if (winsock() != 0) return -1;
+    SOCKET s = WSASocketW(domain, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+    if (s == INVALID_SOCKET) return wsa_failed();
+    if (type == SOCK_DGRAM && (domain == AF_INET || domain == AF_INET6)) {
+        BOOL report = FALSE;
+        DWORD bytes = 0;
+        WSAIoctl(s, SIO_UDP_CONNRESET, &report, sizeof report, NULL, 0, &bytes, NULL, NULL);
+    }
+    int fd = new_sock(s);
+    if (fd >= 0) {
+        Sock *made = sock_of(fd);
+        made->domain = domain;
+        made->type = type;
+        made->protocol = protocol;
+    }
+    return fd;
+}
+
+/* Windows has no socketpair. A pair of AF_UNIX stream sockets is made the
+   long way: a socket listening on a name in the directory of temporary
+   files, one that connects to it, and the one accepted; the listener and
+   its name go again. Windows has no AF_UNIX datagrams, and POSIX no other
+   families of pairs. */
+int sys_socketpair(int domain, int type, int protocol, int out[2]) {
+    static unsigned serial = 0;
+    if (domain != AF_UNIX) { last = EOPNOTSUPP; return -1; }
+    if (type != SOCK_STREAM) { last = EPROTONOSUPPORT; return -1; }
+    if (winsock() != 0) return -1;
+    struct sockaddr_un name;
+    memset(&name, 0, sizeof name);
+    name.sun_family = AF_UNIX;
+    char dir[MAX_PATH + 1];
+    DWORD n = GetTempPathA(sizeof dir, dir);
+    if (n == 0 || n > MAX_PATH) { last = ENOENT; return -1; }
+    snprintf(name.sun_path, sizeof name.sun_path, "%srune-pair-%lu-%u", dir,
+             (unsigned long)GetCurrentProcessId(), serial++);
+    SOCKET listener = WSASocketW(AF_UNIX, SOCK_STREAM, protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+    if (listener == INVALID_SOCKET) return wsa_failed();
+    SOCKET a = INVALID_SOCKET, b = INVALID_SOCKET;
+    DeleteFileA(name.sun_path);
+    if (bind(listener, (struct sockaddr *)&name, sizeof name) != 0 || listen(listener, 1) != 0) goto failed;
+    a = WSASocketW(AF_UNIX, SOCK_STREAM, protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+    if (a == INVALID_SOCKET || connect(a, (struct sockaddr *)&name, sizeof name) != 0) goto failed;
+    b = accept(listener, NULL, NULL);
+    if (b == INVALID_SOCKET) goto failed;
+    closesocket(listener);
+    DeleteFileA(name.sun_path);
+    out[0] = new_sock(a);
+    out[1] = new_sock(b);
+    if (out[0] < 0 || out[1] < 0) return -1;
+    for (int k = 0; k < 2; k++) {
+        Sock *made = sock_of(out[k]);
+        made->domain = AF_UNIX;
+        made->type = SOCK_STREAM;
+        made->protocol = protocol;
+        made->pair = 1;
+    }
+    return 0;
+failed:
+    wsa_failed();
+    if (a != INVALID_SOCKET) closesocket(a);
+    closesocket(listener);
+    DeleteFileA(name.sun_path);
+    return -1;
+}
+
+/* The port a stream socket binds when it asks for any (port 0) is picked at
+   random from the ephemeral ones, as Linux picks it. Windows gives the
+   lowest free port every time: a listener that closes and is made again
+   gets the same port, and its connections meet those of the last one,
+   which wait out TIME_WAIT (see sys_connect). */
+static unsigned next_random(void) {
+    static unsigned x = 0;
+    if (x == 0) x = (unsigned)GetTickCount() ^ ((unsigned)GetCurrentProcessId() << 16) ^ 0x9e3779b9u;
+    x ^= x << 13; x ^= x >> 17; x ^= x << 5;
+    return x;
+}
+int sys_bind(int fd, const char *addr, int n) {
+    SOCK_OR_FAIL(s, fd);
+    unsigned short family = 0, port = 1;
+    if (n >= (int)sizeof(struct sockaddr_in)) {
+        memcpy(&family, addr, sizeof family);
+        if (family == AF_INET || (family == AF_INET6 && n >= (int)sizeof(struct sockaddr_in6)))
+            memcpy(&port, addr + offsetof(struct sockaddr_in, sin_port), sizeof port);
+    }
+    if (s->type == SOCK_STREAM && (family == AF_INET || family == AF_INET6) && port == 0) {
+        char copy[sizeof(struct sockaddr_in6)];
+        memcpy(copy, addr, (size_t)n < sizeof copy ? (size_t)n : sizeof copy);
+        for (int tries = 0; tries < 32; tries++) {
+            unsigned short random_port = htons((unsigned short)(49152 + next_random() % 16384));
+            memcpy(copy + offsetof(struct sockaddr_in, sin_port), &random_port, sizeof random_port);
+            if (bind(s->s, (const struct sockaddr *)copy, n) == 0) { s->bound = 1; return 0; }
+            if (WSAGetLastError() != WSAEADDRINUSE && WSAGetLastError() != WSAEACCES) break;
+        }
+    }
+    if (bind(s->s, (const struct sockaddr *)addr, n) != 0) return wsa_failed();
+    s->bound = 1;
+    return 0;
+}
+/* A connection that a non-blocking socket starts is EINPROGRESS, as on
+   POSIX, where Winsock says WSAEWOULDBLOCK.
+
+   Windows gives the ports of the loopback interface out in turn, so two
+   programs that each listen and connect on it, one after the other, swap
+   ports: the second one's connection has the ends of the first one's,
+   which waits out TIME_WAIT, and connect fails with WSAEADDRINUSE. Linux
+   picks ports at random and never meets this. A socket the program did not
+   bind is then made again, with the options it was given, and connected
+   from the next port. */
+static SOCKET remake(Sock *s) {
+    SOCKET fresh = WSASocketW(s->domain, s->type, s->protocol, NULL, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
+    if (fresh == INVALID_SOCKET) return fresh;
+    for (int i = 0; i < s->noptions; i++)
+        setsockopt(fresh, s->options[i].level, s->options[i].name, (const char *)&s->options[i].value, sizeof(int));
+    u_long on = (u_long)s->nonblocking;
+    ioctlsocket(fresh, FIONBIO, &on);
+    return fresh;
+}
+/* A connection on the loopback interface is made or refused at once. Some
+   machines (a firewall that swallows the reset of a closed local port)
+   never answer a closed one, and a blocking connect to it would wait for
+   ever; so a blocking connect on the loopback interface is given four
+   seconds -- Windows' own refusal takes two -- and after that the port is
+   taken to refuse, and the socket, whose attempt is still pending, is made
+   again. */
+static int is_loopback(const char *addr, int n) {
+    unsigned short family;
+    if (n < (int)sizeof family) return 0;
+    memcpy(&family, addr, sizeof family);
+    if (family == AF_INET && n >= (int)sizeof(struct sockaddr_in))
+        return ((const struct sockaddr_in *)(const void *)addr)->sin_addr.s_addr == htonl(INADDR_LOOPBACK)
+            || (ntohl(((const struct sockaddr_in *)(const void *)addr)->sin_addr.s_addr) >> 24) == 127;
+    if (family == AF_INET6 && n >= (int)sizeof(struct sockaddr_in6))
+        return IN6_IS_ADDR_LOOPBACK(&((const struct sockaddr_in6 *)(const void *)addr)->sin6_addr);
+    return 0;
+}
+/* one connect: 0, or the error of Winsock (WSAETIMEDOUT when a bounded
+   one ran out of time) */
+static int connect_once(Sock *s, const char *addr, int n, int bounded) {
+    u_long on = 1, off = 0;
+    if (bounded) ioctlsocket(s->s, FIONBIO, &on);
+    int e = connect(s->s, (const struct sockaddr *)addr, n) == 0 ? 0 : WSAGetLastError();
+    if (bounded && e == WSAEWOULDBLOCK) {
+        WSAPOLLFD p;
+        p.fd = s->s;
+        p.events = POLLWRNORM;
+        p.revents = 0;
+        int k = WSAPoll(&p, 1, 4000);
+        if (k == 0) e = WSAETIMEDOUT;
+        else if (k < 0) e = WSAGetLastError();
+        else if (p.revents & (POLLERR | POLLHUP)) {
+            int err = 0, len = sizeof err;
+            getsockopt(s->s, SOL_SOCKET, SO_ERROR, (char *)&err, &len);
+            e = err ? err : WSAECONNREFUSED;
+        } else e = 0;
+    }
+    if (bounded) ioctlsocket(s->s, FIONBIO, &off);
+    return e;
+}
+int sys_connect(int fd, const char *addr, int n) {
+    SOCK_OR_FAIL(s, fd);
+    int bounded = !s->nonblocking && s->type == SOCK_STREAM && is_loopback(addr, n);
+    for (int tries = 0; ; tries++) {
+        int e = connect_once(s, addr, n, bounded);
+        if (e == 0) {
+            /* a connected datagram socket hears that its peer's port is
+               unreachable, as on POSIX; an unconnected one does not */
+            if (s->type == SOCK_DGRAM) {
+                BOOL report = TRUE;
+                DWORD bytes = 0;
+                WSAIoctl(s->s, SIO_UDP_CONNRESET, &report, sizeof report, NULL, 0, &bytes, NULL, NULL);
+                s->connected = 1;
+            }
+            return 0;
+        }
+        if (e == WSAEWOULDBLOCK) { last = EINPROGRESS; return -1; }
+        int again = e == WSAEADDRINUSE && !s->bound && s->domain >= 0 && tries < 16;
+        if (e == WSAETIMEDOUT && bounded) e = WSAECONNREFUSED;
+        if (again || (bounded && e == WSAECONNREFUSED)) {
+            SOCKET fresh = remake(s);
+            if (fresh != INVALID_SOCKET) { closesocket(s->s); s->s = fresh; }
+            if (again && fresh != INVALID_SOCKET) continue;
+        }
+        last = errno_of_wsa(e);
+        return -1;
+    }
+}
+int sys_listen(int fd, int backlog) {
+    SOCK_OR_FAIL(s, fd);
+    return listen(s->s, backlog) == 0 ? 0 : wsa_failed();
+}
+/* The socket accepted blocks, as it does on Linux, whatever the listening
+   one does: Winsock would have it inherit that. */
+int sys_accept(int fd) {
+    SOCK_OR_FAIL(s, fd);
+    SOCKET a = accept(s->s, NULL, NULL);
+    if (a == INVALID_SOCKET) return wsa_failed();
+    u_long off = 0;
+    ioctlsocket(a, FIONBIO, &off);
+    return new_sock(a);
+}
+static int clamp(int64_t n) { return n > INT_MAX ? INT_MAX : (int)n; }
+int64_t sys_send(int fd, const char *buf, int64_t n, int flags) {
+    SOCK_OR_FAIL(s, fd);
+    int r = send(s->s, buf, clamp(n), flags);
+    return r == SOCKET_ERROR ? wsa_failed() : r;
+}
+int64_t sys_sendto(int fd, const char *buf, int64_t n, int flags, const char *addr, int addrlen) {
+    SOCK_OR_FAIL(s, fd);
+    int r = sendto(s->s, buf, clamp(n), flags, (const struct sockaddr *)addr, addrlen);
+    return r == SOCKET_ERROR ? wsa_failed() : r;
+}
+/* Nothing received, with the error cleared, is the end of the stream, as on
+   POSIX: so is a socket shut down for receiving, which Winsock reports as
+   WSAESHUTDOWN. A datagram longer than the buffer is cut to it, where
+   Winsock also fails with WSAEMSGSIZE. */
+static int64_t received(int r, int64_t n) {
+    if (r != SOCKET_ERROR) return r;
+    int e = WSAGetLastError();
+    if (e == WSAESHUTDOWN) return 0;
+    if (e == WSAEMSGSIZE) return clamp(n);
+    last = errno_of_wsa(e);
+    return -1;
+}
+int64_t sys_recv(int fd, char *buf, int64_t n, int flags) {
+    last = 0;
+    SOCK_OR_FAIL(s, fd);
+    int64_t r = received(recv(s->s, buf, clamp(n), flags), n);
+    /* the refusal a connected datagram socket hears, as POSIX names it */
+    if (r < 0 && s->type == SOCK_DGRAM && last == ECONNRESET) last = ECONNREFUSED;
+    return r;
+}
+int64_t sys_recvfrom(int fd, char *buf, int64_t n, int flags) {
+    int len = sizeof address;
+    last = 0;
+    SOCK_OR_FAIL(s, fd);
+    int64_t got = received(recvfrom(s->s, buf, clamp(n), flags, (struct sockaddr *)address, &len), n);
+    address_length = got < 0 ? 0 : len;
+    return got;
+}
+int sys_shutdown(int fd, int how) {
+    SOCK_OR_FAIL(s, fd);
+    return shutdown(s->s, how) == 0 ? 0 : wsa_failed();
+}
+/* the address of no name of the socket's family: what POSIX gives for a
+   socket not yet bound, and for either end of a pair */
+static void unnamed(Sock *s) {
+    memset(address, 0, sizeof address);
+    unsigned short family = (unsigned short)s->domain;
+    memcpy(address, &family, sizeof family);
+    address_length = s->domain == AF_INET ? (int)sizeof(struct sockaddr_in)
+                   : s->domain == AF_INET6 ? (int)sizeof(struct sockaddr_in6) : (int)sizeof family;
+}
+int sys_sock_name(int fd) {
+    int len = sizeof address;
+    SOCK_OR_FAIL(s, fd);
+    if (s->pair) { unnamed(s); return 0; }
+    if (getsockname(s->s, (struct sockaddr *)address, &len) != 0) {
+        if (WSAGetLastError() == WSAEINVAL && s->domain >= 0) { unnamed(s); return 0; }
+        return wsa_failed();
+    }
+    address_length = len;
+    return 0;
+}
+int sys_sock_peer(int fd) {
+    int len = sizeof address;
+    SOCK_OR_FAIL(s, fd);
+    if (s->pair) { unnamed(s); return 0; }
+    if (getpeername(s->s, (struct sockaddr *)address, &len) != 0) return wsa_failed();
+    address_length = len;
+    return 0;
+}
+
+/* SO_REUSEADDR of POSIX lets a socket bind an address that a connection
+   just closed still holds; Winsock's lets it bind one that another socket
+   is using, and connections then collide. What POSIX's allows, Winsock
+   allows by default, so the option is only remembered. */
+int sys_getsockopt(int fd, int level, int name) {
+    int value = 0, len = sizeof value;
+    SOCK_OR_FAIL(s, fd);
+    if (level == SOL_SOCKET && name == SO_REUSEADDR) return s->reuseaddr;
+    if (getsockopt(s->s, level, name, (char *)&value, &len) != 0) return wsa_failed();
+    /* Winsock tells a connected datagram socket that its peer's port is
+       unreachable on its next receive, and never in SO_ERROR, where POSIX
+       keeps it until it is read: a receive that peeks finds it, and takes
+       it, as reading SO_ERROR does. */
+    if (level == SOL_SOCKET && name == SO_ERROR && value == 0 && s->type == SOCK_DGRAM && s->connected) {
+        u_long on = 1, off = (u_long)s->nonblocking;
+        char byte;
+        ioctlsocket(s->s, FIONBIO, &on);
+        if (recv(s->s, &byte, 1, MSG_PEEK) == SOCKET_ERROR && WSAGetLastError() == WSAECONNRESET)
+            value = ECONNREFUSED;
+        ioctlsocket(s->s, FIONBIO, &off);
+    }
+    return value;
+}
+int sys_setsockopt(int fd, int level, int name, int value) {
+    SOCK_OR_FAIL(s, fd);
+    if (level == SOL_SOCKET && name == SO_REUSEADDR) { s->reuseaddr = value != 0; return 0; }
+    if (setsockopt(s->s, level, name, (const char *)&value, sizeof value) != 0) return wsa_failed();
+    /* kept for remake: the last value of each option */
+    int i;
+    for (i = 0; i < s->noptions; i++) if (s->options[i].level == level && s->options[i].name == name) break;
+    if (i < SOCK_OPTIONS) {
+        s->options[i].level = level;
+        s->options[i].name = name;
+        s->options[i].value = value;
+        if (i == s->noptions) s->noptions++;
     }
     return 0;
 }
-int sys_getsockopt(int fd, int l, int n) { (void)fd; (void)l; (void)n; return fail(); }
-int sys_setsockopt(int fd, int l, int n, int v) { (void)fd; (void)l; (void)n; (void)v; return fail(); }
 int sys_inet_addr(const char *host, int port) {
     struct sockaddr_in in;
     if (winsock() != 0) return -1;
@@ -736,10 +1241,87 @@ const char *sys_unix_path(const char *addr, int n) {
     snprintf(path_buffer, sizeof path_buffer, "%s", un.sun_path);
     return path_buffer;
 }
-const char *sys_host_byname(const char *n) { (void)n; fail(); return NULL; }
-const char *sys_host_byaddr(const char *d) { (void)d; fail(); return NULL; }
-const char *sys_hostname(void) { fail(); return NULL; }
-const char *sys_proto_byname(const char *n) { (void)n; fail(); return NULL; }
-const char *sys_proto_bynumber(int n) { (void)n; fail(); return NULL; }
-const char *sys_serv_byname(const char *n, const char *p) { (void)n; (void)p; fail(); return NULL; }
-const char *sys_serv_byport(int p, const char *pr) { (void)p; (void)pr; fail(); return NULL; }
+/* The databases of hosts, protocols and services are Winsock's, which reads
+   the files POSIX has under %SystemRoot%\System32\drivers\etc. An entry is
+   packed as sys_posix.c packs it: the name, the numbers, then the other
+   names, one after another. */
+static char strings[8192];
+static size_t pack_one(size_t at, const char *part) {
+    size_t n = strlen(part);
+    if (at + n + 2 >= sizeof strings) return at;
+    memcpy(strings + at, part, n);
+    at += n;
+    strings[at++] = 0;
+    return at;
+}
+static const char *pack(const char *first, char **rest, const char *second) {
+    size_t at = 0;
+    if (first) at = pack_one(at, first);
+    if (second) at = pack_one(at, second);
+    for (char **p = rest; p && *p; p++) at = pack_one(at, *p);
+    strings[at] = 0;
+    return strings;
+}
+/* the addresses of a host in one part, separated by spaces */
+static const char *pack_host(struct hostent *h) {
+    if (!h) return NULL;
+    char dotted[1024] = "";
+    size_t at = 0;
+    if (h->h_addrtype == AF_INET && h->h_addr_list)
+        for (char **a = h->h_addr_list; *a; a++) {
+            char one[INET_ADDRSTRLEN];
+            if (!inet_ntop(AF_INET, *a, one, sizeof one)) continue;
+            size_t n = strlen(one);
+            if (at + n + 2 >= sizeof dotted) break;
+            if (at > 0) dotted[at++] = ' ';
+            memcpy(dotted + at, one, n + 1);
+            at += n;
+        }
+    return pack(h->h_name, h->h_aliases, dotted);
+}
+const char *sys_host_byname(const char *name) {
+    return winsock() != 0 ? NULL : pack_host(gethostbyname(name));
+}
+const char *sys_host_byaddr(const char *dotted) {
+    struct in_addr in;
+    if (winsock() != 0) return NULL;
+    if (inet_pton(AF_INET, dotted, &in) != 1) { last = EINVAL; return NULL; }
+    return pack_host(gethostbyaddr((const char *)&in, sizeof in, AF_INET));
+}
+const char *sys_hostname(void) {
+    if (winsock() != 0) return NULL;
+    if (gethostname(path_buffer, (int)sizeof path_buffer) != 0) { wsa_failed(); return NULL; }
+    return path_buffer;
+}
+static const char *pack_proto(struct protoent *p) {
+    if (!p) return NULL;
+    char number[32];
+    snprintf(number, sizeof number, "%d", p->p_proto);
+    return pack(p->p_name, p->p_aliases, number);
+}
+const char *sys_proto_byname(const char *name) {
+    return winsock() != 0 ? NULL : pack_proto(getprotobyname(name));
+}
+const char *sys_proto_bynumber(int number) {
+    return winsock() != 0 ? NULL : pack_proto(getprotobynumber(number));
+}
+/* the name, the port, the protocol, then the other names */
+static const char *pack_serv(struct servent *s) {
+    if (!s) return NULL;
+    char number[32];
+    snprintf(number, sizeof number, "%d", ntohs((unsigned short)s->s_port));
+    size_t at = pack_one(0, s->s_name);
+    at = pack_one(at, number);
+    at = pack_one(at, s->s_proto);
+    for (char **p = s->s_aliases; p && *p; p++) at = pack_one(at, *p);
+    strings[at] = 0;
+    return strings;
+}
+const char *sys_serv_byname(const char *name, const char *protocol) {
+    if (winsock() != 0) return NULL;
+    return pack_serv(getservbyname(name, protocol && *protocol ? protocol : NULL));
+}
+const char *sys_serv_byport(int port, const char *protocol) {
+    if (winsock() != 0) return NULL;
+    return pack_serv(getservbyport(htons((unsigned short)port), protocol && *protocol ? protocol : NULL));
+}
