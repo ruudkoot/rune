@@ -22,7 +22,7 @@ estimate.
 | M1b, two widths | done: `bin/runevm.exe` and `bin/runevm32.exe` (SSE2, large-address-aware), both importing only `KERNEL32.dll` and `msvcrt.dll`; 127 of 136 on both, `tests/vm` 9 of 9, and `--count` agrees with `bin/runevm` on four programs; the runner compiles once, runs in parallel on NTFS with `TZ` (1 m 29 s for both VMs, where one took 9.5 minutes), which showed that msvcrt's `_stat64` shifts file times by `TZ`: they are now read and set in UTC |
 | M2, the Basis suite on both Windows VMs | done: `rune:windows` and `rune:windows32` in `run-matrix.sh`, run by `make test-windows`, each program in its own directory on NTFS; the category `WINDOWS` of `deviations.txt`, which `gen-annotations.sh` leaves out like the lines of `rune`. **Baseline** (M1b, 7 minutes): 963 of 137,016 checks fail on the 64-bit VM, 1,004 of 137,084 on the 32-bit one; `timeout` ends the Windows process too |
 | M3, constants, errors and two quick wins | done: a table of the named constants (the numbers of Linux for what the layer decodes itself, Winsock's for what goes to Winsock), every error of POSIX with glibc's text, the error cleared where POSIX clears it, `getpid` and the ids checked by the library, the addresses of sockets without a socket, a file on disk ready for `poll`; `basis.inet6sock` and `basis.os.io_poll` leave the skip list and `basis.posix_seek` joins `tests/lang`; the Basis suite: 667 of 137,054 checks fail on either VM (963 and 1,004 before), each explained by a `WINDOWS` line that names its milestone |
-| M4, a C-locale `strftime` | not started |
+| M4, a C-locale `strftime`, reals in the rounding mode, local time in any year | done: `Date.fmt` is formatted in the core as glibc formats it in the C locale (780 lines of edge years and every directive agree with glibc), only `%Z` of a local date asks the system; `Real.fromString` reads in the rounding mode on every C library (132 numerals in four modes agree with glibc, subnormals and overflow included); the layer of Windows reaches local time outside 1970 to 3000 by 400-year cycles. `basis.date_year_of_c` leaves the skip list and `basis.date_local_before_1970` joins `tests/lang`; Basis suite: 661 failures on either VM, all explained. Found on the way: glibc keeps no summer time before 1970 under a POSIX `TZ` rule, where the layer of Windows follows the rule in every year |
 | M5, sockets over Winsock | not started |
 | M6, POSIX counterparts short of processes | not started |
 | M7, a spawn primitive | not started |
@@ -324,7 +324,7 @@ in that number, as well as a shorter skip list.
 program that does `Posix.FileSys.createf` and `Posix.IO.lseek` with
 `SEEK_END`, which failed without a word before, and a drop in M2's count.
 
-### M4. A C-locale `strftime` -- S
+### M4. A C-locale `strftime`, reals in the rounding mode, local time in any year -- S
 
 * **Portable C in the core** formats the directives `lib/basis/date.sml:173`
   lets through, `aAbBcdHIjmMpSUwWxXyYZ%`, the way glibc does in the C
@@ -339,6 +339,17 @@ program that does `Posix.FileSys.createf` and `Posix.IO.lseek` with
   `setlocale`, so that is what the specification's `strftime` means here.
   The SML check that a year fits a C `int` stays, because `date_year_of_c`
   expects `Date` beyond it.
+
+* **Reals are read in the rounding mode.** msvcrt's `strtod` and `strtof`
+  round to the nearest whatever the mode, where glibc's round in it. The
+  core reads a numeral to the nearest and steps it to the other neighbour
+  when the mode asks, comparing the numeral with the exact decimal
+  expansion of the nearest, so that `Real.fromString` gives the same
+  everywhere.
+* **Local time in any year.** msvcrt's 64-bit time functions know only the
+  years 1970 to 3000. Its rules for summer time are the same every year and
+  the calendar repeats every 400 years, so the layer moves a time into
+  2370 to 2770 by whole cycles and the year back after.
 
 *Removes* `basis.date_year_of_c`.
 

@@ -155,31 +155,50 @@ void sys_time_sleep(int64_t microseconds) {
 }
 
 /* The calendar goes through the functions of msvcrt that are 64 bits wide
-   by name: time_t is 32 bits in the 32-bit msvcrt, and would end in 2038. */
+   by name: time_t is 32 bits in the 32-bit msvcrt, and would end in 2038.
+   Those know only the years 1970 to 3000. But msvcrt's rules for summer
+   time are the same every year (TZ's, or those Windows has for its zone
+   now), and the Gregorian calendar repeats itself every 400 years,
+   weekdays included: so a time is moved by whole cycles into the years
+   2370 to 2770, far from both ends, and its year moved back after. */
+#define CYCLE_SECONDS 12622780800LL   /* 400 years: 146097 days */
+#define CYCLE_BASE (1 * CYCLE_SECONDS) /* the start of 2370 */
+static int64_t floor_div(int64_t a, int64_t b) { return a / b - (a % b != 0 && (a < 0) != (b < 0)); }
+/* the number of cycles to add to a time to bring it into the window */
+static int64_t cycles_for_time(int64_t seconds) {
+    return -floor_div(seconds - CYCLE_BASE, CYCLE_SECONDS);
+}
+/* the number of cycles to add to a year (less 1900) to bring it there */
+static int64_t cycles_for_year(int64_t tm_year) { return -floor_div(tm_year - 470, 400); }
+static int to_parts(const struct tm *tm, int64_t cycles, int32_t parts[9]) {
+    int64_t year = (int64_t)tm->tm_year - 400 * cycles;
+    if (year > INT32_MAX || year < INT32_MIN) { last = EOVERFLOW; return -1; }
+    parts[0] = tm->tm_sec;  parts[1] = tm->tm_min;   parts[2] = tm->tm_hour;
+    parts[3] = tm->tm_mday; parts[4] = tm->tm_mon;   parts[5] = (int32_t)year;
+    parts[6] = tm->tm_wday; parts[7] = tm->tm_yday;  parts[8] = tm->tm_isdst;
+    return 0;
+}
 int sys_date_parts(int64_t seconds, int local, int32_t parts[9]) {
-    __time64_t t = (__time64_t)seconds;
+    int64_t k = cycles_for_time(seconds);
+    __time64_t t = (__time64_t)(seconds + k * CYCLE_SECONDS);
     struct tm tm;
     if ((local ? _localtime64_s(&tm, &t) : _gmtime64_s(&tm, &t)) != 0) return -1;
-    parts[0] = tm.tm_sec;  parts[1] = tm.tm_min;   parts[2] = tm.tm_hour;
-    parts[3] = tm.tm_mday; parts[4] = tm.tm_mon;   parts[5] = tm.tm_year;
-    parts[6] = tm.tm_wday; parts[7] = tm.tm_yday;  parts[8] = tm.tm_isdst;
-    return 0;
+    return to_parts(&tm, k, parts);
 }
 int64_t sys_date_seconds(int32_t parts[9], int local) {
     struct tm tm;
+    int64_t k = cycles_for_year(parts[5]);
     memset(&tm, 0, sizeof tm);
     tm.tm_sec = parts[0]; tm.tm_min = parts[1]; tm.tm_hour = parts[2];
-    tm.tm_mday = parts[3]; tm.tm_mon = parts[4]; tm.tm_year = parts[5];
+    tm.tm_mday = parts[3]; tm.tm_mon = parts[4]; tm.tm_year = (int)(parts[5] + 400 * k);
     tm.tm_isdst = local ? parts[8] : 0;
     __time64_t t = local ? _mktime64(&tm) : _mkgmtime64(&tm);
     if (t == (__time64_t)-1) return failed();
-    parts[0] = tm.tm_sec;  parts[1] = tm.tm_min;   parts[2] = tm.tm_hour;
-    parts[3] = tm.tm_mday; parts[4] = tm.tm_mon;   parts[5] = tm.tm_year;
-    parts[6] = tm.tm_wday; parts[7] = tm.tm_yday;  parts[8] = tm.tm_isdst;
-    return (int64_t)t;
+    if (to_parts(&tm, k, parts) != 0) return -1;
+    return (int64_t)t - k * CYCLE_SECONDS;
 }
 int sys_date_offset(int64_t seconds, int32_t *offset) {
-    __time64_t t = (__time64_t)seconds;
+    __time64_t t = (__time64_t)(seconds + cycles_for_time(seconds) * CYCLE_SECONDS);
     struct tm local, utc;
     if (_localtime64_s(&local, &t) != 0 || _gmtime64_s(&utc, &t) != 0) return failed();
     local.tm_isdst = 0; utc.tm_isdst = 0;

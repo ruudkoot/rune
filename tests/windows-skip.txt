@@ -8,8 +8,6 @@
 #   POSIX     fork, exec, wait, signals, pipes between processes, the file
 #             modes and owners of POSIX, and the terminal settings: Windows
 #             has none of them in this shape
-#   CRT       the C runtime of Windows differs from POSIX's in a way that
-#             shows in what the program prints
 #
 # Everything else runs on both Windows VMs, bin/runevm.exe and
 # bin/runevm32.exe. docs/plans/windows.md is the roadmap that shortens this
@@ -20,4 +18,3 @@ basis.socket_loopback SOCKETS: a TCP and a UDP socket on the loopback interface
 basis.posix_files POSIX: the modes and owners of POSIX, and a home directory under /
 basis.posix_process POSIX: getpid, uname and getgroups; then fork, exec and waitpid
 basis.unix_pipes POSIX: Unix.execute sets FD_CLOEXEC with fcntl, then forks
-basis.date_year_of_c CRT: strftime of msvcrt formats only the years 0 to 9999, where POSIX formats any year an int holds

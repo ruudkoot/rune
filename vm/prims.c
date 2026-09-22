@@ -6,6 +6,7 @@
 #include <math.h>
 #include <errno.h>
 #include <fenv.h>
+#include <float.h>
 #include "sys.h"
 
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
@@ -277,6 +278,92 @@ static int p_real_to_string(VM *vm) {
 
 /* A numeral in C syntax (~ read as -) to a double, or with single to the
    nearest binary32 value; NONE when it does not start as a number. */
+/* Reading a numeral in the current rounding mode. glibc's strtod and strtof
+   round in the mode; mingw's round to the nearest whatever it is. So the
+   numeral is read to the nearest, and then stepped to the other neighbour
+   when the mode asks for it: the exact decimal expansion of the nearest,
+   which printf gives with enough digits, is compared with the numeral. The
+   result is the same with every C library. */
+
+/* The significant digits of a decimal numeral [s, end), into digits (which
+   has room for end - s + 1), and the exponent of the first one: the numeral
+   is d.ddd * 10^exp. "" for zero. An exponent is kept to what cannot
+   overflow; a numeral that needs more is not finite and not zero, and is
+   not compared. */
+static void decimal_digits(const char *s, const char *end, char *digits, long long *exp) {
+    size_t n = 0;
+    long long e = 0, point = -1, first = -1, pos = 0;
+    for (; s < end && (*s == '-' || *s == '+'); s++) {}
+    for (; s < end && ((*s >= '0' && *s <= '9') || *s == '.'); s++) {
+        if (*s == '.') { point = pos; continue; }
+        if (first < 0 && *s == '0') { pos++; continue; }
+        if (first < 0) first = pos;
+        digits[n++] = *s;
+        pos++;
+    }
+    if (s < end && (*s == 'e' || *s == 'E')) {
+        e = strtoll(s + 1, NULL, 10);
+        if (e > 1000000000LL) e = 1000000000LL;
+        if (e < -1000000000LL) e = -1000000000LL;
+    }
+    while (n > 0 && digits[n - 1] == '0') n--;
+    digits[n] = 0;
+    if (point < 0) point = pos;
+    *exp = first < 0 ? 0 : e + point - first - 1;
+}
+
+/* -1, 0 or 1 as the magnitude of the numeral [s, end) is below, equal to or
+   above |x|. */
+static int decimal_compare(const char *s, const char *end, double x) {
+    /* 767 significant digits are the most a double has */
+    char x_text[1200];
+    int n = snprintf(x_text, sizeof x_text, "%.780e", fabs(x));
+    char *a = malloc((size_t)(end - s) + 1), *b = malloc((size_t)n + 1);
+    if (!a || !b) { free(a); free(b); return 0; }
+    long long ea, eb;
+    decimal_digits(s, end, a, &ea);
+    decimal_digits(x_text, x_text + n, b, &eb);
+    int c;
+    if (!a[0] || !b[0]) c = (a[0] != 0) - (b[0] != 0);
+    else if (ea != eb) c = ea < eb ? -1 : 1;
+    else { c = strcmp(a, b); c = c < 0 ? -1 : c > 0 ? 1 : 0; }
+    free(a);
+    free(b);
+    return c;
+}
+
+static double parse_rounded(const char *buf, char **end, int single) {
+    int mode = fegetround();
+    fesetround(FE_TONEAREST);
+    errno = 0;
+    double x = single ? (double)strtof(buf, end) : strtod(buf, end);
+    int range = errno == ERANGE;
+    fesetround(mode);
+    if (mode == FE_TONEAREST || *end == buf || isnan(x)) return x;
+    for (const char *c = buf; c < *end; c++)
+        if (!((*c >= '0' && *c <= '9') || *c == '.' || *c == '-' || *c == '+' || *c == 'e' || *c == 'E'))
+            return x;   /* inf, nan, hexadecimal: nothing to round */
+    int negative = buf[0] == '-';
+    double big = single ? FLT_MAX : DBL_MAX;
+    if (isinf(x)) {
+        /* beyond the largest finite number: where the mode rounds toward
+           zero, the result is that number */
+        if (range && (mode == FE_TOWARDZERO || (mode == FE_DOWNWARD && !negative) || (mode == FE_UPWARD && negative)))
+            return negative ? -big : big;
+        return x;
+    }
+    int c = decimal_compare(buf, *end, x);   /* the numeral against |x| */
+    if (c == 0) return x;
+    /* the numeral is further from zero than x (c > 0), or nearer */
+    int above = negative ? c < 0 : c > 0;    /* the numeral is above x */
+    double toward;
+    if (mode == FE_UPWARD) { if (!above) return x; toward = INFINITY; }
+    else if (mode == FE_DOWNWARD) { if (above) return x; toward = -INFINITY; }
+    else { if (c > 0) return x; toward = 0.0; }   /* FE_TOWARDZERO */
+    if (single) return (double)nextafterf((float)x, (float)toward);
+    return nextafter(x, toward);
+}
+
 static int real_parse(VM *vm, const char *name, int single) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, name);
     uint32_t n = s->len;
@@ -292,8 +379,7 @@ static int real_parse(VM *vm, const char *name, int single) {
         return ret(vm, 1, mk_con0(0));
     }
     char *end;
-    errno = 0;
-    double d = single ? (double)strtof(buf, &end) : strtod(buf, &end);
+    double d = parse_rounded(buf, &end, single);
     int none = end == buf;
     free(buf);
     if (none) return ret(vm, 1, mk_con0(0));
@@ -572,6 +658,78 @@ static int p_date_offset(VM *vm) {
     return ret(vm, 1, mk_int(offset));
 }
 
+/* Date.fmt: strftime of the C locale, written here so that every platform
+   formats the same. The library passes only the directives of the
+   specification, aAbBcdHIjmMpSUwWxXyYZ% (lib/basis/date.sml), and a date
+   that is valid, with a year that fits a C int. The rules are glibc's: %Y
+   without padding and with a sign ("-5"), %y the year modulo 100 counted
+   from below (95 for -5), %c as %a %b %e %H:%M:%S %Y. Only %Z, the name of
+   the local zone, is asked of the system (sys_date_format), and only for a
+   local date: the library writes the zone of any other. parts[] is as
+   sys_date_parts fills it. */
+typedef struct { char *out; size_t n, cap; } Text;
+static void put(Text *t, const char *s) {
+    for (; *s; s++) if (t->n + 1 < t->cap) t->out[t->n++] = *s;
+}
+static void put_number(Text *t, long long v, int width, char pad) {
+    char buf[32];
+    int k = snprintf(buf, sizeof buf, "%lld", v);
+    for (; k < width; k++) { char p[2] = { pad, 0 }; put(t, p); }
+    put(t, buf);
+}
+static const char *const day_names[7] =
+    { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+static const char *const month_names[12] =
+    { "January", "February", "March", "April", "May", "June", "July", "August",
+      "September", "October", "November", "December" };
+static void put_name(Text *t, const char *const *names, int n, int i, int abbreviated) {
+    if (i < 0 || i >= n) { put(t, "?"); return; }
+    char buf[16];
+    snprintf(buf, sizeof buf, abbreviated ? "%.3s" : "%s", names[i]);
+    put(t, buf);
+}
+static void format_date(Text *t, const char *format, const int32_t parts[9], int local) {
+    long long year = (long long)parts[5] + 1900;
+    int hour = parts[2], wday = parts[6], yday = parts[7];
+    for (const char *f = format; *f; f++) {
+        if (*f != '%' || !f[1]) { char c[2] = { *f, 0 }; put(t, c); continue; }
+        switch (*++f) {
+        case 'a': put_name(t, day_names, 7, wday, 1); break;
+        case 'A': put_name(t, day_names, 7, wday, 0); break;
+        case 'b': put_name(t, month_names, 12, parts[4], 1); break;
+        case 'B': put_name(t, month_names, 12, parts[4], 0); break;
+        case 'c':
+            format_date(t, "%a %b ", parts, local);
+            put_number(t, parts[3], 2, ' ');
+            format_date(t, " %H:%M:%S %Y", parts, local);
+            break;
+        case 'd': put_number(t, parts[3], 2, '0'); break;
+        case 'H': put_number(t, hour, 2, '0'); break;
+        case 'I': put_number(t, hour % 12 == 0 ? 12 : hour % 12, 2, '0'); break;
+        case 'j': put_number(t, yday + 1, 3, '0'); break;
+        case 'm': put_number(t, parts[4] + 1, 2, '0'); break;
+        case 'M': put_number(t, parts[1], 2, '0'); break;
+        case 'p': put(t, hour < 12 ? "AM" : "PM"); break;
+        case 'S': put_number(t, parts[0], 2, '0'); break;
+        case 'U': put_number(t, (yday + 7 - wday) / 7, 2, '0'); break;
+        case 'w': put_number(t, wday, 1, '0'); break;
+        case 'W': put_number(t, (yday + 7 - (wday + 6) % 7) / 7, 2, '0'); break;
+        case 'x': format_date(t, "%m/%d/%y", parts, local); break;
+        case 'X': format_date(t, "%H:%M:%S", parts, local); break;
+        case 'y': put_number(t, (year % 100 + 100) % 100, 2, '0'); break;
+        case 'Y': put_number(t, year, 1, '0'); break;
+        case 'Z': {
+            char zone[128];
+            int k = local ? sys_date_format("%Z", parts, 1, zone, sizeof zone) : 0;
+            if (k > 0 && (size_t)k < sizeof zone) { zone[k] = 0; put(t, zone); }
+            break;
+        }
+        case '%': put(t, "%"); break;
+        default: { char c[3] = { '%', *f, 0 }; put(t, c); }
+        }
+    }
+}
+
 static int p_date_format(VM *vm) {
     Obj *f = check_obj(vm, ARG(2), K_STRING, "date_format");
     check_tag(vm, ARG(0), T_INT, "date_format");
@@ -585,9 +743,10 @@ static int p_date_format(VM *vm) {
     size_t cap = (size_t)f->len * 16 + 256;
     char *out = malloc(cap);
     if (!out) vm_fatal(vm, "out of memory");
-    int n = sys_date_format(format, parts, (int)ARG(0).u.i, out, cap);
+    Text t = { out, 0, cap };
+    format_date(&t, format, parts, (int)ARG(0).u.i);
     free(format);
-    Obj *s = vm_string_from(vm, out, n < 0 ? 0 : (uint32_t)n);
+    Obj *s = vm_string_from(vm, out, (uint32_t)t.n);
     free(out);
     return ret(vm, 3, mk_ptr(s));
 }

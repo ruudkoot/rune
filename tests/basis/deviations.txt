@@ -603,9 +603,6 @@ rune:windows* | UnixSock.* | WINDOWS | M5: the sockets are Winsock's, which the 
 rune:windows* | GenericSock.* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
 rune:windows* | Net*DB.* | WINDOWS | M5: the protocol, service and host databases are Winsock's
 rune:windows* | OS.IO.Kind.socket/* | WINDOWS | M5: the sockets are Winsock's, which the system layer does not use yet
-rune:windows* | Real.fromString/TO_* | WINDOWS | M4: msvcrt's strtod rounds to the nearest whatever the rounding mode
-rune:windows* | Real32.fromString/TO_* | WINDOWS | M4: msvcrt's strtof rounds to the nearest whatever the rounding mode
-rune:windows* | Date.fmt/%c | WINDOWS | M4: msvcrt's strftime writes %c as %m/%d/%y %H:%M:%S
 rune:windows* | OS.IO.poll/* | WINDOWS | M8: poll of a pipe
 rune:windows* | OS.IO.is*/pipe-* | WINDOWS | M8: poll of a pipe
 rune:windows* | OS.IO.Kind.* | WINDOWS | M6: /dev/null, a directory and a symbolic link as descriptors
