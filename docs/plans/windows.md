@@ -1,37 +1,484 @@
-# Windows: the build (done) and the `Windows` structure (scoped)
+# Roadmap: Rune on Windows
 
-## The build
+Written 2026-09-22 on commit `667eef6` (branch `docgen`). The VM builds for
+64-bit Windows, and 127 of the 136 programs of `tests/lang` pass on it. This
+roadmap does four things:
 
-`make windows` builds the VM for Windows with mingw-w64 and `make
-test-windows` runs the language suite on it. Both are apart from every other
-target: `make check` never compiles `vm/sys_win.c`, and nothing else in the
-tree depends on it. Only the VM differs -- the compiler, the library and the
-bytecode are the ones everything else uses -- so the suite runs with the
-ordinary `bin/rune` and `bin/runevm.exe`. Running an `.exe` needs Windows, or
-WSL, which starts one for you.
+* builds and tests a 32-bit VM beside the 64-bit one;
+* runs the Basis Library suite on both;
+* cuts `tests/windows-skip.txt` from nine programs to the one or two that
+  print what only Linux prints;
+* then adds the `Windows` structure.
 
-`vm/sys_win.c` implements the system layer with the CRT of mingw and Win32:
-the clock (`GetSystemTimeAsFileTime`, `GetProcessTimes`), the calendar,
-files, directories (`FindFirstFile`), descriptors, the environment
-(`GetEnvironmentStrings`) and `system`. It answers `ENOSYS` for what belongs
-to POSIX and has no counterpart worth faking. Two things it does that are
-not obvious:
+Every number below was measured on that commit unless it is marked as an
+estimate.
 
+## Status
+
+| Milestone | State |
+|---|---|
+| M0, the 64-bit VM (`make windows`, `make test-windows`) | done (`667eef6`): 127 of 136 programs of `tests/lang` pass; 9 in `tests/windows-skip.txt` |
+| M1a, the core fixes a 32-bit VM needs | not started |
+| M1b, two widths | not started |
+| M2, the Basis suite on both Windows VMs | not started |
+| M3, constants, errors and two quick wins | not started |
+| M4, a C-locale `strftime` | not started |
+| M5, sockets over Winsock | not started |
+| M6, POSIX counterparts short of processes | not started |
+| M7, a spawn primitive | not started |
+| M8, `poll` beyond sockets and files | not started |
+| M9 to M11, the `Windows` structure | not started |
+| M12, `fork` by carrying the VM across (optional) | not started |
+
+## Where it stands
+
+`make windows` builds `bin/runevm.exe` with `x86_64-w64-mingw32-gcc`, and
+`make test-windows` runs `tests/lang` on it (`tests/run-windows.sh`). Neither
+belongs to any other target. `make check` never compiles `vm/sys_win.c`.
+
+Only the VM differs from other builds. The compiler, the library and the
+bytecode are the ones everything else uses, so the suite compiles with the
+ordinary `bin/rune`. Running an `.exe` needs Windows, or WSL, which starts
+one for you.
+
+`vm/sys_win.c` implements `vm/sys.h` with msvcrt and Win32:
+* the clock (`GetSystemTimeAsFileTime`, `GetProcessTimes`) and the calendar;
+* files and directories (`FindFirstFile`), descriptors, the environment and
+  `system`.
+
+It answers `ENOSYS` for the rest. Two things it does are not obvious:
 * every path it hands back is written with `/`, because Rune's `OS.Path` is
-  the one of POSIX and the CRT of Windows takes either separator;
-* the standard streams are put in binary mode before `main` runs, since a
-  Rune string is bytes and a `\n` must stay one byte.
+  the POSIX one;
+* the standard streams are put in binary mode before `main` runs.
 
-**127 of the 136 programs of `tests/lang` pass.** The nine that do not are in
-`tests/windows-skip.txt`: four want sockets, three want POSIX processes and
-file modes, one wants `poll`, and one prints a year before 1970, which
-Microsoft's `strftime` refuses where POSIX formats it.
+### The toolchains
 
-## The `Windows` structure
+Both mingw-w64 toolchains are installed here: `gcc-mingw-w64-i686` and
+`gcc-mingw-w64-x86-64`, gcc 13.
+* Both link msvcrt.dll and build for `_WIN32_WINNT` 0xA00, so `WSAPoll`,
+  `inet_pton` and AF_UNIX sockets are there.
+* The VM passes `-fsyntax-only -Wall -Wextra` with both.
+* Windows 11 (build 22000) runs 32-bit programs under WoW64.
+* Developer Mode is on, so a symbolic link needs no privilege.
 
-Not implemented, and this is what it would take. `WINDOWS` is optional in the
-specification and is the one structure that only `make test-windows` could
-ever exercise.
+Nothing more has to be installed for any milestone below.
+
+### What the 127 passing programs do not show
+
+**Every POSIX constant is 0.**
+* `sys_const` returns -1 for every name (`vm/sys_win.c:303`). The library
+  reads -1 as "not known" and uses 0, so every `O_*`, `SEEK_*`, `AF_*`,
+  signal and `Posix.Error` value is 0 on Windows.
+* `Posix.FileSys.openf` therefore opens read-only and never creates, and
+  `Posix.IO.lseek` with `SEEK_END` seeks from the start. Neither says so.
+* `wnohang` (`lib/basis/posix_process.sml:69`) and the `addrType` of
+  `NetHostDB` (`lib/basis/netdb.sml:119`) have no guard, so they become all
+  ones.
+* `sys_openf` decodes the flags as Linux's octal numbers
+  (`vm/sys_win.c:354-365`). A constant table has to give those numbers, or
+  `sys_openf` has to change with it.
+* None of the 127 programs touches any of this: `OS`, `TextIO` and `BinIO`
+  never ask for a constant.
+
+**Errors are never cleared.**
+* `sys_win.c` sets its error only on failure (`:29`, `:50-52`).
+* The POSIX layer sets `errno` to 0 before `read`, `recv`, `readdir`,
+  `sysconf` and `pathconf` (`vm/sys_posix.c:327,566,581,668,787,793`).
+* The library takes an empty result with error 0 as the end of a stream
+  (`lib/basis/socket.sml:110`). A stale error from an earlier call turns an
+  end of stream into `SysErr`.
+* msvcrt's `strerror` has no text for error numbers from 100 up, which is
+  where `EWOULDBLOCK`, `ECONNREFUSED` and the other socket errors are.
+
+**`getpid` is not checked.**
+* `Posix.ProcEnv.getpid` (`lib/basis/posix_procenv.sml:39`) takes the
+  primitive's result as it is. On Windows that is -1, and the first line of
+  `basis.posix_process` raises `Overflow`.
+
+**Four of the nine skip reasons name the wrong cause:**
+* `basis.inet6sock` needs no socket: `INet6Sock.fromString` is SML, and only
+  the address family and `toAddr`/`fromAddr` reach the system.
+* `basis.posix_files` fails at `O_RDWR` being 0.
+* `basis.unix_pipes` fails at `Posix.IO.setfd` (`lib/basis/unix.sml:34`),
+  before it forks.
+* `basis.date_year_of_c` fails because msvcrt's `strftime` takes only the
+  years 0 to 9999. `basis.date_calendar` formats 1900 and passes, so the limit
+  is not 1970.
+
+**A 32-bit VM needs work, and so does LLP64 on both widths.**
+* `Int` and `Word` stay 64 bits on a 32-bit VM. A `Value` holds an
+  `int64_t`, a `uint64_t` or a `double` whatever the pointer size, and the
+  library measures the precision itself (`int.sml`, `word.sml`). So results
+  should not change; that is to be measured, not assumed. What does change:
+  * `time_t` is 32 bits in i686's msvcrt, so local dates after 2038 are
+    wrong (`sys_date_parts`, `sys_date_seconds`, `sys_date_offset`).
+  * Arithmetic is x87 unless the VM is built with `-msse2 -mfpmath=sse`, and
+    even then a `double` comes back from a function in an x87 register.
+  * The executable is not large-address-aware unless it is linked so.
+  * `vm/heap.c:128` doubles `want` until it wraps to 0 and hangs, once live
+    data passes 1 GiB.
+  * The bounds check of the loader (`vm/loader.c:10-13`) adds `pos + n`,
+    which can wrap.
+  * `bytes_allocated` (`vm/vm.h:123`) wraps at 4 GiB, and `--count` is meant
+    to print the same everywhere.
+* On both Windows widths `long` is 32 bits. `ftell` and `fseek` with `long`
+  (`vm/loader.c:34`, `vm/prims.c:1442-1466`) truncate positions past 2 GiB.
+
+**The runner.**
+* `tests/run-windows.sh` parses `-j` and ignores it; a full run takes about
+  9.5 minutes, one program at a time.
+* It sets no `TZ`, unlike `tests/run-tests.sh:19`.
+* It writes to a fixed `tests/out/windows`, so two VMs would overwrite each
+  other.
+* Its header says it runs `tests/run-tests.sh`, which it does not.
+* It starts each `.exe` in a directory on the Linux file system. Windows sees
+  that directory as a `\\wsl.localhost` UNC path served over 9P, not as NTFS.
+  `cmd.exe` will not work in it: it warns and falls back to `C:\Windows`.
+* Nothing of `tests/basis` runs on Windows at all.
+
+**What makes emulation possible.**
+* Rune's Basis has no signal handlers. `Posix.Signal` is only the numbers,
+  and the primitives are `kill`, `alarm` and `pause`. So the default action
+  of a signal is all a program can ever observe, and emulating that is
+  honest, not a fake.
+* The whole state of the VM can be listed. The collector's roots
+  (`vm/heap.c:89-97`) and a heap that can be walked object by object are all
+  there is, which makes M12 possible.
+
+## The skip list: what is realistic
+
+Every program in the skip list wants something Windows has in some form, and
+six pass as they stand once the system layer gives it. The other three also
+print what only Linux prints:
+* `uname` giving `Linux`;
+* `/bin/sh` and its syntax;
+* a home directory under `/`.
+
+No emulation can give those honestly. Those programs are split: what is
+portable stays in the test, and the lines only Linux can print move to a
+small Linux-only test. That test would fail on a Mac too, so the split is
+worth having for its own sake.
+
+| Program | Passes after | How |
+| --- | --- | --- |
+| `basis.inet6sock` | M3 | the constants, and `inet_pton`/`inet_ntop` without a socket |
+| `basis.os.io_poll` | M3 | a file on disk is always ready, as `poll` says on POSIX |
+| `basis.date_year_of_c` | M4 | Rune's own C-locale `strftime` |
+| `basis.inetsock_addresses` | M5 | Winsock; AF_UNIX from `afunix.h`; `socketpair` emulated |
+| `basis.netdb_lookup` | M5 | Winsock; Windows' `etc\protocol` and `etc\services` have tcp 6, udp 17, http 80 and ssh 22 |
+| `basis.socket_loopback` | M5 | Winsock, with `WSAPoll` for `Socket.select` |
+| `basis.posix_files` | M6 | once the home directory under `/` moves to the Linux-only test |
+| `basis.unix_pipes` | M7 | rewritten with the child chosen by the platform: `/bin/sh`, or `cmd.exe` |
+| `basis.posix_process` | M7 | ids, environment and signal numbers stay; `fork` moves to `basis.posix_fork`, `uname` giving `Linux` to the Linux-only test |
+
+The skip list ends with two lines:
+* the Linux-only test, category `LINUX`;
+* `basis.posix_fork`, category `FORK`, which goes too if M12 is done.
+
+## Constraints for all items
+
+* Each milestone is one or more commits, and each commit leaves `make check`
+  green. A change to the VM also passes `make vm-asan && sh
+  tests/run-tests.sh --vm bin/runevm-asan` and `make test-stress`.
+* `make check` never compiles `vm/sys_win.c`, so a green `make check` says
+  nothing about Windows. A milestone is done only when `make windows` builds
+  both VMs and `make test-windows` passes on both. From M2 on that includes
+  the Basis suite.
+* A new primitive goes through `vm/prims.def` and `docs/bytecode.md`, and is
+  written on the hosts in `tests/basis/host/rune-prim.sml` for the `xc1`
+  configurations.
+* The VM core stays C99 with no platform code: what needs the system goes
+  behind `vm/sys.h`, and every system layer answers each new call. When
+  `sys_posix.c` and `sys_none.c` have nothing to do, they answer `ENOSYS`.
+* A change of behaviour updates `docs/language.md` and `tests/lang`
+  (`make check-docs`). An `.expected` file is written by hand or reviewed
+  line by line.
+
+## Milestones
+
+### M1a. The core fixes a 32-bit VM needs -- S
+
+These need no Windows. They are portable C in the core, so `make check`
+covers them, and they come first so that M1b only adds the Windows side.
+
+* Growing the heap stops with "runevm: out of memory" when the doubling
+  would overflow, and no longer wraps (`vm/heap.c:128`).
+* The loader tests `n > len - pos` in place of `pos + n > len`
+  (`vm/loader.c:10-13`). It reads the file to its end, which removes its
+  `ftell` (`:34`).
+* `bytes_allocated` becomes `uint64_t`.
+* `--heap-size` and `--gc-stress` refuse a value that does not fit a
+  `size_t` (`vm/main.c:54,61`), where they now truncate it.
+* `sys_ftell` and `sys_fseek` join `vm/sys.h`, for `BinIO`'s positions
+  (`vm/prims.c:1442-1466`):
+  * `ftello`/`fseeko` in `sys_posix.c`;
+  * `_ftelli64`/`_fseeki64` in `sys_win.c`;
+  * `ftell`/`fseek` in `sys_none.c`.
+
+*Leaves verifiable:* a `.rbc` crafted to wrap the old bounds check is refused
+with a message.
+
+### M1b. Two widths -- M
+
+`make windows` builds `bin/runevm.exe` for x86_64 and `bin/runevm32.exe` for
+i686. The name follows `bin/rune-smlnj32`: no suffix is 64 bits.
+`make test-windows` compiles each program once and runs it on both VMs, and
+prints one summary line per VM.
+
+* **The 32-bit build.**
+  * `sys_win.c` calls the 64-bit time functions by name: `_localtime64_s`,
+    `_gmtime64_s`, `_mktime64`, `_mkgmtime64`, `__time64_t`. That is right on
+    both widths. `-D__MINGW_USE_VC2005_COMPAT` does the same in one flag but
+    hides it.
+  * i686 is built with `-msse2 -mfpmath=sse -Wl,--large-address-aware`.
+  * Both widths get `-D__USE_MINGW_ANSI_STDIO=1` spelled out. Every `%zu` and
+    `%lld` of the VM depends on it, and `-std=c99` gives it only by accident.
+* **What each `.exe` imports** is checked after the link (`objdump -p`): only
+  `KERNEL32.dll` and `msvcrt.dll`, later `WS2_32.dll`. The posix-threads
+  flavour of mingw would bring `libwinpthread-1.dll`, and the VM would not
+  start.
+* **The runner.**
+  * The results go to `tests/out/windows` and `tests/out/windows32`.
+  * `-j` works, with the `xargs -P` scheme of `tests/run-tests.sh`.
+  * `TZ` reaches the `.exe` through `WSLENV`.
+  * The `.cwarn` files are checked.
+  * Each program runs in a scratch directory on NTFS under `/mnt/c`, not on
+    the `\\wsl.localhost` path. Without that, M6 would test the 9P redirector
+    rather than NTFS, and M7 could not start `cmd.exe`.
+  * The header says what the script does.
+* **The doctor.**
+  * A `windows` scope in `scripts/doctor.sh` compiles a probe with each
+    compiler, and the `.exe` rules depend on its stamp.
+  * The scope stays out of `all`, so `make doctor` is still green on a
+    machine without mingw.
+  * The packages for the two compilers are `gcc-mingw-w64-i686` and
+    `gcc-mingw-w64-x86-64`.
+* **A layout check.**
+  * A program of `tests/lang` with `--count` in its `.vmargs` prints its
+    counts of bytes and objects.
+  * `Value` is 16 bytes and `Obj` 8 on Linux and on both Windows targets, so
+    the numbers must be the same on all three.
+* **Width markers.** If the two VMs ever differ on a program, its line in
+  `tests/windows-skip.txt` names the width. The syntax is added only then.
+
+*Leaves verifiable:* the same result on both VMs, expected to be 127 of 136
+each. A difference is either fixed or explained in the skip list.
+
+### M2. The Basis suite on both Windows VMs -- M
+
+The owner's own list asks for a "full check on lang and basis" on Windows,
+and the Basis suite exercises far more of the system layer than
+`tests/lang`. It comes before the fixes so that each fix is measured.
+
+* **Configurations.** `tests/basis/run-matrix.sh` gets two, say
+  `rune-windows` and `rune-windows32`. It already takes `RUNEVM` and runs
+  `prog.rbc` by a relative path, which is what an `.exe` needs. But it
+  writes `id=rune` whatever the VM (`run-matrix.sh:797-801`), so the Windows
+  results need ids of their own.
+* **Known failures.**
+  * `tests/basis/deviations.txt` gets a `WINDOWS` category.
+  * A `RUNE-DEV` or `SPEC-AMBIGUOUS` line for `rune` holds for the Windows
+    configurations as it does for `xc1`.
+  * Whether the Windows lines reach `gen-annotations`, and so the generated
+    pages, is decided here.
+* **Checks.**
+  * `timeout` in `run-matrix.sh` kills the WSL proxy of an `.exe`. Check that
+    the Windows process dies with it.
+  * `make test-windows` runs the suite on both VMs after `tests/lang`.
+
+**Expected deviations:**
+* Local time: msvcrt reads `NST3:30NDT` from `TZ` and ignores the rule
+  `,M3.2.0,M11.1.0`. It applies the rules of the United States, which happen
+  to be the same.
+* msvcrt refuses a time before 1970 in `localtime` and `mktime`.
+* Everything M3 fixes.
+
+*Leaves verifiable:* the number of Windows deviations per VM, written into
+the Status table. Every milestone after this one gives its effect as a drop
+in that number, as well as a shorter skip list.
+
+### M3. Constants, errors and two quick wins -- S
+
+* **A constant table in `sys_win.c`.**
+  * Linux's numbers for what the Windows layer decodes or emulates itself:
+    `O_*`, `SEEK_*`, `F_*`, `FD_CLOEXEC`, the signals and `W*`. `sys_openf`
+    already decodes those.
+  * Winsock's own numbers for what goes to Winsock unchanged: `AF_*`,
+    `SOCK_*`, `SOL_SOCKET`, `SO_*`, `IPPROTO_*`, `MSG_*`, `SHUT_*`.
+  * Every `E*` name the library asks for, the socket ones included.
+* **Errors.**
+  * `sys_win.c` names and describes the error numbers itself, where msvcrt
+    stops at 99.
+  * It clears the error wherever `sys_posix.c` does.
+* **The library** checks the results of `getpid`, `wnohang` and `addrType`,
+  so a system that lacks one raises `SysErr` and does not give a wrong
+  number.
+* **Quick wins.**
+  * `sys_inet_addr`, `sys_inet6_addr` and their `_parts` use `inet_pton` and
+    `inet_ntop`, which need no socket and no `WSAStartup`.
+  * `sys_poll` reports a file on disk ready, as POSIX's `poll` does.
+  * `poll` of no descriptors sleeps for its timeout, where it now returns at
+    once.
+
+*Removes* `basis.inet6sock` and `basis.os.io_poll`. *Leaves verifiable:* a
+program that does `Posix.FileSys.createf` and `Posix.IO.lseek` with
+`SEEK_END`, which failed without a word before, and a drop in M2's count.
+
+### M4. A C-locale `strftime` -- S
+
+* **Portable C in the core** formats the directives `lib/basis/date.sml:173`
+  lets through, `aAbBcdHIjmMpSUwWxXyYZ%`, the way glibc does in the C
+  locale:
+  * `%Y` with no padding and a `-` sign;
+  * `%c` as `%a %b %e %H:%M:%S %Y`, where msvcrt writes `%m/%d/%y
+    %H:%M:%S`;
+  * glibc's rule for `%y` of a negative year.
+* **The system layer** answers only `%Z`, which reaches C only for a local
+  date.
+* **`Date.fmt` then prints the same on every platform.** Rune never calls
+  `setlocale`, so that is what the specification's `strftime` means here.
+  The SML check that a year fits a C `int` stays, because `date_year_of_c`
+  expects `Date` beyond it.
+
+*Removes* `basis.date_year_of_c`.
+
+### M5. Sockets over Winsock -- M, several commits
+
+* **A socket is a descriptor.** The library holds a socket as the same `int`
+  as a file (`lib/basis/socket.sml:41`). So `sys_win.c` keeps a table from
+  descriptors to `SOCKET`, in a non-negative range that never meets a CRT
+  descriptor.
+  * read, write, close, dup, `fstat`, `fcntl`, `sys_desc_kind` (5) and
+    `sys_poll` look a descriptor up there first.
+  * `O_NONBLOCK` goes through `F_GETFL`/`F_SETFL` to `FIONBIO`. The bit is
+    remembered, because Winsock cannot report it.
+* **Starting and errors.** `WSAStartup` runs on first use, since `vm/sys.h`
+  has no start-up call. `WSAGetLastError` codes become errors of the names M3
+  gave them.
+* **Polling.** `sys_poll` uses `WSAPoll` when every descriptor in the set is
+  a socket, which is what `Socket.select` needs (`socket.sml:281`).
+* **Addresses.**
+  * AF_UNIX comes from `afunix.h` (Windows 10 1803 and later).
+  * `socketpair` is emulated with a listening AF_UNIX socket.
+  * The text of `INet6Sock.fromAddr` goes through the SML `fromString`, so
+    it is the same on every platform, not whatever `inet_ntop` writes.
+* **Databases.** The protocol, service and host databases are ws2_32's.
+* **Windows' own behaviours.**
+  * `SIO_UDP_CONNRESET` is turned off: otherwise `recvfrom` reports an
+    earlier ICMP "port unreachable" as a failure, which POSIX does not.
+  * Sockets are made with `WSA_FLAG_NO_HANDLE_INHERIT`, for M7.
+* **The link** takes `-lws2_32`.
+
+*Removes* `basis.inetsock_addresses`, `basis.netdb_lookup` and
+`basis.socket_loopback`.
+
+### M6. POSIX counterparts short of processes -- M, three or four commits
+
+Each commit takes one group and leaves both suites green.
+
+**Ids, users, `uname`.**
+* `getpid`, and `getppid` from a Toolhelp snapshot.
+* The user and group ids are the RIDs of the token's user and primary group.
+  `stat` gives the current user as the owner of every file, as Cygwin does
+  with `noacl`.
+* `getpwuid` and `getpwnam` answer for the current user only:
+  `GetUserName`, `USERPROFILE` written with `/`, and `COMSPEC`.
+* `getgroups`, `getlogin`, and `uname` with the system name `Windows`.
+* `times`: the children's times come from M7.
+* The names of `sysconf` and `pathconf` that Windows can answer: the page
+  size, `_getmaxstdio`, `MAX_PATH`.
+
+**Modes and links.**
+* A mode is its owner bits: `w` is the inverse of the read-only attribute,
+  and the group and other bits are 0.
+* `fchmod`, and `umask` through `_umask`.
+* `link` is `CreateHardLink`.
+* `symlink` passes the flag for no privilege, and gives `EPERM` without
+  Developer Mode.
+* `readlink` reads the reparse data.
+* `unlink` of a read-only file clears the attribute first, since POSIX
+  ignores the mode there.
+
+**`fcntl` and locks.**
+* `F_GETFL`/`F_SETFL`.
+* Locks are `LockFileEx`, and `F_GETLK` is approximated by trying the lock.
+* The terminal calls give `ENOTTY` on a descriptor that is not a console,
+  where they now give `ENOSYS`.
+
+**The test.** `basis.posix_files` loses its line on the home directory to the
+Linux-only test.
+
+*Removes* `basis.posix_files`.
+
+### M7. A spawn primitive -- M
+
+`Unix.execute` today is SML over `fork`, `dup2` and `exec`
+(`lib/basis/unix.sml:28-59`). A primitive that starts a program directly
+gives Windows the process group of the Basis without `fork`. It is also
+most of what M10 and M12 need.
+
+* **The primitive.** One new primitive takes:
+  * the program, its arguments and its environment;
+  * whether to search `PATH`;
+  * the three descriptors the child gets as its standard streams.
+* **On POSIX** it is `fork`, `dup2` and `execve` in C, and `_exit(126)` when
+  `execve` fails. A failed exec therefore still looks as it does today:
+  the child exits with 126, as the specification asks
+  (`lib/basis/unix.sml:44-48`). `posix_spawn` would report it as an error
+  of the call instead.
+* **On Windows** it is `CreateProcess`:
+  * started suspended, with `STARTF_USESTDHANDLES` and a
+    `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` so that the child inherits only its
+    three handles;
+  * the arguments quoted by msvcrt's rules, and `PATH` searched with
+    `PATHEXT`;
+  * the process handles kept in a table for `waitpid`, which waits on more
+    than 64 of them in turns;
+  * `kill` as `TerminateProcess`, with an exit code no program gives
+    (`0xE0520000` with the signal in its low bits), which `waitpid` reports
+    as "signalled";
+  * NTSTATUS codes mapped to signals: `0xC0000005` to `SIGSEGV`,
+    `0xC000013A` to `SIGINT`. msvcrt's `abort` exits with 3 and stays
+    "exited 3".
+* **In the library**, one code path on every platform:
+  * `Unix.execute`, `executeInEnv`, `reap` and `kill` go through the
+    primitive;
+  * `Posix.Process.exec` alone, with no `fork` before it, spawns, waits and
+    exits with the child's status;
+  * `OS.Process.system` spawns too, where msvcrt's `system` would hand the
+    child every inheritable handle.
+* **Handles.**
+  * Every CRT descriptor is opened with `_O_NOINHERIT`.
+  * `FD_CLOEXEC` is a bit the system layer keeps, which the spawn reads.
+  * The inherit flag of a handle is left alone, which M12 needs.
+* **The tests.**
+  * `basis.unix_pipes` is written with the child chosen by the platform:
+    `/bin/sh` on POSIX, or `cmd.exe` in the NTFS directory of M1b.
+  * `basis.posix_process` is split three ways:
+    * a portable test: ids, environment case-insensitively, `isatty`,
+      error names, signal numbers;
+    * `basis.posix_fork`, category `FORK`: `fork` with `exec` and
+      `waitpid`, and `fork` with `pause` and `kill`;
+    * the Linux-only test, category `LINUX`: `uname` giving `Linux`, and
+      the home directory from M6.
+
+*Removes* `basis.unix_pipes` and `basis.posix_process`, and adds
+`basis.posix_fork` and the Linux-only test.
+
+### M8. `poll` beyond sockets and files -- S
+
+* Pipes are asked with `PeekNamedPipe`.
+* The console is asked with `WaitForSingleObject` and `PeekConsoleInput`.
+* A set that mixes kinds is asked in a short loop until something is ready
+  or the time is up.
+
+Under WSL the standard handles of an `.exe` are pipes, so the console branch
+can only be tested by hand.
+
+### M9 to M11. The `Windows` structure
+
+`WINDOWS` is optional in the specification. It is the one structure only
+`make test-windows` can exercise.
 
 | Part | What it needs from the system layer |
 | --- | --- |
@@ -40,21 +487,168 @@ ever exercise.
 | `Config` | `GetVersionEx` or the version helpers, `GetSystemDirectory`, `GetWindowsDirectory`, `GetComputerName`, `GetUserName` |
 | `Reg` | the registry: `RegOpenKeyEx`, `RegCreateKeyEx`, `RegCloseKey`, `RegDeleteKey`, `RegDeleteValue`, `RegEnumKeyEx`, `RegEnumValue`, `RegQueryValueEx`, `RegSetValueEx`, and the value types (`REG_SZ`, `REG_DWORD`, `REG_BINARY`, `REG_MULTI_SZ`, `REG_EXPAND_SZ`), which `Reg.value` is a datatype of |
 | `DDE` | `DdeInitialize`, `DdeConnect`, `DdeClientTransaction`, `DdeDisconnect`, `DdeUninitialize`, and the string handles around them |
-| `execute`, `simpleExecute`, `reap`, the stream accessors | `CreateProcess` with `STARTUPINFO` redirecting the three handles to pipes made with `CreatePipe`, and `WaitForSingleObject` with `GetExitCodeProcess`; the streams then have to reach `TextIO` and `BinIO` through the descriptor layer, as `Unix.execute` does on POSIX |
+| `execute`, `simpleExecute`, `reap`, the stream accessors | M7's spawn, with the three handles redirected to pipes; the streams reach `TextIO` and `BinIO` through the descriptor layer, as `Unix.execute`'s do |
 | `getVolumeInformation` | `GetVolumeInformation` |
 | `findExecutable`, `launchApplication`, `openDocument` | `FindExecutable` and `ShellExecute`, which are of the shell library and not of the C runtime |
 
-The work is about the size of the `Posix` structure: a new group of calls in
-`vm/sys_win.c` behind new entries of `vm/sys.h`, which every other system
-layer then has to answer `ENOSYS` for, plus the SML and a suite that can only
-run under `make test-windows`. `DDE` is the odd one: it is an interface
-Microsoft has not recommended since the 1990s, and a conforming `Windows`
-needs it all the same.
+Each part is a group of calls in `vm/sys_win.c` behind new entries of
+`vm/sys.h`, which the other system layers answer with `ENOSYS`. Each also
+needs its SML and a suite only `make test-windows` runs.
 
-**Recommendation.** Do `Key`, `Status`, `Config` and `Reg` first -- they are
-self-contained, and the registry is what a program actually wants from this
-structure -- then the process group, which shares its shape with
-`Unix.execute` and can borrow its tests. Leave `DDE` last and let it raise
-`SysErr` with `ENOSYS` until something wants it; the structure will not match
-`WINDOWS` until it is there, so it stays out of the claims and out of
-`structures.md` until then.
+* **M9 (M):** `Key`, `Status`, `Config` and `Reg`. They are self-contained,
+  and the registry is what a program actually wants from this structure.
+* **M10 (M):** the process group on M7, then `getVolumeInformation`,
+  `findExecutable`, `launchApplication` and `openDocument`.
+* **M11 (M):** `DDE`. Microsoft has not recommended it since the 1990s, and
+  a conforming `Windows` needs it all the same. Until then it raises
+  `SysErr` with `ENOSYS`.
+
+The structure does not match `WINDOWS` until M11 is done. So until then it
+stays out of the claims (`docs/generated/basis/claims.tsv`) and out of
+`docs/generated/basis/structures.md`.
+
+### M12. `fork` by carrying the VM across -- L, optional
+
+Windows has no `fork`, but a Rune program is its VM. `fork` can start a
+second VM and hand it the first one's state, and the child carries on as if
+the process had been copied. Cygwin copies the address space of a native
+program to do the same. Here the state is only what the collector already
+knows how to list.
+
+**The estimate:** about 2,000 lines and three to five weeks, in four
+commits or more:
+
+| Part | Lines |
+| --- | ---: |
+| The image in the core | 500 to 700 |
+| The POSIX side | about 150 |
+| The Windows side | 900 to 1,200 |
+| Tests and documents | about 300 |
+
+It comes last because M7 already gives every program that only starts
+other programs. M12 adds `Posix.Process.fork` itself, which
+`basis.posix_fork` and a few programs want.
+
+* **The image.** `p_posix_fork` (`vm/prims.c:1515`) writes the VM before it
+  returns. `vm/interp.c:205` has already moved `pc` past the instruction.
+  * The heap goes as it stands: the from-space `[0, heap_used)` can always be
+    walked between allocations, and pointers become offsets. The child's
+    heap is the same, so `--count`, `--gc-stress` and the collector's count
+    carry on as after a real `fork`.
+  * With it go the stack, the frames and handlers, the globals and
+    `global_set`, and the built-in exceptions. An exception constructor's
+    identity is its address, which offsets keep.
+  * Also the counters, the flags, `io_errno`, `argv` and `progname`, and the
+    rounding mode.
+  * The program goes whole: its functions, names, code and constants. The
+    child does not load the `.rbc` again, which would allocate the constants
+    anew and could fail after a `chdir`.
+  * The file table goes with each file's mode, closed slots included,
+    because handles are never reused. `p_file_open` has to start keeping the
+    mode.
+* **Before writing the image,** `fflush(NULL)`, and every input that can seek
+  is synchronised with `fseek(f, 0, SEEK_CUR)`, so the child reads on from
+  where the program stopped. What a pipe has buffered cannot follow. That is
+  documented.
+* **The system layer's own state** goes through a new pair,
+  `sys_image_save`/`sys_image_restore`: open directory streams, M5's
+  sockets, the `FD_CLOEXEC` bits, the `umask`.
+* **The child** is started as `runevm --resume`, and `vm_run` is split so it
+  does not make the built-in exceptions again or push a second top-level
+  frame. It rebuilds its state and returns 0 from `fork`.
+* **On Windows**:
+  * the child is made with `CreateProcess`, suspended, and inherits nothing;
+  * each descriptor's handle is given to it with `DuplicateHandle`, and each
+    socket with `WSADuplicateSocket`, cloexec ones included, since cloexec
+    matters only at `exec`;
+  * the image goes through a pipe handle given the same way;
+  * the child rebuilds the exact descriptor numbers with `_open_osfhandle`
+    and `_dup2`, because SML values hold them.
+  * msvcrt's own passing of descriptors (`lpReserved2`) is not used: it
+    names handles the kernel only copies if they are inheritable.
+* **`exec` in a child made this way** is M7's spawn, and then the child
+  waits and exits with the program's status.
+  * Before it waits, it closes every descriptor and socket and frees its
+    heap. Otherwise it holds, for example, the write end of a sibling's
+    input, and two `Unix.execute`s deadlock.
+  * The program runs in a job object with `KILL_ON_JOB_CLOSE`, so a `kill`
+    of the child reaches it.
+* **The other signal calls.**
+  * `alarm` is a timer that ends the process as `SIGALRM` would.
+  * `pause` waits for ever, since no handler can end it.
+  * The stop and continue signals stay `ENOSYS`.
+* **Tested on Linux too.** A VM option `--emulate-fork` makes the POSIX layer
+  take the same path. Before starting `/proc/self/exe` it clears
+  `FD_CLOEXEC` on every descriptor, and the child restores the bits from the
+  image.
+  * A program of `tests/lang` runs with it in its `.vmargs`, so it also runs
+    under ASan and `make test-stress`.
+  * The program forks with a cycle in the heap, an exception compared by
+    identity across the `fork`, and a handler pushed before the `fork` and
+    raised to in the child. It also forks with a file half read and after a
+    `chdir`.
+  * This tests the image and the resumption. The handles, the job and the
+    exec emulation are tested only under `make test-windows`.
+
+*Removes* `basis.posix_fork`. The skip list is then the Linux-only test
+alone.
+
+## Risks
+
+1. **WSL interop.**
+   * Environment variables reach an `.exe` only through `WSLENV`.
+   * A working directory on the Linux side is a UNC path.
+   * `timeout` kills the proxy, not necessarily the program.
+   * *Mitigation:* M1b runs from NTFS and passes `TZ` explicitly; M2 checks
+     the timeout.
+2. **msvcrt's calendar.**
+   * No local time before 1970.
+   * A `TZ` rule it partly ignores.
+   * `strftime` limited to the years 0 to 9999.
+   * *Mitigation:* M4 formats in Rune's own code. The rest is recorded in
+     M2's deviations rather than rebuilt, unless the Basis suite shows a
+     program that needs it.
+3. **x87 on i686.**
+   * `-mfpmath=sse` moves the arithmetic, but a `double` still comes back in
+     an x87 register, which can quieten a signalling NaN.
+   * The 32-bit maths library can differ from the 64-bit one in the last
+     bit.
+   * *Mitigation:* expect deviations only the 32-bit VM has, and record them
+     under `WIDTH` with the reason.
+4. **The 32-bit address space.**
+   * A collection holds the old space and the new one at once. With
+     `--large-address-aware` under WoW64, live data tops out around 512 MiB;
+     without it, around 256 MiB (an estimate).
+   * No program of `tests/lang` comes near that.
+   * *Mitigation:* M1a makes running out a clean error, not a hang.
+5. **Symbolic links need Developer Mode.** On a machine without it M6's test
+   of `symlink` expects `EPERM`. The expected output must not depend on which
+   machine runs it.
+6. **The cost of `fork` in M12.** Each `fork` copies the live heap and
+   starts a process.
+   * *Mitigation:* measure it when M12 is built. M7 already keeps
+     `Unix.execute` off `fork` entirely.
+
+## Out of scope
+
+* **`OS.Path` with volumes and `\`.** Rune's `OS.Path` is POSIX's, so
+  `OS.FileSys.getDir` gives `C:/...`, which `OS.Path.isAbsolute` calls
+  relative. The specification describes the Windows rules. Choosing them at
+  run time is a project of its own.
+* **Rune itself on Windows:** running `bin/rune.rbc` on the Windows VMs, and
+  `make install` there.
+* **A 32-bit Linux VM under `make check`.** The i386 headers are installed,
+  and `gcc -m32` compiles the VM. It would catch 32-bit mistakes without
+  Windows, but it is a target of its own and not asked for here.
+* **Continuous integration.**
+
+## Verification
+
+* Each milestone's *Leaves verifiable* line holds.
+* The skip list and M2's count go down by what the milestone says.
+* The whole of `make check` stays green, together with ASan and
+  `test-stress` for the VM.
+* At the end, `make test-windows` reports both VMs over `tests/lang` and
+  `tests/basis`.
+* `tests/windows-skip.txt` holds the Linux-only test, and `basis.posix_fork`
+  too if M12 is not done. Every category in its header still has a program.
