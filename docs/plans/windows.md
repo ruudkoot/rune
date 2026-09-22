@@ -24,7 +24,7 @@ estimate.
 | M3, constants, errors and two quick wins | done: a table of the named constants (the numbers of Linux for what the layer decodes itself, Winsock's for what goes to Winsock), every error of POSIX with glibc's text, the error cleared where POSIX clears it, `getpid` and the ids checked by the library, the addresses of sockets without a socket, a file on disk ready for `poll`; `basis.inet6sock` and `basis.os.io_poll` leave the skip list and `basis.posix_seek` joins `tests/lang`; the Basis suite: 667 of 137,054 checks fail on either VM (963 and 1,004 before), each explained by a `WINDOWS` line that names its milestone |
 | M4, a C-locale `strftime`, reals in the rounding mode, local time in any year | done: `Date.fmt` is formatted in the core as glibc formats it in the C locale (780 lines of edge years and every directive agree with glibc), only `%Z` of a local date asks the system; `Real.fromString` reads in the rounding mode on every C library (132 numerals in four modes agree with glibc, subnormals and overflow included); the layer of Windows reaches local time outside 1970 to 3000 by 400-year cycles. `basis.date_year_of_c` leaves the skip list and `basis.date_local_before_1970` joins `tests/lang`; Basis suite: 661 failures on either VM, all explained. Found on the way: glibc keeps no summer time before 1970 under a POSIX `TZ` rule, where the layer of Windows follows the rule in every year |
 | M5, sockets over Winsock | done: sockets in a table beside the descriptors of msvcrt, `WSAPoll`, the databases of ws2_32, AF_UNIX streams and their pairs, and five differences of Winsock found by the tests and made good (below); `basis.inetsock_addresses`, `basis.netdb_lookup` and `basis.socket_loopback` leave the skip list. In the Basis suite what stays is Windows' own: no datagrams in the Unix domain, `SIOCATMARK`, and a resolver that names `localhost` after the machine |
-| M6, POSIX counterparts short of processes | not started |
+| M6, POSIX counterparts short of processes | done: ids from the token, the user and groups of the process, `uname`, `times`, `sysconf`, `pathconf`; the console as a terminal; paths of a drive as `/C:/...`, `/dev/null` and `/dev/tty`; `stat` from handles (inode, device, links), owner modes, executables by `PATHEXT`; hard and symbolic links and `readlink`; files that can be removed while open; `fcntl` of files (close-on-exec, append, non-blocking pipes, synchronous), `F_DUPFD`, locks by `LockFileEx`. `basis.posix_files` leaves the skip list as it is. Basis suite: 236 checks fail on either VM (398 before), and what stays is Windows' own -- no bits for a group or others, a file its owner cannot fail to read, no FIFOs, no user `root`, the root of a drive -- or asks `sh` |
 | M7, a spawn primitive | not started |
 | M8, `poll` beyond sockets and files | not started |
 | M9 to M11, the `Windows` structure | not started |
@@ -439,8 +439,22 @@ Each commit takes one group and leaves both suites green.
 * The terminal calls give `ENOTTY` on a descriptor that is not a console,
   where they now give `ENOSYS`.
 
-**The test.** `basis.posix_files` loses its line on the home directory to the
-Linux-only test.
+**Paths**, which the tests showed to be needed.
+* A path of a drive is handed to the library as `/C:/Users/...`, and taken
+  back as `C:/...`: absolute to the `OS.Path` of POSIX, and no name of
+  Windows has a colon in it. `realPath`, `fullPath` and `mkRelative` then
+  work as on POSIX. `/dev/null` is `NUL` and `/dev/tty` is `CON`.
+* TextIO, BinIO and the loader open their files through `sys_fopen`, a new
+  call of `vm/sys.h`, so that their paths are translated too.
+* Every file is opened with `FILE_SHARE_DELETE`, so that it can be removed
+  or renamed while open, as on POSIX.
+* `stat` reads a handle's file information: the index of the file is its
+  inode, the serial of the volume its device, and the links are counted.
+* Windows says a path is not found where POSIX says why; the layer names
+  `ENOTDIR` and `ENAMETOOLONG` itself.
+
+**The test.** `basis.posix_files` passes as it is: the home directory is
+`/C:/Users/...`, which starts with `/`.
 
 *Removes* `basis.posix_files`.
 
@@ -665,10 +679,10 @@ alone.
 
 ## Out of scope
 
-* **`OS.Path` with volumes and `\`.** Rune's `OS.Path` is POSIX's, so
-  `OS.FileSys.getDir` gives `C:/...`, which `OS.Path.isAbsolute` calls
-  relative. The specification describes the Windows rules. Choosing them at
-  run time is a project of its own.
+* **`OS.Path` with volumes and `\`.** Rune's `OS.Path` is POSIX's. M6
+  hands it the paths of Windows as `/C:/...`, which it reads as absolute;
+  the rules of Windows that the specification describes, chosen at run
+  time, would be a project of its own.
 * **Rune itself on Windows:** running `bin/rune.rbc` on the Windows VMs, and
   `make install` there.
 * **A 32-bit Linux VM under `make check`.** The i386 headers are installed,

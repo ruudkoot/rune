@@ -1,5 +1,6 @@
 /* Bytecode loader with validation: the .rbc file is untrusted input. */
 #include "vm.h"
+#include "sys.h"
 
 typedef struct Reader {
     const uint8_t *data;
@@ -49,7 +50,7 @@ static uint8_t *read_file(FILE *f, size_t *size) {
 }
 
 int load_program(VM *vm, const char *path, char *err, size_t errlen) {
-    FILE *f = fopen(path, "rb");
+    FILE *f = sys_fopen(path, "rb");
     if (!f) return fail(err, errlen, "cannot open file");
     size_t size = 0;
     uint8_t *data = read_file(f, &size);

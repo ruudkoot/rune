@@ -65,6 +65,11 @@ const char *sys_read_dir(int dir);            /* NULL at the end and on failure 
 int sys_rewind_dir(int dir);
 int sys_close_dir(int dir);
 
+/* fopen, for the files the core opens (TextIO and BinIO, the bytecode): a
+   system whose paths are not those of the library translates them here.
+   NULL on failure, with the reason in errno, as fopen leaves it. */
+FILE *sys_fopen(const char *path, const char *mode);
+
 /* I/O descriptors. The descriptor of an open file, which is what the two
    calls below take; -1 when there is none. */
 int sys_fileno(FILE *file);

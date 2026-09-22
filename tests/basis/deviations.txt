@@ -606,35 +606,34 @@ rune:windows* | Socket.Ctl.getATMARK/before-and-at-the-mark | WINDOWS | stays: W
 rune:windows* | NetHostDB.name/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.aliases/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.getByAddr/loopback | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
-rune:windows* | NetHostDB.getHostName/uname | WINDOWS | M6: uname
 rune:windows* | OS.IO.poll/* | WINDOWS | M8: poll of a pipe
 rune:windows* | OS.IO.is*/pipe-* | WINDOWS | M8: poll of a pipe
-rune:windows* | OS.IO.Kind.* | WINDOWS | M6: /dev/null, a directory and a symbolic link as descriptors
-rune:windows* | OS.FileSys.* | WINDOWS | M6: a path of Windows (C:/...) is not absolute to OS.Path, which is POSIX's; links, file modes and the errors of POSIX
-rune:windows* | OS.SysErr/chDir-to-a-file-is-notdir | WINDOWS | M6: Windows says ENOENT where POSIX says ENOTDIR
-rune:windows* | OS.errorName/unique | WINDOWS | M6: Windows says ENOENT where POSIX says ENOTDIR
+rune:windows* | OS.FileSys.fullPath/root | WINDOWS | stays: the root of Windows is that of a drive, /C:/
+rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows has no execute permission; a file is executable by its extension (PATHEXT)
+rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner
 rune:windows* | OS.Process.system/* | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
 rune:windows* | OS.Process.getEnv/agrees-with-the-shell | WINDOWS | stays: the test asks sh, and the shell of Windows is cmd.exe
 rune:windows* | Posix.Error.child/* | WINDOWS | M7: waitpid
-rune:windows* | Posix.Error.* | WINDOWS | M6: Windows says ENOENT or EACCES where POSIX names the cause, and has no links or terminal yet
-rune:windows* | @load/posix_error | WINDOWS | M6: a part of the test the system layer fails with ENOSYS
-rune:windows* | Posix.FileSys:POSIX_FILE_SYS/* | WINDOWS | M6: user and group ids
+rune:windows* | Posix.Error.srch/kill-reaped-child | WINDOWS | M7: kill
+rune:windows* | Posix.Error.acces/open-unreadable-file | WINDOWS | stays: Windows cannot make a file unreadable to its owner
+rune:windows* | Posix.Error.* | WINDOWS | M12: the check runs in a child made by fork
 rune:windows* | Posix.FileSys.mkfifo/* | WINDOWS | stays: Windows has no named pipes in the file system
 rune:windows* | Posix.FileSys.*/*fifo* | WINDOWS | stays: Windows has no named pipes in the file system
-rune:windows* | Posix.FileSys.* | WINDOWS | M6: file modes, links, owners, umask, pathconf and the paths of Windows
-rune:windows* | Posix.IO:POSIX_IO/* | WINDOWS | M6: process ids
-rune:windows* | Posix.IO.* | WINDOWS | M6: fcntl, dup of a descriptor at a base, and locks
-rune:windows* | Posix.ProcEnv:POSIX_PROC_ENV/* | WINDOWS | M6: process ids
-rune:windows* | Posix.ProcEnv.* | WINDOWS | M6: user and group ids
-rune:windows* | @load/posix_procenv | WINDOWS | M6: a part of the test the system layer fails with ENOSYS
+rune:windows* | Posix.FileSys.ST.is*/none-of-the-others | WINDOWS | stays: the check makes a named pipe, which Windows does not have in the file system
+rune:windows* | Posix.FileSys.chdir/absolute | WINDOWS | stays: the root of Windows is that of a drive, /C:/
+rune:windows* | Posix.FileSys.A_READ/not-readable | WINDOWS | stays: Windows cannot make a file unreadable to its owner
+rune:windows* | Posix.FileSys.* | WINDOWS | stays: a mode of Windows is whether the owner may write, and an extension that makes a file executable; the owner always reads, and a group or others have no bits
+rune:windows* | Posix.ProcEnv.getpid/PPID-of-shell | WINDOWS | stays: the test asks sh
+rune:windows* | Posix.ProcEnv.getppid/of-child | WINDOWS | M12: fork
+rune:windows* | Posix.ProcEnv.getpid/of-child-differs | WINDOWS | M12: fork
+rune:windows* | Posix.ProcEnv.getpgrp/* | WINDOWS | M12: fork (and Windows has no process groups)
+rune:windows* | Posix.ProcEnv.setpgid/* | WINDOWS | M12: fork (and Windows has no process groups)
+rune:windows* | Posix.ProcEnv.setsid/* | WINDOWS | M12: fork (and Windows has no sessions)
+rune:windows* | Posix.ProcEnv.times/children | WINDOWS | M12: fork
+rune:windows* | Posix.ProcEnv.environ/has-PATH | WINDOWS | stays: Windows spells it Path
+rune:windows* | Posix.ProcEnv.* | WINDOWS | stays: the test compares with what sh says (id, uname, date, getconf), and the shell of Windows is cmd.exe
 rune:windows* | Posix.SysDB.*/root | WINDOWS | stays: Windows has no user or group called root
-rune:windows* | Posix.SysDB:POSIX_SYS_DB/* | WINDOWS | M6: user and group ids
-rune:windows* | Posix.SysDB.* | WINDOWS | M6: the user and group of the process
-rune:windows* | Posix.TTY:POSIX_TTY/* | WINDOWS | M6: process ids
-rune:windows* | Posix.TTY.* | WINDOWS | M6: the control characters (NCCS is 0 here)
-rune:windows* | @load/posix_tty | WINDOWS | M6: the control characters (NCCS is 0 here)
-rune:windows* | Posix:POSIX/* | WINDOWS | M6: process, user and group ids
-rune:windows* | Posix.Process:POSIX_PROCESS/* | WINDOWS | M6: process ids
+rune:windows* | Posix.SysDB.* | WINDOWS | stays: the test compares with what sh says (id, getent), and the shell of Windows is cmd.exe
 rune:windows* | Posix.Process.fromStatus/system-killed | WINDOWS | stays: the command is run by cmd.exe, and the test's are sh's
 rune:windows* | Posix.Process.* | WINDOWS | M12: fork; M7: exec, wait and kill without it
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)

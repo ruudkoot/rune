@@ -3,16 +3,15 @@
    nothing else in the tree depends on it.
 
    What Windows has, this gives: the clock, the calendar, files and
-   directories, descriptors, the environment, running a command, the named
-   constants and errors of POSIX (numbered as Linux numbers them where this
-   layer decodes them itself, as Winsock does where they go to Winsock), and
-   the sockets, which are Winsock's. What it does not do yet fails with
-   ENOSYS, as in `make vm SYS=none`, and the library turns that into
-   OS.SysErr; docs/plans/windows.md says which milestone takes what, and
-   tests/basis/deviations.txt which checks of the suite fail meanwhile.
-
-   Paths come to and from the library as the library writes them; the CRT of
-   mingw takes both separators. */
+   directories with their links, descriptors, the environment, running a
+   command, the named constants and errors of POSIX (numbered as Linux
+   numbers them where this layer decodes them itself, as Winsock does where
+   they go to Winsock), the sockets, which are Winsock's, the user and groups
+   of the process, and the console as a terminal. A path of a drive goes to
+   the library as /C:/... (the section on paths says why). What it does not
+   do fails with ENOSYS, as in `make vm SYS=none`, and the library turns that
+   into OS.SysErr; docs/plans/windows.md says which milestone takes what, and
+   tests/basis/deviations.txt which checks of the suite fail. */
 #include "sys.h"
 
 #include <errno.h>
@@ -31,6 +30,7 @@
 #include <ws2tcpip.h>
 #include <afunix.h>
 #include <mstcpip.h>
+#include <tlhelp32.h>
 #ifndef SIO_UDP_CONNRESET
 #define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
 #endif
@@ -327,49 +327,301 @@ int sys_system(const char *command) {
 }
 const char *sys_getenv(const char *name) { return getenv(name); }
 
-int sys_mkdir(const char *path) { return _mkdir(path) == 0 ? 0 : failed(); }
-int sys_rmdir(const char *path) { return _rmdir(path) == 0 ? 0 : failed(); }
-int sys_chdir(const char *path) { return _chdir(path) == 0 ? 0 : failed(); }
-const char *sys_getcwd(void) {
-    if (!_getcwd(path_buffer, (int)sizeof path_buffer)) { failed(); return NULL; }
-    return forward(path_buffer);
+/* ---------------------------------------------------------------- paths */
+/* Windows writes a path as C:\Users\me, and Rune's OS.Path is POSIX's, to
+   which that is one relative arc. So every path of a drive this layer hands
+   back is written /C:/Users/me -- absolute to POSIX, and no file of Windows
+   has a colon in its name, so no other path reads so -- and a path that
+   comes in as /C:/... is given to Windows as C:/.... /dev/null is NUL, and
+   everything else goes as it came; Windows takes "/" for "\" everywhere. */
+static char native_buffers[4][MAX_PATH * 4];
+static int native_next = 0;
+static int is_drive(const char *p) {
+    return ((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) && p[1] == ':';
 }
-int sys_remove(const char *path) { return remove(path) == 0 ? 0 : failed(); }
+static const char *native(const char *path) {
+    if (!path) return path;
+    if (strcmp(path, "/dev/null") == 0) return "NUL";
+    if (strcmp(path, "/dev/tty") == 0) return "CON";
+    if (path[0] == '/' && is_drive(path + 1) && (path[3] == '/' || path[3] == 0)) {
+        char *b = native_buffers[native_next++ % 4];
+        snprintf(b, sizeof native_buffers[0], "%c:%s", path[1], path[3] ? path + 3 : "/");
+        return b;
+    }
+    return path;
+}
+/* a path of Windows, in place, as the library reads it; p has room for one
+   more character */
+static const char *posix_path(char *p) {
+    forward(p);
+    if (is_drive(p) && (p[2] == '/' || p[2] == 0)) {
+        memmove(p + 1, p, strlen(p) + 1);
+        p[0] = '/';
+        if (p[3] == 0) { p[3] = '/'; p[4] = 0; }
+    }
+    return p;
+}
+
+/* The error of the last call of Windows as the errno of POSIX. */
+static int errno_of_win(DWORD e) {
+    switch (e) {
+    case ERROR_FILE_NOT_FOUND: case ERROR_PATH_NOT_FOUND: case ERROR_INVALID_NAME:
+    case ERROR_BAD_PATHNAME: case ERROR_INVALID_DRIVE: case ERROR_BAD_NETPATH: return ENOENT;
+    case ERROR_ACCESS_DENIED: case ERROR_SHARING_VIOLATION: case ERROR_LOCK_VIOLATION: return EACCES;
+    case ERROR_ALREADY_EXISTS: case ERROR_FILE_EXISTS: return EEXIST;
+    case ERROR_DIR_NOT_EMPTY: return ENOTEMPTY;
+    case ERROR_DIRECTORY: return ENOTDIR;
+    case ERROR_FILENAME_EXCED_RANGE: return ENAMETOOLONG;
+    case ERROR_CANT_RESOLVE_FILENAME: return ELOOP;
+    case ERROR_NOT_SAME_DEVICE: return EXDEV;
+    case ERROR_PRIVILEGE_NOT_HELD: return EPERM;
+    case ERROR_INVALID_HANDLE: return EBADF;
+    case ERROR_DISK_FULL: case ERROR_HANDLE_DISK_FULL: return ENOSPC;
+    case ERROR_WRITE_PROTECT: return EROFS;
+    case ERROR_NOT_SUPPORTED: return ENOTSUP;
+    case ERROR_BROKEN_PIPE: case ERROR_NO_DATA: return EPIPE;
+    case ERROR_TOO_MANY_OPEN_FILES: return EMFILE;
+    case ERROR_NOT_ENOUGH_MEMORY: case ERROR_OUTOFMEMORY: return ENOMEM;
+    case ERROR_NOT_A_REPARSE_POINT: case ERROR_INVALID_PARAMETER: return EINVAL;
+    case ERROR_NEGATIVE_SEEK: return EINVAL;
+    default: return EIO;
+    }
+}
+/* Windows says a path is not found where POSIX says why: that one of its
+   directories is a file (ENOTDIR), or that it or a name in it is too long
+   (ENAMETOOLONG). The path is the native one. */
+static int path_error(const char *path, int e) {
+    if (e != ENOENT) return e;
+    size_t n = strlen(path), start = 0;
+    if (n >= MAX_PATH) return ENAMETOOLONG;
+    char prefix[MAX_PATH * 4];
+    for (size_t i = 0; i <= n; i++) {
+        if (i < n && path[i] != '/' && path[i] != '\\') continue;
+        if (i - start > 255) return ENAMETOOLONG;
+        if (i < n && i > 0 && i > start) {
+            memcpy(prefix, path, i);
+            prefix[i] = 0;
+            DWORD a = GetFileAttributesA(prefix);
+            if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) return ENOTDIR;
+        }
+        start = i + 1;
+    }
+    return ENOENT;
+}
+static int win_failed(const char *path) {
+    last = errno_of_win(GetLastError());
+    if (path) last = path_error(path, last);
+    return -1;
+}
+
+/* ---------------------------------------------------------------- files */
+/* A file is opened with FILE_SHARE_DELETE, so that it can be removed or
+   renamed while it is open, as on POSIX, and with FILE_FLAG_BACKUP_SEMANTICS
+   when it is a directory, which POSIX lets a program open for reading. */
+#define SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
+static HANDLE open_existing(const char *path, DWORD access, int follow) {
+    return CreateFileA(path, access, SHARE_ALL, NULL, OPEN_EXISTING,
+                       FILE_FLAG_BACKUP_SEMANTICS | (follow ? 0 : FILE_FLAG_OPEN_REPARSE_POINT), NULL);
+}
+static int is_directory(const char *path) {
+    DWORD a = GetFileAttributesA(path);
+    return a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+/* What stat says of a file, from a handle to it. */
+typedef struct {
+    int kind;                      /* as sys_stat_of numbers them */
+    int64_t mode, ino, dev, nlink, size, atime, mtime, ctime;
+} FileInfo;
+static int info_of_path(const char *path, int follow, FileInfo *fi);
+static int is_symlink(const char *path);
+static DWORD reparse_tag(const char *path);
+
+/* The mask of the modes of new files and directories, as umask sets it. A
+   file is made read-only when its mode leaves out the owner's write. */
+static int creation_mask = 022;
+int sys_umask(int mask) {
+    int old = creation_mask;
+    creation_mask = mask & 0777;
+    return old;
+}
+
+int sys_mkdir(const char *path) {
+    path = native(path);
+    return CreateDirectoryA(path, NULL) ? 0 : win_failed(path);
+}
+/* A symbolic link to a directory is not a directory to rmdir, as on POSIX. */
+int sys_rmdir(const char *path) {
+    path = native(path);
+    DWORD a = GetFileAttributesA(path);
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_REPARSE_POINT)) { last = ENOTDIR; return -1; }
+    return RemoveDirectoryA(path) ? 0 : win_failed(path);
+}
+int sys_chdir(const char *path) {
+    path = native(path);
+    return SetCurrentDirectoryA(path) ? 0 : win_failed(path);
+}
+/* The directory as POSIX's getcwd gives it, with the links on the way to
+   it followed: Windows keeps the path it was changed to. */
+const char *sys_getcwd(void) {
+    const char *real = sys_real_path(".");
+    if (real) return real;
+    DWORD n = GetCurrentDirectoryA(MAX_PATH * 4 - 2, path_buffer);
+    if (n == 0 || n >= MAX_PATH * 4 - 2) { win_failed(NULL); return NULL; }
+    return posix_path(path_buffer);
+}
+/* unlink: POSIX removes a file whatever its mode, and a symbolic link to a
+   directory as a link; a directory itself it will not. */
+int sys_remove(const char *path) {
+    path = native(path);
+    DWORD a = GetFileAttributesA(path);
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (a & FILE_ATTRIBUTE_REPARSE_POINT) return RemoveDirectoryA(path) ? 0 : win_failed(path);
+        last = EISDIR;
+        return -1;
+    }
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_READONLY))
+        SetFileAttributesA(path, a & ~(DWORD)FILE_ATTRIBUTE_READONLY);
+    if (DeleteFileA(path)) return 0;
+    int e = win_failed(path);
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_READONLY)) SetFileAttributesA(path, a);
+    return e;
+}
+/* rename as POSIX has it: a file replaces a file, a directory an empty
+   directory; not a directory into itself, and not across volumes. */
 int sys_rename(const char *from, const char *to) {
-    /* rename() will not replace an existing file on Windows */
-    if (MoveFileExA(from, to, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED)) return 0;
-    errno = EACCES;
-    return failed();
+    from = native(from);
+    to = native(to);
+    DWORD fa = GetFileAttributesA(from), ta = GetFileAttributesA(to);
+    if (fa == INVALID_FILE_ATTRIBUTES) return win_failed(from);
+    if (ta != INVALID_FILE_ATTRIBUTES) {
+        /* two names of one file: POSIX leaves both */
+        FileInfo a, b;
+        if (info_of_path(from, 0, &a) == 0 && info_of_path(to, 0, &b) == 0 && a.dev == b.dev && a.ino == b.ino)
+            return 0;
+        int from_dir = (fa & FILE_ATTRIBUTE_DIRECTORY) != 0, to_dir = (ta & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if (from_dir && !to_dir) { last = ENOTDIR; return -1; }
+        if (!from_dir && to_dir) { last = EISDIR; return -1; }
+        if (to_dir && !RemoveDirectoryA(to)) return win_failed(to);
+        if (!to_dir && (ta & FILE_ATTRIBUTE_READONLY)) SetFileAttributesA(to, ta & ~(DWORD)FILE_ATTRIBUTE_READONLY);
+    }
+    if (fa & FILE_ATTRIBUTE_DIRECTORY) {
+        char a[MAX_PATH * 4], b[MAX_PATH * 4];
+        if (GetFullPathNameA(from, sizeof a, a, NULL) && GetFullPathNameA(to, sizeof b, b, NULL)) {
+            size_t n = strlen(forward(a));
+            forward(b);
+            if (_strnicmp(a, b, n) == 0 && b[n] == '/') { last = EINVAL; return -1; }
+        }
+    }
+    return MoveFileExA(from, to, MOVEFILE_REPLACE_EXISTING) ? 0 : win_failed(to);
+}
+
+/* Windows has no execute permission: a file is executable when its
+   extension is one of PATHEXT's, as the command line of Windows has it,
+   and a directory can always be searched. */
+static int executable(const char *path) {
+    const char *dot = strrchr(path, '.'), *slash = strrchr(path, '/'), *back = strrchr(path, '\\');
+    if (!dot || (slash && slash > dot) || (back && back > dot)) return 0;
+    const char *list = getenv("PATHEXT");
+    if (!list) list = ".COM;.EXE;.BAT;.CMD";
+    size_t n = strlen(dot);
+    for (const char *p = list; *p; ) {
+        const char *end = strchr(p, ';');
+        size_t k = end ? (size_t)(end - p) : strlen(p);
+        if (k == n && _strnicmp(p, dot, n) == 0) return 1;
+        if (!end) break;
+        p = end + 1;
+    }
+    return 0;
 }
 int sys_access(const char *path, int read, int write, int exec) {
-    /* Windows has no execute bit: a file that exists is executable here */
-    int mode = 0;
-    if (read) mode |= 4;
-    if (write) mode |= 2;
-    (void)exec;
-    return _access(path, mode) == 0 ? 1 : 0;
-}
-/* 0 regular, 1 directory, 2 symbolic link, 3 other. Windows reparse points
-   are reported as links; _stat follows them, so both calls agree unless the
-   file is one. */
-int sys_file_kind(const char *path) {
+    (void)read;
+    path = native(path);
     DWORD a = GetFileAttributesA(path);
-    if (a == INVALID_FILE_ATTRIBUTES) { errno = ENOENT; return failed(); }
-    if (a & FILE_ATTRIBUTE_DIRECTORY) return 1;
+    if (a == INVALID_FILE_ATTRIBUTES) { win_failed(path); return 0; }
+    /* through a link to what it names, which may not be there */
+    if ((a & FILE_ATTRIBUTE_REPARSE_POINT) && is_symlink(path)) {
+        HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, 1);
+        if (h == INVALID_HANDLE_VALUE) { win_failed(path); return 0; }
+        BY_HANDLE_FILE_INFORMATION info;
+        if (GetFileInformationByHandle(h, &info)) a = info.dwFileAttributes;
+        CloseHandle(h);
+    }
+    int dir = (a & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    if (write && !dir && (a & FILE_ATTRIBUTE_READONLY)) { last = EACCES; return 0; }
+    if (exec && !dir && !executable(path)) { last = EACCES; return 0; }
+    return 1;
+}
+
+static int64_t filetime_seconds(FILETIME ft);
+static int info_of(HANDLE h, const char *path, int link, FileInfo *fi) {
+    memset(fi, 0, sizeof *fi);
+    DWORD type = GetFileType(h);
+    if (type == FILE_TYPE_PIPE) { fi->kind = 4; fi->mode = 0600; fi->nlink = 1; return 0; }
+    if (type == FILE_TYPE_CHAR) {
+        DWORD m;
+        fi->kind = 6;
+        fi->mode = GetConsoleMode(h, &m) ? 0620 : 0666;
+        fi->nlink = 1;
+        return 0;
+    }
+    BY_HANDLE_FILE_INFORMATION info;
+    if (!GetFileInformationByHandle(h, &info)) return win_failed(NULL);
+    int dir = (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    char name[MAX_PATH * 4];
+    if (!path && GetFinalPathNameByHandleA(h, name, sizeof name, FILE_NAME_NORMALIZED) > 0) path = name;
+    if (link) { fi->kind = 2; fi->mode = 0777; }
+    else if (dir) { fi->kind = 1; fi->mode = 0700; }
+    else {
+        fi->kind = 0;
+        fi->mode = 0400 | ((info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0 : 0200)
+                 | (path && executable(path) ? 0100 : 0);
+    }
+    fi->ino = (int64_t)(((uint64_t)info.nFileIndexHigh << 32) | info.nFileIndexLow);
+    fi->dev = (int64_t)info.dwVolumeSerialNumber;
+    fi->nlink = (int64_t)info.nNumberOfLinks;
+    fi->size = (int64_t)(((uint64_t)info.nFileSizeHigh << 32) | info.nFileSizeLow);
+    fi->atime = filetime_seconds(info.ftLastAccessTime);
+    fi->mtime = filetime_seconds(info.ftLastWriteTime);
+    fi->ctime = filetime_seconds(info.ftCreationTime);
     return 0;
+}
+static int is_symlink(const char *path);
+static int64_t link_text_length(const char *path);
+/* stat of a path, following a link or not; any other reparse point is
+   opened as itself (a socket's file cannot be opened through) */
+static int info_of_path(const char *path, int follow, FileInfo *fi) {
+    DWORD tag = reparse_tag(path);
+    int symlink = tag == IO_REPARSE_TAG_SYMLINK || tag == IO_REPARSE_TAG_MOUNT_POINT;
+    int link = !follow && symlink;
+    HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, follow && symlink);
+    if (h == INVALID_HANDLE_VALUE) return win_failed(path);
+    int r = info_of(h, path, link, fi);
+    CloseHandle(h);
+    if (r == 0 && link) fi->size = link_text_length(path);
+    /* a socket's file, as Linux makes it */
+    if (r == 0 && tag == IO_REPARSE_TAG_AF_UNIX) { fi->kind = 5; fi->mode = 0755; }
+    return r;
+}
+
+/* 0 regular, 1 directory, 2 symbolic link, 3 other. file_kind follows
+   links, link_kind does not. */
+int sys_file_kind(const char *path) {
+    FileInfo fi;
+    if (info_of_path(native(path), 1, &fi) != 0) return -1;
+    return fi.kind <= 1 ? fi.kind : 3;
 }
 int sys_link_kind(const char *path) {
-    DWORD a = GetFileAttributesA(path);
-    if (a == INVALID_FILE_ATTRIBUTES) { errno = ENOENT; return failed(); }
-    if (a & FILE_ATTRIBUTE_REPARSE_POINT) return 2;
-    if (a & FILE_ATTRIBUTE_DIRECTORY) return 1;
-    return 0;
+    FileInfo fi;
+    if (info_of_path(native(path), 0, &fi) != 0) return -1;
+    return fi.kind <= 2 ? fi.kind : 3;
 }
 int64_t sys_file_size(const char *path) {
-    struct __stat64 st;
-    if (_stat64(path, &st) != 0) return failed();
-    return (int64_t)st.st_size;
+    FileInfo fi;
+    if (info_of_path(native(path), 1, &fi) != 0) return -1;
+    return fi.size;
 }
+
 /* The times of a file are read and set as Windows keeps them, in UTC:
    msvcrt's _stat64 and _utime64 go through the local time of TZ, and when TZ
    names another zone than the system's the times they give are off by the
@@ -385,73 +637,165 @@ static FILETIME seconds_filetime(int64_t seconds) {
     ft.dwHighDateTime = (DWORD)(ticks >> 32);
     return ft;
 }
-/* access, modification and creation (which msvcrt gives as the change) */
-static int file_times(const char *path, int fd, int64_t out[3]) {
-    FILETIME a, m, c;
-    if (path) {
-        WIN32_FILE_ATTRIBUTE_DATA d;
-        if (!GetFileAttributesExA(path, GetFileExInfoStandard, &d)) { errno = ENOENT; return -1; }
-        a = d.ftLastAccessTime; m = d.ftLastWriteTime; c = d.ftCreationTime;
-    } else {
-        HANDLE h = (HANDLE)_get_osfhandle(fd);
-        if (h == INVALID_HANDLE_VALUE || !GetFileTime(h, &c, &a, &m)) { errno = EBADF; return -1; }
-    }
-    out[0] = filetime_seconds(a); out[1] = filetime_seconds(m); out[2] = filetime_seconds(c);
-    return 0;
-}
 static int set_file_times(const char *path, int64_t access, int64_t modification) {
-    /* FILE_FLAG_BACKUP_SEMANTICS opens a directory too */
-    HANDLE h = CreateFileA(path, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (h == INVALID_HANDLE_VALUE) {
-        errno = GetLastError() == ERROR_ACCESS_DENIED ? EACCES : ENOENT;
-        return failed();
-    }
+    HANDLE h = open_existing(path, FILE_WRITE_ATTRIBUTES, 1);
+    if (h == INVALID_HANDLE_VALUE) return win_failed(path);
     FILETIME a = seconds_filetime(access), m = seconds_filetime(modification);
     int ok = SetFileTime(h, NULL, &a, &m);
     CloseHandle(h);
-    if (!ok) { errno = EACCES; return failed(); }
-    return 0;
+    return ok ? 0 : win_failed(NULL);
 }
 int64_t sys_mod_time(const char *path) {
-    int64_t t[3];
-    if (file_times(path, -1, t) != 0) return failed();
-    return t[1];
+    FileInfo fi;
+    if (info_of_path(native(path), 1, &fi) != 0) return -1;
+    return fi.mtime;
 }
 int sys_set_time(const char *path, int64_t seconds, int now) {
     if (now) seconds = sys_time_now() / 1000000;
-    return set_file_times(path, seconds, seconds);
+    return set_file_times(native(path), seconds, seconds);
 }
-const char *sys_read_link(const char *path) { (void)path; fail(); return NULL; }
+int sys_utime(const char *path, int64_t access, int64_t modification) {
+    return set_file_times(native(path), access, modification);
+}
+
+/* ---------------------------------------------------------------- links */
+/* A symbolic link is a reparse point of the tag IO_REPARSE_TAG_SYMLINK (a
+   junction, IO_REPARSE_TAG_MOUNT_POINT, is read as one too). Its target is
+   kept as its print name, with "\" for "/" and a drive written C:\; this
+   layer writes and reads it as POSIX has it. The layout of the reparse data
+   is that of ntifs.h, which user programs do not get. */
+typedef struct {
+    ULONG tag;
+    USHORT data_length, reserved;
+    USHORT substitute_offset, substitute_length, print_offset, print_length;
+    /* symbolic links only: ULONG flags, then the names */
+    UCHAR rest[1];
+} ReparseData;
+static char link_text[MAX_PATH * 4];
+/* The target of the link at the native path, as the library reads it, or
+   NULL with EINVAL when the file is no link. */
+static const char *read_link_text(const char *path) {
+    HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, 0);
+    if (h == INVALID_HANDLE_VALUE) { win_failed(path); return NULL; }
+    static union { ReparseData data; char bytes[MAXIMUM_REPARSE_DATA_BUFFER_SIZE]; } buffer;
+    DWORD got = 0;
+    BOOL ok = DeviceIoControl(h, FSCTL_GET_REPARSE_POINT, NULL, 0, &buffer, sizeof buffer, &got, NULL);
+    CloseHandle(h);
+    if (!ok) { last = GetLastError() == ERROR_NOT_A_REPARSE_POINT ? EINVAL : errno_of_win(GetLastError()); return NULL; }
+    const ReparseData *r = &buffer.data;
+    const UCHAR *names;
+    if (r->tag == IO_REPARSE_TAG_SYMLINK) names = r->rest + sizeof(ULONG);
+    else if (r->tag == IO_REPARSE_TAG_MOUNT_POINT) names = r->rest;
+    else { last = EINVAL; return NULL; }
+    USHORT offset = r->print_length ? r->print_offset : r->substitute_offset;
+    USHORT length = r->print_length ? r->print_length : r->substitute_length;
+    const WCHAR *w = (const WCHAR *)(names + offset);
+    int n = WideCharToMultiByte(CP_ACP, 0, w, length / (int)sizeof(WCHAR), link_text, (int)sizeof link_text - 2, NULL, NULL);
+    if (n <= 0) { last = EINVAL; return NULL; }
+    link_text[n] = 0;
+    /* a substitute name is \??\C:\...: the prefix is Windows' own */
+    if (strncmp(link_text, "\\??\\", 4) == 0) memmove(link_text, link_text + 4, strlen(link_text + 4) + 1);
+    return posix_path(link_text);
+}
+/* The tag of a reparse point, 0 for a file that is none. A link is a
+   symbolic link or a junction; a socket of the Unix domain is a reparse
+   point too (IO_REPARSE_TAG_AF_UNIX), and names nothing. */
+#ifndef IO_REPARSE_TAG_AF_UNIX
+#define IO_REPARSE_TAG_AF_UNIX 0x80000023L
+#endif
+static DWORD reparse_tag(const char *path) {
+    WIN32_FIND_DATAA d;
+    HANDLE f = FindFirstFileA(path, &d);
+    if (f == INVALID_HANDLE_VALUE) return 0;
+    FindClose(f);
+    return (d.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ? d.dwReserved0 : 0;
+}
+static int is_symlink(const char *path) {
+    DWORD tag = reparse_tag(path);
+    return tag == IO_REPARSE_TAG_SYMLINK || tag == IO_REPARSE_TAG_MOUNT_POINT;
+}
+/* lstat gives the length of the target as the size of a link */
+static int64_t link_text_length(const char *path) {
+    const char *t = read_link_text(path);
+    return t ? (int64_t)strlen(t) : 0;
+}
+const char *sys_read_link(const char *path) { return read_link_text(native(path)); }
+
+/* symlink: the link is made to a directory when its target is one now (a
+   dangling link is made to a file); without the privilege it needs, which
+   Developer Mode waives, Windows refuses it with EPERM. */
+int sys_symlink(const char *from, const char *to) {
+    char target[MAX_PATH * 4];
+    snprintf(target, sizeof target, "%s", native(from));
+    to = native(to);
+    for (char *c = target; *c; c++) if (*c == '/') *c = '\\';
+    /* where the target is, from the directory of the link */
+    char where[MAX_PATH * 8];
+    if (target[0] == '\\' || is_drive(target)) snprintf(where, sizeof where, "%s", target);
+    else {
+        const char *slash = strrchr(to, '/'), *back = strrchr(to, '\\');
+        const char *sep = slash > back ? slash : back;
+        if (sep) snprintf(where, sizeof where, "%.*s\\%s", (int)(sep - to), to, target);
+        else snprintf(where, sizeof where, "%s", target);
+    }
+    DWORD flags = 0x2;   /* SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE */
+    if (is_directory(where)) flags |= SYMBOLIC_LINK_FLAG_DIRECTORY;
+    if (CreateSymbolicLinkA(to, target, flags)) return 0;
+    if (GetLastError() == ERROR_INVALID_PARAMETER && CreateSymbolicLinkA(to, target, flags & ~(DWORD)0x2)) return 0;
+    return win_failed(to);
+}
+/* link: a hard link, which Windows makes to files only, as POSIX may */
+int sys_link(const char *from, const char *to) {
+    from = native(from);
+    to = native(to);
+    if (is_directory(from)) { last = EPERM; return -1; }
+    return CreateHardLinkA(to, from, NULL) ? 0 : win_failed(to);
+}
+int sys_mkfifo(const char *path, int mode) { (void)path; (void)mode; return fail(); }
+
+/* realpath: the path Windows opens the file by, links followed, as
+   GetFinalPathNameByHandle gives it (\\?\C:\... or \\?\UNC\server\...). */
 const char *sys_real_path(const char *path) {
-    if (!_fullpath(path_buffer, path, sizeof path_buffer)) { failed(); return NULL; }
-    if (GetFileAttributesA(path_buffer) == INVALID_FILE_ATTRIBUTES) { errno = ENOENT; failed(); return NULL; }
-    return forward(path_buffer);
+    path = native(path);
+    HANDLE h = open_existing(path, FILE_READ_ATTRIBUTES, 1);
+    if (h == INVALID_HANDLE_VALUE) { win_failed(path); return NULL; }
+    char full[MAX_PATH * 4];
+    DWORD n = GetFinalPathNameByHandleA(h, full, sizeof full, FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    CloseHandle(h);
+    if (n == 0 || n >= sizeof full) { win_failed(NULL); return NULL; }
+    const char *p = full;
+    if (strncmp(p, "\\\\?\\UNC\\", 8) == 0) { snprintf(path_buffer, sizeof path_buffer, "\\\\%s", p + 8); }
+    else { if (strncmp(p, "\\\\?\\", 4) == 0) p += 4; snprintf(path_buffer, sizeof path_buffer, "%s", p); }
+    return posix_path(path_buffer);
 }
 /* As mkstemp does for POSIX: a name in the directory Windows keeps for
-   temporary files, and the file made so that the name is taken. tmpnam gives
-   a name at the root of the current drive, which is usually not writable. */
+   temporary files, and the file made so that the name is taken. The name
+   is random, as mkstemp's is: GetTempFileName gives names in turn, so when
+   programs remove the file to make a directory of the name, as the Basis
+   suite does, a program started at the same time is given it again. */
 const char *sys_tmp_name(void) {
+    static uint32_t x = 0;
     char dir[MAX_PATH + 1];
     DWORD n = GetTempPathA(sizeof dir, dir);
-    if (n == 0 || n > MAX_PATH) { errno = ENOENT; failed(); return NULL; }
-    char name[MAX_PATH + 1];
-    if (GetTempFileNameA(dir, "rune", 0, name) == 0) { errno = EACCES; failed(); return NULL; }
-    snprintf(path_buffer, sizeof path_buffer, "%s", name);
-    return forward(path_buffer);
+    if (n == 0 || n > MAX_PATH) { last = ENOENT; return NULL; }
+    if (x == 0) x = (uint32_t)GetTickCount64() ^ ((uint32_t)GetCurrentProcessId() << 12) ^ 0x2545f491u;
+    for (int tries = 0; tries < 100; tries++) {
+        x ^= x << 13; x ^= x >> 17; x ^= x << 5;
+        snprintf(path_buffer, sizeof path_buffer, "%srune%08lx.tmp", dir, (unsigned long)x);
+        HANDLE h = CreateFileA(path_buffer, GENERIC_WRITE, SHARE_ALL, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h != INVALID_HANDLE_VALUE) { CloseHandle(h); return posix_path(path_buffer); }
+        if (GetLastError() != ERROR_FILE_EXISTS) { win_failed(dir); return NULL; }
+    }
+    last = EEXIST;
+    return NULL;
 }
 /* Windows has no inode: the volume and the file index of the handle name a
    file, which is what BY_HANDLE_FILE_INFORMATION gives. */
 int sys_file_id(const char *path, int64_t *device, int64_t *inode) {
-    HANDLE h = CreateFileA(path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                           NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (h == INVALID_HANDLE_VALUE) { errno = ENOENT; return failed(); }
-    BY_HANDLE_FILE_INFORMATION info;
-    int ok = GetFileInformationByHandle(h, &info);
-    CloseHandle(h);
-    if (!ok) { errno = EIO; return failed(); }
-    *device = (int64_t)info.dwVolumeSerialNumber;
-    *inode = (int64_t)(((uint64_t)info.nFileIndexHigh << 32) | info.nFileIndexLow);
+    FileInfo fi;
+    if (info_of_path(native(path), 1, &fi) != 0) return -1;
+    *device = fi.dev;
+    *inode = fi.ino;
     return 0;
 }
 /* Directories, on FindFirstFile: a stream is a slot of this table. "." and
@@ -461,20 +805,24 @@ static struct { int used; HANDLE find; WIN32_FIND_DATAA data; int pending; char 
 
 static int dir_start(int i) {
     dirs[i].find = FindFirstFileA(dirs[i].pattern, &dirs[i].data);
-    if (dirs[i].find == INVALID_HANDLE_VALUE) { errno = ENOENT; return -1; }
+    if (dirs[i].find == INVALID_HANDLE_VALUE) return win_failed(NULL);
     dirs[i].pending = 1;
     return 0;
 }
 int sys_open_dir(const char *path) {
     int i;
+    path = native(path);
     for (i = 0; i < DIRS; i++) if (!dirs[i].used) break;
-    if (i == DIRS) { errno = EMFILE; return failed(); }
-    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES) { errno = ENOENT; return failed(); }
+    if (i == DIRS) { last = EMFILE; return -1; }
+    DWORD a = GetFileAttributesA(path);
+    if (a == INVALID_FILE_ATTRIBUTES) return win_failed(path);
+    if (!(a & FILE_ATTRIBUTE_DIRECTORY)) { last = ENOTDIR; return -1; }
     snprintf(dirs[i].pattern, sizeof dirs[i].pattern, "%s\\*", path);
-    if (dir_start(i) != 0) return failed();
+    if (dir_start(i) != 0) return -1;
     dirs[i].used = 1;
     return i;
 }
+
 /* The end of a directory is NULL with the error cleared, as POSIX's readdir
    leaves it: the library tells the end from a failure by it. */
 const char *sys_read_dir(int dir) {
@@ -507,13 +855,16 @@ int sys_fseek(FILE *file, int64_t offset, int whence) {
     return _fseeki64(file, (__int64)offset, whence) == 0 ? 0 : -1;
 }
 /* 0 file, 1 directory, 2 symbolic link, 3 terminal, 4 pipe, 5 socket, 6 device */
+static HANDLE console_of(int fd);
 int sys_desc_kind(int fd) {
     if (sock_of(fd)) return 5;
     HANDLE h = (HANDLE)_get_osfhandle(fd);
     if (h == INVALID_HANDLE_VALUE) { errno = EBADF; return failed(); }
+    BY_HANDLE_FILE_INFORMATION info;
     switch (GetFileType(h)) {
-        case FILE_TYPE_DISK: return 0;
-        case FILE_TYPE_CHAR: return _isatty(fd) ? 3 : 6;
+        case FILE_TYPE_DISK:
+            return GetFileInformationByHandle(h, &info) && (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
+        case FILE_TYPE_CHAR: return console_of(fd) ? 3 : 6;
         case FILE_TYPE_PIPE: return 4;
         default: return 6;
     }
@@ -567,8 +918,7 @@ int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
 /* The named constants. What this layer decodes or emulates itself has the
    numbers of Linux: the flags of open (sys_openf), of fcntl, of waitpid,
    and the signals. What goes to Winsock unchanged has Winsock's numbers.
-   The errors are the table above. The terminal's size of the control
-   characters, NCCS, is left out: it is sys_nccs, 0 here. */
+   The errors are the table above. */
 static const struct { const char *name; int64_t value; } constants[] = {
     /* signals */
     { "SIGHUP", 1 }, { "SIGINT", 2 }, { "SIGQUIT", 3 }, { "SIGILL", 4 }, { "SIGABRT", 6 },
@@ -599,7 +949,7 @@ static const struct { const char *name; int64_t value; } constants[] = {
     { "ECHOK", 32 }, { "ECHONL", 64 }, { "ICANON", 2 }, { "IEXTEN", 32768 }, { "ISIG", 1 },
     { "NOFLSH", 128 }, { "TOSTOP", 256 }, { "VEOF", 4 }, { "VEOL", 11 }, { "VERASE", 2 },
     { "VINTR", 0 }, { "VKILL", 3 }, { "VMIN", 6 }, { "VQUIT", 1 }, { "VSUSP", 10 },
-    { "VTIME", 5 }, { "VSTART", 8 }, { "VSTOP", 9 },
+    { "VTIME", 5 }, { "VSTART", 8 }, { "VSTOP", 9 }, { "NCCS", 32 },
     { "B0", 0 }, { "B50", 1 }, { "B75", 2 }, { "B110", 3 }, { "B134", 4 }, { "B150", 5 },
     { "B200", 6 }, { "B300", 7 }, { "B600", 8 }, { "B1200", 9 }, { "B1800", 10 }, { "B2400", 11 },
     { "B4800", 12 }, { "B9600", 13 }, { "B19200", 14 }, { "B38400", 15 },
@@ -628,21 +978,147 @@ int sys_waitpid(int64_t pid, int flags, int64_t out[3]) { (void)pid; (void)flags
 int sys_kill(int64_t pid, int signal) { (void)pid; (void)signal; return fail(); }
 int sys_alarm(int seconds) { (void)seconds; return fail(); }
 int sys_pause(void) { return fail(); }
-int64_t sys_getpid(void) { return fail(); }
-int64_t sys_getppid(void) { return fail(); }
-int64_t sys_getuid(void) { return fail(); }
-int64_t sys_geteuid(void) { return fail(); }
-int64_t sys_getgid(void) { return fail(); }
-int64_t sys_getegid(void) { return fail(); }
-int sys_setuid(int64_t uid) { (void)uid; return fail(); }
-int sys_setgid(int64_t gid) { (void)gid; return fail(); }
-int sys_getgroups(int64_t *out, int n) { (void)out; (void)n; return fail(); }
-const char *sys_getlogin(void) { fail(); return NULL; }
+/* ---------------------------------------------------------------- ids */
+int64_t sys_getpid(void) { return (int64_t)GetCurrentProcessId(); }
+/* the process that made this one, from a snapshot of all of them */
+int64_t sys_getppid(void) {
+    HANDLE all = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (all == INVALID_HANDLE_VALUE) { last = EIO; return -1; }
+    PROCESSENTRY32 e;
+    e.dwSize = sizeof e;
+    DWORD me = GetCurrentProcessId();
+    int64_t parent = -1;
+    for (BOOL ok = Process32First(all, &e); ok; ok = Process32Next(all, &e))
+        if (e.th32ProcessID == me) { parent = (int64_t)e.th32ParentProcessID; break; }
+    CloseHandle(all);
+    if (parent < 0) last = ESRCH;
+    return parent;
+}
+
+/* Windows names users and groups by SIDs, not numbers. The number of a user
+   or a group here is the last part of its SID, its relative identifier, as
+   Cygwin shows it (1001 is the first user a machine is given). Only the user
+   of the process and the groups of its token can be asked for. */
+static void *token_info(TOKEN_INFORMATION_CLASS what) {
+    HANDLE token;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) { last = EACCES; return NULL; }
+    DWORD size = 0;
+    GetTokenInformation(token, what, NULL, 0, &size);
+    void *info = size ? malloc(size) : NULL;
+    if (!info || !GetTokenInformation(token, what, info, size, &size)) {
+        free(info);
+        CloseHandle(token);
+        last = EACCES;
+        return NULL;
+    }
+    CloseHandle(token);
+    return info;
+}
+static int64_t rid_of(PSID sid) {
+    return (int64_t)*GetSidSubAuthority(sid, (DWORD)(*GetSidSubAuthorityCount(sid) - 1));
+}
+int64_t sys_getuid(void) {
+    TOKEN_USER *u = token_info(TokenUser);
+    if (!u) return -1;
+    int64_t id = rid_of(u->User.Sid);
+    free(u);
+    return id;
+}
+int64_t sys_geteuid(void) { return sys_getuid(); }
+int64_t sys_getgid(void) {
+    TOKEN_PRIMARY_GROUP *g = token_info(TokenPrimaryGroup);
+    if (!g) return -1;
+    int64_t id = rid_of(g->PrimaryGroup);
+    free(g);
+    return id;
+}
+int64_t sys_getegid(void) { return sys_getgid(); }
+/* A process may become the user and group it is, and no other. */
+int sys_setuid(int64_t uid) {
+    int64_t me = sys_getuid();
+    if (me < 0) return -1;
+    if (uid != me) { last = EPERM; return -1; }
+    return 0;
+}
+int sys_setgid(int64_t gid) {
+    int64_t me = sys_getgid();
+    if (me < 0) return -1;
+    if (gid != me) { last = EPERM; return -1; }
+    return 0;
+}
+/* the groups of the token, those it uses (enabled) */
+int sys_getgroups(int64_t *out, int n) {
+    TOKEN_GROUPS *g = token_info(TokenGroups);
+    if (!g) return -1;
+    int k = 0;
+    for (DWORD i = 0; i < g->GroupCount; i++) {
+        if (!(g->Groups[i].Attributes & SE_GROUP_ENABLED)) continue;
+        if (k < n) out[k] = rid_of(g->Groups[i].Sid);
+        k++;
+    }
+    free(g);
+    if (n > 0 && k > n) { last = EINVAL; return -1; }
+    return k;
+}
+static char user_name[256];
+static const char *current_user(void) {
+    DWORD n = sizeof user_name;
+    if (!GetUserNameA(user_name, &n)) { last = ENOENT; return NULL; }
+    return user_name;
+}
+const char *sys_getlogin(void) { return current_user(); }
 int64_t sys_getpgrp(void) { return fail(); }
 int64_t sys_setsid(void) { return fail(); }
 int sys_setpgid(int64_t pid, int64_t pgid) { (void)pid; (void)pgid; return fail(); }
-const char *sys_uname(void) { fail(); return NULL; }
-int sys_times(int64_t out[5]) { (void)out; return fail(); }
+/* The name of the system is "Windows"; its release is the version of
+   Windows, as RtlGetVersion gives it (GetVersionEx gives what the program's
+   manifest asks for), its version the build, and the machine that of the
+   processor, not of this process: a 32-bit VM on 64-bit Windows says x86_64,
+   as a 32-bit program does on Linux. */
+static char uname_strings[1024];
+const char *sys_uname(void) {
+    char node[256] = "";
+    DWORD n = sizeof node;
+    GetComputerNameExA(ComputerNameDnsHostname, node, &n);
+    typedef LONG (WINAPI *RtlGetVersionFn)(PRTL_OSVERSIONINFOW);
+    RtlGetVersionFn get = (RtlGetVersionFn)(void (*)(void))GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlGetVersion");
+    RTL_OSVERSIONINFOW v;
+    memset(&v, 0, sizeof v);
+    v.dwOSVersionInfoSize = sizeof v;
+    if (get) get(&v);
+    char release[32], version[32];
+    snprintf(release, sizeof release, "%lu.%lu", (unsigned long)v.dwMajorVersion, (unsigned long)v.dwMinorVersion);
+    snprintf(version, sizeof version, "%lu", (unsigned long)v.dwBuildNumber);
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    const char *machine = si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ? "x86_64"
+                        : si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64 ? "aarch64"
+                        : si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL ? "i686" : "unknown";
+    const char *parts[5] = { "Windows", node, release, version, machine };
+    size_t at = 0;
+    for (int i = 0; i < 5; i++) {
+        size_t k = strlen(parts[i]);
+        if (at + k + 2 >= sizeof uname_strings) break;
+        memcpy(uname_strings + at, parts[i], k);
+        at += k;
+        uname_strings[at++] = 0;
+    }
+    uname_strings[at] = 0;
+    return uname_strings;
+}
+/* The processor time of the children the process has waited for, which
+   sys_waitpid adds to (M7), in microseconds. */
+static int64_t children_user = 0, children_sys = 0;
+int sys_times(int64_t out[5]) {
+    FILETIME creation, exited, kernel, user;
+    if (!GetProcessTimes(GetCurrentProcess(), &creation, &exited, &kernel, &user)) { last = EIO; return -1; }
+    out[0] = (int64_t)GetTickCount64() * 1000;
+    out[1] = of_filetime(user);
+    out[2] = of_filetime(kernel);
+    out[3] = children_user;
+    out[4] = children_sys;
+    return 0;
+}
 /* the variables, each NUL-terminated, then an empty one */
 static char environ_buffer[64 * 1024];
 const char *sys_environ(void) {
@@ -662,32 +1138,133 @@ const char *sys_environ(void) {
     FreeEnvironmentStringsA(block);
     return environ_buffer;
 }
-const char *sys_ctermid(void) { fail(); return NULL; }
-const char *sys_ttyname(int fd) { (void)fd; fail(); return NULL; }
-int sys_isatty(int fd) { return !sock_of(fd) && _isatty(fd) ? 1 : 0; }
-int64_t sys_sysconf(const char *name) { (void)name; last = 0; return fail(); }
-
-/* The flags the library passes are POSIX's; mingw's CRT has the ones that
-   mean anything here, and every file is opened in binary mode, because a
-   stream of the library counts bytes. */
-int sys_openf(const char *path, int flags, int mode) {
-    int f = _O_BINARY;
-    if (flags & 1) f |= _O_WRONLY;
-    else if (flags & 2) f |= _O_RDWR;
-    else f |= _O_RDONLY;
-    if (flags & 0100) f |= _O_CREAT;
-    if (flags & 01000) f |= _O_TRUNC;
-    if (flags & 02000) f |= _O_APPEND;
-    if (flags & 0200) f |= _O_EXCL;
-    int fd = _open(path, f, mode ? mode : _S_IREAD | _S_IWRITE);
-    return fd < 0 ? failed() : fd;
+/* A terminal is a console of Windows: msvcrt's _isatty says so of NUL too,
+   and of every other character device. */
+static HANDLE console_of(int fd) {
+    if (sock_of(fd)) return NULL;
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    DWORD mode;
+    return h != INVALID_HANDLE_VALUE && GetConsoleMode(h, &mode) ? h : NULL;
 }
+/* the terminal is /dev/tty, which the layer opens as the console, CON */
+const char *sys_ctermid(void) { return "/dev/tty"; }
+const char *sys_ttyname(int fd) {
+    if (!console_of(fd)) { last = ENOTTY; return NULL; }
+    return "/dev/tty";
+}
+int sys_isatty(int fd) { return console_of(fd) ? 1 : 0; }
+/* The limits of sysconf, as Linux gives them where Windows has no answer of
+   its own; -1 with the error cleared is "no limit", and an option Windows
+   does not have (job control, saved ids) is -1 too. */
+int64_t sys_sysconf(const char *name) {
+    last = 0;
+    if (strcmp(name, "ARG_MAX") == 0) return 32767;   /* the command line of CreateProcess */
+    if (strcmp(name, "CHILD_MAX") == 0) return -1;
+    if (strcmp(name, "CLK_TCK") == 0) return 100;
+    if (strcmp(name, "NGROUPS_MAX") == 0) return 65536;
+    if (strcmp(name, "OPEN_MAX") == 0) return 2048;   /* the descriptors of msvcrt */
+    if (strcmp(name, "STREAM_MAX") == 0) return _getmaxstdio();
+    if (strcmp(name, "TZNAME_MAX") == 0) return -1;
+    if (strcmp(name, "JOB_CONTROL") == 0) return -1;
+    if (strcmp(name, "SAVED_IDS") == 0) return -1;
+    if (strcmp(name, "VERSION") == 0) return 200809;
+    if (strcmp(name, "PAGESIZE") == 0) {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        return (int64_t)si.dwPageSize;
+    }
+    last = EINVAL;
+    return -1;
+}
+
+/* What POSIX keeps of a descriptor of the C runtime and msvcrt does not:
+   the status flags append, non-blocking and synchronous (which POSIX keeps
+   with the open file, and which a duplicate gets a copy of here), and
+   close-on-exec, which is the descriptor's own. The access mode is asked of
+   Windows (access_of). */
+#define FD_TABLE 2048
+typedef struct { int append, nonblocking, sync, cloexec; } FdFlags;
+static FdFlags fd_flags[FD_TABLE];
+static FdFlags *flags_of(int fd) { return fd >= 0 && fd < FD_TABLE ? &fd_flags[fd] : NULL; }
+static void set_flags(int fd, int append, int nonblocking, int sync) {
+    FdFlags *f = flags_of(fd);
+    if (!f) return;
+    f->append = append;
+    f->nonblocking = nonblocking;
+    f->sync = sync;
+    f->cloexec = 0;
+}
+/* the access of a handle, O_RDONLY, O_WRONLY or O_RDWR, from the rights it
+   was opened with (NtQueryInformationFile, FileAccessInformation) */
+static int access_of(HANDLE h) {
+    typedef LONG (WINAPI *QueryFn)(HANDLE, void *, void *, ULONG, int);
+    static QueryFn query = NULL;
+    if (!query) query = (QueryFn)(void (*)(void))GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryInformationFile");
+    struct { void *status; ULONG_PTR information; } io;
+    ACCESS_MASK mask = 0;
+    if (!query || query(h, &io, &mask, sizeof mask, 8) != 0) return 2;
+    int r = (mask & FILE_READ_DATA) != 0, w = (mask & (FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
+    return r && w ? 2 : w ? 1 : 0;
+}
+
+/* open, with the flags of Linux (sys_const): the file is opened with
+   CreateFile, shared for removal (open_existing), and given to msvcrt as a
+   descriptor, in binary mode, because a stream of the library counts bytes.
+   A new file is read-only when its mode, less the umask, does not let the
+   owner write; the descriptor that makes it may still write, as on POSIX,
+   and a file that exists keeps its mode. A directory opens for reading. */
+static int open_fd(const char *path, int flags, int mode, int crt_append) {
+    path = native(path);
+    int access = flags & 3, create = (flags & 0100) != 0, exclusive = (flags & 0200) != 0;
+    int truncate = (flags & 01000) != 0, append = (flags & 02000) != 0;
+    DWORD a = GetFileAttributesA(path);
+    HANDLE h;
+    if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (create && exclusive) { last = EEXIST; return -1; }
+        if (access != 0 || truncate) { last = EISDIR; return -1; }
+        h = open_existing(path, GENERIC_READ, 1);
+    } else {
+        DWORD want = access == 0 ? GENERIC_READ : access == 1 ? GENERIC_WRITE : GENERIC_READ | GENERIC_WRITE;
+        DWORD disposition, attributes = FILE_ATTRIBUTE_NORMAL;
+        if (a != INVALID_FILE_ATTRIBUTES) {
+            if (create && exclusive) { last = EEXIST; return -1; }
+            disposition = truncate ? TRUNCATE_EXISTING : OPEN_EXISTING;
+        } else {
+            if (!create) { last = path_error(path, ENOENT); return -1; }
+            disposition = CREATE_NEW;
+            if (!((mode & ~creation_mask) & 0200)) attributes = FILE_ATTRIBUTE_READONLY;
+        }
+        h = CreateFileA(path, want, SHARE_ALL, NULL, disposition, attributes, NULL);
+    }
+    if (h == INVALID_HANDLE_VALUE) return win_failed(path);
+    int fd = _open_osfhandle((intptr_t)h, _O_BINARY | (crt_append ? _O_APPEND : 0) |
+                             (access == 0 ? _O_RDONLY : access == 1 ? _O_WRONLY : _O_RDWR));
+    if (fd < 0) { CloseHandle(h); return failed(); }
+    /* append is this layer's (sys_write_fd), so that fcntl can turn it off */
+    set_flags(fd, append && !crt_append, (flags & 04000) != 0, (flags & 04010000) == 04010000);
+    return fd;
+}
+int sys_openf(const char *path, int flags, int mode) { return open_fd(path, flags, mode, 0); }
+/* fopen for the core (TextIO, BinIO, the loader): a descriptor of sys_openf
+   and a stream on it, so that the paths and sharing are those above. The
+   error is left in errno, where the core looks for it. */
+FILE *sys_fopen(const char *path, const char *mode) {
+    int flags = mode[0] == 'r' ? 0 : mode[0] == 'w' ? 1 | 0100 | 01000 : 1 | 0100 | 02000;
+    if (strchr(mode, '+')) flags = (flags & ~3) | 2;
+    int fd = open_fd(path, flags, 0666, mode[0] == 'a');
+    if (fd < 0) { errno = last; return NULL; }
+    FILE *f = _fdopen(fd, mode);
+    if (!f) { int e = errno; _close(fd); errno = e; }
+    return f;
+}
+static void drop_locks(int fd);
 int sys_close_fd(int fd) {
     Sock *s = sock_of(fd);
     if (s) {
         s->used = 0;
         return closesocket(s->s) == 0 ? 0 : wsa_failed();
     }
+    drop_locks(fd);
     return _close(fd) == 0 ? 0 : failed();
 }
 /* A socket is duplicated as Winsock hands a socket to another process,
@@ -706,29 +1283,65 @@ int sys_dup(int fd) {
         return r;
     }
     int r = _dup(fd);
-    return r < 0 ? failed() : r;
+    if (r < 0) return failed();
+    if (flags_of(fd) && flags_of(r)) { *flags_of(r) = *flags_of(fd); flags_of(r)->cloexec = 0; }
+    return r;
 }
 /* A socket cannot take the number of a descriptor of the C runtime, nor
    the other way round. */
 int sys_dup2(int fd, int to) {
     if (sock_of(fd) || sock_of(to)) { last = EBADF; return -1; }
-    return _dup2(fd, to) == 0 ? to : failed();
+    if (_dup2(fd, to) != 0) return failed();
+    if (fd != to && flags_of(fd) && flags_of(to)) { *flags_of(to) = *flags_of(fd); flags_of(to)->cloexec = 0; }
+    return to;
 }
-int sys_pipe(int out[2]) { return _pipe(out, 65536, _O_BINARY) == 0 ? 0 : failed(); }
+/* A pipe's handles are not inherited by the programs this one starts
+   unless it hands them on (M7). */
+int sys_pipe(int out[2]) {
+    if (_pipe(out, 65536, _O_BINARY | _O_NOINHERIT) != 0) return failed();
+    set_flags(out[0], 0, 0, 0);
+    set_flags(out[1], 0, 0, 0);
+    return 0;
+}
 /* the end of a file is 0 bytes with the error cleared, as on POSIX */
+/* A pipe that does not block and has nothing in it says EAGAIN; one whose
+   writer has gone says the end. */
 int64_t sys_read_fd(int fd, char *buf, int64_t n) {
     last = 0;
     if (sock_of(fd)) return sys_recv(fd, buf, n, 0);
+    FdFlags *f = flags_of(fd);
+    if (f && f->nonblocking && n > 0) {
+        HANDLE h = (HANDLE)_get_osfhandle(fd);
+        DWORD avail = 0;
+        if (h != INVALID_HANDLE_VALUE && GetFileType(h) == FILE_TYPE_PIPE) {
+            if (!PeekNamedPipe(h, NULL, 0, NULL, &avail, NULL)) {
+                if (GetLastError() == ERROR_BROKEN_PIPE) return 0;
+                return win_failed(NULL);
+            }
+            if (avail == 0) { last = EAGAIN; return -1; }
+            if ((int64_t)avail < n) n = avail;
+        }
+    }
     int r = _read(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
     return r < 0 ? failed() : r;
 }
+/* O_APPEND: every write goes to the end; O_SYNC: every write is on the
+   disk before it returns. */
 int64_t sys_write_fd(int fd, const char *buf, int64_t n) {
     if (sock_of(fd)) return sys_send(fd, buf, n, 0);
+    FdFlags *f = flags_of(fd);
+    if (f && f->append) _lseeki64(fd, 0, SEEK_END);
     int r = _write(fd, buf, (unsigned)(n > 0x7fffffff ? 0x7fffffff : n));
-    return r < 0 ? failed() : r;
+    if (r < 0) return failed();
+    if (f && f->sync) _commit(fd);
+    return r;
 }
 int64_t sys_lseek_fd(int fd, int64_t offset, int whence) {
     if (sock_of(fd)) { last = ESPIPE; return -1; }
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    if (h == INVALID_HANDLE_VALUE) { last = EBADF; return -1; }
+    /* msvcrt seeks on a pipe or a device without complaint */
+    if (GetFileType(h) != FILE_TYPE_DISK) { last = ESPIPE; return -1; }
     __int64 r = _lseeki64(fd, offset, whence);
     return r < 0 ? failed() : (int64_t)r;
 }
@@ -738,9 +1351,32 @@ int sys_fsync(int fd) {
 }
 /* The commands of fcntl, as Linux numbers them (sys_const). A socket is
    read and written (O_RDWR), and blocks or not as FIONBIO last said. */
+static int fcntl_fd(int fd, int command, int argument) {
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    FdFlags *f = flags_of(fd);
+    if (h == INVALID_HANDLE_VALUE || !f) { last = EBADF; return -1; }
+    switch (command) {
+    case 0: {                                                    /* F_DUPFD */
+        if (argument < 0 || argument >= FD_TABLE) { last = EINVAL; return -1; }
+        for (int to = argument; to < FD_TABLE; to++)
+            if ((HANDLE)_get_osfhandle(to) == INVALID_HANDLE_VALUE) return sys_dup2(fd, to);
+        last = EMFILE;
+        return -1;
+    }
+    case 1: return f->cloexec;                                   /* F_GETFD */
+    case 2: f->cloexec = argument & 1; return 0;                 /* F_SETFD */
+    case 3:                                                      /* F_GETFL */
+        return access_of(h) | (f->append ? 02000 : 0) | (f->nonblocking ? 04000 : 0) | (f->sync ? 04010000 : 0);
+    case 4:                                                      /* F_SETFL */
+        f->append = (argument & 02000) != 0;
+        f->nonblocking = (argument & 04000) != 0;
+        return 0;
+    default: last = EINVAL; return -1;
+    }
+}
 int sys_fcntl(int fd, int command, int argument) {
     Sock *s = sock_of(fd);
-    if (!s) return fail();
+    if (!s) return fcntl_fd(fd, command, argument);
     switch (command) {
     case 1: return s->cloexec;                                   /* F_GETFD */
     case 2: s->cloexec = argument & 1; return 0;                 /* F_SETFD */
@@ -754,18 +1390,165 @@ int sys_fcntl(int fd, int command, int argument) {
     default: last = EINVAL; return -1;
     }
 }
+/* Locks. Windows locks a range of a file for a handle, and holds it
+   against every other handle, the process's own too; POSIX locks it for
+   the process, which its own locks never stop. So the process's locks are
+   kept here, a new lock of the process replaces its old ones where they
+   meet, and F_GETLK looks here before it asks Windows, with a handle of
+   its own, whether another process holds the range. A lock that is split
+   by an unlock is taken again for what is left. */
+typedef struct { int used, fd, type; int64_t start, end; } Lock;   /* [start, end) */
+#define LOCKS 256
+static Lock locks[LOCKS];
+static int lock_range(HANDLE h, int type, int64_t start, int64_t end, int wait) {
+    OVERLAPPED o;
+    memset(&o, 0, sizeof o);
+    o.Offset = (DWORD)start;
+    o.OffsetHigh = (DWORD)((uint64_t)start >> 32);
+    uint64_t n = (uint64_t)(end - start);
+    DWORD flags = (type == 1 ? LOCKFILE_EXCLUSIVE_LOCK : 0) | (wait ? 0 : LOCKFILE_FAIL_IMMEDIATELY);
+    return LockFileEx(h, flags, 0, (DWORD)n, (DWORD)(n >> 32), &o) ? 0 : -1;
+}
+static void unlock_range(HANDLE h, int64_t start, int64_t end) {
+    OVERLAPPED o;
+    memset(&o, 0, sizeof o);
+    o.Offset = (DWORD)start;
+    o.OffsetHigh = (DWORD)((uint64_t)start >> 32);
+    uint64_t n = (uint64_t)(end - start);
+    UnlockFileEx(h, 0, (DWORD)n, (DWORD)(n >> 32), &o);
+}
+/* take the process's locks of fd off [start, end), keeping what is left */
+static void release(int fd, HANDLE h, int64_t start, int64_t end) {
+    for (int i = 0; i < LOCKS; i++) {
+        Lock *l = &locks[i];
+        if (!l->used || l->fd != fd || l->end <= start || l->start >= end) continue;
+        unlock_range(h, l->start, l->end);
+        Lock keep = *l;
+        l->used = 0;
+        for (int side = 0; side < 2; side++) {
+            int64_t s0 = side == 0 ? keep.start : end, e0 = side == 0 ? start : keep.end;
+            if (s0 >= e0 || lock_range(h, keep.type, s0, e0, 0) != 0) continue;
+            for (int j = 0; j < LOCKS; j++)
+                if (!locks[j].used) { locks[j] = keep; locks[j].start = s0; locks[j].end = e0; locks[j].used = 1; break; }
+        }
+    }
+}
+static void drop_locks(int fd) {
+    for (int i = 0; i < LOCKS; i++) if (locks[i].used && locks[i].fd == fd) locks[i].used = 0;
+}
 int sys_lock(int fd, int command, int type, int whence, int64_t start, int64_t length, int64_t out[5]) {
-    (void)command; (void)type; (void)whence; (void)start; (void)length; (void)out;
     if (sock_of(fd)) { last = EINVAL; return -1; }
-    return fail();
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    if (h == INVALID_HANDLE_VALUE) { last = EBADF; return -1; }
+    int64_t base = 0;
+    if (whence == 1) base = _lseeki64(fd, 0, SEEK_CUR);
+    else if (whence == 2) {
+        LARGE_INTEGER size;
+        if (!GetFileSizeEx(h, &size)) return win_failed(NULL);
+        base = size.QuadPart;
+    }
+    int64_t from = base + start, to = length == 0 ? INT64_MAX : base + start + length;
+    if (length < 0) { to = from; from = from + length; }
+    if (from < 0 || to < from) { last = EINVAL; return -1; }
+    out[0] = type; out[1] = whence; out[2] = start; out[3] = length; out[4] = 0;
+    if (command == 5) {                                          /* F_GETLK */
+        out[0] = 2;                                              /* F_UNLCK */
+        for (int i = 0; i < LOCKS; i++)
+            if (locks[i].used && locks[i].end > from && locks[i].start < to) return 0;
+        HANDLE probe = ReOpenFile(h, GENERIC_READ, SHARE_ALL, 0);
+        if (probe == INVALID_HANDLE_VALUE) return win_failed(NULL);
+        if (lock_range(probe, type, from, to, 0) == 0) unlock_range(probe, from, to);
+        else out[0] = 1;                                         /* held by another process */
+        CloseHandle(probe);
+        return 0;
+    }
+    if (command != 6 && command != 7) { last = EINVAL; return -1; }
+    /* a read lock needs a descriptor open for reading, a write lock one open
+       for writing, as POSIX has it; Windows locks for any handle */
+    int access = access_of(h);
+    if ((type == 0 && access == 1) || (type == 1 && access == 0)) { last = EBADF; return -1; }
+    release(fd, h, from, to);
+    if (type == 2) return 0;                                     /* F_UNLCK */
+    if (lock_range(h, type, from, to, command == 7) != 0) {
+        last = GetLastError() == ERROR_LOCK_VIOLATION || GetLastError() == ERROR_IO_PENDING ? EAGAIN
+             : errno_of_win(GetLastError());
+        return -1;
+    }
+    for (int i = 0; i < LOCKS; i++)
+        if (!locks[i].used) { locks[i] = (Lock){ 1, fd, type, from, to }; return 0; }
+    unlock_range(h, from, to);
+    last = ENOLCK;
+    return -1;
 }
+/* The limits of pathconf, those of NTFS and of msvcrt; -1 is "no such
+   property" (the options of synchronised, asynchronous and prioritised
+   input and output, which Linux leaves undefined too). */
 int sys_pathconf(const char *path, int fd, const char *name, int64_t *out) {
-    (void)path; (void)fd; (void)name; (void)out; last = 0; return fail();
+    last = 0;
+    path = native(path);
+    if (path ? GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES
+             : (!sock_of(fd) && (HANDLE)_get_osfhandle(fd) == INVALID_HANDLE_VALUE)) {
+        last = path ? ENOENT : EBADF;
+        return -1;
+    }
+    static const struct { const char *name; int64_t value; } limits[] = {
+        { "LINK_MAX", 1024 }, { "MAX_CANON", 255 }, { "MAX_INPUT", 255 }, { "NAME_MAX", 255 },
+        { "PATH_MAX", MAX_PATH }, { "PIPE_BUF", 4096 }, { "CHOWN_RESTRICTED", 1 }, { "NO_TRUNC", 1 },
+        { "VDISABLE", 0 }, { "SYNC_IO", -1 }, { "ASYNC_IO", -1 }, { "PRIO_IO", -1 }, { "FILESIZEBITS", 64 },
+    };
+    for (size_t i = 0; i < sizeof limits / sizeof limits[0]; i++)
+        if (strcmp(limits[i].name, name) == 0) { *out = limits[i].value; return 0; }
+    last = EINVAL;
+    return -1;
 }
-int sys_tcgetattr(int fd, int64_t *out) { (void)fd; (void)out; return fail(); }
-int sys_tcsetattr(int fd, int action, const int64_t *in) { (void)fd; (void)action; (void)in; return fail(); }
-int64_t sys_tcop(int op, int fd, int64_t argument) { (void)op; (void)fd; (void)argument; return fail(); }
-int sys_nccs(void) { return 0; }
+
+/* The terminal: a console, of which the settings of POSIX that have a
+   counterpart are its modes -- ECHO (echoing input), ICANON (reading by
+   lines) and ISIG (^C ends the program) -- and the rest are what a
+   terminal of Linux has. The control characters are Linux's, but for the
+   end of the input, ^Z on Windows. Anything else is not a terminal. */
+#define TERMINAL_NCCS 32
+int sys_nccs(void) { return TERMINAL_NCCS; }
+int sys_tcgetattr(int fd, int64_t *out) {
+    HANDLE h = console_of(fd);
+    DWORD mode;
+    if (!h || !GetConsoleMode(h, &mode)) { last = ENOTTY; return -1; }
+    out[0] = 0400 | 02000;                                          /* ICRNL IXON */
+    out[1] = 01;                                                    /* OPOST */
+    out[2] = 060 | 0200;                                            /* CS8 CREAD */
+    out[3] = ((mode & ENABLE_ECHO_INPUT) ? 010 | 020 | 040 : 0)     /* ECHO ECHOE ECHOK */
+           | ((mode & ENABLE_LINE_INPUT) ? 02 : 0)                  /* ICANON */
+           | ((mode & ENABLE_PROCESSED_INPUT) ? 01 : 0)             /* ISIG */
+           | 0100000;                                               /* IEXTEN */
+    out[4] = out[5] = 15;                                           /* B38400 */
+    for (int i = 0; i < TERMINAL_NCCS; i++) out[6 + i] = 0;
+    out[6 + 0] = 3;  out[6 + 1] = 28; out[6 + 2] = 127; out[6 + 3] = 21;   /* INTR QUIT ERASE KILL */
+    out[6 + 4] = 26; out[6 + 5] = 0;  out[6 + 6] = 1;                      /* EOF TIME MIN */
+    out[6 + 8] = 17; out[6 + 9] = 19; out[6 + 10] = 26;                    /* START STOP SUSP */
+    return 0;
+}
+int sys_tcsetattr(int fd, int action, const int64_t *in) {
+    (void)action;
+    HANDLE h = console_of(fd);
+    DWORD mode;
+    if (!h || !GetConsoleMode(h, &mode)) { last = ENOTTY; return -1; }
+    mode &= ~(DWORD)(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+    if (in[3] & 010) mode |= ENABLE_ECHO_INPUT;
+    /* a console echoes only by lines */
+    if (in[3] & 02) mode |= ENABLE_LINE_INPUT; else mode &= ~(DWORD)ENABLE_ECHO_INPUT;
+    if (in[3] & 01) mode |= ENABLE_PROCESSED_INPUT;
+    return SetConsoleMode(h, mode) ? 0 : (last = EIO, -1);
+}
+/* drain, flush, flow, break, get and set the group of the foreground */
+int64_t sys_tcop(int op, int fd, int64_t argument) {
+    HANDLE h = console_of(fd);
+    if (!h) { last = ENOTTY; return -1; }
+    switch (op) {
+    case 0: return 0;
+    case 1: if (argument != 1) FlushConsoleInputBuffer(h); return 0;   /* TCOFLUSH has nothing to flush */
+    default: last = ENOSYS; return -1;
+    }
+}
 /* SO_LINGER, as sys_posix.c has it: *seconds is -1 when off. */
 int sys_linger(int fd, int set, int *seconds) {
     struct linger l;
@@ -791,63 +1574,142 @@ int sys_socket_query(int fd, int what) {
     last = EINVAL;
     return -1;
 }
-int sys_utime(const char *path, int64_t access, int64_t modification) {
-    return set_file_times(path, access, modification);
-}
 int sys_ftruncate(int fd, int64_t length) {
     if (sock_of(fd)) { last = EINVAL; return -1; }
     return _chsize_s(fd, length) == 0 ? 0 : failed();
 }
 /* kind, mode, inode, device, links, user, group, size, access, modification,
-   change. Windows has no inode, user or group: they are 0. */
+   change: the handle's file information (FileInfo). The owner of every file
+   is the user of the process, and its group the user's, as Cygwin says
+   without ACLs; the change is the creation, as msvcrt has it. */
 int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {
-    (void)follow;
+    FileInfo fi;
     if (!path && sock_of(fd)) {
         /* a socket, readable and writable by all, as Linux has it */
-        for (int i = 0; i < 11; i++) out[i] = 0;
-        out[0] = 5;
-        out[1] = 0777;
-        out[2] = (int64_t)sock_of(fd)->s;
-        return 0;
+        memset(&fi, 0, sizeof fi);
+        fi.kind = 5;
+        fi.mode = 0777;
+        fi.ino = (int64_t)sock_of(fd)->s;
+        fi.nlink = 1;
+    } else if (path) {
+        if (info_of_path(native(path), follow, &fi) != 0) return -1;
+    } else {
+        HANDLE h = (HANDLE)_get_osfhandle(fd);
+        if (h == INVALID_HANDLE_VALUE) { last = EBADF; return -1; }
+        if (info_of(h, NULL, 0, &fi) != 0) return -1;
     }
-    struct __stat64 st;
-    if (path ? _stat64(path, &st) != 0 : _fstat64(fd, &st) != 0) return failed();
-    int kind = (st.st_mode & _S_IFDIR) ? 1 : (st.st_mode & _S_IFCHR) ? 6 : 0;
-    out[0] = kind;
-    out[1] = (int64_t)(st.st_mode & 0777);
-    out[2] = 0;
-    out[3] = (int64_t)st.st_dev;
-    out[4] = (int64_t)st.st_nlink;
-    out[5] = 0;
-    out[6] = 0;
-    out[7] = (int64_t)st.st_size;
-    int64_t t[3];
-    if (file_times(path, fd, t) != 0) return failed();
-    out[8] = t[0];
-    out[9] = t[1];
-    out[10] = t[2];
+    int64_t uid = sys_getuid(), gid = sys_getgid();
+    out[0] = fi.kind;
+    out[1] = fi.mode;
+    out[2] = fi.ino;
+    out[3] = fi.dev;
+    out[4] = fi.nlink;
+    out[5] = uid < 0 ? 0 : uid;
+    out[6] = gid < 0 ? 0 : gid;
+    out[7] = fi.size;
+    out[8] = fi.atime;
+    out[9] = fi.mtime;
+    out[10] = fi.ctime;
     return 0;
 }
-/* Windows has only the read-only bit of a file mode. */
+/* A mode of Windows is only whether the owner may write: the read-only
+   attribute, which a directory does not have. fchmod reopens the file for
+   its attributes, which the descriptor may not have been opened for. */
 int sys_chmod(const char *path, int fd, int mode) {
-    (void)fd;
-    if (!path) { errno = ENOSYS; return failed(); }
-    return _chmod(path, (mode & 0200) ? _S_IREAD | _S_IWRITE : _S_IREAD) == 0 ? 0 : failed();
+    HANDLE h;
+    if (path) h = open_existing(native(path), FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, 1);
+    else {
+        HANDLE own = sock_of(fd) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
+        if (own == INVALID_HANDLE_VALUE) { last = EBADF; return -1; }
+        h = ReOpenFile(own, FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, SHARE_ALL, FILE_FLAG_BACKUP_SEMANTICS);
+    }
+    if (h == INVALID_HANDLE_VALUE) return win_failed(path ? native(path) : NULL);
+    FILE_BASIC_INFO info;
+    int ok = GetFileInformationByHandleEx(h, FileBasicInfo, &info, sizeof info);
+    if (ok && !(info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        DWORD a = info.FileAttributes & ~(DWORD)FILE_ATTRIBUTE_READONLY;
+        if (!(mode & 0200)) a |= FILE_ATTRIBUTE_READONLY;
+        if (a == 0) a = FILE_ATTRIBUTE_NORMAL;
+        memset(&info, 0, sizeof info);   /* zero times are left as they are */
+        info.FileAttributes = a;
+        ok = SetFileInformationByHandle(h, FileBasicInfo, &info, sizeof info);
+    }
+    if (!ok) win_failed(NULL);
+    CloseHandle(h);
+    return ok ? 0 : -1;
 }
+/* Every file is the user's, so it can be given to the user and a group of
+   the user's (-1 leaves either as it is), and to no one else. */
 int sys_chown(const char *path, int fd, int64_t uid, int64_t gid) {
-    (void)path; (void)fd; (void)uid; (void)gid; return fail();
+    FileInfo fi;
+    if (path) { if (info_of_path(native(path), 1, &fi) != 0) return -1; }
+    else if (!sock_of(fd) && (HANDLE)_get_osfhandle(fd) == INVALID_HANDLE_VALUE) { last = EBADF; return -1; }
+    int64_t groups[256];
+    int n = sys_getgroups(groups, 256);
+    int group_ok = gid == -1 || gid == sys_getgid();
+    for (int i = 0; i < n && !group_ok; i++) group_ok = groups[i] == gid;
+    if ((uid != -1 && uid != sys_getuid()) || !group_ok) { last = EPERM; return -1; }
+    return 0;
 }
-int sys_link(const char *from, const char *to) { (void)from; (void)to; return fail(); }
-int sys_symlink(const char *from, const char *to) { (void)from; (void)to; return fail(); }
-int sys_mkfifo(const char *path, int mode) { (void)path; (void)mode; return fail(); }
-int sys_umask(int mask) { (void)mask; return fail(); }
+/* The user of the process, and no other: its name, its home (USERPROFILE)
+   and its shell (COMSPEC), with the numbers of sys_getuid and sys_getgid.
+   Another user is not found, with the error cleared, as getpwnam leaves it. */
+static char pw_strings[3 * (MAX_PATH * 4)];
 const char *sys_getpw(const char *name, int64_t uid, int64_t out[2]) {
-    (void)name; (void)uid; (void)out; fail(); return NULL;
+    const char *me = current_user();
+    int64_t my_uid = sys_getuid(), my_gid = sys_getgid();
+    if (!me || my_uid < 0 || my_gid < 0) return NULL;
+    last = 0;
+    if (name ? _stricmp(name, me) != 0 : uid != my_uid) return NULL;
+    const char *home = getenv("USERPROFILE"), *shell = getenv("COMSPEC");
+    const char *parts[3] = { me, home ? home : "", shell ? shell : "" };
+    size_t at = 0;
+    for (int i = 0; i < 3; i++) {
+        size_t k = strlen(parts[i]);
+        if (at + k + 2 >= sizeof pw_strings) break;
+        memcpy(pw_strings + at, parts[i], k);
+        pw_strings[at + k] = 0;
+        if (i > 0) posix_path(pw_strings + at);   /* the home and the shell */
+        k = strlen(pw_strings + at);
+        at += k;
+        pw_strings[at++] = 0;
+    }
+    pw_strings[at] = 0;
+    out[0] = my_uid;
+    out[1] = my_gid;
+    return pw_strings;
 }
+/* A group of the process's token, by name or by number: its name and
+   number, and as its members the user of the process, the one member this
+   layer knows. Another group is not found, with the error cleared. */
+static char gr_name[256], gr_members[256];
 const char *sys_getgr(const char *name, int64_t gid, int64_t *id) {
-    (void)name; (void)gid; (void)id; fail(); return NULL;
+    TOKEN_GROUPS *g = token_info(TokenGroups);
+    TOKEN_PRIMARY_GROUP *primary = token_info(TokenPrimaryGroup);
+    const char *me = current_user();
+    const char *found = NULL;
+    last = 0;
+    if (g && primary && me) {
+        for (DWORD i = 0; i <= g->GroupCount && !found; i++) {
+            PSID sid = i == 0 ? primary->PrimaryGroup : g->Groups[i - 1].Sid;
+            char account[256], domain[256];
+            DWORD an = sizeof account, dn = sizeof domain;
+            SID_NAME_USE use;
+            if (!LookupAccountSidA(NULL, sid, account, &an, domain, &dn, &use)) continue;
+            if (name ? _stricmp(name, account) != 0 : gid != rid_of(sid)) continue;
+            snprintf(gr_name, sizeof gr_name, "%s", account);
+            gr_name[strlen(gr_name) + 1] = 0;
+            snprintf(gr_members, sizeof gr_members, "%s", me);
+            gr_members[strlen(gr_members) + 1] = 0;
+            *id = rid_of(sid);
+            found = gr_name;
+        }
+    }
+    free(g);
+    free(primary);
+    return found;
 }
-const char *sys_group_members(void) { return ""; }
+const char *sys_group_members(void) { return gr_members; }
 
 /* The addresses of sockets are the bytes of a sockaddr of Winsock, which has
    the layout of POSIX's (family, then port and address). */
@@ -1201,6 +2063,7 @@ int sys_unix_addr(const char *path) {
     struct sockaddr_un un;
     memset(&un, 0, sizeof un);
     un.sun_family = AF_UNIX;
+    path = native(path);
     if (strlen(path) >= sizeof un.sun_path) { last = ENAMETOOLONG; return -1; }
     strcpy(un.sun_path, path);
     size_t n = offsetof(struct sockaddr_un, sun_path) + strlen(path) + 1;
@@ -1239,7 +2102,7 @@ const char *sys_unix_path(const char *addr, int n) {
     memcpy(&un, addr, (size_t)n < sizeof un ? (size_t)n : sizeof un);
     if (un.sun_family != AF_UNIX) return NULL;
     snprintf(path_buffer, sizeof path_buffer, "%s", un.sun_path);
-    return path_buffer;
+    return posix_path(path_buffer);
 }
 /* The databases of hosts, protocols and services are Winsock's, which reads
    the files POSIX has under %SystemRoot%\System32\drivers\etc. An entry is

@@ -10,6 +10,5 @@
 # Everything else runs on both Windows VMs, bin/runevm.exe and
 # bin/runevm32.exe. docs/plans/windows.md is the roadmap that shortens this
 # list.
-basis.posix_files POSIX: the modes and owners of POSIX, and a home directory under /
-basis.posix_process POSIX: getpid, uname and getgroups; then fork, exec and waitpid
+basis.posix_process POSIX: uname says Linux; fork, exec and waitpid
 basis.unix_pipes POSIX: Unix.execute sets FD_CLOEXEC with fcntl, then forks

@@ -351,6 +351,7 @@ int sys_close_dir(int dir) {
 }
 
 /* ---------------------------------------------------------------- descriptors */
+FILE *sys_fopen(const char *path, const char *mode) { return fopen(path, mode); }
 int sys_fileno(FILE *file) { return file ? fileno(file) : -1; }
 int64_t sys_ftell(FILE *file) { off_t r = ftello(file); return r < 0 ? -1 : (int64_t)r; }
 int sys_fseek(FILE *file, int64_t offset, int whence) {

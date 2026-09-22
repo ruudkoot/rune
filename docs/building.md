@@ -131,9 +131,11 @@ passes `TZ` to them through `WSLENV`. It also runs a few programs with
 
 `vm/sys_win.c` gives what Windows has -- the clock, the calendar, files,
 directories, descriptors, the environment and running a command -- and
-answers `ENOSYS` for what it does not do yet. Paths come back with `/` for a
-separator, because Rune's `OS.Path` is the one of POSIX and the C runtime of
-Windows takes either. The standard streams are put in binary mode before
+answers `ENOSYS` for what it does not do. A path of a drive comes back as
+`/C:/Users/...`, because Rune's `OS.Path` is the one of POSIX, to which
+that is absolute (no name of Windows has a colon in it), and a path that
+goes in as `/C:/...` is given to Windows as `C:/...`; `/dev/null` is `NUL`
+and `/dev/tty` the console. The standard streams are put in binary mode before
 `main` runs, since a Rune string is bytes and a `\n` must stay one.
 
 The programs of `tests/lang` that do not pass on the VMs of Windows are in

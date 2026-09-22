@@ -70,6 +70,8 @@ const char *sys_read_dir(int dir) { (void)dir; fail(); return NULL; }
 int sys_rewind_dir(int dir) { (void)dir; return fail(); }
 int sys_close_dir(int dir) { (void)dir; return fail(); }
 
+/* ISO C opens files */
+FILE *sys_fopen(const char *path, const char *mode) { return fopen(path, mode); }
 int sys_fileno(FILE *file) { (void)file; return fail(); }
 /* ISO C has only the positions a long can hold. */
 int64_t sys_ftell(FILE *file) { long r = ftell(file); return r < 0 ? -1 : (int64_t)r; }

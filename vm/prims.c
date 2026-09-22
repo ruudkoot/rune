@@ -1536,7 +1536,7 @@ static int p_file_open(VM *vm) {
     path[s->len] = 0;
     FILE *f = NULL;
     if (strlen(path) != s->len) vm->io_errno = EINVAL;   /* embedded NUL */
-    else { f = fopen(path, m); if (!f) vm->io_errno = errno; }
+    else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
     free(path);
     if (!f) return ret(vm, 2, mk_con0(0));
     if (vm->nfiles == vm->files_cap) {
