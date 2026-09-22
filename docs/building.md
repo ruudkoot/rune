@@ -104,30 +104,43 @@ host build that compiles stage 1 of the bootstrap.
 
 ## Windows
 
-`make windows` builds the VM for Windows with mingw-w64 and `make
-test-windows` runs the language suite on it. Neither is part of any other
-target: `make check` never compiles `vm/sys_win.c`, and nothing else in the
-tree depends on it. The toolchain has to be installed
-(`x86_64-w64-mingw32-gcc`, which `WINCC` overrides), and running the result
-needs Windows -- or WSL, which starts an `.exe` for you, which is how it was
-developed and tested.
+`make windows` builds the VM for Windows with mingw-w64 twice: for 64 bits,
+`bin/runevm.exe`, and for 32 bits, `bin/runevm32.exe`. `make test-windows`
+runs the language suite and `tests/vm` on both (`tests/run-windows.sh`).
+Neither is part of any other target: `make check` never compiles
+`vm/sys_win.c`, and nothing else in the tree depends on it. The toolchains
+have to be installed (`x86_64-w64-mingw32-gcc` and `i686-w64-mingw32-gcc`,
+which `WINCC` and `WINCC32` override; `make doctor` says whether they are),
+and running the result needs Windows -- or WSL, which starts an `.exe` for
+you, which is how it was developed and tested.
 
 Only the VM differs: the compiler, the library and the bytecode are the ones
-everything else uses, so the suite runs with the ordinary `bin/rune` and
-`bin/runevm.exe`.
+everything else uses, so the suite is compiled once, with the ordinary
+`bin/rune`, and run on each VM. A value is 64 bits wide on both VMs, so
+`Int`, `Word` and the positions of files are the same as on any other; the
+32-bit VM computes with SSE2, as the 64-bit one does, and is linked
+large-address-aware, which gives it 4 GiB of address space under 64-bit
+Windows. The link is refused if an `.exe` imports a DLL of the toolchain
+rather than of Windows.
+
+The runner starts the VMs in a directory on the Windows side
+(`$RUNE_WINDOWS_DIR`, or `rune-test-windows` in the `TEMP` directory of
+Windows), not in the tree, which WSL would hand them as a network path, and
+passes `TZ` to them through `WSLENV`. It also runs a few programs with
+`--count` on each VM and on `bin/runevm`: the counts must agree.
 
 `vm/sys_win.c` gives what Windows has -- the clock, the calendar, files,
 directories, descriptors, the environment and running a command -- and
-answers `ENOSYS` for what belongs to POSIX and has no counterpart worth
-faking: fork, signals, pipes between processes, the terminal settings, users
-and groups, and the sockets, which on Windows are Winsock. Paths come back
-with `/` for a separator, because Rune's `OS.Path` is the one of POSIX and
-the C runtime of Windows takes either. The standard streams are put in
-binary mode before `main` runs, since a Rune string is bytes and a `\n` must
-stay one.
+answers `ENOSYS` for what it does not do yet. Paths come back with `/` for a
+separator, because Rune's `OS.Path` is the one of POSIX and the C runtime of
+Windows takes either. The standard streams are put in binary mode before
+`main` runs, since a Rune string is bytes and a `\n` must stay one.
 
-127 of the 136 programs of `tests/lang` pass; the nine that do not are in
-`tests/windows-skip.txt` with the reason for each.
+127 of the 136 programs of `tests/lang` pass on both VMs, and so does
+`tests/vm`; the nine programs that do not are in `tests/windows-skip.txt`
+with the reason for each.
+
+[docs/plans/windows.md](plans/windows.md) is the roadmap of what is left.
 
 ## Installing
 

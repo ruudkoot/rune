@@ -18,8 +18,8 @@ estimate.
 | Milestone | State |
 |---|---|
 | M0, the 64-bit VM (`make windows`, `make test-windows`) | done (`667eef6`): 127 of 136 programs of `tests/lang` pass; 9 in `tests/windows-skip.txt` |
-| M1a, the core fixes a 32-bit VM needs | not started |
-| M1b, two widths | not started |
+| M1a, the core fixes a 32-bit VM needs | done: growing the heap stops with "out of memory" where it wrapped, the loader's bound cannot wrap and the loader reads to the end of the file, `bytes_allocated` is 64 bits, `--heap-size` and `--gc-stress` refuse what is not a size; `sys_ftell`/`sys_fseek` give `BinIO` 64-bit positions everywhere; `tests/vm` (9 cases, part of `make test`) |
+| M1b, two widths | done: `bin/runevm.exe` and `bin/runevm32.exe` (SSE2, large-address-aware), both importing only `KERNEL32.dll` and `msvcrt.dll`; 127 of 136 on both, `tests/vm` 9 of 9, and `--count` agrees with `bin/runevm` on four programs; the runner compiles once, runs in parallel on NTFS with `TZ` (1 m 29 s for both VMs, where one took 9.5 minutes), which showed that msvcrt's `_stat64` shifts file times by `TZ`: they are now read and set in UTC |
 | M2, the Basis suite on both Windows VMs | not started |
 | M3, constants, errors and two quick wins | not started |
 | M4, a C-locale `strftime` | not started |

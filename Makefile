@@ -27,8 +27,9 @@
 #   make matrix-quick  the Basis Library suite on Rune and on Rune's library
 #                   compiled by each of the hosts
 #   make matrix     matrix-quick and the suite on each host's own library
-#   make windows    the VM for Windows with mingw-w64 (docs/building.md); it
-#                   and make test-windows are apart from every other target
+#   make windows    the VM for Windows with mingw-w64, 64-bit and 32-bit
+#                   (docs/building.md); it and make test-windows are apart
+#                   from every other target
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
 #
@@ -108,10 +109,12 @@ all: vm boot runedoc
 # when the script changes.
 doctor:
 	@CC="$(CC)" sh scripts/doctor.sh
+	@WINCC="$(WINCC)" WINCC32="$(WINCC32)" sh scripts/doctor.sh --scope windows || \
+	  echo "doctor: the Windows tools are optional: only make windows and make test-windows need them"
 
 build/.doctor-%: scripts/doctor.sh
 	@mkdir -p build
-	@[ "$(DOCTOR)" = no ] || { CC="$(CC)" sh scripts/doctor.sh --quiet --scope $* && touch $@; }
+	@[ "$(DOCTOR)" = no ] || { CC="$(CC)" WINCC="$(WINCC)" WINCC32="$(WINCC32)" sh scripts/doctor.sh --quiet --scope $* && touch $@; }
 
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
@@ -216,31 +219,54 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
 
 # ---------------------------------------------------------- Windows (apart)
-# `make windows` builds the VM for Windows with mingw-w64, and
-# `make test-windows` runs the language suite on it. Neither is part of any
-# other target, and nothing else in the tree depends on vm/sys_win.c: the
-# toolchain is only on a machine that has it, and running the result needs
-# Windows, or WSL, which starts an .exe for you. The library, the compiler
-# and the bytecode are the same as everywhere else -- only the VM differs --
-# so the suite is run with the ordinary bin/rune and this VM.
+# `make windows` builds the VM for Windows with mingw-w64, for 64 bits
+# (bin/runevm.exe) and for 32 bits (bin/runevm32.exe), and `make
+# test-windows` runs the language suite and tests/vm on both. Neither is
+# part of any other target, and nothing else in the tree depends on
+# vm/sys_win.c: the toolchain is only on a machine that has it, and running
+# the result needs Windows, or WSL, which starts an .exe for you. The
+# library, the compiler and the bytecode are the same as everywhere else --
+# only the VM differs -- so the suite is compiled once, with the ordinary
+# bin/rune, and run on each VM.
+#
+# The 32-bit VM computes with SSE2 as the 64-bit one does (x87 arithmetic
+# rounds differently) and is linked large-address-aware, which gives it
+# 4 GiB of address space under 64-bit Windows instead of 2. An .exe that
+# imports a DLL of the toolchain rather than of Windows (libwinpthread,
+# libgcc_s) would not start without it beside it, so the link is refused.
 #
 # What the system layer of Windows does and does not do is in the header of
 # vm/sys_win.c; tests/windows-skip.txt lists the programs that need what it
-# does not (fork, signals, the terminal, sockets, users) and why.
-WINCC     ?= x86_64-w64-mingw32-gcc
-WINCFLAGS ?= -std=c99 -O2 -Wall -Wextra
-WIN_SRCS  := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_win.c
+# does not and why, and docs/plans/windows.md what is left to do.
+WINCC       ?= x86_64-w64-mingw32-gcc
+WINCC32     ?= i686-w64-mingw32-gcc
+WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
+WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
+WIN_SRCS    := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/sys_win.c
+WIN_LIBS    :=
 
-windows: bin/runevm.exe
+# windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
+define windows_dlls
+	@for d in $$($$($(1) -print-prog-name=objdump) -p $@ | sed -n 's/^[[:space:]]*DLL Name: //p'); do \
+	  case $$d in [Ll][Ii][Bb]*) echo "make windows: $@ imports $$d, which is not part of Windows"; \
+	    rm -f $@; exit 1 ;; esac; \
+	done
+endef
 
-bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c
+windows: bin/runevm.exe bin/runevm32.exe
+
+bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 	@mkdir -p bin
-	@command -v $(WINCC) > /dev/null 2>&1 || \
-	  { echo "make windows: $(WINCC) is not installed (mingw-w64)"; exit 1; }
-	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) -Ivm
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC))
 
-test-windows: bin/runevm.exe $(RUNE)
-	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe
+bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
+	@mkdir -p bin
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC32))
+
+test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
+	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.

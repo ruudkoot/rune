@@ -103,13 +103,15 @@ void sys_time_sleep(int64_t microseconds) {
     Sleep((DWORD)((microseconds + 999) / 1000));
 }
 
+/* The calendar goes through the functions of msvcrt that are 64 bits wide
+   by name: time_t is 32 bits in the 32-bit msvcrt, and would end in 2038. */
 int sys_date_parts(int64_t seconds, int local, int32_t parts[9]) {
-    time_t t = (time_t)seconds;
-    struct tm *tm = local ? localtime(&t) : gmtime(&t);
-    if (tm == NULL) return -1;
-    parts[0] = tm->tm_sec;  parts[1] = tm->tm_min;   parts[2] = tm->tm_hour;
-    parts[3] = tm->tm_mday; parts[4] = tm->tm_mon;   parts[5] = tm->tm_year;
-    parts[6] = tm->tm_wday; parts[7] = tm->tm_yday;  parts[8] = tm->tm_isdst;
+    __time64_t t = (__time64_t)seconds;
+    struct tm tm;
+    if ((local ? _localtime64_s(&tm, &t) : _gmtime64_s(&tm, &t)) != 0) return -1;
+    parts[0] = tm.tm_sec;  parts[1] = tm.tm_min;   parts[2] = tm.tm_hour;
+    parts[3] = tm.tm_mday; parts[4] = tm.tm_mon;   parts[5] = tm.tm_year;
+    parts[6] = tm.tm_wday; parts[7] = tm.tm_yday;  parts[8] = tm.tm_isdst;
     return 0;
 }
 int64_t sys_date_seconds(int32_t parts[9], int local) {
@@ -118,20 +120,20 @@ int64_t sys_date_seconds(int32_t parts[9], int local) {
     tm.tm_sec = parts[0]; tm.tm_min = parts[1]; tm.tm_hour = parts[2];
     tm.tm_mday = parts[3]; tm.tm_mon = parts[4]; tm.tm_year = parts[5];
     tm.tm_isdst = local ? parts[8] : 0;
-    time_t t = local ? mktime(&tm) : _mkgmtime(&tm);
-    if (t == (time_t)-1) return failed();
+    __time64_t t = local ? _mktime64(&tm) : _mkgmtime64(&tm);
+    if (t == (__time64_t)-1) return failed();
     parts[0] = tm.tm_sec;  parts[1] = tm.tm_min;   parts[2] = tm.tm_hour;
     parts[3] = tm.tm_mday; parts[4] = tm.tm_mon;   parts[5] = tm.tm_year;
     parts[6] = tm.tm_wday; parts[7] = tm.tm_yday;  parts[8] = tm.tm_isdst;
     return (int64_t)t;
 }
 int sys_date_offset(int64_t seconds, int32_t *offset) {
-    time_t t = (time_t)seconds;
+    __time64_t t = (__time64_t)seconds;
     struct tm local, utc;
-    if (localtime_s(&local, &t) != 0 || gmtime_s(&utc, &t) != 0) return failed();
+    if (_localtime64_s(&local, &t) != 0 || _gmtime64_s(&utc, &t) != 0) return failed();
     local.tm_isdst = 0; utc.tm_isdst = 0;
-    time_t a = mktime(&local), b = mktime(&utc);
-    if (a == (time_t)-1 || b == (time_t)-1) return failed();
+    __time64_t a = _mktime64(&local), b = _mktime64(&utc);
+    if (a == (__time64_t)-1 || b == (__time64_t)-1) return failed();
     *offset = (int32_t)(a - b);
     return 0;
 }
@@ -196,17 +198,57 @@ int64_t sys_file_size(const char *path) {
     if (_stat64(path, &st) != 0) return failed();
     return (int64_t)st.st_size;
 }
+/* The times of a file are read and set as Windows keeps them, in UTC:
+   msvcrt's _stat64 and _utime64 go through the local time of TZ, and when TZ
+   names another zone than the system's the times they give are off by the
+   difference. */
+static int64_t filetime_seconds(FILETIME ft) {
+    uint64_t ticks = ((uint64_t)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+    return (int64_t)(ticks / 10000000) - 11644473600LL;
+}
+static FILETIME seconds_filetime(int64_t seconds) {
+    uint64_t ticks = (uint64_t)(seconds + 11644473600LL) * 10000000;
+    FILETIME ft;
+    ft.dwLowDateTime = (DWORD)ticks;
+    ft.dwHighDateTime = (DWORD)(ticks >> 32);
+    return ft;
+}
+/* access, modification and creation (which msvcrt gives as the change) */
+static int file_times(const char *path, int fd, int64_t out[3]) {
+    FILETIME a, m, c;
+    if (path) {
+        WIN32_FILE_ATTRIBUTE_DATA d;
+        if (!GetFileAttributesExA(path, GetFileExInfoStandard, &d)) { errno = ENOENT; return -1; }
+        a = d.ftLastAccessTime; m = d.ftLastWriteTime; c = d.ftCreationTime;
+    } else {
+        HANDLE h = (HANDLE)_get_osfhandle(fd);
+        if (h == INVALID_HANDLE_VALUE || !GetFileTime(h, &c, &a, &m)) { errno = EBADF; return -1; }
+    }
+    out[0] = filetime_seconds(a); out[1] = filetime_seconds(m); out[2] = filetime_seconds(c);
+    return 0;
+}
+static int set_file_times(const char *path, int64_t access, int64_t modification) {
+    /* FILE_FLAG_BACKUP_SEMANTICS opens a directory too */
+    HANDLE h = CreateFileA(path, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (h == INVALID_HANDLE_VALUE) {
+        errno = GetLastError() == ERROR_ACCESS_DENIED ? EACCES : ENOENT;
+        return failed();
+    }
+    FILETIME a = seconds_filetime(access), m = seconds_filetime(modification);
+    int ok = SetFileTime(h, NULL, &a, &m);
+    CloseHandle(h);
+    if (!ok) { errno = EACCES; return failed(); }
+    return 0;
+}
 int64_t sys_mod_time(const char *path) {
-    struct __stat64 st;
-    if (_stat64(path, &st) != 0) return failed();
-    return (int64_t)st.st_mtime;
+    int64_t t[3];
+    if (file_times(path, -1, t) != 0) return failed();
+    return t[1];
 }
 int sys_set_time(const char *path, int64_t seconds, int now) {
-    struct __utimbuf64 t;
     if (now) seconds = sys_time_now() / 1000000;
-    t.actime = (__time64_t)seconds;
-    t.modtime = (__time64_t)seconds;
-    return _utime64(path, &t) == 0 ? 0 : failed();
+    return set_file_times(path, seconds, seconds);
 }
 const char *sys_read_link(const char *path) { (void)path; fail(); return NULL; }
 const char *sys_real_path(const char *path) {
@@ -398,10 +440,7 @@ int sys_nccs(void) { return 0; }
 int sys_linger(int fd, int set, int *seconds) { (void)fd; (void)set; (void)seconds; return fail(); }
 int sys_socket_query(int fd, int what) { (void)fd; (void)what; return fail(); }
 int sys_utime(const char *path, int64_t access, int64_t modification) {
-    struct __utimbuf64 t;
-    t.actime = (__time64_t)access;
-    t.modtime = (__time64_t)modification;
-    return _utime64(path, &t) == 0 ? 0 : failed();
+    return set_file_times(path, access, modification);
 }
 int sys_ftruncate(int fd, int64_t length) { return _chsize_s(fd, length) == 0 ? 0 : failed(); }
 /* kind, mode, inode, device, links, user, group, size, access, modification,
@@ -419,9 +458,11 @@ int sys_stat_of(const char *path, int follow, int fd, int64_t out[11]) {
     out[5] = 0;
     out[6] = 0;
     out[7] = (int64_t)st.st_size;
-    out[8] = (int64_t)st.st_atime;
-    out[9] = (int64_t)st.st_mtime;
-    out[10] = (int64_t)st.st_ctime;
+    int64_t t[3];
+    if (file_times(path, fd, t) != 0) return failed();
+    out[8] = t[0];
+    out[9] = t[1];
+    out[10] = t[2];
     return 0;
 }
 /* Windows has only the read-only bit of a file mode. */

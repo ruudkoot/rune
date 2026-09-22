@@ -14,13 +14,15 @@
 #   CRT       the C runtime of Windows differs from POSIX's in a way that
 #             shows in what the program prints
 #
-# Everything else runs: 127 of the 136 programs pass on the Windows VM.
-basis.inet6sock SOCKETS: INet6Sock.fromString asks the system to read an address
+# Everything else runs: 127 of the 136 programs pass on both Windows VMs,
+# bin/runevm.exe and bin/runevm32.exe. docs/plans/windows.md is the roadmap
+# that shortens this list.
+basis.inet6sock SOCKETS: the address family is a constant sys_const does not give, and INet6Sock.toAddr builds a sockaddr
 basis.inetsock_addresses SOCKETS: INetSock.toAddr builds a sockaddr
 basis.netdb_lookup SOCKETS: the protocol, service and host databases are Winsock's
 basis.socket_loopback SOCKETS: a TCP and a UDP socket on the loopback interface
 basis.os.io_poll POLL: OS.IO.poll waits on descriptors
-basis.posix_files POSIX: the modes, owners and links of a file
-basis.posix_process POSIX: fork, exec and waitpid
-basis.unix_pipes POSIX: a pipe to a child process
-basis.date_year_of_c CRT: strftime of Microsoft's C runtime gives nothing for a year before 1970, where POSIX formats it
+basis.posix_files POSIX: createf gets O_RDWR as 0 from sys_const; then the modes, owners and home directory of POSIX
+basis.posix_process POSIX: getpid fails and Posix.ProcEnv.getpid takes -1 for a process (Overflow); then fork, exec and waitpid
+basis.unix_pipes POSIX: Unix.execute sets FD_CLOEXEC with fcntl, then forks
+basis.date_year_of_c CRT: strftime of msvcrt formats only the years 0 to 9999, where POSIX formats any year an int holds
