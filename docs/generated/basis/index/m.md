@@ -47,6 +47,7 @@
 - `month` (type): [DATE](../sig/DATE.md#type-month)
 - `month` (val): [DATE](../sig/DATE.md#val-month)
 - `msgsize` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-msgsize)
+- `Reg.MULTI_SZ` (con): [WINDOWS](../sig/WINDOWS.md#con-reg.multi_sz)
 - `S.mode` (type): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#type-s.mode)
 - `ST.mode` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.mode)
 - `ST.mtime` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.mtime)

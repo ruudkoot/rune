@@ -1115,6 +1115,149 @@ static int p_posix_getgr(VM *vm) {
     return ret(vm, 2, l);
 }
 
+/* ================================================================ Windows */
+/* A list of n strings of the given lengths (bytes, NULs among them), built
+   on the VM stack so that the collector sees every cell. */
+static int push_byte_strings(VM *vm, const char *const *strs, const size_t *lens, int n, int arity) {
+    vm_push(vm, mk_con0(0));
+    for (int i = n; i > 0; i--) {
+        vm_push(vm, mk_ptr(vm_string_from(vm, strs[i - 1], (uint32_t)lens[i - 1])));
+        vm_cons(vm);
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, arity, l);
+}
+static int push_c_strings(VM *vm, const char *const *strs, int n, int arity) {
+    size_t lens[8] = { 0 };
+    for (int i = 0; i < n; i++) lens[i] = strlen(strs[i]);
+    return push_byte_strings(vm, strs, lens, n, arity);
+}
+static int p_win_reg_open(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_reg_open");
+    check_tag(vm, ARG(1), T_INT, "win_reg_open");
+    check_tag(vm, ARG(0), T_INT, "win_reg_open");
+    char *name = c_string(vm, ARG(2), "win_reg_open");
+    int64_t out[2];
+    int r = sys_win_reg_open((int)ARG(3).u.i, name, (int)ARG(1).u.i, (int)ARG(0).u.i, out);
+    free(name);
+    return push_int_list(vm, out, r == 0 ? 2 : 0, 4);
+}
+static int p_win_reg_close(VM *vm) { INT1("win_reg_close"); return ret(vm, 1, mk_int(sys_win_reg_close((int)x))); }
+static int p_win_reg_delete(VM *vm) {
+    check_tag(vm, ARG(2), T_INT, "win_reg_delete");
+    check_tag(vm, ARG(0), T_INT, "win_reg_delete");
+    char *name = c_string(vm, ARG(1), "win_reg_delete");
+    int r = sys_win_reg_delete((int)ARG(2).u.i, name, (int)ARG(0).u.i);
+    free(name);
+    return ret(vm, 3, mk_int(r));
+}
+static int p_win_reg_enum(VM *vm) {
+    for (int i = 0; i < 3; i++) check_tag(vm, ARG(i), T_INT, "win_reg_enum");
+    const char *name = sys_win_reg_enum((int)ARG(2).u.i, (int)ARG(1).u.i, (int)ARG(0).u.i);
+    return push_c_strings(vm, &name, name ? 1 : 0, 3);
+}
+static int p_win_reg_query(VM *vm) {
+    check_tag(vm, ARG(1), T_INT, "win_reg_query");
+    char *name = c_string(vm, ARG(0), "win_reg_query");
+    int type = 0;
+    int64_t length = 0;
+    const char *data = sys_win_reg_query((int)ARG(1).u.i, name, &type, &length);
+    free(name);
+    if (!data || length < 0) return push_c_strings(vm, NULL, 0, 2);
+    char kind[16];
+    snprintf(kind, sizeof kind, "%d", type);
+    const char *strs[2] = { kind, data };
+    size_t lens[2] = { strlen(kind), (size_t)length };
+    return push_byte_strings(vm, strs, lens, 2, 2);
+}
+static int p_win_reg_set(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_reg_set");
+    check_tag(vm, ARG(1), T_INT, "win_reg_set");
+    char *name = c_string(vm, ARG(2), "win_reg_set");
+    Obj *data = check_obj(vm, ARG(0), K_STRING, "win_reg_set");
+    int r = sys_win_reg_set((int)ARG(3).u.i, name, (int)ARG(1).u.i, OBJ_BYTES(data), (int64_t)data->len);
+    free(name);
+    return ret(vm, 4, mk_int(r));
+}
+static int p_win_config(VM *vm) {
+    INT1("win_config");
+    const char *s = sys_win_config((int)x);
+    return push_string_value(vm, s ? s : "");
+}
+static int p_win_version(VM *vm) {
+    int64_t out[4];
+    const char *csd = sys_win_version(out);
+    if (!csd) return push_c_strings(vm, NULL, 0, 1);
+    char n[4][24];
+    for (int i = 0; i < 4; i++) snprintf(n[i], sizeof n[i], "%lld", (long long)out[i]);
+    const char *strs[5] = { n[0], n[1], n[2], n[3], csd };
+    return push_c_strings(vm, strs, 5, 1);
+}
+static int p_win_volume(VM *vm) {
+    char *root = c_string(vm, ARG(0), "win_volume");
+    int64_t out[2];
+    const char *names = sys_win_volume(root, out);
+    free(root);
+    if (!names) return push_c_strings(vm, NULL, 0, 1);
+    char serial[24], longest[24];
+    snprintf(serial, sizeof serial, "%lld", (long long)out[0]);
+    snprintf(longest, sizeof longest, "%lld", (long long)out[1]);
+    const char *strs[4] = { names, names + strlen(names) + 1, serial, longest };
+    return push_c_strings(vm, strs, 4, 1);
+}
+static int p_win_find_executable(VM *vm) {
+    char *name = c_string(vm, ARG(0), "win_find_executable");
+    const char *path = sys_win_find_executable(name);
+    free(name);
+    return push_c_strings(vm, &path, path ? 1 : 0, 1);
+}
+static int p_win_shell_execute(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "win_shell_execute");
+    char *file = c_string(vm, ARG(2), "win_shell_execute");
+    char *arg = c_string(vm, ARG(1), "win_shell_execute");
+    int r = sys_win_shell_execute(file, arg, (int)ARG(0).u.i);
+    free(file);
+    free(arg);
+    return ret(vm, 3, mk_int(r));
+}
+static int p_win_spawn(VM *vm) {
+    int32_t given[3];
+    if (int_list(ARG(0), given, 3) != 3) vm_fatal(vm, "primitive win_spawn: malformed descriptors");
+    char *command = c_string(vm, ARG(2), "win_spawn");
+    char *arg = c_string(vm, ARG(1), "win_spawn");
+    int fds[3] = { given[0], given[1], given[2] };
+    fflush(stdout);
+    fflush(stderr);
+    int64_t pid = sys_win_spawn(command, arg, fds);
+    free(command);
+    free(arg);
+    return ret(vm, 3, mk_int(pid));
+}
+static int p_win_wait(VM *vm) {
+    INT1("win_wait");
+    int64_t code = 0;
+    int r = sys_win_wait(x, &code);
+    return push_int_list(vm, &code, r == 0 ? 1 : 0, 1);
+}
+static int p_win_dde_start(VM *vm) {
+    char *service = c_string(vm, ARG(1), "win_dde_start");
+    char *topic = c_string(vm, ARG(0), "win_dde_start");
+    int r = sys_win_dde_start(service, topic);
+    free(service);
+    free(topic);
+    return ret(vm, 2, mk_int(r));
+}
+static int p_win_dde_execute(VM *vm) {
+    check_tag(vm, ARG(3), T_INT, "win_dde_execute");
+    check_tag(vm, ARG(1), T_INT, "win_dde_execute");
+    check_tag(vm, ARG(0), T_INT, "win_dde_execute");
+    char *command = c_string(vm, ARG(2), "win_dde_execute");
+    int r = sys_win_dde_execute((int)ARG(3).u.i, command, (int)ARG(1).u.i, ARG(0).u.i);
+    free(command);
+    return ret(vm, 4, mk_int(r));
+}
+static int p_win_dde_stop(VM *vm) { INT1("win_dde_stop"); return ret(vm, 1, mk_int(sys_win_dde_stop((int)x))); }
+
 /* ================================================================ sockets */
 static int push_last_addr(VM *vm, int ok, int arity) {
     if (ok != 0) return push_string_value(vm, "");

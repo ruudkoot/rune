@@ -166,7 +166,7 @@ library of the 64-bit one):
 | `WideText` | yes | yes | | |
 | `WideTextIO` | yes | | | |
 | `WideTextPrimIO` | yes | | | |
-| `Windows` | | | | |
+| `Windows` | yes | | | |
 | `WordArray` | yes | yes | | |
 | `WordArray2` | yes | yes | | |
 | `WordArraySlice` | yes | yes | | |
@@ -203,8 +203,10 @@ the table at the top of this page.
 
 Every departure is written on the member it is about, as a `Deviation:` or a
 `Limitation:` note, and is collected in
-[generated/basis/readings.md](generated/basis/readings.md). What is not
-implemented at all: `Windows`. IPv6 is not in the specification either -- it
+[generated/basis/readings.md](generated/basis/readings.md). Every structure
+of the specification is implemented; `Windows`, which is Windows' own,
+raises `OS.SysErr` with `ENOSYS` for every call of the system on another
+system. IPv6 is not in the specification either -- it
 was written before the protocol, and its `NetHostDB` gives the four dotted
 numbers of IPv4 -- so Rune adds it as `INet6Sock` with a signature of its own,
 `INET6_SOCK`, which is `INET_SOCK` read for 128-bit addresses. `Socket.AF`

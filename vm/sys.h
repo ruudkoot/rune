@@ -209,6 +209,31 @@ const char *sys_proto_bynumber(int number);
 const char *sys_serv_byname(const char *name, const char *protocol);
 const char *sys_serv_byport(int port, const char *protocol);
 
+/* The structure Windows (lib/basis/windows.sml): Windows' own, which every
+   other system fails with ENOSYS. A key of the registry is a number, the
+   seven at its roots 0 to 6; a failure is -1 or NULL, and a lookup that
+   finds nothing is NULL with the error cleared. */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]);
+int sys_win_reg_close(int key);
+int sys_win_reg_delete(int key, const char *name, int value);
+const char *sys_win_reg_enum(int key, int index, int value);
+/* a value's bytes, its type in *type and its length in *length (-1: none) */
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length);
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length);
+const char *sys_win_config(int what);
+/* major, minor, build and platform in out[], and the service pack */
+const char *sys_win_version(int64_t out[4]);
+/* the name of the volume and of its file system, one after the other; the
+   serial and the longest name in out[] */
+const char *sys_win_volume(const char *root, int64_t out[2]);
+const char *sys_win_find_executable(const char *name);
+int sys_win_shell_execute(const char *file, const char *arg, int document);
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]);
+int sys_win_wait(int64_t pid, int64_t *code);
+int sys_win_dde_start(const char *service, const char *topic);
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms);
+int sys_win_dde_stop(int info);
+
 /* Processes. */
 int sys_system(const char *command);            /* the exit status, or -1 */
 const char *sys_getenv(const char *name);       /* NULL when it is not set */

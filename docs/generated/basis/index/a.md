@@ -47,8 +47,11 @@
 - `Aug` (con): [DATE](../sig/DATE.md#con-aug)
 - `augmentReader` (val): [PRIM_IO](../sig/PRIM_IO.md#val-augmentreader)
 - `augmentWriter` (val): [PRIM_IO](../sig/PRIM_IO.md#val-augmentwriter)
+- `Key.allAccess` (val): [WINDOWS](../sig/WINDOWS.md#val-key.allaccess)
 - `O.append` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-o.append), [POSIX_IO](../sig/POSIX_IO.md#val-o.append)
 - `ST.atime` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.atime)
+- `Status.accessViolation` (val): [WINDOWS](../sig/WINDOWS.md#val-status.accessviolation)
+- `Status.arrayBoundsExceeded` (val): [WINDOWS](../sig/WINDOWS.md#val-status.arrayboundsexceeded)
 
 ---
 

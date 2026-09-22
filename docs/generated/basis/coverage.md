@@ -71,8 +71,9 @@ documented when a comment describes it, alone or together with the entry before 
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | 14 | 14 | 100% | 6 | 6 |
 | [`VECTOR`](sig/VECTOR.md) | 21 | 21 | 100% | 19 | 19 |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
+| [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1558 | 1558 | 100% | 1089 | 1089 |
+| **all** | 1646 | 1646 | 100% | 1119 | 1119 |
 
 ## Examples that are run
 

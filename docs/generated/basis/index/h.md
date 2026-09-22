@@ -9,6 +9,7 @@
 - `hour` (val): [DATE](../sig/DATE.md#val-hour)
 - `hup` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-hup)
 - `Passwd.home` (val): [POSIX_SYS_DB](../sig/POSIX_SYS_DB.md#val-passwd.home)
+- `Reg.hkey` (type): [WINDOWS](../sig/WINDOWS.md#type-reg.hkey)
 
 ---
 

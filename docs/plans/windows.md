@@ -27,7 +27,7 @@ estimate.
 | M6, POSIX counterparts short of processes | done: ids from the token, the user and groups of the process, `uname`, `times`, `sysconf`, `pathconf`; the console as a terminal; paths of a drive as `/C:/...`, `/dev/null` and `/dev/tty`; `stat` from handles (inode, device, links), owner modes, executables by `PATHEXT`; hard and symbolic links and `readlink`; files that can be removed while open; `fcntl` of files (close-on-exec, append, non-blocking pipes, synchronous), `F_DUPFD`, locks by `LockFileEx`. `basis.posix_files` leaves the skip list as it is. Basis suite: 236 checks fail on either VM (398 before), and what stays is Windows' own -- no bits for a group or others, a file its owner cannot fail to read, no FIFOs, no user `root`, the root of a drive -- or asks `sh` |
 | M7, a spawn primitive | done: `posix_spawn` starts a program with three descriptors, `Unix.execute` uses it everywhere (fork, dup2 and exec in C on POSIX, so 126 stays; `CreateProcess` handing on only the three handles on Windows); `exec` without a fork, `waitpid`, `kill`, `alarm`, `pause` and `OS.Process.system` on Windows. `basis.unix_pipes` runs `cmd.exe` on Windows and `basis.posix_process` keeps what every system has; `basis.posix_fork` (FORK) and `basis.posix_linux` (LINUX) are the skip list. Basis suite: 232 checks fail on either VM, the rest of them fork or start the programs of POSIX |
 | M8, `poll` beyond sockets and files | done: the reading end of a pipe by `PeekNamedPipe` (its writer gone is the end, ready to be read), the writing end always, the console by a key waiting in its input, `NUL` always; a set of more than sockets is looked at every 10 milliseconds until something is ready or the time is up. Basis suite: 225 checks fail on either VM (232 before), the `poll` of a pipe no longer among them |
-| M9 to M11, the `Windows` structure | not started |
+| M9 to M11, the `Windows` structure | done, in one commit, since a signature of the library that nothing implements fails `check-claims`: `WINDOWS` transcribed, documented in full and on the ratchet list; `Windows` with the registry, `Config`, DDE, the volume, the shell, programs started with one command line and reaped with their whole code, and `Status`; sixteen primitives `win_*`, which every other system answers with `ENOSYS`. The suite has 93 checks, which pass on Linux (as `ENOSYS`), under the three hosts that compile the library (`xc1`), and on both VMs of Windows but `exit`, which forks: 226 checks of the Basis suite fail on either VM |
 | M12, `fork` by carrying the VM across (optional) | not started |
 
 ## Where it stands
@@ -548,12 +548,12 @@ needs its SML and a suite only `make test-windows` runs.
 * **M10 (M):** the process group on M7, then `getVolumeInformation`,
   `findExecutable`, `launchApplication` and `openDocument`.
 * **M11 (M):** `DDE`. Microsoft has not recommended it since the 1990s, and
-  a conforming `Windows` needs it all the same. Until then it raises
-  `SysErr` with `ENOSYS`.
+  a conforming `Windows` needs it all the same.
 
-The structure does not match `WINDOWS` until M11 is done. So until then it
-stays out of the claims (`docs/generated/basis/claims.tsv`) and out of
-`docs/generated/basis/structures.md`.
+The structure does not match `WINDOWS` without M11, and a signature of the
+library that no structure implements fails `check-claims`, so the three
+went in together. The suite checks DDE only in what it refuses: a machine
+has no server of DDE that a test may count on.
 
 ### M12. `fork` by carrying the VM across -- L, optional
 

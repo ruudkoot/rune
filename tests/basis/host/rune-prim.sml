@@ -1198,6 +1198,25 @@ struct
   fun netdb_serv_byname (_ : string, _ : string) : string list = unsupported []
   fun netdb_serv_byport (_ : int, _ : string) : string list = unsupported []
 
+  (* ---- the structure Windows: Windows' own, which fails with ENOSYS on
+     every host, as on a VM of another system ---- *)
+  fun win_reg_open (_ : int, _ : string, _ : int, _ : int) : int list = unsupported []
+  fun win_reg_close (_ : int) = unsupported ~1
+  fun win_reg_delete (_ : int, _ : string, _ : int) = unsupported ~1
+  fun win_reg_enum (_ : int, _ : int, _ : int) : string list = unsupported []
+  fun win_reg_query (_ : int, _ : string) : string list = unsupported []
+  fun win_reg_set (_ : int, _ : string, _ : int, _ : string) = unsupported ~1
+  fun win_config (_ : int) = unsupported ""
+  fun win_version () : string list = unsupported []
+  fun win_volume (_ : string) : string list = unsupported []
+  fun win_find_executable (_ : string) : string list = unsupported []
+  fun win_shell_execute (_ : string, _ : string, _ : int) = unsupported ~1
+  fun win_spawn (_ : string, _ : string, _ : int list) = unsupported ~1
+  fun win_wait (_ : int) : int list = unsupported []
+  fun win_dde_start (_ : string, _ : string) = unsupported ~1
+  fun win_dde_execute (_ : int, _ : string, _ : int, _ : int) = unsupported ~1
+  fun win_dde_stop (_ : int) = unsupported ~1
+
   fun posix_getgr (name, gid) =
     let
       val gr = if name = "" then Posix.SysDB.getgrgid (Posix.ProcEnv.wordToGid (SysWord.fromInt gid))

@@ -6,6 +6,7 @@
 - `date` (type): [DATE](../sig/DATE.md#type-date)
 - `date` (val): [DATE](../sig/DATE.md#val-date)
 - `day` (val): [DATE](../sig/DATE.md#val-day)
+- `DDE` (str): [WINDOWS](../sig/WINDOWS.md#str-dde)
 - `deadlk` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-deadlk)
 - `DEC` (con): [STRING_CVT](../sig/STRING_CVT.md#con-dec)
 - `Dec` (con): [DATE](../sig/DATE.md#con-dec)
@@ -32,8 +33,13 @@
 - `dupfd` (val): [POSIX_IO](../sig/POSIX_IO.md#val-dupfd)
 - `Kind.device` (val): [OS_IO](../sig/OS_IO.md#val-kind.device)
 - `Kind.dir` (val): [OS_IO](../sig/OS_IO.md#val-kind.dir)
+- `Reg.deleteKey` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.deletekey)
+- `Reg.deleteValue` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.deletevalue)
+- `Reg.DWORD` (con): [WINDOWS](../sig/WINDOWS.md#con-reg.dword)
+- `Reg.dynData` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.dyndata)
 - `SOCK.dgram` (val): [SOCKET](../sig/SOCKET.md#val-sock.dgram)
 - `ST.dev` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.dev)
+- `Status.datatypeMisalignment` (val): [WINDOWS](../sig/WINDOWS.md#val-status.datatypemisalignment)
 - `TC.drain` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.drain)
 
 ---

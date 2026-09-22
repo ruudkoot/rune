@@ -64,6 +64,7 @@ UNIX	signature			optional	declared	lib/basis/sig_unix.sml
 UNIX_SOCK	signature			optional	declared	lib/basis/sig_unix_sock.sml
 VECTOR	signature			required	declared	lib/basis/sig_vector.sml
 VECTOR_SLICE	signature			required	declared	lib/basis/sig_vector_slice.sml
+WINDOWS	signature			optional	declared	lib/basis/sig_windows.sml
 WORD	signature			required	declared	lib/basis/word_sig.sml
 Array	structure	ARRAY		required	claimed	lib/basis/array.sml
 Array2	structure	ARRAY2		optional	ascribed	lib/basis/array2.sml
@@ -239,6 +240,7 @@ WideString	structure	STRING	where type string = WideCharVector.vector where type
 WideSubstring	structure	SUBSTRING	where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char	optional	claimed	lib/basis/widestring.sml
 WideText	structure	TEXT	where type Char.char = WideChar.char where type String.string = WideString.string where type Substring.substring = WideSubstring.substring where type CharArray.array = WideCharArray.array where type CharVectorSlice.slice = WideCharVectorSlice.slice where type CharArraySlice.slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetext.sml
 WideTextPrimIO	structure	PRIM_IO	where type array = WideCharArray.array where type vector = WideCharVector.vector where type elem = WideChar.char where type vector_slice = WideCharVectorSlice.slice where type array_slice = WideCharArraySlice.slice	optional	claimed	lib/basis/widetextio.sml
+Windows	structure	WINDOWS		optional	claimed	lib/basis/windows.sml
 Word	structure	WORD		required	claimed	lib/basis/word.sml
 Word16	structure	WORD		optional	claimed	lib/basis/word16.sml
 Word16Array	structure	MONO_ARRAY	where type vector = Word16Vector.vector where type elem = Word16.word	optional	claimed	lib/basis/mono_word16.sml

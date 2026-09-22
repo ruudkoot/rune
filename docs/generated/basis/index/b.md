@@ -25,8 +25,8 @@
 - `BIN` (con): [STRING_CVT](../sig/STRING_CVT.md#con-bin)
 - `Bind` (exn): [GENERAL](../sig/GENERAL.md#exn-bind)
 - `bind` (val): [SOCKET](../sig/SOCKET.md#val-bind)
-- `binInstreamOf` (val): [UNIX](../sig/UNIX.md#val-bininstreamof)
-- `binOutstreamOf` (val): [UNIX](../sig/UNIX.md#val-binoutstreamof)
+- `binInstreamOf` (val): [UNIX](../sig/UNIX.md#val-bininstreamof), [WINDOWS](../sig/WINDOWS.md#val-bininstreamof)
+- `binOutstreamOf` (val): [UNIX](../sig/UNIX.md#val-binoutstreamof), [WINDOWS](../sig/WINDOWS.md#val-binoutstreamof)
 - `BLOCK_BUF` (con): [IO](../sig/IO.md#con-block_buf)
 - `BlockingNotSupported` (exn): [IO](../sig/IO.md#exn-blockingnotsupported)
 - `bool` (type): [BOOL](../sig/BOOL.md#type-bool)
@@ -37,6 +37,8 @@
 - `bytesToString` (val): [BYTE](../sig/BYTE.md#val-bytestostring)
 - `byteToChar` (val): [BYTE](../sig/BYTE.md#val-bytetochar)
 - `I.brkint` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-i.brkint)
+- `Reg.BINARY` (con): [WINDOWS](../sig/WINDOWS.md#con-reg.binary)
+- `Status.breakpoint` (val): [WINDOWS](../sig/WINDOWS.md#val-status.breakpoint)
 
 ---
 

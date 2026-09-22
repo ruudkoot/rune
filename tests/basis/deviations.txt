@@ -319,6 +319,7 @@ native:polyml@* | Posix.Process.W.toWord/of-fromWord | HOST-BUG | W.fromWord kee
 xc1:* | Posix.Process.exit/no-flush | XC1-NA | the file handles of tests/basis/host/rune-prim.sml write through (file_write), where the VM's keep the block that TextIO leaves them to buffer: what the child wrote before Posix.Process.exit is in the file already (and on SML/NJ 110.79 the check raises Overflow first, at the Time.now of C.waitBounded: microseconds since 1970 in a 31-bit int; on Poly/ML the child's exit fails too, as in Posix.Process.exit/status)
 *:polyml@* | Posix.Process.pause/until-* | HOST-BUG | a forked child that pauses is not ended by the signal (alrm, usr1) that ends the same pause in the main process
 *:polyml@5.9.2 | Posix.Process.exit/[szn]* | HOST-BUG | a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
+xc1:polyml@5.9.2 | Windows.exit/code | HOST-BUG | a forked child that calls Posix.Process.exit never ends, and Windows.exit is the exit primitive, which tests/basis/host/rune-prim.sml writes with it
 native:smlnj@110.99.9 | Posix.ProcEnv.time/* | HOST-BUG | time () is negative: the seconds since the Epoch overflow 32 bits
 *:smlnj@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-BUG | the elapsed time of times is negative
 xc1:smlnj32@* | Posix.ProcEnv.times/* | WIDTH | times gives its times as microseconds in an int (posix_times), the elapsed time since a point in the past among them, and the int of the host has 31 bits: Overflow
@@ -636,3 +637,4 @@ rune:windows* | Posix.Process.* | WINDOWS | M12: fork
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | M12: the test signals a /bin/sh started by fork
 rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows
+rune:windows* | Windows.exit/code | WINDOWS | M12: the check runs in a child made by fork

@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) **i** [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [x](x.md) [y](y.md) [z](z.md) [symbols](symbols.md)
 
+- `DDE.info` (type): [WINDOWS](../sig/WINDOWS.md#type-dde.info)
 - `I` (str): [POSIX_TTY](../sig/POSIX_TTY.md#str-i)
 - `I.icrnl` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-i.icrnl)
 - `I.ignbrk` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-i.ignbrk)
@@ -106,6 +107,12 @@
 - `ST.isLink` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.islink)
 - `ST.isReg` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.isreg)
 - `ST.isSock` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-st.issock)
+- `Status.illegalInstruction` (val): [WINDOWS](../sig/WINDOWS.md#val-status.illegalinstruction)
+- `Status.inPageError` (val): [WINDOWS](../sig/WINDOWS.md#val-status.inpageerror)
+- `Status.integerDivideByZero` (val): [WINDOWS](../sig/WINDOWS.md#val-status.integerdividebyzero)
+- `Status.integerOverflow` (val): [WINDOWS](../sig/WINDOWS.md#val-status.integeroverflow)
+- `Status.invalidDisposition` (val): [WINDOWS](../sig/WINDOWS.md#val-status.invaliddisposition)
+- `Status.invalidHandle` (val): [WINDOWS](../sig/WINDOWS.md#val-status.invalidhandle)
 - `TC.iflush` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.iflush)
 - `TC.ioff` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.ioff)
 - `TC.ioflush` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-tc.ioflush)

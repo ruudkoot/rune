@@ -35,6 +35,8 @@
 #define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
 #endif
 #include <windows.h>
+#include <shellapi.h>
+#include <ddeml.h>
 
 static int last = 0;
 /* Rune's strings are bytes, and a program that writes "\n" means one byte:
@@ -2597,4 +2599,265 @@ int sys_system(const char *command) {
     int64_t out[3];
     if (sys_waitpid(pid, 0, out) != 0) return -1;
     return out[1] == 0 ? (int)out[2] : 256 + (int)out[2];
+}
+
+/* ---------------------------------------------------------------- Windows */
+/* The structure Windows of the Basis Library (lib/basis/windows.sml).
+
+   A key of the registry is a number of this table; the seven keys at the
+   roots are 0 to 6, in the order of the specification (classesRoot,
+   currentUser, localMachine, users, performanceData, currentConfig,
+   dynData), and are never closed. Names and strings go through the code
+   page of Windows (the A calls), as the rest of this file does. */
+#define WIN_KEYS 256
+static HKEY win_keys[WIN_KEYS];
+static int win_key_used[WIN_KEYS];
+static HKEY key_of(int k) {
+    static const HKEY roots[7] = {
+        HKEY_CLASSES_ROOT, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, HKEY_USERS,
+        HKEY_PERFORMANCE_DATA, HKEY_CURRENT_CONFIG, HKEY_DYN_DATA
+    };
+    if (k >= 0 && k < 7) return roots[k];
+    if (k >= 7 && k < WIN_KEYS && win_key_used[k]) return win_keys[k];
+    return NULL;
+}
+/* the error of a call of the registry, which returns it */
+static int reg_failed(LONG e) { last = errno_of_win((DWORD)e); return -1; }
+
+/* open or, when create is set, create: out[0] 1 made, 2 opened; out[1] the key */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]) {
+    HKEY parent = key_of(key), made;
+    if (!parent) { last = EBADF; return -1; }
+    int k;
+    for (k = 7; k < WIN_KEYS; k++) if (!win_key_used[k]) break;
+    if (k == WIN_KEYS) { last = EMFILE; return -1; }
+    DWORD disposition = REG_OPENED_EXISTING_KEY;
+    LONG r = create ? RegCreateKeyExA(parent, name, 0, NULL, REG_OPTION_NON_VOLATILE, (REGSAM)access, NULL, &made, &disposition)
+                    : RegOpenKeyExA(parent, name, 0, (REGSAM)access, &made);
+    if (r != ERROR_SUCCESS) return reg_failed(r);
+    win_keys[k] = made;
+    win_key_used[k] = 1;
+    out[0] = disposition == REG_CREATED_NEW_KEY ? 1 : 2;
+    out[1] = k;
+    return 0;
+}
+int sys_win_reg_close(int key) {
+    if (key < 7) return 0;
+    HKEY h = key_of(key);
+    if (!h) { last = EBADF; return -1; }
+    win_key_used[key] = 0;
+    LONG r = RegCloseKey(h);
+    return r == ERROR_SUCCESS ? 0 : reg_failed(r);
+}
+int sys_win_reg_delete(int key, const char *name, int value) {
+    HKEY h = key_of(key);
+    if (!h) { last = EBADF; return -1; }
+    LONG r = value ? RegDeleteValueA(h, name) : RegDeleteKeyA(h, name);
+    return r == ERROR_SUCCESS ? 0 : reg_failed(r);
+}
+/* The name of the index-th subkey (or value): NULL with the error cleared
+   when there are no more, NULL with an error on failure. */
+static char reg_name[16384 + 1];
+const char *sys_win_reg_enum(int key, int index, int value) {
+    HKEY h = key_of(key);
+    if (!h) { last = EBADF; return NULL; }
+    DWORD n = sizeof reg_name;
+    LONG r = value ? RegEnumValueA(h, (DWORD)index, reg_name, &n, NULL, NULL, NULL, NULL)
+                   : RegEnumKeyExA(h, (DWORD)index, reg_name, &n, NULL, NULL, NULL, NULL);
+    if (r == ERROR_NO_MORE_ITEMS) { last = 0; return NULL; }
+    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
+    reg_name[n] = 0;
+    return reg_name;
+}
+/* The value named: its type of the registry and its bytes, as the registry
+   keeps them (a string with its NUL). *length is -1 with the error cleared
+   when there is no such value. */
+static char *reg_data = NULL;
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length) {
+    HKEY h = key_of(key);
+    if (!h) { last = EBADF; return NULL; }
+    DWORD t = 0, n = 0;
+    LONG r = RegQueryValueExA(h, name, NULL, &t, NULL, &n);
+    if (r == ERROR_FILE_NOT_FOUND) { last = 0; *length = -1; return ""; }
+    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
+    free(reg_data);
+    reg_data = malloc(n + 2);
+    if (!reg_data) { last = ENOMEM; return NULL; }
+    r = RegQueryValueExA(h, name, NULL, &t, (BYTE *)reg_data, &n);
+    if (r != ERROR_SUCCESS) { reg_failed(r); return NULL; }
+    *type = (int)t;
+    *length = (int64_t)n;
+    return reg_data;
+}
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length) {
+    HKEY h = key_of(key);
+    if (!h) { last = EBADF; return -1; }
+    LONG r = RegSetValueExA(h, name, 0, (DWORD)type, (const BYTE *)data, (DWORD)length);
+    return r == ERROR_SUCCESS ? 0 : reg_failed(r);
+}
+
+/* Config: 0 the directory of Windows, 1 its system directory, 2 the name of
+   the computer, 3 the name of the user; written as Windows writes them
+   (C:\Windows), as the specification has it. */
+static char win_string[MAX_PATH * 4];
+const char *sys_win_config(int what) {
+    DWORD n = sizeof win_string;
+    BOOL ok;
+    switch (what) {
+    case 0: n = GetWindowsDirectoryA(win_string, sizeof win_string); ok = n > 0 && n < sizeof win_string; break;
+    case 1: n = GetSystemDirectoryA(win_string, sizeof win_string); ok = n > 0 && n < sizeof win_string; break;
+    case 2: ok = GetComputerNameA(win_string, &n); break;
+    case 3: ok = GetUserNameA(win_string, &n); break;
+    default: last = EINVAL; return NULL;
+    }
+    if (!ok) { win_failed(NULL); return NULL; }
+    return win_string;
+}
+/* the version, as RtlGetVersion gives it (GetVersionEx gives what the
+   program's manifest asks for): major, minor, build, platform; and the
+   service pack */
+const char *sys_win_version(int64_t out[4]) {
+    typedef LONG (WINAPI *RtlGetVersionFn)(PRTL_OSVERSIONINFOW);
+    RtlGetVersionFn get = (RtlGetVersionFn)(void (*)(void))GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlGetVersion");
+    RTL_OSVERSIONINFOW v;
+    memset(&v, 0, sizeof v);
+    v.dwOSVersionInfoSize = sizeof v;
+    if (!get || get(&v) != 0) { last = ENOSYS; return NULL; }
+    out[0] = v.dwMajorVersion; out[1] = v.dwMinorVersion; out[2] = v.dwBuildNumber; out[3] = v.dwPlatformId;
+    int n = WideCharToMultiByte(CP_ACP, 0, v.szCSDVersion, -1, win_string, (int)sizeof win_string, NULL, NULL);
+    if (n <= 0) win_string[0] = 0;
+    return win_string;
+}
+/* the volume whose root is given: its name and the name of its file system,
+   one after the other; out[0] the serial, out[1] the longest name */
+static char volume_strings[2 * (MAX_PATH + 1)];
+const char *sys_win_volume(const char *root, int64_t out[2]) {
+    char path[MAX_PATH * 4];
+    snprintf(path, sizeof path - 1, "%s", native(root));
+    size_t k = strlen(path);
+    if (k > 0 && path[k - 1] != '\\' && path[k - 1] != '/') { path[k] = '\\'; path[k + 1] = 0; }
+    char name[MAX_PATH + 1], system[MAX_PATH + 1];
+    DWORD serial = 0, longest = 0, flags = 0;
+    if (!GetVolumeInformationA(path, name, sizeof name, &serial, &longest, &flags, system, sizeof system))
+        { win_failed(path); return NULL; }
+    size_t a = strlen(name);
+    memcpy(volume_strings, name, a + 1);
+    memcpy(volume_strings + a + 1, system, strlen(system) + 1);
+    out[0] = (int64_t)serial;
+    out[1] = (int64_t)longest;
+    return volume_strings;
+}
+/* the program Windows would open the file with (FindExecutable); NULL with
+   the error cleared when there is none */
+const char *sys_win_find_executable(const char *name) {
+    HINSTANCE r = FindExecutableA(native(name), NULL, win_string);
+    if ((INT_PTR)r > 32) return posix_path(win_string);
+    last = (INT_PTR)r == SE_ERR_NOASSOC || (INT_PTR)r == ERROR_FILE_NOT_FOUND || (INT_PTR)r == ERROR_PATH_NOT_FOUND ? 0 : EIO;
+    return NULL;
+}
+/* ShellExecute, "open": a program with its argument (launchApplication), or
+   a document with the program that opens it (openDocument) */
+int sys_win_shell_execute(const char *file, const char *arg, int document) {
+    const char *f = native(file);
+    if (!document && !executable(f)) { last = ENOEXEC; return -1; }
+    HINSTANCE r = ShellExecuteA(NULL, "open", f, document ? NULL : arg, NULL, SW_SHOWNORMAL);
+    if ((INT_PTR)r > 32) return 0;
+    switch ((INT_PTR)r) {
+    case ERROR_FILE_NOT_FOUND: case ERROR_PATH_NOT_FOUND: last = ENOENT; break;
+    case SE_ERR_ACCESSDENIED: last = EACCES; break;
+    case ERROR_BAD_FORMAT: last = ENOEXEC; break;
+    case SE_ERR_NOASSOC: case SE_ERR_ASSOCINCOMPLETE: last = ENOEXEC; break;
+    default: last = EIO;
+    }
+    return -1;
+}
+/* A program with its arguments as one string, as CreateProcess takes them
+   (Windows.execute and simpleExecute), and fds[] its standard streams. */
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) {
+    char *line = malloc(strlen(command) + strlen(arg) + 8);
+    if (!line) { last = ENOMEM; return -1; }
+    sprintf(line, "\"%s\"%s%s", command, *arg ? " " : "", arg);
+    char *argv[] = { (char *)command, NULL };
+    int64_t pid = spawn(command, argv, NULL, 0, fds, NULL, line);
+    free(line);
+    return pid;
+}
+/* wait for a child and give the code it ended with, all 32 bits of it,
+   which is what Windows.reap gives */
+int sys_win_wait(int64_t pid, int64_t *code) {
+    for (int i = 0; i < nchildren; i++) {
+        if ((int64_t)children[i].pid != pid) continue;
+        if (WaitForSingleObject(children[i].process, INFINITE) != WAIT_OBJECT_0) return win_failed(NULL);
+        DWORD c = 0;
+        GetExitCodeProcess(children[i].process, &c);
+        FILETIME a, e, k, u;
+        if (GetProcessTimes(children[i].process, &a, &e, &k, &u)) {
+            children_user += of_filetime(u);
+            children_sys += of_filetime(k);
+        }
+        CloseHandle(children[i].process);
+        children[i] = children[--nchildren];
+        *code = (int64_t)c;
+        return 0;
+    }
+    last = ECHILD;
+    return -1;
+}
+
+/* DDE, as a client: a conversation with a service on a topic, in which
+   commands are executed. Each conversation has its own instance of DDEML,
+   and is a number of this table. A transaction waits for as long as the
+   delay, and a busy service is asked again as many times as the retries
+   say. */
+#define DDE_CONVERSATIONS 64
+static struct { int used; DWORD instance; HCONV conversation; } dde[DDE_CONVERSATIONS];
+__attribute__((force_align_arg_pointer))
+static HDDEDATA CALLBACK dde_callback(UINT type, UINT format, HCONV conversation, HSZ a, HSZ b,
+                                      HDDEDATA data, ULONG_PTR x, ULONG_PTR y) {
+    (void)type; (void)format; (void)conversation; (void)a; (void)b; (void)data; (void)x; (void)y;
+    return NULL;
+}
+static int dde_failed(DWORD instance) {
+    UINT e = DdeGetLastError(instance);
+    last = e == DMLERR_NO_CONV_ESTABLISHED ? ECONNREFUSED : e == DMLERR_BUSY ? EBUSY
+         : e == DMLERR_EXECACKTIMEOUT ? ETIMEDOUT : e == DMLERR_NOTPROCESSED ? EIO : EIO;
+    return -1;
+}
+int sys_win_dde_start(const char *service, const char *topic) {
+    int i;
+    for (i = 0; i < DDE_CONVERSATIONS; i++) if (!dde[i].used) break;
+    if (i == DDE_CONVERSATIONS) { last = EMFILE; return -1; }
+    DWORD instance = 0;
+    if (DdeInitializeA(&instance, dde_callback, APPCMD_CLIENTONLY, 0) != DMLERR_NO_ERROR) { last = EIO; return -1; }
+    HSZ s = DdeCreateStringHandleA(instance, service, CP_WINANSI);
+    HSZ t = DdeCreateStringHandleA(instance, topic, CP_WINANSI);
+    HCONV c = DdeConnect(instance, s, t, NULL);
+    int r = c ? 0 : dde_failed(instance);
+    DdeFreeStringHandle(instance, s);
+    DdeFreeStringHandle(instance, t);
+    if (!c) { DdeUninitialize(instance); return r; }
+    dde[i].used = 1;
+    dde[i].instance = instance;
+    dde[i].conversation = c;
+    return i;
+}
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms) {
+    if (info < 0 || info >= DDE_CONVERSATIONS || !dde[info].used) { last = EBADF; return -1; }
+    DWORD timeout = delay_ms <= 0 ? 1 : delay_ms > 0x7fffffff ? 0x7fffffff : (DWORD)delay_ms;
+    for (int attempt = 0; ; attempt++) {
+        DWORD result = 0;
+        HDDEDATA r = DdeClientTransaction((LPBYTE)command, (DWORD)strlen(command) + 1, dde[info].conversation,
+                                          NULL, 0, XTYP_EXECUTE, timeout, &result);
+        if (r) return 0;
+        UINT e = DdeGetLastError(dde[info].instance);
+        if ((e == DMLERR_BUSY || (result & DDE_FBUSY)) && attempt < retries) { Sleep(timeout); continue; }
+        return dde_failed(dde[info].instance);
+    }
+}
+int sys_win_dde_stop(int info) {
+    if (info < 0 || info >= DDE_CONVERSATIONS || !dde[info].used) { last = EBADF; return -1; }
+    DdeDisconnect(dde[info].conversation);
+    DdeUninitialize(dde[info].instance);
+    dde[info].used = 0;
+    return 0;
 }

@@ -25,8 +25,9 @@ records, let-polymorphism, refs, proper tail calls), the Modules language
 the optional ones everything that makes sense on Linux (`IntInf`, `Array2`,
 the monomorphic vectors, arrays, slices and two-dimensional arrays, `Posix`,
 `Unix`, the sockets and the network databases, the fixed-width `IntN` and
-`WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`). Not there:
-`Windows` ([docs/basis-compat.md](docs/basis-compat.md)).
+`WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`), and
+`Windows`, whose calls of the system answer on the VMs of Windows (`make
+windows`; [docs/basis-compat.md](docs/basis-compat.md)).
 
 **[docs/generated/basis](docs/generated/basis/README.md)** is the
 documentation of the library: a page for every signature, with what each

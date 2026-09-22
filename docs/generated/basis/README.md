@@ -22,7 +22,8 @@ function that can fail either returns an [`option`](sig/OPTION.md#type-option) o
 which it does is said for every one. And the optional parts of the library,
 the wide characters, the sized integers, [`POSIX`](sig/POSIX.md) and the sockets, are marked
 as optional, because a program that uses them is not bound to run on every
-implementation. Of the optional parts only `Windows` is missing.
+implementation. Every optional part is there, [`Windows`](sig/WINDOWS.md) too, whose calls of
+the system answer on Windows only.
 
 [How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
@@ -86,6 +87,7 @@ implementation. Of the optional parts only `Windows` is missing.
 | [`TIMER`](sig/TIMER.md) | Stopwatches: how much processor time and how much wall-clock time have passed since a timer was started. | required | 10 of 10 |
 | [`UNIX`](sig/UNIX.md) | Running another program and talking to it: a child process with a pipe each way. | optional | 14 of 14 |
 | [`UNIX_SOCK`](sig/UNIX_SOCK.md) | Sockets of the Unix family: an address is a path in the file system, and the connection never leaves the machine. | optional | 14 of 14 |
+| [`WINDOWS`](sig/WINDOWS.md) | The operating system Windows: the registry, the configuration of the machine, dynamic data exchange, programs started with a pipe each way, and the codes a process ends with. | optional | 88 of 88 |
 
 ## Text and characters
 

@@ -4,6 +4,10 @@
 
 - `C.parenb` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-c.parenb)
 - `C.parodd` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-c.parodd)
+- `Config.platformWin32CE` (val): [WINDOWS](../sig/WINDOWS.md#val-config.platformwin32ce)
+- `Config.platformWin32NT` (val): [WINDOWS](../sig/WINDOWS.md#val-config.platformwin32nt)
+- `Config.platformWin32s` (val): [WINDOWS](../sig/WINDOWS.md#val-config.platformwin32s)
+- `Config.platformWin32Windows` (val): [WINDOWS](../sig/WINDOWS.md#val-config.platformwin32windows)
 - `FLock.pid` (val): [POSIX_IO](../sig/POSIX_IO.md#val-flock.pid)
 - `I.parmrk` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-i.parmrk)
 - `Kind.pipe` (val): [OS_IO](../sig/OS_IO.md#val-kind.pipe)
@@ -41,11 +45,14 @@
 - `precision` (val): [INTEGER](../sig/INTEGER.md#val-precision), [REAL](../sig/REAL.md#val-precision)
 - `pred` (val): [CHAR](../sig/CHAR.md#val-pred)
 - `print` (val): [TEXT_IO](../sig/TEXT_IO.md#val-print)
-- `proc` (type): [UNIX](../sig/UNIX.md#type-proc)
+- `proc` (type): [UNIX](../sig/UNIX.md#type-proc), [WINDOWS](../sig/WINDOWS.md#type-proc)
 - `ProcEnv` (str): [POSIX](../sig/POSIX.md#str-procenv)
 - `Process` (str): [OS](../sig/OS.md#str-process), [POSIX](../sig/POSIX.md#str-process)
 - `Prod` (exn): [SML90](../sig/SML90.md#exn-prod)
 - `protocol` (val): [NET_PROT_DB](../sig/NET_PROT_DB.md#val-protocol), [NET_SERV_DB](../sig/NET_SERV_DB.md#val-protocol)
+- `Reg.performanceData` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.performancedata)
+- `Status.pending` (val): [WINDOWS](../sig/WINDOWS.md#val-status.pending)
+- `Status.privilegedInstruction` (val): [WINDOWS](../sig/WINDOWS.md#val-status.privilegedinstruction)
 
 ---
 

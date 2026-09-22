@@ -144,6 +144,7 @@ inetsock.sml    | demand | yes  | GenericSock INetSock RuneGenericSock RuneINetS
 inet6sock_sig.sml | demand | yes | INET6_SOCK | Socket
 inet6sock.sml   | demand | yes  | INet6Sock RuneINet6Sock | Char Int List Option RuneError RuneNet RuneSocket String
 unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix RuneExit RuneError RuneStatus SysWord TextIO Word8 Word8Vector
+windows.sml     | demand | yes  | Windows               | BinIO Byte Char IO Int List OS Posix RuneError RuneExit RuneStatus String SysWord TextIO Time Word Word8Vector
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
@@ -193,6 +194,7 @@ sig_real.sml | demand | yes  | REAL | IEEEReal LargeInt LargeReal MATH Math Stri
 sig_os.sml | demand | yes  | OS | IO OS_FILE_SYS OS_IO OS_PATH OS_PROCESS
 sig_text.sml | demand | yes  | TEXT | CHAR Char CharArray CharArraySlice CharVector CharVectorSlice MONO_ARRAY MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE STRING SUBSTRING String Substring
 sig_text_io.sml | demand | yes  | TEXT_IO | Char StreamIO StringCvt TEXT_STREAM_IO TextPrimIO substring
+sig_windows.sml | demand | yes  | WINDOWS | BIT_FLAGS BinIO OS SysWord TextIO Time Word8Vector
 sig_unix.sml | demand | yes  | UNIX | BinIO OS TextIO Word8
 sig_socket.sml | demand | yes  | SOCKET | NetHostDB OS Time Word8ArraySlice Word8Vector Word8VectorSlice
 sig_posix_process.sml | demand | yes  | POSIX_PROCESS | BIT_FLAGS OS SysWord Time Word8
@@ -280,6 +282,7 @@ seal_netdb.sml          | seal   | yes  | NetHostDB NetProtDB NetServDB | NET_HO
 seal_inet6sock.sml      | seal   | yes  | INet6Sock | INET6_SOCK
 seal_inetsock.sml       | seal   | yes  | GenericSock INetSock UnixSock | GENERIC_SOCK INET_SOCK UNIX_SOCK
 seal_unix.sml           | seal   | yes  | Unix | Posix UNIX
+seal_windows.sml        | seal   | yes  | Windows | WINDOWS
 seal_commandline.sml    | seal   | yes  | CommandLine | COMMAND_LINE
 seal_sml90.sml          | seal   | yes  | SML90 | 
 seal_pack_real32.sml    | seal   | yes  | PackReal32Big PackReal32Little | PACK_REAL Real32

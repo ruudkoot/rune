@@ -195,3 +195,30 @@ const char *sys_proto_byname(const char *n) { (void)n; fail(); return NULL; }
 const char *sys_proto_bynumber(int n) { (void)n; fail(); return NULL; }
 const char *sys_serv_byname(const char *n, const char *p) { (void)n; (void)p; fail(); return NULL; }
 const char *sys_serv_byport(int p, const char *pr) { (void)p; (void)pr; fail(); return NULL; }
+
+#define NOSYS_INT fail()
+/* The structure Windows: Windows' own. */
+int sys_win_reg_open(int key, const char *name, int access, int create, int64_t out[2]) {
+    (void)key; (void)name; (void)access; (void)create; (void)out; return NOSYS_INT;
+}
+int sys_win_reg_close(int key) { (void)key; return NOSYS_INT; }
+int sys_win_reg_delete(int key, const char *name, int value) { (void)key; (void)name; (void)value; return NOSYS_INT; }
+const char *sys_win_reg_enum(int key, int index, int value) { (void)key; (void)index; (void)value; NOSYS_INT; return NULL; }
+const char *sys_win_reg_query(int key, const char *name, int *type, int64_t *length) {
+    (void)key; (void)name; (void)type; (void)length; NOSYS_INT; return NULL;
+}
+int sys_win_reg_set(int key, const char *name, int type, const char *data, int64_t length) {
+    (void)key; (void)name; (void)type; (void)data; (void)length; return NOSYS_INT;
+}
+const char *sys_win_config(int what) { (void)what; NOSYS_INT; return NULL; }
+const char *sys_win_version(int64_t out[4]) { (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_volume(const char *root, int64_t out[2]) { (void)root; (void)out; NOSYS_INT; return NULL; }
+const char *sys_win_find_executable(const char *name) { (void)name; NOSYS_INT; return NULL; }
+int sys_win_shell_execute(const char *file, const char *arg, int document) { (void)file; (void)arg; (void)document; return NOSYS_INT; }
+int64_t sys_win_spawn(const char *command, const char *arg, const int fds[3]) { (void)command; (void)arg; (void)fds; return NOSYS_INT; }
+int sys_win_wait(int64_t pid, int64_t *code) { (void)pid; (void)code; return NOSYS_INT; }
+int sys_win_dde_start(const char *service, const char *topic) { (void)service; (void)topic; return NOSYS_INT; }
+int sys_win_dde_execute(int info, const char *command, int retries, int64_t delay_ms) {
+    (void)info; (void)command; (void)retries; (void)delay_ms; return NOSYS_INT;
+}
+int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }
