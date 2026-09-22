@@ -606,8 +606,6 @@ rune:windows* | Socket.Ctl.getATMARK/before-and-at-the-mark | WINDOWS | stays: W
 rune:windows* | NetHostDB.name/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.aliases/localhost | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
 rune:windows* | NetHostDB.getByAddr/loopback | WINDOWS | stays: the resolver of Windows answers localhost itself, with the name of the machine
-rune:windows* | OS.IO.poll/* | WINDOWS | M8: poll of a pipe
-rune:windows* | OS.IO.is*/pipe-* | WINDOWS | M8: poll of a pipe
 rune:windows* | OS.FileSys.fullPath/root | WINDOWS | stays: the root of Windows is that of a drive, /C:/
 rune:windows* | OS.FileSys.A_EXEC/with-execute-bit | WINDOWS | stays: Windows has no execute permission; a file is executable by its extension (PATHEXT)
 rune:windows* | OS.FileSys.A_READ/write-only | WINDOWS | stays: Windows cannot make a file unreadable to its owner

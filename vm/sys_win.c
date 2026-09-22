@@ -866,50 +866,121 @@ int sys_desc_kind(int fd) {
         default: return 6;
     }
 }
-/* A file on disk is always ready, for reading and for writing, as POSIX's
-   poll says of a regular file, and sockets are asked with WSAPoll, which
-   waits when nothing else is ready. Nothing else can be waited for yet. No
+/* poll. Windows can wait for sockets (WSAPoll) and nothing else in the same
+   call, so each kind of descriptor is asked in its own way:
+     a file on disk is always ready, for reading and for writing, as POSIX's
+     poll says of a regular file, and so is a device such as NUL;
+     the reading end of a pipe is ready when PeekNamedPipe finds bytes in it,
+     or finds its writer gone (the end of the stream is ready to be read);
+     the writing end of a pipe is ready for writing;
+     a console is ready for reading when a key waits in its input, and for
+     writing always;
+     sockets are asked with WSAPoll.
+   Nothing is urgent but a socket's out-of-band data. Where anything but
+   sockets is asked for, the set is looked at again every 10 milliseconds
+   until one is ready or the time is up; sockets alone wait in WSAPoll. No
    descriptors at all is a wait for the time given. */
+static int access_of(HANDLE h);
+static int console_key_waits(HANDLE h) {
+    DWORD n = 0;
+    if (!GetNumberOfConsoleInputEvents(h, &n) || n == 0) return 0;
+    INPUT_RECORD records[64];
+    DWORD got = 0;
+    if (!PeekConsoleInputA(h, records, n < 64 ? n : 64, &got)) return 0;
+    for (DWORD i = 0; i < got; i++)
+        if (records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown &&
+            records[i].Event.KeyEvent.uChar.AsciiChar != 0)
+            return 1;
+    return 0;
+}
+/* what a descriptor that is no socket is ready for now, of what is asked */
+static int ready_now(HANDLE h, int asked) {
+    DWORD mode, avail = 0;
+    switch (GetFileType(h)) {
+    case FILE_TYPE_DISK: return asked & 3;
+    case FILE_TYPE_PIPE: {
+        int r = 0;
+        if (asked & 1) {
+            if (!PeekNamedPipe(h, NULL, 0, NULL, &avail, NULL)) {
+                /* the writer is gone: the end can be read; a writing end
+                   cannot be peeked into, and is not ready for reading */
+                if (GetLastError() == ERROR_BROKEN_PIPE) r |= 1;
+            } else if (avail > 0) r |= 1;
+        }
+        if ((asked & 2) && (access_of(h) != 0)) r |= 2;
+        return r;
+    }
+    case FILE_TYPE_CHAR:
+        if (GetConsoleMode(h, &mode)) {
+            int r = asked & 2;
+            if ((asked & 1) && access_of(h) != 1 && console_key_waits(h)) r |= 1;
+            return r;
+        }
+        return asked & 3;
+    default: return 0;
+    }
+}
 int sys_poll(const int *fds, int *events, int n, int64_t microseconds) {
-    int ready = 0, nsock = 0;
     WSAPOLLFD *items = calloc((size_t)(n > 0 ? n : 1), sizeof *items);
     int *which = calloc((size_t)(n > 0 ? n : 1), sizeof *which);
-    if (!items || !which) { free(items); free(which); last = ENOMEM; return -1; }
+    int *asked = calloc((size_t)(n > 0 ? n : 1), sizeof *asked);
+    HANDLE *handles = calloc((size_t)(n > 0 ? n : 1), sizeof *handles);
+    int nsock = 0, others = 0, result = -1;
+    if (!items || !which || !asked || !handles) { last = ENOMEM; goto done; }
     for (int i = 0; i < n; i++) {
+        asked[i] = events[i];
         Sock *s = sock_of(fds[i]);
         if (s) {
             items[nsock].fd = s->s;
             items[nsock].events = (short)(((events[i] & 1) ? POLLRDNORM : 0) | ((events[i] & 2) ? POLLWRNORM : 0) |
                                           ((events[i] & 4) ? POLLRDBAND : 0));
             which[nsock++] = i;
+            handles[i] = NULL;
             continue;
         }
-        HANDLE h = (HANDLE)_get_osfhandle(fds[i]);
-        if (h == INVALID_HANDLE_VALUE) { free(items); free(which); errno = EBADF; return failed(); }
-        if (GetFileType(h) != FILE_TYPE_DISK) { free(items); free(which); return fail(); }
-        events[i] &= 1 | 2;
-        if (events[i]) ready++;
+        handles[i] = (HANDLE)_get_osfhandle(fds[i]);
+        if (handles[i] == INVALID_HANDLE_VALUE) { last = EBADF; goto done; }
+        others++;
     }
-    if (nsock > 0) {
-        int timeout = ready > 0 ? 0 : microseconds < 0 ? -1
-                    : microseconds / 1000 >= INT_MAX ? INT_MAX : (int)((microseconds + 999) / 1000);
-        if (WSAPoll(items, (ULONG)nsock, timeout) == SOCKET_ERROR) {
-            free(items); free(which); return wsa_failed();
-        }
-        for (int k = 0; k < nsock; k++) {
-            short r = items[k].revents;
-            int i = which[k];
-            /* the end of the stream is ready to be read, as POLLHUP is on POSIX */
-            events[i] = ((r & (POLLRDNORM | POLLHUP)) ? 1 : 0) | ((r & POLLWRNORM) ? 2 : 0) | ((r & POLLRDBAND) ? 4 : 0);
+    ULONGLONG start = GetTickCount64();
+    for (;;) {
+        int ready = 0;
+        for (int i = 0; i < n; i++) {
+            if (!handles[i]) continue;
+            events[i] = ready_now(handles[i], asked[i]);
             if (events[i]) ready++;
         }
-    } else if (ready == 0) {
-        if (microseconds < 0) Sleep(INFINITE);
-        else sys_time_sleep(microseconds);
+        int timeout;
+        if (ready > 0) timeout = 0;
+        else if (others > 0) timeout = microseconds == 0 ? 0 : 10;
+        else timeout = microseconds < 0 ? -1 : microseconds / 1000 >= INT_MAX ? INT_MAX : (int)((microseconds + 999) / 1000);
+        if (nsock > 0) {
+            for (int k = 0; k < nsock; k++) items[k].revents = 0;
+            if (WSAPoll(items, (ULONG)nsock, timeout) == SOCKET_ERROR) { wsa_failed(); goto done; }
+            for (int k = 0; k < nsock; k++) {
+                short r = items[k].revents;
+                int i = which[k];
+                /* the end of the stream is ready to be read, as POLLHUP is on POSIX */
+                events[i] = ((r & (POLLRDNORM | POLLHUP)) ? 1 : 0) | ((r & POLLWRNORM) ? 2 : 0) | ((r & POLLRDBAND) ? 4 : 0);
+                if (events[i]) ready++;
+            }
+        } else if (ready == 0 && timeout != 0) {
+            if (n == 0 && microseconds < 0) Sleep(INFINITE);
+            if (n == 0) { sys_time_sleep(microseconds); result = 0; goto done; }
+            Sleep((DWORD)timeout);
+        }
+        int64_t spent = (int64_t)(GetTickCount64() - start) * 1000;
+        if (ready > 0 || microseconds == 0 || (microseconds > 0 && spent >= microseconds) || (nsock > 0 && others == 0)) {
+            result = ready;
+            goto done;
+        }
     }
+done:
     free(items);
     free(which);
-    return ready;
+    free(asked);
+    free(handles);
+    return result;
 }
 
 /* The named constants. What this layer decodes or emulates itself has the
