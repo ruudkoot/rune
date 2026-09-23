@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 9 of 9 entries documented |
-| Tests | 38 checks of 8 entries |
+| Documentation | 11 of 11 entries documented |
+| Tests | 40 checks of 9 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -63,6 +63,10 @@ sig
   val <a href="#val-printtrace">printTrace</a> : TextIO.outstream -&gt; unit
 
   val <a href="#val-same">same</a> : 'a * 'a -&gt; bool
+
+  datatype <a href="#type-world">world</a> = <a href="#con-saved">Saved</a> | <a href="#con-restored">Restored</a>
+
+  val <a href="#val-save">save</a> : string -&gt; world
 
   val <a href="#val-version">version</a> : string
 end
@@ -260,6 +264,45 @@ separately are two.
 <details><summary>Tests (6)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-ref-is-itself` &middot; `two-equal-refs-are-two` &middot; `agrees-with-equality-on-refs` &middot; `an-array-is-itself` &middot; `compares-what-is-not-in-the-heap` &middot; `works-where-equality-does-not`
+
+</details>
+
+### <a name="type-world"></a>`world`
+
+```sml
+datatype world = Saved | Restored
+```
+
+Which of the two worlds a [`save`](#val-save) came back in: the one that wrote the
+image, or the one that was started from it.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-saved"></a>`Saved` |  |  |
+| <a name="con-restored"></a>`Restored` |  |  |
+
+### <a name="val-save"></a>`save`
+
+```sml
+val save : string -> world
+```
+
+`save file` writes the whole running program to `file` and is [`Saved`](#con-saved).
+A VM started as `runevm --restore file` carries on from inside that same
+call, where it is [`Restored`](#con-restored): one call, two worlds, as [`Posix.Process.fork`](../sig/POSIX_PROCESS.md#val-fork)
+gives a pid to one process and 0 to another.
+
+What is written is everything the program is made of -- the heap, the
+stacks, the counters, and the files it has open, which are opened again
+by name and put back where they were left. What belongs to the process
+rather than to the program is not: a socket, a directory stream and a
+pipe are the system's, and a restored world does not have them.
+
+Raises [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
+
+<details><summary>Tests (2)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `writes-a-file-and-says-Saved` &middot; `a-file-it-cannot-write` (raises)
 
 </details>
 

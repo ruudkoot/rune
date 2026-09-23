@@ -31,6 +31,8 @@
 - `sameDesc` (val): [SOCKET](../sig/SOCKET.md#val-samedesc)
 - `sameSign` (val): [INTEGER](../sig/INTEGER.md#val-samesign), [REAL](../sig/REAL.md#val-samesign)
 - `Sat` (con): [DATE](../sig/DATE.md#con-sat)
+- `save` (val): [RUNTIME](../sig/RUNTIME.md#val-save)
+- `Saved` (con): [RUNTIME](../sig/RUNTIME.md#con-saved)
 - `scan` (val): [BOOL](../sig/BOOL.md#val-scan), [CHAR](../sig/CHAR.md#val-scan), [DATE](../sig/DATE.md#val-scan), [IEEE_REAL](../sig/IEEE_REAL.md#val-scan), [INTEGER](../sig/INTEGER.md#val-scan), [NET_HOST_DB](../sig/NET_HOST_DB.md#val-scan), [REAL](../sig/REAL.md#val-scan), [STRING](../sig/STRING.md#val-scan), [TIME](../sig/TIME.md#val-scan), [WORD](../sig/WORD.md#val-scan)
 - `scanStream` (val): [TEXT_IO](../sig/TEXT_IO.md#val-scanstream)
 - `scanString` (val): [STRING_CVT](../sig/STRING_CVT.md#val-scanstring)

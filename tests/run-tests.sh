@@ -5,6 +5,8 @@
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .args (command line words for
 #   the program), .vmargs (options for runevm), .stdin (fed to the program),
+#   .restore (the standard output of `runevm --restore` on the image the
+#   program wrote to tests/out/NAME.img with Runtime.save),
 #   .exitcode (expected status, default 0), .stderr (expected stderr, compared
 #   exactly when present), .cwarn (expected compiler stderr, i.e. warnings,
 #   compared exactly when present; otherwise the compiler must print nothing).
@@ -91,6 +93,25 @@ run_lang() {
   if [ -f "$base.stderr" ] && ! cmp -s "$out/$name.stderr" "$base.stderr"; then
     echo "FAIL $name: stderr differs (diff $base.stderr $out/$name.stderr)"
     return
+  fi
+  # A program that writes itself to $out/$name.img with Runtime.save is
+  # carried on by a second VM, whose standard output is the .restore file.
+  # It takes two runs of the VM, which nothing else here does.
+  if [ -f "$base.restore" ]; then
+    if [ ! -f "$out/$name.img" ]; then
+      echo "FAIL $name: no $out/$name.img to restore"
+      return
+    fi
+    "$vm" --restore "$out/$name.img" < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
+    rcode=$?
+    if [ "$rcode" != 0 ]; then
+      echo "FAIL $name: --restore exited $rcode: $(head -1 "$out/$name.restored.err")"
+      return
+    fi
+    if ! cmp -s "$out/$name.restored" "$base.restore"; then
+      echo "FAIL $name: restored stdout differs (diff $base.restore $out/$name.restored)"
+      return
+    fi
   fi
   echo PASS
 }

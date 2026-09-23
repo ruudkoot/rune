@@ -30,6 +30,7 @@
 - `wordToPid` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-wordtopid)
 - `wordToSpeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-wordtospeed)
 - `wordToUid` (val): [POSIX_PROC_ENV](../sig/POSIX_PROC_ENV.md#val-wordtouid)
+- `world` (type): [RUNTIME](../sig/RUNTIME.md#type-world)
 - `WR` (con): [PRIM_IO](../sig/PRIM_IO.md#con-wr)
 - `writeArr` (val): [POSIX_IO](../sig/POSIX_IO.md#val-writearr)
 - `writer` (type): [PRIM_IO](../sig/PRIM_IO.md#type-writer), [STREAM_IO](../sig/STREAM_IO.md#type-writer)

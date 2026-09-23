@@ -1,4 +1,4 @@
-(* requires: Runtime Array Char List String TextIO *)
+(* requires: Runtime Array Char List OS String TextIO *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -184,6 +184,26 @@ struct
                         List.length lines = n
                         andalso List.all (fn l => String.isPrefix "  in " l) lines
                       end)
+
+  (* ---- save
+
+     What `save` does needs a second VM, which the Basis suite cannot start:
+     `tests/lang/rt.save_restore` writes an image and `runevm --restore`
+     carries it on. What is checked here is what one program can see. *)
+
+  val () = T.check ("Runtime.save/writes-a-file-and-says-Saved",
+                    fn () =>
+                      let
+                        val file = "runtime-save.img"
+                        val w = Runtime.save file
+                        val size = OS.FileSys.fileSize file
+                        val () = OS.FileSys.remove file
+                      in
+                        w = Runtime.Saved andalso size > 0
+                      end)
+  val () = T.raises ("Runtime.save/a-file-it-cannot-write",
+                     fn OS.SysErr _ => true | _ => false,
+                     fn () => Runtime.save "no-such-directory-here/world.img")
 
   (* ---- version *)
 

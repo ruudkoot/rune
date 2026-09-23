@@ -24,8 +24,14 @@
 #include "vm.h"
 #include "sys.h"
 #include <fenv.h>
+#include <errno.h>
 
 #define IMAGE_MAGIC "runevm image 2"
+
+/* What a world that starts again from an image should do: a fork gives 0 to
+   the child, a save gives `Restored` to the program that wrote it. */
+#define IMAGE_FORK 0
+#define IMAGE_SAVE 1
 
 /* A buffer either way: the heap is written and read a field at a time, and a
    call to stdio for each of them would cost more than the encoding does. */
@@ -127,9 +133,11 @@ static void put_heap(Stream *s, VM *vm) {
     }
 }
 
-static void write_image(VM *vm, Stream *s) {
+static void write_image(VM *vm, Stream *s, int kind) {
     const Program *p = &vm->prog;
     put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
+    /* what the world should do when it starts again (IMAGE_FORK, IMAGE_SAVE) */
+    put_u32(s, (uint32_t)kind);
 
     put_u32(s, (uint32_t)vm->trace);
     put_u32(s, (uint32_t)vm->stats);
@@ -198,13 +206,22 @@ static void write_image(VM *vm, Stream *s) {
         put_u64(s, (uint64_t)vm->handlers[i].fp);
     }
 
-    /* each file by its descriptor, -1 for a closed slot: handles are never
-       used again, so the slots go too */
+    /* Each file by its descriptor, -1 for a closed slot: handles are never
+       used again, so the slots go too. A fork's child has the descriptors
+       themselves, from the system layer; a saved image is read by a process
+       that has none of them, so the path and the position go too and the
+       file is opened again where it was left. */
     put_u64(s, (uint64_t)vm->nfiles);
     for (size_t i = 0; i < vm->nfiles; i++) {
         int fd = vm->files[i] ? sys_fileno(vm->files[i]) : -1;
         put_u32(s, (uint32_t)fd);
         put_u8(s, vm->file_modes[i]);
+        if (kind == IMAGE_SAVE) {
+            const char *path = i >= 3 && vm->files[i] && vm->file_paths[i] ? vm->file_paths[i] : "";
+            int64_t at = i >= 3 && vm->files[i] ? sys_ftell(vm->files[i]) : -1;
+            put_string(s, path);
+            put_u64(s, (uint64_t)at);
+        }
     }
     put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
     wflush(s);
@@ -225,8 +242,30 @@ int64_t vm_fork(VM *vm) {
     FILE *out = sys_fork_start();
     if (!out) return -1;
     Stream s = { out, 1, 0, 0, {0} };
-    write_image(vm, &s);
+    write_image(vm, &s, IMAGE_FORK);
     return sys_fork_finish(out);
+}
+
+/* Runtime.save: the whole VM in a file of its own, for a process that will
+   read it later and carry on from here. Unlike a fork, nothing is inherited:
+   what the system layer holds -- sockets, directory streams, a pipe -- is not
+   in the image, and the files that are come back by their path. */
+int vm_save(VM *vm, const char *path) {
+    FILE *f = sys_fopen(path, "wb");
+    if (!f) { vm->io_errno = errno; return 0; }
+    fflush(NULL);
+    Stream *s = malloc(sizeof(Stream));
+    if (!s) { fclose(f); vm->io_errno = ENOMEM; return 0; }
+    s->f = f;
+    s->ok = 1;
+    s->n = 0;
+    s->pos = 0;
+    write_image(vm, s, IMAGE_SAVE);
+    int ok = s->ok;
+    free(s);
+    if (fclose(f) != 0) ok = 0;
+    if (!ok) vm->io_errno = errno;
+    return ok;
 }
 
 /* --- reading --- */
@@ -369,8 +408,8 @@ static int failed(Stream *s, char *err, size_t errlen, const char *msg) {
     return 0;
 }
 
-int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
-    Stream s = { sys_resume(token), 1, 0, 0, {0} };
+static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
+    Stream s = { in, 1, 0, 0, {0} };
     if (!s.f) return failed(&s, err, errlen, "no image to resume from");
     Program *p = &vm->prog;
 
@@ -378,6 +417,11 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
     get(&s, magic, sizeof magic);
     if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0)
         return failed(&s, err, errlen, "not an image of this runevm");
+    int kind = (int)get_u32(&s);
+    if (!s.ok || kind != want)
+        return failed(&s, err, errlen,
+                      want == IMAGE_FORK ? "the image was not made by fork"
+                                         : "the image was not made by Runtime.save");
 
     vm->trace = (int)get_u32(&s);
     vm->stats = (int)get_u32(&s);
@@ -492,7 +536,8 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
     vm->files_cap = nfiles < 8 ? 8 : (size_t)nfiles;
     vm->files = calloc(vm->files_cap, sizeof(FILE *));
     vm->file_modes = calloc(vm->files_cap, 1);
-    if (!vm->files || !vm->file_modes) return failed(&s, err, errlen, "out of memory");
+    vm->file_paths = calloc(vm->files_cap, sizeof(char *));
+    if (!vm->files || !vm->file_modes || !vm->file_paths) return failed(&s, err, errlen, "out of memory");
     vm->nfiles = (size_t)nfiles;
     vm->files[0] = stdin;
     vm->files[1] = stdout;
@@ -500,9 +545,29 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
     for (size_t i = 0; i < vm->nfiles && s.ok; i++) {
         int fd = (int)get_u32(&s);
         vm->file_modes[i] = get_u8(&s);
-        if (i >= 3 && fd >= 0 && s.ok) {
-            uint8_t mode = vm->file_modes[i];
-            vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : "ab");
+        uint8_t mode = vm->file_modes[i];
+        if (kind == IMAGE_FORK) {
+            /* the descriptors came with the child */
+            if (i >= 3 && fd >= 0 && s.ok)
+                vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : "ab");
+        } else {
+            /* nothing was inherited: open the file again where it was left.
+               A file written to is opened for update, not truncated. */
+            char *path = get_string(&s);
+            int64_t at = (int64_t)get_u64(&s);
+            if (!s.ok) { free(path); break; }
+            if (i >= 3 && path && path[0]) {
+                FILE *f = sys_fopen(path, mode == 0 ? "rb" : mode == 1 ? "r+b" : "ab");
+                if (!f) {
+                    free(path);
+                    return failed(&s, err, errlen, "a file the image was saved with cannot be opened again");
+                }
+                if (at >= 0 && mode != 2) sys_fseek(f, at, SEEK_SET);
+                vm->files[i] = f;
+                vm->file_paths[i] = path;
+            } else {
+                free(path);
+            }
         }
     }
     get(&s, magic, sizeof magic);
@@ -515,10 +580,20 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }
-    /* the image was written inside posix_fork, its argument still on the
-       stack: fork gives 0 here */
-    if (vm->sp == 0) { snprintf(err, errlen, "the image was not made by fork"); return 0; }
+    /* The image was written inside the primitive that made it, whose
+       argument is still on the stack. What replaces it is what that call
+       gives back in the world that starts again: 0 for the child of a fork,
+       and 1 -- `Restored` -- for the program that saved itself. */
+    if (vm->sp == 0) { snprintf(err, errlen, "the image has nothing on its stack"); return 0; }
     vm->sp--;
-    vm_push(vm, mk_int(0));
+    vm_push(vm, mk_int(kind == IMAGE_FORK ? 0 : 1));
     return 1;
+}
+
+int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
+    return read_image(vm, sys_resume(token), IMAGE_FORK, err, errlen);
+}
+
+int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
+    return read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, err, errlen);
 }

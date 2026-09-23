@@ -155,6 +155,8 @@ typedef struct VM {
        handles are never reused, a closed slot is NULL */
     FILE **files;
     uint8_t *file_modes;     /* each file's mode of file_open, which an image of the VM carries */
+    char **file_paths;       /* the path each was opened by, for an image that a process does not
+                                inherit descriptors from (Runtime.save); NULL for the standard streams */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
 } VM;
@@ -191,6 +193,8 @@ int values_equal(Value a, Value b);
 /* image.c: fork as a second VM that is handed this one's state */
 int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the child */
+int vm_save(VM *vm, const char *path);       /* the whole VM in a file (Runtime.save); 0 on failure */
+int vm_restore(VM *vm, const char *path, char *err, size_t errlen);  /* runevm --restore FILE */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);

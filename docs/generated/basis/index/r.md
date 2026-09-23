@@ -47,6 +47,7 @@
 - `rem` (val): [INTEGER](../sig/INTEGER.md#val-rem), [REAL](../sig/REAL.md#val-rem)
 - `remove` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-remove)
 - `rename` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-rename), [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-rename)
+- `Restored` (con): [RUNTIME](../sig/RUNTIME.md#con-restored)
 - `rev` (val): [LIST](../sig/LIST.md#val-rev)
 - `revAppend` (val): [LIST](../sig/LIST.md#val-revappend)
 - `rewindDir` (val): [OS_FILE_SYS](../sig/OS_FILE_SYS.md#val-rewinddir)

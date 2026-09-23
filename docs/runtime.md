@@ -176,6 +176,15 @@ open files, sockets and directory streams -- and the child carries on from
 the `fork` as a copied process would (`vm/image.c`). `runevm --emulate-fork`
 takes that path on a POSIX system too, which is how `make check` tests it.
 
+The same image is what `Runtime.save` writes to a file and
+`runevm --restore` carries on, in another process and on another machine:
+nothing in the format is of a particular width or byte order, and a pointer
+into the heap is written as its distance from the start of it, so an image
+written by `bin/runevm` is restored by `bin/runevm32.exe`. What the system
+layer holds is handed to a fork's child and cannot go into a file, so a
+restored world has no sockets, directory streams or pipes; the files the
+program opened are opened again by name, where they were left.
+
 ## Loading a program
 
 `runevm` treats a `.rbc` file as untrusted input: every offset, length and
@@ -186,5 +195,5 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--heap-size`, `--emulate-fork`, `--version` -- is described
+`--gc-stress`, `--heap-size`, `--emulate-fork`, `--restore`, `--version` -- is described
 in [bytecode.md](bytecode.md).

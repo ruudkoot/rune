@@ -1229,6 +1229,7 @@ struct
   fun rt_collect () = unsupported ()
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
+  fun rt_save (_ : string) = unsupported ~1
 
   fun posix_getgr (name, gid) =
     let

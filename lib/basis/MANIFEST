@@ -148,7 +148,7 @@ windows.sml     | demand | yes  | Windows               | BinIO Byte Char IO Int
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
 runtime_sig.sml | demand | no   | RUNTIME               | TextIO
-runtime.sml     | demand | no   | Runtime RuneRuntime   | Int List TextIO
+runtime.sml     | demand | no   | Runtime RuneRuntime   | Int List RuneError TextIO
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
 sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice

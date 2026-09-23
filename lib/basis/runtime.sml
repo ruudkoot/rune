@@ -14,6 +14,7 @@ struct
     val collect' = _prim "rt_collect" : unit -> unit
     val version' = _prim "rt_version" : unit -> string
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
+    val save' = _prim "rt_save" : string -> int
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int }
@@ -79,6 +80,14 @@ struct
     val same = _prim "ptr_eq" : 'a * 'a -> bool
 
     val version = version' ()
+
+    datatype world = Saved | Restored
+
+    fun save file =
+      case save' file of
+        0 => Saved
+      | 1 => Restored
+      | _ => raise RuneError.lastError ()
   end
 end
 

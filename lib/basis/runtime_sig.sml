@@ -123,6 +123,24 @@ sig
      Example: `let val r = ref 0 in same (r, r) end = true` *)
   val same : 'a * 'a -> bool
 
+  (* Which of the two worlds a `save` came back in: the one that wrote the
+     image, or the one that was started from it. *)
+  datatype world = Saved | Restored
+
+  (* `save file` writes the whole running program to `file` and is `Saved`.
+     A VM started as `runevm --restore file` carries on from inside that same
+     call, where it is `Restored`: one call, two worlds, as `Posix.Process.fork`
+     gives a pid to one process and 0 to another.
+
+     What is written is everything the program is made of -- the heap, the
+     stacks, the counters, and the files it has open, which are opened again
+     by name and put back where they were left. What belongs to the process
+     rather than to the program is not: a socket, a directory stream and a
+     pipe are the system's, and a restored world does not have them.
+
+     Raises `OS.SysErr` if the image cannot be written. *)
+  val save : string -> world
+
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.
 

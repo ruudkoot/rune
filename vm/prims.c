@@ -1681,16 +1681,20 @@ static int p_file_open(VM *vm) {
     FILE *f = NULL;
     if (strlen(path) != s->len) vm->io_errno = EINVAL;   /* embedded NUL */
     else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
-    free(path);
-    if (!f) return ret(vm, 2, mk_con0(0));
+    if (!f) { free(path); return ret(vm, 2, mk_con0(0)); }
+    char *kept = path;
     if (vm->nfiles == vm->files_cap) {
         vm->files_cap *= 2;
         vm->files = realloc(vm->files, vm->files_cap * sizeof(FILE *));
         vm->file_modes = realloc(vm->file_modes, vm->files_cap);
-        if (!vm->files || !vm->file_modes) vm_fatal(vm, "out of memory");
+        vm->file_paths = realloc(vm->file_paths, vm->files_cap * sizeof(char *));
+        if (!vm->files || !vm->file_modes || !vm->file_paths) vm_fatal(vm, "out of memory");
     }
     int64_t h = (int64_t)vm->nfiles;
     vm->file_modes[vm->nfiles] = (uint8_t)mode;
+    /* kept so that Runtime.save can name the file again: a saved image is
+       read by a process that inherited no descriptor from this one */
+    vm->file_paths[vm->nfiles] = kept;
     vm->files[vm->nfiles++] = f;
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
@@ -1698,7 +1702,12 @@ static int p_file_open(VM *vm) {
 static int p_file_close(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "file_close");
     int64_t i = ARG(0).u.i;
-    if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) { fclose(vm->files[i]); vm->files[i] = NULL; }
+    if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) {
+        fclose(vm->files[i]);
+        vm->files[i] = NULL;
+        free(vm->file_paths[i]);
+        vm->file_paths[i] = NULL;
+    }
     return ret(vm, 1, mk_unit());
 }
 static int p_file_write(VM *vm) {
@@ -2068,6 +2077,20 @@ static int p_rt_trace(VM *vm) {
     }
     Value l = vm_pop(vm);
     return ret(vm, 1, l);
+}
+
+/* Runtime.save: 0 in the world that writes the image, and 1 -- `Restored` --
+   in the world that starts again from it, which vm_resume pushes in place of
+   this call's argument. ~1 says the image could not be written. */
+static int p_rt_save(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_save");
+    char *path = malloc((size_t)s->len + 1);
+    if (!path) vm_fatal(vm, "out of memory");
+    memcpy(path, OBJ_BYTES(s), s->len);
+    path[s->len] = 0;
+    int ok = strlen(path) == s->len && vm_save(vm, path);
+    free(path);
+    return ret(vm, 1, mk_int(ok ? 0 : -1));
 }
 
 static int p_rt_version(VM *vm) {
