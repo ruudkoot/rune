@@ -432,7 +432,10 @@ int vm_loop(VM *vm) {
         }
         case OP_PRIM:
             if (vm->sp < prim_arity[a]) vm_fatal(vm, "stack underflow in primitive %s", prim_names[a]);
-            prim_table[a](vm);
+            /* A primitive that says PRIM_NEW_WORLD has put another program
+               here (Runtime.restore), so the code this loop is reading from
+               has been freed: take it again, and the pc with it. */
+            if (prim_table[a](vm) == PRIM_NEW_WORLD) code = p->code;
             break;
         default:
             vm_fatal(vm, "invalid opcode %u", op);

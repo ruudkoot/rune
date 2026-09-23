@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 11 of 11 entries documented |
-| Tests | 40 checks of 9 entries |
+| Documentation | 12 of 12 entries documented |
+| Tests | 43 checks of 10 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -67,6 +67,8 @@ sig
   datatype <a href="#type-world">world</a> = <a href="#con-saved">Saved</a> | <a href="#con-restored">Restored</a>
 
   val <a href="#val-save">save</a> : string -&gt; world
+
+  val <a href="#val-restore">restore</a> : string -&gt; 'a
 
   val <a href="#val-version">version</a> : string
 end
@@ -305,6 +307,43 @@ pipe are the system's, and a restored world does not have them.
 <details><summary>Tests (2)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `writes-a-file-and-says-Saved` &middot; `a-file-it-cannot-write` (raises)
+
+</details>
+
+### <a name="val-restore"></a>`restore`
+
+```sml
+val restore : string -> 'a
+```
+
+`restore file` becomes the world that [`save`](#val-save) wrote to `file`. It does
+not come back.
+
+Where [`save`](#val-save) gives two worlds one call, this gives one world another
+call: the program carries on from inside the [`save`](#val-save) that wrote the
+image, where it is [`Restored`](#con-restored). `runevm --restore file` does the same to
+a VM that has just started; this does it to one that is running.
+
+The image carries its own bytecode, so the program that runs afterwards
+may be another program entirely -- it is a whole world, not a heap
+dropped into this one. Nothing of the world that called [`restore`](#val-restore)
+survives it: not its code, not its stack, not the files it had open.
+Nothing written after the call is reached.
+
+> **Implementation** `RUNTIME.restore/reads-before-it-replaces`. The image is
+> read into a world of its own and moved over only once it is whole, so a
+> file that is not an image, or is cut short, leaves the calling world
+> running and able to handle the exception. That is what makes the type
+> honest: [`restore`](#val-restore) either does not return or raises. The world it leaves
+> behind is let go at that moment -- its files closed, its heap and its
+> program freed -- so a program may restore as often as it likes without
+> growing.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be read.
+
+<details><summary>Tests (3)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-file-that-is-not-an-image` (raises) &middot; `a-file-that-is-not-there` (raises) &middot; `leaves-this-world-running`
 
 </details>
 

@@ -205,6 +205,26 @@ struct
                      fn OS.SysErr _ => true | _ => false,
                      fn () => Runtime.save "no-such-directory-here/world.img")
 
+  (* ---- restore
+
+     Only the failing path can be checked here: a restore that works replaces
+     the world, and this one is running the suite. What it does is shown by
+     `tests/lang/rt.restore_world`, where a program becomes an earlier world
+     of itself and stops by a count kept in a file. *)
+
+  val () = T.raises ("Runtime.restore/a-file-that-is-not-an-image",
+                     fn OS.SysErr _ => true | _ => false,
+                     fn () => Runtime.restore "runtime.sml")
+  val () = T.raises ("Runtime.restore/a-file-that-is-not-there",
+                     fn OS.SysErr _ => true | _ => false,
+                     fn () => Runtime.restore "no-such-world-here.img")
+  (* the world that called it is untouched: it is still running *)
+  val () = T.check ("Runtime.restore/leaves-this-world-running",
+                    fn () =>
+                      let val n = #instructions (Runtime.stats ())
+                          val () = (ignore (Runtime.restore "no-such-world-here.img")) handle OS.SysErr _ => ()
+                      in #instructions (Runtime.stats ()) > n end)
+
   (* ---- version *)
 
   val () = T.check ("Runtime.version/is-numbers-separated-by-dots",

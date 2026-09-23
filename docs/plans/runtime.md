@@ -59,6 +59,7 @@ need no new machinery at all, and the structure exists from M1 on.
 | M7, a portable image, measured | done: `vm/image.c` writes nothing as it lies in memory. Every number is little-endian and as wide as the format says, a `Value` is a tag and eight bytes, and a pointer is its distance from the start of the heap, so `heap_relocate(vm, 0)` both places and checks it. The `sizeof` guard is gone and the magic is `runevm image 2`. **D1 is decided: one format** -- it is not a trade-off but a win, see below. The cross-width *resume* this milestone's line asks for could not be run here -- `sys_fork_start` execs `/proc/self/exe`, so a fork's child is always the same binary -- and was carried to M8, where `--restore FILE` made it possible: **met** |
 | M8, `save`, `restore` and `--restore` | done: an image says whether it was made by a fork or by a save, and what it pushes in place of the call's argument when the world starts again says so too -- 0 for a fork's child, `Restored` for a program that saved itself. `Runtime.save` writes the file, `runevm --restore FILE` carries it on. **One image, three VMs:** written by `bin/runevm` on Linux and restored by `bin/runevm32.exe` and `bin/runevm.exe` on Windows, the heap and the stack intact -- M7's line, met here. A fork's child inherits descriptors and a saved image's reader inherits nothing, so a save records each open file's path and position and a restore opens it again where it was left, for update rather than truncating what was written. What the system layer holds -- a socket, a directory stream, a pipe -- cannot go in a file, and the signature says so. A test needed two runs of the VM, which nothing in `tests/lang` did: `tests/run-tests.sh` gained a `.restore` sibling beside `.args` and `.stderr`. 33 checks. Found by ASan, which `make check` cannot see: the table of paths was allocated in three places and freed in none |
 | M9, the examples and the round-up | done: `examples/runtime` has a program for each part of the structure -- the counters of a run, `profile` with the cost of measuring taken out, a trace from a handler and from an exception nothing handles, and a checkpoint written and taken up again -- with a README. `check-cross` and `check-positions` descend into it, so those programs are under the five-build identity check too (152 programs, up from 148). `RUNTIME` joined `lib/basis/DOCUMENTED`, which at once failed two summaries for being over 160 characters; `docs/basis-compat.md`, `README.md` and a section of `docs/runtime.md` say what the structure is. Writing the examples found two claims of my own that were false: a list cell costs 104 bytes and three objects in that loop, not 64 and two, because the argument of the recursive call is a pair and a pair is an object. The examples now show it -- 100,000 iterations with a pair argument allocate 4,000,040 bytes and with one argument allocate 0 |
+| M10, `restore` from inside a program | done: `Runtime.restore` becomes the world in an image without leaving the process -- the pid is the caller's, where `--restore` is a fresh one -- and the image brings its own bytecode, so what runs after it may be another program. The loop re-reads its cached `code` pointer when a primitive returns `PRIM_NEW_WORLD`, which is the value it already threw away. The image is read into a world of its own and moved over only once whole, so a bad one raises where the program can still handle it, and the old world is released. **Found on the way:** an image carries code and `read_image` ran none of the checks `load_program` runs, which was fine while only a fork wrote one and is not now that a file can -- `validate_program` is shared by both, and the places a restored world is stopped at are checked to be instructions of its own program. 36 checks; eight restores in a row leak nothing under ASan |
 
 Sizes as in [sml97.md](sml97.md): S about a day, M a few days, L a week or
 more, XL several weeks.
@@ -273,14 +274,20 @@ encoder writes into the stream's own buffer: the first version called stdio
 once a field and was 44% slower per MB, which is what the threshold would have
 caught.
 
-### D2. `restore` is a command line, not a function
+### D2. `restore` is a command line -- and, from M10, a function too
 
-A restore replaces the world it runs in, so there is nothing for it to return
-to. It is `runevm --restore FILE`, which is what `--resume` already is
-(`vm/main.c:94-105`). An in-process `restore : string -> 'a` that never
-returns normally is implementable -- it is `--resume` from inside the loop --
-but it throws away the stacks of a call that is still running, and no use for
-it has come up. Left out; M8 can add it if one does.
+M8 gave the command line alone: a restore replaces the world it runs in, so
+there is nothing for it to return to, and no use for an in-process one had
+come up. The owner asked for one after M9, and for the image to bring its own
+bytecode with it, so that a program can become a different program.
+
+That is sound, and for the reason it looks doubtful: the image carries the
+code, the constants, the function names and the line table, so the world that
+starts is consistent with itself and nothing of the caller's program is left
+to disagree with it. It is not the *Out of scope* entry below, which is about
+resuming an image **under** bytecode that is not its own.
+
+What M10 has to get right is in its milestone.
 
 ### D3. `save` returns `Saved` or `Restored`
 
@@ -528,6 +535,35 @@ under ASan and `make test-stress`.
 files intact -- a test under `tests/lang` -- while `rt.fork_image` still
 passes under ASan and `make test-stress`, and `make test-windows` still forks
 on both VMs.
+
+### M10. `restore` from inside a program -- M
+
+Asked for after M9: `Runtime.restore file` becomes the world in that file,
+where `runevm --restore file` starts one. The image brings its own bytecode,
+so what runs afterwards may be another program entirely.
+
+* **The loop's cached code.** `vm_loop` holds `const uint8_t *code = p->code`
+  outside its loop (`vm/interp.c`). Everything else it uses -- the pc, the
+  frame -- it reads again every time round, so that one pointer is the whole
+  of the danger: swap the program under it and the next instruction is read
+  from memory that has been freed. A primitive already returns an `int` that
+  the loop throws away (`ret` gives 0), which is where it can say that the
+  world has changed.
+* **A bad image must not destroy a running world.** The image is read into a
+  world of its own and only moved over once it is whole, so that a file that
+  is missing or malformed raises where the program can still handle it. That
+  is what lets `restore` have a type that says it does not return.
+* **The old world is let go**, its files closed and its heap and program
+  freed, or a program that restores in a loop leaks. `vm_destroy` in
+  `vm/main.c` is the teardown and is static; the part that frees the contents
+  becomes a function of its own.
+* **The choice is documented where it is met**: an `Implementation:` note on
+  `restore` in `RUNTIME`, which is what `docs/generated/basis` shows a reader.
+
+*Leaves verifiable:* a program restores an image of *another* program and
+runs it to its end, its own code never reached again; a restore of a file
+that is not an image raises and the program carries on; and a program that
+restores in a loop does not grow, under ASan.
 
 ### M9. The examples and the round-up -- M
 

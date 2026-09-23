@@ -590,6 +590,30 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }
+    /* An image carries code, and since Runtime.restore it comes from a file
+       like any other: it is checked as a .rbc is, and then the places this
+       world is stopped at are checked to be instructions of it. */
+    {
+        uint8_t *starts = validate_program(p, err, errlen);
+        if (!starts) return 0;
+        int ok = vm->pc < p->code_len && starts[vm->pc];
+        if (ok && vm->frames_active) {
+            if (vm->fp >= vm->frames_cap) ok = 0;
+            for (size_t i = 0; ok && i <= vm->fp; i++)
+                ok = vm->frames[i].func < p->nfuncs
+                     && vm->frames[i].base <= vm->sp
+                     && (i == 0 || (vm->frames[i].ret_pc < p->code_len && starts[vm->frames[i].ret_pc]));
+        }
+        for (size_t i = 0; ok && i < vm->hp; i++)
+            ok = vm->handlers[i].pc < p->code_len && starts[vm->handlers[i].pc]
+                 && vm->handlers[i].sp <= vm->sp
+                 && (!vm->frames_active || vm->handlers[i].fp <= vm->fp);
+        free(starts);
+        if (!ok) {
+            snprintf(err, errlen, "the image stopped somewhere its program does not go");
+            return 0;
+        }
+    }
     /* The image was written inside the primitive that made it, whose
        argument is still on the stack. What replaces it is what that call
        gives back in the world that starts again: 0 for the child of a fork,
@@ -606,4 +630,29 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
 
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen) {
     return read_image(vm, sys_fopen(path, "rb"), IMAGE_SAVE, err, errlen);
+}
+
+/* Runtime.restore: this world becomes the one in the file, bytecode and all,
+   so what runs afterwards may be another program. The image is read into a
+   world of its own and only moved over once it is whole: a file that is not
+   an image, or is cut short, leaves this world running and able to raise.
+   The world that was here is let go -- its files closed, its heap and its
+   program freed -- which is what a program that restores in a loop needs. */
+int vm_become(VM *vm, const char *path) {
+    VM *next = calloc(1, sizeof(VM));
+    char err[256];
+    if (!next) { vm->io_errno = ENOMEM; return 0; }
+    fflush(NULL);
+    if (!read_image(next, sys_fopen(path, "rb"), IMAGE_SAVE, err, sizeof err)) {
+        vm_release(next);
+        free(next);
+        vm->io_errno = EINVAL;
+        return 0;
+    }
+    /* Nothing of this world is read again, so it goes before the other takes
+       its place; the path was copied out of the heap by the caller. */
+    vm_release(vm);
+    *vm = *next;
+    free(next);
+    return 1;
 }

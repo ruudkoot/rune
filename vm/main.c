@@ -23,7 +23,7 @@ static void usage(void) {
 }
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
-static void vm_destroy(VM *vm) {
+void vm_release(VM *vm) {
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);
@@ -47,6 +47,10 @@ static void vm_destroy(VM *vm) {
         free(vm->argv);
         free((char *)vm->progname);
     }
+}
+
+static void vm_destroy(VM *vm) {
+    vm_release(vm);
     free(vm);
 }
 

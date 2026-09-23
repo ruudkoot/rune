@@ -191,12 +191,29 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
     r.pos += table_len;
     free(data);
 
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
+    for (uint32_t i = 0; i < p->nfuncs; i++)
         p->funcs[i].code_end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
-        if (p->funcs[i].code_offset >= p->code_len) return fail(err, errlen, "function offset out of range");
-    }
 
-    /* validate instructions: boundaries and operand ranges */
+    uint8_t *starts = validate_program(p, err, errlen);
+    if (!starts) return 0;
+    free(starts);
+    return 1;
+}
+
+/* Where every instruction of a program begins, or NULL and a message: the
+   opcodes, the ranges of the operands, and the jump targets and function
+   entries, which must be instruction boundaries. The caller frees it.
+
+   A .rbc is untrusted input and so, since Runtime.restore, is an image: both
+   carry code, and both come through here (vm/image.c). */
+uint8_t *validate_program(Program *p, char *err, size_t errlen) {
+    for (uint32_t i = 0; i < p->nfuncs; i++) {
+        if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
+        if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) { fail(err, errlen, "functions out of order"); return NULL; }
+        if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) { fail(err, errlen, "bad frame size"); return NULL; }
+        uint32_t end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
+        if (p->funcs[i].code_end != end) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
+    }
     uint8_t *starts = calloc(p->code_len + 1, 1);
     uint32_t fi = 0;
     uint32_t pc = 0;
@@ -204,8 +221,8 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         uint8_t op = p->code[pc];
         int len = instr_length(op);
-        if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return 0; }
-        if (pc + len > p->code_len) { free(starts); return fail(err, errlen, "truncated instruction"); }
+        if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return NULL; }
+        if (pc + len > p->code_len) { free(starts); fail(err, errlen, "truncated instruction"); return NULL; }
         starts[pc] = 1;
         int32_t a = len > 1 ? read_i32(p->code + pc + 1) : 0;
         int32_t b = len > 5 ? read_i32(p->code + pc + 5) : 0;
@@ -224,7 +241,7 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         case OP_PRIM: bad = a < 0 || a >= PRIM__COUNT; break;
         default: break;
         }
-        if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return 0; }
+        if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }
     /* jump targets and function entries must be instruction boundaries */
@@ -235,15 +252,14 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_PUSHHANDLER) {
             int32_t t = read_i32(p->code + pc + 1);
             if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
-                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return 0;
+                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
             }
         }
         pc += len;
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
-        if (!starts[p->funcs[i].code_offset]) { free(starts); return fail(err, errlen, "function entry is not an instruction"); }
-    free(starts);
-    return 1;
+        if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    return starts;
 }
 
 /* The entry covering pc: the last one that begins at or before it, found by

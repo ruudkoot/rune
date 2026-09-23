@@ -15,6 +15,7 @@ struct
     val version' = _prim "rt_version" : unit -> string
     val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
     val save' = _prim "rt_save" : string -> int
+    val restore' = _prim "rt_restore" : string -> int
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int }
@@ -88,6 +89,11 @@ struct
         0 => Saved
       | 1 => Restored
       | _ => raise RuneError.lastError ()
+
+    (* The primitive comes back only when it could not read the image: on
+       success the world it made is running instead, and nothing here is
+       reached again. *)
+    fun restore file = (ignore (restore' file); raise RuneError.lastError ())
   end
 end
 

@@ -143,6 +143,32 @@ sig
      Raises: `OS.SysErr` if the image cannot be written. *)
   val save : string -> world
 
+  (* `restore file` becomes the world that `save` wrote to `file`. It does
+     not come back.
+
+     Where `save` gives two worlds one call, this gives one world another
+     call: the program carries on from inside the `save` that wrote the
+     image, where it is `Restored`. `runevm --restore file` does the same to
+     a VM that has just started; this does it to one that is running.
+
+     The image carries its own bytecode, so the program that runs afterwards
+     may be another program entirely -- it is a whole world, not a heap
+     dropped into this one. Nothing of the world that called `restore`
+     survives it: not its code, not its stack, not the files it had open.
+     Nothing written after the call is reached.
+
+     Implementation: `RUNTIME.restore/reads-before-it-replaces`. The image is
+     read into a world of its own and moved over only once it is whole, so a
+     file that is not an image, or is cut short, leaves the calling world
+     running and able to handle the exception. That is what makes the type
+     honest: `restore` either does not return or raises. The world it leaves
+     behind is let go at that moment -- its files closed, its heap and its
+     program freed -- so a program may restore as often as it likes without
+     growing.
+
+     Raises: `OS.SysErr` if the image cannot be read. *)
+  val restore : string -> 'a
+
   (* The version of Rune that this program is running on, as
      `runevm --version` prints it.
 

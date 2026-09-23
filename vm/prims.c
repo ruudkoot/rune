@@ -2093,6 +2093,22 @@ static int p_rt_save(VM *vm) {
     return ret(vm, 1, mk_int(ok ? 0 : -1));
 }
 
+/* Runtime.restore: on success this world is gone and the loop carries on in
+   the one the image holds, which read_image has already left ready -- so
+   there is no result to return here, and none to return it onto. ~1 and the
+   old world on failure. */
+static int p_rt_restore(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_restore");
+    char *path = malloc((size_t)s->len + 1);
+    if (!path) vm_fatal(vm, "out of memory");
+    memcpy(path, OBJ_BYTES(s), s->len);
+    path[s->len] = 0;
+    int ok = strlen(path) == s->len && vm_become(vm, path);
+    free(path);
+    if (ok) return PRIM_NEW_WORLD;
+    return ret(vm, 1, mk_int(-1));
+}
+
 static int p_rt_version(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, RUNE_VERSION, (uint32_t)strlen(RUNE_VERSION))));
 }

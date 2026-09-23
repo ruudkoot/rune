@@ -195,9 +195,14 @@ int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, o
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the child */
 int vm_save(VM *vm, const char *path);       /* the whole VM in a file (Runtime.save); 0 on failure */
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen);  /* runevm --restore FILE */
+int vm_become(VM *vm, const char *path);     /* Runtime.restore: this world becomes that one; 0 on failure */
+void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
+/* Where every instruction begins, or NULL: a program from a .rbc or from an
+   image is checked the same way. The caller frees it. */
+uint8_t *validate_program(Program *p, char *err, size_t errlen);
 const LineEntry *line_at(const Program *p, uint32_t pc);
 void vm_print_trace(VM *vm, FILE *out);
 void disassemble(const Program *p, FILE *out);
@@ -209,6 +214,10 @@ static inline int instr_length(uint8_t op) {
 }
 
 /* prims.c */
+/* What a primitive gives back to the dispatch loop: 0 for an ordinary return
+   (`ret`), 1 where it raised, and this where it has replaced the program the
+   loop is running (vm/image.c, Runtime.restore). */
+#define PRIM_NEW_WORLD 2
 typedef int (*PrimFn)(VM *vm);
 extern const PrimFn prim_table[PRIM__COUNT];
 
