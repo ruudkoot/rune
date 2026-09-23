@@ -181,7 +181,8 @@ size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap l
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 
-/* interp.c */
+/* runtime.c: all of a VM but its dispatch loop and its command line */
+void vm_init(VM *vm, size_t heap);           /* the standard files and the heap */
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
 static inline void vm_push(VM *vm, Value v) {
     if (vm->sp >= vm->stack_cap) vm_grow_stack(vm, vm->sp + 1);
@@ -195,10 +196,18 @@ void vm_fatal(VM *vm, const char *fmt, ...);
 void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
-int vm_run(VM *vm);
-int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
+void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base);
+void vm_push_handler(VM *vm, uint32_t pc);
+void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
 int values_equal(Value a, Value b);
+void vm_print_trace(VM *vm, FILE *out);
+void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
+void vm_destroy(VM *vm);                     /* and the VM */
+
+/* interp.c */
+int vm_run(VM *vm);                          /* vm_start, then the loop */
+int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
 
 /* image.c: fork as a second VM that is handed this one's state */
 int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
@@ -206,15 +215,14 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the 
 int vm_save(VM *vm, const char *path);       /* the whole VM in a file (Runtime.save); 0 on failure */
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen);  /* runevm --restore FILE */
 int vm_become(VM *vm, const char *path);     /* Runtime.restore: this world becomes that one; 0 on failure */
-void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
+int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen);
 /* Where every instruction begins, or NULL: a program from a .rbc or from an
    image is checked the same way. The caller frees it. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen);
 const LineEntry *line_at(const Program *p, uint32_t pc);
-void vm_print_trace(VM *vm, FILE *out);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

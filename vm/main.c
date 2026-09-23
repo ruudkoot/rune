@@ -22,52 +22,6 @@ static void usage(void) {
         "  --version       print the version and exit\n");
 }
 
-/* Also for a VM that an image was read into only in part (vm_resume). */
-void vm_release(VM *vm) {
-    for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
-    free(vm->prog.funcs);
-    free(vm->prog.consts);
-    free(vm->prog.code);
-    for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
-    free(vm->prog.files);
-    free(vm->prog.lines);
-    free(vm->globals);
-    free(vm->global_set);
-    free(vm->stack);
-    free(vm->frames);
-    free(vm->handlers);
-    free(vm->heap_from);
-    for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
-    for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
-    free(vm->files);
-    free(vm->file_modes);
-    free(vm->file_paths);
-    if (vm->owns_args) {
-        for (int i = 0; vm->argv && i < vm->argc; i++) free(vm->argv[i]);
-        free(vm->argv);
-        free((char *)vm->progname);
-    }
-}
-
-static void vm_destroy(VM *vm) {
-    vm_release(vm);
-    free(vm);
-}
-
-void vm_exit(VM *vm, int status) {
-    fflush(stdout);
-    if (vm->count)
-        fprintf(stderr, "runevm: count: %llu instructions, %llu bytes, %llu objects\n",
-                (unsigned long long)vm->instructions, (unsigned long long)vm->bytes_allocated,
-                (unsigned long long)vm->objects_allocated);
-    if (vm->stats)
-        fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used);
-    fflush(stderr);
-    vm_destroy(vm);
-    exit(status);
-}
-
 /* A size in bytes or a count: a decimal number that fits a size_t, which is
    32 bits on a 32-bit VM. 0 when the text is not one. */
 static int size_arg(const char *text, size_t *out) {
@@ -138,14 +92,7 @@ int main(int argc, char **argv) {
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
-    vm->files_cap = 8;
-    vm->files = calloc(vm->files_cap, sizeof(FILE *));
-    vm->file_modes = calloc(vm->files_cap, 1);
-    vm->file_paths = calloc(vm->files_cap, sizeof(char *));
-    vm->files[0] = stdin; vm->files[1] = stdout; vm->files[2] = stderr;
-    vm->file_modes[1] = vm->file_modes[2] = 1;
-    vm->nfiles = 3;
-    heap_init(vm, heap);
+    vm_init(vm, heap);
 
     char err[256];
     if (!load_program(vm, argv[i], err, sizeof err)) {

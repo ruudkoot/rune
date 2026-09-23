@@ -80,19 +80,27 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
     uint8_t *data = read_file(f, &size);
     fclose(f);
     if (!data) return fail(err, errlen, "cannot read file");
+    int ok = load_program_mem(vm, data, size, err, errlen);
+    free(data);
+    return ok;
+}
 
+/* A program from the bytes of a .rbc, which stay the caller's: what
+   load_program does with a file, and a program of runeopt's with the .rbc
+   it carries (docs/plans/codegen.md). */
+int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen) {
     Reader r = { data, size, 0, 0 };
     Program *p = &vm->prog;
     memset(p, 0, sizeof *p);
 
-    if (!need(&r, 8) || memcmp(data, "RUNE", 4) != 0) { free(data); return fail(err, errlen, "not a Rune bytecode file"); }
+    if (!need(&r, 8) || memcmp(data, "RUNE", 4) != 0) return fail(err, errlen, "not a Rune bytecode file");
     r.pos = 4;
     uint32_t version = rd_u32(&r);
-    if (version != 2) { free(data); return fail(err, errlen, "unsupported bytecode version"); }
+    if (version != 2) return fail(err, errlen, "unsupported bytecode version");
 
     /* constants */
     p->nconsts = rd_u32(&r);
-    if (r.error || p->nconsts > 10000000) { free(data); return fail(err, errlen, "bad constant table"); }
+    if (r.error || p->nconsts > 10000000) return fail(err, errlen, "bad constant table");
     p->consts = calloc(p->nconsts ? p->nconsts : 1, sizeof(Value));
     for (uint32_t i = 0; i < p->nconsts; i++) {
         uint8_t kind = rd_u8(&r);
@@ -101,7 +109,7 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         case 1: p->consts[i] = mk_word((uint64_t)rd_i64(&r)); break;
         case 2: {
             uint32_t n = rd_u32(&r);
-            if (!need(&r, n) || n > 64) { free(data); return fail(err, errlen, "bad real constant"); }
+            if (!need(&r, n) || n > 64) return fail(err, errlen, "bad real constant");
             char buf[65];
             memcpy(buf, data + r.pos, n); buf[n] = 0; r.pos += n;
             p->consts[i] = mk_real(strtod(buf, NULL));
@@ -109,64 +117,64 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         }
         case 3: {
             uint32_t n = rd_u32(&r);
-            if (!need(&r, n)) { free(data); return fail(err, errlen, "bad string constant"); }
+            if (!need(&r, n)) return fail(err, errlen, "bad string constant");
             p->consts[i] = mk_ptr(vm_string_from(vm, (const char *)data + r.pos, n));
             r.pos += n;
             break;
         }
         case 4: p->consts[i] = mk_char(rd_u8(&r)); break;
-        default: free(data); return fail(err, errlen, "bad constant kind");
+        default: return fail(err, errlen, "bad constant kind");
         }
-        if (r.error) { free(data); return fail(err, errlen, "truncated constant table"); }
+        if (r.error) return fail(err, errlen, "truncated constant table");
     }
 
     /* globals */
     p->nglobals = rd_u32(&r);
-    if (r.error || p->nglobals > 10000000) { free(data); return fail(err, errlen, "bad global count"); }
+    if (r.error || p->nglobals > 10000000) return fail(err, errlen, "bad global count");
     vm->globals = calloc(p->nglobals ? p->nglobals : 1, sizeof(Value));
     vm->global_set = calloc(p->nglobals ? p->nglobals : 1, 1);
     for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = mk_unit();
 
     /* functions */
     p->nfuncs = rd_u32(&r);
-    if (r.error || p->nfuncs == 0 || p->nfuncs > 10000000) { free(data); return fail(err, errlen, "bad function table"); }
+    if (r.error || p->nfuncs == 0 || p->nfuncs > 10000000) return fail(err, errlen, "bad function table");
     p->funcs = calloc(p->nfuncs, sizeof(Function));
     for (uint32_t i = 0; i < p->nfuncs; i++) {
         p->funcs[i].code_offset = rd_u32(&r);
         p->funcs[i].nlocals = rd_u32(&r);
         uint32_t n = rd_u32(&r);
-        if (!need(&r, n)) { free(data); return fail(err, errlen, "bad function name"); }
+        if (!need(&r, n)) return fail(err, errlen, "bad function name");
         p->funcs[i].name = malloc(n + 1);
         memcpy(p->funcs[i].name, data + r.pos, n); p->funcs[i].name[n] = 0; r.pos += n;
-        if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) { free(data); return fail(err, errlen, "bad frame size"); }
-        if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) { free(data); return fail(err, errlen, "functions out of order"); }
+        if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) return fail(err, errlen, "bad frame size");
+        if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) return fail(err, errlen, "functions out of order");
     }
 
     /* code */
     p->code_len = rd_u32(&r);
-    if (r.error || !need(&r, p->code_len)) { free(data); return fail(err, errlen, "truncated code"); }
+    if (r.error || !need(&r, p->code_len)) return fail(err, errlen, "truncated code");
     p->code = malloc(p->code_len ? p->code_len : 1);
     memcpy(p->code, data + r.pos, p->code_len);
     r.pos += p->code_len;
 
     /* debug information: the files, then the position of every instruction */
     p->nfiles = rd_u32(&r);
-    if (r.error || p->nfiles > 1000000) { free(data); return fail(err, errlen, "bad file table"); }
+    if (r.error || p->nfiles > 1000000) return fail(err, errlen, "bad file table");
     p->files = calloc(p->nfiles ? p->nfiles : 1, sizeof(char *));
-    if (!p->files) { free(data); return fail(err, errlen, "out of memory"); }
+    if (!p->files) return fail(err, errlen, "out of memory");
     for (uint32_t i = 0; i < p->nfiles; i++) {
         uint32_t n = rd_u32(&r);
-        if (!need(&r, n)) { free(data); return fail(err, errlen, "bad file name"); }
+        if (!need(&r, n)) return fail(err, errlen, "bad file name");
         p->files[i] = malloc(n + 1);
-        if (!p->files[i]) { free(data); return fail(err, errlen, "out of memory"); }
+        if (!p->files[i]) return fail(err, errlen, "out of memory");
         memcpy(p->files[i], data + r.pos, n); p->files[i][n] = 0; r.pos += n;
     }
     p->nlines = rd_u32(&r);
     uint32_t table_len = rd_u32(&r);
     if (r.error || p->nlines > 100000000 || !need(&r, table_len))
-        { free(data); return fail(err, errlen, "bad line table"); }
+        return fail(err, errlen, "bad line table");
     p->lines = calloc(p->nlines ? p->nlines : 1, sizeof(LineEntry));
-    if (!p->lines) { free(data); return fail(err, errlen, "out of memory"); }
+    if (!p->lines) return fail(err, errlen, "out of memory");
     {
         const uint8_t *q = data + r.pos, *end = q + table_len;
         int64_t pc = 0, file = 0, line = 0, col = 0;
@@ -175,21 +183,20 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
             int64_t dfile, dline, dcol;
             if (!rd_uvar(&q, end, &dpc) || !rd_svar(&q, end, &dfile) ||
                 !rd_svar(&q, end, &dline) || !rd_svar(&q, end, &dcol))
-                { free(data); return fail(err, errlen, "bad line table"); }
-            if (dpc > (uint64_t)p->code_len) { free(data); return fail(err, errlen, "line table out of range"); }
+                return fail(err, errlen, "bad line table");
+            if (dpc > (uint64_t)p->code_len) return fail(err, errlen, "line table out of range");
             pc += (int64_t)dpc; file += dfile; line += dline; col += dcol;
             if (pc >= (int64_t)p->code_len || file < 0 || (uint32_t)file >= p->nfiles ||
                 line < 1 || col < 1 || line > INT32_MAX || col > INT32_MAX)
-                { free(data); return fail(err, errlen, "line table out of range"); }
+                return fail(err, errlen, "line table out of range");
             p->lines[i].pc = (uint32_t)pc;
             p->lines[i].file = (uint32_t)file;
             p->lines[i].line = (uint32_t)line;
             p->lines[i].col = (uint32_t)col;
         }
-        if (q != end) { free(data); return fail(err, errlen, "bad line table"); }
+        if (q != end) return fail(err, errlen, "bad line table");
     }
     r.pos += table_len;
-    free(data);
 
     for (uint32_t i = 0; i < p->nfuncs; i++)
         p->funcs[i].code_end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;

@@ -63,7 +63,7 @@ The owner's decisions on the roadmap (2026-09-23):
 |---|---|
 | M0, this roadmap | done (`fe759b8`): every claim of *Where we are* measured on `e099de5`, twelve decisions, nine milestones |
 | The owner's decisions | taken on 2026-09-23: D3 = B, D8 as proposed (to revisit), D11 = option 1 with `--from-image` and `OS.SysErr` from `Runtime.restore` for another program's image, the name `runeopt` |
-| M1, the runtime as a library | not started |
+| M1, the runtime as a library | done: `vm/runtime.c` has what a VM does besides dispatching (frames, handlers, raising, the trace of a failure, equality, `vm_init`, `vm_start`, `vm_exit`, `vm_release`), taken out of `interp.c` and `main.c`; `load_program_mem` loads an `.rbc` from memory; `build/librune.a` is the runtime for this machine and `bin/runevm` links it. The other VMs compile the same list, `RT_SRCS`, in their one `cc` call, which removes the duplicated lists of sources. Nothing a program sees changed: `make check`, `make test-windows` and `make test-portability` pass, and `--count` agrees with the VM before |
 | M2, the `.rbc` reader, the validator and the tool | not started |
 | M3, every instruction translated | not started |
 | M4, the suites, run natively | not started |

@@ -80,9 +80,17 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.ml
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
+#
+# A VM is the runtime, RT_SRCS and a system layer, with the dispatch loop and
+# the command line on top (vm/interp.c, vm/main.c). The runtime is also
+# build/librune.a, which bin/runevm links, and so will a program runeopt
+# makes (docs/plans/codegen.md); the other VMs compile the same list.
 SYS ?= posix
-VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_$(SYS).c
+RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/prims.c vm/image.c
+VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
 VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
+RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
+AR      ?= ar
 
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)
@@ -216,9 +224,17 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 # ---------------------------------------------------------------- VM
 vm: bin/runevm
 
-bin/runevm: $(VM_SRCS) $(VM_HDRS) | build/.doctor-vm
+build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p build/librune
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+build/librune.a: $(RT_OBJS)
+	rm -f $@
+	$(AR) rcs $@ $(RT_OBJS)
+
+bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -o $@ $(VM_SRCS) -lm
+	$(CC) $(CFLAGS) -o $@ vm/main.c vm/interp.c build/librune.a -lm
 
 vm-asan: bin/runevm-asan
 
@@ -251,7 +267,7 @@ WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
-WIN_SRCS    := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_win.c
+WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
