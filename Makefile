@@ -116,6 +116,9 @@ doctor:
 	@CC="$(CC)" sh scripts/doctor.sh
 	@WINCC="$(WINCC)" WINCC32="$(WINCC32)" sh scripts/doctor.sh --scope windows || \
 	  echo "doctor: the Windows tools are optional: only make windows and make test-windows need them"
+	@PORTCC32="$(PORTCC32)" PPCCC="$(PPCCC)" PPCROOT="$(PPCROOT)" QEMUPPC="$(QEMUPPC)" \
+	  sh scripts/doctor.sh --scope portability || \
+	  echo "doctor: these are optional too: only make portability and make test-portability need them"
 
 build/.doctor-%: scripts/doctor.sh
 	@mkdir -p build
