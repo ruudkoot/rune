@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 5 of 5 entries documented |
-| Tests | 26 checks of 5 entries |
+| Documentation | 6 of 6 entries documented |
+| Tests | 33 checks of 6 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -51,6 +51,8 @@ sig
                  <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int }
 
   val <a href="#val-stats">stats</a> : unit -&gt; stats
+
+  val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
 
   val <a href="#val-collect">collect</a> : unit -&gt; unit
 
@@ -118,6 +120,31 @@ though, so the other five agree.
 <details><summary>Tests (8)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
+
+</details>
+
+### <a name="val-profile"></a>`profile`
+
+```sml
+val profile : (unit -> 'a) -> 'a * stats
+```
+
+`profile f` is what `f ()` returned, and what it cost: the difference
+between the counters after it and the counters before.
+
+What measuring costs is part of the answer, so `profile (fn () => ())`
+is not zero -- it is that cost, and subtracting it from another answer
+removes it. It is the same number on every run and on every VM, since
+the counters depend on the program and its input alone.
+
+If `f` raises, the exception passes through and there are no counters:
+this measures a call that returns.
+
+**Example** `#objects (#2 (profile (fn () => ()))) = 1`
+
+<details><summary>Tests (7)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `returns-what-the-call-returned` &middot; `reports-what-was-allocated` &middot; `reports-the-objects-allocated` &middot; `costs-the-same-every-time` &middot; `allocates-one-record-of-its-own` &middot; `counts-a-collection` &middot; `an-exception-passes-through` (raises Fail)
 
 </details>
 

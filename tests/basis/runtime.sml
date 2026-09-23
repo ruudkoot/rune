@@ -58,6 +58,39 @@ struct
                     fn () => let val s = Runtime.stats ()
                              in #collections s >= 0 andalso #objects s > 0 end)
 
+  (* ---- profile *)
+
+  val () = eqI ("Runtime.profile/returns-what-the-call-returned", 42,
+                fn () => #1 (Runtime.profile (fn () => 21 + 21)))
+
+  (* Measuring costs one `stats` record and nothing else, so profiling one
+     list cell costs exactly a list cell more than profiling nothing. *)
+  val () = eqI ("Runtime.profile/reports-what-was-allocated", 64,
+                fn () => #bytes (#2 (Runtime.profile (fn () => keep := 1 :: !keep)))
+                         - #bytes (#2 (Runtime.profile (fn () => ()))))
+  val () = eqI ("Runtime.profile/reports-the-objects-allocated", 2,
+                fn () => #objects (#2 (Runtime.profile (fn () => keep := 1 :: !keep)))
+                         - #objects (#2 (Runtime.profile (fn () => ()))))
+
+  (* what it costs is one number, not a range: the counters depend on the
+     program and its input alone *)
+  val () = T.check ("Runtime.profile/costs-the-same-every-time",
+                    fn () =>
+                      let val a = #2 (Runtime.profile (fn () => ()))
+                          val b = #2 (Runtime.profile (fn () => ()))
+                      in #instructions a = #instructions b andalso #bytes a = #bytes b
+                         andalso #objects a = #objects b
+                      end)
+  (* and its allocation is that one record *)
+  val () = eqI ("Runtime.profile/allocates-one-record-of-its-own", 1,
+                fn () => #objects (#2 (Runtime.profile (fn () => ()))))
+
+  val () = eqI ("Runtime.profile/counts-a-collection", 1,
+                fn () => #collections (#2 (Runtime.profile Runtime.collect)))
+
+  val () = T.raises ("Runtime.profile/an-exception-passes-through", T.isFail,
+                     fn () => Runtime.profile (fn () => raise Fail "profiled"))
+
   (* ---- collect *)
 
   val () = eqI ("Runtime.collect/makes-one-collection", 1,

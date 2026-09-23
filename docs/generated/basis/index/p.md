@@ -49,6 +49,7 @@
 - `ProcEnv` (str): [POSIX](../sig/POSIX.md#str-procenv)
 - `Process` (str): [OS](../sig/OS.md#str-process), [POSIX](../sig/POSIX.md#str-process)
 - `Prod` (exn): [SML90](../sig/SML90.md#exn-prod)
+- `profile` (val): [RUNTIME](../sig/RUNTIME.md#val-profile)
 - `protocol` (val): [NET_PROT_DB](../sig/NET_PROT_DB.md#val-protocol), [NET_SERV_DB](../sig/NET_SERV_DB.md#val-protocol)
 - `Reg.performanceData` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.performancedata)
 - `Status.pending` (val): [WINDOWS](../sig/WINDOWS.md#val-status.pending)

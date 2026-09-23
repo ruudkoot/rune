@@ -56,6 +56,20 @@ sig
      though, so the other five agree. *)
   val stats : unit -> stats
 
+  (* `profile f` is what `f ()` returned, and what it cost: the difference
+     between the counters after it and the counters before.
+
+     What measuring costs is part of the answer, so `profile (fn () => ())`
+     is not zero -- it is that cost, and subtracting it from another answer
+     removes it. It is the same number on every run and on every VM, since
+     the counters depend on the program and its input alone.
+
+     If `f` raises, the exception passes through and there are no counters:
+     this measures a call that returns.
+
+     Example: `#objects (#2 (profile (fn () => ()))) = 1` *)
+  val profile : (unit -> 'a) -> 'a * stats
+
   (* `collect ()` collects the heap now.
 
      Every unreachable object is freed and every surviving one moves, which

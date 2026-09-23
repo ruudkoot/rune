@@ -33,6 +33,24 @@ struct
 
     fun collect () = collect' ()
 
+    (* The difference between two readings. What measuring costs is inside it
+       -- the record of the first reading, and the instructions of both -- so
+       `profile (fn () => ())` is that cost and subtracting it from another
+       answer removes it. *)
+    fun profile f =
+      let
+        val a = stats ()
+        val v = f ()
+        val b = stats ()
+      in
+        (v, {instructions = #instructions b - #instructions a,
+             bytes = #bytes b - #bytes a,
+             objects = #objects b - #objects a,
+             collections = #collections b - #collections a,
+             live = #live b - #live a,
+             heapSize = #heapSize b - #heapSize a})
+      end
+
     (* The identity of a heap value, which the compiler uses for the
        constructor of an exception and no structure of the library has
        offered until now. *)

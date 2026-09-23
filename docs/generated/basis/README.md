@@ -133,7 +133,7 @@ the system answer on Windows only.
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 5 of 5 |
+| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 6 of 6 |
 
 ## Functors
 

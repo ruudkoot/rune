@@ -7,4 +7,6 @@ kept: 1
 collect makes one collection: true
 a ref is itself across a collection: true
 two equal refs are two: true
+profile sees the cell and nothing else: true
+profile returns the value: true
 version is three numbers: true
