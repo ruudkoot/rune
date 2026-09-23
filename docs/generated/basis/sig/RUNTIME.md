@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 2 of 2 entries documented |
-| Tests | 16 checks of 2 entries |
+| Documentation | 5 of 5 entries documented |
+| Tests | 26 checks of 5 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -51,6 +51,12 @@ sig
                  <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int }
 
   val <a href="#val-stats">stats</a> : unit -&gt; stats
+
+  val <a href="#val-collect">collect</a> : unit -&gt; unit
+
+  val <a href="#val-same">same</a> : 'a * 'a -&gt; bool
+
+  val <a href="#val-version">version</a> : string
 end
 </pre>
 
@@ -112,6 +118,80 @@ though, so the other five agree.
 <details><summary>Tests (8)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
+
+</details>
+
+### <a name="val-collect"></a>`collect`
+
+```sml
+val collect : unit -> unit
+```
+
+`collect ()` collects the heap now.
+
+Every unreachable object is freed and every surviving one moves, which
+costs time proportional to the live data and to nothing else: a copying
+collector never visits what it does not keep. After it, the `live` of a
+[`stats`](#val-stats) is exactly the live data, where otherwise it is an upper bound.
+
+Nothing an SML program can see changes. Equality on a `ref` or an
+`array` is the identity the collector maintains, not an address of the
+moment, so this says when the cost of collecting is paid and never what
+the program means.
+
+<details><summary>Tests (3)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `makes-one-collection` &middot; `drops-what-is-unreachable` &middot; `identity-survives-it`
+
+</details>
+
+### <a name="val-same"></a>`same`
+
+```sml
+val same : 'a * 'a -> bool
+```
+
+`same (x, y)` is true when `x` and `y` are one object rather than two
+equal ones.
+
+It is the identity that `=` uses for a `ref` and an `array`, and it is
+available where `=` is not: at a function type, at [`real`](../sig/REAL.md#val-fromint), and at any
+type that admits no equality. A collection does not change an answer.
+
+What it says of anything else is not specified, and a program should not
+ask. A value that is not in the heap at all -- an `int`, a `word`, a
+`char`, `unit`, a constructor with no argument -- has no identity, and
+the comparison is of the values themselves, so `same (1, 1)` is true and
+`same (0.0, ~0.0)` is false because the two are different reals. Of the
+rest, whether two equal values are one object is whatever the compiler
+shared: two equal string constants are one, and two lists written
+separately are two.
+
+**Example** `let val r = ref 0 in same (r, r) end = true`
+
+<details><summary>Tests (6)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `a-ref-is-itself` &middot; `two-equal-refs-are-two` &middot; `agrees-with-equality-on-refs` &middot; `an-array-is-itself` &middot; `compares-what-is-not-in-the-heap` &middot; `works-where-equality-does-not`
+
+</details>
+
+### <a name="val-version"></a>`version`
+
+```sml
+val version : string
+```
+
+The version of Rune that this program is running on, as
+`runevm --version` prints it.
+
+The compiler and the VM are built from one string, so `rune --version`
+says the same. It is not the version of the bytecode, which the VM
+checks when it loads a program and which changes only when the file
+format does.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `is-numbers-separated-by-dots`
 
 </details>
 

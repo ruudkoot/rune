@@ -2,6 +2,7 @@
    or raises an SML exception (returning 1 after unwinding the machine).
    Arguments are read from the stack (not popped) until the result exists, so
    that a garbage collection during allocation keeps them alive. */
+#include "version.h"
 #include "vm.h"
 #include <math.h>
 #include <errno.h>
@@ -2025,6 +2026,15 @@ static int p_rt_objects(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->objects_
 static int p_rt_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc_count)); }
 static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_used)); }
 static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_size)); }
+
+/* A collection on demand. It moves every object, so nothing of the heap may
+   be held in a C variable across it; the argument on the stack is unit, and
+   the collector walks the stack itself. */
+static int p_rt_collect(VM *vm) { vm_gc(vm, 0); return ret(vm, 1, mk_unit()); }
+
+static int p_rt_version(VM *vm) {
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, RUNE_VERSION, (uint32_t)strlen(RUNE_VERSION))));
+}
 
 /* ================================================================ table (generated order from prims.def) */
 #define PRIM_ENTRY(name) p_##name,

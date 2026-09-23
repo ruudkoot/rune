@@ -4,3 +4,7 @@ instructions grow: true
 live within the semispace: true
 allocated covers what is in use: true
 kept: 1
+collect makes one collection: true
+a ref is itself across a collection: true
+two equal refs are two: true
+version is three numbers: true

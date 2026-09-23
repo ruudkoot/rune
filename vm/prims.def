@@ -314,3 +314,5 @@ rt_objects       1  unit -> int              Objects it has allocated, likewise.
 rt_collections   1  unit -> int              Collections the collector has made.
 rt_live          1  unit -> int              Bytes of the current semispace that are in use: what the last collection kept plus what has been allocated since.
 rt_heap_size     1  unit -> int              The size of one semispace, in bytes.
+rt_collect       1  unit -> unit             Collect the heap now: free every unreachable object and move every surviving one.
+rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.

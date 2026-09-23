@@ -9,6 +9,7 @@
 - `vector` (type): [ARRAY](../sig/ARRAY.md#type-vector), [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#type-vector), [MONO_ARRAY](../sig/MONO_ARRAY.md#type-vector), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-vector), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#type-vector), [MONO_VECTOR](../sig/MONO_VECTOR.md#type-vector), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#type-vector), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#type-vector), [PRIM_IO](../sig/PRIM_IO.md#type-vector), [STREAM_IO](../sig/STREAM_IO.md#type-vector), [TEXT_IO](../sig/TEXT_IO.md#type-vector), [VECTOR](../sig/VECTOR.md#type-vector)
 - `vector` (val): [ARRAY](../sig/ARRAY.md#val-vector), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-vector), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-vector), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-vector), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-vector), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-vector)
 - `vector_slice` (type): [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#type-vector_slice), [PRIM_IO](../sig/PRIM_IO.md#type-vector_slice)
+- `version` (val): [RUNTIME](../sig/RUNTIME.md#val-version)
 
 ---
 

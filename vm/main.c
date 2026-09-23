@@ -1,4 +1,5 @@
 /* runevm: portable interpreter for Rune bytecode. */
+#include "version.h"
 #include "vm.h"
 
 #include <errno.h>
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
         }
-        else if (strcmp(argv[i], "--version") == 0) { printf("runevm 0.2.0\n"); return 0; }
+        else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;

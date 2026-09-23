@@ -25,3 +25,14 @@ val () = print ("instructions grow: "
 val () = print ("live within the semispace: " ^ Bool.toString (#live s <= #heapSize s) ^ "\n")
 val () = print ("allocated covers what is in use: " ^ Bool.toString (#bytes s >= #live s) ^ "\n")
 val () = print ("kept: " ^ Int.toString (List.length (!keep)) ^ "\n")
+val was = #collections (Runtime.stats ())
+val () = Runtime.collect ()
+val () = print ("collect makes one collection: "
+                ^ Bool.toString (#collections (Runtime.stats ()) - was = 1) ^ "\n")
+val r = ref 0
+val held = r
+val () = Runtime.collect ()
+val () = print ("a ref is itself across a collection: " ^ Bool.toString (Runtime.same (r, held)) ^ "\n")
+val () = print ("two equal refs are two: " ^ Bool.toString (not (Runtime.same (ref 0, ref 0))) ^ "\n")
+val () = print ("version is three numbers: "
+                ^ Bool.toString (List.length (String.fields (fn c => c = #".") Runtime.version) = 3) ^ "\n")

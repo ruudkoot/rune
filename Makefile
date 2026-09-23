@@ -70,14 +70,14 @@ SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml vm/version.h
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
 SYS ?= posix
 VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_$(SYS).c
-VM_HDRS := vm/vm.h vm/sys.h $(GEN_C)
+VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
 
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)

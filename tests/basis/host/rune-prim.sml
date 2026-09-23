@@ -1226,6 +1226,8 @@ struct
   fun rt_collections () = unsupported ~1
   fun rt_live () = unsupported ~1
   fun rt_heap_size () = unsupported ~1
+  fun rt_collect () = unsupported ()
+  fun rt_version () = unsupported ""
 
   fun posix_getgr (name, gid) =
     let

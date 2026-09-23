@@ -93,6 +93,27 @@ for f in tests/errors/*.sml; do
   [ -f "${f%.sml}.expected" ] || fail "missing ${f%.sml}.expected"
 done
 
+# 7. the version is one string. scripts/gen-build-files.sh writes it into
+# build/config.sml for the compiler and vm/version.h for the VM; the manual
+# pages are written by hand and once said two different things.
+version=$(sed -n 's/^version=\(.*\)$/\1/p' scripts/gen-build-files.sh)
+[ -n "$version" ] || fail "scripts/gen-build-files.sh does not set a version"
+for page in man/rune.1 man/runedoc.1 man/runevm.1; do
+  prog=$(basename "$page" .1)
+  grep -q "\"$prog $version\"" "$page" ||
+    fail "$page does not say \"$prog $version\", the version of scripts/gen-build-files.sh"
+done
+
+# 8. every primitive has a definition for the hosts. tests/basis/host/rune-prim.sml
+# is ascribed to a signature generated from vm/prims.def, so a primitive with no
+# definition there stops the four xc1 configurations of the Basis Library suite
+# compiling -- which make check does not run, and make matrix-quick finds ten
+# minutes later. poly_eq and ptr_eq are the two gen-host-basis.sh leaves out.
+for p in $(awk '!/^#/ && NF && $1 != "poly_eq" && $1 != "ptr_eq" { print $1 }' vm/prims.def); do
+  grep -qE "^[[:space:]]*(fun|val) $p([[:space:]]|\()" tests/basis/host/rune-prim.sml ||
+    fail "primitive $p (vm/prims.def) has no definition in tests/basis/host/rune-prim.sml, so the xc1 configurations will not compile"
+done
+
 if [ $status = 0 ]; then
   echo "check-docs: OK ($(echo "$tested" | wc -l | tr -d ' ') documented features, $(ls tests/lang/*.sml | wc -l | tr -d ' ') tests, $basis_tests Basis Library suite files)"
 fi

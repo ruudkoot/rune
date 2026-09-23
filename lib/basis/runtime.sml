@@ -11,6 +11,8 @@ struct
     val collections' = _prim "rt_collections" : unit -> int
     val live' = _prim "rt_live" : unit -> int
     val heapSize' = _prim "rt_heap_size" : unit -> int
+    val collect' = _prim "rt_collect" : unit -> unit
+    val version' = _prim "rt_version" : unit -> string
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int }
@@ -28,6 +30,15 @@ struct
         {instructions = instructions' (), bytes = b, objects = ob,
          collections = c, live = l, heapSize = h}
       end
+
+    fun collect () = collect' ()
+
+    (* The identity of a heap value, which the compiler uses for the
+       constructor of an exception and no structure of the library has
+       offered until now. *)
+    val same = _prim "ptr_eq" : 'a * 'a -> bool
+
+    val version = version' ()
   end
 end
 

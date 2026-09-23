@@ -26,6 +26,7 @@
 - `Reg.setValueEx` (val): [WINDOWS](../sig/WINDOWS.md#val-reg.setvalueex)
 - `Reg.SZ` (con): [WINDOWS](../sig/WINDOWS.md#con-reg.sz)
 - `S` (str): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#str-s)
+- `same` (val): [RUNTIME](../sig/RUNTIME.md#val-same)
 - `sameAddr` (val): [SOCKET](../sig/SOCKET.md#val-sameaddr)
 - `sameDesc` (val): [SOCKET](../sig/SOCKET.md#val-samedesc)
 - `sameSign` (val): [INTEGER](../sig/INTEGER.md#val-samesign), [REAL](../sig/REAL.md#val-samesign)

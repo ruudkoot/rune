@@ -1,4 +1,4 @@
-(* requires: Runtime *)
+(* requires: Runtime Array Char List String *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -57,4 +57,70 @@ struct
   val () = T.check ("Runtime.stats/collections-and-objects-are-not-negative",
                     fn () => let val s = Runtime.stats ()
                              in #collections s >= 0 andalso #objects s > 0 end)
+
+  (* ---- collect *)
+
+  val () = eqI ("Runtime.collect/makes-one-collection", 1,
+                fn () =>
+                  let val a = #collections (Runtime.stats ())
+                      val () = Runtime.collect ()
+                  in #collections (Runtime.stats ()) - a end)
+
+  (* What a collection is for: a thousand cells the semispace holds while they
+     are reachable and does not once they are not. *)
+  val () = T.check ("Runtime.collect/drops-what-is-unreachable",
+                    fn () =>
+                      let
+                        fun many (0, acc) = acc
+                          | many (n, acc) = many (n - 1, n :: acc)
+                        val () = keep := many (1000, [])
+                        val () = Runtime.collect ()
+                        val held = #live (Runtime.stats ())
+                        val () = keep := []
+                        val () = Runtime.collect ()
+                        val freed = #live (Runtime.stats ())
+                      in
+                        held - freed >= 1000 * 64
+                      end)
+
+  val () = T.check ("Runtime.collect/identity-survives-it",
+                    fn () =>
+                      let val r = ref 5
+                          val s = r
+                          val () = Runtime.collect ()
+                      in Runtime.same (r, s) andalso !r = 5 end)
+
+  (* ---- same *)
+
+  val () = T.check ("Runtime.same/a-ref-is-itself",
+                    fn () => let val r = ref 0 in Runtime.same (r, r) end)
+  val () = T.check ("Runtime.same/two-equal-refs-are-two",
+                    fn () => not (Runtime.same (ref 0, ref 0)))
+  val () = T.check ("Runtime.same/agrees-with-equality-on-refs",
+                    fn () =>
+                      let val r = ref 0
+                          val s = ref 0
+                      in Runtime.same (r, s) = (r = s) andalso Runtime.same (r, r) = (r = r) end)
+  val () = T.check ("Runtime.same/an-array-is-itself",
+                    fn () =>
+                      let val a = Array.array (3, 0)
+                      in Runtime.same (a, a) andalso not (Runtime.same (a, Array.array (3, 0))) end)
+  (* a value that is not in the heap has no identity, so the values are
+     compared: two reals that are equal to `=` are not the same real *)
+  val () = T.check ("Runtime.same/compares-what-is-not-in-the-heap",
+                    fn () => Runtime.same (1, 1) andalso not (Runtime.same (1, 2))
+                             andalso Runtime.same ((), ()) andalso not (Runtime.same (0.0, ~0.0)))
+  (* where `=` is not available at all *)
+  val () = T.check ("Runtime.same/works-where-equality-does-not",
+                    fn () => let val f = fn x : int => x + 1 in Runtime.same (f, f) end)
+
+  (* ---- version *)
+
+  val () = T.check ("Runtime.version/is-numbers-separated-by-dots",
+                    fn () =>
+                      let val parts = String.fields (fn c => c = #".") Runtime.version
+                      in List.length parts = 3
+                         andalso List.all (fn q => q <> "" andalso List.all Char.isDigit (String.explode q))
+                                          parts
+                      end)
 end
