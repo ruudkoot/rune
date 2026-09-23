@@ -70,12 +70,14 @@ ROOT    := $(CURDIR)
 RUNE    ?= bin/rune
 RUNEVM  ?= bin/runevm
 RUNEDOC ?= bin/runedoc
+RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml vm/version.h
+SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/config.sml vm/version.h
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
@@ -112,9 +114,9 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows portability test-portability docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
-all: vm boot runedoc
+all: vm boot runedoc runeopt
 
 # ---------------------------------------------------------------- environment
 # `make doctor` reports on everything. Targets depend (order-only) on a stamp
@@ -135,7 +137,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
 
-$(BUILDGEN) &: sources.txt sources-doc.txt scripts/gen-build-files.sh
+$(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 $(GEN_SML) $(GEN_C) &: vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
@@ -153,7 +155,7 @@ smlnj32: bin/rune-smlnj32
 
 polyml: bin/rune-polyml
 
-host-builds: mlton smlnj smlnj32 polyml runedoc-host-builds
+host-builds: mlton smlnj smlnj32 polyml runedoc-host-builds runeopt-host-builds
 
 bin/rune-mlton.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -219,6 +221,41 @@ bin/runedoc-polyml.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-p
 
 bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
+	chmod +x $@
+
+# ---------------------------------------------------------------- runeopt
+# The native code generator (docs/plans/codegen.md): the sources of
+# sources-opt.txt, built like runedoc by every host and by the compiler itself
+# (bin/runeopt, on runevm). It reads no library, so its wrappers pass none; the
+# SML/NJ builds come after runedoc's, for the same reason as runedoc's do.
+runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj bin/runeopt-smlnj32 bin/runeopt-polyml
+
+bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runeopt.mlb
+
+bin/runeopt-mlton: bin/runeopt-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runeopt-smlnj: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj bin/runedoc-smlnj32
+	@mkdir -p bin
+	$(MLBUILD) build/runeopt.cm OptMain.main bin/runeopt-smlnj.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj.heap" "$$@"\n' "$(SMLNJ)" > $@
+	chmod +x $@
+
+bin/runeopt-smlnj32: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runeopt-smlnj
+	@mkdir -p bin
+	$(MLBUILD32) build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj32.heap" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-polyml-main.sml | build/.doctor-polyml
+	@mkdir -p bin
+	$(POLYC) -o $@ build/runeopt-polyml-build.sml
+
+bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" "$$@"\n' > $@
 	chmod +x $@
 
 # ---------------------------------------------------------------- VM
@@ -408,6 +445,11 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 test-doc: $(RUNEDOC) vm
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
 
+# The native code generator's own tests (tests/opt): after the suites, whose
+# programs it checks and disassembles.
+test-opt: $(RUNEOPT) vm
+	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --vm $(RUNEVM)
+
 perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
 
@@ -479,6 +521,21 @@ bin/runedoc: bin/runedoc-boot
 
 runedoc: bin/runedoc
 
+# runeopt compiled by the self-hosted compiler.
+OPT_SRCS := build/config.sml $(SOURCES_OPT) src/main/runeopt-rune-main.sml
+
+bin/runeopt.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
+	bin/rune -o $@ $(OPT_SRCS)
+
+bin/runeopt-boot: bin/runeopt.rbc Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runeopt: bin/runeopt-boot
+	ln -sf runeopt-boot $@
+
+runeopt: bin/runeopt
+
 bootstrap: bin/rune-boot
 	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
 	cmp bin/rune.rbc bin/rune.stage2.rbc
@@ -488,11 +545,12 @@ bootstrap: bin/rune-boot
 # keeps JOBS CPUs busy by itself. bootstrap is a single process, so it runs
 # alongside the suite.
 check:
-	@$(MAKE) --no-print-directory host-builds vm boot runedoc
+	@$(MAKE) --no-print-directory host-builds vm boot runedoc runeopt
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
+	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs

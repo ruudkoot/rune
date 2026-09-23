@@ -21,7 +21,7 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | Rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
-| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `BinIO`. |
+| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
@@ -37,6 +37,20 @@ the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
 library the way the compiler does (the same lexer, parser and, later,
 elaborator), so what it documents is what the compiler compiles. Nothing of
 `src/doc` is part of the compiler, so it costs the bootstrap nothing.
+
+## The native code generator
+
+`runeopt` ([docs/plans/codegen.md](plans/codegen.md)) is a third program,
+built from `sources-opt.txt`: the compiler's `OrdMap`, its description of
+the machine (`Opcodes` and `Prims`, generated from `vm/opcodes.def` and
+`vm/prims.def`), and `src/opt`. It takes an `.rbc`, not a source file.
+
+| Module | File | Role |
+|---|---|---|
+| `Rbc` | `src/opt/rbc.sml` | Reads an `.rbc` as `load_program` and `validate_program` of `vm/loader.c` do, and refuses what they refuse with their messages. No number of the file is read into an `int` that could not hold it on a 31-bit host. |
+| `RbcCheck` | `src/opt/rbccheck.sml` | What a translation relies on and the loader does not promise: the stack height and handler depth agree on every path into an instruction, no path underflows, leaves its function or runs off its end, no `TAILCALL` or `RET` has a handler of its function installed. Gives the height before every instruction and each function's highest stack. |
+| `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm --disasm` prints (a real constant as its text). |
+| `OptMain` | `src/opt/optmain.sml` | The command line: `--check`, `--disasm`, `--facts`. |
 
 | Structure | File | Purpose |
 |---|---|---|

@@ -13,7 +13,7 @@ unsigned 32-bit, signed 32-bit and signed 64-bit two's complement.
 
 ```
 magic       4 bytes   "RUNE"
-version     u32       1
+version     u32       2
 nconsts     u32
 consts      nconsts × constant
 nglobals    u32       number of global slots

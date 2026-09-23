@@ -6,6 +6,9 @@ runevm \- run Rune bytecode
 .RI [ options ]
 .I file.rbc
 .RI [ args " ...]"
+.br
+.B runevm \-\-restore
+.I file
 .SH DESCRIPTION
 .B runevm
 loads a bytecode file produced by
@@ -49,6 +52,30 @@ Collect before every
 .IR N th
 allocation. This exercises the collector and the primitives' handling of heap
 pointers, and makes programs far slower.
+.TP
+.B \-\-emulate\-fork
+Fork as on Windows, which has no
+.BR fork (2):
+by a second
+.B runevm
+that is handed this one's state. This tests that path where the system has a
+fork of its own.
+.TP
+.BI \-\-resume " TOKEN"
+Carry on as the child of such a fork.
+.B runevm
+passes this to the second VM itself; it is not for use by hand.
+.TP
+.BI \-\-restore " FILE"
+Carry on the world that
+.B Runtime.save
+wrote to
+.IR FILE ,
+from that call, which returns
+.B Restored
+this time. No
+.I file.rbc
+is given: the image carries its program.
 .TP
 .B \-\-version
 Print the version and exit.

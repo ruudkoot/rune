@@ -40,11 +40,15 @@ _runevm() {
         --heap-size|--gc-stress)
             return
             ;;
+        --restore)
+            COMPREPLY=($(compgen -f -- "$cur"))
+            return
+            ;;
     esac
 
     if [[ $cur == -* ]]; then
         COMPREPLY=($(compgen -W '--heap-size --disasm --trace --stats --count
-            --gc-stress --version --help' -- "$cur"))
+            --gc-stress --emulate-fork --restore --version --help' -- "$cur"))
         return
     fi
 

@@ -76,7 +76,8 @@ keep these invariants:
 ## Build and verification
 
 * Compiler sources are listed in `sources.txt` (ordered), those of the
-  documentation generator `runedoc` in `sources-doc.txt`; the MLton, SML/NJ and
+  documentation generator `runedoc` in `sources-doc.txt` and those of the
+  native code generator `runeopt` in `sources-opt.txt`; the MLton, SML/NJ and
   Poly/ML build files are generated from them — never edit `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
@@ -92,7 +93,8 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `perf-check`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  `test-basis`, `test-doc`, `test-opt`, `perf-check`, `check-positions`,
+  `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For

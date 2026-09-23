@@ -7,6 +7,8 @@ _arguments -s \
   '--stats[print heap statistics at exit]' \
   '--count[print instructions and allocations at exit]' \
   '--gc-stress[collect before every Nth allocation]:interval:' \
+  '--emulate-fork[fork by a second VM, as on Windows]' \
+  '--restore[carry on the world Runtime.save wrote]:image file:_files' \
   '--version[print the version and exit]' \
   '(- *)--help[print a usage summary and exit]' \
   '1:bytecode file:_files -g "*.rbc"' \
