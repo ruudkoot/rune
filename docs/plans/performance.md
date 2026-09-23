@@ -198,6 +198,39 @@ Options:
 
 This touches every primitive and the collector. Do it last.
 
+**16 bytes is a constraint, not an accident** (`vm/vm.h`). The padding between
+the tag and the union is written out, because the 32-bit System V ABI aligns an
+`int64_t` to 4 where x86-64, PowerPC and the Windows compilers align it to 8:
+without it a `Value` is 12 bytes on a 32-bit Linux and every object of the heap
+a different size there. Three things depend on it -- the counts of `--count`,
+which `make perf-check` uses as budgets and `make test-portability` compares
+across machines; the heap of an image, which is rebuilt at the offsets it was
+written from (`vm/image.c`); and the arithmetic of `Int`, `Word` and `Real`,
+which is 64-bit on every VM.
+
+**And 12 bytes would save almost nothing anyway.** `payload_size` rounds a
+payload up to a multiple of 16, so the objects that fill a heap do not shrink:
+a 1-field object is 24 bytes either way, a 2-field one 40 either way, and only
+from 4 fields up is anything saved. Measured on `examples/nqueens.sml`:
+6,851,408 bytes against 6,882,848, which is **0.46%**. Anyone tempted by a
+narrower `Value` on 32-bit machines should read that number first, and know it
+would also mean writing an image by object index rather than by offset, and
+giving up the byte-for-byte agreement of `--count` between machines.
+
+**The rounding is not a lever**, which is worth saying because it looks like
+one. `payload_size` rounds a payload up to a multiple of 16 and never gives
+less than 16 (`vm/heap.c`), but a payload of *fields* is `n` times 16 and so
+already a multiple of it: nothing is ever padded. It bites only on a string,
+which is padded up to 16 bytes and then to a multiple of 16 -- a string of one
+byte costs the same 24 bytes as a string of sixteen. Rounding to 8 instead
+would change nothing about a tuple and would halve the floor for a short
+string.
+
+So what a list cell costs is not padding but the boxing already named above: a
+cons cell is a 2-field tuple (40 bytes) *and* a `K_CON` around it (24). Putting
+the constructor tag in the tuple's header makes it one object of 40, which is
+38% of every list cell, and is where this item's payoff is.
+
 ## Measuring
 
 Time the bootstrap. Take the best of several runs, because timings on a

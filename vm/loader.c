@@ -25,6 +25,30 @@ static int64_t rd_i64(Reader *r) {
     return (int64_t)v;
 }
 
+/* The line table's numbers, seven bits at a time, least significant first,
+   the top bit saying that another byte follows; a signed one is folded so
+   that a small negative difference stays one byte. Both refuse a number that
+   does not end before the table does, or that does not fit. */
+static int rd_uvar(const uint8_t **q, const uint8_t *end, uint64_t *out) {
+    uint64_t v = 0;
+    int shift = 0;
+    while (*q < end) {
+        uint8_t b = *(*q)++;
+        if (shift > 63 || (shift == 63 && (b & 0x7f) > 1)) return 0;
+        v |= (uint64_t)(b & 0x7f) << shift;
+        if (!(b & 0x80)) { *out = v; return 1; }
+        shift += 7;
+    }
+    return 0;
+}
+
+static int rd_svar(const uint8_t **q, const uint8_t *end, int64_t *out) {
+    uint64_t v;
+    if (!rd_uvar(q, end, &v)) return 0;
+    *out = (v & 1) ? -(int64_t)(v >> 1) - 1 : (int64_t)(v >> 1);
+    return 1;
+}
+
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
     return 0;
@@ -64,7 +88,7 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
     if (!need(&r, 8) || memcmp(data, "RUNE", 4) != 0) { free(data); return fail(err, errlen, "not a Rune bytecode file"); }
     r.pos = 4;
     uint32_t version = rd_u32(&r);
-    if (version != 1) { free(data); return fail(err, errlen, "unsupported bytecode version"); }
+    if (version != 2) { free(data); return fail(err, errlen, "unsupported bytecode version"); }
 
     /* constants */
     p->nconsts = rd_u32(&r);
@@ -124,14 +148,72 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
     p->code = malloc(p->code_len ? p->code_len : 1);
     memcpy(p->code, data + r.pos, p->code_len);
     r.pos += p->code_len;
+
+    /* debug information: the files, then the position of every instruction */
+    p->nfiles = rd_u32(&r);
+    if (r.error || p->nfiles > 1000000) { free(data); return fail(err, errlen, "bad file table"); }
+    p->files = calloc(p->nfiles ? p->nfiles : 1, sizeof(char *));
+    if (!p->files) { free(data); return fail(err, errlen, "out of memory"); }
+    for (uint32_t i = 0; i < p->nfiles; i++) {
+        uint32_t n = rd_u32(&r);
+        if (!need(&r, n)) { free(data); return fail(err, errlen, "bad file name"); }
+        p->files[i] = malloc(n + 1);
+        if (!p->files[i]) { free(data); return fail(err, errlen, "out of memory"); }
+        memcpy(p->files[i], data + r.pos, n); p->files[i][n] = 0; r.pos += n;
+    }
+    p->nlines = rd_u32(&r);
+    uint32_t table_len = rd_u32(&r);
+    if (r.error || p->nlines > 100000000 || !need(&r, table_len))
+        { free(data); return fail(err, errlen, "bad line table"); }
+    p->lines = calloc(p->nlines ? p->nlines : 1, sizeof(LineEntry));
+    if (!p->lines) { free(data); return fail(err, errlen, "out of memory"); }
+    {
+        const uint8_t *q = data + r.pos, *end = q + table_len;
+        int64_t pc = 0, file = 0, line = 0, col = 0;
+        for (uint32_t i = 0; i < p->nlines; i++) {
+            uint64_t dpc;
+            int64_t dfile, dline, dcol;
+            if (!rd_uvar(&q, end, &dpc) || !rd_svar(&q, end, &dfile) ||
+                !rd_svar(&q, end, &dline) || !rd_svar(&q, end, &dcol))
+                { free(data); return fail(err, errlen, "bad line table"); }
+            if (dpc > (uint64_t)p->code_len) { free(data); return fail(err, errlen, "line table out of range"); }
+            pc += (int64_t)dpc; file += dfile; line += dline; col += dcol;
+            if (pc >= (int64_t)p->code_len || file < 0 || (uint32_t)file >= p->nfiles ||
+                line < 1 || col < 1 || line > INT32_MAX || col > INT32_MAX)
+                { free(data); return fail(err, errlen, "line table out of range"); }
+            p->lines[i].pc = (uint32_t)pc;
+            p->lines[i].file = (uint32_t)file;
+            p->lines[i].line = (uint32_t)line;
+            p->lines[i].col = (uint32_t)col;
+        }
+        if (q != end) { free(data); return fail(err, errlen, "bad line table"); }
+    }
+    r.pos += table_len;
     free(data);
 
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
+    for (uint32_t i = 0; i < p->nfuncs; i++)
         p->funcs[i].code_end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
-        if (p->funcs[i].code_offset >= p->code_len) return fail(err, errlen, "function offset out of range");
-    }
 
-    /* validate instructions: boundaries and operand ranges */
+    uint8_t *starts = validate_program(p, err, errlen);
+    if (!starts) return 0;
+    free(starts);
+    return 1;
+}
+
+/* Where every instruction of a program begins, or NULL and a message: the
+   opcodes, the ranges of the operands, and the jump targets and function
+   entries, which must be instruction boundaries. The caller frees it.
+
+   A .rbc is untrusted input and so, since Runtime.restore, is an image: both
+   carry code, and both come through here (vm/image.c). */
+uint8_t *validate_program(Program *p, char *err, size_t errlen) {
+    for (uint32_t i = 0; i < p->nfuncs; i++) {
+        if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
+        if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) { fail(err, errlen, "functions out of order"); return NULL; }
+        if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) { fail(err, errlen, "bad frame size"); return NULL; }
+        uint32_t end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
+        if (p->funcs[i].code_end != end) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
+    }
     uint8_t *starts = calloc(p->code_len + 1, 1);
     uint32_t fi = 0;
     uint32_t pc = 0;
@@ -139,8 +221,8 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         uint8_t op = p->code[pc];
         int len = instr_length(op);
-        if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return 0; }
-        if (pc + len > p->code_len) { free(starts); return fail(err, errlen, "truncated instruction"); }
+        if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return NULL; }
+        if (pc + len > p->code_len) { free(starts); fail(err, errlen, "truncated instruction"); return NULL; }
         starts[pc] = 1;
         int32_t a = len > 1 ? read_i32(p->code + pc + 1) : 0;
         int32_t b = len > 5 ? read_i32(p->code + pc + 5) : 0;
@@ -159,7 +241,7 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         case OP_PRIM: bad = a < 0 || a >= PRIM__COUNT; break;
         default: break;
         }
-        if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return 0; }
+        if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }
     /* jump targets and function entries must be instruction boundaries */
@@ -170,15 +252,26 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
         if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_PUSHHANDLER) {
             int32_t t = read_i32(p->code + pc + 1);
             if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
-                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return 0;
+                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
             }
         }
         pc += len;
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
-        if (!starts[p->funcs[i].code_offset]) { free(starts); return fail(err, errlen, "function entry is not an instruction"); }
-    free(starts);
-    return 1;
+        if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    return starts;
+}
+
+/* The entry covering pc: the last one that begins at or before it, found by
+   halving the table, which is in order of pc. */
+const LineEntry *line_at(const Program *p, uint32_t pc) {
+    uint32_t lo = 0, hi = p->nlines;
+    if (hi == 0 || p->lines[0].pc > pc) return NULL;
+    while (hi - lo > 1) {
+        uint32_t mid = lo + (hi - lo) / 2;
+        if (p->lines[mid].pc <= pc) lo = mid; else hi = mid;
+    }
+    return &p->lines[lo];
 }
 
 void disassemble(const Program *p, FILE *out) {
@@ -206,6 +299,10 @@ void disassemble(const Program *p, FILE *out) {
         int len = instr_length(op);
         fprintf(out, "  %6u  %s", pc, op_names[op]);
         for (int k = 0; k < op_nargs[op]; k++) fprintf(out, " %d", read_i32(p->code + pc + 1 + 4 * k));
+        {
+            const LineEntry *e = line_at(p, pc);
+            if (e && e->file < p->nfiles) fprintf(out, "\t; %s:%u:%u", p->files[e->file], e->line, e->col);
+        }
         fprintf(out, "\n");
         pc += len;
     }

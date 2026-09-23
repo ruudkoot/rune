@@ -1,1 +1,2 @@
 runevm: uncaught exception Boom "kaboom"
+  in <toplevel> at tests/lang/rt.exn.uncaught_exit1.sml:3:16

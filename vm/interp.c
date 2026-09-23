@@ -2,6 +2,33 @@
 #include "vm.h"
 #include <stdarg.h>
 
+/* Where a frame is stopped: the instruction being executed in the innermost
+   one, and the call it is waiting on in every other. A pc points past the
+   instruction it is in, so one byte back is inside it, and an entry of the
+   line table never begins in the middle of an instruction. */
+static uint32_t frame_pc(const VM *vm, size_t i) {
+    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+    return pc > 0 ? pc - 1 : 0;
+}
+
+/* The frames, innermost first, under a message that has already been
+   printed. A frame whose position the program does not carry -- there is
+   none for a file compiled before M5, and none for the outermost frame of a
+   resumed image -- is named without one. */
+void vm_print_trace(VM *vm, FILE *out) {
+    if (!vm->frames_active) return;
+    for (size_t k = vm->fp + 1; k > 0; k--) {
+        size_t i = k - 1;
+        uint32_t f = vm->frames[i].func;
+        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+        const LineEntry *e = line_at(&vm->prog, frame_pc(vm, i));
+        if (e && e->file < vm->prog.nfiles)
+            fprintf(out, "  in %s at %s:%u:%u\n", name, vm->prog.files[e->file], e->line, e->col);
+        else
+            fprintf(out, "  in %s\n", name);
+    }
+}
+
 void vm_fatal(VM *vm, const char *fmt, ...) {
     va_list ap;
     fflush(stdout);
@@ -13,6 +40,7 @@ void vm_fatal(VM *vm, const char *fmt, ...) {
     vfprintf(stderr, fmt, ap);
     va_end(ap);
     fprintf(stderr, "\n");
+    vm_print_trace(vm, stderr);
     exit(2);
 }
 
@@ -149,6 +177,7 @@ int vm_raise(VM *vm, Value exn) {
             fprintf(stderr, "<invalid exception value>");
         }
         fprintf(stderr, "\n");
+        vm_print_trace(vm, stderr);
         vm_exit(vm, 1);
     }
     Handler h = vm->handlers[--vm->hp];
@@ -403,7 +432,10 @@ int vm_loop(VM *vm) {
         }
         case OP_PRIM:
             if (vm->sp < prim_arity[a]) vm_fatal(vm, "stack underflow in primitive %s", prim_names[a]);
-            prim_table[a](vm);
+            /* A primitive that says PRIM_NEW_WORLD has put another program
+               here (Runtime.restore), so the code this loop is reading from
+               has been freed: take it again, and the pc with it. */
+            if (prim_table[a](vm) == PRIM_NEW_WORLD) code = p->code;
             break;
         default:
             vm_fatal(vm, "invalid opcode %u", op);

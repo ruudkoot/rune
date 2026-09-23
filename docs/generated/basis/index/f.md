@@ -54,6 +54,7 @@
 - `fork` (val): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-fork)
 - `fpathconf` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-fpathconf)
 - `fpe` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-fpe)
+- `frame` (type): [RUNTIME](../sig/RUNTIME.md#type-frame)
 - `Fri` (con): [DATE](../sig/DATE.md#con-fri)
 - `fromAddr` (val): [INET6_SOCK](../sig/INET6_SOCK.md#val-fromaddr), [INET_SOCK](../sig/INET_SOCK.md#val-fromaddr), [UNIX_SOCK](../sig/UNIX_SOCK.md#val-fromaddr)
 - `fromBytes` (val): [PACK_REAL](../sig/PACK_REAL.md#val-frombytes)

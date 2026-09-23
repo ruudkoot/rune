@@ -17,8 +17,18 @@ enum Tag { T_UNIT = 0, T_INT, T_WORD, T_REAL, T_CHAR, T_CON0, T_PTR };
 
 typedef struct Obj Obj;
 
+/* 16 bytes on every VM, which the heap's layout and the counts of --count
+   both depend on and an image relies on (vm/image.c). The padding is written
+   out rather than left to the machine: the i386 System V ABI aligns an
+   `int64_t` to 4, where x86-64, PowerPC and the Windows compilers align it to
+   8, and without this a Value is 12 bytes there and every object of the heap
+   a different size (make test-portability). A narrower Value on 32-bit
+   machines would save 0.46% of the heap and cost more than that: the reasons
+   are written down under "Value representation" in docs/plans/performance.md,
+   which is also where the padding of the payload is weighed. */
 typedef struct Value {
     uint8_t tag;
+    uint8_t pad[7];
     union {
         int64_t i;   /* T_INT, T_CHAR, T_CON0 (constructor tag) */
         uint64_t w;  /* T_WORD */
@@ -68,6 +78,15 @@ typedef struct Function {
     char *name;
 } Function;
 
+/* Where an instruction came from: the file, line and column the compiler
+   recorded for the instructions from `pc` up to the next entry's. */
+typedef struct LineEntry {
+    uint32_t pc;
+    uint32_t file;
+    uint32_t line;
+    uint32_t col;
+} LineEntry;
+
 typedef struct Program {
     uint32_t nconsts;
     Value *consts;
@@ -76,6 +95,12 @@ typedef struct Program {
     Function *funcs;
     uint32_t code_len;
     uint8_t *code;
+    /* debug information: the files the program was compiled from, and the
+       position of every instruction, in order of pc */
+    uint32_t nfiles;
+    char **files;
+    uint32_t nlines;
+    LineEntry *lines;
 } Program;
 
 /* ---------------------------------------------------------------- machine */
@@ -140,6 +165,8 @@ typedef struct VM {
        handles are never reused, a closed slot is NULL */
     FILE **files;
     uint8_t *file_modes;     /* each file's mode of file_open, which an image of the VM carries */
+    char **file_paths;       /* the path each was opened by, for an image that a process does not
+                                inherit descriptors from (Runtime.save); NULL for the standard streams */
     size_t nfiles, files_cap;
     int io_errno;            /* errno of the last failed file_open / file_write */
 } VM;
@@ -150,6 +177,7 @@ Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payloa
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);
 Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
+size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 
@@ -175,9 +203,18 @@ int values_equal(Value a, Value b);
 /* image.c: fork as a second VM that is handed this one's state */
 int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the child */
+int vm_save(VM *vm, const char *path);       /* the whole VM in a file (Runtime.save); 0 on failure */
+int vm_restore(VM *vm, const char *path, char *err, size_t errlen);  /* runevm --restore FILE */
+int vm_become(VM *vm, const char *path);     /* Runtime.restore: this world becomes that one; 0 on failure */
+void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
+/* Where every instruction begins, or NULL: a program from a .rbc or from an
+   image is checked the same way. The caller frees it. */
+uint8_t *validate_program(Program *p, char *err, size_t errlen);
+const LineEntry *line_at(const Program *p, uint32_t pc);
+void vm_print_trace(VM *vm, FILE *out);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */
@@ -187,6 +224,10 @@ static inline int instr_length(uint8_t op) {
 }
 
 /* prims.c */
+/* What a primitive gives back to the dispatch loop: 0 for an ordinary return
+   (`ret`), 1 where it raised, and this where it has replaced the program the
+   loop is running (vm/image.c, Runtime.restore). */
+#define PRIM_NEW_WORLD 2
 typedef int (*PrimFn)(VM *vm);
 extern const PrimFn prim_table[PRIM__COUNT];
 

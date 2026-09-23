@@ -129,6 +129,12 @@ the system answer on Windows only.
 | [`LIST_PAIR`](sig/LIST_PAIR.md) | Two lists walked side by side: pairing, and the traversals that take a function of an element of each. | required | 15 of 15 |
 | [`OPTION`](sig/OPTION.md) | Optional values: a value that may be missing, and what a partial function returns instead of raising an exception. | required | 12 of 12 |
 
+## The runtime
+
+| Signature |  | Status | Documented |
+| --- | --- | --- | --- |
+| [`RUNTIME`](sig/RUNTIME.md) | What a program can ask about the machine it is running on: how much work it has done, and how much memory that took. | extension | 12 of 12 |
+
 ## Functors
 
 | Functor |  |

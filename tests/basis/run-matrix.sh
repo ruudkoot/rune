@@ -7,12 +7,16 @@
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
 #   rune:windows  rune:windows32
+#   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
+#                          x86, and a big-endian 64-bit PowerPC under qemu
+#                          (make portability; RUNEVM_LINUX32=, RUNEVM_PPC64=)
 #                          bin/rune + bin/runevm.exe or bin/runevm32.exe, the
 #                          VMs of make windows (RUNEVM_WINDOWS=,
 #                          RUNEVM_WINDOWS32=); a program runs in a directory
 #                          on the Windows side (tests/windows-dir.sh), and
 #                          needs Windows, or WSL, which starts an .exe
 #   windows                rune:windows and rune:windows32
+#   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
 #                          the suite against the host's own Basis Library
 #   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml
@@ -238,7 +242,12 @@ load() {
       # With a heap image of the library the program starts from it and uses
       # only its own files; the image itself uses what it is given.
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
-        shift $(prefix | wc -w)
+        prefix_count=$(prefix | wc -w)
+        if [ "$prefix_count" -gt "$#" ]; then
+          echo "error: saved basis image has $prefix_count prefix files, but load received only $# source files" >> "$loaddir/log"
+          return 1
+        fi
+        shift "$prefix_count"
         write_driver "$loaddir/driver.sml" "$@"
         (cd "$loaddir" && timeout "$limit" "$cmd1" "@SMLload=$cfgout/basis.heap" > stdout 2> log < /dev/null)
       else
@@ -248,7 +257,12 @@ load() {
       ;;
     *:polyml)
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
-        shift $(prefix | wc -w)
+        prefix_count=$(prefix | wc -w)
+        if [ "$prefix_count" -gt "$#" ]; then
+          echo "error: saved basis image has $prefix_count prefix files, but load received only $# source files" >> "$loaddir/log"
+          return 1
+        fi
+        shift "$prefix_count"
         write_driver "$loaddir/driver.sml" "$@"
         sed -i "1i val () = PolyML.SaveState.loadState \"$cfgout/basis.state\";" "$loaddir/driver.sml"
       else
@@ -657,13 +671,19 @@ if [ -z "$runekey" ]; then
 fi
 export RUNE_MATRIX_RUNEKEY=$runekey
 
+# discard_image: remove a saved host session and the marker that makes load
+# use it. The image is valid only while basis.key matches the current library.
+discard_image() {
+  rm -f "$cfgout/basis.image" "$cfgout/basis.heap".* "$cfgout/basis.state"
+}
+
 # save_image PRELUDE FILES: for a host that keeps a session, a heap image
 # with the library already in it, so that a program does not use its sources
 # again -- which is most of what a run of the matrix costs on such a host.
 # SML/NJ exports one that uses the files it is given when it resumes; Poly/ML
 # saves a state that a program loads first. basis.image says there is one.
 save_image() {
-  rm -f "$cfgout/basis.image" "$cfgout/basis.heap".* "$cfgout/basis.state"
+  discard_image
   [ "${RUNE_MATRIX_NO_IMAGE:-0}" = 0 ] || return 0
   case "$host" in
     smlnj|smlnj32)
@@ -718,6 +738,12 @@ probe_basis() {
   cmd1=$(config_field "$1" 4)
   cfgout=$out/$(dirname_of "$1")
   mkdir -p "$cfgout"
+  # A shell error in a probe must release the test jobs waiting below. In
+  # particular, dash exits the whole worker when shift is given too large a
+  # count; without this marker every job slot can wait for ever.
+  probe_status=0
+  trap 'probe_status=$?; if [ ! -f "$cfgout/basis.done" ]; then printf "probe exited before completion (status %s)\n" "$probe_status" > "$cfgout/basis.done"; fi' 0
+  trap 'exit 1' HUP INT TERM
   t_probe=$(now)
   key=$(cat lib/basis/MANIFEST lib/basis/*.sml tests/basis/host/* vm/prims.def | cksum | cut -d ' ' -f 1)-$(echo "$cmd1" | cksum | cut -d ' ' -f 1)
   if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/basis.loaded" ] &&
@@ -729,7 +755,12 @@ probe_basis() {
     fi
     return
   fi
-  rm -f "$cfgout/basis.key"
+  # basis.loaded and the saved session describe the library named by
+  # basis.key. Do not let load mistake either for the library being probed
+  # after a source or host change.
+  rm -f "$cfgout/basis.done" "$cfgout/basis.key" "$cfgout/basis.loaded" \
+        "$cfgout/basis.provides" "$cfgout/basis.dropped" "$cfgout/basis.time"
+  discard_image
   gen=$cfgout/basis
   rm -rf "$gen"
   if ! sh tests/basis/host/gen-host-basis.sh "$gen"; then
@@ -804,6 +835,7 @@ expand() {
       xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 ;;
+      portability) echo rune:linux32 rune:ppc64 ;;
       *) echo "$c" ;;
     esac
   done
@@ -835,6 +867,20 @@ resolve() {
         RUNE_WINDOWS_DIR=$(sh "$root/tests/windows-dir.sh") || { echo "run-matrix: no directory on the Windows side; set RUNE_WINDOWS_DIR" >&2; return 1; }
         export RUNE_WINDOWS_DIR
       fi
+      ;;
+    rune:linux32|rune:ppc64)
+      # The library and the compiler of the `rune` configuration on a VM of
+      # another machine (make portability): a 32-bit x86, and a big-endian
+      # 64-bit PowerPC, which its own wrapper runs under qemu. Nothing of the
+      # suite differs -- the bytecode is the same file -- so what is tested is
+      # the VM.
+      cmd1=${RUNE:-$root/bin/rune}
+      if [ "$host" = linux32 ]; then cmd2=${RUNEVM_LINUX32:-$root/bin/runevm32}
+      else cmd2=${RUNEVM_PPC64:-$root/bin/runevm-ppc64}
+      fi
+      id=rune:$host
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make portability)" >&2; return 1; }
+      "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
       ;;
     native:mlton|xc1:mlton)
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}

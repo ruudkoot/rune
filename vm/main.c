@@ -1,4 +1,5 @@
 /* runevm: portable interpreter for Rune bytecode. */
+#include "version.h"
 #include "vm.h"
 
 #include <errno.h>
@@ -17,15 +18,19 @@ static void usage(void) {
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
+        "  --restore FILE  carry on the world Runtime.save wrote to FILE\n"
         "  --version       print the version and exit\n");
 }
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
-static void vm_destroy(VM *vm) {
+void vm_release(VM *vm) {
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);
     free(vm->prog.code);
+    for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
+    free(vm->prog.files);
+    free(vm->prog.lines);
     free(vm->globals);
     free(vm->global_set);
     free(vm->stack);
@@ -33,13 +38,19 @@ static void vm_destroy(VM *vm) {
     free(vm->handlers);
     free(vm->heap_from);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
+    for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
     free(vm->files);
     free(vm->file_modes);
+    free(vm->file_paths);
     if (vm->owns_args) {
         for (int i = 0; vm->argv && i < vm->argc; i++) free(vm->argv[i]);
         free(vm->argv);
         free((char *)vm->progname);
     }
+}
+
+static void vm_destroy(VM *vm) {
+    vm_release(vm);
     free(vm);
 }
 
@@ -71,7 +82,7 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0;
-    const char *resume = NULL;
+    const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
@@ -83,13 +94,26 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--count") == 0) count = 1;
         else if (strcmp(argv[i], "--emulate-fork") == 0) emulate_fork = 1;
         else if (strcmp(argv[i], "--resume") == 0 && i + 1 < argc) resume = argv[++i];
+        else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
         }
-        else if (strcmp(argv[i], "--version") == 0) { printf("runevm 0.2.0\n"); return 0; }
+        else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;
+    }
+    if (restore) {
+        /* a world Runtime.save wrote: it carries on from that call, which
+           gives it `Restored` */
+        VM *vm = calloc(1, sizeof(VM));
+        char err[256];
+        if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
+            fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
+            if (vm) vm_destroy(vm);
+            return 2;
+        }
+        vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
         /* the child of a fork by a second VM: its state, flags included, is
@@ -117,6 +141,7 @@ int main(int argc, char **argv) {
     vm->files_cap = 8;
     vm->files = calloc(vm->files_cap, sizeof(FILE *));
     vm->file_modes = calloc(vm->files_cap, 1);
+    vm->file_paths = calloc(vm->files_cap, sizeof(char *));
     vm->files[0] = stdin; vm->files[1] = stdout; vm->files[2] = stderr;
     vm->file_modes[1] = vm->file_modes[2] = 1;
     vm->nfiles = 3;

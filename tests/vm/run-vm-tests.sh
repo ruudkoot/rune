@@ -42,8 +42,8 @@ expect() {
   fi
 }
 
-# the header: "RUNE", version 1; numbers are 32 bits, little-endian
-header='RUNE\001\000\000\000'
+# the header: "RUNE", version 2; numbers are 32 bits, little-endian
+header='RUNE\002\000\000\000'
 one='\001\000\000\000'
 zero='\000\000\000\000'
 huge='\377\377\377\377'
@@ -51,8 +51,12 @@ huge='\377\377\377\377'
 printf '' > empty.rbc
 expect empty "not a Rune bytecode file" empty.rbc
 
-printf 'RUNE\002\000\000\000' > version.rbc
+printf 'RUNE\003\000\000\000' > version.rbc
 expect version "unsupported bytecode version" version.rbc
+
+# version 1: the layout before the line table (docs/bytecode.md)
+printf 'RUNE\001\000\000\000' > version1.rbc
+expect version1 "unsupported bytecode version" version1.rbc
 
 # one constant, a string of 0xFFFFFFF0 bytes
 printf "$header$one\\003\\360\\377\\377\\377" > string.rbc
@@ -74,6 +78,46 @@ expect code "truncated code" code.rbc
 expect heap-size "usage:" --heap-size 18446744073709551616 empty.rbc
 expect heap-size-text "usage:" --heap-size 64M empty.rbc
 expect gc-stress "usage:" --gc-stress 18446744073709551616 empty.rbc
+
+# The debug section (docs/bytecode.md). A whole program, then the
+# line table broken in each of the ways the loader has to refuse. `prog` is
+# one function `f` whose only instruction is HALT, and `dbg` its files.
+prog="$header$zero$zero$one$zero$one\\001\\000\\000\\000f$one\\000"
+onefile="$one\\001\\000\\000\\000a"
+
+# a file table longer than the file
+printf "$prog$huge" > files.rbc
+expect debug-files "bad file table" files.rbc
+
+# one file whose name runs past the end
+printf "$prog$one$huge" > filename.rbc
+expect debug-filename "bad file name" filename.rbc
+
+# a table of one entry, but no bytes for it
+printf "$prog$onefile$one$zero" > lines.rbc
+expect debug-lines "bad line table" lines.rbc
+
+# an entry whose pc is past the code: dpc 9, file 0, line 1, column 1
+printf "$prog$onefile$one\\004\\000\\000\\000\\011\\000\\002\\002" > linepc.rbc
+expect debug-line-pc "line table out of range" linepc.rbc
+
+# an entry naming file 1, where there is one file: dpc 0, dfile 1, line 1, col 1
+printf "$prog$onefile$one\\004\\000\\000\\000\\000\\002\\002\\002" > linefile.rbc
+expect debug-line-file "line table out of range" linefile.rbc
+
+# an entry at line 0, which no file has: dpc 0, dfile 0, dline 0, dcol 1
+printf "$prog$onefile$one\\004\\000\\000\\000\\000\\000\\000\\002" > lineno.rbc
+expect debug-line-zero "line table out of range" lineno.rbc
+
+# bytes left over after the entries the count promised
+printf "$prog$onefile$one\\005\\000\\000\\000\\000\\000\\002\\002\\000" > linetail.rbc
+expect debug-line-tail "bad line table" linetail.rbc
+
+# A fatal error names the function it happened in, which is the name the
+# compiler put in the file (docs/bytecode.md). One function called
+# `queens`, one instruction, SELF (opcode 8) where there is no closure.
+printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010$zero$zero$zero" > named.rbc
+expect named-function "fatal error at pc 1 in queens" named.rbc
 
 # the child of a fork by a second VM (vm/image.c) with no image to read:
 # standard input is empty, and x names no descriptor or handle

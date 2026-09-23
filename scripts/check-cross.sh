@@ -95,7 +95,7 @@ fi
 
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
 sources=""
-for src in tests/lang/*.sml examples/*.sml; do
+for src in tests/lang/*.sml examples/*.sml examples/*/*.sml; do
   [ -f "$src" ] && sources="$sources $src"
 done
 for src in tests/basis/*.sml; do

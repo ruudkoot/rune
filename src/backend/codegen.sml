@@ -7,10 +7,11 @@ struct
       Op of int * int list                (* opcode, immediate operands *)
     | OpLab of int * int                  (* opcode with one label operand *)
     | Lab of int
+    | Pos of int * int * int              (* file, line, column of what follows *)
 
   type func = {id : int, nlocals : int, code : item list, name : string}
 
-  type program = {consts : const list, nglobals : int, funcs : func list}
+  type program = {consts : const list, nglobals : int, funcs : func list, files : string list}
 
   (* ---------------------------------------------------------------- *)
   (* Free variables (sorted by stamp).                                  *)
@@ -29,6 +30,7 @@ struct
             in List.foldl (fn ((_, e), acc) => fv (e, bound', acc)) (fv (b, bound', acc)) bs end
         | Seq (a, b) => fv (b, bound, fv (a, bound, acc))
         | SetGlobal (_, a) => fv (a, bound, acc)
+        | Mark (_, a) => fv (a, bound, acc)
         | Tuple es => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc es
         | Select (_, a) => fv (a, bound, acc)
         | Con (_, a) => fv (a, bound, acc)
@@ -56,10 +58,28 @@ struct
   val globals : int IntMap.map ref = ref IntMap.empty
   val nglobals = ref 0
   val nextLabel = ref 0
+  (* The source files positions refer to, in the order they were first seen;
+     an index into this is what the line table holds. *)
+  val files : string list ref = ref []
+  val nfiles = ref 0
+  val fileIndex : int StringMap.map ref = ref StringMap.empty
+  (* What the source called each function, by the stamp of its parameter;
+     `compile` is given it by the translation. *)
+  val funNames : string IntMap.map ref = ref IntMap.empty
 
   fun reset () =
     (funcs := []; nextFuncId := 0; consts := []; nconsts := 0; constIndex := StringMap.empty;
-     globals := IntMap.empty; nglobals := 0; nextLabel := 0)
+     globals := IntMap.empty; nglobals := 0; nextLabel := 0; funNames := IntMap.empty;
+     files := []; nfiles := 0; fileIndex := StringMap.empty)
+
+  fun fileIdx (name : string) : int =
+    case StringMap.find (!fileIndex, name) of
+      SOME i => i
+    | NONE =>
+      let val i = !nfiles
+      in files := name :: !files; nfiles := i + 1;
+         fileIndex := StringMap.insert (!fileIndex, name, i); i
+      end
 
   fun newLabel () = let val l = !nextLabel in nextLabel := l + 1; l end
 
@@ -97,9 +117,20 @@ struct
 
   (* ---------------------------------------------------------------- *)
   type ctx = {locals : int IntMap.map ref, nlocals : int ref, env : int IntMap.map,
-              self : int option, code : item list ref, fails : int list ref}
+              self : int option, code : item list ref, fails : int list ref,
+              pos : (int * int * int) ref}
 
   fun emit (ctx : ctx, it) = #code ctx := it :: !(#code ctx)
+
+  (* Note where the instructions that follow came from. A span the source was
+     not loaded for, and one that repeats the position already in force, cost
+     nothing: the line table holds only the places where it changes. *)
+  fun markPos (ctx : ctx, sp : Source.span) : unit =
+    case Source.lineColOf sp of
+      NONE => ()
+    | SOME (file, line, col) =>
+      let val p = (fileIdx file, line, col)
+      in if p = !(#pos ctx) then () else (#pos ctx := p; emit (ctx, Pos p)) end
 
   fun newLocal (ctx : ctx, x) =
     let val slot = !(#nlocals ctx)
@@ -124,6 +155,7 @@ struct
         else emit (ctx, Op (Opcodes.CONST, [constIdx (CInt i)]))
     | Const c => emit (ctx, Op (Opcodes.CONST, [constIdx c]))
     | Unit => emit (ctx, Op (Opcodes.UNIT, []))
+    | Mark (sp, a) => (markPos (ctx, sp); gen (ctx, a, tail))
     | Fn (x, b) => ignore (genClosure (ctx, x, b, NONE, []))
     | App (f, a) =>
         (gen (ctx, f, false); gen (ctx, a, false);
@@ -195,13 +227,18 @@ struct
     | Prim (p, args) => (List.app (fn e => gen (ctx, e, false)) args; emit (ctx, Op (Opcodes.PRIM, [primIdx p])))
 
   (* Compile a function body into a new function; returns its id. *)
-  and genFunction (param : int, body : lexp, envVars : int list, self : int option, name : string) : int =
+  and genFunction (param : int, body : lexp, envVars : int list, self : int option, name : string,
+                   pos0 : int * int * int) : int =
     let
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val env = #1 (List.foldl (fn (v, (m, i)) => (IntMap.insert (m, v, i), i + 1)) (IntMap.empty, 0) envVars)
       val ctx : ctx = {locals = ref (IntMap.insert (IntMap.empty, param, 0)), nlocals = ref 1, env = env,
-                       self = self, code = ref [], fails = ref []}
+                       self = self, code = ref [], fails = ref [], pos = ref (~1, ~1, ~1)}
+      (* The code of a function begins where the function does, so that an
+         instruction before the first mark of its body is not attributed to
+         whatever was compiled before it. *)
+      val () = if pos0 = (~1, ~1, ~1) then () else (#pos ctx := pos0; emit (ctx, Pos pos0))
     in
       gen (ctx, body, true);
       emit (ctx, Op (Opcodes.RET, []));
@@ -215,8 +252,15 @@ struct
       : (int * int) list =
     let
       val fvs = List.filter (fn v => SOME v <> self) (freeVars (Fn (x, body)))
-      val name = case self of SOME s => "fn" ^ Int.toString s | NONE => "fn"
-      val fid = genFunction (x, body, fvs, self, name)
+      (* The name the source gave this function, by the stamp of its
+         parameter (Translate.funNames). One that no binding names keeps
+         `fn`, with its own stamp where it is recursive, so that two of them
+         can still be told apart in a disassembly. *)
+      val name =
+        case IntMap.find (!funNames, x) of
+          SOME n => n
+        | NONE => (case self of SOME s => "fn" ^ Int.toString s | NONE => "fn")
+      val fid = genFunction (x, body, fvs, self, name, !(#pos ctx))
       val patches =
         #1 (List.foldl (fn (v, (ps, i)) =>
                           if List.exists (fn p => p = v) pending then
@@ -227,6 +271,14 @@ struct
       patches
     end
 
+  (* The expression under its marks, with each put in force on the way: for
+     an expression whose shape is looked at rather than generated, so that it
+     is still compiled where the source says it is. *)
+  and markThrough (ctx : ctx, e : lexp) : lexp =
+    case e of
+      Mark (sp, a) => (markPos (ctx, sp); markThrough (ctx, a))
+    | _ => e
+
   and genLetRec (ctx : ctx, bs : (int * lexp) list) : unit =
     let
       val slots = List.map (fn (f, _) => (f, newLocal (ctx, f))) bs
@@ -236,7 +288,7 @@ struct
           let
             val pending' = List.map #1 rest
             val patches =
-              case e of
+              case markThrough (ctx, e) of
                 Fn (x, body) => genClosure (ctx, x, body, SOME f, pending')
               | _ => Error.bug "letrec right-hand side is not a function"
             val () = emit (ctx, Op (Opcodes.SETLOCAL, [slotOf f]))
@@ -250,14 +302,15 @@ struct
     end
 
   (* ---------------------------------------------------------------- *)
-  fun compile (top : lexp) : program =
+  fun compile (top : lexp, names : string IntMap.map) : program =
     let
       val () = reset ()
+      val () = funNames := names
       val dummyParam = Elaborate.freshStamp ()
-      val _ = genFunction (dummyParam, top, [], NONE, "<toplevel>")
+      val _ = genFunction (dummyParam, top, [], NONE, "<toplevel>", (~1, ~1, ~1))
       val sorted = IntMap.listItems (List.foldl (fn (f : func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (!funcs))
     in
-      {consts = List.rev (!consts), nglobals = !nglobals, funcs = sorted}
+      {consts = List.rev (!consts), nglobals = !nglobals, funcs = sorted, files = List.rev (!files)}
     end
 
   (* ---------------------------------------------------------------- *)
@@ -266,6 +319,7 @@ struct
       Op (opc, args) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " " ^ String.concatWith " " (List.map Int.toString args)
     | OpLab (opc, l) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " L" ^ Int.toString l
     | Lab l => "  L" ^ Int.toString l ^ ":"
+    | Pos (f, l, c) => "  ; " ^ Int.toString f ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c
 
   fun dump (p : program) : string =
     let

@@ -16,6 +16,7 @@
 #   make uninstall  remove them again
 #   make test-all   run the suite with each of the four host builds
 #   make check-cross  verify all five builds emit byte-identical bytecode
+#   make check-positions  verify every instruction names a line that exists
 #   make check-docs verify docs/language.md, tests and .def files are in sync
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
 #   make perf-check verify the instruction and allocation budgets (tests/perf)
@@ -30,6 +31,10 @@
 #   make windows    the VM for Windows with mingw-w64, 64-bit and 32-bit
 #                   (docs/building.md); it and make test-windows are apart
 #                   from every other target
+#   make portability  the VM for a 32-bit x86 and for a big-endian 64-bit
+#                   PowerPC; make test-portability runs both suites on them,
+#                   the PowerPC one under qemu, and checks that an image of
+#                   one is read by the others
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
 #
@@ -70,14 +75,14 @@ SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml vm/version.h
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
 SYS ?= posix
 VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_$(SYS).c
-VM_HDRS := vm/vm.h vm/sys.h $(GEN_C)
+VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
 
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)
@@ -99,7 +104,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows portability test-portability docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -238,7 +243,7 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 #
 # What the system layer of Windows does and does not do is in the header of
 # vm/sys_win.c; tests/windows-skip.txt lists the programs that need what it
-# does not and why, and docs/plans/windows.md what is left to do.
+# does not and why, and docs/runtime.md what a program can count on.
 WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
@@ -270,6 +275,62 @@ test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
 	RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
+# ------------------------------------------------------------- portability
+# The VM on machines this one is not: a 32-bit x86, where a pointer is four
+# bytes, and a 64-bit PowerPC, where a number is the other way round. Both
+# are Linux, so only the VM differs -- the bytecode is the same file -- and
+# the point is what they do not share with the machine that built them: the
+# width of a pointer, the alignment an ABI gives an int64_t, and the order of
+# the bytes in a word. An image written by one is read by another, which is
+# the strongest thing the format claims (vm/image.c).
+#
+# The 64-bit PowerPC VM is big-endian and runs under qemu; its compiler is
+# clang, which cross-compiles without a gcc for the target, with the linker
+# and headers of the sysroot the distribution's binutils and libc provide.
+PORTCC32   ?= $(CC)
+# -msse2 -mfpmath=sse for the same reason the 32-bit Windows VM has them: the
+# x87 stack holds a double with more bits than a double has, so arithmetic that
+# stays in a register rounds differently from arithmetic on any other machine.
+# Without them `Real.round` of a number just below a half gives 1 here and 0
+# everywhere else.
+PORTFLAGS32 ?= -m32 -msse2 -mfpmath=sse
+PPCCC      ?= clang
+PPCROOT    ?= /usr/powerpc64-linux-gnu
+# -rpath as well as -L: the sysroot's libraries are not on the loader's path,
+# and the VM must be loadable however it is started -- by the wrapper, which
+# gives qemu -L, and by the kernel through binfmt_misc, which gives it nothing
+# (that is what a fork by a second VM needs; tests/portability-skip.txt).
+PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
+              -Wl,-dynamic-linker,$(PPCROOT)/lib/ld64.so.1 -Wl,-rpath,$(PPCROOT)/lib
+QEMUPPC    ?= qemu-ppc64
+PORT_TIMEOUT ?= 900
+
+portability: bin/runevm32 bin/runevm-ppc64
+
+bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -o $@ $(VM_SRCS) -lm
+
+# As with the host builds of the compiler, the name is a wrapper and the
+# payload sits beside it: every runner takes --vm bin/runevm-ppc64 and needs
+# to know nothing of qemu.
+bin/runevm-ppc64.bin: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -o $@ $(VM_SRCS) -lm
+
+bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
+	chmod +x $@
+
+# The PowerPC VM runs under an emulator and is about ten times slower, so the
+# Basis suite gets longer than the two minutes a program is otherwise given:
+# the largest of the monomorphic tests takes 34 s here and about six minutes
+# there.
+test-portability: portability $(RUNE) vm
+	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm32 --vm bin/runevm-ppc64
+	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
+	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
+
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.
 test: $(RUNE) vm | build/.doctor-check
@@ -284,6 +345,10 @@ test-all: host-builds vm | build/.doctor-check
 
 check-cross: host-builds bin/rune-boot bin/runedoc-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
+
+# Every instruction says where it came from, and the line is one the file has.
+check-positions: $(RUNE) $(RUNEVM)
+	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE) --vm $(RUNEVM)
 
 check-docs: $(RUNE) $(RUNEDOC)
 	sh scripts/check-docs.sh
@@ -410,6 +475,7 @@ check:
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory perf-check
+	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs
 
 clean:

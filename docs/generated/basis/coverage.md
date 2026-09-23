@@ -56,6 +56,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
+| [`RUNTIME`](sig/RUNTIME.md) | 12 | 12 | 100% | 8 | 8 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
@@ -73,12 +74,12 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1646 | 1646 | 100% | 1119 | 1119 |
+| **all** | 1658 | 1658 | 100% | 1127 | 1127 |
 
 ## Examples that are run
 
 An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the
-test suite: 251 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.md) (5), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (4), [`BOOL`](sig/BOOL.md) (2), [`BYTE`](sig/BYTE.md) (4), [`CHAR`](sig/CHAR.md) (15), [`DATE`](sig/DATE.md) (7), [`GENERAL`](sig/GENERAL.md) (5), [`IEEE_REAL`](sig/IEEE_REAL.md) (3), [`INET6_SOCK`](sig/INET6_SOCK.md) (2), [`INET_SOCK`](sig/INET_SOCK.md) (1), [`INTEGER`](sig/INTEGER.md) (15), [`INT_INF`](sig/INT_INF.md) (8), [`LIST`](sig/LIST.md) (14), [`LIST_PAIR`](sig/LIST_PAIR.md) (6), [`MATH`](sig/MATH.md) (6), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (2), [`OPTION`](sig/OPTION.md) (6), [`OS`](sig/OS.md) (1), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (2), [`OS_PATH`](sig/OS_PATH.md) (22), [`OS_PROCESS`](sig/OS_PROCESS.md) (2), [`PACK_REAL`](sig/PACK_REAL.md) (2), [`PACK_WORD`](sig/PACK_WORD.md) (5), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (2), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`REAL`](sig/REAL.md) (26), [`SML90`](sig/SML90.md) (4), [`STREAM_IO`](sig/STREAM_IO.md) (1), [`STRING`](sig/STRING.md) (15), [`STRING_CVT`](sig/STRING_CVT.md) (5), [`SUBSTRING`](sig/SUBSTRING.md) (9), [`TEXT_IO`](sig/TEXT_IO.md) (4), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (8), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (1), [`VECTOR`](sig/VECTOR.md) (8), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (4), [`WORD`](sig/WORD.md) (16).
+test suite: 253 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.md) (5), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (4), [`BOOL`](sig/BOOL.md) (2), [`BYTE`](sig/BYTE.md) (4), [`CHAR`](sig/CHAR.md) (15), [`DATE`](sig/DATE.md) (7), [`GENERAL`](sig/GENERAL.md) (5), [`IEEE_REAL`](sig/IEEE_REAL.md) (3), [`INET6_SOCK`](sig/INET6_SOCK.md) (2), [`INET_SOCK`](sig/INET_SOCK.md) (1), [`INTEGER`](sig/INTEGER.md) (15), [`INT_INF`](sig/INT_INF.md) (8), [`LIST`](sig/LIST.md) (14), [`LIST_PAIR`](sig/LIST_PAIR.md) (6), [`MATH`](sig/MATH.md) (6), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (2), [`OPTION`](sig/OPTION.md) (6), [`OS`](sig/OS.md) (1), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (2), [`OS_PATH`](sig/OS_PATH.md) (22), [`OS_PROCESS`](sig/OS_PROCESS.md) (2), [`PACK_REAL`](sig/PACK_REAL.md) (2), [`PACK_WORD`](sig/PACK_WORD.md) (5), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (2), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`REAL`](sig/REAL.md) (26), [`RUNTIME`](sig/RUNTIME.md) (2), [`SML90`](sig/SML90.md) (4), [`STREAM_IO`](sig/STREAM_IO.md) (1), [`STRING`](sig/STRING.md) (15), [`STRING_CVT`](sig/STRING_CVT.md) (5), [`SUBSTRING`](sig/SUBSTRING.md) (9), [`TEXT_IO`](sig/TEXT_IO.md) (4), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (8), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (1), [`VECTOR`](sig/VECTOR.md) (8), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (4), [`WORD`](sig/WORD.md) (16).
 
 ## Notes that no check pins
 
@@ -88,6 +89,7 @@ be pinned: many are about the text and not about behaviour.
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
+- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS

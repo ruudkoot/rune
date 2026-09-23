@@ -153,6 +153,7 @@ is listed at the end of this page.
 | `RealArraySlice` | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | `RealVector` | :> [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = real` | optional | an application of `RuneMonoVectorFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
 | `RealVectorSlice` | :> [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = RealVector.vector where type elem = real` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_real.sml](../../../lib/basis/mono_real.sml) |
+| `Runtime` | : [`RUNTIME`](sig/RUNTIME.md) |  | extension | is `RuneRuntime` | [lib/basis/runtime.sml](../../../lib/basis/runtime.sml) |
 | `SML90` | : [`SML90`](sig/SML90.md) |  | optional |  | [lib/basis/sml90.sml](../../../lib/basis/sml90.sml) |
 | `Socket` | : [`SOCKET`](sig/SOCKET.md) |  | optional | is `RuneSocket` | [lib/basis/socket.sml](../../../lib/basis/socket.sml) |
 | `String` | : [`STRING`](sig/STRING.md) | `where type string = string where type char = Char.char` | required |  | [lib/basis/string.sml](../../../lib/basis/string.sml) |

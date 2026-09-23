@@ -2,6 +2,7 @@
    or raises an SML exception (returning 1 after unwinding the machine).
    Arguments are read from the stack (not popped) until the result exists, so
    that a garbage collection during allocation keeps them alive. */
+#include "version.h"
 #include "vm.h"
 #include <math.h>
 #include <errno.h>
@@ -1680,16 +1681,20 @@ static int p_file_open(VM *vm) {
     FILE *f = NULL;
     if (strlen(path) != s->len) vm->io_errno = EINVAL;   /* embedded NUL */
     else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
-    free(path);
-    if (!f) return ret(vm, 2, mk_con0(0));
+    if (!f) { free(path); return ret(vm, 2, mk_con0(0)); }
+    char *kept = path;
     if (vm->nfiles == vm->files_cap) {
         vm->files_cap *= 2;
         vm->files = realloc(vm->files, vm->files_cap * sizeof(FILE *));
         vm->file_modes = realloc(vm->file_modes, vm->files_cap);
-        if (!vm->files || !vm->file_modes) vm_fatal(vm, "out of memory");
+        vm->file_paths = realloc(vm->file_paths, vm->files_cap * sizeof(char *));
+        if (!vm->files || !vm->file_modes || !vm->file_paths) vm_fatal(vm, "out of memory");
     }
     int64_t h = (int64_t)vm->nfiles;
     vm->file_modes[vm->nfiles] = (uint8_t)mode;
+    /* kept so that Runtime.save can name the file again: a saved image is
+       read by a process that inherited no descriptor from this one */
+    vm->file_paths[vm->nfiles] = kept;
     vm->files[vm->nfiles++] = f;
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
@@ -1697,7 +1702,12 @@ static int p_file_open(VM *vm) {
 static int p_file_close(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "file_close");
     int64_t i = ARG(0).u.i;
-    if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) { fclose(vm->files[i]); vm->files[i] = NULL; }
+    if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) {
+        fclose(vm->files[i]);
+        vm->files[i] = NULL;
+        free(vm->file_paths[i]);
+        vm->file_paths[i] = NULL;
+    }
     return ret(vm, 1, mk_unit());
 }
 static int p_file_write(VM *vm) {
@@ -2012,6 +2022,95 @@ static int p_command_args(VM *vm) {
 }
 static int p_command_name(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, vm->progname, (uint32_t)strlen(vm->progname))));
+}
+
+/* ================================================================ runtime (Runtime) */
+
+/* The counters the VM keeps for the program it is running. None of these
+   allocates, so a program reading all six sees one consistent set: only an
+   allocation can move the numbers of the heap. */
+static int p_rt_instructions(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->instructions)); }
+static int p_rt_bytes(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->bytes_allocated)); }
+static int p_rt_objects(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->objects_allocated)); }
+static int p_rt_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc_count)); }
+static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_used)); }
+static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_size)); }
+
+/* A collection on demand. It moves every object, so nothing of the heap may
+   be held in a C variable across it; the argument on the stack is unit, and
+   the collector walks the stack itself. */
+static int p_rt_collect(VM *vm) { vm_gc(vm, 0); return ret(vm, 1, mk_unit()); }
+
+/* One frame as (name, file, line, column), built on the VM stack: every
+   allocation here can collect, and the strings must survive the next one. */
+static void push_frame(VM *vm, const char *name, const char *file, int64_t line, int64_t col) {
+    vm_push(vm, mk_ptr(vm_string_from(vm, name, (uint32_t)strlen(name))));
+    vm_push(vm, mk_ptr(vm_string_from(vm, file, (uint32_t)strlen(file))));
+    vm_push(vm, mk_int(line));
+    vm_push(vm, mk_int(col));
+    Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, 4);
+    for (int i = 0; i < 4; i++) OBJ_FIELDS(t)[i] = vm->stack[vm->sp - 4 + i];
+    vm->sp -= 4;
+    vm_push(vm, mk_ptr(t));
+}
+
+/* The frames, innermost first, leaving out the innermost `skip` of them --
+   which is how Runtime keeps its own frames out of what it reports. Built
+   from the outermost inwards so that each cons puts its frame at the head. */
+static int p_rt_trace(VM *vm) {
+    INT1("rt_trace");
+    size_t skip = x < 0 ? 0 : (size_t)x;
+    vm_push(vm, mk_con0(0));
+    if (vm->frames_active && vm->fp + 1 > skip) {
+        size_t last = vm->fp - skip;
+        for (size_t i = 0; i <= last; i++) {
+            uint32_t f = vm->frames[i].func;
+            const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+            uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+            const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+            if (e && e->file < vm->prog.nfiles)
+                push_frame(vm, name, vm->prog.files[e->file], e->line, e->col);
+            else
+                push_frame(vm, name, "", 0, 0);
+            vm_cons(vm);
+        }
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
+/* Runtime.save: 0 in the world that writes the image, and 1 -- `Restored` --
+   in the world that starts again from it, which vm_resume pushes in place of
+   this call's argument. ~1 says the image could not be written. */
+static int p_rt_save(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_save");
+    char *path = malloc((size_t)s->len + 1);
+    if (!path) vm_fatal(vm, "out of memory");
+    memcpy(path, OBJ_BYTES(s), s->len);
+    path[s->len] = 0;
+    int ok = strlen(path) == s->len && vm_save(vm, path);
+    free(path);
+    return ret(vm, 1, mk_int(ok ? 0 : -1));
+}
+
+/* Runtime.restore: on success this world is gone and the loop carries on in
+   the one the image holds, which read_image has already left ready -- so
+   there is no result to return here, and none to return it onto. ~1 and the
+   old world on failure. */
+static int p_rt_restore(VM *vm) {
+    Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_restore");
+    char *path = malloc((size_t)s->len + 1);
+    if (!path) vm_fatal(vm, "out of memory");
+    memcpy(path, OBJ_BYTES(s), s->len);
+    path[s->len] = 0;
+    int ok = strlen(path) == s->len && vm_become(vm, path);
+    free(path);
+    if (ok) return PRIM_NEW_WORLD;
+    return ret(vm, 1, mk_int(-1));
+}
+
+static int p_rt_version(VM *vm) {
+    return ret(vm, 1, mk_ptr(vm_string_from(vm, RUNE_VERSION, (uint32_t)strlen(RUNE_VERSION))));
 }
 
 /* ================================================================ table (generated order from prims.def) */

@@ -1,5 +1,9 @@
 /* The system layer on POSIX. */
 #define _POSIX_C_SOURCE 200809L
+/* `realpath` is POSIX.1-2008, and a glibc new enough declares it for the line
+   above; an older one wants this as well, which a cross compiler's headers
+   showed (make test-portability). */
+#define _XOPEN_SOURCE 700
 /* off_t of 64 bits on a 32-bit system as well: file positions, sizes */
 #define _FILE_OFFSET_BITS 64
 #include "sys.h"

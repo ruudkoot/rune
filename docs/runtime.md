@@ -99,8 +99,9 @@ The exit statuses of the VM itself:
 registered; `Posix.Process.exit` ends the process at once and flushes
 nothing, as POSIX's `_exit` does. A fatal error of the VM -- a stack
 underflow, a bad opcode, an argument of the wrong kind -- prints
-`runevm: fatal error at pc N in FUNC: ...` and exits with 2. It means the
-bytecode or the VM is wrong, never the program's input.
+`runevm: fatal error at pc N in FUNC: ...` and exits with 2, where FUNC is
+what the source called the function, qualified by the structures it is in.
+It means the bytecode or the VM is wrong, never the program's input.
 
 ## Numbers
 
@@ -175,6 +176,27 @@ open files, sockets and directory streams -- and the child carries on from
 the `fork` as a copied process would (`vm/image.c`). `runevm --emulate-fork`
 takes that path on a POSIX system too, which is how `make check` tests it.
 
+The same image is what `Runtime.save` writes to a file and
+`runevm --restore` carries on, in another process and on another machine:
+nothing in the format is of a particular width or byte order, and a pointer
+into the heap is written as its distance from the start of it, so an image
+written by `bin/runevm` is restored by `bin/runevm32.exe`. What the system
+layer holds is handed to a fork's child and cannot go into a file, so a
+restored world has no sockets, directory streams or pipes; the files the
+program opened are opened again by name, where they were left.
+
+## Asking from inside
+
+Most of this page is visible to a program through `Runtime`, which is Rune's
+own and not in the specification: `Runtime.stats` gives the counters of *The
+same run twice* and of *The heap*, `Runtime.profile` the difference of two of
+them across a call, `Runtime.collect` a collection on demand, `Runtime.trace`
+the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
+this page describes under *The system layer*, and `Runtime.same` the identity
+the collector maintains. The page of the signature is
+[generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md), and
+[../examples/runtime](../examples/runtime) has a program for each part of it.
+
 ## Loading a program
 
 `runevm` treats a `.rbc` file as untrusted input: every offset, length and
@@ -185,5 +207,5 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--heap-size`, `--emulate-fork`, `--version` -- is described
+`--gc-stress`, `--heap-size`, `--emulate-fork`, `--restore`, `--version` -- is described
 in [bytecode.md](bytecode.md).

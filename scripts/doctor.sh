@@ -14,6 +14,9 @@
 #   windows mingw-w64 for both Windows VMs (make windows), and whether an
 #           .exe runs here (make test-windows); not part of all, since
 #           nothing else needs it
+#   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
+#           with qemu to run the latter (make portability,
+#           make test-portability); not part of all either
 #   build = vm mlton      hosts = mlton smlnj smlnj32 polyml
 #   all = everything but windows
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
@@ -36,7 +39,7 @@ for s in $scopes; do
     all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf" ;;
     build) expanded="$expanded vm mlton" ;;
     hosts) expanded="$expanded mlton smlnj smlnj32 polyml" ;;
-    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|windows) expanded="$expanded $s" ;;
+    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -336,6 +339,46 @@ EOF
     else warn run "$(basename "$exe") does not run here: make test-windows needs Windows or WSL"
     fi
   done
+fi
+
+if in_scope portability; then
+  section "another machine's VM (make portability, make test-portability)"
+  cat > "$tmp/port.c" << 'EOF'
+#include <stdint.h>
+#include <stdio.h>
+int main(void) {
+    uint32_t one = 1;
+    /* what the VM depends on: eight bytes of payload beside a tag, and the
+       order of the bytes, which it must not care about */
+    printf("%d %d\n", (int)sizeof(int64_t), *(char *)&one ? 1 : 0);
+    return 0;
+}
+EOF
+  if ${PORTCC32:-cc} -std=c99 -m32 -o "$tmp/port32" "$tmp/port.c" > "$tmp/port32.log" 2>&1; then
+    ok "${PORTCC32:-cc} -m32" "compiles for a 32-bit x86"
+  else
+    bad "${PORTCC32:-cc} -m32" "cannot compile for a 32-bit x86: $(head -1 "$tmp/port32.log")" gcc-multilib
+  fi
+  ppcroot=${PPCROOT:-/usr/powerpc64-linux-gnu}
+  if ! command -v "${PPCCC:-clang}" > /dev/null 2>&1; then
+    bad "${PPCCC:-clang}" "not found on PATH (the PowerPC VM)" clang
+  elif [ ! -f "$ppcroot/lib/libc.so.6" ]; then
+    bad "$ppcroot" "no libc for powerpc64 there (PPCROOT names it)" libc6-dev-ppc64-cross
+  elif "${PPCCC:-clang}" -std=c99 --target=powerpc64-linux-gnu -B"$ppcroot/bin" -L"$ppcroot/lib" \
+        -I"$ppcroot/include" -Wl,-dynamic-linker,"$ppcroot/lib/ld64.so.1" \
+        -o "$tmp/portppc" "$tmp/port.c" > "$tmp/portppc.log" 2>&1; then
+    ok "${PPCCC:-clang}" "compiles for a big-endian powerpc64"
+  else
+    bad "${PPCCC:-clang}" "cannot compile for powerpc64: $(head -1 "$tmp/portppc.log")" binutils-powerpc64-linux-gnu
+  fi
+  qemu=${QEMUPPC:-qemu-ppc64}
+  if ! command -v "${qemu%% *}" > /dev/null 2>&1; then
+    bad "${qemu%% *}" "not found on PATH: make test-portability runs the PowerPC VM with it" qemu-user
+  elif [ -x "$tmp/portppc" ] && [ "$("${qemu%% *}" -L "$ppcroot" "$tmp/portppc" 2> /dev/null)" = "8 0" ]; then
+    ok "${qemu%% *}" "runs a big-endian powerpc64 program"
+  else
+    bad "${qemu%% *}" "cannot run a powerpc64 program here" qemu-user
+  fi
 fi
 
 # ---------------------------------------------------------------- summary

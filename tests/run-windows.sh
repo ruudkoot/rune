@@ -11,7 +11,9 @@
 # bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/vm runs on
 # each VM, and a few programs run with --count on each and on bin/runevm:
 # the counts of instructions, bytes and objects must be the same, since a
-# value and an object have the same layout on all three.
+# value and an object have the same layout on all three. Last, an image of
+# Runtime.save crosses between the two systems both ways, which is the one
+# thing about vm/image.c that only two machines can show.
 #
 # The VMs do not run in this tree but in a directory on the Windows side,
 # which tests/windows-dir.sh finds and says why. Each program runs in a
@@ -189,8 +191,40 @@ for vm in $vms; do
       fi
     done
   fi
+  # An image across the two systems, both ways. Runtime.save writes the whole
+  # running program to a file and `runevm --restore` carries it on, and nothing
+  # in that file belongs to a machine or a system (vm/image.c): what this VM
+  # saves, bin/runevm must take up, and the other way about. The program prints
+  # its answer before saving and again when restored, so the two are compared
+  # with each other and nothing is written down here.
+  image="not checked"
+  name=rt.save_restore_cross
+  if [ -z "$filter" ] && [ -x bin/runevm ] && [ -f "$rbcdir/$name.rbc" ]; then
+    image=ok
+    idir=$RUNDIR/image$suffix
+    rm -rf "$idir"
+    mkdir -p "$idir/tests/out"
+    cp "$rbcdir/$name.rbc" "$idir/prog.rbc"
+    img=tests/out/$name.img
+    # this VM saves, bin/runevm restores
+    want=$(cd "$idir" && rm -f "$img" && "$VM" prog.rbc 2>&1 | tr -d '\r')
+    got=$(cd "$idir" && "$root/bin/runevm" --restore "$img" 2>&1)
+    if [ -z "$want" ] || [ "$want" != "$got" ]; then
+      echo "FAIL image $vm -> bin/runevm: \"$got\", where it was saved as \"$want\""
+      image=failed
+      status=1
+    fi
+    # bin/runevm saves, this VM restores
+    want=$(cd "$idir" && rm -f "$img" && "$root/bin/runevm" prog.rbc 2>&1)
+    got=$(cd "$idir" && "$VM" --restore "$img" 2>&1 | tr -d '\r')
+    if [ -z "$want" ] || [ "$want" != "$got" ]; then
+      echo "FAIL image bin/runevm -> $vm: \"$got\", where it was saved as \"$want\""
+      image=failed
+      status=1
+    fi
+  fi
   summary="$summary
-windows$suffix ($vm): passed $pass, failed $fail, skipped $nskip; $(tail -1 "$OUT/vm.txt"); layout $layout"
+windows$suffix ($vm): passed $pass, failed $fail, skipped $nskip; $(tail -1 "$OUT/vm.txt"); layout $layout; image $image"
 done
 echo "${summary#?}"
 exit $status

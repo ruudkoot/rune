@@ -308,3 +308,14 @@ win_wait         1  int -> int list          Wait for a child: [the code it ende
 win_dde_start    2  string * string -> int   Start a conversation of DDE with a service on a topic.
 win_dde_execute  4  int * string * int * int -> int  Execute a command in a conversation, trying again that many times while the service is busy, that many milliseconds apart.
 win_dde_stop     1  int -> int               End a conversation of DDE.
+rt_instructions  1  unit -> int              Bytecode instructions this program has executed, which `runevm --count` prints when it ends.
+rt_bytes         1  unit -> int              Bytes it has allocated in the heap, including what has since been collected.
+rt_objects       1  unit -> int              Objects it has allocated, likewise.
+rt_collections   1  unit -> int              Collections the collector has made.
+rt_live          1  unit -> int              Bytes of the current semispace that are in use: what the last collection kept plus what has been allocated since.
+rt_heap_size     1  unit -> int              The size of one semispace, in bytes.
+rt_collect       1  unit -> unit             Collect the heap now: free every unreachable object and move every surviving one.
+rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
+rt_trace         1  int -> (string * string * int * int) list  The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.
+rt_save          1  string -> int            Write the whole VM to a file, to be carried on by `runevm --restore`: 0 here, 1 in the world that starts again from it, ~1 if it could not be written.
+rt_restore       1  string -> int            Become the world in a file that Runtime.save wrote, bytecode and all; it does not come back, and gives ~1 only when the image cannot be read.

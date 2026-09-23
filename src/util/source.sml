@@ -62,6 +62,22 @@ struct
   fun load (name : string) : file =
     let val f = readFile name in register f; f end
 
+  (* The file, line and column a span starts at, for a source that was
+     loaded. Positions are put in the bytecode this way, so that the VM never
+     needs the source to name a line. *)
+  fun lineColOf ({file, start, ...} : span) : (string * int * int) option =
+    case StringMap.find (!files, file) of
+      NONE => NONE
+    | SOME f => let val (l, c) = lineCol (f, start) in SOME (file, l, c) end
+
+  (* The file, line and column a span starts at, for a source that was
+     loaded. Positions are put in the bytecode this way, so that the VM never
+     needs the source to name a line. *)
+  fun lineColOf ({file, start, ...} : span) : (string * int * int) option =
+    case StringMap.find (!files, file) of
+      NONE => NONE
+    | SOME f => let val (l, c) = lineCol (f, start) in SOME (file, l, c) end
+
   fun describe ({file, start, ...} : span) : string =
     case StringMap.find (!files, file) of
       NONE => if file = "" then "<unknown>" else file
