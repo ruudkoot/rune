@@ -55,7 +55,8 @@ struct
   (* The name a function was given in the source, by the stamp of its
      parameter, which belongs to that function alone. The code generator puts
      it in the bytecode, where it is what a disassembly and a stack trace show
-     (docs/plans/runtime.md, M4); a function that no binding names keeps `fn`.
+     (docs/bytecode.md, the function table); a function that no binding names
+     keeps `fn`.
      `structPath` is the structures being translated, innermost first, so that
      the name is the one a reader would write. *)
   val funNames : string IntMap.map ref = ref IntMap.empty

@@ -54,7 +54,7 @@ expect empty "not a Rune bytecode file" empty.rbc
 printf 'RUNE\003\000\000\000' > version.rbc
 expect version "unsupported bytecode version" version.rbc
 
-# version 1: the layout before the line table (docs/plans/runtime.md, M5)
+# version 1: the layout before the line table (docs/bytecode.md)
 printf 'RUNE\001\000\000\000' > version1.rbc
 expect version1 "unsupported bytecode version" version1.rbc
 
@@ -79,7 +79,7 @@ expect heap-size "usage:" --heap-size 18446744073709551616 empty.rbc
 expect heap-size-text "usage:" --heap-size 64M empty.rbc
 expect gc-stress "usage:" --gc-stress 18446744073709551616 empty.rbc
 
-# The debug section (docs/plans/runtime.md, M5). A whole program, then the
+# The debug section (docs/bytecode.md). A whole program, then the
 # line table broken in each of the ways the loader has to refuse. `prog` is
 # one function `f` whose only instruction is HALT, and `dbg` its files.
 prog="$header$zero$zero$one$zero$one\\001\\000\\000\\000f$one\\000"
@@ -114,7 +114,7 @@ printf "$prog$onefile$one\\005\\000\\000\\000\\000\\000\\002\\002\\000" > lineta
 expect debug-line-tail "bad line table" linetail.rbc
 
 # A fatal error names the function it happened in, which is the name the
-# compiler put in the file (docs/plans/runtime.md, M4). One function called
+# compiler put in the file (docs/bytecode.md). One function called
 # `queens`, one instruction, SELF (opcode 8) where there is no closure.
 printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010$zero$zero$zero" > named.rbc
 expect named-function "fatal error at pc 1 in queens" named.rbc

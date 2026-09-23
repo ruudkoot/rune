@@ -1,5 +1,6 @@
 #!/bin/sh
-# Every instruction comes from a line that exists (docs/plans/runtime.md, M5):
+# Every instruction comes from a line that exists (docs/bytecode.md, the line
+# table):
 #   sh scripts/check-positions.sh [-j N] [--rune BIN] [--vm BIN] [FILTER]
 #
 # The loader refuses a line table whose pc or file index is out of range, so
