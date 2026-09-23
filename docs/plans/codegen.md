@@ -9,9 +9,9 @@ against the VM's runtime. The roadmap does five things:
 * It states the facts a translator has to respect. Some of them come from
   reading the code. The rest come from a static analysis of 422 compiled
   programs, listed under *What the corpus does*.
-* It proposes twelve decisions, D1 to D12, preceded by D0, which defines
-  what "straightforward, no optimisation" allows. Two of the decisions are
-  for the owner to pick.
+* It takes twelve decisions, D1 to D12, preceded by D0, which defines
+  what "straightforward, no optimisation" allows. The owner took the open
+  ones on 2026-09-23.
 * It orders the work in nine milestones. M1 to M8 give native programs that
   pass the existing suites with the same instruction counts as runevm, plus
   debug information and a place in the performance comparison.
@@ -48,11 +48,21 @@ The owner added the following while this roadmap was being written
   now, for trying things out (M3).
 * lldb, `llvm-dwarfdump` and perf are installed now (see *Toolchain*).
 
+The owner's decisions on the roadmap (2026-09-23):
+
+* **D3:** B. A may be tried later.
+* **D8:** as proposed, to be revisited later (see *To revisit*).
+* **D11:** option 1, and `runeopt --from-image` as well. The other options
+  may be tried later. `Runtime.restore` raises `OS.SysErr` for now; a
+  compiler or an interpreter offered as a service may take its place later.
+* **The tool's name:** `runeopt`.
+
 ## Status
 
 | Milestone | State |
 |---|---|
-| M0, this roadmap | done: every claim of *Where we are* measured on `e099de5`, twelve decisions, nine milestones. D3 and D8 wait for the owner, and so does the choice D11 leaves open |
+| M0, this roadmap | done (`fe759b8`): every claim of *Where we are* measured on `e099de5`, twelve decisions, nine milestones |
+| The owner's decisions | taken on 2026-09-23: D3 = B, D8 as proposed (to revisit), D11 = option 1 with `--from-image` and `OS.SysErr` from `Runtime.restore` for another program's image, the name `runeopt` |
 | M1, the runtime as a library | not started |
 | M2, the `.rbc` reader, the validator and the tool | not started |
 | M3, every instruction translated | not started |
@@ -421,9 +431,9 @@ message on every host. On the 32-bit SML/NJ an `int` has 31 bits, while the
 file's operands are full `i32`s and its lengths `u32`s, so the reader reads
 through `Word32` or `IntInf`.
 
-The name is open. This roadmap writes `runeaot` for the tool. From it follow
-`bin/runevm-aot` for the wrapper of D9, `rune:aot` for its configuration in
-the matrix, and `scripts/aot.sh` for the script of M3.
+The owner named the tool `runeopt` on 2026-09-23. From the name follow
+`bin/runevm-opt` for the wrapper of D9, `rune:opt` for its configuration in
+the matrix, and `scripts/opt.sh` for the script of M3.
 
 Two other homes were considered and rejected:
 
@@ -465,7 +475,7 @@ Writing ELF objects and DWARF directly would free the tool from the
 assembler, at the cost of an ELF writer and a DWARF writer. That is left for
 later.
 
-### D3. Control flow (open: the owner picks)
+### D3. Control flow -- decided: B
 
 In both options the state stays in the VM's structures:
 
@@ -521,7 +531,8 @@ The costs:
 * **Windows.** Its `__chkstk` probes and its exception handling check the
   stack limits in the TEB.
 
-B is recommended for M3. A remains a later experiment in performance (M7).
+The owner chose B on 2026-09-23, with A perhaps to be tried later: a later
+experiment in performance (M7).
 It changes only the templates of CALL, TAILCALL, RET and RAISE, and the
 glue. Timing fib and tak with A and with B at M3 would say little, because
 a primitive call per arithmetic operation dominates both. The comparison
@@ -626,14 +637,15 @@ the `.s` files, not the executables.
 * gdb and lldb run a scripted smoke test: break at a line of a `.sml`, stop
   there, step.
 
-### D8. The executable's command line and messages (open: the owner picks)
+### D8. The executable's command line and messages -- decided: as proposed
 
 A native program's arguments are its own. `runevm`'s options come before
 the `.rbc`, and a native program has no `.rbc` to put them in front of.
 Precedents: MLton takes `@MLton ... --` on the command line and has
 defaults fixed at link time with `-runtime`; GHC takes `+RTS ... -RTS`, the
-variable `GHCRTS`, and `-with-rtsopts` at link time. Proposed, one question
-at a time:
+variable `GHCRTS`, and `-with-rtsopts` at link time. The owner accepted
+the following on 2026-09-23, and it is to be revisited later (see *To
+revisit*):
 
 * **Runtime options** (`--count`, `--stats`, `--heap-size`, `--gc-stress`,
   `--emulate-fork`) come from the environment variable `RUNEVM_OPTIONS`,
@@ -653,7 +665,7 @@ at a time:
 
 ### D9. Tests
 
-**The tool's own suite**, in `tests/aot`:
+**The tool's own suite**, in `tests/opt`:
 
 * **Refusals.** The malformed files of `tests/vm` are refused with the
   loader's messages, and files that break D0's facts are refused with the
@@ -669,16 +681,16 @@ at a time:
 
 **The existing suites, run natively.** Nothing about them changes:
 
-* **A wrapper.** `bin/runevm-aot [vmargs] prog.rbc [args]` translates the
+* **A wrapper.** `bin/runevm-opt [vmargs] prog.rbc [args]` translates the
   `.rbc` into a cached executable, sets `RUNEVM_OPTIONS` from `vmargs`, and
   execs the executable. It is written by the Makefile, as
   `bin/runevm-stress` is.
 * **`tests/lang` and `tests/vm`** run through
-  `tests/run-tests.sh --vm bin/runevm-aot`, with a skip list,
-  `tests/aot-skip.txt`, in the format of the portability and Windows lists.
+  `tests/run-tests.sh --vm bin/runevm-opt`, with a skip list,
+  `tests/opt-skip.txt`, in the format of the portability and Windows lists.
   Every entry gives a reason, and a category stays only while a program is
   listed under it.
-* **The Basis Library suite** runs as a configuration `rune:aot` of
+* **The Basis Library suite** runs as a configuration `rune:opt` of
   `run-matrix.sh`.
 * **`--count`.** It agrees with `runevm` for every program: all of
   `tests/lang` and all of the Basis Library suite, not the five programs
@@ -693,7 +705,7 @@ at a time:
 
 ### D10. Performance
 
-`rune:aot` joins `make perf`. The `.rbc` is compiled and translated before
+`rune:opt` joins `make perf`. The `.rbc` is compiled and translated before
 the timed body, as `load()` already compiles, so `tests/out/perf/wall.md`
 gains a column. The results go beside those of 2026-09-20 in
 [basis-compat.md](../basis-compat.md), with the time taken to translate and
@@ -707,7 +719,7 @@ The draft forbids optimising the bytecode, so the gap to MLton will stay
 large. Every value is 16 bytes in memory, and every call goes through a
 closure and a frame. How large the gap is, M7 measures.
 
-### D11. Save and restore: the options
+### D11. Save and restore -- decided: option 1, with option 6
 
 The draft asks for strategies, presented as options. Six were considered.
 Option 1 is recommended.
@@ -763,13 +775,13 @@ the counters come from the image, but a descriptor without `CLOEXEC`
 survives into the new world. This option is how option 1 could implement
 `Runtime.restore`, and how it could handle a foreign image.
 
-**6. Translate from an image.** `runeaot --from-image img` reads the program
+**6. Translate from an image.** `runeopt --from-image img` reads the program
 out of the image and makes an executable that resumes it. This answers the
 wrapper's `--restore img`, which comes with no `.rbc`.
 
-**Open: an image of another program.** `Runtime.restore` can load an image
-of a program other than the running one (`vm/image.c:641-664`). A native
-program cannot run that program's code. The choices:
+**An image of another program.** `Runtime.restore` can load an image of a
+program other than the running one (`vm/image.c:641-664`). A native program
+cannot run that program's code. The choices were:
 
 * refuse, with `OS.SysErr`;
 * exec `runevm` on the image (option 5);
@@ -777,8 +789,12 @@ program cannot run that program's code. The choices:
   close to the "interpreter presenting as a linux executable" the draft
   rules out.
 
-The first two are recommended together: exec `runevm` where it is
-installed, and refuse where it is not.
+**Decided on 2026-09-23:** option 1, and option 6 as `runeopt
+--from-image`. The others may be tried later. `Runtime.restore` of an image
+of another program raises `OS.SysErr`, and a native program that cannot
+restore at all yet (before M9) raises it for every image. A compiler or an
+interpreter offered as a service may later let it continue into another
+program.
 
 For comparison, SML/NJ's `exportML` and `exportFn` write a heap image that
 the runtime loads. Poly/ML's `SaveState` saves the heap without any thread's
@@ -849,7 +865,7 @@ Inlining a primitive that allocates is out of scope.
 * **An opcode now has four implementations**: the interpreter's case, the
   template, the SML validator's stack effect, and the prose in
   [bytecode.md](../bytecode.md). M8 writes that into `AGENTS.md`, and
-  `tests/aot`'s synthetic program fails for an opcode without a template.
+  `tests/opt`'s synthetic program fails for an opcode without a template.
 * **The `.rbc` format has three readers and writers**: `emit.sml`,
   `loader.c` and the tool's reader. A change of version changes all three.
 * **An inlined primitive changes with its C code.** Its differential test is
@@ -891,8 +907,8 @@ M1 and M2 do not depend on each other.
   * no falling off the end.
 
   It computes each function's maximum height.
-* **Disassembly.** `runeaot --disasm` prints what `runevm --disasm` prints.
-* **Suite and checks.** `tests/aot` begins with the refusals and the parity.
+* **Disassembly.** `runeopt --disasm` prints what `runevm --disasm` prints.
+* **Suite and checks.** `tests/opt` begins with the refusals and the parity.
   The analysis of *What the corpus does* becomes a test, run over every
   program that `make check` compiles.
 * **The drift listed above** is fixed.
@@ -912,7 +928,7 @@ M1 and M2 do not depend on each other.
   same output and the same `--count` as under `runevm`.
 * **Measured:** the size of the machine code, the time to translate and
   link, and the first timings (D5, D10).
-* **`scripts/aot.sh prog.sml [-o exe]`** runs `bin/rune`, then the tool,
+* **`scripts/opt.sh prog.sml [-o exe]`** runs `bin/rune`, then the tool,
   then the link, for trying things out. It is not installed.
 
 ### M4. The suites, run natively -- L
@@ -927,8 +943,9 @@ M1 and M2 do not depend on each other.
   `checkpoint`, which wait for M9.
 * **Saving.** `Runtime.save` works natively. Until M9 the wrapper hands
   `--restore` to `runevm`, so the three `.restore` tests show that
-  `runevm` resumes a native program's image. `rt.fork_image` goes on the
-  skip list until M9.
+  `runevm` resumes a native program's image. `Runtime.restore` raises
+  `OS.SysErr` natively (D11), and `rt.fork_image` goes on the skip list,
+  until M9.
 * **The `--gc-stress` and ASan runs.**
 * **The compiler, translated, compiles itself** to the same bytes.
 * **`make test-native`** joins `make check`. The doctor gates it with a
@@ -953,7 +970,7 @@ inlined is a change that can be compared against the one before.
 
 ### M6. Debug information, checked -- S
 
-D7's checks run in `tests/aot` for every program:
+D7's checks run in `tests/opt` for every program:
 
 * `llvm-dwarfdump-18` and `readelf` agree with `--disasm` about the line of
   every instruction;
@@ -965,7 +982,7 @@ by looking for its versioned names) and perf.
 
 ### M7. Performance -- M
 
-* **`rune:aot` in `make perf`**, and the table in
+* **`rune:opt` in `make perf`**, and the table in
   [basis-compat.md](../basis-compat.md) with it.
 * **A `perf record` profile** of fib, tak and the compiler compiling itself,
   with what it says about templates, primitives, allocation and collection.
@@ -976,7 +993,7 @@ pay for first.
 
 ### M8. The round-up -- M
 
-* `man/runeaot.1` and completions, both checked by `check-docs`.
+* `man/runeopt.1` and completions, both checked by `check-docs`.
 * `make install` installs the tool, `librune.a` and the glue, so that an
   installed tool links on its own.
 * A section on native code in [architecture.md](../architecture.md) and
@@ -987,18 +1004,32 @@ pay for first.
 
 ### M9. Save and restore (optional) -- M or L
 
-D11's option 1, with the choice made for an image of another program:
+D11's option 1, with option 6:
 
-* **Restoring natively.** `RUNEVM_OPTIONS=--restore` or the tool's
-  `--from-image`, the strict check of the embedded program and of the
+* **Restoring natively.** `RUNEVM_OPTIONS=--restore` resumes an image of
+  the program itself: the strict check of the embedded program and of the
   resume points, native return addresses filled in, and the counters
   reloaded.
-* **`Runtime.restore`**, by option 5 where the image is another program's.
+* **`runeopt --from-image img`** makes an executable from the program in an
+  image, and that executable resumes it. The wrapper uses it for
+  `--restore img`.
+* **`Runtime.restore`** resumes an image of the same program, and raises
+  `OS.SysErr` for an image of another.
 * **The child of an emulated fork.**
 * **Crossing.** Images cross between `runevm` and native programs in both
   directions, including the 32-bit and PowerPC VMs of
   `make test-portability`.
 * **The skip list is emptied** of its `RESTORE` entries.
+
+## To revisit
+
+* **D8**, the executable's command line and messages. The owner accepted it
+  as proposed on 2026-09-23, to be looked at again once native programs are
+  in use: `RUNEVM_OPTIONS`, the fork token in the environment, the prefix
+  `runevm:`, and `argv[0]`.
+* **D3's option A**, native call and return, as an experiment after M5.
+* **D11's other options**, and a compiler or interpreter offered as a
+  service for `Runtime.restore` of another program.
 
 ## Risks
 
@@ -1057,7 +1088,7 @@ D11's option 1, with the choice made for an image of another program:
   `--count` agrees to the byte on every VM.
 * **M2:**
   * `check-cross` with the tool, over the five hosts;
-  * `tests/aot`'s refusals and `--disasm` parity;
+  * `tests/opt`'s refusals and `--disasm` parity;
   * the corpus test over every program `make check` compiles.
 * **M3:**
   * hello, fib and tak give the same output and `--count` as under
@@ -1099,7 +1130,7 @@ D11's option 1, with the choice made for an image of another program:
 | reuse the compiler's code | D1 |
 | straightforward translation, no interpreter, no optimisation | D0, D3 and D12, the last at the owner's later request |
 | linked against heap, image and sys_posix as the runtime | D4 and M1. `prims.c` and parts of `interp.c`, `loader.c` and `main.c` are needed too (*The runtime the native code would link against*) |
-| a new test suite for the tool | D9 and `tests/aot` (M2, M3, M6) |
+| a new test suite for the tool | D9 and `tests/opt` (M2, M3, M6) |
 | native code in the existing test suites | D9 and M4 |
 | the real-time performance test compares native code with runevm and the other compilers | D10 and M7 |
 | instruction counting (bytecode equivalent) and heap statistics | D5, D6 and M4 |
