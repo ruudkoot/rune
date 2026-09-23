@@ -188,13 +188,13 @@ For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml)
 type frame = { function : string, file : string, line : int, column : int }
 ```
 
-One function on the call stack: its name as the compiler recorded it,
-qualified by the structures it is in, and where in the source it has got
-to -- the call it is waiting on, or, for the innermost, the expression
-being evaluated.
+One function on the call stack, and where in the source it has got to.
 
-A function the source gives no name is `fn`. Where the program carries
-no position for the instruction, `file` is `""` and both numbers are 0.
+`function` is the name the compiler recorded, qualified by the structures
+it is in; a function the source gives no name is `fn`. The position is
+the call the function is waiting on, or, for the innermost frame, the
+expression being evaluated. Where the program carries no position for
+that instruction, `file` is `""` and both numbers are 0.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -288,9 +288,11 @@ val save : string -> world
 ```
 
 `save file` writes the whole running program to `file` and is [`Saved`](#con-saved).
+
 A VM started as `runevm --restore file` carries on from inside that same
-call, where it is [`Restored`](#con-restored): one call, two worlds, as [`Posix.Process.fork`](../sig/POSIX_PROCESS.md#val-fork)
-gives a pid to one process and 0 to another.
+call, where it is [`Restored`](#con-restored): one call and two worlds, as
+[`Posix.Process.fork`](../sig/POSIX_PROCESS.md#val-fork) gives a pid to one process and 0 to another. The
+file is not used up by being restored.
 
 What is written is everything the program is made of -- the heap, the
 stacks, the counters, and the files it has open, which are opened again
@@ -298,7 +300,7 @@ by name and put back where they were left. What belongs to the process
 rather than to the program is not: a socket, a directory stream and a
 pipe are the system's, and a restored world does not have them.
 
-Raises [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the image cannot be written.
 
 <details><summary>Tests (2)</summary>
 

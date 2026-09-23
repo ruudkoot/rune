@@ -27,7 +27,12 @@ the monomorphic vectors, arrays, slices and two-dimensional arrays, `Posix`,
 `Unix`, the sockets and the network databases, the fixed-width `IntN` and
 `WordN`, `Real32`, the wide characters with `WideTextIO`, `Pack*`), and
 `Windows`, whose calls of the system answer on the VMs of Windows (`make
-windows`; [docs/basis-compat.md](docs/basis-compat.md)).
+windows`; [docs/basis-compat.md](docs/basis-compat.md)). Beside it Rune has
+two structures of its own: `INet6Sock`, which the specification predates, and
+`Runtime`, which is the machine a program is running on -- its counters, a
+`profile`, a collection on demand, a stack trace, and `save`, which writes the
+whole running program to a file for `runevm --restore` to take up again
+([examples/runtime](examples/runtime)).
 
 **[docs/language.md](docs/language.md)** is the authoritative, test-backed
 description of the supported language. Every feature row there has an id
@@ -50,7 +55,7 @@ differently. `runedoc` generates it from the comments of `lib/basis`
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
 | `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
-| `examples/` | small programs |
+| `examples/` | small programs; `examples/runtime/` is the `Runtime` structure, which is Rune's own |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh`, `install.sh` |
 | `man/`, `completions/` | man pages and shell completions, installed by `make install` |
 

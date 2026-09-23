@@ -48,8 +48,11 @@ seven bits at a time, least significant first, with the top bit of a byte
 saying that another follows; the three that may be negative are folded to a
 natural number first (`n` becomes `2n`, and `-n` becomes `2n - 1`) so that a
 small difference stays one byte either way. The table is about four bytes an
-entry, and costs 18% of a file: `examples/nqueens.rbc` is 48,621 bytes where
-without it it would be 41,077.
+entry, and costs 14% of a file: `examples/nqueens.rbc` is 46,672 bytes where
+without it it would be 41,077. A variable, a constant, a selector and a
+`_prim` carry no position of their own -- none of them can fail or call, so
+the position of whatever contains them is the one worth having -- which is
+what keeps the table to that, and the compiler within its budgets.
 
 The loader refuses a table that does not decode, that has bytes left over, or
 whose `pc` is past the code, whose file is not one the table names, or whose

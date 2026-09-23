@@ -216,6 +216,19 @@ knows the family, which the page allows (`AF.list` "returns a list of all the
 available address families"), and `NetHostDB` stays what the specification
 defines.
 
+`Runtime` is the other structure of Rune's own, and the one the specification
+had no reason to have: it is about the implementation a program is running on
+rather than about anything the language defines. It gives a program the
+counters the VM keeps anyway (instructions, bytes, objects, collections), a
+`profile` that reports what a call cost, a collection on demand, the call
+stack as data, the identity `=` uses for a `ref` where `=` is not available,
+the version, and `save`, which writes the whole running program to a file for
+`runevm --restore` to carry on. Nothing there ports, and nothing there is
+needed to write Standard ML: a program that only wants the time a computation
+took should use `Timer`, which is the specification's
+([generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md),
+[../examples/runtime](../examples/runtime)).
+
 No check of the suite fails on Rune.
 
 `WideChar` is there: a wide character is a Unicode code point (`maxOrd`

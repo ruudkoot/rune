@@ -47,7 +47,7 @@ out=tests/out/positions
 rm -rf "$out"; mkdir -p "$out"
 
 sources=""
-for src in tests/lang/*.sml examples/*.sml; do
+for src in tests/lang/*.sml examples/*.sml examples/*/*.sml; do
   case "$src" in *"$filter"*) [ -f "$src" ] && sources="$sources $src" ;; esac
 done
 

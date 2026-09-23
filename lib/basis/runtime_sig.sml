@@ -83,13 +83,13 @@ sig
      the program means. *)
   val collect : unit -> unit
 
-  (* One function on the call stack: its name as the compiler recorded it,
-     qualified by the structures it is in, and where in the source it has got
-     to -- the call it is waiting on, or, for the innermost, the expression
-     being evaluated.
+  (* One function on the call stack, and where in the source it has got to.
 
-     A function the source gives no name is `fn`. Where the program carries
-     no position for the instruction, `file` is `""` and both numbers are 0. *)
+     `function` is the name the compiler recorded, qualified by the structures
+     it is in; a function the source gives no name is `fn`. The position is
+     the call the function is waiting on, or, for the innermost frame, the
+     expression being evaluated. Where the program carries no position for
+     that instruction, `file` is `""` and both numbers are 0. *)
   type frame = { function : string, file : string, line : int, column : int }
 
   (* `trace ()` is the frames, innermost first, of the call stack as it
@@ -128,9 +128,11 @@ sig
   datatype world = Saved | Restored
 
   (* `save file` writes the whole running program to `file` and is `Saved`.
+
      A VM started as `runevm --restore file` carries on from inside that same
-     call, where it is `Restored`: one call, two worlds, as `Posix.Process.fork`
-     gives a pid to one process and 0 to another.
+     call, where it is `Restored`: one call and two worlds, as
+     `Posix.Process.fork` gives a pid to one process and 0 to another. The
+     file is not used up by being restored.
 
      What is written is everything the program is made of -- the heap, the
      stacks, the counters, and the files it has open, which are opened again
@@ -138,7 +140,7 @@ sig
      rather than to the program is not: a socket, a directory stream and a
      pipe are the system's, and a restored world does not have them.
 
-     Raises `OS.SysErr` if the image cannot be written. *)
+     Raises: `OS.SysErr` if the image cannot be written. *)
   val save : string -> world
 
   (* The version of Rune that this program is running on, as

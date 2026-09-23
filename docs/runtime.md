@@ -185,6 +185,18 @@ layer holds is handed to a fork's child and cannot go into a file, so a
 restored world has no sockets, directory streams or pipes; the files the
 program opened are opened again by name, where they were left.
 
+## Asking from inside
+
+Most of this page is visible to a program through `Runtime`, which is Rune's
+own and not in the specification: `Runtime.stats` gives the counters of *The
+same run twice* and of *The heap*, `Runtime.profile` the difference of two of
+them across a call, `Runtime.collect` a collection on demand, `Runtime.trace`
+the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
+this page describes under *The system layer*, and `Runtime.same` the identity
+the collector maintains. The page of the signature is
+[generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md), and
+[../examples/runtime](../examples/runtime) has a program for each part of it.
+
 ## Loading a program
 
 `runevm` treats a `.rbc` file as untrusted input: every offset, length and
