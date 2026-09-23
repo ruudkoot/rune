@@ -52,6 +52,26 @@ struct
      variable still gets its closure, for the uses that are not applications. *)
   val primAliases : string IntMap.map ref = ref IntMap.empty
 
+  (* The name a function was given in the source, by the stamp of its
+     parameter, which belongs to that function alone. The code generator puts
+     it in the bytecode, where it is what a disassembly and a stack trace show
+     (docs/plans/runtime.md, M4); a function that no binding names keeps `fn`.
+     `structPath` is the structures being translated, innermost first, so that
+     the name is the one a reader would write. *)
+  val funNames : string IntMap.map ref = ref IntMap.empty
+  val structPath : string list ref = ref []
+
+  fun qualified name = String.concatWith "." (List.rev (name :: !structPath))
+
+  (* Name e and, where it is curried, the functions inside it: they are all
+     the one function of the source. *)
+  fun nameFun (name : string, e : lexp) : unit =
+    let
+      val q = qualified name
+      fun go (Fn (x, b)) = (funNames := IntMap.insert (!funNames, x, q); go b)
+        | go _ = ()
+    in go e end
+
   fun primAliasOf (e : exp) : string option =
     case e of
       ETyped (e, _, _) => primAliasOf e
@@ -186,6 +206,9 @@ struct
         let
           val loop = MatchComp.freshVar ()
           val u = MatchComp.freshVar ()
+          (* the loop is a function of the translation, not of the source, so
+             a trace calls it `while` rather than giving it a stamp *)
+          val () = funNames := IntMap.insert (!funNames, u, "while")
         in
           LetRec ([(loop, Fn (u, If (transExp c, Seq (transExp b, App (Var loop, Unit)), Unit)))],
                   App (Var loop, Unit))
@@ -256,13 +279,14 @@ struct
         let
           fun one ((p, e), k) =
             case p of
-              PVar (_, slot, sp) =>
+              PVar ((_, vname), slot, sp) =>
                 (case patInfo (slot, sp) of
                    PIVar (stamp, g) =>
                      (case primAliasOf e of
                         SOME prim => primAliases := IntMap.insert (!primAliases, stamp, prim)
                       | NONE => ();
-                      MatchComp.bindVar (stamp, g, transExp e, k ()))
+                      let val e' = transExp e
+                      in nameFun (vname, e'); MatchComp.bindVar (stamp, g, e', k ()) end)
                  | _ => general (p, e, k))
             | PWild _ => Seq (transExp e, k ())
             | _ => general (p, e, k)
@@ -280,7 +304,12 @@ struct
             case recBindVars p of
               SOME (vs, _) => List.map (fn (_, slot, sp) => patInfo (slot, sp)) vs
             | NONE => bug (spanOfPat p, "val rec pattern")
-          val groups = List.map (fn (p, e) => (vars p, transExp e)) binds
+          fun nameOf p = case recBindVars p of SOME ((n, _, _) :: _, _) => SOME n | _ => NONE
+          val groups =
+            List.map (fn (p, e) =>
+                        let val e' = transExp e
+                        in case nameOf p of SOME n => nameFun (n, e') | NONE => (); (vars p, e') end)
+                     binds
           val primaries =
             List.map (fn ([], e) => (PIVar (MatchComp.freshVar (), false), e)
                        | (v :: _, e) => (v, e)) groups
@@ -300,8 +329,10 @@ struct
               val params = List.tabulate (arity, fn _ => MatchComp.freshVar ())
               val clauses = List.map (fn {pats, body, ...} => (pats, transExp body)) (#clauses f)
               val body = MatchComp.compileClauses (params, clauses, raiseBuiltin exnMatch)
+              val fn' = List.foldr Fn body params
+              val () = nameFun (#name f, fn')
             in
-              (patInfo (#info f, #span f), List.foldr Fn body params)
+              (patInfo (#info f, #span f), fn')
             end
         in transRecBindings (List.map transFundef fundefs, k) end
     | DType _ => k ()
@@ -326,7 +357,13 @@ struct
     | DStructure (binds, _) =>
         let
           fun go [] = k ()
-            | go ((b : strbind) :: rest) = transStrexp (#strexp b, fn () => go rest)
+            | go ((b : strbind) :: rest) =
+                let
+                  val saved = !structPath
+                  val () = structPath := #name b :: saved
+                in
+                  transStrexp (#strexp b, fn () => (structPath := saved; go rest))
+                end
         in go binds end
     | DSignature _ => k ()
     | DFunctor _ => k ()
@@ -363,5 +400,6 @@ struct
         else LetRec (List.map (fn (pi, e) => (stampOf (pi, e), e)) bs, k ())
     end
 
-  fun transProgram (decs : dec list) : lexp = transDecs (decs, fn () => Unit)
+  fun transProgram (decs : dec list) : lexp =
+    (funNames := IntMap.empty; structPath := []; transDecs (decs, fn () => Unit))
 end

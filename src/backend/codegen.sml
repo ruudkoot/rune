@@ -56,10 +56,13 @@ struct
   val globals : int IntMap.map ref = ref IntMap.empty
   val nglobals = ref 0
   val nextLabel = ref 0
+  (* What the source called each function, by the stamp of its parameter;
+     `compile` is given it by the translation. *)
+  val funNames : string IntMap.map ref = ref IntMap.empty
 
   fun reset () =
     (funcs := []; nextFuncId := 0; consts := []; nconsts := 0; constIndex := StringMap.empty;
-     globals := IntMap.empty; nglobals := 0; nextLabel := 0)
+     globals := IntMap.empty; nglobals := 0; nextLabel := 0; funNames := IntMap.empty)
 
   fun newLabel () = let val l = !nextLabel in nextLabel := l + 1; l end
 
@@ -215,7 +218,14 @@ struct
       : (int * int) list =
     let
       val fvs = List.filter (fn v => SOME v <> self) (freeVars (Fn (x, body)))
-      val name = case self of SOME s => "fn" ^ Int.toString s | NONE => "fn"
+      (* The name the source gave this function, by the stamp of its
+         parameter (Translate.funNames). One that no binding names keeps
+         `fn`, with its own stamp where it is recursive, so that two of them
+         can still be told apart in a disassembly. *)
+      val name =
+        case IntMap.find (!funNames, x) of
+          SOME n => n
+        | NONE => (case self of SOME s => "fn" ^ Int.toString s | NONE => "fn")
       val fid = genFunction (x, body, fvs, self, name)
       val patches =
         #1 (List.foldl (fn (v, (ps, i)) =>
@@ -250,9 +260,10 @@ struct
     end
 
   (* ---------------------------------------------------------------- *)
-  fun compile (top : lexp) : program =
+  fun compile (top : lexp, names : string IntMap.map) : program =
     let
       val () = reset ()
+      val () = funNames := names
       val dummyParam = Elaborate.freshStamp ()
       val _ = genFunction (dummyParam, top, [], NONE, "<toplevel>")
       val sorted = IntMap.listItems (List.foldl (fn (f : func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (!funcs))

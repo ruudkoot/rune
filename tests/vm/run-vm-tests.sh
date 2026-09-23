@@ -75,6 +75,12 @@ expect heap-size "usage:" --heap-size 18446744073709551616 empty.rbc
 expect heap-size-text "usage:" --heap-size 64M empty.rbc
 expect gc-stress "usage:" --gc-stress 18446744073709551616 empty.rbc
 
+# A fatal error names the function it happened in, which is the name the
+# compiler put in the file (docs/plans/runtime.md, M4). One function called
+# `queens`, one instruction, SELF (opcode 8) where there is no closure.
+printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010" > named.rbc
+expect named-function "fatal error at pc 1 in queens" named.rbc
+
 # the child of a fork by a second VM (vm/image.c) with no image to read:
 # standard input is empty, and x names no descriptor or handle
 expect resume "no image to resume from" --resume 0

@@ -99,8 +99,9 @@ The exit statuses of the VM itself:
 registered; `Posix.Process.exit` ends the process at once and flushes
 nothing, as POSIX's `_exit` does. A fatal error of the VM -- a stack
 underflow, a bad opcode, an argument of the wrong kind -- prints
-`runevm: fatal error at pc N in FUNC: ...` and exits with 2. It means the
-bytecode or the VM is wrong, never the program's input.
+`runevm: fatal error at pc N in FUNC: ...` and exits with 2, where FUNC is
+what the source called the function, qualified by the structures it is in.
+It means the bytecode or the VM is wrong, never the program's input.
 
 ## Numbers
 

@@ -142,7 +142,7 @@ struct
         let
           val lam = Translate.transProgram (preludeProg @ userProg)
           val () = if !Options.dumpLambda then println (Lambda.toString lam) else ()
-          val prog = Codegen.compile lam
+          val prog = Codegen.compile (lam, !Translate.funNames)
           val () = if !Options.dumpCode then print (Codegen.dump prog) else ()
           val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
         in

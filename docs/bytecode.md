@@ -19,6 +19,10 @@ consts      nconsts × constant
 nglobals    u32       number of global slots
 nfuncs      u32
 funcs       nfuncs × { code_offset u32, nlocals u32, name_len u32, name bytes }
+            # name is what the source called the function, qualified by the
+            # structures it is in (`StringCvt.padLeft`); `fn` where nothing
+            # names it, `while` for the loop of a while, `<toplevel>` for the
+            # program itself. `--disasm` and a fatal error print it.
 code_len    u32
 code        code_len bytes
 ```
