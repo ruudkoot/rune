@@ -31,6 +31,10 @@
 #   make windows    the VM for Windows with mingw-w64, 64-bit and 32-bit
 #                   (docs/building.md); it and make test-windows are apart
 #                   from every other target
+#   make portability  the VM for a 32-bit x86 and for a big-endian 64-bit
+#                   PowerPC; make test-portability runs both suites on them,
+#                   the PowerPC one under qemu, and checks that an image of
+#                   one is read by the others
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
 #
@@ -100,7 +104,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows portability test-portability docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -270,6 +274,62 @@ bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
 	RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+
+# ------------------------------------------------------------- portability
+# The VM on machines this one is not: a 32-bit x86, where a pointer is four
+# bytes, and a 64-bit PowerPC, where a number is the other way round. Both
+# are Linux, so only the VM differs -- the bytecode is the same file -- and
+# the point is what they do not share with the machine that built them: the
+# width of a pointer, the alignment an ABI gives an int64_t, and the order of
+# the bytes in a word. An image written by one is read by another, which is
+# the strongest thing the format claims (vm/image.c).
+#
+# The 64-bit PowerPC VM is big-endian and runs under qemu; its compiler is
+# clang, which cross-compiles without a gcc for the target, with the linker
+# and headers of the sysroot the distribution's binutils and libc provide.
+PORTCC32   ?= $(CC)
+# -msse2 -mfpmath=sse for the same reason the 32-bit Windows VM has them: the
+# x87 stack holds a double with more bits than a double has, so arithmetic that
+# stays in a register rounds differently from arithmetic on any other machine.
+# Without them `Real.round` of a number just below a half gives 1 here and 0
+# everywhere else.
+PORTFLAGS32 ?= -m32 -msse2 -mfpmath=sse
+PPCCC      ?= clang
+PPCROOT    ?= /usr/powerpc64-linux-gnu
+# -rpath as well as -L: the sysroot's libraries are not on the loader's path,
+# and the VM must be loadable however it is started -- by the wrapper, which
+# gives qemu -L, and by the kernel through binfmt_misc, which gives it nothing
+# (that is what a fork by a second VM needs; tests/portability-skip.txt).
+PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
+              -Wl,-dynamic-linker,$(PPCROOT)/lib/ld64.so.1 -Wl,-rpath,$(PPCROOT)/lib
+QEMUPPC    ?= qemu-ppc64
+PORT_TIMEOUT ?= 900
+
+portability: bin/runevm32 bin/runevm-ppc64
+
+bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -o $@ $(VM_SRCS) -lm
+
+# As with the host builds of the compiler, the name is a wrapper and the
+# payload sits beside it: every runner takes --vm bin/runevm-ppc64 and needs
+# to know nothing of qemu.
+bin/runevm-ppc64.bin: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -o $@ $(VM_SRCS) -lm
+
+bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
+	chmod +x $@
+
+# The PowerPC VM runs under an emulator and is about ten times slower, so the
+# Basis suite gets longer than the two minutes a program is otherwise given:
+# the largest of the monomorphic tests takes 34 s here and about six minutes
+# there.
+test-portability: portability $(RUNE) vm
+	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm32 --vm bin/runevm-ppc64
+	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
+	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 
 # ---------------------------------------------------------------- tests
 # Depending on $(RUNE) builds whichever compiler the override names.

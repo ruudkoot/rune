@@ -22,6 +22,12 @@
    encoder writes into the stream's own buffer; a first version called stdio
    once a field and was 44% slower for each MB of live heap.
 
+   A fork this way costs about 30 ms and 3 to 4 ms for each MB of live heap,
+   most of the fixed part being the start of a process. The child checks the
+   program it is given as the loader checks a .rbc, which costs about 3 us for
+   each KB of code -- 14 us for a small program, 1.5 ms for bin/rune.rbc, the
+   largest in the tree -- and is not worth a way to turn off (docs/building.md).
+
    Every number is little-endian and
    as many bytes wide as the format says, never as many as the machine has,
    and a pointer into the heap is written as its distance from the start of

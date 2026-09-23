@@ -105,6 +105,19 @@ keep these invariants:
   `make test-windows` passes on both (`tests/lang`, `tests/vm` and the Basis
   Library suite; about 8 minutes). It needs the mingw-w64 toolchains and a
   Windows to run the `.exe`s, which is what `make doctor` reports.
+* `make check` also builds the VM for one machine only, so it says nothing
+  about a machine of another width or another byte order. `make portability`
+  builds it for a 32-bit x86 and for a big-endian 64-bit PowerPC, and
+  `make test-portability` runs `tests/lang`, `tests/vm` and the Basis Library
+  suite on both -- the PowerPC one under qemu -- checks that the counts of
+  `--count` agree to the byte on every VM, and carries an image of
+  `Runtime.save` between them in every direction. A change to the layout of a
+  value, to the heap, to the bytecode format or to `vm/image.c` is not done
+  until it passes. It needs a 32-bit libc, clang, a powerpc64 sysroot and
+  qemu, which `make doctor --scope portability` reports. Two bugs it found
+  when it was written: a `Value` of 12 bytes where the 32-bit System V ABI
+  aligns an `int64_t` to four, and `realpath` undeclared under an older
+  glibc's headers.
 * `tests/external/run-mlton.sh DIR` runs MLton's regression programs
   (`regression/` of github.com/MLton/mlton, not part of this repository) as
   an external conformance corpus; `tests/external/mlton-skip.txt` lists the

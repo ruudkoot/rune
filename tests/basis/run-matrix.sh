@@ -7,12 +7,16 @@
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
 #   rune:windows  rune:windows32
+#   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
+#                          x86, and a big-endian 64-bit PowerPC under qemu
+#                          (make portability; RUNEVM_LINUX32=, RUNEVM_PPC64=)
 #                          bin/rune + bin/runevm.exe or bin/runevm32.exe, the
 #                          VMs of make windows (RUNEVM_WINDOWS=,
 #                          RUNEVM_WINDOWS32=); a program runs in a directory
 #                          on the Windows side (tests/windows-dir.sh), and
 #                          needs Windows, or WSL, which starts an .exe
 #   windows                rune:windows and rune:windows32
+#   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
 #                          the suite against the host's own Basis Library
 #   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml
@@ -831,6 +835,7 @@ expand() {
       xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 ;;
+      portability) echo rune:linux32 rune:ppc64 ;;
       *) echo "$c" ;;
     esac
   done
@@ -862,6 +867,20 @@ resolve() {
         RUNE_WINDOWS_DIR=$(sh "$root/tests/windows-dir.sh") || { echo "run-matrix: no directory on the Windows side; set RUNE_WINDOWS_DIR" >&2; return 1; }
         export RUNE_WINDOWS_DIR
       fi
+      ;;
+    rune:linux32|rune:ppc64)
+      # The library and the compiler of the `rune` configuration on a VM of
+      # another machine (make portability): a 32-bit x86, and a big-endian
+      # 64-bit PowerPC, which its own wrapper runs under qemu. Nothing of the
+      # suite differs -- the bytecode is the same file -- so what is tested is
+      # the VM.
+      cmd1=${RUNE:-$root/bin/rune}
+      if [ "$host" = linux32 ]; then cmd2=${RUNEVM_LINUX32:-$root/bin/runevm32}
+      else cmd2=${RUNEVM_PPC64:-$root/bin/runevm-ppc64}
+      fi
+      id=rune:$host
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make portability)" >&2; return 1; }
+      "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
       ;;
     native:mlton|xc1:mlton)
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}

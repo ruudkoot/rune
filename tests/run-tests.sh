@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rune test runner.
-#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--update] [-j N] [FILTER]
+#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--skip FILE] [--update] [-j N] [FILTER]
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .args (command line words for
@@ -23,6 +23,7 @@ export TZ
 
 rune=bin/rune
 vm=bin/runevm
+skip=""
 update=0
 jobs=""
 one=""
@@ -34,6 +35,7 @@ while [ $# -gt 0 ]; do
     --update) update=1; shift ;;
     -j) jobs=$2; shift 2 ;;
     --one) one=$2; shift 2 ;;
+    --skip) skip=$2; shift 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -149,10 +151,23 @@ if [ -n "$one" ]; then
 fi
 
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
+# A skip file names the programs to leave out, one to a line, with a reason
+# after the name; a line beginning with # is a comment. Only a runner that
+# gives the VM of another machine uses it (tests/run-portability.sh).
+skipped=""
+nskip=0
+if [ -n "$skip" ]; then
+  skipped=$(sed -e 's/#.*//' -e 's/[[:space:]].*//' "$skip" | grep -v '^$' | tr '\n' ' ')
+fi
+is_skipped() { case " $skipped " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
+
 tests=""
 for src in tests/lang/*.sml tests/errors/*.sml; do
   [ -f "$src" ] || continue
-  case "$(basename "$src" .sml)" in *"$filter"*) tests="$tests $src" ;; esac
+  name=$(basename "$src" .sml)
+  case "$name" in *"$filter"*) ;; *) continue ;; esac
+  if is_skipped "$name"; then nskip=$((nskip + 1)); continue; fi
+  tests="$tests $src"
 done
 
 rm -f "$out"/*.result
@@ -182,6 +197,8 @@ for src in $tests; do
   esac
 done
 
-echo "passed $pass, failed $fail"
+if [ "$nskip" -gt 0 ]; then echo "passed $pass, failed $fail, skipped $nskip"
+else echo "passed $pass, failed $fail"
+fi
 [ -n "$failed" ] && echo "failed:$failed"
 [ "$fail" = 0 ]

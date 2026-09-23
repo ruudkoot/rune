@@ -1,0 +1,22 @@
+# Programs that `make test-portability` leaves out, one per line
+# (tests/run-portability.sh):
+#
+#   NAME CATEGORY: reason
+#
+# The list is empty: both VMs, bin/runevm32 and bin/runevm-ppc64, run every
+# program of tests/lang (docs/building.md). A category is added here again only
+# with a program to go under it.
+#
+# A fork by a second VM starts it by exec of the VM's own binary, and qemu-user
+# does not emulate a program it is given by exec: the kernel has to know what a
+# PowerPC binary is. So `rt.fork_image` needs qemu registered under
+# /proc/sys/fs/binfmt_misc, which on WSL systemd will not do for itself -- it
+# ships ConditionVirtualization=!wsl for systemd-binfmt.service, to keep its
+# own WSLInterop registration, which make test-windows needs. Register it
+# beside that one rather than by starting the service, which flushes every
+# registration first:
+#
+#   sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register'
+#
+# The VM is linked with an rpath so that it loads either way, since binfmt
+# gives qemu no -L (Makefile, PPCFLAGS).

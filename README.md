@@ -79,6 +79,14 @@ make check         # everything
 make install       # install under PREFIX; sudo make install goes to /usr/local
 ```
 
+Two suites stand apart from `make check`, because each needs a machine this
+one is not. `make windows` builds the VM for Windows in both widths and
+`make test-windows` runs the suites on them; `make portability` builds it for
+a 32-bit x86 and a big-endian 64-bit PowerPC and `make test-portability` runs
+the suites on those, under qemu for the PowerPC. Both check that the counts of
+`runevm --count` are the same on every VM and that an image of `Runtime.save`
+written by one is taken up by another ([docs/building.md](docs/building.md)).
+
 `bin/rune` runs on the VM, so it is about 35× slower than a host build.
 `make test RUNE=bin/rune-mlton` runs the same suite with the MLton build and
 is the faster loop while iterating; every target that runs the compiler takes

@@ -145,6 +145,22 @@ on from the `fork` as a copied process would. `runevm --emulate-fork` takes
 the same path on Linux, so that `make check` tests the image
 (`tests/lang/rt.fork_image`), which the Windows suites cannot do under ASan.
 
+**What a fork of this kind costs**, measured with `--emulate-fork` on a
+64-bit Linux VM, best of five runs of twenty forks: about 30 ms, and about
+3 to 4 ms for each MB of live heap -- so 30 ms with nothing live, 93 ms with
+16 MB and 267 ms with 64 MB, against 0 to 2 ms for a real `fork`. Most of the
+fixed part is starting a process; the rest is the image through a pipe.
+
+The child checks the program in the image as it would a `.rbc`, since
+`Runtime.restore` means an image can now come from a file rather than only
+from a parent (`vm/loader.c`, `validate_program`). That check costs about
+3 µs for each KB of code: 14 µs for a program of the size of
+`examples/hello.sml`, and 1.5 ms for `bin/rune.rbc`, which at 479 KB of code
+in 2,343 functions is the largest program in the tree. Against the 30 ms a
+fork costs anyway that is under a tenth of a percent for an ordinary program
+and about 5% for the largest, so there is no way to turn it off: an image that
+is not checked is a way to run code that was never loaded.
+
 Both VMs run every program of `tests/lang`; `tests/windows-skip.txt` names
 those to leave out, with a reason for each, and is empty. The checks of the
 Basis Library suite that do not pass are the `WINDOWS` lines of
@@ -160,6 +176,59 @@ the drive letters and backslashes of Windows, which is why a path of a drive
 reaches a program as `/C:/...`; `bin/rune` itself is not run on the Windows
 VMs, only the VM is built and tested there; and nothing of this runs in
 continuous integration.
+
+## Another machine's VM
+
+`make check` builds the VM for this machine alone, so it says nothing about a
+machine of another width or another order of bytes. `make portability` builds
+two more, both Linux, so that only the VM differs:
+
+| | |
+|---|---|
+| `bin/runevm32` | a 32-bit x86, where a pointer is four bytes and the System V ABI aligns an `int64_t` to four |
+| `bin/runevm-ppc64` | a 64-bit PowerPC, big-endian; a wrapper that runs `bin/runevm-ppc64.bin` under `qemu-ppc64`, as `bin/rune-mlton` wraps its payload |
+
+The PowerPC one is built with clang, which cross-compiles without a gcc for
+the target, using the linker and the headers of a sysroot (`PPCROOT`, by
+default `/usr/powerpc64-linux-gnu`). `make doctor --scope portability` says
+what is missing and what to install.
+
+`make test-portability` runs `tests/lang` and `tests/vm` on each, and the Basis
+Library suite as the configurations `rune:linux32` and `rune:ppc64`. Then two
+things no single VM can show:
+
+* the counts of `runevm --count` must agree **to the byte** on every VM and on
+  this one. They are the instructions executed and the bytes and objects
+  allocated, and they depend on the program and its input alone, so a VM that
+  lays out a value differently says so here.
+* an image of `Runtime.save` must cross **in every direction**: each VM writes
+  one and each of the others reads it. The program prints its answer before
+  saving and again once restored, so the two are compared with each other.
+
+The PowerPC VM is linked with an rpath as well as `-L`, so that it loads both
+when the wrapper starts it and when the kernel does. That second way is what a
+fork by a second VM needs: it starts the child by exec of the VM's own binary,
+and qemu-user does not emulate a program it is handed by exec -- the kernel has
+to know what a PowerPC binary is, which means qemu registered under
+`/proc/sys/fs/binfmt_misc`. On WSL systemd will not do that for itself, since
+it ships `ConditionVirtualization=!wsl` for `systemd-binfmt.service` to keep
+its own `WSLInterop` registration, which `make test-windows` needs; register
+qemu beside that one rather than by starting the service, which flushes every
+registration first (`tests/portability-skip.txt` has the command). Without it,
+`rt.fork_image` is the one program to leave out.
+
+It found two bugs when it was written. A `Value` was 12 bytes on a 32-bit
+Linux, where the ABI aligns an `int64_t` to four and every other target
+Rune builds for aligns it to eight -- so every object of the heap was a
+different size there, the counts disagreed, and an image would not have
+crossed; the padding is now written out (`vm/vm.h`, and
+[plans/performance.md](plans/performance.md) for why 16 bytes and not 12). And
+`vm/sys_posix.c` asked for `_POSIX_C_SOURCE` alone, under which an older
+glibc's headers do not declare `realpath`.
+
+Nothing here is part of `make check`, and nothing here is Windows: the VMs of
+Windows are `make test-windows`, which carries an image between Windows and
+this system in the same way.
 
 ## Installing
 

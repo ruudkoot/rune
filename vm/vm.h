@@ -17,8 +17,18 @@ enum Tag { T_UNIT = 0, T_INT, T_WORD, T_REAL, T_CHAR, T_CON0, T_PTR };
 
 typedef struct Obj Obj;
 
+/* 16 bytes on every VM, which the heap's layout and the counts of --count
+   both depend on and an image relies on (vm/image.c). The padding is written
+   out rather than left to the machine: the i386 System V ABI aligns an
+   `int64_t` to 4, where x86-64, PowerPC and the Windows compilers align it to
+   8, and without this a Value is 12 bytes there and every object of the heap
+   a different size (make test-portability). A narrower Value on 32-bit
+   machines would save 0.46% of the heap and cost more than that: the reasons
+   are written down under "Value representation" in docs/plans/performance.md,
+   which is also where the padding of the payload is weighed. */
 typedef struct Value {
     uint8_t tag;
+    uint8_t pad[7];
     union {
         int64_t i;   /* T_INT, T_CHAR, T_CON0 (constructor tag) */
         uint64_t w;  /* T_WORD */
