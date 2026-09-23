@@ -37,6 +37,12 @@ struct
     | ExnCon of lexp
     | ExnArg of lexp
     | Prim of string * lexp list
+    | Mark of Source.span * lexp          (* where in the source this came from *)
+
+  (* The expression under whatever positions were put on it. Code that looks
+     at the shape of an expression asks for this first. *)
+  fun unmark (Mark (_, e)) = unmark e
+    | unmark e = e
 
   val falseExp = Con0 0
   val trueExp = Con0 1
@@ -88,5 +94,6 @@ struct
         | ExnCon a => "exncon " ^ go a
         | ExnArg a => "exnarg " ^ go a
         | Prim (p, args) => p ^ "(" ^ String.concatWith ", " (List.map go args) ^ ")"
+        | Mark (_, e) => go e
     in go e end
 end

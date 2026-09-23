@@ -25,7 +25,37 @@ funcs       nfuncs × { code_offset u32, nlocals u32, name_len u32, name bytes }
             # program itself. `--disasm` and a fatal error print it.
 code_len    u32
 code        code_len bytes
+nfiles      u32
+files       nfiles × { len u32, bytes }      # the sources, as given on the command line
+nlines      u32
+table_len   u32
+lines       table_len bytes                  # nlines entries; see below
 ```
+
+The version is `2`. A file of version `1`, which has no debug section, is
+refused like any other version the VM does not know.
+
+**The line table** says where each instruction came from, which is what
+`--disasm` prints beside it and what a stack trace reads. Its entries are in
+order of `pc`, and each holds the position of the instructions from its `pc`
+up to the next entry's; the entry covering a `pc` is the last one that begins
+at or before it. Every function's code begins with an entry of its own, so an
+instruction is never attributed to whatever was compiled before it.
+
+An entry is four numbers -- the difference in `pc`, in file, in line and in
+column from the entry before it, counting from `0, 0, 0, 0`. Each is written
+seven bits at a time, least significant first, with the top bit of a byte
+saying that another follows; the three that may be negative are folded to a
+natural number first (`n` becomes `2n`, and `-n` becomes `2n - 1`) so that a
+small difference stays one byte either way. The table is about four bytes an
+entry, and costs 18% of a file: `examples/nqueens.rbc` is 48,621 bytes where
+without it it would be 41,077.
+
+The loader refuses a table that does not decode, that has bytes left over, or
+whose `pc` is past the code, whose file is not one the table names, or whose
+line or column is below 1 (`tests/vm`). The positions themselves are the
+compiler's business: `make check-positions` verifies that every one of them
+names a line its file really has.
 
 A constant is a `u8` kind followed by its payload:
 

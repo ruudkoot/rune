@@ -27,6 +27,9 @@ static void vm_destroy(VM *vm) {
     free(vm->prog.funcs);
     free(vm->prog.consts);
     free(vm->prog.code);
+    for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
+    free(vm->prog.files);
+    free(vm->prog.lines);
     free(vm->globals);
     free(vm->global_set);
     free(vm->stack);

@@ -68,8 +68,10 @@ struct
   fun nameFun (name : string, e : lexp) : unit =
     let
       val q = qualified name
-      fun go (Fn (x, b)) = (funNames := IntMap.insert (!funNames, x, q); go b)
-        | go _ = ()
+      fun go e =
+        case unmark e of
+          Fn (x, b) => (funNames := IntMap.insert (!funNames, x, q); go b)
+        | _ => ()
     in go e end
 
   fun primAliasOf (e : exp) : string option =
@@ -142,7 +144,25 @@ struct
          | _ => bug (sp, "record selector did not resolve to a record type"))
     | NONE => bug (sp, "record selector not annotated")
 
+  (* An expression is translated under its own position, so that the code
+     generator can say where each instruction came from. A mark that repeats
+     the position already in force costs nothing in the bytecode.
+
+     A variable, a constant, a selector and a `_prim` are left unmarked: none
+     of them can fail or call, so the position of whatever contains them is
+     the one worth having, and they are much the commonest expressions there
+     are -- marking them cost 4% of the time it takes to compile. A type
+     annotation covers the same ground as what it annotates. *)
   and transExp (e : exp) : lexp =
+    case e of
+      EScon _ => transExp' e
+    | EVar _ => transExp' e
+    | ESelect _ => transExp' e
+    | EPrim _ => transExp' e
+    | ETyped _ => transExp' e
+    | _ => Mark (spanOfExp e, transExp' e)
+
+  and transExp' (e : exp) : lexp =
     case e of
       EScon (sc, slot, _) => MatchComp.sconExp (sc, slot)
     | EVar (_, slot, sp) =>
@@ -329,7 +349,9 @@ struct
               val params = List.tabulate (arity, fn _ => MatchComp.freshVar ())
               val clauses = List.map (fn {pats, body, ...} => (pats, transExp body)) (#clauses f)
               val body = MatchComp.compileClauses (params, clauses, raiseBuiltin exnMatch)
-              val fn' = List.foldr Fn body params
+              (* under the position of the declaration, so that the closure
+                 is made where the function is written *)
+              val fn' = Mark (#span f, List.foldr Fn body params)
               val () = nameFun (#name f, fn')
             in
               (patInfo (#info f, #span f), fn')

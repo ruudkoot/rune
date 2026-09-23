@@ -68,6 +68,15 @@ typedef struct Function {
     char *name;
 } Function;
 
+/* Where an instruction came from: the file, line and column the compiler
+   recorded for the instructions from `pc` up to the next entry's. */
+typedef struct LineEntry {
+    uint32_t pc;
+    uint32_t file;
+    uint32_t line;
+    uint32_t col;
+} LineEntry;
+
 typedef struct Program {
     uint32_t nconsts;
     Value *consts;
@@ -76,6 +85,12 @@ typedef struct Program {
     Function *funcs;
     uint32_t code_len;
     uint8_t *code;
+    /* debug information: the files the program was compiled from, and the
+       position of every instruction, in order of pc */
+    uint32_t nfiles;
+    char **files;
+    uint32_t nlines;
+    LineEntry *lines;
 } Program;
 
 /* ---------------------------------------------------------------- machine */
@@ -178,6 +193,7 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the 
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
+const LineEntry *line_at(const Program *p, uint32_t pc);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

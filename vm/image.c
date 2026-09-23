@@ -69,6 +69,10 @@ static void write_image(VM *vm, Stream *s) {
     }
     PUT(s, p->code_len);
     put(s, p->code, p->code_len);
+    PUT(s, p->nfiles);
+    for (uint32_t i = 0; i < p->nfiles; i++) put_string(s, p->files[i]);
+    PUT(s, p->nlines);
+    put(s, p->lines, (size_t)p->nlines * sizeof(LineEntry));
 
     /* the heap, with the address it is at: the pointers in it and in the
        roots are relative to that */
@@ -210,6 +214,13 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
     }
     GET(&s, p->code_len);
     p->code = get_new(&s, p->code_len);
+    GET(&s, p->nfiles);
+    if (s.ok && fits(p->nfiles, sizeof(char *))) p->files = calloc(p->nfiles > 0 ? p->nfiles : 1, sizeof(char *));
+    if (!s.ok || !p->files) return failed(&s, err, errlen, "the image is cut short");
+    for (uint32_t i = 0; i < p->nfiles && s.ok; i++) p->files[i] = get_string(&s);
+    GET(&s, p->nlines);
+    if (!s.ok || !fits(p->nlines, sizeof(LineEntry))) return failed(&s, err, errlen, "the image is cut short");
+    p->lines = get_new(&s, (size_t)p->nlines * sizeof(LineEntry));
 
     uintptr_t base = 0;
     GET(&s, base);

@@ -16,6 +16,7 @@
 #   make uninstall  remove them again
 #   make test-all   run the suite with each of the four host builds
 #   make check-cross  verify all five builds emit byte-identical bytecode
+#   make check-positions  verify every instruction names a line that exists
 #   make check-docs verify docs/language.md, tests and .def files are in sync
 #   make test-basis run the Basis Library suite (tests/basis) with bin/rune
 #   make perf-check verify the instruction and allocation budgets (tests/perf)
@@ -99,7 +100,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc
 
@@ -285,6 +286,10 @@ test-all: host-builds vm | build/.doctor-check
 check-cross: host-builds bin/rune-boot bin/runedoc-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
+# Every instruction says where it came from, and the line is one the file has.
+check-positions: $(RUNE) $(RUNEVM)
+	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE) --vm $(RUNEVM)
+
 check-docs: $(RUNE) $(RUNEDOC)
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
@@ -410,6 +415,7 @@ check:
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory perf-check
+	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs
 
 clean:
