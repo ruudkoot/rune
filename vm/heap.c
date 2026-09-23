@@ -9,7 +9,7 @@ static size_t payload_size(size_t bytes) {
     return s < 16 ? 16 : s;
 }
 
-static size_t obj_size(const Obj *o) {
+size_t obj_size(const Obj *o) {
     size_t payload = (o->kind == K_STRING) ? o->len : (size_t)o->len * sizeof(Value);
     return sizeof(Obj) + payload_size(payload);
 }

@@ -165,6 +165,7 @@ Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payloa
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields);
 Obj *vm_alloc_string(VM *vm, uint32_t len);
 Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
+size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap lays it out */
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 

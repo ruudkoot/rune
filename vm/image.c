@@ -10,98 +10,204 @@
    itself, the program (not read again from its file, which the program may
    have moved away from), the counters and flags, the arguments, the
    rounding mode, and each file of the core by its descriptor and mode. The
-   system layer hands on the descriptors themselves before the image. */
+   system layer hands on the descriptors themselves before the image.
+
+   Nothing is written as it lies in memory. Every number is little-endian and
+   as many bytes wide as the format says, never as many as the machine has,
+   and a pointer into the heap is written as its distance from the start of
+   the heap. So an image written by one VM is read by another of a different
+   width: `bin/runevm` writes one and `bin/runevm32.exe` resumes it. What a
+   `Value` and an `Obj` are is the same on every VM already (docs/runtime.md),
+   so the heap is rebuilt object by object at the same offsets, and the
+   distances stay true; heap_relocate then turns each of them into a pointer
+   and refuses an image whose heap is not sound. */
 #include "vm.h"
 #include "sys.h"
 #include <fenv.h>
 
-#define IMAGE_MAGIC "runevm image 1"
+#define IMAGE_MAGIC "runevm image 2"
 
+/* A buffer either way: the heap is written and read a field at a time, and a
+   call to stdio for each of them would cost more than the encoding does. */
 typedef struct Stream {
     FILE *f;
     int ok;
+    size_t n, pos;              /* bytes in buf; where reading has got to */
+    uint8_t buf[1 << 16];
 } Stream;
 
 /* --- writing --- */
 
-static void put(Stream *s, const void *p, size_t n) {
-    if (s->ok && n > 0 && fwrite(p, 1, n, s->f) != n) s->ok = 0;
+static void wflush(Stream *s) {
+    if (s->ok && s->n > 0 && fwrite(s->buf, 1, s->n, s->f) != s->n) s->ok = 0;
+    s->n = 0;
 }
-#define PUT(s, x) put((s), &(x), sizeof(x))
+
+static void put(Stream *s, const void *p, size_t n) {
+    if (!s->ok || n == 0) return;
+    if (n > sizeof s->buf - s->n) wflush(s);
+    if (n > sizeof s->buf) {
+        if (s->ok && fwrite(p, 1, n, s->f) != n) s->ok = 0;
+        return;
+    }
+    memcpy(s->buf + s->n, p, n);
+    s->n += n;
+}
+
+/* Room for the widest thing written in one go, so that the heap -- which is
+   nearly all of an image -- is encoded straight into the buffer. */
+static uint8_t *room(Stream *s, size_t n) {
+    if (!s->ok) return NULL;
+    if (n > sizeof s->buf - s->n) wflush(s);
+    if (!s->ok) return NULL;
+    uint8_t *at = s->buf + s->n;
+    s->n += n;
+    return at;
+}
+
+static void put_u8(Stream *s, uint8_t v) {
+    uint8_t *b = room(s, 1);
+    if (b) b[0] = v;
+}
+
+static void put_u16(Stream *s, uint16_t v) {
+    uint8_t *b = room(s, 2);
+    if (b) { b[0] = (uint8_t)v; b[1] = (uint8_t)(v >> 8); }
+}
+
+static void put_u32(Stream *s, uint32_t v) {
+    uint8_t *b = room(s, 4);
+    if (b) for (int i = 0; i < 4; i++) b[i] = (uint8_t)(v >> (8 * i));
+}
+
+static void put_u64(Stream *s, uint64_t v) {
+    uint8_t *b = room(s, 8);
+    if (b) for (int i = 0; i < 8; i++) b[i] = (uint8_t)(v >> (8 * i));
+}
+
+/* the distance of a heap object from the start of the heap; NONE for none */
+#define OFF_NONE UINT64_MAX
+
+static void put_obj(Stream *s, const Obj *o, const VM *vm) {
+    put_u64(s, o ? (uint64_t)((const char *)o - vm->heap_from) : OFF_NONE);
+}
+
+static void put_value(Stream *s, Value v, const VM *vm) {
+    uint64_t w = v.tag == T_PTR
+               ? (v.u.p ? (uint64_t)((const char *)v.u.p - vm->heap_from) : OFF_NONE)
+               : v.u.w;
+    uint8_t *b = room(s, 9);
+    if (!b) return;
+    b[0] = v.tag;
+    for (int i = 0; i < 8; i++) b[i + 1] = (uint8_t)(w >> (8 * i));
+}
 
 static void put_string(Stream *s, const char *text) {
     uint64_t n = strlen(text);
-    PUT(s, n);
+    put_u64(s, n);
     put(s, text, (size_t)n);
+}
+
+/* The heap, object by object at the offsets it has: a header of its own
+   width, then the fields, or the bytes of a string. */
+static void put_heap(Stream *s, VM *vm) {
+    size_t scan = 0;
+    while (s->ok && scan < vm->heap_used) {
+        Obj *o = (Obj *)(vm->heap_from + scan);
+        put_u8(s, o->kind);
+        put_u16(s, o->contag);
+        put_u32(s, o->len);
+        if (o->kind == K_STRING) {
+            put(s, OBJ_BYTES(o), o->len);
+        } else {
+            Value *f = OBJ_FIELDS(o);
+            for (uint32_t i = 0; i < o->len; i++) put_value(s, f[i], vm);
+        }
+        scan += obj_size(o);
+    }
 }
 
 static void write_image(VM *vm, Stream *s) {
     const Program *p = &vm->prog;
     put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
-    uint32_t sizes[4] = { sizeof(Value), sizeof(Obj), sizeof(Frame), sizeof(void *) };
-    PUT(s, sizes);
 
-    int flags[5] = { vm->trace, vm->stats, vm->count, vm->emulate_fork, fegetround() };
-    PUT(s, flags);
-    PUT(s, vm->gc_stress);
-    PUT(s, vm->gc_count);
-    PUT(s, vm->gc_user_us);
-    PUT(s, vm->gc_sys_us);
-    PUT(s, vm->bytes_allocated);
-    PUT(s, vm->objects_allocated);
-    PUT(s, vm->instructions);
-    PUT(s, vm->pc);
-    PUT(s, vm->io_errno);
+    put_u32(s, (uint32_t)vm->trace);
+    put_u32(s, (uint32_t)vm->stats);
+    put_u32(s, (uint32_t)vm->count);
+    put_u32(s, (uint32_t)vm->emulate_fork);
+    put_u32(s, (uint32_t)fegetround());
+    put_u64(s, (uint64_t)vm->gc_stress);
+    put_u64(s, (uint64_t)vm->gc_count);
+    put_u64(s, (uint64_t)vm->gc_user_us);
+    put_u64(s, (uint64_t)vm->gc_sys_us);
+    put_u64(s, vm->bytes_allocated);
+    put_u64(s, vm->objects_allocated);
+    put_u64(s, vm->instructions);
+    put_u32(s, vm->pc);
+    put_u32(s, (uint32_t)vm->io_errno);
 
     put_string(s, vm->progname);
-    PUT(s, vm->argc);
+    put_u32(s, (uint32_t)vm->argc);
     for (int i = 0; i < vm->argc; i++) put_string(s, vm->argv[i]);
 
-    PUT(s, p->nconsts);
-    put(s, p->consts, (size_t)p->nconsts * sizeof(Value));
-    PUT(s, p->nglobals);
-    PUT(s, p->nfuncs);
+    /* the heap first, so that what follows can be written as offsets into it */
+    put_u64(s, (uint64_t)vm->heap_size);
+    put_u64(s, (uint64_t)vm->heap_used);
+    put_heap(s, vm);
+
+    put_u32(s, p->nconsts);
+    for (uint32_t i = 0; i < p->nconsts; i++) put_value(s, p->consts[i], vm);
+    put_u32(s, p->nglobals);
+    put_u32(s, p->nfuncs);
     for (uint32_t i = 0; i < p->nfuncs; i++) {
-        PUT(s, p->funcs[i].code_offset);
-        PUT(s, p->funcs[i].code_end);
-        PUT(s, p->funcs[i].nlocals);
+        put_u32(s, p->funcs[i].code_offset);
+        put_u32(s, p->funcs[i].code_end);
+        put_u32(s, p->funcs[i].nlocals);
         put_string(s, p->funcs[i].name);
     }
-    PUT(s, p->code_len);
+    put_u32(s, p->code_len);
     put(s, p->code, p->code_len);
-    PUT(s, p->nfiles);
+    put_u32(s, p->nfiles);
     for (uint32_t i = 0; i < p->nfiles; i++) put_string(s, p->files[i]);
-    PUT(s, p->nlines);
-    put(s, p->lines, (size_t)p->nlines * sizeof(LineEntry));
+    put_u32(s, p->nlines);
+    for (uint32_t i = 0; i < p->nlines; i++) {
+        put_u32(s, p->lines[i].pc);
+        put_u32(s, p->lines[i].file);
+        put_u32(s, p->lines[i].line);
+        put_u32(s, p->lines[i].col);
+    }
 
-    /* the heap, with the address it is at: the pointers in it and in the
-       roots are relative to that */
-    uintptr_t base = (uintptr_t)vm->heap_from;
-    PUT(s, base);
-    PUT(s, vm->heap_size);
-    PUT(s, vm->heap_used);
-    put(s, vm->heap_from, vm->heap_used);
-
-    put(s, vm->globals, (size_t)p->nglobals * sizeof(Value));
+    for (uint32_t i = 0; i < p->nglobals; i++) put_value(s, vm->globals[i], vm);
     put(s, vm->global_set, p->nglobals);
-    put(s, vm->builtin_exns, sizeof vm->builtin_exns);
-    PUT(s, vm->sp);
-    put(s, vm->stack, vm->sp * sizeof(Value));
-    PUT(s, vm->frames_active);
-    PUT(s, vm->fp);
-    if (vm->frames_active) put(s, vm->frames, (vm->fp + 1) * sizeof(Frame));
-    PUT(s, vm->hp);
-    put(s, vm->handlers, vm->hp * sizeof(Handler));
+    for (int i = 0; i < NUM_BUILTIN_EXNS; i++) put_obj(s, vm->builtin_exns[i], vm);
+    put_u64(s, (uint64_t)vm->sp);
+    for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
+    put_u32(s, (uint32_t)vm->frames_active);
+    put_u64(s, (uint64_t)vm->fp);
+    if (vm->frames_active)
+        for (size_t i = 0; i <= vm->fp; i++) {
+            put_u32(s, vm->frames[i].func);
+            put_u32(s, vm->frames[i].ret_pc);
+            put_u64(s, (uint64_t)vm->frames[i].base);
+            put_obj(s, vm->frames[i].closure, vm);
+        }
+    put_u64(s, (uint64_t)vm->hp);
+    for (size_t i = 0; i < vm->hp; i++) {
+        put_u32(s, vm->handlers[i].pc);
+        put_u64(s, (uint64_t)vm->handlers[i].sp);
+        put_u64(s, (uint64_t)vm->handlers[i].fp);
+    }
 
     /* each file by its descriptor, -1 for a closed slot: handles are never
        used again, so the slots go too */
-    PUT(s, vm->nfiles);
+    put_u64(s, (uint64_t)vm->nfiles);
     for (size_t i = 0; i < vm->nfiles; i++) {
         int fd = vm->files[i] ? sys_fileno(vm->files[i]) : -1;
-        PUT(s, fd);
-        PUT(s, vm->file_modes[i]);
+        put_u32(s, (uint32_t)fd);
+        put_u8(s, vm->file_modes[i]);
     }
     put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
+    wflush(s);
 }
 
 /* Called by posix_fork before it pops its argument. What was written is
@@ -118,7 +224,7 @@ int64_t vm_fork(VM *vm) {
     }
     FILE *out = sys_fork_start();
     if (!out) return -1;
-    Stream s = { out, 1 };
+    Stream s = { out, 1, 0, 0, {0} };
     write_image(vm, &s);
     return sys_fork_finish(out);
 }
@@ -126,9 +232,111 @@ int64_t vm_fork(VM *vm) {
 /* --- reading --- */
 
 static void get(Stream *s, void *p, size_t n) {
-    if (s->ok && n > 0 && fread(p, 1, n, s->f) != n) s->ok = 0;
+    uint8_t *d = p;
+    while (s->ok && n > 0) {
+        if (s->pos >= s->n) {
+            s->pos = 0;
+            s->n = fread(s->buf, 1, sizeof s->buf, s->f);
+            if (s->n == 0) { s->ok = 0; return; }
+        }
+        size_t take = s->n - s->pos;
+        if (take > n) take = n;
+        memcpy(d, s->buf + s->pos, take);
+        s->pos += take;
+        d += take;
+        n -= take;
+    }
 }
-#define GET(s, x) get((s), &(x), sizeof(x))
+
+/* The next n bytes where they are already in the buffer, else NULL and the
+   caller reads them the slow way. */
+static const uint8_t *have(Stream *s, size_t n) {
+    if (!s->ok || s->n - s->pos < n) return NULL;
+    const uint8_t *at = s->buf + s->pos;
+    s->pos += n;
+    return at;
+}
+
+static uint8_t get_u8(Stream *s) {
+    const uint8_t *b = have(s, 1);
+    if (b) return b[0];
+    uint8_t v = 0;
+    get(s, &v, 1);
+    return v;
+}
+
+static uint16_t get_u16(Stream *s) {
+    uint8_t tmp[2] = { 0, 0 };
+    const uint8_t *b = have(s, 2);
+    if (!b) { get(s, tmp, 2); b = tmp; }
+    return (uint16_t)((uint16_t)b[0] | ((uint16_t)b[1] << 8));
+}
+
+static uint32_t get_u32(Stream *s) {
+    uint8_t tmp[4] = { 0, 0, 0, 0 };
+    const uint8_t *b = have(s, 4);
+    uint32_t v = 0;
+    if (!b) { get(s, tmp, 4); b = tmp; }
+    for (int i = 3; i >= 0; i--) v = (v << 8) | b[i];
+    return v;
+}
+
+static uint64_t get_u64(Stream *s) {
+    uint8_t tmp[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    const uint8_t *b = have(s, 8);
+    uint64_t v = 0;
+    if (!b) { get(s, tmp, 8); b = tmp; }
+    for (int i = 7; i >= 0; i--) v = (v << 8) | b[i];
+    return v;
+}
+
+/* An offset is kept where the pointer will go; heap_relocate turns every one
+   of them into a pointer, and refuses the image if any is not in the heap. */
+static Obj *get_obj(Stream *s) {
+    uint64_t w = get_u64(s);
+    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)w;
+}
+
+static Value get_value(Stream *s) {
+    Value v;
+    const uint8_t *b = have(s, 9);
+    uint64_t w = 0;
+    if (b) {
+        v.tag = b[0];
+        for (int i = 8; i >= 1; i--) w = (w << 8) | b[i];
+    } else {
+        v.tag = get_u8(s);
+        w = get_u64(s);
+    }
+    if (v.tag == T_PTR) v.u.p = w == OFF_NONE ? NULL : (Obj *)(uintptr_t)w;
+    else v.u.w = w;
+    return v;
+}
+
+/* The heap, rebuilt at the offsets it was written from, so that the
+   distances the rest of the image holds stay true. */
+static int get_heap(Stream *s, VM *vm) {
+    size_t scan = 0;
+    while (scan < vm->heap_used) {
+        if (vm->heap_used - scan < sizeof(Obj)) return 0;
+        Obj *o = (Obj *)(vm->heap_from + scan);
+        o->kind = get_u8(s);
+        o->pad = 0;
+        o->contag = get_u16(s);
+        o->len = get_u32(s);
+        if (!s->ok || o->kind < K_TUPLE || o->kind > K_EXNCON) return 0;
+        size_t size = obj_size(o);
+        if (size > vm->heap_used - scan) return 0;
+        if (o->kind == K_STRING) {
+            get(s, OBJ_BYTES(o), o->len);
+        } else {
+            Value *f = OBJ_FIELDS(o);
+            for (uint32_t i = 0; i < o->len; i++) f[i] = get_value(s);
+        }
+        scan += size;
+    }
+    return s->ok;
+}
 
 /* n bytes read into new memory; NULL (and the stream no longer ok) when
    there is no such memory */
@@ -141,8 +349,7 @@ static void *get_new(Stream *s, size_t n) {
 }
 
 static char *get_string(Stream *s) {
-    uint64_t n = 0;
-    GET(s, n);
+    uint64_t n = get_u64(s);
     if (!s->ok || n >= SIZE_MAX) { s->ok = 0; return NULL; }
     char *text = malloc((size_t)n + 1);
     if (!text) { s->ok = 0; return NULL; }
@@ -163,126 +370,148 @@ static int failed(Stream *s, char *err, size_t errlen, const char *msg) {
 }
 
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen) {
-    Stream s = { sys_resume(token), 1 };
+    Stream s = { sys_resume(token), 1, 0, 0, {0} };
     if (!s.f) return failed(&s, err, errlen, "no image to resume from");
     Program *p = &vm->prog;
 
     char magic[sizeof IMAGE_MAGIC];
-    uint32_t sizes[4];
     get(&s, magic, sizeof magic);
-    GET(&s, sizes);
-    if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0 || sizes[0] != sizeof(Value) ||
-        sizes[1] != sizeof(Obj) || sizes[2] != sizeof(Frame) || sizes[3] != sizeof(void *))
+    if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0)
         return failed(&s, err, errlen, "not an image of this runevm");
 
-    int flags[5];
-    GET(&s, flags);
-    vm->trace = flags[0];
-    vm->stats = flags[1];
-    vm->count = flags[2];
-    vm->emulate_fork = flags[3];
-    fesetround(flags[4]);
-    GET(&s, vm->gc_stress);
-    GET(&s, vm->gc_count);
-    GET(&s, vm->gc_user_us);
-    GET(&s, vm->gc_sys_us);
-    GET(&s, vm->bytes_allocated);
-    GET(&s, vm->objects_allocated);
-    GET(&s, vm->instructions);
-    GET(&s, vm->pc);
-    GET(&s, vm->io_errno);
+    vm->trace = (int)get_u32(&s);
+    vm->stats = (int)get_u32(&s);
+    vm->count = (int)get_u32(&s);
+    vm->emulate_fork = (int)get_u32(&s);
+    fesetround((int)get_u32(&s));
+    vm->gc_stress = (size_t)get_u64(&s);
+    vm->gc_count = (size_t)get_u64(&s);
+    vm->gc_user_us = (int64_t)get_u64(&s);
+    vm->gc_sys_us = (int64_t)get_u64(&s);
+    vm->bytes_allocated = get_u64(&s);
+    vm->objects_allocated = get_u64(&s);
+    vm->instructions = get_u64(&s);
+    vm->pc = get_u32(&s);
+    vm->io_errno = (int)get_u32(&s);
 
     vm->owns_args = 1;
     vm->progname = get_string(&s);
-    GET(&s, vm->argc);
-    if (!s.ok || vm->argc < 0) return failed(&s, err, errlen, "the image is cut short");
-    vm->argv = calloc((size_t)vm->argc + 1, sizeof(char *));
+    vm->argc = (int)get_u32(&s);
+    if (!s.ok || vm->argc < 0 || !fits((uint64_t)vm->argc, sizeof(char *)))
+        return failed(&s, err, errlen, "the image is cut short");
+    vm->argv = calloc(vm->argc > 0 ? (size_t)vm->argc : 1, sizeof(char *));
     if (!vm->argv) return failed(&s, err, errlen, "out of memory");
     for (int i = 0; i < vm->argc; i++) vm->argv[i] = get_string(&s);
 
-    GET(&s, p->nconsts);
-    if (s.ok && fits(p->nconsts, sizeof(Value))) p->consts = get_new(&s, (size_t)p->nconsts * sizeof(Value));
-    GET(&s, p->nglobals);
-    GET(&s, p->nfuncs);
-    if (s.ok && fits(p->nfuncs, sizeof(Function))) p->funcs = calloc(p->nfuncs > 0 ? p->nfuncs : 1, sizeof(Function));
-    if (!s.ok || !p->consts || !p->funcs) return failed(&s, err, errlen, "the image is cut short");
+    /* the heap, before what points into it */
+    uint64_t heap_size = get_u64(&s);
+    uint64_t heap_used = get_u64(&s);
+    if (!s.ok || heap_used > heap_size || heap_size > SIZE_MAX)
+        return failed(&s, err, errlen, "the image is cut short");
+    vm->heap_size = (size_t)heap_size;
+    vm->heap_used = (size_t)heap_used;
+    vm->heap_from = malloc(vm->heap_size > 0 ? vm->heap_size : 1);
+    if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
+    if (!get_heap(&s, vm)) return failed(&s, err, errlen, "the heap of the image is not sound");
+
+    p->nconsts = get_u32(&s);
+    if (!s.ok || !fits(p->nconsts, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
+    p->consts = calloc(p->nconsts > 0 ? p->nconsts : 1, sizeof(Value));
+    if (!p->consts) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->nconsts; i++) p->consts[i] = get_value(&s);
+    p->nglobals = get_u32(&s);
+    p->nfuncs = get_u32(&s);
+    if (!s.ok || !fits(p->nfuncs, sizeof(Function))) return failed(&s, err, errlen, "the image is cut short");
+    p->funcs = calloc(p->nfuncs > 0 ? p->nfuncs : 1, sizeof(Function));
+    if (!p->funcs) return failed(&s, err, errlen, "out of memory");
     for (uint32_t i = 0; i < p->nfuncs && s.ok; i++) {
-        GET(&s, p->funcs[i].code_offset);
-        GET(&s, p->funcs[i].code_end);
-        GET(&s, p->funcs[i].nlocals);
+        p->funcs[i].code_offset = get_u32(&s);
+        p->funcs[i].code_end = get_u32(&s);
+        p->funcs[i].nlocals = get_u32(&s);
         p->funcs[i].name = get_string(&s);
     }
-    GET(&s, p->code_len);
+    p->code_len = get_u32(&s);
     p->code = get_new(&s, p->code_len);
-    GET(&s, p->nfiles);
-    if (s.ok && fits(p->nfiles, sizeof(char *))) p->files = calloc(p->nfiles > 0 ? p->nfiles : 1, sizeof(char *));
-    if (!s.ok || !p->files) return failed(&s, err, errlen, "the image is cut short");
+    p->nfiles = get_u32(&s);
+    if (!s.ok || !fits(p->nfiles, sizeof(char *))) return failed(&s, err, errlen, "the image is cut short");
+    p->files = calloc(p->nfiles > 0 ? p->nfiles : 1, sizeof(char *));
+    if (!p->files) return failed(&s, err, errlen, "out of memory");
     for (uint32_t i = 0; i < p->nfiles && s.ok; i++) p->files[i] = get_string(&s);
-    GET(&s, p->nlines);
+    p->nlines = get_u32(&s);
     if (!s.ok || !fits(p->nlines, sizeof(LineEntry))) return failed(&s, err, errlen, "the image is cut short");
-    p->lines = get_new(&s, (size_t)p->nlines * sizeof(LineEntry));
-
-    uintptr_t base = 0;
-    GET(&s, base);
-    GET(&s, vm->heap_size);
-    GET(&s, vm->heap_used);
-    if (!s.ok || vm->heap_used > vm->heap_size) return failed(&s, err, errlen, "the image is cut short");
-    vm->heap_from = malloc(vm->heap_size);
-    if (!vm->heap_from) return failed(&s, err, errlen, "cannot allocate heap");
-    get(&s, vm->heap_from, vm->heap_used);
-
-    if (s.ok && fits(p->nglobals, sizeof(Value))) {
-        vm->globals = get_new(&s, (size_t)p->nglobals * sizeof(Value));
-        vm->global_set = get_new(&s, p->nglobals);
+    p->lines = calloc(p->nlines > 0 ? p->nlines : 1, sizeof(LineEntry));
+    if (!p->lines) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->nlines && s.ok; i++) {
+        p->lines[i].pc = get_u32(&s);
+        p->lines[i].file = get_u32(&s);
+        p->lines[i].line = get_u32(&s);
+        p->lines[i].col = get_u32(&s);
     }
-    get(&s, vm->builtin_exns, sizeof vm->builtin_exns);
-    size_t sp = 0;
-    GET(&s, sp);
+
+    if (!s.ok || !fits(p->nglobals, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
+    vm->globals = calloc(p->nglobals > 0 ? p->nglobals : 1, sizeof(Value));
+    vm->global_set = calloc(p->nglobals > 0 ? p->nglobals : 1, 1);
+    if (!vm->globals || !vm->global_set) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->nglobals; i++) vm->globals[i] = get_value(&s);
+    get(&s, vm->global_set, p->nglobals);
+    for (int i = 0; i < NUM_BUILTIN_EXNS; i++) vm->builtin_exns[i] = get_obj(&s);
+
+    uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
-    vm_grow_stack(vm, sp + 1);
-    vm->sp = sp;
-    get(&s, vm->stack, sp * sizeof(Value));
-    GET(&s, vm->frames_active);
-    GET(&s, vm->fp);
+    vm_grow_stack(vm, (size_t)sp + 1);
+    vm->sp = (size_t)sp;
+    for (size_t i = 0; i < vm->sp; i++) vm->stack[i] = get_value(&s);
+
+    vm->frames_active = (int)get_u32(&s);
+    vm->fp = (size_t)get_u64(&s);
     if (vm->frames_active) {
-        if (!s.ok || !fits(vm->fp + 1, sizeof(Frame))) return failed(&s, err, errlen, "the image is cut short");
+        if (!s.ok || !fits((uint64_t)vm->fp + 1, sizeof(Frame))) return failed(&s, err, errlen, "the image is cut short");
         vm->frames_cap = vm->fp + 1 < 256 ? 256 : vm->fp + 1;
         vm->frames = malloc(vm->frames_cap * sizeof(Frame));
         if (!vm->frames) return failed(&s, err, errlen, "out of memory");
-        get(&s, vm->frames, (vm->fp + 1) * sizeof(Frame));
+        for (size_t i = 0; i <= vm->fp && s.ok; i++) {
+            vm->frames[i].func = get_u32(&s);
+            vm->frames[i].ret_pc = get_u32(&s);
+            vm->frames[i].base = (size_t)get_u64(&s);
+            vm->frames[i].closure = get_obj(&s);
+        }
     }
-    GET(&s, vm->hp);
-    if (!s.ok || !fits(vm->hp, sizeof(Handler))) return failed(&s, err, errlen, "the image is cut short");
+    vm->hp = (size_t)get_u64(&s);
+    if (!s.ok || !fits((uint64_t)vm->hp, sizeof(Handler))) return failed(&s, err, errlen, "the image is cut short");
     vm->handlers_cap = vm->hp < 64 ? 64 : vm->hp;
     vm->handlers = malloc(vm->handlers_cap * sizeof(Handler));
     if (!vm->handlers) return failed(&s, err, errlen, "out of memory");
-    get(&s, vm->handlers, vm->hp * sizeof(Handler));
+    for (size_t i = 0; i < vm->hp && s.ok; i++) {
+        vm->handlers[i].pc = get_u32(&s);
+        vm->handlers[i].sp = (size_t)get_u64(&s);
+        vm->handlers[i].fp = (size_t)get_u64(&s);
+    }
 
-    size_t nfiles = 0;
-    GET(&s, nfiles);
+    uint64_t nfiles = get_u64(&s);
     if (!s.ok || nfiles < 3 || !fits(nfiles, sizeof(FILE *))) return failed(&s, err, errlen, "the image is cut short");
-    vm->files_cap = nfiles < 8 ? 8 : nfiles;
+    vm->files_cap = nfiles < 8 ? 8 : (size_t)nfiles;
     vm->files = calloc(vm->files_cap, sizeof(FILE *));
     vm->file_modes = calloc(vm->files_cap, 1);
     if (!vm->files || !vm->file_modes) return failed(&s, err, errlen, "out of memory");
-    vm->nfiles = nfiles;
+    vm->nfiles = (size_t)nfiles;
     vm->files[0] = stdin;
     vm->files[1] = stdout;
     vm->files[2] = stderr;
-    for (size_t i = 0; i < nfiles && s.ok; i++) {
-        int fd = -1;
-        GET(&s, fd);
-        GET(&s, vm->file_modes[i]);
+    for (size_t i = 0; i < vm->nfiles && s.ok; i++) {
+        int fd = (int)get_u32(&s);
+        vm->file_modes[i] = get_u8(&s);
         if (i >= 3 && fd >= 0 && s.ok) {
             uint8_t mode = vm->file_modes[i];
             vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : "ab");
         }
     }
     get(&s, magic, sizeof magic);
-    if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0 || !p->code || !vm->globals || !vm->global_set)
+    if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0 || !p->code)
         return failed(&s, err, errlen, "the image is cut short");
     fclose(s.f);
-    if (!heap_relocate(vm, base)) {
+    /* every pointer is a distance from the start of the heap: moving them by
+       where the heap is now both places them and checks that they are in it */
+    if (!heap_relocate(vm, 0)) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }

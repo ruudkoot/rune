@@ -56,7 +56,7 @@ need no new machinery at all, and the structure exists from M1 on.
 | M4, real names for functions | done: the name a binding gave a function, qualified by the structures it is in (`StringCvt.padLeft`), keyed by the stamp of the function's parameter, which belongs to it alone -- so the Lambda IR needed no new field and a curried function's inner closures are named with it. Of the 12,502 functions the programs of `tests/lang` compile to, 11,684 now carry a name where none did; the 815 left are lambdas the source gives no name, and `fn` with a stamp is gone entirely, the three that had one being the loop of a `while`, which is now called `while`. A fatal error names its function (`fatal error at pc 1 in queens`), pinned by a twelfth case of `tests/vm`. `check-cross` reports 369 programs identical across all five builds, so the naming is deterministic, and `perf-check` is within budget; names cost 1,908 bytes of `examples/nqueens.rbc`, 4.6% of it |
 | M5, source positions in the bytecode | done: `Lambda` gained a `Mark`, `Translate` fills it from the abstract syntax, the code generator turns it into a `Pos` item that costs no bytes, and `Emit` writes a file table and a line table delta-encoded seven bits at a time; the version is `2` and a `1` is refused. `--disasm` prints a position beside every instruction, and `make check-positions` verifies over all 146 programs that each names a line its file really has. Two faults found by looking, both of which would have given a plausible wrong answer: an instruction before a function's first mark took the *previous* function's position, so every function now begins with one of its own; and `genLetRec` unmarked without putting the position in force, so a local recursive function was attributed to the enclosing `let`. Marking every expression cost 4.6% of the time to compile and failed `perf-check`; a variable, a constant, a selector and a `_prim` can neither fail nor call, so they are left unmarked, which is within budget and smaller besides -- the table costs 13.6% of `examples/nqueens.rbc` (41,077 to 46,672 bytes). `tests/vm` is 20 cases, seven of them line tables the loader must refuse |
 | M6, the stack trace | done: the VM walks `frames[fp..0]` as the collector does, taking each name from the function table and each position from M5's line table -- at `vm->pc` for the innermost frame and at the call it waits on for every other, one byte back so that the lookup lands inside the instruction. `Runtime.trace` gives the frames as data and `printTrace` writes them; `vm_raise` and `vm_fatal` print the same. The primitive takes the number of innermost frames to leave out, so the library keeps its own frames out of what a program sees (`trace` skips one, `printTrace` two) rather than trimming the list afterwards. A tail call leaves no frame, which `tests/lang/rt.trace_frames` shows rather than asserts: `inner` and `mid` call in tail position and are absent, `outer` does not and is there. 31 checks. The `.expected` churn was one file, `rt.exn.uncaught_exit1`, whose new line was read against the source before it was pinned |
-| M7, a portable image, measured | to do -- L |
+| M7, a portable image, measured | done: `vm/image.c` writes nothing as it lies in memory. Every number is little-endian and as wide as the format says, a `Value` is a tag and eight bytes, and a pointer is its distance from the start of the heap, so `heap_relocate(vm, 0)` both places and checks it. The `sizeof` guard is gone and the magic is `runevm image 2`. **D1 is decided: one format** -- it is not a trade-off but a win, see below. The cross-width *resume* that this milestone's line asks for cannot be run yet: `sys_fork_start` execs `/proc/self/exe`, so a fork's child is always the same binary, and the test needs M8's `--restore FILE`; it is carried to M8 |
 | M8, `save`, `restore` and `--restore` | to do -- M |
 | M9, the examples and the round-up | to do -- M |
 
@@ -239,7 +239,7 @@ subtracts one record from another. `live` and `heapSize` are the answer to
 
 ## Design decisions
 
-### D1. One image format, or two (open: the owner picks, on M7's numbers)
+### D1. One image format, or two -- decided at M7: one
 
 The draft asks that the checkpoint be architecture-independent like the
 bytecode and that it replace the fork format. A portable encoding makes every
@@ -256,9 +256,22 @@ against the 12 ms + 3 ms/MB the native one costs. The owner then picks:
 * **B. Two.** The native encoder stays for fork, the portable one is written
   only by `save`. One set of structures, two writers and two readers.
 
-The threshold to propose: if the portable encoder costs less than 25% more
-per MB, take A. The roadmap assumes A until the numbers say otherwise, and
-M8's work is the same either way.
+The threshold proposed was: take A if the portable encoder costs less than
+25% more per MB.
+
+**Measured (M7, 40 forks at 64 MB live, three runs each, one machine):**
+native 224, 222 and 296 ms a fork; portable 200, 205 and 210. At 16 MB,
+native 72 to 78 and portable 71 to 72; at 0 MB the two are 26 ms alike. The
+portable format is not slower but *faster*, so **A**, and the question the
+threshold was for does not arise.
+
+The reason is that it is smaller on the wire. A `Value` occupies 16 bytes in
+memory -- a tag, then padding, then eight bytes of payload -- and goes into an
+image as nine. A heap of list cells ships in about two thirds of the bytes,
+and the pipe carries less than the encoding costs. That only holds because the
+encoder writes into the stream's own buffer: the first version called stdio
+once a field and was 44% slower per MB, which is what the threshold would have
+caught.
 
 ### D2. `restore` is a command line, not a function
 
@@ -565,7 +578,13 @@ bytecode under all five builds.
    * *Mitigation:* D1 is not decided in advance. M7 measures both encoders at
      three sizes on three VMs and the owner picks; B keeps the fast path if
      the cost is real.
-   * *Measured:* to be filled in at M7.
+   * *Measured* (M7, 40 forks at 64 MB live, three runs each): native 224,
+     222 and 296 ms a fork, portable 200, 205 and 210. The risk did not
+     happen: the portable image is smaller on the wire than the native one --
+     nine bytes a `Value` where memory holds sixteen -- and the pipe carries
+     less than the encoding costs. An encoder that called stdio once a field
+     *was* 44% slower per MB; writing into the stream's buffer is what makes
+     the difference.
 6. **Tail calls do not appear in a trace**, which will look like a missing
    frame to someone who does not know why.
    * *Mitigation:* the doc comment of `trace` says it, and
