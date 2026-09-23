@@ -49,6 +49,7 @@ POSIX_SYS_DB	signature			optional	declared	lib/basis/sig_posix_sys_db.sml
 POSIX_TTY	signature			optional	declared	lib/basis/sig_posix_tty.sml
 PRIM_IO	signature			required	declared	lib/basis/primio_sig.sml
 REAL	signature			required	declared	lib/basis/sig_real.sml
+RUNTIME	signature			extension	declared	lib/basis/runtime_sig.sml
 SML90	signature			optional	declared	lib/basis/sig_sml90.sml
 SOCKET	signature			optional	declared	lib/basis/sig_socket.sml
 STREAM_IO	signature			required	declared	lib/basis/streamio_sig.sml
@@ -211,6 +212,7 @@ RealArray2	structure	MONO_ARRAY2	where type vector = RealVector.vector where typ
 RealArraySlice	structure	MONO_ARRAY_SLICE	where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real	optional	claimed	lib/basis/mono_real.sml
 RealVector	structure	MONO_VECTOR	where type elem = real	optional	claimed	lib/basis/mono_real.sml
 RealVectorSlice	structure	MONO_VECTOR_SLICE	where type vector = RealVector.vector where type elem = real	optional	claimed	lib/basis/mono_real.sml
+Runtime	structure	RUNTIME		extension	claimed	lib/basis/runtime.sml
 SML90	structure	SML90		optional	claimed	lib/basis/sml90.sml
 Socket	structure	SOCKET		optional	claimed	lib/basis/socket.sml
 StreamIO	functor	STREAM_IO		optional	ascribed	lib/basis/io_functors.sml

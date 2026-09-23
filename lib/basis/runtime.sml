@@ -1,0 +1,37 @@
+(* Runtime: what the VM counts, for the program it is running (Rune's own, not
+   of the specification). Each counter is a primitive that reads a field of
+   the VM and allocates nothing, so the six are read without disturbing five
+   of them. *)
+structure RuneRuntime =
+struct
+  local
+    val instructions' = _prim "rt_instructions" : unit -> int
+    val bytes' = _prim "rt_bytes" : unit -> int
+    val objects' = _prim "rt_objects" : unit -> int
+    val collections' = _prim "rt_collections" : unit -> int
+    val live' = _prim "rt_live" : unit -> int
+    val heapSize' = _prim "rt_heap_size" : unit -> int
+  in
+    type stats = { instructions : int, bytes : int, objects : int,
+                   collections : int, live : int, heapSize : int }
+
+    (* The heap's five are read first and the instruction count last, so that
+       it counts as much of this call as it can. *)
+    fun stats () : stats =
+      let
+        val b = bytes' ()
+        val ob = objects' ()
+        val c = collections' ()
+        val l = live' ()
+        val h = heapSize' ()
+      in
+        {instructions = instructions' (), bytes = b, objects = ob,
+         collections = c, live = l, heapSize = h}
+      end
+  end
+end
+
+(* Implements: RUNTIME
+
+   Status: extension *)
+structure Runtime = RuneRuntime

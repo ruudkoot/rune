@@ -50,7 +50,7 @@ need no new machinery at all, and the structure exists from M1 on.
 | Milestone | State |
 |---|---|
 | M0, this roadmap | done (`3f3aa91`): the signature below, four decisions, and every claim of *Where it stands* measured on that commit |
-| M1, the structure and the numbers already counted | to do -- S |
+| M1, the structure and the numbers already counted | done: `Runtime.stats` over six primitives that read one field each and allocate nothing, so the five numbers of the heap cannot drift apart while they are read; `runtime_sig.sml`, `runtime.sml` and `seal_runtime.sml`, all three `host = no` in the MANIFEST (D4). It is the same counter `runevm --count` prints: a program that reads it just before it ends reports 27 instructions fewer, which is the printing, in a 2,509-instruction program and in a 272,536-instruction one alike, and the number does not move with `--heap-size`. The suite has 9 checks, which pin what a list cell and a `ref` cost (64 bytes and two objects, 24 and one); they are absent on the four `xc1` hosts, and run on both VMs of Windows, where `--count` still agrees to the byte across all three VMs |
 | M2, forced collection, pointer equality and the version | to do -- S |
 | M3, `profile` | to do -- S |
 | M4, real names for functions | to do -- M |

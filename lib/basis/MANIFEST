@@ -147,6 +147,8 @@ unix.sml        | demand | yes  | Unix                  | BinIO IO OS Posix Rune
 windows.sml     | demand | yes  | Windows               | BinIO Byte Char IO Int List OS Posix RuneError RuneExit RuneStatus String SysWord TextIO Time Word Word8Vector
 commandline.sml | demand | yes  | CommandLine           |
 sml90.sml       | demand | yes  | SML90                 | Char IO List Math Real String TextIO
+runtime_sig.sml | demand | no   | RUNTIME               |
+runtime.sml     | demand | no   | Runtime RuneRuntime   |
 # ---- the signatures of the specification (scripts/gen-basis-sigs.sh)
 sig_array.sml | demand | yes  | ARRAY | Vector
 sig_array_slice.sml | demand | yes  | ARRAY_SLICE | Array Vector VectorSlice
@@ -285,6 +287,7 @@ seal_unix.sml           | seal   | yes  | Unix | Posix UNIX
 seal_windows.sml        | seal   | yes  | Windows | WINDOWS
 seal_commandline.sml    | seal   | yes  | CommandLine | COMMAND_LINE
 seal_sml90.sml          | seal   | yes  | SML90 | 
+seal_runtime.sml        | seal   | no   | Runtime | RUNTIME
 seal_pack_real32.sml    | seal   | yes  | PackReal32Big PackReal32Little | PACK_REAL Real32
 seal_mono_real32.sml    | seal   | yes  | Real32Array2 | MONO_ARRAY2 Real32 Real32Vector
 seal_widetext.sml       | seal   | yes  | WideText | TEXT

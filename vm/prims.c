@@ -2014,6 +2014,18 @@ static int p_command_name(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, vm->progname, (uint32_t)strlen(vm->progname))));
 }
 
+/* ================================================================ runtime (Runtime) */
+
+/* The counters the VM keeps for the program it is running. None of these
+   allocates, so a program reading all six sees one consistent set: only an
+   allocation can move the numbers of the heap. */
+static int p_rt_instructions(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->instructions)); }
+static int p_rt_bytes(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->bytes_allocated)); }
+static int p_rt_objects(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->objects_allocated)); }
+static int p_rt_collections(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->gc_count)); }
+static int p_rt_live(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_used)); }
+static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_size)); }
+
 /* ================================================================ table (generated order from prims.def) */
 #define PRIM_ENTRY(name) p_##name,
 const PrimFn prim_table[PRIM__COUNT] = {

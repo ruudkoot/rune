@@ -308,3 +308,9 @@ win_wait         1  int -> int list          Wait for a child: [the code it ende
 win_dde_start    2  string * string -> int   Start a conversation of DDE with a service on a topic.
 win_dde_execute  4  int * string * int * int -> int  Execute a command in a conversation, trying again that many times while the service is busy, that many milliseconds apart.
 win_dde_stop     1  int -> int               End a conversation of DDE.
+rt_instructions  1  unit -> int              Bytecode instructions this program has executed, which `runevm --count` prints when it ends.
+rt_bytes         1  unit -> int              Bytes it has allocated in the heap, including what has since been collected.
+rt_objects       1  unit -> int              Objects it has allocated, likewise.
+rt_collections   1  unit -> int              Collections the collector has made.
+rt_live          1  unit -> int              Bytes of the current semispace that are in use: what the last collection kept plus what has been allocated since.
+rt_heap_size     1  unit -> int              The size of one semispace, in bytes.

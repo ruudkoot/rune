@@ -1217,6 +1217,16 @@ struct
   fun win_dde_execute (_ : int, _ : string, _ : int, _ : int) = unsupported ~1
   fun win_dde_stop (_ : int) = unsupported ~1
 
+  (* Runtime: the counters of Rune's VM. A host counts none of them -- it has
+     neither Rune's instructions nor Rune's heap -- and lib/basis/runtime.sml
+     is `host = no` in the MANIFEST, so nothing here calls these. *)
+  fun rt_instructions () = unsupported ~1
+  fun rt_bytes () = unsupported ~1
+  fun rt_objects () = unsupported ~1
+  fun rt_collections () = unsupported ~1
+  fun rt_live () = unsupported ~1
+  fun rt_heap_size () = unsupported ~1
+
   fun posix_getgr (name, gid) =
     let
       val gr = if name = "" then Posix.SysDB.getgrgid (Posix.ProcEnv.wordToGid (SysWord.fromInt gid))

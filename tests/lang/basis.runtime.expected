@@ -1,0 +1,6 @@
+a list cell: 64 bytes, 2 objects
+a ref: 24 bytes, 1 object
+instructions grow: true
+live within the semispace: true
+allocated covers what is in use: true
+kept: 1

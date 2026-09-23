@@ -56,6 +56,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
+| [`RUNTIME`](sig/RUNTIME.md) | 2 | 2 | 100% | 1 | 1 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
@@ -73,7 +74,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1646 | 1646 | 100% | 1119 | 1119 |
+| **all** | 1648 | 1648 | 100% | 1120 | 1120 |
 
 ## Examples that are run
 
@@ -88,6 +89,7 @@ be pinned: many are about the text and not about behaviour.
 - `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
+- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
 - `SML90/is-history` (Limitation), SML90
 - `SML90.Interrupt/never-raised` (Limitation), SML90
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
