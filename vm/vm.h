@@ -194,6 +194,7 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
 const LineEntry *line_at(const Program *p, uint32_t pc);
+void vm_print_trace(VM *vm, FILE *out);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

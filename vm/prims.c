@@ -2032,6 +2032,44 @@ static int p_rt_heap_size(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm->heap_s
    the collector walks the stack itself. */
 static int p_rt_collect(VM *vm) { vm_gc(vm, 0); return ret(vm, 1, mk_unit()); }
 
+/* One frame as (name, file, line, column), built on the VM stack: every
+   allocation here can collect, and the strings must survive the next one. */
+static void push_frame(VM *vm, const char *name, const char *file, int64_t line, int64_t col) {
+    vm_push(vm, mk_ptr(vm_string_from(vm, name, (uint32_t)strlen(name))));
+    vm_push(vm, mk_ptr(vm_string_from(vm, file, (uint32_t)strlen(file))));
+    vm_push(vm, mk_int(line));
+    vm_push(vm, mk_int(col));
+    Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, 4);
+    for (int i = 0; i < 4; i++) OBJ_FIELDS(t)[i] = vm->stack[vm->sp - 4 + i];
+    vm->sp -= 4;
+    vm_push(vm, mk_ptr(t));
+}
+
+/* The frames, innermost first, leaving out the innermost `skip` of them --
+   which is how Runtime keeps its own frames out of what it reports. Built
+   from the outermost inwards so that each cons puts its frame at the head. */
+static int p_rt_trace(VM *vm) {
+    INT1("rt_trace");
+    size_t skip = x < 0 ? 0 : (size_t)x;
+    vm_push(vm, mk_con0(0));
+    if (vm->frames_active && vm->fp + 1 > skip) {
+        size_t last = vm->fp - skip;
+        for (size_t i = 0; i <= last; i++) {
+            uint32_t f = vm->frames[i].func;
+            const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+            uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+            const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+            if (e && e->file < vm->prog.nfiles)
+                push_frame(vm, name, vm->prog.files[e->file], e->line, e->col);
+            else
+                push_frame(vm, name, "", 0, 0);
+            vm_cons(vm);
+        }
+    }
+    Value l = vm_pop(vm);
+    return ret(vm, 1, l);
+}
+
 static int p_rt_version(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, RUNE_VERSION, (uint32_t)strlen(RUNE_VERSION))));
 }

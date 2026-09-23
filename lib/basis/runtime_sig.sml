@@ -83,6 +83,27 @@ sig
      the program means. *)
   val collect : unit -> unit
 
+  (* One function on the call stack: its name as the compiler recorded it,
+     qualified by the structures it is in, and where in the source it has got
+     to -- the call it is waiting on, or, for the innermost, the expression
+     being evaluated.
+
+     A function the source gives no name is `fn`. Where the program carries
+     no position for the instruction, `file` is `""` and both numbers are 0. *)
+  type frame = { function : string, file : string, line : int, column : int }
+
+  (* `trace ()` is the frames, innermost first, of the call stack as it
+     stands, beginning with the function that called `trace`.
+
+     A tail call does not appear. It replaces the frame it is made from --
+     that is what makes a tail-recursive loop run in constant space -- so the
+     function it was made from is not on the stack to be reported. *)
+  val trace : unit -> frame list
+
+  (* `printTrace out` writes the frames of `trace ()` to `out`, one to a
+     line, as the VM writes them under an uncaught exception. *)
+  val printTrace : TextIO.outstream -> unit
+
   (* `same (x, y)` is true when `x` and `y` are one object rather than two
      equal ones.
 

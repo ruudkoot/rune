@@ -45,6 +45,7 @@
 - `precision` (val): [INTEGER](../sig/INTEGER.md#val-precision), [REAL](../sig/REAL.md#val-precision)
 - `pred` (val): [CHAR](../sig/CHAR.md#val-pred)
 - `print` (val): [TEXT_IO](../sig/TEXT_IO.md#val-print)
+- `printTrace` (val): [RUNTIME](../sig/RUNTIME.md#val-printtrace)
 - `proc` (type): [UNIX](../sig/UNIX.md#type-proc), [WINDOWS](../sig/WINDOWS.md#type-proc)
 - `ProcEnv` (str): [POSIX](../sig/POSIX.md#str-procenv)
 - `Process` (str): [OS](../sig/OS.md#str-process), [POSIX](../sig/POSIX.md#str-process)

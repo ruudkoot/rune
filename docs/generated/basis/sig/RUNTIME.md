@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 6 of 6 entries documented |
-| Tests | 33 checks of 6 entries |
+| Documentation | 9 of 9 entries documented |
+| Tests | 38 checks of 8 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -55,6 +55,12 @@ sig
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
 
   val <a href="#val-collect">collect</a> : unit -&gt; unit
+
+  type <a href="#type-frame">frame</a> = { <a href="#fld-frame.function">function</a> : string, <a href="#fld-frame.file">file</a> : string, <a href="#fld-frame.line">line</a> : int, <a href="#fld-frame.column">column</a> : int }
+
+  val <a href="#val-trace">trace</a> : unit -&gt; frame list
+
+  val <a href="#val-printtrace">printTrace</a> : TextIO.outstream -&gt; unit
 
   val <a href="#val-same">same</a> : 'a * 'a -&gt; bool
 
@@ -169,6 +175,61 @@ the program means.
 <details><summary>Tests (3)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `makes-one-collection` &middot; `drops-what-is-unreachable` &middot; `identity-survives-it`
+
+</details>
+
+### <a name="type-frame"></a>`frame`
+
+```sml
+type frame = { function : string, file : string, line : int, column : int }
+```
+
+One function on the call stack: its name as the compiler recorded it,
+qualified by the structures it is in, and where in the source it has got
+to -- the call it is waiting on, or, for the innermost, the expression
+being evaluated.
+
+A function the source gives no name is `fn`. Where the program carries
+no position for the instruction, `file` is `""` and both numbers are 0.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-frame.function"></a>`function` | `string` |  |
+| <a name="fld-frame.file"></a>`file` | `string` |  |
+| <a name="fld-frame.line"></a>`line` | `int` |  |
+| <a name="fld-frame.column"></a>`column` | `int` |  |
+
+### <a name="val-trace"></a>`trace`
+
+```sml
+val trace : unit -> frame list
+```
+
+`trace ()` is the frames, innermost first, of the call stack as it
+stands, beginning with the function that called [`trace`](#val-trace).
+
+A tail call does not appear. It replaces the frame it is made from --
+that is what makes a tail-recursive loop run in constant space -- so the
+function it was made from is not on the stack to be reported.
+
+<details><summary>Tests (4)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `names-the-caller` &middot; `leaves-out-its-own-frames` &middot; `a-call-adds-a-frame` &middot; `says-where-in-this-file`
+
+</details>
+
+### <a name="val-printtrace"></a>`printTrace`
+
+```sml
+val printTrace : TextIO.outstream -> unit
+```
+
+`printTrace out` writes the frames of `trace ()` to `out`, one to a
+line, as the VM writes them under an uncaught exception.
+
+<details><summary>Tests (1)</summary>
+
+For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `writes-a-line-for-each-frame`
 
 </details>
 

@@ -1228,6 +1228,7 @@ struct
   fun rt_heap_size () = unsupported ~1
   fun rt_collect () = unsupported ()
   fun rt_version () = unsupported ""
+  fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
 
   fun posix_getgr (name, gid) =
     let

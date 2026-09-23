@@ -316,3 +316,4 @@ rt_live          1  unit -> int              Bytes of the current semispace that
 rt_heap_size     1  unit -> int              The size of one semispace, in bytes.
 rt_collect       1  unit -> unit             Collect the heap now: free every unreachable object and move every surviving one.
 rt_version       1  unit -> string           The version of Rune this VM was built as, which `runevm --version` prints.
+rt_trace         1  int -> (string * string * int * int) list  The frames, innermost first, leaving out the innermost n: the name of each function, the file it is in, and the line and column it is stopped at; the file is "" and both numbers 0 where the program carries no position.

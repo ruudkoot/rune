@@ -13,6 +13,7 @@ struct
     val heapSize' = _prim "rt_heap_size" : unit -> int
     val collect' = _prim "rt_collect" : unit -> unit
     val version' = _prim "rt_version" : unit -> string
+    val trace' = _prim "rt_trace" : int -> (string * string * int * int) list
   in
     type stats = { instructions : int, bytes : int, objects : int,
                    collections : int, live : int, heapSize : int }
@@ -32,6 +33,27 @@ struct
       end
 
     fun collect () = collect' ()
+
+    type frame = { function : string, file : string, line : int, column : int }
+
+    (* The primitive leaves out the innermost frames, which are this
+       structure's own: `trace` is one, and `printTrace` calling it is two. A
+       program should see its own call stack and nothing of the library's. *)
+    fun frames n : frame list =
+      List.map (fn (f, file, line, col) =>
+                  {function = f, file = file, line = line, column = col})
+               (trace' n)
+
+    fun trace () = frames 1
+
+    fun printTrace out =
+      List.app (fn {function, file, line, column} =>
+                  TextIO.output (out,
+                    "  in " ^ function
+                    ^ (if file = "" then ""
+                       else " at " ^ file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column)
+                    ^ "\n"))
+               (frames 2)
 
     (* The difference between two readings. What measuring costs is inside it
        -- the record of the first reading, and the instructions of both -- so

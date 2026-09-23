@@ -56,7 +56,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`POSIX_TTY`](sig/POSIX_TTY.md) | 110 | 110 | 100% | 25 | 25 |
 | [`PRIM_IO`](sig/PRIM_IO.md) | 14 | 14 | 100% | 6 | 6 |
 | [`REAL`](sig/REAL.md) | 64 | 64 | 100% | 55 | 55 |
-| [`RUNTIME`](sig/RUNTIME.md) | 6 | 6 | 100% | 4 | 4 |
+| [`RUNTIME`](sig/RUNTIME.md) | 9 | 9 | 100% | 6 | 6 |
 | [`SML90`](sig/SML90.md) | 36 | 36 | 100% | 18 | 18 |
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
@@ -74,7 +74,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1652 | 1652 | 100% | 1123 | 1123 |
+| **all** | 1655 | 1655 | 100% | 1125 | 1125 |
 
 ## Examples that are run
 

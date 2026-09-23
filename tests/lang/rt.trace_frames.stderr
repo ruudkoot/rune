@@ -1,0 +1,4 @@
+runevm: uncaught exception Fail "boom"
+  in boom at tests/lang/rt.trace_frames.sml:14:21
+  in caller at tests/lang/rt.trace_frames.sml:15:22
+  in <toplevel> at tests/lang/rt.trace_frames.sml:16:38

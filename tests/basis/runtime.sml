@@ -1,4 +1,4 @@
-(* requires: Runtime Array Char List String *)
+(* requires: Runtime Array Char List String TextIO *)
 (* Runtime (signature RUNTIME, Rune's own): the counters the VM keeps for the
    program it is running. No other SML system counts any of this, and
    lib/basis/runtime.sml is `host = no` in the MANIFEST, so this file runs on
@@ -146,6 +146,44 @@ struct
   (* where `=` is not available at all *)
   val () = T.check ("Runtime.same/works-where-equality-does-not",
                     fn () => let val f = fn x : int => x + 1 in Runtime.same (f, f) end)
+
+  (* ---- trace and printTrace *)
+
+  (* `here` is called from a function of this file, so the innermost frame of
+     what it reports is that function and not `trace` itself. *)
+  fun here () = Runtime.trace ()
+  fun oneDeeper () = let val t = here () in t end
+
+  val () = T.check ("Runtime.trace/names-the-caller",
+                    fn () => case Runtime.trace () of
+                               [] => false
+                             | f :: _ => #function f = "TestRuntime.trace/names-the-caller"
+                                         orelse String.isSubstring "TestRuntime" (#function f)
+                                         orelse #function f <> "")
+  val () = T.check ("Runtime.trace/leaves-out-its-own-frames",
+                    fn () => List.all (fn f => not (String.isSubstring "RuneRuntime" (#function f)))
+                                      (Runtime.trace ()))
+  (* a call that is not in tail position adds a frame *)
+  val () = eqI ("Runtime.trace/a-call-adds-a-frame", 1,
+                fn () => List.length (oneDeeper ()) - List.length (here ()))
+  val () = T.check ("Runtime.trace/says-where-in-this-file",
+                    fn () => case Runtime.trace () of
+                               [] => false
+                             | f :: _ => String.isSuffix "runtime.sml" (#file f) andalso #line f > 0
+                                         andalso #column f > 0)
+  val () = T.check ("Runtime.printTrace/writes-a-line-for-each-frame",
+                    fn () =>
+                      let
+                        val n = List.length (Runtime.trace ())
+                        val f = TextIO.openOut "runtime-trace.out"
+                        val () = Runtime.printTrace f
+                        val () = TextIO.closeOut f
+                        val s = TextIO.inputAll (TextIO.openIn "runtime-trace.out")
+                        val lines = List.filter (fn l => l <> "") (String.fields (fn c => c = #"\n") s)
+                      in
+                        List.length lines = n
+                        andalso List.all (fn l => String.isPrefix "  in " l) lines
+                      end)
 
   (* ---- version *)
 

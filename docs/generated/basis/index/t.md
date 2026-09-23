@@ -61,6 +61,7 @@
 - `toUnixPath` (val): [OS_PATH](../sig/OS_PATH.md#val-tounixpath)
 - `toUpper` (val): [CHAR](../sig/CHAR.md#val-toupper)
 - `toWord` (val): [BIT_FLAGS](../sig/BIT_FLAGS.md#val-toword), [POSIX_ERROR](../sig/POSIX_ERROR.md#val-toword), [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-toword)
+- `trace` (val): [RUNTIME](../sig/RUNTIME.md#val-trace)
 - `translate` (val): [STRING](../sig/STRING.md#val-translate), [SUBSTRING](../sig/SUBSTRING.md#val-translate)
 - `traversal` (type): [ARRAY2](../sig/ARRAY2.md#type-traversal), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-traversal)
 - `triml` (val): [SUBSTRING](../sig/SUBSTRING.md#val-triml)
