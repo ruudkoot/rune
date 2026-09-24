@@ -26,12 +26,13 @@ struct
     \              loader of runevm accepts, whose code keeps what the\n\
     \              translation relies on (docs/plans/codegen.md, D0)\n\
     \  --disasm    print the bytecode as runevm --disasm does\n\
+    \  --inlined   list the primitives whose common case the code does itself\n\
     \  --facts     what the check found in each file: functions,\n\
     \              instructions, the highest stack, the places to resume at\n\
     \  --version   print the version\n\
     \  --help      print this text\n"
 
-  datatype mode = Check | Disasm | Facts | Translate
+  datatype mode = Check | Disasm | Facts | Inlined | Translate
 
   val mode = ref Translate
   val modeGiven = ref false
@@ -45,7 +46,7 @@ struct
   val showVersion = ref false
 
   fun setMode m =
-    if !modeGiven then raise Usage "give one of --check, --disasm and --facts"
+    if !modeGiven then raise Usage "give one of --check, --disasm, --facts and --inlined"
     else (mode := m; modeGiven := true)
 
   fun parse (args : string list) : unit =
@@ -54,6 +55,7 @@ struct
     | "--check" :: rest => (setMode Check; parse rest)
     | "--disasm" :: rest => (setMode Disasm; parse rest)
     | "--facts" :: rest => (setMode Facts; parse rest)
+    | "--inlined" :: rest => (setMode Inlined; parse rest)
     | "-o" :: file :: rest => (output := SOME file; parse rest)
     | "-S" :: rest => (assembly := true; parse rest)
     | "--options" :: text :: rest => (options := text; parse rest)
@@ -133,7 +135,8 @@ struct
 
   fun run () : OS.Process.status =
     case (!mode, !inputs) of
-      (_, []) => raise Usage "no input file"
+      (Inlined, _) => (List.app println X64.inlined; OS.Process.success)
+    | (_, []) => raise Usage "no input file"
     | (Translate, [path]) => translate path
     | (Translate, _) => raise Usage "translate one file at a time"
     | (Disasm, [path]) => (RbcDisasm.print (TextIO.stdOut, load path); OS.Process.success)

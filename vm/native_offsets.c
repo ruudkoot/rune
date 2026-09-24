@@ -32,10 +32,16 @@ int main(void) {
     SET("VALUE_PAYLOAD", offsetof(Value, u));
     SET("T_UNIT", T_UNIT);
     SET("T_INT", T_INT);
+    SET("T_WORD", T_WORD);
+    SET("T_REAL", T_REAL);
+    SET("T_CHAR", T_CHAR);
     SET("T_CON0", T_CON0);
     SET("T_PTR", T_PTR);
     SET("K_TUPLE", K_TUPLE);
     SET("K_CON", K_CON);
+    SET("K_STRING", K_STRING);
+    SET("K_REF", K_REF);
+    SET("K_ARRAY", K_ARRAY);
     SET("K_EXN", K_EXN);
     return 0;
 }

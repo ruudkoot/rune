@@ -180,6 +180,24 @@ if [ -n "$missing" ]; then
 fi
 printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
 same every-opcode "$out/every-opcode.rbc"
+# The primitives runeopt inlines (D12) on their edge cases: prims.sml must
+# have a PRIM of each, as --disasm shows it.
+if "$rune" tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.cerr"; then
+  missing=""
+  used=$("$opt" --disasm "$out/prims.rbc" | awk '$2 == "PRIM" { print $3 }' | sort -u | tr '\n' ' ')
+  for name in $("$opt" --inlined); do
+    idx=$(awk -v name="$name" '!/^#/ && NF { if ($1 == name) print n; n++ }' vm/prims.def)
+    case " $used " in *" $idx "*) ;; *) missing="$missing $name" ;; esac
+  done
+  if [ -n "$missing" ]; then
+    echo "FAIL opt.prims: tests/opt/prims.sml does not use$missing, which runeopt inlines"
+    fail=$((fail + 1))
+  fi
+  same prims "$out/prims.rbc"
+else
+  echo "FAIL opt.run.prims: rune failed: $(head -1 "$out/prims.cerr")"
+  fail=$((fail + 1))
+fi
 for src in examples/hello.sml examples/fib.sml examples/nqueens.sml tests/perf/fib.sml tests/perf/tak.sml; do
   name=$(echo "$src" | tr '/' '_' | sed 's/\.sml$//')
   if "$rune" "$src" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then same "$name" "$out/$name.rbc"

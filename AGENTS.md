@@ -76,7 +76,11 @@ keep these invariants:
   instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
   the loader's messages. A field of the VM that the code touches is named in
   `vm/native_offsets.c`, never written as a number. `make test-native` runs
-  the suites as native code and wants `--count` to agree with `runevm`.
+  the suites as native code and wants `--count` to agree with `runevm`. The
+  primitives whose common case the code does itself (`runeopt --inlined`,
+  `fastPrim` in `src/opt/x64.sml`) change with their C code in
+  `vm/prims.c`: `tests/opt/prims.sml` runs each on its edge cases, natively
+  and on `runevm`, and must use every one of them.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
