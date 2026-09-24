@@ -9,12 +9,15 @@ against the VM's runtime. The roadmap does five things:
 * It states the facts a translator has to respect. Some of them come from
   reading the code. The rest come from a static analysis of 422 compiled
   programs, listed under *What the corpus does*.
-* It takes twelve decisions, D1 to D12, preceded by D0, which defines
+* It takes fourteen decisions, D1 to D14, preceded by D0, which defines
   what "straightforward, no optimisation" allows. The owner took the open
-  ones on 2026-09-23.
-* It orders the work in nine milestones. M1 to M8 give native programs that
-  pass the existing suites with the same instruction counts as runevm, plus
-  debug information and a place in the performance comparison.
+  ones of D1 to D12 on 2026-09-23; D13 and D14, added with M10 to M15, are
+  open.
+* It orders the work in fifteen milestones. M1 to M8 give native programs
+  that pass the existing suites with the same instruction counts as runevm,
+  plus debug information and a place in the performance comparison; M10 to
+  M15, added on 2026-09-24, make them faster, the biggest gain for the least
+  work first.
 * It sets out the options for save and restore, as the draft asks. That work
   is M9, which is optional.
 * It says where each line of the draft is answered.
@@ -69,9 +72,15 @@ The owner's decisions on the roadmap (2026-09-23):
 | M4, the suites, run natively | done: `bin/runevm-opt` (`scripts/runevm-opt.sh`) is a VM for the runners: it translates the bytecode with `runeopt`, keeps each translation by the checksum of the bytecode, gives the program the options of `runevm` in `RUNEVM_OPTIONS` and its name in `RUNEVM_NAME`, and hands `--restore` and the like to `runevm`. `make test-native`, part of `make check`: `tests/lang` natively (205 of 206; `rt.fork_image` waits for M9, `tests/opt-skip.txt`); `--count` equal to `runevm`'s for all 146 programs (`tests/opt/run-counts.sh`); the Basis Library suite in the configuration `rune:opt`, all 137,276 checks, reusing the bytecode `test-basis` compiled where its sources are the same, which takes the run from 163 s to 19 s; and the compiler as native code compiling itself to `bin/rune.rbc` (`tests/opt/run-bootstrap.sh`). `make test-native-stress` (a collection before every 101st allocation, the Basis Library suite every 1009th) and `make test-native-asan` (the runtime built with ASan and UBSan) pass too, and there is a doctor scope `native`. A native program's `Runtime.save` writes an image `runevm --restore` carries on (the three `.restore` tests). Found on the way: the program saw `RUNEVM_OPTIONS` in its environment (`basis.posix_process` counted more), and bash, whose `exec -a` would set `argv[0]`, takes the variable `_` out of the environment, so the wrapper is sh and the name comes in `RUNEVM_NAME`; LeakSanitizer found the copy of that name. `tests/vm` is not run natively: it tests the loader and the command line of `runevm`, and `tests/opt` has the loader's refusals for `runeopt` |
 | M5, inlined primitives | done: 56 primitives are inline (`fastPrim` in `src/opt/x64.sml`, `runeopt --inlined`): the arithmetic and comparisons of ints, words, reals and chars, the conversions between them, `=` on two values that are not pointers or reals, `!` and `:=`, and the length and elements of strings, vectors and arrays; anything unusual calls the primitive. Chosen by what the programs of `tests/perf` and the compiler compiling `hello` execute: 8.3 million primitive calls, 9.1% of their 91 million instructions, of which `poly_eq` is 48.6%, `int_add` 16.0%, `int_sub` 5.9%, `int_lt` and `int_mod` 4.4% each; the 56 are 99.1% of the calls. `tests/opt/prims.sml` runs each on its edge cases, 3,321 lines of output that are the same natively and on `runevm`, with the same counts, and `tests/opt` fails if it stops using one of them. `make check`, `make test-native-stress` and `make test-native-asan` pass. The timings before and after are M7's |
 | M6, debug information, checked | done: every function has CFI (the frame of `rune_enter`, which the code never changes), so a debugger unwinds from an SML function to `main`, and a position from its first byte; `runeopt --lines` prints the table of a `.rbc`. `tests/opt/run-debug.sh`, part of `make test-native`: for the compiler and every program of `tests/lang`, the line table as `llvm-dwarfdump` reads it (file, line, column) and as `readelf` decodes it is the position of every instruction that has code, in order, and `addr2line` gives every function at its symbol its first line; gdb and lldb stop at a line of `examples/nqueens.sml`, and lldb names the function (`place#235`). What it found is under D7 |
-| M7, performance | done: `make perf` with `rune:opt` beside `rune` and the hosts, in [basis-compat.md](../basis-compat.md): natively the programs of `tests/perf` run 1.8 to 4.0 times faster than on `runevm` (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5 against 10.0), still 10 to 40 times slower than the hosts; the compiler compiles itself in 5.5 s against 10.2. The inlining of M5 gains 3% (`tak`) to 33% (`word_bits`), measured against the `runeopt` of M4. A profile of the native bootstrap (`perf record`, the symbols of D2): 36% in the translated code, 34% in calls and returns through the glue (`enter` 13%, `native_ret` 6.6%, `vm_pop` 6.1%, `native_call` 4.1%, `vm_push_frame` 2.5%), 12% in the collector, 6% allocating, 2% in the primitives still called. **For the next roadmap**: what pays first is CALL, TAILCALL and RET done by the templates, which D0 allows (the glue was M3's shortcut), then allocation by a bump of the pointer inline; D3's option A waits for those, since a native `ret` gains nothing while every return goes through C. M7 also found that M1 had made `runevm` slower, 13 to 16% more machine instructions (`perf stat`), because `vm_pop`, `vm_top` and the push of a frame had left the file of the loop; they are inline in `vm.h` again, and `vm_fatal` and `vm_exit` are declared not to return |
+| M7, performance | done: `make perf` with `rune:opt` beside `rune` and the hosts, in [basis-compat.md](../basis-compat.md): natively the programs of `tests/perf` run 1.8 to 4.0 times faster than on `runevm` (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5 against 10.0), still 10 to 40 times slower than the hosts; the compiler compiles itself in 5.5 s against 10.2. The inlining of M5 gains 3% (`tak`) to 33% (`word_bits`), measured against the `runeopt` of M4. A profile of the native bootstrap (`perf record`, the symbols of D2): 36% in the translated code, 34% in calls and returns through the glue (`enter` 13%, `native_ret` 6.6%, `vm_pop` 6.1%, `native_call` 4.1%, `vm_push_frame` 2.5%), 12% in the collector, 6% allocating, 2% in the primitives still called. What pays first, and in what order, is M10 to M15 below, from a profile taken after M9: calls and returns done by the templates, which D0 allows (the glue was M3's shortcut), then allocation inline; D3's option A waits for those, since a native `ret` gains nothing while every return goes through C. M7 also found that M1 had made `runevm` slower, 13 to 16% more machine instructions (`perf stat`), because `vm_pop`, `vm_top` and the push of a frame had left the file of the loop; they are inline in `vm.h` again, and `vm_fatal` and `vm_exit` are declared not to return |
 | M8, the round-up | done but for retiring this roadmap, which is the owner's to decide: the list *To revisit* has to find a home first. The rest: `man/runeopt.1` and completions for bash and zsh, which `check-docs` holds to the version; `make install` installs `runeopt` (the self-hosted build, or a host's with `HOST`) with its runtime under `lib/rune/runtime`, which the installed wrapper passes (tried: installed into a prefix, translating and running `hello` outside the tree, uninstalled); a section on native programs in [runtime.md](../runtime.md); the rules of *Constraints* in `AGENTS.md` (written as the milestones needed them) |
 | M9, save and restore (optional) | done, D11's option 1 with option 6: a native program carries on an image of its own program -- `RUNEVM_OPTIONS="--restore FILE"`, `Runtime.restore`, the child of `--emulate-fork` -- whoever wrote it, and `runeopt --from-image` makes the program of an image (`RbcImage`; a real constant is written as C's hexadecimal notation from its bits, with integers alone). The code has a table of the places an image stops at (after a CALL, and after `rt_save` and `posix_fork`); a restore checks that the image's program is the one the executable carries (code, functions, globals, constants, the constants read under the rounding mode a program starts with, since `strtod` follows the mode the image restores) and gives every frame its native return. An image of another program is refused, `Runtime.restore` raising `OS.SysErr` (`ENOEXEC`), as the owner decided. `tests/opt-skip.txt` is empty: `rt.fork_image` and the `.restore` tests run natively, images cross between `runevm` and native code both ways and with the 32-bit and PowerPC VMs, and the programs of `examples/runtime` give `runevm`'s output, but `become`, which becomes an image of another program. **M9 found a bug of the runtime**: an image lost every reference to the first object of the heap, whose distance 0 was read back as no object, so `runevm --restore` crashed on a program that named the first string constant afterwards; the reader keeps the distance plus one now, and `tests/lang/rt.save_first` pins it |
+| M10, calls and returns in the templates | not started (added 2026-09-24, as M11 to M15; est. 15-20% of the bootstrap) |
+| M11, allocation in the templates | not started (est. 6-8%) |
+| M12, a cheaper collector | not started (est. 3-6%, up to 12% by D14) |
+| M13, the tag test of a match, fused | not started; waits for D13 (est. 4-6%) |
+| M14, D3's option A, measured first | not started (est. 5-15% on programs made of calls) |
+| M15, the values of a run in registers | not started (est. 5-10%) |
 
 ## Where we are
 
@@ -867,6 +876,38 @@ edge values and prints the results, run under `runevm` and natively, with
 the outputs compared. A check fails for an entry without such a test.
 Inlining a primitive that allocates is out of scope.
 
+### D13. Fusing an instruction sequence (open: the owner picks)
+
+D0 has every instruction become a template of its own, with nothing merged.
+One sequence stands out in the profile of M10 to M15 below. The compiler
+tests a constructor as `CONTAG; INT t; PRIM poly_eq; JUMPIFNOT l`
+(`src/core/matchcomp.sml:70`), and those four instructions are about 9.5%
+of the time of the native bootstrap. A template for the four together
+would read the tag, compare it and branch, without the int and the bool in
+between. It would still count four instructions, still stop on a value
+that is not a constructor as CONTAG does, and apply only where no label
+falls between them.
+
+* **A, fuse in the translator (M13).** This relaxes D0 for this one
+  sequence.
+* **B, a fused opcode in the compiler.** This is item 3 of Phase B of
+  [performance.md](performance.md), which helps `runevm` as much. It changes
+  the bytecode, and Phase B waits for the owner's go-ahead.
+* **C, neither.**
+
+### D14. How full the heap may be after a collection (open: the owner picks)
+
+Today the collector grows the heap until it is at most half full after a
+collection (`vm/heap.c`). A quarter would roughly halve the number of
+collections, for twice the memory. The collector is 17% of the native
+bootstrap. Starting it with a heap of 1 GiB, one collection instead of 24,
+takes 12% fewer cycles, which is the most any policy could gain. The
+choice is the runtime's, so `runevm` would change with it.
+
+* **A, half, as now.**
+* **B, a quarter.**
+* **C, an option**, with half as the default.
+
 ## Constraints for all items
 
 * **Every commit builds and passes `make check`.** A large milestone is
@@ -1037,6 +1078,122 @@ D11's option 1, with option 6:
   `make test-portability`.
 * **The skip list is emptied** of its `RESTORE` entries.
 
+### After M9: making native code faster
+
+The owner asked on 2026-09-24 for milestones of performance, those of the
+biggest gain and the lowest complexity first. They rest on a profile of the
+native compiler compiling itself, taken on 2026-09-24 after the commits of
+M9 (`perf record`). Each instruction of the code was given a symbol of its
+own for the measurement (`.Lp` to `Lp_`, nothing else changed), so a sample
+of the translated code names the bytecode instruction it belongs to:
+
+| Where the time goes | Share |
+|---|---:|
+| Calls: `enter` 13.0% (half of it setting the locals of a new frame to unit, in a loop), `native_call` 6.1%, `native_ret` 4.7%, `native_tailcall` 3.2%, the reload of the frame at each entry 2.5% | 29% |
+| The collector: `copy_obj` 8.8%, `collect_into` 3.8%, `memmove` 4.5%, and 2.3% in the kernel, mostly the fresh pages of every new to-space | 19% |
+| Allocation: `vm_alloc` 4.0%, `vm_alloc_fields` 3.1%, `native_tuple` 2.4%, `native_closure` 1.0%, `native_con` 0.5% | 11% |
+| The tag test of a match: CONTAG 5.2%, JUMPIFNOT 2.2%, `poly_eq` 2.1% | 9.5% |
+| LOCAL 5.1% and SETLOCAL 4.6%: 16-byte values copied through memory | 9.7% |
+| SELECT, mostly the load of the tuple itself | 7.6% |
+| The primitives still called | 2% |
+
+The gains below are estimates, from these shares. Each milestone is timed
+before and after with `perf stat` (cycles and instructions, which stay
+steady where the wall-clock time of a loaded machine does not), on `fib`,
+`tak`, the programs of `tests/perf` (`make perf`) and the bootstrap. Each
+keeps what every milestone before it kept: the suites natively, the counts
+of `--count` equal to `runevm`'s, the stress and ASan runs, and the images.
+
+### M10. Calls and returns in the templates -- M
+
+Estimated gain: 15 to 20% of the bootstrap, more on programs made of
+calls. The calls' 29% is C doing, one call at a time, what the templates
+can do knowing the heights and the frame, and a loop over the locals that
+the callee can unroll, since only it knows how many it has. This is within
+D0: the code does what `vm/interp.c` does, and the frames are exact at
+every call into C.
+
+* **CALL** checks the closure (its tag and kind) and its function index,
+  and leaves the rest to the glue's fatal path. It moves the argument into
+  the closure's slot, which is where the callee's local 0 lies, and pushes
+  the frame inline: `func`, `ret_pc`, `base`, `closure`, `native_ret`, with
+  `vm_grow_frames` as the slow path. Then it jumps through the function
+  table.
+* **A function's entry** checks the room its frame needs (base, locals,
+  highest stack) against `stack_cap`, with `vm_grow_stack` as the slow path.
+  It sets its locals 1 to n - 1 to unit with n straight stores, which is
+  half of what `enter` does today.
+* **RET** puts the result in local 0 and pops the frame. At the top level it
+  goes to the glue (`vm_exit`); otherwise it jumps through `native_ret`.
+  **TAILCALL** is CALL with the frame kept.
+* Traces, images and the collector see the same frames as before; the
+  image tests of M9 and the gc-stress run are what show it.
+
+### M11. Allocation in the templates -- S to M
+
+Estimated gain: 6 to 8%. TUPLE, CON, CLOSURE, MKEXN and NEWEXN allocate by
+bumping `heap_used`, when the object fits and `--gc-stress` is off. They
+write the header and the fields from their slots, and add to
+`bytes_allocated` and `objects_allocated`, which `--count` prints and which
+must stay equal to `runevm`'s. Everything else goes to the helper of today,
+which collects. The heap's base and limit are loaded from the VM after every
+call into C, since a collection moves them. Within D0.
+
+### M12. A cheaper collector -- S (the runtime, so `runevm` gains too)
+
+Estimated gain: 3 to 6% with the heap as full as today, up to 12% by D14.
+This changes `vm/heap.c`, which both programs share, so `make
+test-windows` and `make test-portability` are part of it.
+
+* Keep both semispaces, where the collector now allocates a new to-space and
+  frees the old one at every collection: that is the kernel's 2.3%. The
+  pair grows only when the heap does.
+* Copy a small object field by field, not by `memcpy` (the 4.5% of
+  `memmove`).
+* How full the heap may be after a collection, as D14 decides.
+* Not a collector of another kind: a generational collector is a roadmap of
+  its own.
+
+### M13. The tag test of a match, fused -- S to M (needs D13 = A)
+
+Estimated gain: 4 to 6%. The four instructions of the test, in one run
+with no label between them, become one template: read the tag of a
+nullary constructor, or the `contag` of a constructor with an argument,
+compare it with `t`, and branch. It still adds four to the count, and
+still stops on a value that is no constructor as CONTAG does. With D13 = B
+the compiler emits the fused opcode instead, and this milestone translates
+that opcode.
+
+### M14. D3's option A: native call and return -- M to L (measured first)
+
+Estimated gain: 5 to 15% on programs made of calls, less elsewhere. After
+M10 a return is an indirect jump through the frame, which the processor
+predicts poorly for a function called from many places, where a `ret` is
+predicted by its return stack buffer.
+
+* **The prototype first.** CALL, TAILCALL and RET as `call`, `jmp` and
+  `ret` on a separate machine stack of 16-byte frames, timed on `fib`,
+  `tak` and the bootstrap. The milestone goes on only if they gain.
+* **What it takes** is D3's list: the stack switched to and sized, overflow
+  still reported as `runevm: out of memory (stack)`, a handler's `rsp`
+  taken from `vm->fp`, a restore that rebuilds the machine stack from the
+  frames, and ASan told of the switch.
+
+### M15. The values of a run in registers -- L
+
+Estimated gain: 5 to 10%. Within a straight run, the values at the top of
+the stack live in registers, and are stored to their slots only before a
+call into C, a label or the end of the run. D0 already allows state in
+registers between those points. A value pushed and popped within the run
+(the operands of an inlined primitive, the tuple of a SELECT) then never
+goes to memory. The largest change of these, since every template has to
+know where its operands are, so it comes last.
+
+**Not in these milestones**, since they change the compiler or the
+bytecode rather than the translation: calling a known function directly,
+values that are not boxed, and slots of a frame used twice. They are in
+[performance.md](performance.md), for the VM and native code alike.
+
 ## To revisit
 
 * **D8**, the executable's command line and messages. The owner accepted it
@@ -1045,7 +1202,7 @@ D11's option 1, with option 6:
   of a fork known by `argv[0]` rather than a token in the environment, the
   prefix `runevm:`, and `RUNEVM_NAME`, which only the wrapper of the suites
   sets.
-* **D3's option A**, native call and return, as an experiment after M5.
+* **D3's option A**, native call and return: M14, after M10.
 * **D11's other options**, and a compiler or interpreter offered as a
   service for `Runtime.restore` of another program.
 
@@ -1084,10 +1241,11 @@ D11's option 1, with option 6:
 
 ## Out of scope
 
-* **Optimisation beyond D0 and D12**: keeping the top of the stack in
-  registers, unboxing, calling known functions directly, peephole
-  optimisation, inlining primitives that allocate. This is for a later
-  roadmap, which M7 prepares.
+* **Optimisation that needs the compiler or the bytecode**: calling known
+  functions directly, unboxing, slots of a frame used twice
+  ([performance.md](performance.md)); inlining primitives that allocate;
+  a collector of another kind. M10 to M15 are what the translation and the
+  runtime can do alone.
 * **Windows and processors other than x86-64.** D2, D4 and *Constraints*
   keep them additions. Windows needs a Win64 ABI layer, the mingw
   assembler, `sys_win.c` in `librune`, and PE/COFF with CodeView or DWARF.
@@ -1136,6 +1294,14 @@ D11's option 1, with option 6:
   * `examples/runtime/checkpoint` and `become` give the output they give
     under `runevm`;
   * `rt.fork_image` passes natively.
+* **M10 to M15:**
+  * everything the milestones before kept: the suites natively, `--count`
+    equal to `runevm`'s, the stress and ASan runs, the images;
+  * the gain, timed before and after with `perf stat` (cycles and
+    instructions) on `fib`, `tak`, `tests/perf` and the bootstrap, and a
+    profile, recorded in the milestone's row;
+  * M12 also `make test-windows` and `make test-portability`, since it
+    changes the runtime.
 
 ## Where each line of the specification is answered
 
