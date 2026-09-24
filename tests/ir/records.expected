@@ -1,0 +1,9 @@
+(* after translate *)
+(seq
+  (set g1
+    (let v1
+      (prim int_add 1 1)
+      (let v2
+        (prim int_add 2 2)
+        (tuple v2 v1))))
+  ())

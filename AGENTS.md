@@ -93,6 +93,12 @@ keep these invariants:
   instruction in the list `reads` of `x64.sml` must never write its top
   operand in place, since a LOCAL may have left it in its local
   (`docs/native.md`).
+* **A pass of the compiler** (docs/ir.md) runs through `Pass.stage`, with the
+  printer and the size of what it makes and the lint of its representation;
+  a pass that rewrites asks `Pass.spend` before each rewrite, and one that
+  optimises says from which level it runs. It comes with a test in
+  `tests/ir`, and what its representation keeps is written down in
+  `docs/ir.md`.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
@@ -119,7 +125,8 @@ keep these invariants:
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
   `test-basis`, `test-doc`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
-  `check-cross`, `check-docs`, `check-isa`, `bootstrap`; runs on all CPUs,
+  `check-cross`, `check-docs`, `check-isa`, `test-ir`, `check-levels`,
+  `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For

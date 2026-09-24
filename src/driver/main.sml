@@ -146,16 +146,20 @@ struct
     in
       if !Options.typecheckOnly then NONE
       else
-        let val lam = Translate.transProgram (preludeProg @ userProg)
-        in if !Options.dumpLambda then println (Lambda.toString lam) else (); SOME lam end
+        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
+                          size = Lambda.size}
+                         Translate.transProgram (preludeProg @ userProg))
     end
 
   and backEnd (_, NONE) = OS.Process.success
-    | backEnd (inputs, SOME lam) = emitProgram (inputs, Codegen.compile (lam, !Translate.funNames))
+    | backEnd (inputs, SOME lam) =
+        emitProgram (inputs,
+                     Pass.stage {name = "codegen", showIn = SOME Lambda.show, show = Codegen.dump,
+                                 check = fn _ => (), size = Codegen.size}
+                                (fn lam => Codegen.compile (lam, !Translate.funNames)) lam)
 
   and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
     let
-      val () = if !Options.dumpCode then print (Codegen.dump prog) else ()
       val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
     in
       Emit.writeFile (out, prog);

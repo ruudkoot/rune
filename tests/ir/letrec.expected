@@ -1,0 +1,30 @@
+(* after translate *)
+(seq
+  (set g1
+    (fn v1
+      (try
+        (if
+          (prim poly_eq v1 0)
+          0
+          fail)
+        (let v2
+          v1
+          (app
+            g1
+            (prim int_sub v2 1))))))
+  (seq
+    (set g2
+      (letrec v3
+        (fn v4
+          (try
+            (if
+              (prim poly_eq v4 0)
+              0
+              fail)
+            (let v5
+              v4
+              (app
+                v3
+                (prim int_sub v5 1)))))
+        (app v3 3)))
+    ()))

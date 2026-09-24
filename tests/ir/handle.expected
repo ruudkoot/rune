@@ -1,0 +1,25 @@
+(* after translate *)
+(seq
+  (set g1 (newexn E))
+  (seq
+    (set g2
+      (fn v1
+        (let v2
+          v1
+          (handle v3
+            (if
+              (prim poly_eq v2 0)
+              (raise
+                (mkexn g1 7))
+              v2)
+            (try
+              (if
+                (prim ptr_eq
+                  (exncon v3)
+                  g1)
+                (let v4
+                  (exnarg v3)
+                  (let v5 v4 v5))
+                fail)
+              (raise v3))))))
+    ()))

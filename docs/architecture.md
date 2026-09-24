@@ -9,7 +9,10 @@ source files ──► Lexer ──► Parser ──► Elaborate ──► Tran
 
 The compiler is a classic multi-pass design in `src/`; the VM is in `vm/`.
 Every pass is a separate structure with a small interface so the pipeline can
-be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code`.
+be inspected with `rune --dump-tokens | --dump-ast` and, for each stage from
+one intermediate representation to the next, `--dump-before=PASS` and
+`--dump-after=PASS`, with `--lint` checking what each makes
+([ir.md](ir.md)).
 
 ## Compiler passes
 

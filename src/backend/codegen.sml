@@ -356,6 +356,11 @@ struct
     | Lab l => "  L" ^ Int.toString l ^ ":"
     | Pos (f, l, c) => "  ; " ^ Int.toString f ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c
 
+  (* The instructions of a program, for --pass-stats. *)
+  fun size ({funcs, ...} : program) : int =
+    List.foldl (fn ({code, ...} : func, n) =>
+                  List.foldl (fn (Lab _, n) => n | (Pos _, n) => n | (_, n) => n + 1) n code) 0 funcs
+
   fun dump (p : program) : string =
     let
       val cs = String.concat (#1 (List.foldl (fn (c, (acc, i)) => (acc @ ["const " ^ Int.toString i ^ " = " ^ constToString c ^ "\n"], i + 1)) ([], 0) (#consts p)))

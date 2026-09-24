@@ -19,7 +19,7 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | The instruction set as one description | done |
-| M2 | Pass infrastructure | |
+| M2 | Pass infrastructure | done |
 | M3 | Types, and Mid launched dark | |
 | M4 | The new back end: Low and the stack target | |
 | M5 | The register target and the first loop of `vm/new` | |

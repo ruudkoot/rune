@@ -118,7 +118,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -446,6 +446,15 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot | build/.doctor-check
 	sh scripts/check-cross.sh -j $(JOBS)
 
 # Every instruction says where it came from, and the line is one the file has.
+# The intermediate representations (docs/ir.md): the dumps of tests/ir, and
+# every program of tests/lang and tests/perf the same at -O0 and -O2 with the
+# lint of every pass on (docs/plans/middle-end.md, M2).
+test-ir: $(RUNE)
+	sh tests/ir/run-ir-tests.sh --rune $(RUNE)
+
+check-levels: $(RUNE) $(RUNEVM)
+	sh scripts/check-levels.sh --rune $(RUNE) --vm $(RUNEVM) -j $(JOBS)
+
 check-positions: $(RUNE) $(RUNEVM)
 	sh scripts/check-positions.sh -j $(JOBS) --rune $(RUNE) --vm $(RUNEVM)
 
@@ -658,6 +667,7 @@ check:
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt
+	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
