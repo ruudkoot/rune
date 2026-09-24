@@ -1,7 +1,7 @@
 (* after translate *)
 (seq
   (set g1
-    (fn v1
+    (fn (v1 : int) : int
       (try
         (if
           (prim poly_eq v1 0)
@@ -15,7 +15,7 @@
   (seq
     (set g2
       (letrec v3
-        (fn v4
+        (fn (v4 : int) : int
           (try
             (if
               (prim poly_eq v4 0)

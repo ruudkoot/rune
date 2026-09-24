@@ -3,7 +3,7 @@
   (set g1 (newexn E))
   (seq
     (set g2
-      (fn v1
+      (fn (v1 : int) : int
         (let v2
           v1
           (handle v3
@@ -18,7 +18,7 @@
                   (exncon v3)
                   g1)
                 (let v4
-                  (exnarg v3)
+                  (exnarg v3 : int)
                   (let v5 v4 v5))
                 fail)
               (raise v3))))))

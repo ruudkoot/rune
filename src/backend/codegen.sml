@@ -35,21 +35,22 @@ struct
       Var v => if IntMap.member (bound, v) then acc else IntMap.insert (acc, v, ())
     | Global _ => acc | Const _ => acc | Unit => acc | Con0 _ => acc | Fail => acc
     | NewExn _ => acc | BuiltinExn _ => acc
-    | Fn (x, b) =>
+    | Fn (x, _, b) =>
         List.foldl (fn (v, acc) => if IntMap.member (bound, v) then acc else IntMap.insert (acc, v, ()))
                    acc (fnFree (x, b))
+    | Inst (a, _) => fv (a, bound, acc)
     | App (a, b) => fv (b, bound, fv (a, bound, acc))
     | Let (x, a, b) => fv (b, IntMap.insert (bound, x, ()), fv (a, bound, acc))
     | LetRec (bs, b) =>
-        let val bound' = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) bound bs
-        in List.foldl (fn ((_, e), acc) => fv (e, bound', acc)) (fv (b, bound', acc)) bs end
+        let val bound' = List.foldl (fn ((x, _, _), m) => IntMap.insert (m, x, ())) bound bs
+        in List.foldl (fn ((_, _, e), acc) => fv (e, bound', acc)) (fv (b, bound', acc)) bs end
     | Seq (a, b) => fv (b, bound, fv (a, bound, acc))
     | SetGlobal (_, a) => fv (a, bound, acc)
     | Mark (_, a) => fv (a, bound, acc)
     | Tuple es => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc es
     | Select (_, a) => fv (a, bound, acc)
-    | Con (_, a) => fv (a, bound, acc)
-    | Decon a => fv (a, bound, acc)
+    | Con (_, _, a) => fv (a, bound, acc)
+    | Decon (_, a) => fv (a, bound, acc)
     | ConTag a => fv (a, bound, acc)
     | If (c, t, f) => fv (f, bound, fv (t, bound, fv (c, bound, acc)))
     | Try (a, b) => fv (b, bound, fv (a, bound, acc))
@@ -57,8 +58,8 @@ struct
     | Handle (a, x, h) => fv (h, IntMap.insert (bound, x, ()), fv (a, bound, acc))
     | MkExn (c, p) => fv (p, bound, fv (c, bound, acc))
     | ExnCon a => fv (a, bound, acc)
-    | ExnArg a => fv (a, bound, acc)
-    | Prim (_, args) => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc args
+    | ExnArg (_, a) => fv (a, bound, acc)
+    | Prim (_, _, args) => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc args
 
   (* ---------------------------------------------------------------- *)
   (* Program-wide state.                                                *)
@@ -175,13 +176,14 @@ struct
     case e of
       Var v => loadVar (ctx, v)
     | Global g => emit (ctx, Op (Opcodes.GLOBAL, [globalIdx g]))
-    | Const (CInt i) =>
+    | Const (CInt i, _) =>
         if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then emit (ctx, Op (Opcodes.INT, [IntInf.toInt i]))
         else emit (ctx, Op (Opcodes.CONST, [constIdx (CInt i)]))
-    | Const c => emit (ctx, Op (Opcodes.CONST, [constIdx c]))
+    | Const (c, _) => emit (ctx, Op (Opcodes.CONST, [constIdx c]))
+    | Inst (a, _) => gen (ctx, a, tail)
     | Unit => emit (ctx, Op (Opcodes.UNIT, []))
     | Mark (sp, a) => (markPos (ctx, sp); gen (ctx, a, tail))
-    | Fn (x, b) => ignore (genClosure (ctx, x, b, NONE, []))
+    | Fn (x, _, b) => ignore (genClosure (ctx, x, b, NONE, []))
     | App (f, a) =>
         (gen (ctx, f, false); gen (ctx, a, false);
          emit (ctx, Op (if tail then Opcodes.TAILCALL else Opcodes.CALL, [])))
@@ -195,9 +197,9 @@ struct
         (gen (ctx, a, false); emit (ctx, Op (Opcodes.SETGLOBAL, [globalIdx g])); emit (ctx, Op (Opcodes.UNIT, [])))
     | Tuple es => (List.app (fn e => gen (ctx, e, false)) es; emit (ctx, Op (Opcodes.TUPLE, [List.length es])))
     | Select (i, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.SELECT, [i])))
-    | Con0 t => emit (ctx, Op (Opcodes.CON0, [t]))
-    | Con (t, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.CON, [t])))
-    | Decon a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.DECON, [])))
+    | Con0 (t, _) => emit (ctx, Op (Opcodes.CON0, [t]))
+    | Con (t, _, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.CON, [t])))
+    | Decon (_, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.DECON, [])))
     | ConTag a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.CONTAG, [])))
     | If (c, t, f) =>
         let
@@ -209,7 +211,7 @@ struct
              poly_eq and JUMPIFNOT: 17% of the instructions the compiler
              ran compiling itself (docs/plans/codegen.md, M13). *)
           (case c of
-             Prim ("poly_eq", [ConTag a, Const (CInt i)]) =>
+             Prim ("poly_eq", _, [ConTag a, Const (CInt i, _)]) =>
                if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
                  (gen (ctx, a, false); emit (ctx, OpLabImm (Opcodes.JUMPIFNOTTAG, lElse, IntInf.toInt i)))
                else (gen (ctx, c, false); emit (ctx, OpLab (Opcodes.JUMPIFNOT, lElse)))
@@ -256,8 +258,8 @@ struct
     | BuiltinExn k => emit (ctx, Op (Opcodes.BUILTINEXN, [k]))
     | MkExn (c, p) => (gen (ctx, c, false); gen (ctx, p, false); emit (ctx, Op (Opcodes.MKEXN, [])))
     | ExnCon a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.EXNCON, [])))
-    | ExnArg a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.EXNARG, [])))
-    | Prim (p, args) => (List.app (fn e => gen (ctx, e, false)) args; emit (ctx, Op (Opcodes.PRIM, [primIdx p])))
+    | ExnArg (_, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.EXNARG, [])))
+    | Prim (p, _, args) => (List.app (fn e => gen (ctx, e, false)) args; emit (ctx, Op (Opcodes.PRIM, [primIdx p])))
 
   (* Compile a function body into a new function; returns its id. *)
   and genFunction (param : int, body : lexp, envVars : int list, self : int option, name : string,
@@ -312,8 +314,9 @@ struct
       Mark (sp, a) => (markPos (ctx, sp); markThrough (ctx, a))
     | _ => e
 
-  and genLetRec (ctx : ctx, bs : (int * lexp) list) : unit =
+  and genLetRec (ctx : ctx, bs : (int * Ty.ty * lexp) list) : unit =
     let
+      val bs = List.map (fn (f, _, e) => (f, e)) bs
       val slots = List.map (fn (f, _) => (f, newLocal (ctx, f))) bs
       fun slotOf f = case List.find (fn (g, _) => g = f) slots of SOME (_, s) => s | NONE => Error.bug "letrec slot"
       fun go ([], _) = []
@@ -322,7 +325,7 @@ struct
             val pending' = List.map #1 rest
             val patches =
               case markThrough (ctx, e) of
-                Fn (x, body) => genClosure (ctx, x, body, SOME f, pending')
+                Fn (x, _, body) => genClosure (ctx, x, body, SOME f, pending')
               | _ => Error.bug "letrec right-hand side is not a function"
             val () = emit (ctx, Op (Opcodes.SETLOCAL, [slotOf f]))
           in List.map (fn (i, v) => (f, i, v)) patches @ go (rest, pending) end

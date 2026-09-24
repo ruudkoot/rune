@@ -68,7 +68,7 @@ struct
       Ast.EVar (([], x), _, _) =>
         if Char.isLower (String.sub (x, 0)) andalso x <> "true" andalso x <> "false" andalso x <> "nil" then [x] else []
     | Ast.ETuple (es, _) => List.concat (List.map variables es)
-    | Ast.EList (es, _) => List.concat (List.map variables es)
+    | Ast.EList (es, _, _) => List.concat (List.map variables es)
     | Ast.ESeq (es, _) => List.concat (List.map variables es)
     | Ast.ERecord (fields, _) => List.concat (List.map (fn (_, e) => variables e) fields)
     | Ast.ETyped (e', _, _) => variables e'

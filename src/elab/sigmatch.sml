@@ -276,13 +276,22 @@ struct
 
   (* Rules 52 and 53. *)
   fun ascribe (sigma as {bound, env} : sigma, actual : env, opaque : bool, sp) : env =
-    let val (_, specE) = match (sigma, actual, sp)
+    let val (phi, specE) = match (sigma, actual, sp)
     in
       if not opaque then mergeInfo (specE, actual)
       else
         let
-          val rho = List.foldl (fn (c, m) => IntMap.insert (m, #stamp c, TName (freshTycon (#name c, #arity c, #eq c))))
-                               IntMap.empty bound
+          (* each fresh name stands for what the structure made its type,
+             which the intermediate representations see through (Ty) *)
+          fun abstract (c : Types.tycon, m) =
+            let val c' = freshTycon (#name c, #arity c, #eq c)
+            in
+              case IntMap.find (phi, #stamp c) of
+                SOME fcn => Ty.bindRealization (#stamp c', fcn)
+              | NONE => ();
+              IntMap.insert (m, #stamp c, TName c')
+            end
+          val rho = List.foldl abstract IntMap.empty bound
         in mergeInfo (realizeEnv (rho, env), actual) end
     end
 end

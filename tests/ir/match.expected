@@ -1,7 +1,7 @@
 (* after translate *)
 (seq
   (set g1
-    (fn v1
+    (fn (v1 : 'a list) : int
       (try
         (if
           (prim poly_eq
@@ -15,7 +15,7 @@
               (tag v1)
               1)
             (let v2
-              (decon v1)
+              (decon 1 v1)
               (let v3
                 (select 1 v2)
                 (let v4

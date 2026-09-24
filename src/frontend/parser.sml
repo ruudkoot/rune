@@ -372,7 +372,7 @@ struct
                 val () = expect OF
                 val m = parseMatch ()
               in ECase (e, m, spanFrom start) end
-          | FN => (advance (); let val m = parseMatch () in EFn (m, spanFrom start) end)
+          | FN => (advance (); let val m = parseMatch () in EFn (m, ref NONE, spanFrom start) end)
           | _ => parseHandleExp ()
         end
 
@@ -505,11 +505,11 @@ struct
           | LBRACKET =>
               let val () = advance ()
               in
-                if peek () = RBRACKET then (advance (); EList ([], spanFrom start))
+                if peek () = RBRACKET then (advance (); EList ([], ref NONE, spanFrom start))
                 else
                   let fun loop acc = if peek () = COMMA then (advance (); loop (parseExp () :: acc)) else List.rev acc
                       val es = loop [parseExp ()]
-                  in expect RBRACKET; EList (es, spanFrom start) end
+                  in expect RBRACKET; EList (es, ref NONE, spanFrom start) end
               end
           | LET =>
               let
@@ -530,7 +530,7 @@ struct
                 val name = case next () of STRING s => s | _ => err "expected string literal after _prim"
                 val () = expect COLON
                 val t = parseTy ()
-              in EPrim (name, t, spanFrom start) end
+              in EPrim (name, t, ref NONE, spanFrom start) end
           | t => err ("expected expression but found '" ^ toString t ^ "'")
         end
 

@@ -1,5 +1,10 @@
-(* Untyped lambda intermediate representation. Variables are integer stamps
-   shared with elaboration, so every binder is globally unique. *)
+(* The lambda intermediate representation, which the translation makes from
+   the elaborated syntax (docs/ir.md). Variables are integer stamps shared
+   with elaboration, so every binder is globally unique. It is typed: a
+   variable has the type its binder gives it, a use of a polymorphic one
+   says at which instance (Inst), and what no argument's type tells -- a
+   function's parameter, a constructor's datatype, a primitive's type, a
+   constant's -- is written on the node; LambdaLint checks it. *)
 structure Lambda =
 struct
   datatype const =
@@ -12,19 +17,20 @@ struct
   datatype lexp =
       Var of int                          (* local variable *)
     | Global of int                       (* top-level variable *)
-    | Const of const
+    | Const of const * Ty.ty
     | Unit
-    | Fn of int * lexp                    (* parameter, body *)
+    | Fn of int * Ty.ty * lexp            (* parameter, the function's type (an arrow), body *)
+    | Inst of lexp * Ty.ty                (* a use of a variable at an instance of its scheme *)
     | App of lexp * lexp
-    | Let of int * lexp * lexp
-    | LetRec of (int * lexp) list * lexp  (* every right-hand side is a Fn *)
+    | Let of int * lexp * lexp            (* the variable has the type of what it is bound to *)
+    | LetRec of (int * Ty.ty * lexp) list * lexp  (* every right-hand side is a Fn *)
     | Seq of lexp * lexp
     | SetGlobal of int * lexp             (* evaluates to unit *)
     | Tuple of lexp list
     | Select of int * lexp
-    | Con0 of int                         (* nullary constructor with tag *)
-    | Con of int * lexp
-    | Decon of lexp
+    | Con0 of int * Ty.ty                 (* nullary constructor with tag, and the datatype it makes *)
+    | Con of int * Ty.ty * lexp
+    | Decon of int * lexp                 (* the argument of a value made by the constructor with the tag *)
     | ConTag of lexp
     | If of lexp * lexp * lexp
     | Try of lexp * lexp                  (* body, fallback taken when body executes Fail *)
@@ -35,8 +41,8 @@ struct
     | BuiltinExn of int
     | MkExn of lexp * lexp                (* constructor, payload *)
     | ExnCon of lexp
-    | ExnArg of lexp
-    | Prim of string * lexp list
+    | ExnArg of Ty.ty * lexp              (* the payload of an exception, of the type its constructor gives it *)
+    | Prim of string * Ty.ty option * lexp list  (* its type at this use; NONE where LambdaLint works it out *)
     | Mark of Source.span * lexp          (* where in the source this came from *)
 
   (* The expression under whatever positions were put on it. Code that looks
@@ -44,8 +50,8 @@ struct
   fun unmark (Mark (_, e)) = unmark e
     | unmark e = e
 
-  val falseExp = Con0 0
-  val trueExp = Con0 1
+  val falseExp = Con0 (0, Ty.bool)
+  val trueExp = Con0 (1, Ty.bool)
 
   (* Builtin exception constructor numbers (see docs/bytecode.md). *)
   val exnMatch = 0
@@ -68,20 +74,21 @@ struct
         case e of
           Var i => v i
         | Global i => "g" ^ Int.toString i
-        | Const c => constToString c
+        | Const (c, _) => constToString c
         | Unit => "()"
-        | Fn (x, b) => "(fn " ^ v x ^ " => " ^ go b ^ ")"
+        | Fn (x, _, b) => "(fn " ^ v x ^ " => " ^ go b ^ ")"
+        | Inst (e, _) => go e
         | App (f, a) => "(" ^ go f ^ " " ^ go a ^ ")"
         | Let (x, a, b) => "let " ^ v x ^ " = " ^ go a ^ " in " ^ go b ^ " end"
         | LetRec (bs, b) =>
-            "letrec " ^ String.concatWith " and " (List.map (fn (x, a) => v x ^ " = " ^ go a) bs) ^ " in " ^ go b ^ " end"
+            "letrec " ^ String.concatWith " and " (List.map (fn (x, _, a) => v x ^ " = " ^ go a) bs) ^ " in " ^ go b ^ " end"
         | Seq (a, b) => "(" ^ go a ^ "; " ^ go b ^ ")"
         | SetGlobal (g, a) => "(g" ^ Int.toString g ^ " := " ^ go a ^ ")"
         | Tuple es => "(" ^ String.concatWith ", " (List.map go es) ^ ")"
         | Select (i, a) => "#" ^ Int.toString i ^ " " ^ go a
-        | Con0 t => "C" ^ Int.toString t
-        | Con (t, a) => "(C" ^ Int.toString t ^ " " ^ go a ^ ")"
-        | Decon a => "decon " ^ go a
+        | Con0 (t, _) => "C" ^ Int.toString t
+        | Con (t, _, a) => "(C" ^ Int.toString t ^ " " ^ go a ^ ")"
+        | Decon (_, a) => "decon " ^ go a
         | ConTag a => "tag " ^ go a
         | If (c, t, f) => "(if " ^ go c ^ " then " ^ go t ^ " else " ^ go f ^ ")"
         | Try (a, b) => "(try " ^ go a ^ " else " ^ go b ^ ")"
@@ -92,8 +99,8 @@ struct
         | BuiltinExn k => "builtinexn " ^ Int.toString k
         | MkExn (c, p) => "(mkexn " ^ go c ^ " " ^ go p ^ ")"
         | ExnCon a => "exncon " ^ go a
-        | ExnArg a => "exnarg " ^ go a
-        | Prim (p, args) => p ^ "(" ^ String.concatWith ", " (List.map go args) ^ ")"
+        | ExnArg (_, a) => "exnarg " ^ go a
+        | Prim (p, _, args) => p ^ "(" ^ String.concatWith ", " (List.map go args) ^ ")"
         | Mark (_, e) => go e
     in go e end
 
@@ -112,17 +119,24 @@ struct
         case IntMap.find (!m, x) of
           SOME n => n
         | NONE => (count := !count + 1; m := IntMap.insert (!m, x, !count); !count)
+      val tyvars : int IntMap.map ref = ref IntMap.empty
+      val ntyvars = ref 0
       fun v x = "v" ^ Int.toString (number (vars, nvars, x))
       fun g x = "g" ^ Int.toString (number (globals, nglobals, x))
+      (* type variables too, as 'a, 'b, ... in the order they appear *)
+      fun tyvar prefix x =
+        let val n = number (tyvars, ntyvars, x)
+        in if n <= 26 then prefix ^ String.str (Char.chr (Char.ord #"a" + n - 1)) else prefix ^ "t" ^ Int.toString n end
+      val ty = Ty.format (tyvar "'", tyvar "'_")
       fun closeLast [] = []
         | closeLast ls = let val r = List.rev ls in List.rev ((hd r ^ ")") :: tl r) end
       fun atom e =
         case e of
           Var x => SOME (v x)
         | Global x => SOME (g x)
-        | Const c => SOME (constToString c)
+        | Const (c, _) => SOME (constToString c)
         | Unit => SOME "()"
-        | Con0 t => SOME ("C" ^ Int.toString t)
+        | Con0 (t, _) => SOME ("C" ^ Int.toString t)
         | Fail => SOME "fail"
         | NewExn n => SOME ("(newexn " ^ n ^ ")")
         | BuiltinExn k => SOME ("(builtinexn " ^ Int.toString k ^ ")")
@@ -152,18 +166,25 @@ struct
                 end
             in
               case e of
-                Fn (x, b) => node (fn () => "fn " ^ v x, [b])
+                Inst (a, t) =>
+                  if isAtom a then [indent n ^ "(inst " ^ valOf (atom a) ^ " : " ^ ty t ^ ")"]
+                  else node (fn () => "inst : " ^ ty t, [a])
+              | Fn (x, t, b) =>
+                  node (fn () => case t of
+                                   Ty.Arrow (d, r) => let val x = v x val d = ty d in "fn (" ^ x ^ " : " ^ d ^ ") : " ^ ty r end
+                                 | _ => "fn " ^ v x ^ " : " ^ ty t,
+                        [b])
               | App (f, a) => node (fn () => "app", [f, a])
               | Let (x, a, b) => node (fn () => "let " ^ v x, [a, b])
               | LetRec (bs, b) =>
-                  node (fn () => "letrec " ^ String.concatWith " " (List.map (fn (x, _) => v x) bs),
-                        List.map #2 bs @ [b])
+                  node (fn () => "letrec " ^ String.concatWith " " (List.map (fn (x, _, _) => v x) bs),
+                        List.map #3 bs @ [b])
               | Seq (a, b) => node (fn () => "seq", [a, b])
               | SetGlobal (x, a) => node (fn () => "set " ^ g x, [a])
               | Tuple es => node (fn () => "tuple", es)
               | Select (i, a) => node (fn () => "select " ^ Int.toString i, [a])
-              | Con (t, a) => node (fn () => "con " ^ Int.toString t, [a])
-              | Decon a => node (fn () => "decon", [a])
+              | Con (t, _, a) => node (fn () => "con " ^ Int.toString t, [a])
+              | Decon (t, a) => node (fn () => "decon " ^ Int.toString t, [a])
               | ConTag a => node (fn () => "tag", [a])
               | If (c, t, f) => node (fn () => "if", [c, t, f])
               | Try (a, b) => node (fn () => "try", [a, b])
@@ -171,8 +192,10 @@ struct
               | Handle (a, x, h) => node (fn () => "handle " ^ v x, [a, h])
               | MkExn (c, p) => node (fn () => "mkexn", [c, p])
               | ExnCon a => node (fn () => "exncon", [a])
-              | ExnArg a => node (fn () => "exnarg", [a])
-              | Prim (p, args) => node (fn () => "prim " ^ p, args)
+              | ExnArg (t, a) =>
+                  if isAtom a then [indent n ^ "(exnarg " ^ valOf (atom a) ^ " : " ^ ty t ^ ")"]
+                  else node (fn () => "exnarg : " ^ ty t, [a])
+              | Prim (p, _, args) => node (fn () => "prim " ^ p, args)
               | Mark (_, e) => lines (n, e)
               | _ => [indent n ^ "?"]
             end
@@ -183,16 +206,17 @@ struct
   (* The nodes of an expression, for --pass-stats. *)
   fun size (e : lexp) : int =
     case e of
-      Fn (_, b) => 1 + size b
+      Fn (_, _, b) => 1 + size b
+    | Inst (e, _) => size e
     | App (f, a) => 1 + size f + size a
     | Let (_, a, b) => 1 + size a + size b
-    | LetRec (bs, b) => List.foldl (fn ((_, r), n) => n + size r) (1 + size b) bs
+    | LetRec (bs, b) => List.foldl (fn ((_, _, r), n) => n + size r) (1 + size b) bs
     | Seq (a, b) => 1 + size a + size b
     | SetGlobal (_, a) => 1 + size a
     | Tuple es => List.foldl (fn (e, n) => n + size e) 1 es
     | Select (_, a) => 1 + size a
-    | Con (_, a) => 1 + size a
-    | Decon a => 1 + size a
+    | Con (_, _, a) => 1 + size a
+    | Decon (_, a) => 1 + size a
     | ConTag a => 1 + size a
     | If (c, t, f) => 1 + size c + size t + size f
     | Try (a, b) => 1 + size a + size b
@@ -200,8 +224,8 @@ struct
     | Handle (a, _, h) => 1 + size a + size h
     | MkExn (c, p) => 1 + size c + size p
     | ExnCon a => 1 + size a
-    | ExnArg a => 1 + size a
-    | Prim (_, args) => List.foldl (fn (e, n) => n + size e) 1 args
+    | ExnArg (_, a) => 1 + size a
+    | Prim (_, _, args) => List.foldl (fn (e, n) => n + size e) 1 args
     | Mark (_, a) => size a
     | _ => 1
 end

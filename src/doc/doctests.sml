@@ -117,7 +117,7 @@ struct
       | Ast.ETuple (es, _) => List.app w es
         (* a table of checks: every row begins with the beginning of its
            labels, "Structure.member/" *)
-      | Ast.EList (es, _) =>
+      | Ast.EList (es, _, _) =>
           List.app (fn row =>
                       ((case row of
                           Ast.ETuple (first :: _, _) =>
@@ -137,7 +137,7 @@ struct
       | Ast.EIf (a, b, c, _) => (w a; w b; w c)
       | Ast.EWhile (a, b, _) => (w a; w b)
       | Ast.ECase (x, ms, _) => (w x; rules ms)
-      | Ast.EFn (ms, _) => rules ms
+      | Ast.EFn (ms, _, _) => rules ms
       | _ => ()
     end
 

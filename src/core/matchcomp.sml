@@ -24,32 +24,48 @@ struct
     | SWideString _ => Error.bug "sconConst: a string constant with a code point above 255"
     | SChar c => CChar c
 
+  (* The type of a special constant: what elaboration found, where the
+     constant is overloaded, else that of its kind. *)
+  fun sconTy (sc, slot : Types.ty option ref) : Ty.ty =
+    case !slot of
+      SOME t => Ty.fromTypes t
+    | NONE =>
+        (case sc of
+           SInt _ => Ty.int
+         | SWord _ => Ty.Con (#stamp Types.wordTycon, "word", [])
+         | SReal _ => Ty.Con (#stamp Types.realTycon, "real", [])
+         | SChar _ => Ty.Con (#stamp Types.charTycon, "char", [])
+         | SString _ => Ty.string
+         | SWideString _ => Ty.string)
+
   (* A special constant at the type elaboration found for it: a constant, or
      for a type registered with `_overload ... via f` the application of f to
      the digits (the text, for a real constant). *)
   fun sconExp (sc, slot : Types.ty option ref) : lexp =
     let
+      val ty = sconTy (sc, slot)
       fun via digits =
         case !slot of
           SOME t =>
             (case Types.resolve t of
                Types.TCon (c, _) =>
                  (case Overload.literalOf c of
-                    SOME (Overload.Via f) => SOME (App (Global f, Const (CString digits)))
+                    SOME (Overload.Via f) => SOME (App (Inst (Global f, Ty.Arrow (Ty.string, ty)), Const (CString digits, Ty.string)))
                   | _ => NONE)
              | _ => NONE)
         | NONE => NONE
       fun digits i = if IntInf.< (i, IntInf.fromInt 0) then "~" ^ IntInf.toString (IntInf.~ i) else IntInf.toString i
+      fun const () = Const (sconConst sc, ty)
     in
       case sc of
-        SInt i => (case via (digits i) of SOME e => e | NONE => Const (sconConst sc))
-      | SWord w => (case via (digits w) of SOME e => e | NONE => Const (sconConst sc))
-      | SReal text => (case via text of SOME e => e | NONE => Const (sconConst sc))
-      | SChar c => (case via (Scon.escape c) of SOME e => e | NONE => Const (sconConst sc))
+        SInt i => (case via (digits i) of SOME e => e | NONE => const ())
+      | SWord w => (case via (digits w) of SOME e => e | NONE => const ())
+      | SReal text => (case via text of SOME e => e | NONE => const ())
+      | SChar c => (case via (Scon.escape c) of SOME e => e | NONE => const ())
       | SString s => (case via (Scon.text (List.map Char.ord (String.explode s))) of
                         SOME e => e
-                      | NONE => Const (sconConst sc))
-      | SWideString s => (case via (Scon.text s) of SOME e => e | NONE => Const (sconConst sc))
+                      | NONE => const ())
+      | SWideString s => (case via (Scon.text s) of SOME e => e | NONE => const ())
     end
 
   fun info (slot : patinfo option ref, sp) =
@@ -66,9 +82,17 @@ struct
          | _ => Error.bug ("flexible record pattern did not resolve to a record at " ^ Source.describe sp))
     | NONE => Error.bug "flexible record pattern not annotated"
 
-  fun testEq (a, b, k) = If (Prim ("poly_eq", [a, b]), k, Fail)
-  fun testTag (v, tag, k) = If (Prim ("poly_eq", [ConTag (Var v), Const (CInt (IntInf.fromInt tag))]), k, Fail)
-  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", [ExnCon (Var v), exncon]), k, Fail)
+  fun eqTy t = Ty.Arrow (Ty.Tuple [t, t], Ty.bool)
+  fun testEq (a, b, t, k) = If (Prim ("poly_eq", SOME (eqTy t), [a, b]), k, Fail)
+  fun testTag (v, tag, k) =
+    If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), k, Fail)
+  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.ExnCon), [ExnCon (Var v), exncon]), k, Fail)
+
+  (* The type of an exception's payload. *)
+  fun exnArgTy (info : exninfo) : Ty.ty =
+    case IntMap.find (!Ty.exnArgs, #stamp info) of
+      SOME (SOME t) => Ty.fromTypes t
+    | _ => Error.bug ("exception " ^ #name info ^ " has no payload")
 
   (* Can matching this pattern fail? *)
   fun refutable (p : pat) : bool =
@@ -95,7 +119,7 @@ struct
   fun compilePat (p : pat, v : int, k : lexp) : lexp =
     case p of
       PWild _ => k
-    | PScon (sc, slot, _) => testEq (Var v, sconExp (sc, slot), k)
+    | PScon (sc, slot, _) => testEq (Var v, sconExp (sc, slot), sconTy (sc, slot), k)
     | PVar (_, slot, sp) =>
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, k)
@@ -122,7 +146,7 @@ struct
           val tl = freshVar ()
         in
           testTag (v, 1,
-            Let (cell, Decon (Var v),
+            Let (cell, Decon (1, Var v),
               Let (hd, Select (0, Var cell),
                 Let (tl, Select (1, Var cell),
                   compilePat (p, hd, compilePat (PList (rest, sp), tl, k))))))
@@ -132,14 +156,14 @@ struct
            PICon i =>
              let val w = freshVar ()
              in
-               if #isRef i then Let (w, Prim ("ref_get", [Var v]), compilePat (arg, w, k))
+               if #isRef i then Let (w, Prim ("ref_get", NONE, [Var v]), compilePat (arg, w, k))
                else
-                 let val inner = Let (w, Decon (Var v), compilePat (arg, w, k))
+                 let val inner = Let (w, Decon (#tag i, Var v), compilePat (arg, w, k))
                  in if #ncons i <= 1 then inner else testTag (v, #tag i, inner) end
              end
          | PIExn i =>
              let val w = freshVar ()
-             in testExn (v, exnConExp i, Let (w, ExnArg (Var v), compilePat (arg, w, k))) end
+             in testExn (v, exnConExp i, Let (w, ExnArg (exnArgTy i, Var v), compilePat (arg, w, k))) end
          | PIVar _ => Error.bug "constructor application pattern annotated as variable")
     | PTyped (p, _, _) => compilePat (p, v, k)
     | PLayered (_, _, p, slot, sp) =>
