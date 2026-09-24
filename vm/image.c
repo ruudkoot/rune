@@ -42,7 +42,7 @@
 #include <fenv.h>
 #include <errno.h>
 
-#define IMAGE_MAGIC "runevm image 2"
+#define IMAGE_MAGIC "runevm image 3"
 
 /* What a world that starts again from an image should do: a fork gives 0 to
    the child, a save gives `Restored` to the program that wrote it. */
@@ -160,6 +160,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
     put_u32(s, (uint32_t)vm->count);
     put_u32(s, (uint32_t)vm->emulate_fork);
     put_u32(s, (uint32_t)fegetround());
+    put_u32(s, (uint32_t)vm->heap_fill);
     put_u64(s, (uint64_t)vm->gc_stress);
     put_u64(s, (uint64_t)vm->gc_count);
     put_u64(s, (uint64_t)vm->gc_user_us);
@@ -447,6 +448,9 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm->count = (int)get_u32(&s);
     vm->emulate_fork = (int)get_u32(&s);
     fesetround((int)get_u32(&s));
+    vm->heap_fill = get_u32(&s);
+    if (s.ok && (vm->heap_fill < 1 || vm->heap_fill > 100))
+        return failed(&s, err, errlen, "the image is not sound");
     vm->gc_stress = (size_t)get_u64(&s);
     vm->gc_count = (size_t)get_u64(&s);
     vm->gc_user_us = (int64_t)get_u64(&s);

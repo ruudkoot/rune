@@ -152,6 +152,8 @@ typedef struct VM {
     uint64_t objects_allocated;
     uint64_t instructions;   /* executed so far */
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
+                                after a collection; 50 unless the option says otherwise */
 
     uint32_t pc;
     int trace;

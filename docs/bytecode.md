@@ -102,7 +102,8 @@ alphabetic), so a tuple `(a, b)` and the record `{1 = a, 2 = b}` are the same
 object. Options are `CON0 0` (`NONE`) and `CON 1 x` (`SOME x`).
 
 The heap is managed by a Cheney semispace copying collector; the semispace
-doubles whenever it is more than half full after a collection.
+doubles whenever it is more than half full after a collection, or the share
+`runevm --heap-fill P` gives, P percent.
 
 ## Machine state
 
@@ -196,6 +197,8 @@ raised as noted.
   that keeps a heap pointer in a C variable across an allocation
   (`make test-stress`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm --heap-fill P file.rbc` grows the heap after a collection until at
+  most P percent of it is in use (1 to 100, 50 by default);
 * `runevm --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,
   which has no fork: a second `runevm` is started as `runevm --resume` and
   handed the whole state of this one (`vm/image.c`), and it carries on with

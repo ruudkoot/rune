@@ -6,6 +6,7 @@ _arguments -s \
   '--trace[trace every instruction to stderr]' \
   '--stats[print heap statistics at exit]' \
   '--count[print instructions and allocations at exit]' \
+  '--heap-fill[the percent of the heap in use after a collection]:percent:' \
   '--gc-stress[collect before every Nth allocation]:interval:' \
   '--emulate-fork[fork by a second VM, as on Windows]' \
   '--restore[carry on the world Runtime.save wrote]:image file:_files' \

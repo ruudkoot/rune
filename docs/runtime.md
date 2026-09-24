@@ -42,7 +42,8 @@ values, and it survives a collection and a `fork` (below).
 
 The collector is a Cheney two-space copier. Allocation is a bump of a pointer
 in the current semispace; when a request does not fit, the live data is
-copied into a new space and the old one is freed. The roots are the value
+copied into the other semispace, which is kept for the next collection
+while the heap stays the same size. The roots are the value
 stack, the globals, the constants of the program, the closure of each frame
 and the built-in exception constructors; from those the whole live graph is
 copied, so anything unreachable disappears without being visited.
@@ -54,7 +55,9 @@ maintains, not the address of the moment.
 * The first semispace is 4 MiB, and `runevm --heap-size N` sets it (at least
   4096 bytes).
 * After a collection the heap grows -- doubling -- until the live data is at
-  most half of it and the request fits. A heap that would have to double past
+  most half of it and the request fits. `runevm --heap-fill P` makes that
+  *P* percent instead (1 to 100): a quarter makes about half the collections
+  for twice the memory. A heap that would have to double past
   what a `size_t` can hold ends the run with `runevm: out of memory`.
 * `runevm --stats` prints, at exit, the number of collections, the bytes
   allocated, the size of a semispace and the bytes live.
@@ -134,11 +137,11 @@ The Basis Library suite records such a difference as a `WIDTH` line of
 | A string | 1,073,741,823 bytes | `String.maxSize`; longer raises `Size` |
 | An array or a vector | 100,000,000 elements | `Array.maxLen`, `Vector.maxLen` |
 | A file position | 64 bits | on every platform, including 32-bit Windows |
-| Live data, 64-bit VM | the machine's memory | a collection holds both semispaces at once |
+| Live data, 64-bit VM | the machine's memory | the heap holds both semispaces at once |
 | Live data, 32-bit VM | about 512 MiB | `bin/runevm32.exe` is linked large-address-aware, which gives it 4 GiB of address space; without that it would be about half (an estimate: no test comes near) |
 
-The ceiling of a 32-bit VM is lower than its address space because a
-collection holds the old semispace and the new one at the same time. Running
+The ceiling of a 32-bit VM is lower than its address space because the
+heap holds both semispaces at the same time. Running
 out is a clean `runevm: out of memory`, not a hang.
 
 ## The same run twice
@@ -207,7 +210,7 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--heap-size`, `--emulate-fork`, `--restore`, `--version` -- is described
+`--gc-stress`, `--heap-size`, `--heap-fill`, `--emulate-fork`, `--restore`, `--version` -- is described
 in [bytecode.md](bytecode.md).
 
 ## A native program
@@ -227,7 +230,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--gc-stress`) come from the environment variable `RUNEVM_OPTIONS`, after
+  `--heap-fill`, `--gc-stress`) come from the environment variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.
 * `CommandLine.name ()` is the name the program was started by.

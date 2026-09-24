@@ -15,6 +15,8 @@ static void usage(void) {
         "                  to stderr at exit; the same for every run of a program\n"
         "  --gc-stress N   collect before every Nth allocation (testing the collector\n"
         "                  and the primitives' handling of heap pointers)\n"
+        "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
+        "                  a collection, 1 to 100 (default 50)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
@@ -34,7 +36,7 @@ static int size_arg(const char *text, size_t *out) {
 }
 
 int main(int argc, char **argv) {
-    size_t heap = 4u << 20, gc_stress = 0;
+    size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
@@ -51,6 +53,9 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--heap-fill") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
@@ -93,6 +98,7 @@ int main(int argc, char **argv) {
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
     vm_init(vm, heap);
+    vm->heap_fill = (unsigned)heap_fill;
 
     char err[256];
     if (!load_program(vm, argv[i], err, sizeof err)) {

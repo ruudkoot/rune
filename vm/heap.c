@@ -19,6 +19,7 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->heap_from = malloc(semispace_bytes);
     vm->heap_to = NULL;
     vm->heap_used = 0;
+    vm->heap_fill = 50;
     vm->gc_count = 0;
     vm->gc_user_us = 0;
     vm->gc_sys_us = 0;
@@ -70,7 +71,15 @@ static Obj *copy_obj(Obj *o) {
     if (o->kind == K_FORWARD) return *(Obj **)OBJ_BYTES(o);
     size_t size = obj_size(o);
     Obj *n = (Obj *)(to_space + to_used);
-    memcpy(n, o, size);
+    /* Most objects have one to three fields: a copy of a size the compiler
+       knows is a few moves, where one of any size is a call of memcpy, which
+       was 4.5% of the time of the compiler compiling itself natively. */
+    switch (size) {
+    case sizeof(Obj) + 16: memcpy(n, o, sizeof(Obj) + 16); break;
+    case sizeof(Obj) + 32: memcpy(n, o, sizeof(Obj) + 32); break;
+    case sizeof(Obj) + 48: memcpy(n, o, sizeof(Obj) + 48); break;
+    default: memcpy(n, o, size); break;
+    }
     to_used += size;
     o->kind = K_FORWARD;
     *(Obj **)OBJ_BYTES(o) = n;
@@ -81,9 +90,18 @@ static void copy_value(Value *v) {
     if (v->tag == T_PTR && v->u.p) v->u.p = copy_obj(v->u.p);
 }
 
+/* The heap is two semispaces, both kept: the one collected from is the next
+   one collected into, as long as the heap stays the size it is. A new one
+   for every collection, as before, cost the kernel's work of giving fresh
+   pages every time. */
 static void collect_into(VM *vm, size_t new_size) {
-    to_space = malloc(new_size);
-    if (!to_space) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+    if (vm->heap_to && new_size == vm->heap_size) to_space = vm->heap_to;
+    else {
+        free(vm->heap_to);
+        to_space = malloc(new_size);
+        if (!to_space) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+    }
+    vm->heap_to = NULL;
     to_used = 0;
 
     /* roots */
@@ -108,12 +126,18 @@ static void collect_into(VM *vm, size_t new_size) {
         scan += size;
     }
 
-    free(vm->heap_from);
+    if (new_size == vm->heap_size) vm->heap_to = vm->heap_from;
+    else free(vm->heap_from);
     vm->heap_from = to_space;
     vm->heap_used = to_used;
     vm->heap_size = new_size;
     vm->gc_count++;
     to_space = NULL;
+}
+
+/* heap_fill% of n bytes, rounded down, which for 50 is n / 2 */
+static size_t fill_of(const VM *vm, size_t n) {
+    return n / 100 * vm->heap_fill + n % 100 * vm->heap_fill / 100;
 }
 
 void vm_gc(VM *vm, size_t needed) {
@@ -123,10 +147,11 @@ void vm_gc(VM *vm, size_t needed) {
     int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
     /* live data always fits in a semispace of the current size */
     collect_into(vm, vm->heap_size);
-    /* keep the heap at most half full after collection to avoid thrashing;
-       written so that nothing wraps where a size_t is 32 bits */
+    /* keep the heap at most heap_fill% full after collection, half unless
+       --heap-fill says otherwise, to avoid thrashing; written so that nothing
+       wraps where a size_t is 32 bits */
     size_t want = vm->heap_size;
-    while (vm->heap_used > want / 2 || needed > want / 2 - vm->heap_used) {
+    while (vm->heap_used > fill_of(vm, want) || needed > fill_of(vm, want) - vm->heap_used) {
         if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
         want *= 2;
     }

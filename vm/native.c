@@ -279,7 +279,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 /* ---------------------------------------------------------------- main */
 
 typedef struct Options {
-    size_t heap, gc_stress;
+    size_t heap, gc_stress, heap_fill;
     int stats, count, emulate_fork;
     char *restore;
 } Options;
@@ -313,6 +313,9 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         } else if (strcmp(w, "--gc-stress") == 0 && i + 1 < n && size_arg(words[i + 1], &o->gc_stress) && o->gc_stress > 0)
             i++;
+        else if (strcmp(w, "--heap-fill") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap_fill)
+                 && o->heap_fill >= 1 && o->heap_fill <= 100)
+            i++;
         else if (strcmp(w, "--restore") == 0 && i + 1 < n) {
             free(o->restore);
             o->restore = malloc(strlen(words[i + 1]) + 1);
@@ -320,7 +323,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(o->restore, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --gc-stress N, --emulate-fork, --restore FILE)\n", where, w);
+                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --emulate-fork, --restore FILE)\n", where, w);
             exit(2);
         }
     }
@@ -331,7 +334,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { 4u << 20, 0, 0, 0, 0, NULL };
+    Options o = { 4u << 20, 0, 50, 0, 0, 0, NULL };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm's are, and not part of what
@@ -375,6 +378,7 @@ int main(int argc, char **argv) {
     vm->argc = argc - 1;
     vm->argv = argv + 1;
     vm_init(vm, o.heap);
+    vm->heap_fill = (unsigned)o.heap_fill;
 
     char err[256];
     if (!load_program_mem(vm, rune_rbc, rune_rbc_size, err, sizeof err)) {

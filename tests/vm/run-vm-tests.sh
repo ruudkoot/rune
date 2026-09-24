@@ -78,6 +78,9 @@ expect code "truncated code" code.rbc
 expect heap-size "usage:" --heap-size 18446744073709551616 empty.rbc
 expect heap-size-text "usage:" --heap-size 64M empty.rbc
 expect gc-stress "usage:" --gc-stress 18446744073709551616 empty.rbc
+# a share of the heap that is none, and one of more than all of it
+expect heap-fill-zero "usage:" --heap-fill 0 empty.rbc
+expect heap-fill-over "usage:" --heap-fill 101 empty.rbc
 
 # The debug section (docs/bytecode.md). A whole program, then the
 # line table broken in each of the ways the loader has to refuse. `prog` is

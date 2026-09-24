@@ -237,6 +237,7 @@ void vm_release(VM *vm) {
     free(vm->frames);
     free(vm->handlers);
     free(vm->heap_from);
+    free(vm->heap_to);
     for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
     for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
     free(vm->files);

@@ -15,7 +15,7 @@ struct
 
   fun fail msg = raise Bad msg
 
-  val magic = "runevm image 2\000"
+  val magic = "runevm image 3\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -108,7 +108,7 @@ struct
       val () = if String.size data >= String.size magic andalso String.substring (data, 0, String.size magic) = magic
                then #pos r := String.size magic else fail "not an image of this runevm"
       val _ = u32 r                                   (* the kind *)
-      val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5]
+      val () = List.app (fn _ => ignore (u32 r)) [1, 2, 3, 4, 5, 6]
       val () = List.app (fn _ => ignore (uN (r, 8))) [1, 2, 3, 4, 5, 6, 7]
       val _ = u32 r                                   (* pc *)
       val _ = u32 r                                   (* io_errno *)

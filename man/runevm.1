@@ -47,6 +47,13 @@ to standard error at exit.
 Print the instructions executed and the bytes and objects allocated to standard
 error at exit. The numbers are the same for every run of a program.
 .TP
+.BI \-\-heap\-fill " P"
+Grow the heap after a collection until at most
+.I P
+percent of it is in use, 1 to 100 (default 50). A lower
+.I P
+makes fewer collections for more memory.
+.TP
 .BI \-\-gc\-stress " N"
 Collect before every
 .IR N th
