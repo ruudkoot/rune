@@ -15,7 +15,8 @@ struct
 
   fun fail msg = raise Bad msg
 
-  val magic = "runevm image 3\000"
+  (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
+  val magic = "runevm image 4 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}

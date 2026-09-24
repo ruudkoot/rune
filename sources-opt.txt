@@ -1,10 +1,14 @@
 # Ordered list of the sources of runeopt, the native code generator
 # (docs/plans/codegen.md): the compiler's utilities and its description of
-# the machine (the opcodes and primitives of vm/opcodes.def and vm/prims.def),
+# the machine (the descriptions of src/isa, and the opcodes and primitives
+# runeisa generates from them),
 # which it shares with sources.txt in the same order, and src/opt.
 # scripts/gen-build-files.sh makes the build files of every host from this
 # list -- edit only this file. The rules of sources.txt hold here too.
 src/util/ordmap.sml
+src/isa/isa.sml
+src/isa/stack.sml
+src/isa/prims.sml
 src/backend/opcodes.sml
 src/backend/prims.sml
 src/opt/rbc.sml

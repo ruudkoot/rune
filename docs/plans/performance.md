@@ -151,7 +151,8 @@ Its live data grows steadily, to 205 MB at the end, so the collector copies
   * `tests/opt/every-opcode.rasm`.
 
   The `.rbc` version changes only when the layout does, in
-  `src/backend/emit.sml`, `vm/loader.c` and `src/opt/rbc.sml`.
+  `src/isa/stack.sml`; the fingerprint of the instruction set, which the
+  `.rbc` and images carry, changes by itself.
 * **A change that moves `--count`** re-measures the budgets
   (`sh tests/perf/run-perf.sh --update`) and quotes old and new in the
   commit.

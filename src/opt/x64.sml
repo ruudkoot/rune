@@ -35,10 +35,7 @@ struct
 
   (* The instructions after which a straight run of code ends, and with it
      what the counter adds at once (docs/native.md, Counting). *)
-  fun endsRun opc =
-    opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL orelse opc = Opcodes.PRIM orelse opc = Opcodes.RAISE
-    orelse opc = Opcodes.RET orelse opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF
-    orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIFNOTTAG orelse opc = Opcodes.HALT
+  fun endsRun opc = Isa.endsRun (Vector.sub (RbcCheck.info, opc))
 
   (* The numbers the checks of the code give native_fatal, which has the
      messages of vm/interp.c. *)
@@ -47,6 +44,8 @@ struct
   val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11
 
   val primNames : string vector = Vector.fromList (List.map #1 Prims.table)
+  (* The description of each primitive (src/isa/prims.sml), by its number. *)
+  val primInfo : Isa.primitive vector = Vector.fromList PrimIsa.primitives
 
   (* The primitives whose common case the code does itself (docs/native.md,
      Primitives done inline). A PRIM of
@@ -294,21 +293,20 @@ struct
       val () =
         Vector.app
           (fn {opc, a, ...} : RbcCheck.instr =>
-             if opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT
-                orelse opc = Opcodes.JUMPIFNOTTAG
-             then Array.update (target, Array.sub (index, a), true)
-             else if opc = Opcodes.PUSHHANDLER then Array.update (handler, Array.sub (index, a), true)
+             if RbcCheck.isJump opc then Array.update (target, Array.sub (index, a), true)
+             else if RbcCheck.installs opc then Array.update (handler, Array.sub (index, a), true)
              else ())
           instrs
       fun reachable i = Vector.sub (#height facts, i) >= 0
-      fun afterCall i = i > 0 andalso #opc (ins (i - 1)) = Opcodes.CALL andalso reachable (i - 1)
+      fun afterCall i =
+        i > 0 andalso #flow (Vector.sub (RbcCheck.info, #opc (ins (i - 1)))) = Isa.Call andalso reachable (i - 1)
 
       (* The places an image can stop at, by pc, with the native code that
          carries on there (M9): the instruction after a CALL, where a frame
          returns to, and after a primitive that writes an image, where the
          world that saved itself starts again. *)
       val resumes : (int * string) list ref = ref []
-      fun imagePrim a = let val n = Vector.sub (primNames, a) in n = "rt_save" orelse n = "posix_fork" end
+      fun imagePrim a = Isa.hasEffect (Vector.sub (primInfo, a), Isa.SavesImage)
 
       (* the line table, as .loc where an entry begins *)
       val lineStarts = Array.array (codeLen + 1, ~1)
@@ -455,48 +453,112 @@ struct
                             ^ (case Vector.sub (Opcodes.nargs, opc) of 0 => "" | 1 => " " ^ num a | _ => " " ^ num a ^ " " ^ num b)
                             ^ "\n")
               val () = case Array.sub (lineStarts, pc) of ~1 => () | k => loc k
+              (* CALL and TAILCALL, and JUMPIFNOT and JUMPIF, share a template *)
+              fun callTemplate () =
+                (* M10: the closure checked, its function index in range, the
+                   frame pushed (or, for TAILCALL, kept), the argument moved
+                   to the callee's local 0, where the closure was, and a jump
+                   to the callee's fast entry; anything else, and a full
+                   array of frames, is the glue's (native_call and
+                   native_tailcall), as before M10. *)
+                let
+                  val slow = lab pc ^ "_slow"
+                  val tail = opc = Opcodes.TAILCALL
+                  val newBase = num (16 * (nlocals + h - 2))
+                in
+                  line ("cmpb $T_PTR, " ^ slot (h - 2));
+                  line ("jne " ^ slow);
+                  line ("mov " ^ payload (h - 2) ^ ", %rax");
+                  line "cmpb $K_CLOSURE, OBJ_KIND(%rax)";
+                  line ("jne " ^ slow);
+                  line "mov OBJ_FIELDS+8(%rax), %rcx";
+                  line ("cmp $" ^ num nfuncs ^ ", %rcx");
+                  line ("jae " ^ slow);
+                  if tail then
+                    (line "mov VM_FRAMES(%r12), %rdx";
+                     line "mov VM_FP(%r12), %rsi";
+                     line "imul $FRAME_SIZE, %rsi, %rsi";
+                     line "add %rsi, %rdx";
+                     line "mov %ecx, FRAME_FUNC(%rdx)";
+                     line "mov %rax, FRAME_CLOSURE(%rdx)";
+                     copy (rslot (h - 1), "(%r13,%rbp)"))
+                  else
+                    (line "mov VM_FP(%r12), %rdx";
+                     line "add $1, %rdx";
+                     line "cmp VM_FRAMES_CAP(%r12), %rdx";
+                     line ("jae " ^ slow);
+                     line "mov %rdx, VM_FP(%r12)";
+                     line "imul $FRAME_SIZE, %rdx, %rdx";
+                     line "add VM_FRAMES(%r12), %rdx";
+                     line "mov %ecx, FRAME_FUNC(%rdx)";
+                     line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
+                     line ("lea " ^ newBase ^ "(%rbp), %rsi");
+                     line "shr $4, %rsi";
+                     line "mov %rsi, FRAME_BASE(%rdx)";
+                     line "mov %rax, FRAME_CLOSURE(%rdx)";
+                     line ("lea " ^ lab next ^ "(%rip), %rsi");
+                     line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
+                     copy (rslot (h - 1), slot (h - 2));
+                     line ("lea " ^ newBase ^ "(%rbp), %rbp"));
+                  line "lea rune_functions(%rip), %rdx";
+                  line "lea (%rcx,%rcx,2), %rcx";
+                  line "movslq 4(%rdx,%rcx,4), %rsi";
+                  line "add %rdx, %rsi";
+                  line "jmp *%rsi";
+                  slows := (fn () =>
+                              (put (slow ^ ":\n"); unforward (); flushSp (); setPc ();
+                               if tail then callC ("native_tailcall", [])
+                               else callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]);
+                               line "jmp *%rax")) :: !slows
+                end
+              fun jumpIfTemplate () =
+                (line ("cmpb $T_CON0, " ^ rslot (h - 1));
+                 line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
+                 line ("cmpq $0, " ^ rpayload (h - 1));
+                 line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
             in
               if h < 0 then line "ud2"
               else
                 ((if afterCall i then resumes := (pc, lab pc) :: !resumes else ());
                  (if afterCall i orelse Array.sub (handler, i) then reloadFrame () else ());
                  (if startsRun i then line ("add $" ^ Int.toString (runLength i) ^ ", %r15") else ());
-                 if opc = Opcodes.HALT then
+                 case Opcode.fromInt opc of
+                   Opcode.HALT =>
                    (flushCount (); flushSp (); setPc (); callC ("native_halt", []); line "ud2")
-                 else if opc = Opcodes.CONST then
+                 | Opcode.CONST =>
                    (line "mov VM_CONSTS(%r12), %rax"; copy (num (16 * a) ^ "(%rax)", slot h))
-                 else if opc = Opcodes.INT then put0 ("T_INT", num a, h)
-                 else if opc = Opcodes.UNIT then put0 ("T_UNIT", "0", h)
-                 else if opc = Opcodes.CON0 then put0 ("T_CON0", num a, h)
-                 else if opc = Opcodes.LOCAL then
+                 | Opcode.INT => put0 ("T_INT", num a, h)
+                 | Opcode.UNIT => put0 ("T_UNIT", "0", h)
+                 | Opcode.CON0 => put0 ("T_CON0", num a, h)
+                 | Opcode.LOCAL =>
                    if forwards i then pending := SOME (h, a) else copy (localSlot a, slot h)
-                 else if opc = Opcodes.SETLOCAL then copy (rslot (h - 1), localSlot a)
-                 else if opc = Opcodes.ENV then
+                 | Opcode.SETLOCAL => copy (rslot (h - 1), localSlot a)
+                 | Opcode.ENV =>
                    (closureToRax ();
                     line "test %rax, %rax";
                     line ("jz " ^ check (pc, next, fatalEnv, a));
                     line ("cmpl $" ^ num (a + 1) ^ ", OBJ_LEN(%rax)");
                     line ("jbe " ^ check (pc, next, fatalEnv, a));
                     copy ("OBJ_FIELDS+" ^ num (16 * (a + 1)) ^ "(%rax)", slot h))
-                 else if opc = Opcodes.SELF then
+                 | Opcode.SELF =>
                    (closureToRax ();
                     line "test %rax, %rax";
                     line ("jz " ^ check (pc, next, fatalSelf, 0));
                     line ("movb $T_PTR, " ^ slot h);
                     line ("mov %rax, " ^ payload h))
-                 else if opc = Opcodes.GLOBAL then
+                 | Opcode.GLOBAL =>
                    (line "mov VM_GLOBAL_SET(%r12), %rax";
                     line ("cmpb $0, " ^ num a ^ "(%rax)");
                     line ("je " ^ check (pc, next, fatalGlobal, a));
                     line "mov VM_GLOBALS(%r12), %rax";
                     copy (num (16 * a) ^ "(%rax)", slot h))
-                 else if opc = Opcodes.SETGLOBAL then
+                 | Opcode.SETGLOBAL =>
                    (line "mov VM_GLOBALS(%r12), %rax";
                     copy (rslot (h - 1), num (16 * a) ^ "(%rax)");
                     line "mov VM_GLOBAL_SET(%r12), %rax";
                     line ("movb $1, " ^ num a ^ "(%rax)"))
-                 else if opc = Opcodes.POP then ()
-                 else if opc = Opcodes.TUPLE then
+                 | Opcode.POP => ()
+                 | Opcode.TUPLE =>
                    if a = 0 then put0 ("T_UNIT", "0", h)
                    else
                      inlineAlloc (fn slow =>
@@ -504,17 +566,17 @@ struct
                                      List.app (fn k => copy (rslot (h - a + k), field k)) (List.tabulate (a, fn k => k));
                                      putPtr (h - a)),
                                   fn () => callC ("native_tuple", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.SELECT then
+                 | Opcode.SELECT =>
                    (expectObj (h - 1, "K_TUPLE", fatalTuple);
                     line ("cmpl $" ^ num a ^ ", OBJ_LEN(%rax)");
                     line ("jbe " ^ check (pc, next, fatalSelect, a));
                     copy ("OBJ_FIELDS+" ^ num (16 * a) ^ "(%rax)", slot (h - 1)))
-                 else if opc = Opcodes.CON then
+                 | Opcode.CON =>
                    inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (rslot (h - 1), field 0); putPtr (h - 1)),
                                 fn () => callC ("native_con", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.DECON then
+                 | Opcode.DECON =>
                    (expectObj (h - 1, "K_CON", fatalCon); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
-                 else if opc = Opcodes.CONTAG then
+                 | Opcode.CONTAG =>
                    let val ptr = lab pc ^ "_ptr" val done = lab pc ^ "_done"
                    in
                      line ("cmpb $T_CON0, " ^ slot (h - 1));
@@ -532,7 +594,7 @@ struct
                      line ("mov %rax, " ^ payload (h - 1));
                      put (done ^ ":\n")
                    end
-                 else if opc = Opcodes.CLOSURE then
+                 | Opcode.CLOSURE =>
                    inlineAlloc (fn slow =>
                                   (alloc ("K_CLOSURE", 0, b + 1, slow);
                                    line ("movb $T_INT, " ^ field 0);
@@ -540,66 +602,11 @@ struct
                                    List.app (fn k => copy (rslot (h - b + k), field (k + 1))) (List.tabulate (b, fn k => k));
                                    putPtr (h - b)),
                                 fn () => callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
-                 else if opc = Opcodes.SETENV then
+                 | Opcode.SETENV =>
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL then
-                   (* M10: the closure checked, its function index in range, the
-                      frame pushed (or, for TAILCALL, kept), the argument moved
-                      to the callee's local 0, where the closure was, and a jump
-                      to the callee's fast entry; anything else, and a full
-                      array of frames, is the glue's (native_call and
-                      native_tailcall), as before M10. *)
-                   let
-                     val slow = lab pc ^ "_slow"
-                     val tail = opc = Opcodes.TAILCALL
-                     val newBase = num (16 * (nlocals + h - 2))
-                   in
-                     line ("cmpb $T_PTR, " ^ slot (h - 2));
-                     line ("jne " ^ slow);
-                     line ("mov " ^ payload (h - 2) ^ ", %rax");
-                     line "cmpb $K_CLOSURE, OBJ_KIND(%rax)";
-                     line ("jne " ^ slow);
-                     line "mov OBJ_FIELDS+8(%rax), %rcx";
-                     line ("cmp $" ^ num nfuncs ^ ", %rcx");
-                     line ("jae " ^ slow);
-                     if tail then
-                       (line "mov VM_FRAMES(%r12), %rdx";
-                        line "mov VM_FP(%r12), %rsi";
-                        line "imul $FRAME_SIZE, %rsi, %rsi";
-                        line "add %rsi, %rdx";
-                        line "mov %ecx, FRAME_FUNC(%rdx)";
-                        line "mov %rax, FRAME_CLOSURE(%rdx)";
-                        copy (rslot (h - 1), "(%r13,%rbp)"))
-                     else
-                       (line "mov VM_FP(%r12), %rdx";
-                        line "add $1, %rdx";
-                        line "cmp VM_FRAMES_CAP(%r12), %rdx";
-                        line ("jae " ^ slow);
-                        line "mov %rdx, VM_FP(%r12)";
-                        line "imul $FRAME_SIZE, %rdx, %rdx";
-                        line "add VM_FRAMES(%r12), %rdx";
-                        line "mov %ecx, FRAME_FUNC(%rdx)";
-                        line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
-                        line ("lea " ^ newBase ^ "(%rbp), %rsi");
-                        line "shr $4, %rsi";
-                        line "mov %rsi, FRAME_BASE(%rdx)";
-                        line "mov %rax, FRAME_CLOSURE(%rdx)";
-                        line ("lea " ^ lab next ^ "(%rip), %rsi");
-                        line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
-                        copy (rslot (h - 1), slot (h - 2));
-                        line ("lea " ^ newBase ^ "(%rbp), %rbp"));
-                     line "lea rune_functions(%rip), %rdx";
-                     line "lea (%rcx,%rcx,2), %rcx";
-                     line "movslq 4(%rdx,%rcx,4), %rsi";
-                     line "add %rdx, %rsi";
-                     line "jmp *%rsi";
-                     slows := (fn () =>
-                                 (put (slow ^ ":\n"); unforward (); flushSp (); setPc ();
-                                  if tail then callC ("native_tailcall", [])
-                                  else callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]);
-                                  line "jmp *%rax")) :: !slows
-                   end
-                 else if opc = Opcodes.RET then
+                 | Opcode.CALL => callTemplate ()
+                 | Opcode.TAILCALL => callTemplate ()
+                 | Opcode.RET =>
                    (* M10: the result in local 0, where the caller wants it,
                       the frame popped, and a jump to where it returns; the
                       top level's RET ends the run in the glue. *)
@@ -617,13 +624,10 @@ struct
                                  (put (slow ^ ":\n"); unforward (); flushCount (); flushSp (); setPc ();
                                   callC ("native_ret", []); line "jmp *%rax")) :: !slows
                    end
-                 else if opc = Opcodes.JUMP then line ("jmp " ^ lab a)
-                 else if opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF then
-                   (line ("cmpb $T_CON0, " ^ rslot (h - 1));
-                    line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
-                    line ("cmpq $0, " ^ rpayload (h - 1));
-                    line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
-                 else if opc = Opcodes.JUMPIFNOTTAG then
+                 | Opcode.JUMP => line ("jmp " ^ lab a)
+                 | Opcode.JUMPIFNOT => jumpIfTemplate ()
+                 | Opcode.JUMPIF => jumpIfTemplate ()
+                 | Opcode.JUMPIFNOTTAG =>
                    (* CONTAG's two cases, each compared with b *)
                    let val ptr = lab pc ^ "_ptr"
                    in
@@ -642,26 +646,26 @@ struct
                      line ("cmp $" ^ num b ^ ", %rax");
                      line ("jne " ^ lab a)
                    end
-                 else if opc = Opcodes.PUSHHANDLER then
+                 | Opcode.PUSHHANDLER =>
                    (flushSp (); callC ("vm_push_handler", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.POPHANDLER then
+                 | Opcode.POPHANDLER =>
                    (line "cmpq $0, VM_HP(%r12)";
                     line ("je " ^ check (pc, next, fatalPopHandler, 0));
                     line "decq VM_HP(%r12)")
-                 else if opc = Opcodes.RAISE then
+                 | Opcode.RAISE =>
                    (flushCount (); flushSp (); setPc (); callC ("native_raise", []); line "jmp *%rax")
-                 else if opc = Opcodes.NEWEXN then
+                 | Opcode.NEWEXN =>
                    inlineAlloc (fn slow =>
                                   (alloc ("K_EXNCON", 0, 1, slow);
                                    line "mov VM_CONSTS(%r12), %rcx";
                                    copy (num (16 * a) ^ "(%rcx)", field 0);
                                    putPtr h),
                                 fn () => callC ("native_newexn", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.BUILTINEXN then
+                 | Opcode.BUILTINEXN =>
                    (line ("mov VM_BUILTIN_EXNS+" ^ num (8 * a) ^ "(%r12), %rax");
                     line ("movb $T_PTR, " ^ slot h);
                     line ("mov %rax, " ^ payload h))
-                 else if opc = Opcodes.MKEXN then
+                 | Opcode.MKEXN =>
                    (* a constructor that is none is the helper's to report,
                       after it has allocated, as the interpreter does *)
                    inlineAlloc (fn slow =>
@@ -675,11 +679,11 @@ struct
                                    copy (rslot (h - 1), field 1);
                                    putPtr (h - 2)),
                                 fn () => callC ("native_mkexn", []))
-                 else if opc = Opcodes.EXNCON then
+                 | Opcode.EXNCON =>
                    (expectObj (h - 1, "K_EXN", fatalExn); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
-                 else if opc = Opcodes.EXNARG then
+                 | Opcode.EXNARG =>
                    (expectObj (h - 1, "K_EXN", fatalExn); copy ("OBJ_FIELDS+16(%rax)", slot (h - 1)))
-                 else if opc = Opcodes.PRIM then
+                 | Opcode.PRIM =>
                    let
                      fun callPrim () =
                        (flushCount (); flushSp (); setPc ();
@@ -710,7 +714,7 @@ struct
                                     :: !slows
                          end
                    end
-                 else raise Fail ("no template for opcode " ^ Int.toString opc))
+                 )
             end
           fun loop i = if i > last then () else (instruction i; loop (i + 1))
         in

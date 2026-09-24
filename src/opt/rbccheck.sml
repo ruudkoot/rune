@@ -55,32 +55,37 @@ struct
       go (0, [])
     end
 
-  (* (pops, pushes) of an instruction, as vm/interp.c has it. A CALL pushes
+  (* The description of each opcode (src/isa/stack.sml), by its number. *)
+  val info : Isa.instruction vector = StackIsa.info
+
+  (* (pops, pushes) of an instruction, from its description. A CALL pushes
      its result when the call returns. *)
   fun effect ({opc, a, b, ...} : instr) : int * int =
-    if opc = Opcodes.CONST orelse opc = Opcodes.INT orelse opc = Opcodes.UNIT orelse opc = Opcodes.CON0
-       orelse opc = Opcodes.LOCAL orelse opc = Opcodes.ENV orelse opc = Opcodes.SELF orelse opc = Opcodes.GLOBAL
-       orelse opc = Opcodes.NEWEXN orelse opc = Opcodes.BUILTINEXN then (0, 1)
-    else if opc = Opcodes.SETLOCAL orelse opc = Opcodes.SETGLOBAL orelse opc = Opcodes.POP
-       orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOTTAG then (1, 0)
-    else if opc = Opcodes.TUPLE then (a, 1)
-    else if opc = Opcodes.SELECT orelse opc = Opcodes.CON orelse opc = Opcodes.DECON orelse opc = Opcodes.CONTAG
-       orelse opc = Opcodes.EXNCON orelse opc = Opcodes.EXNARG then (1, 1)
-    else if opc = Opcodes.CLOSURE then (b, 1)
-    else if opc = Opcodes.SETENV then (2, 0)
-    else if opc = Opcodes.CALL orelse opc = Opcodes.MKEXN then (2, 1)
-    else if opc = Opcodes.PRIM then (Vector.sub (arity, a), 1)
-    else if opc = Opcodes.TAILCALL then (2, 0)
-    else if opc = Opcodes.RET orelse opc = Opcodes.RAISE then (1, 0)
-    else (0, 0)          (* HALT, JUMP, PUSHHANDLER, POPHANDLER *)
+    let
+      val i = Vector.sub (info, opc)
+      fun operand 0 = a
+        | operand _ = b
+      val pops =
+        case #pops i of
+          Isa.Fixed n => n
+        | Isa.OperandValue k => operand k
+        | Isa.ArityOf k => Vector.sub (arity, operand k)
+    in
+      (pops, #pushes i)
+    end
 
   (* An instruction after which control does not go on to the next. *)
-  fun ends opc =
-    opc = Opcodes.TAILCALL orelse opc = Opcodes.RET orelse opc = Opcodes.RAISE
-    orelse opc = Opcodes.JUMP orelse opc = Opcodes.HALT
+  fun ends opc = Isa.ends (Vector.sub (info, opc))
 
+  (* One that goes to the label of its first operand, always or on a
+     condition. *)
   fun isJump opc =
-    opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIFNOTTAG
+    case #flow (Vector.sub (info, opc)) of Isa.Jump => true | Isa.Branch => true | _ => false
+
+  fun leaves opc =
+    case #flow (Vector.sub (info, opc)) of Isa.TailCall => true | Isa.Return => true | _ => false
+  fun installs opc = #handlers (Vector.sub (info, opc)) = Isa.Installs
+  fun removes opc = #handlers (Vector.sub (info, opc)) = Isa.Removes
 
   fun check (p : Rbc.program) : facts =
     let
@@ -138,14 +143,14 @@ struct
               val () = if pops > h then refuse ("the stack underflows" ^ at (pc, f)) else ()
               val h' = h - pops + pushes
               val () = if h' > Array.sub (maxHeight, f) then Array.update (maxHeight, f, h') else ()
-              val () = if (opc = Opcodes.TAILCALL orelse opc = Opcodes.RET) andalso d > 0
+              val () = if leaves opc andalso d > 0
                        then refuse ("a handler of the function is still installed" ^ at (pc, f)) else ()
-              val () = if opc = Opcodes.POPHANDLER andalso d = 0
-                       then refuse ("POPHANDLER without a handler of the function" ^ at (pc, f)) else ()
-              val d' = if opc = Opcodes.PUSHHANDLER then d + 1 else if opc = Opcodes.POPHANDLER then d - 1 else d
+              val () = if removes opc andalso d = 0
+                       then refuse (Vector.sub (Opcodes.names, opc) ^ " without a handler of the function" ^ at (pc, f)) else ()
+              val d' = if installs opc then d + 1 else if removes opc then d - 1 else d
               val work =
                 if isJump opc then target (a, h', d', pc, work)
-                else if opc = Opcodes.PUSHHANDLER then target (a, h + 1, d, pc, work)
+                else if installs opc then target (a, h + 1, d, pc, work)
                 else work
             in
               if ends opc then work

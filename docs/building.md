@@ -69,6 +69,8 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the four host builds |
+| `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `vm/opcodes.def`, `vm/prims.def`, `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
+| `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
 | `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
 | `make test-native` | the suites with every program translated to native code by `runeopt` ([docs/native.md](native.md)): `tests/lang` through `bin/runevm-opt` (a VM for the runners that translates and runs; `tests/opt-skip.txt` lists what native code does not do yet), the check that every program of `tests/lang` counts what `runevm` counts (`tests/opt/run-counts.sh`), the Basis Library suite in the `rune:opt` configuration, and the compiler as native code compiling itself (`tests/opt/run-bootstrap.sh`). Linux on x86-64 only; elsewhere it does nothing. `make test-native-stress` runs it with a collection before every `GC_STRESS`-th allocation and `make test-native-asan` with a runtime built with the sanitizers; neither is part of `make check` |
@@ -300,13 +302,18 @@ where it runs (`man runeopt`).
 * `sources-opt.txt` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
   `src/opt` too.
-* `vm/opcodes.def` and `vm/prims.def` are the single source of truth for the
-  instruction set and primitive table. `scripts/gen-opcodes.sh` generates
-  `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml` and
-  `src/backend/prims.sml`. The C dispatch table in `vm/prims.c` is built from
-  the generated `RUNE_PRIM_LIST` X-macro, so adding a primitive means: add a
-  line to `prims.def`, implement `p_<name>` in `vm/prims.c`, document it in
-  `docs/bytecode.md`.
+* The instruction set and the primitives are described once, in Standard
+  ML: `src/isa/stack.sml` and `src/isa/prims.sml`, in the language of
+  `src/isa/isa.sml`. `runeisa` (`sources-isa.txt`, `src/isa`) writes from
+  them `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml`,
+  `src/backend/prims.sml`, and `vm/opcodes.def` and `vm/prims.def`, which the
+  scripts read. All of them are committed, so that the VM builds with a C
+  compiler alone: `make isa` writes them again, and `make check-isa`, part of
+  `make check`, fails when one is not what the descriptions give. The C
+  dispatch table in `vm/prims.c` is built from the generated
+  `RUNE_PRIM_LIST` X-macro, so adding a primitive means: add it at the end of
+  `src/isa/prims.sml`, run `make isa`, implement `p_<name>` in `vm/prims.c`,
+  document it in `docs/bytecode.md`.
 * Entry points: `src/main/mlton-main.sml`, `src/main/polyml-main.sml` and
   `src/main/rune-main.sml` (the self-hosted build) call `Main.main`; SML/NJ's
   `ml-build` exports `Main.main` directly. Each of the four `bin/rune*` files

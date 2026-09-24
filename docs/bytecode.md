@@ -1,10 +1,11 @@
 # Rune bytecode (`.rbc`) and VM
 
 `rune` emits a single `.rbc` file per program (basis library included);
-`runevm` loads, validates and interprets it. The instruction set and primitive
-table are generated from `vm/opcodes.def` and `vm/prims.def`; those files are
-the source of truth and `make check-docs` verifies every opcode and primitive
-they define is mentioned here.
+`runevm` loads, validates and interprets it. The instruction set and the
+primitives are described in `src/isa/stack.sml` and `src/isa/prims.sml`,
+from which `runeisa` writes `vm/opcodes.def`, `vm/prims.def` and the tables
+of the VM and the compiler; `make check-docs` verifies every opcode and
+primitive they define is mentioned here.
 
 ## File format
 
@@ -13,7 +14,8 @@ unsigned 32-bit, signed 32-bit and signed 64-bit two's complement.
 
 ```
 magic       4 bytes   "RUNE"
-version     u32       2
+version     u32       3
+fingerprint u32       of the instruction set the file is of (below)
 nconsts     u32
 consts      nconsts × constant
 nglobals    u32       number of global slots
@@ -32,8 +34,19 @@ table_len   u32
 lines       table_len bytes                  # nlines entries; see below
 ```
 
-The version is `2`. A file of version `1`, which has no debug section, is
-refused like any other version the VM does not know.
+The version is `3`, and it changes when the layout does (`rbcVersion` in
+`src/isa/stack.sml`). A file of version `1`, which has no debug section, or
+`2`, which has no fingerprint, is refused like any other version the VM does
+not know.
+
+**The fingerprint** says which instruction set a file is of. `runeisa`
+works it out from the descriptions of `src/isa` -- the instructions' names,
+operands, stack effects and flow, and the primitives' names and arities, in
+order -- and writes it into the generated tables; a VM refuses a file of
+another instruction set with "bytecode of another instruction set", and an
+image of one (whose magic carries the fingerprint) as not an image of this
+`runevm`. So an opcode or a primitive may be added, removed or moved: a file
+made before is refused rather than read with another meaning.
 
 **The line table** says where each instruction came from, which is what
 `--disasm` prints beside it and what a stack trace reads. Its entries are in
@@ -127,7 +140,7 @@ jumps to `o`. If no handler exists the VM prints
 ## Instructions
 
 Each instruction is one opcode byte followed by zero or more `i32` operands.
-Opcode numbers are assigned in the order of `vm/opcodes.def`.
+Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 
 | Opcode | Operands | Effect |
 |---|---|---|
@@ -163,7 +176,7 @@ Opcode numbers are assigned in the order of `vm/opcodes.def`.
 
 ## Primitives
 
-Primitive numbers follow the order of `vm/prims.def`. The basis library binds
+Primitive numbers follow the order of `src/isa/prims.sml`. The basis library binds
 them with `_prim "name" : ty`. Type errors in primitive arguments are fatal VM
 errors (they cannot happen for programs produced by `rune`); SML exceptions are
 raised as noted.

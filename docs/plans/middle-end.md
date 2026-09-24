@@ -18,7 +18,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | The instruction set as one description | |
+| M1 | The instruction set as one description | done |
 | M2 | Pass infrastructure | |
 | M3 | Types, and Mid launched dark | |
 | M4 | The new back end: Low and the stack target | |

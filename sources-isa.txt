@@ -1,0 +1,12 @@
+# Ordered list of the sources of runeisa, the generator of the instruction
+# sets (docs/plans/middle-end.md, M1): the compiler's ordered maps, the
+# language of the descriptions, the descriptions themselves, and what
+# writes the files. scripts/gen-build-files.sh makes the build files of
+# every host from this list -- edit only this file. The rules of
+# sources.txt hold here too.
+src/util/ordmap.sml
+src/isa/isa.sml
+src/isa/stack.sml
+src/isa/prims.sml
+src/isa/isagen.sml
+src/isa/isamain.sml

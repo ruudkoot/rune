@@ -59,21 +59,27 @@ keep these invariants:
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
   Poly/ML); `make matrix` adds the suite on each host's own library.
-* **Instruction set / primitives** change only through `vm/opcodes.def` and
-  `vm/prims.def` (then `make gen`), with the corresponding implementation in
+* **Instruction set / primitives** change only through their descriptions,
+  `src/isa/stack.sml` and `src/isa/prims.sml` (then `make isa`, which writes
+  the generated files and `vm/opcodes.def` and `vm/prims.def`; `make
+  check-isa` fails when they are stale), with the corresponding implementation in
   `vm/` and a description in `docs/bytecode.md`. A primitive that needs the
   operating system goes behind a new call of `vm/sys.h` that every layer
   answers -- `sys_posix.c`, `sys_win.c` and `sys_none.c`, with `ENOSYS` where
   there is nothing to do -- and is written on the hosts in
   `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
-  Basis Library suite run. Bump the `.rbc` version in
-  `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
+  Basis Library suite run. Bump `rbcVersion` in
+  `src/isa/stack.sml` if the file layout changes; a change to the
+  instructions or the primitives changes the fingerprint of the instruction
+  set by itself, which the `.rbc` and images carry.
 * **Native code** (`runeopt`, `docs/native.md`): an instruction has,
-  beside its case in `vm/interp.c`, a template in `src/opt/x64.sml`, a stack
-  effect in `src/opt/rbccheck.sml`, and where it calls into C a helper in
-  `vm/native.c`; a change to what an instruction does changes all of them,
-  and a new one goes into `tests/opt/every-opcode.rasm`, which runs every
-  instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
+  beside its description and body in `src/isa/stack.sml` (from which the
+  interpreter's case and its stack effect are generated), a template in
+  `src/opt/x64.sml`, which MLton's build of `runeopt` refuses to go
+  without, and where it calls into C a helper in `vm/native.c`, the shared
+  `op_<NAME>` of `vm/ops.h` where its body is shared; a change to what an
+  instruction does changes all of them, and a new one goes into
+  `tests/opt/every-opcode.rasm`, which runs every instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
   the loader's messages. A field of the VM that the code touches is named in
   `vm/native_offsets.c`, never written as a number. `make test-native` runs
   the suites as native code and wants `--count` to agree with `runevm`. The
@@ -113,7 +119,7 @@ keep these invariants:
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
   `test-basis`, `test-doc`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
-  `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  `check-cross`, `check-docs`, `check-isa`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For

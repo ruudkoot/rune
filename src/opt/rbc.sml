@@ -241,25 +241,36 @@ struct
             val () = if len = 0 then fail ("invalid opcode " ^ Int.toString opc ^ " at " ^ Int.toString pc) else ()
             val () = if pc + len > codeLen then fail "truncated instruction" else ()
             val () = Array.update (starts, pc, true)
-            val a = if len > 1 then i32At (code, pc + 1) else In 0
-            val b = if len > 5 then i32At (code, pc + 5) else In 0
-            val ok =
-              if opc = Opcodes.CONST then within (a, 0, nconsts - 1)
-              else if opc = Opcodes.CON0 orelse opc = Opcodes.CON then within (a, 0, 65535)
-              else if opc = Opcodes.LOCAL orelse opc = Opcodes.SETLOCAL then within (a, 0, #nlocals (Vector.sub (funcs, fi)) - 1)
-              else if opc = Opcodes.ENV orelse opc = Opcodes.SETENV then nonneg a
-              else if opc = Opcodes.GLOBAL orelse opc = Opcodes.SETGLOBAL then within (a, 0, #nglobals p - 1)
-              else if opc = Opcodes.TUPLE then within (a, 0, 1000000)
-              else if opc = Opcodes.SELECT then nonneg a
-              else if opc = Opcodes.CLOSURE then within (a, 0, nfuncs - 1) andalso within (b, 0, 1000000)
-              else if opc = Opcodes.NEWEXN then
-                (case a of
-                   In k => k >= 0 andalso k < nconsts
-                           andalso (case Vector.sub (#consts p, k) of CString _ => true | _ => false)
-                 | _ => false)
-              else if opc = Opcodes.BUILTINEXN then within (a, 0, builtinExns - 1)
-              else if opc = Opcodes.PRIM then within (a, 0, List.length Prims.table - 1)
-              else true
+            (* each operand by its kind (src/isa/isa.sml), as the loader
+               checks it; a label is checked below, once every instruction's
+               start is known *)
+            fun operandOk ((_, kind), (k, ok)) =
+              let
+                val x = i32At (code, pc + 1 + 4 * k)
+                val good =
+                  case kind of
+                    Isa.Constant => within (x, 0, nconsts - 1)
+                  | Isa.StringConstant =>
+                      (case x of
+                         In c => c >= 0 andalso c < nconsts
+                                 andalso (case Vector.sub (#consts p, c) of CString _ => true | _ => false)
+                       | _ => false)
+                  | Isa.Immediate => true
+                  | Isa.Tag => within (x, 0, 65535)
+                  | Isa.Local => within (x, 0, #nlocals (Vector.sub (funcs, fi)) - 1)
+                  | Isa.EnvSlot => nonneg x
+                  | Isa.Global => within (x, 0, #nglobals p - 1)
+                  | Isa.Function => within (x, 0, nfuncs - 1)
+                  | Isa.Label => true
+                  | Isa.HandlerLabel => true
+                  | Isa.Primitive => within (x, 0, List.length Prims.table - 1)
+                  | Isa.Count => within (x, 0, 1000000)
+                  | Isa.Field => nonneg x
+                  | Isa.BuiltinExn => within (x, 0, builtinExns - 1)
+              in
+                (k + 1, ok andalso good)
+              end
+            val ok = #2 (List.foldl operandOk (0, true) (#operands (Vector.sub (StackIsa.info, opc))))
           in
             if ok then scan (pc + len, fi) else badOperand (opc, pc)
           end
@@ -271,13 +282,16 @@ struct
             val opc = byte (code, pc)
             val len = instrLength opc
           in
-            if opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT
-               orelse opc = Opcodes.JUMPIFNOTTAG orelse opc = Opcodes.PUSHHANDLER
-            then (case i32At (code, pc + 1) of
-                    In t => if t < 0 orelse t >= codeLen orelse not (Array.sub (starts, t))
-                            then fail ("bad jump target at " ^ Int.toString pc) else ()
-                  | _ => fail ("bad jump target at " ^ Int.toString pc))
-            else ();
+            List.foldl
+              (fn ((_, kind), k) =>
+                 (if kind = Isa.Label orelse kind = Isa.HandlerLabel then
+                    (case i32At (code, pc + 1 + 4 * k) of
+                       In t => if t < 0 orelse t >= codeLen orelse not (Array.sub (starts, t))
+                               then fail ("bad jump target at " ^ Int.toString pc) else ()
+                     | _ => fail ("bad jump target at " ^ Int.toString pc))
+                  else ();
+                  k + 1))
+              0 (#operands (Vector.sub (StackIsa.info, opc)));
             targets (pc + len)
           end
       val () = targets 0
@@ -297,7 +311,8 @@ struct
       val () = if not (need (r, 8)) orelse String.substring (data, 0, 4) <> "RUNE"
                then fail "not a Rune bytecode file" else ()
       val () = #pos r := 4
-      val () = if rdU32 r <> 2 then fail "unsupported bytecode version" else ()
+      val () = if rdU32 r <> Opcodes.rbcVersion then fail "unsupported bytecode version" else ()
+      val () = if rdU32 r <> Opcodes.fingerprint then fail "bytecode of another instruction set" else ()
 
       val nconsts = rdU32 r
       val () = if !(#error r) orelse nconsts > 10000000 then fail "bad constant table" else ()
@@ -433,7 +448,7 @@ struct
       val tableText = String.concat (table (lines, (0, 0, 0, 0)))
     in
       String.concat
-        (["RUNE", le32 2, le32 (List.length consts)] @ List.map const consts
+        (["RUNE", le32 Opcodes.rbcVersion, le32 Opcodes.fingerprint, le32 (List.length consts)] @ List.map const consts
          @ [le32 nglobals, le32 (List.length funcs)] @ List.map func funcs
          @ [le32 (String.size code), code, le32 (List.length files)]
          @ List.map (fn f => le32 (String.size f) ^ f) files

@@ -42,7 +42,9 @@
 #include <fenv.h>
 #include <errno.h>
 
-#define IMAGE_MAGIC "runevm image 3"
+/* The format of an image, and the instruction set of the program in it
+   (src/isa): a VM refuses the image of another. */
+#define IMAGE_MAGIC "runevm image 4 isa " ISA_FINGERPRINT_HEX
 
 /* What a world that starts again from an image should do: a fork gives 0 to
    the child, a save gives `Restored` to the program that wrote it. */

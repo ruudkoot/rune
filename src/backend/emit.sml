@@ -7,7 +7,6 @@ struct
   open Lambda Codegen
 
   val magic = "RUNE"
-  val version = 2
 
   val two64 : IntInf.int = IntInf.pow (IntInf.fromInt 2, 64)
   val b256 : IntInf.int = IntInf.fromInt 256
@@ -117,7 +116,7 @@ struct
         end
       val header =
         String.concat
-          [magic, u32 version,
+          [magic, u32 Opcodes.rbcVersion, u32 Opcodes.fingerprint,
            u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
            u32 (#nglobals p),
            u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),

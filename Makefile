@@ -77,10 +77,11 @@ RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
-GEN_C    := vm/opcodes.h vm/prims_table.h
+GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/ops.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
 SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/config.sml vm/version.h
+SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/config.sml vm/version.h
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
@@ -117,7 +118,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -138,13 +139,37 @@ build/.doctor-%: scripts/doctor.sh
 	@[ "$(DOCTOR)" = no ] || { CC="$(CC)" WINCC="$(WINCC)" WINCC32="$(WINCC32)" sh scripts/doctor.sh --quiet --scope $* && touch $@; }
 
 # ---------------------------------------------------------------- generated
-gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
+gen: $(BUILDGEN)
 
-$(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt scripts/gen-build-files.sh
+$(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt sources-isa.txt scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
-$(GEN_SML) $(GEN_C) &: vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
-	sh scripts/gen-opcodes.sh
+# The instruction sets are described in src/isa (docs/plans/middle-end.md,
+# M1); runeisa writes from them the tables of the VM and the compiler and
+# the .def files the scripts read, $(ISA_OUT). They are committed, so that
+# the VM builds with a C compiler alone: `make isa` writes them again after
+# a change to src/isa, and `make check-isa` (part of make check) fails when
+# one of them is not what the descriptions give, with runeisa built by
+# MLton and by the self-hosted compiler.
+ISA_OUT := vm/opcodes.def vm/prims.def $(GEN_C) $(GEN_SML)
+
+isa: bin/runeisa-mlton
+	bin/runeisa-mlton --root .
+
+check-isa: bin/runeisa-mlton bin/runeisa.rbc vm
+	bin/runeisa-mlton --root . --check
+	$(RUNEVM) bin/runeisa.rbc --root . --check
+
+bin/runeisa-mlton.bin: $(BUILDGEN) $(SOURCES_ISA) src/main/runeisa-mlton-main.sml | build/.doctor-mlton
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runeisa.mlb
+
+bin/runeisa-mlton: bin/runeisa-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeisa-mlton.bin" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runeisa.rbc: bin/rune bin/rune.rbc build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
+	$(RUNE) -o $@ build/config.sml $(SOURCES_ISA) src/main/runeisa-rune-main.sml
 
 # ---------------------------------------------------------------- compiler
 # The compiler has no built-in library path, so each bin/rune* is a wrapper
@@ -636,10 +661,10 @@ check:
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
-	@$(MAKE) --no-print-directory check-cross check-docs
+	@$(MAKE) --no-print-directory check-cross check-docs check-isa
 
 clean:
-	rm -rf bin build $(GEN_SML) $(GEN_C) tests/out
+	rm -rf bin build tests/out
 	find . -type d -name .cm -prune -exec rm -rf {} +
 
 # ---------------------------------------------------------------- install

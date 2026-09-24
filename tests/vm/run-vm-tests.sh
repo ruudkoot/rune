@@ -22,6 +22,11 @@ while [ $# -gt 0 ]; do
 done
 cd "$(dirname "$0")/../.."
 case $vm in /*) ;; *) vm=$(pwd)/$vm ;; esac
+# the header: "RUNE", the version and the fingerprint of the instruction
+# set, as the generated vm/opcodes.def gives it; numbers are 32 bits,
+# little-endian
+header=$(sed -n 's/^# rbc header //p' vm/opcodes.def)
+[ -n "$header" ] || { echo "run-vm-tests: vm/opcodes.def has no rbc header" >&2; exit 2; }
 mkdir -p "$out"
 cd "$out" || exit 2
 
@@ -42,8 +47,6 @@ expect() {
   fi
 }
 
-# the header: "RUNE", version 2; numbers are 32 bits, little-endian
-header='RUNE\002\000\000\000'
 one='\001\000\000\000'
 zero='\000\000\000\000'
 huge='\377\377\377\377'
@@ -51,12 +54,19 @@ huge='\377\377\377\377'
 printf '' > empty.rbc
 expect empty "not a Rune bytecode file" empty.rbc
 
-printf 'RUNE\003\000\000\000' > version.rbc
+printf 'RUNE\377\000\000\000' > version.rbc
 expect version "unsupported bytecode version" version.rbc
 
-# version 1: the layout before the line table (docs/bytecode.md)
+# version 1: the layout before the line table; version 2, before the
+# fingerprint (docs/bytecode.md)
 printf 'RUNE\001\000\000\000' > version1.rbc
 expect version1 "unsupported bytecode version" version1.rbc
+printf 'RUNE\002\000\000\000' > version2.rbc
+expect version2 "unsupported bytecode version" version2.rbc
+
+# the right version with the fingerprint of another instruction set
+printf "$(printf '%s\n' "$header" | cut -c1-20)\\377\\377\\377\\377" > isa.rbc
+expect isa "bytecode of another instruction set" isa.rbc
 
 # one constant, a string of 0xFFFFFFF0 bytes
 printf "$header$one\\003\\360\\377\\377\\377" > string.rbc

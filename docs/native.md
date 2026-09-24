@@ -296,11 +296,13 @@ Its limits:
 
 `AGENTS.md` has the short form of these rules.
 
-* **An opcode** has its case in `vm/interp.c`, its template, its stack
-  effect in `RbcCheck`, a helper in `vm/native.c` if it calls into C, its
-  prose in [bytecode.md](bytecode.md), and a use in `every-opcode.rasm`. One
-  that jumps also has its target checked in `vm/loader.c` and
-  `src/opt/rbc.sml`.
+* **An opcode** has its description in `src/isa/stack.sml` -- its operands,
+  stack effect, flow and body, from which `runeisa` writes the interpreter's
+  case, the loader's and `Rbc`'s checks and `RbcCheck`'s effects -- its
+  template, which MLton's build refuses to go without, a helper in
+  `vm/native.c` if it calls into C (for a shared body, `op_<NAME>` of the
+  generated `vm/ops.h`), its prose in [bytecode.md](bytecode.md), and a use
+  in `every-opcode.rasm`.
 * **A field of the VM** that the code touches is named in
   `vm/native_offsets.c`, never written as a number.
 * **A primitive done inline** changes with its C code, and `prims.sml` has

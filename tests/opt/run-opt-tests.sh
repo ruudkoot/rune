@@ -71,7 +71,9 @@ refuse() {
 }
 
 # The numbers of the file are little-endian; an i32 or u32 is four bytes.
-header='RUNE\002\000\000\000'
+# The header, with the version and the fingerprint of the instruction set,
+# is the generated vm/opcodes.def's.
+header=$(sed -n 's/^# rbc header //p' vm/opcodes.def)
 zero='\000\000\000\000'
 one='\001\000\000\000'
 two='\002\000\000\000'

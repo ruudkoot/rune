@@ -96,7 +96,10 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     if (!need(&r, 8) || memcmp(data, "RUNE", 4) != 0) return fail(err, errlen, "not a Rune bytecode file");
     r.pos = 4;
     uint32_t version = rd_u32(&r);
-    if (version != 2) return fail(err, errlen, "unsupported bytecode version");
+    if (version != RBC_VERSION) return fail(err, errlen, "unsupported bytecode version");
+    /* the instruction set it was made for (src/isa): a file of another means
+       something else by its opcodes and primitives */
+    if (rd_u32(&r) != ISA_FINGERPRINT) return fail(err, errlen, "bytecode of another instruction set");
 
     /* constants */
     p->nconsts = rd_u32(&r);
@@ -233,20 +236,26 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         starts[pc] = 1;
         int32_t a = len > 1 ? read_i32(p->code + pc + 1) : 0;
         int32_t b = len > 5 ? read_i32(p->code + pc + 5) : 0;
+        /* each operand by its kind (src/isa/isa.sml); a label is checked
+           below, once every instruction's start is known */
         int bad = 0;
-        switch (op) {
-        case OP_CONST: bad = a < 0 || (uint32_t)a >= p->nconsts; break;
-        case OP_CON0: case OP_CON: bad = a < 0 || a > 65535; break;
-        case OP_LOCAL: case OP_SETLOCAL: bad = a < 0 || (uint32_t)a >= p->funcs[fi].nlocals; break;
-        case OP_ENV: case OP_SETENV: bad = a < 0; break;
-        case OP_GLOBAL: case OP_SETGLOBAL: bad = a < 0 || (uint32_t)a >= p->nglobals; break;
-        case OP_TUPLE: bad = a < 0 || a > 1000000; break;
-        case OP_SELECT: bad = a < 0; break;
-        case OP_CLOSURE: bad = a < 0 || (uint32_t)a >= p->nfuncs || b < 0 || b > 1000000; break;
-        case OP_NEWEXN: bad = a < 0 || (uint32_t)a >= p->nconsts || p->consts[a].tag != T_PTR; break;
-        case OP_BUILTINEXN: bad = a < 0 || a >= NUM_BUILTIN_EXNS; break;
-        case OP_PRIM: bad = a < 0 || a >= PRIM__COUNT; break;
-        default: break;
+        for (int k = 0; k < op_nargs[op] && !bad; k++) {
+            int32_t v = k == 0 ? a : b;
+            switch ((enum OperandKind)op_kinds[op][k]) {
+            case OPND_CONSTANT: bad = v < 0 || (uint32_t)v >= p->nconsts; break;
+            case OPND_STRING_CONSTANT: bad = v < 0 || (uint32_t)v >= p->nconsts || p->consts[v].tag != T_PTR; break;
+            case OPND_IMMEDIATE: break;
+            case OPND_TAG: bad = v < 0 || v > 65535; break;
+            case OPND_LOCAL: bad = v < 0 || (uint32_t)v >= p->funcs[fi].nlocals; break;
+            case OPND_ENV_SLOT: bad = v < 0; break;
+            case OPND_GLOBAL: bad = v < 0 || (uint32_t)v >= p->nglobals; break;
+            case OPND_FUNCTION: bad = v < 0 || (uint32_t)v >= p->nfuncs; break;
+            case OPND_LABEL: case OPND_HANDLER_LABEL: break;
+            case OPND_PRIMITIVE: bad = v < 0 || v >= PRIM__COUNT; break;
+            case OPND_COUNT: bad = v < 0 || v > 1000000; break;
+            case OPND_FIELD: bad = v < 0; break;
+            case OPND_BUILTIN_EXN: bad = v < 0 || v >= NUM_BUILTIN_EXNS; break;
+            }
         }
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
@@ -256,12 +265,13 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     while (pc < p->code_len) {
         uint8_t op = p->code[pc];
         int len = instr_length(op);
-        if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_JUMPIFNOTTAG || op == OP_PUSHHANDLER) {
-            int32_t t = read_i32(p->code + pc + 1);
-            if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
-                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
+        for (int k = 0; k < op_nargs[op]; k++)
+            if (op_kinds[op][k] == OPND_LABEL || op_kinds[op][k] == OPND_HANDLER_LABEL) {
+                int32_t t = read_i32(p->code + pc + 1 + 4 * k);
+                if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
+                    free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
+                }
             }
-        }
         pc += len;
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
