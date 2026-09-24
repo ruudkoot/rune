@@ -14,6 +14,10 @@ _runeopt() {
             COMPREPLY=($(compgen -d -- "$cur"))
             return
             ;;
+        --from-image)
+            COMPREPLY=($(compgen -f -- "$cur"))
+            return
+            ;;
         --cc)
             COMPREPLY=($(compgen -c -- "$cur"))
             return
@@ -24,7 +28,7 @@ _runeopt() {
     esac
 
     if [[ $cur == -* ]]; then
-        COMPREPLY=($(compgen -W '-o -S --options --cc --runtime --check --disasm --lines --facts
+        COMPREPLY=($(compgen -W '-o -S --options --cc --runtime --from-image --check --disasm --lines --facts
             --inlined --version --help' -- "$cur"))
         return
     fi

@@ -18,6 +18,11 @@ runeopt \- translate Rune bytecode into a native program
 .RB ( \-\-disasm | \-\-lines )
 .I file.rbc
 .br
+.B runeopt \-\-from\-image
+.I image
+.RB [ \-o
+.IR file ]
+.br
 .B runeopt \-\-inlined
 .SH DESCRIPTION
 .B runeopt
@@ -77,10 +82,24 @@ takes them:
 .BR \-\-stats ,
 .BI \-\-heap\-size " N"
 and
-.BI \-\-gc\-stress " N."
+.BI \-\-gc\-stress " N,"
+and
+.BI \-\-restore " image,"
+which carries on an image of the program.
 Those of
 .B RUNEVM_OPTIONS
 come after these.
+.TP
+.BI \-\-from\-image " image"
+Translate the program in an image that
+.B Runtime.save
+wrote, whether a native program or
+.B runevm
+wrote it, and write its bytecode beside the executable
+.RI ( file .rbc).
+.B RUNEVM_OPTIONS="\-\-restore
+.IB image "" \(dq
+then carries the image on.
 .TP
 .BI \-\-cc " cc"
 The C compiler that assembles and links (default
@@ -140,14 +159,14 @@ the options are wrong, or when the C compiler fails. A program it made exits
 as it would under
 .BR runevm .
 .SH BUGS
+A native program carries on an image of its own program only:
 .B Runtime.restore
-raises
+of an image of another raises
 .B OS.SysErr
-in a native program, and a native program cannot carry on an image, nor be
-the child of a fork emulated by
-.BR \-\-emulate\-fork ;
-.B runevm \-\-restore
-carries on an image a native program saved.
+.RB ( ENOEXEC ),
+where
+.B runevm
+would become the other world.
 .SH SEE ALSO
 .BR rune (1),
 .BR runevm (1)

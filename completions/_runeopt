@@ -6,6 +6,7 @@ _arguments -s \
   '--options[options of runevm the program runs with]:runevm options:' \
   '--cc[the C compiler that assembles and links]:command:_command_names' \
   '--runtime[where librune.a and rune-offsets.s are]:runtime directory:_files -/' \
+  '--from-image[translate the program of an image]:image file:_files' \
   '--check[check the files and translate nothing]' \
   '--disasm[print the bytecode as runevm --disasm does]' \
   '--lines[print the line table of the file]' \

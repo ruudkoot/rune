@@ -6,9 +6,10 @@
 # The options a native program takes go to it in RUNEVM_OPTIONS (D8), and
 # FILE.rbc, which is its name under runevm, in RUNEVM_NAME; the program
 # takes both out of its environment, so that it sees the one it sees under
-# runevm. (This is sh, not bash, which changes the variable _.) What only
-# runevm does -- --disasm, --trace, and --restore and --resume, which carry
-# on an image, which a native program cannot yet (M9) -- goes to runevm.
+# runevm. (This is sh, not bash, which changes the variable _.) --restore
+# IMAGE makes a program of the program in the image (runeopt --from-image)
+# and carries the image on with it. What only runevm does -- --disasm,
+# --trace, --resume -- goes to runevm.
 # A translation is kept, by the checksum of the bytecode, in RUNEOPT_CACHE
 # (tests/out/opt-cache); RUNEOPT chooses the build of runeopt (by default
 # the MLton one where it is built, which is the fastest, and every build
@@ -28,7 +29,20 @@ while [ $# -gt 0 ]; do
   case $1 in
     --count|--stats|--emulate-fork) options="$options $1"; shift ;;
     --heap-size|--gc-stress) options="$options $1 ${2:-}"; shift 2 ;;
-    --disasm|--trace|--restore|--resume|--version|--help) exec "$vm" "$@" ;;
+    --restore)
+      image=${2:-}
+      [ -f "$image" ] || exec "$vm" "$@"
+      mkdir -p "$cache"
+      exe=$cache/image.$$
+      if ! "$runeopt" ${RUNEOPT_RUNTIME:+--runtime "$RUNEOPT_RUNTIME"} ${RUNEOPT_CC:+--cc "$RUNEOPT_CC"} \
+           --from-image "$image" -o "$exe" > "$exe.log" 2>&1; then
+        sed 's/^runeopt: /runevm: /' "$exe.log" >&2
+        rm -f "$exe" "$exe.log" "$exe.rbc" "$exe.s"
+        exit 2
+      fi
+      rm -f "$exe.log"
+      RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options --restore $image" exec "$exe" ;;
+    --disasm|--trace|--resume|--version|--help) exec "$vm" "$@" ;;
     -*) exec "$vm" "$@" ;;
     *) break ;;
   esac

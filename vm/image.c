@@ -659,6 +659,17 @@ int vm_become(VM *vm, const char *path) {
         vm->io_errno = EINVAL;
         return 0;
     }
+    /* Native code runs its own program and no other (docs/plans/codegen.md,
+       D11): an image of another is refused, and this world goes on. */
+    if (vm->native) {
+        if (!vm_same_program || !vm_same_program(next)) {
+            vm_release(next);
+            free(next);
+            sys_set_errno(ENOEXEC);
+            return 0;
+        }
+        next->native = 1;
+    }
     /* Nothing of this world is read again, so it goes before the other takes
        its place; the path was copied out of the heap by the caller. */
     vm_release(vm);

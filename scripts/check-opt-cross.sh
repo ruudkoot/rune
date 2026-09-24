@@ -48,5 +48,23 @@ for prog in bin/runeopt.rbc "$out/every-opcode.rbc"; do
   done
 done
 
+# The program of an image (--from-image), which a runevm wrote: every build
+# must make the same .rbc of it, and the same assembly. They write to the same
+# names in turn, since the assembly names the .rbc it embeds.
+if bin/rune tests/lang/rt.save_first.sml -o "$out/first.rbc" 2> /dev/null && bin/runevm "$out/first.rbc" > /dev/null 2>&1; then
+  for c in $builds; do
+    "bin/runeopt-$c" --from-image tests/out/rt.save_first.img -S -o "$out/image.s" > "$out/image.$c.err" 2>&1 ||
+      { echo "FAIL opt-cross image: runeopt-$c --from-image failed: $(head -1 "$out/image.$c.err")"; status=1; }
+    mv -f "$out/image.s" "$out/image.$c.s" 2> /dev/null
+    mv -f "$out/image.rbc" "$out/image.$c.rbc" 2> /dev/null
+  done
+  for c in $builds; do
+    cmp -s "$out/image.mlton.rbc" "$out/image.$c.rbc" && cmp -s "$out/image.mlton.s" "$out/image.$c.s" ||
+      { echo "FAIL opt-cross image: the mlton and $c builds make another program of the image"; status=1; }
+  done
+else
+  echo "FAIL opt-cross image: no image of tests/lang/rt.save_first.sml"; status=1
+fi
+
 [ $status = 0 ] && echo "check-opt-cross: the builds of runeopt agree ($builds)"
 exit $status

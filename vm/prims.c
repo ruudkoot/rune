@@ -1978,8 +1978,8 @@ static int p_os_poll(VM *vm) {
     if (!fds || !events) vm_fatal(vm, "out of memory");
     if (int_list(ARG(2), fds, (int)n) != n || int_list(ARG(1), events, (int)n) != n)
         vm_fatal(vm, "primitive os_poll: malformed list");
-    int *wide_fds = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_fds);
-    int *wide_events = malloc((size_t)(n > 0 ? n : 1) * sizeof *wide_events);
+    int *wide_fds = calloc((size_t)(n > 0 ? n : 1), sizeof *wide_fds);
+    int *wide_events = calloc((size_t)(n > 0 ? n : 1), sizeof *wide_events);
     if (!wide_fds || !wide_events) vm_fatal(vm, "out of memory");
     for (int i = 0; i < (int)n; i++) {
         wide_fds[i] = fds[i];
@@ -2099,9 +2099,6 @@ static int p_rt_save(VM *vm) {
    old world on failure. */
 static int p_rt_restore(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_restore");
-    /* A program runeopt made cannot become another world yet: its code is
-       not the bytecode an image carries (docs/plans/codegen.md, D11). */
-    if (vm->native) { sys_set_errno(ENOSYS); return ret(vm, 1, mk_int(-1)); }
     char *path = malloc((size_t)s->len + 1);
     if (!path) vm_fatal(vm, "out of memory");
     memcpy(path, OBJ_BYTES(s), s->len);

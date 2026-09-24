@@ -53,6 +53,7 @@ handlers where the interpreter keeps them, so the collector, traces,
 | Module | File | Role |
 |---|---|---|
 | `Rbc` | `src/opt/rbc.sml` | Reads an `.rbc` as `load_program` and `validate_program` of `vm/loader.c` do, and refuses what they refuse with their messages. No number of the file is read into an `int` that could not hold it on a 31-bit host. |
+| `RbcImage` | `src/opt/rbcimage.sml` | `runeopt --from-image`: the program of an image of `vm/image.c` as an `.rbc`, its real constants written as C's hexadecimal notation from their bits, with integers alone. |
 | `RbcCheck` | `src/opt/rbccheck.sml` | What a translation relies on and the loader does not promise: the stack height and handler depth agree on every path into an instruction, no path underflows, leaves its function or runs off its end, no `TAILCALL` or `RET` has a handler of its function installed. Gives the height before every instruction and each function's highest stack. |
 | `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm --disasm` prints (a real constant as its text). |
 | `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `vm/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls, returns and raises go through `vm/native.c`, primitives through `prim_table`, but for the 56 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entry and highest stack, each handler's code. |
@@ -62,7 +63,10 @@ On the side of the VM, `vm/native.c` is the `main` of a program `runeopt`
 made and what its code calls: the cases of `vm/interp.c` for a call, a
 return, a raise and an allocation, taken out of the loop, each returning the
 native code to go on at. It reads the options of `runevm` from
-`RUNEVM_OPTIONS`. `vm/native_offsets.c` prints the layout of the VM as
+`RUNEVM_OPTIONS`, and carries on an image of its program (`--restore`, the
+child of an emulated fork, `Runtime.restore`): the code has a table of the
+places an image can stop at, the instruction after a call and after a
+primitive that writes an image. `vm/native_offsets.c` prints the layout of the VM as
 assembler directives, `build/rune-offsets.s`, which the code includes, so
 that what `runeopt` writes names fields and never gives their offsets.
 

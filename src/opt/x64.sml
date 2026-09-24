@@ -287,6 +287,13 @@ struct
       fun reachable i = Vector.sub (#height facts, i) >= 0
       fun afterCall i = i > 0 andalso #opc (ins (i - 1)) = Opcodes.CALL andalso reachable (i - 1)
 
+      (* The places an image can stop at, by pc, with the native code that
+         carries on there (M9): the instruction after a CALL, where a frame
+         returns to, and after a primitive that writes an image, where the
+         world that saved itself starts again. *)
+      val resumes : (int * string) list ref = ref []
+      fun imagePrim a = let val n = Vector.sub (primNames, a) in n = "rt_save" orelse n = "posix_fork" end
+
       (* the line table, as .loc where an entry begins *)
       val lineStarts = Array.array (codeLen + 1, ~1)
       val () = Vector.appi (fn (k, {pc, ...} : Rbc.line) => Array.update (lineStarts, pc, k)) (#lines p)
@@ -371,7 +378,8 @@ struct
             in
               if h < 0 then line "ud2"
               else
-                ((if afterCall i orelse Array.sub (handler, i) then reloadFrame () else ());
+                ((if afterCall i then resumes := (pc, lab pc) :: !resumes else ());
+                 (if afterCall i orelse Array.sub (handler, i) then reloadFrame () else ());
                  (if startsRun i then line ("add $" ^ Int.toString (runLength i) ^ ", %r15") else ());
                  if opc = Opcodes.HALT then
                    (flushCount (); flushSp (); setPc (); callC ("native_halt", []); line "ud2")
@@ -485,6 +493,14 @@ struct
                         line "test %eax, %eax";
                         line "jnz rune_unusual";
                         line reloadStack)
+                     val () =
+                       if imagePrim a then
+                         let val stub = ".Lr" ^ Int.toString next
+                         in
+                           resumes := (next, stub) :: !resumes;
+                           slows := (fn () => (put (stub ^ ":\n"); reloadFrame (); line ("jmp " ^ lab next))) :: !slows
+                         end
+                       else ()
                    in
                      case fastPrim (Vector.sub (primNames, a), h, pc, emitters) of
                        NONE => callPrim ()
@@ -548,7 +564,9 @@ struct
       (* a primitive that raised, or replaced the program *)
       put "rune_unusual:\n";
       cfiFrame ();
-      List.app line ["mov %eax, %esi", "mov %r12, %rdi", "call native_unusual", "jmp *%rax", ".cfi_endproc"];
+      (* the count comes from the VM again: a new world brings its own *)
+      List.app line ["mov %eax, %esi", "mov %r12, %rdi", "call native_unusual",
+                     "mov VM_INSTRUCTIONS(%r12), %r15", "jmp *%rax", ".cfi_endproc"];
       Vector.appi function funcs;
 
       line ".section .rodata";
@@ -569,6 +587,12 @@ struct
       line ".globl rune_handlers";
       put "rune_handlers:\n";
       List.app (fn pc => line (".long " ^ Int.toString pc ^ ", " ^ lab pc ^ " - rune_handlers")) handlerPcs;
+      line ".globl rune_resume";
+      put "rune_resume:\n";
+      List.app (fn (pc, l) => line (".long " ^ Int.toString pc ^ ", " ^ l ^ " - rune_resume")) (List.rev (!resumes));
+      line ".globl rune_nresume";
+      put "rune_nresume:\n";
+      line (".long " ^ Int.toString (List.length (!resumes)));
       line ".globl rune_nhandlers";
       put "rune_nhandlers:\n";
       line (".long " ^ Int.toString (List.length handlerPcs));

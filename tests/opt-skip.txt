@@ -1,11 +1,9 @@
 # Programs that `make test-native` leaves out, one per line: what a program
-# runeopt made does not do yet (docs/plans/codegen.md):
+# runeopt made does not do (docs/plans/codegen.md):
 #
 #   NAME CATEGORY: reason
 #
-# A category stays only while a program is under it.
-#
-# RESTORE: carrying on an image as native code is M9 of the plan. A native
-# program saves as runevm does, and runevm resumes what it saved (the .restore
-# tests do that), but the child of an emulated fork is such an image.
-rt.fork_image RESTORE: the child of a fork by a second VM resumes an image
+# The list is empty: native code runs every program of tests/lang, the one
+# that forks by a second process (rt.fork_image) and those that carry on an
+# image (the .restore tests) included, since M9. A category is added here
+# again only with a program to go under it.

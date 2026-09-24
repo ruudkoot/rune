@@ -221,7 +221,8 @@ So everything above holds for it: the layout of a value, when the collector
 moves it, the limits, the counters of *The same run twice* -- the same numbers
 for the same run, which `make test-native` checks for every program of the
 suite -- the trace of a failure, the messages, which still begin `runevm:`,
-and the images `Runtime.save` writes, which `runevm --restore` carries on.
+and the images, which name the places of the code by their bytecode, so
+that the one writes what the other reads.
 
 What differs:
 
@@ -230,8 +231,13 @@ What differs:
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.
 * `CommandLine.name ()` is the name the program was started by.
-* `Runtime.restore` raises `OS.SysErr`, and the program cannot carry on an
-  image or be the child of a fork emulated by `--emulate-fork`; a fork is the
-  system's own.
+* A native program carries on an image of its own program, whoever wrote it:
+  `RUNEVM_OPTIONS="--restore FILE"`, `Runtime.restore`, and the child of a
+  fork emulated by `--emulate-fork`. `runeopt --from-image FILE` makes the
+  program of an image, and images cross between native programs and every
+  VM, of every width and byte order. An image of another program is refused:
+  `Runtime.restore` raises `OS.SysErr` with `ENOEXEC`, where `runevm` would
+  become the other world, since the native code is the translation of its
+  own program alone.
 * The program carries its line table as DWARF: a debugger stops at a line of
   an SML source, and names a function by its name and its number.

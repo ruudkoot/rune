@@ -11,6 +11,7 @@ struct
 
   val usage =
     "usage: runeopt [-o FILE] [-S] [--options TEXT] FILE.rbc\n\
+    \       runeopt --from-image IMAGE [-o FILE]\n\
     \       runeopt --check FILE.rbc ...\n\
     \       runeopt --disasm FILE.rbc\n\
     \       runeopt --facts FILE.rbc ...\n\
@@ -19,6 +20,9 @@ struct
     \  --options TEXT  options of runevm the program is to run with, as\n\
     \              RUNEVM_OPTIONS gives them when it runs, which come after\n\
     \              these: --count, --stats, --heap-size N, --gc-stress N\n\
+    \  --from-image IMAGE  the program of an image Runtime.save wrote, which\n\
+    \              RUNEVM_OPTIONS=\"--restore IMAGE\" then carries on; its .rbc is\n\
+    \              written beside the executable (FILE.rbc)\n\
     \  --cc CC     the C compiler that assembles and links (default cc)\n\
     \  --runtime DIR  where librune.a and rune-offsets.s are (the wrappers\n\
     \              pass it)\n\
@@ -44,6 +48,7 @@ struct
   val options = ref ""
   val cc = ref "cc"
   val runtime : string option ref = ref NONE
+  val fromImage : string option ref = ref NONE
   val showHelp = ref false
   val showVersion = ref false
 
@@ -64,6 +69,7 @@ struct
     | "--options" :: text :: rest => (options := text; parse rest)
     | "--cc" :: c :: rest => (cc := c; parse rest)
     | "--runtime" :: dir :: rest => (runtime := SOME dir; parse rest)
+    | "--from-image" :: image :: rest => (fromImage := SOME image; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
     | "-h" :: rest => (showHelp := true; parse rest)
@@ -136,7 +142,32 @@ struct
         end
     end
 
+  (* --from-image: the program of the image, written as an .rbc beside the
+     executable, translated as any other. *)
+  fun translateImage (image : string) : OS.Process.status =
+    let
+      val exe = case !output of
+                  SOME o' => o'
+                | NONE => if String.isSuffix ".img" image then String.substring (image, 0, String.size image - 4)
+                          else image ^ ".exe"
+      val rbc = RbcImage.readFile image handle RbcImage.Bad msg => raise Refused (image, msg)
+      val path = (if !assembly andalso String.isSuffix ".s" exe
+                  then String.substring (exe, 0, String.size exe - 2) else exe) ^ ".rbc"
+      val out = BinIO.openOut path
+      val () = BinIO.output (out, Byte.stringToBytes rbc)
+      val () = BinIO.closeOut out
+    in
+      output := SOME exe;
+      translate path
+    end
+
   fun run () : OS.Process.status =
+    case (!mode, !inputs, !fromImage) of
+      (Translate, [], SOME image) => translateImage image
+    | (_, _, SOME _) => raise Usage "--from-image takes no other file"
+    | _ => runMode ()
+
+  and runMode () : OS.Process.status =
     case (!mode, !inputs) of
       (Inlined, _) => (List.app println X64.inlined; OS.Process.success)
     | (_, []) => raise Usage "no input file"

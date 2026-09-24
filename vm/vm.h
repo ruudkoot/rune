@@ -238,6 +238,10 @@ void vm_destroy(VM *vm);                     /* and the VM */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
 int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
 
+/* In a program runeopt made (vm/native.c), whether a world read from an
+   image runs the program it carries; NULL in runevm, which runs any. */
+extern int (*vm_same_program)(const VM *world);
+
 /* image.c: fork as a second VM that is handed this one's state */
 int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
 int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the child */

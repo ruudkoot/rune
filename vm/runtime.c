@@ -205,6 +205,10 @@ void vm_start(VM *vm) {
     vm->pc = p->funcs[0].code_offset;
 }
 
+/* Set by a program runeopt made (vm/native.c): whether the world of an image
+   runs the program it carries, which Runtime.restore asks (vm_become). */
+int (*vm_same_program)(const VM *world) = NULL;
+
 /* A VM about to load a program: the three standard files, and a heap whose
    semispace is `heap` bytes. */
 void vm_init(VM *vm, size_t heap) {

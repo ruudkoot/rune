@@ -14,6 +14,8 @@
 #    vm/opcodes.def and must name each, and the examples and a few programs of
 #    tests/perf, compiled by --rune. Each prints what it prints under runevm,
 #    exits as it does there, and --count says the same.
+# 4. Images: saved by runevm and carried on natively, and the other way round,
+#    and one of another program, which native code refuses.
 set -u
 opt=bin/runeopt
 rune=bin/rune
@@ -203,6 +205,38 @@ for src in examples/hello.sml examples/fib.sml examples/nqueens.sml tests/perf/f
   if "$rune" "$src" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then same "$name" "$out/$name.rbc"
   else echo "FAIL opt.run.$name: rune failed: $(head -1 "$out/$name.cerr")"; fail=$((fail + 1)); fi
 done
+
+# Images (D11): a program that saves itself, saved by runevm and carried on
+# natively (runeopt --from-image), and the other way round; and an image of
+# another program, which a native program refuses with OS.SysErr.
+# check NAME WANT GOT: the file GOT holds what the file WANT holds
+check() {
+  if cmp -s "$2" "$3"; then pass=$((pass + 1))
+  else echo "FAIL opt.$1: not what $2 says (diff $2 $3)"; fail=$((fail + 1)); fi
+}
+img=tests/out/rt.save_first.img
+if "$rune" tests/lang/rt.save_first.sml -o "$out/first.rbc" 2> "$out/first.cerr" &&
+   "$opt" "$out/first.rbc" -o "$out/first" > "$out/first.opt" 2>&1; then
+  rm -f "$img"
+  "$vm" "$out/first.rbc" > /dev/null 2>&1
+  if "$opt" --from-image "$img" -o "$out/first-image" > "$out/first-image.opt" 2>&1; then
+    RUNEVM_OPTIONS="--restore $img" "$out/first-image" > "$out/vm-to-native" 2>&1
+    check image.vm-to-native tests/lang/rt.save_first.restore "$out/vm-to-native"
+  else echo "FAIL opt.image.from-image: $(head -1 "$out/first-image.opt")"; fail=$((fail + 1)); fi
+  rm -f "$img"
+  "$out/first" > /dev/null 2>&1
+  "$vm" --restore "$img" > "$out/native-to-vm" 2>&1
+  check image.native-to-vm tests/lang/rt.save_first.restore "$out/native-to-vm"
+  if "$rune" tests/opt/foreign.sml -o "$out/foreign.rbc" 2> "$out/foreign.cerr" &&
+     "$opt" "$out/foreign.rbc" -o "$out/foreign" > "$out/foreign.opt" 2>&1; then
+    "$out/foreign" > "$out/foreign.out" 2>&1
+    printf 'refused: noexec\n' > "$out/foreign.want"
+    check image.foreign "$out/foreign.want" "$out/foreign.out"
+  else echo "FAIL opt.image.foreign: runeopt or rune failed"; fail=$((fail + 1)); fi
+else
+  echo "FAIL opt.image: rune or runeopt failed on rt.save_first: $(head -1 "$out/first.cerr" "$out/first.opt")"
+  fail=$((fail + 1))
+fi
 
 echo "opt: passed $pass, failed $fail ($nprog programs checked and disassembled)"
 [ "$fail" = 0 ]

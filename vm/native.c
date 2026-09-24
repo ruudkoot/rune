@@ -17,6 +17,7 @@
 #include "sys.h"
 
 #include <errno.h>
+#include <fenv.h>
 
 extern const unsigned char rune_rbc[];
 extern const uint32_t rune_rbc_size;
@@ -24,6 +25,8 @@ extern const int32_t rune_functions[];     /* 2 per function: entry - rune_funct
 extern const int32_t rune_handlers[];      /* 2 per handler, by pc: pc, code - rune_handlers */
 extern const uint32_t rune_nhandlers;
 extern const char rune_options[];
+extern const int32_t rune_resume[];        /* 2 per place, by pc: pc, code - rune_resume */
+extern const uint32_t rune_nresume;
 void rune_enter(VM *vm, const void *code); /* in the generated code: never returns */
 
 static const void *entry(uint32_t f) {
@@ -119,13 +122,90 @@ const void *native_raise(VM *vm) {
     return native_handler(vm);
 }
 
-/* A primitive that did not return a value: 1, it raised; 2, it replaced the
-   program, which Runtime.restore does not do in a native program yet (M9 of
-   the plan: it raises OS.SysErr instead, see p_rt_restore). */
+/* ---------------------------------------------------------------- images */
+
+/* An entry of a table of the code, by pc: its native code, or NULL. */
+static const void *lookup(const int32_t *table, uint32_t n, uint32_t pc) {
+    uint32_t lo = 0, hi = n;
+    while (lo < hi) {
+        uint32_t mid = lo + (hi - lo) / 2;
+        uint32_t at = (uint32_t)table[2 * mid];
+        if (at == pc) return (const char *)table + table[2 * mid + 1];
+        if (at < pc) lo = mid + 1; else hi = mid;
+    }
+    return NULL;
+}
+
+/* Whether a world read from an image runs the program this one carries: the
+   same code, functions, globals and constants. Nothing else can be carried
+   on, since the native code is the translation of that program alone (D11
+   of docs/plans/codegen.md). */
+static int same_program(const VM *world) {
+    VM *mine = calloc(1, sizeof(VM));
+    if (!mine) return 0;
+    vm_init(mine, 1u << 16);
+    char err[256];
+    /* The constants as a program starts with them: a real is read by
+       strtod, which rounds as the mode is, and the image has put its own. */
+    int mode = fegetround();
+    fesetround(FE_TONEAREST);
+    int same = load_program_mem(mine, rune_rbc, rune_rbc_size, err, sizeof err);
+    fesetround(mode);
+    const Program *a = &mine->prog, *b = &world->prog;
+    same = same && a->nconsts == b->nconsts && a->nglobals == b->nglobals && a->nfuncs == b->nfuncs
+        && a->code_len == b->code_len && memcmp(a->code, b->code, a->code_len) == 0;
+    for (uint32_t i = 0; same && i < a->nfuncs; i++)
+        same = a->funcs[i].code_offset == b->funcs[i].code_offset && a->funcs[i].code_end == b->funcs[i].code_end
+            && a->funcs[i].nlocals == b->funcs[i].nlocals && strcmp(a->funcs[i].name, b->funcs[i].name) == 0;
+    for (uint32_t i = 0; same && i < a->nconsts; i++) {
+        Value x = a->consts[i], y = b->consts[i];
+        if (x.tag != y.tag) same = 0;
+        else if (x.tag == T_PTR)
+            same = x.u.p->kind == K_STRING && y.u.p->kind == K_STRING && x.u.p->len == y.u.p->len
+                && memcmp(OBJ_BYTES(x.u.p), OBJ_BYTES(y.u.p), x.u.p->len) == 0;
+        else same = x.u.w == y.u.w;
+    }
+    vm_destroy(mine);
+    return same;
+}
+
+/* A world of this program, read from an image, made ready for its native
+   code: every frame is given the native code it returns to, every handler
+   and the place the world stopped at must be places of this code, and the
+   stack has room for what every frame pushes. The native code to carry on
+   at, or NULL and why. */
+static const void *prepare_resume(VM *vm, char *err, size_t errlen) {
+    if (!vm->frames_active) { snprintf(err, errlen, "the image has no frames"); return NULL; }
+    size_t need = vm->sp;
+    for (size_t i = 0; i <= vm->fp; i++) {
+        Frame *fr = &vm->frames[i];
+        if (i > 0) {
+            fr->native_ret = lookup(rune_resume, rune_nresume, fr->ret_pc);
+            if (!fr->native_ret) { snprintf(err, errlen, "a frame of the image returns where no call does"); return NULL; }
+        }
+        size_t top = fr->base + vm->prog.funcs[fr->func].nlocals + (size_t)rune_functions[2 * fr->func + 1];
+        if (top > need) need = top;
+    }
+    for (size_t j = 0; j < vm->hp; j++)
+        if (!lookup(rune_handlers, rune_nhandlers, vm->handlers[j].pc)) {
+            snprintf(err, errlen, "a handler of the image is not one of the program"); return NULL;
+        }
+    const void *code = lookup(rune_resume, rune_nresume, vm->pc);
+    if (!code) { snprintf(err, errlen, "the image stopped where the program does not save"); return NULL; }
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    vm->native = 1;
+    return code;
+}
+
+/* A primitive that did not return a value: 1, it raised; 2, Runtime.restore
+   made this the world of an image, of this program (vm_become asks
+   same_program), which carries on where it was saved. */
 const void *native_unusual(VM *vm, int r) {
     if (r == 1) return native_handler(vm);
-    vm_fatal(vm, "a primitive replaced the program");
-    return NULL;
+    char err[256];
+    const void *code = prepare_resume(vm, err, sizeof err);
+    if (!code) vm_fatal(vm, "Runtime.restore: %s", err);
+    return code;
 }
 
 void native_tuple(VM *vm, int32_t a) {
@@ -200,6 +280,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 typedef struct Options {
     size_t heap, gc_stress;
     int stats, count, emulate_fork;
+    char *restore;
 } Options;
 
 /* A size in bytes or a count, as runevm takes it (vm/main.c). */
@@ -231,9 +312,14 @@ static void options(const char *text, const char *where, Options *o) {
             i++;
         } else if (strcmp(w, "--gc-stress") == 0 && i + 1 < n && size_arg(words[i + 1], &o->gc_stress) && o->gc_stress > 0)
             i++;
-        else {
+        else if (strcmp(w, "--restore") == 0 && i + 1 < n) {
+            free(o->restore);
+            o->restore = malloc(strlen(words[i + 1]) + 1);
+            if (!o->restore) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+            strcpy(o->restore, words[++i]);
+        } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --gc-stress N, --emulate-fork)\n", where, w);
+                    "(--count, --stats, --heap-size N, --gc-stress N, --emulate-fork, --restore FILE)\n", where, w);
             exit(2);
         }
     }
@@ -244,12 +330,34 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { 4u << 20, 0, 0, 0, 0 };
+    Options o = { 4u << 20, 0, 0, 0, 0, NULL };
+    vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm's are, and not part of what
        the program sees of its environment, nor of what its children get. */
     const char *env = getenv("RUNEVM_OPTIONS");
     if (env) { options(env, "RUNEVM_OPTIONS", &o); unsetenv("RUNEVM_OPTIONS"); }
+
+    /* A world to carry on: an image Runtime.save wrote (--restore FILE), or
+       the child of a fork emulated by a second process (vm/image.c), which is
+       started as `runevm --resume TOKEN` whichever program it is. Its state,
+       flags and arguments included, are the image's. */
+    int child = argc == 3 && strcmp(argv[0], "runevm") == 0 && strcmp(argv[1], "--resume") == 0;
+    if (o.restore || child) {
+        VM *vm = calloc(1, sizeof(VM));
+        char err[256];
+        if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
+        int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
+        if (ok && !same_program(vm)) { ok = 0; snprintf(err, sizeof err, "the image is of another program"); }
+        const void *code = ok ? prepare_resume(vm, err, sizeof err) : NULL;
+        if (!code) {
+            fprintf(stderr, "runevm: %s: %s\n", child ? "--resume" : "--restore", err);
+            vm_destroy(vm);
+            return 2;
+        }
+        free(o.restore);
+        rune_enter(vm, code);
+    }
 
     VM *vm = calloc(1, sizeof(VM));
     if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }

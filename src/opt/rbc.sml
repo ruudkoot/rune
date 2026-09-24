@@ -384,6 +384,61 @@ struct
 
   fun readFile (path : string) : program = read (readBytes path)
 
+  (* ---- writing ---- *)
+
+  (* n as `bytes` bytes, little-endian, two's complement below zero *)
+  fun leInf (n : IntInf.int, bytes : int) : string =
+    let
+      val b256 = IntInf.fromInt 256
+      fun go (0, _) = []
+        | go (k, v) = Char.chr (IntInf.toInt (IntInf.mod (v, b256))) :: go (k - 1, IntInf.div (v, b256))
+    in
+      String.implode (go (bytes, IntInf.mod (n, IntInf.pow (IntInf.fromInt 2, 8 * bytes))))
+    end
+
+  fun le32 (n : int) = leInf (IntInf.fromInt n, 4)
+
+  (* the numbers of the line table, as load_program reads them *)
+  fun uvarText (v : IntInf.int) : string =
+    let val b128 = IntInf.fromInt 128
+    in
+      if IntInf.< (v, b128) then String.str (Char.chr (IntInf.toInt v))
+      else String.str (Char.chr (128 + IntInf.toInt (IntInf.mod (v, b128)))) ^ uvarText (IntInf.div (v, b128))
+    end
+
+  fun svarText (n : int) : string =
+    let val v = IntInf.fromInt n
+    in uvarText (if n >= 0 then IntInf.* (v, IntInf.fromInt 2)
+                 else IntInf.- (IntInf.* (IntInf.~ v, IntInf.fromInt 2), IntInf.fromInt 1))
+    end
+
+  (* An .rbc of a program given as its parts: what load_program reads back
+     as that program (runeopt --from-image). *)
+  fun write {consts : const list, nglobals : int, funcs : (int * int * string) list, code : string,
+             files : string list, lines : (int * int * int * int) list} : string =
+    let
+      fun const c =
+        case c of
+          CInt i => "\000" ^ leInf (i, 8)
+        | CWord w => "\001" ^ leInf (w, 8)
+        | CReal t => "\002" ^ le32 (String.size t) ^ t
+        | CString t => "\003" ^ le32 (String.size t) ^ t
+        | CChar c => "\004" ^ String.str (Char.chr c)
+      fun func (offset, nlocals, name) = le32 offset ^ le32 nlocals ^ le32 (String.size name) ^ name
+      fun table ([], _) = []
+        | table ((pc, file, line, col) :: rest, (pc0, file0, line0, col0)) =
+            uvarText (IntInf.fromInt (pc - pc0)) :: svarText (file - file0) :: svarText (line - line0)
+            :: svarText (col - col0) :: table (rest, (pc, file, line, col))
+      val tableText = String.concat (table (lines, (0, 0, 0, 0)))
+    in
+      String.concat
+        (["RUNE", le32 2, le32 (List.length consts)] @ List.map const consts
+         @ [le32 nglobals, le32 (List.length funcs)] @ List.map func funcs
+         @ [le32 (String.size code), code, le32 (List.length files)]
+         @ List.map (fn f => le32 (String.size f) ^ f) files
+         @ [le32 (List.length lines), le32 (String.size tableText), tableText])
+    end
+
   (* line_at: the entry that covers pc, the last that begins at or before it. *)
   fun lineAt (lines : line vector, pc : int) : line option =
     let

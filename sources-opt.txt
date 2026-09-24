@@ -8,6 +8,7 @@ src/util/ordmap.sml
 src/backend/opcodes.sml
 src/backend/prims.sml
 src/opt/rbc.sml
+src/opt/rbcimage.sml
 src/opt/rbccheck.sml
 src/opt/rbcdisasm.sml
 src/opt/x64.sml
