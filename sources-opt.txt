@@ -1,0 +1,15 @@
+# Ordered list of the sources of runeopt, the native code generator
+# (docs/plans/codegen.md): the compiler's utilities and its description of
+# the machine (the opcodes and primitives of vm/opcodes.def and vm/prims.def),
+# which it shares with sources.txt in the same order, and src/opt.
+# scripts/gen-build-files.sh makes the build files of every host from this
+# list -- edit only this file. The rules of sources.txt hold here too.
+src/util/ordmap.sml
+src/backend/opcodes.sml
+src/backend/prims.sml
+src/opt/rbc.sml
+src/opt/rbcimage.sml
+src/opt/rbccheck.sml
+src/opt/rbcdisasm.sml
+src/opt/x64.sml
+src/opt/optmain.sml

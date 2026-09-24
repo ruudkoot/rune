@@ -1,0 +1,9 @@
+# Programs that `make test-native` leaves out, one per line: what a program
+# runeopt made does not do (docs/native.md):
+#
+#   NAME CATEGORY: reason
+#
+# The list is empty: native code runs every program of tests/lang, the one
+# that forks by a second process (rt.fork_image) and those that carry on an
+# image (the .restore tests) included, since M9. A category is added here
+# again only with a program to go under it.

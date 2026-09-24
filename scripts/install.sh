@@ -1,8 +1,9 @@
 #!/bin/sh
 # Install (or remove) Rune: the rune wrapper, runevm, the compiler it runs, the
 # basis library, the man pages and the shell completions; and runedoc, the
-# documentation generator, when it is built (bin/runedoc.rbc, or
-# bin/runedoc-NAME with --host).
+# documentation generator, and runeopt, the native code generator, when they
+# are built (bin/runedoc.rbc, or bin/runedoc-NAME with --host, and the same of
+# runeopt), runeopt with the runtime it links a program with (lib/rune/runtime).
 #
 # Usage: scripts/install.sh [--prefix DIR] [--destdir DIR] [--host NAME] [--uninstall]
 #
@@ -58,11 +59,12 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 if [ "$uninstall" = 1 ]; then
   rm -f "$bindir/rune" "$bindir/runevm" \
         "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml" \
-        "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj" "$bindir/runedoc-polyml"
+        "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj" "$bindir/runedoc-polyml" \
+        "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj" "$bindir/runeopt-polyml"
   rm -rf "$libdir"
-  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1"
-  rm -f "$bashdir/rune" "$bashdir/runedoc"
-  rm -f "$zshdir/_rune" "$zshdir/_runevm" "$zshdir/_runedoc"
+  rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
+  rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
+  rm -f "$zshdir/_rune" "$zshdir/_runevm" "$zshdir/_runedoc" "$zshdir/_runeopt"
   echo "uninstalled rune from $prefix"
   exit 0
 fi
@@ -159,6 +161,45 @@ if [ -n "$host" ] && [ -n "$doc" ]; then
   ln -sfn "$doc" "$bindir/runedoc"
 fi
 
+# runeopt, when it is built and so is its runtime: the same kind of build as
+# rune, told where the runtime is installed.
+opt=""
+if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
+  if [ -z "$host" ]; then
+    if [ -e "$root/bin/runeopt.rbc" ]; then
+      copy "$root/bin/runeopt.rbc" "$libdir/runeopt.rbc" 644
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/runevm" --heap-size %s "$d/../lib/rune/runeopt.rbc" --runtime "$d/../lib/rune/runtime" "$@"\n' \
+        "$heap" > "$bindir/runeopt"
+      chmod 755 "$bindir/runeopt"
+      opt=runeopt
+    fi
+  elif [ "$host" = smlnj ]; then
+    found=0
+    for h in "$root"/bin/runeopt-smlnj.heap.*; do
+      if [ -e "$h" ]; then copy "$h" "$libdir/${h##*/}" 644; found=1; fi
+    done
+    if [ "$found" = 1 ]; then
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runeopt-smlnj.heap" --runtime "$d/../lib/rune/runtime" "$@"\n' "$smlnj" \
+        > "$bindir/runeopt-smlnj"
+      opt=runeopt-smlnj
+    fi
+  elif [ -e "$root/bin/runeopt-$host.bin" ]; then
+    copy "$root/bin/runeopt-$host.bin" "$libdir/runeopt-$host.bin" 755
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "$d/../lib/rune/runeopt-%s.bin" --runtime "$d/../lib/rune/runtime" "$@"\n' \
+      "$host" > "$bindir/runeopt-$host"
+    opt=runeopt-$host
+  fi
+  if [ -n "$host" ] && [ -n "$opt" ]; then
+    chmod 755 "$bindir/$opt"
+    ln -sfn "$opt" "$bindir/runeopt"
+  fi
+  if [ -n "$opt" ]; then
+    mkdir -p "$libdir/runtime"
+    copy "$root/build/librune.a" "$libdir/runtime/librune.a" 644
+    copy "$root/build/rune-offsets.s" "$libdir/runtime/rune-offsets.s" 644
+  fi
+fi
+
 copy "$root/lib/basis/MANIFEST" "$libdir/basis/MANIFEST" 644
 # the first column of a line is the file
 while IFS='|' read -r f _; do
@@ -181,8 +222,13 @@ if [ -n "$doc" ]; then
   copy "$root/completions/runedoc.bash" "$bashdir/runedoc" 644
   copy "$root/completions/_runedoc" "$zshdir/_runedoc" 644
 fi
+if [ -n "$opt" ]; then
+  copy "$root/man/runeopt.1" "$mandir/runeopt.1" 644
+  copy "$root/completions/runeopt.bash" "$bashdir/runeopt" 644
+  copy "$root/completions/_runeopt" "$zshdir/_runeopt" 644
+fi
 
-echo "installed $installed${doc:+, runedoc} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
+echo "installed $installed${doc:+, runedoc}${opt:+, runeopt} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
 if [ "$host" = smlnj ]; then
   echo "note: rune-smlnj runs with $smlnj"
 fi

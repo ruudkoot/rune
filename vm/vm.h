@@ -24,7 +24,7 @@ typedef struct Obj Obj;
    8, and without this a Value is 12 bytes there and every object of the heap
    a different size (make test-portability). A narrower Value on 32-bit
    machines would save 0.46% of the heap and cost more than that: the reasons
-   are written down under "Value representation" in docs/plans/performance.md,
+   are written down under "8-byte values" in docs/plans/performance.md,
    which is also where the padding of the payload is weighed. */
 typedef struct Value {
     uint8_t tag;
@@ -110,6 +110,9 @@ typedef struct Frame {
     uint32_t ret_pc;
     size_t base;     /* stack index of local 0 */
     Obj *closure;    /* NULL for the toplevel */
+    /* In a program runeopt made (vm/native.c), the native code at ret_pc.
+       An image does not carry it: it is an address of one process. */
+    const void *native_ret;
 } Frame;
 
 typedef struct Handler {
@@ -149,12 +152,15 @@ typedef struct VM {
     uint64_t objects_allocated;
     uint64_t instructions;   /* executed so far */
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
+    unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
+                                after a collection; 50 unless the option says otherwise */
 
     uint32_t pc;
     int trace;
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
+    int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -181,24 +187,62 @@ size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap l
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 
-/* interp.c */
+/* runtime.c: all of a VM but its dispatch loop and its command line. What
+   the loop does at every instruction is inline here, where it can be made
+   part of the loop; only what grows an array is not. */
+/* A function that never returns: the loop needs nothing kept for after it. */
+#if defined(__GNUC__)
+#define VM_NORETURN __attribute__((noreturn))
+#else
+#define VM_NORETURN
+#endif
+
+void vm_init(VM *vm, size_t heap);           /* the standard files and the heap */
+VM_NORETURN void vm_fatal(VM *vm, const char *fmt, ...);
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
+void vm_grow_frames(VM *vm);                 /* make room for another frame */
 static inline void vm_push(VM *vm, Value v) {
     if (vm->sp >= vm->stack_cap) vm_grow_stack(vm, vm->sp + 1);
     vm->stack[vm->sp++] = v;
 }
-Value vm_pop(VM *vm);
-Value *vm_top(VM *vm, size_t depth);  /* pointer to stack[sp-1-depth] */
-void vm_fatal(VM *vm, const char *fmt, ...);
+static inline Value vm_pop(VM *vm) {
+    if (vm->sp == 0) vm_fatal(vm, "stack underflow");
+    return vm->stack[--vm->sp];
+}
+static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-depth] */
+    if (vm->sp <= depth) vm_fatal(vm, "stack underflow");
+    return &vm->stack[vm->sp - 1 - depth];
+}
+static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
+    size_t idx = vm->frames_active ? vm->fp + 1 : 0;
+    if (idx >= vm->frames_cap) vm_grow_frames(vm);
+    vm->frames[idx].func = func;
+    vm->frames[idx].closure = closure;
+    vm->frames[idx].ret_pc = ret_pc;
+    vm->frames[idx].base = base;
+    vm->fp = idx;
+    vm->frames_active = 1;
+}
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */
-void vm_exit(VM *vm, int status);
+VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
-int vm_run(VM *vm);
-int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
+void vm_push_handler(VM *vm, uint32_t pc);
+void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */
 int values_equal(Value a, Value b);
+void vm_print_trace(VM *vm, FILE *out);
+void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
+void vm_destroy(VM *vm);                     /* and the VM */
+
+/* interp.c */
+int vm_run(VM *vm);                          /* vm_start, then the loop */
+int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
+
+/* In a program runeopt made (vm/native.c), whether a world read from an
+   image runs the program it carries; NULL in runevm, which runs any. */
+extern int (*vm_same_program)(const VM *world);
 
 /* image.c: fork as a second VM that is handed this one's state */
 int64_t vm_fork(VM *vm);                     /* the child's pid in the parent, or -1 */
@@ -206,15 +250,14 @@ int vm_resume(VM *vm, const char *token, char *err, size_t errlen);   /* in the 
 int vm_save(VM *vm, const char *path);       /* the whole VM in a file (Runtime.save); 0 on failure */
 int vm_restore(VM *vm, const char *path, char *err, size_t errlen);  /* runevm --restore FILE */
 int vm_become(VM *vm, const char *path);     /* Runtime.restore: this world becomes that one; 0 on failure */
-void vm_release(VM *vm);                     /* free what a VM holds, but not the VM */
 
 /* loader.c */
 int load_program(VM *vm, const char *path, char *err, size_t errlen);
+int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen);
 /* Where every instruction begins, or NULL: a program from a .rbc or from an
    image is checked the same way. The caller frees it. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen);
 const LineEntry *line_at(const Program *p, uint32_t pc);
-void vm_print_trace(VM *vm, FILE *out);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

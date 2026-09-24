@@ -1,0 +1,196 @@
+# A program that runs every instruction of vm/opcodes.def at least once, HALT
+# and JUMPIF among them, which the compiler never writes: tests/opt makes it
+# with rbcasm.awk, runs it under runevm and as runeopt translates it, and
+# wants the same output and the same counts. A new opcode goes in here too.
+
+const start string "every opcode\n"
+const nl string "\n"
+const bad string "wrong\n"
+const exn string "Mine"
+const div string "Div caught\n"
+const done string "done\n"
+globals 1
+
+function main 2
+  CONST %start
+  PRIM print
+  POP
+  # TUPLE, SELECT, SETLOCAL, LOCAL: 2
+  INT 1
+  INT 2
+  TUPLE 2
+  SETLOCAL 1
+  LOCAL 1
+  SELECT 1
+  PRIM int_to_string
+  PRIM print
+  POP
+  CONST %nl
+  PRIM print
+  POP
+  # CON, CONTAG on a constructor with an argument: 3
+  INT 5
+  CON 3
+  CONTAG
+  PRIM int_to_string
+  PRIM print
+  POP
+  # DECON: 6
+  INT 6
+  CON 1
+  DECON
+  PRIM int_to_string
+  PRIM print
+  POP
+  # CON0, CONTAG on a nullary one: 4
+  CON0 4
+  CONTAG
+  PRIM int_to_string
+  PRIM print
+  POP
+  # JUMPIFNOTTAG on a nullary constructor and on one with an argument, each
+  # both ways: 11
+  CON0 2
+  JUMPIFNOTTAG @n1 2
+  INT 1
+  PRIM int_to_string
+  PRIM print
+  POP
+n1:
+  CON0 2
+  JUMPIFNOTTAG @n2 3
+  CONST %bad
+  PRIM print
+  POP
+n2:
+  INT 0
+  CON 7
+  JUMPIFNOTTAG @n3 7
+  INT 1
+  PRIM int_to_string
+  PRIM print
+  POP
+n3:
+  INT 0
+  CON 7
+  JUMPIFNOTTAG @n4 6
+  CONST %bad
+  PRIM print
+  POP
+n4:
+  UNIT
+  POP
+  # SETGLOBAL, GLOBAL: 9
+  INT 9
+  SETGLOBAL 0
+  GLOBAL 0
+  PRIM int_to_string
+  PRIM print
+  POP
+  # CLOSURE, CALL, ENV: 10 + 5
+  INT 10
+  CLOSURE &addenv 1
+  INT 5
+  CALL
+  PRIM int_to_string
+  PRIM print
+  POP
+  # SETENV, SELF, TAILCALL: countdown from 3 gives what its environment holds
+  UNIT
+  CLOSURE &countdown 1
+  SETLOCAL 1
+  LOCAL 1
+  INT 42
+  SETENV 0
+  LOCAL 1
+  INT 3
+  CALL
+  PRIM int_to_string
+  PRIM print
+  POP
+  CONST %nl
+  PRIM print
+  POP
+  # JUMPIF, JUMPIFNOT, JUMP
+  CON0 1
+  JUMPIF @t
+  CONST %bad
+  PRIM print
+  POP
+t:
+  CON0 0
+  JUMPIFNOT @f
+  CONST %bad
+  PRIM print
+  POP
+f:
+  # PUSHHANDLER, NEWEXN, MKEXN, RAISE, EXNARG, EXNCON: 7
+  PUSHHANDLER @h1
+  NEWEXN %exn
+  INT 7
+  MKEXN
+  RAISE
+h1:
+  SETLOCAL 1
+  LOCAL 1
+  EXNARG
+  PRIM int_to_string
+  PRIM print
+  POP
+  LOCAL 1
+  EXNCON
+  POP
+  # POPHANDLER: the handler is taken down, not used
+  PUSHHANDLER @h2
+  UNIT
+  POP
+  POPHANDLER
+  JUMP @a2
+h2:
+  POP
+a2:
+  # a primitive that raises, and BUILTINEXN
+  PUSHHANDLER @h3
+  INT 1
+  INT 0
+  PRIM int_div
+  POP
+  POPHANDLER
+  JUMP @a3
+h3:
+  EXNCON
+  BUILTINEXN 3
+  PRIM ptr_eq
+  JUMPIFNOT @a3
+  CONST %nl
+  PRIM print
+  POP
+  CONST %div
+  PRIM print
+  POP
+a3:
+  CONST %done
+  PRIM print
+  POP
+  HALT
+
+function addenv 1
+  LOCAL 0
+  ENV 0
+  PRIM int_add
+  RET
+
+function countdown 1
+  LOCAL 0
+  INT 0
+  PRIM poly_eq
+  JUMPIFNOT @rec
+  ENV 0
+  RET
+rec:
+  SELF
+  LOCAL 0
+  INT 1
+  PRIM int_sub
+  TAILCALL
+  RET

@@ -1,199 +1,5 @@
-/* The interpreter loop, stacks, calls and exceptions. */
+/* The interpreter loop: an instruction at a time, from vm->pc. */
 #include "vm.h"
-#include <stdarg.h>
-
-/* Where a frame is stopped: the instruction being executed in the innermost
-   one, and the call it is waiting on in every other. A pc points past the
-   instruction it is in, so one byte back is inside it, and an entry of the
-   line table never begins in the middle of an instruction. */
-static uint32_t frame_pc(const VM *vm, size_t i) {
-    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
-    return pc > 0 ? pc - 1 : 0;
-}
-
-/* The frames, innermost first, under a message that has already been
-   printed. A frame whose position the program does not carry -- there is
-   none for a file compiled before M5, and none for the outermost frame of a
-   resumed image -- is named without one. */
-void vm_print_trace(VM *vm, FILE *out) {
-    if (!vm->frames_active) return;
-    for (size_t k = vm->fp + 1; k > 0; k--) {
-        size_t i = k - 1;
-        uint32_t f = vm->frames[i].func;
-        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-        const LineEntry *e = line_at(&vm->prog, frame_pc(vm, i));
-        if (e && e->file < vm->prog.nfiles)
-            fprintf(out, "  in %s at %s:%u:%u\n", name, vm->prog.files[e->file], e->line, e->col);
-        else
-            fprintf(out, "  in %s\n", name);
-    }
-}
-
-void vm_fatal(VM *vm, const char *fmt, ...) {
-    va_list ap;
-    fflush(stdout);
-    fprintf(stderr, "runevm: fatal error at pc %u", vm->pc);
-    if (vm->frames_active && vm->fp < vm->frames_cap)
-        fprintf(stderr, " in %s", vm->prog.funcs[vm->frames[vm->fp].func].name);
-    fprintf(stderr, ": ");
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    fprintf(stderr, "\n");
-    vm_print_trace(vm, stderr);
-    exit(2);
-}
-
-void vm_grow_stack(VM *vm, size_t need) {
-    size_t ncap = vm->stack_cap ? vm->stack_cap : 1024;
-    while (ncap < need) ncap *= 2;
-    if (ncap == vm->stack_cap) return;
-    Value *ns = realloc(vm->stack, ncap * sizeof(Value));
-    if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
-    vm->stack = ns;
-    vm->stack_cap = ncap;
-}
-
-Value vm_pop(VM *vm) {
-    if (vm->sp == 0) vm_fatal(vm, "stack underflow");
-    return vm->stack[--vm->sp];
-}
-
-Value *vm_top(VM *vm, size_t depth) {
-    if (vm->sp <= depth) vm_fatal(vm, "stack underflow");
-    return &vm->stack[vm->sp - 1 - depth];
-}
-
-static void push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
-    size_t idx = vm->frames_active ? vm->fp + 1 : 0;
-    if (idx >= vm->frames_cap) {
-        size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
-        Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
-        if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
-        vm->frames = nf;
-        vm->frames_cap = ncap;
-    }
-    vm->frames[idx].func = func;
-    vm->frames[idx].closure = closure;
-    vm->frames[idx].ret_pc = ret_pc;
-    vm->frames[idx].base = base;
-    vm->fp = idx;
-    vm->frames_active = 1;
-}
-
-static void push_handler(VM *vm, uint32_t pc) {
-    if (vm->hp >= vm->handlers_cap) {
-        size_t ncap = vm->handlers_cap ? vm->handlers_cap * 2 : 64;
-        Handler *nh = realloc(vm->handlers, ncap * sizeof(Handler));
-        if (!nh) { fprintf(stderr, "runevm: out of memory (handlers)\n"); exit(2); }
-        vm->handlers = nh;
-        vm->handlers_cap = ncap;
-    }
-    vm->handlers[vm->hp].pc = pc;
-    vm->handlers[vm->hp].sp = vm->sp;
-    vm->handlers[vm->hp].fp = vm->fp;
-    vm->hp++;
-}
-
-void vm_cons(VM *vm) {
-    Obj *cell = vm_alloc_fields(vm, K_TUPLE, 0, 2);
-    OBJ_FIELDS(cell)[0] = vm->stack[vm->sp - 1];
-    OBJ_FIELDS(cell)[1] = vm->stack[vm->sp - 2];
-    vm->sp -= 2;
-    vm_push(vm, mk_ptr(cell));
-    Obj *con = vm_alloc_fields(vm, K_CON, 1, 1);
-    OBJ_FIELDS(con)[0] = vm->stack[vm->sp - 1];
-    vm->stack[vm->sp - 1] = mk_ptr(con);
-}
-
-/* --- structural equality --- */
-int values_equal(Value a, Value b) {
-    for (;;) {
-        if (a.tag != b.tag) return 0;
-        switch (a.tag) {
-        case T_UNIT: return 1;
-        case T_INT: case T_CHAR: case T_CON0: return a.u.i == b.u.i;
-        case T_WORD: return a.u.w == b.u.w;
-        case T_REAL: return a.u.d == b.u.d;
-        case T_PTR: {
-            Obj *x = a.u.p, *y = b.u.p;
-            if (x == y) return 1;
-            if (x->kind != y->kind) return 0;
-            switch (x->kind) {
-            case K_STRING:
-                return x->len == y->len && memcmp(OBJ_BYTES(x), OBJ_BYTES(y), x->len) == 0;
-            case K_REF: case K_ARRAY: case K_CLOSURE: case K_EXNCON:
-                return 0;
-            case K_CON:
-                if (x->contag != y->contag) return 0;
-                /* fall through */
-            case K_TUPLE: case K_EXN: {
-                if (x->len != y->len) return 0;
-                if (x->len == 0) return 1;
-                Value *fx = OBJ_FIELDS(x), *fy = OBJ_FIELDS(y);
-                for (uint32_t i = 0; i + 1 < x->len; i++)
-                    if (!values_equal(fx[i], fy[i])) return 0;
-                a = fx[x->len - 1];
-                b = fy[x->len - 1];
-                continue;
-            }
-            default: return 0;
-            }
-        }
-        default: return 0;
-        }
-    }
-}
-
-/* --- exceptions --- */
-static void print_exn_payload(FILE *out, Value v) {
-    switch (v.tag) {
-    case T_UNIT: break;
-    case T_INT: fprintf(out, " %lld", (long long)v.u.i); break;
-    case T_WORD: fprintf(out, " 0wx%llX", (unsigned long long)v.u.w); break;
-    case T_REAL: fprintf(out, " %g", v.u.d); break;
-    case T_CHAR: fprintf(out, " #\"%c\"", (int)v.u.i); break;
-    case T_PTR:
-        if (v.u.p->kind == K_STRING) fprintf(out, " \"%.*s\"", (int)v.u.p->len, OBJ_BYTES(v.u.p));
-        else fprintf(out, " <value>");
-        break;
-    default: fprintf(out, " <value>");
-    }
-}
-
-int vm_raise(VM *vm, Value exn) {
-    if (vm->hp == 0) {
-        fflush(stdout);
-        fprintf(stderr, "runevm: uncaught exception ");
-        if (exn.tag == T_PTR && exn.u.p->kind == K_EXN) {
-            Value con = OBJ_FIELDS(exn.u.p)[0];
-            if (con.tag == T_PTR && con.u.p->kind == K_EXNCON) {
-                Value name = OBJ_FIELDS(con.u.p)[0];
-                if (name.tag == T_PTR && name.u.p->kind == K_STRING)
-                    fprintf(stderr, "%.*s", (int)name.u.p->len, OBJ_BYTES(name.u.p));
-            }
-            print_exn_payload(stderr, OBJ_FIELDS(exn.u.p)[1]);
-        } else {
-            fprintf(stderr, "<invalid exception value>");
-        }
-        fprintf(stderr, "\n");
-        vm_print_trace(vm, stderr);
-        vm_exit(vm, 1);
-    }
-    Handler h = vm->handlers[--vm->hp];
-    vm->fp = h.fp;
-    vm->sp = h.sp;
-    vm_push(vm, exn);
-    vm->pc = h.pc;
-    return 1;
-}
-
-int vm_raise_builtin(VM *vm, int k) {
-    Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
-    OBJ_FIELDS(e)[0] = mk_ptr(vm->builtin_exns[k]);
-    OBJ_FIELDS(e)[1] = mk_unit();
-    return vm_raise(vm, mk_ptr(e));
-}
 
 /* --- checks --- */
 static Obj *expect_obj(VM *vm, Value v, int kind, const char *what) {
@@ -203,25 +9,7 @@ static Obj *expect_obj(VM *vm, Value v, int kind, const char *what) {
 
 /* --- main loop --- */
 int vm_run(VM *vm) {
-    Program *p = &vm->prog;
-
-    /* builtin exception constructors */
-    static const char *const builtin_names[NUM_BUILTIN_EXNS] =
-        { "Match", "Bind", "Overflow", "Div", "Subscript", "Size", "Chr", "Domain" };
-    for (int i = 0; i < NUM_BUILTIN_EXNS; i++) {
-        Obj *name = vm_string_from(vm, builtin_names[i], (uint32_t)strlen(builtin_names[i]));
-        vm_push(vm, mk_ptr(name));
-        Obj *con = vm_alloc_fields(vm, K_EXNCON, 0, 1);
-        OBJ_FIELDS(con)[0] = vm_pop(vm);
-        vm->builtin_exns[i] = con;
-    }
-
-    /* toplevel frame: function 0 applied to unit */
-    vm->sp = 0;
-    vm_push(vm, mk_unit());
-    for (uint32_t i = 1; i < p->funcs[0].nlocals; i++) vm_push(vm, mk_unit());
-    push_frame(vm, 0, NULL, 0, 0);
-    vm->pc = p->funcs[0].code_offset;
+    vm_start(vm);
     return vm_loop(vm);
 }
 
@@ -350,7 +138,7 @@ int vm_loop(VM *vm) {
                 fr->closure = c;
             } else {
                 size_t base = vm->sp;
-                push_frame(vm, (uint32_t)fidx, c, vm->pc, base);
+                vm_push_frame(vm, (uint32_t)fidx, c, vm->pc, base);
             }
             /* local 0 is the argument; the other locals start as unit */
             if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);
@@ -379,6 +167,17 @@ int vm_loop(VM *vm) {
             if (v.u.i == 0) vm->pc = (uint32_t)a;
             break;
         }
+        case OP_JUMPIFNOTTAG: {
+            /* CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o, the test of a match
+               against a constructor, in one */
+            Value v = vm_pop(vm);
+            int64_t tag = 0;
+            if (v.tag == T_CON0) tag = v.u.i;
+            else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+            else vm_fatal(vm, "JUMPIFNOTTAG on non-constructor");
+            if (tag != b) vm->pc = (uint32_t)a;
+            break;
+        }
         case OP_JUMPIF: {
             Value v = vm_pop(vm);
             if (v.tag != T_CON0) vm_fatal(vm, "JUMPIF on non-bool");
@@ -386,7 +185,7 @@ int vm_loop(VM *vm) {
             break;
         }
         case OP_PUSHHANDLER:
-            push_handler(vm, (uint32_t)a);
+            vm_push_handler(vm, (uint32_t)a);
             break;
         case OP_POPHANDLER:
             if (vm->hp == 0) vm_fatal(vm, "POPHANDLER with no handler");

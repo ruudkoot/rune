@@ -68,6 +68,25 @@ keep these invariants:
   `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
   Basis Library suite run. Bump the `.rbc` version in
   `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
+* **Native code** (`runeopt`, `docs/native.md`): an instruction has,
+  beside its case in `vm/interp.c`, a template in `src/opt/x64.sml`, a stack
+  effect in `src/opt/rbccheck.sml`, and where it calls into C a helper in
+  `vm/native.c`; a change to what an instruction does changes all of them,
+  and a new one goes into `tests/opt/every-opcode.rasm`, which runs every
+  instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
+  the loader's messages. A field of the VM that the code touches is named in
+  `vm/native_offsets.c`, never written as a number. `make test-native` runs
+  the suites as native code and wants `--count` to agree with `runevm`. The
+  primitives whose common case the code does itself (`runeopt --inlined`,
+  `fastPrim` in `src/opt/x64.sml`) change with their C code in
+  `vm/prims.c`: `tests/opt/prims.sml` runs each on its edge cases, natively
+  and on `runevm`, and must use every one of them. The templates also copy
+  the push and pop of a frame (`vm_push_frame`, `native_call`, `native_ret`)
+  and the fast path of `vm_alloc` (when it collects, `--gc-stress`, the
+  header, the counts): a change to either changes the templates too. An
+  instruction in the list `reads` of `x64.sml` must never write its top
+  operand in place, since a LOCAL may have left it in its local
+  (`docs/native.md`).
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
@@ -76,7 +95,8 @@ keep these invariants:
 ## Build and verification
 
 * Compiler sources are listed in `sources.txt` (ordered), those of the
-  documentation generator `runedoc` in `sources-doc.txt`; the MLton, SML/NJ and
+  documentation generator `runedoc` in `sources-doc.txt` and those of the
+  native code generator `runeopt` in `sources-opt.txt`; the MLton, SML/NJ and
   Poly/ML build files are generated from them — never edit `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
@@ -92,7 +112,8 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `perf-check`, `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
+  `test-basis`, `test-doc`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
+  `check-cross`, `check-docs`, `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
   every test target uses by default; `make test RUNE=bin/rune-mlton` runs the
   same suite with the MLton build and is the faster loop while iterating. For

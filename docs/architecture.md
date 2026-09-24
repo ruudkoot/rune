@@ -21,7 +21,7 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | Rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
-| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `BinIO`. |
+| Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
@@ -37,6 +37,39 @@ the elaborator of the compiler, `BasisManifest`, and `src/doc`. It reads a
 library the way the compiler does (the same lexer, parser and, later,
 elaborator), so what it documents is what the compiler compiles. Nothing of
 `src/doc` is part of the compiler, so it costs the bootstrap nothing.
+
+## The native code generator
+
+`runeopt` ([native.md](native.md), which says how it translates) is a third program,
+built from `sources-opt.txt`: the compiler's `OrdMap`, its description of
+the machine (`Opcodes` and `Prims`, generated from `vm/opcodes.def` and
+`vm/prims.def`), and `src/opt`. It takes an `.rbc`, not a source file, and
+writes an executable for Linux on x86-64: the bytecode translated an
+instruction at a time into assembly, which `cc` assembles and links with
+`build/librune.a`. The code keeps the value stack, the frames and the
+handlers where the interpreter keeps them, so the collector, traces,
+`Runtime.stats` and images see the machine they see under `runevm`.
+
+| Module | File | Role |
+|---|---|---|
+| `Rbc` | `src/opt/rbc.sml` | Reads an `.rbc` as `load_program` and `validate_program` of `vm/loader.c` do, and refuses what they refuse with their messages. No number of the file is read into an `int` that could not hold it on a 31-bit host. |
+| `RbcImage` | `src/opt/rbcimage.sml` | `runeopt --from-image`: the program of an image of `vm/image.c` as an `.rbc`, its real constants written as C's hexadecimal notation from their bits, with integers alone. |
+| `RbcCheck` | `src/opt/rbccheck.sml` | What a translation relies on and the loader does not promise: the stack height and handler depth agree on every path into an instruction, no path underflows, leaves its function or runs off its end, no `TAILCALL` or `RET` has a handler of its function installed. Gives the height before every instruction and each function's highest stack. |
+| `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm --disasm` prints (a real constant as its text). |
+| `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `vm/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls and returns push and pop the VM's frames themselves, and allocation bumps the heap itself, with `vm/native.c` as the slow path; raises go through `vm/native.c`, primitives through `prim_table`, but for the 56 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entries and highest stack, each handler's code, the places an image can resume at. |
+| `OptMain` | `src/opt/optmain.sml` | The command line: `runeopt FILE.rbc [-o EXE] [-S]`, `--check`, `--disasm`, `--facts`. |
+
+On the side of the VM, `vm/native.c` is the `main` of a program `runeopt`
+made and what its code calls: the cases of `vm/interp.c` for a call, a
+return, a raise and an allocation, taken out of the loop, each returning the
+native code to go on at. The code does the common case of a call, a return
+and an allocation itself, and calls these for the rest. It reads the options of `runevm` from
+`RUNEVM_OPTIONS`, and carries on an image of its program (`--restore`, the
+child of an emulated fork, `Runtime.restore`): the code has a table of the
+places an image can stop at, the instruction after a call and after a
+primitive that writes an image. `vm/native_offsets.c` prints the layout of the VM as
+assembler directives, `build/rune-offsets.s`, which the code includes, so
+that what `runeopt` writes names fields and never gives their offsets.
 
 | Structure | File | Purpose |
 |---|---|---|
@@ -105,13 +138,19 @@ the payload beside it. The bytecode therefore contains no path, and
 | File | Contents |
 |---|---|
 | `vm/vm.h` | `Value`, `Obj`, `VM` and the shared API. |
-| `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), disassembler. |
-| `vm/interp.c` | Stacks, frames, handlers, `vm_run` dispatch loop, structural equality, exception raising. |
+| `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
+| `vm/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
+| `vm/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. |
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
 | `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
 | `vm/prims.c` | One function per primitive; the dispatch table is generated from `prims.def`. |
 | `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
 | `vm/main.c` | Command line handling. |
+
+Everything but `interp.c` and `main.c` is the runtime, which the Makefile
+also builds as `build/librune.a` for this machine: `bin/runevm` is the two
+linked against it, and a program made by the native code generator
+([native.md](native.md)) links it in place of them.
 
 GC discipline in C: an allocation may move every heap object, so primitives
 read their arguments from the stack (not popped) until the result exists, and

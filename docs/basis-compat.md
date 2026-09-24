@@ -506,3 +506,32 @@ What the table says:
   about as fast as that host's own library (`list_ops` 1.2 ms on MLton against
   1.8 ms native, `string_ops` 2.8 against 1.4): the algorithms of `lib/basis`
   are not what makes Rune slow.
+
+### Native code
+
+The same, on 2026-09-24, with `rune:opt`: every program translated into
+native code by `runeopt` ([native.md](native.md)) and run so.
+`rune` and `rune:opt` were timed together, the hosts in a run of their own
+that day.
+
+| Program | rune | rune:opt | native:mlton@20241230 | native:smlnj@110.99.9 | native:polyml@5.9.2 |
+|---|---:|---:|---:|---:|---:|
+| array_sieve | 39.21 (3.7) | 16.26 (3.5) | 0.43 (1.7) | 1.28 (3.8) | 0.56 (2.6) |
+| fib | 10.75 (1.0) | 5.64 (1.2) | 0.44 (1.7) | 0.42 (1.2) | 0.32 (1.5) |
+| intinf_fact | 333.32 (31.3) | 110.69 (24.1) | 0.05 (0.2) | 0.27 (0.8) | 0.13 (0.6) |
+| list_ops | 30.65 (2.9) | 16.75 (3.6) | 2.18 (8.5) | 1.55 (4.6) | 1.88 (8.9) |
+| real_nbody | 9.98 (0.9) | 2.50 (0.5) | 0.57 (2.2) | 0.50 (1.5) | 1.03 (4.9) |
+| string_ops | 36.75 (3.5) | 18.36 (4.0) | 1.47 (5.7) | 2.16 (6.4) | 2.21 (10.4) |
+| tak | 10.52 (1.0) | 3.74 (0.8) | 0.15 (0.6) | 0.27 (0.8) | 0.14 (0.7) |
+| word_bits | 14.61 (1.4) | 6.02 (1.3) | 0.17 (0.7) | 0.27 (0.8) | 0.17 (0.8) |
+
+* Native code ran these programs 1.8 to 4.0 times faster than the VM
+  (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5
+  against 10.0), and the compiler compiled itself in 5.5 s against 10.2,
+  still 10 to 40 times slower than the hosts.
+* These are the timings of codegen's M7. Its M10 to M15, the same day, made
+  native code 1.75 times as fast again, by doing calls, returns and
+  allocation in the translated code; a new `make perf` for this table is
+  among the remaining work of [plans/codegen.md](plans/codegen.md). Where
+  native code and the VM spend their time now, against MLton, is in
+  [plans/performance.md](plans/performance.md).

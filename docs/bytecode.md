@@ -13,7 +13,7 @@ unsigned 32-bit, signed 32-bit and signed 64-bit two's complement.
 
 ```
 magic       4 bytes   "RUNE"
-version     u32       1
+version     u32       2
 nconsts     u32
 consts      nconsts × constant
 nglobals    u32       number of global slots
@@ -102,7 +102,8 @@ alphabetic), so a tuple `(a, b)` and the record `{1 = a, 2 = b}` are the same
 object. Options are `CON0 0` (`NONE`) and `CON 1 x` (`SOME x`).
 
 The heap is managed by a Cheney semispace copying collector; the semispace
-doubles whenever it is more than half full after a collection.
+doubles whenever it is more than half full after a collection, or the share
+`runevm --heap-fill P` gives, P percent.
 
 ## Machine state
 
@@ -151,6 +152,7 @@ Opcode numbers are assigned in the order of `vm/opcodes.def`.
 | `RET` | | Return the top of stack to the caller. |
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
 | `JUMPIFNOT o` / `JUMPIF o` | offset | Pop a bool, jump if false / true. |
+| `JUMPIFNOTTAG o, t` | offset, tag | Pop a constructor value (nullary or not), jump unless its tag is `t`: what `CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o` does, in one instruction, which is how the compiler tests a constructor in a match. |
 | `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
 | `RAISE` | | Pop an exception value and raise it. |
 | `NEWEXN k` | string constant | Create a fresh exception constructor named `k`. |
@@ -196,6 +198,8 @@ raised as noted.
   that keeps a heap pointer in a C variable across an allocation
   (`make test-stress`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm --heap-fill P file.rbc` grows the heap after a collection until at
+  most P percent of it is in use (1 to 100, 50 by default);
 * `runevm --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,
   which has no fork: a second `runevm` is started as `runevm --resume` and
   handed the whole state of this one (`vm/image.c`), and it carries on with

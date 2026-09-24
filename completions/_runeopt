@@ -1,0 +1,17 @@
+#compdef runeopt
+
+_arguments -s \
+  '-o[the executable to write]:executable:_files' \
+  '-S[write the assembly and stop]' \
+  '--options[options of runevm the program runs with]:runevm options:' \
+  '--cc[the C compiler that assembles and links]:command:_command_names' \
+  '--runtime[where librune.a and rune-offsets.s are]:runtime directory:_files -/' \
+  '--from-image[translate the program of an image]:image file:_files' \
+  '--check[check the files and translate nothing]' \
+  '--disasm[print the bytecode as runevm --disasm does]' \
+  '--lines[print the line table of the file]' \
+  '--facts[print what the check found in each file]' \
+  '--inlined[list the primitives whose common case is inline]' \
+  '--version[print the version and exit]' \
+  '(- *)'{-h,--help}'[print a usage summary and exit]' \
+  '*:bytecode file:_files -g "*.rbc"'

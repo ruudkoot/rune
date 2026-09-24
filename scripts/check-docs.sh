@@ -98,7 +98,7 @@ done
 # pages are written by hand and once said two different things.
 version=$(sed -n 's/^version=\(.*\)$/\1/p' scripts/gen-build-files.sh)
 [ -n "$version" ] || fail "scripts/gen-build-files.sh does not set a version"
-for page in man/rune.1 man/runedoc.1 man/runevm.1; do
+for page in man/rune.1 man/runedoc.1 man/runeopt.1 man/runevm.1; do
   prog=$(basename "$page" .1)
   grep -q "\"$prog $version\"" "$page" ||
     fail "$page does not say \"$prog $version\", the version of scripts/gen-build-files.sh"

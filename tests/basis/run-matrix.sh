@@ -15,6 +15,9 @@
 #                          RUNEVM_WINDOWS32=); a program runs in a directory
 #                          on the Windows side (tests/windows-dir.sh), and
 #                          needs Windows, or WSL, which starts an .exe
+#   rune:opt               bin/rune, and every program translated to native
+#                          code by runeopt and run so: bin/runevm-opt
+#                          (RUNEVM_OPT=; docs/native.md)
 #   windows                rune:windows and rune:windows32
 #   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
@@ -196,6 +199,30 @@ write_mlb() {
 # in $WORK/log. With MODE=check the program is only type-checked where the
 # configuration can do that. Succeeds iff the program loaded: for MODE=run,
 # iff it printed its SUMMARY line.
+# fresh_bytecode LOADDIR SOURCE...: with RUNE_MATRIX_BYTECODE, the directory
+# of a run of the `rune` configuration (make test-native gives it that of
+# test-basis), whether the program it compiled there can be taken instead of
+# compiling it again: it was compiled from the same sources (program_key),
+# and it is newer than the compiler, the sources and every file of lib/basis. The configurations that compile with
+# bin/rune and run the bytecode elsewhere (rune:opt) compile the same file.
+fresh_bytecode() {
+  [ -n "${RUNE_MATRIX_BYTECODE:-}" ] || return 1
+  reused=$RUNE_MATRIX_BYTECODE/${1##*/}/prog.rbc
+  shift
+  [ -f "$reused" ] && [ -f "${reused%.rbc}.key" ] || return 1
+  [ "$(program_key "$@")" = "$(cat "${reused%.rbc}.key")" ] || return 1
+  [ "$(readlink -f "$cmd1")" -nt "$reused" ] && return 1
+  for src in "$@"; do [ "$src" -nt "$reused" ] && return 1; done
+  [ -z "$(find "$root/lib/basis" -newer "$reused" -print | head -1)" ]
+}
+
+# program_key SOURCE...: what a program is compiled from, the names and
+# the contents of its sources, as a line.
+program_key() {
+  printf '%s ' "$@"
+  cat "$@" | cksum
+}
+
 load() {
   loaddir=$1
   mode=$2
@@ -210,7 +237,12 @@ load() {
         "$cmd1" --typecheck-only "$@" > "$loaddir/log" 2>&1
         return
       fi
-      "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
+      if fresh_bytecode "$loaddir" "$@"; then
+        cp "$RUNE_MATRIX_BYTECODE/${loaddir##*/}/prog.rbc" "$loaddir/prog.rbc"
+      else
+        "$cmd1" "$@" -o "$loaddir/prog.rbc" > "$loaddir/log" 2>&1 || return 1
+      fi
+      program_key "$@" > "$loaddir/prog.key"
       case $host in
         windows*)
           # in the same place on the Windows side, with the program beside it.
@@ -867,6 +899,15 @@ resolve() {
         RUNE_WINDOWS_DIR=$(sh "$root/tests/windows-dir.sh") || { echo "run-matrix: no directory on the Windows side; set RUNE_WINDOWS_DIR" >&2; return 1; }
         export RUNE_WINDOWS_DIR
       fi
+      ;;
+    rune:opt)
+      # The library and the compiler of the `rune` configuration, and every
+      # program run as native code: bin/runevm-opt translates the bytecode
+      # with runeopt and runs the executable (docs/native.md, Tests).
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM_OPT:-$root/bin/runevm-opt}
+      id=rune:opt
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-opt)" >&2; return 1; }
       ;;
     rune:linux32|rune:ppc64)
       # The library and the compiler of the `rune` configuration on a VM of

@@ -6,6 +6,7 @@ struct
   datatype item =
       Op of int * int list                (* opcode, immediate operands *)
     | OpLab of int * int                  (* opcode with one label operand *)
+    | OpLabImm of int * int * int         (* opcode with a label operand, then an immediate *)
     | Lab of int
     | Pos of int * int * int              (* file, line, column of what follows *)
 
@@ -179,8 +180,16 @@ struct
           val lElse = newLabel ()
           val lEnd = newLabel ()
         in
-          gen (ctx, c, false);
-          emit (ctx, OpLab (Opcodes.JUMPIFNOT, lElse));
+          (* The test of a match against a constructor (MatchComp.testTag)
+             is one instruction, where it would be CONTAG, INT t, PRIM
+             poly_eq and JUMPIFNOT: 17% of the instructions the compiler
+             ran compiling itself (docs/plans/codegen.md, M13). *)
+          (case c of
+             Prim ("poly_eq", [ConTag a, Const (CInt i)]) =>
+               if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
+                 (gen (ctx, a, false); emit (ctx, OpLabImm (Opcodes.JUMPIFNOTTAG, lElse, IntInf.toInt i)))
+               else (gen (ctx, c, false); emit (ctx, OpLab (Opcodes.JUMPIFNOT, lElse)))
+           | _ => (gen (ctx, c, false); emit (ctx, OpLab (Opcodes.JUMPIFNOT, lElse))));
           gen (ctx, t, tail);
           emit (ctx, OpLab (Opcodes.JUMP, lEnd));
           emit (ctx, Lab lElse);
@@ -318,6 +327,7 @@ struct
     case it of
       Op (opc, args) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " " ^ String.concatWith " " (List.map Int.toString args)
     | OpLab (opc, l) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " L" ^ Int.toString l
+    | OpLabImm (opc, l, i) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " L" ^ Int.toString l ^ " " ^ Int.toString i
     | Lab l => "  L" ^ Int.toString l ^ ":"
     | Pos (f, l, c) => "  ; " ^ Int.toString f ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c
 

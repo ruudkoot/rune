@@ -3,14 +3,15 @@
 #   make hosts      install the SML systems Rune is built and compared with
 #                   (MLton, SML/NJ in 64 and 32 bits, Poly/ML) under
 #                   ~/.local/rune-hosts; needed once, before anything else
-#   make            build bin/rune (the self-hosted compiler) and bin/runevm
+#   make            build bin/rune (the self-hosted compiler), bin/runevm, and
+#                   bin/runedoc and bin/runeopt, which the compiler compiles
 #   make mlton|smlnj|smlnj32|polyml   build the compiler with one of them
 #   make host-builds  build the compiler with all four
 #   make vm         build bin/runevm
 #   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
 #                   the bin/rune-boot wrapper that runs it, and bin/rune -> it
 #   make test       run the test suite with bin/rune
-#   make install    install rune, runevm, runedoc and the basis library under PREFIX
+#   make install    install rune, runevm, runedoc, runeopt and the basis library under PREFIX
 #                   (/usr/local as root, ~/.local otherwise); as root nothing
 #                   is built, so run `make` as yourself first
 #   make uninstall  remove them again
@@ -37,6 +38,8 @@
 #                   one is read by the others
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
+#   make test-native  the suites with every program translated to native code
+#                   by runeopt (docs/native.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
 # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32 and bin/rune-polyml exist
@@ -70,19 +73,29 @@ ROOT    := $(CURDIR)
 RUNE    ?= bin/rune
 RUNEVM  ?= bin/runevm
 RUNEDOC ?= bin/runedoc
+RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
 GEN_C    := vm/opcodes.h vm/prims_table.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
-BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/config.sml vm/version.h
+SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
+BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/config.sml vm/version.h
 
 # The core VM is ISO C99; what needs the operating system is in vm/sys.h and
 # one of its implementations. `make SYS=none` builds without POSIX, and the
 # library then reports ENOSYS for what it cannot do.
+#
+# A VM is the runtime, RT_SRCS and a system layer, with the dispatch loop and
+# the command line on top (vm/interp.c, vm/main.c). The runtime is also
+# build/librune.a, which bin/runevm links, and so will a program runeopt
+# makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-VM_SRCS := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_$(SYS).c
+RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/prims.c vm/image.c
+VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
 VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
+RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
+AR      ?= ar
 
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)
@@ -104,9 +117,9 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows portability test-portability docs test-doc all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
-all: vm boot runedoc
+all: vm boot runedoc runeopt
 
 # ---------------------------------------------------------------- environment
 # `make doctor` reports on everything. Targets depend (order-only) on a stamp
@@ -116,6 +129,9 @@ doctor:
 	@CC="$(CC)" sh scripts/doctor.sh
 	@WINCC="$(WINCC)" WINCC32="$(WINCC32)" sh scripts/doctor.sh --scope windows || \
 	  echo "doctor: the Windows tools are optional: only make windows and make test-windows need them"
+	@PORTCC32="$(PORTCC32)" PPCCC="$(PPCCC)" PPCROOT="$(PPCROOT)" QEMUPPC="$(QEMUPPC)" \
+	  sh scripts/doctor.sh --scope portability || \
+	  echo "doctor: these are optional too: only make portability and make test-portability need them"
 
 build/.doctor-%: scripts/doctor.sh
 	@mkdir -p build
@@ -124,7 +140,7 @@ build/.doctor-%: scripts/doctor.sh
 # ---------------------------------------------------------------- generated
 gen: $(BUILDGEN) $(GEN_SML) $(GEN_C)
 
-$(BUILDGEN) &: sources.txt sources-doc.txt scripts/gen-build-files.sh
+$(BUILDGEN) &: sources.txt sources-doc.txt sources-opt.txt scripts/gen-build-files.sh
 	sh scripts/gen-build-files.sh "$(ROOT)"
 
 $(GEN_SML) $(GEN_C) &: vm/opcodes.def vm/prims.def scripts/gen-opcodes.sh
@@ -142,7 +158,7 @@ smlnj32: bin/rune-smlnj32
 
 polyml: bin/rune-polyml
 
-host-builds: mlton smlnj smlnj32 polyml runedoc-host-builds
+host-builds: mlton smlnj smlnj32 polyml runedoc-host-builds runeopt-host-builds
 
 bin/rune-mlton.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -210,12 +226,70 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-polyml.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
+# ---------------------------------------------------------------- runeopt
+# The native code generator (docs/native.md): the sources of
+# sources-opt.txt, built like runedoc by every host and by the compiler itself
+# (bin/runeopt, on runevm). It reads no library; its wrappers pass instead the
+# directory of the runtime a program is linked with (build/librune.a and
+# build/rune-offsets.s). The SML/NJ builds come after runedoc's, for the same
+# reason as runedoc's do.
+runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj bin/runeopt-smlnj32 bin/runeopt-polyml
+
+# The translations bin/runevm-opt keeps are by the checksum of the bytecode
+# alone: a new runeopt or runtime empties them, or the suites would run the
+# programs the old ones made.
+bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton build/librune.a
+	@mkdir -p bin
+	$(MLTON) -output $@ build/runeopt.mlb
+	rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+
+bin/runeopt-mlton: bin/runeopt-mlton.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" --runtime "$$d/../build" "$$@"\n' > $@
+	chmod +x $@
+
+bin/runeopt-smlnj: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj bin/runedoc-smlnj32
+	@mkdir -p bin
+	$(MLBUILD) build/runeopt.cm OptMain.main bin/runeopt-smlnj.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ)" > $@
+	chmod +x $@
+
+bin/runeopt-smlnj32: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runeopt-smlnj
+	@mkdir -p bin
+	$(MLBUILD32) build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj32.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-polyml-main.sml | build/.doctor-polyml
+	@mkdir -p bin
+	$(POLYC) -o $@ build/runeopt-polyml-build.sml
+
+bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" --runtime "$$d/../build" "$$@"\n' > $@
+	chmod +x $@
+
 # ---------------------------------------------------------------- VM
 vm: bin/runevm
 
-bin/runevm: $(VM_SRCS) $(VM_HDRS) | build/.doctor-vm
+build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p build/librune
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# native.o is the main of a program runeopt makes and what its code calls
+# (vm/native.c): it is in the library, but nothing of runevm refers to it,
+# so no VM links it. rune-offsets.s is the layout of the VM for the code.
+build/librune.a: $(RT_OBJS) build/librune/native.o build/rune-offsets.s
+	rm -f $@
+	$(AR) rcs $@ $(RT_OBJS) build/librune/native.o
+	rm -rf tests/out/opt-cache
+
+build/rune-offsets.s: vm/native_offsets.c $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p build/librune
+	$(CC) $(CFLAGS) -o build/librune/native-offsets vm/native_offsets.c
+	build/librune/native-offsets > $@
+
+bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -o $@ $(VM_SRCS) -lm
+	$(CC) $(CFLAGS) -o $@ vm/main.c vm/interp.c build/librune.a -lm
 
 vm-asan: bin/runevm-asan
 
@@ -248,7 +322,7 @@ WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
 WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
-WIN_SRCS    := vm/main.c vm/heap.c vm/loader.c vm/interp.c vm/prims.c vm/image.c vm/sys_win.c
+WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -389,6 +463,11 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 test-doc: $(RUNEDOC) vm
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
 
+# The native code generator's own tests (tests/opt): after the suites, whose
+# programs it checks and disassembles.
+test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a
+	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE) --vm $(RUNEVM)
+
 perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
 
@@ -407,6 +486,69 @@ test-stress: $(RUNE) vm | build/.doctor-check
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE)) RUNEVM="$(ROOT)/bin/runevm-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
+
+# ------------------------------------------------------------- native code
+# The suites with every program translated by runeopt and run as native
+# code (docs/native.md, Tests). bin/runevm-opt takes what runevm takes and
+# does so (scripts/runevm-opt.sh), keeping each translation by the checksum
+# of its bytecode, so every runner takes it as --vm. test-native runs
+# tests/lang (tests/opt-skip.txt lists what native code does not do yet, and
+# why) and the Basis Library suite (the rune:opt configuration) that way,
+# checks that every program of tests/lang counts what runevm counts, that
+# the compiler, translated, compiles itself to bin/rune.rbc, and that the
+# debug information of those programs and the compiler is their line table
+# (tests/opt/run-debug.sh), and gdb and lldb stop where it says. Programs of
+# runeopt are for Linux on x86-64: elsewhere it says so and does nothing.
+NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
+
+bin/runevm-opt: scripts/runevm-opt.sh
+	@mkdir -p bin
+	cp scripts/runevm-opt.sh $@
+	chmod +x $@
+
+ifeq ($(NATIVE_HOST),yes)
+test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt --skip tests/opt-skip.txt
+	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
+	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
+	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
+	@mkdir -p tests/out/opt-debug
+	$(RUNE) examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
+	sh tests/opt/run-debug.sh -j $(JOBS) --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.rbc \
+	  $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
+
+# The native suite with a collection before every GC_STRESS-th allocation, which
+# is what finds an address of the heap that the code keeps across a call; and
+# with a runtime built with the address and undefined behaviour sanitizers.
+# Neither is part of make check.
+test-native-stress: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-opt" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	chmod +x bin/runevm-opt-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt-stress --skip tests/opt-skip.txt
+	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE)) \
+	  RUNEVM_OPT="$(ROOT)/bin/runevm-opt-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+
+ASAN_CFLAGS := -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+
+build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
+	@mkdir -p build/asan/obj
+	for f in $(RT_SRCS) vm/sys_$(SYS).c vm/native.c; do \
+	  $(CC) $(ASAN_CFLAGS) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
+	cp build/rune-offsets.s build/asan/rune-offsets.s
+	rm -f $@
+	$(AR) rcs $@ build/asan/obj/*.o
+	rm -rf tests/out/opt-cache-asan
+
+test-native-asan: bin/runevm-opt bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
+	printf '#!/bin/sh\nexec $(CC) -fsanitize=address,undefined "$$@"\n' > build/asan/cc
+	chmod +x build/asan/cc
+	RUNEOPT_RUNTIME="$(ROOT)/build/asan" RUNEOPT_CC="$(ROOT)/build/asan/cc" RUNEOPT_CACHE="$(ROOT)/tests/out/opt-cache-asan" \
+	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt --skip tests/opt-skip.txt
+else
+test-native test-native-stress test-native-asan:
+	@echo "$@: runeopt makes programs for Linux on x86-64, and this is not one: nothing to test"
+endif
 
 hosts: | build/.doctor-matrix
 	sh scripts/fetch-hosts.sh
@@ -460,6 +602,22 @@ bin/runedoc: bin/runedoc-boot
 
 runedoc: bin/runedoc
 
+# runeopt compiled by the self-hosted compiler.
+OPT_SRCS := build/config.sml $(SOURCES_OPT) src/main/runeopt-rune-main.sml
+
+bin/runeopt.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
+	bin/rune -o $@ $(OPT_SRCS)
+
+bin/runeopt-boot: bin/runeopt.rbc Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" --runtime "$$d/../build" "$$@"\n' > $@
+	chmod +x $@
+	rm -rf tests/out/opt-cache tests/out/opt-cache-asan
+
+bin/runeopt: bin/runeopt-boot
+	ln -sf runeopt-boot $@
+
+runeopt: bin/runeopt
+
 bootstrap: bin/rune-boot
 	bin/rune-boot -o bin/rune.stage2.rbc $(BOOT_SRCS)
 	cmp bin/rune.rbc bin/rune.stage2.rbc
@@ -469,11 +627,13 @@ bootstrap: bin/rune-boot
 # keeps JOBS CPUs busy by itself. bootstrap is a single process, so it runs
 # alongside the suite.
 check:
-	@$(MAKE) --no-print-directory host-builds vm boot runedoc
+	@$(MAKE) --no-print-directory host-builds vm boot runedoc runeopt
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
+	@$(MAKE) --no-print-directory test-opt
+	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs
@@ -497,7 +657,7 @@ install:
 	@if [ "$$(id -u)" -eq 0 ]; then \
 	  echo "install: running as root, installing what is in bin/ as it stands"; \
 	else \
-	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj,$(HOST)),bin/runedoc-smlnj,bin/runedoc-$(HOST)),all); \
+	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj,$(HOST)),bin/runedoc-smlnj bin/runeopt-smlnj,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all); \
 	fi
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh scripts/install.sh $(INSTALL_FLAGS)
 

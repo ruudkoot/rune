@@ -15,57 +15,13 @@ static void usage(void) {
         "                  to stderr at exit; the same for every run of a program\n"
         "  --gc-stress N   collect before every Nth allocation (testing the collector\n"
         "                  and the primitives' handling of heap pointers)\n"
+        "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
+        "                  a collection, 1 to 100 (default 50)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
         "  --restore FILE  carry on the world Runtime.save wrote to FILE\n"
         "  --version       print the version and exit\n");
-}
-
-/* Also for a VM that an image was read into only in part (vm_resume). */
-void vm_release(VM *vm) {
-    for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
-    free(vm->prog.funcs);
-    free(vm->prog.consts);
-    free(vm->prog.code);
-    for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
-    free(vm->prog.files);
-    free(vm->prog.lines);
-    free(vm->globals);
-    free(vm->global_set);
-    free(vm->stack);
-    free(vm->frames);
-    free(vm->handlers);
-    free(vm->heap_from);
-    for (size_t i = 3; i < vm->nfiles; i++) if (vm->files[i]) fclose(vm->files[i]);
-    for (size_t i = 0; vm->file_paths && i < vm->nfiles; i++) free(vm->file_paths[i]);
-    free(vm->files);
-    free(vm->file_modes);
-    free(vm->file_paths);
-    if (vm->owns_args) {
-        for (int i = 0; vm->argv && i < vm->argc; i++) free(vm->argv[i]);
-        free(vm->argv);
-        free((char *)vm->progname);
-    }
-}
-
-static void vm_destroy(VM *vm) {
-    vm_release(vm);
-    free(vm);
-}
-
-void vm_exit(VM *vm, int status) {
-    fflush(stdout);
-    if (vm->count)
-        fprintf(stderr, "runevm: count: %llu instructions, %llu bytes, %llu objects\n",
-                (unsigned long long)vm->instructions, (unsigned long long)vm->bytes_allocated,
-                (unsigned long long)vm->objects_allocated);
-    if (vm->stats)
-        fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used);
-    fflush(stderr);
-    vm_destroy(vm);
-    exit(status);
 }
 
 /* A size in bytes or a count: a decimal number that fits a size_t, which is
@@ -80,7 +36,7 @@ static int size_arg(const char *text, size_t *out) {
 }
 
 int main(int argc, char **argv) {
-    size_t heap = 4u << 20, gc_stress = 0;
+    size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
@@ -97,6 +53,9 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &gc_stress) || gc_stress == 0) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--heap-fill") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
@@ -138,14 +97,8 @@ int main(int argc, char **argv) {
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
-    vm->files_cap = 8;
-    vm->files = calloc(vm->files_cap, sizeof(FILE *));
-    vm->file_modes = calloc(vm->files_cap, 1);
-    vm->file_paths = calloc(vm->files_cap, sizeof(char *));
-    vm->files[0] = stdin; vm->files[1] = stdout; vm->files[2] = stderr;
-    vm->file_modes[1] = vm->file_modes[2] = 1;
-    vm->nfiles = 3;
-    heap_init(vm, heap);
+    vm_init(vm, heap);
+    vm->heap_fill = (unsigned)heap_fill;
 
     char err[256];
     if (!load_program(vm, argv[i], err, sizeof err)) {

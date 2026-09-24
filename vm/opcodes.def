@@ -38,3 +38,4 @@ MKEXN         -       Pop payload, pop exception constructor, push the exception
 EXNCON        -       Pop an exception value and push its constructor.
 EXNARG        -       Pop an exception value and push its payload.
 PRIM          p       Invoke primitive p; pops its arguments and pushes the result.
+JUMPIFNOTTAG  o,t     Pop a constructor value; jump to o unless its tag is t.
