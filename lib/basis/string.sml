@@ -54,10 +54,7 @@ struct
 
   fun tokens isDelim s = List.filter (fn t => Int.> (size t, 0)) (fields isDelim s)
 
-  val compareInt = _prim "string_compare" : string * string -> int
-  fun compare (a, b) =
-    let val c = compareInt (a, b)
-    in if Int.< (c, 0) then LESS else if Int.> (c, 0) then GREATER else EQUAL end
+  val compare = _prim "string_order" : string * string -> order
 
   fun collate cmp (a, b) = List.collate cmp (explode a, explode b)
 

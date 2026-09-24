@@ -27,6 +27,7 @@ struct
   val int_le = Int.<=
   val int_gt = Int.>
   val int_ge = Int.>=
+  val int_order = Int.compare
   val int_to_string = Int.toString
   val int_from_string = Int.fromString
   val int_to_char = Char.chr
@@ -42,6 +43,7 @@ struct
   val word_le = Word.<=
   val word_gt = Word.>
   val word_ge = Word.>=
+  val word_order = Word.compare
   val word_andb = Word.andb
   val word_orb = Word.orb
   val word_xorb = Word.xorb
@@ -325,6 +327,7 @@ struct
   val char_le = Char.<=
   val char_gt = Char.>
   val char_ge = Char.>=
+  val char_order = Char.compare
   val string_size = String.size
   val string_sub = String.sub
   (* the VM's limit (String.maxSize of lib/basis), not the host's *)
@@ -337,6 +340,7 @@ struct
   val string_ge = String.>=
   fun string_compare (a, b) =
     case String.compare (a, b) of LESS => ~1 | EQUAL => 0 | GREATER => 1
+  val string_order = String.compare
   val string_from_char = String.str
   val string_implode = String.implode
   val string_explode = String.explode

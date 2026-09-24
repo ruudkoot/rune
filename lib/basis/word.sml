@@ -52,7 +52,7 @@ struct
 
   fun min (a : word, b) = if a < b then a else b
   fun max (a : word, b) = if a > b then a else b
-  fun compare (a : word, b) = if a < b then LESS else if a = b then EQUAL else GREATER
+  val compare = _prim "word_order" : word * word -> order
 
   val toString = _prim "word_to_string" : word -> string
 

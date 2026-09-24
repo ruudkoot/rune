@@ -12,8 +12,9 @@ fun show (name : string) (f : unit -> string) =
                                   | e => "exception " ^ exnName e) ^ "\n")
 
 fun b (x : bool) = Bool.toString x
+fun ord3 LESS = "LESS" | ord3 EQUAL = "EQUAL" | ord3 GREATER = "GREATER"
 
-(* ---- int: int_add int_sub int_mul int_neg int_div int_mod int_quot int_rem int_lt int_le int_gt int_ge *)
+(* ---- int: int_add int_sub int_mul int_neg int_div int_mod int_quot int_rem int_lt int_le int_gt int_ge int_order *)
 val maxInt = valOf Int.maxInt
 val minInt = valOf Int.minInt
 val ints = [0, 1, ~1, 2, ~2, 7, ~7, 3, maxInt, minInt, maxInt - 1, minInt + 1, 4611686018427387904]
@@ -27,12 +28,13 @@ fun int2 (x, y) =
     show ("mod " ^ p) (fn () => Int.toString (x mod y));
     show ("quot " ^ p) (fn () => Int.toString (Int.quot (x, y)));
     show ("rem " ^ p) (fn () => Int.toString (Int.rem (x, y)));
-    show ("cmp " ^ p) (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y) ^ b (x = y))
+    show ("cmp " ^ p) (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y) ^ b (x = y));
+    show ("compare " ^ p) (fn () => ord3 (Int.compare (x, y)))
   end
 val () = List.app (fn x => List.app (fn y => int2 (x, y)) ints) ints
 val () = List.app (fn x => show ("~ " ^ Int.toString x) (fn () => Int.toString (~ x))) ints
 
-(* ---- word: word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_andb word_orb word_xorb word_notb word_lsl word_lsr *)
+(* ---- word: word_add word_sub word_mul word_div word_mod word_lt word_le word_gt word_ge word_order word_andb word_orb word_xorb word_notb word_lsl word_lsr *)
 val words = [0w0, 0w1, 0w2, 0w3, 0w7, 0w63, 0w64, 0w65, Word.fromInt ~1, Word.fromInt minInt, 0wx8000000000000001]
 fun word2 (x, y) =
   let val p = Word.toString x ^ " " ^ Word.toString y
@@ -45,7 +47,8 @@ fun word2 (x, y) =
     show ("wbits " ^ p) (fn () => Word.toString (Word.andb (x, y)) ^ " " ^ Word.toString (Word.orb (x, y))
                                   ^ " " ^ Word.toString (Word.xorb (x, y)));
     show ("wshift " ^ p) (fn () => Word.toString (Word.<< (x, y)) ^ " " ^ Word.toString (Word.>> (x, y)));
-    show ("wcmp " ^ p) (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y) ^ b (x = y))
+    show ("wcmp " ^ p) (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y) ^ b (x = y));
+    show ("wcompare " ^ p) (fn () => ord3 (Word.compare (x, y)))
   end
 val () = List.app (fn x => List.app (fn y => word2 (x, y)) words) words
 val () = List.app (fn x => show ("wnot " ^ Word.toString x) (fn () => Word.toString (Word.notb x))) words
@@ -73,12 +76,12 @@ fun real2 (x, y) =
 val () = List.app (fn x => List.app (fn y => real2 (x, y)) reals) reals
 val () = List.app (fn x => show ("r~ " ^ r x) (fn () => r (~ x) ^ " " ^ b (Real.signBit (~ x)))) reals
 
-(* ---- char: char_ord char_lt char_le char_gt char_ge *)
+(* ---- char: char_ord char_lt char_le char_gt char_ge char_order *)
 val chars = [#"\000", #"\001", #"a", #"b", #"\127", #"\128", #"\255"]
 val () =
   List.app (fn x => List.app (fn y =>
     show ("ccmp " ^ Int.toString (ord x) ^ " " ^ Int.toString (ord y))
-         (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y))) chars) chars
+         (fn () => b (x < y) ^ b (x <= y) ^ b (x > y) ^ b (x >= y) ^ " " ^ ord3 (Char.compare (x, y)))) chars) chars
 
 (* ---- poly: poly_eq, on immediates of one tag and of two, and on pointers *)
 datatype t = A | B of int | C

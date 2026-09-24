@@ -1,4 +1,4 @@
 runedoc --dump-ir tests/basis/spec-sigs/*.sml
-instructions 110497931
-bytes 193874656
-objects 4409575
+instructions 106221931
+bytes 185363745
+objects 4196717

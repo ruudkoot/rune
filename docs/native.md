@@ -37,7 +37,7 @@ may sit in registers between the points where it must be exact:
 
 * the count is added once for each straight run of instructions (see
   *Counting*);
-* 56 primitives are done inline, with the C primitive as the slow path (see
+* 59 primitives are done inline, with the C primitive as the slow path (see
   *Primitives done inline*);
 * the value a LOCAL pushes may stay in its local, for the instruction after
   it to read there (see *A pushed local read in place*).
@@ -140,7 +140,7 @@ over their argument, are not in the list.
 
 ## Primitives done inline
 
-`fastPrim` in `x64.sml` (`runeopt --inlined`) does the common case of 56
+`fastPrim` in `x64.sml` (`runeopt --inlined`) does the common case of 59
 primitives:
 
 * the arithmetic and comparisons of ints, words, reals and chars, and the

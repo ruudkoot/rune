@@ -537,6 +537,14 @@ static int p_string_le(VM *vm) { STR2("string_le"); return ret(vm, 2, mk_bool(st
 static int p_string_gt(VM *vm) { STR2("string_gt"); return ret(vm, 2, mk_bool(str_cmp(a, b) > 0)); }
 static int p_string_ge(VM *vm) { STR2("string_ge"); return ret(vm, 2, mk_bool(str_cmp(a, b) >= 0)); }
 static int p_string_compare(VM *vm) { STR2("string_compare"); return ret(vm, 2, mk_int(str_cmp(a, b))); }
+
+/* The comparisons that answer an order: LESS, EQUAL and GREATER are the
+   nullary constructors 0, 1 and 2 of lib/basis/initial.sml. */
+static Value mk_order(int c) { return mk_con0(c < 0 ? 0 : c == 0 ? 1 : 2); }
+static int p_int_order(VM *vm) { INT2("int_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_word_order(VM *vm) { WORD2("word_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_char_order(VM *vm) { CHAR2("char_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_string_order(VM *vm) { STR2("string_order"); return ret(vm, 2, mk_order(str_cmp(a, b))); }
 static int p_string_from_char(VM *vm) {
     check_tag(vm, ARG(0), T_CHAR, "string_from_char");
     char c = (char)ARG(0).u.i;

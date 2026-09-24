@@ -92,6 +92,15 @@ struct
           (tags (t, [x, y]) slow;
            line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
            bool (setcc, x)))
+      (* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2: the sum
+         of x >= y and x > y *)
+      fun order (t, ge, gt) =
+        SOME (fn slow =>
+          (tags (t, [x, y]) slow;
+           line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
+           line (ge ^ " %al"); line (gt ^ " %cl"); line "movzbl %al, %eax"; line "movzbl %cl, %ecx";
+           line "add %rcx, %rax";
+           line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
       (* ucomisd sets `above` only for an ordered pair, so a NaN compares false *)
       fun realCompare (first, second, setcc) =
         SOME (fn slow =>
@@ -164,6 +173,7 @@ struct
       | "int_le" => compare ("T_INT", "setle")
       | "int_gt" => compare ("T_INT", "setg")
       | "int_ge" => compare ("T_INT", "setge")
+      | "int_order" => order ("T_INT", "setge", "setg")
       | "word_add" => arith ("T_WORD", "add", false)
       | "word_sub" => arith ("T_WORD", "sub", false)
       | "word_mul" => arith ("T_WORD", "imul", false)
@@ -179,10 +189,12 @@ struct
       | "word_le" => compare ("T_WORD", "setbe")
       | "word_gt" => compare ("T_WORD", "seta")
       | "word_ge" => compare ("T_WORD", "setae")
+      | "word_order" => order ("T_WORD", "setae", "seta")
       | "char_lt" => compare ("T_CHAR", "setl")
       | "char_le" => compare ("T_CHAR", "setle")
       | "char_gt" => compare ("T_CHAR", "setg")
       | "char_ge" => compare ("T_CHAR", "setge")
+      | "char_order" => order ("T_CHAR", "setge", "setg")
       | "char_ord" => SOME (fn slow => (tags ("T_CHAR", [y]) slow; line ("movb $T_INT, " ^ slot y)))
       | "real_add" => real "addsd"
       | "real_sub" => real "subsd"

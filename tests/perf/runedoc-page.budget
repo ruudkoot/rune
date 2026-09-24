@@ -1,4 +1,4 @@
 runedoc --page tests/basis/spec-sigs/*.sml
-instructions 142799660
-bytes 258022256
-objects 5984685
+instructions 135559582
+bytes 244947269
+objects 5657725

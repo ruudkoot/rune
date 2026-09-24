@@ -175,7 +175,7 @@ struct
   val op > = _prim "char_gt" : char * char -> bool
   val op >= = _prim "char_ge" : char * char -> bool
 
-  fun compare (a : char, b) = if a < b then LESS else if a = b then EQUAL else GREATER
+  val compare = _prim "char_order" : char * char -> order
 
   fun succ c = if c = maxChar then raise Chr else chr (Int.+ (ord c, 1))
   fun pred c = if c = minChar then raise Chr else chr (Int.- (ord c, 1))
