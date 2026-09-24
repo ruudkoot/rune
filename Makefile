@@ -235,9 +235,13 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 # reason as runedoc's do.
 runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj bin/runeopt-smlnj32 bin/runeopt-polyml
 
+# The translations bin/runevm-opt keeps are by the checksum of the bytecode
+# alone: a new runeopt or runtime empties them, or the suites would run the
+# programs the old ones made.
 bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton build/librune.a
 	@mkdir -p bin
 	$(MLTON) -output $@ build/runeopt.mlb
+	rm -rf tests/out/opt-cache tests/out/opt-cache-asan
 
 bin/runeopt-mlton: bin/runeopt-mlton.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" --runtime "$$d/../build" "$$@"\n' > $@
@@ -276,6 +280,7 @@ build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
 build/librune.a: $(RT_OBJS) build/librune/native.o build/rune-offsets.s
 	rm -f $@
 	$(AR) rcs $@ $(RT_OBJS) build/librune/native.o
+	rm -rf tests/out/opt-cache
 
 build/rune-offsets.s: vm/native_offsets.c $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p build/librune
@@ -533,6 +538,7 @@ build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.
 	cp build/rune-offsets.s build/asan/rune-offsets.s
 	rm -f $@
 	$(AR) rcs $@ build/asan/obj/*.o
+	rm -rf tests/out/opt-cache-asan
 
 test-native-asan: bin/runevm-opt bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
 	printf '#!/bin/sh\nexec $(CC) -fsanitize=address,undefined "$$@"\n' > build/asan/cc
@@ -605,6 +611,7 @@ bin/runeopt.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
 bin/runeopt-boot: bin/runeopt.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
+	rm -rf tests/out/opt-cache tests/out/opt-cache-asan
 
 bin/runeopt: bin/runeopt-boot
 	ln -sf runeopt-boot $@

@@ -65,7 +65,7 @@ The owner's decisions on the roadmap (2026-09-23):
 | Milestone | State |
 |---|---|
 | M0, this roadmap | done (`fe759b8`): every claim of *Where we are* measured on `e099de5`, twelve decisions, nine milestones |
-| The owner's decisions | taken on 2026-09-23: D3 = B, D8 as proposed (to revisit), D11 = option 1 with `--from-image` and `OS.SysErr` from `Runtime.restore` for another program's image, the name `runeopt` |
+| The owner's decisions | taken on 2026-09-23: D3 = B, D8 as proposed (to revisit), D11 = option 1 with `--from-image` and `OS.SysErr` from `Runtime.restore` for another program's image, the name `runeopt`; on 2026-09-24: D13 = B (a fused opcode in the compiler), D14 = C (`--heap-fill`, half by default), and M10 to M15 to be done, each with an analysis of what it gained and what it cost in code |
 | M1, the runtime as a library | done: `vm/runtime.c` has what a VM does besides dispatching (frames, handlers, raising, the trace of a failure, equality, `vm_init`, `vm_start`, `vm_exit`, `vm_release`), taken out of `interp.c` and `main.c`; `load_program_mem` loads an `.rbc` from memory; `build/librune.a` is the runtime for this machine and `bin/runevm` links it. The other VMs compile the same list, `RT_SRCS`, in their one `cc` call, which removes the duplicated lists of sources. Nothing a program sees changed: `make check`, `make test-windows` and `make test-portability` pass, and `--count` agrees with the VM before |
 | M2, the `.rbc` reader, the validator and the tool | done: `runeopt --check`, `--disasm` and `--facts` (`Rbc`, `RbcCheck`, `RbcDisasm`, `OptMain` in `src/opt`), built by all five, whose bytecode `check-cross` compares and whose output `scripts/check-opt-cross.sh` compares. `tests/opt`: 16 files refused (8 by the loader's checks, with its messages, 8 by D0's) and `--check` and `--disasm` over every program the suites compiled (368). The check finds exactly the facts of *What the corpus does* (437,885 functions, 12,639,613 instructions, 235,894 unreachable). Two things `--disasm` parity found: C's `%.*s` ends a string constant at its first NUL, and awk loses the sign of `-0`. What the cross-check found: SML/NJ 110.99.9 in 32 bits compiles `c - x`, where the literal `c` is its `Int.maxInt`, into code that overflows whatever `x` is; the reader takes that bound from a string. The drift listed above is fixed |
 | M3, every instruction translated | done: the templates of all 34 opcodes (`src/opt/x64.sml`), the glue (`vm/native.c`), the layout the code names (`build/rune-offsets.s`, from `vm/native_offsets.c`), `runeopt prog.rbc -o prog` with `-S` and `--options`, and `scripts/opt.sh`. `tests/opt/every-opcode.rasm`, assembled by `tests/opt/rbcasm.awk`, runs every opcode, `HALT` and `JUMPIF` among them; it, `hello`, fib, nqueens and tak print what they print under `runevm`, with the same counts, and so do all the programs of `tests/perf`. The compiler as native code compiles itself to `bin/rune.rbc`, byte for byte: 969 million instructions in 21 s, on a machine with a load of 20. Measured on the compiler: 20.5 MB of assembly, translated in 1.4 s by the MLton build of `runeopt` (the self-hosted one translates `runeopt.rbc`, 357 KB, in 6 s), assembled and linked in 5.2 s, 5.6 MB of machine code, about 51 bytes per instruction where D5 estimated 20 to 40. A native program's `Runtime.restore` raises `OS.SysErr` (`ENOSYS`) |
@@ -75,7 +75,7 @@ The owner's decisions on the roadmap (2026-09-23):
 | M7, performance | done: `make perf` with `rune:opt` beside `rune` and the hosts, in [basis-compat.md](../basis-compat.md): natively the programs of `tests/perf` run 1.8 to 4.0 times faster than on `runevm` (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5 against 10.0), still 10 to 40 times slower than the hosts; the compiler compiles itself in 5.5 s against 10.2. The inlining of M5 gains 3% (`tak`) to 33% (`word_bits`), measured against the `runeopt` of M4. A profile of the native bootstrap (`perf record`, the symbols of D2): 36% in the translated code, 34% in calls and returns through the glue (`enter` 13%, `native_ret` 6.6%, `vm_pop` 6.1%, `native_call` 4.1%, `vm_push_frame` 2.5%), 12% in the collector, 6% allocating, 2% in the primitives still called. What pays first, and in what order, is M10 to M15 below, from a profile taken after M9: calls and returns done by the templates, which D0 allows (the glue was M3's shortcut), then allocation inline; D3's option A waits for those, since a native `ret` gains nothing while every return goes through C. M7 also found that M1 had made `runevm` slower, 13 to 16% more machine instructions (`perf stat`), because `vm_pop`, `vm_top` and the push of a frame had left the file of the loop; they are inline in `vm.h` again, and `vm_fatal` and `vm_exit` are declared not to return |
 | M8, the round-up | done but for retiring this roadmap, which is the owner's to decide: the list *To revisit* has to find a home first. The rest: `man/runeopt.1` and completions for bash and zsh, which `check-docs` holds to the version; `make install` installs `runeopt` (the self-hosted build, or a host's with `HOST`) with its runtime under `lib/rune/runtime`, which the installed wrapper passes (tried: installed into a prefix, translating and running `hello` outside the tree, uninstalled); a section on native programs in [runtime.md](../runtime.md); the rules of *Constraints* in `AGENTS.md` (written as the milestones needed them) |
 | M9, save and restore (optional) | done, D11's option 1 with option 6: a native program carries on an image of its own program -- `RUNEVM_OPTIONS="--restore FILE"`, `Runtime.restore`, the child of `--emulate-fork` -- whoever wrote it, and `runeopt --from-image` makes the program of an image (`RbcImage`; a real constant is written as C's hexadecimal notation from its bits, with integers alone). The code has a table of the places an image stops at (after a CALL, and after `rt_save` and `posix_fork`); a restore checks that the image's program is the one the executable carries (code, functions, globals, constants, the constants read under the rounding mode a program starts with, since `strtod` follows the mode the image restores) and gives every frame its native return. An image of another program is refused, `Runtime.restore` raising `OS.SysErr` (`ENOEXEC`), as the owner decided. `tests/opt-skip.txt` is empty: `rt.fork_image` and the `.restore` tests run natively, images cross between `runevm` and native code both ways and with the 32-bit and PowerPC VMs, and the programs of `examples/runtime` give `runevm`'s output, but `become`, which becomes an image of another program. **M9 found a bug of the runtime**: an image lost every reference to the first object of the heap, whose distance 0 was read back as no object, so `runevm --restore` crashed on a program that named the first string constant afterwards; the reader keeps the distance plus one now, and `tests/lang/rt.save_first` pins it |
-| M10, calls and returns in the templates | not started (added 2026-09-24, as M11 to M15; est. 15-20% of the bootstrap) |
+| M10, calls and returns in the templates | done: CALL and TAILCALL check the closure and its function index, push the frame (`func`, `ret_pc`, `base`, `closure`, `native_ret`) or, for TAILCALL, keep it, move the argument to the callee's local 0 and jump to the callee's entry for calls, a third column of `rune_functions`; that entry checks the room the frame needs against `stack_cap` and sets the locals but the first to unit, a store each, where `enter` had a loop. RET puts the result in local 0, pops the frame and jumps through `native_ret`. The glue (`native_call`, `native_tailcall`, `native_ret`) is the slow path: a value that is no closure, an index out of range, a full array of frames, the top level's RET. Found on the way: `bin/runevm-opt` kept its translations by the checksum of the bytecode alone, so a suite run after a change of `runeopt` or the runtime could run the programs the old ones made; `make` now empties the cache whenever it builds either again. `make check`, `make test-native-stress` and `make test-native-asan` pass. The gain is measured with the others' after M15 |
 | M11, allocation in the templates | not started (est. 6-8%) |
 | M12, a cheaper collector | not started (est. 3-6%, up to 12% by D14) |
 | M13, the tag test of a match, fused | not started; waits for D13 (est. 4-6%) |
@@ -876,7 +876,7 @@ edge values and prints the results, run under `runevm` and natively, with
 the outputs compared. A check fails for an entry without such a test.
 Inlining a primitive that allocates is out of scope.
 
-### D13. Fusing an instruction sequence (open: the owner picks)
+### D13. Fusing an instruction sequence (decided: B)
 
 D0 has every instruction become a template of its own, with nothing merged.
 One sequence stands out in the profile of M10 to M15 below. The compiler
@@ -895,7 +895,9 @@ falls between them.
   the bytecode, and Phase B waits for the owner's go-ahead.
 * **C, neither.**
 
-### D14. How full the heap may be after a collection (open: the owner picks)
+The owner decided on 2026-09-24: **B**. M13 is the new opcode.
+
+### D14. How full the heap may be after a collection (decided: C)
 
 Today the collector grows the heap until it is at most half full after a
 collection (`vm/heap.c`). A quarter would roughly halve the number of
@@ -907,6 +909,8 @@ choice is the runtime's, so `runevm` would change with it.
 * **A, half, as now.**
 * **B, a quarter.**
 * **C, an option**, with half as the default.
+
+The owner decided on 2026-09-24: **C**. M12 is `--heap-fill P`.
 
 ## Constraints for all items
 
@@ -1150,19 +1154,28 @@ test-windows` and `make test-portability` are part of it.
   pair grows only when the heap does.
 * Copy a small object field by field, not by `memcpy` (the 4.5% of
   `memmove`).
-* How full the heap may be after a collection, as D14 decides.
+* How full the heap may be after a collection, as D14 decides: C, an
+  option of `runevm` and of native programs, `--heap-fill P`, which the
+  image carries as it carries `--gc-stress` (so the format of images
+  becomes version 3).
 * Not a collector of another kind: a generational collector is a roadmap of
   its own.
 
-### M13. The tag test of a match, fused -- S to M (needs D13 = A)
+### M13. The tag test of a match, fused -- S to M (D13 = B)
 
-Estimated gain: 4 to 6%. The four instructions of the test, in one run
-with no label between them, become one template: read the tag of a
-nullary constructor, or the `contag` of a constructor with an argument,
-compare it with `t`, and branch. It still adds four to the count, and
-still stops on a value that is no constructor as CONTAG does. With D13 = B
-the compiler emits the fused opcode instead, and this milestone translates
-that opcode.
+Estimated gain: 4 to 6%. The compiler's test of a constructor,
+`CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o`, becomes one instruction,
+`JUMPIFNOTTAG o, t`: pop a constructor value, nullary or not, and jump
+unless its tag is `t`; it stops on a value that is no constructor as CONTAG
+does. `Codegen` emits it for an `If` whose test is exactly that
+comparison, which is what `MatchComp.testTag` builds. It is an opcode like
+any other: the interpreter's case, the template, the stack effect of
+`RbcCheck`, the loader's and `Rbc`'s check of its target, `bytecode.md`,
+and `every-opcode.rasm`. Where runeopt's M13 of D13 = A would have kept
+the count, B changes it: one instruction where there were four, so the
+counts of `--count` and the budgets of `make perf-check` go down, and
+`runevm` gains as much as native code. Appended to `opcodes.def`, the
+opcode leaves the others their numbers, so the format keeps its version.
 
 ### M14. D3's option A: native call and return -- M to L (measured first)
 

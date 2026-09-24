@@ -11,7 +11,8 @@
 # and carries the image on with it. What only runevm does -- --disasm,
 # --trace, --resume -- goes to runevm.
 # A translation is kept, by the checksum of the bytecode, in RUNEOPT_CACHE
-# (tests/out/opt-cache); RUNEOPT chooses the build of runeopt (by default
+# (tests/out/opt-cache), which the Makefile empties whenever it builds runeopt
+# or the runtime again; RUNEOPT chooses the build of runeopt (by default
 # the MLton one where it is built, which is the fastest, and every build
 # writes the same program: scripts/check-opt-cross.sh), and RUNEOPT_RUNTIME
 # and RUNEOPT_CC what it is given as --runtime and --cc (make test-native-asan).

@@ -267,6 +267,7 @@ struct
       val instrs = #instrs facts
       val n = Vector.length instrs
       val funcs = #funcs p
+      val nfuncs = Vector.length funcs
       val codeLen = String.size (#code p)
       fun ins i = Vector.sub (instrs, i)
       fun line s = put ("\t" ^ s ^ "\n")
@@ -451,12 +452,81 @@ struct
                     line reloadStack)
                  else if opc = Opcodes.SETENV then
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
-                 else if opc = Opcodes.CALL then
-                   (flushSp (); setPc (); callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]); line "jmp *%rax")
-                 else if opc = Opcodes.TAILCALL then
-                   (flushSp (); setPc (); callC ("native_tailcall", []); line "jmp *%rax")
+                 else if opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL then
+                   (* M10: the closure checked, its function index in range, the
+                      frame pushed (or, for TAILCALL, kept), the argument moved
+                      to the callee's local 0, where the closure was, and a jump
+                      to the callee's fast entry; anything else, and a full
+                      array of frames, is the glue's (native_call and
+                      native_tailcall), as before M10. *)
+                   let
+                     val slow = lab pc ^ "_slow"
+                     val tail = opc = Opcodes.TAILCALL
+                     val newBase = num (16 * (nlocals + h - 2))
+                   in
+                     line ("cmpb $T_PTR, " ^ slot (h - 2));
+                     line ("jne " ^ slow);
+                     line ("mov " ^ payload (h - 2) ^ ", %rax");
+                     line "cmpb $K_CLOSURE, OBJ_KIND(%rax)";
+                     line ("jne " ^ slow);
+                     line "mov OBJ_FIELDS+8(%rax), %rcx";
+                     line ("cmp $" ^ num nfuncs ^ ", %rcx");
+                     line ("jae " ^ slow);
+                     if tail then
+                       (line "mov VM_FRAMES(%r12), %rdx";
+                        line "mov VM_FP(%r12), %rsi";
+                        line "imul $FRAME_SIZE, %rsi, %rsi";
+                        line "add %rsi, %rdx";
+                        line "mov %ecx, FRAME_FUNC(%rdx)";
+                        line "mov %rax, FRAME_CLOSURE(%rdx)";
+                        copy (slot (h - 1), "(%r13,%rbp)"))
+                     else
+                       (line "mov VM_FP(%r12), %rdx";
+                        line "add $1, %rdx";
+                        line "cmp VM_FRAMES_CAP(%r12), %rdx";
+                        line ("jae " ^ slow);
+                        line "mov %rdx, VM_FP(%r12)";
+                        line "imul $FRAME_SIZE, %rdx, %rdx";
+                        line "add VM_FRAMES(%r12), %rdx";
+                        line "mov %ecx, FRAME_FUNC(%rdx)";
+                        line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
+                        line ("lea " ^ newBase ^ "(%rbp), %rsi");
+                        line "shr $4, %rsi";
+                        line "mov %rsi, FRAME_BASE(%rdx)";
+                        line "mov %rax, FRAME_CLOSURE(%rdx)";
+                        line ("lea " ^ lab next ^ "(%rip), %rsi");
+                        line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
+                        copy (slot (h - 1), slot (h - 2));
+                        line ("lea " ^ newBase ^ "(%rbp), %rbp"));
+                     line "lea rune_functions(%rip), %rdx";
+                     line "lea (%rcx,%rcx,2), %rcx";
+                     line "movslq 4(%rdx,%rcx,4), %rsi";
+                     line "add %rdx, %rsi";
+                     line "jmp *%rsi";
+                     slows := (fn () =>
+                                 (put (slow ^ ":\n"); flushSp (); setPc ();
+                                  if tail then callC ("native_tailcall", [])
+                                  else callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]);
+                                  line "jmp *%rax")) :: !slows
+                   end
                  else if opc = Opcodes.RET then
-                   (flushCount (); flushSp (); setPc (); callC ("native_ret", []); line "jmp *%rax")
+                   (* M10: the result in local 0, where the caller wants it,
+                      the frame popped, and a jump to where it returns; the
+                      top level's RET ends the run in the glue. *)
+                   let val slow = lab pc ^ "_slow"
+                   in
+                     line "mov VM_FP(%r12), %rdx";
+                     line "test %rdx, %rdx";
+                     line ("jz " ^ slow);
+                     copy (slot (h - 1), "(%r13,%rbp)");
+                     line "imul $FRAME_SIZE, %rdx, %rdx";
+                     line "add VM_FRAMES(%r12), %rdx";
+                     line "decq VM_FP(%r12)";
+                     line "jmp *FRAME_NATIVE_RET(%rdx)";
+                     slows := (fn () =>
+                                 (put (slow ^ ":\n"); flushCount (); flushSp (); setPc ();
+                                  callC ("native_ret", []); line "jmp *%rax")) :: !slows
+                   end
                  else if opc = Opcodes.JUMP then line ("jmp " ^ lab a)
                  else if opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF then
                    (line ("cmpb $T_CON0, " ^ slot (h - 1));
@@ -525,6 +595,22 @@ struct
              address a debugger or addr2line is given for it *)
           (case Array.sub (lineStarts, offset) of ~1 => () | k => loc k);
           reloadFrame ();
+          (* M10: the entry a CALL of the code jumps to, the frame already
+             pushed and rbp its base: the room the frame needs, and its locals
+             but the first set to unit, n stores where the glue had a loop *)
+          put (".Le" ^ Int.toString f ^ ":\n");
+          line ("lea " ^ num (16 * (nlocals + Vector.sub (#maxHeight facts, f))) ^ "(%rbp), %rax");
+          line "shr $4, %rax";
+          line "cmp VM_STACK_CAP(%r12), %rax";
+          line ("ja .Lg" ^ Int.toString f);
+          put (".Lh" ^ Int.toString f ^ ":\n");
+          if nlocals > 1 then line "pxor %xmm1, %xmm1" else ();
+          let fun units k = if k >= nlocals then () else (line ("movdqu %xmm1, " ^ localSlot k); units (k + 1))
+          in units 1 end;
+          slows := (fn () =>
+                      (put (".Lg" ^ Int.toString f ^ ":\n");
+                       line "mov %rax, %rsi"; line "mov %r12, %rdi"; line "call vm_grow_stack";
+                       line reloadStack; line ("jmp .Lh" ^ Int.toString f))) :: !slows;
           loop first;
           List.app
             (fn (l, next, what, arg) =>
@@ -582,7 +668,8 @@ struct
       put "rune_functions:\n";
       Vector.appi
         (fn (f, {name, ...} : Rbc.func) =>
-           line (".long " ^ symbol (name, f) ^ " - rune_functions, " ^ Int.toString (Vector.sub (#maxHeight facts, f))))
+           line (".long " ^ symbol (name, f) ^ " - rune_functions, .Le" ^ Int.toString f ^ " - rune_functions, "
+                 ^ Int.toString (Vector.sub (#maxHeight facts, f))))
         funcs;
       line ".globl rune_handlers";
       put "rune_handlers:\n";

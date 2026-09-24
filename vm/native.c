@@ -21,7 +21,8 @@
 
 extern const unsigned char rune_rbc[];
 extern const uint32_t rune_rbc_size;
-extern const int32_t rune_functions[];     /* 2 per function: entry - rune_functions, highest stack */
+extern const int32_t rune_functions[];     /* 3 per function: entry - rune_functions, the entry of a call
+                                              of the code (M10) - rune_functions, highest stack */
 extern const int32_t rune_handlers[];      /* 2 per handler, by pc: pc, code - rune_handlers */
 extern const uint32_t rune_nhandlers;
 extern const char rune_options[];
@@ -30,7 +31,7 @@ extern const uint32_t rune_nresume;
 void rune_enter(VM *vm, const void *code); /* in the generated code: never returns */
 
 static const void *entry(uint32_t f) {
-    return (const char *)rune_functions + rune_functions[2 * f];
+    return (const char *)rune_functions + rune_functions[3 * f];
 }
 
 /* A frame of function f begins at vm->sp with its argument: its locals, the
@@ -39,7 +40,7 @@ static const void *entry(uint32_t f) {
    the frame is pushed. */
 static const void *enter(VM *vm, uint32_t f, Value arg) {
     Function *fn = &vm->prog.funcs[f];
-    size_t need = vm->sp + fn->nlocals + (size_t)rune_functions[2 * f + 1];
+    size_t need = vm->sp + fn->nlocals + (size_t)rune_functions[3 * f + 2];
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
     Value *slot = &vm->stack[vm->sp];
     slot[0] = arg;
@@ -183,7 +184,7 @@ static const void *prepare_resume(VM *vm, char *err, size_t errlen) {
             fr->native_ret = lookup(rune_resume, rune_nresume, fr->ret_pc);
             if (!fr->native_ret) { snprintf(err, errlen, "a frame of the image returns where no call does"); return NULL; }
         }
-        size_t top = fr->base + vm->prog.funcs[fr->func].nlocals + (size_t)rune_functions[2 * fr->func + 1];
+        size_t top = fr->base + vm->prog.funcs[fr->func].nlocals + (size_t)rune_functions[3 * fr->func + 2];
         if (top > need) need = top;
     }
     for (size_t j = 0; j < vm->hp; j++)
@@ -382,7 +383,7 @@ int main(int argc, char **argv) {
         return 2;
     }
     vm_start(vm);
-    size_t need = vm->sp + (size_t)rune_functions[1];
+    size_t need = vm->sp + (size_t)rune_functions[2];
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
     rune_enter(vm, entry(0));
     return 0;
