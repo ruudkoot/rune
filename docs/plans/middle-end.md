@@ -20,7 +20,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | The instruction set as one description | |
 | M2 | Pass infrastructure | |
-| M3 | Mid, launched dark | |
+| M3 | Types, and Mid launched dark | |
 | M4 | The new back end: Low and the stack target | |
 | M5 | The register target and the first loop of `vm/new` | |
 | M6 | `vm/portable`: frames and dispatch | |
@@ -31,8 +31,8 @@ What it rests on:
 | M11 | Representation | |
 | M12 | Whole-program analyses | |
 
-The order is the one recommended here. D5 decides where M5 goes, and the
-owner decides what starts first.
+The order follows the owner's decisions of 2026-09-24 (*Decisions*): M5
+comes right after M4 (D5). The owner decides what starts first.
 
 ## The request
 
@@ -55,6 +55,8 @@ The owner's decisions while it was planned (2026-09-24):
 * **Rune will support both a stack and a register bytecode:**
   * the stack bytecode is `vm/portable`'s, and `runeopt` translates it;
   * the register bytecode is `vm/new`'s only.
+* **After reading this roadmap**, the owner decided D1, D2, D3, D5, D6,
+  D7, D9, D13 and D14. D8, D10, D11 and D12 are open. See *Decisions*.
 
 | The brief asks | Answered in |
 |---|---|
@@ -358,10 +360,10 @@ more ambitious meets these:
 ```
           front ends (SML today; others later)
                       │
-     AST ──Translate, MatchComp──► Lambda
+     AST ──Translate, MatchComp──► Lambda   typed
                       │
                       ▼
-                     Mid   ANF with join points, n-ary functions,
+                     Mid   typed ANF with join points, n-ary functions,
                       │    a top level of definitions, Handle regions
                       │    ◄── simplifier, inliner, contification,
                       │        known calls, decision trees, representation
@@ -384,10 +386,10 @@ more ambitious meets these:
 
 | IR | Built by | Shape | Why it is there |
 |---|---|---|---|
-| `Lambda` | Translate, MatchComp | as today; later with representation information | the front ends' target, so a new front end writes only this |
-| Mid | from `Lambda` | ANF, join points, n-ary functions, a list of top-level definitions | where the functional optimisations happen |
-| Mid, closed | closure conversion | Mid in which no function has a free variable | the boundary between functions and code |
-| Low | from closed Mid | SSA with block parameters, per function | liveness, stack maps, both targets |
+| `Lambda` | Translate, MatchComp | as today, with the elaborator's types on it (M3) | the front ends' target, so a new front end writes only this |
+| Mid | from `Lambda` | explicitly typed ANF, join points, n-ary functions, a list of top-level definitions | where the functional optimisations happen |
+| Mid, closed | closure conversion | Mid in which no function has a free variable, typed by representations | the boundary between functions and code |
+| Low | from closed Mid | SSA with block parameters, per function, typed by representations | liveness, stack maps, both targets |
 
 **Mid** (D1):
 * **Atoms.** Every argument of a call, a primitive or a constructor is a
@@ -413,7 +415,8 @@ more ambitious meets these:
   function becomes a jump in the simplifier.
 * **Positions** stay on the nodes that can fail or call. Inlined code keeps
   the position of its source and records where it was inlined (D7).
-* **A lint** checks every invariant after every pass (M2).
+* **A lint** checks every invariant after every pass (M2), types included
+  (M3).
 
 **Low** (D2):
 * **Functions of blocks.** A function is blocks with parameters (SSA as in
@@ -426,11 +429,42 @@ more ambitious meets these:
   for the stack bytecode, registers for the register bytecode, and stack
   maps at every place a collection can happen.
 
-**Types** (D3): no type system in Mid or Low. A variable carries its
-*representation*: a value, a pointer, an immediate, and later an unboxed
-int or real. A side table keeps each binder's type scheme, recorded by the
-elaborator, for the passes that need it (monomorphisation,
-representation).
+**Types** (D3, decided: typed IRs). The IRs are typed, and after every pass a
+lint checks the types of what it made, as GHC's Core Lint does. The owner's
+reason: this is essential for catching the optimiser's bugs.
+* **`Lambda`** carries the elaborator's types. The elaborator records:
+  * the type scheme of every binder;
+  * the instance at every use of a polymorphic variable;
+  * every datatype and exception.
+
+  Translate and MatchComp carry them over. Today the elaborator computes
+  these and throws them away (`VBuiltin` alone keeps one).
+* **Mid** is explicitly typed in the manner of System F, as FLINT and GHC
+  Core are:
+  * type abstraction and application are written out, so the lint checks
+    any pass's output without inferring anything;
+  * a pass that substitutes values substitutes types too, which is what
+    keeps inlined code well typed.
+* **After closure conversion** the types become representations: a value,
+  a pointer, an immediate, later an unboxed int or real. Closed Mid and Low
+  are checked against those. Typing closures themselves would need
+  existential types, and is left out.
+* **The snags** to settle in M3:
+  * **Mutable types.** The elaborator's types are mutable unification
+    variables, final only after `Elaborate.finish`, so they are copied out
+    resolved.
+  * **Unresolved variables.** A type variable that is never generalised or
+    resolved gets a default.
+  * **Ascription.** It can give a value a less polymorphic type with no
+    coercion (`SigMatch.mergeInfo` keeps the stamp), so Mid needs an
+    explicit instance or coercion there.
+  * **What is already done:** functors are elaborated anew at every
+    application, so modules are monomorphic already and only the core
+    language's polymorphism is left; overloading is resolved per top-level
+    declaration.
+* **Primitives:** each is typed where the Basis Library binds it
+  (`_prim "name" : ty`), and again in the DSL (M1), where `prims.def` has
+  it only as documentation today. The lint checks that the two agree.
 
 **The target record** is what the middle end asks of a target:
 * the precision of `int`, which constant folding needs;
@@ -513,29 +547,54 @@ loop that runs its code (M5). The `vm/new` roadmap owns the VM beyond that.
 ## The instruction set as one description
 
 The brief asks whether changing the bytecode can be engineered better. It
-can: describe each instruction once, in full, and generate everything that
-is not its meaning.
+can: describe each instruction once, in full, what it does included, and
+generate everything else from that.
+
+**A DSL in Standard ML** (D6, decided):
+* **What it is:** an instruction set is an SML program. Each instruction is
+  a value giving what is listed below and its body, written in a small
+  language of the DSL.
+* **The generator** is a program of its own, built from its own list of
+  sources as `runedoc` and `runeopt` are. It reads the descriptions and
+  writes C and SML.
+* **Why SML:**
+  * a missing field or an operand of the wrong kind stops the description
+    compiling;
+  * it is the compiler's own language, checked by the same five builds.
+* **`vm/portable` still builds with a C compiler alone,** which is what it
+  is for. So the generated C and SML are committed, and `make check`
+  fails when they are stale, as it does for `docs/generated`. The
+  generator runs on any host, or on Rune itself.
 
 **The description:**
-* **Several instruction sets.** The format holds one file per bytecode from
-  the start: M1 writes the stack one, and M5 adds the register one.
-* **Each opcode** gives:
+* **Several instruction sets.** One description per bytecode from the
+  start: M1 writes the stack one, and M5 adds the register one.
+* **Each instruction** gives:
   * **operands** by kind: constant, immediate, tag, local, environment
     slot, global, function, label, primitive, count, built-in exception,
     table;
   * **its stack effect:** a number, an operand, or a primitive's arity;
   * **flags:** branches, ends a counted run, calls C, may collect, may
     raise, reads its operand in place (`reads`), is a place an image
-    resumes at.
-* **One `VERSION` line**, plus a fingerprint of the whole description,
+    resumes at;
+  * **its body:** what it does, in the DSL's language. That language is
+    small and typed, and just enough for these instructions: operands and
+    stack slots (or registers) read and written, tags checked, objects
+    allocated, runtime helpers called, fatal errors, control transfer. Its
+    C is C99.
+* **One version**, plus a fingerprint of the whole description,
   written into every `.rbc` and every image. A stale file is refused, and
   the rule that opcodes and primitives are only appended goes away.
-* **`prims.def`** gains effect flags: pure, reads the heap, writes it,
-  allocates, may raise, does I/O, touches images, done inline. The default
-  is the most conservative, since a primitive wrongly called pure is a
+* **The primitives** are described in the same DSL, each with its type
+  and its effects: pure, reads the heap, writes it, allocates, may raise,
+  does I/O, touches images, done inline. The default is the most
+  conservative, since a primitive wrongly called pure is a
   miscompilation.
 
 **Generated from it:**
+* **The interpreter:** the cases of `interp.c`, and the slow paths
+  `native.c` shares with them, from the bodies. The copy between the two
+  goes away.
 * **Tables:** the C tables and an X-macro list of opcodes.
 * **An instruction datatype:** an SML `datatype 'l instr` with encode,
   decode, length, stack effect, flags and `toString`. It replaces
@@ -548,29 +607,46 @@ is not its meaning.
 * **The documentation:** the table of `docs/bytecode.md`, checked rather
   than grepped, and the check that `every-opcode.rasm` runs every opcode.
 
-**What stays written by hand:** what an instruction does, in the
-interpreter, the templates and the helpers of `native.c`. Two things make a
-missing case fail the build instead of running:
-* in C, the interpreter's `switch` over the generated enum is compiled
-  with a missing case as an error (`-Wswitch-enum -Werror` for that file);
-* in SML, MLton's build treats a non-exhaustive match as an error.
+**What stays written by hand:**
+* **The runtime:** the collector and the primitives' C bodies.
+* **`runeopt`'s x86-64 templates.** They are written over the generated
+  datatype, and MLton's build treats a non-exhaustive match as an error,
+  so an instruction without a template fails the build. Generating them
+  from the bodies is a later option.
 
-**Without a generator:**
-* `interp.c` calls the helpers that `native.c` exports, instead of keeping
-  a copy of them.
-* The octal fixtures in the test scripts become `.rasm` listings.
+**Without the DSL:** the octal fixtures in the test scripts become `.rasm`
+listings.
 
-**For `vm/new`** (D6): a CPython-style DSL, in which an instruction's body
-is written once, pays off. From one source it gives the interpreter, the
-metadata, and the stencils of a copy-and-patch JIT (Xu and Kjolstad 2021).
-It does not pay for `vm/portable`, whose native templates are SML.
+**For `vm/new`:** its register instruction set is a second description in
+the same DSL. The same bodies can later give the stencils of a
+copy-and-patch JIT (Xu and Kjolstad 2021), as CPython already generates
+its interpreter from one definition of its instructions.
 
 ## Decisions
 
-Each gives the options, what favours each, and a recommendation. The owner
-decides.
+Each gives the options, what favours each, and the recommendation it was
+written with. The owner decided on 2026-09-24:
+
+| Decision | Chosen |
+|---|---|
+| D1. The shape of Mid | A: ANF with join points |
+| D2. The shape of Low | A: SSA with block parameters |
+| D3. Types in the IRs | B: typed IRs now |
+| D4. The bytecodes | stack for `vm/portable`, register for `vm/new` |
+| D5. When the register target comes | A: right after M4 |
+| D6. How the instruction set is described | B: a DSL in Standard ML |
+| D7. Traces under optimisation | B: inline frames in the line table |
+| D8. Optimisation levels | open |
+| D9. The calling convention | A for now, B in M12 |
+| D10. The old code generator | open |
+| D11. The items of performance.md | open |
+| D12. The precision of `int` per target | open |
+| D13. `runeopt`'s long-term role | A now, perhaps B later |
+| D14. Exhaustiveness | B |
 
 ### D1. The shape of Mid
+
+**Decided: A**, ANF with join points.
 
 * **A. ANF with join points** (Flanagan et al. 1993; Maurer et al. 2017).
   **Recommended.**
@@ -605,6 +681,8 @@ decides.
 
 ### D2. The shape of Low
 
+**Decided: A**, SSA with block parameters.
+
 * **A. SSA with block parameters.** **Recommended.** Join points become
   blocks, and MLton does its whole-program work on the same shape. It
   serves a register allocator, and out-of-SSA plus stackification serves
@@ -613,6 +691,10 @@ decides.
   build, weaker for analyses.
 
 ### D3. Types in the IRs
+
+**Decided: B**, typed IRs now, against the recommendation: a type-checking
+lint is essential for catching bugs. *The architecture* says how, and M3
+does it.
 
 * **A. Untyped, with representations on variables and a side table of
   type schemes.** **Recommended.**
@@ -634,6 +716,8 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 
 ### D5. When the register target comes
 
+**Decided: A**, right after M4, as M5.
+
 * **A. Right after M4**, as M5. **Recommended.**
   * An interface with one implementation is untested. A second, very
     different target shows what Low and the target record got wrong before
@@ -648,12 +732,17 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 
 ### D6. How the instruction set is described
 
-* **A. A richer `.def` with generators** (M1), for both bytecodes.
-  **Recommended.**
+**Decided: B**, a DSL in Standard ML, for both bytecodes from M1.
+*The instruction set as one description* says what it holds and makes.
+
+* **A. A richer `.def` with generators** (M1), for both bytecodes, with
+  the instructions' bodies written by hand. Recommended at first.
 * **B. A DSL with the instructions' bodies**, as CPython's `bytecodes.c`.
-  **Recommended for `vm/new`**, when it has a JIT to feed.
+  Recommended at first for `vm/new` only, when it has a JIT to feed.
 
 ### D7. Traces under optimisation
+
+**Decided: B**, inline frames in the line table (M10).
 
 * **A. Exact.** No inlining that removes a frame, and no new tail calls.
 * **B. Inline frames in the line table.** **Recommended.**
@@ -674,6 +763,8 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
   the default, with `-O0` and `-O2` in the differential tests).
 
 ### D9. The calling convention
+
+**Decided: A** for now (M8), **then B** in M12.
 
 * **A. Known calls with n arguments; unknown calls stay unary through a
   closure.** **Recommended.**
@@ -711,12 +802,16 @@ Basis Library suite expects. The target record carries it.
 
 ### D13. `runeopt`'s long-term role
 
+**Decided: A** now, perhaps B later.
+
 * **A.** Templates over the stack bytecode, as now, for `vm/portable`.
 * **B.** An optimising native back end from Low, later.
 * **Recommended:** A for this roadmap, since `vm/new` and its JIT are
   where native speed is headed.
 
 ### D14. Exhaustiveness
+
+**Decided: B.** The checked VM mode is part of M9.
 
 * **A.** `Exhaust` becomes load-bearing: the last rule of an exhaustive
   match is not tested.
@@ -733,21 +828,40 @@ the repository's rules require. Where it touches the VM, it also passes
 again and the commit quotes the old and the new. Sizes are lines of code,
 estimated.
 
-### M1. The instruction set as one description (M, about 800)
+### M1. The instruction set as one description (L, about 1,500)
 
-* **What:** the description and generators of *The instruction set as one
-  description*, for the stack bytecode, in a format that takes a second
-  instruction set.
+* **What:** the DSL in Standard ML and its generator (D6), with the stack
+  bytecode's 35 instructions and 292 primitives described in it, bodies
+  included:
+  * the DSL, and the small language of its bodies;
+  * the generator, its list of sources, and its build by the hosts and by
+    Rune itself;
+  * the generated interpreter cases, slow paths of `native.c`, tables,
+    validators, SML datatype, `RbcCheck` and `runeopt` metadata, and the
+    table of `docs/bytecode.md`;
+  * the generated files committed, and a check in `make check` that they
+    are up to date.
 * **Also:**
-  * the six parsers become one;
-  * the version constant and the fingerprint go into `.rbc` and images;
-  * `interp.c` uses `native.c`'s helpers;
+  * `vm/opcodes.def`, `vm/prims.def`, `scripts/gen-opcodes.sh` and the
+    six parsers go;
+  * the version and the fingerprint go into `.rbc` and images;
   * the octal fixtures become `.rasm`.
+* **Staged**, each step green:
+  1. the DSL with everything but bodies, generating what the `.def` files
+     and `gen-opcodes.sh` make today, byte for byte;
+  2. the rest of the metadata, and its consumers switched over;
+  3. the bodies, and the generated interpreter replacing the hand-written
+     cases.
 * **Done when:**
-  * `bin/rune.rbc` is byte for byte the same;
-  * a dummy opcode added on a scratch branch reports every place that
-    lacks it when the tree is built;
-  * `make check`, `make test-windows` and `make test-portability` pass.
+  * `bin/rune.rbc` is byte for byte the same, and `--count` gives the same
+    numbers for every program;
+  * the VM builds from a clean checkout with a C compiler alone;
+  * an instruction added without a body, or without a template in
+    `x64.sml`, fails the build;
+  * the generated interpreter costs `runevm` no more instructions (`perf
+    stat -e instructions:u` on the bootstrap);
+  * `make check`, `make test-stress`, the ASan build, `make test-windows`
+    and `make test-portability` pass.
 
 ### M2. Pass infrastructure (M, about 500)
 
@@ -757,9 +871,9 @@ estimated.
   variables numbered afresh, so that expected files survive changes
   upstream.
 * **Checks:** `--lint`, which runs the lint after every pass and is on in
-  `make check`. Its first lint is `Lambda`'s: every variable bound, stamps
-  unique, every `Fail` in tail position of a `Try`, every `LetRec`
-  right-hand side a `Fn`.
+  `make check`. Its first lint is `Lambda`'s, of its structure: every
+  variable bound, stamps unique, every `Fail` in tail position of a `Try`,
+  every `LetRec` right-hand side a `Fn`. M3 adds types.
 * **Finding a bad pass:**
   * `--fuel=N`, which stops rewriting after N rewrites (optimisation
     fuel, as in Hoopl: Ramsey, Dias and Peyton Jones 2010), and a script
@@ -776,20 +890,35 @@ estimated.
 * **Done when:** the output is byte for byte the same, and `make check`
   passes.
 
-### M3. Mid, launched dark (L, about 1,100)
+### M3. Types, and Mid launched dark (XL, about 2,000)
 
-* **What:**
-  * Mid's datatype;
+* **Types first** (D3):
+  * the elaborator records binder schemes, instances at uses, and the
+    datatypes and exceptions;
+  * Translate and MatchComp put them on `Lambda`;
+  * `Lambda`'s lint checks them.
+
+  This is its own commit. It already checks the elaborator and the
+  translation, before any optimisation exists.
+* **Then Mid:**
+  * its datatype, explicitly typed;
   * the translation from `Lambda`, with `Try`/`Fail` becoming join points
     and the top level becoming a list of definitions;
-  * the lint, a printer, and a parser of the printed form, so that a pass
-    can be tested on a small input.
-* **Launched dark:** every compile builds Mid and lints it, and the code is
-  still generated from `Lambda`.
+  * its lint, types included;
+  * a printer, and a parser of the printed form, so that a pass can be
+    tested on a small input.
+* **The snags** of *The architecture* (*Types*) are settled here, each with
+  a test in `tests/ir`: unresolved type variables, ascription without a
+  coercion, primitives typed where they are bound.
+* **Launched dark:** every compile builds the typed Mid and lints it, and
+  the code is still generated from `Lambda`.
 * **Done when:**
   * the output is byte for byte the same;
-  * the lint is clean on every test and on the bootstrap;
-  * printing and parsing give back the same Mid.
+  * both lints are clean on every test, the Basis Library suite and the
+    bootstrap;
+  * printing and parsing give back the same Mid;
+  * the compile-time budgets hold. Types cost memory and time on every
+    compile, and are measured.
 
 ### M4. The new back end: Low and the stack target (XL, about 2,000)
 
@@ -838,7 +967,7 @@ estimated.
 * **Measured here:** dispatches, code size and time against the stack
   target, on the same Low, the bootstrap and `tests/perf`. That is Rune's
   answer to Shi et al.
-* **Where it goes:** here if D5 is A; after M9 or M11 if B.
+* **Where it goes:** right after M4 (D5).
 * **Done when:** every suite passes on it, with bytes and objects equal to
   `runevm`'s.
 
@@ -859,7 +988,8 @@ estimated.
 ### M7. The simplifier and tree shaking (L, about 1,200)
 
 * **Shrinking reductions** (Appel and Jim 1997): inlining what is used
-  once, dead code removed, beta and eta, using the effects of `prims.def`.
+  once, dead code removed, beta and eta, using the primitives' effects
+  from the DSL (M1).
 * **What is known:** a `case` on a known constructor, a `SELECT` of a known
   tuple, a known boolean.
 * **Constants:** folded in `IntInf` at the target's precision, raising what
@@ -904,7 +1034,9 @@ estimated.
   * Maranget's decision trees (2008), from each datatype's constructors,
     with the rules' bodies as join points so that nothing is copied;
   * `SWITCH`, a variable-length instruction with a table of targets;
-  * the last test of an exhaustive match left out by construction (D14).
+  * the last test of an exhaustive match left out by construction (D14);
+  * a checked mode of the VMs, in which `DECON` tests its tag, run by the
+    test suites (D14).
 * **Gain, from the counts:**
   * the tests of a last rule, with their loads, are about 2.5% of the
     bootstrap's instructions;
@@ -932,7 +1064,7 @@ estimated.
 ### M11. Representation (L, about 1,000)
 
 * **What:**
-  * a datatype table;
+  * representations chosen from the datatypes M3 records;
   * a constructor whose argument is a tuple becomes one object (item 16);
   * `=` compiled by type where the type is known: 68.3% of polymorphic
     equalities compare two non-pointers;
@@ -1014,7 +1146,7 @@ which its design has to start.
 * **The FFI.** The owner asked where this becomes critical, so that the
   tracks can switch in time.
   * **Start its design before M5**, where `vm/new`'s convention for
-    primitives is set (or before M8, if D5 puts M5 later).
+    primitives is set.
   * **Settle it by M8**, where the calling convention is chosen.
   * **M11** extends it, when unboxed representations appear.
   * A foreign call is a known call with a different convention and a
@@ -1053,7 +1185,9 @@ which its design has to start.
   later on both targets, must print the same, fail the same and allocate
   the same bytes and objects.
 * **Unit tests of passes** use Mid's printed form in `tests/ir`.
-* **Lints** run after every pass in `make check`.
+* **Lints** run after every pass in `make check`, and check types (D3):
+  a pass that makes an ill-typed program is caught where it runs, not
+  where the program fails.
 * **Bisection by fuel** finds the one rewrite that breaks a program.
 * **Stress and outside code:** `--gc-stress`, `runeopt --check`, the corpus
   of `rune-corpus-sml97` and `tests/external`.
