@@ -133,7 +133,14 @@ struct
     in go (0, fields) end
 
   (* --- resolving variable links --- *)
-  fun prune (t as TVar r) = (case !r of Bound t' => let val t'' = prune t' in r := Bound t''; t'' end | _ => t)
+  (* The type a variable stands for. A chain of variables is shortened to
+     one link on the way; one link is left as it is, since writing it again
+     would allocate. *)
+  fun prune (t as TVar r) =
+      (case !r of
+         Bound (t' as TVar _) => let val t'' = prune t' in r := Bound t''; t'' end
+       | Bound t' => t'
+       | _ => t)
     | prune t = t
 
   (* Fully dereference (for the backend). *)

@@ -19,14 +19,31 @@ struct
      compared with the few that begin as it does. *)
   fun buckets (words : (string * token) list) : (string * token) list vector =
     let
-      fun add (w as (s, _), m) =
-        let val i = Char.ord (String.sub (s, 0))
-        in IntMap.insert (m, i, getOpt (IntMap.find (m, i), []) @ [w]) end
-      val m = List.foldl add IntMap.empty words
+      val a = Array.array (256, [] : (string * token) list)
+      fun add (w as (s, _)) =
+        let val i = Char.ord (String.sub (s, 0)) in Array.update (a, i, Array.sub (a, i) @ [w]) end
     in
-      (* Not an array made into a vector: MLton 20241230 fails on that
-         here, with a type error in its SSA. *)
-      Vector.tabulate (256, fn i => getOpt (IntMap.find (m, i), []))
+      List.app add words;
+      (* A workaround for a bug of MLton 20241230, which miscompiles the
+         code this was meant to be (docs/bugreport/mlton/BUGREPORT.md):
+
+             List.app add words; Array.vector a
+
+         MLton's optimiser gives the array and the vector made from it two
+         different types of list, so the copy in Array.vector is ill typed:
+         `mlton -type-check true` fails in its SSA, and a build without
+         the check stops at run time with "control shouldn't reach here".
+         An array of lists of pairs that come from another list is what it
+         takes; Vector.tabulate does not copy an array and is not
+         affected.
+
+         What it costs: on runevm, 3,819 instructions more for every
+         compile, 0.06% of compiling examples/hello.sml (and 1,544 fewer
+         objects); in the host builds, 256 calls in place of one copy, once
+         a run. MLton has fixed the bug after 20241230 (its pull request
+         #632); this can go once `make hosts` installs a release with the
+         fix. *)
+      Vector.tabulate (256, fn i => Array.sub (a, i))
     end
   val reservedBuckets = buckets reserved
   val reservedSymbolicBuckets = buckets reservedSymbolic

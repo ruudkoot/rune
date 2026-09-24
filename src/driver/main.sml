@@ -123,7 +123,14 @@ struct
                         List.filter (fn e : entry => #when e = Final) basis, userToks, inputs)
     end
 
-  and compileWith (basis : entry list, final : entry list, userToks, inputs) : OS.Process.status =
+  (* The front end and the back end are two functions, so that nothing of
+     the first -- tokens, syntax, environment -- is still reachable, and
+     copied by every collection, while the second runs: compileWith
+     calls frontEnd and then hands its result on in a tail call. *)
+  and compileWith (args : entry list * entry list * Lexer.item vector list * string list) : OS.Process.status =
+    backEnd (#4 args, frontEnd args)
+
+  and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (libDir () ^ "/" ^ #file e))) es)
       val preludeProg = parseEntries basis
@@ -137,18 +144,22 @@ struct
       val () = Elaborate.finish ()
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
-      if !Options.typecheckOnly then OS.Process.success
+      if !Options.typecheckOnly then NONE
       else
-        let
-          val lam = Translate.transProgram (preludeProg @ userProg)
-          val () = if !Options.dumpLambda then println (Lambda.toString lam) else ()
-          val prog = Codegen.compile (lam, !Translate.funNames)
-          val () = if !Options.dumpCode then print (Codegen.dump prog) else ()
-          val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
-        in
-          Emit.writeFile (out, prog);
-          OS.Process.success
-        end
+        let val lam = Translate.transProgram (preludeProg @ userProg)
+        in if !Options.dumpLambda then println (Lambda.toString lam) else (); SOME lam end
+    end
+
+  and backEnd (_, NONE) = OS.Process.success
+    | backEnd (inputs, SOME lam) = emitProgram (inputs, Codegen.compile (lam, !Translate.funNames))
+
+  and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
+    let
+      val () = if !Options.dumpCode then print (Codegen.dump prog) else ()
+      val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
+    in
+      Emit.writeFile (out, prog);
+      OS.Process.success
     end
 
   fun main (_ : string, args : string list) : OS.Process.status =

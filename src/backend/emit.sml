@@ -21,6 +21,14 @@ struct
 
   val i32 = u32
 
+  (* The strings of the opcodes, and of the operands below 256, which are
+     most of them (slots, tags, counts), made once: the code of a function
+     is the concatenation of such pieces, so that most instructions allocate
+     nothing but the cells of the list of pieces. *)
+  val byteString : string vector = Vector.tabulate (256, fn i => String.str (Char.chr i))
+  val smallU32 : string vector = Vector.tabulate (256, u32)
+  fun operand (v : int) : string = if v >= 0 andalso v < 256 then Vector.sub (smallU32, v) else u32 v
+
   fun i64 (v : IntInf.int) : string =
     let
       val u = IntInf.mod (v, two64)     (* two's complement *)
@@ -53,8 +61,9 @@ struct
   (* The file as chunks in order: the header, then one chunk per function. *)
   fun serialize (p : program) : string list =
     let
-      (* layout: function start offsets and label offsets *)
-      val labels : int IntMap.map ref = ref IntMap.empty
+      (* layout: function start offsets and label offsets, the latter in an
+         array since labels are numbered densely from 0 *)
+      val labels : int array = Array.array (#nlabels p, ~1)
       (* where each position begins, in the order the code is laid out *)
       val lineEntries : (int * int * int * int) list ref = ref []
       val (starts, codeLen) =
@@ -63,7 +72,7 @@ struct
                          val off' =
                            List.foldl (fn (it, o') =>
                                           (case it of
-                                             Lab l => labels := IntMap.insert (!labels, l, o')
+                                             Lab l => Array.update (labels, l, o')
                                            | Pos (fi, ln, cl) => lineEntries := (o', fi, ln, cl) :: !lineEntries
                                            | _ => ();
                                            o' + instrSize it)) off (#code f)
@@ -78,7 +87,8 @@ struct
                 :: go (rest, (pc, fi, ln, cl))
         in String.concat (go (List.rev (!lineEntries), (0, 0, 0, 0))) end
       val nlines = List.length (!lineEntries)
-      fun labelOffset l = case IntMap.find (!labels, l) of SOME o' => o' | NONE => Error.bug "unresolved label"
+      fun labelOffset l =
+        let val o' = Array.sub (labels, l) in if o' < 0 then Error.bug "unresolved label" else o' end
       fun constBytes c =
         case c of
           CInt i => u8 0 ^ i64 i
@@ -87,13 +97,24 @@ struct
         | CString s => u8 3 ^ str s
         | CChar c => u8 4 ^ u8 c
       fun funcEntry (f : func, (_, off)) = u32 off ^ u32 (#nlocals f) ^ str (#name f)
-      fun itemBytes it =
+      (* A function's code is one concatenation of the pieces of its
+         instructions, consed from its last instruction back. *)
+      fun pieces (it, acc) =
         case it of
-          Op (opc, args) => String.concat (u8 opc :: List.map i32 args)
-        | OpLab (opc, l) => u8 opc ^ i32 (labelOffset l)
-        | OpLabImm (opc, l, i) => u8 opc ^ i32 (labelOffset l) ^ i32 i
-        | Lab _ => ""
-        | Pos _ => ""
+          Op (opc, []) => Vector.sub (byteString, opc) :: acc
+        | Op (opc, [a]) => Vector.sub (byteString, opc) :: operand a :: acc
+        | Op (opc, args) => Vector.sub (byteString, opc) :: List.foldr (fn (a, acc) => operand a :: acc) acc args
+        | OpLab (opc, l) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: acc
+        | OpLabImm (opc, l, i) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: operand i :: acc
+        | Lab _ => acc
+        | Pos _ => acc
+      fun codeString (f : func) =
+        let
+          fun go ([], acc) = acc
+            | go (it :: rest, acc) = go (rest, pieces (it, acc))
+        in
+          String.concat (go (List.rev (#code f), []))
+        end
       val header =
         String.concat
           [magic, u32 version,
@@ -108,7 +129,7 @@ struct
           [u32 (List.length (#files p)), String.concat (List.map str (#files p)),
            u32 nlines, u32 (String.size lineTable), lineTable]
     in
-      header :: List.map (fn (f : func) => String.concat (List.map itemBytes (#code f))) (#funcs p)
+      header :: List.map codeString (#funcs p)
       @ [debug]
     end
 

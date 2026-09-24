@@ -12,42 +12,53 @@ struct
 
   type func = {id : int, nlocals : int, code : item list, name : string}
 
-  type program = {consts : const list, nglobals : int, funcs : func list, files : string list}
+  (* nlabels: the labels of the program are numbered from 0 up to it. *)
+  type program = {consts : const list, nglobals : int, funcs : func list, files : string list, nlabels : int}
 
   (* ---------------------------------------------------------------- *)
   (* Free variables (sorted by stamp).                                  *)
-  fun freeVars (e : lexp) : int list =
-    let
-      fun fv (e, bound : unit IntMap.map, acc : unit IntMap.map) =
-        case e of
-          Var v => if IntMap.member (bound, v) then acc else IntMap.insert (acc, v, ())
-        | Global _ => acc | Const _ => acc | Unit => acc | Con0 _ => acc | Fail => acc
-        | NewExn _ => acc | BuiltinExn _ => acc
-        | Fn (x, b) => fv (b, IntMap.insert (bound, x, ()), acc)
-        | App (a, b) => fv (b, bound, fv (a, bound, acc))
-        | Let (x, a, b) => fv (b, IntMap.insert (bound, x, ()), fv (a, bound, acc))
-        | LetRec (bs, b) =>
-            let val bound' = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) bound bs
-            in List.foldl (fn ((_, e), acc) => fv (e, bound', acc)) (fv (b, bound', acc)) bs end
-        | Seq (a, b) => fv (b, bound, fv (a, bound, acc))
-        | SetGlobal (_, a) => fv (a, bound, acc)
-        | Mark (_, a) => fv (a, bound, acc)
-        | Tuple es => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc es
-        | Select (_, a) => fv (a, bound, acc)
-        | Con (_, a) => fv (a, bound, acc)
-        | Decon a => fv (a, bound, acc)
-        | ConTag a => fv (a, bound, acc)
-        | If (c, t, f) => fv (f, bound, fv (t, bound, fv (c, bound, acc)))
-        | Try (a, b) => fv (b, bound, fv (a, bound, acc))
-        | Raise a => fv (a, bound, acc)
-        | Handle (a, x, h) => fv (h, IntMap.insert (bound, x, ()), fv (a, bound, acc))
-        | MkExn (c, p) => fv (p, bound, fv (c, bound, acc))
-        | ExnCon a => fv (a, bound, acc)
-        | ExnArg a => fv (a, bound, acc)
-        | Prim (_, args) => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc args
-    in
-      IntMap.listKeys (fv (e, IntMap.empty, IntMap.empty))
-    end
+
+  (* Those of each function, by the stamp of its parameter, worked out once:
+     a function's are those of its body, where a function nested in it
+     counts with its own, already worked out, so that no part of the program
+     is walked again for every function around it. *)
+  val freeMemo : int list IntMap.map ref = ref IntMap.empty
+
+  fun fnFree (x : int, body : lexp) : int list =
+    case IntMap.find (!freeMemo, x) of
+      SOME vs => vs
+    | NONE =>
+      let val vs = IntMap.listKeys (fv (body, IntMap.insert (IntMap.empty, x, ()), IntMap.empty))
+      in freeMemo := IntMap.insert (!freeMemo, x, vs); vs end
+  and fv (e, bound : unit IntMap.map, acc : unit IntMap.map) =
+    case e of
+      Var v => if IntMap.member (bound, v) then acc else IntMap.insert (acc, v, ())
+    | Global _ => acc | Const _ => acc | Unit => acc | Con0 _ => acc | Fail => acc
+    | NewExn _ => acc | BuiltinExn _ => acc
+    | Fn (x, b) =>
+        List.foldl (fn (v, acc) => if IntMap.member (bound, v) then acc else IntMap.insert (acc, v, ()))
+                   acc (fnFree (x, b))
+    | App (a, b) => fv (b, bound, fv (a, bound, acc))
+    | Let (x, a, b) => fv (b, IntMap.insert (bound, x, ()), fv (a, bound, acc))
+    | LetRec (bs, b) =>
+        let val bound' = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) bound bs
+        in List.foldl (fn ((_, e), acc) => fv (e, bound', acc)) (fv (b, bound', acc)) bs end
+    | Seq (a, b) => fv (b, bound, fv (a, bound, acc))
+    | SetGlobal (_, a) => fv (a, bound, acc)
+    | Mark (_, a) => fv (a, bound, acc)
+    | Tuple es => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc es
+    | Select (_, a) => fv (a, bound, acc)
+    | Con (_, a) => fv (a, bound, acc)
+    | Decon a => fv (a, bound, acc)
+    | ConTag a => fv (a, bound, acc)
+    | If (c, t, f) => fv (f, bound, fv (t, bound, fv (c, bound, acc)))
+    | Try (a, b) => fv (b, bound, fv (a, bound, acc))
+    | Raise a => fv (a, bound, acc)
+    | Handle (a, x, h) => fv (h, IntMap.insert (bound, x, ()), fv (a, bound, acc))
+    | MkExn (c, p) => fv (p, bound, fv (c, bound, acc))
+    | ExnCon a => fv (a, bound, acc)
+    | ExnArg a => fv (a, bound, acc)
+    | Prim (_, args) => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc args
 
   (* ---------------------------------------------------------------- *)
   (* Program-wide state.                                                *)
@@ -74,7 +85,8 @@ struct
   fun reset () =
     (funcs := []; nextFuncId := 0; consts := []; nconsts := 0; constIndex := StringMap.empty;
      globals := IntMap.empty; nglobals := 0; nextLabel := 0; funNames := IntMap.empty;
-     files := []; nfiles := 0; fileIndex := StringMap.empty; lastFile := NONE)
+     files := []; nfiles := 0; fileIndex := StringMap.empty; lastFile := NONE;
+     freeMemo := IntMap.empty)
 
   fun fileIdx (name : string) : int =
     case !lastFile of
@@ -272,7 +284,7 @@ struct
   and genClosure (ctx : ctx, x : int, body : lexp, self : int option, pending : int list)
       : (int * int) list =
     let
-      val fvs = List.filter (fn v => SOME v <> self) (freeVars (Fn (x, body)))
+      val fvs = List.filter (fn v => SOME v <> self) (fnFree (x, body))
       (* The name the source gave this function, by the stamp of its
          parameter (Translate.funNames). One that no binding names keeps
          `fn`, with its own stamp where it is recursive, so that two of them
@@ -331,7 +343,8 @@ struct
       val _ = genFunction (dummyParam, top, [], NONE, "<toplevel>", (~1, ~1, ~1))
       val sorted = IntMap.listItems (List.foldl (fn (f : func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (!funcs))
     in
-      {consts = List.rev (!consts), nglobals = !nglobals, funcs = sorted, files = List.rev (!files)}
+      {consts = List.rev (!consts), nglobals = !nglobals, funcs = sorted, files = List.rev (!files),
+       nlabels = !nextLabel}
     end
 
   (* ---------------------------------------------------------------- *)
