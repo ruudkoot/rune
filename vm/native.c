@@ -12,6 +12,7 @@
    begins, in order of pc; and the runtime options it was made with. An
    address in a table is an offset from the start of the table, which keeps
    the program position independent. */
+#define _POSIX_C_SOURCE 200809L     /* unsetenv, strdup */
 #include "vm.h"
 #include "sys.h"
 
@@ -239,11 +240,16 @@ static void options(const char *text, const char *where, Options *o) {
     free(copy);
 }
 
+/* The name from RUNEVM_NAME, kept for as long as the program runs. */
+static char *program_name;
+
 int main(int argc, char **argv) {
     Options o = { 4u << 20, 0, 0, 0, 0 };
     options(rune_options, "runeopt --options", &o);
+    /* The options are the runtime's, as runevm's are, and not part of what
+       the program sees of its environment, nor of what its children get. */
     const char *env = getenv("RUNEVM_OPTIONS");
-    if (env) options(env, "RUNEVM_OPTIONS", &o);
+    if (env) { options(env, "RUNEVM_OPTIONS", &o); unsetenv("RUNEVM_OPTIONS"); }
 
     VM *vm = calloc(1, sizeof(VM));
     if (!vm) { fprintf(stderr, "runevm: out of memory\n"); return 2; }
@@ -252,7 +258,11 @@ int main(int argc, char **argv) {
     vm->count = o.count;
     vm->gc_stress = o.gc_stress;
     vm->emulate_fork = o.emulate_fork;
-    vm->progname = argv[0];
+    /* the name the program has under runevm, where bin/runevm-opt runs it
+       for the suites: the path of its .rbc */
+    const char *name = getenv("RUNEVM_NAME");
+    if (name) { program_name = strdup(name); unsetenv("RUNEVM_NAME"); }
+    vm->progname = program_name ? program_name : argv[0];
     vm->argc = argc - 1;
     vm->argv = argv + 1;
     vm_init(vm, o.heap);

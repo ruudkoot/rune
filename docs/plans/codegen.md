@@ -66,7 +66,7 @@ The owner's decisions on the roadmap (2026-09-23):
 | M1, the runtime as a library | done: `vm/runtime.c` has what a VM does besides dispatching (frames, handlers, raising, the trace of a failure, equality, `vm_init`, `vm_start`, `vm_exit`, `vm_release`), taken out of `interp.c` and `main.c`; `load_program_mem` loads an `.rbc` from memory; `build/librune.a` is the runtime for this machine and `bin/runevm` links it. The other VMs compile the same list, `RT_SRCS`, in their one `cc` call, which removes the duplicated lists of sources. Nothing a program sees changed: `make check`, `make test-windows` and `make test-portability` pass, and `--count` agrees with the VM before |
 | M2, the `.rbc` reader, the validator and the tool | done: `runeopt --check`, `--disasm` and `--facts` (`Rbc`, `RbcCheck`, `RbcDisasm`, `OptMain` in `src/opt`), built by all five, whose bytecode `check-cross` compares and whose output `scripts/check-opt-cross.sh` compares. `tests/opt`: 16 files refused (8 by the loader's checks, with its messages, 8 by D0's) and `--check` and `--disasm` over every program the suites compiled (368). The check finds exactly the facts of *What the corpus does* (437,885 functions, 12,639,613 instructions, 235,894 unreachable). Two things `--disasm` parity found: C's `%.*s` ends a string constant at its first NUL, and awk loses the sign of `-0`. What the cross-check found: SML/NJ 110.99.9 in 32 bits compiles `c - x`, where the literal `c` is its `Int.maxInt`, into code that overflows whatever `x` is; the reader takes that bound from a string. The drift listed above is fixed |
 | M3, every instruction translated | done: the templates of all 34 opcodes (`src/opt/x64.sml`), the glue (`vm/native.c`), the layout the code names (`build/rune-offsets.s`, from `vm/native_offsets.c`), `runeopt prog.rbc -o prog` with `-S` and `--options`, and `scripts/opt.sh`. `tests/opt/every-opcode.rasm`, assembled by `tests/opt/rbcasm.awk`, runs every opcode, `HALT` and `JUMPIF` among them; it, `hello`, fib, nqueens and tak print what they print under `runevm`, with the same counts, and so do all the programs of `tests/perf`. The compiler as native code compiles itself to `bin/rune.rbc`, byte for byte: 969 million instructions in 21 s, on a machine with a load of 20. Measured on the compiler: 20.5 MB of assembly, translated in 1.4 s by the MLton build of `runeopt` (the self-hosted one translates `runeopt.rbc`, 357 KB, in 6 s), assembled and linked in 5.2 s, 5.6 MB of machine code, about 51 bytes per instruction where D5 estimated 20 to 40. A native program's `Runtime.restore` raises `OS.SysErr` (`ENOSYS`) |
-| M4, the suites, run natively | not started |
+| M4, the suites, run natively | done: `bin/runevm-opt` (`scripts/runevm-opt.sh`) is a VM for the runners: it translates the bytecode with `runeopt`, keeps each translation by the checksum of the bytecode, gives the program the options of `runevm` in `RUNEVM_OPTIONS` and its name in `RUNEVM_NAME`, and hands `--restore` and the like to `runevm`. `make test-native`, part of `make check`: `tests/lang` natively (205 of 206; `rt.fork_image` waits for M9, `tests/opt-skip.txt`); `--count` equal to `runevm`'s for all 146 programs (`tests/opt/run-counts.sh`); the Basis Library suite in the configuration `rune:opt`, all 137,276 checks, reusing the bytecode `test-basis` compiled where its sources are the same, which takes the run from 163 s to 19 s; and the compiler as native code compiling itself to `bin/rune.rbc` (`tests/opt/run-bootstrap.sh`). `make test-native-stress` (a collection before every 101st allocation, the Basis Library suite every 1009th) and `make test-native-asan` (the runtime built with ASan and UBSan) pass too, and there is a doctor scope `native`. A native program's `Runtime.save` writes an image `runevm --restore` carries on (the three `.restore` tests). Found on the way: the program saw `RUNEVM_OPTIONS` in its environment (`basis.posix_process` counted more), and bash, whose `exec -a` would set `argv[0]`, takes the variable `_` out of the environment, so the wrapper is sh and the name comes in `RUNEVM_NAME`; LeakSanitizer found the copy of that name. `tests/vm` is not run natively: it tests the loader and the command line of `runevm`, and `tests/opt` has the loader's refusals for `runeopt` |
 | M5, inlined primitives | not started |
 | M6, debug information, checked | not started |
 | M7, performance | not started |
@@ -660,8 +660,13 @@ revisit*):
   prefix. The alternative is the program's name, as GHC does, at the cost
   of a second set of expected `.stderr` files.
 * **`CommandLine.name ()`** is the program as it was invoked, `argv[0]`. The
-  wrapper of D9 execs with `argv[0]` set to the `.rbc`, so
-  `rt.args_commandline` keeps its expected output.
+  wrapper of D9 gives the `.rbc`, the name the program has under `runevm`,
+  in `RUNEVM_NAME`, so `rt.args_commandline` keeps its expected output. (M4
+  found that setting `argv[0]` needs bash's `exec -a`, and bash takes the
+  variable `_` out of the environment of what it runs, which a test of
+  `Posix.ProcEnv.environ` saw.) The program reads both variables and takes
+  them out of its environment, which is then the one it has under `runevm`,
+  and the one its children get.
 
 ### D9. Tests
 
@@ -1026,7 +1031,7 @@ D11's option 1, with option 6:
 * **D8**, the executable's command line and messages. The owner accepted it
   as proposed on 2026-09-23, to be looked at again once native programs are
   in use: `RUNEVM_OPTIONS`, the fork token in the environment, the prefix
-  `runevm:`, and `argv[0]`.
+  `runevm:`, and `RUNEVM_NAME`, which only the wrapper of the suites sets.
 * **D3's option A**, native call and return, as an experiment after M5.
 * **D11's other options**, and a compiler or interpreter offered as a
   service for `Runtime.restore` of another program.

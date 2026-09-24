@@ -11,6 +11,10 @@
 #   sys     POSIX headers of the VM's system layer (vm/sys_posix.c)
 #   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
 #   perf    optional profiling tools
+#   native  what a program of runeopt needs (make test-native): cc that
+#           assembles and links x86-64 code with its line table; the
+#           debuggers and DWARF readers are optional.
+#           Only on Linux for x86-64: elsewhere there is nothing to check
 #   windows mingw-w64 for both Windows VMs (make windows), and whether an
 #           .exe runs here (make test-windows); not part of all, since
 #           nothing else needs it
@@ -36,10 +40,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf" ;;
+    all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf native" ;;
     build) expanded="$expanded vm mlton" ;;
     hosts) expanded="$expanded mlton smlnj smlnj32 polyml" ;;
-    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|windows|portability) expanded="$expanded $s" ;;
+    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -91,6 +95,10 @@ pkg() {
     pacman:findutils) echo findutils ;;   brew:findutils) echo findutils ;;
     apt:xz) echo xz-utils ;;              *:xz) echo xz ;;
     apt:gprof) echo binutils ;;           *:gprof) echo binutils ;;
+    *:readelf|*:addr2line) echo binutils ;;
+    apt:dwarfdump) echo dwarfdump ;;      *:dwarfdump) echo libdwarf-tools ;;
+    apt:llvm-dwarfdump) echo llvm ;;      *:llvm-dwarfdump) echo llvm ;;
+    *:gdb|*:lldb|*:bash) echo "$1" ;;
     none:*) echo - ;;
     *:make|*:gawk|*:sed|*:grep|*:diffutils|*:curl|*:tar|*:valgrind) echo "$1" ;;
     *) echo - ;;
@@ -312,6 +320,35 @@ if in_scope perf; then
     else warn $t "not found (optional; package: $(pkg $t))"
     fi
   done
+fi
+
+# ---------------------------------------------------------------- native
+if in_scope native; then
+  section "native code (runeopt, make test-native)"
+  if [ "$(uname -s) $(uname -m)" != "Linux x86_64" ]; then
+    note native "runeopt makes programs for Linux on x86-64, and this is $(uname -s) $(uname -m): make test-native skips them"
+  else
+    # what the code of runeopt is: x86-64, with a line table, assembled and
+    # linked by cc into a position-independent executable
+    printf '\t.file 1 "native.sml"\n\t.text\n\t.globl main\n\t.type main, @function\nmain:\n\t.loc 1 1 1\n\txor %%eax, %%eax\n\tret\n\t.section .note.GNU-stack,"",@progbits\n' > "$tmp/native.s"
+    if "$CC" -o "$tmp/native" "$tmp/native.s" > "$tmp/native.log" 2>&1 && "$tmp/native"; then
+      ok native "$CC assembles and links x86-64 code"
+    else bad native "$CC cannot assemble and link x86-64 code: $(head -1 "$tmp/native.log")" cc
+    fi
+    for t in gdb lldb readelf addr2line dwarfdump perf; do
+      if path=$(command -v $t 2> /dev/null); then ok $t "$path"
+      else warn $t "not found (optional: the checks of debug information; package: $(pkg $t))"
+      fi
+    done
+    # llvm-dwarfdump is often installed under the name of its version only
+    dump=""
+    for d in llvm-dwarfdump $(cd /usr/bin 2> /dev/null && ls llvm-dwarfdump-* 2> /dev/null | sort -t- -k3 -n -r); do
+      command -v "$d" > /dev/null 2>&1 && { dump=$d; break; }
+    done
+    if [ -n "$dump" ]; then ok llvm-dwarfdump "$(command -v "$dump")"
+    else warn llvm-dwarfdump "not found (optional; package: $(pkg llvm-dwarfdump))"
+    fi
+  fi
 fi
 
 # ---------------------------------------------------------------- windows

@@ -1,0 +1,56 @@
+#!/bin/sh
+# A program as runeopt translates it, run as runevm would run its bytecode
+# (docs/plans/codegen.md, M4): every runner of the suites takes it as --vm,
+# as it takes bin/runevm-ppc64, and needs to know nothing of native code.
+#   scripts/runevm-opt.sh [runevm options] FILE.rbc [args ...]
+# The options a native program takes go to it in RUNEVM_OPTIONS (D8), and
+# FILE.rbc, which is its name under runevm, in RUNEVM_NAME; the program
+# takes both out of its environment, so that it sees the one it sees under
+# runevm. (This is sh, not bash, which changes the variable _.) What only
+# runevm does -- --disasm, --trace, and --restore and --resume, which carry
+# on an image, which a native program cannot yet (M9) -- goes to runevm.
+# A translation is kept, by the checksum of the bytecode, in RUNEOPT_CACHE
+# (tests/out/opt-cache); RUNEOPT chooses the build of runeopt (by default
+# the MLton one where it is built, which is the fastest, and every build
+# writes the same program: scripts/check-opt-cross.sh), and RUNEOPT_RUNTIME
+# and RUNEOPT_CC what it is given as --runtime and --cc (make test-native-asan).
+set -u
+root=$(cd "$(dirname "$0")/.." && pwd)
+vm=${RUNEVM:-$root/bin/runevm}
+runeopt=${RUNEOPT:-}
+if [ -z "$runeopt" ]; then
+  if [ -x "$root/bin/runeopt-mlton" ]; then runeopt=$root/bin/runeopt-mlton; else runeopt=$root/bin/runeopt; fi
+fi
+cache=${RUNEOPT_CACHE:-$root/tests/out/opt-cache}
+
+options=""
+while [ $# -gt 0 ]; do
+  case $1 in
+    --count|--stats|--emulate-fork) options="$options $1"; shift ;;
+    --heap-size|--gc-stress) options="$options $1 ${2:-}"; shift 2 ;;
+    --disasm|--trace|--restore|--resume|--version|--help) exec "$vm" "$@" ;;
+    -*) exec "$vm" "$@" ;;
+    *) break ;;
+  esac
+done
+[ $# -gt 0 ] || exec "$vm"
+rbc=$1
+shift
+[ -f "$rbc" ] || exec "$vm" $options "$rbc" "$@"
+
+mkdir -p "$cache"
+sum=$(sha256sum < "$rbc" | cut -c1-32)
+exe=$cache/$sum
+if [ ! -x "$exe" ]; then
+  # into a name of its own, then into place: runners run programs in parallel
+  tmp=$cache/$sum.$$
+  if ! "$runeopt" ${RUNEOPT_RUNTIME:+--runtime "$RUNEOPT_RUNTIME"} ${RUNEOPT_CC:+--cc "$RUNEOPT_CC"} \
+       "$rbc" -o "$tmp" > "$tmp.log" 2>&1; then
+    sed 's/^runeopt: /runevm: /' "$tmp.log" >&2
+    rm -f "$tmp" "$tmp.log" "$tmp.s"
+    exit 2
+  fi
+  rm -f "$tmp.log"
+  mv -f "$tmp" "$exe"
+fi
+RUNEVM_OPTIONS="${RUNEVM_OPTIONS:-}$options" RUNEVM_NAME=$rbc exec "$exe" "$@"

@@ -37,6 +37,8 @@
 #                   one is read by the others
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
+#   make test-native  the suites with every program translated to native code
+#                   by runeopt (docs/plans/codegen.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
 # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32 and bin/rune-polyml exist
@@ -114,7 +116,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -479,6 +481,62 @@ test-stress: $(RUNE) vm | build/.doctor-check
 	  RUNE=$(abspath $(RUNE)) RUNEVM="$(ROOT)/bin/runevm-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
 
+# ------------------------------------------------------------- native code
+# The suites with every program translated by runeopt and run as native
+# code (docs/plans/codegen.md, M4). bin/runevm-opt takes what runevm takes and
+# does so (scripts/runevm-opt.sh), keeping each translation by the checksum
+# of its bytecode, so every runner takes it as --vm. test-native runs
+# tests/lang (tests/opt-skip.txt lists what native code does not do yet, and
+# why) and the Basis Library suite (the rune:opt configuration) that way,
+# checks that every program of tests/lang counts what runevm counts, and that
+# the compiler, translated, compiles itself to bin/rune.rbc. Programs of
+# runeopt are for Linux on x86-64: elsewhere it says so and does nothing.
+NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
+
+bin/runevm-opt: scripts/runevm-opt.sh
+	@mkdir -p bin
+	cp scripts/runevm-opt.sh $@
+	chmod +x $@
+
+ifeq ($(NATIVE_HOST),yes)
+test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt --skip tests/opt-skip.txt
+	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
+	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
+	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
+
+# The native suite with a collection before every GC_STRESS-th allocation, which
+# is what finds an address of the heap that the code keeps across a call; and
+# with a runtime built with the address and undefined behaviour sanitizers.
+# Neither is part of make check.
+test-native-stress: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build/.doctor-native
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-opt" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-opt-stress
+	chmod +x bin/runevm-opt-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt-stress --skip tests/opt-skip.txt
+	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE)) \
+	  RUNEVM_OPT="$(ROOT)/bin/runevm-opt-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
+
+ASAN_CFLAGS := -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+
+build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
+	@mkdir -p build/asan/obj
+	for f in $(RT_SRCS) vm/sys_$(SYS).c vm/native.c; do \
+	  $(CC) $(ASAN_CFLAGS) -c -o build/asan/obj/$$(basename $$f .c).o $$f || exit 1; done
+	cp build/rune-offsets.s build/asan/rune-offsets.s
+	rm -f $@
+	$(AR) rcs $@ build/asan/obj/*.o
+
+test-native-asan: bin/runevm-opt bin/runeopt-mlton build/asan/librune.a $(RUNE) vm | build/.doctor-native
+	printf '#!/bin/sh\nexec $(CC) -fsanitize=address,undefined "$$@"\n' > build/asan/cc
+	chmod +x build/asan/cc
+	RUNEOPT_RUNTIME="$(ROOT)/build/asan" RUNEOPT_CC="$(ROOT)/build/asan/cc" RUNEOPT_CACHE="$(ROOT)/tests/out/opt-cache-asan" \
+	  sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-opt --skip tests/opt-skip.txt
+else
+test-native test-native-stress test-native-asan:
+	@echo "$@: runeopt makes programs for Linux on x86-64, and this is not one: nothing to test"
+endif
+
 hosts: | build/.doctor-matrix
 	sh scripts/fetch-hosts.sh
 
@@ -561,6 +619,7 @@ check:
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt
+	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs
