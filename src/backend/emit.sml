@@ -46,6 +46,7 @@ struct
 
   fun instrSize (Op (_, args)) = 1 + 4 * List.length args
     | instrSize (OpLab _) = 5
+    | instrSize (OpLabImm _) = 9
     | instrSize (Lab _) = 0
     | instrSize (Pos _) = 0
 
@@ -90,6 +91,7 @@ struct
         case it of
           Op (opc, args) => String.concat (u8 opc :: List.map i32 args)
         | OpLab (opc, l) => u8 opc ^ i32 (labelOffset l)
+        | OpLabImm (opc, l, i) => u8 opc ^ i32 (labelOffset l) ^ i32 i
         | Lab _ => ""
         | Pos _ => ""
       val header =

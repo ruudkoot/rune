@@ -36,13 +36,13 @@ struct
   fun endsRun opc =
     opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL orelse opc = Opcodes.PRIM orelse opc = Opcodes.RAISE
     orelse opc = Opcodes.RET orelse opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF
-    orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.HALT
+    orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIFNOTTAG orelse opc = Opcodes.HALT
 
   (* The numbers the checks of the code give native_fatal, which has the
      messages of vm/interp.c. *)
   val fatalTuple = 0 val fatalCon = 1 val fatalExn = 2 val fatalEnv = 3 val fatalSelf = 4
   val fatalGlobal = 5 val fatalSelect = 6 val fatalContag = 7 val fatalJumpIfNot = 8
-  val fatalJumpIf = 9 val fatalPopHandler = 10
+  val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11
 
   val primNames : string vector = Vector.fromList (List.map #1 Prims.table)
 
@@ -281,6 +281,7 @@ struct
         Vector.app
           (fn {opc, a, ...} : RbcCheck.instr =>
              if opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT
+                orelse opc = Opcodes.JUMPIFNOTTAG
              then Array.update (target, Array.sub (index, a), true)
              else if opc = Opcodes.PUSHHANDLER then Array.update (handler, Array.sub (index, a), true)
              else ())
@@ -577,6 +578,25 @@ struct
                     line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
                     line ("cmpq $0, " ^ payload (h - 1));
                     line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
+                 else if opc = Opcodes.JUMPIFNOTTAG then
+                   (* CONTAG's two cases, each compared with b *)
+                   let val ptr = lab pc ^ "_ptr"
+                   in
+                     line ("cmpb $T_CON0, " ^ slot (h - 1));
+                     line ("jne " ^ ptr);
+                     line ("cmpq $" ^ num b ^ ", " ^ payload (h - 1));
+                     line ("jne " ^ lab a);
+                     line ("jmp " ^ lab next);
+                     put (ptr ^ ":\n");
+                     line ("cmpb $T_PTR, " ^ slot (h - 1));
+                     line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
+                     line ("mov " ^ payload (h - 1) ^ ", %rax");
+                     line "cmpb $K_CON, OBJ_KIND(%rax)";
+                     line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
+                     line "movzwl OBJ_CONTAG(%rax), %eax";
+                     line ("cmp $" ^ num b ^ ", %rax");
+                     line ("jne " ^ lab a)
+                   end
                  else if opc = Opcodes.PUSHHANDLER then
                    (flushSp (); callC ("vm_push_handler", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.POPHANDLER then

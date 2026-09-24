@@ -256,7 +256,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     while (pc < p->code_len) {
         uint8_t op = p->code[pc];
         int len = instr_length(op);
-        if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_PUSHHANDLER) {
+        if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_JUMPIFNOTTAG || op == OP_PUSHHANDLER) {
             int32_t t = read_i32(p->code + pc + 1);
             if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
                 free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;

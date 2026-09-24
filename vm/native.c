@@ -272,6 +272,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
     case 8: vm_fatal(vm, "JUMPIFNOT on non-bool"); break;
     case 9: vm_fatal(vm, "JUMPIF on non-bool"); break;
     case 10: vm_fatal(vm, "POPHANDLER with no handler"); break;
+    case 11: vm_fatal(vm, "JUMPIFNOTTAG on non-constructor"); break;
     default: vm_fatal(vm, "unknown check %d", what);
     }
 }

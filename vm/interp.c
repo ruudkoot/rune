@@ -167,6 +167,17 @@ int vm_loop(VM *vm) {
             if (v.u.i == 0) vm->pc = (uint32_t)a;
             break;
         }
+        case OP_JUMPIFNOTTAG: {
+            /* CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o, the test of a match
+               against a constructor, in one */
+            Value v = vm_pop(vm);
+            int64_t tag = 0;
+            if (v.tag == T_CON0) tag = v.u.i;
+            else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+            else vm_fatal(vm, "JUMPIFNOTTAG on non-constructor");
+            if (tag != b) vm->pc = (uint32_t)a;
+            break;
+        }
         case OP_JUMPIF: {
             Value v = vm_pop(vm);
             if (v.tag != T_CON0) vm_fatal(vm, "JUMPIF on non-bool");

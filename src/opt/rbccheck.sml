@@ -62,7 +62,7 @@ struct
        orelse opc = Opcodes.LOCAL orelse opc = Opcodes.ENV orelse opc = Opcodes.SELF orelse opc = Opcodes.GLOBAL
        orelse opc = Opcodes.NEWEXN orelse opc = Opcodes.BUILTINEXN then (0, 1)
     else if opc = Opcodes.SETLOCAL orelse opc = Opcodes.SETGLOBAL orelse opc = Opcodes.POP
-       orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF then (1, 0)
+       orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOTTAG then (1, 0)
     else if opc = Opcodes.TUPLE then (a, 1)
     else if opc = Opcodes.SELECT orelse opc = Opcodes.CON orelse opc = Opcodes.DECON orelse opc = Opcodes.CONTAG
        orelse opc = Opcodes.EXNCON orelse opc = Opcodes.EXNARG then (1, 1)
@@ -80,7 +80,7 @@ struct
     orelse opc = Opcodes.JUMP orelse opc = Opcodes.HALT
 
   fun isJump opc =
-    opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT
+    opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIFNOTTAG
 
   fun check (p : Rbc.program) : facts =
     let

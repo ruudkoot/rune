@@ -271,7 +271,8 @@ struct
             val opc = byte (code, pc)
             val len = instrLength opc
           in
-            if opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.PUSHHANDLER
+            if opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOT
+               orelse opc = Opcodes.JUMPIFNOTTAG orelse opc = Opcodes.PUSHHANDLER
             then (case i32At (code, pc + 1) of
                     In t => if t < 0 orelse t >= codeLen orelse not (Array.sub (starts, t))
                             then fail ("bad jump target at " ^ Int.toString pc) else ()

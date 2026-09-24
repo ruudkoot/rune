@@ -152,6 +152,7 @@ Opcode numbers are assigned in the order of `vm/opcodes.def`.
 | `RET` | | Return the top of stack to the caller. |
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
 | `JUMPIFNOT o` / `JUMPIF o` | offset | Pop a bool, jump if false / true. |
+| `JUMPIFNOTTAG o, t` | offset, tag | Pop a constructor value (nullary or not), jump unless its tag is `t`: what `CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o` does, in one instruction, which is how the compiler tests a constructor in a match. |
 | `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
 | `RAISE` | | Pop an exception value and raise it. |
 | `NEWEXN k` | string constant | Create a fresh exception constructor named `k`. |

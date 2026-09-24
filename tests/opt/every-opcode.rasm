@@ -48,6 +48,36 @@ function main 2
   PRIM int_to_string
   PRIM print
   POP
+  # JUMPIFNOTTAG on a nullary constructor and on one with an argument, each
+  # both ways: 11
+  CON0 2
+  JUMPIFNOTTAG @n1 2
+  INT 1
+  PRIM int_to_string
+  PRIM print
+  POP
+n1:
+  CON0 2
+  JUMPIFNOTTAG @n2 3
+  CONST %bad
+  PRIM print
+  POP
+n2:
+  INT 0
+  CON 7
+  JUMPIFNOTTAG @n3 7
+  INT 1
+  PRIM int_to_string
+  PRIM print
+  POP
+n3:
+  INT 0
+  CON 7
+  JUMPIFNOTTAG @n4 6
+  CONST %bad
+  PRIM print
+  POP
+n4:
   UNIT
   POP
   # SETGLOBAL, GLOBAL: 9
