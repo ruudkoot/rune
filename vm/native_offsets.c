@@ -22,6 +22,12 @@ int main(void) {
     SET("VM_BUILTIN_EXNS", offsetof(VM, builtin_exns));
     SET("VM_INSTRUCTIONS", offsetof(VM, instructions));
     SET("VM_PC", offsetof(VM, pc));
+    SET("VM_HEAP_FROM", offsetof(VM, heap_from));
+    SET("VM_HEAP_SIZE", offsetof(VM, heap_size));
+    SET("VM_HEAP_USED", offsetof(VM, heap_used));
+    SET("VM_BYTES_ALLOCATED", offsetof(VM, bytes_allocated));
+    SET("VM_OBJECTS_ALLOCATED", offsetof(VM, objects_allocated));
+    SET("VM_GC_STRESS", offsetof(VM, gc_stress));
     SET("FRAME_SIZE", sizeof(Frame));
     SET("FRAME_FUNC", offsetof(Frame, func));
     SET("FRAME_RET_PC", offsetof(Frame, ret_pc));
@@ -49,5 +55,6 @@ int main(void) {
     SET("K_REF", K_REF);
     SET("K_ARRAY", K_ARRAY);
     SET("K_EXN", K_EXN);
+    SET("K_EXNCON", K_EXNCON);
     return 0;
 }

@@ -343,6 +343,30 @@ struct
           fun copy (from, to) = (line ("movdqu " ^ from ^ ", %xmm0"); line ("movdqu %xmm0, " ^ to))
           val emitters = {line = line, put = put, slot = slot, payload = payload}
           fun put0 (tag, value, k) = (line ("movb $" ^ tag ^ ", " ^ slot k); line ("movq $" ^ value ^ ", " ^ payload k))
+          fun putPtr k = (line ("movb $T_PTR, " ^ slot k); line ("mov %rax, " ^ payload k))
+          (* M11: an object of n > 0 fields, its header written, in rax, by
+             bumping heap_used as vm_alloc does, with the same counts; to
+             `slow` when it does not fit or --gc-stress is on, which is
+             vm_alloc's to decide. The fields are the caller's to write. *)
+          fun alloc (kind, contag, n, slow) =
+            let val size = num (8 + 16 * n)
+            in
+              line "cmpq $0, VM_GC_STRESS(%r12)";
+              line ("jne " ^ slow);
+              line "mov VM_HEAP_USED(%r12), %rax";
+              line "mov VM_HEAP_SIZE(%r12), %rdx";
+              line "sub %rax, %rdx";
+              line ("cmp $" ^ size ^ ", %rdx");
+              line ("jb " ^ slow);
+              line ("lea " ^ size ^ "(%rax), %rdx");
+              line "mov %rdx, VM_HEAP_USED(%r12)";
+              line "add VM_HEAP_FROM(%r12), %rax";
+              line ("addq $" ^ size ^ ", VM_BYTES_ALLOCATED(%r12)");
+              line "incq VM_OBJECTS_ALLOCATED(%r12)";
+              line ("movl $" ^ kind ^ "+" ^ num (65536 * (contag mod 65536)) ^ ", (%rax)");
+              line ("movl $" ^ num n ^ ", OBJ_LEN(%rax)")
+            end
+          fun field k = "OBJ_FIELDS+" ^ num (16 * k) ^ "(%rax)"
           fun startsRun i =
             i = first orelse endsRun (#opc (ins (i - 1))) orelse Array.sub (target, i) orelse Array.sub (handler, i)
           fun runLength i =
@@ -366,6 +390,16 @@ struct
               fun setPc () = line ("movl $" ^ num next ^ ", VM_PC(%r12)")
               fun flushCount () = line "mov %r15, VM_INSTRUCTIONS(%r12)"
               fun callC (fname, args) = (line "mov %r12, %rdi"; List.app line args; line ("call " ^ fname))
+              (* M11: an instruction that allocates, inline, and its helper,
+                 which collects, out of line *)
+              fun inlineAlloc (fast, helper) =
+                let val slow = lab pc ^ "_slow" val done = lab pc ^ "_done"
+                in
+                  fast slow;
+                  put (done ^ ":\n");
+                  slows := (fn () => (put (slow ^ ":\n"); flushSp (); setPc (); helper (); line reloadStack;
+                                      line ("jmp " ^ done))) :: !slows
+                end
               fun expectObj (k, kind, what) =
                 (line ("cmpb $T_PTR, " ^ slot k);
                  line ("jne " ^ check (pc, next, what, 0));
@@ -418,14 +452,20 @@ struct
                  else if opc = Opcodes.POP then ()
                  else if opc = Opcodes.TUPLE then
                    if a = 0 then put0 ("T_UNIT", "0", h)
-                   else (flushSp (); setPc (); callC ("native_tuple", ["mov $" ^ num a ^ ", %esi"]); line reloadStack)
+                   else
+                     inlineAlloc (fn slow =>
+                                    (alloc ("K_TUPLE", 0, a, slow);
+                                     List.app (fn k => copy (slot (h - a + k), field k)) (List.tabulate (a, fn k => k));
+                                     putPtr (h - a)),
+                                  fn () => callC ("native_tuple", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.SELECT then
                    (expectObj (h - 1, "K_TUPLE", fatalTuple);
                     line ("cmpl $" ^ num a ^ ", OBJ_LEN(%rax)");
                     line ("jbe " ^ check (pc, next, fatalSelect, a));
                     copy ("OBJ_FIELDS+" ^ num (16 * a) ^ "(%rax)", slot (h - 1)))
                  else if opc = Opcodes.CON then
-                   (flushSp (); setPc (); callC ("native_con", ["mov $" ^ num a ^ ", %esi"]); line reloadStack)
+                   inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (slot (h - 1), field 0); putPtr (h - 1)),
+                                fn () => callC ("native_con", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.DECON then
                    (expectObj (h - 1, "K_CON", fatalCon); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
                  else if opc = Opcodes.CONTAG then
@@ -447,9 +487,13 @@ struct
                      put (done ^ ":\n")
                    end
                  else if opc = Opcodes.CLOSURE then
-                   (flushSp (); setPc ();
-                    callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]);
-                    line reloadStack)
+                   inlineAlloc (fn slow =>
+                                  (alloc ("K_CLOSURE", 0, b + 1, slow);
+                                   line ("movb $T_INT, " ^ field 0);
+                                   line ("movq $" ^ num a ^ ", OBJ_FIELDS+8(%rax)");
+                                   List.app (fn k => copy (slot (h - b + k), field (k + 1))) (List.tabulate (b, fn k => k));
+                                   putPtr (h - b)),
+                                fn () => callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
                  else if opc = Opcodes.SETENV then
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL then
@@ -542,13 +586,30 @@ struct
                  else if opc = Opcodes.RAISE then
                    (flushCount (); flushSp (); setPc (); callC ("native_raise", []); line "jmp *%rax")
                  else if opc = Opcodes.NEWEXN then
-                   (flushSp (); setPc (); callC ("native_newexn", ["mov $" ^ num a ^ ", %esi"]); line reloadStack)
+                   inlineAlloc (fn slow =>
+                                  (alloc ("K_EXNCON", 0, 1, slow);
+                                   line "mov VM_CONSTS(%r12), %rcx";
+                                   copy (num (16 * a) ^ "(%rcx)", field 0);
+                                   putPtr h),
+                                fn () => callC ("native_newexn", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.BUILTINEXN then
                    (line ("mov VM_BUILTIN_EXNS+" ^ num (8 * a) ^ "(%r12), %rax");
                     line ("movb $T_PTR, " ^ slot h);
                     line ("mov %rax, " ^ payload h))
                  else if opc = Opcodes.MKEXN then
-                   (flushSp (); setPc (); callC ("native_mkexn", []); line reloadStack)
+                   (* a constructor that is none is the helper's to report,
+                      after it has allocated, as the interpreter does *)
+                   inlineAlloc (fn slow =>
+                                  (line ("cmpb $T_PTR, " ^ slot (h - 2));
+                                   line ("jne " ^ slow);
+                                   line ("mov " ^ payload (h - 2) ^ ", %rcx");
+                                   line "cmpb $K_EXNCON, OBJ_KIND(%rcx)";
+                                   line ("jne " ^ slow);
+                                   alloc ("K_EXN", 0, 2, slow);
+                                   copy (slot (h - 2), field 0);
+                                   copy (slot (h - 1), field 1);
+                                   putPtr (h - 2)),
+                                fn () => callC ("native_mkexn", []))
                  else if opc = Opcodes.EXNCON then
                    (expectObj (h - 1, "K_EXN", fatalExn); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
                  else if opc = Opcodes.EXNARG then
