@@ -1,5 +1,5 @@
-(* What runeopt relies on and the loader does not promise (D0 of
-   docs/plans/codegen.md): in every function, the height of the stack above
+(* What runeopt relies on and the loader does not promise (docs/native.md,
+   The contract): in every function, the height of the stack above
    the locals, and the number of handlers the function has installed, are
    the same on every path into an instruction; no path pops below the
    locals, leaves the function by a jump, or falls off its end; no TAILCALL

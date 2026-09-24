@@ -215,7 +215,7 @@ in [bytecode.md](bytecode.md).
 
 ## A native program
 
-`runeopt` ([plans/codegen.md](plans/codegen.md)) translates a `.rbc` into a
+`runeopt` ([native.md](native.md)) translates a `.rbc` into a
 program for Linux on x86-64 that runs on the same runtime, linked into it:
 the heap, the collector, the primitives and the system layer of this page are
 the ones `runevm` has, and so are the value stack, the frames and the

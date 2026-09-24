@@ -3,7 +3,7 @@
    numbers of the tags and kinds it tests. runeopt writes these names, never
    the numbers, so what it writes does not depend on the layout, and the
    Makefile makes build/librune/rune-offsets.s with this for the program to
-   include (docs/plans/codegen.md, D2). */
+   include (docs/native.md, What the executable holds). */
 #include "vm.h"
 
 #define SET(name, value) printf(".set %s, %lu\n", name, (unsigned long)(value))

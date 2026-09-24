@@ -1,7 +1,7 @@
 (* runeopt, the native code generator: the command line. It reads an .rbc
    as the loader of runevm does, checks what a translation relies on, and
    translates it into an executable for Linux on x86-64.
-   docs/plans/codegen.md is the plan. *)
+   docs/native.md says how. *)
 structure OptMain =
 struct
   fun println s = print (s ^ "\n")
@@ -28,7 +28,7 @@ struct
     \              pass it)\n\
     \  --check     check that each file is one runeopt can translate: one the\n\
     \              loader of runevm accepts, whose code keeps what the\n\
-    \              translation relies on (docs/plans/codegen.md, D0)\n\
+    \              translation relies on (docs/native.md)\n\
     \  --disasm    print the bytecode as runevm --disasm does\n\
     \  --inlined   list the primitives whose common case the code does itself\n\
     \  --lines     print the line table of the file: pc file:line:column of\n\

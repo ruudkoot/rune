@@ -39,7 +39,7 @@
 #   make perf       the wall-clock times of tests/perf in the configurations of
 #                   the matrix
 #   make test-native  the suites with every program translated to native code
-#                   by runeopt (docs/plans/codegen.md); part of make check
+#                   by runeopt (docs/native.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
 # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32 and bin/rune-polyml exist
@@ -89,7 +89,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.ml
 # A VM is the runtime, RT_SRCS and a system layer, with the dispatch loop and
 # the command line on top (vm/interp.c, vm/main.c). The runtime is also
 # build/librune.a, which bin/runevm links, and so will a program runeopt
-# makes (docs/plans/codegen.md); the other VMs compile the same list.
+# makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
 RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/prims.c vm/image.c
 VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
@@ -227,7 +227,7 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 	chmod +x $@
 
 # ---------------------------------------------------------------- runeopt
-# The native code generator (docs/plans/codegen.md): the sources of
+# The native code generator (docs/native.md): the sources of
 # sources-opt.txt, built like runedoc by every host and by the compiler itself
 # (bin/runeopt, on runevm). It reads no library; its wrappers pass instead the
 # directory of the runtime a program is linked with (build/librune.a and
@@ -489,7 +489,7 @@ test-stress: $(RUNE) vm | build/.doctor-check
 
 # ------------------------------------------------------------- native code
 # The suites with every program translated by runeopt and run as native
-# code (docs/plans/codegen.md, M4). bin/runevm-opt takes what runevm takes and
+# code (docs/native.md, Tests). bin/runevm-opt takes what runevm takes and
 # does so (scripts/runevm-opt.sh), keeping each translation by the checksum
 # of its bytecode, so every runner takes it as --vm. test-native runs
 # tests/lang (tests/opt-skip.txt lists what native code does not do yet, and

@@ -1,9 +1,10 @@
 #!/bin/sh
-# The tests of runeopt, the native code generator (docs/plans/codegen.md):
+# The tests of runeopt, the native code generator (docs/native.md):
 #   tests/opt/run-opt-tests.sh [--runeopt BIN] [--rune BIN] [--vm BIN] [-j N]
 # 1. Files it refuses: a file the loader of runevm refuses is refused with
 #    the loader's message, and a file the loader accepts but whose code does
-#    not keep what a translation relies on (D0) with a message of its own;
+#    not keep what a translation relies on (docs/native.md, The contract)
+#    with a message of its own;
 #    runeopt exits with status 1 and runs nothing.
 # 2. Every program of the compiler, of runedoc and of the suites that have
 #    been run (tests/out, tests/out/matrix/rune) passes --check, and
@@ -98,7 +99,7 @@ refuse local "bad operand for LOCAL at 0" "$out/local.rbc"
 printf "$header$zero$zero$one$zero$one$zero$one\\000$one\\001\\000\\000\\000a$one\\004\\000\\000\\000\\011\\000\\002\\002" > "$out/linepc.rbc"
 refuse linepc "line table out of range" "$out/linepc.rbc"
 
-# What the loader accepts and runeopt does not (D0). Each is one function f
+# What the loader accepts and runeopt does not (the contract). Each is one function f
 # of one local (or two, f and g), with no debug information.
 # code BYTES LEN: a program of one function f whose code is BYTES, LEN long
 code() {
@@ -182,7 +183,7 @@ if [ -n "$missing" ]; then
 fi
 printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
 same every-opcode "$out/every-opcode.rbc"
-# The primitives runeopt inlines (D12) on their edge cases: prims.sml must
+# The primitives runeopt inlines on their edge cases: prims.sml must
 # have a PRIM of each, as --disasm shows it.
 if "$rune" tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.cerr"; then
   missing=""
@@ -206,7 +207,7 @@ for src in examples/hello.sml examples/fib.sml examples/nqueens.sml tests/perf/f
   else echo "FAIL opt.run.$name: rune failed: $(head -1 "$out/$name.cerr")"; fail=$((fail + 1)); fi
 done
 
-# Images (D11): a program that saves itself, saved by runevm and carried on
+# Images: a program that saves itself, saved by runevm and carried on
 # natively (runeopt --from-image), and the other way round; and an image of
 # another program, which a native program refuses with OS.SysErr.
 # check NAME WANT GOT: the file GOT holds what the file WANT holds

@@ -1,5 +1,5 @@
 # Programs that `make test-native` leaves out, one per line: what a program
-# runeopt made does not do (docs/plans/codegen.md):
+# runeopt made does not do (docs/native.md):
 #
 #   NAME CATEGORY: reason
 #

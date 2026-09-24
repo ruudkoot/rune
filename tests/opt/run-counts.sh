@@ -1,5 +1,6 @@
 #!/bin/sh
-# The counts of --count, natively and on runevm (docs/plans/codegen.md, D6):
+# The counts of --count, natively and on runevm (docs/native.md,
+# Counting):
 #   tests/opt/run-counts.sh [--vm BIN] [--native BIN] [-j N] RBC...
 # Each program is run by both, with the arguments and the input its test
 # gives it (the siblings of tests/lang: NAME.args, NAME.stdin), and must

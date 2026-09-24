@@ -1,7 +1,7 @@
 #!/bin/sh
 # An executable from SML sources, for trying runeopt out: the sources are
 # compiled by bin/rune and the bytecode translated by bin/runeopt
-# (docs/plans/codegen.md). Not installed.
+# (docs/native.md). Not installed.
 #   scripts/opt.sh [-o EXE] FILE.sml ...
 # EXE defaults to the first file without .sml; its bytecode is kept beside it
 # as EXE.rbc. RUNE and RUNEOPT choose other builds (RUNEOPT=bin/runeopt-mlton

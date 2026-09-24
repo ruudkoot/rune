@@ -17,7 +17,7 @@
 #                          needs Windows, or WSL, which starts an .exe
 #   rune:opt               bin/rune, and every program translated to native
 #                          code by runeopt and run so: bin/runevm-opt
-#                          (RUNEVM_OPT=; docs/plans/codegen.md)
+#                          (RUNEVM_OPT=; docs/native.md)
 #   windows                rune:windows and rune:windows32
 #   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
@@ -903,7 +903,7 @@ resolve() {
     rune:opt)
       # The library and the compiler of the `rune` configuration, and every
       # program run as native code: bin/runevm-opt translates the bytecode
-      # with runeopt and runs the executable (docs/plans/codegen.md, M4).
+      # with runeopt and runs the executable (docs/native.md, Tests).
       cmd1=${RUNE:-$root/bin/rune}
       cmd2=${RUNEVM_OPT:-$root/bin/runevm-opt}
       id=rune:opt

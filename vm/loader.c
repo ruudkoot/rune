@@ -87,7 +87,7 @@ int load_program(VM *vm, const char *path, char *err, size_t errlen) {
 
 /* A program from the bytes of a .rbc, which stay the caller's: what
    load_program does with a file, and a program of runeopt's with the .rbc
-   it carries (docs/plans/codegen.md). */
+   it carries (docs/native.md). */
 int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t errlen) {
     Reader r = { data, size, 0, 0 };
     Program *p = &vm->prog;

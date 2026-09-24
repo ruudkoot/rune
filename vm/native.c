@@ -1,4 +1,4 @@
-/* A program runeopt made (docs/plans/codegen.md): its main, and what its
+/* A program runeopt made (docs/native.md): its main, and what its
    code calls. The code is the bytecode translated an instruction at a time,
    with the value stack, the frames and the handlers kept where the
    interpreter keeps them, so the collector, a trace, Runtime.stats and an
@@ -139,8 +139,8 @@ static const void *lookup(const int32_t *table, uint32_t n, uint32_t pc) {
 
 /* Whether a world read from an image runs the program this one carries: the
    same code, functions, globals and constants. Nothing else can be carried
-   on, since the native code is the translation of that program alone (D11
-   of docs/plans/codegen.md). */
+   on, since the native code is the translation of that program alone
+   (docs/native.md, Images). */
 static int same_program(const VM *world) {
     VM *mine = calloc(1, sizeof(VM));
     if (!mine) return 0;

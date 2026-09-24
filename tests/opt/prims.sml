@@ -1,5 +1,5 @@
-(* The primitives that runeopt does inline (runeopt --inlined; D12 of
-   docs/plans/codegen.md) on their edge cases: tests/opt runs this under
+(* The primitives that runeopt does inline (runeopt --inlined;
+   docs/native.md) on their edge cases: tests/opt runs this under
    runevm and as native code and wants the same output and the same counts.
    Each result, or the exception raised, is printed; the inline code takes
    the common case and leaves the rest -- an overflow, a divisor of zero, an

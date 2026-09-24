@@ -1,7 +1,7 @@
 (* The .rbc format read back, as the loader of runevm reads it (vm/loader.c):
    a file that the loader refuses is refused here, at the same point and with
-   the same message. docs/bytecode.md is the format; docs/plans/codegen.md is
-   the plan of runeopt, which this is the first part of.
+   the same message. docs/bytecode.md is the format; docs/native.md is
+   how runeopt translates, which this is the first part of.
 
    A number of the file is a u32 or an i32, and an int has 31 bits on one of
    the hosts, so no number is read into an int that could not hold it. A

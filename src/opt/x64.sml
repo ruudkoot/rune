@@ -1,22 +1,24 @@
 (* The translation of a program into x86-64 assembly, for the GNU assembler
-   (docs/plans/codegen.md, D0 to D6). Every instruction becomes the code that
-   does what its case in vm/interp.c does, in the order of the bytecode:
-   nothing is dropped, merged or moved. The value stack, the frames and the
-   handlers are the interpreter's; the code keeps four things in registers:
+   (docs/native.md). Every instruction becomes the code that does what its
+   case in vm/interp.c does, in the order of the bytecode: nothing is
+   dropped, merged or moved. The value stack, the frames and the handlers
+   are the interpreter's; the code keeps four things in registers:
 
      r12  the VM
      r13  vm->stack, reloaded after every call into C
      rbp  16 times the base of the current frame, reloaded where the frame
           changes (a function's entry, a return, a handler)
      r15  the count of instructions executed, written to the VM before
-          anything that can read it (D6)
+          anything that can read it (docs/native.md, Counting)
 
    The height of the stack before every instruction is known (RbcCheck), so
    a slot is an address in the frame, and vm->sp is written only before a
-   call into C. A call, a return and a raise go through vm/native.c, which
-   answers with the native code to jump to (D3, option B); a primitive is a
-   call through prim_table. The offsets and numbers of the VM's layout are
-   names that rune-offsets.s, made from vm/vm.h, defines. *)
+   call into C. A call and a return push and pop the VM's frame here, and an
+   allocation bumps the heap here, with vm/native.c as the slow path, which
+   answers with the native code to jump to; a raise goes through
+   vm/native.c, and a primitive is a call through prim_table unless its
+   common case is done here (fastPrim). The offsets and numbers of the VM's
+   layout are names that rune-offsets.s, made from vm/vm.h, defines. *)
 structure X64 =
 struct
   (* A number as the assembler writes it. *)
@@ -32,7 +34,7 @@ struct
   fun symbol (name : string, f : int) : string = quote (name ^ "#" ^ Int.toString f)
 
   (* The instructions after which a straight run of code ends, and with it
-     what the counter adds at once (D6). *)
+     what the counter adds at once (docs/native.md, Counting). *)
   fun endsRun opc =
     opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL orelse opc = Opcodes.PRIM orelse opc = Opcodes.RAISE
     orelse opc = Opcodes.RET orelse opc = Opcodes.JUMP orelse opc = Opcodes.JUMPIF
@@ -46,7 +48,8 @@ struct
 
   val primNames : string vector = Vector.fromList (List.map #1 Prims.table)
 
-  (* D12: the primitives whose common case the code does itself. A PRIM of
+  (* The primitives whose common case the code does itself (docs/native.md,
+     Primitives done inline). A PRIM of
      one of them checks the tags (and the kinds, and the bounds) of its
      arguments and does the operation; anything else -- a wrong tag, an
      overflow, a divisor of zero, an index out of bounds, a real or a pointer
@@ -743,7 +746,7 @@ struct
       val handlerPcs = List.filter (fn pc => Array.sub (handler, Array.sub (index, pc)) andalso reachable (Array.sub (index, pc)))
                                    (List.map #pc (Vector.foldr op:: [] instrs))
     in
-      put ("# Made by runeopt " ^ Config.version ^ " from " ^ String.toString rbc ^ " (docs/plans/codegen.md).\n");
+      put ("# Made by runeopt " ^ Config.version ^ " from " ^ String.toString rbc ^ " (docs/native.md).\n");
       line ".include \"rune-offsets.s\"";
       Vector.appi (fn (k, file) => line (".file " ^ Int.toString (k + 1) ^ " " ^ quote file)) (#files p);
       line ".text";

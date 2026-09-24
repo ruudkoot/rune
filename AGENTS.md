@@ -68,7 +68,7 @@ keep these invariants:
   `tests/basis/host/rune-prim.sml`, which the `xc1` configurations of the
   Basis Library suite run. Bump the `.rbc` version in
   `src/backend/emit.sml` and `vm/loader.c` if the file layout changes.
-* **Native code** (`runeopt`, `docs/plans/codegen.md`): an instruction has,
+* **Native code** (`runeopt`, `docs/native.md`): an instruction has,
   beside its case in `vm/interp.c`, a template in `src/opt/x64.sml`, a stack
   effect in `src/opt/rbccheck.sml`, and where it calls into C a helper in
   `vm/native.c`; a change to what an instruction does changes all of them,
@@ -80,7 +80,13 @@ keep these invariants:
   primitives whose common case the code does itself (`runeopt --inlined`,
   `fastPrim` in `src/opt/x64.sml`) change with their C code in
   `vm/prims.c`: `tests/opt/prims.sml` runs each on its edge cases, natively
-  and on `runevm`, and must use every one of them.
+  and on `runevm`, and must use every one of them. The templates also copy
+  the push and pop of a frame (`vm_push_frame`, `native_call`, `native_ret`)
+  and the fast path of `vm_alloc` (when it collects, `--gc-stress`, the
+  header, the counts): a change to either changes the templates too. An
+  instruction in the list `reads` of `x64.sml` must never write its top
+  operand in place, since a LOCAL may have left it in its local
+  (`docs/native.md`).
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

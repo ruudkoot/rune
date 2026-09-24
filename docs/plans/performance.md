@@ -5,7 +5,7 @@ This plan covers the speed of what Rune runs:
 * the compiler Rune ships, `bin/rune` (`bin/rune.rbc` on `runevm`), which
   `make check` spends most of its time in;
 * the programs it compiles, run by `runevm` or translated to x86-64 by
-  `runeopt` ([codegen.md](codegen.md)).
+  `runeopt` ([native.md](../native.md), [codegen.md](codegen.md)).
 
 It says where the time goes and ranks the work that remains, from what is
 cheap and safe to what is large. Numbers are from 2026-09-24, on the
@@ -483,8 +483,8 @@ Each is S or S-M and changes no output:
 
 The rest of codegen's M15: an instruction's result stays in a register for
 the next one. It takes part of LOCAL, SETLOCAL and SELECT (19% of native
-code between them), for a change of every template. See codegen.md's M15
-and *Performance of the milestones*.
+code between them), for a change of every template. The part that was
+built, a pushed local read where it is, is in [native.md](../native.md).
 
 ### 19. 8-byte values
 

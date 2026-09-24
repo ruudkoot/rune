@@ -1,9 +1,9 @@
 #!/bin/sh
 # A program as runeopt translates it, run as runevm would run its bytecode
-# (docs/plans/codegen.md, M4): every runner of the suites takes it as --vm,
+# (docs/native.md, Tests): every runner of the suites takes it as --vm,
 # as it takes bin/runevm-ppc64, and needs to know nothing of native code.
 #   scripts/runevm-opt.sh [runevm options] FILE.rbc [args ...]
-# The options a native program takes go to it in RUNEVM_OPTIONS (D8), and
+# The options a native program takes go to it in RUNEVM_OPTIONS (docs/native.md), and
 # FILE.rbc, which is its name under runevm, in RUNEVM_NAME; the program
 # takes both out of its environment, so that it sees the one it sees under
 # runevm. (This is sh, not bash, which changes the variable _.) --restore

@@ -2,7 +2,7 @@
    and handlers, raising, the trace of a failure, structural equality, how a
    program begins and how a run ends. runevm is interp.c and main.c on top
    of it, heap.c, loader.c, prims.c, image.c and a system layer, and so is a
-   program that runeopt made (docs/plans/codegen.md). */
+   program that runeopt made (docs/native.md). */
 #include "vm.h"
 #include <stdarg.h>
 

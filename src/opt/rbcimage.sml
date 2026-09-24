@@ -1,6 +1,6 @@
 (* The program in an image (vm/image.c), as an .rbc: what runeopt --from-image
-   translates, so that the executable resumes the image (D11 of
-   docs/plans/codegen.md, option 6). An image carries its program whole --
+   translates, so that the executable resumes the image (docs/native.md,
+   Images). An image carries its program whole --
    constants, functions, code, files and line table -- after the heap, from
    which the string constants are taken; what comes after the program, the
    state of the world, is not read.

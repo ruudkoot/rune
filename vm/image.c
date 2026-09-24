@@ -663,8 +663,8 @@ int vm_become(VM *vm, const char *path) {
         vm->io_errno = EINVAL;
         return 0;
     }
-    /* Native code runs its own program and no other (docs/plans/codegen.md,
-       D11): an image of another is refused, and this world goes on. */
+    /* Native code runs its own program and no other (docs/native.md,
+       Images): an image of another is refused, and this world goes on. */
     if (vm->native) {
         if (!vm_same_program || !vm_same_program(next)) {
             vm_release(next);

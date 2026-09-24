@@ -1,5 +1,6 @@
 #!/bin/sh
-# The debug information of programs runeopt made (docs/plans/codegen.md, D7):
+# The debug information of programs runeopt made (docs/native.md,
+# Debug information):
 #   tests/opt/run-debug.sh [--runeopt BIN] [-j N] RBC...
 # For each program, translated as bin/runevm-opt translates it (or taken from
 # its cache, tests/out/opt-cache):
