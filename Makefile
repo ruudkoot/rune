@@ -226,28 +226,30 @@ bin/runedoc-polyml: bin/runedoc-polyml.bin Makefile
 # ---------------------------------------------------------------- runeopt
 # The native code generator (docs/plans/codegen.md): the sources of
 # sources-opt.txt, built like runedoc by every host and by the compiler itself
-# (bin/runeopt, on runevm). It reads no library, so its wrappers pass none; the
-# SML/NJ builds come after runedoc's, for the same reason as runedoc's do.
+# (bin/runeopt, on runevm). It reads no library; its wrappers pass instead the
+# directory of the runtime a program is linked with (build/librune.a and
+# build/rune-offsets.s). The SML/NJ builds come after runedoc's, for the same
+# reason as runedoc's do.
 runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj bin/runeopt-smlnj32 bin/runeopt-polyml
 
-bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton
+bin/runeopt-mlton.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-mlton-main.sml | build/.doctor-mlton build/librune.a
 	@mkdir -p bin
 	$(MLTON) -output $@ build/runeopt.mlb
 
 bin/runeopt-mlton: bin/runeopt-mlton.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runeopt-smlnj: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj bin/runedoc-smlnj32
 	@mkdir -p bin
 	$(MLBUILD) build/runeopt.cm OptMain.main bin/runeopt-smlnj.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj.heap" "$$@"\n' "$(SMLNJ)" > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ)" > $@
 	chmod +x $@
 
 bin/runeopt-smlnj32: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runeopt-smlnj
 	@mkdir -p bin
 	$(MLBUILD32) build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj32.heap" "$$@"\n' "$(SMLNJ32)" > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj32.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ32)" > $@
 	chmod +x $@
 
 bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-polyml-main.sml | build/.doctor-polyml
@@ -255,7 +257,7 @@ bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-p
 	$(POLYC) -o $@ build/runeopt-polyml-build.sml
 
 bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-polyml.bin" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
 # ---------------------------------------------------------------- VM
@@ -265,9 +267,17 @@ build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p build/librune
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/librune.a: $(RT_OBJS)
+# native.o is the main of a program runeopt makes and what its code calls
+# (vm/native.c): it is in the library, but nothing of runevm refers to it,
+# so no VM links it. rune-offsets.s is the layout of the VM for the code.
+build/librune.a: $(RT_OBJS) build/librune/native.o build/rune-offsets.s
 	rm -f $@
-	$(AR) rcs $@ $(RT_OBJS)
+	$(AR) rcs $@ $(RT_OBJS) build/librune/native.o
+
+build/rune-offsets.s: vm/native_offsets.c $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p build/librune
+	$(CC) $(CFLAGS) -o build/librune/native-offsets vm/native_offsets.c
+	build/librune/native-offsets > $@
 
 bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
@@ -447,8 +457,8 @@ test-doc: $(RUNEDOC) vm
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
-test-opt: $(RUNEOPT) vm
-	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --vm $(RUNEVM)
+test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a
+	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE) --vm $(RUNEVM)
 
 perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
@@ -528,7 +538,7 @@ bin/runeopt.rbc: bin/rune bin/rune.rbc $(OPT_SRCS)
 	bin/rune -o $@ $(OPT_SRCS)
 
 bin/runeopt-boot: bin/runeopt.rbc Makefile
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runeopt.rbc" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
 bin/runeopt: bin/runeopt-boot

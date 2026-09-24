@@ -63,7 +63,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make mlton` / `make smlnj` / `make smlnj32` / `make polyml` | `bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml`; none of them is `bin/rune` |
 | `make host-builds` | all four host builds, of the compiler, of `runedoc` and of `runeopt` |
 | `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
-| `make runeopt` | `bin/runeopt`, the native code generator ([docs/plans/codegen.md](plans/codegen.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
+| `make runeopt` | `bin/runeopt`, the native code generator ([docs/plans/codegen.md](plans/codegen.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32` and `-polyml`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
 | `make vm` | `bin/runevm` |
 | `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
@@ -71,7 +71,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make test-all` | run the suite with each of the four host builds |
 | `make docs` | write the generated documentation of the basis library, `docs/generated/basis`, with `bin/runedoc`; it is committed, and `make check-docs` fails when it is not what the sources give (`runedoc --check`) |
 | `make test-doc` | run the tests of the documentation generator (`tests/doc/run-doc-tests.sh`) with `bin/runedoc`; `RUNEDOC=bin/runedoc-mlton` is the faster loop |
-| `make test-opt` | run the tests of the native code generator (`tests/opt/run-opt-tests.sh`) with `bin/runeopt`: the files it refuses, and `--check` and `--disasm` over the programs the other suites compiled, so it runs after them; `RUNEOPT=bin/runeopt-mlton` is the faster loop |
+| `make test-opt` | run the tests of the native code generator (`tests/opt/run-opt-tests.sh`) with `bin/runeopt`: the files it refuses, `--check` and `--disasm` over the programs the other suites compiled (so it runs after them), and a few programs translated, among them `tests/opt/every-opcode.rasm`, which runs every instruction; `RUNEOPT=bin/runeopt-mlton` is the faster loop |
 | `make check-cross` | compile every test, example and Basis Library suite program, the compiler, `runedoc` and `runeopt` with all five builds and compare the bytecode; run the five builds of `runedoc` on the same input and compare what they write (`scripts/check-doc-cross.sh`), and the same for `runeopt` (`scripts/check-opt-cross.sh`) |
 | `make check-docs` | verify docs, tests and `.def` files are in sync, that the library's signatures have the tokens of their transcriptions, that the comments of `lib/basis` and `src` are in the language of doc comments (`runedoc --lint`, [doc-comments.md](doc-comments.md)), that `docs/generated/basis` is up to date (which includes that the Basis Library suite has a check for every specified member of every structure: `runedoc` reads the suite's labels), and that the structures the library says implement a signature are the ones the suite matches against it (`tests/basis/check-claims.sh`), and that the notes of the documentation and `tests/basis/deviations.txt` agree (`tests/basis/check-notes.sh`) |
 | `make test-basis` | run the Basis Library suite (`tests/basis`) with `bin/rune` |
@@ -372,6 +372,8 @@ rules so that one source tree builds everywhere and emits identical output:
 bin/rune [options] file.sml ...      # produces first-file.rbc (or -o FILE)
 bin/runevm [options] file.rbc [args] # runs it
 bin/rune-mlton [options] file.sml ... # the same compiler, built by MLton
+bin/runeopt file.rbc -o prog          # an executable of it (Linux, x86-64)
+RUNEVM_OPTIONS=--count ./prog [args]  # runs it, with the options of runevm
 ```
 
 Run `bin/rune --help` and `bin/runevm --help` for the option lists, or

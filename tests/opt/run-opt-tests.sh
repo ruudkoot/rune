@@ -1,6 +1,6 @@
 #!/bin/sh
 # The tests of runeopt, the native code generator (docs/plans/codegen.md):
-#   tests/opt/run-opt-tests.sh [--runeopt BIN] [--vm BIN] [-j N]
+#   tests/opt/run-opt-tests.sh [--runeopt BIN] [--rune BIN] [--vm BIN] [-j N]
 # 1. Files it refuses: a file the loader of runevm refuses is refused with
 #    the loader's message, and a file the loader accepts but whose code does
 #    not keep what a translation relies on (D0) with a message of its own;
@@ -10,23 +10,30 @@
 #    --disasm prints what runevm --disasm prints. The VM prints a real
 #    constant with C's %g and runeopt the text the file carries, so those
 #    lines are compared through awk's printf, which is C's.
+# 3. Programs translated: every-opcode.rasm, which runs every instruction of
+#    vm/opcodes.def and must name each, and the examples and a few programs of
+#    tests/perf, compiled by --rune. Each prints what it prints under runevm,
+#    exits as it does there, and --count says the same.
 set -u
 opt=bin/runeopt
+rune=bin/rune
 vm=bin/runevm
 jobs=""
 one=""
 while [ $# -gt 0 ]; do
   case $1 in
     --runeopt) opt=$2; shift 2 ;;
+    --rune) rune=$2; shift 2 ;;
     --vm) vm=$2; shift 2 ;;
     -j) jobs=$2; shift 2 ;;
     --one) one=$2; shift 2 ;;
-    *) echo "usage: $0 [--runeopt BIN] [--vm BIN] [-j N]" >&2; exit 2 ;;
+    *) echo "usage: $0 [--runeopt BIN] [--rune BIN] [--vm BIN] [-j N]" >&2; exit 2 ;;
   esac
 done
 cd "$(dirname "$0")/../.."
 case $opt in /*) ;; *) opt=$(pwd)/$opt ;; esac
 case $vm in /*) ;; *) vm=$(pwd)/$vm ;; esac
+case $rune in /*) ;; *) rune=$(pwd)/$rune ;; esac
 out=tests/out/opt
 mkdir -p "$out"
 
@@ -136,6 +143,48 @@ if [ -n "$failures" ]; then
   fail=$((fail + $(printf '%s\n' "$failures" | wc -l)))
 fi
 pass=$((pass + nprog))
+
+# same NAME RBC: the program of RBC translated does what it does under runevm
+same() {
+  name=$1 rbc=$2
+  if ! "$opt" "$rbc" -o "$out/$name" > "$out/$name.opt" 2>&1; then
+    echo "FAIL opt.run.$name: runeopt failed: $(head -1 "$out/$name.opt")"
+    fail=$((fail + 1))
+    return
+  fi
+  "$vm" --count "$rbc" < /dev/null > "$out/$name.vm.stdout" 2> "$out/$name.vm.stderr"
+  vcode=$?
+  RUNEVM_OPTIONS=--count "$out/$name" < /dev/null > "$out/$name.stdout" 2> "$out/$name.stderr"
+  ncode=$?
+  if [ "$vcode" != "$ncode" ]; then
+    echo "FAIL opt.run.$name: exit status $ncode, runevm's $vcode"
+    fail=$((fail + 1))
+  elif ! cmp -s "$out/$name.stdout" "$out/$name.vm.stdout"; then
+    echo "FAIL opt.run.$name: the output differs from runevm's (diff $out/$name.stdout $out/$name.vm.stdout)"
+    fail=$((fail + 1))
+  elif ! cmp -s "$out/$name.stderr" "$out/$name.vm.stderr"; then
+    echo "FAIL opt.run.$name: standard error or the counts differ (diff $out/$name.stderr $out/$name.vm.stderr)"
+    fail=$((fail + 1))
+  else
+    pass=$((pass + 1))
+  fi
+}
+
+missing=""
+for op in $(awk '!/^#/ && NF { print $1 }' vm/opcodes.def); do
+  grep -qE "^[[:space:]]*$op([[:space:]]|$)" tests/opt/every-opcode.rasm || missing="$missing $op"
+done
+if [ -n "$missing" ]; then
+  echo "FAIL opt.every-opcode: tests/opt/every-opcode.rasm does not run$missing"
+  fail=$((fail + 1))
+fi
+printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
+same every-opcode "$out/every-opcode.rbc"
+for src in examples/hello.sml examples/fib.sml examples/nqueens.sml tests/perf/fib.sml tests/perf/tak.sml; do
+  name=$(echo "$src" | tr '/' '_' | sed 's/\.sml$//')
+  if "$rune" "$src" -o "$out/$name.rbc" 2> "$out/$name.cerr"; then same "$name" "$out/$name.rbc"
+  else echo "FAIL opt.run.$name: rune failed: $(head -1 "$out/$name.cerr")"; fail=$((fail + 1)); fi
+done
 
 echo "opt: passed $pass, failed $fail ($nprog programs checked and disassembled)"
 [ "$fail" = 0 ]

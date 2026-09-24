@@ -110,6 +110,9 @@ typedef struct Frame {
     uint32_t ret_pc;
     size_t base;     /* stack index of local 0 */
     Obj *closure;    /* NULL for the toplevel */
+    /* In a program runeopt made (vm/native.c), the native code at ret_pc.
+       An image does not carry it: it is an address of one process. */
+    const void *native_ret;
 } Frame;
 
 typedef struct Handler {
@@ -155,6 +158,7 @@ typedef struct VM {
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
+    int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */

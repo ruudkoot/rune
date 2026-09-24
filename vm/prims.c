@@ -2099,6 +2099,9 @@ static int p_rt_save(VM *vm) {
    old world on failure. */
 static int p_rt_restore(VM *vm) {
     Obj *s = check_obj(vm, ARG(0), K_STRING, "rt_restore");
+    /* A program runeopt made cannot become another world yet: its code is
+       not the bytecode an image carries (docs/plans/codegen.md, D11). */
+    if (vm->native) { sys_set_errno(ENOSYS); return ret(vm, 1, mk_int(-1)); }
     char *path = malloc((size_t)s->len + 1);
     if (!path) vm_fatal(vm, "out of memory");
     memcpy(path, OBJ_BYTES(s), s->len);

@@ -33,5 +33,20 @@ run disasm-rune --disasm bin/rune.rbc
 printf 'RUNE\002\000\000\000\001\000\000\000\003\360\377\377\377' > "$out/bad.rbc"
 run refused --check "$out/bad.rbc"
 
+# The assembly of a program, from every build: runeopt's own, and that of the
+# program of tests/opt that runs every instruction.
+printf "$(awk -v opdefs=vm/opcodes.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/opt/every-opcode.rasm)" > "$out/every-opcode.rbc"
+for prog in bin/runeopt.rbc "$out/every-opcode.rbc"; do
+  name=$(basename "$prog" .rbc)
+  for c in $builds; do
+    "bin/runeopt-$c" -S "$prog" -o "$out/$name.$c.s" 2> "$out/$name.$c.s.err" ||
+      { echo "FAIL opt-cross $name: runeopt-$c -S failed: $(head -1 "$out/$name.$c.s.err")"; status=1; }
+  done
+  for c in $builds; do
+    cmp -s "$out/$name.mlton.s" "$out/$name.$c.s" ||
+      { echo "FAIL opt-cross $name: the mlton and $c builds write different assembly (diff $out/$name.mlton.s $out/$name.$c.s)"; status=1; }
+  done
+done
+
 [ $status = 0 ] && echo "check-opt-cross: the builds of runeopt agree ($builds)"
 exit $status
