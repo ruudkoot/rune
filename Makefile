@@ -610,7 +610,7 @@ perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 # All host builds emit the same bytecode, so BOOTHOST (mlton, smlnj, smlnj32
 # or polyml) only decides which one builds stage 1, not what comes out.
 bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
-	bin/rune-$(BOOTHOST) --lint -o $@ $(BOOT_SRCS)
+	bin/rune-$(BOOTHOST) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@

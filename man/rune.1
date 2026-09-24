@@ -127,6 +127,16 @@ a program.
 Print the size of what every pass makes and the time it took, on standard
 error.
 .TP
+.BI \-\-read\-mid " file"
+Read a program of the intermediate representation Mid, in the text
+.B \-\-dump\-after=mid
+prints, and make and check it as the pass
+.B mid
+would; no bytecode is written.
+.TP
+.B \-\-mid\-roundtrip
+Check that Mid printed with its positions, read and printed again is the same.
+.TP
 .B \-\-version
 Print the version and exit.
 .TP

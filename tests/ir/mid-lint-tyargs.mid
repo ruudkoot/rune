@@ -1,0 +1,8 @@
+(* fail: abstracts over 1 variables and is given 0 types *)
+(* A use of a polymorphic variable gives a type for each variable it
+   abstracts over. *)
+(funs
+  (fn g1 ['a] ((v1 : 'a)) : 'a
+    (return v1)))
+(val g2 : int
+  (return (app g1 5)))

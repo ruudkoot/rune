@@ -16,6 +16,8 @@ struct
   val noWarnings = ref false
   val showVersion = ref false
   val showHelp = ref false
+  val readMid : string option ref = ref NONE   (* --read-mid FILE: a Mid program, not SML *)
+  val midRoundTrip = ref false                 (* --mid-roundtrip: check MidText against itself *)
 
   val usage =
     "usage: rune [options] file.sml ...\n\
@@ -45,6 +47,9 @@ struct
     \  --lint            check what every pass makes (docs/ir.md)\n\
     \  --fuel=N          make no more than N rewrites (scripts/bisect-fuel.sh)\n\
     \  --pass-stats      print the size and the time of every pass\n\
+    \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
+    \                    make and check it as the pass mid would, but no bytecode\n\
+    \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
     \  --version         print the version and exit\n\
     \  --help            print this message\n"
 
@@ -82,6 +87,9 @@ struct
     | "-O1" :: rest => (Pass.level := 1; parse rest)
     | "-O2" :: rest => (Pass.level := 2; parse rest)
     | "--lint" :: rest => (Pass.lint := true; parse rest)
+    | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
+    | ["--read-mid"] => raise Usage "--read-mid requires a file"
+    | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
     | "--pass-stats" :: rest => (Pass.stats := true; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)

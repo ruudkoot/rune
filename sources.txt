@@ -26,6 +26,10 @@ src/core/lambda.sml
 src/core/lambdalint.sml
 src/core/matchcomp.sml
 src/core/translate.sml
+src/core/mid.sml
+src/core/midlint.sml
+src/core/midtext.sml
+src/core/tomid.sml
 src/backend/codegen.sml
 src/backend/emit.sml
 src/driver/basismanifest.sml

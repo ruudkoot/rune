@@ -1,0 +1,21 @@
+(* dump: --dump-after=mid *)
+(* A Mid program written by hand, read, checked and printed: the names are
+   numbered again in the order they appear, and a constant of its kind's
+   type is written bare. *)
+(datatype shape () (0 "Dot") (1 "Box" : int * int))
+(funs
+  (fn g7 ((v10 : shape)) : int
+    (join j3 ()
+      (return 0)
+    (let (v11 : int) (tag v10)
+    (let (v12 : bool) (prim poly_eq v11 1 : (int * int) -> bool)
+    (if v12
+      (let (v13 : int * int) (decon 1 v10)
+      (let (v14 : int) (select 0 v13)
+      (let (v15 : int) (select 1 v13)
+      (return (prim int_mul v14 v15 : (int * int) -> int)))))
+      (jump j3)))))))
+(val g2 : int
+  (let (v1 : int * int) (tuple 3 (4 : int))
+  (let (v2 : shape) (con 1 v1 : shape)
+  (return (app g7 v2)))))

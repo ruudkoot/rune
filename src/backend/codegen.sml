@@ -47,6 +47,7 @@ struct
     | Seq (a, b) => fv (b, bound, fv (a, bound, acc))
     | SetGlobal (_, a) => fv (a, bound, acc)
     | Mark (_, a) => fv (a, bound, acc)
+    | Rest a => fv (a, bound, acc)
     | Tuple es => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc es
     | Select (_, a) => fv (a, bound, acc)
     | Con (_, _, a) => fv (a, bound, acc)
@@ -183,6 +184,7 @@ struct
     | Inst (a, _) => gen (ctx, a, tail)
     | Unit => emit (ctx, Op (Opcodes.UNIT, []))
     | Mark (sp, a) => (markPos (ctx, sp); gen (ctx, a, tail))
+    | Rest a => gen (ctx, a, tail)
     | Fn (x, _, b) => ignore (genClosure (ctx, x, b, NONE, []))
     | App (f, a) =>
         (gen (ctx, f, false); gen (ctx, a, false);

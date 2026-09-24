@@ -44,6 +44,8 @@ struct
     | ExnArg of Ty.ty * lexp              (* the payload of an exception, of the type its constructor gives it *)
     | Prim of string * Ty.ty option * lexp list  (* its type at this use; NONE where LambdaLint works it out *)
     | Mark of Source.span * lexp          (* where in the source this came from *)
+    | Rest of lexp                        (* the rest of the program, after a declaration of its
+                                             top level: where Mid's top level splits it *)
 
   (* The expression under whatever positions were put on it. Code that looks
      at the shape of an expression asks for this first. *)
@@ -102,6 +104,7 @@ struct
         | ExnArg (_, a) => "exnarg " ^ go a
         | Prim (p, _, args) => p ^ "(" ^ String.concatWith ", " (List.map go args) ^ ")"
         | Mark (_, e) => go e
+        | Rest e => go e
     in go e end
 
   (* The same for a dump (--dump-after, tests/ir): one node to a line, its
@@ -141,12 +144,14 @@ struct
         | NewExn n => SOME ("(newexn " ^ n ^ ")")
         | BuiltinExn k => SOME ("(builtinexn " ^ Int.toString k ^ ")")
         | Mark (_, e) => atom e
+        | Rest e => atom e
         | _ => NONE
       fun isAtom e =
         case e of
           Var _ => true | Global _ => true | Const _ => true | Unit => true | Con0 _ => true
         | Fail => true | NewExn _ => true | BuiltinExn _ => true
         | Mark (_, e) => isAtom e
+        | Rest e => isAtom e
         | _ => false
       fun indent n = CharVector.tabulate (n, fn _ => #" ")
       (* The lines of e at indentation n; the head of a node is named before
@@ -197,6 +202,7 @@ struct
                   else node (fn () => "exnarg : " ^ ty t, [a])
               | Prim (p, _, args) => node (fn () => "prim " ^ p, args)
               | Mark (_, e) => lines (n, e)
+              | Rest e => lines (n, e)
               | _ => [indent n ^ "?"]
             end
     in
@@ -227,5 +233,6 @@ struct
     | ExnArg (_, a) => 1 + size a
     | Prim (_, _, args) => List.foldl (fn (e, n) => n + size e) 1 args
     | Mark (_, a) => size a
+    | Rest a => size a
     | _ => 1
 end

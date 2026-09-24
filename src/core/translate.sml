@@ -343,6 +343,21 @@ struct
       [] => k ()
     | d :: rest => transDec (d, fn () => transDecs (rest, k))
 
+  (* The same at the top level of the program and of its structures, where
+     the continuation of each declaration is marked as the rest of the
+     program: that is where Mid's top level splits it into definitions
+     (ToMid), rather than nest the whole program once per declaration. *)
+  and transTopDecs (decs : dec list, k : unit -> lexp) : lexp =
+    case decs of
+      [] => k ()
+    | d :: rest => transTopDec (d, fn () => Rest (transTopDecs (rest, k)))
+
+  and transTopDec (d : dec, k : unit -> lexp) : lexp =
+    case d of
+      DLocal (d1, d2, _) => transTopDecs (d1, fn () => transTopDecs (d2, k))
+    | DAbstype (_, _, decs, _) => transTopDecs (decs, k)
+    | _ => transDec (d, k)
+
   and patInfo (slot : patinfo option ref, sp) =
     case !slot of
       SOME i => i
@@ -459,7 +474,7 @@ struct
      elaborated copy of the functor body. *)
   and transStrexp (se : strexp, k : unit -> lexp) : lexp =
     case se of
-      StrStruct (decs, _) => transDecs (decs, k)
+      StrStruct (decs, _) => transTopDecs (decs, k)
     | StrId _ => k ()
     | StrAscribe (e, _, _, _) => transStrexp (e, k)
     | StrApp (_, arg, slot, sp) =>
@@ -467,7 +482,7 @@ struct
           case !slot of
             SOME body => transStrexp (body, k)
           | NONE => bug (sp, "functor application not elaborated"))
-    | StrLet (decs, e, _) => transDecs (decs, fn () => transStrexp (e, k))
+    | StrLet (decs, e, _) => transTopDecs (decs, fn () => transStrexp (e, k))
 
   (* Recursive bindings: globals are assigned in sequence (closures refer to
      them through the global table); locals use LetRec. *)
@@ -491,5 +506,5 @@ struct
     end
 
   fun transProgram (decs : dec list) : lexp =
-    (funNames := IntMap.empty; structPath := []; schemes := IntMap.empty; transDecs (decs, fn () => Unit))
+    (funNames := IntMap.empty; structPath := []; schemes := IntMap.empty; transTopDecs (decs, fn () => Unit))
 end

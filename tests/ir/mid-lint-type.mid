@@ -1,0 +1,4 @@
+(* fail: a result has type string where int is wanted *)
+(* The lint refuses a global of type int whose value is a string. *)
+(val g1 : int
+  (return "one"))

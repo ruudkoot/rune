@@ -1,6 +1,7 @@
 #!/bin/sh
 # Every program of tests/lang and tests/perf compiled at -O0 and at -O2,
-# the lint of every pass on (docs/ir.md). Where the two bytecodes differ,
+# the lint of every pass on and Mid's text checked against itself
+# (--mid-roundtrip; docs/ir.md). Where the two bytecodes differ,
 # both are run as tests/run-tests.sh runs the program -- its .args, .stdin
 # and .vmargs -- and must print the same, on both streams, and exit the same
 # (docs/plans/middle-end.md, M2). Where they are the same, there is nothing
@@ -28,7 +29,7 @@ mkdir -p "$out"
 if [ -n "$one" ]; then
   name=$(echo "$one" | tr '/' '_')
   for level in 0 2; do
-    if ! "$rune" -O$level --lint "$one.sml" -o "$out/$name.O$level.rbc" 2> "$out/$name.O$level.cerr"; then
+    if ! "$rune" -O$level --lint --mid-roundtrip "$one.sml" -o "$out/$name.O$level.rbc" 2> "$out/$name.O$level.cerr"; then
       echo "FAIL levels.$name: -O$level: $(grep -m1 . "$out/$name.O$level.cerr")"; exit 0
     fi
   done

@@ -27,8 +27,10 @@ struct
   (* the argument of each exception, by its stamp *)
   val exnArgs : Types.ty option IntMap.map ref = ref IntMap.empty
   (* each datatype, by the stamp of its type name: the ids of its parameters,
-     and each constructor's tag, name and argument *)
-  type datatypeInfo = {params : int list, cons : (int * string * Types.ty option) list}
+     and each constructor's tag, name and argument, as the elaborator gave it
+     or, for one Mid's text declares (MidText), as it is *)
+  datatype argTy = FromElab of Types.ty | Direct of ty
+  type datatypeInfo = {params : int list, cons : (int * string * argTy option) list}
   val datatypes : datatypeInfo IntMap.map ref = ref IntMap.empty
   (* what each type made abstract by an opaque signature stands for, by the
      stamp of its fresh name *)
@@ -36,7 +38,12 @@ struct
 
   fun bindVar (stamp : int, t : Types.ty) = binders := IntMap.insert (!binders, stamp, t)
   fun bindExn (stamp : int, arg : Types.ty option) = exnArgs := IntMap.insert (!exnArgs, stamp, arg)
-  fun bindDatatype (stamp : int, info : datatypeInfo) = datatypes := IntMap.insert (!datatypes, stamp, info)
+  fun bindDatatype (stamp : int, {params, cons} : {params : int list, cons : (int * string * Types.ty option) list}) =
+    datatypes := IntMap.insert (!datatypes, stamp,
+                                {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map FromElab a)) cons})
+  fun bindDatatypeDirect (stamp : int, {params, cons} : {params : int list, cons : (int * string * ty option) list}) =
+    datatypes := IntMap.insert (!datatypes, stamp,
+                                {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons})
   fun bindRealization (stamp : int, fcn : Types.tyfcn) = realizations := IntMap.insert (!realizations, stamp, fcn)
 
   (* bool and list, which no declaration makes *)
@@ -64,6 +71,15 @@ struct
          | NONE => Con (#stamp c, #name c, List.map fromTypes args))
     | Types.TRecord fields => Tuple (List.map (fromTypes o #2) fields)
     | Types.TArrow (a, b) => Arrow (fromTypes a, fromTypes b)
+
+  fun argOf (FromElab t) = fromTypes t
+    | argOf (Direct t) = t
+
+  (* A datatype, its constructors' arguments as types. *)
+  fun datatypeOf (stamp : int) : {params : int list, cons : (int * string * ty option) list} option =
+    case IntMap.find (!datatypes, stamp) of
+      NONE => NONE
+    | SOME {params, cons} => SOME {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map argOf a)) cons}
 
   (* ---- the types the translation makes ---- *)
 
@@ -132,7 +148,7 @@ struct
                let
                  val s = ListPair.foldl (fn (p, a, s) => IntMap.insert (s, p, a)) IntMap.empty (params, args)
                in
-                 SOME (Option.map (subst s o fromTypes) arg)
+                 SOME (Option.map (subst s o argOf) arg)
                end)
 
   (* A type as text, a variable written as the functions given say. *)
@@ -146,12 +162,13 @@ struct
         | Con (_, n, [a]) => atomic a ^ " " ^ n
         | Con (_, n, xs) => "(" ^ String.concatWith ", " (List.map go xs) ^ ") " ^ n
         | Tuple [] => "unit"
+        | Tuple [x] => "{" ^ go x ^ "}"         (* a record of one field *)
         | Tuple xs => String.concatWith " * " (List.map atomic xs)
         | Arrow (a, b) => atomic a ^ " -> " ^ go b
         | ExnCon => "exncon"
       and atomic t =
         case t of
-          Tuple (_ :: _) => "(" ^ go t ^ ")"
+          Tuple (_ :: _ :: _) => "(" ^ go t ^ ")"
         | Arrow _ => "(" ^ go t ^ ")"
         | _ => go t
     in go t end

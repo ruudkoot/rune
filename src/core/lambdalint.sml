@@ -176,6 +176,7 @@ struct
                  if List.exists (fn Never => true | _ => false) found then Never
                  else Error.bug ("primitive " ^ p ^ " without a type"))
         | Mark (_, a) => go (a, scope, tail)
+        | Rest a => go (a, scope, tail)
     in
       ignore (go (e, IntMap.empty, false))
     end

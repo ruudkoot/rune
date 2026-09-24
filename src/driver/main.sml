@@ -104,6 +104,24 @@ struct
       else OS.Process.failure
     end
 
+  (* The stage that makes Mid, from Lambda or from its text. *)
+  fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
+    Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
+                check = fn p => (MidLint.check p; if !Options.midRoundTrip then MidText.roundTrip p else ()),
+                size = Mid.size}
+               f
+
+  (* --read-mid: a Mid program from its text, made and checked as the pass
+     mid makes and checks one; there is no bytecode from Mid yet. *)
+  fun readMid (file : string) : OS.Process.status =
+    let
+      val text = #text (Source.readFile file) handle IO.Io _ => raise Options.Usage ("cannot read " ^ file)
+      fun parse t = MidText.parse t handle MidText.Syntax msg => raise Options.Usage (file ^ ": " ^ msg)
+    in
+      ignore (midStage NONE parse text);
+      OS.Process.success
+    end
+
   fun compile () : OS.Process.status =
     let
       val inputs = !Options.inputs
@@ -153,10 +171,24 @@ struct
 
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        emitProgram (inputs,
+        let
+          (* Mid, launched dark (docs/plans/middle-end.md, M3): the code is
+             still generated from Lambda, so Mid is made only where it is
+             checked (--lint, as make check does), printed or named in
+             --passes. Made on every compile it would cost 8% of the
+             instructions of compiling hello.sml and 13% of the bootstrap's. *)
+          val wanted =
+            case !Pass.only of
+              SOME names => List.exists (fn n => n = "mid") names
+            | NONE => !Pass.level >= 1
+                      andalso (!Pass.lint orelse Pass.asked (Pass.dumpBefore, "mid") orelse Pass.asked (Pass.dumpAfter, "mid"))
+          val () = if wanted then ignore (midStage (SOME Lambda.show) ToMid.program lam) else ()
+        in
+          emitProgram (inputs,
                      Pass.stage {name = "codegen", showIn = SOME Lambda.show, show = Codegen.dump,
                                  check = fn _ => (), size = Codegen.size}
                                 (fn lam => Codegen.compile (lam, !Translate.funNames)) lam)
+        end
 
   and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
     let
@@ -172,6 +204,7 @@ struct
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
      else if !Options.dumpTokens then dumpTokens ()
+     else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
