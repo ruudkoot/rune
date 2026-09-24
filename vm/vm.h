@@ -185,22 +185,47 @@ size_t obj_size(const Obj *o);      /* header and payload, rounded as the heap l
 void vm_gc(VM *vm, size_t needed);
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
 
-/* runtime.c: all of a VM but its dispatch loop and its command line */
+/* runtime.c: all of a VM but its dispatch loop and its command line. What
+   the loop does at every instruction is inline here, where it can be made
+   part of the loop; only what grows an array is not. */
+/* A function that never returns: the loop needs nothing kept for after it. */
+#if defined(__GNUC__)
+#define VM_NORETURN __attribute__((noreturn))
+#else
+#define VM_NORETURN
+#endif
+
 void vm_init(VM *vm, size_t heap);           /* the standard files and the heap */
+VM_NORETURN void vm_fatal(VM *vm, const char *fmt, ...);
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
+void vm_grow_frames(VM *vm);                 /* make room for another frame */
 static inline void vm_push(VM *vm, Value v) {
     if (vm->sp >= vm->stack_cap) vm_grow_stack(vm, vm->sp + 1);
     vm->stack[vm->sp++] = v;
 }
-Value vm_pop(VM *vm);
-Value *vm_top(VM *vm, size_t depth);  /* pointer to stack[sp-1-depth] */
-void vm_fatal(VM *vm, const char *fmt, ...);
+static inline Value vm_pop(VM *vm) {
+    if (vm->sp == 0) vm_fatal(vm, "stack underflow");
+    return vm->stack[--vm->sp];
+}
+static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-depth] */
+    if (vm->sp <= depth) vm_fatal(vm, "stack underflow");
+    return &vm->stack[vm->sp - 1 - depth];
+}
+static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
+    size_t idx = vm->frames_active ? vm->fp + 1 : 0;
+    if (idx >= vm->frames_cap) vm_grow_frames(vm);
+    vm->frames[idx].func = func;
+    vm->frames[idx].closure = closure;
+    vm->frames[idx].ret_pc = ret_pc;
+    vm->frames[idx].base = base;
+    vm->fp = idx;
+    vm->frames_active = 1;
+}
 /* Every normal end of a run (halt, the exit primitive, an uncaught exception)
    goes through vm_exit, which flushes and prints what --count and --stats ask for. */
-void vm_exit(VM *vm, int status);
+VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
-void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base);
 void vm_push_handler(VM *vm, uint32_t pc);
 void vm_start(VM *vm);                       /* the builtin exceptions, and function 0 called with () */
 void vm_cons(VM *vm);                        /* stack: ..., hd, tl  ->  ..., hd :: tl */

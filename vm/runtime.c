@@ -58,31 +58,12 @@ void vm_grow_stack(VM *vm, size_t need) {
     vm->stack_cap = ncap;
 }
 
-Value vm_pop(VM *vm) {
-    if (vm->sp == 0) vm_fatal(vm, "stack underflow");
-    return vm->stack[--vm->sp];
-}
-
-Value *vm_top(VM *vm, size_t depth) {
-    if (vm->sp <= depth) vm_fatal(vm, "stack underflow");
-    return &vm->stack[vm->sp - 1 - depth];
-}
-
-void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
-    size_t idx = vm->frames_active ? vm->fp + 1 : 0;
-    if (idx >= vm->frames_cap) {
-        size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
-        Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
-        if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
-        vm->frames = nf;
-        vm->frames_cap = ncap;
-    }
-    vm->frames[idx].func = func;
-    vm->frames[idx].closure = closure;
-    vm->frames[idx].ret_pc = ret_pc;
-    vm->frames[idx].base = base;
-    vm->fp = idx;
-    vm->frames_active = 1;
+void vm_grow_frames(VM *vm) {
+    size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
+    Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
+    if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
+    vm->frames = nf;
+    vm->frames_cap = ncap;
 }
 
 void vm_push_handler(VM *vm, uint32_t pc) {
