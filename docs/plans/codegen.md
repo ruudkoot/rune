@@ -79,7 +79,7 @@ The owner's decisions on the roadmap (2026-09-23):
 | M11, allocation in the templates | done: TUPLE, CON, CLOSURE, NEWEXN and MKEXN bump `heap_used` themselves when the object fits and `--gc-stress` is off, as `vm_alloc` decides, write the header (kind, contag and length in two stores) and the fields from their slots, and add to `bytes_allocated` and `objects_allocated`, so `--count` stays `runevm`'s; otherwise, and for MKEXN on a value that is no exception constructor, they call the helper as before, which collects. The same checks pass as for M10 |
 | M12, a cheaper collector | done, in `vm/heap.c`, so `runevm` too: both semispaces are kept while the heap stays its size, the one collected from being the next collected into, where every collection allocated a new one and freed the old; an object of one to three fields is copied by a `memcpy` of a size the compiler knows, which it inlines; and D14 = C, `--heap-fill P` (1 to 100, 50 by default, which is the rule as before to the byte), an option of `runevm` and of native programs that an image carries as it carries `--gc-stress`, so images are version 3 (`vm/image.c`, `RbcImage`). At a quarter the compiler compiling itself collects 14 times, where at half it collects 24, and ends with the same semispace of 256 MB. `make check`, `make test-native-stress`, `make test-native-asan`, `make test-stress`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass; `tests/vm` refuses `--heap-fill 0` and `101` |
 | M13, the tag test of a match, fused | done, D13 = B: `JUMPIFNOTTAG o, t`, appended to `vm/opcodes.def`, so no other opcode moves and the `.rbc` keeps version 2. `Codegen` emits it for the `If` that `MatchComp.testTag` builds; the interpreter's case, the template, the stack effect in `RbcCheck`, the check of its target in the loader and in `Rbc`, `bytecode.md`, and `every-opcode.rasm`, which takes it both ways on both kinds of constructor. The compiler compiling itself runs 849.6 million instructions where it ran 967.9 million, 12.2% fewer (the 967.9 million had come to within 0.2% of the old budget); `runedoc` 6 to 8% fewer, `intinf_fact` 13.7%, `list_ops` 10.9%, `string_ops` 8.2%, `array_sieve` 5.3%, and `fib`, `tak` and `real_nbody`, which match no constructor, the same. The budgets of `make perf-check` are measured again (`tests/perf/run-perf.sh --update`). `make check`, where the bootstrap reproduces itself with the new opcode, `make test-native-stress`, `make test-native-asan`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass |
-| M14, D3's option A, measured first | not started (est. 5-15% on programs made of calls) |
+| M14, D3's option A, measured first | measured, not built: the processor already predicts the returns M10 made (under M14 below), which leaves at most 0.6% of the bootstrap and 2% of `fib` and `tak` for a native `ret` to gain, against the cost D3 lists |
 | M15, the values of a run in registers | not started (est. 5-10%) |
 
 ## Where we are
@@ -1191,6 +1191,25 @@ predicted by its return stack buffer.
   still reported as `runevm: out of memory (stack)`, a handler's `rsp`
   taken from `vm->fp`, a restore that rebuilds the machine stack from the
   frames, and ASan told of the switch.
+
+**Measured, not built (2026-09-24).** After M10 a return is an indirect
+jump through the frame's `native_ret`, and this machine (a Xeon E5-1680 v3,
+Haswell) predicts nearly all of them. The native bootstrap has 22.4 million
+branch misses in 7.0 billion cycles (`perf stat`); at about 16 cycles each,
+all of them together are at most 5% of its time. Of the samples of `perf
+record -e branch-misses`, which land where the mispredicted jump went, 5 to
+10% land on the label a call returns to: 0.3 to 0.6% of the bootstrap. For
+the programs made of calls, every miss of `fib` together (1.8 million in 1.7
+billion cycles) is at most 1.7% of its time, and of `tak` 2.1%. A native
+`ret` can remove only the misses of returns; the call stays an indirect
+`call`, whose misses (10% of all, at the entries of functions) remain; and
+it costs everything in the list above. The prototype was to be built to
+find out whether A gains, and the measurement answers that with a bound
+below what A would cost to keep, so it was not built. A machine whose
+indirect predictor is weaker, or code whose functions are called from many
+more places, could change the answer: the measurement is two commands
+(`perf stat -e branch-misses:u`, and `perf record` of the same event on a
+program whose labels are symbols, as in the profile above).
 
 ### M15. The values of a run in registers -- L
 
