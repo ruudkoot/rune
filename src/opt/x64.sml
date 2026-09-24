@@ -257,9 +257,8 @@ struct
     end
 
   (* The names of the primitives fastPrim does inline, for runeopt --inlined. *)
-  val inlined : string list =
-    let val none = {line = fn _ => (), put = fn _ => (), slot = fn _ => "", payload = fn _ => ""}
-    in List.filter (fn n => isSome (fastPrim (n, 3, 0, none))) (Vector.foldr op:: [] primNames) end
+  val silent = {line = fn _ : string => (), put = fn _ : string => (), slot = fn _ : int => "", payload = fn _ : int => ""}
+  val inlined : string list = List.filter (fn n => isSome (fastPrim (n, 3, 0, silent))) (Vector.foldr op:: [] primNames)
 
   fun write (put : string -> unit, p : Rbc.program, facts : RbcCheck.facts,
              {rbc : string, rbcSize : int, options : string}) : unit =
@@ -342,7 +341,6 @@ struct
           fun payload k = num (16 * (nlocals + k) + 8) ^ "(%r13,%rbp)"
           fun localSlot l = num (16 * l) ^ "(%r13,%rbp)"
           fun copy (from, to) = (line ("movdqu " ^ from ^ ", %xmm0"); line ("movdqu %xmm0, " ^ to))
-          val emitters = {line = line, put = put, slot = slot, payload = payload}
           fun put0 (tag, value, k) = (line ("movb $" ^ tag ^ ", " ^ slot k); line ("movq $" ^ value ^ ", " ^ payload k))
           fun putPtr k = (line ("movb $T_PTR, " ^ slot k); line ("mov %rax, " ^ payload k))
           (* M11: an object of n > 0 fields, its header written, in rax, by
@@ -373,6 +371,28 @@ struct
           fun runLength i =
             let fun go j = if j > last orelse startsRun j then j - i else go (j + 1)
             in go (i + 1) end
+          (* M15: the value a LOCAL pushed, while it is still only in the
+             local: its height and the local. A LOCAL leaves it there when
+             the instruction after it, in the same run, reads the top of the
+             stack and does not write it in place, and calls into C only on
+             a slow path, which copies it to its slot first; everything else
+             finds the value in its slot, as before. Nothing between the two
+             writes a local, so the local still holds the value. *)
+          val pending : (int * int) option ref = ref NONE
+          fun reads ({opc, a, b, ...} : RbcCheck.instr) =
+            opc = Opcodes.SETLOCAL orelse opc = Opcodes.SETGLOBAL orelse opc = Opcodes.SELECT
+            orelse opc = Opcodes.DECON orelse opc = Opcodes.EXNCON orelse opc = Opcodes.EXNARG
+            orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOTTAG
+            orelse opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL orelse opc = Opcodes.RET
+            orelse (opc = Opcodes.TUPLE andalso a > 0) orelse opc = Opcodes.CON orelse opc = Opcodes.MKEXN
+            orelse (opc = Opcodes.CLOSURE andalso b > 0)
+            orelse (opc = Opcodes.PRIM andalso Vector.sub (RbcCheck.arity, a) >= 2
+                    andalso isSome (fastPrim (Vector.sub (primNames, a), 3, 0, silent)))
+          (* and the next instruction has no position of its own, which would
+             take the place of the LOCAL's in the line table *)
+          fun forwards i =
+            i + 1 <= last andalso not (startsRun (i + 1)) andalso reads (ins (i + 1))
+            andalso Array.sub (lineStarts, #pc (ins (i + 1))) = ~1
           (* a check that fails: the code of native_fatal's message *)
           fun fatalLabel (pc, k) = ".Lf" ^ Int.toString pc ^ "_" ^ Int.toString k
           fun check (pc, next, what, arg) =
@@ -384,6 +404,15 @@ struct
               val {pc, opc, a, b} = ins i
               val h = Vector.sub (#height facts, i)
               val next = pc + Rbc.instrLength opc
+              (* M15: where this instruction reads its operands: the top from
+                 the local a LOCAL left it in, if it did; and the copy to its
+                 slot that the slow paths make before they call into C *)
+              val fwd = !pending
+              val () = pending := NONE
+              fun rslot k = case fwd of SOME (k', l) => if k = k' then localSlot l else slot k | NONE => slot k
+              fun rpayload k =
+                case fwd of SOME (k', l) => if k = k' then num (16 * l + 8) ^ "(%r13,%rbp)" else payload k | NONE => payload k
+              fun unforward () = case fwd of SOME (k, l) => copy (localSlot l, slot k) | NONE => ()
               fun flushSp () =
                 (line ("lea " ^ num (16 * (nlocals + h)) ^ "(%rbp), %rax");
                  line "shr $4, %rax";
@@ -398,13 +427,13 @@ struct
                 in
                   fast slow;
                   put (done ^ ":\n");
-                  slows := (fn () => (put (slow ^ ":\n"); flushSp (); setPc (); helper (); line reloadStack;
-                                      line ("jmp " ^ done))) :: !slows
+                  slows := (fn () => (put (slow ^ ":\n"); unforward (); flushSp (); setPc (); helper ();
+                                      line reloadStack; line ("jmp " ^ done))) :: !slows
                 end
               fun expectObj (k, kind, what) =
-                (line ("cmpb $T_PTR, " ^ slot k);
+                (line ("cmpb $T_PTR, " ^ rslot k);
                  line ("jne " ^ check (pc, next, what, 0));
-                 line ("mov " ^ payload k ^ ", %rax");
+                 line ("mov " ^ rpayload k ^ ", %rax");
                  line ("cmpb $" ^ kind ^ ", OBJ_KIND(%rax)");
                  line ("jne " ^ check (pc, next, what, 0)))
               val () = put (lab pc ^ ":\t# " ^ Vector.sub (Opcodes.names, opc)
@@ -424,8 +453,9 @@ struct
                  else if opc = Opcodes.INT then put0 ("T_INT", num a, h)
                  else if opc = Opcodes.UNIT then put0 ("T_UNIT", "0", h)
                  else if opc = Opcodes.CON0 then put0 ("T_CON0", num a, h)
-                 else if opc = Opcodes.LOCAL then copy (localSlot a, slot h)
-                 else if opc = Opcodes.SETLOCAL then copy (slot (h - 1), localSlot a)
+                 else if opc = Opcodes.LOCAL then
+                   if forwards i then pending := SOME (h, a) else copy (localSlot a, slot h)
+                 else if opc = Opcodes.SETLOCAL then copy (rslot (h - 1), localSlot a)
                  else if opc = Opcodes.ENV then
                    (closureToRax ();
                     line "test %rax, %rax";
@@ -447,7 +477,7 @@ struct
                     copy (num (16 * a) ^ "(%rax)", slot h))
                  else if opc = Opcodes.SETGLOBAL then
                    (line "mov VM_GLOBALS(%r12), %rax";
-                    copy (slot (h - 1), num (16 * a) ^ "(%rax)");
+                    copy (rslot (h - 1), num (16 * a) ^ "(%rax)");
                     line "mov VM_GLOBAL_SET(%r12), %rax";
                     line ("movb $1, " ^ num a ^ "(%rax)"))
                  else if opc = Opcodes.POP then ()
@@ -456,7 +486,7 @@ struct
                    else
                      inlineAlloc (fn slow =>
                                     (alloc ("K_TUPLE", 0, a, slow);
-                                     List.app (fn k => copy (slot (h - a + k), field k)) (List.tabulate (a, fn k => k));
+                                     List.app (fn k => copy (rslot (h - a + k), field k)) (List.tabulate (a, fn k => k));
                                      putPtr (h - a)),
                                   fn () => callC ("native_tuple", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.SELECT then
@@ -465,7 +495,7 @@ struct
                     line ("jbe " ^ check (pc, next, fatalSelect, a));
                     copy ("OBJ_FIELDS+" ^ num (16 * a) ^ "(%rax)", slot (h - 1)))
                  else if opc = Opcodes.CON then
-                   inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (slot (h - 1), field 0); putPtr (h - 1)),
+                   inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (rslot (h - 1), field 0); putPtr (h - 1)),
                                 fn () => callC ("native_con", ["mov $" ^ num a ^ ", %esi"]))
                  else if opc = Opcodes.DECON then
                    (expectObj (h - 1, "K_CON", fatalCon); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
@@ -492,7 +522,7 @@ struct
                                   (alloc ("K_CLOSURE", 0, b + 1, slow);
                                    line ("movb $T_INT, " ^ field 0);
                                    line ("movq $" ^ num a ^ ", OBJ_FIELDS+8(%rax)");
-                                   List.app (fn k => copy (slot (h - b + k), field (k + 1))) (List.tabulate (b, fn k => k));
+                                   List.app (fn k => copy (rslot (h - b + k), field (k + 1))) (List.tabulate (b, fn k => k));
                                    putPtr (h - b)),
                                 fn () => callC ("native_closure", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
                  else if opc = Opcodes.SETENV then
@@ -524,7 +554,7 @@ struct
                         line "add %rsi, %rdx";
                         line "mov %ecx, FRAME_FUNC(%rdx)";
                         line "mov %rax, FRAME_CLOSURE(%rdx)";
-                        copy (slot (h - 1), "(%r13,%rbp)"))
+                        copy (rslot (h - 1), "(%r13,%rbp)"))
                      else
                        (line "mov VM_FP(%r12), %rdx";
                         line "add $1, %rdx";
@@ -541,7 +571,7 @@ struct
                         line "mov %rax, FRAME_CLOSURE(%rdx)";
                         line ("lea " ^ lab next ^ "(%rip), %rsi");
                         line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
-                        copy (slot (h - 1), slot (h - 2));
+                        copy (rslot (h - 1), slot (h - 2));
                         line ("lea " ^ newBase ^ "(%rbp), %rbp"));
                      line "lea rune_functions(%rip), %rdx";
                      line "lea (%rcx,%rcx,2), %rcx";
@@ -549,7 +579,7 @@ struct
                      line "add %rdx, %rsi";
                      line "jmp *%rsi";
                      slows := (fn () =>
-                                 (put (slow ^ ":\n"); flushSp (); setPc ();
+                                 (put (slow ^ ":\n"); unforward (); flushSp (); setPc ();
                                   if tail then callC ("native_tailcall", [])
                                   else callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]);
                                   line "jmp *%rax")) :: !slows
@@ -563,34 +593,34 @@ struct
                      line "mov VM_FP(%r12), %rdx";
                      line "test %rdx, %rdx";
                      line ("jz " ^ slow);
-                     copy (slot (h - 1), "(%r13,%rbp)");
+                     copy (rslot (h - 1), "(%r13,%rbp)");
                      line "imul $FRAME_SIZE, %rdx, %rdx";
                      line "add VM_FRAMES(%r12), %rdx";
                      line "decq VM_FP(%r12)";
                      line "jmp *FRAME_NATIVE_RET(%rdx)";
                      slows := (fn () =>
-                                 (put (slow ^ ":\n"); flushCount (); flushSp (); setPc ();
+                                 (put (slow ^ ":\n"); unforward (); flushCount (); flushSp (); setPc ();
                                   callC ("native_ret", []); line "jmp *%rax")) :: !slows
                    end
                  else if opc = Opcodes.JUMP then line ("jmp " ^ lab a)
                  else if opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF then
-                   (line ("cmpb $T_CON0, " ^ slot (h - 1));
+                   (line ("cmpb $T_CON0, " ^ rslot (h - 1));
                     line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
-                    line ("cmpq $0, " ^ payload (h - 1));
+                    line ("cmpq $0, " ^ rpayload (h - 1));
                     line ((if opc = Opcodes.JUMPIF then "jne " else "je ") ^ lab a))
                  else if opc = Opcodes.JUMPIFNOTTAG then
                    (* CONTAG's two cases, each compared with b *)
                    let val ptr = lab pc ^ "_ptr"
                    in
-                     line ("cmpb $T_CON0, " ^ slot (h - 1));
+                     line ("cmpb $T_CON0, " ^ rslot (h - 1));
                      line ("jne " ^ ptr);
-                     line ("cmpq $" ^ num b ^ ", " ^ payload (h - 1));
+                     line ("cmpq $" ^ num b ^ ", " ^ rpayload (h - 1));
                      line ("jne " ^ lab a);
                      line ("jmp " ^ lab next);
                      put (ptr ^ ":\n");
-                     line ("cmpb $T_PTR, " ^ slot (h - 1));
+                     line ("cmpb $T_PTR, " ^ rslot (h - 1));
                      line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
-                     line ("mov " ^ payload (h - 1) ^ ", %rax");
+                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
                      line "cmpb $K_CON, OBJ_KIND(%rax)";
                      line ("jne " ^ check (pc, next, fatalJumpIfNotTag, 0));
                      line "movzwl OBJ_CONTAG(%rax), %eax";
@@ -627,7 +657,7 @@ struct
                                    line ("jne " ^ slow);
                                    alloc ("K_EXN", 0, 2, slow);
                                    copy (slot (h - 2), field 0);
-                                   copy (slot (h - 1), field 1);
+                                   copy (rslot (h - 1), field 1);
                                    putPtr (h - 2)),
                                 fn () => callC ("native_mkexn", []))
                  else if opc = Opcodes.EXNCON then
@@ -653,14 +683,16 @@ struct
                          end
                        else ()
                    in
-                     case fastPrim (Vector.sub (primNames, a), h, pc, emitters) of
+                     case fastPrim (Vector.sub (primNames, a), h, pc,
+                                    {line = line, put = put, slot = rslot, payload = rpayload}) of
                        NONE => callPrim ()
                      | SOME fast =>
                          let val slow = lab pc ^ "_slow" val done = lab pc ^ "_done"
                          in
                            fast slow;
                            put (done ^ ":\n");
-                           slows := (fn () => (put (slow ^ ":\n"); callPrim (); line ("jmp " ^ done))) :: !slows
+                           slows := (fn () => (put (slow ^ ":\n"); unforward (); callPrim (); line ("jmp " ^ done)))
+                                    :: !slows
                          end
                    end
                  else raise Fail ("no template for opcode " ^ Int.toString opc))

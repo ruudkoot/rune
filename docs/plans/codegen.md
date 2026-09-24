@@ -80,7 +80,7 @@ The owner's decisions on the roadmap (2026-09-23):
 | M12, a cheaper collector | done, in `vm/heap.c`, so `runevm` too: both semispaces are kept while the heap stays its size, the one collected from being the next collected into, where every collection allocated a new one and freed the old; an object of one to three fields is copied by a `memcpy` of a size the compiler knows, which it inlines; and D14 = C, `--heap-fill P` (1 to 100, 50 by default, which is the rule as before to the byte), an option of `runevm` and of native programs that an image carries as it carries `--gc-stress`, so images are version 3 (`vm/image.c`, `RbcImage`). At a quarter the compiler compiling itself collects 14 times, where at half it collects 24, and ends with the same semispace of 256 MB. `make check`, `make test-native-stress`, `make test-native-asan`, `make test-stress`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass; `tests/vm` refuses `--heap-fill 0` and `101` |
 | M13, the tag test of a match, fused | done, D13 = B: `JUMPIFNOTTAG o, t`, appended to `vm/opcodes.def`, so no other opcode moves and the `.rbc` keeps version 2. `Codegen` emits it for the `If` that `MatchComp.testTag` builds; the interpreter's case, the template, the stack effect in `RbcCheck`, the check of its target in the loader and in `Rbc`, `bytecode.md`, and `every-opcode.rasm`, which takes it both ways on both kinds of constructor. The compiler compiling itself runs 849.6 million instructions where it ran 967.9 million, 12.2% fewer (the 967.9 million had come to within 0.2% of the old budget); `runedoc` 6 to 8% fewer, `intinf_fact` 13.7%, `list_ops` 10.9%, `string_ops` 8.2%, `array_sieve` 5.3%, and `fib`, `tak` and `real_nbody`, which match no constructor, the same. The budgets of `make perf-check` are measured again (`tests/perf/run-perf.sh --update`). `make check`, where the bootstrap reproduces itself with the new opcode, `make test-native-stress`, `make test-native-asan`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass |
 | M14, D3's option A, measured first | measured, not built: the processor already predicts the returns M10 made (under M14 below), which leaves at most 0.6% of the bootstrap and 2% of `fib` and `tak` for a native `ret` to gain, against the cost D3 lists |
-| M15, the values of a run in registers | not started (est. 5-10%) |
+| M15, the values of a run in registers | done in part: the value a LOCAL pushes stays in its local when the next instruction, in the same run and with no position of its own, only reads the top of the stack (SETLOCAL, SETGLOBAL, SELECT, DECON, EXNCON, EXNARG, the conditional jumps, CALL, TAILCALL, RET, a TUPLE, CON, CLOSURE or MKEXN that takes values, and a primitive of two or three arguments done inline), and that instruction reads it there; its slow paths copy it to its slot before they call into C. Values an instruction computes are still stored to their slots: keeping those in registers, the rest of M15, is not built (under M15 below). `make check`, `make test-native-stress` and `make test-native-asan` pass |
 
 ## Where we are
 
@@ -1220,6 +1220,28 @@ registers between those points. A value pushed and popped within the run
 (the operands of an inlined primitive, the tuple of a SELECT) then never
 goes to memory. The largest change of these, since every template has to
 know where its operands are, so it comes last.
+
+**Built in part (2026-09-24).** The part built is the one the profile
+pointed at: LOCAL was 5.1% of the native bootstrap, a copy of 16 bytes
+through memory whose reader loads the value again at once. A LOCAL now
+emits nothing when the instruction after it only reads the top of the
+stack; that instruction reads the local itself, and a slow path of it
+copies the value to its slot first, so the VM is exact at every call into
+C as D0 wants. `SETLOCAL a; LOCAL a`, which `performance.md` counts 31.5
+million times in a bootstrap, becomes a single copy. It adds one rule to
+the templates: an instruction in the list `reads` may read its top operand
+through `rslot` and `rpayload` but never write it in place, which is why
+the primitives of one argument, which write their result over their
+argument, are not in the list. A LOCAL is not left in its local when the
+next instruction has a position of its own, so that the line table keeps
+the LOCAL's.
+
+Not built: values an instruction computes kept in registers across the
+run. Every template would have to know whether each operand is in memory,
+in a local or in a register, and every label, slow path and call into C
+spill them: the change to every template the estimate called L. What the
+forwarding gained is under *Performance of the milestones*, with what is
+left for registers.
 
 **Not in these milestones**, since they change the compiler or the
 bytecode rather than the translation: calling a known function directly,
