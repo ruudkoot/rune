@@ -6,10 +6,38 @@ struct
 
   type item = token * Source.span
 
-  fun isSymbolic c = Char.contains "!%&$#+-/:<=>?@\\~`^|*" c
+  (* Whether each character is symbolic, by its code: a lookup for every
+     character of an identifier, where Char.contains would scan the string
+     and build a closure. *)
+  val symbolicTable = Vector.tabulate (256, fn i => Char.contains "!%&$#+-/:<=>?@\\~`^|*" (Char.chr i))
+  fun isSymbolic c = Vector.sub (symbolicTable, Char.ord c)
   fun isIdentStart c = Char.isAlpha c
   fun isIdentChar c = Char.isAlphaNum c orelse c = #"'" orelse c = #"_"
   fun isHex c = Char.isHexDigit c
+
+  (* The reserved words by their first character, so that an identifier is
+     compared with the few that begin as it does. *)
+  fun buckets (words : (string * token) list) : (string * token) list vector =
+    let
+      fun add (w as (s, _), m) =
+        let val i = Char.ord (String.sub (s, 0))
+        in IntMap.insert (m, i, getOpt (IntMap.find (m, i), []) @ [w]) end
+      val m = List.foldl add IntMap.empty words
+    in
+      (* Not an array made into a vector: MLton 20241230 fails on that
+         here, with a type error in its SSA. *)
+      Vector.tabulate (256, fn i => getOpt (IntMap.find (m, i), []))
+    end
+  val reservedBuckets = buckets reserved
+  val reservedSymbolicBuckets = buckets reservedSymbolic
+
+  fun lookupReserved (s, tbl) =
+    let
+      fun go [] = NONE
+        | go ((k, t) :: rest) = if k = s then SOME t else go rest
+    in
+      if s = "" then NONE else go (Vector.sub (tbl, Char.ord (String.sub (s, 0))))
+    end
 
   fun hexVal c =
     if Char.isDigit c then Char.ord c - Char.ord #"0"
@@ -153,16 +181,13 @@ struct
 
       fun lexSymbolic (i, j) = if at j andalso isSymbolic (ch j) then lexSymbolic (i, j + 1) else j
 
-      fun lookupReserved (s, tbl) =
-        case List.find (fn (k, _) => k = s) tbl of SOME (_, t) => SOME t | NONE => NONE
-
       (* Alphanumeric identifier or long identifier. *)
       fun lexAlpha (i) =
         let
           val j = digitsWhile (i, isIdentChar)
           val s = String.substring (text, i, j - i)
         in
-          case lookupReserved (s, reserved) of
+          case lookupReserved (s, reservedBuckets) of
             SOME t => (t, span (i, j), j)
           | NONE =>
             if ch j = #"." andalso (isIdentStart (ch (j + 1)) orelse isSymbolic (ch (j + 1))) then
@@ -175,7 +200,7 @@ struct
             val j = digitsWhile (i, isIdentChar)
             val s = String.substring (text, i, j - i)
           in
-            if isSome (lookupReserved (s, reserved)) then err (i, j, "reserved word in long identifier")
+            if isSome (lookupReserved (s, reservedBuckets)) then err (i, j, "reserved word in long identifier")
             else if ch j = #"." andalso (isIdentStart (ch (j + 1)) orelse isSymbolic (ch (j + 1))) then
               lexLong (start, s :: path, j + 1)
             else (LONGID (List.rev path, s), span (start, j), j)
@@ -185,7 +210,7 @@ struct
             val j = lexSymbolic (i, i)
             val s = String.substring (text, i, j - i)
           in
-            if j = i orelse isSome (lookupReserved (s, reservedSymbolic)) then
+            if j = i orelse isSome (lookupReserved (s, reservedSymbolicBuckets)) then
               err (start, j, "malformed long identifier")
             else (LONGID (List.rev path, s), span (start, j), j)
           end
@@ -232,7 +257,7 @@ struct
                 val j = lexSymbolic (i, i)
                 val s = String.substring (text, i, j - i)
               in
-                case lookupReserved (s, reservedSymbolic) of
+                case lookupReserved (s, reservedSymbolicBuckets) of
                   SOME t => (t, span (i, j), j)
                 | NONE => (ID s, span (i, j), j)
               end

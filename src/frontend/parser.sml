@@ -655,8 +655,7 @@ struct
                 val () = expect END
                 val env2 = !fixenv
                 (* keep fixity directives from d2 but drop those from d1 *)
-                val added = List.take (env2, List.length env2 - List.length env1)
-                val () = fixenv := added @ env0
+                val () = fixenv := Fixity.afterLocal (env0, env1, env2)
               in DLocal (d1, d2, spanFrom start) end
           | OPEN =>
               let
@@ -676,7 +675,7 @@ struct
               let
                 val () = advance ()
                 val ids = parseFixityIds ()
-                val () = fixenv := List.map (fn id => (id, Fixity.Nonfix)) ids @ !fixenv
+                val () = fixenv := Fixity.extend (!fixenv, List.map (fn id => (id, Fixity.Nonfix)) ids)
               in DNonfix (ids, spanFrom start) end
           | OVERLOAD =>
               (* _overload <kind> <longstrid> [<bits> | via <longvid>] *)
@@ -1076,7 +1075,7 @@ struct
                                  else IntInf.toInt i)
                      | _ => 0
           val ids = parseFixityIds ()
-          val () = fixenv := List.map (fn id => (id, mkFix prec)) ids @ !fixenv
+          val () = fixenv := Fixity.extend (!fixenv, List.map (fn id => (id, mkFix prec)) ids)
         in mkDec (prec, ids, spanFrom start) end
 
       and parseTypbinds () : typbind list =

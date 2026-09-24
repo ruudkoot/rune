@@ -68,19 +68,31 @@ struct
      `compile` is given it by the translation. *)
   val funNames : string IntMap.map ref = ref IntMap.empty
 
+  (* The file numbered last, since positions come file by file. *)
+  val lastFile : (string * int) option ref = ref NONE
+
   fun reset () =
     (funcs := []; nextFuncId := 0; consts := []; nconsts := 0; constIndex := StringMap.empty;
      globals := IntMap.empty; nglobals := 0; nextLabel := 0; funNames := IntMap.empty;
-     files := []; nfiles := 0; fileIndex := StringMap.empty)
+     files := []; nfiles := 0; fileIndex := StringMap.empty; lastFile := NONE)
 
   fun fileIdx (name : string) : int =
-    case StringMap.find (!fileIndex, name) of
-      SOME i => i
-    | NONE =>
-      let val i = !nfiles
-      in files := name :: !files; nfiles := i + 1;
-         fileIndex := StringMap.insert (!fileIndex, name, i); i
-      end
+    case !lastFile of
+      SOME (n, i) => if n = name then i else fileIdx' name
+    | NONE => fileIdx' name
+  and fileIdx' name =
+    let
+      val i =
+        case StringMap.find (!fileIndex, name) of
+          SOME i => i
+        | NONE =>
+          let val i = !nfiles
+          in files := name :: !files; nfiles := i + 1;
+             fileIndex := StringMap.insert (!fileIndex, name, i); i
+          end
+    in
+      lastFile := SOME (name, i); i
+    end
 
   fun newLabel () = let val l = !nextLabel in nextLabel := l + 1; l end
 

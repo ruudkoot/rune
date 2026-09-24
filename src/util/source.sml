@@ -57,24 +57,29 @@ struct
   (* Registry of loaded files so that spans can be rendered anywhere. *)
   val files : file StringMap.map ref = ref StringMap.empty
 
-  fun register (f : file) = files := StringMap.insert (!files, #name f, f)
+  (* The file looked up last: positions come file by file, so most lookups
+     are of the same file as the one before. *)
+  val lastFile : (string * file) option ref = ref NONE
+
+  fun register (f : file) = (files := StringMap.insert (!files, #name f, f); lastFile := NONE)
 
   fun load (name : string) : file =
     let val f = readFile name in register f; f end
 
-  (* The file, line and column a span starts at, for a source that was
-     loaded. Positions are put in the bytecode this way, so that the VM never
-     needs the source to name a line. *)
-  fun lineColOf ({file, start, ...} : span) : (string * int * int) option =
-    case StringMap.find (!files, file) of
+  fun findFile (name : string) : file option =
+    case !lastFile of
+      SOME (n, f) => if n = name then SOME f else findFile' name
+    | NONE => findFile' name
+  and findFile' name =
+    case StringMap.find (!files, name) of
       NONE => NONE
-    | SOME f => let val (l, c) = lineCol (f, start) in SOME (file, l, c) end
+    | SOME f => (lastFile := SOME (name, f); SOME f)
 
   (* The file, line and column a span starts at, for a source that was
      loaded. Positions are put in the bytecode this way, so that the VM never
      needs the source to name a line. *)
   fun lineColOf ({file, start, ...} : span) : (string * int * int) option =
-    case StringMap.find (!files, file) of
+    case findFile file of
       NONE => NONE
     | SOME f => let val (l, c) = lineCol (f, start) in SOME (file, l, c) end
 
