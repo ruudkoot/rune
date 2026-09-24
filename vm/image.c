@@ -345,11 +345,14 @@ static uint64_t get_u64(Stream *s) {
     return v;
 }
 
-/* An offset is kept where the pointer will go; heap_relocate turns every one
-   of them into a pointer, and refuses the image if any is not in the heap. */
+/* An offset is kept where the pointer will go, one more than it is: the
+   first object of the heap is at 0, which as a pointer is no object, and was
+   lost so (M9 of docs/plans/codegen.md found it). heap_relocate, told of the
+   one, turns every one of them into a pointer, and refuses the image if any
+   is not in the heap. */
 static Obj *get_obj(Stream *s) {
     uint64_t w = get_u64(s);
-    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)w;
+    return w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1);
 }
 
 static Value get_value(Stream *s) {
@@ -363,7 +366,7 @@ static Value get_value(Stream *s) {
         v.tag = get_u8(s);
         w = get_u64(s);
     }
-    if (v.tag == T_PTR) v.u.p = w == OFF_NONE ? NULL : (Obj *)(uintptr_t)w;
+    if (v.tag == T_PTR) v.u.p = w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1);
     else v.u.w = w;
     return v;
 }
@@ -590,9 +593,10 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0 || !p->code)
         return failed(&s, err, errlen, "the image is cut short");
     fclose(s.f);
-    /* every pointer is a distance from the start of the heap: moving them by
-       where the heap is now both places them and checks that they are in it */
-    if (!heap_relocate(vm, 0)) {
+    /* every pointer is a distance from the start of the heap, and one more:
+       moving them by where the heap is now both places them and checks that
+       they are in it */
+    if (!heap_relocate(vm, 1)) {
         snprintf(err, errlen, "the heap of the image is not sound");
         return 0;
     }
