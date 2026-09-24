@@ -209,3 +209,29 @@ afterwards: a program is one file, the basis library included.
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--heap-size`, `--emulate-fork`, `--restore`, `--version` -- is described
 in [bytecode.md](bytecode.md).
+
+## A native program
+
+`runeopt` ([plans/codegen.md](plans/codegen.md)) translates a `.rbc` into a
+program for Linux on x86-64 that runs on the same runtime, linked into it:
+the heap, the collector, the primitives and the system layer of this page are
+the ones `runevm` has, and so are the value stack, the frames and the
+handlers, which the translated code keeps where the interpreter keeps them.
+So everything above holds for it: the layout of a value, when the collector
+moves it, the limits, the counters of *The same run twice* -- the same numbers
+for the same run, which `make test-native` checks for every program of the
+suite -- the trace of a failure, the messages, which still begin `runevm:`,
+and the images `Runtime.save` writes, which `runevm --restore` carries on.
+
+What differs:
+
+* The options of `runevm` (`--count`, `--stats`, `--heap-size`,
+  `--gc-stress`) come from the environment variable `RUNEVM_OPTIONS`, after
+  those the program was made with (`runeopt --options`), and the program takes
+  the variable out of its environment.
+* `CommandLine.name ()` is the name the program was started by.
+* `Runtime.restore` raises `OS.SysErr`, and the program cannot carry on an
+  image or be the child of a fork emulated by `--emulate-fork`; a fork is the
+  system's own.
+* The program carries its line table as DWARF: a debugger stops at a line of
+  an SML source, and names a function by its name and its number.

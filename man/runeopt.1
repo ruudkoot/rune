@@ -1,0 +1,153 @@
+.TH RUNEOPT 1 "2026" "runeopt 0.3.0" "Rune Manual"
+.SH NAME
+runeopt \- translate Rune bytecode into a native program
+.SH SYNOPSIS
+.B runeopt
+.RB [ \-o
+.IR file ]
+.RB [ \-S ]
+.RB [ \-\-options
+.IR text ]
+.I file.rbc
+.br
+.B runeopt
+.RB ( \-\-check | \-\-facts )
+.IR file.rbc " ..."
+.br
+.B runeopt
+.RB ( \-\-disasm | \-\-lines )
+.I file.rbc
+.br
+.B runeopt \-\-inlined
+.SH DESCRIPTION
+.B runeopt
+translates a bytecode file made by
+.BR rune (1)
+into an executable for Linux on x86-64: every instruction becomes the machine
+code that does what
+.BR runevm (1)
+does for it, in the order of the bytecode, and the C compiler assembles the
+code and links it with the runtime of
+.BR runevm .
+The program keeps the value stack, the frames and the handlers where
+.B runevm
+keeps them, so it prints what it prints under
+.BR runevm ,
+counts the same instructions, bytes and objects, reports an uncaught
+exception and a trace in the same words, and writes the same images with
+.BR Runtime.save .
+The common case of the arithmetic and comparisons of integers, words, reals
+and characters, of equality on values that are not pointers, of references
+and of the elements of strings, vectors and arrays is done by the code
+itself; everything else calls the primitive
+.B runevm
+calls.
+.PP
+The executable carries its bytecode and a line table: a debugger stops at a
+line of an SML source and shows the function, which is named by its name in
+the source and its number,
+.IR name # n .
+.PP
+A file that the loader of
+.B runevm
+refuses is refused with its message, and so is one whose code does not keep
+what the translation relies on (the compiler's code always does): the stack
+has the same height on every path into an instruction, no jump leaves its
+function, and no function runs off its end.
+.SH OPTIONS
+.TP
+.BI \-o " file"
+The executable to write. The default is the name of the bytecode file without
+.BR .rbc .
+.TP
+.B \-S
+Write the assembly, to
+.I file
+or the name of the bytecode file with
+.BR .s ,
+and stop.
+.TP
+.BI \-\-options " text"
+Options of
+.B runevm
+the program is to run with, written as
+.B runevm
+takes them:
+.BR \-\-count ,
+.BR \-\-stats ,
+.BI \-\-heap\-size " N"
+and
+.BI \-\-gc\-stress " N."
+Those of
+.B RUNEVM_OPTIONS
+come after these.
+.TP
+.BI \-\-cc " cc"
+The C compiler that assembles and links (default
+.BR cc ).
+.TP
+.BI \-\-runtime " dir"
+Where the runtime is:
+.B librune.a
+and
+.BR rune\-offsets.s .
+The installed
+.B runeopt
+passes it.
+.TP
+.B \-\-check
+Check each file, and translate nothing.
+.TP
+.B \-\-disasm
+Print the bytecode as
+.B runevm \-\-disasm
+prints it.
+.TP
+.B \-\-lines
+Print the line table of the file: the pc, file, line and column of each entry.
+.TP
+.B \-\-facts
+Print what the check found in each file: functions, instructions, the
+highest stack, and the places the code resumes at.
+.TP
+.B \-\-inlined
+List the primitives whose common case the code does itself.
+.TP
+.B \-\-version
+Print the version and exit.
+.TP
+.B \-\-help
+Print a usage summary and exit.
+.SH ENVIRONMENT
+A program
+.B runeopt
+made takes the options of
+.B runevm
+from
+.BR RUNEVM_OPTIONS ,
+after those it was made with, and removes the variable from its environment,
+so that it sees the environment it has under
+.BR runevm .
+Its
+.B CommandLine.name
+is its own name, or
+.B RUNEVM_NAME
+where that is set, which the test suites use.
+.SH EXIT STATUS
+.B runeopt
+exits 0 when it wrote what it was asked to, and 1 when a file is refused, when
+the options are wrong, or when the C compiler fails. A program it made exits
+as it would under
+.BR runevm .
+.SH BUGS
+.B Runtime.restore
+raises
+.B OS.SysErr
+in a native program, and a native program cannot carry on an image, nor be
+the child of a fork emulated by
+.BR \-\-emulate\-fork ;
+.B runevm \-\-restore
+carries on an image a native program saved.
+.SH SEE ALSO
+.BR rune (1),
+.BR runevm (1)

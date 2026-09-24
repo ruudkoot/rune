@@ -241,14 +241,18 @@ this system in the same way.
 ```
 $PREFIX/bin/rune                     wrapper: runevm + rune.rbc + --lib
 $PREFIX/bin/runedoc                  wrapper: runevm + runedoc.rbc + --lib
+$PREFIX/bin/runeopt                  wrapper: runevm + runeopt.rbc + --runtime
 $PREFIX/bin/runevm                   the VM
 $PREFIX/lib/rune/rune.rbc            the compiler
 $PREFIX/lib/rune/runedoc.rbc         the documentation generator
+$PREFIX/lib/rune/runeopt.rbc         the native code generator
+$PREFIX/lib/rune/runtime/            librune.a and rune-offsets.s, what
+                                     runeopt links a program with
 $PREFIX/lib/rune/basis/              MANIFEST and the basis library sources,
                                      overview.doc and DOCUMENTED for runedoc
-$PREFIX/share/man/man1/              rune.1, runevm.1, runedoc.1
-$PREFIX/share/bash-completion/completions/rune, runedoc
-$PREFIX/share/zsh/site-functions/    _rune, _runevm, _runedoc
+$PREFIX/share/man/man1/              rune.1, runevm.1, runedoc.1, runeopt.1
+$PREFIX/share/bash-completion/completions/rune, runedoc, runeopt
+$PREFIX/share/zsh/site-functions/    _rune, _runevm, _runedoc, _runeopt
 ```
 
 The installed `rune` and `runedoc` derive the library path from their own
@@ -257,7 +261,9 @@ location (`$(dirname $0)/../lib/rune`), so the tree can be moved or staged.
 `runedoc --library ./mylib --out docs/mylib` documents a library of your own
 on top of the installed Basis Library (`man runedoc`), and `runedoc --library
 basis --out DIR` writes the pages of the Basis Library, without the test
-inventory, which needs the suite of the sources.
+inventory, which needs the suite of the sources. `runeopt` is installed the
+same way, with the runtime it links a program with; it needs a C compiler
+where it runs (`man runeopt`).
 
 * As a normal user `make install` builds whatever is missing first.
 * As root it builds **nothing** — it installs `bin/` as it stands and fails if

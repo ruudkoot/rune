@@ -3,14 +3,15 @@
 #   make hosts      install the SML systems Rune is built and compared with
 #                   (MLton, SML/NJ in 64 and 32 bits, Poly/ML) under
 #                   ~/.local/rune-hosts; needed once, before anything else
-#   make            build bin/rune (the self-hosted compiler) and bin/runevm
+#   make            build bin/rune (the self-hosted compiler), bin/runevm, and
+#                   bin/runedoc and bin/runeopt, which the compiler compiles
 #   make mlton|smlnj|smlnj32|polyml   build the compiler with one of them
 #   make host-builds  build the compiler with all four
 #   make vm         build bin/runevm
 #   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
 #                   the bin/rune-boot wrapper that runs it, and bin/rune -> it
 #   make test       run the test suite with bin/rune
-#   make install    install rune, runevm, runedoc and the basis library under PREFIX
+#   make install    install rune, runevm, runedoc, runeopt and the basis library under PREFIX
 #                   (/usr/local as root, ~/.local otherwise); as root nothing
 #                   is built, so run `make` as yourself first
 #   make uninstall  remove them again
@@ -649,7 +650,7 @@ install:
 	@if [ "$$(id -u)" -eq 0 ]; then \
 	  echo "install: running as root, installing what is in bin/ as it stands"; \
 	else \
-	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj,$(HOST)),bin/runedoc-smlnj,bin/runedoc-$(HOST)),all); \
+	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj,$(HOST)),bin/runedoc-smlnj bin/runeopt-smlnj,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all); \
 	fi
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh scripts/install.sh $(INSTALL_FLAGS)
 
