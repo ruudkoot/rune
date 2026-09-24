@@ -360,6 +360,12 @@ convention), which halves allocation and so also takes part of 13's gain.
   collections.
 * **Change:** decide from the survivors of the last collection, and collect
   once into the larger space.
+* **Done:** `vm_gc` guesses the survivors from how they grew between the
+  last two collections, and collects into the larger space at once where
+  the guess says the heap must grow; a guess too low collects again, as
+  before. The bootstrap from a 64 MB heap: 15 to 14 collections, with the
+  same bytes and live data and `--count` unchanged; the time is within the
+  noise of a run.
 
 ### 11. The compiler's other constant factors
 

@@ -146,6 +146,8 @@ typedef struct VM {
     size_t heap_size;        /* size of one semispace */
     size_t heap_used;
     size_t gc_count;
+    size_t live_last;        /* bytes the last collection kept, and the one before it: */
+    size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
