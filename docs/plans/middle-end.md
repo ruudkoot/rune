@@ -55,8 +55,8 @@ The owner's decisions while it was planned (2026-09-24):
 * **Rune will support both a stack and a register bytecode:**
   * the stack bytecode is `vm/portable`'s, and `runeopt` translates it;
   * the register bytecode is `vm/new`'s only.
-* **After reading this roadmap**, the owner decided D1, D2, D3, D5, D6,
-  D7, D9, D13 and D14. D8, D10, D11 and D12 are open. See *Decisions*.
+* **After reading this roadmap**, the owner decided D1 to D14. See
+  *Decisions*.
 
 | The brief asks | Answered in |
 |---|---|
@@ -625,7 +625,7 @@ its interpreter from one definition of its instructions.
 ## Decisions
 
 Each gives the options, what favours each, and the recommendation it was
-written with. The owner decided on 2026-09-24:
+written with. The owner decided all of them on 2026-09-24:
 
 | Decision | Chosen |
 |---|---|
@@ -636,11 +636,11 @@ written with. The owner decided on 2026-09-24:
 | D5. When the register target comes | A: right after M4 |
 | D6. How the instruction set is described | B: a DSL in Standard ML |
 | D7. Traces under optimisation | B: inline frames in the line table |
-| D8. Optimisation levels | open |
+| D8. Optimisation levels | as recommended: `-O0`, `-O1` by default, `-O2` for the shipped compiler |
 | D9. The calling convention | A for now, B in M12 |
-| D10. The old code generator | open |
-| D11. The items of performance.md | open |
-| D12. The precision of `int` per target | open |
+| D10. The old code generator | as recommended: `-O0` until M10, then removed |
+| D11. The items of performance.md | as recommended: 1-3, 5, 10, 11 now; 4, 7, 8, 12, 17 skipped |
+| D12. The precision of `int` per target | as proposed: per target, in the target record |
 | D13. `runeopt`'s long-term role | A now, perhaps B later |
 | D14. Exhaustiveness | B |
 
@@ -754,13 +754,15 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 
 ### D8. Optimisation levels
 
+**Decided: as recommended.**
+
 * **`-O0`:** the old `Codegen` until M10 (D10), then the new back end with
   no optimisation.
 * **`-O1`:** the default, cheap passes only.
 * **`-O2`:** whole-program analyses.
-* The owner decides what the shipped compiler is built with (recommended:
-  `-O2`, since it runs on `runevm`) and what `make check` runs (recommended:
-  the default, with `-O0` and `-O2` in the differential tests).
+* The shipped compiler is built with `-O2`, since it runs on `runevm`.
+  `make check` runs the default, with `-O0` and `-O2` in the differential
+  tests.
 
 ### D9. The calling convention
 
@@ -776,10 +778,14 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 
 ### D10. The old code generator
 
+**Decided: as recommended.**
+
 Keep `Codegen` as `-O0` and the differential reference from M4 until M10,
 then remove it. **Recommended.**
 
 ### D11. The items of performance.md
+
+**Decided: as recommended.**
 
 * **Do now,** since they are independent of this roadmap:
   * 1-3: the lexer's lookups, the maps' loops, the cached file of a
@@ -796,9 +802,13 @@ then remove it. **Recommended.**
 
 ### D12. The precision of `int` per target
 
+**Decided: as proposed.** The precision is a property of the target,
+carried by the target record: 64 bits on `vm/portable`, and whatever
+`vm/new` chooses.
+
 Today it is 64 bits everywhere. A `vm/new` with 8-byte values might have
 63-bit ints. That changes constant folding, `Int.precision`, and what the
-Basis Library suite expects. The target record carries it.
+Basis Library suite expects.
 
 ### D13. `runeopt`'s long-term role
 
