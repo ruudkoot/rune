@@ -110,7 +110,7 @@ set -u
 
 jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
-refresh=0
+refresh=${RUNE_MATRIX_REFRESH:-0}
 configs=rune
 filter=""
 one_config=""
@@ -1005,7 +1005,7 @@ fi
 if [ "$perf" = 1 ]; then
   # One at a time: a timing is only worth something on an idle machine.
   for id in $ids; do for t in $tests; do printf '%s\n%s\n' "$id" "$t"; done; done |
-    RUNE_MATRIX_RUN=$run RUNE_MATRIX_PERF=1 xargs -n 2 -P 1 sh "$self" --one
+    RUNE_MATRIX_RUN=$run RUNE_MATRIX_PERF=1 RUNE_MATRIX_REFRESH=$refresh xargs -n 2 -P 1 sh "$self" --one
   wall=$root/tests/out/perf/wall.md
   mkdir -p "$root/tests/out/perf"
   status=0
@@ -1065,7 +1065,7 @@ tab=$(printf '\t')
       BEGIN { while ((getline l < tf) > 0) { split(l, f, "\t"); d[f[1] "\t" f[2]] = f[3] } }
       { k = $1 "\t" $2; printf "%s\t%s\t%s\n", $1, $2, (k in d) ? d[k] : 1e9 }'
 } | sort -t "$tab" -k3,3gr -s | cut -f 1,2 | tr '\t' '\n' |
-  RUNE_MATRIX_RUN=$run xargs -n 2 -P "$jobs" sh "$self" --one
+  RUNE_MATRIX_RUN=$run RUNE_MATRIX_REFRESH=$refresh xargs -n 2 -P "$jobs" sh "$self" --one
 t_tests=$(since "$t_run")
 
 # ------------------------------------------------------------------ report
