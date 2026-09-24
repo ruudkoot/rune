@@ -24,7 +24,7 @@ typedef struct Obj Obj;
    8, and without this a Value is 12 bytes there and every object of the heap
    a different size (make test-portability). A narrower Value on 32-bit
    machines would save 0.46% of the heap and cost more than that: the reasons
-   are written down under "Value representation" in docs/plans/performance.md,
+   are written down under "8-byte values" in docs/plans/performance.md,
    which is also where the padding of the payload is weighed. */
 typedef struct Value {
     uint8_t tag;

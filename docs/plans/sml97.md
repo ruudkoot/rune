@@ -422,8 +422,8 @@ datatype … in dec end`. Errors: constructor used outside the `with` part,
   Appendix E's classes can grow (`Int` = {`int`, `IntInf.int`}) without
   Definition-level changes.
 * An interactive top level.
-* Performance: `docs/plans/performance.md`. Its item 4 and M3 share Sestoft's
-  pattern matrix.
+* Performance: `docs/plans/performance.md`. Its item 17 (decision trees) and M3
+  share Sestoft's pattern matrix.
 
 ## Verification
 

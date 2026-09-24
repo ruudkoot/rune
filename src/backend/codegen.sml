@@ -183,7 +183,7 @@ struct
           (* The test of a match against a constructor (MatchComp.testTag)
              is one instruction, where it would be CONTAG, INT t, PRIM
              poly_eq and JUMPIFNOT: 17% of the instructions the compiler
-             ran compiling itself (docs/plans/performance.md, item 3). *)
+             ran compiling itself (docs/plans/codegen.md, M13). *)
           (case c of
              Prim ("poly_eq", [ConTag a, Const (CInt i)]) =>
                if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
