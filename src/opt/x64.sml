@@ -291,6 +291,20 @@ struct
       val lineStarts = Array.array (codeLen + 1, ~1)
       val () = Vector.appi (fn (k, {pc, ...} : Rbc.line) => Array.update (lineStarts, pc, k)) (#lines p)
 
+      fun loc k =
+        let val {file, line = l, col, ...} = Vector.sub (#lines p, k)
+        in line (".loc " ^ Int.toString (file + 1) ^ " " ^ Int.toString l ^ " " ^ Int.toString col) end
+
+      (* The frame every function runs in, which is rune_enter's: the code
+         pushes nothing, so the frame's address is always rsp + 64, and the
+         registers of the caller of rune_enter are where it put them. A
+         debugger unwinds from any function to main so. *)
+      fun cfiFrame () =
+        (line ".cfi_startproc";
+         line ".cfi_def_cfa_offset 64";
+         List.app (fn (r, off) => line (".cfi_offset %" ^ r ^ ", " ^ num off))
+           [("rbp", ~16), ("rbx", ~24), ("r12", ~32), ("r13", ~40), ("r14", ~48), ("r15", ~56)])
+
       (* ---- pieces of the templates ---- *)
       val reloadStack = "mov VM_STACK(%r12), %r13"
       fun reloadFrame () =
@@ -353,11 +367,7 @@ struct
               val () = put (lab pc ^ ":\t# " ^ Vector.sub (Opcodes.names, opc)
                             ^ (case Vector.sub (Opcodes.nargs, opc) of 0 => "" | 1 => " " ^ num a | _ => " " ^ num a ^ " " ^ num b)
                             ^ "\n")
-              val () =
-                case Array.sub (lineStarts, pc) of
-                  ~1 => ()
-                | k => let val {file, line = l, col, ...} = Vector.sub (#lines p, k)
-                       in line (".loc " ^ Int.toString (file + 1) ^ " " ^ Int.toString l ^ " " ^ Int.toString col) end
+              val () = case Array.sub (lineStarts, pc) of ~1 => () | k => loc k
             in
               if h < 0 then line "ud2"
               else
@@ -494,6 +504,10 @@ struct
           line ".p2align 4";
           line (".type " ^ sym ^ ", @function");
           put (sym ^ ":\n");
+          cfiFrame ();
+          (* the function's own position from its first byte, which is the
+             address a debugger or addr2line is given for it *)
+          (case Array.sub (lineStarts, offset) of ~1 => () | k => loc k);
           reloadFrame ();
           loop first;
           List.app
@@ -507,6 +521,7 @@ struct
                 line "ud2"))
             (List.rev (!fatals));
           List.app (fn f => f ()) (List.rev (!slows));
+          line ".cfi_endproc";
           line (".size " ^ sym ^ ", .-" ^ sym)
         end
 
@@ -523,12 +538,17 @@ struct
       line ".globl rune_enter";
       line ".type rune_enter, @function";
       put "rune_enter:\n";
-      List.app line ["push %rbp", "push %rbx", "push %r12", "push %r13", "push %r14", "push %r15",
-                     "sub $8, %rsp", "mov %rdi, %r12", "mov VM_INSTRUCTIONS(%r12), %r15", "jmp *%rsi"];
+      line ".cfi_startproc";
+      List.app (fn (r, off) => (line ("push %" ^ r); line (".cfi_def_cfa_offset " ^ num (~ off));
+                                line (".cfi_offset %" ^ r ^ ", " ^ num off)))
+        [("rbp", ~16), ("rbx", ~24), ("r12", ~32), ("r13", ~40), ("r14", ~48), ("r15", ~56)];
+      List.app line ["sub $8, %rsp", ".cfi_def_cfa_offset 64",
+                     "mov %rdi, %r12", "mov VM_INSTRUCTIONS(%r12), %r15", "jmp *%rsi", ".cfi_endproc"];
       line ".size rune_enter, .-rune_enter";
       (* a primitive that raised, or replaced the program *)
       put "rune_unusual:\n";
-      List.app line ["mov %eax, %esi", "mov %r12, %rdi", "call native_unusual", "jmp *%rax"];
+      cfiFrame ();
+      List.app line ["mov %eax, %esi", "mov %r12, %rdi", "call native_unusual", "jmp *%rax", ".cfi_endproc"];
       Vector.appi function funcs;
 
       line ".section .rodata";

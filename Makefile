@@ -488,8 +488,10 @@ test-stress: $(RUNE) vm | build/.doctor-check
 # of its bytecode, so every runner takes it as --vm. test-native runs
 # tests/lang (tests/opt-skip.txt lists what native code does not do yet, and
 # why) and the Basis Library suite (the rune:opt configuration) that way,
-# checks that every program of tests/lang counts what runevm counts, and that
-# the compiler, translated, compiles itself to bin/rune.rbc. Programs of
+# checks that every program of tests/lang counts what runevm counts, that
+# the compiler, translated, compiles itself to bin/rune.rbc, and that the
+# debug information of those programs and the compiler is their line table
+# (tests/opt/run-debug.sh), and gdb and lldb stop where it says. Programs of
 # runeopt are for Linux on x86-64: elsewhere it says so and does nothing.
 NATIVE_HOST := $(shell [ "$$(uname -s) $$(uname -m)" = "Linux x86_64" ] && echo yes)
 
@@ -505,6 +507,10 @@ test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm | build
 	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_BYTECODE="$(ROOT)/tests/out/matrix/rune" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 	RUNE_HEAP=$(RUNE_HEAP) sh tests/opt/run-bootstrap.sh
+	@mkdir -p tests/out/opt-debug
+	$(RUNE) examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
+	sh tests/opt/run-debug.sh -j $(JOBS) --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.rbc \
+	  $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)
 
 # The native suite with a collection before every GC_STRESS-th allocation, which
 # is what finds an address of the heap that the code keeps across a call; and

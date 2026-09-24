@@ -27,12 +27,14 @@ struct
     \              translation relies on (docs/plans/codegen.md, D0)\n\
     \  --disasm    print the bytecode as runevm --disasm does\n\
     \  --inlined   list the primitives whose common case the code does itself\n\
+    \  --lines     print the line table of the file: pc file:line:column of\n\
+    \              each entry, which the debug information of the program says\n\
     \  --facts     what the check found in each file: functions,\n\
     \              instructions, the highest stack, the places to resume at\n\
     \  --version   print the version\n\
     \  --help      print this text\n"
 
-  datatype mode = Check | Disasm | Facts | Inlined | Translate
+  datatype mode = Check | Disasm | Facts | Inlined | Lines | Translate
 
   val mode = ref Translate
   val modeGiven = ref false
@@ -56,6 +58,7 @@ struct
     | "--disasm" :: rest => (setMode Disasm; parse rest)
     | "--facts" :: rest => (setMode Facts; parse rest)
     | "--inlined" :: rest => (setMode Inlined; parse rest)
+    | "--lines" :: rest => (setMode Lines; parse rest)
     | "-o" :: file :: rest => (output := SOME file; parse rest)
     | "-S" :: rest => (assembly := true; parse rest)
     | "--options" :: text :: rest => (options := text; parse rest)
@@ -141,6 +144,16 @@ struct
     | (Translate, _) => raise Usage "translate one file at a time"
     | (Disasm, [path]) => (RbcDisasm.print (TextIO.stdOut, load path); OS.Process.success)
     | (Disasm, _) => raise Usage "--disasm takes one file"
+    | (Lines, [path]) =>
+        let val p = load path
+        in
+          Vector.app (fn {pc, file, line, col} =>
+                        println (Int.toString pc ^ " " ^ Vector.sub (#files p, file) ^ ":" ^ Int.toString line
+                                 ^ ":" ^ Int.toString col))
+                     (#lines p);
+          OS.Process.success
+        end
+    | (Lines, _) => raise Usage "--lines takes one file"
     | (Check, paths) => (List.app (fn path => ignore (check path)) paths; OS.Process.success)
     | (Facts, paths) => (List.app (println o facts) paths; OS.Process.success)
 
