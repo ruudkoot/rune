@@ -75,12 +75,12 @@ The owner's decisions on the roadmap (2026-09-23):
 | M7, performance | done: `make perf` with `rune:opt` beside `rune` and the hosts, in [basis-compat.md](../basis-compat.md): natively the programs of `tests/perf` run 1.8 to 4.0 times faster than on `runevm` (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5 against 10.0), still 10 to 40 times slower than the hosts; the compiler compiles itself in 5.5 s against 10.2. The inlining of M5 gains 3% (`tak`) to 33% (`word_bits`), measured against the `runeopt` of M4. A profile of the native bootstrap (`perf record`, the symbols of D2): 36% in the translated code, 34% in calls and returns through the glue (`enter` 13%, `native_ret` 6.6%, `vm_pop` 6.1%, `native_call` 4.1%, `vm_push_frame` 2.5%), 12% in the collector, 6% allocating, 2% in the primitives still called. What pays first, and in what order, is M10 to M15 below, from a profile taken after M9: calls and returns done by the templates, which D0 allows (the glue was M3's shortcut), then allocation inline; D3's option A waits for those, since a native `ret` gains nothing while every return goes through C. M7 also found that M1 had made `runevm` slower, 13 to 16% more machine instructions (`perf stat`), because `vm_pop`, `vm_top` and the push of a frame had left the file of the loop; they are inline in `vm.h` again, and `vm_fatal` and `vm_exit` are declared not to return |
 | M8, the round-up | done but for retiring this roadmap, which is the owner's to decide: the list *To revisit* has to find a home first. The rest: `man/runeopt.1` and completions for bash and zsh, which `check-docs` holds to the version; `make install` installs `runeopt` (the self-hosted build, or a host's with `HOST`) with its runtime under `lib/rune/runtime`, which the installed wrapper passes (tried: installed into a prefix, translating and running `hello` outside the tree, uninstalled); a section on native programs in [runtime.md](../runtime.md); the rules of *Constraints* in `AGENTS.md` (written as the milestones needed them) |
 | M9, save and restore (optional) | done, D11's option 1 with option 6: a native program carries on an image of its own program -- `RUNEVM_OPTIONS="--restore FILE"`, `Runtime.restore`, the child of `--emulate-fork` -- whoever wrote it, and `runeopt --from-image` makes the program of an image (`RbcImage`; a real constant is written as C's hexadecimal notation from its bits, with integers alone). The code has a table of the places an image stops at (after a CALL, and after `rt_save` and `posix_fork`); a restore checks that the image's program is the one the executable carries (code, functions, globals, constants, the constants read under the rounding mode a program starts with, since `strtod` follows the mode the image restores) and gives every frame its native return. An image of another program is refused, `Runtime.restore` raising `OS.SysErr` (`ENOEXEC`), as the owner decided. `tests/opt-skip.txt` is empty: `rt.fork_image` and the `.restore` tests run natively, images cross between `runevm` and native code both ways and with the 32-bit and PowerPC VMs, and the programs of `examples/runtime` give `runevm`'s output, but `become`, which becomes an image of another program. **M9 found a bug of the runtime**: an image lost every reference to the first object of the heap, whose distance 0 was read back as no object, so `runevm --restore` crashed on a program that named the first string constant afterwards; the reader keeps the distance plus one now, and `tests/lang/rt.save_first` pins it |
-| M10, calls and returns in the templates | done: CALL and TAILCALL check the closure and its function index, push the frame (`func`, `ret_pc`, `base`, `closure`, `native_ret`) or, for TAILCALL, keep it, move the argument to the callee's local 0 and jump to the callee's entry for calls, a third column of `rune_functions`; that entry checks the room the frame needs against `stack_cap` and sets the locals but the first to unit, a store each, where `enter` had a loop. RET puts the result in local 0, pops the frame and jumps through `native_ret`. The glue (`native_call`, `native_tailcall`, `native_ret`) is the slow path: a value that is no closure, an index out of range, a full array of frames, the top level's RET. Found on the way: `bin/runevm-opt` kept its translations by the checksum of the bytecode alone, so a suite run after a change of `runeopt` or the runtime could run the programs the old ones made; `make` now empties the cache whenever it builds either again. `make check`, `make test-native-stress` and `make test-native-asan` pass. The gain is measured with the others' after M15 |
-| M11, allocation in the templates | done: TUPLE, CON, CLOSURE, NEWEXN and MKEXN bump `heap_used` themselves when the object fits and `--gc-stress` is off, as `vm_alloc` decides, write the header (kind, contag and length in two stores) and the fields from their slots, and add to `bytes_allocated` and `objects_allocated`, so `--count` stays `runevm`'s; otherwise, and for MKEXN on a value that is no exception constructor, they call the helper as before, which collects. The same checks pass as for M10 |
-| M12, a cheaper collector | done, in `vm/heap.c`, so `runevm` too: both semispaces are kept while the heap stays its size, the one collected from being the next collected into, where every collection allocated a new one and freed the old; an object of one to three fields is copied by a `memcpy` of a size the compiler knows, which it inlines; and D14 = C, `--heap-fill P` (1 to 100, 50 by default, which is the rule as before to the byte), an option of `runevm` and of native programs that an image carries as it carries `--gc-stress`, so images are version 3 (`vm/image.c`, `RbcImage`). At a quarter the compiler compiling itself collects 14 times, where at half it collects 24, and ends with the same semispace of 256 MB. `make check`, `make test-native-stress`, `make test-native-asan`, `make test-stress`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass; `tests/vm` refuses `--heap-fill 0` and `101` |
-| M13, the tag test of a match, fused | done, D13 = B: `JUMPIFNOTTAG o, t`, appended to `vm/opcodes.def`, so no other opcode moves and the `.rbc` keeps version 2. `Codegen` emits it for the `If` that `MatchComp.testTag` builds; the interpreter's case, the template, the stack effect in `RbcCheck`, the check of its target in the loader and in `Rbc`, `bytecode.md`, and `every-opcode.rasm`, which takes it both ways on both kinds of constructor. The compiler compiling itself runs 849.6 million instructions where it ran 967.9 million, 12.2% fewer (the 967.9 million had come to within 0.2% of the old budget); `runedoc` 6 to 8% fewer, `intinf_fact` 13.7%, `list_ops` 10.9%, `string_ops` 8.2%, `array_sieve` 5.3%, and `fib`, `tak` and `real_nbody`, which match no constructor, the same. The budgets of `make perf-check` are measured again (`tests/perf/run-perf.sh --update`). `make check`, where the bootstrap reproduces itself with the new opcode, `make test-native-stress`, `make test-native-asan`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass |
+| M10, calls and returns in the templates | done: CALL and TAILCALL check the closure and its function index, push the frame (`func`, `ret_pc`, `base`, `closure`, `native_ret`) or, for TAILCALL, keep it, move the argument to the callee's local 0 and jump to the callee's entry for calls, a third column of `rune_functions`; that entry checks the room the frame needs against `stack_cap` and sets the locals but the first to unit, a store each, where `enter` had a loop. RET puts the result in local 0, pops the frame and jumps through `native_ret`. The glue (`native_call`, `native_tailcall`, `native_ret`) is the slow path: a value that is no closure, an index out of range, a full array of frames, the top level's RET. Found on the way: `bin/runevm-opt` kept its translations by the checksum of the bytecode alone, so a suite run after a change of `runeopt` or the runtime could run the programs the old ones made; `make` now empties the cache whenever it builds either again. `make check`, `make test-native-stress` and `make test-native-asan` pass. Native code gains 33% (geometric mean; `fib` 72%, the bootstrap 31%): *Performance of the milestones* |
+| M11, allocation in the templates | done: TUPLE, CON, CLOSURE, NEWEXN and MKEXN bump `heap_used` themselves when the object fits and `--gc-stress` is off, as `vm_alloc` decides, write the header (kind, contag and length in two stores) and the fields from their slots, and add to `bytes_allocated` and `objects_allocated`, so `--count` stays `runevm`'s; otherwise, and for MKEXN on a value that is no exception constructor, they call the helper as before, which collects. The same checks pass as for M10. Native code gains 14% (`tak` 26%, `fib`, which allocates nothing, none) |
+| M12, a cheaper collector | done, in `vm/heap.c`, so `runevm` too: both semispaces are kept while the heap stays its size, the one collected from being the next collected into, where every collection allocated a new one and freed the old; an object of one to three fields is copied by a `memcpy` of a size the compiler knows, which it inlines; and D14 = C, `--heap-fill P` (1 to 100, 50 by default, which is the rule as before to the byte), an option of `runevm` and of native programs that an image carries as it carries `--gc-stress`, so images are version 3 (`vm/image.c`, `RbcImage`). At a quarter the compiler compiling itself collects 14 times, where at half it collects 24, and ends with the same semispace of 256 MB. `make check`, `make test-native-stress`, `make test-native-asan`, `make test-stress`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass; `tests/vm` refuses `--heap-fill 0` and `101`. The bootstrap takes 21% less CPU time natively and 10% less on `runevm`, most of it the kernel's (page faults 505,000 to 151,000); programs with small heaps do not change |
+| M13, the tag test of a match, fused | done, D13 = B: `JUMPIFNOTTAG o, t`, appended to `vm/opcodes.def`, so no other opcode moves and the `.rbc` keeps version 2. `Codegen` emits it for the `If` that `MatchComp.testTag` builds; the interpreter's case, the template, the stack effect in `RbcCheck`, the check of its target in the loader and in `Rbc`, `bytecode.md`, and `every-opcode.rasm`, which takes it both ways on both kinds of constructor. The compiler compiling itself runs 849.6 million instructions where it ran 967.9 million, 12.2% fewer (the 967.9 million had come to within 0.2% of the old budget); `runedoc` 6 to 8% fewer, `intinf_fact` 13.7%, `list_ops` 10.9%, `string_ops` 8.2%, `array_sieve` 5.3%, and `fib`, `tak` and `real_nbody`, which match no constructor, the same. The budgets of `make perf-check` are measured again (`tests/perf/run-perf.sh --update`). `make check`, where the bootstrap reproduces itself with the new opcode, `make test-native-stress`, `make test-native-asan`, the suite on the ASan VM, `make test-windows` and `make test-portability` pass. `runevm` gains 6.4% (the bootstrap 13.9%), native code 2.0% |
 | M14, D3's option A, measured first | measured, not built: the processor already predicts the returns M10 made (under M14 below), which leaves at most 0.6% of the bootstrap and 2% of `fib` and `tak` for a native `ret` to gain, against the cost D3 lists |
-| M15, the values of a run in registers | done in part: the value a LOCAL pushes stays in its local when the next instruction, in the same run and with no position of its own, only reads the top of the stack (SETLOCAL, SETGLOBAL, SELECT, DECON, EXNCON, EXNARG, the conditional jumps, CALL, TAILCALL, RET, a TUPLE, CON, CLOSURE or MKEXN that takes values, and a primitive of two or three arguments done inline), and that instruction reads it there; its slow paths copy it to its slot before they call into C. Values an instruction computes are still stored to their slots: keeping those in registers, the rest of M15, is not built (under M15 below). `make check`, `make test-native-stress` and `make test-native-asan` pass |
+| M15, the values of a run in registers | done in part: the value a LOCAL pushes stays in its local when the next instruction, in the same run and with no position of its own, only reads the top of the stack (SETLOCAL, SETGLOBAL, SELECT, DECON, EXNCON, EXNARG, the conditional jumps, CALL, TAILCALL, RET, a TUPLE, CON, CLOSURE or MKEXN that takes values, and a primitive of two or three arguments done inline), and that instruction reads it there; its slow paths copy it to its slot before they call into C. Values an instruction computes are still stored to their slots: keeping those in registers, the rest of M15, is not built (under M15 below). `make check`, `make test-native-stress` and `make test-native-asan` pass. Native code gains 11% (`intinf_fact` 15%, `string_ops` 7%) |
 
 ## Where we are
 
@@ -1247,6 +1247,146 @@ left for registers.
 bytecode rather than the translation: calling a known function directly,
 values that are not boxed, and slots of a frame used twice. They are in
 [performance.md](performance.md), for the VM and native code alike.
+
+## Performance of the milestones
+
+Measured on 2026-09-24, as the owner asked, for every milestone: what it
+gained, on which programs most and least, and why, for native code and for
+`runevm` where the milestone touches it; and what it cost in code.
+
+**How.** `perf stat -e cycles:u,instructions:u`, the least of five runs
+(three for the bootstrap), on the eight programs of `tests/perf`, each
+wrapped to run its `wall` repetitions three times, and on the compiler
+compiling itself (64 MiB heap; the same frozen sources for every version).
+Each milestone's `runevm` and `runeopt` were built from its commit (M10 to
+M15 from the snapshot that was checked) and every program translated by
+that milestone's `runeopt`. A gain is the old cycles over the new, less 1;
+the average is the geometric mean over the nine. Two kinds of noise: the
+same binaries measured twice, hours apart, differ by up to 3% on a program
+and 1% on the mean; and a rebuild that changes nothing a program executes
+moves its cycles by up to 13% (`word_bits` on `runevm` at M3, whose
+instruction count did not move), which is where the code lands in memory.
+So for `runevm`, a change of cycles without a change of instructions is
+placement, not a gain. `cycles:u` counts no kernel time, which hid M12's
+gain: M12 is also measured by CPU time, user and system.
+
+### The numbers
+
+| Milestone | `runevm` | Native | Code (product, not tests or docs) |
+|---|---|---|---|
+| M1, runtime as a library | **-15.4%** (14% more instructions); worst `array_sieve` -20.8%, least `word_bits` -10.3% | (none yet) | runtime +333 -299, a move |
+| M2, reader and validator | none | (none yet) | translator +723 |
+| M3, every instruction translated | none (0.0% instructions) | **2.25x `runevm`** of the same build; most `real_nbody` 2.79x, `word_bits` 2.59x; least `fib` 1.68x, `list_ops` 1.89x; bootstrap 2.05x | translator +385, glue +319 |
+| M4, the suites natively | none | none (0.0% instructions) | harness +155 |
+| M5, 56 primitives inline | none | **+21.1%** (23% fewer instructions); most `word_bits` +43%, `real_nbody` +37%; least `tak` +1.3%, `list_ops` +12.7%; bootstrap +17.6% | translator +247 |
+| M6, debug information | none | none | translator +42 |
+| M7, M8 | none | none | docs, install |
+| `e656ead`, M1's loss undone | **+22.3%** (12% fewer instructions); most `array_sieve` +35%, least `tak` +15% | **+10.0%**; most `fib` +18.5%, least `real_nbody` +3.5% | runtime +37 -31 |
+| M9, images | none | none | runtime +137, translator +284 |
+| M10, calls and returns | none | **+33.4%** (33% fewer instructions); most `fib` +72%, `list_ops` +39%, `tak` +36%; least `intinf_fact` +24%, `array_sieve` +24%; bootstrap +31% | translator +93, glue +12 |
+| M11, allocation | none | **+14.4%**; most `tak` +26%, `list_ops` +25%; least `fib` 0.0%, bootstrap +9.5% | translator +68 |
+| M12, the collector | small heaps: none; **bootstrap -10% CPU time** | small heaps: none; **bootstrap -21% CPU time** (page faults 505,000 to 151,000) | runtime +54 -12 |
+| M13, fused tag test | **+6.4%** (6.5% fewer instructions); most `intinf_fact` +20.5%, `list_ops` +15.5%, bootstrap +13.9%; `fib`, `tak`, `real_nbody` none | **+2.0%**; most `string_ops` +5.1%, `intinf_fact` +4.8%; `fib`, `tak` none | compiler +14, runtime +14, translator +26 |
+| M14, option A | not built | measured: at most 0.6% of the bootstrap, 2% of `fib` | none |
+| M15, a pushed local read in place | none | **+11.2%** (6.3% fewer instructions); most `intinf_fact` +14.6%, `tak` +13.4%; least `string_ops` +6.9%, `word_bits` +8.3%, bootstrap +9.8% | translator +60 -28 |
+
+Where it ends: native code runs **4.0 times** as fast as `runevm` of the
+same build (2.45 times after M9), from 2.9 on the bootstrap to 5.5 on
+`tak`; **4.5 times** the `runevm` of before M1. M10 to M15 together made
+native code **1.75 times** as fast (most `list_ops` 2.04x, `tak` 1.95x,
+`fib` 1.90x; least `real_nbody` 1.53x, `word_bits` 1.62x), the bootstrap
+1.70x in user cycles and more in CPU time by M12. `runevm` ends 1.12 times
+as fast as before M1, almost all of it M13 (the bootstrap 1.23x).
+
+### Why
+
+* **M1** moved `vm_pop`, `vm_top` and the push of a frame out of the file of
+  the loop, so every instruction called them; all programs lost, and the
+  spread between them is within what placement moves. `e656ead` put them
+  back inline in `vm.h` and gained what M1 lost, and native code gained with
+  it, since the glue used them too: `fib` most, whose every call went
+  through three of them, `real_nbody` least, whose arithmetic was inline
+  already.
+* **M3** takes away dispatch and decoding. `real_nbody` (42.6% LOCAL, 19.5%
+  SETLOCAL) is long runs of moves, which become a load and a store each;
+  `fib` is a call every 13 instructions, and a call still went through the
+  C glue as it goes through the loop, so it gained least.
+* **M5**: `word_bits` and `real_nbody` spend their primitives on word and
+  real arithmetic, now inline; `tak` has 6.4% PRIM (`int_lt`, `int_sub`)
+  and its time was in its calls, then all in C.
+* **M10**: `fib` is nothing but calls (CALL and RET are 15% of what it
+  executes), and a call was three C functions and a loop; `tak`, `list_ops`
+  next. `intinf_fact` and `array_sieve` loop by TAILCALL and spend their
+  time allocating and in SELECT, which M10 left alone.
+* **M11**: `tak` builds a tuple of three for every call, `list_ops` two
+  objects for every cons cell; `fib` allocates nothing (271 objects in a
+  run).
+* **M12**: the bootstrap's heap grows to 256 MB and it collects 24 times;
+  each collection allocated a new to-space, whose every page the kernel
+  had to supply again, which was 0.85 s of system time in a run of 3.3 s.
+  The programs of `tests/perf` stay in the first 4 MiB, where that never
+  mattered. `--heap-fill 25` collects 14 times instead of 24 and saves 4%
+  of user time, but the heap reaches its large sizes sooner and the new
+  memory costs more system time than that (0.70 s against 0.28 s): half
+  stays the best default on this machine.
+* **M13**: the gain is where matches on datatypes are: `intinf_fact`
+  (digit lists, CONTAG 4.6% of its instructions), `list_ops`, and the
+  compiler, which matches all the time. `runevm` gains three times what
+  native code does, since it paid four dispatches for the test where native
+  code paid four cheap templates (M5 had made `poly_eq` inline).
+* **M15**: `tak` is 40% LOCAL and `intinf_fact` and `list_ops` read a local
+  just before a SELECT, a CALL or a jump; the cycles gained exceed the
+  instructions saved because the reader no longer loads what was stored a
+  cycle before. `string_ops` spends its time in C, `word_bits` in the
+  primitives of one argument, which M15 leaves out, and the bootstrap in the
+  collector.
+
+### What it cost, and whether it paid
+
+M10 to M15 grew the translator by 200 lines (`x64.sml`, 604 to 804), the
+collector by 25, the interpreter by 11 and the compiler by 12, for 1.75 times
+the speed of native code and the collector's fifth of the bootstrap's CPU
+time. The gain per line is best where the most work moved out of C into the
+templates (M10: 105 lines for a third) and worst where it reached into the
+compiler for a gain that native code had mostly taken already (M13: 54
+lines across four implementations for 2% natively, though 6% on `runevm`).
+The costs that matter are not the lines but what each adds that must be kept
+in step:
+
+* **M10 and M11 copy two protocols of the runtime into the templates**: the
+  push and pop of a frame and the fast path of `vm_alloc` (its rule for
+  collecting, `--gc-stress`, the header, the counts). The offsets are
+  generated, but the protocols are not: a change to `vm_push_frame` or to
+  when `vm_alloc` collects -- a generational collector, say -- now has a
+  second place to go. The images, the traces, `--count` everywhere and the
+  stress runs are what would notice.
+* **M12** adds nothing to keep in step, but a knob (`--heap-fill`) whose
+  best value here is the default, and a new version of the image format.
+* **M13** is *Constraints*' rule that an opcode has four implementations
+  at work: its case, its template, its stack effect, its prose; and a
+  special case in `Codegen` keyed on the shape `MatchComp` builds. It is the
+  one milestone whose value is mostly `runevm`'s.
+* **M15** adds the subtlest rule in the translator: an instruction in
+  `reads` may read its top operand where a LOCAL left it but never write it
+  in place, or it writes into a local; and a LOCAL is not left in place
+  before an instruction with a position of its own, for the line table.
+  Nothing checks the first rule but the suites that happen to run such a
+  path.
+* **M14** is the cheapest milestone: two measurements that kept an M-to-L
+  change with its own stack, CFI and ASan work out of the tree.
+
+The balance tips at the rest of M15. After M15 the native bootstrap spends
+its user cycles so (`perf record`, 23,000 samples over six runs, every
+bytecode instruction its own symbol): the collector 27% (`copy_obj` 19.8%,
+`collect_into` 6.6%); calls 19% (CALL 7.0%, RET 6.6%, TAILCALL 4.2%, the
+entry 1.5%); SELECT 9.4%; SETLOCAL 6.9% and LOCAL 2.8%; the tag test 7.8%
+(JUMPIFNOTTAG 6.2%); inline allocation 6.1%; the primitives, inline and in
+C, about 6%. Keeping values in registers would take at most part of the
+9.7% of LOCAL and SETLOCAL and some of SELECT's, for a change of every
+template; the collector, the largest item, is the runtime's, shared with
+`runevm`; and what remains of the calls is the calling convention, which is
+the compiler's. Those are the next things to weigh, in
+[performance.md](performance.md), for both.
 
 ## To revisit
 
