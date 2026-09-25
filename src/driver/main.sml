@@ -171,24 +171,24 @@ struct
 
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        let
-          (* Mid, launched dark (docs/plans/middle-end.md, M3): the code is
-             still generated from Lambda, so Mid is made only where it is
-             checked (--lint, as make check does), printed or named in
-             --passes. Made on every compile it would cost 8% of the
-             instructions of compiling hello.sml and 13% of the bootstrap's. *)
-          val wanted =
-            case !Pass.only of
-              SOME names => List.exists (fn n => n = "mid") names
-            | NONE => !Pass.level >= 1
-                      andalso (!Pass.lint orelse Pass.asked (Pass.dumpBefore, "mid") orelse Pass.asked (Pass.dumpAfter, "mid"))
-          val () = if wanted then ignore (midStage (SOME Lambda.show) ToMid.program lam) else ()
-        in
+        if !Pass.level = 0 then
+          (* -O0: the code generator of Lambda (decision D10 of the plan) *)
           emitProgram (inputs,
-                     Pass.stage {name = "codegen", showIn = SOME Lambda.show, show = Codegen.dump,
-                                 check = fn _ => (), size = Codegen.size}
-                                (fn lam => Codegen.compile (lam, !Translate.funNames)) lam)
-        end
+                       Pass.stage {name = "codegen", showIn = SOME Lambda.show, show = Codegen.dump,
+                                   check = fn _ => (), size = Codegen.size}
+                                  (fn lam => Codegen.compile (lam, !Translate.funNames)) lam)
+        else
+          let
+            val mid = midStage (SOME Lambda.show) ToMid.program lam
+            val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
+                                  size = Low.size}
+                                 (fn m => Lower.program (m, !Translate.funNames)) mid
+          in
+            emitProgram (inputs,
+                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Codegen.dump,
+                                     check = fn _ => (), size = Codegen.size}
+                                    Stack.program low)
+          end
 
   and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
     let

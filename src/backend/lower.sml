@@ -1,0 +1,406 @@
+(* From Mid to Low (docs/ir.md): each function of Mid becomes a function of
+   Low, and closures become explicit on the way (closure conversion). A
+   function captures the variables free in it, in the order of their stamps,
+   less itself, which it reads as `Self`; the members of a group made
+   together capture each other, and those not made yet are set after
+   (`SetEnv`) -- the flat closures of Codegen, so that a program allocates
+   what it did.
+
+   A join point becomes a block with its parameters; a Handle a Push, the
+   blocks of its body, and the handler's block, whose parameter is the
+   exception; a jump or a return out of a handler's region pops what it
+   leaves. A variable bound to another is the other (no copy), and one
+   bound to a constant, a global or a captured value is read again where
+   it is used. A match against a constructor's tag -- ConTag, poly_eq with
+   the tag, If -- is one IfTag. *)
+structure Lower =
+struct
+  structure M = Mid
+  structure L = Low
+
+  fun bug msg = Error.bug ("Lower: " ^ msg)
+
+  (* ---- what the whole program says ---- *)
+
+  (* How many times each variable is used, and what each function captures,
+     by its name. *)
+  val useCounts : int IntMap.map ref = ref IntMap.empty
+  val captures : int list IntMap.map ref = ref IntMap.empty
+
+  fun count x = useCounts := IntMap.insert (!useCounts, x, 1 + (case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0))
+  fun usesOf x = case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0
+
+  fun countAtom a = case a of M.Var (x, _) => count x | _ => ()
+  fun countRhs r =
+    case r of
+      M.Atom a => countAtom a
+    | M.App (f, xs) => List.app countAtom (f :: xs)
+    | M.Prim (_, _, xs) => List.app countAtom xs
+    | M.Tuple xs => List.app countAtom xs
+    | M.Select (_, a) => countAtom a
+    | M.Con (_, _, a) => countAtom a
+    | M.Decon (_, a) => countAtom a
+    | M.ConTag a => countAtom a
+    | M.MkExn (c, a) => (countAtom c; countAtom a)
+    | M.ExnCon a => countAtom a
+    | M.ExnArg (_, a) => countAtom a
+    | M.SetGlobal (_, a) => countAtom a
+    | _ => ()
+
+  (* The free variables of e, those in bound left out, added to acc; each
+     function's are worked out once (captures). *)
+  fun free (e : M.exp, bound : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
+    let
+      fun atom (a, acc) =
+        case a of
+          M.Var (x, _) => if IntMap.member (bound, x) then acc else IntMap.insert (acc, x, ())
+        | _ => acc
+      fun atoms (xs, acc) = List.foldl atom acc xs
+      fun rhs (r, acc) =
+        case r of
+          M.Atom a => atom (a, acc)
+        | M.App (f, xs) => atoms (f :: xs, acc)
+        | M.Prim (_, _, xs) => atoms (xs, acc)
+        | M.Tuple xs => atoms (xs, acc)
+        | M.Select (_, a) => atom (a, acc)
+        | M.Con (_, _, a) => atom (a, acc)
+        | M.Decon (_, a) => atom (a, acc)
+        | M.ConTag a => atom (a, acc)
+        | M.MkExn (c, a) => atoms ([c, a], acc)
+        | M.ExnCon a => atom (a, acc)
+        | M.ExnArg (_, a) => atom (a, acc)
+        | M.SetGlobal (_, a) => atom (a, acc)
+        | _ => acc
+      fun bind (x, b) = IntMap.insert (b, x, ())
+    in
+      case e of
+        M.Let (x, _, r, b) => free (b, bind (x, bound), rhs (r, acc))
+      | M.Fun (fs, b) =>
+          let
+            val bound' = List.foldl (fn (f, m) => bind (#name f, m)) bound fs
+            val acc = List.foldl (fn (f, acc) =>
+                                     List.foldl (fn (x, acc) => if IntMap.member (bound', x) then acc else IntMap.insert (acc, x, ()))
+                                                acc (capturesOf f)) acc fs
+          in free (b, bound', acc) end
+      | M.Join (_, ps, body, s) =>
+          free (s, bound, free (body, List.foldl (fn ((x, _), m) => bind (x, m)) bound ps, acc))
+      | M.Jump (_, xs) => atoms (xs, acc)
+      | M.If (c, t, f) => free (f, bound, free (t, bound, atom (c, acc)))
+      | M.Handle (a, x, h) => free (h, bind (x, bound), free (a, bound, acc))
+      | M.Raise a => atom (a, acc)
+      | M.Return r => rhs (r, acc)
+      | M.Mark (_, a) => free (a, bound, acc)
+    end
+
+  (* What a function captures: the variables free in it, but itself, in the
+     order of their stamps; its siblings of a group are among them. *)
+  and capturesOf (f : M.fundef) : int list =
+    case IntMap.find (!captures, #name f) of
+      SOME cs => cs
+    | NONE =>
+        let
+          val bound = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) (IntMap.insert (IntMap.empty, #name f, ())) (#params f)
+          val cs = IntMap.listKeys (free (#body f, bound, IntMap.empty))
+        in captures := IntMap.insert (!captures, #name f, cs); cs end
+
+  fun countExp e =
+    case e of
+      M.Let (_, _, r, b) => (countRhs r; countExp b)
+    | M.Fun (fs, b) => (List.app (countExp o #body) fs; countExp b)
+    | M.Join (_, _, body, s) => (countExp body; countExp s)
+    | M.Jump (_, xs) => List.app countAtom xs
+    | M.If (c, t, f) => (countAtom c; countExp t; countExp f)
+    | M.Handle (a, _, h) => (countExp a; countExp h)
+    | M.Raise a => countAtom a
+    | M.Return r => countRhs r
+    | M.Mark (_, a) => countExp a
+
+  (* ---- the functions being made ---- *)
+
+  val funcs : L.func list ref = ref []
+  val nextFuncId = ref 0
+  val funNames : string IntMap.map ref = ref IntMap.empty
+
+  (* A function being made: its blocks so far, the block being filled, and
+     how it reads the variables it captures. *)
+  type builder = {blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
+                  open' : bool ref, nextLabel : int ref, env : int IntMap.map, self : int option,
+                  span : Source.span option ref}
+
+  fun newLabel (b : builder) = let val l = !(#nextLabel b) in #nextLabel b := l + 1; l end
+  fun emit (b : builder, i) = if !(#open' b) then #instrs b := i :: !(#instrs b) else ()
+  fun def (b : builder, oper) = let val x = Elaborate.freshStamp () in emit (b, L.Def (x, oper)); x end
+  fun finish (b : builder, t : L.transfer) =
+    if !(#open' b) then
+      (#blocks b := {label = !(#label b), params = !(#params b), instrs = List.rev (!(#instrs b)), transfer = t}
+                    :: !(#blocks b);
+       #open' b := false)
+    else ()
+  fun start (b : builder, l, params) =
+    (if !(#open' b) then bug "a block started before the last was finished" else ();
+     #label b := l; #params b := params; #instrs b := []; #open' b := true)
+
+  (* Where the value of an expression goes: returned from the function, to a
+     block (as its parameter) with the handlers pushed when it was made, or
+     to what follows it in the same block. *)
+  datatype ret = FunRet | ToBlock of L.label * int | Cont of L.var -> unit
+
+  (* What an expression is lowered in: where its value goes, how many
+     handlers the function has pushed, its join points (with the handlers
+     pushed where each was made), and the variables that are others. *)
+  type cx = {ret : ret, depth : int, labels : (L.label * int) IntMap.map, subst : L.var IntMap.map}
+
+  (* An expression with one way out, and that at its end: its value can go
+     on in the same block. *)
+  fun straight (e : M.exp) : bool =
+    case e of
+      M.Let (_, _, _, b) => straight b
+    | M.Fun (_, b) => straight b
+    | M.Mark (_, a) => straight a
+    | M.Return _ => true
+    | _ => false
+
+  val int32Max : IntInf.int = IntInf.fromInt 1073741823
+  val int32Min : IntInf.int = IntInf.fromInt ~1073741824
+
+  (* ---- lowering ---- *)
+
+  fun function (f : M.fundef, pos : Source.span option, group : int) : int =
+    let
+      val id = !nextFuncId
+      val () = nextFuncId := id + 1
+      val cs = capturesOf f
+      val param = case #params f of [(x, _)] => x | _ => bug "a function of other than one parameter"
+      val selfRef = List.exists (fn x => x = #name f) (IntMap.listKeys (free (#body f, IntMap.insert (IntMap.empty, param, ()), IntMap.empty)))
+      val recursive = group > 1 orelse selfRef
+      val name =
+        case IntMap.find (!funNames, param) of
+          SOME n => n
+        | NONE => if recursive then "fn" ^ Int.toString (#name f) else "fn"
+      val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
+                         nextLabel = ref 0,
+                         env = #1 (List.foldl (fn (x, (m, i)) => (IntMap.insert (m, x, i), i + 1)) (IntMap.empty, 0) cs),
+                         self = SOME (#name f), span = ref pos}
+      val () = start (b, newLabel b, [])
+      val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty})
+    in
+      funcs := {id = id, name = name, param = param, ncaptured = List.length cs, blocks = List.rev (!(#blocks b)),
+                pos = pos} :: !funcs;
+      id
+    end
+
+  (* The variable an atom's value is in, made here where it is a constant,
+     a global or a captured value. *)
+  and atom (b : builder, cx : cx, a : M.atom) : L.var =
+    case a of
+      M.Var (x, _) => var (b, cx, x)
+    | M.Global (g, _) => def (b, L.Global g)
+    | M.Const (c, _) => def (b, L.Const c)
+    | M.Con0 (tag, _) => def (b, L.Con0 tag)
+    | M.Unit => def (b, L.Unit)
+
+  and var (b : builder, cx : cx, x : int) : L.var =
+    case IntMap.find (#subst cx, x) of
+      SOME y => y
+    | NONE =>
+        case IntMap.find (#env b, x) of
+          SOME i => def (b, L.Env i)
+        | NONE => if #self b = SOME x then def (b, L.Self) else x
+
+  and oper (b : builder, cx : cx, r : M.rhs) : L.operation =
+    let fun at a = atom (b, cx, a)
+    in
+      case r of
+        M.Atom _ => bug "an atom as an operation"
+      | M.App (f, [a]) => let val f = at f in L.Call (f, at a) end
+      | M.App _ => bug "a call of other than one argument"
+      | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
+      | M.Tuple xs => L.Tuple (List.map at xs)
+      | M.Select (i, a) => L.Select (i, at a)
+      | M.Con (tag, _, a) => L.Con (tag, at a)
+      | M.Decon (_, a) => L.Decon (at a)
+      | M.ConTag a => L.ConTag (at a)
+      | M.NewExn n => L.NewExn n
+      | M.BuiltinExn k => L.BuiltinExn k
+      | M.MkExn (c, a) => let val c = at c in L.MkExn (c, at a) end
+      | M.ExnCon a => L.ExnCon (at a)
+      | M.ExnArg (_, a) => L.ExnArg (at a)
+      | M.SetGlobal (g, a) => L.SetGlobal (g, at a)
+    end
+
+  and value (b, cx, r : M.rhs) : L.var =
+    case r of
+      M.Atom a => atom (b, cx, a)
+    | _ => def (b, oper (b, cx, r))
+
+  and pops (b, n) = if n <= 0 then () else (emit (b, L.Pop); pops (b, n - 1))
+
+  (* Lower e into the block being filled, which it finishes, but for a Cont,
+     whose rest fills it on. *)
+  and exp (b : builder, e : M.exp, cx : cx) : unit =
+    case e of
+      M.Let (x, _, r, body) =>
+        (case tagTest (x, r, body) of
+           SOME (y, tag, sp, t, f) =>
+             let
+               val v = var (b, cx, y)
+               val lt = newLabel b
+               val lf = newLabel b
+             in
+               finish (b, L.IfTag (v, tag, lt, lf));
+               start (b, lt, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, t, cx);
+               start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
+             end
+         | NONE =>
+             (case r of
+                M.Atom (M.Var (y, _)) =>
+                  exp (b, body, {ret = #ret cx, depth = #depth cx, labels = #labels cx,
+                                 subst = IntMap.insert (#subst cx, x, var (b, cx, y))})
+              | M.Atom a =>
+                  let val v = atom (b, cx, a)
+                  in exp (b, body, {ret = #ret cx, depth = #depth cx, labels = #labels cx, subst = IntMap.insert (#subst cx, x, v)}) end
+              | _ => (emit (b, L.Def (x, oper (b, cx, r))); exp (b, body, cx))))
+    | M.Fun (fs, body) => (closures (b, cx, fs); exp (b, body, cx))
+    | M.Join (j, ps, jbody, scope) =>
+        let val l = newLabel b
+        in
+          exp (b, scope, {ret = #ret cx, depth = #depth cx, labels = IntMap.insert (#labels cx, j, (l, #depth cx)),
+                          subst = #subst cx});
+          start (b, l, List.map #1 ps);
+          exp (b, jbody, cx)
+        end
+    | M.Jump (j, xs) =>
+        (case IntMap.find (#labels cx, j) of
+           SOME (l, d) =>
+             let val vs = List.map (fn a => atom (b, cx, a)) xs
+             in pops (b, #depth cx - d); finish (b, L.Goto (l, vs)) end
+         | NONE => bug "a jump to a join point not in scope")
+    | M.If (c, t, f) =>
+        let
+          val v = atom (b, cx, c)
+          val lt = newLabel b
+          val lf = newLabel b
+        in
+          finish (b, L.If (v, lt, lf));
+          start (b, lt, []); exp (b, t, cx);
+          start (b, lf, []); exp (b, f, cx)
+        end
+    | M.Handle (a, x, h) =>
+        let val lh = newLabel b
+        in
+          emit (b, L.Push lh);
+          exp (b, a, {ret = #ret cx, depth = #depth cx + 1, labels = #labels cx, subst = #subst cx});
+          start (b, lh, [x]);
+          exp (b, h, cx)
+        end
+    | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
+    | M.Return r =>
+        (case (#ret cx, r) of
+           (FunRet, M.App (f, [a])) =>
+             if #depth cx = 0 then let val f = atom (b, cx, f) in finish (b, L.TailCall (f, atom (b, cx, a))) end
+             else let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
+         | (FunRet, _) => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
+         | (ToBlock (l, d), _) => let val v = value (b, cx, r) in pops (b, #depth cx - d); finish (b, L.Goto (l, [v])) end
+         | (Cont k, _) => k (value (b, cx, r)))
+    | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME sp; exp (b, a, cx))
+
+  (* ConTag of y, poly_eq of it with a tag, and an If on that, each used
+     once: y, the tag, and the two branches. *)
+  and tagTest (x, r, body) =
+    case r of
+      M.ConTag (M.Var (y, _)) =>
+        if usesOf x <> 1 then NONE
+        else
+          let
+            fun unmark (M.Mark (sp, e), _) = unmark (e, SOME sp)
+              | unmark (e, sp) = (e, sp)
+          in
+            case unmark (body, NONE) of
+              (M.Let (c, _, M.Prim ("poly_eq", _, [M.Var (x', _), M.Const (Lambda.CInt i, _)]), rest), sp1) =>
+                if x' = x andalso usesOf c = 1 andalso IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
+                  (case unmark (rest, sp1) of
+                     (M.If (M.Var (c', _), t, f), sp2) =>
+                       if c' = c then SOME (y, IntInf.toInt i, sp2, t, f) else NONE
+                   | _ => NONE)
+                else NONE
+            | _ => NONE
+          end
+    | _ => NONE
+
+  (* The closures of a group of functions: each made in turn, capturing
+     those made before it and a placeholder for those after, which are set
+     once all are made. *)
+  and closures (b : builder, cx : cx, fs : M.fundef list) : unit =
+    let
+      val names = List.map #name fs
+      (* a function begins where it is made, so that what comes before the
+         first position of its body is not put down to what was made before *)
+      val pos = !(#span b)
+      fun go ([], _, patches) = patches
+        | go (f :: rest, made, patches) =
+            let
+              val fid = function (f, pos, List.length fs)
+              val later = List.map #name rest
+              val cs = capturesOf f
+              val (vs, ps, _) =
+                List.foldl (fn (c, (vs, ps, i)) =>
+                              if List.exists (fn l => l = c) later then (NONE :: vs, (#name f, i, c) :: ps, i + 1)
+                              else (SOME (var (b, cx, c)) :: vs, ps, i + 1))
+                           ([], [], 0) cs
+              val () = emit (b, L.Def (#name f, L.Closure (fid, List.rev vs)))
+            in go (rest, #name f :: made, patches @ List.rev ps) end
+      val patches = go (fs, [], [])
+      val _ = names
+    in
+      List.app (fn (f, i, c) => ignore (def (b, L.SetEnv (f, i, c)))) patches
+    end
+
+  (* ---- the program ---- *)
+
+  fun program (p : M.program, names : string IntMap.map) : L.program =
+    let
+      val () = (useCounts := IntMap.empty; captures := IntMap.empty; funcs := []; nextFuncId := 0; funNames := names)
+      val () = List.app (fn M.Val (_, _, e) => countExp e
+                          | M.Funs fs => List.app (countExp o #body) fs
+                          | M.Do (_, e) => countExp e) p
+      val id = !nextFuncId
+      val () = nextFuncId := id + 1
+      val param = Elaborate.freshStamp ()
+      val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
+                         nextLabel = ref 0, env = IntMap.empty, self = NONE, span = ref NONE}
+      val () = start (b, newLabel b, [])
+      val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty}
+      (* a definition's expression, whose value then goes to k *)
+      fun defining (e, k : L.var -> unit) =
+        if straight e then exp (b, e, {ret = Cont k, depth = 0, labels = IntMap.empty, subst = IntMap.empty})
+        else
+          let
+            val l = newLabel b
+            val x = Elaborate.freshStamp ()
+          in
+            exp (b, e, {ret = ToBlock (l, 0), depth = 0, labels = IntMap.empty, subst = IntMap.empty});
+            start (b, l, [x]);
+            k x
+          end
+      fun definition d =
+        case d of
+          M.Val (g, _, e) => defining (e, fn v => ignore (def (b, L.SetGlobal (g, v))))
+        | M.Funs fs =>
+            List.app (fn f =>
+                        let val fid = function (f, !(#span b), 1)
+                        in
+                          if null (capturesOf f) then ()
+                          else bug "a global function that captures a variable";
+                          ignore (def (b, L.SetGlobal (#name f, def (b, L.Closure (fid, [])))))
+                        end) fs
+        | M.Do (_, e) => defining (e, fn _ => ())
+      val () = List.app definition p
+      val u = def (b, L.Unit)
+      val () = finish (b, L.Return u)
+      val () = ignore top
+      val topFunc : L.func = {id = id, name = "<toplevel>", param = param, ncaptured = 0,
+                              blocks = List.rev (!(#blocks b)), pos = NONE}
+    in
+      IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (topFunc :: !funcs))
+    end
+end

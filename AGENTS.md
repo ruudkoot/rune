@@ -98,7 +98,9 @@ keep these invariants:
   a pass that rewrites asks `Pass.spend` before each rewrite, and one that
   optimises says from which level it runs. It comes with a test in
   `tests/ir`, and what its representation keeps is written down in
-  `docs/ir.md`.
+  `docs/ir.md`. Code is made by the new back end (`Lower`, `Stack`) from
+  `-O1`, and by `Codegen` at `-O0`: `make check-levels` holds the two to the
+  same output, exit status and allocation for every program.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

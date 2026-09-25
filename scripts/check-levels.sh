@@ -3,9 +3,12 @@
 # the lint of every pass on and Mid's text checked against itself
 # (--mid-roundtrip; docs/ir.md). Where the two bytecodes differ,
 # both are run as tests/run-tests.sh runs the program -- its .args, .stdin
-# and .vmargs -- and must print the same, on both streams, and exit the same
-# (docs/plans/middle-end.md, M2). Where they are the same, there is nothing
-# to run.
+# and .vmargs -- and must print the same, on both streams, exit the same,
+# and allocate the same bytes and objects (runevm --count), the cheap check
+# of a back end (docs/plans/middle-end.md, M2 and M4): -O0 is Codegen's code
+# and -O2 the new back end's. A program that allocates otherwise for a
+# reason is listed, with the reason, in scripts/check-levels.alloc. Where
+# the bytecodes are the same, there is nothing to run.
 #   scripts/check-levels.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -39,10 +42,14 @@ if [ -n "$one" ]; then
   stdin=/dev/null; [ -f "$one.stdin" ] && stdin=$one.stdin
   for level in 0 2; do
     # shellcheck disable=SC2086
-    "$vm" $vmargs "$out/$name.O$level.rbc" $args < "$stdin" > "$out/$name.O$level.out" 2> "$out/$name.O$level.err"
+    "$vm" --count $vmargs "$out/$name.O$level.rbc" $args < "$stdin" > "$out/$name.O$level.out" 2> "$out/$name.O$level.all"
     echo $? > "$out/$name.O$level.code"
+    grep -v '^runevm: count: ' "$out/$name.O$level.all" > "$out/$name.O$level.err"
+    sed -n 's/^runevm: count: [0-9]* instructions, //p' "$out/$name.O$level.all" > "$out/$name.O$level.alloc"
   done
-  for part in out err code; do
+  parts="out err code alloc"
+  grep -q "^$(basename "$one") " scripts/check-levels.alloc && parts="out err code"
+  for part in $parts; do
     if ! cmp -s "$out/$name.O0.$part" "$out/$name.O2.$part"; then
       echo "FAIL levels.$name: -O0 and -O2 differ ($part: diff $out/$name.O0.$part $out/$name.O2.$part)"; exit 0
     fi

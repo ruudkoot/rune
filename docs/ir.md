@@ -10,15 +10,14 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
-| `codegen` | `Lambda` | instruction lists (`src/backend/codegen.sml`) | none yet |
+| `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
+| `stack` | `Low` | instruction lists (`src/backend/stack.sml`) | none yet |
 | emission | instruction lists | the `.rbc` | |
 
-**Mid is launched dark** (the plan's M3): the code is still generated from
-`Lambda`, and Mid is made only where it is checked (`--lint`, which
-`make check` gives every program), printed, or named in `--passes`, and
-never at `-O0`. Made on every compile, it cost 8% of the instructions of
-compiling `hello.sml` on `runevm` and 13% of the bootstrap's; the back end
-of M4 generates code from it.
+At `-O0` the code is still generated from `Lambda`, by `Codegen` (stage
+`codegen`), the reference the new back end is compared with (decision D10
+of the plan): `-O0` and `-O2` must give programs that print, exit and
+allocate the same (`make check-levels`).
 
 Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
@@ -179,6 +178,65 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   EXP)`; comments are SML's.
 
+## Low
+
+Low (`src/backend/low.sml`) is what the targets are made from: each
+function is blocks with parameters in SSA form (decision D2), and what Mid
+leaves implicit is explicit.
+
+* **Closures:** `Lower` converts them as it goes. A function captures the
+  variables free in it, in the order of their stamps, less itself, which it
+  reads as `Self`; captured values are read with `Env i`. The functions of
+  a group capture each other, and those not made yet are set after
+  (`SetEnv`). These are `Codegen`'s flat closures, so a program allocates
+  what it did.
+* **Blocks:** a join point of Mid is a block whose parameters are the join
+  point's; an `If` two blocks; a match on a constructor's tag one `IfTag`.
+  Every edge goes forward in the order of the blocks, since Mid has no
+  loops yet.
+* **Handlers:** a `Handle` is a `Push` of the handler's block, the blocks of
+  its region, and that block, whose one parameter is the exception; a jump
+  or a return out of a region pops what it leaves, and a call in tail
+  position of a region is no tail call.
+* **Copies:** a variable Mid binds to another is the other, and one bound
+  to a constant, a global or a captured value is read again where it is
+  used.
+
+### What a `Low` keeps
+
+`LowLint` checks, after `lower`:
+
+* **SSA:** every variable is defined once in the program and on every way
+  to each of its uses; a handler's block sees only what was defined where
+  it was pushed, since its region may raise anywhere.
+* **Blocks:** a jump goes forward, to a block of its function, with an
+  argument for each parameter; a handler's block has one parameter.
+* **Handlers:** every way into a block has the same handlers pushed, and a
+  function returns, or calls in tail position, with none.
+
+Low is untyped: the types become representations after closure
+conversion, which Low will carry when a target needs them (M11).
+
+### The stack target
+
+`Stack` makes `runevm`'s bytecode from Low (`Target.stack` says what the
+middle end may ask of it):
+
+* **Trees:** a value used once, by an instruction of its own block that
+  takes it in the order the stack gives it, stays on the stack; it is
+  computed where that instruction's operands are pushed, with nothing
+  between them that has an effect. Constants, globals, captured values and
+  the running closure are pushed where they are used.
+* **Locals:** every other value has one, shared by linear scan: since every
+  edge goes forward, a value lives from where it is made to its last use in
+  the order of the blocks. The parameter is local 0.
+* **Jumps:** the arguments of a jump are pushed and stored into the block's
+  parameters from the last, so they move in parallel; a jump to the next
+  block falls through, one to a block that only jumps on goes on, and one
+  to a block that only returns its parameter returns.
+* **Positions** are noted where they change; a tree keeps the position it
+  was made at.
+
 ## Tests
 
 * **`make test-ir`** (`tests/ir/run-ir-tests.sh`): each `tests/ir/NAME.sml`
@@ -189,9 +247,12 @@ program written by hand. The grammar is at the head of
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
 * **`make check-levels`** (`scripts/check-levels.sh`): every program of
-  `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
-  lint on and Mid's text checked against itself (`--mid-roundtrip`). Where
-  the two bytecodes differ, both run and must print and exit the same.
+  `tests/lang` and `tests/perf` compiled at `-O0` (`Codegen`) and at `-O2`
+  (the new back end), with the lint on and Mid's text checked against
+  itself (`--mid-roundtrip`). Both run, and must print, exit and allocate
+  the same (the bytes and objects of `runevm --count`); a program that
+  allocates otherwise for a reason is listed with it in
+  `scripts/check-levels.alloc`.
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
 * **`scripts/bisect-fuel.sh PROGRAM.sml`**: where a program runs otherwise

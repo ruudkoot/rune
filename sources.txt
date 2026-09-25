@@ -31,6 +31,11 @@ src/core/midlint.sml
 src/core/midtext.sml
 src/core/tomid.sml
 src/backend/codegen.sml
+src/backend/low.sml
+src/backend/target.sml
+src/backend/lowlint.sml
+src/backend/lower.sml
+src/backend/stack.sml
 src/backend/emit.sml
 src/driver/basismanifest.sml
 src/driver/options.sml

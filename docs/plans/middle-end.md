@@ -21,7 +21,7 @@ What it rests on:
 | M1 | The instruction set as one description | done |
 | M2 | Pass infrastructure | done |
 | M3 | Types, and Mid launched dark | done |
-| M4 | The new back end: Low and the stack target | |
+| M4 | The new back end: Low and the stack target | done |
 | M5 | The register target and the first loop of `vm/new` | |
 | M6 | `vm/portable`: frames and dispatch | |
 | M7 | The simplifier and tree shaking | |

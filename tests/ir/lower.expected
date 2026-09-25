@@ -1,0 +1,100 @@
+(* after lower *)
+function f0 <toplevel> (v1, 0 captured)
+  b0:
+    v2 = closure f1 
+    v3 = setglobal g1 v2
+    v4 = closure f3 
+    v5 = setglobal g2 v4
+    v6 = closure f4 
+    v7 = setglobal g3 v6
+    push b2
+    v8 = global g3
+    v9 = con0 0
+    v10 = call v8 v9
+    v11 = const 0
+    v12 = prim int_div v10 v11
+    pop
+    goto b1 v12
+  b2(v13):
+    v14 = exncon v13
+    v15 = builtinexn 3
+    v16 = prim ptr_eq v14 v15
+    if v16 b4 b5
+  b4:
+    v17 = const ~1
+    goto b1 v17
+  b5:
+    goto b3
+  b3:
+    raise v13
+  b1(v18):
+    v19 = setglobal g4 v18
+    v20 = global g4
+    v21 = const 0
+    v22 = prim int_gt v20 v21
+    if v22 b8 b9
+  b8:
+    v23 = global g1
+    v24 = const 1
+    v25 = call v23 v24
+    goto b7 v25
+  b9:
+    v26 = global g1
+    v27 = const 2
+    v28 = call v26 v27
+    goto b7 v28
+  b7(v29):
+    v30 = const 3
+    v31 = call v29 v30
+    goto b6 v31
+  b6(v32):
+    v33 = setglobal g5 v32
+    v34 = ()
+    return v34
+function f1 adder (v35, 0 captured)
+  b0:
+    v36 = closure f2 v35
+    return v36
+function f2 fn (v37, 1 captured)
+  b0:
+    v38 = env 0
+    v39 = prim int_add v37 v38
+    return v39
+function f3 count (v40, 0 captured)
+  b0:
+    v41 = select 0 v40
+    v42 = select 1 v40
+    v43 = const 0
+    v44 = prim poly_eq v41 v43
+    if v44 b1 b2
+  b1:
+    return v42
+  b2:
+    v45 = const 1
+    v46 = prim int_sub v41 v45
+    v47 = const 1
+    v48 = prim int_add v42 v47
+    v49 = tuple v46 v48
+    v50 = global g2
+    tailcall v50 v49
+function f4 first (v51, 0 captured)
+  b0:
+    iftag v51 0 b2 b3
+  b2:
+    v52 = const 0
+    return v52
+  b3:
+    goto b1
+  b1:
+    iftag v51 1 b5 b6
+  b5:
+    v53 = decon v51
+    v54 = select 0 v53
+    return v54
+  b6:
+    goto b4
+  b4:
+    v55 = builtinexn 0
+    v56 = ()
+    v57 = mkexn v55 v56
+    raise v57

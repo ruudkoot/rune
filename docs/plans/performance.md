@@ -293,6 +293,13 @@ convention), which halves allocation and so also takes part of 13's gain.
 * **Gain:** `LOCAL x; SETLOCAL y` is 16% of all instructions, and the
   unit stores are 34% on top. The gain is mostly `runevm`'s: M15 already reads many
   of these locals where they are in native code.
+* **Done** by the new back end (middle-end M4, the default from `-O1`): a
+  variable bound to another is the other, a value used once stays on the
+  stack, and locals are shared by linear scan. `fun f (a, b) = a + b` is
+  six instructions and one local, where it was ten and five. With the jumps of item 7, `runevm`
+  executes 17 to 28% fewer instructions on `tests/perf` (fib 18.5%,
+  list_ops 27%, intinf_fact 28%) and the compiler 20 to 26% fewer
+  (compiling itself: 806.6M to 595.1M), allocating the same.
 
 ### 5. Compares that return `order`
 
@@ -331,6 +338,11 @@ convention), which halves allocation and so also takes part of 13's gain.
   * conditions compiled as branches (`JUMPIF` exists and is never
     emitted).
 * **At parity:** a CFG back end does all of this.
+* **Done in part** by the new back end (middle-end M4): a return where the
+  value is, a jump to the next block dropped, jumps to jumps threaded, a
+  jump to a block that only returns made a return, and `JUMPIF` where the
+  other branch follows. `andalso`, `orelse` and `not` as branches are the
+  simplifier's (M7).
 
 ### 8. No test on the last rule of an exhaustive match
 
