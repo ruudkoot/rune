@@ -84,6 +84,14 @@ int vm_run(VM *vm) {
     return vm_loop(vm);
 }
 
+/* The JIT is vm/new's (docs/plans/jit.md): this VM has none. */
+int vm_jit_arg(const char *arg, int *mode, int *stats, int *check) {
+    (void)mode; (void)stats; (void)check;
+    fprintf(stderr, "runevm: %s: this VM has no JIT (bin/runevm-new has)\n", arg);
+    return 0;
+}
+int vm_jit_check(void) { return 2; }
+
 /* The loop alone: a VM resumed from an image (vm/image.c) enters it here,
    its built-in exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {

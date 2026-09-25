@@ -257,4 +257,16 @@ int sys_win_dde_stop(int info);
 int sys_system(const char *command);            /* the exit status, or -1 */
 const char *sys_getenv(const char *name);       /* NULL when it is not set */
 
+/* Executable memory, for the code a JIT makes (vm/new; docs/plans/jit.md).
+   sys_code_alloc gives size bytes, page-aligned, readable and writable, or
+   NULL; sys_code_protect makes them executable and no longer writable
+   (executable 1), or writable again (0), and gives 0 on failure;
+   sys_code_flush is what a machine needs between writing code and running
+   it (its instruction cache), and nothing on x86; sys_code_free gives the
+   memory back. sys_none fails the first with ENOSYS. */
+void *sys_code_alloc(size_t size);
+int sys_code_protect(void *code, size_t size, int executable);
+void sys_code_flush(void *code, size_t size);
+void sys_code_free(void *code, size_t size);
+
 #endif

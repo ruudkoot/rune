@@ -228,3 +228,9 @@ int sys_win_dde_execute(int info, const char *command, int retries, int64_t dela
     (void)info; (void)command; (void)retries; (void)delay_ms; return NOSYS_INT;
 }
 int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }
+
+/* executable memory: none */
+void *sys_code_alloc(size_t size) { (void)size; fail(); return NULL; }
+int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
+void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
+void sys_code_free(void *code, size_t size) { (void)code; (void)size; }

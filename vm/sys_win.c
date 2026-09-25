@@ -3083,3 +3083,17 @@ int sys_win_dde_stop(int info) {
     dde[info].used = 0;
     return 0;
 }
+
+/* ---------------------------------------------------------- executable memory */
+void *sys_code_alloc(size_t size) {
+    void *p = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!p) last = errno_of_win(GetLastError());
+    return p;
+}
+int sys_code_protect(void *code, size_t size, int executable) {
+    DWORD old;
+    if (!VirtualProtect(code, size, executable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old)) { last = errno_of_win(GetLastError()); return 0; }
+    return 1;
+}
+void sys_code_flush(void *code, size_t size) { FlushInstructionCache(GetCurrentProcess(), code, size); }
+void sys_code_free(void *code, size_t size) { (void)size; VirtualFree(code, 0, MEM_RELEASE); }

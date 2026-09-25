@@ -9,8 +9,8 @@ in [docs/bytecode.md](../../docs/bytecode.md) and `src/isa/regs.sml`.
 
 ## What it is made of
 
-`bin/runevm-new` is `vm/main.c`, `vm/new/interp.c` and `vm/new/isa_regs.c`
-linked against `build/librune.a`, the runtime `runevm` is built from
+`bin/runevm-new` is `vm/main.c`, `vm/new/interp.c`, `vm/new/isa_regs.c` and
+`vm/new/jit.c` linked against `build/librune.a`, the runtime `runevm` is built from
 (`Makefile`, `bin/runevm-new`): the heap and collector (`vm/heap.c`),
 frames, handlers, raising and traces (`vm/runtime.c`), the loader
 (`vm/loader.c`), the primitives (`vm/prims.c`), images (`vm/image.c`) and
@@ -113,6 +113,41 @@ bounds, an argument of the wrong kind), and then the arguments are pushed,
 the VM made exact, the primitive called and its result popped, or its
 raise taken. Either way a `PRIM` counts one.
 
+## The driver and the JIT's view of a program
+
+`vm_loop` is a driver (`vm/new/jit.h`): it runs whatever frame is on top
+at that frame's tier -- the interpreter's, or the native code the JIT
+made -- and no engine calls another. The interpreter hands the VM back
+to the driver, exact, when the function it is about to enter has a
+native entry (`HANDOVER` in `CALL`, `CALLK`, `TAILCALL` and `TAILCALLK`)
+and when a `RET` lands in a frame whose caller left a native return
+address (`RETURN_NATIVE`); native code hands it back when it must run an
+interpreted frame or returns into one. So the machine stack is one C
+frame deep whatever the program does, plus the call into C in progress:
+`make test-new-jit` runs a recursion 200,000 deep under a machine stack
+of 1 MB with every function handed to the JIT. That is what lets frames
+be switched (green threads), copied (continuations) and rebuilt
+(deoptimisation) later.
+
+The JIT's view of the program (`JitProgram`, made by `jit_program` when
+the driver first sees a program and again when it becomes another,
+`Runtime.restore`) is a code object per function: its entry, NULL while
+it is interpreted; its tier; the counters tier 0 will keep for the
+tiering policy; and, from M4, its code's table of pc to address. An entry
+is published last, with one store. `--jit=off` runs the interpreter alone,
+`--jit=all` gives every function an entry at load, `baseline` and `opt`
+are the tiers of M6 and M9; `--jit-stats` prints at exit what the JIT did.
+`--jit-check` allocates executable memory through the system layer
+(`sys_code_alloc`, `sys_code_protect`, `sys_code_flush`,
+`sys_code_free`; `vm/sys.h`), writes a few bytes of this machine's code
+into it and runs them. A VM built with `RUNE_JIT=0` has the interpreter
+alone and refuses `--jit`.
+
+Until M4 the only entry is a stub: `jit_run` answers `RUN_INTERP` for it,
+and the interpreter runs the frame. Under `--jit=all` every call thus
+crosses the driver twice, which is the cost of the protocol itself,
+measured in M3.
+
 ## Images
 
 An image (`vm/image.c`) is in bytecode terms and shared with `runevm`, with
@@ -127,6 +162,9 @@ for each frame, the `RESULT` after its call. A resumed VM enters
 `runevm-new --count` counts instructions executed and bytes and objects
 allocated, and `make perf-check` holds them to `tests/perf/new/*.budget`.
 Cycles are `scripts/perf-cycles.sh` (docs/plans/jit.md, *Measuring*).
+`make test-new-jit` (part of `make check`) runs `tests/lang` with every
+function given to the JIT (`--jit=all`), `--jit-check`, and a recursion
+200,000 deep under a machine stack of 1 MB.
 `make test-new` (part of `make check`) runs `tests/lang` on it, holds every
 program's allocation and the compiler's own output to `runevm`'s and the
 primitives of `fastprim.h` to their edge cases (`scripts/check-new.sh`),

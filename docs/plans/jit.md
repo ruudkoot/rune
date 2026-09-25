@@ -30,7 +30,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | Measure | done |
 | M2 | Tier 0: the interpreter finished | done |
-| M3 | The skeleton: code objects, executable memory, the driver | |
+| M3 | The skeleton: code objects, executable memory, the driver | done |
 | M4 | Tier 1, straight-line code, x86-64 | |
 | M5 | Tier 1 complete, and Windows | |
 | M6 | Tiering, OSR entry and the code cache | |
@@ -1510,6 +1510,44 @@ M8 to M12 about 6,000, and are planned again after M7.
   the nesting test passes; Windows and portability build.
 * **Touches:** green threads and continuations (the driver), incremental
   compilation (the entries).
+* **Done** (2026-09-25):
+  * **Executable memory** in `vm/sys.h`: `sys_code_alloc`,
+    `sys_code_protect` (writable, or executable and read-only),
+    `sys_code_flush`, `sys_code_free`, answered by `sys_posix.c` (`mmap`,
+    `mprotect`, `__builtin___clear_cache`), `sys_win.c` (`VirtualAlloc`,
+    `VirtualProtect`, `FlushInstructionCache`) and `sys_none.c` (`ENOSYS`).
+    `runevm-new --jit-check` writes a function returning 42 in this
+    machine's code (x86-64, aarch64) into such memory and runs it.
+  * **Code objects** (`vm/new/jit.h`, `jit.c`): a `JitProgram` per
+    program, made when the driver first sees it and again when the program
+    becomes another (`Runtime.restore`, through `NEW_PROGRAM` in
+    `PRIMPUSH`), with a `CodeObject` per function: the entry (NULL while
+    interpreted), the tier, the counters for M6. `--jit=off|baseline|opt|all`
+    (`vm->jit_mode`, kept across a restore), `--jit-stats` (printed at exit
+    by `atexit`, since `OS.Process.exit` never returns to the driver);
+    `runevm` refuses all three; `make RUNE_JIT=0` builds `vm/new` without.
+  * **The driver** (`vm_loop`): runs the frame on top at its tier and no
+    engine calls another. The interpreter returns `RUN_NATIVE` where the
+    function it enters has an entry (`HANDOVER` after `ENTER` in `CALL`,
+    `CALLK`, `TAILCALL`, `TAILCALLK`) and where a `RET` lands in a frame
+    whose caller left a `native_ret` (`RETURN_NATIVE`; `vm_push_frame` now
+    sets the field to NULL, and `make_room` clears it on the frames of an
+    image); `jit_run` runs native code and answers as the engines do
+    (`RUN_HALT`, `RUN_INTERP`, `RUN_NATIVE` with `jit->at`).
+  * **The null engine**: under `--jit=all` every function's entry is a
+    stub that `jit_run` answers `RUN_INTERP` for, so every call of every
+    suite crosses the driver twice before a line of machine code exists.
+    `make test-new-jit`, part of `make check`: `tests/lang` under
+    `--jit=all`, `--jit-check`, and `rt.deeprec_stack` (200,000 deep) under
+    a machine stack of 1 MB, which a nesting driver would blow.
+  * **Windows and the other machines** build it (the null engine is C).
+* **Measured** (`scripts/perf-cycles.sh --configs new,jit`; the cost of
+  the protocol alone, every call crossing the driver twice with a stub):
+  the bootstrap 12.0G to 13.6G cycles (+13%), `fib` +43%, `tak` +28%,
+  `intinf_fact` +19%, `list_ops` +14%, `array_sieve` +11%, `string_ops`
+  +9%, `real_nbody` and `word_bits` unchanged. That is what a `SYNC`, two
+  C calls and a `RELOAD` per call cost, and what tier 1 removes by running
+  the frame instead of handing it back.
 
 ### M4. Tier 1, straight-line code, x86-64 (L, about 1,500)
 

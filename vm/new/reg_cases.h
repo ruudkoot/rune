@@ -111,6 +111,7 @@ CASE(CALL) {
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
     ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
     NEXT;
 }
 CASE(RESULT) {
@@ -140,6 +141,7 @@ CASE(TAILCALL) {
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
     ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
     NEXT;
 }
 CASE(RET) {
@@ -149,6 +151,7 @@ CASE(RET) {
     count++;
     Value v = R(a);
     uint32_t back = fr->ret_pc;
+    const void *back_native = fr->native_ret;
     size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
     vm->fp--;
@@ -160,6 +163,8 @@ CASE(RET) {
        the stack, as an image resumed at RESULT does */
     if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }
     else { PUSH(v); pc = back; }
+    /* a caller in native code takes the frame back where it left it (M5) */
+    if (back_native) RETURN_NATIVE(back_native);
     NEXT;
 }
 CASE(PRIM) {
@@ -192,8 +197,9 @@ CASE(PRIMPUSH) {
     for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));
     SYNC();
     /* one that says PRIM_NEW_WORLD has put another program here
-       (Runtime.restore): RELOAD takes its code again, and the pc with it */
-    (void)prim_table[a](vm);
+       (Runtime.restore): RELOAD takes its code again, and the pc with
+       it, and the JIT's view of the program is made again */
+    if (prim_table[a](vm) == PRIM_NEW_WORLD) NEW_PROGRAM();
     RELOAD();
     NEXT;
 }
@@ -447,6 +453,7 @@ CASE(CALLK) {
     for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
     vm_push_frame(vm, (uint32_t)a, NULL, pc, top);
     ENTER(slot, fn);
+    HANDOVER((uint32_t)a);
     NEXT;
 }
 CASE(TAILCALLK) {
@@ -471,6 +478,7 @@ CASE(TAILCALLK) {
     fr->func = (uint32_t)a;
     fr->closure = NULL;
     ENTER(slot, fn);
+    HANDOVER((uint32_t)a);
     NEXT;
 }
 CASE(SWITCH) {

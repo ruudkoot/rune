@@ -2,7 +2,7 @@
    loop_fast and as loop_traced, TRACED saying whether each instruction is
    printed first (runevm-new --trace). Not a header of its own. */
 
-static int LOOP_NAME(VM *vm) {
+static int LOOP_NAME(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
     const uint8_t *code = p->code;
     uint32_t pc = vm->pc;

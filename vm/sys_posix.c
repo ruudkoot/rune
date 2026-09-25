@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 /* POSIX declares it, but only under _GNU_SOURCE in some libraries. */
 extern char **environ;
@@ -1205,3 +1206,20 @@ int sys_win_dde_execute(int info, const char *command, int retries, int64_t dela
     (void)info; (void)command; (void)retries; (void)delay_ms; return NOSYS_INT;
 }
 int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }
+
+/* ---------------------------------------------------------- executable memory */
+void *sys_code_alloc(size_t size) {
+    void *p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    return p == MAP_FAILED ? NULL : p;
+}
+int sys_code_protect(void *code, size_t size, int executable) {
+    return mprotect(code, size, executable ? PROT_READ | PROT_EXEC : PROT_READ | PROT_WRITE) == 0;
+}
+void sys_code_flush(void *code, size_t size) {
+#if defined(__GNUC__)
+    __builtin___clear_cache((char *)code, (char *)code + size);
+#else
+    (void)code; (void)size;
+#endif
+}
+void sys_code_free(void *code, size_t size) { munmap(code, size); }
