@@ -30,7 +30,7 @@ run() {
 run facts --facts bin/rune.rbc bin/runedoc.rbc
 run disasm-rune --disasm bin/rune.rbc
 # a file the loader refuses
-printf 'RUNE\002\000\000\000\001\000\000\000\003\360\377\377\377' > "$out/bad.rbc"
+printf "$(sed -n 's/^# rbc header //p' vm/opcodes.def)\\001\\000\\000\\000\\003\\360\\377\\377\\377" > "$out/bad.rbc"
 run refused --check "$out/bad.rbc"
 
 # The assembly of a program, from every build: runeopt's own, and that of the

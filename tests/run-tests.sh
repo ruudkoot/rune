@@ -1,6 +1,6 @@
 #!/bin/sh
 # Rune test runner.
-#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--skip FILE] [--update] [-j N] [FILTER]
+#   tests/run-tests.sh [--rune BIN] [--vm BIN] [--out DIR] [--skip FILE] [--update] [-j N] [FILTER]
 #
 # tests/lang/<id>_<name>.sml : compiled and run; stdout must equal the
 #   matching .expected file. Optional siblings: .args (command line words for
@@ -13,6 +13,8 @@
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
 #   compiler's stderr must contain the text in the .expected file.
 #
+# The VM runs --checked: a DECON of another constructor than the one it names
+# stops the program (decision D14 of docs/plans/middle-end.md).
 # Tests run N at a time (default: all available CPUs); results are reported
 # in file order. Each test runs in a worker, `run-tests.sh ... --one SRC`,
 # which writes its outcome to tests/out/<name>.result.
@@ -24,6 +26,7 @@ export TZ
 rune=bin/rune
 vm=bin/runevm
 skip=""
+outdir=tests/out
 update=0
 jobs=""
 one=""
@@ -36,13 +39,18 @@ while [ $# -gt 0 ]; do
     -j) jobs=$2; shift 2 ;;
     --one) one=$2; shift 2 ;;
     --skip) skip=$2; shift 2 ;;
+    --out) outdir=$2; shift 2 ;;
     *) filter=$1; shift ;;
   esac
 done
 
 cd "$(dirname "$0")/.."
-out=tests/out
-mkdir -p "$out"
+# where the bytecode and what each run printed go (--out, for a second VM
+# whose runs must not take the place of runevm's); an image goes where the
+# program writes it, tests/out/NAME.img
+out=$outdir
+img=tests/out
+mkdir -p "$out" "$img"
 
 # run_lang NAME / run_error NAME: run one test and print its outcome: PASS,
 # "FAIL NAME: why" or "updated NAME".
@@ -63,7 +71,7 @@ run_lang() {
   expected_code=0
   [ -f "$base.exitcode" ] && expected_code=$(cat "$base.exitcode")
   # shellcheck disable=SC2086
-  "$vm" $vmargs "$rbc" $args < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr"
+  "$vm" --checked $vmargs "$rbc" $args < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr"
   code=$?
   if [ "$update" = 1 ]; then
     cp "$out/$name.stdout" "$base.expected"
@@ -100,11 +108,11 @@ run_lang() {
   # carried on by a second VM, whose standard output is the .restore file.
   # It takes two runs of the VM, which nothing else here does.
   if [ -f "$base.restore" ]; then
-    if [ ! -f "$out/$name.img" ]; then
-      echo "FAIL $name: no $out/$name.img to restore"
+    if [ ! -f "$img/$name.img" ]; then
+      echo "FAIL $name: no $img/$name.img to restore"
       return
     fi
-    "$vm" --restore "$out/$name.img" < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
+    "$vm" --restore "$img/$name.img" < /dev/null > "$out/$name.restored" 2> "$out/$name.restored.err"
     rcode=$?
     if [ "$rcode" != 0 ]; then
       echo "FAIL $name: --restore exited $rcode: $(head -1 "$out/$name.restored.err")"
@@ -176,7 +184,7 @@ upd=""
 if [ -n "$tests" ]; then
   # shellcheck disable=SC2086
   printf '%s\n' $tests |
-    xargs -n 1 -P "$jobs" sh tests/run-tests.sh --rune "$rune" --vm "$vm" $upd --one
+    xargs -n 1 -P "$jobs" sh tests/run-tests.sh --rune "$rune" --vm "$vm" --out "$out" $upd --one
 fi
 
 pass=0

@@ -28,6 +28,17 @@ function main 2
   CONST %nl
   PRIM print
   POP
+  # TEELOCAL: 7, kept on the stack and in local 1
+  INT 7
+  TEELOCAL 1
+  PRIM int_to_string
+  PRIM print
+  POP
+  LOCAL 1
+  POP
+  CONST %nl
+  PRIM print
+  POP
   # CON, CONTAG on a constructor with an argument: 3
   INT 5
   CON 3
@@ -38,7 +49,15 @@ function main 2
   # DECON: 6
   INT 6
   CON 1
-  DECON
+  DECON 1
+  PRIM int_to_string
+  PRIM print
+  POP
+  # CONN, FIELD: constructor 3 made of 4 and 5, its field 1: 5
+  INT 4
+  INT 5
+  CONN 3 2
+  FIELD 3 1
   PRIM int_to_string
   PRIM print
   POP
@@ -108,6 +127,55 @@ n4:
   PRIM int_to_string
   PRIM print
   POP
+  # CALLK, TAILCALLK: 20 - 7, by a known call of two arguments that calls
+  # another in tail position with them the other way round: 13
+  INT 20
+  INT 7
+  CALLK &minus 2
+  PRIM int_to_string
+  PRIM print
+  POP
+  CONST %nl
+  PRIM print
+  POP
+  # SWITCH: a nullary constructor of tag 2 goes to the target of the third
+  # JUMP of its table: 8
+  CON0 2
+  SWITCH 3
+  JUMP @w0
+  JUMP @w0
+  JUMP @w2
+  CONST %bad
+  PRIM print
+  POP
+  JUMP @wdone
+w0:
+  CONST %bad
+  PRIM print
+  POP
+  JUMP @wdone
+w2:
+  INT 8
+  PRIM int_to_string
+  PRIM print
+  POP
+wdone:
+  # and a constructor of tag 7 with an argument goes past a table of 2: 9
+  INT 5
+  CON 7
+  SWITCH 2
+  JUMP @v0
+  JUMP @v0
+  INT 9
+  PRIM int_to_string
+  PRIM print
+  POP
+  JUMP @vdone
+v0:
+  CONST %bad
+  PRIM print
+  POP
+vdone:
   CONST %nl
   PRIM print
   POP
@@ -193,4 +261,15 @@ rec:
   INT 1
   PRIM int_sub
   TAILCALL
+  RET
+
+function minus 3
+  LOCAL 1
+  LOCAL 0
+  TAILCALLK &flip 2
+
+function flip 2
+  LOCAL 1
+  LOCAL 0
+  PRIM int_sub
   RET

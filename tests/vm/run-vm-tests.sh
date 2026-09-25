@@ -22,6 +22,11 @@ while [ $# -gt 0 ]; do
 done
 cd "$(dirname "$0")/../.."
 case $vm in /*) ;; *) vm=$(pwd)/$vm ;; esac
+# the header: "RUNE", the version and the fingerprint of the instruction
+# set, as the generated vm/opcodes.def gives it; numbers are 32 bits,
+# little-endian
+header=$(sed -n 's/^# rbc header //p' vm/opcodes.def)
+[ -n "$header" ] || { echo "run-vm-tests: vm/opcodes.def has no rbc header" >&2; exit 2; }
 mkdir -p "$out"
 cd "$out" || exit 2
 
@@ -42,8 +47,6 @@ expect() {
   fi
 }
 
-# the header: "RUNE", version 2; numbers are 32 bits, little-endian
-header='RUNE\002\000\000\000'
 one='\001\000\000\000'
 zero='\000\000\000\000'
 huge='\377\377\377\377'
@@ -51,12 +54,22 @@ huge='\377\377\377\377'
 printf '' > empty.rbc
 expect empty "not a Rune bytecode file" empty.rbc
 
-printf 'RUNE\003\000\000\000' > version.rbc
+printf 'RUNE\377\000\000\000' > version.rbc
 expect version "unsupported bytecode version" version.rbc
 
-# version 1: the layout before the line table (docs/bytecode.md)
+# version 1: the layout before the line table; version 2, before the
+# fingerprint; version 3, before the frames of inlined functions
+# (docs/bytecode.md)
 printf 'RUNE\001\000\000\000' > version1.rbc
 expect version1 "unsupported bytecode version" version1.rbc
+printf 'RUNE\002\000\000\000' > version2.rbc
+expect version2 "unsupported bytecode version" version2.rbc
+printf 'RUNE\003\000\000\000' > version3.rbc
+expect version3 "unsupported bytecode version" version3.rbc
+
+# the right version with the fingerprint of another instruction set
+printf "$(printf '%s\n' "$header" | cut -c1-20)\\377\\377\\377\\377" > isa.rbc
+expect isa "bytecode of another instruction set" isa.rbc
 
 # one constant, a string of 0xFFFFFFF0 bytes
 printf "$header$one\\003\\360\\377\\377\\377" > string.rbc
@@ -100,26 +113,44 @@ expect debug-filename "bad file name" filename.rbc
 printf "$prog$onefile$one$zero" > lines.rbc
 expect debug-lines "bad line table" lines.rbc
 
-# an entry whose pc is past the code: dpc 9, file 0, line 1, column 1
-printf "$prog$onefile$one\\004\\000\\000\\000\\011\\000\\002\\002" > linepc.rbc
+# an entry whose pc is past the code: dpc 9, file 0, line 1, column 1, no
+# frame inlined
+printf "$prog$onefile$one\\005\\000\\000\\000\\011\\000\\002\\002\\000" > linepc.rbc
 expect debug-line-pc "line table out of range" linepc.rbc
 
 # an entry naming file 1, where there is one file: dpc 0, dfile 1, line 1, col 1
-printf "$prog$onefile$one\\004\\000\\000\\000\\000\\002\\002\\002" > linefile.rbc
+printf "$prog$onefile$one\\005\\000\\000\\000\\000\\002\\002\\002\\000" > linefile.rbc
 expect debug-line-file "line table out of range" linefile.rbc
 
 # an entry at line 0, which no file has: dpc 0, dfile 0, dline 0, dcol 1
-printf "$prog$onefile$one\\004\\000\\000\\000\\000\\000\\000\\002" > lineno.rbc
+printf "$prog$onefile$one\\005\\000\\000\\000\\000\\000\\000\\002\\000" > lineno.rbc
 expect debug-line-zero "line table out of range" lineno.rbc
 
 # bytes left over after the entries the count promised
-printf "$prog$onefile$one\\005\\000\\000\\000\\000\\000\\002\\002\\000" > linetail.rbc
+printf "$prog$onefile$one\\006\\000\\000\\000\\000\\000\\002\\002\\000\\000" > linetail.rbc
 expect debug-line-tail "bad line table" linetail.rbc
+
+# an entry in frame 1 of the functions inlined, where there is none
+line="$onefile$one\\005\\000\\000\\000\\000\\000\\002\\002\\002"
+printf "$prog$line$zero$zero$zero" > lineinl.rbc
+expect debug-line-inlined "line table out of range" lineinl.rbc
+
+# one name, `g`, and one frame of five numbers: name 0, called from file 0,
+# line 1, column 1, in no frame -- but whose parent is frame 2, which is
+# not before it; or called from file 1, where there is one file; or named
+# 1, where there is one name
+frame() { printf '%s' "$one$one\\147$one\\005\\000\\000\\000$1"; }
+printf "$prog$line$(frame '\000\000\001\001\002')" > inlparent.rbc
+expect debug-inlined-parent "bad table of inlined functions" inlparent.rbc
+printf "$prog$line$(frame '\000\001\001\001\000')" > inlfile.rbc
+expect debug-inlined-file "bad table of inlined functions" inlfile.rbc
+printf "$prog$line$(frame '\001\000\001\001\000')" > inlname.rbc
+expect debug-inlined-name "bad table of inlined functions" inlname.rbc
 
 # A fatal error names the function it happened in, which is the name the
 # compiler put in the file (docs/bytecode.md). One function called
 # `queens`, one instruction, SELF (opcode 8) where there is no closure.
-printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010$zero$zero$zero" > named.rbc
+printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010$zero$zero$zero$zero$zero$zero" > named.rbc
 expect named-function "fatal error at pc 1 in queens" named.rbc
 
 # the child of a fork by a second VM (vm/image.c) with no image to read:

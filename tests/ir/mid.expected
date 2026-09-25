@@ -1,0 +1,66 @@
+(* after mid *)
+(funs
+  (fn g1 ['a 'b] ((v1 : 'a * 'b)) : 'a
+    (let (v2 : 'a) (select 0 v1)
+    (let (v3 : 'a) v2
+    (return v3)))))
+(do ((g2 : int) (g3 : string))
+  (let (v4 : int * string) (tuple 1 "one")
+  (let (v5 : int) (app g1[int, string] v4)
+  (let (v6 : string * int) (tuple "two" 2)
+  (let (v7 : string) (app g1[string, int] v6)
+  (let (v8 : int * string) (tuple v5 v7)
+  (let (v9 : int) (select 0 v8)
+  (let (v10 : unit) (setglobal g2 v9)
+  (let (v11 : string) (select 1 v8)
+  (let (v12 : unit) (setglobal g3 v11)
+  (return ())))))))))))
+(funs
+  (fn g4 ['c] ((v13 : 'c list)) : int
+    (join j1 ()
+      (join j2 ()
+        (let (v14 : exncon) (builtinexn 0)
+        (let (v15 : exn) (mkexn v14 ())
+        (raise v15)))
+      (let (v16 : int) (tag v13)
+      (let (v17 : bool) (prim poly_eq v16 1 : (int * int) -> bool)
+      (if v17
+        (let (v18 : 'c * 'c list) (decon 1 v13 : 'c list)
+        (let (v19 : 'c list) (select 1 v18)
+        (let (v20 : 'c list) v19
+        (let (v21 : int) (app g4['c] v20)
+        (return (prim int_add 1 v21 : (int * int) -> int))))))
+        (jump j2)))))
+    (let (v22 : int) (tag v13)
+    (let (v23 : bool) (prim poly_eq v22 0 : (int * int) -> bool)
+    (if v23
+      (return 0)
+      (jump j1)))))))
+(val g5 : exncon
+  (return (newexn "E")))
+(funs
+  (fn g6 ((v24 : int)) : int
+    (let (v25 : int) v24
+    (join j3 ((v26 : int))
+      (return (prim int_add 1 v26 : (int * int) -> int))
+    (handle v27
+      (let (v28 : bool) (prim poly_eq v25 0 : (int * int) -> bool)
+      (if v28
+        (let (v29 : exn) (mkexn g5 v25)
+        (raise v29))
+        (jump j3 v25)))
+      (join j4 ()
+        (raise v27)
+      (let (v30 : exncon) (exncon v27)
+      (let (v31 : bool) (prim ptr_eq v30 g5 : (exncon * exncon) -> bool)
+      (if v31
+        (let (v32 : int) (exnarg v27 : int)
+        (let (v33 : int) v32
+        (jump j3 v33)))
+        (jump j4))))))))))
+(val g7 : int
+  (let (v34 : int) (app g6 0)
+  (let (v35 : int * int list) (tuple g2 (con0 0 : int list))
+  (let (v36 : int list) (con 1 v35 : int list)
+  (let (v37 : int) (app g4[int] v36)
+  (return (prim int_add v34 v37 : (int * int) -> int)))))))

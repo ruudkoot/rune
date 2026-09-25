@@ -4,10 +4,9 @@
    that the emitter is cheap when the compiler itself runs on runevm. *)
 structure Emit =
 struct
-  open Lambda Codegen
+  open Lambda Code
 
   val magic = "RUNE"
-  val version = 2
 
   val two64 : IntInf.int = IntInf.pow (IntInf.fromInt 2, 64)
   val b256 : IntInf.int = IntInf.fromInt 256
@@ -20,6 +19,14 @@ struct
     String.implode [byteChar v, byteChar (v div 256), byteChar (v div 65536), byteChar (v div 16777216)]
 
   val i32 = u32
+
+  (* The strings of the opcodes, and of the operands below 256, which are
+     most of them (slots, tags, counts), made once: the code of a function
+     is the concatenation of such pieces, so that most instructions allocate
+     nothing but the cells of the list of pieces. *)
+  val byteString : string vector = Vector.tabulate (256, fn i => String.str (Char.chr i))
+  val smallU32 : string vector = Vector.tabulate (256, u32)
+  fun operand (v : int) : string = if v >= 0 andalso v < 256 then Vector.sub (smallU32, v) else u32 v
 
   fun i64 (v : IntInf.int) : string =
     let
@@ -45,26 +52,28 @@ struct
   fun realText (r : string) = String.map (fn #"~" => #"-" | c => c) r
 
   fun instrSize (Op (_, args)) = 1 + 4 * List.length args
+    | instrSize (Ops (_, args)) = 1 + 4 * List.length args
     | instrSize (OpLab _) = 5
     | instrSize (OpLabImm _) = 9
     | instrSize (Lab _) = 0
     | instrSize (Pos _) = 0
 
   (* The file as chunks in order: the header, then one chunk per function. *)
-  fun serialize (p : program) : string list =
+  fun serialize (fingerprint : int, p : program) : string list =
     let
-      (* layout: function start offsets and label offsets *)
-      val labels : int IntMap.map ref = ref IntMap.empty
+      (* layout: function start offsets and label offsets, the latter in an
+         array since labels are numbered densely from 0 *)
+      val labels : int array = Array.array (#nlabels p, ~1)
       (* where each position begins, in the order the code is laid out *)
-      val lineEntries : (int * int * int * int) list ref = ref []
+      val lineEntries : (int * int * int * int * int) list ref = ref []
       val (starts, codeLen) =
         List.foldl (fn (f : func, (starts, off)) =>
                        let
                          val off' =
                            List.foldl (fn (it, o') =>
                                           (case it of
-                                             Lab l => labels := IntMap.insert (!labels, l, o')
-                                           | Pos (fi, ln, cl) => lineEntries := (o', fi, ln, cl) :: !lineEntries
+                                             Lab l => Array.update (labels, l, o')
+                                           | Pos (fi, ln, cl, inl) => lineEntries := (o', fi, ln, cl, inl) :: !lineEntries
                                            | _ => ();
                                            o' + instrSize it)) off (#code f)
                        in ((#id f, off) :: starts, off') end) ([], 0) (#funcs p)
@@ -73,12 +82,13 @@ struct
       val lineTable =
         let
           fun go ([], _) = []
-            | go ((pc, fi, ln, cl) :: rest, (pc0, fi0, ln0, cl0)) =
-                (uvar (pc - pc0) ^ svar (fi - fi0) ^ svar (ln - ln0) ^ svar (cl - cl0))
-                :: go (rest, (pc, fi, ln, cl))
-        in String.concat (go (List.rev (!lineEntries), (0, 0, 0, 0))) end
+            | go ((pc, fi, ln, cl, inl) :: rest, (pc0, fi0, ln0, cl0, inl0)) =
+                (uvar (pc - pc0) ^ svar (fi - fi0) ^ svar (ln - ln0) ^ svar (cl - cl0) ^ svar (inl - inl0))
+                :: go (rest, (pc, fi, ln, cl, inl))
+        in String.concat (go (List.rev (!lineEntries), (0, 0, 0, 0, 0))) end
       val nlines = List.length (!lineEntries)
-      fun labelOffset l = case IntMap.find (!labels, l) of SOME o' => o' | NONE => Error.bug "unresolved label"
+      fun labelOffset l =
+        let val o' = Array.sub (labels, l) in if o' < 0 then Error.bug "unresolved label" else o' end
       fun constBytes c =
         case c of
           CInt i => u8 0 ^ i64 i
@@ -87,37 +97,70 @@ struct
         | CString s => u8 3 ^ str s
         | CChar c => u8 4 ^ u8 c
       fun funcEntry (f : func, (_, off)) = u32 off ^ u32 (#nlocals f) ^ str (#name f)
-      fun itemBytes it =
+      (* A function's code is one concatenation of the pieces of its
+         instructions, consed from its last instruction back. *)
+      fun pieces (it, acc) =
         case it of
-          Op (opc, args) => String.concat (u8 opc :: List.map i32 args)
-        | OpLab (opc, l) => u8 opc ^ i32 (labelOffset l)
-        | OpLabImm (opc, l, i) => u8 opc ^ i32 (labelOffset l) ^ i32 i
-        | Lab _ => ""
-        | Pos _ => ""
+          Op (opc, []) => Vector.sub (byteString, opc) :: acc
+        | Op (opc, [a]) => Vector.sub (byteString, opc) :: operand a :: acc
+        | Op (opc, args) => Vector.sub (byteString, opc) :: List.foldr (fn (a, acc) => operand a :: acc) acc args
+        | Ops (opc, args) =>
+            Vector.sub (byteString, opc)
+            :: List.foldr (fn (I a, acc) => operand a :: acc | (L l, acc) => operand (labelOffset l) :: acc) acc args
+        | OpLab (opc, l) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: acc
+        | OpLabImm (opc, l, i) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: operand i :: acc
+        | Lab _ => acc
+        | Pos _ => acc
+      fun codeString (f : func) =
+        let
+          fun go ([], acc) = acc
+            | go (it :: rest, acc) = go (rest, pieces (it, acc))
+        in
+          String.concat (go (List.rev (#code f), []))
+        end
       val header =
         String.concat
-          [magic, u32 version,
+          [magic, u32 Opcodes.rbcVersion, u32 fingerprint,
            u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
            u32 (#nglobals p),
            u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),
            u32 codeLen]
+      (* The functions inlined on the way to the positions: their names, each
+         once, in the order the frames first name them, and the frames, five
+         numbers each -- the name's, the file, line and column called from,
+         and the frame that call is in. *)
+      val (names, _, nameIdx) =
+        List.foldl (fn ((name, _, _, _, _), acc as (ns, n, m)) =>
+                      if StringMap.member (m, name) then acc else (name :: ns, n + 1, StringMap.insert (m, name, n)))
+                   ([], 0, StringMap.empty) (#inlines p)
+      val frames =
+        String.concat (List.map (fn (name, f, l, c, parent) =>
+                                   uvar (StringMap.lookup (nameIdx, name)) ^ uvar f ^ uvar l ^ uvar c ^ uvar parent)
+                                (#inlines p))
       (* The debug section, after the code: the files positions name, then the
-         table that says which of them each instruction came from. *)
+         table that says which of them each instruction came from, then the
+         functions inlined on the way to them (docs/bytecode.md). *)
       val debug =
         String.concat
           [u32 (List.length (#files p)), String.concat (List.map str (#files p)),
-           u32 nlines, u32 (String.size lineTable), lineTable]
+           u32 nlines, u32 (String.size lineTable), lineTable,
+           u32 (List.length names), String.concat (List.map str (List.rev names)),
+           u32 (List.length (#inlines p)), u32 (String.size frames), frames]
     in
-      header :: List.map (fn (f : func) => String.concat (List.map itemBytes (#code f))) (#funcs p)
+      header :: List.map codeString (#funcs p)
       @ [debug]
     end
 
-  fun writeFile (path : string, p : program) : unit =
+  (* The file of a program of the stack bytecode, or with the fingerprint of
+     another instruction set (the register bytecode's, Regs). *)
+  fun writeFileAs (fingerprint : int, path : string, p : program) : unit =
     let
-      val chunks = serialize p
+      val chunks = serialize (fingerprint, p)
       val out = TextIO.openOut path
     in
       List.app (fn s => TextIO.output (out, s)) chunks;
       TextIO.closeOut out
     end
+
+  fun writeFile (path : string, p : program) : unit = writeFileAs (Opcodes.fingerprint, path, p)
 end

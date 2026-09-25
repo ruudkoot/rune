@@ -3,11 +3,15 @@
    what is printed is what the documentation promises of them: the cost of a
    shape whose size is known, and how the numbers stand to one another. *)
 val keep : int list ref = ref []
+(* called through a ref, which no optimisation sees through: had stats been
+   inlined in one measurement and not in another, its record would be made
+   in one and not in the other *)
+val stats = ref Runtime.stats
 fun allocated f =
   let
-    val a = Runtime.stats ()
+    val a = !stats ()
     val () = f ()
-    val b = Runtime.stats ()
+    val b = !stats ()
   in
     (#bytes b - #bytes a, #objects b - #objects a)
   end
@@ -18,7 +22,9 @@ fun plural (n, w) = Int.toString n ^ " " ^ w ^ (if n = 1 then "" else "s")
 fun show (name, (b, ob)) =
   print (name ^ ": " ^ plural (b, "byte") ^ ", " ^ plural (ob, "object") ^ "\n")
 val () = show ("a list cell", less (allocated (fn () => keep := 1 :: !keep), nothing ()))
-val () = show ("a ref", less (allocated (fn () => ignore (ref 7)), nothing ()))
+(* kept, where an unused one would be no allocation at all once optimised *)
+val cell = ref (ref 0)
+val () = show ("a ref", less (allocated (fn () => cell := ref 7), nothing ()))
 val s = Runtime.stats ()
 val () = print ("instructions grow: "
                 ^ Bool.toString (#instructions s < #instructions (Runtime.stats ())) ^ "\n")
@@ -37,8 +43,8 @@ val () = print ("two equal refs are two: " ^ Bool.toString (not (Runtime.same (r
 val (answer, cost) = Runtime.profile (fn () => keep := 1 :: !keep)
 val (_, nothing') = Runtime.profile (fn () => ())
 val () = print ("profile sees the cell and nothing else: "
-                ^ Bool.toString (#bytes cost - #bytes nothing' = 64
-                                 andalso #objects cost - #objects nothing' = 2) ^ "\n")
+                ^ Bool.toString (#bytes cost - #bytes nothing' = 40
+                                 andalso #objects cost - #objects nothing' = 1) ^ "\n")
 val () = print ("profile returns the value: " ^ Bool.toString (answer = ()) ^ "\n")
 val () = print ("version is three numbers: "
                 ^ Bool.toString (List.length (String.fields (fn c => c = #".") Runtime.version) = 3) ^ "\n")

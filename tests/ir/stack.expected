@@ -1,0 +1,43 @@
+(* after stack *)
+globals 1
+function 0 <toplevel> (locals 1)
+  L0:
+    CLOSURE 1 0
+    SETGLOBAL 0
+    UNIT 
+    RET 
+function 1 f (locals 2)
+  L1:
+  ; 0:7:5
+    LOCAL 0
+    SELECT 0
+    LOCAL 0
+    SELECT 1
+  ; 0:9:13
+    PRIM 2
+    SETLOCAL 0
+  ; 0:10:16
+    LOCAL 0
+    INT 10
+    PRIM 13
+    JUMPIFNOT L3
+  L2:
+  ; 0:10:28
+    LOCAL 0
+    INT 2
+    PRIM 4
+    SETLOCAL 1
+    JUMP L4
+  L3:
+  ; 0:10:39
+    LOCAL 0
+    INT 1
+    PRIM 3
+    SETLOCAL 1
+  L4:
+  ; 0:12:5
+    LOCAL 1
+    LOCAL 0
+    PRIM 2
+    RET 
+

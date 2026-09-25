@@ -76,6 +76,13 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
 
 /* ================================================================ poly */
 static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(ARG(1), ARG(0)))); }
+/* `=` where the compiler knows the type's values are never in the heap
+   (middle-end M11): their tags and bits. */
+static int p_imm_eq(VM *vm) {
+    Value a = ARG(1), b = ARG(0);
+    if (a.tag == T_PTR || b.tag == T_PTR) vm_fatal(vm, "primitive imm_eq: a value in the heap");
+    return ret(vm, 2, mk_bool(a.tag == b.tag && a.u.i == b.u.i));
+}
 /* exn values are K_EXN [constructor, payload]; a constructor is K_EXNCON [name]. */
 static int p_exn_name(VM *vm) {
     Obj *e = check_obj(vm, ARG(0), K_EXN, "exn_name");
@@ -537,26 +544,33 @@ static int p_string_le(VM *vm) { STR2("string_le"); return ret(vm, 2, mk_bool(st
 static int p_string_gt(VM *vm) { STR2("string_gt"); return ret(vm, 2, mk_bool(str_cmp(a, b) > 0)); }
 static int p_string_ge(VM *vm) { STR2("string_ge"); return ret(vm, 2, mk_bool(str_cmp(a, b) >= 0)); }
 static int p_string_compare(VM *vm) { STR2("string_compare"); return ret(vm, 2, mk_int(str_cmp(a, b))); }
+
+/* The comparisons that answer an order: LESS, EQUAL and GREATER are the
+   nullary constructors 0, 1 and 2 of lib/basis/initial.sml. */
+static Value mk_order(int c) { return mk_con0(c < 0 ? 0 : c == 0 ? 1 : 2); }
+static int p_int_order(VM *vm) { INT2("int_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_word_order(VM *vm) { WORD2("word_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_char_order(VM *vm) { CHAR2("char_order"); return ret(vm, 2, mk_order(x < y ? -1 : x > y)); }
+static int p_string_order(VM *vm) { STR2("string_order"); return ret(vm, 2, mk_order(str_cmp(a, b))); }
 static int p_string_from_char(VM *vm) {
     check_tag(vm, ARG(0), T_CHAR, "string_from_char");
     char c = (char)ARG(0).u.i;
     return ret(vm, 1, mk_ptr(vm_string_from(vm, &c, 1)));
 }
 
-/* Walks an SML list; returns its length or -1 if malformed. */
+/* Walks an SML list; returns its length or -1 if malformed. A cell is one
+   object of two fields, head and tail (vm_cons). */
 static int64_t list_length(Value l) {
     int64_t n = 0;
     for (;;) {
         if (l.tag == T_CON0) return n;
-        if (l.tag != T_PTR || l.u.p->kind != K_CON) return -1;
-        Value cell = OBJ_FIELDS(l.u.p)[0];
-        if (cell.tag != T_PTR || cell.u.p->kind != K_TUPLE || cell.u.p->len != 2) return -1;
-        l = OBJ_FIELDS(cell.u.p)[1];
+        if (l.tag != T_PTR || l.u.p->kind != K_CON || l.u.p->len != 2) return -1;
+        l = OBJ_FIELDS(l.u.p)[1];
         n++;
     }
 }
-static Value list_head(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[0]; }
-static Value list_tail(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[1]; }
+static Value list_head(Value l) { return OBJ_FIELDS(l.u.p)[0]; }
+static Value list_tail(Value l) { return OBJ_FIELDS(l.u.p)[1]; }
 
 /* ================================================================ system */
 static int push_string_value(VM *vm, const char *s) {
@@ -2054,6 +2068,18 @@ static void push_frame(VM *vm, const char *name, const char *file, int64_t line,
     vm_push(vm, mk_ptr(t));
 }
 
+/* The frames of activation i, innermost first: its function's, and those of
+   the functions inlined where it is (trace_frames). */
+static uint32_t frames_at(VM *vm, size_t i, TraceFrame *fs, uint32_t max) {
+    uint32_t f = vm->frames[i].func;
+    const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+    const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+    if (e && e->file < vm->prog.nfiles) return trace_frames(&vm->prog, e, name, fs, max);
+    fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0;
+    return 1;
+}
+
 /* The frames, innermost first, leaving out the innermost `skip` of them --
    which is how Runtime keeps its own frames out of what it reports. Built
    from the outermost inwards so that each cons puts its frame at the head. */
@@ -2061,18 +2087,20 @@ static int p_rt_trace(VM *vm) {
     INT1("rt_trace");
     size_t skip = x < 0 ? 0 : (size_t)x;
     vm_push(vm, mk_con0(0));
-    if (vm->frames_active && vm->fp + 1 > skip) {
-        size_t last = vm->fp - skip;
-        for (size_t i = 0; i <= last; i++) {
-            uint32_t f = vm->frames[i].func;
-            const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-            uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
-            const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
-            if (e && e->file < vm->prog.nfiles)
-                push_frame(vm, name, vm->prog.files[e->file], e->line, e->col);
-            else
-                push_frame(vm, name, "", 0, 0);
-            vm_cons(vm);
+    if (vm->frames_active) {
+        /* the frames of the trace, not of the VM: those of functions
+           inlined count, as their calls would have */
+        TraceFrame fs[64];
+        size_t total = 0;
+        for (size_t i = 0; i <= vm->fp; i++) total += frames_at(vm, i, fs, 64);
+        size_t keep = total > skip ? total - skip : 0, k = 0;
+        for (size_t i = 0; i <= vm->fp && k < keep; i++) {
+            uint32_t n = frames_at(vm, i, fs, 64);
+            for (uint32_t j = n; j > 0 && k < keep; j--, k++) {
+                const TraceFrame *t = &fs[j - 1];
+                push_frame(vm, t->name, t->file == UINT32_MAX ? "" : vm->prog.files[t->file], t->line, t->col);
+                vm_cons(vm);
+            }
         }
     }
     Value l = vm_pop(vm);

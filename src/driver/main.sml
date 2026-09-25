@@ -104,6 +104,24 @@ struct
       else OS.Process.failure
     end
 
+  (* The stage that makes Mid, from Lambda or from its text. *)
+  fun midStage (showIn : ('a -> string) option) (f : 'a -> Mid.program) : 'a -> Mid.program =
+    Pass.stage {name = "mid", showIn = showIn, show = MidText.show,
+                check = fn p => (MidLint.check p; if !Options.midRoundTrip then MidText.roundTrip p else ()),
+                size = Mid.size}
+               f
+
+  (* --read-mid: a Mid program from its text, made and checked as the pass
+     mid makes and checks one; there is no bytecode from Mid yet. *)
+  fun readMid (file : string) : OS.Process.status =
+    let
+      val text = #text (Source.readFile file) handle IO.Io _ => raise Options.Usage ("cannot read " ^ file)
+      fun parse t = MidText.parse t handle MidText.Syntax msg => raise Options.Usage (file ^ ": " ^ msg)
+    in
+      ignore (midStage NONE parse text);
+      OS.Process.success
+    end
+
   fun compile () : OS.Process.status =
     let
       val inputs = !Options.inputs
@@ -123,7 +141,14 @@ struct
                         List.filter (fn e : entry => #when e = Final) basis, userToks, inputs)
     end
 
-  and compileWith (basis : entry list, final : entry list, userToks, inputs) : OS.Process.status =
+  (* The front end and the back end are two functions, so that nothing of
+     the first -- tokens, syntax, environment -- is still reachable, and
+     copied by every collection, while the second runs: compileWith
+     calls frontEnd and then hands its result on in a tail call. *)
+  and compileWith (args : entry list * entry list * Lexer.item vector list * string list) : OS.Process.status =
+    backEnd (#4 args, frontEnd args)
+
+  and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
       fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (libDir () ^ "/" ^ #file e))) es)
       val preludeProg = parseEntries basis
@@ -137,18 +162,59 @@ struct
       val () = Elaborate.finish ()
       val () = if !Options.noWarnings then Error.warnings := [] else Error.flushWarnings ()
     in
-      if !Options.typecheckOnly then OS.Process.success
+      if !Options.typecheckOnly then NONE
       else
+        SOME (Pass.stage {name = "translate", showIn = NONE, show = Lambda.show, check = LambdaLint.check,
+                          size = Lambda.size}
+                         Translate.transProgram (preludeProg @ userProg))
+    end
+
+  (* -O0 is the same stages with no optional pass *)
+  and backEnd (_, NONE) = OS.Process.success
+    | backEnd (inputs, SOME lam) =
         let
-          val lam = Translate.transProgram (preludeProg @ userProg)
-          val () = if !Options.dumpLambda then println (Lambda.toString lam) else ()
-          val prog = Codegen.compile (lam, !Translate.funNames)
-          val () = if !Options.dumpCode then print (Codegen.dump prog) else ()
-          val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
+          val mid = midStage (SOME Lambda.show) ToMid.program lam
+          (* the optional passes on Mid (docs/ir.md) *)
+          fun optional (name, f) m =
+            if Pass.enabled (name, 1) then
+              Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
+                          size = Mid.size}
+                         f m
+            else m
+          val mid = optional ("shake", Shake.program) mid
+          val mid = optional ("lift", Lift.program) mid
+          val mid = optional ("workers", Workers.program) mid
+          val mid = optional ("simplify", Simplify.program) mid
+          (* what the inliner left of the functions it put in place goes *)
+          val mid =
+            if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
+            else mid
+          val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
+                                size = Low.size}
+                               (fn m => Lower.program (m, !Translate.funNames)) mid
         in
-          Emit.writeFile (out, prog);
-          OS.Process.success
+          if !Options.target = "registers" then
+            (Code.opcodeNames := RegCodes.names;
+             emitProgramAs (RegCodes.fingerprint, inputs,
+                            Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump,
+                                        check = fn _ => (), size = Code.size}
+                                       Regs.program low))
+          else
+            emitProgram (inputs,
+                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
+                                     check = fn _ => (), size = Code.size}
+                                    Stack.program low)
         end
+
+  and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
+    emitProgramAs (Opcodes.fingerprint, inputs, prog)
+
+  and emitProgramAs (fingerprint : int, inputs : string list, prog : Code.program) : OS.Process.status =
+    let
+      val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
+    in
+      Emit.writeFileAs (fingerprint, out, prog);
+      OS.Process.success
     end
 
   fun main (_ : string, args : string list) : OS.Process.status =
@@ -157,6 +223,7 @@ struct
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
      else if !Options.dumpTokens then dumpTokens ()
+     else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())
     handle BasisManifest.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)
          | Options.Usage msg => (eprintln ("rune: " ^ msg); eprintln "try 'rune --help'"; OS.Process.failure)

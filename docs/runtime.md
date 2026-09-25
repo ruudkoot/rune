@@ -30,9 +30,11 @@ bytes, at least 16. The smallest object is therefore 24 bytes, and a tuple of
 vector), a constructor with an argument, a closure, a string, a `ref`, an
 array, an exception and an exception constructor.
 
-A list cell is two objects: the pair of head and tail (40 bytes) and the
-constructor around it (24), so 64 bytes a cell. `runevm --stats` and
-`--count` report what a program really allocates.
+A constructor whose argument is a tuple is one object of the tuple's
+fields, its tag in the header (`CONN`; `src/backend/rep.sml`); one of any
+other argument is an object of one field around it, 24 bytes. So a list
+cell, `::` of head and tail, is one object of 40 bytes. `runevm --stats`
+and `--count` report what a program really allocates.
 
 An exception constructor is an object, and its identity is its address: that
 is what makes two exceptions declared by the same code in two calls different
@@ -210,8 +212,8 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--heap-size`, `--heap-fill`, `--emulate-fork`, `--restore`, `--version` -- is described
-in [bytecode.md](bytecode.md).
+`--gc-stress`, `--checked`, `--heap-size`, `--heap-fill`, `--emulate-fork`,
+`--restore`, `--version` -- is described in [bytecode.md](bytecode.md).
 
 ## A native program
 
@@ -230,7 +232,8 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`) come from the environment variable `RUNEVM_OPTIONS`, after
+  `--heap-fill`, `--gc-stress`, `--checked`) come from the environment
+  variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.
 * `CommandLine.name ()` is the name the program was started by.

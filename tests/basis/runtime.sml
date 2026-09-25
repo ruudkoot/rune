@@ -36,19 +36,21 @@ struct
                       let val a = #instructions (Runtime.stats ())
                       in a < #instructions (Runtime.stats ()) end)
 
-  (* A list cell is two objects -- the pair of head and tail, and the
-     constructor around it -- and 64 bytes (docs/runtime.md). *)
-  val () = eqI ("Runtime.stats/bytes-count-a-list-cell", 64,
+  (* A list cell is one object, :: made of its two fields, head and tail,
+     and 40 bytes (docs/runtime.md). *)
+  val () = eqI ("Runtime.stats/bytes-count-a-list-cell", 40,
                 fn () => #bytes (allocated (fn () => keep := 1 :: !keep)) - #bytes (nothing ()))
-  val () = eqI ("Runtime.stats/objects-count-a-list-cell", 2,
+  val () = eqI ("Runtime.stats/objects-count-a-list-cell", 1,
                 fn () => #objects (allocated (fn () => keep := 1 :: !keep)) - #objects (nothing ()))
 
   (* A ref is the smallest object there is: an 8-byte header and a payload
-     rounded up to 16. *)
+     rounded up to 16. It is kept, since one nothing uses is no allocation
+     at all once optimised. *)
+  val cell = ref (ref 0)
   val () = eqI ("Runtime.stats/bytes-count-the-smallest-object", 24,
-                fn () => #bytes (allocated (fn () => ignore (ref 7))) - #bytes (nothing ()))
+                fn () => #bytes (allocated (fn () => cell := ref 7)) - #bytes (nothing ()))
   val () = eqI ("Runtime.stats/objects-count-the-smallest-object", 1,
-                fn () => #objects (allocated (fn () => ignore (ref 7))) - #objects (nothing ()))
+                fn () => #objects (allocated (fn () => cell := ref 7)) - #objects (nothing ()))
 
   val () = T.check ("Runtime.stats/live-is-within-the-semispace",
                     fn () => let val s = Runtime.stats () in #live s <= #heapSize s end)
@@ -65,10 +67,10 @@ struct
 
   (* Measuring costs one `stats` record and nothing else, so profiling one
      list cell costs exactly a list cell more than profiling nothing. *)
-  val () = eqI ("Runtime.profile/reports-what-was-allocated", 64,
+  val () = eqI ("Runtime.profile/reports-what-was-allocated", 40,
                 fn () => #bytes (#2 (Runtime.profile (fn () => keep := 1 :: !keep)))
                          - #bytes (#2 (Runtime.profile (fn () => ()))))
-  val () = eqI ("Runtime.profile/reports-the-objects-allocated", 2,
+  val () = eqI ("Runtime.profile/reports-the-objects-allocated", 1,
                 fn () => #objects (#2 (Runtime.profile (fn () => keep := 1 :: !keep)))
                          - #objects (#2 (Runtime.profile (fn () => ()))))
 
@@ -81,9 +83,10 @@ struct
                       in #instructions a = #instructions b andalso #bytes a = #bytes b
                          andalso #objects a = #objects b
                       end)
-  (* and its allocation is that one record *)
-  val () = eqI ("Runtime.profile/allocates-one-record-of-its-own", 1,
-                fn () => #objects (#2 (Runtime.profile (fn () => ()))))
+  (* and its allocation is at most one record: none where the optimiser
+     has seen that only the counters are read *)
+  val () = T.check ("Runtime.profile/allocates-at-most-one-record-of-its-own",
+                    fn () => #objects (#2 (Runtime.profile (fn () => ()))) <= 1)
 
   val () = eqI ("Runtime.profile/counts-a-collection", 1,
                 fn () => #collections (#2 (Runtime.profile Runtime.collect)))
@@ -113,7 +116,7 @@ struct
                         val () = Runtime.collect ()
                         val freed = #live (Runtime.stats ())
                       in
-                        held - freed >= 1000 * 64
+                        held - freed >= 1000 * 40
                       end)
 
   val () = T.check ("Runtime.collect/identity-survives-it",

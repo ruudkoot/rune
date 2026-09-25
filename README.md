@@ -51,10 +51,11 @@ differently. `runedoc` generates it from the comments of `lib/basis`
 | Path | Contents |
 |---|---|
 | `src/` | the compiler (frontend, elaboration, core translation, backend, driver) |
-| `vm/` | the virtual machine; `opcodes.def` and `prims.def` define the instruction set |
+| `vm/` | the virtual machine |
+| `src/isa/` | the instruction set and the primitives, described in Standard ML; `runeisa` writes the tables of the VM and the compiler from them |
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
-| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [native.md](docs/native.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
+| `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [native.md](docs/native.md), [performance.md](docs/performance.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
 | `examples/` | small programs; `examples/runtime/` is the `Runtime` structure, which is Rune's own |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh`, `install.sh` |
 | `man/`, `completions/` | man pages and shell completions, installed by `make install` |

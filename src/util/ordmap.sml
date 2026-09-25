@@ -51,7 +51,8 @@ struct
     | height (T (h, _, _, _, _)) = h
 
   fun mk (l, k, v, r) =
-    T (Int.max (height l, height r) + 1, l, k, v, r)
+    let val hl = height l and hr = height r
+    in T ((if hl > hr then hl else hr) + 1, l, k, v, r) end
 
   fun rotL (T (_, l, k, v, T (_, rl, rk, rv, rr))) = mk (mk (l, k, v, rl), rk, rv, rr)
     | rotL t = t
@@ -73,24 +74,38 @@ struct
              if height rr >= height rl then rotL (mk (l, k, v, r))
              else rotL (mk (l, k, v, rotR r))
          | E => mk (l, k, v, r))
-      else mk (l, k, v, r)
+      else T ((if hl > hr then hl else hr) + 1, l, k, v, r)
     end
 
   fun singleton (k, v) = T (1, E, k, v, E)
 
-  fun insert (E, k, v) = singleton (k, v)
-    | insert (T (h, l, k', v', r), k, v) =
-      (case Key.compare (k, k') of
-         LESS => bal (insert (l, k, v), k', v', r)
-       | GREATER => bal (l, k', v', insert (r, k, v))
-       | EQUAL => T (h, l, k, v, r))
+  (* insert and find, the hottest code of the compiler, recurse through a
+     local function of one argument that closes over the key: going through
+     the global function would allocate a tuple of arguments at every
+     level. *)
+  fun insert (m, k, v) =
+    let
+      fun go E = T (1, E, k, v, E)
+        | go (T (h, l, k', v', r)) =
+          (case Key.compare (k, k') of
+             LESS => bal (go l, k', v', r)
+           | GREATER => bal (l, k', v', go r)
+           | EQUAL => T (h, l, k, v, r))
+    in
+      go m
+    end
 
-  fun find (E, _) = NONE
-    | find (T (_, l, k', v, r), k) =
-      (case Key.compare (k, k') of
-         LESS => find (l, k)
-       | GREATER => find (r, k)
-       | EQUAL => SOME v)
+  fun find (m, k) =
+    let
+      fun go E = NONE
+        | go (T (_, l, k', v, r)) =
+          (case Key.compare (k, k') of
+             LESS => go l
+           | GREATER => go r
+           | EQUAL => SOME v)
+    in
+      go m
+    end
 
   fun lookup (m, k) = case find (m, k) of SOME v => v | NONE => raise NotFound
   fun member (m, k) = case find (m, k) of SOME _ => true | NONE => false
@@ -111,11 +126,23 @@ struct
           | (_, E) => l
           | _ => let val (mk', mv, r') = removeMin r in bal (l, mk', mv, r') end))
 
-  fun foldli f acc E = acc
-    | foldli f acc (T (_, l, k, v, r)) = foldli f (f (k, v, foldli f acc l)) r
+  (* The folds and mapi recurse through a local function too, where the
+     curried global one would build two closures at every node. *)
+  fun foldli f acc m =
+    let
+      fun go (E, acc) = acc
+        | go (T (_, l, k, v, r), acc) = go (r, f (k, v, go (l, acc)))
+    in
+      go (m, acc)
+    end
 
-  fun foldri f acc E = acc
-    | foldri f acc (T (_, l, k, v, r)) = foldri f (f (k, v, foldri f acc r)) l
+  fun foldri f acc m =
+    let
+      fun go (E, acc) = acc
+        | go (T (_, l, k, v, r), acc) = go (l, f (k, v, go (r, acc)))
+    in
+      go (m, acc)
+    end
 
   fun foldl f acc m = foldli (fn (_, v, a) => f (v, a)) acc m
 
@@ -127,8 +154,13 @@ struct
   fun app f m = foldl (fn (v, ()) => f v) () m
   fun appi f m = foldli (fn (k, v, ()) => f (k, v)) () m
 
-  fun mapi f E = E
-    | mapi f (T (h, l, k, v, r)) = T (h, mapi f l, k, f (k, v), mapi f r)
+  fun mapi f m =
+    let
+      fun go E = E
+        | go (T (h, l, k, v, r)) = T (h, go l, k, f (k, v), go r)
+    in
+      go m
+    end
   fun map f m = mapi (fn (_, v) => f v) m
 
   fun filteri p m =

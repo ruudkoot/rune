@@ -60,6 +60,14 @@ Collect before every
 allocation. This exercises the collector and the primitives' handling of heap
 pointers, and makes programs far slower.
 .TP
+.B \-\-checked
+Make each
+.B DECON
+test the constructor tag it is given, and stop the program where the value
+has another. A match that names every constructor of a datatype does not test
+the last, so this finds a compiler that got a tag wrong; the test suites run
+so.
+.TP
 .B \-\-emulate\-fork
 Fork as on Windows, which has no
 .BR fork (2):

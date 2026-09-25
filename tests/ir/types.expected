@@ -1,0 +1,93 @@
+(* after translate *)
+(seq
+  (set g1
+    (fn (v1 : 'a) : 'a
+      (let v2 v1 v2)))
+  (seq
+    (set g2
+      (tuple
+        (app
+          (inst g1 : int -> int)
+          1)
+        (app
+          (inst g1 : string -> string)
+          "one")))
+    (seq
+      (set g3
+        (fn (v3 : 'b list) : int
+          (try
+            (if
+              (prim poly_eq
+                (tag v3)
+                0)
+              0
+              fail)
+            (try
+              (if
+                (prim poly_eq
+                  (tag v3)
+                  1)
+                (let v4
+                  (decon 1 v3)
+                  (let v5
+                    (select 1 v4)
+                    (let v6
+                      v5
+                      (prim int_add
+                        1
+                        (app g3 v6)))))
+                fail)
+              (raise
+                (mkexn (builtinexn 0) ()))))))
+      (seq
+        (set g4
+          (app
+            (inst g3 : '_c list -> int)
+            C0))
+        (seq
+          (set g5
+            (fn (v7 : 'd) : 'd
+              (let v8 v7 v8)))
+          (seq
+            (set g6
+              (fn (v9 : 'e) : 'e
+                (let v10
+                  v9
+                  (app
+                    (inst g5 : 'e -> 'e)
+                    v10))))
+            (seq
+              (set g7
+                (fn (v11 : int) : int
+                  (let v12 v11 v12)))
+              (seq
+                (set g8
+                  (app
+                    g7
+                    (app
+                      (inst g6 : int -> int)
+                      (app
+                        (inst g5 : int -> int)
+                        3))))
+                (seq
+                  (set g9 (newexn E))
+                  (seq
+                    (set g10
+                      (handle v13
+                        (raise
+                          (mkexn
+                            g9
+                            (tuple 1 "one")))
+                        (try
+                          (if
+                            (prim ptr_eq
+                              (exncon v13)
+                              g9)
+                            (let v14
+                              (exnarg v13 : int * string)
+                              (let v15
+                                (select 0 v14)
+                                (let v16 v15 v16)))
+                            fail)
+                          (raise v13))))
+                    ()))))))))))

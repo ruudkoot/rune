@@ -96,7 +96,10 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     if (!need(&r, 8) || memcmp(data, "RUNE", 4) != 0) return fail(err, errlen, "not a Rune bytecode file");
     r.pos = 4;
     uint32_t version = rd_u32(&r);
-    if (version != 2) return fail(err, errlen, "unsupported bytecode version");
+    if (version != RBC_VERSION) return fail(err, errlen, "unsupported bytecode version");
+    /* the instruction set it was made for (src/isa): a file of another means
+       something else by its opcodes and primitives */
+    if (rd_u32(&r) != isa_fingerprint) return fail(err, errlen, "bytecode of another instruction set");
 
     /* constants */
     p->nconsts = rd_u32(&r);
@@ -177,26 +180,78 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     if (!p->lines) return fail(err, errlen, "out of memory");
     {
         const uint8_t *q = data + r.pos, *end = q + table_len;
-        int64_t pc = 0, file = 0, line = 0, col = 0;
+        int64_t pc = 0, file = 0, line = 0, col = 0, inl = 0;
         for (uint32_t i = 0; i < p->nlines; i++) {
             uint64_t dpc;
-            int64_t dfile, dline, dcol;
+            int64_t dfile, dline, dcol, dinl;
             if (!rd_uvar(&q, end, &dpc) || !rd_svar(&q, end, &dfile) ||
-                !rd_svar(&q, end, &dline) || !rd_svar(&q, end, &dcol))
+                !rd_svar(&q, end, &dline) || !rd_svar(&q, end, &dcol) || !rd_svar(&q, end, &dinl))
                 return fail(err, errlen, "bad line table");
             if (dpc > (uint64_t)p->code_len) return fail(err, errlen, "line table out of range");
-            pc += (int64_t)dpc; file += dfile; line += dline; col += dcol;
+            pc += (int64_t)dpc; file += dfile; line += dline; col += dcol; inl += dinl;
             if (pc >= (int64_t)p->code_len || file < 0 || (uint32_t)file >= p->nfiles ||
-                line < 1 || col < 1 || line > INT32_MAX || col > INT32_MAX)
+                line < 1 || col < 1 || line > INT32_MAX || col > INT32_MAX || inl < 0 || inl > INT32_MAX)
                 return fail(err, errlen, "line table out of range");
             p->lines[i].pc = (uint32_t)pc;
             p->lines[i].file = (uint32_t)file;
             p->lines[i].line = (uint32_t)line;
             p->lines[i].col = (uint32_t)col;
+            p->lines[i].inl = (uint32_t)inl;
         }
         if (q != end) return fail(err, errlen, "bad line table");
     }
     r.pos += table_len;
+
+    /* the functions inlined on the way to the positions: their names, each
+       once, then each frame's name, the place it was called from, and the
+       frame that call is in, five natural numbers */
+    uint32_t nnames = rd_u32(&r);
+    if (r.error || nnames > 100000000) return fail(err, errlen, "bad table of inlined functions");
+    size_t *name_at = calloc(nnames ? nnames : 1, sizeof(size_t));
+    uint32_t *name_len = calloc(nnames ? nnames : 1, sizeof(uint32_t));
+    if (!name_at || !name_len) { free(name_at); free(name_len); return fail(err, errlen, "out of memory"); }
+    for (uint32_t i = 0; i < nnames; i++) {
+        uint32_t n = rd_u32(&r);
+        if (!need(&r, n)) { free(name_at); free(name_len); return fail(err, errlen, "bad table of inlined functions"); }
+        name_at[i] = r.pos; name_len[i] = n; r.pos += n;
+    }
+    p->ninlines = rd_u32(&r);
+    uint32_t frames_len = rd_u32(&r);
+    if (r.error || p->ninlines > 100000000 || !need(&r, frames_len)) {
+        free(name_at); free(name_len);
+        return fail(err, errlen, "bad table of inlined functions");
+    }
+    p->inlines = calloc(p->ninlines ? p->ninlines : 1, sizeof(Inlined));
+    if (!p->inlines) { free(name_at); free(name_len); return fail(err, errlen, "out of memory"); }
+    {
+        const uint8_t *q = data + r.pos, *end = q + frames_len;
+        const char *bad = NULL;
+        for (uint32_t i = 0; i < p->ninlines && !bad; i++) {
+            uint64_t name, file, line, col, parent;
+            if (!rd_uvar(&q, end, &name) || !rd_uvar(&q, end, &file) || !rd_uvar(&q, end, &line) ||
+                !rd_uvar(&q, end, &col) || !rd_uvar(&q, end, &parent) || name >= nnames ||
+                /* a frame called in tail position has no place (0, 0, 0) */
+                (line == 0 && (file != 0 || col != 0)) || (line != 0 && (file >= p->nfiles || col < 1)) ||
+                line > INT32_MAX || col > INT32_MAX || parent > i) {
+                bad = "bad table of inlined functions";
+                break;
+            }
+            p->inlines[i].name = malloc(name_len[name] + 1);
+            if (!p->inlines[i].name) { bad = "out of memory"; break; }
+            memcpy(p->inlines[i].name, data + name_at[name], name_len[name]);
+            p->inlines[i].name[name_len[name]] = 0;
+            p->inlines[i].file = (uint32_t)file;
+            p->inlines[i].line = (uint32_t)line;
+            p->inlines[i].col = (uint32_t)col;
+            p->inlines[i].parent = (uint32_t)parent;
+        }
+        if (!bad && q != end) bad = "bad table of inlined functions";
+        free(name_at); free(name_len);
+        if (bad) return fail(err, errlen, bad);
+    }
+    r.pos += frames_len;
+    for (uint32_t i = 0; i < p->nlines; i++)
+        if (p->lines[i].inl > p->ninlines) return fail(err, errlen, "line table out of range");
 
     for (uint32_t i = 0; i < p->nfuncs; i++)
         p->funcs[i].code_end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
@@ -207,70 +262,30 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     return 1;
 }
 
-/* Where every instruction of a program begins, or NULL and a message: the
-   opcodes, the ranges of the operands, and the jump targets and function
-   entries, which must be instruction boundaries. The caller frees it.
-
-   A .rbc is untrusted input and so, since Runtime.restore, is an image: both
-   carry code, and both come through here (vm/image.c). */
-uint8_t *validate_program(Program *p, char *err, size_t errlen) {
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
-        if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
-        if (i > 0 && p->funcs[i].code_offset < p->funcs[i - 1].code_offset) { fail(err, errlen, "functions out of order"); return NULL; }
-        if (p->funcs[i].nlocals < 1 || p->funcs[i].nlocals > 1000000) { fail(err, errlen, "bad frame size"); return NULL; }
-        uint32_t end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
-        if (p->funcs[i].code_end != end) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
-    }
-    uint8_t *starts = calloc(p->code_len + 1, 1);
-    uint32_t fi = 0;
-    uint32_t pc = 0;
-    while (pc < p->code_len) {
-        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
-        uint8_t op = p->code[pc];
-        int len = instr_length(op);
-        if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return NULL; }
-        if (pc + len > p->code_len) { free(starts); fail(err, errlen, "truncated instruction"); return NULL; }
-        starts[pc] = 1;
-        int32_t a = len > 1 ? read_i32(p->code + pc + 1) : 0;
-        int32_t b = len > 5 ? read_i32(p->code + pc + 5) : 0;
-        int bad = 0;
-        switch (op) {
-        case OP_CONST: bad = a < 0 || (uint32_t)a >= p->nconsts; break;
-        case OP_CON0: case OP_CON: bad = a < 0 || a > 65535; break;
-        case OP_LOCAL: case OP_SETLOCAL: bad = a < 0 || (uint32_t)a >= p->funcs[fi].nlocals; break;
-        case OP_ENV: case OP_SETENV: bad = a < 0; break;
-        case OP_GLOBAL: case OP_SETGLOBAL: bad = a < 0 || (uint32_t)a >= p->nglobals; break;
-        case OP_TUPLE: bad = a < 0 || a > 1000000; break;
-        case OP_SELECT: bad = a < 0; break;
-        case OP_CLOSURE: bad = a < 0 || (uint32_t)a >= p->nfuncs || b < 0 || b > 1000000; break;
-        case OP_NEWEXN: bad = a < 0 || (uint32_t)a >= p->nconsts || p->consts[a].tag != T_PTR; break;
-        case OP_BUILTINEXN: bad = a < 0 || a >= NUM_BUILTIN_EXNS; break;
-        case OP_PRIM: bad = a < 0 || a >= PRIM__COUNT; break;
-        default: break;
-        }
-        if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
-        pc += len;
-    }
-    /* jump targets and function entries must be instruction boundaries */
-    pc = 0;
-    while (pc < p->code_len) {
-        uint8_t op = p->code[pc];
-        int len = instr_length(op);
-        if (op == OP_JUMP || op == OP_JUMPIF || op == OP_JUMPIFNOT || op == OP_JUMPIFNOTTAG || op == OP_PUSHHANDLER) {
-            int32_t t = read_i32(p->code + pc + 1);
-            if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
-                free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
-            }
-        }
-        pc += len;
-    }
-    for (uint32_t i = 0; i < p->nfuncs; i++)
-        if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
-    return starts;
-}
-
 /* The entry covering pc: the last one that begins at or before it, found by
    halving the table, which is in order of pc. */
+uint32_t trace_frames(const Program *p, const LineEntry *e, const char *name, TraceFrame *out, uint32_t max) {
+    uint32_t k = 0;
+    const char *cur = name;
+    uint32_t file = e->file, line = e->line, col = e->col, n = e->inl;
+    if (n != 0 && n <= p->ninlines) cur = p->inlines[n - 1].name;
+    while (n != 0 && n <= p->ninlines) {
+        const Inlined *in = &p->inlines[n - 1];
+        const char *next = in->parent != 0 ? p->inlines[in->parent - 1].name : name;
+        /* one inlined in tail position took the place of the next: cur
+           stays, at the place it is at */
+        if (in->line != 0) {
+            if (k < max) { out[k].name = cur; out[k].file = file; out[k].line = line; out[k].col = col; }
+            k++;
+            cur = next; file = in->file; line = in->line; col = in->col;
+        }
+        n = in->parent;
+    }
+    if (k < max) { out[k].name = cur; out[k].file = file; out[k].line = line; out[k].col = col; }
+    k++;
+    return k < max ? k : max;
+}
+
 const LineEntry *line_at(const Program *p, uint32_t pc) {
     uint32_t lo = 0, hi = p->nlines;
     if (hi == 0 || p->lines[0].pc > pc) return NULL;
@@ -279,38 +294,4 @@ const LineEntry *line_at(const Program *p, uint32_t pc) {
         if (p->lines[mid].pc <= pc) lo = mid; else hi = mid;
     }
     return &p->lines[lo];
-}
-
-void disassemble(const Program *p, FILE *out) {
-    for (uint32_t i = 0; i < p->nconsts; i++) {
-        Value c = p->consts[i];
-        fprintf(out, "const %u = ", i);
-        switch (c.tag) {
-        case T_INT: fprintf(out, "%lld\n", (long long)c.u.i); break;
-        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)c.u.w); break;
-        case T_REAL: fprintf(out, "%g\n", c.u.d); break;
-        case T_CHAR: fprintf(out, "#%lld\n", (long long)c.u.i); break;
-        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)c.u.p->len, OBJ_BYTES(c.u.p)); break;
-        default: fprintf(out, "?\n");
-        }
-    }
-    fprintf(out, "globals %u\n", p->nglobals);
-    uint32_t fi = 0;
-    uint32_t pc = 0;
-    while (pc < p->code_len) {
-        while (fi < p->nfuncs && pc == p->funcs[fi].code_offset) {
-            fprintf(out, "function %u %s (locals %u)\n", fi, p->funcs[fi].name, p->funcs[fi].nlocals);
-            fi++;
-        }
-        uint8_t op = p->code[pc];
-        int len = instr_length(op);
-        fprintf(out, "  %6u  %s", pc, op_names[op]);
-        for (int k = 0; k < op_nargs[op]; k++) fprintf(out, " %d", read_i32(p->code + pc + 1 + 4 * k));
-        {
-            const LineEntry *e = line_at(p, pc);
-            if (e && e->file < p->nfiles) fprintf(out, "\t; %s:%u:%u", p->files[e->file], e->line, e->col);
-        }
-        fprintf(out, "\n");
-        pc += len;
-    }
 }

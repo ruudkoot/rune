@@ -18,17 +18,23 @@ static uint32_t frame_pc(const VM *vm, size_t i) {
 /* The frames, innermost first, under a message that has already been
    printed. A frame whose position the program does not carry -- there is
    none for a file compiled before M5, and none for the outermost frame of a
-   resumed image -- is named without one. */
+   resumed image -- is named without one. Where the code a frame is stopped
+   in was inlined from other functions, each is a frame of its own, at the
+   place the next called it from (the line table, docs/bytecode.md). */
 void vm_print_trace(VM *vm, FILE *out) {
     if (!vm->frames_active) return;
+    const Program *p = &vm->prog;
     for (size_t k = vm->fp + 1; k > 0; k--) {
         size_t i = k - 1;
         uint32_t f = vm->frames[i].func;
-        const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-        const LineEntry *e = line_at(&vm->prog, frame_pc(vm, i));
-        if (e && e->file < vm->prog.nfiles)
-            fprintf(out, "  in %s at %s:%u:%u\n", name, vm->prog.files[e->file], e->line, e->col);
-        else
+        const char *name = f < p->nfuncs ? p->funcs[f].name : "?";
+        const LineEntry *e = line_at(p, frame_pc(vm, i));
+        if (e && e->file < p->nfiles) {
+            TraceFrame fs[64];
+            uint32_t n = trace_frames(p, e, name, fs, 64);
+            for (uint32_t j = 0; j < n; j++)
+                fprintf(out, "  in %s at %s:%u:%u\n", fs[j].name, p->files[fs[j].file], fs[j].line, fs[j].col);
+        } else
             fprintf(out, "  in %s\n", name);
     }
 }
@@ -80,15 +86,15 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->hp++;
 }
 
+/* A list cell is one object, the constructor :: (tag 1) of the two fields
+   of its argument, head and tail -- a constructor whose argument is a tuple
+   is made of its fields (src/backend/rep.sml; middle-end M11). */
 void vm_cons(VM *vm) {
-    Obj *cell = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    Obj *cell = vm_alloc_fields(vm, K_CON, 1, 2);
     OBJ_FIELDS(cell)[0] = vm->stack[vm->sp - 1];
     OBJ_FIELDS(cell)[1] = vm->stack[vm->sp - 2];
     vm->sp -= 2;
     vm_push(vm, mk_ptr(cell));
-    Obj *con = vm_alloc_fields(vm, K_CON, 1, 1);
-    OBJ_FIELDS(con)[0] = vm->stack[vm->sp - 1];
-    vm->stack[vm->sp - 1] = mk_ptr(con);
 }
 
 /* --- structural equality --- */
@@ -231,6 +237,8 @@ void vm_release(VM *vm) {
     for (uint32_t i = 0; vm->prog.files && i < vm->prog.nfiles; i++) free(vm->prog.files[i]);
     free(vm->prog.files);
     free(vm->prog.lines);
+    for (uint32_t i = 0; vm->prog.inlines && i < vm->prog.ninlines; i++) free(vm->prog.inlines[i].name);
+    free(vm->prog.inlines);
     free(vm->globals);
     free(vm->global_set);
     free(vm->stack);

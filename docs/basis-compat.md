@@ -31,7 +31,7 @@ make matrix-quick                      # rune and Rune's library compiled by eac
 make matrix                            # and the suite on each host's own library
 sh tests/basis/run-matrix.sh --configs all real   # tests whose name contains "real"
 sh tests/basis/structures.sh           # which structures each system has
-make perf                              # wall-clock times of tests/perf, one at a time
+make perf                              # wall-clock times of tests/perf, one at a time (performance.md)
 ```
 
 The report is `tests/out/matrix/report.md`; the logs of one test in one
@@ -457,81 +457,13 @@ reach inside it. The note is
 * The host's `OS.Process.exit` knows two statuses, so
   `RunePrim.exit` maps 0 and 1 to them and leaves other statuses to
   `Posix.Process.exit`.
-* `poly_eq` and `ptr_eq` are what Rune's compiler makes of `=` and of
+* `poly_eq`, `imm_eq` and `ptr_eq` are what Rune's compiler makes of `=`
+  (`imm_eq` where it knows the values are never in the heap) and of
   exception matching. No library source names them and they are not part of
   `RUNE_PRIM`.
 
 ## Performance
 
-`make perf PERF_CONFIGS=all` on an x86_64 machine with 16 CPUs, idle but for
-the one program being timed (2026-09-20). Each cell is the milliseconds of
-one run of a program of `tests/perf`: the program is run R times in a row
-(the `wall R` line of its `.budget` file) in three rounds, and the fastest
-round counts; SML/NJ and Poly/ML compile it before the timer starts, like the
-others. In parentheses: the time divided by the baseline of the same
-configuration, the geometric mean of `fib` and `tak`, which use no Basis
-Library. That ratio separates what a library costs from how fast a system
-runs code at all.
-
-| Program | rune | native:mlton@20241230 | native:smlnj@110.99.9 | native:smlnj32@110.99.9 | native:polyml@5.9.2 | xc1:mlton@20241230 | xc1:smlnj@110.99.9 | xc1:smlnj32@110.99.9 | xc1:polyml@5.9.2 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| array_sieve | 39.61 (3.9) | 0.43 (1.7) | 1.36 (4.0) | 0.91 (2.4) | 0.61 (2.5) | 0.50 (1.6) | 1.33 (4.0) | n/a | 0.55 (2.2) |
-| fib | 11.19 (1.1) | 0.44 (1.8) | 0.43 (1.3) | 0.49 (1.3) | 0.36 (1.5) | 0.53 (1.7) | 0.44 (1.3) | n/a | 0.32 (1.3) |
-| intinf_fact | 295.00 (29.3) | 0.03 (0.1) | 0.24 (0.7) | 0.44 (1.1) | 0.13 (0.5) | n/a | n/a | n/a | n/a |
-| list_ops | 34.27 (3.4) | 1.80 (7.3) | 1.70 (5.0) | 1.52 (4.0) | 1.54 (6.4) | 1.15 (3.7) | 2.01 (6.1) | n/a | 0.84 (3.3) |
-| real_nbody | 9.53 (0.9) | 0.57 (2.3) | 0.55 (1.6) | 0.55 (1.4) | 1.29 (5.4) | 0.58 (1.9) | 0.54 (1.6) | n/a | 0.99 (3.9) |
-| string_ops | 33.67 (3.3) | 1.40 (5.6) | 2.42 (7.1) | 2.10 (5.5) | 2.38 (9.9) | 2.75 (8.9) | 3.78 (11.4) | n/a | 2.56 (10.1) |
-| tak | 9.07 (0.9) | 0.14 (0.6) | 0.27 (0.8) | 0.30 (0.8) | 0.16 (0.7) | 0.18 (0.6) | 0.25 (0.8) | n/a | 0.20 (0.8) |
-| word_bits | 14.62 (1.5) | 0.12 (0.5) | 0.28 (0.8) | 0.27 (0.7) | 0.17 (0.7) | 0.13 (0.4) | 0.31 (0.9) | n/a | 0.18 (0.7) |
-
-Not measured: `intinf_fact` in the `xc1` configurations (its `IntInf`
-constants would need the host's overloading to include the `IntInf` of
-`lib/basis`); anything on `xc1:smlnj32`, where the `Timer` and `LargeInt` the
-wrapper times with are not those of `lib/basis` (`timer.sml` and `intinf.sml`
-do not load on a 31-bit `int`).
-
-What the table says:
-
-* Rune's VM runs plain code 20 to 80 times slower than the native code of
-  the hosts (`fib` 12 ms against 0.3 to 0.5 ms, `tak` 10 ms against 0.13 to
-  0.3 ms). This is the interpreter; it is the subject of
-  [plans/performance.md](plans/performance.md).
-* Relative to that baseline, the library costs Rune what it costs the hosts:
-  `array_sieve`, `list_ops` and `string_ops` take 3 to 4 times the baseline on
-  Rune, 2 to 12 times on the hosts.
-* `IntInf` is the exception: 30 times the baseline on Rune, 0.2 to 1.5 times
-  on the hosts, which use GMP (MLton) or native code. Its limbs of 30 bits
-  are an SML datatype, and every limb operation runs on the interpreter.
-* The `xc1` columns run Rune's library compiled by each host, and they are
-  about as fast as that host's own library (`list_ops` 1.2 ms on MLton against
-  1.8 ms native, `string_ops` 2.8 against 1.4): the algorithms of `lib/basis`
-  are not what makes Rune slow.
-
-### Native code
-
-The same, on 2026-09-24, with `rune:opt`: every program translated into
-native code by `runeopt` ([native.md](native.md)) and run so.
-`rune` and `rune:opt` were timed together, the hosts in a run of their own
-that day.
-
-| Program | rune | rune:opt | native:mlton@20241230 | native:smlnj@110.99.9 | native:polyml@5.9.2 |
-|---|---:|---:|---:|---:|---:|
-| array_sieve | 39.21 (3.7) | 16.26 (3.5) | 0.43 (1.7) | 1.28 (3.8) | 0.56 (2.6) |
-| fib | 10.75 (1.0) | 5.64 (1.2) | 0.44 (1.7) | 0.42 (1.2) | 0.32 (1.5) |
-| intinf_fact | 333.32 (31.3) | 110.69 (24.1) | 0.05 (0.2) | 0.27 (0.8) | 0.13 (0.6) |
-| list_ops | 30.65 (2.9) | 16.75 (3.6) | 2.18 (8.5) | 1.55 (4.6) | 1.88 (8.9) |
-| real_nbody | 9.98 (0.9) | 2.50 (0.5) | 0.57 (2.2) | 0.50 (1.5) | 1.03 (4.9) |
-| string_ops | 36.75 (3.5) | 18.36 (4.0) | 1.47 (5.7) | 2.16 (6.4) | 2.21 (10.4) |
-| tak | 10.52 (1.0) | 3.74 (0.8) | 0.15 (0.6) | 0.27 (0.8) | 0.14 (0.7) |
-| word_bits | 14.61 (1.4) | 6.02 (1.3) | 0.17 (0.7) | 0.27 (0.8) | 0.17 (0.8) |
-
-* Native code ran these programs 1.8 to 4.0 times faster than the VM
-  (`fib` 5.6 ms against 10.8, `tak` 3.7 against 10.5, `real_nbody` 2.5
-  against 10.0), and the compiler compiled itself in 5.5 s against 10.2,
-  still 10 to 40 times slower than the hosts.
-* These are the timings of codegen's M7. Its M10 to M15, the same day, made
-  native code 1.75 times as fast again, by doing calls, returns and
-  allocation in the translated code; a new `make perf` for this table is
-  among the remaining work of [plans/codegen.md](plans/codegen.md). Where
-  native code and the VM spend their time now, against MLton, is in
-  [plans/performance.md](plans/performance.md).
+The wall-clock times of `make perf` in every configuration of Rune and of
+the hosts, `xc1` included, and what compiling costs, are in
+[performance.md](performance.md).

@@ -1,0 +1,31 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int)) : int
+    (let (v3 : bool) (prim imm_eq v1 0 : (int * int) -> bool)
+    (if v3
+      (return v2)
+      (let (v4 : int) (prim int_sub v1 1 : (int * int) -> int)
+      (let (v5 : int) (prim int_add v2 1 : (int * int) -> int)
+      (return (app g1 v4 v5))))))))
+(funs
+  (fn g2 ['a 'b] ((v6 : 'a) (v7 : 'b)) : 'b * 'a
+    (return (tuple v7 v6)))
+  (fn g3 ['a 'b] ((v8 : 'a * 'b)) : 'b * 'a
+    (let (v9 : 'a) (select 0 v8)
+    (let (v10 : 'b) (select 1 v8)
+    (return (app g2['a, 'b] v9 v10))))))
+(funs
+  (fn g4 ((v11 : int * int)) : int * (int * int)
+    (let (v12 : int) (select 0 v11)
+    (return (tuple v12 v11)))))
+(funs
+  (fn g5 ['c 'd] ((v13 : 'c -> 'd) (v14 : 'c)) : 'd
+    (return (app v13 v14))))
+(val g6 : int * (int * int) * (int * int) * (int * (int * int))
+  (let (v15 : int) (app g1 10 0)
+  (let (v16 : int * int) (app g2[int, int] 1 2)
+  (let (v17 : int * int) (tuple 3 4)
+  (let (v18 : int * int) (app g5[int * int, int * int] g3[int, int] v17)
+  (let (v19 : int * int) (tuple 5 6)
+  (let (v20 : int * (int * int)) (app g4 v19)
+  (return (tuple v15 v16 v18 v20)))))))))

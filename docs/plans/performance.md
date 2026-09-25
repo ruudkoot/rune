@@ -151,7 +151,8 @@ Its live data grows steadily, to 205 MB at the end, so the collector copies
   * `tests/opt/every-opcode.rasm`.
 
   The `.rbc` version changes only when the layout does, in
-  `src/backend/emit.sml`, `vm/loader.c` and `src/opt/rbc.sml`.
+  `src/isa/stack.sml`; the fingerprint of the instruction set, which the
+  `.rbc` and images carry, changes by itself.
 * **A change that moves `--count`** re-measures the budgets
   (`sh tests/perf/run-perf.sh --update`) and quotes old and new in the
   commit.
@@ -292,6 +293,13 @@ convention), which halves allocation and so also takes part of 13's gain.
 * **Gain:** `LOCAL x; SETLOCAL y` is 16% of all instructions, and the
   unit stores are 34% on top. The gain is mostly `runevm`'s: M15 already reads many
   of these locals where they are in native code.
+* **Done** by the new back end (middle-end M4, the default from `-O1`): a
+  variable bound to another is the other, a value used once stays on the
+  stack, and locals are shared by linear scan. `fun f (a, b) = a + b` is
+  six instructions and one local, where it was ten and five. With the jumps of item 7, `runevm`
+  executes 17 to 28% fewer instructions on `tests/perf` (fib 18.5%,
+  list_ops 27%, intinf_fact 28%) and the compiler 20 to 26% fewer
+  (compiling itself: 806.6M to 595.1M), allocating the same.
 
 ### 5. Compares that return `order`
 
@@ -316,6 +324,14 @@ convention), which halves allocation and so also takes part of 13's gain.
   xs in go l end`, keeping the order of evaluation.
 * **Gain:** every program gains, not only the compiler. An optimiser that
   uncurries (item 14) subsumes it.
+* **Done** (middle-end M8 and M10): the workers of M8 call themselves
+  directly, with no closure made per element, and M10 copies such a
+  function for a call that gives it a function of the top level, whose
+  calls are then known, and inlined where small (`specialise`, docs/ir.md).
+  Measured against the same compiler without it (`runevm --count`):
+  array_sieve 14.8% fewer instructions, list_ops 7.7%, string_ops 2.5%, the
+  compiler 0.4% -- whose calls mostly give closures, which are not
+  specialised.
 
 ### 7. Jumps, returns and branches
 
@@ -330,6 +346,11 @@ convention), which halves allocation and so also takes part of 13's gain.
   * conditions compiled as branches (`JUMPIF` exists and is never
     emitted).
 * **At parity:** a CFG back end does all of this.
+* **Done in part** by the new back end (middle-end M4): a return where the
+  value is, a jump to the next block dropped, jumps to jumps threaded, a
+  jump to a block that only returns made a return, and `JUMPIF` where the
+  other branch follows. `andalso`, `orelse` and `not` as branches are the
+  simplifier's (M7).
 
 ### 8. No test on the last rule of an exhaustive match
 
@@ -342,6 +363,10 @@ convention), which halves allocation and so also takes part of 13's gain.
   (`interp.c:96`), so this makes the soundness of `Exhaust` load-bearing,
   where today it only drives a warning.
 * **At parity:** stays, since an untyped back end cannot find this again.
+* **Done** (middle-end M9), without relying on `Exhaust`: a decision tree
+  leaves the last constructor untested where its rules name every one, and
+  `runevm --checked`, which the test suites run, makes `DECON` test the tag
+  it now carries.
 
 ### 9. No frame reload after a return
 
@@ -360,6 +385,12 @@ convention), which halves allocation and so also takes part of 13's gain.
   collections.
 * **Change:** decide from the survivors of the last collection, and collect
   once into the larger space.
+* **Done:** `vm_gc` guesses the survivors from how they grew between the
+  last two collections, and collects into the larger space at once where
+  the guess says the heap must grow; a guess too low collects again, as
+  before. The bootstrap from a 64 MB heap: 15 to 14 collections, with the
+  same bytes and live data and `--count` unchanged; the time is within the
+  noise of a run.
 
 ### 11. The compiler's other constant factors
 
@@ -389,6 +420,10 @@ Each is S or S-M and changes no output:
     stores and a jump, with a tupled or curried parameter kept in locals;
   * a closed closure made once, into a global.
 * **At parity:** item 14 subsumes the first.
+* **Done** (middle-end M8): a self tail call is a jump back to the head of
+  its function, its arguments stored into the head's parameters; a local
+  group that captures nothing is lifted to the top level, its closure made
+  once. See item 14 for what the two did with it.
 
 ### 13. A generational collector
 
@@ -437,6 +472,13 @@ Each is S or S-M and changes no output:
   budgets.
 * **At parity:** this is what MLton does. It is a step towards parity, not
   work an optimiser would make unnecessary.
+* **Done** (middle-end M8), in Mid and the new back end rather than in
+  `codegen`: `CALLK` and `TAILCALLK` in both bytecodes; workers and
+  wrappers for tupled and curried functions of the top level; local
+  functions that do not escape lambda-lifted. Against M7: tak 48% fewer
+  instructions and almost no allocation, the other programs of `tests/perf`
+  9 to 35% fewer instructions and half the bytes or less, compiles 14%
+  fewer (docs/plans/middle-end.md, M8).
 
 ### 15. `runevm`'s loop
 
@@ -455,6 +497,14 @@ Each is S or S-M and changes no output:
     are written at once.
 * **At parity:** fades once programs run natively, but it speeds up `make
   check` and every VM that has no native code (32-bit, PowerPC, Windows).
+* **Done** (middle-end M6): the loop keeps the stack pointer, the frame, its
+  base, the pc and the count in its own variables and gives them to the VM
+  only around what reads them; each case reads its own operands; a push
+  does not check, since the loader works out how deep each function's
+  stack goes; computed goto under `__GNUC__`; tracing in a copy of its own.
+  With `TEELOCAL`: the bootstrap's compile 41% fewer cycles (34.6G to
+  20.5G) and 49% fewer machine instructions; fib 30%, tak 45%,
+  intinf_fact 41%, string_ops 29%, list_ops 20% fewer cycles.
 
 ### 16. The constructor tag in the tuple's header
 
@@ -466,6 +516,10 @@ Each is S or S-M and changes no output:
   tuples have no identity. A polymorphic argument stays boxed.
 * **Blast radius:** the compiler (`coninfo` needs the arity), new opcodes,
   the C that walks lists (`prims.c`, the system layer).
+* **Done** (middle-end M11): `CONN` and `FIELD`, chosen per datatype
+  (`src/backend/rep.sml`); a list cell is one object of 40 bytes. Against
+  M10: intinf_fact 49.4% fewer objects, list_ops 41.2%, string_ops 43.4%;
+  the compiler as native code 12.7% fewer cycles.
 
 ### 17. Decision trees and a tag switch
 
@@ -478,6 +532,10 @@ Each is S or S-M and changes no output:
   change for the loader, `Rbc`, `RbcCheck`, the disassemblers, `Emit`, the
   interpreter and the templates.
 * **Do items 8 and 12 first:** they are most of the gain for narrow types.
+* **Done** (middle-end M9): Maranget's decision trees in `MatchComp` from
+  `-O1`, and `SWITCH n` followed by a table of `n` `JUMP`s, which kept every
+  instruction of fixed size. Against M8: intinf_fact 21.5% fewer
+  instructions, list_ops 7.3%, the compiler compiling itself 7.6%.
 
 ### 18. Values in registers across a run
 

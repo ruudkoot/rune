@@ -3,8 +3,4 @@ build/
 .cm/
 *.rbc
 tests/out/
-vm/opcodes.h
-vm/prims_table.h
 vm/version.h
-src/backend/opcodes.sml
-src/backend/prims.sml

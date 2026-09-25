@@ -1,0 +1,10 @@
+(* fail: is not in scope *)
+(* A function may not jump to a join point of the function around it: the
+   join point is second class, a place in the code of that function. *)
+(val g1 : int
+  (join j1 ((v1 : int))
+    (return v1)
+  (fun
+    (fn v2 ((v3 : int)) : int
+      (jump j1 v3))
+  (return 0))))

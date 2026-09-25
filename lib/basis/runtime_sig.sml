@@ -45,7 +45,7 @@ sig
 
      A value is 16 bytes and an object costs an 8-byte header and a payload
      rounded up to 16, so the smallest object is 24 bytes and a list cell,
-     which is two objects, is 64. *)
+     one object of two fields, is 40. *)
   type stats = { instructions : int, bytes : int, objects : int,
                  collections : int, live : int, heapSize : int }
 
@@ -60,14 +60,15 @@ sig
      between the counters after it and the counters before.
 
      What measuring costs is part of the answer, so `profile (fn () => ())`
-     is not zero -- it is that cost, and subtracting it from another answer
+     is not all zero -- it is that cost, the instructions that read the
+     counters and at most one record, and subtracting it from another answer
      removes it. It is the same number on every run and on every VM, since
      the counters depend on the program and its input alone.
 
      If `f` raises, the exception passes through and there are no counters:
      this measures a call that returns.
 
-     Example: `#objects (#2 (profile (fn () => ()))) = 1` *)
+     Example: `#objects (#2 (profile (fn () => ()))) <= 1` *)
   val profile : (unit -> 'a) -> 'a * stats
 
   (* `collect ()` collects the heap now.

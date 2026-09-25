@@ -372,7 +372,7 @@ struct
                 val () = expect OF
                 val m = parseMatch ()
               in ECase (e, m, spanFrom start) end
-          | FN => (advance (); let val m = parseMatch () in EFn (m, spanFrom start) end)
+          | FN => (advance (); let val m = parseMatch () in EFn (m, ref NONE, spanFrom start) end)
           | _ => parseHandleExp ()
         end
 
@@ -505,11 +505,11 @@ struct
           | LBRACKET =>
               let val () = advance ()
               in
-                if peek () = RBRACKET then (advance (); EList ([], spanFrom start))
+                if peek () = RBRACKET then (advance (); EList ([], ref NONE, spanFrom start))
                 else
                   let fun loop acc = if peek () = COMMA then (advance (); loop (parseExp () :: acc)) else List.rev acc
                       val es = loop [parseExp ()]
-                  in expect RBRACKET; EList (es, spanFrom start) end
+                  in expect RBRACKET; EList (es, ref NONE, spanFrom start) end
               end
           | LET =>
               let
@@ -530,7 +530,7 @@ struct
                 val name = case next () of STRING s => s | _ => err "expected string literal after _prim"
                 val () = expect COLON
                 val t = parseTy ()
-              in EPrim (name, t, spanFrom start) end
+              in EPrim (name, t, ref NONE, spanFrom start) end
           | t => err ("expected expression but found '" ^ toString t ^ "'")
         end
 
@@ -655,8 +655,7 @@ struct
                 val () = expect END
                 val env2 = !fixenv
                 (* keep fixity directives from d2 but drop those from d1 *)
-                val added = List.take (env2, List.length env2 - List.length env1)
-                val () = fixenv := added @ env0
+                val () = fixenv := Fixity.afterLocal (env0, env1, env2)
               in DLocal (d1, d2, spanFrom start) end
           | OPEN =>
               let
@@ -676,7 +675,7 @@ struct
               let
                 val () = advance ()
                 val ids = parseFixityIds ()
-                val () = fixenv := List.map (fn id => (id, Fixity.Nonfix)) ids @ !fixenv
+                val () = fixenv := Fixity.extend (!fixenv, List.map (fn id => (id, Fixity.Nonfix)) ids)
               in DNonfix (ids, spanFrom start) end
           | OVERLOAD =>
               (* _overload <kind> <longstrid> [<bits> | via <longvid>] *)
@@ -1076,7 +1075,7 @@ struct
                                  else IntInf.toInt i)
                      | _ => 0
           val ids = parseFixityIds ()
-          val () = fixenv := List.map (fn id => (id, mkFix prec)) ids @ !fixenv
+          val () = fixenv := Fixity.extend (!fixenv, List.map (fn id => (id, mkFix prec)) ids)
         in mkDec (prec, ids, spanFrom start) end
 
       and parseTypbinds () : typbind list =

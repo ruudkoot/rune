@@ -174,7 +174,7 @@ struct
     | ERecord (fields, _) => List.foldl (fn ((_, e), acc) => unguardedExp (e, acc)) acc fields
     | ETuple (es, _) => List.foldl unguardedExp acc es
     | ESelect _ => acc
-    | EList (es, _) => List.foldl unguardedExp acc es
+    | EList (es, _, _) => List.foldl unguardedExp acc es
     | ESeq (es, _) => List.foldl unguardedExp acc es
     | ELet (decs, e, _) => unguardedExp (e, List.foldl unguardedDec acc decs)
     | EApp (f, a, _) => unguardedExp (a, unguardedExp (f, acc))
@@ -186,8 +186,8 @@ struct
     | EIf (a, b, c, _) => unguardedExp (c, unguardedExp (b, unguardedExp (a, acc)))
     | EWhile (a, b, _) => unguardedExp (b, unguardedExp (a, acc))
     | ECase (e, rules, _) => unguardedRules (rules, unguardedExp (e, acc))
-    | EFn (rules, _) => unguardedRules (rules, acc)
-    | EPrim (_, t, _) => tyvarsOfTy (t, acc)
+    | EFn (rules, _, _) => unguardedRules (rules, acc)
+    | EPrim (_, t, _, _) => tyvarsOfTy (t, acc)
 
   and unguardedRules (rules : mrule list, acc) =
     List.foldl (fn ((p, e), acc) => unguardedExp (e, unguardedPat (p, acc))) acc rules
@@ -331,7 +331,7 @@ struct
          let
            val stamp = freshStamp ()
            val t = fresh level
-         in (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal})) end)
+         in Ty.bindVar (stamp, t); (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal})) end)
       fun elab p =
         case p of
           PWild _ => (fresh level, [])
@@ -424,11 +424,11 @@ struct
     | ESelect _ => true
     | ETuple (es, _) => List.all nonexpansive es
     | ERecord (fs, _) => List.all (fn (_, e) => nonexpansive e) fs
-    | EList (es, _) => List.all nonexpansive es
+    | EList (es, _, _) => List.all nonexpansive es
     | ETyped (e, _, _) => nonexpansive e
     | EApp (EVar (_, slot, _), a, _) =>
         (case !slot of
-           SOME (VCon info) => not (#isRef info) andalso nonexpansive a
+           SOME (VCon (info, _)) => not (#isRef info) andalso nonexpansive a
          | SOME (VExn _) => nonexpansive a
          | _ => false)                     (* a constructor that lost its status is an ordinary variable *)
     | _ => false
@@ -440,15 +440,17 @@ struct
         (case findVal (env, longid) of
            NONE => err (sp, "unbound variable or constructor: " ^ longidToString longid)
          | SOME (Val {scheme, stamp, global}) =>
-             (slot := SOME (if global then VGlobal stamp else VLocal stamp);
-              Unify.instantiate (level, scheme))
-         | SOME (Con {scheme, info}) => (slot := SOME (VCon info); Unify.instantiate (level, scheme))
-         | SOME (Exn {ty, info}) => (slot := SOME (VExn info); ty)
+             let val t = Unify.instantiate (level, scheme)
+             in slot := SOME (if global then VGlobal (stamp, t) else VLocal (stamp, t)); t end
+         | SOME (Con {scheme, info}) =>
+             let val t = Unify.instantiate (level, scheme) in slot := SOME (VCon (info, t)); t end
+         | SOME (Exn {ty, info}) => (slot := SOME (VExn (info, ty)); ty)
          | SOME (Prim {scheme, name}) =>
              let val t = Unify.instantiate (level, scheme)
              in registerOverloads t; slot := SOME (VBuiltin (name, t)); t end
-         | SOME (ConAsVal {scheme, info}) => (slot := SOME (VConVal info); Unify.instantiate (level, scheme))
-         | SOME (ExnAsVal {ty, info}) => (slot := SOME (VExnVal info); ty))
+         | SOME (ConAsVal {scheme, info}) =>
+             let val t = Unify.instantiate (level, scheme) in slot := SOME (VConVal (info, t)); t end
+         | SOME (ExnAsVal {ty, info}) => (slot := SOME (VExnVal (info, ty)); ty))
     | ERecord (fields, sp) =>
         (checkDupLabels (fields, sp);
          TRecord (sortFields (List.map (fn (l, e) => (l, elabExp (env, level, scope, e))) fields)))
@@ -463,10 +465,11 @@ struct
           slot := SOME r;
           TArrow (r, a)
         end
-    | EList (es, _) =>
+    | EList (es, slot, _) =>
         let val a = fresh level
         in
           List.app (fn e => unifyAt (spanOfExp e, a, elabExp (env, level, scope, e), "list element")) es;
+          slot := SOME (listTy a);
           listTy a
         end
     | ESeq (es, _) =>
@@ -518,17 +521,17 @@ struct
           val te = elabExp (env, level, scope, e)
           val res = fresh level
         in elabMatch (env, level, scope, rules, te, res, true, sp); res end
-    | EFn (rules, sp) =>
+    | EFn (rules, slot, sp) =>
         let
           val arg = fresh level
           val res = fresh level
-        in elabMatch (env, level, scope, rules, arg, res, true, sp); TArrow (arg, res) end
-    | EPrim (name, t, sp) =>
+        in elabMatch (env, level, scope, rules, arg, res, true, sp); slot := SOME (TArrow (arg, res)); TArrow (arg, res) end
+    | EPrim (name, t, slot, sp) =>
         if not (!allowPrim) then err (sp, "_prim is only allowed when compiling with --allow-prim")
         else
           (case Prims.find name of
              NONE => err (sp, "unknown primitive '" ^ name ^ "'")
-           | SOME _ => elabTy (env, scope, level, t))
+           | SOME _ => let val ty = elabTy (env, scope, level, t) in slot := SOME ty; ty end)
 
   (* Section 4.11: a fn match must be exhaustive, every match irredundant. *)
   and elabMatch (env, level, scope, rules : mrule list, argTy, resTy, exhaustive : bool, sp) =
@@ -596,6 +599,7 @@ struct
                                           let val stamp = freshStamp ()
                                           in
                                             checkBindable (name, psp, true);
+                                            Ty.bindVar (stamp, tv);
                                             slot := SOME (PIVar (stamp, top));
                                             (name, Val {scheme = tv, stamp = stamp, global = top})
                                           end) vars
@@ -626,6 +630,7 @@ struct
                            val () = checkBindable (#name f, #span f, true)
                            val stamp = freshStamp ()
                            val tv = fresh (level + 1)
+                           val () = Ty.bindVar (stamp, tv)
                            val () = #info f := SOME (PIVar (stamp, top))
                          in (#name f, Val {scheme = tv, stamp = stamp, global = top}, tv, f) end) fundefs
           fun checkDups [] = ()
@@ -692,6 +697,7 @@ struct
               val resTy = TCon (tc, List.map #2 params)
               val ncons = List.length (#cons db)
               val siblings = List.map (fn (cname, argOpt, _) => (cname, isSome argOpt)) (#cons db)
+              val conArgs : (int * string * ty option) list ref = ref []
               val cons =
                 List.foldl (fn ((cname, argOpt, csp), (acc, i, args)) =>
                                let
@@ -700,15 +706,16 @@ struct
                                             err (csp, "duplicate constructor '" ^ cname ^ "'") else ()
                                  val (scheme, args) =
                                    case argOpt of
-                                     NONE => (resTy, args)
+                                     NONE => (conArgs := (i, cname, NONE) :: !conArgs; (resTy, args))
                                    | SOME t => let val ta = elabTy (env2, scope, level, t)
-                                               in (TArrow (ta, resTy), ta :: args) end
+                                               in conArgs := (i, cname, SOME ta) :: !conArgs; (TArrow (ta, resTy), ta :: args) end
                                  val info = {name = cname, tag = i, hasArg = isSome argOpt, ncons = ncons, isRef = false,
                                              siblings = siblings}
                                in ((cname, Con {scheme = scheme, info = info}) :: acc, i + 1, args) end)
                            ([], 0, []) (#cons db)
               val args = #3 cons
               val cons = List.rev (#1 cons)
+              val () = Ty.bindDatatype (#stamp tc, {params = List.map #1 params, cons = List.rev (!conArgs)})
               val delta = bindTy (delta, #name db, TyStr {fcn = TName tc, cons = cons})
             in (List.foldl (fn ((n, v), d) => bindVal (d, n, v)) delta cons, (tc, args) :: groups) end
           val (delta, groups) = List.foldl elabDatbind (Env.empty, []) tycons
@@ -767,9 +774,11 @@ struct
                                         err (sp, "duplicate exception constructor '" ^ name ^ "' in one declaration") else ()
                              val stamp = freshStamp ()
                              val scope = ref (!outerScope)
-                             val ty = case tyopt of
+                             val arg = Option.map (fn t => elabTy (env, scope, level + 1, t)) tyopt
+                             val ty = case arg of
                                         NONE => exnTy
-                                      | SOME t => TArrow (elabTy (env, scope, level + 1, t), exnTy)
+                                      | SOME ta => TArrow (ta, exnTy)
+                             val () = Ty.bindExn (stamp, arg)
                              val info = {name = name, stamp = stamp, isGlobal = top, hasArg = isSome tyopt, builtin = NONE}
                            in slot := SOME (PIExn info); bindVal (delta, name, Exn {ty = ty, info = info}) end
                        | ExnRepl (name, longid, slot, sp) =>

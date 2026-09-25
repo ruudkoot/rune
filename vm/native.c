@@ -3,8 +3,11 @@
    with the value stack, the frames and the handlers kept where the
    interpreter keeps them, so the collector, a trace, Runtime.stats and an
    image see the same machine they see under runevm. Each helper below is the
-   case of vm/interp.c that it is named after, taken out of the loop: a change
-   to the one is a change to the other.
+   case of the interpreter's loop that it is named after, taken out of the
+   loop: those of the instructions whose bodies are shared (src/isa/isa.sml)
+   call the same function the interpreter does (vm/ops.h); CALL, TAILCALL,
+   CALLK, RET and RAISE, which say where the code goes on, are written again
+   here, and a change to the one is a change to the other.
 
    What runeopt writes into the program, beside its code: the .rbc, which is
    loaded as runevm loads it; for each function where its code begins and the
@@ -15,13 +18,15 @@
 #define _POSIX_C_SOURCE 200809L     /* unsetenv, strdup */
 #include "vm.h"
 #include "sys.h"
+#include "ops.h"
 
 #include <errno.h>
 #include <fenv.h>
 
 extern const unsigned char rune_rbc[];
 extern const uint32_t rune_rbc_size;
-extern const int32_t rune_functions[];     /* 3 per function: entry - rune_functions, the entry of a call
+extern const int32_t rune_functions[];     /* 3 per function: the glue's entry, which takes the frame's
+                                              base first - rune_functions, the entry of a call
                                               of the code (M10) - rune_functions, highest stack */
 extern const int32_t rune_handlers[];      /* 2 per handler, by pc: pc, code - rune_handlers */
 extern const uint32_t rune_nhandlers;
@@ -50,11 +55,6 @@ static const void *enter(VM *vm, uint32_t f, Value arg) {
     return entry(f);
 }
 
-static Obj *expect_obj(VM *vm, Value v, int kind, const char *what) {
-    if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "expected %s", what);
-    return v.u.p;
-}
-
 static uint32_t callee(VM *vm, Obj *c) {
     int64_t fidx = OBJ_FIELDS(c)[0].u.i;
     if (fidx < 0 || (uint64_t)fidx >= vm->prog.nfuncs) vm_fatal(vm, "bad function index");
@@ -66,7 +66,7 @@ static uint32_t callee(VM *vm, Obj *c) {
 const void *native_call(VM *vm, void *back) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
-    Obj *c = expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
     uint32_t f = callee(vm, c);
     vm_push_frame(vm, f, c, vm->pc, vm->sp);
     vm->frames[vm->fp].native_ret = back;
@@ -76,13 +76,30 @@ const void *native_call(VM *vm, void *back) {
 const void *native_tailcall(VM *vm) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
-    Obj *c = expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
     uint32_t f = callee(vm, c);
     Frame *fr = &vm->frames[vm->fp];
     vm->sp = fr->base;
     fr->func = f;
     fr->closure = c;
     return enter(vm, f, arg);
+}
+
+/* CALLK (middle-end M8) when the array of frames is full: a frame of
+   function f at the n arguments on top of the stack, which are its first
+   locals, with no closure, the rest of its locals unit. */
+const void *native_callk(VM *vm, uint32_t f, uint32_t n, void *back) {
+    size_t at = vm->sp - n;
+    vm_push_frame(vm, f, NULL, vm->pc, at);
+    vm->frames[vm->fp].native_ret = back;
+    Function *fn = &vm->prog.funcs[f];
+    size_t need = at + fn->nlocals + (size_t)rune_functions[3 * f + 2];
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = &vm->stack[at];
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm->sp = at + fn->nlocals;
+    vm->pc = fn->code_offset;
+    return entry(f);
 }
 
 /* RET: the native code of the caller, or the end of the run. */
@@ -209,52 +226,15 @@ const void *native_unusual(VM *vm, int r) {
     return code;
 }
 
-void native_tuple(VM *vm, int32_t a) {
-    Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)a);
-    Value *f = OBJ_FIELDS(t);
-    for (int32_t i = 0; i < a; i++) f[i] = vm->stack[vm->sp - (size_t)a + (size_t)i];
-    vm->sp -= (size_t)a;
-    vm_push(vm, mk_ptr(t));
-}
-
-void native_con(VM *vm, int32_t a) {
-    Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, 1);
-    OBJ_FIELDS(c)[0] = *vm_top(vm, 0);
-    *vm_top(vm, 0) = mk_ptr(c);
-}
-
-void native_closure(VM *vm, int32_t a, int32_t b) {
-    Obj *c = vm_alloc_fields(vm, K_CLOSURE, 0, (uint32_t)b + 1);
-    Value *f = OBJ_FIELDS(c);
-    f[0] = mk_int(a);
-    for (int32_t i = 0; i < b; i++) f[i + 1] = vm->stack[vm->sp - (size_t)b + (size_t)i];
-    vm->sp -= (size_t)b;
-    vm_push(vm, mk_ptr(c));
-}
-
-void native_setenv(VM *vm, int32_t a) {
-    Value v = vm_pop(vm);
-    Value cv = vm_pop(vm);
-    Obj *c = expect_obj(vm, cv, K_CLOSURE, "closure");
-    if ((uint32_t)a + 1 >= c->len) vm_fatal(vm, "environment slot %d out of range", a);
-    OBJ_FIELDS(c)[a + 1] = v;
-}
-
-void native_newexn(VM *vm, int32_t a) {
-    Obj *c = vm_alloc_fields(vm, K_EXNCON, 0, 1);
-    OBJ_FIELDS(c)[0] = vm->prog.consts[a];
-    vm_push(vm, mk_ptr(c));
-}
-
-void native_mkexn(VM *vm) {
-    Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
-    Value con = vm->stack[vm->sp - 2];
-    if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) vm_fatal(vm, "MKEXN on non-constructor");
-    OBJ_FIELDS(e)[0] = con;
-    OBJ_FIELDS(e)[1] = vm->stack[vm->sp - 1];
-    vm->sp -= 2;
-    vm_push(vm, mk_ptr(e));
-}
+/* The instructions whose slow paths are their bodies in src/isa/stack.sml,
+   as the interpreter runs them (vm/ops.h). */
+void native_tuple(VM *vm, int32_t a) { op_TUPLE(vm, a, 0); }
+void native_con(VM *vm, int32_t a) { op_CON(vm, a, 0); }
+void native_conn(VM *vm, int32_t a, int32_t b) { op_CONN(vm, a, b); }
+void native_closure(VM *vm, int32_t a, int32_t b) { op_CLOSURE(vm, a, b); }
+void native_setenv(VM *vm, int32_t a) { op_SETENV(vm, a, 0); }
+void native_newexn(VM *vm, int32_t a) { op_NEWEXN(vm, a, 0); }
+void native_mkexn(VM *vm) { op_MKEXN(vm, 0, 0); }
 
 /* The checks the code makes itself end here, with vm->pc already the
    instruction after the one that failed, as the interpreter has it; `what`
@@ -273,6 +253,11 @@ void native_fatal(VM *vm, int what, int32_t a) {
     case 9: vm_fatal(vm, "JUMPIF on non-bool"); break;
     case 10: vm_fatal(vm, "POPHANDLER with no handler"); break;
     case 11: vm_fatal(vm, "JUMPIFNOTTAG on non-constructor"); break;
+    case 12: vm_fatal(vm, "SWITCH on non-constructor"); break;
+    case 13: vm_fatal(vm, "DECON of a constructor of tag %d where %d is wanted", a >> 16, a & 0xffff); break;
+    case 14: vm_fatal(vm, "expected %s", "constructor with fields"); break;
+    case 15: vm_fatal(vm, "constructor field %d out of range", a); break;
+    case 16: vm_fatal(vm, "FIELD of a constructor of tag %d where %d is wanted", a >> 16, a & 0xffff); break;
     default: vm_fatal(vm, "unknown check %d", what);
     }
 }
@@ -281,7 +266,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 
 typedef struct Options {
     size_t heap, gc_stress, heap_fill;
-    int stats, count, emulate_fork;
+    int stats, count, emulate_fork, checked;
     char *restore;
 } Options;
 
@@ -309,6 +294,7 @@ static void options(const char *text, const char *where, Options *o) {
         if (strcmp(w, "--count") == 0) o->count = 1;
         else if (strcmp(w, "--stats") == 0) o->stats = 1;
         else if (strcmp(w, "--emulate-fork") == 0) o->emulate_fork = 1;
+        else if (strcmp(w, "--checked") == 0) o->checked = 1;
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -324,7 +310,8 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(o->restore, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --emulate-fork, --restore FILE)\n", where, w);
+                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
+                    "--restore FILE)\n", where, w);
             exit(2);
         }
     }
@@ -335,7 +322,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { 4u << 20, 0, 50, 0, 0, 0, NULL };
+    Options o = { 4u << 20, 0, 50, 0, 0, 0, 0, NULL };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm's are, and not part of what
@@ -371,6 +358,7 @@ int main(int argc, char **argv) {
     vm->count = o.count;
     vm->gc_stress = o.gc_stress;
     vm->emulate_fork = o.emulate_fork;
+    vm->checked = o.checked;
     /* the name the program has under runevm, where bin/runevm-opt runs it
        for the suites: the path of its .rbc */
     const char *name = getenv("RUNEVM_NAME");

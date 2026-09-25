@@ -42,7 +42,7 @@ struct
   fun max (a : int, b) = if a > b then a else b
   fun sign (a : int) = if a < 0 then ~1 else if a > 0 then 1 else 0
   fun sameSign (a, b) = sign a = sign b
-  fun compare (a : int, b) = if a < b then LESS else if a = b then EQUAL else GREATER
+  val compare = _prim "int_order" : int * int -> order
 
   val toString = _prim "int_to_string" : int -> string
 

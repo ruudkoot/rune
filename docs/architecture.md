@@ -1,15 +1,21 @@
 # Architecture
 
 ```
-source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► Codegen ──► Emit ──► .rbc
-                 tokens     AST        typed AST    Lambda IR     bytecode
-                                                                   items
+source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► ToMid ──► Shake, Lift, Workers, ──► Lower ──► Stack ──► Emit ──► .rbc
+                 tokens     AST        typed AST    Lambda IR     Mid       Simplify (from -O1)      Low       bytecode
+                                                                                                             items (Code)
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
+
+Low ──► Regs (--target=registers) ──► register .rbc ──► vm/new's first loop
+                                                        (bin/runevm-new, on the runtime of runevm)
 ```
 
 The compiler is a classic multi-pass design in `src/`; the VM is in `vm/`.
 Every pass is a separate structure with a small interface so the pipeline can
-be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code`.
+be inspected with `rune --dump-tokens | --dump-ast` and, for each stage from
+one intermediate representation to the next, `--dump-before=PASS` and
+`--dump-after=PASS`, with `--lint` checking what each makes
+([ir.md](ir.md)).
 
 ## Compiler passes
 
@@ -18,15 +24,21 @@ be inspected with `rune --dump-tokens | --dump-ast | --dump-lambda | --dump-code
 | Lexer | `src/frontend/token.sml`, `lexer.sml` | text → token vector | Hand-written. Recognises long identifiers, `~` in numeric literals, `#"c"`, string gaps, nested comments and the `_prim` extension. Produces a vector so the parser can backtrack. |
 | Parser | `src/frontend/ast.sml`, `fixity.sml`, `parser.sml` | tokens → `Ast.program` | Recursive descent. Infix expressions/patterns are collected as flat item lists and resolved by precedence climbing against the current fixity environment (`infix` directives are lexically scoped and threaded across files). `fun` clause heads try the `(p op q) r` form first, then the generic form. |
 | Elaboration | `src/elab/types.sml`, `overload.sml`, `unify.sml`, `env.sml`, `sigmatch.sml`, `elaborate.sml` | AST → AST with annotations | Hindley–Milner with levels for let-polymorphism, kinds on type variables for overloading (`KOverload`: the admissible kinds `int word real char string`; `Overload` maps a type constructor, by stamp, to its kind, to the primitive or top-level variable behind each operator and to the form of its constants; the basis library adds types to it with `_overload`, and int and word constants are typed with an overloaded variable of their kind, whose resolved type `Translate` finds in the constant's slot) and flexible records (`KFlex`), value restriction via non-expansiveness. Fills the mutable annotation slots in the AST (`varinfo`, `patinfo`, record types for `#lab` and `{...}`) instead of building a separate typed tree. Every binder gets a globally unique integer stamp. Overloaded operators and flexible records are resolved/defaulted at the end of each top-level declaration. Types are built from type names (`Types.tycon`: stamp, arity, equality attribute) and type functions; `Env.TyStr` is the Definition's type structure. `SigMatch` implements signatures (flexible names + environment), `where type`/`sharing` as realisations, matching by enrichment and ascription. |
-| Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | Rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
+| Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | From `-O1`, a match of two rules or more is a decision tree: each value tested once on a way through, the rules' bodies join points (`Join`, `Jump`), the last constructor of a datatype the rules all name untested (docs/ir.md, *Matches*). Otherwise rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
-| Code generation | `src/backend/codegen.sml` | Lambda → per-function instruction lists | Flat closure conversion: free variables are computed per `Fn`, loaded in the enclosing function and stored in the closure environment. Self reference uses `SELF`; mutual recursion patches environment slots with `SETENV`. Locals get frame slots; tail calls are detected syntactically. |
+| Mid | `src/core/ty.sml`, `mid.sml`, `tomid.sml`, `midlint.sml`, `midtext.sml` | Lambda → `Mid.program` | A-normal form with join points, typed in the manner of System F, the top level a list of definitions; see [ir.md](ir.md). |
+| Optimisation (from `-O1`) | `src/core/shake.sml`, `lift.sml`, `workers.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), lambda lifting, workers and wrappers, then shrinking reductions in rounds after a census, with inlining (its frames kept for traces) and the specialisation of higher-order functions to known functions; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. `-O0` runs none of them. |
+| Lowering | `src/backend/low.sml`, `lower.sml`, `lowlint.sml` | Mid → `Low.program` | Blocks with parameters in SSA form, one function per function of the program. Flat closure conversion: a function captures its free variables in the order of their stamps; self reference is `Self`; a group of functions patches its closures with `SetEnv`. Handlers are pushed and popped around their regions. |
+| Stack target | `src/backend/target.sml`, `code.sml`, `stack.sml` | Low → per-function instruction lists (`Code`) | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. `Code` holds the instruction lists and the tables of the program (constants, globals, files, inlined frames) that both targets fill and Emit writes. |
+| Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `vm/new` ([bytecode.md](bytecode.md), The register bytecode). |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
-applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
-`error.sml` (`CompileError`, `Bug`).
+applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
+ints, which are never listed, so their order cannot reach the output),
+`source.sml` (files, spans, line/column), `error.sml` (`CompileError`,
+`Bug`), `pass.sml` (the passes' options, lints and fuel).
 
 
 ## The documentation generator
@@ -42,8 +54,8 @@ elaborator), so what it documents is what the compiler compiles. Nothing of
 
 `runeopt` ([native.md](native.md), which says how it translates) is a third program,
 built from `sources-opt.txt`: the compiler's `OrdMap`, its description of
-the machine (`Opcodes` and `Prims`, generated from `vm/opcodes.def` and
-`vm/prims.def`), and `src/opt`. It takes an `.rbc`, not a source file, and
+the machine (`Opcodes` and `Prims`, generated by `runeisa` from `src/isa`),
+and `src/opt`. It takes an `.rbc`, not a source file, and
 writes an executable for Linux on x86-64: the bytecode translated an
 instruction at a time into assembly, which `cc` assembles and links with
 `build/librune.a`. The code keeps the value stack, the frames and the
@@ -56,7 +68,7 @@ handlers where the interpreter keeps them, so the collector, traces,
 | `RbcImage` | `src/opt/rbcimage.sml` | `runeopt --from-image`: the program of an image of `vm/image.c` as an `.rbc`, its real constants written as C's hexadecimal notation from their bits, with integers alone. |
 | `RbcCheck` | `src/opt/rbccheck.sml` | What a translation relies on and the loader does not promise: the stack height and handler depth agree on every path into an instruction, no path underflows, leaves its function or runs off its end, no `TAILCALL` or `RET` has a handler of its function installed. Gives the height before every instruction and each function's highest stack. |
 | `RbcDisasm` | `src/opt/rbcdisasm.sml` | `runeopt --disasm`, line for line what `runevm --disasm` prints (a real constant as its text). |
-| `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `vm/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls and returns push and pop the VM's frames themselves, and allocation bumps the heap itself, with `vm/native.c` as the slow path; raises go through `vm/native.c`, primitives through `prim_table`, but for the 56 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entries and highest stack, each handler's code, the places an image can resume at. |
+| `X64` | `src/opt/x64.sml` | The translation: for every instruction the code that does what its case in `vm/interp.c` does, in the order of the bytecode. The VM is in `r12`, the stack in `r13`, 16 times the frame's base in `rbp`, the count of instructions in `r15`; a slot is an address in the frame, since the height of the stack is known. Calls and returns push and pop the VM's frames themselves, and allocation bumps the heap itself, with `vm/native.c` as the slow path; raises go through `vm/native.c`, primitives through `prim_table`, but for the 59 whose common case the code does itself (`fastPrim`, `runeopt --inlined`: the arithmetic and comparisons of ints, words, reals and chars, `=` on two immediates, references, and the length and elements of strings, vectors and arrays), which call the primitive only for what they leave to it: an overflow, a divisor of zero, an index out of bounds. Also the tables of the program: the `.rbc` (by `.incbin`), each function's entries and highest stack, each handler's code, the places an image can resume at. |
 | `OptMain` | `src/opt/optmain.sml` | The command line: `runeopt FILE.rbc [-o EXE] [-S]`, `--check`, `--disasm`, `--facts`. |
 
 On the side of the VM, `vm/native.c` is the `main` of a program `runeopt`
@@ -140,10 +152,10 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/vm.h` | `Value`, `Obj`, `VM` and the shared API. |
 | `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
 | `vm/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
-| `vm/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. |
+| `vm/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. Its cases are the bodies of `src/isa/stack.sml`, which `runeisa` writes into `vm/interp_cases.h`, and into `vm/ops.h` those that `vm/native.c` shares. |
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
 | `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
-| `vm/prims.c` | One function per primitive; the dispatch table is generated from `prims.def`. |
+| `vm/prims.c` | One function per primitive; the dispatch table is generated from `src/isa/prims.sml`. |
 | `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
 | `vm/main.c` | Command line handling. |
 
@@ -190,9 +202,11 @@ primitives that construct options.
 ## Adding a language feature (checklist)
 
 1. Lexer/parser/AST as needed; elaboration (types + annotations); translation
-   to Lambda; codegen only if a new Lambda construct is required.
-2. If the VM needs a new instruction or primitive: `vm/opcodes.def` /
-   `vm/prims.def`, implement in `vm/`, document in `docs/bytecode.md`.
+   to Lambda; the rest of the pipeline (Mid, Low and the targets) only if
+   a new Lambda construct is required.
+2. If the VM needs a new instruction or primitive: `src/isa/stack.sml` /
+   `src/isa/prims.sml` and `make isa`, implement in `vm/`, document in
+   `docs/bytecode.md`.
 3. Add `tests/lang/<id>_<name>.sml` + `.expected` (verify the expected output
    by hand, not just by running Rune) and the row `<id>` in `docs/language.md`.
 4. `make check` must pass (all three compiler builds, identical bytecode,

@@ -18,6 +18,10 @@
 #   rune:opt               bin/rune, and every program translated to native
 #                          code by runeopt and run so: bin/runevm-opt
 #                          (RUNEVM_OPT=; docs/native.md)
+#   rune:new               bin/rune making the register bytecode of vm/new
+#                          (bin/rune-new, RUNE_NEW=) and vm/new's first loop
+#                          running it (bin/runevm-new, RUNEVM_NEW=;
+#                          docs/plans/middle-end.md, M5)
 #   windows                rune:windows and rune:windows32
 #   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
@@ -110,7 +114,7 @@ set -u
 
 jobs=""
 perf=${RUNE_MATRIX_PERF:-0}
-refresh=0
+refresh=${RUNE_MATRIX_REFRESH:-0}
 configs=rune
 filter=""
 one_config=""
@@ -909,6 +913,14 @@ resolve() {
       id=rune:opt
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-opt)" >&2; return 1; }
       ;;
+    rune:new)
+      # The library of the `rune` configuration, compiled to the register
+      # bytecode, and every program run by vm/new's first loop.
+      cmd1=${RUNE_NEW:-$root/bin/rune-new}
+      cmd2=${RUNEVM_NEW:-$root/bin/runevm-new}
+      id=rune:new
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/rune-new bin/runevm-new)" >&2; return 1; }
+      ;;
     rune:linux32|rune:ppc64)
       # The library and the compiler of the `rune` configuration on a VM of
       # another machine (make portability): a 32-bit x86, and a big-endian
@@ -1005,7 +1017,7 @@ fi
 if [ "$perf" = 1 ]; then
   # One at a time: a timing is only worth something on an idle machine.
   for id in $ids; do for t in $tests; do printf '%s\n%s\n' "$id" "$t"; done; done |
-    RUNE_MATRIX_RUN=$run RUNE_MATRIX_PERF=1 xargs -n 2 -P 1 sh "$self" --one
+    RUNE_MATRIX_RUN=$run RUNE_MATRIX_PERF=1 RUNE_MATRIX_REFRESH=$refresh xargs -n 2 -P 1 sh "$self" --one
   wall=$root/tests/out/perf/wall.md
   mkdir -p "$root/tests/out/perf"
   status=0
@@ -1065,7 +1077,7 @@ tab=$(printf '\t')
       BEGIN { while ((getline l < tf) > 0) { split(l, f, "\t"); d[f[1] "\t" f[2]] = f[3] } }
       { k = $1 "\t" $2; printf "%s\t%s\t%s\n", $1, $2, (k in d) ? d[k] : 1e9 }'
 } | sort -t "$tab" -k3,3gr -s | cut -f 1,2 | tr '\t' '\n' |
-  RUNE_MATRIX_RUN=$run xargs -n 2 -P "$jobs" sh "$self" --one
+  RUNE_MATRIX_RUN=$run RUNE_MATRIX_REFRESH=$refresh xargs -n 2 -P "$jobs" sh "$self" --one
 t_tests=$(since "$t_run")
 
 # ------------------------------------------------------------------ report

@@ -18,15 +18,16 @@ struct
   (* The constants of a type registered with _overload (Overload.literal). *)
   datatype ovliteral = OvBits of int | OvVia of string list * string
 
-  (* Resolved status of a value identifier, filled by elaboration. *)
+  (* Resolved status of a value identifier, filled by elaboration, with the
+     type of this use of it: the instance of its scheme (docs/ir.md). *)
   datatype varinfo =
-      VLocal of int                             (* variable stamp *)
-    | VGlobal of int                            (* top-level variable stamp *)
-    | VCon of coninfo
-    | VExn of exninfo
+      VLocal of int * Types.ty                  (* variable stamp *)
+    | VGlobal of int * Types.ty                 (* top-level variable stamp *)
+    | VCon of coninfo * Types.ty
+    | VExn of exninfo * Types.ty
     | VBuiltin of string * Types.ty             (* builtin operator (possibly overloaded) and its operand type *)
-    | VConVal of coninfo                        (* constructor that lost its status through a signature *)
-    | VExnVal of exninfo                        (* exception constructor that lost its status *)
+    | VConVal of coninfo * Types.ty             (* constructor that lost its status through a signature *)
+    | VExnVal of exninfo * Types.ty             (* exception constructor that lost its status *)
 
   and patinfo =
       PIVar of int * bool                       (* stamp, isGlobal *)
@@ -43,7 +44,7 @@ struct
     | ERecord of (string * exp) list * span
     | ETuple of exp list * span                 (* including () *)
     | ESelect of string * Types.ty option ref * span   (* #lab *)
-    | EList of exp list * span
+    | EList of exp list * Types.ty option ref * span   (* the type of the list, filled by elaboration *)
     | ESeq of exp list * span
     | ELet of dec list * exp * span
     | EApp of exp * exp * span
@@ -55,8 +56,8 @@ struct
     | EIf of exp * exp * exp * span
     | EWhile of exp * exp * span
     | ECase of exp * mrule list * span
-    | EFn of mrule list * span
-    | EPrim of string * ty * span               (* _prim "name" : ty *)
+    | EFn of mrule list * Types.ty option ref * span   (* the type of the function, filled by elaboration *)
+    | EPrim of string * ty * Types.ty option ref * span   (* _prim "name" : ty, and ty elaborated *)
 
   and pat =
       PWild of span
@@ -138,11 +139,11 @@ struct
   fun spanOfExp e =
     case e of
       EScon (_, _, s) => s | EVar (_, _, s) => s | ERecord (_, s) => s | ETuple (_, s) => s
-    | ESelect (_, _, s) => s | EList (_, s) => s | ESeq (_, s) => s | ELet (_, _, s) => s
+    | ESelect (_, _, s) => s | EList (_, _, s) => s | ESeq (_, s) => s | ELet (_, _, s) => s
     | EApp (_, _, s) => s | ETyped (_, _, s) => s | EAndalso (_, _, s) => s
     | EOrelse (_, _, s) => s | EHandle (_, _, s) => s | ERaise (_, s) => s
     | EIf (_, _, _, s) => s | EWhile (_, _, s) => s | ECase (_, _, s) => s
-    | EFn (_, s) => s | EPrim (_, _, s) => s
+    | EFn (_, _, s) => s | EPrim (_, _, _, s) => s
 
   fun spanOfPat p =
     case p of
@@ -194,7 +195,7 @@ struct
     | ERecord (fs, sp) => ERecord (List.map (fn (l, e) => (l, copyExp e)) fs, sp)
     | ETuple (es, sp) => ETuple (List.map copyExp es, sp)
     | ESelect (l, _, sp) => ESelect (l, ref NONE, sp)
-    | EList (es, sp) => EList (List.map copyExp es, sp)
+    | EList (es, _, sp) => EList (List.map copyExp es, ref NONE, sp)
     | ESeq (es, sp) => ESeq (List.map copyExp es, sp)
     | ELet (ds, e, sp) => ELet (List.map copyDec ds, copyExp e, sp)
     | EApp (f, a, sp) => EApp (copyExp f, copyExp a, sp)
@@ -206,8 +207,8 @@ struct
     | EIf (a, b, c, sp) => EIf (copyExp a, copyExp b, copyExp c, sp)
     | EWhile (a, b, sp) => EWhile (copyExp a, copyExp b, sp)
     | ECase (e, rules, sp) => ECase (copyExp e, copyRules rules, sp)
-    | EFn (rules, sp) => EFn (copyRules rules, sp)
-    | EPrim _ => e
+    | EFn (rules, _, sp) => EFn (copyRules rules, ref NONE, sp)
+    | EPrim (name, t, _, sp) => EPrim (name, t, ref NONE, sp)
 
   and copyRules rules = List.map (fn (p, e) => (copyPat p, copyExp e)) rules
 
@@ -276,7 +277,7 @@ struct
     | ERecord (fields, _) => "{" ^ String.concatWith ", " (List.map (fn (l, e) => l ^ " = " ^ expToString e) fields) ^ "}"
     | ETuple (es, _) => "(" ^ String.concatWith ", " (List.map expToString es) ^ ")"
     | ESelect (l, _, _) => "#" ^ l
-    | EList (es, _) => "[" ^ String.concatWith ", " (List.map expToString es) ^ "]"
+    | EList (es, _, _) => "[" ^ String.concatWith ", " (List.map expToString es) ^ "]"
     | ESeq (es, _) => "(" ^ String.concatWith "; " (List.map expToString es) ^ ")"
     | ELet (ds, e, _) => "let " ^ String.concatWith " " (List.map decToString ds) ^ " in " ^ expToString e ^ " end"
     | EApp (f, a, _) => "(" ^ expToString f ^ " " ^ expToString a ^ ")"
@@ -288,8 +289,8 @@ struct
     | EIf (a, b, c, _) => "(if " ^ expToString a ^ " then " ^ expToString b ^ " else " ^ expToString c ^ ")"
     | EWhile (a, b, _) => "(while " ^ expToString a ^ " do " ^ expToString b ^ ")"
     | ECase (e, m, _) => "(case " ^ expToString e ^ " of " ^ matchToString m ^ ")"
-    | EFn (m, _) => "(fn " ^ matchToString m ^ ")"
-    | EPrim (n, t, _) => "(_prim \"" ^ n ^ "\" : " ^ tyToString t ^ ")"
+    | EFn (m, _, _) => "(fn " ^ matchToString m ^ ")"
+    | EPrim (n, t, _, _) => "(_prim \"" ^ n ^ "\" : " ^ tyToString t ^ ")"
 
   and matchToString rules =
     String.concatWith " | " (List.map (fn (p, e) => patToString p ^ " => " ^ expToString e) rules)

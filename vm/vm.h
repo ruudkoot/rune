@@ -39,7 +39,7 @@ typedef struct Value {
 
 enum ObjKind {
     K_TUPLE = 1,  /* len fields; also vectors */
-    K_CON,        /* contag; 1 field */
+    K_CON,        /* contag; 1 field, the argument -- or the n fields of an argument that is a tuple of n (CONN) */
     K_CLOSURE,    /* field 0 = T_INT function index; fields 1.. = environment */
     K_STRING,     /* len bytes */
     K_REF,        /* 1 field */
@@ -74,18 +74,35 @@ static inline Value mk_bool(int b) { return mk_con0(b ? 1 : 0); }
 typedef struct Function {
     uint32_t code_offset;
     uint32_t code_end;
+    uint32_t maxstack;   /* how deep its operand stack goes: the loader works it out (vm/isa_stack.c) */
     uint32_t nlocals;
     char *name;
 } Function;
 
 /* Where an instruction came from: the file, line and column the compiler
-   recorded for the instructions from `pc` up to the next entry's. */
+   recorded for the instructions from `pc` up to the next entry's, and the
+   functions inlined on the way there (inl, a number of Program.inlines;
+   0: none). */
 typedef struct LineEntry {
     uint32_t pc;
     uint32_t file;
     uint32_t line;
     uint32_t col;
+    uint32_t inl;
 } LineEntry;
+
+/* A function whose code was inlined into another's: its name, where it was
+   called from -- line 0 where it was called in tail position, taking the
+   place of the function it was called from, as a tail call's frame does --
+   and the inlined function that call is in itself (parent, a number below
+   this one's; 0: none). Numbered from 1. */
+typedef struct Inlined {
+    char *name;
+    uint32_t file;
+    uint32_t line;
+    uint32_t col;
+    uint32_t parent;
+} Inlined;
 
 typedef struct Program {
     uint32_t nconsts;
@@ -101,6 +118,8 @@ typedef struct Program {
     char **files;
     uint32_t nlines;
     LineEntry *lines;
+    uint32_t ninlines;
+    Inlined *inlines;
 } Program;
 
 /* ---------------------------------------------------------------- machine */
@@ -146,6 +165,8 @@ typedef struct VM {
     size_t heap_size;        /* size of one semispace */
     size_t heap_used;
     size_t gc_count;
+    size_t live_last;        /* bytes the last collection kept, and the one before it: */
+    size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
     int64_t gc_sys_us;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
@@ -160,6 +181,7 @@ typedef struct VM {
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
+    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
 
     int argc;
@@ -213,6 +235,12 @@ static inline Value *vm_top(VM *vm, size_t depth) {    /* pointer to stack[sp-1-
     if (vm->sp <= depth) vm_fatal(vm, "stack underflow");
     return &vm->stack[vm->sp - 1 - depth];
 }
+/* The object v points to, which must be of that kind; the instructions stop
+   the program with "expected <what>" where it is not. */
+static inline Obj *vm_expect_obj(VM *vm, Value v, int kind, const char *what) {
+    if (v.tag != T_PTR || v.u.p->kind != kind) vm_fatal(vm, "expected %s", what);
+    return v.u.p;
+}
 static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
     size_t idx = vm->frames_active ? vm->fp + 1 : 0;
     if (idx >= vm->frames_cap) vm_grow_frames(vm);
@@ -257,7 +285,22 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
 /* Where every instruction begins, or NULL: a program from a .rbc or from an
    image is checked the same way. The caller frees it. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen);
+
+/* What each VM's instruction set gives (vm/isa_stack.c, vm/new/isa_regs.c):
+   the fingerprint an .rbc must carry, and the first bytes of an image. */
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 5 isa 00000000")
+extern const uint32_t isa_fingerprint;
+extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);
+
+/* The frames a trace shows for a VM frame of the function `name` stopped at
+   the line entry e: the functions inlined there and its own, innermost
+   first, at most max of them in out; how many. */
+typedef struct TraceFrame {
+    const char *name;
+    uint32_t file, line, col;
+} TraceFrame;
+uint32_t trace_frames(const Program *p, const LineEntry *e, const char *name, TraceFrame *out, uint32_t max);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

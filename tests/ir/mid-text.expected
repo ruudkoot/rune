@@ -1,0 +1,13 @@
+(* after mid *)
+(val g1 : string
+  (return "a\"b\\c\^\d\127e\n"))
+(val g2 : char
+  (return #"\^\"))
+(val g3 : int
+  (return ~5))
+(val g4 : word
+  (return 0w7))
+(val g5 : real
+  (return 1.5E~3))
+(val g6 : {int}
+  (return (tuple 1)))

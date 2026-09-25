@@ -27,6 +27,7 @@ BEGIN {
   for (i = 0; i < 256; i++) ord[sprintf("%c", i)] = i
   n = 0
   while ((getline l < opdefs) > 0) {
+    if (l ~ /^# rbc header /) { header = l; sub(/^# rbc header /, "", header); continue }
     if (l ~ /^#/ || l ~ /^[ \t]*$/) continue
     split(l, f, /[ \t]+/)
     opnum[f[1]] = n++
@@ -76,10 +77,10 @@ END {
       code = code le(v, 4)
     }
   }
-  out = "RUNE" le(2, 4) le(nconsts, 4)
+  out = header le(nconsts, 4)
   for (k = 0; k < nconsts; k++) out = out consts[k]
   out = out le(nglobals, 4) le(nfuncs, 4)
   for (k = 0; k < nfuncs; k++) out = out le(foffset[k], 4) le(flocals[k], 4) le(length(fname[k]), 4) str(fname[k])
-  out = out le(pc, 4) code le(0, 4) le(0, 4) le(0, 4)
+  out = out le(pc, 4) code le(0, 4) le(0, 4) le(0, 4) le(0, 4) le(0, 4) le(0, 4)
   printf "%s", out
 }

@@ -100,7 +100,7 @@ struct
       ^ Int.toString (Vector.length instrs) ^ " instructions, "
       ^ Int.toString (count (fn h => h < 0) (#height f)) ^ " unreachable, highest stack "
       ^ Int.toString (Vector.foldl Int.max 0 (#maxHeight f)) ^ ", resume points "
-      ^ Int.toString (sites Opcodes.CALL) ^ " after a CALL, "
+      ^ Int.toString (sites Opcodes.CALL + sites Opcodes.CALLK) ^ " after a call, "
       ^ Int.toString (sites Opcodes.PRIM) ^ " after a PRIM, "
       ^ Int.toString (sites Opcodes.PUSHHANDLER) ^ " handlers"
     end
@@ -178,7 +178,7 @@ struct
     | (Lines, [path]) =>
         let val p = load path
         in
-          Vector.app (fn {pc, file, line, col} =>
+          Vector.app (fn {pc, file, line, col, ...} =>
                         println (Int.toString pc ^ " " ^ Vector.sub (#files p, file) ^ ":" ^ Int.toString line
                                  ^ ":" ^ Int.toString col))
                      (#lines p);

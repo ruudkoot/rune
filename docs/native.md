@@ -37,7 +37,7 @@ may sit in registers between the points where it must be exact:
 
 * the count is added once for each straight run of instructions (see
   *Counting*);
-* 56 primitives are done inline, with the C primitive as the slow path (see
+* 59 primitives are done inline, with the C primitive as the slow path (see
   *Primitives done inline*);
 * the value a LOCAL pushes may stay in its local, for the instruction after
   it to read there (see *A pushed local read in place*).
@@ -48,17 +48,21 @@ where any file its loader accepts can run. It checks:
 
 * on every path into an instruction, the stack height and the handler depth
   agree: at a jump target, at a handler (its height and the exception), and
-  after a CALL;
+  after a call;
 * no path underflows, jumps out of its function, or runs off the end of it;
 * no TAILCALL or RET happens with a handler of its own function installed;
 * every operand fits 31 bits, so that the 32-bit SML/NJ build of `runeopt`
-  reads what the others read.
+  reads what the others read;
+* every function is given one number of arguments: every known call of it
+  (CALLK, TAILCALLK) passes as many, and a function made a closure, and the
+  top level, one; its entry sets the rest of its locals to unit.
 
 Since the height before every instruction is known, a slot is an address in
 the frame, and the room a function needs (its locals and its highest stack)
 is checked once at its entry, where `vm_push` checks at every push. A jump
-backwards within a function is allowed; the compiler emits none today, and
-counting would handle one, since a jump target starts a run.
+backwards within a function is allowed -- the compiler makes one of a self
+tail call (a loop, middle-end M8) -- and counting handles it, since a jump
+target starts a run.
 
 ## Registers and the machine stack
 
@@ -85,11 +89,29 @@ address the frame returns to, is never written into an image.
   in range, pushes the frame itself when the array of frames has room, moves
   the argument into the closure's slot (the callee's local 0), sets `rbp` to
   the new base and jumps to the callee's entry for calls.
-* **A function's entry for calls** (the second column of `rune_functions`)
-  checks the room the frame needs against `stack_cap`, calling
-  `vm_grow_stack` if it must, and sets locals 1 to n-1 to unit, a store each.
+* **A function's entry for calls** is its symbol (and the second column of
+  `rune_functions`; the first is the glue's entry, a stub that takes `rbp`
+  from the frame and jumps there). It checks the room the frame needs
+  against `stack_cap`, calling `vm_grow_stack` if it must, and sets the
+  locals after its arguments to unit, a store each.
 * **TAILCALL** makes the same checks, keeps the frame (its `func` and
   `closure` change), moves the argument into local 0 and jumps.
+* **CALLK f, n** (a known call, middle-end M8) checks nothing: it pushes the
+  frame, with no closure and its base at the first of the `n` arguments,
+  which are already the callee's first locals, and jumps straight to `f`'s
+  entry for calls. **TAILCALLK** keeps the frame, moves the arguments down
+  to its first locals and jumps there too. A full array of frames is
+  `native_callk`'s.
+* **DECON** and **FIELD** test the constructor's tag only under
+  `--checked`, out of line; FIELD tests its index against the object's
+  length always, as SELECT does. **CONN** allocates in line, as TUPLE
+  does, with the tag in the header.
+* **`imm_eq`** is inlined with no call and no tests of its operands' kinds:
+  the compiler gives it only values that are never in the heap.
+* **SWITCH** finds the tag as CONTAG does and jumps through a table of
+  the native addresses of its `JUMP`s' targets, which are never run
+  themselves (the checker finds them unreachable); a tag past the table
+  goes on after it.
 * **RET** puts the result in local 0, pops the frame and jumps through
   `native_ret`. The code there reloads `r13` and `rbp` from the frame.
 * **The slow paths** are `vm/native.c`'s `native_call`, `native_tailcall`
@@ -140,7 +162,7 @@ over their argument, are not in the list.
 
 ## Primitives done inline
 
-`fastPrim` in `x64.sml` (`runeopt --inlined`) does the common case of 56
+`fastPrim` in `x64.sml` (`runeopt --inlined`) does the common case of 59
 primitives:
 
 * the arithmetic and comparisons of ints, words, reals and chars, and the
@@ -163,7 +185,7 @@ program stops using one of them.
 ## Counting
 
 The count lives in `r15`. A run of instructions ends after a CALL, TAILCALL,
-PRIM, RAISE, RET, JUMP, a conditional jump or HALT, and before a jump
+CALLK, TAILCALLK, PRIM, RAISE, RET, JUMP, a conditional jump or HALT, and before a jump
 target or a handler; each run adds its length where it begins. That is
 exact: the interpreter counts an instruction before running it, and control
 leaves a run early only at a PRIM or a RAISE, which end runs.
@@ -213,7 +235,8 @@ handlers and pc are in bytecode terms. It resumes one, whoever wrote it, if
 the image's program is its own. That covers `RUNEVM_OPTIONS="--restore
 FILE"`, `Runtime.restore`, and the child of `--emulate-fork`.
 
-* **The places an image can stop at** are the instruction after a CALL and
+* **The places an image can stop at** are the instruction after a CALL or a
+  CALLK and
   the instruction after `rt_save` and `posix_fork`, whose code (a `.Lr`
   stub) reloads the frame first. Handlers are in `rune_handlers`.
 * **Restoring:** `same_program` compares the image's code, functions,
@@ -239,6 +262,10 @@ perf name SML functions.
 
 Its limits:
 
+* **A function's first row** is at its symbol, which is its entry for
+  calls, where every call enters: a breakpoint on the line is reached
+  however the function is called. The glue enters at a stub that takes the
+  frame's base first and jumps there.
 * **Entries without code.** An entry that covers only instructions that
   emit no code (a POP) has no row, since two `.loc` at one address leave
   one. A LOCAL left in its local is not left so before an instruction with
@@ -257,8 +284,9 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--emulate-fork`, `--restore`) come from
-  `runeopt --options` and then the environment variable `RUNEVM_OPTIONS`.
+  `--heap-fill`, `--gc-stress`, `--checked`, `--emulate-fork`, `--restore`)
+  come from `runeopt --options` and then the environment variable
+  `RUNEVM_OPTIONS`.
 * **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives. The suites'
   wrapper sets it to the `.rbc`.
 * **Both variables** are taken out of the environment, so the program and
@@ -296,17 +324,20 @@ Its limits:
 
 `AGENTS.md` has the short form of these rules.
 
-* **An opcode** has its case in `vm/interp.c`, its template, its stack
-  effect in `RbcCheck`, a helper in `vm/native.c` if it calls into C, its
-  prose in [bytecode.md](bytecode.md), and a use in `every-opcode.rasm`. One
-  that jumps also has its target checked in `vm/loader.c` and
-  `src/opt/rbc.sml`.
+* **An opcode** has its description in `src/isa/stack.sml` -- its operands,
+  stack effect, flow and body, from which `runeisa` writes the interpreter's
+  case, the loader's and `Rbc`'s checks and `RbcCheck`'s effects -- its
+  template, which MLton's build refuses to go without, a helper in
+  `vm/native.c` if it calls into C (for a shared body, `op_<NAME>` of the
+  generated `vm/ops.h`), its prose in [bytecode.md](bytecode.md), and a use
+  in `every-opcode.rasm`.
 * **A field of the VM** that the code touches is named in
   `vm/native_offsets.c`, never written as a number.
 * **A primitive done inline** changes with its C code, and `prims.sml` has
   its edge cases.
-* **Frames:** the templates of CALL, TAILCALL, RET and the entry for calls
-  do what `vm_push_frame`, `native_call` and `native_ret` do. A change to
+* **Frames:** the templates of CALL, TAILCALL, CALLK, TAILCALLK, RET and
+  the entry for calls do what `vm_push_frame`, `native_call`,
+  `native_callk` and `native_ret` do. A change to
   `Frame` or to how a frame is pushed changes them too.
 * **Allocation:** five templates copy the fast path of `vm_alloc`: when it
   collects, `--gc-stress`, the size, the header, the counts. A change to the

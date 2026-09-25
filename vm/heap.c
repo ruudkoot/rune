@@ -21,6 +21,8 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->heap_used = 0;
     vm->heap_fill = 50;
     vm->gc_count = 0;
+    vm->live_last = 0;
+    vm->live_before = 0;
     vm->gc_user_us = 0;
     vm->gc_sys_us = 0;
     vm->bytes_allocated = 0;
@@ -140,22 +142,43 @@ static size_t fill_of(const VM *vm, size_t n) {
     return n / 100 * vm->heap_fill + n % 100 * vm->heap_fill / 100;
 }
 
+/* The size, doubled from size as often as it must be, at which a heap that
+   holds used bytes and must take needed more is at most heap_fill% full,
+   half unless --heap-fill says otherwise, to avoid thrashing; written so
+   that nothing wraps where a size_t is 32 bits. */
+static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
+    size_t want = size;
+    while (used > fill_of(vm, want) || needed > fill_of(vm, want) - used) {
+        if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
+        want *= 2;
+    }
+    return want;
+}
+
 void vm_gc(VM *vm, size_t needed) {
     /* The processor time of a collection, for Timer.checkCPUTimes and
        checkGCTime: read once around the whole of it, so that growing the
        heap counts as one collection and not two. */
     int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
-    /* live data always fits in a semispace of the current size */
-    collect_into(vm, vm->heap_size);
-    /* keep the heap at most heap_fill% full after collection, half unless
-       --heap-fill says otherwise, to avoid thrashing; written so that nothing
-       wraps where a size_t is 32 bits */
-    size_t want = vm->heap_size;
-    while (vm->heap_used > fill_of(vm, want) || needed > fill_of(vm, want) - vm->heap_used) {
-        if (want > SIZE_MAX / 2) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
-        want *= 2;
+    /* Where the heap must grow, collecting into a space of the same size
+       and then again into a larger one made the largest collections of a
+       run. So guess first whether it must: the survivors grow about as
+       they grew between the last two collections. A guess too high grows
+       the heap one collection early; one too low collects again below, as
+       before. A space of the current size or larger always holds what
+       survives. */
+    size_t guess = vm->live_last;
+    if (vm->live_last > vm->live_before) {
+        guess += vm->live_last - vm->live_before;
+        /* no more than can survive: it would wrap, or grow the heap more
+           than once on a guess */
+        if (guess < vm->live_last || guess > vm->heap_size) guess = vm->heap_size;
     }
+    collect_into(vm, grown(vm, vm->heap_size, guess, needed));
+    size_t want = grown(vm, vm->heap_size, vm->heap_used, needed);
     if (want != vm->heap_size) collect_into(vm, want);
+    vm->live_before = vm->live_last;
+    vm->live_last = vm->heap_used;
     vm->gc_user_us += sys_time_user() - user0;
     vm->gc_sys_us += sys_time_sys() - sys0;
 }

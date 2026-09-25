@@ -1,0 +1,25 @@
+trace tests/lang/rt.trace_inlined.sml:9
+leaf tests/lang/rt.trace_inlined.sml:11
+twice tests/lang/rt.trace_inlined.sml:15
+<toplevel> tests/lang/rt.trace_inlined.sml:16
+--
+trace tests/lang/rt.trace_inlined.sml:9
+leaf tests/lang/rt.trace_inlined.sml:11
+notTail tests/lang/rt.trace_inlined.sml:13
+<toplevel> tests/lang/rt.trace_inlined.sml:16
+--
+trace tests/lang/rt.trace_inlined.sml:9
+leaf tests/lang/rt.trace_inlined.sml:11
+inRegion tests/lang/rt.trace_inlined.sml:14
+<toplevel> tests/lang/rt.trace_inlined.sml:17
+--
+trace tests/lang/rt.trace_inlined.sml:9
+leaf tests/lang/rt.trace_inlined.sml:11
+outer tests/lang/rt.trace_inlined.sml:20
+<toplevel> tests/lang/rt.trace_inlined.sml:21
+--
+trace tests/lang/rt.trace_inlined.sml:9
+go tests/lang/rt.trace_inlined.sml:25
+once tests/lang/rt.trace_inlined.sml:26
+<toplevel> tests/lang/rt.trace_inlined.sml:27
+--

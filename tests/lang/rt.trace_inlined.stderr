@@ -1,0 +1,4 @@
+runevm: uncaught exception Overflow
+  in add at tests/lang/rt.trace_inlined.sml:29:18
+  in scale at tests/lang/rt.trace_inlined.sml:30:19
+  in <toplevel> at tests/lang/rt.trace_inlined.sml:31:38
