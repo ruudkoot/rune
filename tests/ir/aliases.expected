@@ -1,0 +1,10 @@
+(* after shake *)
+(funs
+  (fn g1 ['a] ((v1 : 'a)) : 'a list
+    (let (v2 : 'a) v1
+    (let (v3 : 'a * 'a list) (tuple v2 (con0 0 : 'a list))
+    (return (con 1 v3 : 'a list))))))
+(val g2 : int list
+  (return (app g1[int] 2)))
+(val g3 : string list
+  (return (app g1[string] "two")))

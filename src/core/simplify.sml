@@ -454,7 +454,24 @@ struct
      position a call is at is here. *)
   val inlineSize = 12
   val knownConSize = 16
+  (* Whether e always raises: a call of a function that does is on the way
+     to an error, where what the call costs does not matter, so it is not
+     inlined. *)
+  fun raises (e : exp) : bool =
+    case e of
+      Let (_, _, _, b) => raises b
+    | Fun (_, b) => raises b
+    | Join (_, _, body, s) => raises body andalso raises s
+    | If (_, t, f) => raises t andalso raises f
+    | Handle (a, _, h) => raises a andalso raises h
+    | Raise _ => true
+    | Mark (_, a) => raises a
+    | _ => false
+
   val inlinable : fundef IntMap.map ref = ref IntMap.empty
+  (* whether inlining is on, for the local functions registered as they are
+     met (keepFun) *)
+  val inlining = ref false
   val once : fundef IntMap.map ref = ref IntMap.empty
   val budget = ref 0
   val here : pos ref = ref (Source.noSpan, [])
@@ -670,6 +687,14 @@ struct
              end)
     | _ => r
 
+  (* The function a call calls, where it may be put in the call's place: one
+     of the top level, or a local one registered as small (keepFun). *)
+  fun calleeOf (f : atom) : (var * Ty.ty list) option =
+    case f of
+      Global (g, ts) => SOME (g, ts)
+    | Var (g, ts) => if IntMap.member (!inlinable, g) then SOME (g, ts) else NONE
+    | _ => NONE
+
   (* A round: e simplified in env, with the census taken before. *)
   fun simp (c : census, env : env, e : exp) : exp =
     case e of
@@ -677,19 +702,24 @@ struct
         let val r = specialised (known (env, substRhs (env, r)))
         in
           case (r, tvs) of
-            (App (Global (g, ts), args), []) =>
-              (* a call of a small function: its body, whose results go to a
-                 join point for what follows, which is where the call was *)
-              let
-                val j = freshStamp ()
-                val site = !here
-                fun give (Atom a) = Jump (j, [a])
-                  | give r = let val v = freshStamp () in Let (v, ([], t), r, Jump (j, [Var (v, [])])) end
-              in
-                case inlined (g, ts, args, SOME give) of
-                  SOME b => (uncount (c, args); censusInto (c, b); simp (c, env, Join (j, [(x, t)], Mark (site, body), b)))
-                | NONE => letStep (c, env, x, s, r, body)
-              end
+            (App (f, args), []) =>
+              (case calleeOf f of
+                 SOME (g, ts) =>
+                   (* a call of a small function: its body, whose results go
+                      to a join point for what follows, which is where the
+                      call was *)
+                   let
+                     val j = freshStamp ()
+                     val site = !here
+                     fun give (Atom a) = Jump (j, [a])
+                       | give r = let val v = freshStamp () in Let (v, ([], t), r, Jump (j, [Var (v, [])])) end
+                   in
+                     case inlined (g, ts, args, SOME give) of
+                       SOME b => (uncount (c, f :: args); censusInto (c, b);
+                                  simp (c, env, Join (j, [(x, t)], Mark (site, body), b)))
+                     | NONE => letStep (c, env, x, s, r, body)
+                   end
+               | NONE => letStep (c, env, x, s, r, body))
           | _ => letStep (c, env, x, s, r, body)
         end
     | Fun (fs, body) =>
@@ -733,9 +763,12 @@ struct
     | Raise a => Raise (substAtom (env, a))
     | Return r =>
         (case specialised (known (env, substRhs (env, r))) of
-           r as App (Global (g, ts), args) =>
-             (case inlined (g, ts, args, NONE) of
-                SOME b => simp (census b, env, b)
+           r as App (f, args) =>
+             (case calleeOf f of
+                SOME (g, ts) =>
+                  (case inlined (g, ts, args, NONE) of
+                     SOME b => simp (census b, env, b)
+                   | NONE => Return r)
               | NONE => Return r)
          | r => Return r)
     | Mark (sp, a) =>
@@ -775,10 +808,19 @@ struct
       fun inside b =
         let val saved = !inHandler
         in inHandler := 0; let val b = simp (c, env, b) in inHandler := saved; b end end
+      val fs =
+        List.map (fn {name, tyvars, params, result, body = b} =>
+                    {name = name, tyvars = tyvars, params = params, result = result, body = inside b}) fs
+      (* a small one may be put where it is called in what follows, as a
+         function of the top level may: what it names is in scope there too
+         (M12) *)
+      val () =
+        if !inlining then
+          List.app (fn f => if size (#body f) <= inlineSize andalso not (usesItself f) andalso not (raises (#body f))
+                            then inlinable := IntMap.insert (!inlinable, #name f, f) else ()) fs
+        else ()
     in
-      Fun (List.map (fn {name, tyvars, params, result, body = b} =>
-                       {name = name, tyvars = tyvars, params = params, result = result, body = inside b}) fs,
-           simp (c, env, body))
+      Fun (fs, simp (c, env, body))
     end
 
   (* The one function of fs, where it abstracts over no type variables and
@@ -1078,20 +1120,6 @@ struct
         | Mark (_, a) => go a
     in go e end
 
-  (* Whether e always raises: a call of a function that does is on the way
-     to an error, where what the call costs does not matter, so it is not
-     inlined. *)
-  fun raises (e : exp) : bool =
-    case e of
-      Let (_, _, _, b) => raises b
-    | Fun (_, b) => raises b
-    | Join (_, _, body, s) => raises body andalso raises s
-    | If (_, t, f) => raises t andalso raises f
-    | Handle (a, _, h) => raises a andalso raises h
-    | Raise _ => true
-    | Mark (_, a) => raises a
-    | _ => false
-
   (* How many times each global is named in p, and how many of those are
      calls of it. *)
   fun globalUses (p : program) : (int * int) IntTable.table =
@@ -1137,6 +1165,7 @@ struct
     let
       (* inlining is an optional pass of its own name, which runs here *)
       val inline = Pass.enabled ("inline", 1)
+      val () = inlining := inline
       val uses = globalUses p
       fun calledOnce g = IntTable.find (uses, g) = SOME (1, 1)
       val () =

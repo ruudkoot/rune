@@ -29,10 +29,14 @@ What it rests on:
 | M9 | Decision trees and `SWITCH` | done |
 | M10 | The inliner, contification and inline frames | done |
 | M11 | Representation | done |
-| M12 | Whole-program analyses | |
+| M12 | Whole-program analyses | done |
 
 The order follows the owner's decisions of 2026-09-24 (*Decisions*): M5
 comes right after M4 (D5). The owner decides what starts first.
+
+Every milestone was done by 2026-09-25, each measured where it says
+*Done*. Retiring the roadmap -- what of it moves to `docs/` and where its
+*Ready for, not built* goes -- is the owner's call.
 
 ## The request
 
@@ -764,6 +768,9 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 * The shipped compiler is built with `-O2`, since it runs on `runevm`.
   `make check` runs the default, with `-O0` and `-O2` in the differential
   tests.
+* **As built (M12):** no analysis needed a level of its own, so `-O2` runs
+  the passes of `-O1`, and `bin/rune.rbc`, built at the default, is what
+  `-O2` would make.
 
 ### D9. The calling convention
 
@@ -1349,6 +1356,44 @@ estimated.
 * **Where it runs:** at `-O2` only, the whole-program mode.
 * **Gain:** measured then. MLton, which does all of this, is 8 times faster
   than Rune's native code on the bootstrap.
+* **Done:** each analysis was built first as a count on the compiler's own
+  code, and kept where the count and then the measure said it pays.
+  * **Aliases of globals** (in `shake`; docs/ir.md): `structure List`
+    re-exports the prelude's functions as `val foldl = foldl`, which made
+    `List.foldl` a global bound to a closure -- unknown to the workers,
+    known calls, inlining and specialisation, so every call of it built a
+    closure per curried argument. A global bound to another is now the
+    other at every use, at the types the use gives it. This was the
+    largest part of what 0CFA found: before it, 1,652 of the compiler's
+    1,815 unknown calls had exactly one possible target, a local function,
+    1,001 of them the closures of `foldl`, `map` and `app`.
+  * **Small local functions inlined** where they are called, as those of
+    the top level are: 0.15% fewer instructions on the compiler.
+  * **Control-flow analysis: measured, not built.** A 0CFA over Mid
+    (flow-insensitive, a function stored in the heap or given to a
+    primitive escaping) finds, after the two above, that of the
+    compiler's unknown calls 1 has one possible target of the top level,
+    about 530 one local function -- a closure the call already has in
+    hand, where a known call would save a load and a test -- 43 two to
+    four (defunctionalisation's), 24 more, and 92 anything. Neither
+    known calls of closures nor defunctionalisation pays for an
+    instruction and the analysis at that count.
+  * **Useless parameters: measured, not built.** 85 parameters of 71
+    functions of the top level that are only called are never named;
+    dropping them and their arguments made the compiler no faster.
+  * **eval/apply** (D9 B): **not built.** After the aliases, 2 of the
+    compiler's 816 unknown calls call what a call returned; the curried
+    calls are the workers' now.
+  * **Monomorphisation:** not built, since `vm/new` does not unbox.
+  * **Where it runs:** what paid is cheap, so it runs from `-O1`; `-O2`
+    is `-O1` until an analysis needs a level of its own (D8).
+  * **Measured** against M11: list_ops 14.5% fewer instructions and 29.9%
+    fewer objects, string_ops 5.5% fewer instructions, the others about
+    the same. The compiler, compiling the same sources with no optional
+    pass: 2.4% fewer instructions, 6.0% fewer cycles, 10.4% fewer
+    objects; as native code, 8.6% fewer cycles. The bootstrap: 1.2% more
+    instructions, for the inlining the aliases open up, and 1.8% fewer
+    cycles. `bin/rune.rbc` is 4.6% larger.
 
 ### Why this order
 

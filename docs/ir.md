@@ -242,7 +242,12 @@ does.
   not removable, a raise, a global set); every global a root uses is
   reached, and every one their definitions use. The rest goes, a function
   of a group alone. The whole pass is one rewrite for `--fuel`, since a
-  definition kept of those that go would use one that went.
+  definition kept of those that go would use one that went. Before it, a
+  global bound to another -- `val foldl = foldl` in `structure List` -- is
+  the other at every use, at the types the use gives it (M12), so that
+  the passes that know a function of the top level know it through the
+  alias: `List.foldl f b l` is then a call of the worker, which
+  `specialise` copies for `f`.
 * **`lift`** (lambda lifting): a group of local functions none of which
   escapes -- each is only ever called, by name -- becomes a group of the
   top level. What the group captured it is given instead, as parameters
@@ -305,7 +310,9 @@ does.
   -- and the place of the call elsewhere, where the calls in tail position
   of the body are then marked as made from that place, since their frames
   would have taken the place of the function's. Bodies are taken as they
-  are once simplified, where the definition came first.
+  are once simplified, where the definition came first. A local function
+  small enough is put where it is called too, in the scope of its `Fun`,
+  where what it names is in scope (M12).
 * **`specialise`** (in `simplify`, M10): a function of the top level of no
   more than 64 nodes that calls itself, each time passing some parameters
   of function type on unchanged, is copied for a call that gives those
