@@ -419,3 +419,28 @@ CASE(TAILCALLK) {
     ENTER(slot, fn);
     NEXT;
 }
+CASE(CONN) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_CONN, a, b);
+    pc += 9;
+    count++;
+    SYNC();
+    op_CONN(vm, a, b);
+    RELOAD();
+    NEXT;
+}
+CASE(FIELD) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_FIELD, a, b);
+    pc += 9;
+    count++;
+    Value v = POP();
+    Obj *c = EXPECT(v, K_CON, "constructor with fields");
+    /* the tag is not tested but --checked, as DECON's (decision D14) */
+    if (vm->checked && c->contag != a) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)c->contag, (int)a);
+    if ((uint32_t)b >= c->len) FATAL("constructor field %d out of range", b);
+    PUSH(OBJ_FIELDS(c)[b]);
+    NEXT;
+}

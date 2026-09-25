@@ -266,7 +266,20 @@ struct
         "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
         "else vm_fatal(vm, \"SWITCH on non-constructor\");",
         "if (tag >= 0 && tag < b) vm->pc = (uint32_t)read_i32(code + vm->pc + 5 * (uint32_t)tag + 1);",
-        "else vm->pc += 5 * (uint32_t)b;"]]
+        "else vm->pc += 5 * (uint32_t)b;"],
+     rinst ("CONN", [("d", reg), ("t", K Tag), ("n", K Count), ("fields", Registers 2)], Next,
+            "Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).")
+       ["Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, n);",
+        "Value *f = OBJ_FIELDS(o);",
+        "for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));",
+        "R(a) = mk_ptr(o);"],
+     rinst ("FIELD", [("d", reg), ("s", reg), ("t", K Tag), ("i", K Field)], Next,
+            "Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another.")
+       ["Value v = R(b);",
+        "Obj *o = vm_expect_obj(vm, v, K_CON, \"constructor with fields\");",
+        "if (vm->checked && o->contag != c) vm_fatal(vm, \"FIELD of a constructor of tag %d where %d is wanted\", (int)o->contag, (int)c);",
+        "if ((uint32_t)d >= o->len) vm_fatal(vm, \"constructor field %d out of range\", d);",
+        "R(a) = OBJ_FIELDS(o)[d];"]]
 
   (* ---- questions about the description ---- *)
 

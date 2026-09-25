@@ -10,7 +10,7 @@
     (let (v11 : int) (tag v10)
     (let (v12 : bool) (prim poly_eq v11 1 : (int * int) -> bool)
     (if v12
-      (let (v13 : int * int) (decon 1 v10)
+      (let (v13 : int * int) (decon 1 v10 : shape)
       (let (v14 : int) (select 0 v13)
       (let (v15 : int) (select 1 v13)
       (return (prim int_mul v14 v15 : (int * int) -> int)))))

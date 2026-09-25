@@ -50,7 +50,8 @@ struct
     | Tuple of atom list
     | Select of int * atom
     | Con of int * Ty.ty * atom           (* tag, the datatype made, the argument *)
-    | Decon of int * atom                 (* the argument of a value the constructor with the tag made *)
+    | Decon of int * Ty.ty * atom         (* the argument of a value of the datatype the constructor with
+                                             the tag made *)
     | ConTag of atom
     | NewExn of string
     | BuiltinExn of int

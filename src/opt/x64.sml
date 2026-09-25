@@ -42,7 +42,7 @@ struct
   val fatalTuple = 0 val fatalCon = 1 val fatalExn = 2 val fatalEnv = 3 val fatalSelf = 4
   val fatalGlobal = 5 val fatalSelect = 6 val fatalContag = 7 val fatalJumpIfNot = 8
   val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11 val fatalSwitch = 12
-  val fatalDecon = 13
+  val fatalDecon = 13 val fatalFields = 14 val fatalField = 15 val fatalFieldTag = 16
 
   val primNames : string vector = Vector.fromList (List.map #1 Prims.table)
   (* The description of each primitive (src/isa/prims.sml), by its number. *)
@@ -226,6 +226,15 @@ struct
              put (l ^ "_eq:\n"); line "mov $1, %eax"; line ("jmp " ^ l ^ "_b");
              put (l ^ "_ne:\n"); line "xor %eax, %eax";
              put (l ^ "_b:\n"); line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
+      | "imm_eq" =>
+          (* two values the compiler knows are never in the heap, nor unit:
+             their tags and bits, with no call *)
+          SOME (fn _ =>
+            (line ("movzbl " ^ slot x ^ ", %eax");
+             line ("cmpb %al, " ^ slot y); line "sete %cl";
+             line ("mov " ^ payload x ^ ", %rax"); line ("cmp " ^ payload y ^ ", %rax");
+             line "sete %al"; line "and %cl, %al"; line "movzbl %al, %eax";
+             line ("movb $T_CON0, " ^ slot x); line ("mov %rax, " ^ payload x)))
       | "ref_get" => SOME (fn slow => (obj (y, "K_REF") slow; line "movdqu OBJ_FIELDS(%rax), %xmm0"; line ("movdqu %xmm0, " ^ slot y)))
       | "ref_set" =>
           SOME (fn slow =>
@@ -642,6 +651,37 @@ struct
                                   line ("movl $" ^ num next ^ ", VM_PC(%r12)");
                                   line "mov %r12, %rdi";
                                   line ("mov $" ^ num fatalDecon ^ ", %esi");
+                                  line "call native_fatal";
+                                  line "ud2")) :: !slows
+                   end
+                 | Opcode.CONN =>
+                   inlineAlloc (fn slow =>
+                                  (alloc ("K_CON", a, b, slow);
+                                   List.app (fn k => copy (rslot (h - b + k), field k)) (List.tabulate (b, fn k => k));
+                                   putPtr (h - b)),
+                                fn () => callC ("native_conn", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx"]))
+                 | Opcode.FIELD =>
+                   (* the tag tested under --checked alone, as DECON's *)
+                   let val slow = lab pc ^ "_checked" val done = lab pc ^ "_done"
+                   in
+                     expectObj (h - 1, "K_CON", fatalFields);
+                     line ("cmpl $" ^ num b ^ ", OBJ_LEN(%rax)");
+                     line ("jbe " ^ check (pc, next, fatalField, b));
+                     line "cmpl $0, VM_CHECKED(%r12)";
+                     line ("jne " ^ slow);
+                     put (done ^ ":\n");
+                     copy ("OBJ_FIELDS+" ^ num (16 * b) ^ "(%rax)", slot (h - 1));
+                     slows := (fn () =>
+                                 (put (slow ^ ":\n");
+                                  line "movzwl OBJ_CONTAG(%rax), %ecx";
+                                  line ("cmp $" ^ num a ^ ", %ecx");
+                                  line ("je " ^ done);
+                                  line "shl $16, %ecx";
+                                  line ("or $" ^ num a ^ ", %ecx");
+                                  line "mov %ecx, %edx";
+                                  line ("movl $" ^ num next ^ ", VM_PC(%r12)");
+                                  line "mov %r12, %rdi";
+                                  line ("mov $" ^ num fatalFieldTag ^ ", %esi");
                                   line "call native_fatal";
                                   line "ud2")) :: !slows
                    end

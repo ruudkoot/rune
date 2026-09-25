@@ -100,7 +100,7 @@ heap size and so on `runevm --heap-size`.
 
 A value is 16 bytes and an object costs an 8-byte header and a payload
 rounded up to 16, so the smallest object is 24 bytes and a list cell,
-which is two objects, is 64.
+one object of two fields, is 40.
 
 | Field | Type | Description |
 | --- | --- | --- |

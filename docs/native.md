@@ -102,8 +102,12 @@ address the frame returns to, is never written into an image.
   entry for calls. **TAILCALLK** keeps the frame, moves the arguments down
   to its first locals and jumps there too. A full array of frames is
   `native_callk`'s.
-* **DECON** tests the constructor's tag only under `--checked`, out of
-  line.
+* **DECON** and **FIELD** test the constructor's tag only under
+  `--checked`, out of line; FIELD tests its index against the object's
+  length always, as SELECT does. **CONN** allocates in line, as TUPLE
+  does, with the tag in the header.
+* **`imm_eq`** is inlined with no call and no tests of its operands' kinds:
+  the compiler gives it only values that are never in the heap.
 * **SWITCH** finds the tag as CONTAG does and jumps through a table of
   the native addresses of its `JUMP`s' targets, which are never run
   themselves (the checker finds them unreachable); a tag past the table

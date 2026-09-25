@@ -257,7 +257,24 @@ struct
         "Value *slot = vm->stack + at;",
         "memmove(slot, vm->stack + from, (size_t)b * sizeof(Value));",
         "for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();",
-        "ENTER(slot, fn);"]]
+        "ENTER(slot, fn);"],
+     sharedBody
+       (inst ("CONN", [("t", Tag), ("n", Count)], (OperandValue 1, 1), Next,
+              "Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).")
+          ["if ((size_t)b > vm->sp) vm_fatal(vm, \"stack underflow\");",
+           "Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, (uint32_t)b);",
+           "Value *f = OBJ_FIELDS(c);",
+           "for (int32_t i = 0; i < b; i++) f[i] = vm->stack[vm->sp - (size_t)b + (size_t)i];",
+           "vm->sp -= (size_t)b;",
+           "vm_push(vm, mk_ptr(c));"]),
+     inst ("FIELD", [("t", Tag), ("i", Field)], (Fixed 1, 1), Next,
+           "Pop a constructor value that CONN made, of tag t, and push its field i; runevm --checked stops where the tag is another.")
+       ["Value v = POP();",
+        "Obj *c = EXPECT(v, K_CON, \"constructor with fields\");",
+        "/* the tag is not tested but --checked, as DECON's (decision D14) */",
+        "if (vm->checked && c->contag != a) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)c->contag, (int)a);",
+        "if ((uint32_t)b >= c->len) FATAL(\"constructor field %d out of range\", b);",
+        "PUSH(OBJ_FIELDS(c)[b]);"]]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

@@ -271,7 +271,10 @@ does.
   removable; a field of a tuple, the argument or tag of a constructor made
   in the same function, and an `If` on a known bool, are known; a primitive
   of int, word or char constants is folded at the target's precision
-  (`Target.t`'s `intBits`), unless it would raise; a join point nothing
+  (`Target.t`'s `intBits`), unless it would raise; `=` of a type whose
+  values are never in the heap -- int, word, char, and a datatype whose
+  constructors are all nullary -- is `imm_eq`, which compares tags and
+  bits (M11); a join point nothing
   jumps to goes, and one jumped to once is put where the jump is, unless
   the jump is in a handler's region the join point is not; a function
   nothing uses goes, and one called once, where it is made and not from a
@@ -324,6 +327,19 @@ leaves implicit is explicit.
   reads as `Self`; captured values are read with `Env i`. The functions of
   a group capture each other, and those not made yet are set after
   (`SetEnv`): flat closures.
+* **Constructors** (`Rep`, `src/backend/rep.sml`, M11): one whose declared
+  argument is a tuple of two or more is one object of those fields, its
+  tag in the header -- `Con` of the fields, and `Field (tag, i, v)` to take
+  field `i` -- and one of any other argument boxes it, `Con` of one and
+  `Decon`. The choice is the datatype's, the same at every type it is used
+  at, so every use of a constructor agrees; a list's `::` is of two fields,
+  as the C of the VM makes and walks it. Mid's `Decon` says the datatype it
+  takes apart, so that `Lower` can ask. What is made only to be taken apart
+  is not made: a tuple used once, by a constructor made of its fields or a
+  field taken of it, is its parts; the argument of such a constructor,
+  each of whose uses in its function takes a field, is its fields; and a
+  use that needs either whole makes it there -- the argument whole is then
+  a copy.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
   point's; an `If` two blocks; a match on a constructor's tag one `IfTag`,
   and three or more of the same value, each in the else of the one before,

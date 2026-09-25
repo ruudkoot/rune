@@ -32,8 +32,11 @@ struct
     | Prim of string * var list
     | Tuple of var list
     | Select of int * var
-    | Con of int * var
+    | Con of int * var list               (* a constructor by its tag, of its argument, or of the fields of
+                                             its argument where that is a tuple (Rep, M11) *)
     | Decon of int * var                  (* the argument of var, made by the constructor with the tag *)
+    | Field of int * int * var            (* field i of var, made by the constructor with the tag of the
+                                             fields of its argument (Rep) *)
     | ConTag of var
     | NewExn of string
     | BuiltinExn of int
@@ -91,8 +94,9 @@ struct
     | Prim (_, vs) => vs
     | Tuple vs => vs
     | Select (_, v) => [v]
-    | Con (_, v) => [v]
+    | Con (_, vs) => vs
     | Decon (_, v) => [v]
+    | Field (_, _, v) => [v]
     | ConTag v => [v]
     | MkExn (c, p) => [c, p]
     | ExnCon v => [v]
@@ -148,8 +152,9 @@ struct
         | Prim (p, xs) => "prim " ^ p ^ " " ^ vs xs
         | Tuple xs => "tuple " ^ vs xs
         | Select (i, x) => "select " ^ Int.toString i ^ " " ^ v x
-        | Con (t, x) => "con " ^ Int.toString t ^ " " ^ v x
+        | Con (t, xs) => "con " ^ Int.toString t ^ " " ^ vs xs
         | Decon (t, x) => "decon " ^ Int.toString t ^ " " ^ v x
+        | Field (t, i, x) => "field " ^ Int.toString t ^ " " ^ Int.toString i ^ " " ^ v x
         | ConTag x => "tag " ^ v x
         | NewExn n => "newexn " ^ n
         | BuiltinExn k => "builtinexn " ^ Int.toString k

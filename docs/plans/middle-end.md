@@ -28,7 +28,7 @@ What it rests on:
 | M8 | Known calls and the calling convention | done |
 | M9 | Decision trees and `SWITCH` | done |
 | M10 | The inliner, contification and inline frames | done |
-| M11 | Representation | |
+| M11 | Representation | done |
 | M12 | Whole-program analyses | |
 
 The order follows the owner's decisions of 2026-09-24 (*Decisions*): M5
@@ -1307,6 +1307,35 @@ estimated.
 * **Gain:** est. about 30% fewer objects, native 8 to 15%. Constructors
   with an argument are 16.5% of objects, and each points to a tuple, one of
   the 58.1%.
+* **Done:**
+  * **Representations from the datatypes** (`Rep`, `src/backend/rep.sml`;
+    docs/ir.md, Low): a constructor whose declared argument is a tuple of
+    two or more is one object of its fields, its tag in the header
+    (`CONN t n`, and `FIELD t i` to take a field, which tests the tag under
+    `--checked` as `DECON` does); any other boxes its argument as before.
+    The choice is the datatype's, the same at every type, and Mid's `Decon`
+    now says the datatype it takes apart. `Lower` makes nothing it would
+    only take apart: a tuple used once by such a constructor, or by a
+    field taken of it, is its parts, and such a constructor's argument
+    whose uses all take a field is its fields; a use that needs either
+    whole makes it there.
+  * **`=` by type:** where the simplifier knows the type's values are
+    never in the heap -- int, word, char, a datatype of nullary
+    constructors -- `poly_eq` is `imm_eq`, tags and bits, which runeopt
+    inlines without the tests of the general case. Lower's tag tests take
+    it as they took `poly_eq`.
+  * **The C that walks lists** already went through `list_head`,
+    `list_tail` and `vm_cons`, which now make and read a cell of two
+    fields: 40 bytes and one object, where it was 64 and two.
+  * **Measured** against M10 (`runevm --count`): intinf_fact 11.3% fewer
+    instructions and 49.4% fewer objects, list_ops 11.9% and 41.2%,
+    string_ops 8.6% and 43.4%, word_bits 43.5% fewer objects, array_sieve
+    39.9%. The compiler, compiling the same sources with no optional
+    pass: 1.7% fewer instructions, 5.8% fewer cycles, 36.6% fewer objects;
+    as native code (runeopt), 12.7% fewer cycles -- within the estimate.
+    The bootstrap: 4.4% fewer instructions and 11.3% fewer cycles, which
+    wins back most of what M10's inlining cost it. `bin/rune.rbc` is 1.6%
+    larger.
 
 ### M12. Whole-program analyses (XL)
 

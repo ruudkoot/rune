@@ -40,6 +40,7 @@ src/backend/code.sml
 src/backend/low.sml
 src/backend/target.sml
 src/backend/lowlint.sml
+src/backend/rep.sml
 src/backend/lower.sml
 src/backend/stack.sml
 src/backend/regcodes.sml

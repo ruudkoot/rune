@@ -230,6 +230,7 @@ const void *native_unusual(VM *vm, int r) {
    as the interpreter runs them (vm/ops.h). */
 void native_tuple(VM *vm, int32_t a) { op_TUPLE(vm, a, 0); }
 void native_con(VM *vm, int32_t a) { op_CON(vm, a, 0); }
+void native_conn(VM *vm, int32_t a, int32_t b) { op_CONN(vm, a, b); }
 void native_closure(VM *vm, int32_t a, int32_t b) { op_CLOSURE(vm, a, b); }
 void native_setenv(VM *vm, int32_t a) { op_SETENV(vm, a, 0); }
 void native_newexn(VM *vm, int32_t a) { op_NEWEXN(vm, a, 0); }
@@ -254,6 +255,9 @@ void native_fatal(VM *vm, int what, int32_t a) {
     case 11: vm_fatal(vm, "JUMPIFNOTTAG on non-constructor"); break;
     case 12: vm_fatal(vm, "SWITCH on non-constructor"); break;
     case 13: vm_fatal(vm, "DECON of a constructor of tag %d where %d is wanted", a >> 16, a & 0xffff); break;
+    case 14: vm_fatal(vm, "expected %s", "constructor with fields"); break;
+    case 15: vm_fatal(vm, "constructor field %d out of range", a); break;
+    case 16: vm_fatal(vm, "FIELD of a constructor of tag %d where %d is wanted", a >> 16, a & 0xffff); break;
     default: vm_fatal(vm, "unknown check %d", what);
     }
 }

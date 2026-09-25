@@ -298,7 +298,8 @@ struct
     ("int_order", 292, 2),
     ("word_order", 293, 2),
     ("char_order", 294, 2),
-    ("string_order", 295, 2)
+    ("string_order", 295, 2),
+    ("imm_eq", 296, 2)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -397,7 +398,8 @@ struct
     "int_order",
     "word_order",
     "char_order",
-    "string_order"
+    "string_order",
+    "imm_eq"
   ])
   fun removable name = StringMap.member (removables, name)
 end

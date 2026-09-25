@@ -5,8 +5,8 @@
 /* The version of the layout of an .rbc, and the fingerprint of the
    instruction set, which an .rbc and an image carry. */
 #define RBC_VERSION 4
-#define ISA_FINGERPRINT 0x00dc71ccu
-#define ISA_FINGERPRINT_HEX "00dc71cc"
+#define ISA_FINGERPRINT 0x00a8ea18u
+#define ISA_FINGERPRINT_HEX "00a8ea18"
 
 enum Opcode {
   OP_HALT = 0,  /* Stop execution. */
@@ -48,6 +48,8 @@ enum Opcode {
   OP_CALLK = 36,  /* Call function f, known, with the n values on top of the stack, which become its locals 0 to n-1; no closure. */
   OP_SWITCH = 37,  /* Pop a constructor value; jump to the target of the JUMP of its tag among the n that follow, or past them. */
   OP_TAILCALLK = 38,  /* Like CALLK, but the current frame is replaced. */
+  OP_CONN = 39,  /* Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
+  OP_FIELD = 40,  /* Pop a constructor value that CONN made, of tag t, and push its field i; runevm --checked stops where the tag is another. */
   OP__COUNT
 };
 
@@ -91,6 +93,8 @@ static const char *const op_names[] = {
   "CALLK",
   "SWITCH",
   "TAILCALLK",
+  "CONN",
+  "FIELD",
 };
 
 static const unsigned char op_nargs[] = {
@@ -132,6 +136,8 @@ static const unsigned char op_nargs[] = {
   1,
   2,
   1,
+  2,
+  2,
   2,
 };
 
@@ -180,6 +186,8 @@ static const signed char op_pops_fixed[] = {
   -1,
   1,
   -1,
+  -1,
+  1,
 };
 static const signed char op_pops_operand[] = {
   -1,
@@ -221,6 +229,8 @@ static const signed char op_pops_operand[] = {
   1,
   -1,
   1,
+  1,
+  -1,
 };
 static const signed char op_pops_arity[] = {
   -1,
@@ -257,6 +267,8 @@ static const signed char op_pops_arity[] = {
   -1,
   -1,
   0,
+  -1,
+  -1,
   -1,
   -1,
   -1,
@@ -303,6 +315,8 @@ static const unsigned char op_pushes[] = {
   1,
   0,
   0,
+  1,
+  1,
 };
 
 /* Where control goes after each (src/isa/isa.sml, flow). */
@@ -348,6 +362,8 @@ static const unsigned char op_flow[] = {
   FLOW_CALL,
   FLOW_SWITCH,
   FLOW_TAILCALL,
+  FLOW_NEXT,
+  FLOW_NEXT,
 };
 
 /* What each operand is, which says what the loader accepts for it
@@ -410,6 +426,8 @@ static const unsigned char op_kinds[][2] = {
   {7, 11},  /* CALLK */
   {11, 0},  /* SWITCH */
   {7, 11},  /* TAILCALLK */
+  {3, 11},  /* CONN */
+  {3, 12},  /* FIELD */
 };
 
 #endif

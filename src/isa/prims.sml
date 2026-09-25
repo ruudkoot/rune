@@ -619,5 +619,8 @@ struct
          {name = "char_order", arity = 2, ty = "char * char -> order", effects = [],
           doc = "The same for characters, by code."},
          {name = "string_order", arity = 2, ty = "string * string -> order", effects = [],
-          doc = "The same for strings, lexicographically by the codes of their characters."}]]
+          doc = "The same for strings, lexicographically by the codes of their characters."}],
+       group "equality by type (middle-end M11)"
+        [{name = "imm_eq", arity = 2, ty = "'a * 'a -> bool", effects = [],
+          doc = "Equality of two values that are never in the heap -- ints, words, chars, units and the nullary constructors of a datatype that has no other: `=` where the compiler knows the type is one of those."}]]
 end

@@ -322,3 +322,6 @@ int_order        2  int * int -> order       LESS, EQUAL or GREATER: how the fir
 word_order       2  word * word -> order     The same for words, unsigned.
 char_order       2  char * char -> order     The same for characters, by code.
 string_order     2  string * string -> order   The same for strings, lexicographically by the codes of their characters.
+
+# --- equality by type (middle-end M11) ---
+imm_eq           2  'a * 'a -> bool          Equality of two values that are never in the heap -- ints, words, chars, units and the nullary constructors of a datatype that has no other: `=` where the compiler knows the type is one of those.

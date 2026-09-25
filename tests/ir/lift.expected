@@ -2,13 +2,13 @@
 (funs
   (fn g1 ((v1 : int list) (v2 : int)) : int
     (let (v3 : int) (tag v1)
-    (let (v4 : bool) (prim poly_eq v3 0 : (int * int) -> bool)
+    (let (v4 : bool) (prim imm_eq v3 0 : (int * int) -> bool)
     (if v4
       (return v2)
       (let (v5 : int) (tag v1)
-      (let (v6 : bool) (prim poly_eq v5 1 : (int * int) -> bool)
+      (let (v6 : bool) (prim imm_eq v5 1 : (int * int) -> bool)
       (if v6
-        (let (v7 : int * int list) (decon 1 v1)
+        (let (v7 : int * int list) (decon 1 v1 : int list)
         (let (v8 : int) (select 0 v7)
         (let (v9 : int list) (select 1 v7)
         (let (v10 : int) (prim int_add v2 v8 : (int * int) -> int)
@@ -22,13 +22,13 @@
 (funs
   (fn g3 ((v14 : int) (v15 : int list)) : int list
     (let (v16 : int) (tag v15)
-    (let (v17 : bool) (prim poly_eq v16 0 : (int * int) -> bool)
+    (let (v17 : bool) (prim imm_eq v16 0 : (int * int) -> bool)
     (if v17
       (return (con0 0 : int list))
       (let (v18 : int) (tag v15)
-      (let (v19 : bool) (prim poly_eq v18 1 : (int * int) -> bool)
+      (let (v19 : bool) (prim imm_eq v18 1 : (int * int) -> bool)
       (if v19
-        (let (v20 : int * int list) (decon 1 v15)
+        (let (v20 : int * int list) (decon 1 v15 : int list)
         (let (v21 : int) (select 0 v20)
         (let (v22 : int list) (select 1 v20)
         (let (v23 : int) (prim int_mul v14 v21 : (int * int) -> int)

@@ -86,13 +86,12 @@ function f4 first (v1, 0 captured)
   b1:
     iftag v1 1 b5 b6
   b5:
-    v3 = decon 1 v1
-    v4 = select 0 v3
-    return v4
+    v3 = field 1 0 v1
+    return v3
   b6:
     goto b4
   b4:
-    v5 = builtinexn 0
-    v6 = ()
-    v7 = mkexn v5 v6
-    raise v7
+    v4 = builtinexn 0
+    v5 = ()
+    v6 = mkexn v4 v5
+    raise v6

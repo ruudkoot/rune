@@ -189,7 +189,7 @@ struct
                             case t of
                               Ty.Con (stamp, _, args) =>
                                 (case Ty.conArg (stamp, args, tag) of
-                                   SOME (SOME arg) => deliver (ctx, st, R (M.Decon (tag, aa), arg))
+                                   SOME (SOME arg) => deliver (ctx, st, R (M.Decon (tag, t, aa), arg))
                                  | _ => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t))
                             | _ => bug ("a deconstruction of what has type " ^ Ty.toString t))
         | L.ConTag a => atom (a, st, fn (aa, _) => deliver (ctx, st, R (M.ConTag aa, Ty.int)))

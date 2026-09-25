@@ -10,8 +10,8 @@
    exception; a jump or a return out of a handler's region pops what it
    leaves. A variable bound to another is the other (no copy), and one
    bound to a constant, a global or a captured value is read again where
-   it is used. A match against a constructor's tag -- ConTag, poly_eq with
-   the tag, If -- is one IfTag, and a chain of three or more of the same
+   it is used. A match against a constructor's tag -- ConTag, poly_eq or
+   imm_eq with the tag, If -- is one IfTag, and a chain of three or more of the same
    value, each in the other's else, one Switch.
 
    A call of a function of the top level is a known call (CallK), which
@@ -39,6 +39,47 @@ struct
   val captures : int list IntMap.map ref = ref IntMap.empty
   val selfRefs : bool IntMap.map ref = ref IntMap.empty
 
+  (* How many uses of each variable take a field of it (Select) in the
+     function it is bound in: where that is all its uses, the argument of a
+     constructor made of its fields is never made whole (Rep, M11). *)
+  val selectUses : int IntMap.map ref = ref IntMap.empty
+  val binderFn : int IntMap.map ref = ref IntMap.empty
+  val nextFn = ref 0
+  fun countSelects (e : M.exp) : unit =
+    let
+      val f = !nextFn
+      val () = nextFn := f + 1
+      fun sel r =
+        case r of
+          M.Select (_, M.Var (y, _)) =>
+            if IntMap.find (!binderFn, y) = SOME f then
+              selectUses := IntMap.insert (!selectUses, y, 1 + (case IntMap.find (!selectUses, y) of SOME n => n | NONE => 0))
+            else ()
+        | _ => ()
+      fun go e =
+        case e of
+          M.Let (x, _, r, b) => (sel r; binderFn := IntMap.insert (!binderFn, x, f); go b)
+        | M.Fun (fs, b) => (List.app (countSelects o #body) fs; go b)
+        | M.Join (_, _, jb, sc) => (go jb; go sc)
+        | M.If (_, t, e) => (go t; go e)
+        | M.Handle (a, _, h) => (go a; go h)
+        | M.Return r => sel r
+        | M.Mark (_, a) => go a
+        | _ => ()
+    in go e end
+  fun selectsOf x = case IntMap.find (!selectUses, x) of SOME n => n | NONE => 0
+
+  (* A variable whose value is not made where it is bound (M11): a tuple
+     used once, whose parts a constructor made of its fields, or a field
+     taken of it, uses as they are (Parts); or the argument of a constructor
+     value made of its fields, each of whose uses takes a field (Fields: the
+     tag, the number of fields, the value). A use that needs it whole makes
+     it there (var). *)
+  datatype virt = Parts of L.var list | Fields of int * int * L.var
+  val virtuals : virt IntMap.map ref = ref IntMap.empty
+  fun virtualOf (a : M.atom) : virt option =
+    case a of M.Var (y, _) => IntMap.find (!virtuals, y) | _ => NONE
+
   fun count x = useCounts := IntMap.insert (!useCounts, x, 1 + (case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0))
   fun usesOf x = case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0
 
@@ -51,7 +92,7 @@ struct
     | M.Tuple xs => List.app countAtom xs
     | M.Select (_, a) => countAtom a
     | M.Con (_, _, a) => countAtom a
-    | M.Decon (_, a) => countAtom a
+    | M.Decon (_, _, a) => countAtom a
     | M.ConTag a => countAtom a
     | M.MkExn (c, a) => (countAtom c; countAtom a)
     | M.ExnCon a => countAtom a
@@ -76,7 +117,7 @@ struct
         | M.Tuple xs => atoms (xs, acc)
         | M.Select (_, a) => atom (a, acc)
         | M.Con (_, _, a) => atom (a, acc)
-        | M.Decon (_, a) => atom (a, acc)
+        | M.Decon (_, _, a) => atom (a, acc)
         | M.ConTag a => atom (a, acc)
         | M.MkExn (c, a) => atoms ([c, a], acc)
         | M.ExnCon a => atom (a, acc)
@@ -269,7 +310,13 @@ struct
     | NONE =>
         case IntMap.find (#env b, x) of
           SOME i => def (b, L.Env i)
-        | NONE => if #self b = SOME x then def (b, L.Self) else bug ("v" ^ Int.toString x ^ " is not in scope")
+        | NONE =>
+            if #self b = SOME x then def (b, L.Self)
+            else
+              case IntMap.find (!virtuals, x) of
+                SOME (Parts vs) => def (b, L.Tuple vs)
+              | SOME (Fields (tag, n, v)) => def (b, L.Tuple (List.tabulate (n, fn i => def (b, L.Field (tag, i, v)))))
+              | NONE => bug ("v" ^ Int.toString x ^ " is not in scope")
 
   and oper (b : builder, cx : cx, r : M.rhs) : L.operation =
     let fun at a = atom (b, cx, a)
@@ -280,9 +327,26 @@ struct
       | M.App _ => unknown (b, cx, r)
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
-      | M.Select (i, a) => L.Select (i, at a)
-      | M.Con (tag, _, a) => L.Con (tag, at a)
-      | M.Decon (tag, a) => L.Decon (tag, at a)
+      | M.Select (i, a) =>
+          (case virtualOf a of
+             SOME (Fields (tag, _, v)) => L.Field (tag, i, v)
+           | SOME (Parts vs) => bug "a field of a tuple not made, as an operation"
+           | NONE => L.Select (i, at a))
+      | M.Con (tag, t, a) =>
+          (case Rep.fields (t, tag) of
+             NONE => L.Con (tag, [at a])
+           | SOME n =>
+               (* one object of the fields of its argument *)
+               (case virtualOf a of
+                  SOME (Parts vs) => L.Con (tag, vs)
+                | SOME (Fields (tag', _, v)) => L.Con (tag, List.tabulate (n, fn i => def (b, L.Field (tag', i, v))))
+                | NONE => let val v = at a in L.Con (tag, List.tabulate (n, fn i => def (b, L.Select (i, v)))) end))
+      | M.Decon (tag, t, a) =>
+          (case Rep.fields (t, tag) of
+             NONE => L.Decon (tag, at a)
+           | SOME n =>
+               (* the argument whole, where a use needs it so: a copy *)
+               let val v = at a in L.Tuple (List.tabulate (n, fn i => def (b, L.Field (tag, i, v)))) end)
       | M.ConTag a => L.ConTag (at a)
       | M.NewExn n => L.NewExn n
       | M.BuiltinExn k => L.BuiltinExn k
@@ -301,7 +365,30 @@ struct
   and value (b, cx, r : M.rhs) : L.var =
     case r of
       M.Atom a => atom (b, cx, a)
+    | M.Select (i, a) =>
+        (case virtualOf a of
+           SOME (Parts vs) => List.nth (vs, i)
+         | _ => def (b, oper (b, cx, r)))
     | _ => def (b, oper (b, cx, r))
+
+  (* x bound to r, where its value need not be made there (virt) *)
+  and virtualised (b, cx, x : int, r : M.rhs) : bool =
+    case r of
+      M.Tuple (xs as _ :: _ :: _) =>
+        usesOf x = 1 andalso (virtuals := IntMap.insert (!virtuals, x, Parts (List.map (fn a => atom (b, cx, a)) xs)); true)
+    | M.Decon (tag, t, a) =>
+        (case Rep.fields (t, tag) of
+           SOME n =>
+             usesOf x = selectsOf x
+             andalso (virtuals := IntMap.insert (!virtuals, x, Fields (tag, n, atom (b, cx, a))); true)
+         | NONE => false)
+    | M.Atom (a as M.Var (y, _)) =>
+        (* another name for one: the same, where its uses would do *)
+        (case virtualOf a of
+           SOME (v as Parts _) => usesOf x = 1 andalso (virtuals := IntMap.insert (!virtuals, x, v); true)
+         | SOME (v as Fields _) => usesOf x = selectsOf x andalso (virtuals := IntMap.insert (!virtuals, x, v); true)
+         | NONE => false)
+    | _ => false
 
   and pops (b, n) = if n <= 0 then () else (emit (b, L.Pop); pops (b, n - 1))
 
@@ -335,9 +422,8 @@ struct
                     start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
                   end)
          | NONE =>
-             (case r of
-                M.Atom a => exp (b, body, bindAs (cx, x, atom (b, cx, a)))
-              | _ => exp (b, body, bindAs (cx, x, def (b, oper (b, cx, r))))))
+             if virtualised (b, cx, x, r) then exp (b, body, cx)
+             else exp (b, body, bindAs (cx, x, value (b, cx, r))))
     | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
     | M.Join (j, ps, jbody, scope) =>
         let val l = newLabel b
@@ -407,8 +493,9 @@ struct
       (0, M.App (f, [a])) => let val f = atom (b, cx, f) in finish (b, L.TailCall (f, atom (b, cx, a))) end
     | _ => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
 
-  (* ConTag of y, poly_eq of it with a tag, and an If on that, each used
-     once: y, the tag, and the two branches. *)
+  (* ConTag of y, poly_eq of it with a tag -- or imm_eq, which the
+     simplifier makes of it -- and an If on that, each used once: y, the
+     tag, and the two branches. *)
   and tagTest (x, r, body) =
     case r of
       M.ConTag (M.Var (y, _)) =>
@@ -419,8 +506,8 @@ struct
               | unmark (e, sp) = (e, sp)
           in
             case unmark (body, NONE) of
-              (M.Let (c, _, M.Prim ("poly_eq", _, [M.Var (x', _), M.Const (Lambda.CInt i, _)]), rest), sp1) =>
-                if x' = x andalso usesOf c = 1 andalso IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
+              (M.Let (c, _, M.Prim (eq, _, [M.Var (x', _), M.Const (Lambda.CInt i, _)]), rest), sp1) =>
+                if (eq = "poly_eq" orelse eq = "imm_eq") andalso x' = x andalso usesOf c = 1 andalso IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then
                   (case unmark (rest, sp1) of
                      (M.If (M.Var (c', _), t, f), sp2) =>
                        if c' = c then SOME (y, IntInf.toInt i, sp2, t, f) else NONE
@@ -504,12 +591,16 @@ struct
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
       val () = (useCounts := IntMap.empty; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
+                selectUses := IntMap.empty; binderFn := IntMap.empty; nextFn := 0; virtuals := IntMap.empty;
                 nextFuncId := 0; funNames := names; globalFids := IntMap.empty;
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
                                           | (_, m) => m) IntMap.empty p)
       val () = List.app (fn M.Val (_, _, e) => countExp e
                           | M.Funs fs => List.app (countExp o #body) fs
                           | M.Do (_, e) => countExp e) p
+      val () = List.app (fn M.Val (_, _, e) => countSelects e
+                          | M.Funs fs => List.app (countSelects o #body) fs
+                          | M.Do (_, e) => countSelects e) p
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,

@@ -279,3 +279,18 @@ case ROP_SWITCH: {
     else vm->pc += 5 * (uint32_t)b;
     break;
 }
+case ROP_CONN: {
+    Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, n);
+    Value *f = OBJ_FIELDS(o);
+    for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));
+    R(a) = mk_ptr(o);
+    break;
+}
+case ROP_FIELD: {
+    Value v = R(b);
+    Obj *o = vm_expect_obj(vm, v, K_CON, "constructor with fields");
+    if (vm->checked && o->contag != c) vm_fatal(vm, "FIELD of a constructor of tag %d where %d is wanted", (int)o->contag, (int)c);
+    if ((uint32_t)d >= o->len) vm_fatal(vm, "constructor field %d out of range", d);
+    R(a) = OBJ_FIELDS(o)[d];
+    break;
+}

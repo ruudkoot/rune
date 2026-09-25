@@ -26,7 +26,7 @@
         (return 7)
         (raise v6))))
     (handle v9
-      (let (v10 : bool) (prim poly_eq v5 0 : (int * int) -> bool)
+      (let (v10 : bool) (prim imm_eq v5 0 : (int * int) -> bool)
       (if v10
         (let (v11 : exn) (mkexn g1 ())
         (jump j3 v11))

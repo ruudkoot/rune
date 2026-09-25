@@ -113,8 +113,9 @@ done
 # is ascribed to a signature generated from vm/prims.def, so a primitive with no
 # definition there stops the four xc1 configurations of the Basis Library suite
 # compiling -- which make check does not run, and make matrix-quick finds ten
-# minutes later. poly_eq and ptr_eq are the two gen-host-basis.sh leaves out.
-for p in $(awk '!/^#/ && NF && $1 != "poly_eq" && $1 != "ptr_eq" { print $1 }' vm/prims.def); do
+# minutes later. poly_eq, imm_eq and ptr_eq are the three gen-host-basis.sh
+# leaves out.
+for p in $(awk '!/^#/ && NF && $1 != "poly_eq" && $1 != "imm_eq" && $1 != "ptr_eq" { print $1 }' vm/prims.def); do
   grep -qE "^[[:space:]]*(fun|val) $p([[:space:]]|\()" tests/basis/host/rune-prim.sml ||
     fail "primitive $p (vm/prims.def) has no definition in tests/basis/host/rune-prim.sml, so the xc1 configurations will not compile"
 done

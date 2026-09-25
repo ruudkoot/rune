@@ -76,6 +76,13 @@ static int mul_ov(int64_t a, int64_t b, int64_t *r) {
 
 /* ================================================================ poly */
 static int p_poly_eq(VM *vm) { return ret(vm, 2, mk_bool(values_equal(ARG(1), ARG(0)))); }
+/* `=` where the compiler knows the type's values are never in the heap
+   (middle-end M11): their tags and bits. */
+static int p_imm_eq(VM *vm) {
+    Value a = ARG(1), b = ARG(0);
+    if (a.tag == T_PTR || b.tag == T_PTR) vm_fatal(vm, "primitive imm_eq: a value in the heap");
+    return ret(vm, 2, mk_bool(a.tag == b.tag && a.u.i == b.u.i));
+}
 /* exn values are K_EXN [constructor, payload]; a constructor is K_EXNCON [name]. */
 static int p_exn_name(VM *vm) {
     Obj *e = check_obj(vm, ARG(0), K_EXN, "exn_name");
@@ -551,20 +558,19 @@ static int p_string_from_char(VM *vm) {
     return ret(vm, 1, mk_ptr(vm_string_from(vm, &c, 1)));
 }
 
-/* Walks an SML list; returns its length or -1 if malformed. */
+/* Walks an SML list; returns its length or -1 if malformed. A cell is one
+   object of two fields, head and tail (vm_cons). */
 static int64_t list_length(Value l) {
     int64_t n = 0;
     for (;;) {
         if (l.tag == T_CON0) return n;
-        if (l.tag != T_PTR || l.u.p->kind != K_CON) return -1;
-        Value cell = OBJ_FIELDS(l.u.p)[0];
-        if (cell.tag != T_PTR || cell.u.p->kind != K_TUPLE || cell.u.p->len != 2) return -1;
-        l = OBJ_FIELDS(cell.u.p)[1];
+        if (l.tag != T_PTR || l.u.p->kind != K_CON || l.u.p->len != 2) return -1;
+        l = OBJ_FIELDS(l.u.p)[1];
         n++;
     }
 }
-static Value list_head(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[0]; }
-static Value list_tail(Value l) { return OBJ_FIELDS(OBJ_FIELDS(l.u.p)[0].u.p)[1]; }
+static Value list_head(Value l) { return OBJ_FIELDS(l.u.p)[0]; }
+static Value list_tail(Value l) { return OBJ_FIELDS(l.u.p)[1]; }
 
 /* ================================================================ system */
 static int push_string_value(VM *vm, const char *s) {

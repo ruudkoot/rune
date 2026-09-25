@@ -120,7 +120,7 @@ struct
         | Tuple xs => List.app collectAtom xs
         | Select (_, a) => collectAtom a
         | Con (_, t, a) => (collect t; collectAtom a)
-        | Decon (_, a) => collectAtom a
+        | Decon (_, t, a) => (collect t; collectAtom a)
         | ConTag a => collectAtom a
         | MkExn (c, a) => (collectAtom c; collectAtom a)
         | ExnCon a => collectAtom a
@@ -184,7 +184,7 @@ struct
         | Tuple xs => "(tuple" ^ atoms xs ^ ")"
         | Select (i, a) => "(select " ^ Int.toString i ^ " " ^ atom a ^ ")"
         | Con (tag, t, a) => let val a = atom a in "(con " ^ Int.toString tag ^ " " ^ a ^ " : " ^ ty t ^ ")" end
-        | Decon (tag, a) => "(decon " ^ Int.toString tag ^ " " ^ atom a ^ ")"
+        | Decon (tag, t, a) => let val a = atom a in "(decon " ^ Int.toString tag ^ " " ^ a ^ " : " ^ ty t ^ ")" end
         | ConTag a => "(tag " ^ atom a ^ ")"
         | NewExn n => "(newexn \"" ^ String.toString n ^ "\")"
         | BuiltinExn k => "(builtinexn " ^ Int.toString k ^ ")"
@@ -521,7 +521,7 @@ struct
                   | "tuple" => Tuple (atomsUntil RP)
                   | "select" => let val i = int () in Select (i, atom ()) end
                   | "con" => let val tag = int () val a = atom () val () = eat COLON in Con (tag, ty (), a) end
-                  | "decon" => let val tag = int () in Decon (tag, atom ()) end
+                  | "decon" => let val tag = int () val a = atom () val () = eat COLON in Decon (tag, ty (), a) end
                   | "tag" => ConTag (atom ())
                   | "newexn" => NewExn (str ())
                   | "builtinexn" => BuiltinExn (int ())

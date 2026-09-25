@@ -63,7 +63,7 @@ struct
         | Tuple xs => List.app atom xs
         | Select (_, a) => atom a
         | Con (_, _, a) => atom a
-        | Decon (_, a) => atom a
+        | Decon (_, _, a) => atom a
         | ConTag a => atom a
         | MkExn (x, y) => (atom x; atom y)
         | ExnCon a => atom a
@@ -136,6 +136,13 @@ struct
       fun intCmp f = case ints () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
       fun word f = case words () of SOME (a, b) => SOME (Const (Lambda.CWord (wrapWord (f (a, b))), result)) | NONE => NONE
       fun wordCmp f = case words () of SOME (a, b) => SOME (boolAtom (f (a, b))) | NONE => NONE
+      fun eqs () =
+        case xs of
+          [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (boolAtom (a = b))
+        | [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (boolAtom (a = b))
+        | [Const (Lambda.CChar a, _), Const (Lambda.CChar b, _)] => SOME (boolAtom (a = b))
+        | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
+        | _ => NONE
     in
       case p of
         "int_add" => int IntInf.+
@@ -152,13 +159,8 @@ struct
       | "word_le" => wordCmp IntInf.<=
       | "word_gt" => wordCmp IntInf.>
       | "word_ge" => wordCmp IntInf.>=
-      | "poly_eq" =>
-          (case xs of
-             [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (boolAtom (a = b))
-           | [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (boolAtom (a = b))
-           | [Const (Lambda.CChar a, _), Const (Lambda.CChar b, _)] => SOME (boolAtom (a = b))
-           | [Con0 (a, _), Con0 (b, _)] => SOME (boolAtom (a = b))
-           | _ => NONE)
+      | "poly_eq" => eqs ()
+      | "imm_eq" => eqs ()
       | "ptr_eq" =>
           (case xs of
              [Global (a, []), Global (b, [])] => if a = b then SOME (boolAtom true) else NONE
@@ -193,7 +195,7 @@ struct
       | Tuple xs => Tuple (List.map at xs)
       | Select (i, a) => Select (i, at a)
       | Con (tag, t, a) => Con (tag, t, at a)
-      | Decon (tag, a) => Decon (tag, at a)
+      | Decon (tag, t, a) => Decon (tag, t, at a)
       | ConTag a => ConTag (at a)
       | MkExn (c, a) => MkExn (at c, at a)
       | ExnCon a => ExnCon (at a)
@@ -204,6 +206,18 @@ struct
 
   (* What a step is, now that what is known is used: an atom where it can
      be. *)
+  (* Whether the values of a type are never in the heap, nor unit: ints,
+     words, chars, and the nullary constructors of a datatype that has no
+     other (bool, order). `=` of them is imm_eq (M11). *)
+  fun immediate (t : Ty.ty) : bool =
+    case t of
+      Ty.Con (stamp, _, _) =>
+        List.exists (fn c => stamp = #stamp c) [Types.intTycon, Types.wordTycon, Types.charTycon, Types.boolTycon]
+        orelse (case Ty.datatypeOf stamp of
+                  SOME {cons = cons as _ :: _, ...} => List.all (fn (_, _, arg) => not (isSome arg)) cons
+                | _ => false)
+    | _ => false
+
   fun known (env : env, r : rhs) : rhs =
     let
       fun madeOf (Var (x, [])) = IntTable.find (#known env, x)
@@ -214,7 +228,9 @@ struct
           (case madeOf a of
              SOME (Made (Tuple xs)) => if i < List.length xs andalso spend () then Atom (List.nth (xs, i)) else r
            | _ => r)
-      | Decon (tag, a) =>
+      | Prim ("poly_eq", pty as Ty.Arrow (Ty.Tuple [t, _], _), xs) =>
+          if immediate t andalso spend () then Prim ("imm_eq", pty, xs) else r
+      | Decon (tag, _, a) =>
           (case madeOf a of
              SOME (Made (Con (tag', _, x))) => if tag = tag' andalso spend () then Atom x else r
            | _ => r)
@@ -246,7 +262,7 @@ struct
         | Tuple xs => Tuple (List.map f xs)
         | Select (i, a) => Select (i, f a)
         | Con (tag, t, a) => Con (tag, ty t, f a)
-        | Decon (tag, a) => Decon (tag, f a)
+        | Decon (tag, t, a) => Decon (tag, ty t, f a)
         | ConTag a => ConTag (f a)
         | MkExn (c, a) => MkExn (f c, f a)
         | ExnCon a => ExnCon (f a)
@@ -314,7 +330,7 @@ struct
         | Tuple xs => Tuple (List.map (atom s) xs)
         | Select (i, a) => Select (i, atom s a)
         | Con (tag, t, a) => Con (tag, t, atom s a)
-        | Decon (tag, a) => Decon (tag, atom s a)
+        | Decon (tag, t, a) => Decon (tag, t, atom s a)
         | ConTag a => ConTag (atom s a)
         | MkExn (c, a) => MkExn (atom s c, atom s a)
         | ExnCon a => ExnCon (atom s a)
@@ -1042,7 +1058,7 @@ struct
         | Tuple xs => List.exists atom xs
         | Select (_, a) => atom a
         | Con (_, _, a) => atom a
-        | Decon (_, a) => atom a
+        | Decon (_, _, a) => atom a
         | ConTag a => atom a
         | MkExn (c, a) => atom c orelse atom a
         | ExnCon a => atom a
@@ -1094,7 +1110,7 @@ struct
         | Tuple xs => List.app atom xs
         | Select (_, a) => atom a
         | Con (_, _, a) => atom a
-        | Decon (_, a) => atom a
+        | Decon (_, _, a) => atom a
         | ConTag a => atom a
         | MkExn (x, y) => (atom x; atom y)
         | ExnCon a => atom a

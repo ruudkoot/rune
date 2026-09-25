@@ -133,13 +133,11 @@ struct
               (case conArg ("a constructor", t, tag) of
                  SOME arg => (expect ("the argument of a constructor", at a, arg); t)
                | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " takes no argument"))
-          | Decon (tag, a) =>
-              let val t = at a
-              in
-                case conArg ("a deconstruction", t, tag) of
-                  SOME arg => arg
-                | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument")
-              end
+          | Decon (tag, t, a) =>
+              (expect ("what a deconstruction takes apart", at a, t);
+               case conArg ("a deconstruction", t, tag) of
+                 SOME arg => arg
+               | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
           | ConTag a =>
               (case at a of
                  Ty.Con _ => Ty.int

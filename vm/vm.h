@@ -39,7 +39,7 @@ typedef struct Value {
 
 enum ObjKind {
     K_TUPLE = 1,  /* len fields; also vectors */
-    K_CON,        /* contag; 1 field */
+    K_CON,        /* contag; 1 field, the argument -- or the n fields of an argument that is a tuple of n (CONN) */
     K_CLOSURE,    /* field 0 = T_INT function index; fields 1.. = environment */
     K_STRING,     /* len bytes */
     K_REF,        /* 1 field */

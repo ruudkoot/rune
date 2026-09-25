@@ -40,3 +40,5 @@
 &&L_CALLK,
 &&L_SWITCH,
 &&L_TAILCALLK,
+&&L_CONN,
+&&L_FIELD,

@@ -26,7 +26,7 @@ struct
         | Tuple xs => (atoms (xs, acc), eff)
         | Select (_, a) => (atom (a, acc), eff)
         | Con (_, _, a) => (atom (a, acc), eff)
-        | Decon (_, a) => (atom (a, acc), eff)
+        | Decon (_, _, a) => (atom (a, acc), eff)
         | ConTag a => (atom (a, acc), eff)
         | MkExn (c, a) => (atoms ([c, a], acc), eff)
         | ExnCon a => (atom (a, acc), eff)

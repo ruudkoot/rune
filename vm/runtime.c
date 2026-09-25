@@ -86,15 +86,15 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->hp++;
 }
 
+/* A list cell is one object, the constructor :: (tag 1) of the two fields
+   of its argument, head and tail -- a constructor whose argument is a tuple
+   is made of its fields (src/backend/rep.sml; middle-end M11). */
 void vm_cons(VM *vm) {
-    Obj *cell = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    Obj *cell = vm_alloc_fields(vm, K_CON, 1, 2);
     OBJ_FIELDS(cell)[0] = vm->stack[vm->sp - 1];
     OBJ_FIELDS(cell)[1] = vm->stack[vm->sp - 2];
     vm->sp -= 2;
     vm_push(vm, mk_ptr(cell));
-    Obj *con = vm_alloc_fields(vm, K_CON, 1, 1);
-    OBJ_FIELDS(con)[0] = vm->stack[vm->sp - 1];
-    vm->stack[vm->sp - 1] = mk_ptr(con);
 }
 
 /* --- structural equality --- */

@@ -299,6 +299,7 @@ enum Prim {
   PRIM_word_order = 293,
   PRIM_char_order = 294,
   PRIM_string_order = 295,
+  PRIM_imm_eq = 296,
   PRIM__COUNT
 };
 
@@ -599,6 +600,7 @@ static const char *const prim_names[] = {
   "word_order",
   "char_order",
   "string_order",
+  "imm_eq",
 };
 
 static const unsigned char prim_arity[] = {
@@ -894,6 +896,7 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   1,
+  2,
   2,
   2,
   2,
@@ -1196,6 +1199,7 @@ static const unsigned char prim_arity[] = {
   X(int_order) \
   X(word_order) \
   X(char_order) \
-  X(string_order)
+  X(string_order) \
+  X(imm_eq)
 
 #endif

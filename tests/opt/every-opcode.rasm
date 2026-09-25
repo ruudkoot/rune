@@ -53,6 +53,14 @@ function main 2
   PRIM int_to_string
   PRIM print
   POP
+  # CONN, FIELD: constructor 3 made of 4 and 5, its field 1: 5
+  INT 4
+  INT 5
+  CONN 3 2
+  FIELD 3 1
+  PRIM int_to_string
+  PRIM print
+  POP
   # CON0, CONTAG on a nullary one: 4
   CON0 4
   CONTAG

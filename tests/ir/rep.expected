@@ -1,0 +1,69 @@
+(* after lower *)
+function f0 <toplevel> (v1, 0 captured)
+  b0:
+    v2 = closure f1 
+    v3 = setglobal g1 v2
+    v4 = closure f2 
+    v5 = setglobal g2 v4
+    v6 = closure f3 
+    v7 = setglobal g3 v6
+    v8 = closure f4 
+    v9 = setglobal g4 v8
+    v10 = ()
+    return v10
+function f1 make (v1, 0 captured)
+  b0:
+    v2 = select 0 v1
+    v3 = select 1 v1
+    v4 = con 0 v2 v3
+    return v4
+function f2 sum (v1, 0 captured)
+  b0:
+    iftag v1 0 b2 b3
+  b2:
+    v2 = field 0 0 v1
+    v3 = field 0 1 v1
+    v4 = prim int_add v2 v3
+    return v4
+  b3:
+    goto b1
+  b1:
+    iftag v1 1 b5 b6
+  b5:
+    v5 = decon 1 v1
+    return v5
+  b6:
+    goto b4
+  b4:
+    iftag v1 2 b8 b9
+  b8:
+    v6 = const 0
+    return v6
+  b9:
+    goto b7
+  b7:
+    v7 = builtinexn 0
+    v8 = ()
+    v9 = mkexn v7 v8
+    raise v9
+function f3 rewrap (v1, 0 captured)
+  b0:
+    v2 = select 0 v1
+    v3 = select 1 v1
+    v4 = con 2 v2 v3
+    return v4
+function f4 whole (v1, 0 captured)
+  b0:
+    iftag v1 2 b2 b3
+  b2:
+    v2 = field 2 0 v1
+    v3 = field 2 1 v1
+    v4 = tuple v2 v3
+    return v4
+  b3:
+    goto b1
+  b1:
+    v5 = const 0
+    v6 = const 0
+    v7 = tuple v5 v6
+    return v7

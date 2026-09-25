@@ -25,7 +25,7 @@
       (let (v16 : int) (tag v13)
       (let (v17 : bool) (prim poly_eq v16 1 : (int * int) -> bool)
       (if v17
-        (let (v18 : 'c * 'c list) (decon 1 v13)
+        (let (v18 : 'c * 'c list) (decon 1 v13 : 'c list)
         (let (v19 : 'c list) (select 1 v18)
         (let (v20 : 'c list) v19
         (let (v21 : int) (app g4['c] v20)

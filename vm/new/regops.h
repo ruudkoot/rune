@@ -4,8 +4,8 @@
 
 /* The fingerprint of the register instruction set, which its .rbc
    and its images carry. */
-#define REG_ISA_FINGERPRINT 0x0098af43u
-#define REG_ISA_FINGERPRINT_HEX "0098af43"
+#define REG_ISA_FINGERPRINT 0x0038b766u
+#define REG_ISA_FINGERPRINT_HEX "0038b766"
 
 enum RegOpcode {
   ROP_HALT = 0,  /* Stop execution. */
@@ -47,6 +47,8 @@ enum RegOpcode {
   ROP_CALLK = 36,  /* Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns. */
   ROP_TAILCALLK = 37,  /* Like CALLK, but the current frame is replaced. */
   ROP_SWITCH = 38,  /* Jump to the target of the JUMP of the tag of the constructor value in register s among the n that follow, or past them. */
+  ROP_CONN = 39,  /* Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
+  ROP_FIELD = 40,  /* Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another. */
   ROP__COUNT
 };
 
@@ -90,6 +92,8 @@ static const char *const rop_names[] = {
   "CALLK",
   "TAILCALLK",
   "SWITCH",
+  "CONN",
+  "FIELD",
 };
 
 /* how many operands come before the list, if there is one */
@@ -133,6 +137,8 @@ static const unsigned char rop_nfixed[] = {
   2,
   2,
   2,
+  3,
+  4,
 };
 
 /* the operand that says how long the list is (-1: no list), and
@@ -177,6 +183,8 @@ static const signed char rop_list_at[] = {
   1,
   1,
   -1,
+  2,
+  -1,
 };
 static const unsigned char rop_list_prim[] = {
   0,
@@ -195,6 +203,8 @@ static const unsigned char rop_list_prim[] = {
   0,
   1,
   1,
+  0,
+  0,
   0,
   0,
   0,
@@ -282,6 +292,8 @@ static const unsigned char rop_kinds[][4] = {
   {7, 11, 0, 0},  /* CALLK */
   {7, 11, 0, 0},  /* TAILCALLK */
   {14, 11, 0, 0},  /* SWITCH */
+  {14, 3, 11, 0},  /* CONN */
+  {14, 14, 3, 12},  /* FIELD */
 };
 
 #endif

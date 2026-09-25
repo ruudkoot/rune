@@ -38,7 +38,7 @@ struct
         | Tuple xs => oks xs
         | Select _ => true
         | Con (_, _, a) => ok a
-        | Decon (_, a) => ok a
+        | Decon (_, _, a) => ok a
         | ConTag a => ok a
         | MkExn (c, a) => oks [c, a]
         | ExnCon a => ok a
@@ -73,7 +73,7 @@ struct
         | Tuple xs => List.app atom xs
         | Select (_, a) => atom a
         | Con (_, _, a) => atom a
-        | Decon (_, a) => atom a
+        | Decon (_, _, a) => atom a
         | ConTag a => atom a
         | MkExn (c, a) => (atom c; atom a)
         | ExnCon a => atom a
@@ -177,7 +177,7 @@ struct
             | Tuple xs => List.app atom xs
             | Select (_, a) => atom a
             | Con (_, _, a) => atom a
-            | Decon (_, a) => atom a
+            | Decon (_, _, a) => atom a
             | ConTag a => atom a
             | MkExn (c, a) => (atom c; atom a)
             | ExnCon a => atom a

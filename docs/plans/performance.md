@@ -516,6 +516,10 @@ Each is S or S-M and changes no output:
   tuples have no identity. A polymorphic argument stays boxed.
 * **Blast radius:** the compiler (`coninfo` needs the arity), new opcodes,
   the C that walks lists (`prims.c`, the system layer).
+* **Done** (middle-end M11): `CONN` and `FIELD`, chosen per datatype
+  (`src/backend/rep.sml`); a list cell is one object of 40 bytes. Against
+  M10: intinf_fact 49.4% fewer objects, list_ops 41.2%, string_ops 43.4%;
+  the compiler as native code 12.7% fewer cycles.
 
 ### 17. Decision trees and a tag switch
 

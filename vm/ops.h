@@ -68,4 +68,15 @@ static inline void op_MKEXN(VM *vm, int32_t a, int32_t b) {
     vm_push(vm, mk_ptr(e));
 }
 
+static inline void op_CONN(VM *vm, int32_t a, int32_t b) {
+    Program *p = &vm->prog;
+    (void)p; (void)a; (void)b;
+    if ((size_t)b > vm->sp) vm_fatal(vm, "stack underflow");
+    Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, (uint32_t)b);
+    Value *f = OBJ_FIELDS(c);
+    for (int32_t i = 0; i < b; i++) f[i] = vm->stack[vm->sp - (size_t)b + (size_t)i];
+    vm->sp -= (size_t)b;
+    vm_push(vm, mk_ptr(c));
+}
+
 #endif

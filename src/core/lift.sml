@@ -34,7 +34,7 @@ struct
     | Tuple xs => xs
     | Select (_, a) => [a]
     | Con (_, _, a) => [a]
-    | Decon (_, a) => [a]
+    | Decon (_, _, a) => [a]
     | ConTag a => [a]
     | MkExn (c, a) => [c, a]
     | ExnCon a => [a]
@@ -293,7 +293,7 @@ struct
         | Tuple xs => Tuple (List.map atom xs)
         | Select (i, a) => Select (i, atom a)
         | Con (tag, t, a) => Con (tag, t, atom a)
-        | Decon (tag, a) => Decon (tag, atom a)
+        | Decon (tag, t, a) => Decon (tag, t, atom a)
         | ConTag a => ConTag (atom a)
         | MkExn (c, a) => MkExn (atom c, atom a)
         | ExnCon a => ExnCon (atom a)
@@ -313,7 +313,7 @@ struct
             | Tuple xs => Tuple (List.map atom xs)
             | Select (i, a) => Select (i, atom a)
             | Con (tag, t, a) => Con (tag, t, atom a)
-            | Decon (tag, a) => Decon (tag, atom a)
+            | Decon (tag, t, a) => Decon (tag, t, atom a)
             | ConTag a => ConTag (atom a)
             | MkExn (c, a) => MkExn (atom c, atom a)
             | ExnCon a => ExnCon (atom a)
