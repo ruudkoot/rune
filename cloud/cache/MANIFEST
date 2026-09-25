@@ -1,0 +1,4 @@
+key mlton-20241230 smlnj-110.99.9 polyml-5.9.2 x86_64 ubuntu-24.04 glibc-2.39 /root/.local/rune-hosts
+sha256 e7e38ea1eb2bd9d09457ed1f9c3bdd15cd0c6ff1d7f6cfbf9bda70669488535a
+parts hosts.tar.xz.00 hosts.tar.xz.01
+built 2026-09-25 19:25 UTC on 6.18.44-fc-v37, by scripts/fetch-hosts.sh from the releases it names
