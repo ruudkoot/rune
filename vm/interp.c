@@ -91,6 +91,7 @@ int vm_jit_arg(const char *arg, int *mode, int *stats, int *check) {
     return 0;
 }
 int vm_jit_check(void) { return 2; }
+int vm_jit_env(const char *mode, int *out) { (void)mode; (void)out; return 1; }
 
 /* The loop alone: a VM resumed from an image (vm/image.c) enters it here,
    its built-in exceptions and frames being those of the image. */

@@ -147,3 +147,11 @@ int vm_jit_arg(const char *arg, int *mode, int *stats, int *check) {
 }
 
 int vm_jit_check(void) { return jit_check(); }
+
+int vm_jit_env(const char *mode, int *out) {
+    int stats = 0, check = 0;
+    char arg[64];
+    snprintf(arg, sizeof arg, "--jit=%s", mode);
+    if (!vm_jit_arg(arg, out, &stats, &check)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
+    return 1;
+}

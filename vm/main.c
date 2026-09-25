@@ -43,7 +43,7 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
-    int jit_mode = 0, jit_stats = 0, jit_check = 0;
+    int jit_mode = 0, jit_stats = 0, jit_check = 0, jit_given = 0;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
@@ -66,12 +66,16 @@ int main(int argc, char **argv) {
         }
         else if (strncmp(argv[i], "--jit", 5) == 0) {
             if (!vm_jit_arg(argv[i], &jit_mode, &jit_stats, &jit_check)) { usage(); return 2; }
+            if (strncmp(argv[i], "--jit=", 6) == 0) jit_given = 1;
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;
     }
+    /* RUNEVM_JIT names the mode where no --jit= does: for the test runners,
+       which start a VM they cannot give options (vm/new; docs/bytecode.md) */
+    if (!jit_given && getenv("RUNEVM_JIT") && !vm_jit_env(getenv("RUNEVM_JIT"), &jit_mode)) return 2;
     if (jit_check) return vm_jit_check();
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which

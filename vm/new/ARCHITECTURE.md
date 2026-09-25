@@ -9,8 +9,9 @@ in [docs/bytecode.md](../../docs/bytecode.md) and `src/isa/regs.sml`.
 
 ## What it is made of
 
-`bin/runevm-new` is `vm/main.c`, `vm/new/interp.c`, `vm/new/isa_regs.c` and
-`vm/new/jit.c` linked against `build/librune.a`, the runtime `runevm` is built from
+`bin/runevm-new` is `vm/main.c`, `vm/new/interp.c`, `vm/new/isa_regs.c`,
+`vm/new/jit.c` and the compiler in `vm/new/jit/` linked against
+`build/librune.a`, the runtime `runevm` is built from
 (`Makefile`, `bin/runevm-new`): the heap and collector (`vm/heap.c`),
 frames, handlers, raising and traces (`vm/runtime.c`), the loader
 (`vm/loader.c`), the primitives (`vm/prims.c`), images (`vm/image.c`) and
@@ -23,7 +24,8 @@ builds (`bin/runevm-new.exe`, `bin/runevm-new32.exe`, `bin/runevm-new32`,
 sources with `vm/isa_stack.c` left out (`NEW_SRCS`, `WIN_NEW_SRCS`).
 
 The generated files -- `vm/new/regs.def`, `regops.h`, `reg_cases.h`,
-`reg_labels.h` and `src/backend/regcodes.sml` -- are written by `runeisa`
+`reg_labels.h`, `jit_emit.h`, `jit_cases.h` and `src/backend/regcodes.sml`
+-- are written by `runeisa`
 from `src/isa/regs.sml` (`make isa`; `make check-isa` fails when they are
 stale) and committed, so that the VM builds with a C compiler alone.
 
@@ -143,10 +145,78 @@ are the tiers of M6 and M9; `--jit-stats` prints at exit what the JIT did.
 into it and runs them. A VM built with `RUNE_JIT=0` has the interpreter
 alone and refuses `--jit`.
 
-Until M4 the only entry is a stub: `jit_run` answers `RUN_INTERP` for it,
-and the interpreter runs the frame. Under `--jit=all` every call thus
-crosses the driver twice, which is the cost of the protocol itself,
-measured in M3.
+`jit_run` enters native code through the enter stub (*Tier 1*). Under
+`--jit=all` every function tier 1 can compile is compiled when the
+program is first seen; a call from interpreted code into compiled code
+and a return out of it each cross the driver once, which is the cost of
+the protocol, measured in M3 with stubs for entries. `RUNEVM_JIT` in the
+environment names the mode where no `--jit=` does, for the runners that
+start a VM they cannot give options.
+
+## Tier 1: the baseline compiler
+
+`vm/new/jit/` compiles a function of the register bytecode to x86-64
+machine code (docs/plans/jit.md, D3 and M4): one instruction at a time,
+in the order of the bytecode, each doing what its case in the loop does,
+in the same frame, with every value in its slot. It is `runeopt`'s
+contract (docs/native.md) for the register bytecode, at run time, in C.
+
+* **`x64.h`, `x64.c`**: the encoder. A buffer of bytes, labels bound and
+  patched (a rel32 to a label, or a table entry relative to a table's
+  start), and the instructions the macro-assembler is written in: moves,
+  16-byte copies through an xmm register, arithmetic, SSE2 on doubles,
+  branches, calls. Nothing here knows a Value or a VM.
+* **`masm.h`, `masm.c`**: the macro-assembler, and the conventions the
+  code keeps. `r12` is the VM, `r13` the value stack, `rbp` the frame's
+  base as an index, `r14` its registers (`r13 + 16 rbp`), `r15` the count
+  of instructions; register k is the 16 bytes at `[r14 + 16 k]`. The
+  machine stack holds only the call into C in progress, aligned by the
+  enter stub; the code never pushes. `SYNC` writes the stack pointer (the
+  frame's base plus its registers, plus what a primitive's arguments
+  push), the pc after the instruction and the count to the VM before any
+  call into C; `RELOAD` takes the stack, the frame and its registers back
+  after one, since a call may move the stack and a raise the frame. A
+  call into C takes the System V or the Windows convention (`ms_call`;
+  the VM is argument 0). The allocation fast path is `vm_alloc`'s in
+  line -- `--gc-stress` to the slow path, the room, the bump, the counts,
+  the header -- and every store into an object goes through
+  `ms_store_field`, where a collector's barrier goes. Slow paths (a fatal
+  error, an allocation the fast path could not make) are emitted after
+  the function's code. The stubs: `enter(vm, at)` saves the callee-saved
+  registers, loads the VM's into the code's and jumps to `at`; `leave`
+  restores them and returns what `rax` says. An emitter that names a
+  register the frame has not, or a field the object just allocated has
+  not, is a mistake of the VM's own, and the macro-assembler says so and
+  stops, on every machine: the code it would have made faults only where
+  the stray access leaves what is mapped (the first such mistake, a
+  closure filled with one capture too many, read a register 1,553 slots
+  up and ran on Linux, and crashed on Windows).
+* **`compile.h`, `compile.c`**: the compiler. A scan of the function finds
+  where instructions begin, which are targets of jumps (and of a
+  `SWITCH`'s table, whose `JUMP`s are data, never run) and which end a
+  run; a function with an instruction tier 1 does not compile stays
+  interpreted (M4: the calls, `RESULT`, `PRIMPUSH`, the handlers and
+  `RAISE`). Then each instruction's emitter, with a run's length added to
+  the count where the run begins (docs/native.md, *Counting*), the slow
+  paths, and the code copied into the region, which is one 64 MB
+  mapping, executable, made writable to add a function's code; the enter
+  and leave stubs are at its start. A code object's entry is written
+  last. The helpers native code calls: `jit_h_prim` (the primitive from
+  the registers, `fastprim.h`'s way, or pushed and called), `jit_h_alloc`,
+  `jit_h_ret` (`RET` as the loop does it, answering what the driver is to
+  do next) and `jit_h_fatal` (the loop's message).
+* **`emit.c`**: the emitters, one per instruction, over the
+  macro-assembler. `runeisa` writes `vm/new/jit_emit.h`, their
+  prototypes, so that an instruction without one does not build, and
+  `vm/new/jit_cases.h`, the walk that reads each instruction's operands as
+  the loop reads them and calls its emitter; the flow, raises and handlers
+  of each instruction are the tables of `regops.h`.
+
+Correctness is `--count`: the code counts every instruction the loop
+would, allocates every object it would, and prints what it prints, which
+`make test-new-jit` holds it to on every suite (`--jit=all`), with the
+program of every instruction and `tests/opt/prims.sml` on their edge
+cases, `--gc-stress` and the sanitisers.
 
 ## Images
 
@@ -162,9 +232,14 @@ for each frame, the `RESULT` after its call. A resumed VM enters
 `runevm-new --count` counts instructions executed and bytes and objects
 allocated, and `make perf-check` holds them to `tests/perf/new/*.budget`.
 Cycles are `scripts/perf-cycles.sh` (docs/plans/jit.md, *Measuring*).
-`make test-new-jit` (part of `make check`) runs `tests/lang` with every
-function given to the JIT (`--jit=all`), `--jit-check`, and a recursion
-200,000 deep under a machine stack of 1 MB.
+`make test-new-jit` (part of `make check`) runs `tests/lang` and the Basis
+Library suite with every function given to the JIT (`--jit=all`), holds
+every program of `tests/lang` and `tests/perf` and the primitives' edge
+cases to the same output and `--count` in both modes and every
+instruction to occurring in them (`scripts/check-jit.sh`), runs
+`--jit-check`, and a recursion 200,000 deep under a machine stack of 1
+MB; `make test-stress`, `make test-new-asan` and `make test-windows` run
+the suites under the JIT as well.
 `make test-new` (part of `make check`) runs `tests/lang` on it, holds every
 program's allocation and the compiler's own output to `runevm`'s and the
 primitives of `fastprim.h` to their edge cases (`scripts/check-new.sh`),

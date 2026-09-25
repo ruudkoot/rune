@@ -31,7 +31,7 @@ What it rests on:
 | M1 | Measure | done |
 | M2 | Tier 0: the interpreter finished | done |
 | M3 | The skeleton: code objects, executable memory, the driver | done |
-| M4 | Tier 1, straight-line code, x86-64 | |
+| M4 | Tier 1, straight-line code, x86-64 | done |
 | M5 | Tier 1 complete, and Windows | |
 | M6 | Tiering, OSR entry and the code cache | |
 | M7 | Tier 1 made fast | |
@@ -1582,6 +1582,76 @@ M8 to M12 about 6,000, and are planned again after M7.
   pass.
 * **Touches:** the FFI and the collector (the transition into C and the
   allocation path are written here).
+* **Done** (2026-09-25; `vm/new/jit/`, about 1,500 lines of C):
+  * **The encoder** (`x64.c`): the instructions the macro-assembler
+    needs, labels bound and patched, a table entry relative to its table
+    for `SWITCH`. `tests/new/x64_test.c` checks its bytes against the
+    manual and runs two functions; `tests/new/masm_test.c` runs the stubs,
+    the moves, an allocation and its slow path on a small VM; both in
+    `make test-new-jit`.
+  * **The macro-assembler** (`masm.c`): `r12` the VM, `r13` the stack,
+    `rbp` the frame's base index, `r14` its registers, `r15` the count;
+    `ms_sync` and `ms_reload` around every call into C, one `ms_call` for
+    both conventions (the VM as argument 0), the allocation fast path of
+    `vm_alloc` in line, `ms_store_field` where a barrier goes, slow paths
+    after the code, and the enter and leave stubs. The machine stack holds
+    only the call into C in progress: the enter stub aligns it and the
+    code never pushes. A register beyond the frame or a field beyond the
+    object just allocated stops the compiler with an internal error, on
+    every machine: the one such mistake made (a closure filled with one
+    capture too many) ran on Linux, reading a slot 1,553 registers up,
+    and crashed on Windows.
+  * **The compiler** (`compile.c`): the scan of a function (starts,
+    targets, the ends of runs; a `SWITCH`'s `JUMP`s as data), a run's
+    length added to `r15` where it begins, the emitters through the
+    generated `jit_cases.h`, the slow paths, the code copied into one
+    64 MB region made writable for it, the entry published last. A
+    function with an instruction tier 1 does not compile (the calls,
+    `RESULT`, `PRIMPUSH`, the handlers, `RAISE`) stays interpreted:
+    331 of the compiler's 2,101 functions are compiled under `--jit=all`,
+    the leaves.
+  * **The emitters** (`emit.c`), one per instruction, and the helpers
+    `jit_h_prim` (the primitive from the registers as `fastprim.h` does
+    it, or pushed and called), `jit_h_alloc`, `jit_h_ret` (`RET` as the
+    loop does it, answering the driver) and `jit_h_fatal` (the loop's
+    messages, the tag found passed from a register). `runeisa` writes
+    `jit_emit.h` and `jit_cases.h`, and the flow, raises and handlers
+    tables of `regops.h`.
+  * **The oracle:** `scripts/check-jit.sh`, in `make test-new-jit`: every
+    program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and
+    `tests/new/every-opcode.rasm` -- the program of every register
+    instruction, which the compiler never writes whole (`HALT`, `SELF`,
+    `SETENV`, `JUMPIF` occur in no compiled program), assembled by
+    `tests/opt/rbcasm.awk`, which now takes a list of registers -- print
+    and count the same under `--jit=off` and `--jit=all`, and every
+    instruction occurs in them; the Basis Library suite as `rune:jit`; the
+    compiler compiling itself under `--jit=all` to the same bytes and
+    counts (427,004,094 instructions either way). `RUNEVM_JIT=MODE` in
+    the environment is the mode where no `--jit=` is given, so that the
+    Windows VMs (`make test-windows`, through `WSLENV`) and the sanitiser
+    and stress runs take the JIT too.
+* **Measured** (`scripts/perf-cycles.sh --configs new,jit`; cycles, and
+  the fraction of the interpreter's):
+
+  | Program | interpreter | `--jit=all` |
+  |---|---:|---:|
+  | array_sieve | 480.3M | 528.6M (1.10) |
+  | fib | 840.9M | 862.0M (1.03) |
+  | intinf_fact | 455.8M | 439.5M (0.96) |
+  | list_ops | 335.6M | 314.7M (0.94) |
+  | real_nbody | 686.8M | 948.7M (1.38) |
+  | string_ops | 669.7M | 654.7M (0.98) |
+  | tak | 220.5M | 221.4M (1.00) |
+  | word_bits | 540.8M | 651.9M (1.21) |
+  | the bootstrap | 12.1G | 12.4G (1.03) |
+
+  Correct before fast, as planned: with only the leaves compiled, every
+  call into them and out of them crosses the driver, and a `PRIM` is a
+  call into C where the loop has its fast path in line, so the
+  primitive-bound programs (`real_nbody`, `word_bits`) are slower than
+  interpreted. M5 removes the crossings for calls between compiled
+  functions and M7 does the primitives in line; the numbers to beat stay
+  M2's.
 
 ### M5. Tier 1 complete, and Windows (L, about 800)
 
