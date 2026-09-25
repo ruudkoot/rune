@@ -102,6 +102,12 @@ address the frame returns to, is never written into an image.
   entry for calls. **TAILCALLK** keeps the frame, moves the arguments down
   to its first locals and jumps there too. A full array of frames is
   `native_callk`'s.
+* **DECON** tests the constructor's tag only under `--checked`, out of
+  line.
+* **SWITCH** finds the tag as CONTAG does and jumps through a table of
+  the native addresses of its `JUMP`s' targets, which are never run
+  themselves (the checker finds them unreachable); a tag past the table
+  goes on after it.
 * **RET** puts the result in local 0, pops the frame and jumps through
   `native_ret`. The code there reloads `r13` and `rbp` from the frame.
 * **The slow paths** are `vm/native.c`'s `native_call`, `native_tailcall`
@@ -274,8 +280,9 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`, `--emulate-fork`, `--restore`) come from
-  `runeopt --options` and then the environment variable `RUNEVM_OPTIONS`.
+  `--heap-fill`, `--gc-stress`, `--checked`, `--emulate-fork`, `--restore`)
+  come from `runeopt --options` and then the environment variable
+  `RUNEVM_OPTIONS`.
 * **`RUNEVM_NAME`** is the name `CommandLine.name ()` gives. The suites'
   wrapper sets it to the `.rbc`.
 * **Both variables** are taken out of the environment, so the program and

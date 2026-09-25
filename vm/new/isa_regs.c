@@ -71,11 +71,26 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         starts[pc] = 1;
         pc += len;
     }
-    /* jump targets and function entries must be instruction boundaries */
+    /* jump targets and function entries must be instruction boundaries; a
+       SWITCH's table is JUMPs of its own function, which the code goes on
+       after */
     pc = 0;
+    fi = 0;
     while (pc < p->code_len) {
+        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         const uint8_t *at = p->code + pc;
         uint8_t op = at[0];
+        if (op == ROP_SWITCH) {
+            uint32_t n = (uint32_t)read_i32(at + 5);
+            uint64_t table = (uint64_t)pc + rop_length(at);
+            uint64_t end = table + 5 * (uint64_t)n;
+            int bad = end >= p->funcs[fi].code_end;
+            for (uint32_t k = 0; k < n && !bad; k++) {
+                uint64_t e = table + 5 * (uint64_t)k;
+                bad = !starts[e] || p->code[e] != ROP_JUMP;
+            }
+            if (bad || !starts[end]) { free(starts); snprintf(err, errlen, "bad SWITCH table at %u", pc); return NULL; }
+        }
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL) {
                 int32_t t = read_i32(at + 1 + 4 * k);

@@ -27,9 +27,9 @@ allocate the same (`make check-levels`).
 Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
-optimises, says from which level it runs (`Pass.enabled`): `shake`,
-`lift`, `workers` and `simplify`, in that order (see *The optimisations of
-Mid*).
+optimises, says from which level it runs (`Pass.enabled`): `trees`, which
+is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
+`workers` and `simplify`, in that order (see *The optimisations of Mid*).
 
 ## Options
 
@@ -62,6 +62,9 @@ so that an expected dump does not change with stamps made elsewhere.
   the `Try` found it. Tail position runs through a `Let`'s body, the second
   of a `Seq`, both arms of an `If`, the fallback of an inner `Try`, a
   handler and a mark.
+* **`Jump`:** every `Jump` is in tail position of the scope of its `Join`,
+  in the same function, with an argument of each parameter's type. Only a
+  match compiled as a decision tree makes them (below).
 * **`LetRec`:** every right-hand side is a function.
 * **Types:** it is well typed, as below.
 
@@ -126,7 +129,8 @@ top level a list of definitions (decision D1 of the plan).
   step (`rhs`) makes one value from atoms; `Let` names it.
 * **Join points:** `Join (j, params, body, scope)` binds a label that
   `scope` jumps to, in tail position only. A `Try` of `Lambda` is one
-  without parameters, its `Fail` a jump to it; the rest of an expression
+  without parameters, its `Fail` a jump to it; a `Join` of `Lambda` (a
+  rule of a match) is one with its parameters; the rest of an expression
   that branches, where more follows it, is one whose parameter is the
   value.
 * **`Handle`** is a region: its body and handler are in tail position of
@@ -186,6 +190,28 @@ program written by hand. The grammar is at the head of
   `(0w5 : word8)`.
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   EXP)`; comments are SML's.
+
+## Matches
+
+`MatchComp` compiles a match two ways:
+
+* **Rule by rule** (at `-O0`, for a match of one rule, and where a tree
+  would grow too big): each rule's tests in turn, a failing one a `Fail`
+  to the next rule's `Try`.
+* **As a decision tree** (the optional pass `trees`, from `-O1`, after
+  Maranget 2008): the rules are a matrix of patterns against the values in
+  hand. The first row's first pattern that tests something picks the
+  value to test; the rows are split by what the test finds -- by
+  constructor for a datatype, yes or no for an exception or a constant,
+  none for a tuple, a record or a `ref`, whose parts become values in hand
+  -- and the first row whose patterns are all wild matches. No value is
+  tested twice on a way through, and where the rows name every
+  constructor of a datatype the last one is what is left, untested
+  (decision D14). Each rule's body is a `Join` whose parameters are its
+  variables, so that a body reached on several ways is not copied; the
+  leaves `Jump` to it. An exception's constructor may be another's under
+  another name, so a row of another constructor is still tested where
+  one matched.
 
 ## The optimisations of Mid
 
@@ -260,7 +286,10 @@ leaves implicit is explicit.
   (`SetEnv`). These are `Codegen`'s flat closures, so a program allocates
   what it did.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
-  point's; an `If` two blocks; a match on a constructor's tag one `IfTag`.
+  point's; an `If` two blocks; a match on a constructor's tag one `IfTag`,
+  and three or more of the same value, each in the else of the one before,
+  one `Switch` -- where the highest tag is no more than about four times
+  their number.
   Every edge goes forward in the order of the blocks, but one: a function
   that calls itself in tail position, where no handler is pushed, is a
   loop -- its entry jumps to a head block whose parameters are the
@@ -311,8 +340,9 @@ middle end may ask of it):
   edge goes forward -- but the jump back to a loop's head, across which only
   the head's parameters live -- a value lives from where it is made to its
   last use in the order of the blocks. An argument of a jump already in
-  its parameter's local is not moved. The parameters are locals 0 to n-1; a known call
-  is its arguments pushed and `CALLK`.
+  its parameter's local is not moved. The parameters are locals 0 to n-1;
+  a known call is its arguments pushed and `CALLK`; a `Switch` is `SWITCH`
+  and its table of `JUMP`s, one for each tag below the highest it tests.
 * **Jumps:** the arguments of a jump are pushed and stored into the block's
   parameters from the last, so they move in parallel; a jump to the next
   block falls through, one to a block that only jumps on goes on, and one
@@ -353,7 +383,9 @@ stack target.
   `tests/lang` and `tests/perf` compiled at `-O0` (`Codegen`), at `-O2`,
   and at `-O2` with no optional pass (`--passes=`, the new back end alone),
   with the lint on and Mid's text checked against itself
-  (`--mid-roundtrip`). All three run, and must print and exit the same;
+  (`--mid-roundtrip`). All three run, under `runevm --checked` (a `DECON`
+  of another constructor than it names stops the program), and must print
+  and exit the same;
   the back end alone must also allocate what `-O0`'s code does (the bytes
   and objects of `runevm --count`), where the optimisations may allocate
   less. A program that allocates otherwise for a reason is listed with it

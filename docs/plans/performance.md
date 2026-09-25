@@ -355,6 +355,10 @@ convention), which halves allocation and so also takes part of 13's gain.
   (`interp.c:96`), so this makes the soundness of `Exhaust` load-bearing,
   where today it only drives a warning.
 * **At parity:** stays, since an untyped back end cannot find this again.
+* **Done** (middle-end M9), without relying on `Exhaust`: a decision tree
+  leaves the last constructor untested where its rules name every one, and
+  `runevm --checked`, which the test suites run, makes `DECON` test the tag
+  it now carries.
 
 ### 9. No frame reload after a return
 
@@ -516,6 +520,10 @@ Each is S or S-M and changes no output:
   change for the loader, `Rbc`, `RbcCheck`, the disassemblers, `Emit`, the
   interpreter and the templates.
 * **Do items 8 and 12 first:** they are most of the gain for narrow types.
+* **Done** (middle-end M9): Maranget's decision trees in `MatchComp` from
+  `-O1`, and `SWITCH n` followed by a table of `n` `JUMP`s, which kept every
+  instruction of fixed size. Against M8: intinf_fact 21.5% fewer
+  instructions, list_ops 7.3%, the compiler compiling itself 7.6%.
 
 ### 18. Values in registers across a run
 

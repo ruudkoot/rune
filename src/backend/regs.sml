@@ -168,7 +168,7 @@ struct
           | L.Tuple vs => op' (R.TUPLE, d :: List.length vs :: List.map reg vs)
           | L.Select (i, v) => op' (R.SELECT, [d, i, reg v])
           | L.Con (t, v) => op' (R.CON, [d, t, reg v])
-          | L.Decon v => op' (R.DECON, [d, reg v])
+          | L.Decon (t, v) => op' (R.DECON, [d, reg v, t])
           | L.ConTag v => op' (R.CONTAG, [d, reg v])
           | L.NewExn n => op' (R.NEWEXN, [d, C.constIdx (Lambda.CString n)])
           | L.BuiltinExn k => op' (R.BUILTINEXN, [d, k])
@@ -246,6 +246,17 @@ struct
              in
                emit (C.Ops (R.JUMPIFNOTTAG, [C.I (reg v), C.L (labelOf ei), C.I tag]));
                if ti = i + 1 then () else emit (C.Ops (R.JUMP, [C.L (labelOf ti)]))
+             end
+         | L.Switch (v, cases, d) =>
+             let
+               val n = 1 + List.foldl (fn ((t, _), m) => Int.max (t, m)) 0 cases
+               fun labelFor t = case List.find (fn (t', _) => t' = t) cases of SOME (_, l) => l | NONE => d
+               val di = target (blockIndex d)
+             in
+               op' (R.SWITCH, [reg v, n]);
+               List.app (fn t => emit (C.Ops (R.JUMP, [C.L (labelOf (target (blockIndex (labelFor t))))])))
+                        (List.tabulate (n, fn t => t));
+               if di = i + 1 then () else emit (C.Ops (R.JUMP, [C.L (labelOf di)]))
              end
          | L.Return v => op' (R.RET, [reg v])
          | L.TailCall (fv, a) => op' (R.TAILCALL, [reg fv, reg a])

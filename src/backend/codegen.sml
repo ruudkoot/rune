@@ -59,6 +59,8 @@ struct
     | ConTag a => fv (a, bound, acc)
     | If (c, t, f) => fv (f, bound, fv (t, bound, fv (c, bound, acc)))
     | Try (a, b) => fv (b, bound, fv (a, bound, acc))
+    | Join (_, ps, b, sc) => fv (sc, bound, fv (b, List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) bound ps, acc))
+    | Jump (_, args) => List.foldl (fn (e, acc) => fv (e, bound, acc)) acc args
     | Raise a => fv (a, bound, acc)
     | Handle (a, x, h) => fv (h, IntMap.insert (bound, x, ()), fv (a, bound, acc))
     | MkExn (c, p) => fv (p, bound, fv (c, bound, acc))
@@ -205,7 +207,7 @@ struct
     | Select (i, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.SELECT, [i])))
     | Con0 (t, _) => emit (ctx, Op (Opcodes.CON0, [t]))
     | Con (t, _, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.CON, [t])))
-    | Decon (_, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.DECON, [])))
+    | Decon (t, a) => (gen (ctx, a, false); emit (ctx, Op (Opcodes.DECON, [t])))
     | ConTag a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.CONTAG, [])))
     | If (c, t, f) =>
         let
@@ -245,6 +247,8 @@ struct
         (case !(#fails ctx) of
            l :: _ => emit (ctx, OpLab (Opcodes.JUMP, l))
          | [] => Error.bug "codegen: Fail outside Try")
+    | Join _ => Error.bug "codegen: a join point, which only the decision trees of -O1 make"
+    | Jump _ => Error.bug "codegen: a jump, which only the decision trees of -O1 make"
     | Raise a => (gen (ctx, a, false); emit (ctx, Op (Opcodes.RAISE, [])))
     | Handle (a, x, h) =>
         let

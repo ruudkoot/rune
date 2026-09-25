@@ -35,6 +35,9 @@ struct
     | If of lexp * lexp * lexp
     | Try of lexp * lexp                  (* body, fallback taken when body executes Fail *)
     | Fail
+    | Join of int * (int * Ty.ty) list * lexp * lexp  (* a join point: its label, its parameters, its body,
+                                                          and the scope that jumps to it (a match's rule) *)
+    | Jump of int * lexp list             (* to a join point, in tail position of its scope *)
     | Raise of lexp
     | Handle of lexp * int * lexp         (* body, variable bound to the exception, handler *)
     | NewExn of string
@@ -95,6 +98,10 @@ struct
         | If (c, t, f) => "(if " ^ go c ^ " then " ^ go t ^ " else " ^ go f ^ ")"
         | Try (a, b) => "(try " ^ go a ^ " else " ^ go b ^ ")"
         | Fail => "FAIL"
+        | Join (j, ps, b, sc) =>
+            "(join j" ^ Int.toString j ^ " (" ^ String.concatWith " " (List.map (v o #1) ps) ^ ") = " ^ go b
+            ^ " in " ^ go sc ^ ")"
+        | Jump (j, args) => "(jump j" ^ Int.toString j ^ String.concat (List.map (fn a => " " ^ go a) args) ^ ")"
         | Raise a => "(raise " ^ go a ^ ")"
         | Handle (a, x, h) => "(" ^ go a ^ " handle " ^ v x ^ " => " ^ go h ^ ")"
         | NewExn n => "newexn " ^ n
@@ -124,7 +131,10 @@ struct
         | NONE => (count := !count + 1; m := IntMap.insert (!m, x, !count); !count)
       val tyvars : int IntMap.map ref = ref IntMap.empty
       val ntyvars = ref 0
+      val labels : int IntMap.map ref = ref IntMap.empty
+      val nlabels = ref 0
       fun v x = "v" ^ Int.toString (number (vars, nvars, x))
+      fun lab j = "j" ^ Int.toString (number (labels, nlabels, j))
       fun g x = "g" ^ Int.toString (number (globals, nglobals, x))
       (* type variables too, as 'a, 'b, ... in the order they appear *)
       fun tyvar prefix x =
@@ -193,6 +203,11 @@ struct
               | ConTag a => node (fn () => "tag", [a])
               | If (c, t, f) => node (fn () => "if", [c, t, f])
               | Try (a, b) => node (fn () => "try", [a, b])
+              | Join (j, ps, b, sc) =>
+                  node (fn () => let val j = lab j
+                                 in "join " ^ j ^ " (" ^ String.concatWith " " (List.map (fn (x, t) => "(" ^ v x ^ " : " ^ ty t ^ ")") ps) ^ ")" end,
+                        [b, sc])
+              | Jump (j, args) => node (fn () => "jump " ^ lab j, args)
               | Raise a => node (fn () => "raise", [a])
               | Handle (a, x, h) => node (fn () => "handle " ^ v x, [a, h])
               | MkExn (c, p) => node (fn () => "mkexn", [c, p])
@@ -226,6 +241,8 @@ struct
     | ConTag a => 1 + size a
     | If (c, t, f) => 1 + size c + size t + size f
     | Try (a, b) => 1 + size a + size b
+    | Join (_, _, b, sc) => 1 + size b + size sc
+    | Jump (_, args) => List.foldl (fn (e, n) => n + size e) 1 args
     | Raise a => 1 + size a
     | Handle (a, _, h) => 1 + size a + size h
     | MkExn (c, p) => 1 + size c + size p

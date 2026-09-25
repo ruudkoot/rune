@@ -12,7 +12,8 @@
    leaves. A variable bound to another is the other (no copy), and one
    bound to a constant, a global or a captured value is read again where
    it is used. A match against a constructor's tag -- ConTag, poly_eq with
-   the tag, If -- is one IfTag.
+   the tag, If -- is one IfTag, and a chain of three or more of the same
+   value, each in the other's else, one Switch.
 
    A call of a function of the top level is a known call (CallK), which
    passes no closure, since such a function captures nothing and names
@@ -282,7 +283,7 @@ struct
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) => L.Select (i, at a)
       | M.Con (tag, _, a) => L.Con (tag, at a)
-      | M.Decon (_, a) => L.Decon (at a)
+      | M.Decon (tag, a) => L.Decon (tag, at a)
       | M.ConTag a => L.ConTag (at a)
       | M.NewExn n => L.NewExn n
       | M.BuiltinExn k => L.BuiltinExn k
@@ -312,15 +313,28 @@ struct
       M.Let (x, _, r, body) =>
         (case tagTest (x, r, body) of
            SOME (y, tag, sp, t, f) =>
-             let
-               val v = var (b, cx, y)
-               val lt = newLabel b
-               val lf = newLabel b
-             in
-               finish (b, L.IfTag (v, tag, lt, lf));
-               start (b, lt, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, t, cx);
-               start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
-             end
+             (case switchOf (y, [(tag, sp, t)], f) of
+                SOME (cases, (dsp, d)) =>
+                  let
+                    val v = var (b, cx, y)
+                    val ls = List.map (fn c => (c, newLabel b)) cases
+                    val ld = newLabel b
+                    fun at sp = case sp of SOME s => emit (b, L.At s) | NONE => ()
+                  in
+                    finish (b, L.Switch (v, List.map (fn ((tag, _, _), l) => (tag, l)) ls, ld));
+                    List.app (fn ((_, sp, t), l) => (start (b, l, []); at sp; exp (b, t, cx))) ls;
+                    start (b, ld, []); at dsp; exp (b, d, cx)
+                  end
+              | NONE =>
+                  let
+                    val v = var (b, cx, y)
+                    val lt = newLabel b
+                    val lf = newLabel b
+                  in
+                    finish (b, L.IfTag (v, tag, lt, lf));
+                    start (b, lt, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, t, cx);
+                    start (b, lf, []); (case sp of SOME s => emit (b, L.At s) | NONE => ()); exp (b, f, cx)
+                  end)
          | NONE =>
              (case r of
                 M.Atom a => exp (b, body, bindAs (cx, x, atom (b, cx, a)))
@@ -416,6 +430,33 @@ struct
             | _ => NONE
           end
     | _ => NONE
+
+  (* The tests of y's tag that follow in the else of each other, from the
+     one found: each tag, where it was and what it goes to -- a tag tested
+     again is left out, since the else of its first test is where the value
+     has another -- and the rest, with where it was; where they are three
+     or more, and a table of their tags no more than about four times as
+     big, a Switch. *)
+  and switchOf (y, found, f) =
+    let
+      fun peel (M.Mark (sp, e), _) = peel (e, SOME sp)
+        | peel (e, sp) = (e, sp)
+      fun collect (acc, f, fsp) =
+        case peel (f, fsp) of
+          (M.Let (x, _, r, body), sp) =>
+            (case tagTest (x, r, body) of
+               SOME (y', tag, sp', t, f') =>
+                 if y' <> y then (List.rev acc, (sp, f))
+                 else if List.exists (fn (t', _, _) => t' = tag) acc then collect (acc, f', sp')
+                 else collect ((tag, sp', t) :: acc, f', sp')
+             | NONE => (List.rev acc, (sp, f)))
+        | (e, sp) => (List.rev acc, (sp, e))
+      val (cases, rest) = collect (List.rev found, f, NONE)
+      val n = List.length cases
+      val top = List.foldl (fn ((t, _, _), m) => Int.max (t, m)) 0 cases
+    in
+      if n >= 3 andalso top < 4 * n + 8 then SOME (cases, rest) else NONE
+    end
 
   (* The closures of a group of functions: each made in turn, capturing
      those made before it and a placeholder for those after, which are set

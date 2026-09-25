@@ -12,10 +12,11 @@
      blocks -- but the jump back to the head of a loop, across which only
      the head's parameters live -- so a value lives from where it is made
      to its last use in that order, and a local freed there is given again
-     (linear scan). The
-     parameters are locals 0 to n-1, as the VM wants.
+     (linear scan). The parameters are locals 0 to n-1, as the VM wants.
    * A call of a known function is its arguments pushed and CALLK, which
      passes no closure (TAILCALLK in tail position).
+   * A Switch is SWITCH and its table, a JUMP for each tag below the
+     highest it tests.
    * The arguments of a jump are pushed and stored into the block's
      parameters from the last, so they move in parallel; a jump to the next
      block falls through, and one to a block that only returns its
@@ -249,7 +250,7 @@ struct
         | L.Tuple vs => (List.app load vs; op' (Opcodes.TUPLE, [List.length vs]))
         | L.Select (i, v) => (load v; op' (Opcodes.SELECT, [i]))
         | L.Con (t, v) => (load v; op' (Opcodes.CON, [t]))
-        | L.Decon v => (load v; op' (Opcodes.DECON, []))
+        | L.Decon (t, v) => (load v; op' (Opcodes.DECON, [t]))
         | L.ConTag v => (load v; op' (Opcodes.CONTAG, []))
         | L.NewExn n => op' (Opcodes.NEWEXN, [C.constIdx (Lambda.CString n)])
         | L.BuiltinExn k => op' (Opcodes.BUILTINEXN, [k])
@@ -344,6 +345,20 @@ struct
                 load v;
                 emit (C.OpLabImm (Opcodes.JUMPIFNOTTAG, labelOf ei, tag));
                 if ti = i + 1 then () else emit (C.OpLab (Opcodes.JUMP, labelOf ti))
+              end
+          | L.Switch (v, cases, d) =>
+              (* SWITCH and its table, a JUMP for each tag below the highest
+                 tested, to its block or to the rest's; then the rest *)
+              let
+                val n = 1 + List.foldl (fn ((t, _), m) => Int.max (t, m)) 0 cases
+                fun labelFor t = case List.find (fn (t', _) => t' = t) cases of SOME (_, l) => l | NONE => d
+                val di = target (blockIndex d)
+              in
+                load v;
+                op' (Opcodes.SWITCH, [n]);
+                List.app (fn t => emit (C.OpLab (Opcodes.JUMP, labelOf (target (blockIndex (labelFor t))))))
+                         (List.tabulate (n, fn t => t));
+                if di = i + 1 then () else emit (C.OpLab (Opcodes.JUMP, labelOf di))
               end
           | L.Return v => (load v; op' (Opcodes.RET, []))
           | L.TailCall (fv, a) => (load fv; load a; op' (Opcodes.TAILCALL, []))

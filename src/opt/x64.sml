@@ -41,7 +41,8 @@ struct
      messages of vm/interp.c. *)
   val fatalTuple = 0 val fatalCon = 1 val fatalExn = 2 val fatalEnv = 3 val fatalSelf = 4
   val fatalGlobal = 5 val fatalSelect = 6 val fatalContag = 7 val fatalJumpIfNot = 8
-  val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11
+  val fatalJumpIf = 9 val fatalPopHandler = 10 val fatalJumpIfNotTag = 11 val fatalSwitch = 12
+  val fatalDecon = 13
 
   val primNames : string vector = Vector.fromList (List.map #1 Prims.table)
   (* The description of each primitive (src/isa/prims.sml), by its number. *)
@@ -396,6 +397,7 @@ struct
             opc = Opcodes.SETLOCAL orelse opc = Opcodes.SETGLOBAL orelse opc = Opcodes.SELECT
             orelse opc = Opcodes.DECON orelse opc = Opcodes.EXNCON orelse opc = Opcodes.EXNARG
             orelse opc = Opcodes.JUMPIFNOT orelse opc = Opcodes.JUMPIF orelse opc = Opcodes.JUMPIFNOTTAG
+            orelse opc = Opcodes.SWITCH
             orelse opc = Opcodes.CALL orelse opc = Opcodes.TAILCALL orelse opc = Opcodes.RET
             orelse (opc = Opcodes.TUPLE andalso a > 0) orelse opc = Opcodes.CON orelse opc = Opcodes.MKEXN
             orelse (opc = Opcodes.CLOSURE andalso b > 0)
@@ -620,7 +622,29 @@ struct
                    inlineAlloc (fn slow => (alloc ("K_CON", a, 1, slow); copy (rslot (h - 1), field 0); putPtr (h - 1)),
                                 fn () => callC ("native_con", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.DECON =>
-                   (expectObj (h - 1, "K_CON", fatalCon); copy ("OBJ_FIELDS(%rax)", slot (h - 1)))
+                   (* under --checked, the tag tested too (decision D14),
+                      out of line: the message has both tags *)
+                   let val slow = lab pc ^ "_checked" val done = lab pc ^ "_done"
+                   in
+                     expectObj (h - 1, "K_CON", fatalCon);
+                     line "cmpl $0, VM_CHECKED(%r12)";
+                     line ("jne " ^ slow);
+                     put (done ^ ":\n");
+                     copy ("OBJ_FIELDS(%rax)", slot (h - 1));
+                     slows := (fn () =>
+                                 (put (slow ^ ":\n");
+                                  line "movzwl OBJ_CONTAG(%rax), %ecx";
+                                  line ("cmp $" ^ num a ^ ", %ecx");
+                                  line ("je " ^ done);
+                                  line "shl $16, %ecx";
+                                  line ("or $" ^ num a ^ ", %ecx");
+                                  line "mov %ecx, %edx";
+                                  line ("movl $" ^ num next ^ ", VM_PC(%r12)");
+                                  line "mov %r12, %rdi";
+                                  line ("mov $" ^ num fatalDecon ^ ", %esi");
+                                  line "call native_fatal";
+                                  line "ud2")) :: !slows
+                   end
                  | Opcode.CONTAG =>
                    let val ptr = lab pc ^ "_ptr" val done = lab pc ^ "_done"
                    in
@@ -651,6 +675,35 @@ struct
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.CALL => callTemplate ()
                  | Opcode.TAILCALL => callTemplate ()
+                 | Opcode.SWITCH =>
+                   (* the tag, as CONTAG finds it, and a jump through a table
+                      of the targets of the JUMPs after it, which are never
+                      run; past them where the tag is not below a *)
+                   let
+                     val ptr = lab pc ^ "_ptr" val have = lab pc ^ "_tag" val table = lab pc ^ "_table"
+                     val past = next + 5 * a
+                   in
+                     line ("cmpb $T_CON0, " ^ rslot (h - 1));
+                     line ("jne " ^ ptr);
+                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
+                     line ("jmp " ^ have);
+                     put (ptr ^ ":\n");
+                     line ("cmpb $T_PTR, " ^ rslot (h - 1));
+                     line ("jne " ^ check (pc, next, fatalSwitch, 0));
+                     line ("mov " ^ rpayload (h - 1) ^ ", %rax");
+                     line "cmpb $K_CON, OBJ_KIND(%rax)";
+                     line ("jne " ^ check (pc, next, fatalSwitch, 0));
+                     line "movzwl OBJ_CONTAG(%rax), %eax";
+                     put (have ^ ":\n");
+                     line ("cmp $" ^ num a ^ ", %rax");
+                     line ("jae " ^ lab past);
+                     line ("lea " ^ table ^ "(%rip), %rcx");
+                     line "movslq (%rcx,%rax,4), %rax";
+                     line "add %rcx, %rax";
+                     line "jmp *%rax";
+                     put (table ^ ":\n");
+                     List.app (fn k => line (".long " ^ lab (#a (ins (i + 1 + k))) ^ " - " ^ table)) (List.tabulate (a, fn k => k))
+                   end
                  | Opcode.CALLK => callKTemplate ()
                  | Opcode.TAILCALLK => callKTemplate ()
                  | Opcode.RET =>

@@ -2,7 +2,8 @@
 # Every program of tests/lang and tests/perf compiled at -O0, at -O2, and
 # at -O2 with no optional pass (--passes=, the back end alone), the lint of
 # every pass on and Mid's text checked against itself (--mid-roundtrip;
-# docs/ir.md). All three are run as tests/run-tests.sh runs the program --
+# docs/ir.md). All three are run --checked (DECON tests its tag), as
+# tests/run-tests.sh runs the program --
 # its .args, .stdin and .vmargs -- and must print the same, on both streams,
 # and exit the same; and the back end alone must allocate the bytes and
 # objects -O0's code does (runevm --count), the cheap check of a back end
@@ -44,7 +45,7 @@ if [ -n "$one" ]; then
   stdin=/dev/null; [ -f "$one.stdin" ] && stdin=$one.stdin
   for level in 0 2 b; do
     # shellcheck disable=SC2086
-    "$vm" --count $vmargs "$out/$name.O$level.rbc" $args < "$stdin" > "$out/$name.O$level.out" 2> "$out/$name.O$level.all"
+    "$vm" --count --checked $vmargs "$out/$name.O$level.rbc" $args < "$stdin" > "$out/$name.O$level.out" 2> "$out/$name.O$level.all"
     echo $? > "$out/$name.O$level.code"
     grep -v '^runevm: count: ' "$out/$name.O$level.all" > "$out/$name.O$level.err"
     sed -n 's/^runevm: count: [0-9]* instructions, //p' "$out/$name.O$level.all" > "$out/$name.O$level.alloc"

@@ -1,0 +1,100 @@
+(* after translate *)
+(seq
+  (set g1
+    (fn (v1 : t * int list) : int
+      (join j1 ()
+        0
+        (join j2 ()
+          1
+          (join j3 ((v2 : int) (v3 : int))
+            (prim int_add v2 v3)
+            (join j4 ((v4 : int) (v5 : int))
+              (prim int_add v4 v5)
+              (join j5 ()
+                9
+                (let v6
+                  (select 0 v1)
+                  (let v7
+                    (select 1 v1)
+                    (if
+                      (prim poly_eq
+                        (tag v6)
+                        0)
+                      (jump j1)
+                      (if
+                        (prim poly_eq
+                          (tag v6)
+                          1)
+                        (let v8
+                          (decon 1 v6)
+                          (if
+                            (prim poly_eq
+                              (tag v7)
+                              0)
+                            (jump j2)
+                            (let v9
+                              (decon 1 v7)
+                              (let v10
+                                (select 0 v9)
+                                (let v11
+                                  (select 1 v9)
+                                  (jump j3 v8 v10))))))
+                        (if
+                          (prim poly_eq
+                            (tag v6)
+                            2)
+                          (let v12
+                            (decon 2 v6)
+                            (if
+                              (prim poly_eq
+                                (tag v7)
+                                0)
+                              (jump j2)
+                              (let v13
+                                (select 0 v12)
+                                (let v14
+                                  (select 1 v12)
+                                  (jump j4 v13 v14)))))
+                          (if
+                            (prim poly_eq
+                              (tag v7)
+                              0)
+                            (jump j2)
+                            (jump j5))))))))))))))
+  (seq
+    (set g2
+      (fn (v15 : int list) : int
+        (let v16
+          v15
+          (let v17
+            v16
+            (join j6 ()
+              0
+              (join j7 ((v18 : int))
+                v18
+                (join j8 ((v19 : int) (v20 : int))
+                  (prim int_add v19 v20)
+                  (if
+                    (prim poly_eq
+                      (tag v17)
+                      0)
+                    (jump j6)
+                    (let v21
+                      (decon 1 v17)
+                      (let v22
+                        (select 0 v21)
+                        (let v23
+                          (select 1 v21)
+                          (if
+                            (prim poly_eq
+                              (tag v23)
+                              0)
+                            (jump j7 v22)
+                            (let v24
+                              (decon 1 v23)
+                              (let v25
+                                (select 0 v24)
+                                (let v26
+                                  (select 1 v24)
+                                  (jump j8 v22 v25))))))))))))))))
+    ()))

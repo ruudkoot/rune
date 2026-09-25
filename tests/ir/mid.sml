@@ -1,4 +1,4 @@
-(* dump: --dump-after=mid *)
+(* dump: --passes= --dump-after=mid *)
 (* Lambda made Mid: the top level split into definitions -- a function, a
    value, and a pattern binding done for its effect, which sets its
    globals; a match's rules as join points without parameters; what follows

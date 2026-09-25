@@ -1,4 +1,4 @@
-(* dump: --dump-after=translate *)
+(* dump: --passes= --dump-after=translate *)
 (* The types Lambda carries (docs/ir.md, Types): a polymorphic function used
    at two instances, and once where nothing says at which (a type variable
    no type was found for, '_a); a signature that makes a function less

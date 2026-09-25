@@ -210,8 +210,8 @@ of another bytecode version is refused as well. There is no dynamic loading
 afterwards: a program is one file, the basis library included.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--heap-size`, `--heap-fill`, `--emulate-fork`, `--restore`, `--version` -- is described
-in [bytecode.md](bytecode.md).
+`--gc-stress`, `--checked`, `--heap-size`, `--heap-fill`, `--emulate-fork`,
+`--restore`, `--version` -- is described in [bytecode.md](bytecode.md).
 
 ## A native program
 
@@ -230,7 +230,8 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--gc-stress`) come from the environment variable `RUNEVM_OPTIONS`, after
+  `--heap-fill`, `--gc-stress`, `--checked`) come from the environment
+  variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.
 * `CommandLine.name ()` is the name the program was started by.

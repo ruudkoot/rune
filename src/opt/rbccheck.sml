@@ -157,6 +157,18 @@ struct
               val work =
                 if isJump opc then target (a, h', d', pc, work)
                 else if installs opc then target (a, h + 1, d, pc, work)
+                else if opc = Opcodes.SWITCH then
+                  (* its table: a JUMP each, whose targets it goes to, and
+                     past them *)
+                  let
+                    fun entry (k, work) =
+                      if k = a then
+                        if i + 1 + a < n then enter (i + 1 + a, h', d', pc, work)
+                        else refuse ("a SWITCH's table runs off the code" ^ at (pc, f))
+                      else if i + 1 + k < n andalso #opc (Vector.sub (instrs, i + 1 + k)) = Opcodes.JUMP then
+                        entry (k + 1, target (#a (Vector.sub (instrs, i + 1 + k)), h', d', pc, work))
+                      else refuse ("a SWITCH's table is not JUMPs" ^ at (pc, f))
+                  in entry (0, work) end
                 else work
             in
               if ends opc then work

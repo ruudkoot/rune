@@ -35,6 +35,7 @@ struct
       fun flowName f =
         case f of Next => "next" | Branch => "branch" | Jump => "jump" | Call => "call"
                 | TailCall => "tailcall" | Return => "return" | Raise => "raise" | Halt => "halt"
+                | Switch => "switch"
       fun handlersName h = case h of Keeps => "keeps" | Installs => "installs" | Removes => "removes"
       fun instr (i : instruction) =
         String.concatWith " "
@@ -155,12 +156,14 @@ struct
             @ ["};",
                "",
                "/* Where control goes after each (src/isa/isa.sml, flow). */",
-               "enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT };",
+               "enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT,",
+               "              FLOW_SWITCH };",
                "static const unsigned char op_flow[] = {"]
             @ List.map (fn (_, i : instruction) =>
                           "  FLOW_" ^ (case #flow i of
                                           Next => "NEXT" | Branch => "BRANCH" | Jump => "JUMP" | Call => "CALL"
-                                        | TailCall => "TAILCALL" | Return => "RETURN" | Raise => "RAISE" | Halt => "HALT") ^ ",") is
+                                        | TailCall => "TAILCALL" | Return => "RETURN" | Raise => "RAISE" | Halt => "HALT"
+                                        | Switch => "SWITCH") ^ ",") is
             @ ["};",
                "",
                "/* What each operand is, which says what the loader accepts for it",

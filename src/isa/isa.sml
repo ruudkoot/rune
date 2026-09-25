@@ -56,8 +56,11 @@ struct
      * TailCall, into a function, not coming back;
      * Return, to the caller;
      * Raise, to the innermost handler;
-     * Halt, nowhere: the program ends. *)
-  datatype flow = Next | Branch | Jump | Call | TailCall | Return | Raise | Halt
+     * Halt, nowhere: the program ends;
+     * Switch, to the target of one of the JUMPs that follow it, as many as
+       its first operand says (a table, never run itself), or to the
+       instruction after them. *)
+  datatype flow = Next | Branch | Jump | Call | TailCall | Return | Raise | Halt | Switch
 
   (* What an instruction does to the handlers of its function. *)
   datatype handlers = Keeps | Installs | Removes
@@ -143,7 +146,8 @@ struct
 
   (* An instruction after which control does not go on to the next. *)
   fun ends (i : instruction) =
-    case #flow i of Jump => true | TailCall => true | Return => true | Raise => true | Halt => true | _ => false
+    case #flow i of
+      Jump => true | TailCall => true | Return => true | Raise => true | Halt => true | Switch => true | _ => false
 
   (* An instruction after which a straight run of code ends (docs/native.md,
      Counting): one that goes elsewhere, calls, or may raise. *)

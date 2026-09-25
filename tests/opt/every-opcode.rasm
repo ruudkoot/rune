@@ -49,7 +49,7 @@ function main 2
   # DECON: 6
   INT 6
   CON 1
-  DECON
+  DECON 1
   PRIM int_to_string
   PRIM print
   POP
@@ -127,6 +127,47 @@ n4:
   PRIM int_to_string
   PRIM print
   POP
+  CONST %nl
+  PRIM print
+  POP
+  # SWITCH: a nullary constructor of tag 2 goes to the target of the third
+  # JUMP of its table: 8
+  CON0 2
+  SWITCH 3
+  JUMP @w0
+  JUMP @w0
+  JUMP @w2
+  CONST %bad
+  PRIM print
+  POP
+  JUMP @wdone
+w0:
+  CONST %bad
+  PRIM print
+  POP
+  JUMP @wdone
+w2:
+  INT 8
+  PRIM int_to_string
+  PRIM print
+  POP
+wdone:
+  # and a constructor of tag 7 with an argument goes past a table of 2: 9
+  INT 5
+  CON 7
+  SWITCH 2
+  JUMP @v0
+  JUMP @v0
+  INT 9
+  PRIM int_to_string
+  PRIM print
+  POP
+  JUMP @vdone
+v0:
+  CONST %bad
+  PRIM print
+  POP
+vdone:
   CONST %nl
   PRIM print
   POP

@@ -13,6 +13,8 @@
 # tests/errors/<id>_<name>.sml : must fail to compile; the first line of the
 #   compiler's stderr must contain the text in the .expected file.
 #
+# The VM runs --checked: a DECON of another constructor than the one it names
+# stops the program (decision D14 of docs/plans/middle-end.md).
 # Tests run N at a time (default: all available CPUs); results are reported
 # in file order. Each test runs in a worker, `run-tests.sh ... --one SRC`,
 # which writes its outcome to tests/out/<name>.result.
@@ -69,7 +71,7 @@ run_lang() {
   expected_code=0
   [ -f "$base.exitcode" ] && expected_code=$(cat "$base.exitcode")
   # shellcheck disable=SC2086
-  "$vm" $vmargs "$rbc" $args < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr"
+  "$vm" --checked $vmargs "$rbc" $args < "$stdin" > "$out/$name.stdout" 2> "$out/$name.stderr"
   code=$?
   if [ "$update" = 1 ]; then
     cp "$out/$name.stdout" "$base.expected"

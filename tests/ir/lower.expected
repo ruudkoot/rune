@@ -86,7 +86,7 @@ function f4 first (v1, 0 captured)
   b1:
     iftag v1 1 b5 b6
   b5:
-    v3 = decon v1
+    v3 = decon 1 v1
     v4 = select 0 v3
     return v4
   b6:

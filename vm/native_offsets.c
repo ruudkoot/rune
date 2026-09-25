@@ -10,6 +10,7 @@
 
 int main(void) {
     SET("VM_STACK", offsetof(VM, stack));
+    SET("VM_CHECKED", offsetof(VM, checked));
     SET("VM_SP", offsetof(VM, sp));
     SET("VM_STACK_CAP", offsetof(VM, stack_cap));
     SET("VM_FRAMES", offsetof(VM, frames));

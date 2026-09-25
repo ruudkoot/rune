@@ -99,9 +99,13 @@ struct
           ["Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, 1);",
            "OBJ_FIELDS(c)[0] = *vm_top(vm, 0);",
            "*vm_top(vm, 0) = mk_ptr(c);"]),
-     inst ("DECON", [], (Fixed 1, 1), Next, "Pop a constructor value and push its argument.")
+     inst ("DECON", [("t", Tag)], (Fixed 1, 1), Next,
+           "Pop a constructor value, of tag t, and push its argument; runevm --checked stops where the tag is another.")
        ["Value v = POP();",
         "Obj *c = EXPECT(v, K_CON, \"constructor with argument\");",
+        "/* the tag is not tested but --checked (decision D14): a match that",
+        "   names every constructor of a datatype leaves the last untested */",
+        "if (vm->checked && c->contag != a) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)c->contag, (int)a);",
         "PUSH(OBJ_FIELDS(c)[0]);"],
      inst ("CONTAG", [], (Fixed 1, 1), Next, "Pop a constructor value and push its tag as an int.")
        ["Value v = POP();",
@@ -230,6 +234,17 @@ struct
         "Value *slot = vm->stack + at;",
         "for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();",
         "ENTER(slot, fn);"],
+     inst ("SWITCH", [("n", Count)], (Fixed 1, 0), Switch,
+           "Pop a constructor value; jump to the target of the JUMP of its tag among the n that follow, or past them.")
+       ["/* the JUMPs are a table, which the loader has checked; each is",
+        "   5 bytes, its target after its opcode */",
+        "Value v = POP();",
+        "int64_t tag = 0;",
+        "if (v.tag == T_CON0) tag = v.u.i;",
+        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "else FATAL(\"SWITCH on non-constructor\");",
+        "if (tag >= 0 && tag < a) JUMP_TO(read_i32(code + PC + 5 * (uint32_t)tag + 1));",
+        "else JUMP_TO(PC + 5 * (uint32_t)a);"],
      inst ("TAILCALLK", [("f", Function), ("n", Count)], (OperandValue 1, 0), TailCall,
            "Like CALLK, but the current frame is replaced.")
        ["Function *fn = &p->funcs[a];",

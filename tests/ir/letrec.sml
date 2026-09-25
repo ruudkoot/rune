@@ -1,4 +1,4 @@
-(* dump: --dump-after=translate *)
+(* dump: --passes= --dump-after=translate *)
 (* A local recursive function is a letrec; a top-level one is a global set
    before it is called. *)
 fun count 0 = 0

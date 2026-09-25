@@ -4,8 +4,8 @@
 
 /* The fingerprint of the register instruction set, which its .rbc
    and its images carry. */
-#define REG_ISA_FINGERPRINT 0x00f3834eu
-#define REG_ISA_FINGERPRINT_HEX "00f3834e"
+#define REG_ISA_FINGERPRINT 0x0098af43u
+#define REG_ISA_FINGERPRINT_HEX "0098af43"
 
 enum RegOpcode {
   ROP_HALT = 0,  /* Stop execution. */
@@ -28,7 +28,7 @@ enum RegOpcode {
   ROP_CLOSURE = 17,  /* Register d := a closure of function f capturing the n registers of env. */
   ROP_SELECT = 18,  /* Register d := field i of the tuple in register s. */
   ROP_CON = 19,  /* Register d := constructor t applied to register s. */
-  ROP_DECON = 20,  /* Register d := the argument of the constructor value in register s. */
+  ROP_DECON = 20,  /* Register d := the argument of the constructor value, of tag t, in register s; --checked stops where the tag is another. */
   ROP_CONTAG = 21,  /* Register d := the tag of the constructor value in register s, as an int. */
   ROP_NEWEXN = 22,  /* Register d := a fresh exception constructor named by string constant k. */
   ROP_BUILTINEXN = 23,  /* Register d := built-in exception constructor i (see docs/bytecode.md). */
@@ -46,6 +46,7 @@ enum RegOpcode {
   ROP_RAISE = 35,  /* Raise the exception in register s. */
   ROP_CALLK = 36,  /* Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns. */
   ROP_TAILCALLK = 37,  /* Like CALLK, but the current frame is replaced. */
+  ROP_SWITCH = 38,  /* Jump to the target of the JUMP of the tag of the constructor value in register s among the n that follow, or past them. */
   ROP__COUNT
 };
 
@@ -88,6 +89,7 @@ static const char *const rop_names[] = {
   "RAISE",
   "CALLK",
   "TAILCALLK",
+  "SWITCH",
 };
 
 /* how many operands come before the list, if there is one */
@@ -112,7 +114,7 @@ static const unsigned char rop_nfixed[] = {
   3,
   3,
   3,
-  2,
+  3,
   2,
   2,
   2,
@@ -128,6 +130,7 @@ static const unsigned char rop_nfixed[] = {
   0,
   1,
   1,
+  2,
   2,
   2,
 };
@@ -173,6 +176,7 @@ static const signed char rop_list_at[] = {
   -1,
   1,
   1,
+  -1,
 };
 static const unsigned char rop_list_prim[] = {
   0,
@@ -191,6 +195,7 @@ static const unsigned char rop_list_prim[] = {
   0,
   1,
   1,
+  0,
   0,
   0,
   0,
@@ -258,7 +263,7 @@ static const unsigned char rop_kinds[][4] = {
   {14, 7, 11, 0},  /* CLOSURE */
   {14, 12, 14, 0},  /* SELECT */
   {14, 3, 14, 0},  /* CON */
-  {14, 14, 0, 0},  /* DECON */
+  {14, 14, 3, 0},  /* DECON */
   {14, 14, 0, 0},  /* CONTAG */
   {14, 1, 0, 0},  /* NEWEXN */
   {14, 13, 0, 0},  /* BUILTINEXN */
@@ -276,6 +281,7 @@ static const unsigned char rop_kinds[][4] = {
   {14, 0, 0, 0},  /* RAISE */
   {7, 11, 0, 0},  /* CALLK */
   {7, 11, 0, 0},  /* TAILCALLK */
+  {14, 11, 0, 0},  /* SWITCH */
 };
 
 #endif

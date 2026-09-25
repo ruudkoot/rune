@@ -6,7 +6,8 @@
      generator relies on (its slots are by stamp);
    * every Fail is in tail position of the body of a Try of the same
      function, where it jumps to the Try's fallback with the stack as the
-     Try found it;
+     Try found it; every Jump in tail position of the scope of its join
+     point, in the same function, with an argument of each parameter's type;
    * every right-hand side of a letrec is a function;
    * it is well typed (Ty): every node has the type its parts give it, a use
      of a variable at an instance (Inst) is one of its scheme, a
@@ -52,8 +53,10 @@ struct
              | NONE => Error.bug (what ^ ": " ^ Ty.toString t ^ " has no constructor " ^ Int.toString tag))
         | _ => Error.bug (what ^ ": " ^ Ty.toString t ^ " is no datatype")
       (* scope: the type of each variable in scope; tail: whether a Fail here
-         is in tail position of a Try's body *)
-      fun go (e, scope : Ty.ty IntMap.map, tail : bool) : found =
+         is in tail position of a Try's body, and the join points a Jump here
+         is in tail position of the scope of, with their parameters' types *)
+      val no : bool * Ty.ty list IntMap.map = (false, IntMap.empty)
+      fun go (e, scope : Ty.ty IntMap.map, tail : bool * Ty.ty list IntMap.map) : found =
         case e of
           Var x =>
             (case IntMap.find (scope, x) of
@@ -61,7 +64,7 @@ struct
              | NONE => Error.bug ("variable v" ^ Int.toString x ^ " is not in scope"))
         | Global g => T (globalTy g)
         | Inst (a, t) =>
-            (case go (a, scope, false) of
+            (case go (a, scope, no) of
                T s => if isSome (Ty.match (s, t)) then T t
                       else Error.bug ("a use at " ^ Ty.toString t ^ " of what has type " ^ Ty.toString s)
              | Never => T t)
@@ -71,16 +74,16 @@ struct
             (case t of
                Ty.Arrow (d, r) =>
                  (bind x;
-                  expect ("the body of a function", go (b, IntMap.insert (scope, x, d), false), r);
+                  expect ("the body of a function", go (b, IntMap.insert (scope, x, d), no), r);
                   T t)
              | _ => Error.bug ("a function of type " ^ Ty.toString t))
         | App (f, a) =>
-            (case go (f, scope, false) of
-               T (Ty.Arrow (d, r)) => (expect ("an argument", go (a, scope, false), d); T r)
+            (case go (f, scope, no) of
+               T (Ty.Arrow (d, r)) => (expect ("an argument", go (a, scope, no), d); T r)
              | T t => Error.bug ("an application of what has type " ^ Ty.toString t)
-             | Never => (ignore (go (a, scope, false)); Never))
+             | Never => (ignore (go (a, scope, no)); Never))
         | Let (x, a, b) =>
-            (case go (a, scope, false) of
+            (case go (a, scope, no) of
                T t => (bind x; go (b, IntMap.insert (scope, x, t), tail))
              | Never =>
                  (* nothing after it runs, but it is checked with the type the
@@ -95,21 +98,21 @@ struct
               val scope' = List.foldl (fn ((x, t, _), m) => IntMap.insert (m, x, t)) scope bs
             in
               List.app (fn (x, t, r) =>
-                          if isFn r then expect ("the letrec of v" ^ Int.toString x, go (r, scope', false), t)
+                          if isFn r then expect ("the letrec of v" ^ Int.toString x, go (r, scope', no), t)
                           else Error.bug ("the letrec of v" ^ Int.toString x ^ " binds what is no function"))
                        bs;
               go (b, scope', tail)
             end
-        | Seq (a, b) => (ignore (go (a, scope, false)); go (b, scope, tail))
-        | SetGlobal (g, a) => (expect ("the value of global g" ^ Int.toString g, go (a, scope, false), globalTy g); T Ty.unit)
+        | Seq (a, b) => (ignore (go (a, scope, no)); go (b, scope, tail))
+        | SetGlobal (g, a) => (expect ("the value of global g" ^ Int.toString g, go (a, scope, no), globalTy g); T Ty.unit)
         | Tuple es =>
-            let val found = List.map (fn e => go (e, scope, false)) es
+            let val found = List.map (fn e => go (e, scope, no)) es
             in
               if List.exists (fn Never => true | _ => false) found then Never
               else T (Ty.Tuple (List.map (fn T t => t | Never => Ty.unit) found))
             end
         | Select (i, a) =>
-            (case go (a, scope, false) of
+            (case go (a, scope, no) of
                T (Ty.Tuple ts) =>
                  if i < List.length ts then T (List.nth (ts, i))
                  else Error.bug ("field " ^ Int.toString i ^ " of a tuple of " ^ Int.toString (List.length ts))
@@ -121,40 +124,56 @@ struct
              | SOME _ => Error.bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " is not nullary"))
         | Con (tag, t, a) =>
             (case conArg ("a constructor", t, tag) of
-               SOME arg => (expect ("the argument of a constructor", go (a, scope, false), arg); T t)
+               SOME arg => (expect ("the argument of a constructor", go (a, scope, no), arg); T t)
              | NONE => Error.bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " takes no argument"))
         | Decon (tag, a) =>
-            (case go (a, scope, false) of
+            (case go (a, scope, no) of
                T t =>
                  (case conArg ("a deconstruction", t, tag) of
                     SOME arg => T arg
                   | NONE => Error.bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
              | Never => Never)
         | ConTag a =>
-            (case go (a, scope, false) of
+            (case go (a, scope, no) of
                T (Ty.Con _) => T Ty.int
              | T t => Error.bug ("the tag of what has type " ^ Ty.toString t)
              | Never => Never)
         | If (c, t, f) =>
-            (expect ("a condition", go (c, scope, false), Ty.bool);
+            (expect ("a condition", go (c, scope, no), Ty.bool);
              join ("the branches of an if", go (t, scope, tail), go (f, scope, tail)))
-        | Try (a, b) => join ("a try and its fallback", go (a, scope, true), go (b, scope, tail))
-        | Fail => if tail then Never else Error.bug "a Fail is not in tail position of a Try"
-        | Raise a => (expect ("what is raised", go (a, scope, false), Ty.exn); Never)
+        | Try (a, b) => join ("a try and its fallback", go (a, scope, (true, #2 tail)), go (b, scope, tail))
+        | Fail => if #1 tail then Never else Error.bug "a Fail is not in tail position of a Try"
+        | Join (j, ps, b, sc) =>
+            (bind j;
+             List.app (fn (x, _) => bind x) ps;
+             let
+               val found = go (b, List.foldl (fn ((x, t), m) => IntMap.insert (m, x, t)) scope ps, tail)
+               val inScope = go (sc, scope, (#1 tail, IntMap.insert (#2 tail, j, List.map #2 ps)))
+             in join ("a join point and its scope", found, inScope) end)
+        | Jump (j, args) =>
+            (case IntMap.find (#2 tail, j) of
+               SOME ts =>
+                 if List.length ts = List.length args then
+                   (ListPair.app (fn (a, t) => expect ("an argument of join point j" ^ Int.toString j, go (a, scope, no), t))
+                                 (args, ts);
+                    Never)
+                 else Error.bug ("join point j" ^ Int.toString j ^ " given " ^ Int.toString (List.length args) ^ " arguments")
+             | NONE => Error.bug ("a jump to j" ^ Int.toString j ^ " that is not in tail position of its scope"))
+        | Raise a => (expect ("what is raised", go (a, scope, no), Ty.exn); Never)
         | Handle (a, x, h) =>
-            let val ta = go (a, scope, false)
+            let val ta = go (a, scope, no)
             in bind x; join ("a handled expression and its handler", ta, go (h, IntMap.insert (scope, x, Ty.exn), tail)) end
         | NewExn _ => T Ty.ExnCon
         | BuiltinExn _ => T Ty.ExnCon
         | MkExn (c, p) =>
-            (expect ("an exception constructor", go (c, scope, false), Ty.ExnCon);
-             ignore (go (p, scope, false));
+            (expect ("an exception constructor", go (c, scope, no), Ty.ExnCon);
+             ignore (go (p, scope, no));
              T Ty.exn)
-        | ExnCon a => (expect ("an exception", go (a, scope, false), Ty.exn); T Ty.ExnCon)
-        | ExnArg (t, a) => (expect ("an exception", go (a, scope, false), Ty.exn); T t)
+        | ExnCon a => (expect ("an exception", go (a, scope, no), Ty.exn); T Ty.ExnCon)
+        | ExnArg (t, a) => (expect ("an exception", go (a, scope, no), Ty.exn); T t)
         | Prim (p, SOME t, args) =>
             let
-              val found = List.map (fn e => go (e, scope, false)) args
+              val found = List.map (fn e => go (e, scope, no)) args
             in
               case t of
                 Ty.Arrow (d, r) =>
@@ -168,7 +187,7 @@ struct
               | _ => Error.bug ("primitive " ^ p ^ " of type " ^ Ty.toString t)
             end
         | Prim (p, NONE, args) =>
-            (case (p, List.map (fn e => go (e, scope, false)) args) of
+            (case (p, List.map (fn e => go (e, scope, no)) args) of
                ("ref_get", [T (Ty.Con (_, "ref", [t]))]) => T t
              | ("poly_eq", [a, b]) => (ignore (join ("the arguments of =", a, b)); T Ty.bool)
              | ("ptr_eq", [a, b]) => (ignore (join ("the arguments of ptr_eq", a, b)); T Ty.bool)
@@ -178,6 +197,6 @@ struct
         | Mark (_, a) => go (a, scope, tail)
         | Rest a => go (a, scope, tail)
     in
-      ignore (go (e, IntMap.empty, false))
+      ignore (go (e, IntMap.empty, no))
     end
 end

@@ -130,6 +130,7 @@ struct
                     Goto (l, args) => goto (l, args)
                   | If (_, a, b) => (goto (a, []); goto (b, []))
                   | IfTag (_, _, a, b) => (goto (a, []); goto (b, []))
+                  | Switch (_, cases, d) => (List.app (fn (_, l) => goto (l, [])) cases; goto (d, []))
                   | Return _ => if depth = 0 then () else bug (here ^ ": a return with a handler pushed")
                   | TailCall _ => if depth = 0 then () else bug (here ^ ": a tail call with a handler pushed")
                   | TailCallK (f, args) =>

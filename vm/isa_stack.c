@@ -51,6 +51,20 @@ static int stack_heights(Program *p, char *err, size_t errlen) {
             }
             int32_t after = h - pops + op_pushes[op];
             if (after > deepest) deepest = after;
+            /* a SWITCH goes to the targets of the table of JUMPs after it
+               (validate_program has checked it), or past the table */
+            if (op_flow[op] == FLOW_SWITCH) {
+                uint32_t table = pc + (uint32_t)len;
+                for (int32_t k = 0; k <= a && ok; k++) {
+                    uint32_t t = k < a ? (uint32_t)read_i32(p->code + table + 5 * (uint32_t)k + 1) : table + 5 * (uint32_t)a;
+                    if (height[t] < 0) { height[t] = after; work[nwork++] = t; }
+                    else if (height[t] != after) {
+                        snprintf(err, errlen, "the stack is %d and %d deep at %u", height[t], after, t);
+                        ok = 0;
+                    }
+                }
+                continue;
+            }
             /* where it goes on, and at what height */
             uint32_t to[3];
             int32_t at[3];
@@ -136,11 +150,25 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }
-    /* jump targets and function entries must be instruction boundaries */
+    /* jump targets and function entries must be instruction boundaries; a
+       SWITCH's table is JUMPs of its own function, which the code goes on
+       after */
     pc = 0;
+    fi = 0;
     while (pc < p->code_len) {
+        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         uint8_t op = p->code[pc];
         int len = instr_length(op);
+        if (op_flow[op] == FLOW_SWITCH) {
+            uint32_t n = (uint32_t)read_i32(p->code + pc + 1);
+            uint64_t end = (uint64_t)pc + (uint32_t)len + 5 * (uint64_t)n;
+            int bad = end >= p->funcs[fi].code_end;
+            for (uint32_t k = 0; k < n && !bad; k++) {
+                uint32_t e = pc + (uint32_t)len + 5 * k;
+                bad = !starts[e] || p->code[e] != OP_JUMP;
+            }
+            if (bad || !starts[end]) { free(starts); snprintf(err, errlen, "bad SWITCH table at %u", pc); return NULL; }
+        }
         for (int k = 0; k < op_nargs[op]; k++)
             if (op_kinds[op][k] == OPND_LABEL || op_kinds[op][k] == OPND_HANDLER_LABEL) {
                 int32_t t = read_i32(p->code + pc + 1 + 4 * k);

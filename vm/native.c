@@ -252,6 +252,8 @@ void native_fatal(VM *vm, int what, int32_t a) {
     case 9: vm_fatal(vm, "JUMPIF on non-bool"); break;
     case 10: vm_fatal(vm, "POPHANDLER with no handler"); break;
     case 11: vm_fatal(vm, "JUMPIFNOTTAG on non-constructor"); break;
+    case 12: vm_fatal(vm, "SWITCH on non-constructor"); break;
+    case 13: vm_fatal(vm, "DECON of a constructor of tag %d where %d is wanted", a >> 16, a & 0xffff); break;
     default: vm_fatal(vm, "unknown check %d", what);
     }
 }
@@ -260,7 +262,7 @@ void native_fatal(VM *vm, int what, int32_t a) {
 
 typedef struct Options {
     size_t heap, gc_stress, heap_fill;
-    int stats, count, emulate_fork;
+    int stats, count, emulate_fork, checked;
     char *restore;
 } Options;
 
@@ -288,6 +290,7 @@ static void options(const char *text, const char *where, Options *o) {
         if (strcmp(w, "--count") == 0) o->count = 1;
         else if (strcmp(w, "--stats") == 0) o->stats = 1;
         else if (strcmp(w, "--emulate-fork") == 0) o->emulate_fork = 1;
+        else if (strcmp(w, "--checked") == 0) o->checked = 1;
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -303,7 +306,8 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(o->restore, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --emulate-fork, --restore FILE)\n", where, w);
+                    "(--count, --stats, --heap-size N, --heap-fill P, --gc-stress N, --checked, --emulate-fork, "
+                    "--restore FILE)\n", where, w);
             exit(2);
         }
     }
@@ -314,7 +318,7 @@ static void options(const char *text, const char *where, Options *o) {
 static char *program_name;
 
 int main(int argc, char **argv) {
-    Options o = { 4u << 20, 0, 50, 0, 0, 0, NULL };
+    Options o = { 4u << 20, 0, 50, 0, 0, 0, 0, NULL };
     vm_same_program = same_program;
     options(rune_options, "runeopt --options", &o);
     /* The options are the runtime's, as runevm's are, and not part of what
@@ -350,6 +354,7 @@ int main(int argc, char **argv) {
     vm->count = o.count;
     vm->gc_stress = o.gc_stress;
     vm->emulate_fork = o.emulate_fork;
+    vm->checked = o.checked;
     /* the name the program has under runevm, where bin/runevm-opt runs it
        for the suites: the path of its .rbc */
     const char *name = getenv("RUNEVM_NAME");

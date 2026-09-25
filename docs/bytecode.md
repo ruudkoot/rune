@@ -163,7 +163,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `TUPLE n` | count | Pop `n` values (first pushed is field 0) and push a tuple; `n = 0` pushes `()`. |
 | `SELECT i` | index | Pop a tuple, push field `i`. |
 | `CON t` | tag | Pop a value, push `t` applied to it. |
-| `DECON` | | Pop a constructor value, push its argument. |
+| `DECON t` | tag | Pop a constructor value, of tag `t`, push its argument. The tag is tested only under `runevm --checked`. |
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
@@ -173,6 +173,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
 | `JUMPIFNOT o` / `JUMPIF o` | offset | Pop a bool, jump if false / true. |
 | `JUMPIFNOTTAG o, t` | offset, tag | Pop a constructor value (nullary or not), jump unless its tag is `t`: what `CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o` does, in one instruction, which is how the compiler tests a constructor in a match. |
+| `SWITCH n` | count | Pop a constructor value; where its tag `t` is below `n`, jump to the target of the `t`-th of the `n` `JUMP`s that follow it (a table, never run itself), else go on after them. The loader checks that they are `JUMP`s of the same function. |
 | `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
 | `RAISE` | | Pop an exception value and raise it. |
 | `NEWEXN k` | string constant | Create a fresh exception constructor named `k`. |
@@ -224,13 +225,14 @@ refuses the other's file and image.
 | `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
 | `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |
 | `SELECT d i s` | register, index, register | `d :=` field `i` of the tuple in `s`. |
-| `CON d t s` / `DECON d s` / `CONTAG d s` | registers, tag | Build a constructor value / take its argument / its tag as an int. |
+| `CON d t s` / `DECON d s t` / `CONTAG d s` | registers, tag | Build a constructor value / take the argument of one of tag `t` (tested only under `--checked`) / its tag as an int. |
 | `NEWEXN d k` / `BUILTINEXN d i` | register, string constant or 0–7 | A fresh exception constructor named `k` / builtin constructor `i`. |
 | `MKEXN d c x` / `EXNCON d s` / `EXNARG d s` | registers | An exception value / its constructor / its payload. |
 | `SETENV c e v` | register, slot, register | `c.env[e] := v` (patches mutually recursive closures). |
 | `JUMP o` | offset | Jump to `o`. |
 | `JUMPIF s o` / `JUMPIFNOT s o` | register, offset | Jump if `s` is true / false. |
 | `JUMPIFNOTTAG s o t` | register, offset, tag | Jump unless the constructor value in `s` has tag `t`. |
+| `SWITCH s n` | register, count | As the stack bytecode's `SWITCH`, on the constructor value in `s`. |
 | `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
 | `CATCH d` | register | `d :=` the exception a raise left for the handler this begins. |
 | `RAISE s` | register | Raise the exception in `s`. |
@@ -271,6 +273,11 @@ raised as noted.
   N = 1 every allocation moves every live object, which exposes a primitive
   that keeps a heap pointer in a C variable across an allocation
   (`make test-stress`);
+* `runevm --checked file.rbc` makes `DECON` test the tag it is given and
+  stop the program where the value has another. A match that names every
+  constructor of a datatype leaves the last untested (decision D14 of
+  plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
+  suites run so (`tests/run-tests.sh`, `make check-levels`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
 * `runevm --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);

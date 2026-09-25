@@ -5,8 +5,8 @@
 /* The version of the layout of an .rbc, and the fingerprint of the
    instruction set, which an .rbc and an image carry. */
 #define RBC_VERSION 3
-#define ISA_FINGERPRINT 0x002982f5u
-#define ISA_FINGERPRINT_HEX "002982f5"
+#define ISA_FINGERPRINT 0x00dc71ccu
+#define ISA_FINGERPRINT_HEX "00dc71cc"
 
 enum Opcode {
   OP_HALT = 0,  /* Stop execution. */
@@ -24,7 +24,7 @@ enum Opcode {
   OP_TUPLE = 12,  /* Pop n values (first pushed is field 0) and push a tuple. */
   OP_SELECT = 13,  /* Pop a tuple and push its field i. */
   OP_CON = 14,  /* Pop a value and push constructor t applied to it. */
-  OP_DECON = 15,  /* Pop a constructor value and push its argument. */
+  OP_DECON = 15,  /* Pop a constructor value, of tag t, and push its argument; runevm --checked stops where the tag is another. */
   OP_CONTAG = 16,  /* Pop a constructor value and push its tag as an int. */
   OP_CLOSURE = 17,  /* Pop n values (first pushed is env slot 0) into a new closure of function f. */
   OP_SETENV = 18,  /* Pop value v, pop closure c, and set c.env[e] := v. */
@@ -46,7 +46,8 @@ enum Opcode {
   OP_JUMPIFNOTTAG = 34,  /* Pop a constructor value; jump to o unless its tag is t. */
   OP_TEELOCAL = 35,  /* Store the top of stack into local slot l and leave it there: SETLOCAL l; LOCAL l in one. */
   OP_CALLK = 36,  /* Call function f, known, with the n values on top of the stack, which become its locals 0 to n-1; no closure. */
-  OP_TAILCALLK = 37,  /* Like CALLK, but the current frame is replaced. */
+  OP_SWITCH = 37,  /* Pop a constructor value; jump to the target of the JUMP of its tag among the n that follow, or past them. */
+  OP_TAILCALLK = 38,  /* Like CALLK, but the current frame is replaced. */
   OP__COUNT
 };
 
@@ -88,6 +89,7 @@ static const char *const op_names[] = {
   "JUMPIFNOTTAG",
   "TEELOCAL",
   "CALLK",
+  "SWITCH",
   "TAILCALLK",
 };
 
@@ -107,7 +109,7 @@ static const unsigned char op_nargs[] = {
   1,
   1,
   1,
-  0,
+  1,
   0,
   2,
   1,
@@ -129,6 +131,7 @@ static const unsigned char op_nargs[] = {
   2,
   1,
   2,
+  1,
   2,
 };
 
@@ -175,6 +178,7 @@ static const signed char op_pops_fixed[] = {
   1,
   1,
   -1,
+  1,
   -1,
 };
 static const signed char op_pops_operand[] = {
@@ -215,6 +219,7 @@ static const signed char op_pops_operand[] = {
   -1,
   -1,
   1,
+  -1,
   1,
 };
 static const signed char op_pops_arity[] = {
@@ -252,6 +257,7 @@ static const signed char op_pops_arity[] = {
   -1,
   -1,
   0,
+  -1,
   -1,
   -1,
   -1,
@@ -296,10 +302,12 @@ static const unsigned char op_pushes[] = {
   1,
   1,
   0,
+  0,
 };
 
 /* Where control goes after each (src/isa/isa.sml, flow). */
-enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT };
+enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT,
+              FLOW_SWITCH };
 static const unsigned char op_flow[] = {
   FLOW_HALT,
   FLOW_NEXT,
@@ -338,6 +346,7 @@ static const unsigned char op_flow[] = {
   FLOW_BRANCH,
   FLOW_NEXT,
   FLOW_CALL,
+  FLOW_SWITCH,
   FLOW_TAILCALL,
 };
 
@@ -377,7 +386,7 @@ static const unsigned char op_kinds[][2] = {
   {11, 0},  /* TUPLE */
   {12, 0},  /* SELECT */
   {3, 0},  /* CON */
-  {0, 0},  /* DECON */
+  {3, 0},  /* DECON */
   {0, 0},  /* CONTAG */
   {7, 11},  /* CLOSURE */
   {5, 0},  /* SETENV */
@@ -399,6 +408,7 @@ static const unsigned char op_kinds[][2] = {
   {8, 3},  /* JUMPIFNOTTAG */
   {4, 0},  /* TEELOCAL */
   {7, 11},  /* CALLK */
+  {11, 0},  /* SWITCH */
   {7, 11},  /* TAILCALLK */
 };
 

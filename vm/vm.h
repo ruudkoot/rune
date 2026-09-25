@@ -163,6 +163,7 @@ typedef struct VM {
     int stats;
     int count;               /* --count: report the deterministic counters at exit */
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
+    int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
 
     int argc;

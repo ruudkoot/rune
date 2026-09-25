@@ -132,11 +132,15 @@ CASE(CON) {
     NEXT;
 }
 CASE(DECON) {
-    TRACE(OP_DECON, 0, 0);
-    pc += 1;
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_DECON, a, 0);
+    pc += 5;
     count++;
     Value v = POP();
     Obj *c = EXPECT(v, K_CON, "constructor with argument");
+    /* the tag is not tested but --checked (decision D14): a match that
+       names every constructor of a datatype leaves the last untested */
+    if (vm->checked && c->contag != a) FATAL("DECON of a constructor of tag %d where %d is wanted", (int)c->contag, (int)a);
     PUSH(OBJ_FIELDS(c)[0]);
     NEXT;
 }
@@ -378,6 +382,22 @@ CASE(CALLK) {
     Value *slot = vm->stack + at;
     for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();
     ENTER(slot, fn);
+    NEXT;
+}
+CASE(SWITCH) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_SWITCH, a, 0);
+    pc += 5;
+    count++;
+    /* the JUMPs are a table, which the loader has checked; each is
+       5 bytes, its target after its opcode */
+    Value v = POP();
+    int64_t tag = 0;
+    if (v.tag == T_CON0) tag = v.u.i;
+    else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+    else FATAL("SWITCH on non-constructor");
+    if (tag >= 0 && tag < a) JUMP_TO(read_i32(code + PC + 5 * (uint32_t)tag + 1));
+    else JUMP_TO(PC + 5 * (uint32_t)a);
     NEXT;
 }
 CASE(TAILCALLK) {

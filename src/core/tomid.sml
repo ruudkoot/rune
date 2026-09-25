@@ -1,6 +1,7 @@
 (* From Lambda to Mid (docs/ir.md). The translation names every value that
    is not an atom, in the order Lambda evaluates it; makes a Try a join
-   point without parameters and its Fail a jump to it; gives what follows an
+   point without parameters and its Fail a jump to it, and a join point of
+   Lambda (a match's rule) one of Mid; gives what follows an
    expression that branches a join point with the value as its parameter,
    so that it is not copied into every branch; and splits the top level at
    each `Rest` into a list of definitions.
@@ -202,6 +203,11 @@ struct
             (case #fail st of
                SOME j => M.Jump (j, [])
              | NONE => bug "a Fail outside a Try")
+        | L.Join (j, ps, b, sc) =>
+            branch (ctx, fn ctx =>
+                           M.Join (j, ps, exp (b, List.foldl (fn ((x, t), st) => bindLocal (st, x, ([], t))) st ps, ctx),
+                                   exp (sc, st, ctx)))
+        | L.Jump (j, args) => atoms (args, st, fn (xs, _) => M.Jump (j, xs))
         | L.Raise a => atom (a, st, fn (aa, _) => M.Raise aa)
         | L.Handle (a, x, h) =>
             branch (ctx, fn ctx =>
@@ -275,6 +281,10 @@ struct
             (case split t of
                (t', SOME r) => (L.If (c, t', f), SOME r)
              | (_, NONE) => let val (f', r) = split f in (L.If (c, t, f'), r) end)
+        | L.Join (j, ps, b, sc) =>
+            (case split sc of
+               (sc', SOME r) => (L.Join (j, ps, b, sc'), SOME r)
+             | (_, NONE) => let val (b', r) = split b in (L.Join (j, ps, b', sc), r) end)
         | _ => (e, NONE)
 
       (* The globals a declaration sets. *)
@@ -288,6 +298,7 @@ struct
         | L.Try (a, b) => sets (b, sets (a, acc))
         | L.If (c, t, f) => sets (f, sets (t, sets (c, acc)))
         | L.Handle (a, _, h) => sets (h, sets (a, acc))
+        | L.Join (_, _, b, sc) => sets (sc, sets (b, acc))
         | _ => acc
 
       (* The definitions of a declaration: a run of globals set in sequence

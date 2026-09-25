@@ -26,7 +26,7 @@ What it rests on:
 | M6 | `vm/portable`: frames and dispatch | done |
 | M7 | The simplifier and tree shaking | done |
 | M8 | Known calls and the calling convention | done |
-| M9 | Decision trees and `SWITCH` | |
+| M9 | Decision trees and `SWITCH` | done |
 | M10 | The inliner, contification and inline frames | |
 | M11 | Representation | |
 | M12 | Whole-program analyses | |
@@ -1204,6 +1204,34 @@ estimated.
   * performance.md estimates `runevm` 7 to 14% for items 8 and 17
     together. The counts point to the lower end for the compiler, whose
     datatypes are mostly narrow. Wide datatypes gain more.
+* **Done:**
+  * **Decision trees** (`MatchComp.trees`, the optional pass `trees`, from
+    `-O1`; docs/ir.md, *Matches*): a match of two rules or more is a
+    matrix, split column by column where the first row tests something;
+    the rules' bodies are join points of `Lambda` (`Join`, `Jump`, which
+    ToMid makes Mid's), so no body is copied; a tree grown past a budget
+    of tests falls back to the rule-by-rule translation, as does a match
+    of one rule and all of `-O0`. An exception constructor that may be
+    another's under another name is still tested where one matched.
+  * **The last constructor untested** (D14), by construction: where the
+    column names every constructor of a datatype, the last is what is
+    left. No test relies on `Exhaust`.
+  * **`SWITCH n`** in both bytecodes, followed by a table of `n` `JUMP`s --
+    fixed-size instructions every tool already reads, which the VM reads
+    the target out of in one dispatch and the loaders check -- rather
+    than an instruction of variable length. Lower makes a Low `Switch` of
+    three or more tests of one value's tag, each in the else of the one
+    before, where the highest tag is no more than about four times their
+    number; `runeopt` jumps through a table of native addresses.
+  * **The checked mode** (D14): `DECON t` carries the tag it expects, and
+    `runevm --checked` (both VMs, and native programs) stops where the
+    value has another; `tests/run-tests.sh` and `make check-levels` run so.
+  * **Measured** against M8 (`runevm --count`): intinf_fact 21.5% fewer
+    instructions, list_ops 7.3%, string_ops 4.9%, array_sieve 3.2%; the
+    compiler compiling the same sources 7.6% fewer instructions and 5.1%
+    fewer cycles (SWITCH about 3 points of that). At the estimate's lower
+    end, as the counts said: the compiler's datatypes are mostly narrow,
+    and M8 had already removed much of what the matches cost.
 
 ### M10. The inliner, contification and inline frames (L, about 1,100)
 

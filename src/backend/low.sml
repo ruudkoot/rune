@@ -29,7 +29,7 @@ struct
     | Tuple of var list
     | Select of int * var
     | Con of int * var
-    | Decon of var
+    | Decon of int * var                  (* the argument of var, made by the constructor with the tag *)
     | ConTag of var
     | NewExn of string
     | BuiltinExn of int
@@ -50,6 +50,8 @@ struct
       Goto of label * var list
     | If of var * label * label           (* on a bool *)
     | IfTag of var * int * label * label  (* whether var's constructor has the tag *)
+    | Switch of var * (int * label) list * label  (* by var's constructor's tag: the block of each tag,
+                                                     and the one for the rest *)
     | Return of var
     | TailCall of var * var
     | TailCallK of int * var list
@@ -73,6 +75,7 @@ struct
       Goto (l, _) => [l]
     | If (_, a, b) => [a, b]
     | IfTag (_, _, a, b) => [a, b]
+    | Switch (_, cases, d) => List.map #2 cases @ [d]
     | _ => []
 
   (* The variables an operation reads. *)
@@ -85,7 +88,7 @@ struct
     | Tuple vs => vs
     | Select (_, v) => [v]
     | Con (_, v) => [v]
-    | Decon v => [v]
+    | Decon (_, v) => [v]
     | ConTag v => [v]
     | MkExn (c, p) => [c, p]
     | ExnCon v => [v]
@@ -99,6 +102,7 @@ struct
       Goto (_, vs) => vs
     | If (v, _, _) => [v]
     | IfTag (v, _, _, _) => [v]
+    | Switch (v, _, _) => [v]
     | Return v => [v]
     | TailCall (f, a) => [f, a]
     | TailCallK (_, vs) => vs
@@ -141,7 +145,7 @@ struct
         | Tuple xs => "tuple " ^ vs xs
         | Select (i, x) => "select " ^ Int.toString i ^ " " ^ v x
         | Con (t, x) => "con " ^ Int.toString t ^ " " ^ v x
-        | Decon x => "decon " ^ v x
+        | Decon (t, x) => "decon " ^ Int.toString t ^ " " ^ v x
         | ConTag x => "tag " ^ v x
         | NewExn n => "newexn " ^ n
         | BuiltinExn k => "builtinexn " ^ Int.toString k
@@ -162,6 +166,8 @@ struct
           Goto (b, xs) => "    goto " ^ l b ^ (if null xs then "" else " " ^ vs xs)
         | If (x, a, b) => "    if " ^ v x ^ " " ^ l a ^ " " ^ l b
         | IfTag (x, tag, a, b) => "    iftag " ^ v x ^ " " ^ Int.toString tag ^ " " ^ l a ^ " " ^ l b
+        | Switch (x, cases, d) =>
+            "    switch " ^ v x ^ String.concat (List.map (fn (t, b) => " " ^ Int.toString t ^ ":" ^ l b) cases) ^ " else " ^ l d
         | Return x => "    return " ^ v x
         | TailCall (f, a) => "    tailcall " ^ vs [f, a]
         | TailCallK (f, xs) => "    tailcallk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)

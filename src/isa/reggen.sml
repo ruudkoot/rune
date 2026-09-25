@@ -28,7 +28,7 @@ struct
         | PrimArgs i => "args" ^ Int.toString i
         | _ => kindName k
       fun flowName f =
-        case f of Next => "next" | Branch => "branch" | Jump => "jump" | Call => "call"
+        case f of Switch => "switch" | Next => "next" | Branch => "branch" | Jump => "jump" | Call => "call"
                 | TailCall => "tailcall" | Return => "return" | Raise => "raise" | Halt => "halt"
       fun handlersName h = case h of Keeps => "keeps" | Installs => "installs" | Removes => "removes"
       fun instr (i : rinstruction) =

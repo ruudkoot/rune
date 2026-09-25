@@ -17,6 +17,8 @@ static void usage(void) {
         "                  and the primitives' handling of heap pointers)\n"
         "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
         "                  a collection, 1 to 100 (default 50)\n"
+        "  --checked       DECON tests the tag it is given, which a match that names\n"
+        "                  every constructor leaves untested (for testing the compiler)\n"
         "  --emulate-fork  fork as on Windows, which has none: by a second runevm that\n"
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
@@ -37,7 +39,7 @@ static int size_arg(const char *text, size_t *out) {
 
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
-    int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0;
+    int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
@@ -49,6 +51,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--stats") == 0) stats = 1;
         else if (strcmp(argv[i], "--count") == 0) count = 1;
         else if (strcmp(argv[i], "--emulate-fork") == 0) emulate_fork = 1;
+        else if (strcmp(argv[i], "--checked") == 0) checked = 1;
         else if (strcmp(argv[i], "--resume") == 0 && i + 1 < argc) resume = argv[++i];
         else if (strcmp(argv[i], "--restore") == 0 && i + 1 < argc) restore = argv[++i];
         else if (strcmp(argv[i], "--gc-stress") == 0 && i + 1 < argc) {
@@ -72,6 +75,7 @@ int main(int argc, char **argv) {
             if (vm) vm_destroy(vm);
             return 2;
         }
+        vm->checked = checked;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -94,6 +98,7 @@ int main(int argc, char **argv) {
     vm->count = count;
     vm->gc_stress = gc_stress;
     vm->emulate_fork = emulate_fork;
+    vm->checked = checked;
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
