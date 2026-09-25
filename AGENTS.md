@@ -134,7 +134,11 @@ keep these invariants:
   a change to the register instruction set is `make isa` and a test, as
   for the stack one; a change to `vm/new` also runs `make test-new-asan`
   and `make test-stress`, and the Windows and portability rules below,
-  whose VMs it is built for too.
+  whose VMs it is built for too. `vm_loop` is a driver and no engine calls
+  another (`vm/new/jit.h`): the interpreter hands the VM back, exact,
+  where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`), and native
+  code hands it back where a frame is interpreted; `make test-new-jit`,
+  part of `make check`, holds the driver to never nesting.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

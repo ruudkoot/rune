@@ -66,6 +66,7 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32` and `-polyml`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
 | `make vm` | `bin/runevm`, and `bin/runevm-new`, `vm/new`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-asan` and `bin/runevm-new-asan` with AddressSanitizer/UBSan; `make test-new-asan` runs `tests/lang` on the latter |
+| `make test-new-jit` | `tests/lang` on `vm/new` with every function given to the JIT (`--jit=all`), `runevm-new --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3); part of `make check`. `make RUNE_JIT=0` builds `vm/new` without the JIT |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the four host builds |

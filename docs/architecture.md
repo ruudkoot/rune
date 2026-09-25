@@ -161,6 +161,7 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/new/interp.c`, `vm/new/reg_loop.h` | `vm/new`'s loop for the register bytecode (`bin/runevm-new`; [bytecode.md](bytecode.md), The register bytecode): the words its bodies are written in, and the loop itself, included twice, plain and traced. Its cases are the bodies of `src/isa/regs.sml`, which `runeisa` writes into `vm/new/reg_cases.h`, with `vm/new/reg_labels.h` for the computed goto and the tables of `vm/new/regops.h`. |
 | `vm/new/isa_regs.c`, `vm/new/regvm.h` | What of `vm/new` is its instruction set's: the check of a program (with each function's deepest stack), the disassembler, the fingerprint. Linked in place of `vm/isa_stack.c`. |
 | `vm/new/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
+| `vm/new/jit.h`, `vm/new/jit.c` | The JIT's view of a program (a code object per function) and the protocol between the driver, `vm_loop`, and the engines that run a frame ([plans/jit.md](plans/jit.md)); the compiler itself comes with M4. |
 | `vm/new/ARCHITECTURE.md` | `vm/new` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
 
 Everything but `interp.c`, `main.c` and `vm/new` is the runtime, which the

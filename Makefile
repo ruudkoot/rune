@@ -120,7 +120,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -321,10 +321,14 @@ bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 # vm/new's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm. Its own instruction set's part (vm/new/isa_regs.c)
 # is linked before build/librune.a, whose vm/isa_stack.c it takes the place of.
-NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.h vm/new/reg_loop.h vm/new/fastprim.h
-bin/runevm-new: vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a $(VM_HDRS) $(NEW_HDRS) | build/.doctor-vm
+NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.h vm/new/reg_loop.h vm/new/fastprim.h vm/new/jit.h
+# RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
+# interpreter alone, which refuses --jit.
+RUNE_JIT ?= 1
+NEW_LOOP := vm/main.c vm/new/interp.c vm/new/isa_regs.c vm/new/jit.c
+bin/runevm-new: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -Ivm -o $@ vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -Ivm -o $@ $(NEW_LOOP) build/librune.a -lm
 
 vm-asan: bin/runevm-asan bin/runevm-new-asan
 
@@ -339,7 +343,7 @@ bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 
 # vm/new with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
+NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c vm/new/jit.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
 bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -o $@ $(NEW_SRCS) -lm
@@ -372,7 +376,7 @@ WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
 # vm/new for Windows: its loop and its instruction set's part in place of
 # the stack bytecode's (vm/isa_stack.c), as bin/runevm-new-asan is built
-WIN_NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_win.c
+WIN_NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c vm/new/jit.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -685,6 +689,21 @@ test-new: bin/rune-new bin/runevm-new $(RUNE) vm
 	sh scripts/check-new.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW=$(abspath bin/runevm-new) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
 
+# The suites through vm/new with every function given to the JIT
+# (--jit=all; docs/plans/jit.md, M3): tests/lang on a wrapper that passes
+# the option, the driver's protocol run by every call; the executable
+# memory of the system layer (--jit-check); and a recursion 200,000 deep
+# under a machine stack of 1 MB, which holds the driver to never nesting.
+test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all "$$@"\n' > bin/runevm-new-jit
+	chmod +x bin/runevm-new-jit
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
+	bin/runevm-new --jit-check
+	@mkdir -p tests/out/new-jit
+	bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
+	(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
+	  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
+
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
@@ -751,6 +770,7 @@ check:
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-new
+	@$(MAKE) --no-print-directory test-new-jit
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs check-isa

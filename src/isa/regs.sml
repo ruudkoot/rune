@@ -31,6 +31,10 @@
      stack; ROOM(top, fn), room for a frame of fn at top, which may move
      the stack too;
    * ENTER(slot, fn), the frame's registers at slot and fn's code entered;
+     HANDOVER(f), the frame handed to the driver where function f has
+     native code (vm/new/jit.h), RETURN_NATIVE(at), where a return lands
+     in native code, and NEW_PROGRAM(), the JIT's view made again of a
+     program that became another;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
      the object v points to, of that kind, or a fatal error;
    * NEXT, on to the next instruction, for a body that ends early. *)
@@ -114,7 +118,8 @@ struct
         @ ["size_t top = (size_t)(sp - vm->stack);",
            "ROOM(top, fn);",
            "vm_push_frame(vm, (uint32_t)fidx, c, pc, top);"]
-        @ enter),
+        @ enter
+        @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
        ["R(a) = POP();"],
      rinst ("TAILCALL", [("f", reg), ("x", reg)], TailCall, "Like CALL, but the current frame is replaced.")
@@ -123,10 +128,12 @@ struct
            "ROOM(top, fn);",
            "fr->func = (uint32_t)fidx;",
            "fr->closure = c;"]
-        @ enter),
+        @ enter
+        @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RET", [("s", reg)], Return, "Return register s to the caller.")
        ["Value v = R(a);",
         "uint32_t back = fr->ret_pc;",
+        "const void *back_native = fr->native_ret;",
         "size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */",
         "if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }",
         "vm->fp--;",
@@ -137,7 +144,9 @@ struct
         "   into d here, and RESULT passed over; anything else takes it from",
         "   the stack, as an image resumed at RESULT does */",
         "if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }",
-        "else { PUSH(v); pc = back; }"],
+        "else { PUSH(v); pc = back; }",
+        "/* a caller in native code takes the frame back where it left it (M5) */",
+        "if (back_native) RETURN_NATIVE(back_native);"],
      rraising
        (rinst ("PRIM", [("p", K Primitive), ("d", reg), ("args", PrimArgs 0)], Next,
                "Register d := primitive p applied to the registers of args.")
@@ -157,8 +166,9 @@ struct
           ["for (uint32_t i = 0; i < n; i++) PUSH(R(LIST(i)));",
            "SYNC();",
            "/* one that says PRIM_NEW_WORLD has put another program here",
-           "   (Runtime.restore): RELOAD takes its code again, and the pc with it */",
-           "(void)prim_table[a](vm);",
+           "   (Runtime.restore): RELOAD takes its code again, and the pc with",
+           "   it, and the JIT's view of the program is made again */",
+           "if (prim_table[a](vm) == PRIM_NEW_WORLD) NEW_PROGRAM();",
            "RELOAD();"]),
      rinst ("TUPLE", [("d", reg), ("n", K Count), ("fields", Registers 1)], Next,
             "Register d := a tuple of the n registers of fields.")
@@ -270,7 +280,8 @@ struct
         "for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));",
         "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
         "vm_push_frame(vm, (uint32_t)a, NULL, pc, top);",
-        "ENTER(slot, fn);"],
+        "ENTER(slot, fn);",
+        "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
             "Like CALLK, but the current frame is replaced.")
        ["Function *fn = &p->funcs[a];",
@@ -286,7 +297,8 @@ struct
         "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
         "fr->func = (uint32_t)a;",
         "fr->closure = NULL;",
-        "ENTER(slot, fn);"],
+        "ENTER(slot, fn);",
+        "HANDOVER((uint32_t)a);"],
      rinst ("SWITCH", [("s", reg), ("n", K Count)], Switch,
             "Jump to the target of the JUMP of the tag of the constructor value in register s among the n that follow, or past them.")
        ["/* the JUMPs are a table, which the loader has checked; each is",

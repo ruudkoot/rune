@@ -20,6 +20,13 @@
    ask. */
 #include "regvm.h"
 #include "fastprim.h"
+#include "jit.h"
+
+#ifndef RUNE_JIT
+#define RUNE_JIT 1
+#endif
+
+#define RUN_JIT (RUNE_JIT != 0)
 
 #if defined(__GNUC__) && !defined(RUNE_SWITCH)
 #define THREADED 1
@@ -29,7 +36,8 @@
 #define THREADED 0
 #endif
 
-/* The words the bodies are written in (src/isa/regs.sml). */
+/* The words the bodies are written in (src/isa/regs.sml). The loop is
+   given the JIT's view of the program (jit), NULL where --jit is off. */
 #define R(x) (base[(x)])
 #define LIST(i) read_i32(L + 4 * (size_t)(i))
 #define PUSH(v) (*sp++ = (v))
@@ -52,6 +60,17 @@
     } while (0)
 #define FATAL(...) (SYNC(), vm_fatal(vm, __VA_ARGS__))
 #define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
+/* the frame on top handed to the driver, where function f has native code
+   (vm/new/jit.h): the VM made exact first */
+#define HANDOVER(f) \
+    do { \
+        const void *at_ = jit_entry(jit, (f)); \
+        if (at_) { SYNC(); jit->at = at_; jit->handed_native++; return RUN_NATIVE; } \
+    } while (0)
+/* a return into native code, at the address the frame kept */
+#define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
+/* the program became another (Runtime.restore): the JIT's view of it again */
+#define NEW_PROGRAM() (jit = RUN_JIT ? jit_program(vm) : NULL)
 
 /* The object v points to, which must be of that kind; the program stops
    with "expected <what>" where it is not, the VM told where it is. */
@@ -85,6 +104,7 @@ static void make_room(VM *vm) {
         Function *fn = &vm->prog.funcs[f->func];
         size_t n = f->base + fn->nlocals + fn->maxstack;
         if (n > need) need = n;
+        f->native_ret = NULL;   /* a frame of an image, or of vm_start, returns into the interpreter */
     }
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
 }
@@ -94,9 +114,36 @@ int vm_run(VM *vm) {
     return vm_loop(vm);
 }
 
-/* The loop alone: a VM resumed from an image (vm/image.c) enters it here,
-   its built-in exceptions and frames being those of the image. */
+/* The driver (vm/new/jit.h): runs the frame on top at its tier, in the
+   interpreter or in its native code, until the program ends. No engine
+   calls another, so the machine stack never grows with the program's. A
+   VM resumed from an image (vm/image.c) enters here too, its built-in
+   exceptions and frames being those of the image. */
 int vm_loop(VM *vm) {
     make_room(vm);
-    return vm->trace ? loop_traced(vm) : loop_fast(vm);
+    int r = RUN_INTERP;
+    for (;;) {
+        /* the program may have become another (Runtime.restore) */
+        JitProgram *jit = RUN_JIT ? jit_program(vm) : NULL;
+        if (r == RUN_NATIVE) r = jit_run(vm, jit, jit->at);
+        else r = vm->trace ? loop_traced(vm, jit) : loop_fast(vm, jit);
+        if (r == RUN_HALT) return 0;
+    }
 }
+
+int vm_jit_arg(const char *arg, int *mode, int *stats, int *check) {
+    if (!RUN_JIT) {
+        fprintf(stderr, "runevm: %s: this VM is built without the JIT (RUNE_JIT=0)\n", arg);
+        return 0;
+    }
+    if (strcmp(arg, "--jit-stats") == 0) { *stats = 1; return 1; }
+    if (strcmp(arg, "--jit-check") == 0) { *check = 1; return 1; }
+    if (strcmp(arg, "--jit=off") == 0) { *mode = JIT_OFF; return 1; }
+    if (strcmp(arg, "--jit=baseline") == 0) { *mode = JIT_BASELINE; return 1; }
+    if (strcmp(arg, "--jit=opt") == 0) { *mode = JIT_OPT; return 1; }
+    if (strcmp(arg, "--jit=all") == 0) { *mode = JIT_ALL; return 1; }
+    fprintf(stderr, "runevm: %s: the modes are off, baseline, opt and all\n", arg);
+    return 0;
+}
+
+int vm_jit_check(void) { return jit_check(); }

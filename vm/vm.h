@@ -222,6 +222,8 @@ typedef struct VM {
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
+    int jit_mode;            /* --jit=MODE in vm/new (vm/new/jit.h); 0, off, in runevm */
+    int jit_stats;           /* --jit-stats: what the JIT did, at exit */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -287,6 +289,7 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].closure = closure;
     vm->frames[idx].ret_pc = ret_pc;
     vm->frames[idx].base = base;
+    vm->frames[idx].native_ret = NULL;   /* native code sets its own (vm/native.c, vm/new) */
     vm->fp = idx;
     vm->frames_active = 1;
 }
@@ -306,6 +309,11 @@ void vm_destroy(VM *vm);                     /* and the VM */
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
 int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
+/* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
+   vm/new takes and runevm refuses: 1 when the option is taken, 0 when it is
+   not one. vm_jit_check runs --jit-check and gives the exit status. */
+int vm_jit_arg(const char *arg, int *mode, int *stats, int *check);
+int vm_jit_check(void);
 
 /* In a program runeopt made (vm/native.c), whether a world read from an
    image runs the program it carries; NULL in runevm, which runs any. */

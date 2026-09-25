@@ -4,7 +4,9 @@
 #   scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--profile CONFIG] [FILTER]
 # The configurations are rune (bin/runevm), new (bin/runevm-new), opt
 # (runeopt's native code) and mlton (MLton's build); all four unless
-# --configs says otherwise. Each program is wrapped as `make perf` wraps it
+# --configs says otherwise. jit is bin/runevm-new --jit=all, every function
+# given to the JIT (docs/plans/jit.md, M3), and the same for jit-off, -baseline
+# and -opt. Each program is wrapped as `make perf` wraps it
 # (tests/basis/run-matrix.sh, wall_program): its body as a function called R
 # times, R from the `wall R` line of its .budget, so that a run is long
 # enough to measure and the numbers stand beside docs/performance.md's. The
@@ -55,6 +57,9 @@ wrap() {
   } > "$3"
 }
 
+# jit_mode CONFIG: the --jit option of the jit configurations
+jit_mode() { case "$1" in jit) echo "--jit=all" ;; *) echo "--jit=${1#jit-}" ;; esac; }
+
 # build CONFIG NAME FILE: what runs FILE (a program) in CONFIG, as a command
 # line on stdout; nothing where the configuration cannot be built.
 build() {
@@ -65,6 +70,9 @@ build() {
     new)
       "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
       echo "bin/runevm-new $out/$2.new.rbc" ;;
+    jit|jit-*)
+      "$rune" --target=registers "$3" -o "$out/$2.new.rbc" 2> "$out/$2.new.err" || return 1
+      echo "bin/runevm-new $(jit_mode "$1") $out/$2.new.rbc" ;;
     opt)
       "$rune" "$3" -o "$out/$2.rbc" 2> "$out/$2.rune.err" || return 1
       bin/runeopt-mlton "$out/$2.rbc" -o "$out/$2.native" 2> "$out/$2.opt.err" || return 1
@@ -84,6 +92,8 @@ bootstrap() {
     rune) echo "bin/runevm --heap-size 67108864 bin/rune.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     new) [ -f bin/rune.new.rbc ] || return 1
          echo "bin/runevm-new --heap-size 67108864 bin/rune.new.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
+    jit|jit-*) [ -f bin/rune.new.rbc ] || return 1
+         echo "bin/runevm-new $(jit_mode "$1") --heap-size 67108864 bin/rune.new.rbc --lib lib -o $out/boot.$1.rbc $srcs" ;;
     opt) bin/runeopt-mlton --options "--heap-size 67108864" bin/rune.rbc -o "$out/rune.native" 2> "$out/rune.native.err" || return 1
          echo "$out/rune.native --lib lib -o $out/boot.$1.rbc $srcs" ;;
     mlton) [ -x bin/rune-mlton ] || return 1

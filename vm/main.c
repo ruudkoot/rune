@@ -23,6 +23,9 @@ static void usage(void) {
         "                  is handed this one's state (testing that path)\n"
         "  --resume TOKEN  carry on as the child of such a fork; runevm gives this itself\n"
         "  --restore FILE  carry on the world Runtime.save wrote to FILE\n"
+        "  --jit=MODE      vm/new: off, baseline, opt or all (docs/plans/jit.md)\n"
+        "  --jit-stats     vm/new: what the JIT did, to stderr at exit\n"
+        "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
         "  --version       print the version and exit\n");
 }
 
@@ -40,6 +43,7 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
+    int jit_mode = 0, jit_stats = 0, jit_check = 0;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
@@ -60,11 +64,15 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--heap-fill") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
+        else if (strncmp(argv[i], "--jit", 5) == 0) {
+            if (!vm_jit_arg(argv[i], &jit_mode, &jit_stats, &jit_check)) { usage(); return 2; }
+        }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
         else break;
     }
+    if (jit_check) return vm_jit_check();
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which
            gives it `Restored` */
@@ -76,6 +84,8 @@ int main(int argc, char **argv) {
             return 2;
         }
         vm->checked = checked;
+        vm->jit_mode = jit_mode;
+        vm->jit_stats = jit_stats;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -88,6 +98,8 @@ int main(int argc, char **argv) {
             if (vm) vm_destroy(vm);
             return 2;
         }
+        vm->jit_mode = jit_mode;
+        vm->jit_stats = jit_stats;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (i >= argc) { usage(); return 2; }
@@ -99,6 +111,8 @@ int main(int argc, char **argv) {
     vm->gc_stress = gc_stress;
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;
+    vm->jit_mode = jit_mode;
+    vm->jit_stats = jit_stats;
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
