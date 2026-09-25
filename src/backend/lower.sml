@@ -26,6 +26,7 @@ struct
      by its name. *)
   val useCounts : int IntMap.map ref = ref IntMap.empty
   val captures : int list IntMap.map ref = ref IntMap.empty
+  val selfRefs : bool IntMap.map ref = ref IntMap.empty
 
   fun count x = useCounts := IntMap.insert (!useCounts, x, 1 + (case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0))
   fun usesOf x = case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0
@@ -93,15 +94,22 @@ struct
     end
 
   (* What a function captures: the variables free in it, but itself, in the
-     order of their stamps; its siblings of a group are among them. *)
+     order of their stamps; its siblings of a group are among them. Whether
+     it names itself is found on the same walk (selfRefs). *)
   and capturesOf (f : M.fundef) : int list =
     case IntMap.find (!captures, #name f) of
       SOME cs => cs
     | NONE =>
         let
-          val bound = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) (IntMap.insert (IntMap.empty, #name f, ())) (#params f)
-          val cs = IntMap.listKeys (free (#body f, bound, IntMap.empty))
-        in captures := IntMap.insert (!captures, #name f, cs); cs end
+          val bound = List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) IntMap.empty (#params f)
+          val fv = free (#body f, bound, IntMap.empty)
+          val self = IntMap.member (fv, #name f)
+          val cs = IntMap.listKeys (if self then IntMap.remove (fv, #name f) else fv)
+        in
+          captures := IntMap.insert (!captures, #name f, cs);
+          selfRefs := IntMap.insert (!selfRefs, #name f, self);
+          cs
+        end
 
   fun countExp e =
     case e of
@@ -124,12 +132,15 @@ struct
   (* A function being made: its blocks so far, the block being filled, and
      how it reads the variables it captures. *)
   type builder = {blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
-                  open' : bool ref, nextLabel : int ref, env : int IntMap.map, self : int option,
+                  open' : bool ref, nextLabel : int ref, nvars : int ref, env : int IntMap.map, self : int option,
                   span : Source.span option ref}
 
   fun newLabel (b : builder) = let val l = !(#nextLabel b) in #nextLabel b := l + 1; l end
+  (* a variable of Low: numbered from 0 in each function, so that a target
+     keeps what it knows of them in arrays *)
+  fun newVar (b : builder) = let val v = !(#nvars b) in #nvars b := v + 1; v end
   fun emit (b : builder, i) = if !(#open' b) then #instrs b := i :: !(#instrs b) else ()
-  fun def (b : builder, oper) = let val x = Elaborate.freshStamp () in emit (b, L.Def (x, oper)); x end
+  fun def (b : builder, oper) = let val x = newVar b in emit (b, L.Def (x, oper)); x end
   fun finish (b : builder, t : L.transfer) =
     if !(#open' b) then
       (#blocks b := {label = !(#label b), params = !(#params b), instrs = List.rev (!(#instrs b)), transfer = t}
@@ -147,8 +158,12 @@ struct
 
   (* What an expression is lowered in: where its value goes, how many
      handlers the function has pushed, its join points (with the handlers
-     pushed where each was made), and the variables that are others. *)
+     pushed where each was made), and the variable of Low each variable of
+     Mid bound in the function is. *)
   type cx = {ret : ret, depth : int, labels : (L.label * int) IntMap.map, subst : L.var IntMap.map}
+
+  fun bindAs ({ret, depth, labels, subst} : cx, x : int, v : L.var) : cx =
+    {ret = ret, depth = depth, labels = labels, subst = IntMap.insert (subst, x, v)}
 
   (* An expression with one way out, and that at its end: its value can go
      on in the same block. *)
@@ -171,21 +186,22 @@ struct
       val () = nextFuncId := id + 1
       val cs = capturesOf f
       val param = case #params f of [(x, _)] => x | _ => bug "a function of other than one parameter"
-      val selfRef = List.exists (fn x => x = #name f) (IntMap.listKeys (free (#body f, IntMap.insert (IntMap.empty, param, ()), IntMap.empty)))
-      val recursive = group > 1 orelse selfRef
+      val recursive = group > 1 orelse IntMap.find (!selfRefs, #name f) = SOME true
       val name =
         case IntMap.find (!funNames, param) of
           SOME n => n
         | NONE => if recursive then "fn" ^ Int.toString (#name f) else "fn"
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
-                         nextLabel = ref 0,
+                         nextLabel = ref 0, nvars = ref 0,
                          env = #1 (List.foldl (fn (x, (m, i)) => (IntMap.insert (m, x, i), i + 1)) (IntMap.empty, 0) cs),
                          self = SOME (#name f), span = ref pos}
+      val p = newVar b
       val () = start (b, newLabel b, [])
-      val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty})
+      val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty,
+                                 subst = IntMap.insert (IntMap.empty, param, p)})
     in
-      funcs := {id = id, name = name, param = param, ncaptured = List.length cs, blocks = List.rev (!(#blocks b)),
-                pos = pos} :: !funcs;
+      funcs := {id = id, name = name, param = p, ncaptured = List.length cs, nvars = !(#nvars b),
+                blocks = List.rev (!(#blocks b)), pos = pos} :: !funcs;
       id
     end
 
@@ -205,7 +221,7 @@ struct
     | NONE =>
         case IntMap.find (#env b, x) of
           SOME i => def (b, L.Env i)
-        | NONE => if #self b = SOME x then def (b, L.Self) else x
+        | NONE => if #self b = SOME x then def (b, L.Self) else bug ("v" ^ Int.toString x ^ " is not in scope")
 
   and oper (b : builder, cx : cx, r : M.rhs) : L.operation =
     let fun at a = atom (b, cx, a)
@@ -253,21 +269,19 @@ struct
              end
          | NONE =>
              (case r of
-                M.Atom (M.Var (y, _)) =>
-                  exp (b, body, {ret = #ret cx, depth = #depth cx, labels = #labels cx,
-                                 subst = IntMap.insert (#subst cx, x, var (b, cx, y))})
-              | M.Atom a =>
-                  let val v = atom (b, cx, a)
-                  in exp (b, body, {ret = #ret cx, depth = #depth cx, labels = #labels cx, subst = IntMap.insert (#subst cx, x, v)}) end
-              | _ => (emit (b, L.Def (x, oper (b, cx, r))); exp (b, body, cx))))
-    | M.Fun (fs, body) => (closures (b, cx, fs); exp (b, body, cx))
+                M.Atom a => exp (b, body, bindAs (cx, x, atom (b, cx, a)))
+              | _ => exp (b, body, bindAs (cx, x, def (b, oper (b, cx, r))))))
+    | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
     | M.Join (j, ps, jbody, scope) =>
         let val l = newLabel b
         in
           exp (b, scope, {ret = #ret cx, depth = #depth cx, labels = IntMap.insert (#labels cx, j, (l, #depth cx)),
                           subst = #subst cx});
-          start (b, l, List.map #1 ps);
-          exp (b, jbody, cx)
+          let val vs = List.map (fn _ => newVar b) ps
+          in
+            start (b, l, vs);
+            exp (b, jbody, ListPair.foldl (fn ((x, _), v, cx) => bindAs (cx, x, v)) cx (ps, vs))
+          end
         end
     | M.Jump (j, xs) =>
         (case IntMap.find (#labels cx, j) of
@@ -290,8 +304,8 @@ struct
         in
           emit (b, L.Push lh);
           exp (b, a, {ret = #ret cx, depth = #depth cx + 1, labels = #labels cx, subst = #subst cx});
-          start (b, lh, [x]);
-          exp (b, h, cx)
+          let val v = newVar b
+          in start (b, lh, [v]); exp (b, h, bindAs (cx, x, v)) end
         end
     | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
     | M.Return r =>
@@ -329,15 +343,14 @@ struct
 
   (* The closures of a group of functions: each made in turn, capturing
      those made before it and a placeholder for those after, which are set
-     once all are made. *)
-  and closures (b : builder, cx : cx, fs : M.fundef list) : unit =
+     once all are made; the context with their names bound to them. *)
+  and closures (b : builder, cx : cx, fs : M.fundef list) : cx =
     let
-      val names = List.map #name fs
       (* a function begins where it is made, so that what comes before the
          first position of its body is not put down to what was made before *)
       val pos = !(#span b)
-      fun go ([], _, patches) = patches
-        | go (f :: rest, made, patches) =
+      fun go ([], cx, patches) = (cx, patches)
+        | go (f :: rest, cx, patches) =
             let
               val fid = function (f, pos, List.length fs)
               val later = List.map #name rest
@@ -347,27 +360,28 @@ struct
                               if List.exists (fn l => l = c) later then (NONE :: vs, (#name f, i, c) :: ps, i + 1)
                               else (SOME (var (b, cx, c)) :: vs, ps, i + 1))
                            ([], [], 0) cs
-              val () = emit (b, L.Def (#name f, L.Closure (fid, List.rev vs)))
-            in go (rest, #name f :: made, patches @ List.rev ps) end
-      val patches = go (fs, [], [])
-      val _ = names
+              val v = def (b, L.Closure (fid, List.rev vs))
+            in go (rest, bindAs (cx, #name f, v), patches @ List.rev ps) end
+      val (cx, patches) = go (fs, cx, [])
     in
-      List.app (fn (f, i, c) => ignore (def (b, L.SetEnv (f, i, c)))) patches
+      List.app (fn (f, i, c) => ignore (def (b, L.SetEnv (var (b, cx, f), i, var (b, cx, c))))) patches;
+      cx
     end
 
   (* ---- the program ---- *)
 
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
-      val () = (useCounts := IntMap.empty; captures := IntMap.empty; funcs := []; nextFuncId := 0; funNames := names)
+      val () = (useCounts := IntMap.empty; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
+                nextFuncId := 0; funNames := names)
       val () = List.app (fn M.Val (_, _, e) => countExp e
                           | M.Funs fs => List.app (countExp o #body) fs
                           | M.Do (_, e) => countExp e) p
       val id = !nextFuncId
       val () = nextFuncId := id + 1
-      val param = Elaborate.freshStamp ()
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
-                         nextLabel = ref 0, env = IntMap.empty, self = NONE, span = ref NONE}
+                         nextLabel = ref 0, nvars = ref 0, env = IntMap.empty, self = NONE, span = ref NONE}
+      val param = newVar b
       val () = start (b, newLabel b, [])
       val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty}
       (* a definition's expression, whose value then goes to k *)
@@ -376,7 +390,7 @@ struct
         else
           let
             val l = newLabel b
-            val x = Elaborate.freshStamp ()
+            val x = newVar b
           in
             exp (b, e, {ret = ToBlock (l, 0), depth = 0, labels = IntMap.empty, subst = IntMap.empty});
             start (b, l, [x]);
@@ -398,7 +412,7 @@ struct
       val u = def (b, L.Unit)
       val () = finish (b, L.Return u)
       val () = ignore top
-      val topFunc : L.func = {id = id, name = "<toplevel>", param = param, ncaptured = 0,
+      val topFunc : L.func = {id = id, name = "<toplevel>", param = param, ncaptured = 0, nvars = !(#nvars b),
                               blocks = List.rev (!(#blocks b)), pos = NONE}
     in
       IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (topFunc :: !funcs))

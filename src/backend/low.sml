@@ -55,10 +55,12 @@ struct
 
   type block = {label : label, params : var list, instrs : instr list, transfer : transfer}
 
-  (* A function: its parameter, how many values it captures, and its blocks,
-     the entry first. The top level of the program is a function too, whose
+  (* A function: its parameter, how many values it captures, how many
+     variables it has -- they are numbered from 0 in each function, so that a
+     target keeps what it knows of them in arrays -- and its blocks, the
+     entry first. The top level of the program is a function too, whose
      parameter is never used. *)
-  type func = {id : int, name : string, param : var, ncaptured : int, blocks : block list,
+  type func = {id : int, name : string, param : var, ncaptured : int, nvars : int, blocks : block list,
                pos : Source.span option}
 
   type program = func list
@@ -105,13 +107,15 @@ struct
 
   fun show (p : program) : string =
     let
-      (* variables and globals numbered afresh, as a dump of Mid numbers them *)
+      (* variables numbered afresh in each function, and globals in the
+       program, as a dump of Mid numbers them *)
       fun counter () = (ref IntMap.empty, ref 0)
       fun number ((m, c), x) =
         case IntMap.find (!m, x) of
           SOME n => n
         | NONE => (c := !c + 1; m := IntMap.insert (!m, x, !c); !c)
       val vars = counter ()
+      fun restart () = (#1 vars := IntMap.empty; #2 vars := 0)
       val globals = counter ()
       fun v x = "v" ^ Int.toString (number (vars, x))
       fun g x = "g" ^ Int.toString (number (globals, x))
@@ -159,7 +163,8 @@ struct
         let val head = "  " ^ l label ^ (if null params then "" else "(" ^ vs params ^ ")") ^ ":"
         in head :: List.filter (fn s => s <> "") (List.map instr instrs) @ [transfer t] end
       fun func ({id, name, param, ncaptured, blocks, ...} : func) =
-        ("function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ v param ^ ", " ^ Int.toString ncaptured ^ " captured)")
+        (restart ();
+         "function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ v param ^ ", " ^ Int.toString ncaptured ^ " captured)")
         :: List.concat (List.map block blocks)
     in
       String.concatWith "\n" (List.concat (List.map func p))

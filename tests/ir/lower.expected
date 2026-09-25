@@ -51,50 +51,50 @@ function f0 <toplevel> (v1, 0 captured)
     v33 = setglobal g5 v32
     v34 = ()
     return v34
-function f1 adder (v35, 0 captured)
+function f1 adder (v1, 0 captured)
   b0:
-    v36 = closure f2 v35
-    return v36
-function f2 fn (v37, 1 captured)
+    v2 = closure f2 v1
+    return v2
+function f2 fn (v1, 1 captured)
   b0:
-    v38 = env 0
-    v39 = prim int_add v37 v38
-    return v39
-function f3 count (v40, 0 captured)
+    v2 = env 0
+    v3 = prim int_add v1 v2
+    return v3
+function f3 count (v1, 0 captured)
   b0:
-    v41 = select 0 v40
-    v42 = select 1 v40
-    v43 = const 0
-    v44 = prim poly_eq v41 v43
-    if v44 b1 b2
+    v2 = select 0 v1
+    v3 = select 1 v1
+    v4 = const 0
+    v5 = prim poly_eq v2 v4
+    if v5 b1 b2
   b1:
-    return v42
+    return v3
   b2:
-    v45 = const 1
-    v46 = prim int_sub v41 v45
-    v47 = const 1
-    v48 = prim int_add v42 v47
-    v49 = tuple v46 v48
-    v50 = global g2
-    tailcall v50 v49
-function f4 first (v51, 0 captured)
+    v6 = const 1
+    v7 = prim int_sub v2 v6
+    v8 = const 1
+    v9 = prim int_add v3 v8
+    v10 = tuple v7 v9
+    v11 = global g2
+    tailcall v11 v10
+function f4 first (v1, 0 captured)
   b0:
-    iftag v51 0 b2 b3
+    iftag v1 0 b2 b3
   b2:
-    v52 = const 0
-    return v52
+    v2 = const 0
+    return v2
   b3:
     goto b1
   b1:
-    iftag v51 1 b5 b6
+    iftag v1 1 b5 b6
   b5:
-    v53 = decon v51
-    v54 = select 0 v53
-    return v54
+    v3 = decon v1
+    v4 = select 0 v3
+    return v4
   b6:
     goto b4
   b4:
-    v55 = builtinexn 0
-    v56 = ()
-    v57 = mkexn v55 v56
-    raise v57
+    v5 = builtinexn 0
+    v6 = ()
+    v7 = mkexn v5 v6
+    raise v7

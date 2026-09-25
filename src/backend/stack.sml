@@ -46,22 +46,30 @@ struct
     let
       val blocks = Vector.fromList (#blocks f)
       val nblocks = Vector.length blocks
-      val index : int IntMap.map = #1 (Vector.foldl (fn ({label, ...} : L.block, (m, i)) => (IntMap.insert (m, label, i), i + 1))
-                                                    (IntMap.empty, 0) blocks)
-      fun blockIndex l = case IntMap.find (index, l) of SOME i => i | NONE => bug "a jump to no block"
+      val nv = Int.max (#nvars f, 1)
+      (* what is known of each variable and label, in arrays: they are
+         numbered from 0 in a function (Low.func) *)
+      val index =
+        let
+          val top = Vector.foldl (fn ({label, ...} : L.block, m) => Int.max (label, m)) 0 blocks
+          val a = Array.array (top + 1, ~1)
+        in Vector.appi (fn (i, {label, ...} : L.block) => Array.update (a, label, i)) blocks; a end
+      fun blockIndex l =
+        if l >= 0 andalso l < Array.length index andalso Array.sub (index, l) >= 0 then Array.sub (index, l)
+        else bug "a jump to no block"
 
       (* the definitions, and how often each variable is used *)
-      val defs : L.operation IntMap.map ref = ref IntMap.empty
-      val uses : int IntMap.map ref = ref IntMap.empty
-      fun use x = uses := IntMap.insert (!uses, x, 1 + (case IntMap.find (!uses, x) of SOME n => n | NONE => 0))
-      fun usesOf x = case IntMap.find (!uses, x) of SOME n => n | NONE => 0
+      val defs : L.operation option array = Array.array (nv, NONE)
+      val uses : int array = Array.array (nv, 0)
+      fun use x = Array.update (uses, x, Array.sub (uses, x) + 1)
+      fun usesOf x = Array.sub (uses, x)
       val () =
         Vector.app (fn ({instrs, transfer, ...} : L.block) =>
-                      (List.app (fn L.Def (x, oper) => (defs := IntMap.insert (!defs, x, oper); List.app use (L.uses oper))
+                      (List.app (fn L.Def (x, oper) => (Array.update (defs, x, SOME oper); List.app use (L.uses oper))
                                   | _ => ()) instrs;
                        List.app use (L.transferUses transfer)))
                    blocks
-      fun isRemat x = case IntMap.find (!defs, x) of SOME oper => remat oper | NONE => false
+      fun isRemat x = case Array.sub (defs, x) of SOME oper => remat oper | NONE => false
 
       (* where each block's jump goes when it only returns its parameter *)
       fun returnsParam i =
@@ -80,8 +88,8 @@ struct
       (* ---- the trees: which values stay on the stack ---- *)
 
       (* tree x: x is computed where its one use pushes its operands *)
-      val tree : unit IntMap.map ref = ref IntMap.empty
-      fun isTree x = IntMap.member (!tree, x)
+      val tree : bool array = Array.array (nv, false)
+      fun isTree x = Array.sub (tree, x)
       val () =
         Vector.app
           (fn ({instrs, transfer, ...} : L.block) =>
@@ -96,7 +104,7 @@ struct
                            go (rest, pending)       (* pushed where it is used *)
                          else
                            case pending of
-                             p :: more => if p = v then (tree := IntMap.insert (!tree, v, ()); go (rest, more)) else []
+                             p :: more => if p = v then (Array.update (tree, v, true); go (rest, more)) else []
                            | [] => []
                  in go (List.rev vs, pending) end
                fun step (i, pending) =
@@ -118,11 +126,11 @@ struct
 
       (* positions in the order of the blocks: where each variable is made,
          and where it is last used *)
-      val first : int IntMap.map ref = ref IntMap.empty
-      val last : int IntMap.map ref = ref IntMap.empty
+      val first : int array = Array.array (nv, ~1)
+      val last : int array = Array.array (nv, ~1)
       val pos = ref 0
-      fun born x = if IntMap.member (!first, x) then () else first := IntMap.insert (!first, x, !pos)
-      fun seen x = last := IntMap.insert (!last, x, !pos)
+      fun born x = if Array.sub (first, x) >= 0 then () else Array.update (first, x, !pos)
+      fun seen x = Array.update (last, x, !pos)
       fun needsLocal x = not (isTree x) andalso not (isRemat x)
       val () = (born (#param f); seen (#param f))
       val () =
@@ -134,43 +142,42 @@ struct
                        pos := !pos + 1;
                        List.app seen (L.transferUses transfer)))
                    blocks
-      val slots : int IntMap.map ref = ref IntMap.empty
+      val slots : int array = Array.array (nv, ~1)
       val nslots = ref 1
-      val () = slots := IntMap.insert (!slots, #param f, 0)
+      val () = Array.update (slots, #param f, 0)
       val () =
         let
           (* the variables that want a local, in the order they are made *)
-          val byStart =
-            List.concat
-              (IntMap.listItems
-                 (IntMap.foldli (fn (x, s, m) =>
-                                   if x = #param f orelse not (needsLocal x) then m
-                                   else IntMap.insert (m, s, x :: (case IntMap.find (m, s) of SOME xs => xs | NONE => [])))
-                                IntMap.empty (!first)))
-          fun startOf x = case IntMap.find (!first, x) of SOME s => s | NONE => 0
+          val buckets : int list array = Array.array (!pos + 1, [])
+          val () =
+            Array.appi (fn (x, s) =>
+                          if s < 0 orelse x = #param f orelse not (needsLocal x) then ()
+                          else Array.update (buckets, s, x :: Array.sub (buckets, s)))
+                       first
+          val byStart = Array.foldr (fn (xs, acc) => List.revAppend (xs, acc)) [] buckets
           fun insert (k, []) = [k]
             | insert (k, k' :: rest) = if k < k' then k :: k' :: rest else k' :: insert (k, rest)
           (* free: the locals no live variable holds, the lowest first;
              active: (last use, local) of the live ones. A local may be given
              to what the instruction that last reads it makes. *)
-          val paramEnd = case IntMap.find (!last, #param f) of SOME e => e | NONE => 0
+          val paramEnd = Int.max (Array.sub (last, #param f), 0)
           fun alloc ([], _, _) = ()
             | alloc (x :: rest, free, active) =
                 let
-                  val s = startOf x
+                  val s = Array.sub (first, x)
                   val (expired, still) = List.partition (fn (e, _) => e <= s) active
                   val free = List.foldl (fn ((_, k), fr) => insert (k, fr)) free expired
                   val (slot, free) =
                     case free of
                       k :: more => (k, more)
                     | [] => let val k = !nslots in nslots := k + 1; (k, []) end
-                  val e = case IntMap.find (!last, x) of SOME e => e | NONE => s
+                  val e = let val e = Array.sub (last, x) in if e < 0 then s else e end
                 in
-                  slots := IntMap.insert (!slots, x, slot);
+                  Array.update (slots, x, slot);
                   alloc (rest, free, (e, slot) :: still)
                 end
         in alloc (byStart, [], [(paramEnd, 0)]) end
-      fun slotOf x = case IntMap.find (!slots, x) of SOME k => k | NONE => bug ("no local for v" ^ Int.toString x)
+      fun slotOf x = let val k = Array.sub (slots, x) in if k < 0 then bug ("no local for v" ^ Int.toString x) else k end
 
       (* ---- the code ---- *)
 
@@ -194,15 +201,17 @@ struct
 
       (* the code of each tree, kept until its use pushes it, with the
          positions in force where it begins and ends *)
-      val trees : (C.item list * (int * int * int) * (int * int * int)) IntMap.map ref = ref IntMap.empty
+      val trees : (C.item list * (int * int * int) * (int * int * int)) option array = Array.array (nv, NONE)
+      val pendingTrees = ref 0
       fun restore p = if p = !here orelse p = (~1, ~1, ~1) then () else (here := p; emit (C.Pos p))
 
       fun load x =
-        case IntMap.find (!trees, x) of
+        case Array.sub (trees, x) of
           SOME (items, start, stop) =>
-            (restore start; List.app emit (List.rev items); here := stop; trees := IntMap.remove (!trees, x))
+            (restore start; List.app emit (List.rev items); here := stop; Array.update (trees, x, NONE);
+             pendingTrees := !pendingTrees - 1)
         | NONE =>
-            (case IntMap.find (!defs, x) of
+            (case Array.sub (defs, x) of
                SOME oper => if remat oper then operation oper else op' (Opcodes.LOCAL, [slotOf x])
              | NONE => op' (Opcodes.LOCAL, [slotOf x]))
       (* An operation: its operands pushed, and then it, where it was. *)
@@ -252,7 +261,10 @@ struct
             val () = operation oper
             val items = !code
             val stop = !here
-          in code := saved; here := start; trees := IntMap.insert (!trees, x, (items, start, stop)) end
+          in
+            code := saved; here := start; Array.update (trees, x, SOME (items, start, stop));
+            pendingTrees := !pendingTrees + 1
+          end
         else
           (operation oper;
            if usesOf x = 0 then (if pushes oper then op' (Opcodes.POP, []) else ())
@@ -288,13 +300,14 @@ struct
         end
 
       (* the blocks that are handlers *)
-      val handlers : unit IntMap.map =
-        Vector.foldl (fn ({instrs, ...} : L.block, m) =>
-                        List.foldl (fn (L.Push l, m) => IntMap.insert (m, blockIndex l, ()) | (_, m) => m) m instrs)
-                     IntMap.empty blocks
+      val handlers : bool array = Array.array (Int.max (nblocks, 1), false)
+      val () =
+        Vector.app (fn ({instrs, ...} : L.block) =>
+                      List.app (fn L.Push l => Array.update (handlers, blockIndex l, true) | _ => ()) instrs)
+                   blocks
       fun block (i, {params, instrs, transfer, ...} : L.block) =
         let
-          val handler = IntMap.member (handlers, i)
+          val handler = Array.sub (handlers, i)
         in
           emit (C.Lab (labelOf i));
           (* a handler's block begins with the exception on the stack *)
@@ -322,7 +335,7 @@ struct
           | L.Raise v => (load v; op' (Opcodes.RAISE, []))
         end
       val () = Vector.appi block blocks
-      val () = if IntMap.isEmpty (!trees) then () else bug "a tree never used"
+      val () = if !pendingTrees = 0 then () else bug "a tree never used"
     in
       {id = #id f, nlocals = !nslots, code = List.rev (!code), name = #name f}
     end

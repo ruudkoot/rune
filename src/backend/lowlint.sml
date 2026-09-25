@@ -1,9 +1,10 @@
 (* What every Low keeps (docs/ir.md), checked after the pass lower when
    --lint is given:
-   * SSA: every variable is defined once in the program, by an instruction
-     or as a block's parameter, and is defined on every way to each of its
-     uses -- a handler's block sees only what was defined where it was
-     pushed, since its region may raise anywhere;
+   * SSA: every variable of a function is below its number of variables and
+     defined once in it, by an instruction or as a block's parameter, and is
+     defined on every way to each of its uses -- a handler's block sees only
+     what was defined where it was pushed, since its region may raise
+     anywhere;
    * blocks: every jump is to a block of its function, forward in their
      order, with an argument for each parameter; a handler's block has one
      parameter, the exception;
@@ -18,14 +19,15 @@ struct
   fun check (p : program) : unit =
     let
       fun bug msg = Error.bug msg
-      val defined : unit IntMap.map ref = ref IntMap.empty
-      fun define x =
-        if IntMap.member (!defined, x) then bug ("v" ^ Int.toString x ^ " is defined twice")
-        else defined := IntMap.insert (!defined, x, ())
 
-      fun func ({id, param, blocks, ...} : func) =
+      fun func ({id, param, nvars, blocks, ...} : func) =
         let
           val where' = "function f" ^ Int.toString id
+          val defined = Array.array (Int.max (nvars, 1), false)
+          fun define x =
+            if x < 0 orelse x >= nvars then bug (where' ^ ": v" ^ Int.toString x ^ " is no variable of it")
+            else if Array.sub (defined, x) then bug (where' ^ ": v" ^ Int.toString x ^ " is defined twice")
+            else Array.update (defined, x, true)
           val () = define param
           val index : int IntMap.map =
             #1 (List.foldl (fn ({label, ...} : block, (m, i)) =>

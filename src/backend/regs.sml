@@ -35,13 +35,21 @@ struct
     let
       val blocks = Vector.fromList (#blocks f)
       val nblocks = Vector.length blocks
-      val index : int IntMap.map = #1 (Vector.foldl (fn ({label, ...} : L.block, (m, i)) => (IntMap.insert (m, label, i), i + 1))
-                                                    (IntMap.empty, 0) blocks)
-      fun blockIndex l = case IntMap.find (index, l) of SOME i => i | NONE => bug "a jump to no block"
+      val nv = Int.max (#nvars f, 1)
+      (* what is known of each variable and label, in arrays: they are
+         numbered from 0 in a function (Low.func) *)
+      val index =
+        let
+          val top = Vector.foldl (fn ({label, ...} : L.block, m) => Int.max (label, m)) 0 blocks
+          val a = Array.array (top + 1, ~1)
+        in Vector.appi (fn (i, {label, ...} : L.block) => Array.update (a, label, i)) blocks; a end
+      fun blockIndex l =
+        if l >= 0 andalso l < Array.length index andalso Array.sub (index, l) >= 0 then Array.sub (index, l)
+        else bug "a jump to no block"
 
-      val uses : int IntMap.map ref = ref IntMap.empty
-      fun use x = uses := IntMap.insert (!uses, x, 1 + (case IntMap.find (!uses, x) of SOME n => n | NONE => 0))
-      fun usesOf x = case IntMap.find (!uses, x) of SOME n => n | NONE => 0
+      val uses : int array = Array.array (nv, 0)
+      fun use x = Array.update (uses, x, Array.sub (uses, x) + 1)
+      fun usesOf x = Array.sub (uses, x)
       val () =
         Vector.app (fn ({instrs, transfer, ...} : L.block) =>
                       (List.app (fn L.Def (_, oper) => List.app use (L.uses oper) | _ => ()) instrs;
@@ -61,11 +69,11 @@ struct
       fun target i = case forward i of SOME j => if j > i then target j else i | NONE => i
 
       (* ---- the registers ---- *)
-      val first : int IntMap.map ref = ref IntMap.empty
-      val last : int IntMap.map ref = ref IntMap.empty
+      val first : int array = Array.array (nv, ~1)
+      val last : int array = Array.array (nv, ~1)
       val pos = ref 0
-      fun born x = if IntMap.member (!first, x) then () else first := IntMap.insert (!first, x, !pos)
-      fun seen x = last := IntMap.insert (!last, x, !pos)
+      fun born x = if Array.sub (first, x) >= 0 then () else Array.update (first, x, !pos)
+      fun seen x = Array.update (last, x, !pos)
       val () = (born (#param f); seen (#param f))
       val () =
         Vector.app (fn ({params, instrs, transfer, ...} : L.block) =>
@@ -76,21 +84,21 @@ struct
                        pos := !pos + 1;
                        List.app seen (L.transferUses transfer)))
                    blocks
-      val regs : int IntMap.map ref = ref (IntMap.insert (IntMap.empty, #param f, 0))
+      val regs : int array = Array.array (nv, ~1)
+      val () = Array.update (regs, #param f, 0)
       val nregs = ref 1
       val () =
         let
-          val byStart =
-            List.concat
-              (IntMap.listItems
-                 (IntMap.foldli (fn (x, s, m) =>
-                                   if x = #param f orelse usesOf x = 0 then m
-                                   else IntMap.insert (m, s, x :: (case IntMap.find (m, s) of SOME xs => xs | NONE => [])))
-                                IntMap.empty (!first)))
-          fun startOf x = case IntMap.find (!first, x) of SOME s => s | NONE => 0
+          val buckets : int list array = Array.array (!pos + 1, [])
+          val () =
+            Array.appi (fn (x, s) =>
+                          if s < 0 orelse x = #param f orelse usesOf x = 0 then ()
+                          else Array.update (buckets, s, x :: Array.sub (buckets, s)))
+                       first
+          val byStart = Array.foldr (fn (xs, acc) => List.revAppend (xs, acc)) [] buckets
           fun insert (k, []) = [k]
             | insert (k, k' :: rest) = if k < k' then k :: k' :: rest else k' :: insert (k, rest)
-          val paramEnd = case IntMap.find (!last, #param f) of SOME e => e | NONE => 0
+          val paramEnd = Int.max (Array.sub (last, #param f), 0)
           (* a register is given again only after the instruction that last
              reads it: a register instruction may write its destination
              before it has read every operand (PRIM, TUPLE read theirs first,
@@ -98,22 +106,22 @@ struct
           fun alloc ([], _, _) = ()
             | alloc (x :: rest, free, active) =
                 let
-                  val s = startOf x
+                  val s = Array.sub (first, x)
                   val (expired, still) = List.partition (fn (e, _) => e < s) active
                   val free = List.foldl (fn ((_, k), fr) => insert (k, fr)) free expired
                   val (r, free) =
                     case free of
                       k :: more => (k, more)
                     | [] => let val k = !nregs in nregs := k + 1; (k, []) end
-                  val e = case IntMap.find (!last, x) of SOME e => e | NONE => s
+                  val e = let val e = Array.sub (last, x) in if e < 0 then s else e end
                 in
-                  regs := IntMap.insert (!regs, x, r);
+                  Array.update (regs, x, r);
                   alloc (rest, free, (e, r) :: still)
                 end
         in alloc (byStart, [], [(paramEnd, 0)]) end
       val scratch = !nregs
       val nlocals = scratch + 1
-      fun reg x = case IntMap.find (!regs, x) of SOME r => r | NONE => scratch
+      fun reg x = let val r = Array.sub (regs, x) in if r < 0 then scratch else r end
 
       (* ---- the code ---- *)
       val code : C.item list ref = ref []
@@ -202,14 +210,15 @@ struct
             end
         end
 
-      val handlers : unit IntMap.map =
-        Vector.foldl (fn ({instrs, ...} : L.block, m) =>
-                        List.foldl (fn (L.Push l, m) => IntMap.insert (m, blockIndex l, ()) | (_, m) => m) m instrs)
-                     IntMap.empty blocks
+      val handlers : bool array = Array.array (Int.max (nblocks, 1), false)
+      val () =
+        Vector.app (fn ({instrs, ...} : L.block) =>
+                      List.app (fn L.Push l => Array.update (handlers, blockIndex l, true) | _ => ()) instrs)
+                   blocks
 
       fun block (i, {params, instrs, transfer, ...} : L.block) =
         (emit (C.Lab (labelOf i));
-         if IntMap.member (handlers, i) then
+         if Array.sub (handlers, i) then
            (case params of
               [x] => op' (R.CATCH, [reg x])
             | _ => bug "a handler's block of other than one parameter")
