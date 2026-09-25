@@ -18,6 +18,7 @@ struct
   val showHelp = ref false
   val readMid : string option ref = ref NONE   (* --read-mid FILE: a Mid program, not SML *)
   val midRoundTrip = ref false                 (* --mid-roundtrip: check MidText against itself *)
+  val target = ref "stack"                     (* --target=T: the bytecode made (Target) *)
 
   val usage =
     "usage: rune [options] file.sml ...\n\
@@ -50,6 +51,8 @@ struct
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
     \                    make and check it as the pass mid would, but no bytecode\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
+    \  --target=T        the bytecode to make: stack (runevm's, the default) or\n\
+    \                    registers (vm/new's, from -O1)\n\
     \  --version         print the version and exit\n\
     \  --help            print this message\n"
 
@@ -99,6 +102,9 @@ struct
            SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
          | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
          | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
+         | SOME ("--target", v) =>
+             if v = "stack" orelse v = "registers" then (target := v; parse rest)
+             else raise Usage "--target requires stack or registers"
          | SOME ("--fuel", v) =>
              (case Int.fromString v of
                 SOME n => if n >= 0 then (Pass.fuel := SOME n; parse rest) else raise Usage "--fuel requires a number"

@@ -7,7 +7,7 @@
 #                   bin/runedoc and bin/runeopt, which the compiler compiles
 #   make mlton|smlnj|smlnj32|polyml   build the compiler with one of them
 #   make host-builds  build the compiler with all four
-#   make vm         build bin/runevm
+#   make vm         build bin/runevm, and bin/runevm-new, vm/new's first loop
 #   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
 #                   the bin/rune-boot wrapper that runs it, and bin/rune -> it
 #   make test       run the test suite with bin/rune
@@ -40,6 +40,8 @@
 #                   the matrix
 #   make test-native  the suites with every program translated to native code
 #                   by runeopt (docs/native.md); part of make check
+#   make test-new   the suites through vm/new's first loop and the register
+#                   bytecode (docs/bytecode.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
 # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32 and bin/rune-polyml exist
@@ -76,8 +78,8 @@ RUNEDOC ?= bin/runedoc
 RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
-GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml
-GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/ops.h
+GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
+GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/ops.h vm/new/regops.h vm/new/reg_cases.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
 SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
 SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
@@ -92,7 +94,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.ml
 # build/librune.a, which bin/runevm links, and so will a program runeopt
 # makes (docs/native.md); the other VMs compile the same list.
 SYS ?= posix
-RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/prims.c vm/image.c
+RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/isa_stack.c vm/prims.c vm/image.c
 VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
 VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
 RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
@@ -118,7 +120,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -293,7 +295,7 @@ bin/runeopt-polyml: bin/runeopt-polyml.bin Makefile
 	chmod +x $@
 
 # ---------------------------------------------------------------- VM
-vm: bin/runevm
+vm: bin/runevm bin/runevm-new
 
 build/librune/%.o: vm/%.c $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p build/librune
@@ -316,11 +318,26 @@ bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -o $@ vm/main.c vm/interp.c build/librune.a -lm
 
-vm-asan: bin/runevm-asan
+# vm/new's first loop (docs/plans/middle-end.md, M5): the register bytecode,
+# on the runtime of runevm. Its own instruction set's part (vm/new/isa_regs.c)
+# is linked before build/librune.a, whose vm/isa_stack.c it takes the place of.
+NEW_HDRS := vm/new/regvm.h
+bin/runevm-new: vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a $(VM_HDRS) $(NEW_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -Ivm -o $@ vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a -lm
+
+vm-asan: bin/runevm-asan bin/runevm-new-asan
 
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
+
+# vm/new with the sanitizers: its loop, its instruction set's part, and the
+# runtime but for the stack bytecode's part
+NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
+bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
+	@mkdir -p bin
+	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -o $@ $(NEW_SRCS) -lm
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -502,8 +519,9 @@ test-doc: $(RUNEDOC) vm
 test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a
 	sh tests/opt/run-opt-tests.sh -j $(JOBS) --runeopt $(RUNEOPT) --rune $(RUNE) --vm $(RUNEVM)
 
-perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
+perf-check: $(RUNE) bin/runedoc vm bin/rune.new.rbc bin/runedoc.new.rbc | build/.doctor-check
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) sh tests/perf/run-perf.sh
+	RUNE=$(RUNE) sh tests/perf/run-perf.sh --new
 
 # Not part of `make check`: a collection before every allocation makes a few
 # tests quadratic. For VM changes, next to `make vm-asan`.
@@ -513,10 +531,13 @@ perf-check: $(RUNE) bin/runedoc vm | build/.doctor-check
 # (bin/rune names bin/runevm outright), or every compile would be quadratic too.
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
-test-stress: $(RUNE) vm | build/.doctor-check
+test-stress: $(RUNE) vm bin/rune-new | build/.doctor-check
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-stress
 	chmod +x bin/runevm-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-stress
+	chmod +x bin/runevm-new-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-stress --out tests/out/new-stress
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE)) RUNEVM="$(ROOT)/bin/runevm-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
@@ -612,6 +633,19 @@ perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	bin/rune-$(BOOTHOST) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
+# bin/rune making the register bytecode of vm/new
+bin/rune-new: bin/rune Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune" --target=registers "$$@"\n' > $@
+	chmod +x $@
+
+# The suites through vm/new's first loop (docs/plans/middle-end.md, M5): the
+# tests of the language, allocation and the bootstrap against runevm, and
+# the Basis Library.
+test-new: bin/rune-new bin/runevm-new $(RUNE) vm
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
+	sh scripts/check-new.sh -j $(JOBS)
+	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW=$(abspath bin/runevm-new) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
+
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
@@ -626,6 +660,14 @@ DOC_SRCS := build/config.sml $(SOURCES_DOC) src/main/runedoc-rune-main.sml
 
 bin/runedoc.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
 	bin/rune -o $@ $(DOC_SRCS)
+
+# The compiler and runedoc in the register bytecode, which vm/new's budgets
+# measure (tests/perf/run-perf.sh --new).
+bin/rune.new.rbc: bin/rune-$(BOOTHOST) $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
+	bin/rune-$(BOOTHOST) --target=registers -o $@ $(BOOT_SRCS)
+
+bin/runedoc.new.rbc: bin/rune bin/rune.rbc $(DOC_SRCS)
+	bin/rune --target=registers -o $@ $(DOC_SRCS)
 
 bin/runedoc-boot: bin/runedoc.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/runedoc.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -669,6 +711,7 @@ check:
 	@$(MAKE) --no-print-directory test-opt
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory test-native
+	@$(MAKE) --no-print-directory test-new
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs check-isa

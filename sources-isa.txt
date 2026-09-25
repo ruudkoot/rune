@@ -8,5 +8,7 @@ src/util/ordmap.sml
 src/isa/isa.sml
 src/isa/stack.sml
 src/isa/prims.sml
+src/isa/regs.sml
 src/isa/isagen.sml
+src/isa/reggen.sml
 src/isa/isamain.sml

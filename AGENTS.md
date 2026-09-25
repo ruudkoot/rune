@@ -101,6 +101,12 @@ keep these invariants:
   `docs/ir.md`. Code is made by the new back end (`Lower`, `Stack`) from
   `-O1`, and by `Codegen` at `-O0`: `make check-levels` holds the two to the
   same output, exit status and allocation for every program.
+* **vm/new** (`vm/new/`, `bin/runevm-new`) runs the register bytecode
+  (`src/isa/regs.sml`, `rune --target=registers`) on the runtime of
+  `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c` and
+  vm/new's `vm/new/isa_regs.c`. `make test-new`, part of `make check`, holds it
+  to what `runevm` prints and allocates; a change to the register
+  instruction set is `make isa` and a test, as for the stack one.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

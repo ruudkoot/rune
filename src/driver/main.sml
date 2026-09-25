@@ -184,17 +184,27 @@ struct
                                   size = Low.size}
                                  (fn m => Lower.program (m, !Translate.funNames)) mid
           in
-            emitProgram (inputs,
-                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Codegen.dump,
-                                     check = fn _ => (), size = Codegen.size}
-                                    Stack.program low)
+            if !Options.target = "registers" then
+              (Codegen.opcodeNames := RegCodes.names;
+               emitProgramAs (RegCodes.fingerprint, inputs,
+                              Pass.stage {name = "registers", showIn = SOME Low.show, show = Codegen.dump,
+                                          check = fn _ => (), size = Codegen.size}
+                                         Regs.program low))
+            else
+              emitProgram (inputs,
+                           Pass.stage {name = "stack", showIn = SOME Low.show, show = Codegen.dump,
+                                       check = fn _ => (), size = Codegen.size}
+                                      Stack.program low)
           end
 
   and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
+    emitProgramAs (Opcodes.fingerprint, inputs, prog)
+
+  and emitProgramAs (fingerprint : int, inputs : string list, prog : Codegen.program) : OS.Process.status =
     let
       val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
     in
-      Emit.writeFile (out, prog);
+      Emit.writeFileAs (fingerprint, out, prog);
       OS.Process.success
     end
 

@@ -36,6 +36,8 @@ src/backend/target.sml
 src/backend/lowlint.sml
 src/backend/lower.sml
 src/backend/stack.sml
+src/backend/regcodes.sml
+src/backend/regs.sml
 src/backend/emit.sml
 src/driver/basismanifest.sml
 src/driver/options.sml

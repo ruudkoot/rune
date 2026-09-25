@@ -18,6 +18,10 @@
 #   rune:opt               bin/rune, and every program translated to native
 #                          code by runeopt and run so: bin/runevm-opt
 #                          (RUNEVM_OPT=; docs/native.md)
+#   rune:new               bin/rune making the register bytecode of vm/new
+#                          (bin/rune-new, RUNE_NEW=) and vm/new's first loop
+#                          running it (bin/runevm-new, RUNEVM_NEW=;
+#                          docs/plans/middle-end.md, M5)
 #   windows                rune:windows and rune:windows32
 #   portability            rune:linux32 and rune:ppc64
 #   native:mlton  native:smlnj  native:smlnj32  native:polyml
@@ -908,6 +912,14 @@ resolve() {
       cmd2=${RUNEVM_OPT:-$root/bin/runevm-opt}
       id=rune:opt
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/runevm-opt)" >&2; return 1; }
+      ;;
+    rune:new)
+      # The library of the `rune` configuration, compiled to the register
+      # bytecode, and every program run by vm/new's first loop.
+      cmd1=${RUNE_NEW:-$root/bin/rune-new}
+      cmd2=${RUNEVM_NEW:-$root/bin/runevm-new}
+      id=rune:new
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/rune-new bin/runevm-new)" >&2; return 1; }
       ;;
     rune:linux32|rune:ppc64)
       # The library and the compiler of the `rune` configuration on a VM of

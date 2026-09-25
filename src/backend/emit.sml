@@ -52,13 +52,14 @@ struct
   fun realText (r : string) = String.map (fn #"~" => #"-" | c => c) r
 
   fun instrSize (Op (_, args)) = 1 + 4 * List.length args
+    | instrSize (Ops (_, args)) = 1 + 4 * List.length args
     | instrSize (OpLab _) = 5
     | instrSize (OpLabImm _) = 9
     | instrSize (Lab _) = 0
     | instrSize (Pos _) = 0
 
   (* The file as chunks in order: the header, then one chunk per function. *)
-  fun serialize (p : program) : string list =
+  fun serialize (fingerprint : int, p : program) : string list =
     let
       (* layout: function start offsets and label offsets, the latter in an
          array since labels are numbered densely from 0 *)
@@ -103,6 +104,9 @@ struct
           Op (opc, []) => Vector.sub (byteString, opc) :: acc
         | Op (opc, [a]) => Vector.sub (byteString, opc) :: operand a :: acc
         | Op (opc, args) => Vector.sub (byteString, opc) :: List.foldr (fn (a, acc) => operand a :: acc) acc args
+        | Ops (opc, args) =>
+            Vector.sub (byteString, opc)
+            :: List.foldr (fn (I a, acc) => operand a :: acc | (L l, acc) => operand (labelOffset l) :: acc) acc args
         | OpLab (opc, l) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: acc
         | OpLabImm (opc, l, i) => Vector.sub (byteString, opc) :: operand (labelOffset l) :: operand i :: acc
         | Lab _ => acc
@@ -116,7 +120,7 @@ struct
         end
       val header =
         String.concat
-          [magic, u32 Opcodes.rbcVersion, u32 Opcodes.fingerprint,
+          [magic, u32 Opcodes.rbcVersion, u32 fingerprint,
            u32 (List.length (#consts p)), String.concat (List.map constBytes (#consts p)),
            u32 (#nglobals p),
            u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),
@@ -132,12 +136,16 @@ struct
       @ [debug]
     end
 
-  fun writeFile (path : string, p : program) : unit =
+  (* The file of a program of the stack bytecode, or with the fingerprint of
+     another instruction set (the register bytecode's, Regs). *)
+  fun writeFileAs (fingerprint : int, path : string, p : program) : unit =
     let
-      val chunks = serialize p
+      val chunks = serialize (fingerprint, p)
       val out = TextIO.openOut path
     in
       List.app (fn s => TextIO.output (out, s)) chunks;
       TextIO.closeOut out
     end
+
+  fun writeFile (path : string, p : program) : unit = writeFileAs (Opcodes.fingerprint, path, p)
 end

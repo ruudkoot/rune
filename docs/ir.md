@@ -12,6 +12,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`) | none yet |
+| `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), with `--target=registers` | none yet |
 | emission | instruction lists | the `.rbc` | |
 
 At `-O0` the code is still generated from `Lambda`, by `Codegen` (stage
@@ -236,6 +237,25 @@ middle end may ask of it):
   to a block that only returns its parameter returns.
 * **Positions** are noted where they change; a tree keeps the position it
   was made at.
+
+### The register target
+
+`Regs` makes the register bytecode of `vm/new` from the same Low
+([bytecode.md](bytecode.md), The register bytecode; decision D4):
+
+* **Registers:** every variable has one, shared by linear scan as the
+  stack target shares locals; the parameter is register 0. One more, the
+  scratch, takes what nothing reads and breaks a cycle of moves.
+* **Calls and primitives:** a call is `CALL` then `RESULT`; a primitive
+  `PRIM` into its register, but one that saves or restores an image
+  `PRIMPUSH` then `RESULT`, where an image resumes; a handler's block
+  begins with `CATCH`.
+* **Jumps** move their arguments into the block's parameters in parallel,
+  fall through, or return as the stack target's do.
+
+`make test-new` runs the suites through it and `vm/new`'s first loop; see
+[plans/middle-end.md](plans/middle-end.md), M5, for how it compares with the
+stack target.
 
 ## Tests
 

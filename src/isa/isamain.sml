@@ -32,6 +32,7 @@ struct
       | SOME (root, check) =>
           let
             val files = IsaGen.files (StackIsa.instructions, PrimIsa.primitives)
+                        @ RegGen.files (RegIsa.instructions, PrimIsa.primitives)
             fun at path = root ^ "/" ^ path
             val stale = List.filter (fn {path, text} => readFile (at path) <> SOME text) files
           in

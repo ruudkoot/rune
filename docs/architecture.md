@@ -6,6 +6,9 @@ source files ──► Lexer ──► Parser ──► Elaborate ──► Tran
                                                         │                             items
                                                         └──► Codegen (-O0) ──────────┘
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
+
+Low ──► Regs (--target=registers) ──► register .rbc ──► vm/new's first loop
+                                                        (bin/runevm-new, on the runtime of runevm)
 ```
 
 The compiler is a classic multi-pass design in `src/`; the VM is in `vm/`.
@@ -27,6 +30,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Mid | `src/core/ty.sml`, `mid.sml`, `tomid.sml`, `midlint.sml`, `midtext.sml` | Lambda → `Mid.program` | A-normal form with join points, typed in the manner of System F, the top level a list of definitions; see [ir.md](ir.md). |
 | Lowering | `src/backend/low.sml`, `lower.sml`, `lowlint.sml` | Mid → `Low.program` | Blocks with parameters in SSA form, one function per function of the program. Flat closure conversion: a function captures its free variables in the order of their stamps; self reference is `Self`; a group of functions patches its closures with `SetEnv`. Handlers are pushed and popped around their regions. |
 | Stack target | `src/backend/target.sml`, `stack.sml` | Low → per-function instruction lists | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. The default from `-O1`. |
+| Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `vm/new` ([bytecode.md](bytecode.md), The register bytecode). |
 | Code generation (`-O0`) | `src/backend/codegen.sml` | Lambda → per-function instruction lists | The first back end, the reference the new one is compared with: flat closures as above, a local for every `Let`, tail calls detected syntactically. |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |

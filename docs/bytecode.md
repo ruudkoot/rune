@@ -174,6 +174,58 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `EXNCON` / `EXNARG` | | Pop an exception value, push its constructor / payload. |
 | `PRIM p` | primitive | Invoke primitive `p`: pops its arguments (first pushed is the first argument) and pushes the result, or raises. |
 
+## The register bytecode (vm/new)
+
+`vm/new`'s first loop (`bin/runevm-new`, `vm/new/interp.c`) runs a second
+instruction set, of registers (`src/isa/regs.sml`; decision D4 of
+[plans/middle-end.md](plans/middle-end.md)). `rune --target=registers` makes
+it, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
+register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
+refuses the other's file and image.
+
+* **Registers** are the slots of the frame, from its base: register 0 is the
+  argument, the others start as `unit`, and `nlocals` of the function table
+  is their number. The collector sees every one, as it sees the locals of the
+  stack bytecode, since the stack pointer stays above them.
+* **Operands** are `i32`, as in the stack bytecode; an instruction that takes
+  a list of registers (`TUPLE`, `CLOSURE`, `PRIM`) has them last, as many as
+  its count says or as its primitive's arity.
+* **Calls** leave their result on the stack, as the stack bytecode's do, and
+  the instruction after the call takes it into a register (`RESULT`); a
+  handler's code begins with `CATCH`, which takes the exception a raise left
+  there. `vm/new` shares `runevm`'s runtime this way (`build/librune.a`).
+* **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
+  `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
+  an image finds its result where `RESULT` takes it.
+
+| Opcode | Operands | Effect |
+|---|---|---|
+| `HALT` | | Stop execution. |
+| `MOVE d s` | registers | `d := s`. |
+| `INT d i` | register, immediate | `d :=` the int `i`. |
+| `CONST d k` | register, constant | `d :=` constant `k`. |
+| `UNIT d` / `CON0 d t` | register, tag | `d := ()` / the nullary constructor `t`. |
+| `GLOBAL d g` / `SETGLOBAL g s` | register, global | `d :=` global `g` / global `g := s`. |
+| `ENV d e` / `SELF d` | register, slot | `d :=` slot `e` of the running closure / the running closure. |
+| `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`). |
+| `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
+| `RET s` | register | Return `s` to the caller. |
+| `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise. |
+| `PRIMPUSH p a...` | primitive, registers | Primitive `p` of `a...`, its result left for `RESULT`. |
+| `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
+| `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |
+| `SELECT d i s` | register, index, register | `d :=` field `i` of the tuple in `s`. |
+| `CON d t s` / `DECON d s` / `CONTAG d s` | registers, tag | Build a constructor value / take its argument / its tag as an int. |
+| `NEWEXN d k` / `BUILTINEXN d i` | register, string constant or 0–7 | A fresh exception constructor named `k` / builtin constructor `i`. |
+| `MKEXN d c x` / `EXNCON d s` / `EXNARG d s` | registers | An exception value / its constructor / its payload. |
+| `SETENV c e v` | register, slot, register | `c.env[e] := v` (patches mutually recursive closures). |
+| `JUMP o` | offset | Jump to `o`. |
+| `JUMPIF s o` / `JUMPIFNOT s o` | register, offset | Jump if `s` is true / false. |
+| `JUMPIFNOTTAG s o t` | register, offset, tag | Jump unless the constructor value in `s` has tag `t`. |
+| `PUSHHANDLER o` / `POPHANDLER` | offset | Install / remove an exception handler. |
+| `CATCH d` | register | `d :=` the exception a raise left for the handler this begins. |
+| `RAISE s` | register | Raise the exception in `s`. |
+
 ## Primitives
 
 Primitive numbers follow the order of `src/isa/prims.sml`. The basis library binds

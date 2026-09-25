@@ -137,6 +137,18 @@ would; no bytecode is written.
 .B \-\-mid\-roundtrip
 Check that Mid printed with its positions, read and printed again is the same.
 .TP
+.BI \-\-target= T
+The bytecode to make:
+.B stack
+for
+.BR runevm ,
+the default, or
+.B registers
+for the first loop of vm/new
+.RB ( runevm\-new ),
+from
+.BR \-O1 .
+.TP
 .B \-\-version
 Print the version and exit.
 .TP

@@ -3,8 +3,12 @@ structure Codegen =
 struct
   open Lambda
 
+  (* An operand of Ops: a number, or a label whose offset it is. *)
+  datatype operand = I of int | L of int
+
   datatype item =
       Op of int * int list                (* opcode, immediate operands *)
+    | Ops of int * operand list           (* opcode, operands of which any may be a label *)
     | OpLab of int * int                  (* opcode with one label operand *)
     | OpLabImm of int * int * int         (* opcode with a label operand, then an immediate *)
     | Lab of int
@@ -353,11 +357,18 @@ struct
     end
 
   (* ---------------------------------------------------------------- *)
+  (* The names of the opcodes a dump shows: the stack bytecode's, or the
+     register bytecode's where the program is of that (Regs). *)
+  val opcodeNames = ref Opcodes.names
+
   fun itemToString it =
     case it of
-      Op (opc, args) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " " ^ String.concatWith " " (List.map Int.toString args)
-    | OpLab (opc, l) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " L" ^ Int.toString l
-    | OpLabImm (opc, l, i) => "    " ^ Vector.sub (Opcodes.names, opc) ^ " L" ^ Int.toString l ^ " " ^ Int.toString i
+      Op (opc, args) => "    " ^ Vector.sub (!opcodeNames, opc) ^ " " ^ String.concatWith " " (List.map Int.toString args)
+    | Ops (opc, args) =>
+        "    " ^ Vector.sub (!opcodeNames, opc) ^ " "
+        ^ String.concatWith " " (List.map (fn I n => Int.toString n | L l => "L" ^ Int.toString l) args)
+    | OpLab (opc, l) => "    " ^ Vector.sub (!opcodeNames, opc) ^ " L" ^ Int.toString l
+    | OpLabImm (opc, l, i) => "    " ^ Vector.sub (!opcodeNames, opc) ^ " L" ^ Int.toString l ^ " " ^ Int.toString i
     | Lab l => "  L" ^ Int.toString l ^ ":"
     | Pos (f, l, c) => "  ; " ^ Int.toString f ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c
 

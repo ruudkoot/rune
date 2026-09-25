@@ -64,6 +64,11 @@ done
 for op in $(grep -v '^[[:space:]]*#' vm/opcodes.def | awk 'NF { print $1 }'); do
   grep -q "\`$op[ \`]" docs/bytecode.md || fail "opcode $op (vm/opcodes.def) is not documented in docs/bytecode.md"
 done
+# the register bytecode of vm/new, in its own section
+regs=$(sed -n '/^## The register bytecode/,/^## /p' docs/bytecode.md)
+for op in $(grep -v '^[[:space:]]*#' vm/new/regs.def | awk 'NF { print $1 }'); do
+  printf '%s\n' "$regs" | grep -q "\`$op[ \`]" || fail "register opcode $op (vm/new/regs.def) is not documented in docs/bytecode.md, The register bytecode"
+done
 for p in $(grep -v '^[[:space:]]*#' vm/prims.def | awk 'NF { print $1 }'); do
   grep -qE "(\`| )$p(\`| )" docs/bytecode.md || fail "primitive $p (vm/prims.def) is not documented in docs/bytecode.md"
 done

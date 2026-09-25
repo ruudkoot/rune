@@ -265,6 +265,12 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
 /* Where every instruction begins, or NULL: a program from a .rbc or from an
    image is checked the same way. The caller frees it. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen);
+
+/* What each VM's instruction set gives (vm/isa_stack.c, vm/new/isa_regs.c):
+   the fingerprint an .rbc must carry, and the first bytes of an image. */
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 4 isa 00000000")
+extern const uint32_t isa_fingerprint;
+extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);
 void disassemble(const Program *p, FILE *out);
 

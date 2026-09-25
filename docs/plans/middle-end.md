@@ -22,7 +22,7 @@ What it rests on:
 | M2 | Pass infrastructure | done |
 | M3 | Types, and Mid launched dark | done |
 | M4 | The new back end: Low and the stack target | done |
-| M5 | The register target and the first loop of `vm/new` | |
+| M5 | The register target and the first loop of `vm/new` | done |
 | M6 | `vm/portable`: frames and dispatch | |
 | M7 | The simplifier and tree shaking | |
 | M8 | Known calls and the calling convention | |
@@ -980,6 +980,56 @@ estimated.
 * **Where it goes:** right after M4 (D5).
 * **Done when:** every suite passes on it, with bytes and objects equal to
   `runevm`'s.
+* **Done:**
+  * `src/isa/regs.sml` describes the register bytecode (36 instructions,
+    three-address, lists of registers for tuples, closures and the
+    arguments of a primitive), and runeisa writes `vm/new`'s tables and the
+    cases of its loop from it, as it does the stack bytecode's.
+  * `Regs` makes it from Low (`rune --target=registers`): linear scan over
+    Low's forward edges, as the stack target shares its locals.
+  * `vm/new`'s first loop (`vm/new/interp.c`, `bin/runevm-new`) runs on
+    `build/librune.a`; what of the runtime is an instruction set's is now
+    apart (`vm/isa_stack.c`, `vm/new/isa_regs.c`). A call is `CALL` then
+    `RESULT` and a handler begins with `CATCH`, so the runtime's returns and
+    raises serve both; a primitive that saves an image is `PRIMPUSH` then
+    `RESULT`, where the image resumes.
+  * **No stack maps:** a register is a slot of its frame, which starts as
+    `unit` and which the collector sees below the stack pointer, so a
+    collection needs to know nothing of which registers are live. Maps
+    come when `vm/new` keeps values in machine registers (its JIT).
+  * `make test-new`, part of `make check`: every test of `tests/lang`,
+    images, traces and `--gc-stress` included, and the Basis Library suite
+    (137,276 checks) pass on it; every program of `tests/lang` and
+    `tests/perf` allocates the bytes and objects it does on `runevm`; the
+    compiler, as register bytecode on `vm/new`, makes of itself the
+    bytecode it makes on `runevm`. ASan finds nothing. `vm/new` has its
+    own budgets (`tests/perf/new`).
+* **Measured** (the same Low, `-O1`; `runevm` against `vm/new`):
+
+  | | VM instructions | machine instructions | cycles |
+  |---|---|---|---|
+  | the bootstrap | 1,333.1M, 747.2M (−44%) | 73.9G, 62.9G (−15%) | 49.7G, 43.8G (−12%) |
+  | tak | 1.35M, 0.70M (−48%) | 76.2M, 66.1M | 48.6M, 43.6M (−10%) |
+  | intinf_fact | 32.3M, 17.8M (−45%) | 1,798M, 1,523M | 1,039M, 853M (−18%) |
+  | real_nbody | 1.34M, 0.60M (−55%) | 74.7M, 75.6M | 44.5M, 46.4M (+4%) |
+  | list_ops | 3.62M, 2.47M (−32%) | 233.5M, 234.3M | 145.7M, 158.9M (+9%) |
+  | string_ops | 4.12M, 2.81M (−32%) | 273.5M, 280.6M | 178.9M, 195.7M (+9%) |
+  | fib | 1.65M, 1.43M (−14%) | 91.9M, 129.7M | 51.8M, 73.4M (+41%) |
+
+  * The register code executes 14 to 55% fewer instructions, as Shi et al.
+    found (about 47%); the compiler's is 50% larger (965 against 644 KB),
+    where they found 25%, since every operand takes four bytes.
+  * Time is mixed: the bootstrap is 12% faster, fib 41% slower. Each
+    instruction of the first loop costs more than one of `runevm`'s: it
+    decodes four operands whatever it has, finds its frame's registers
+    again at every access (`R(x)`), and a call is two instructions. That is
+    the first work of the `vm/new` roadmap.
+* **Handed over to the `vm/new` roadmap:** a register bytecode that every
+  suite passes on and its first loop; next there are operands decoded by
+  the instruction (runeisa can write the reads), the frame's registers
+  kept in a local, a call that writes its result, computed goto, operands
+  narrower than four bytes, and Windows and the other machines, which
+  `vm/new` is not yet built for.
 
 ### M6. `vm/portable`: frames and dispatch (M, about 400, a parallel track)
 

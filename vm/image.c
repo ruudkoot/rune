@@ -43,8 +43,9 @@
 #include <errno.h>
 
 /* The format of an image, and the instruction set of the program in it
-   (src/isa): a VM refuses the image of another. */
-#define IMAGE_MAGIC "runevm image 4 isa " ISA_FINGERPRINT_HEX
+   (src/isa): a VM refuses the image of another. Each VM's instruction set
+   says it (vm/isa_stack.c, vm/new/isa_regs.c). */
+#define IMAGE_MAGIC isa_image_magic
 
 /* What a world that starts again from an image should do: a fork gives 0 to
    the child, a save gives `Restored` to the program that wrote it. */
@@ -153,7 +154,7 @@ static void put_heap(Stream *s, VM *vm) {
 
 static void write_image(VM *vm, Stream *s, int kind) {
     const Program *p = &vm->prog;
-    put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
+    put(s, IMAGE_MAGIC, ISA_IMAGE_MAGIC_SIZE);
     /* what the world should do when it starts again (IMAGE_FORK, IMAGE_SAVE) */
     put_u32(s, (uint32_t)kind);
 
@@ -242,7 +243,7 @@ static void write_image(VM *vm, Stream *s, int kind) {
             put_u64(s, (uint64_t)at);
         }
     }
-    put(s, IMAGE_MAGIC, sizeof IMAGE_MAGIC);
+    put(s, IMAGE_MAGIC, ISA_IMAGE_MAGIC_SIZE);
     wflush(s);
 }
 
@@ -435,7 +436,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     if (!s.f) return failed(&s, err, errlen, "no image to resume from");
     Program *p = &vm->prog;
 
-    char magic[sizeof IMAGE_MAGIC];
+    char magic[ISA_IMAGE_MAGIC_SIZE];
     get(&s, magic, sizeof magic);
     if (!s.ok || memcmp(magic, IMAGE_MAGIC, sizeof magic) != 0)
         return failed(&s, err, errlen, "not an image of this runevm");
