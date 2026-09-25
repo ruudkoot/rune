@@ -24,7 +24,7 @@ What it rests on:
 | M4 | The new back end: Low and the stack target | done |
 | M5 | The register target and the first loop of `vm/new` | done |
 | M6 | `vm/portable`: frames and dispatch | done |
-| M7 | The simplifier and tree shaking | |
+| M7 | The simplifier and tree shaking | done |
 | M8 | Known calls and the calling convention | |
 | M9 | Decision trees and `SWITCH` | |
 | M10 | The inliner, contification and inline frames | |
@@ -333,7 +333,8 @@ more ambitious meets these:
   * **Reals** are never folded, and never used in heuristics. The hosts
     print and round them differently, which is why they are passed through
     as text today.
-  * **Iteration:** only ordered maps and ordered worklists.
+  * **Iteration:** only ordered maps and ordered worklists. A hash table
+    (`IntTable`, M7) is only set and asked, never listed.
   * **Names:** stamps come from the one counter. A pass that copies code
     renames what it copies, since `Codegen` assumes every stamp is bound
     once.
@@ -1082,6 +1083,47 @@ estimated.
   is never called.
 * **Gain:** est. 5 to 10% fewer instructions, and later passes (and
   compiles) cheaper.
+* **Done:**
+  * **`shake`** (`src/core/shake.sml`): the `Do`s and every `Val` that may
+    do more than make its value are the roots; what they reach stays.
+  * **`simplify`** (`src/core/simplify.sml`): up to three rounds, each
+    after a census, the last one that rewrites nothing. Copies propagated;
+    dead steps dropped where `Prims.removable` (from M1's effects) says so;
+    a field, a tag, a constructor's argument and an exception's constructor
+    read back from what made them in the same function; int, word and char
+    folded at `Target.t`'s precision, where the operation does not raise --
+    one that would is left to run; an `If` on a known bool; join points
+    jumped to never or once; functions used never, called once where they
+    are made (beta), or only passing their parameter on (eta); `andalso`
+    and `orelse` as branches (a join point that tests a bool it is given as
+    a constant); a raise to a handler of its own region a jump.
+  * **`not`** is a function of the Basis Library, which only the inliner
+    (M10) can make a branch. A `case` on a known constructor is a test of
+    its tag, which is known, so the test goes and so do the other rules.
+  * **Both from `-O1`.** `make check-levels` now runs each program three
+    ways (`-O0`, `-O2`, and `-O2 --passes=`, the back end alone) and holds
+    the back end alone to `-O0`'s allocation; `--fuel` at any value leaves
+    every lint satisfied.
+  * **Measured** (`runevm --count`):
+    * **Code:** the programs of `tests/perf` are 4 to 9 times smaller
+      (fib 32.9 KB -> 5.4 KB, tak 33.0 KB -> 5.6 KB), and the compiler 18%
+      (668 -> 547 KB): most of the Basis Library each carried is never
+      reached.
+    * **Compiles:** hello 6.24M -> 4.43M instructions (-29%),
+      `compile-sigs` 199.5M -> 132.9M (-33%): what is shaken off is never
+      lowered. The compiler compiling itself is unchanged (1,090M), the
+      two passes (shake 26M, simplify 104M) paying for what lower and
+      stack no longer do (464M -> 366M).
+    * **Running:** the compiler's code 2.2% fewer instructions,
+      `string_ops` 1.1%, the other programs of `tests/perf` under 0.1%.
+      Far from the estimate: without known calls (M8) and an inliner that
+      crosses the top level (M10), what their loops call stays calls, and
+      the new back end had already removed the copies and slots a
+      simplifier finds in the code of `Codegen`.
+    * **The census** was first kept in ordered maps, which made `simplify`
+      cost 266M on the compiler; stamps being unique, tables of them
+      (`IntTable`, never listed, so deterministic) that forget nothing do
+      as well at 104M.
 
 ### M8. Known calls and the calling convention (L-XL, about 1,500)
 

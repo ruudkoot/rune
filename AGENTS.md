@@ -99,8 +99,12 @@ keep these invariants:
   optimises says from which level it runs. It comes with a test in
   `tests/ir`, and what its representation keeps is written down in
   `docs/ir.md`. Code is made by the new back end (`Lower`, `Stack`) from
-  `-O1`, and by `Codegen` at `-O0`: `make check-levels` holds the two to the
-  same output, exit status and allocation for every program.
+  `-O1`, after the optimisations of Mid (`Shake`, `Simplify`), and by
+  `Codegen` at `-O0`: `make check-levels` holds `-O0`, `-O2` and the back
+  end alone (`-O2 --passes=`) to the same output and exit status for every
+  program, and the back end alone to `-O0`'s allocation. A rewrite must
+  leave every lint satisfied at any `--fuel`: what it makes of several
+  parts is one rewrite, or each part is valid alone.
 * **The stack VM's loop** (`vm/interp.c`, `vm/loop.h`) keeps its state in
   its own variables: a body of `src/isa/stack.sml` that is not shared is
   written in the loop's words (`PUSH`, `POP`, `TOP`, `LOCALV`, `JUMP_TO`,

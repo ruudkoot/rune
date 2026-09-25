@@ -1,0 +1,29 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int * int)) : int
+    (let (v2 : int) (select 0 v1)
+    (let (v3 : int) (select 1 v1)
+    (let (v4 : int) (prim int_mul v2 v2 : (int * int) -> int)
+    (return (prim int_add v4 v3 : (int * int) -> int)))))))
+(funs
+  (fn g2 ((v5 : unit)) : int
+    (return (prim int_add 9223372036854775807 1 : (int * int) -> int))))
+(funs
+  (fn g3 ['a] ((v6 : 'a -> 'a)) : 'a -> 'a
+    (fun
+      (fn v7 ((v8 : 'a)) : 'a
+        (let (v9 : 'a) (app v6 v8)
+        (return (app v6 v9))))
+    (return v7))))
+(funs
+  (fn g4 ((v10 : int)) : int
+    (return (prim int_add v10 1 : (int * int) -> int))))
+(funs
+  (fn g5 ((v11 : int)) : int
+    (let (v12 : int -> int) (app g3[int] g4)
+    (return (app v12 v11)))))
+(val g6 : int * (unit -> int) * int
+  (let (v13 : int * int) (tuple 1 2)
+  (let (v14 : int) (app g1 v13)
+  (let (v15 : int) (app g5 3)
+  (return (tuple v14 g2 v15))))))

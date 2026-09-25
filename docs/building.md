@@ -377,7 +377,8 @@ rules so that one source tree builds everywhere and emits identical output:
    as their literal text.
 5. All iteration over maps uses the ordered `StringMap`/`IntMap` from
    `src/util/ordmap.sml`, and every generated name/stamp comes from a counter,
-   so output is deterministic across hosts.
+   so output is deterministic across hosts. A hash table (`IntTable`,
+   `src/util/inttable.sml`) is only set and asked by key, never listed.
 6. The compiler must be compilable by Rune itself, so its sources stay inside
    the language described in `docs/language.md`: in particular no literal or
    operator overloading at `IntInf.int` (write `IntInf.fromInt n` and

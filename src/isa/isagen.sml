@@ -344,6 +344,21 @@ struct
                "    List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table",
                "  (* find name = SOME (index, arity) *)",
                "  fun find name = StringMap.find (byName, name)",
+               "  (* the primitives whose call may be dropped where nothing uses its",
+               "     value: they neither raise, write, touch the system nor save an",
+               "     image (Isa.effect) *)",
+               "  val removables = StringMap.fromList (List.map (fn n => (n, ())) ["]
+            @ (let
+                 val rs = List.filter (fn (p : primitive) =>
+                                         not (List.exists (fn e => e = Raises orelse e = WritesHeap orelse e = System
+                                                                   orelse e = SavesImage orelse e = NewWorld)
+                                                          (#effects p))) prims
+                 val n = List.length rs
+               in
+                 List.tabulate (n, fn k => "    \"" ^ #name (List.nth (rs, k)) ^ "\"" ^ (if k < n - 1 then "," else ""))
+               end)
+            @ ["  ])",
+               "  fun removable name = StringMap.member (removables, name)",
                "end"])}
     end
 

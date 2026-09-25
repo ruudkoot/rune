@@ -1,4 +1,4 @@
-(* dump: --dump-after=lower *)
+(* dump: --passes= --dump-after=lower *)
 (* Mid made Low: each function its blocks in SSA; a closure made
    explicitly, capturing y (env 0), and the recursive function reading
    itself (self); a match on a constructor one iftag; the handle a push,

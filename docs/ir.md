@@ -10,6 +10,8 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 |---|---|---|---|
 | `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
+| `shake` | `Mid` | `Mid`, what nothing reaches gone (`src/core/shake.sml`), from `-O1` | `MidLint` |
+| `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`) | none yet |
 | `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), with `--target=registers` | none yet |
@@ -23,8 +25,8 @@ allocate the same (`make check-levels`).
 Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
-optimises, says from which level it runs (`Pass.enabled`); there is none
-yet.
+optimises, says from which level it runs (`Pass.enabled`): `shake` and
+`simplify` (see *The optimisations of Mid*).
 
 ## Options
 
@@ -179,6 +181,45 @@ program written by hand. The grammar is at the head of
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   EXP)`; comments are SML's.
 
+## The optimisations of Mid
+
+Both keep what the program does -- what it prints, how it exits, which
+exception it raises first -- but may allocate less. What a primitive may do
+is in its description (`src/isa/stack.sml`): one that may raise, write the
+heap, call the system, save an image or make a new world is not
+`Prims.removable`, and is kept where nothing uses its value. An
+application is never removable: nothing is known yet of what a function
+does.
+
+* **`shake`** (tree shaking): the roots are the `Do`s and every `Val` whose
+  expression may do more than make its value (a call, a primitive that is
+  not removable, a raise, a global set); every global a root uses is
+  reached, and every one their definitions use. The rest goes, a function
+  of a group alone. The whole pass is one rewrite for `--fuel`, since a
+  definition kept of those that go would use one that went.
+* **`simplify`** (shrinking, after Appel and Jim): three rounds over each
+  definition, each after a census of the uses of every variable and jumps
+  to every join point. A variable bound to an atom is the atom, unless it
+  abstracts over type variables; a step nothing uses goes where it is
+  removable; a field of a tuple, the argument or tag of a constructor made
+  in the same function, and an `If` on a known bool, are known; a primitive
+  of int, word or char constants is folded at the target's precision
+  (`Target.t`'s `intBits`), unless it would raise; a join point nothing
+  jumps to goes, and one jumped to once is put where the jump is, unless
+  the jump is in a handler's region the join point is not; a function
+  nothing uses goes, and one called once, where it is made and not from a
+  function inside it, is put where the call is -- its returns jumps to a
+  join point for what followed the call; a function that only calls
+  another with its parameter is the other (eta). A join point that tests
+  its one parameter, a bool, where a jump gives it a constant, becomes one
+  for each branch, which those jumps go to (`andalso` and `orelse` as
+  branches); a raise in a handler's region, in the region's own code, is a
+  jump to the handler, made a join point. What a rewrite makes anew is
+  simplified after a census of its own: nothing it binds is used outside
+  it, so that census is whole where the round's is stale. Stamps being
+  unique, the census and what a round knows are tables (`IntTable`), which
+  forget nothing, and a round that rewrites nothing is the last.
+
 ## Low
 
 Low (`src/backend/low.sml`) is what the targets are made from: each
@@ -267,12 +308,14 @@ stack target.
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
 * **`make check-levels`** (`scripts/check-levels.sh`): every program of
-  `tests/lang` and `tests/perf` compiled at `-O0` (`Codegen`) and at `-O2`
-  (the new back end), with the lint on and Mid's text checked against
-  itself (`--mid-roundtrip`). Both run, and must print, exit and allocate
-  the same (the bytes and objects of `runevm --count`); a program that
-  allocates otherwise for a reason is listed with it in
-  `scripts/check-levels.alloc`.
+  `tests/lang` and `tests/perf` compiled at `-O0` (`Codegen`), at `-O2`,
+  and at `-O2` with no optional pass (`--passes=`, the new back end alone),
+  with the lint on and Mid's text checked against itself
+  (`--mid-roundtrip`). All three run, and must print and exit the same;
+  the back end alone must also allocate what `-O0`'s code does (the bytes
+  and objects of `runevm --count`), where the optimisations may allocate
+  less. A program that allocates otherwise for a reason is listed with it
+  in `scripts/check-levels.alloc`.
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
 * **`scripts/bisect-fuel.sh PROGRAM.sml`**: where a program runs otherwise

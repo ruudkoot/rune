@@ -180,6 +180,14 @@ struct
         else
           let
             val mid = midStage (SOME Lambda.show) ToMid.program lam
+            (* the optional passes on Mid (docs/ir.md) *)
+            fun optional (name, f) m =
+              if Pass.enabled (name, 1) then
+                Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
+                            size = Mid.size}
+                           f m
+              else m
+            val mid = optional ("simplify", Simplify.program) (optional ("shake", Shake.program) mid)
             val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
                                   size = Low.size}
                                  (fn m => Lower.program (m, !Translate.funNames)) mid

@@ -1,10 +1,10 @@
 # Architecture
 
 ```
-source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► ToMid ──► Lower ──► Stack ──► Emit ──► .rbc
-                 tokens     AST        typed AST    Lambda IR     Mid       Low       bytecode
-                                                        │                             items
-                                                        └──► Codegen (-O0) ──────────┘
+source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► ToMid ──► Shake, Simplify ──► Lower ──► Stack ──► Emit ──► .rbc
+                 tokens     AST        typed AST    Lambda IR     Mid       Mid (-O1)           Low       bytecode
+                                                        │                                                 items
+                                                        └──► Codegen (-O0) ──────────────────────────────┘
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
 
 Low ──► Regs (--target=registers) ──► register .rbc ──► vm/new's first loop
@@ -28,6 +28,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | Rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Mid | `src/core/ty.sml`, `mid.sml`, `tomid.sml`, `midlint.sml`, `midtext.sml` | Lambda → `Mid.program` | A-normal form with join points, typed in the manner of System F, the top level a list of definitions; see [ir.md](ir.md). |
+| Optimisation (`-O1`) | `src/core/shake.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), then shrinking reductions in rounds after a census; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. |
 | Lowering | `src/backend/low.sml`, `lower.sml`, `lowlint.sml` | Mid → `Low.program` | Blocks with parameters in SSA form, one function per function of the program. Flat closure conversion: a function captures its free variables in the order of their stamps; self reference is `Self`; a group of functions patches its closures with `SetEnv`. Handlers are pushed and popped around their regions. |
 | Stack target | `src/backend/target.sml`, `stack.sml` | Low → per-function instruction lists | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. The default from `-O1`. |
 | Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `vm/new` ([bytecode.md](bytecode.md), The register bytecode). |
@@ -36,8 +37,10 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
-applied as `StringMap`/`IntMap`), `source.sml` (files, spans, line/column),
-`error.sml` (`CompileError`, `Bug`).
+applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
+ints, which are never listed, so their order cannot reach the output),
+`source.sml` (files, spans, line/column), `error.sml` (`CompileError`,
+`Bug`), `pass.sml` (the passes' options, lints and fuel).
 
 
 ## The documentation generator

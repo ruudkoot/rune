@@ -1,4 +1,4 @@
-(* dump: --dump-after=stack *)
+(* dump: --passes= --dump-after=stack *)
 (* Low made stack code: a value used once stays on the stack (the
    arguments of +, the call's argument), and only what is used twice or
    across blocks gets a local; locals are shared once their values are
