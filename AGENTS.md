@@ -116,12 +116,25 @@ keep these invariants:
   calls) is written against the VM. A push does not check: the loader works
   out each function's deepest stack (`vm/isa_stack.c`), so an instruction's
   `pops`/`pushes` must say what it does.
-* **vm/new** (`vm/new/`, `bin/runevm-new`) runs the register bytecode
-  (`src/isa/regs.sml`, `rune --target=registers`) on the runtime of
-  `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c` and
-  vm/new's `vm/new/isa_regs.c`. `make test-new`, part of `make check`, holds it
-  to what `runevm` prints and allocates; a change to the register
-  instruction set is `make isa` and a test, as for the stack one.
+* **vm/new** (`vm/new/`, `bin/runevm-new`; `vm/new/ARCHITECTURE.md` is the
+  VM as built, and every change to `vm/new` keeps it so) runs the register
+  bytecode (`src/isa/regs.sml`, `rune --target=registers`) on the runtime
+  of `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c`
+  and vm/new's `vm/new/isa_regs.c`. Its loop keeps its state in its own
+  variables as the stack VM's does: a body of `src/isa/regs.sml` is written
+  in the loop's words (`R`, `PUSH`, `POP`, `ENTER`, `ROOM`, `FATAL`,
+  `EXPECT`, and `SYNC()` before anything that reads the VM's stack pointer,
+  pc or count, with `RELOAD()` after what may change them or move the
+  stack); a push does not check, since the checker works out each
+  function's deepest stack (`vm/new/isa_regs.c`). A primitive done in the
+  loop (`vm/new/fastprim.h`) gives the primitive's result or declines, and
+  changes with its C in `vm/prims.c`; `scripts/check-new.sh` holds
+  `tests/opt/prims.sml` to the same output on both VMs. `make test-new`,
+  part of `make check`, holds vm/new to what `runevm` prints and allocates;
+  a change to the register instruction set is `make isa` and a test, as
+  for the stack one; a change to `vm/new` also runs `make test-new-asan`
+  and `make test-stress`, and the Windows and portability rules below,
+  whose VMs it is built for too.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
@@ -158,9 +171,10 @@ keep these invariants:
   and with a collection at (nearly) every allocation, `make test-stress`.
 * `make check` never compiles `vm/sys_win.c`, so a green `make check` says
   nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
-  system layers is done only once `make windows` builds both VMs and
-  `make test-windows` passes on both (`tests/lang`, `tests/vm` and the Basis
-  Library suite; about 8 minutes). It needs the mingw-w64 toolchains and a
+  system layers is done only once `make windows` builds all four VMs and
+  `make test-windows` passes on them (`tests/lang`, `tests/vm` and the Basis
+  Library suite, for the stack bytecode and the register one; about 15
+  minutes). It needs the mingw-w64 toolchains and a
   Windows to run the `.exe`s, which is what `make doctor` reports.
 * `make check` also builds the VM for one machine only, so it says nothing
   about a machine of another width or another byte order. `make portability`
@@ -202,7 +216,9 @@ keep these invariants:
 * SML: one main `structure` (or `functor`) per file, no top-level `open`, 2-space indentation,
   `Error.error (span, msg)` for user errors and `Error.bug` for invariant
   violations. Error messages start lowercase and name the construct.
-* C: C99, no platform-specific code, every primitive validates argument tags
+* C: C17 (`-std=c17`), with anything beyond C99 behind a test of
+  `__STDC_VERSION__` so that `-std=c99` still builds the VMs (`vm/vm.h`'s
+  `Value` shows how); no platform-specific code, every primitive validates argument tags
   (`vm_fatal` on bytecode type errors), heap pointers never live in C locals
   across an allocation (see the GC discipline in `docs/architecture.md`).
 * Commit messages: imperative, one line summary.

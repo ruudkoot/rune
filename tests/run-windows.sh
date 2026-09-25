@@ -1,6 +1,6 @@
 #!/bin/sh
 # The language suite and tests/vm on the Windows VMs (`make test-windows`):
-#   tests/run-windows.sh [--rune BIN] [--vm EXE]... [-j N] [FILTER]
+#   tests/run-windows.sh [--rune BIN] [--vm EXE]... [--native BIN] [--def FILE] [-j N] [FILTER]
 # Every program of tests/lang whose name contains FILTER is compiled once,
 # with the ordinary compiler -- the bytecode is the same for every VM -- and
 # run on each VM named by --vm (bin/runevm.exe and bin/runevm32.exe when none
@@ -13,7 +13,10 @@
 # the counts of instructions, bytes and objects must be the same, since a
 # value and an object have the same layout on all three. Last, an image of
 # Runtime.save crosses between the two systems both ways, which is the one
-# thing about vm/image.c that only two machines can show.
+# thing about vm/image.c that only two machines can show. For vm/new
+# (docs/plans/jit.md, M2) the same, with --rune bin/rune-new, --vm
+# bin/runevm-new.exe --vm bin/runevm-new32.exe, --native bin/runevm-new for
+# the VM of this system and --def vm/new/regs.def for tests/vm.
 #
 # The VMs do not run in this tree but in a directory on the Windows side,
 # which tests/windows-dir.sh finds and says why. Each program runs in a
@@ -30,6 +33,8 @@ WSLENV="TZ${WSLENV:+:$WSLENV}"
 export WSLENV
 
 rune=bin/rune
+native=bin/runevm
+def=vm/opcodes.def
 vms=""
 jobs=""
 filter=""
@@ -38,9 +43,11 @@ while [ $# -gt 0 ]; do
   case $1 in
     --rune) rune=$2; shift 2 ;;
     --vm) vms="$vms $2"; shift 2 ;;
+    --native) native=$2; shift 2 ;;
+    --def) def=$2; shift 2 ;;
     -j) jobs=$2; shift 2 ;;
     --compile-one|--run-one) mode=$1; shift ;;
-    -*) echo "usage: $0 [--rune BIN] [--vm EXE]... [-j N] [FILTER]" >&2; exit 2 ;;
+    -*) echo "usage: $0 [--rune BIN] [--vm EXE]... [--native BIN] [--def FILE] [-j N] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -171,21 +178,21 @@ for vm in $vms; do
   fi
 
   # tests/vm, in the directory on the Windows side
-  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$RUNDIR/vm" > "$OUT/vm.txt" 2>&1 || status=1
+  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$RUNDIR/vm" --def "$def" > "$OUT/vm.txt" 2>&1 || status=1
   grep '^FAIL' "$OUT/vm.txt"
 
-  # the layout: --count on this VM and on bin/runevm
+  # the layout: --count on this VM and on the VM of this system (--native)
   layout="not checked"
-  if [ -z "$filter" ] && [ -x bin/runevm ]; then
+  if [ -z "$filter" ] && [ -x "$native" ]; then
     layout=ok
     for name in rt.gc_stress rt.deeprec_stack rt.closure_capture rt.equality_structural; do
       vmargs=""; [ -f "tests/lang/$name.vmargs" ] && vmargs=$(cat "tests/lang/$name.vmargs")
       # shellcheck disable=SC2086
-      want=$(bin/runevm --count $vmargs "$rbcdir/$name.rbc" 2>&1 > /dev/null | grep '^runevm: count:')
+      want=$("$native" --count $vmargs "$rbcdir/$name.rbc" 2>&1 > /dev/null | grep '^runevm: count:')
       # shellcheck disable=SC2086
       got=$(cd "$RUNDIR/$name" 2> /dev/null && "$VM" --count $vmargs "$name.rbc" 2>&1 > /dev/null | tr -d '\r' | grep '^runevm: count:')
       if [ -z "$want" ] || [ "$want" != "$got" ]; then
-        echo "FAIL layout $name on $vm: \"$got\", where bin/runevm gives \"$want\""
+        echo "FAIL layout $name on $vm: \"$got\", where $native gives \"$want\""
         layout=failed
         status=1
       fi
@@ -199,7 +206,7 @@ for vm in $vms; do
   # with each other and nothing is written down here.
   image="not checked"
   name=rt.save_restore_cross
-  if [ -z "$filter" ] && [ -x bin/runevm ] && [ -f "$rbcdir/$name.rbc" ]; then
+  if [ -z "$filter" ] && [ -x "$native" ] && [ -f "$rbcdir/$name.rbc" ]; then
     image=ok
     idir=$RUNDIR/image$suffix
     rm -rf "$idir"
@@ -208,17 +215,17 @@ for vm in $vms; do
     img=tests/out/$name.img
     # this VM saves, bin/runevm restores
     want=$(cd "$idir" && rm -f "$img" && "$VM" prog.rbc 2>&1 | tr -d '\r')
-    got=$(cd "$idir" && "$root/bin/runevm" --restore "$img" 2>&1)
+    got=$(cd "$idir" && "$root/$native" --restore "$img" 2>&1)
     if [ -z "$want" ] || [ "$want" != "$got" ]; then
-      echo "FAIL image $vm -> bin/runevm: \"$got\", where it was saved as \"$want\""
+      echo "FAIL image $vm -> $native: \"$got\", where it was saved as \"$want\""
       image=failed
       status=1
     fi
     # bin/runevm saves, this VM restores
-    want=$(cd "$idir" && rm -f "$img" && "$root/bin/runevm" prog.rbc 2>&1)
+    want=$(cd "$idir" && rm -f "$img" && "$root/$native" prog.rbc 2>&1)
     got=$(cd "$idir" && "$VM" --restore "$img" 2>&1 | tr -d '\r')
     if [ -z "$want" ] || [ "$want" != "$got" ]; then
-      echo "FAIL image bin/runevm -> $vm: \"$got\", where it was saved as \"$want\""
+      echo "FAIL image $native -> $vm: \"$got\", where it was saved as \"$want\""
       image=failed
       status=1
     fi

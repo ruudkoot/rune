@@ -211,8 +211,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 
 ## The register bytecode (vm/new)
 
-`vm/new`'s first loop (`bin/runevm-new`, `vm/new/interp.c`) runs a second
-instruction set, of registers (`src/isa/regs.sml`; decision D4 of
+`vm/new`'s loop (`bin/runevm-new`, `vm/new/interp.c`; `vm/new/ARCHITECTURE.md`
+is the VM as built) runs a second instruction set, of 41 registers
+instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune --target=registers` makes
 it, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
 register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
@@ -222,7 +223,11 @@ refuses the other's file and image.
   argument (registers 0 to `n-1` the arguments of a known call), the others
   start as `unit`, and `nlocals` of the function table
   is their number. The collector sees every one, as it sees the locals of the
-  stack bytecode, since the stack pointer stays above them.
+  stack bytecode, since the stack pointer stays above them. Above them a
+  frame pushes only the arguments of a primitive, a call's result and the
+  exception a raise leaves: the loader works out how deep that goes
+  (`maxstack`: the widest primitive, or 1), a call makes room for it, and
+  the loop's pushes do not check.
 * **Operands** are `i32`, as in the stack bytecode; an instruction that takes
   a list of registers (`TUPLE`, `CLOSURE`, `PRIM`) has them last, as many as
   its count says or as its primitive's arity.
@@ -230,6 +235,16 @@ refuses the other's file and image.
   the instruction after the call takes it into a register (`RESULT`); a
   handler's code begins with `CATCH`, which takes the exception a raise left
   there. `vm/new` shares `runevm`'s runtime this way (`build/librune.a`).
+  The loop's `RET` writes the value into the register of the `RESULT` the
+  caller goes on at and passes over that `RESULT`, so `--count` counts one
+  instruction fewer for each call than the code has; a program resumed from
+  an image at a `RESULT` takes its value from the stack as before.
+* **Primitives** done in the loop: the common case of the primitives
+  `runeopt` does in line (`runeopt --inlined`; [native.md](native.md)) is
+  done from the registers, with nothing pushed (`vm/new/fastprim.h`), and
+  the primitive itself is called for the rest -- an overflow, a divisor of
+  zero, an index out of bounds. The result is the primitive's either way,
+  which `scripts/check-new.sh` holds `tests/opt/prims.sml` to on both VMs.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it.
@@ -247,7 +262,7 @@ refuses the other's file and image.
 | `CALLK f n a...` / `TAILCALLK f n a...` | function, count, registers | Call function `f` with the registers `a...` as its registers 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`). |
 | `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
 | `RET s` | register | Return `s` to the caller. |
-| `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise. |
+| `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise; the common case of some in the loop. |
 | `PRIMPUSH p a...` | primitive, registers | Primitive `p` of `a...`, its result left for `RESULT`. |
 | `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
 | `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |

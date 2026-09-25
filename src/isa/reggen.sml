@@ -1,7 +1,7 @@
 (* What runeisa writes from the description of the register bytecode
-   (src/isa/regs.sml): the tables and the cases of vm/new's loop, and the
-   opcodes of the compiler's register target. As with the stack bytecode,
-   every file is committed. *)
+   (src/isa/regs.sml): the tables, the cases and the labels of vm/new's
+   loop, and the opcodes of the compiler's register target. As with the
+   stack bytecode, every file is committed. *)
 structure RegGen =
 struct
   open Isa RegIsa
@@ -110,17 +110,62 @@ struct
                "#endif"])}
     end
 
+  (* Each case of the loop (vm/new/interp.c) reads its own operands -- the
+     fixed ones, and for a list where it begins and how long it is -- moves
+     the pc past the instruction and counts it, then does its body and goes
+     on to the next (NEXT). CASE and NEXT are the loop's: labels and a
+     computed goto, or the cases of a switch. *)
   fun regCases (instrs : rinstruction list) : file =
     {path = "vm/new/reg_cases.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The cases of vm/new's loop, each the body of its instruction in",
-           "   src/isa/regs.sml. */"]
+           "   The cases of vm/new's loop (vm/new/interp.c), each the body of its",
+           "   instruction in src/isa/regs.sml, in the loop's words. */"]
           @ List.concat
               (List.map (fn (i : rinstruction) =>
-                           ["case ROP_" ^ #name i ^ ": {"] @ IsaGen.indent 4 (#body i) @ ["    break;", "}"])
+                           let
+                             val nf = List.length (fixed i)
+                             val letters = ["a", "b", "c", "d"]
+                             val reads =
+                               List.tabulate (nf, fn k =>
+                                 "int32_t " ^ List.nth (letters, k) ^ " = read_i32(code + pc + " ^ Int.toString (1 + 4 * k) ^ ");")
+                             val len = Int.toString (1 + 4 * nf)
+                             val (listReads, advance) =
+                               case list i of
+                                 SOME (_, Registers k) =>
+                                   (["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                     "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"],
+                                    "pc += " ^ len ^ " + 4 * n;")
+                               | SOME (_, PrimArgs k) =>
+                                   (["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                     "uint32_t n = prim_arity[" ^ List.nth (letters, k) ^ "];"],
+                                    "pc += " ^ len ^ " + 4 * n;")
+                               | _ => ([], "pc += " ^ len ^ ";")
+                             val traced =
+                               commaList (List.tabulate (3, fn k => if k < nf then List.nth (letters, k) else "0"))
+                           in
+                             ["CASE(" ^ #name i ^ ") {"]
+                             @ IsaGen.indent 4 (reads @ listReads
+                                                @ ["TRACE(ROP_" ^ #name i ^ ", " ^ traced ^ ");",
+                                                   advance,
+                                                   "count++;"]
+                                                @ #body i
+                                                @ ["NEXT;"])
+                             @ ["}"]
+                           end)
                         instrs))}
+
+  (* The labels of the cases, in the order of the opcodes, for the computed
+     goto of the loop. *)
+  fun regLabels (instrs : rinstruction list) : file =
+    {path = "vm/new/reg_labels.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The labels of the cases of vm/new/reg_cases.h by opcode, for the",
+           "   dispatch of vm/new/interp.c by computed goto. */"]
+          @ List.map (fn (i : rinstruction) => "&&L_" ^ #name i ^ ",") instrs)}
 
   (* ---- the .def file the scripts and the check of the documentation read,
      one line per instruction ---- *)
@@ -171,6 +216,6 @@ struct
       val () = RegIsa.check instrs
       val fp = fingerprint (instrs, prims)
     in
-      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regcodesSml (instrs, fp)]
+      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regLabels instrs, regcodesSml (instrs, fp)]
     end
 end

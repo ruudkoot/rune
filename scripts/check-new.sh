@@ -3,10 +3,12 @@
 # tests/lang and tests/perf compiled for each -- the register bytecode for
 # vm/new, the stack bytecode for runevm -- and run as tests/run-tests.sh runs
 # it, must allocate the same bytes and objects (runevm --count), the cheap
-# check of a back end and a VM together; and the compiler, compiled to the
+# check of a back end and a VM together; the compiler, compiled to the
 # register bytecode and run by vm/new, must make of its own sources the
-# bytecode runevm's makes. What each prints is tests/run-tests.sh's to check
-# (make test-new).
+# bytecode runevm's makes; and tests/opt/prims.sml, the primitives vm/new
+# does in its loop on their edge cases (vm/new/fastprim.h), must print on
+# vm/new what it prints on runevm. What each prints is tests/run-tests.sh's
+# to check (make test-new).
 #   scripts/check-new.sh [--rune BIN] [--vm BIN] [--new BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -73,10 +75,24 @@ else
   fi
 fi
 
-if [ -n "$fails$boot" ]; then
+# the primitives done in the loop, on their edge cases, against runevm
+prims=""
+if ! "$rune" tests/opt/prims.sml -o "$out/prims.rbc" 2> "$out/prims.err" ||
+   ! "$rune" --target=registers tests/opt/prims.sml -o "$out/prims.new.rbc" 2>> "$out/prims.err"; then
+  prims="FAIL new.prims: $(head -1 "$out/prims.err")"
+else
+  "$vm" "$out/prims.rbc" > "$out/prims.stack.out" 2>&1
+  "$new" "$out/prims.new.rbc" > "$out/prims.new.out" 2>&1
+  if ! cmp -s "$out/prims.stack.out" "$out/prims.new.out"; then
+    prims="FAIL new.prims: tests/opt/prims.sml prints on vm/new other than on runevm: $(diff "$out/prims.stack.out" "$out/prims.new.out" | head -2 | tail -1)"
+  fi
+fi
+
+if [ -n "$fails$boot$prims" ]; then
   [ -n "$fails" ] && echo "$fails"
   [ -n "$boot" ] && echo "$boot"
-  echo "check-new: $(printf '%s\n%s\n' "$fails" "$boot" | grep -c FAIL) of $n programs and the bootstrap fail"
+  [ -n "$prims" ] && echo "$prims"
+  echo "check-new: $(printf '%s\n%s\n%s\n' "$fails" "$boot" "$prims" | grep -c FAIL) of $n programs, the bootstrap and the primitives fail"
   exit 1
 fi
-echo "check-new: $n programs allocate the same on vm/new and runevm, and the compiler on vm/new makes the bytecode it makes on runevm"
+echo "check-new: $n programs allocate the same on vm/new and runevm, the compiler on vm/new makes the bytecode it makes on runevm, and the primitives done in the loop print the same"

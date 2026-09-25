@@ -1,12 +1,15 @@
 #!/bin/sh
 # The suites on VMs of machines this one is not (`make test-portability`):
-#   tests/run-portability.sh [--rune BIN] [--vm BIN]... [--native BIN] [-j N] [FILTER]
+#   tests/run-portability.sh [--rune BIN] [--vm BIN]... [--native BIN] [--def FILE] [-j N] [FILTER]
 #
 # Each VM named by --vm runs every program of tests/lang and the whole of
 # tests/vm, as tests/run-tests.sh runs them here -- the bytecode is the same
 # file for every VM, so only the VM differs. bin/runevm32 is a 32-bit x86,
 # where a pointer is four bytes; bin/runevm-ppc64 is a big-endian 64-bit
 # PowerPC under qemu, where the bytes of a word are the other way round.
+# For vm/new (docs/plans/jit.md, M2) the same, with --rune bin/rune-new,
+# --vm bin/runevm-new32 --vm bin/runevm-new-ppc64, --native bin/runevm-new
+# for the counts of this machine and --def vm/new/regs.def for tests/vm.
 #
 # Then two things no single VM can show:
 #
@@ -32,6 +35,7 @@ export TZ
 
 rune=bin/rune
 native=bin/runevm
+def=vm/opcodes.def
 vms=""
 jobs=""
 filter=""
@@ -40,8 +44,9 @@ while [ $# -gt 0 ]; do
     --rune) rune=$2; shift 2 ;;
     --vm) vms="$vms $2"; shift 2 ;;
     --native) native=$2; shift 2 ;;
+    --def) def=$2; shift 2 ;;
     -j) jobs=$2; shift 2 ;;
-    -*) echo "usage: $0 [--rune BIN] [--vm BIN]... [-j N] [FILTER]" >&2; exit 2 ;;
+    -*) echo "usage: $0 [--rune BIN] [--vm BIN]... [--native BIN] [--def FILE] [-j N] [FILTER]" >&2; exit 2 ;;
     *) filter=$1; shift ;;
   esac
 done
@@ -62,7 +67,7 @@ for vm in $vms; do
   echo "=== $name: the language suite and tests/vm"
   # shellcheck disable=SC2086
   sh tests/run-tests.sh -j "$jobs" --rune "$rune" --vm "$vm" $skip $filter || status=1
-  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$out/$name-vm" || status=1
+  sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$out/$name-vm" --def "$def" || status=1
 done
 
 # ------------------------------------------- the counts, the same everywhere

@@ -6,7 +6,7 @@
 # Configurations (default: rune):
 #   rune                   bin/rune, the self-hosted compiler, + bin/runevm
 #                          (override: RUNE=, RUNEVM=; both must be absolute)
-#   rune:windows  rune:windows32
+#   rune:windows  rune:windows32  rune:windows-new  rune:windows32-new
 #   rune:linux32  rune:ppc64   the same on a VM of another machine: a 32-bit
 #                          x86, and a big-endian 64-bit PowerPC under qemu
 #                          (make portability; RUNEVM_LINUX32=, RUNEVM_PPC64=)
@@ -870,8 +870,8 @@ expand() {
       hosts) echo native:mlton native:smlnj native:smlnj32 native:polyml ;;
       xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml ;;
       all) echo rune; expand hosts,xc1 ;;
-      windows) echo rune:windows rune:windows32 ;;
-      portability) echo rune:linux32 rune:ppc64 ;;
+      windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
+      portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new ;;
       *) echo "$c" ;;
     esac
   done
@@ -933,6 +933,31 @@ resolve() {
       fi
       id=rune:$host
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make portability)" >&2; return 1; }
+      "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
+      ;;
+    rune:windows-new|rune:windows32-new|rune:linux32-new|rune:ppc64-new)
+      # vm/new on the same four machines (docs/plans/jit.md, M2): the
+      # register bytecode of bin/rune-new on bin/runevm-new.exe,
+      # bin/runevm-new32.exe, bin/runevm-new32 and bin/runevm-new-ppc64,
+      # named as the stack VM's with -new, so that a deviation of
+      # tests/basis/deviations.txt for a machine holds for both VMs.
+      cmd1=${RUNE_NEW:-$root/bin/rune-new}
+      case "$host" in
+        windows-new) cmd2=${RUNEVM_NEW_WINDOWS:-$root/bin/runevm-new.exe} ;;
+        windows32-new) cmd2=${RUNEVM_NEW_WINDOWS32:-$root/bin/runevm-new32.exe} ;;
+        linux32-new) cmd2=${RUNEVM_NEW_LINUX32:-$root/bin/runevm-new32} ;;
+        *) cmd2=${RUNEVM_NEW_PPC64:-$root/bin/runevm-new-ppc64} ;;
+      esac
+      id=rune:$host
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make windows, or make portability)" >&2; return 1; }
+      case "$host" in
+        windows*)
+          "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here; Windows or WSL is needed" >&2; return 1; }
+          if [ -z "${RUNE_WINDOWS_DIR:-}" ]; then
+            RUNE_WINDOWS_DIR=$(sh "$root/tests/windows-dir.sh") || { echo "run-matrix: no directory on the Windows side; set RUNE_WINDOWS_DIR" >&2; return 1; }
+            export RUNE_WINDOWS_DIR
+          fi ;;
+      esac
       "$cmd2" --version > /dev/null 2>&1 || { echo "run-matrix: $cmd2 will not start here" >&2; return 1; }
       ;;
     native:mlton|xc1:mlton)

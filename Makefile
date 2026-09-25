@@ -67,7 +67,7 @@ ifeq ($(MAKELEVEL),0)
 MAKEFLAGS += -j$(JOBS)
 endif
 CC      ?= cc
-CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -pedantic
+CFLAGS  ?= -std=c17 -O2 -Wall -Wextra -pedantic
 ROOT    := $(CURDIR)
 
 # The compiler and VM the test targets run. Override to test another build:
@@ -321,23 +321,28 @@ bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 # vm/new's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm. Its own instruction set's part (vm/new/isa_regs.c)
 # is linked before build/librune.a, whose vm/isa_stack.c it takes the place of.
-NEW_HDRS := vm/new/regvm.h
+NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.h vm/new/reg_loop.h vm/new/fastprim.h
 bin/runevm-new: vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a $(VM_HDRS) $(NEW_HDRS) | build/.doctor-vm
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -Ivm -o $@ vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a -lm
 
 vm-asan: bin/runevm-asan bin/runevm-new-asan
 
+# The language suite on vm/new built with the sanitizers (not part of make
+# check; run for every change to vm/new, as the ASan runevm is for the VM).
+test-new-asan: bin/runevm-new-asan bin/rune-new $(RUNE)
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan
+
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
 
 # vm/new with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
 NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
 bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -o $@ $(NEW_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -o $@ $(NEW_SRCS) -lm
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -362,9 +367,12 @@ bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 # does not and why, and docs/runtime.md what a program can count on.
 WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
-WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
+WINCFLAGS   ?= -std=c17 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
+# vm/new for Windows: its loop and its instruction set's part in place of
+# the stack bytecode's (vm/isa_stack.c), as bin/runevm-new-asan is built
+WIN_NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -375,7 +383,7 @@ define windows_dlls
 	done
 endef
 
-windows: bin/runevm.exe bin/runevm32.exe
+windows: bin/runevm.exe bin/runevm32.exe bin/runevm-new.exe bin/runevm-new32.exe
 
 bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 	@mkdir -p bin
@@ -387,8 +395,23 @@ bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
-test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
+bin/runevm-new.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+	@mkdir -p bin
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_NEW_SRCS) -Ivm $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC))
+
+bin/runevm-new32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+	@mkdir -p bin
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_NEW_SRCS) -Ivm $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC32))
+
+# The suites on the Windows VMs of both bytecodes: the stack one compiled
+# by bin/rune, the register one by bin/rune-new, each on its two VMs
+# (tests/run-windows.sh), then the Basis Library suite on all four.
+test-windows: windows $(RUNE) bin/rune-new
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
+	sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new.exe --vm bin/runevm-new32.exe
 	RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
 # ------------------------------------------------------------- portability
@@ -421,7 +444,7 @@ PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$
 QEMUPPC    ?= qemu-ppc64
 PORT_TIMEOUT ?= 900
 
-portability: bin/runevm32 bin/runevm-ppc64
+portability: bin/runevm32 bin/runevm-ppc64 bin/runevm-new32 bin/runevm-new-ppc64
 
 bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
@@ -438,12 +461,28 @@ bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
 	chmod +x $@
 
+# vm/new for the same two machines, from the sources bin/runevm-new-asan is
+# built from (its instruction set's part in place of the stack bytecode's)
+bin/runevm-new32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -Ivm -o $@ $(NEW_SRCS) -lm
+
+bin/runevm-new-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -Ivm -o $@ $(NEW_SRCS) -lm
+
+bin/runevm-new-ppc64: bin/runevm-new-ppc64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
+	chmod +x $@
+
 # The PowerPC VM runs under an emulator and is about ten times slower, so the
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm
+test-portability: portability $(RUNE) vm bin/rune-new
 	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm32 --vm bin/runevm-ppc64
+	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new32 --vm bin/runevm-new-ppc64
 	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 
@@ -584,7 +623,7 @@ test-native-stress: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm 
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE)) \
 	  RUNEVM_OPT="$(ROOT)/bin/runevm-opt-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 
-ASAN_CFLAGS := -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
 build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p build/asan/obj

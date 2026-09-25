@@ -1,7 +1,7 @@
 # Rune
 
 Rune is a Standard ML '97 compiler that targets a compact stack bytecode, plus
-`runevm`, a portable C99 interpreter with a copying garbage collector. The
+`runevm`, a portable C interpreter with a copying garbage collector. The
 compiler is written in portable Standard ML and builds unchanged with
 **MLton**, **SML/NJ** and **Poly/ML** — all three produce byte-identical
 bytecode. It also compiles itself, and that is the compiler Rune ships:

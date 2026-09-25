@@ -29,7 +29,7 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | Measure | done |
-| M2 | Tier 0: the interpreter finished | |
+| M2 | Tier 0: the interpreter finished | done |
 | M3 | The skeleton: code objects, executable memory, the driver | |
 | M4 | Tier 1, straight-line code, x86-64 | |
 | M5 | Tier 1 complete, and Windows | |
@@ -882,14 +882,15 @@ paper; against LLVM tuned for compile time it is 20 to 35%).
 
 ## Constraints
 
-* **The VM stays C, with no C++.** C99 today; the owner allows C17 in
-  `vm/portable` and `vm/new` where it helps performance, behind `#ifdef`s
-  where that is not too much trouble, so that a C99 compiler still builds
-  both. The first use changes `CFLAGS` in the `Makefile` and the rule in
-  `AGENTS.md`; the likely first uses are `<stdatomic.h>` for the store
-  that publishes a code object's entry (D13) and `_Static_assert` on the
-  layout the emitters take by `offsetof`. The owner leans to C and asked
-  to be argued with about Rust. Rust was weighed and set aside: a JIT in Rust
+* **The VM stays C, with no C++.** The owner allows C17 in `vm/portable`
+  and `vm/new` where it helps performance, behind `#ifdef`s where that is
+  not too much trouble, so that a C99 compiler still builds both. M2 made
+  the first use, the two-word `Value` of `vm/vm.h`: `CFLAGS` says
+  `-std=c17`, `-std=c99` still builds, and `AGENTS.md` says the rule.
+  Later uses: `<stdatomic.h>` for the store that publishes a code
+  object's entry (D13) and `_Static_assert` on the layout the emitters
+  take by `offsetof`. The owner leans to C and asked to be argued with
+  about Rust. Rust was weighed and set aside: a JIT in Rust
   inside a runtime in C would need a C API for every structure the code
   touches (`VM`, `Frame`, the heap), which is the layout `runeopt` names
   by hand today; it is worth taking up only if the VM is rewritten,
@@ -1411,6 +1412,76 @@ M8 to M12 about 6,000, and are planned again after M7.
   folded `RESULT`, quoted); cycles at or below `runevm`'s on every
   program of `tests/perf` and the bootstrap; sanitiser, stress, Windows
   and portability green.
+* **Done** (2026-09-25):
+  * **The loop** (`vm/new/interp.c`, `reg_loop.h`): the bodies of
+    `src/isa/regs.sml` are written in the loop's words (`R`, `PUSH`,
+    `POP`, `SYNC`, `RELOAD`, `ROOM`, `ENTER`, `FATAL`, `EXPECT`, `NEXT`),
+    the frame's registers, the stack pointer, the pc and the count in the
+    loop's variables; `reggen` writes each case with its own operand reads
+    and the list's start and length, and the labels of a computed goto
+    (`reg_labels.h`); a traced copy of the loop for `--trace`.
+  * **Room, not checks:** the checker works out each function's deepest
+    stack above its registers (the widest primitive, or one), a call makes
+    room for it, and no push checks. The checker also holds a jump target
+    to its own function.
+  * **`RET` writes the caller's `RESULT` register** and passes over the
+    `RESULT`, so `--count` counts one instruction fewer per call: the
+    budgets of `tests/perf/new` went down 0 to 12% (the bootstrap
+    502.7M to 469.7M, `fib` 1.40M to 1.24M, `tak` 473K to 421K,
+    `real_nbody` and `word_bits` under 0.3%).
+  * **The primitives `runeopt` does in line, done in the loop**
+    (`vm/new/fastprim.h`, 60 of them, from the registers with nothing
+    pushed; the primitive itself for an overflow, a zero divisor, an
+    index out of bounds): `PRIM` was a third to a half of the instructions
+    of the compute-bound programs. `tests/opt/prims.sml` runs them on
+    their edge cases on both VMs (`scripts/check-new.sh`). The first
+    version was a function with a switch and cost as much as the work:
+    inlined, with the arguments read in place, it pays.
+  * **The `Value` in two words** (`vm/vm.h`): 38% of the fast path's time
+    was one 16-byte store, a store-forwarding stall behind a value made a
+    byte at a time. The tag and its padding are now also a 64-bit header
+    word (an unnamed union member, C11), so a value is made in two
+    registers and stored in two stores; the layout is unchanged, and
+    `-std=c99` still builds the byte form. This is the first use of the
+    owner's C17 allowance: `CFLAGS` and the Windows and sanitiser flags
+    say `-std=c17`, and `AGENTS.md` says the rule.
+  * **Built and tested everywhere:** `bin/runevm-new.exe`,
+    `bin/runevm-new32.exe`, `bin/runevm-new32` and `bin/runevm-new-ppc64`
+    (`make windows`, `make portability`), the runners taking `--rune
+    bin/rune-new`, `--native bin/runevm-new` and `--def vm/new/regs.def`
+    (`tests/vm`'s cases are the file's layout, so they hold for both
+    sets; the one that names an instruction takes its opcode from the
+    `.def`), the Basis suite's `rune:windows-new`, `rune:windows32-new`,
+    `rune:linux32-new` and `rune:ppc64-new`, named so that the deviations
+    recorded for a machine hold for both VMs; `make test-new-asan`;
+    `make test-stress` already ran `vm/new`.
+  * **`vm/new/ARCHITECTURE.md`** begun; `docs/bytecode.md` says 41.
+  * **Not done:** a call that writes its result without `RESULT` in the
+    code, which would need a destination in `CALL`: the fold in `RET`
+    takes the dispatch away already, and the instruction stays for images.
+* **Measured** (`scripts/perf-cycles.sh`, the same day; cycles, and the
+  fraction of `runevm`'s):
+
+  | Program | `runevm` | `vm/new` at M1 | `vm/new` at M2 |
+  |---|---:|---:|---:|
+  | array_sieve | 561.3M | 1.08G (1.94) | 453.2M (0.81) |
+  | fib | 950.8M | 2.08G (2.29) | 792.7M (0.83) |
+  | intinf_fact | 565.8M | 865.4M (1.62) | 452.6M (0.80) |
+  | list_ops | 391.9M | 631.1M (1.64) | 327.2M (0.84) |
+  | real_nbody | 932.8M | 2.52G (2.41) | 681.4M (0.73) |
+  | string_ops | 674.5M | 1.12G (1.60) | 669.9M (0.99) |
+  | tak | 252.8M | 519.2M (2.11) | 231.8M (0.92) |
+  | word_bits | 785.3M | 1.84G (2.32) | 549.4M (0.70) |
+  | the bootstrap | 13.7G | 17.35G (1.29) | 11.7G (0.85) |
+
+  `vm/new` went from 17.35G to 11.7G cycles on the bootstrap, 33% fewer,
+  as estimated, and is now faster than `runevm` on every program: the
+  machine instructions per VM instruction fell from about 53 to about 28.
+  Of the four changes, the loop's variables and dispatch were worth about
+  a quarter, the fast path a fifth once inlined, the two-word `Value` most
+  of the rest. `runevm`'s own numbers did not move: its values are copied
+  between slots, not made. The numbers to beat are now `runeopt`'s 6.90G on
+  the bootstrap, 1.7 times, and 0.27 to 0.55 of `runevm` on `tests/perf`.
 
 ### M3. The skeleton: code objects, executable memory, the driver (M, about 500)
 

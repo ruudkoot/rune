@@ -1,32 +1,41 @@
 #!/bin/sh
 # What the VM refuses before it runs anything (part of make test):
-#   tests/vm/run-vm-tests.sh [--vm BIN] [--out DIR]
+#   tests/vm/run-vm-tests.sh [--vm BIN] [--out DIR] [--def FILE]
 # Each case writes a bytecode file by hand, or gives runevm an option, with a
 # length or a size chosen to overflow what is computed from it, and expects
 # runevm to say what is wrong and exit with status 2 -- not to crash, and not
 # to run. The lengths in a bytecode file are 32 bits wide, so they can wrap a
 # size only where size_t is 32 bits too: the cases matter most for the 32-bit
-# Windows VM (make test-windows), and they hold for every VM.
+# Windows VM (make test-windows), and they hold for every VM. The cases are
+# the file's layout and the VM's options, not the instructions, so they hold
+# for vm/new as well: --def vm/new/regs.def gives its header.
 #
 # The VM is given the name of the file relative to the directory it runs in,
 # which is what a Windows VM started from WSL can open.
 set -u
 vm=bin/runevm
 out=tests/out/vm
+def=vm/opcodes.def
 while [ $# -gt 0 ]; do
   case $1 in
     --vm) vm=$2; shift 2 ;;
     --out) out=$2; shift 2 ;;
-    *) echo "usage: $0 [--vm BIN] [--out DIR]" >&2; exit 2 ;;
+    --def) def=$2; shift 2 ;;
+    *) echo "usage: $0 [--vm BIN] [--out DIR] [--def FILE]" >&2; exit 2 ;;
   esac
 done
 cd "$(dirname "$0")/../.."
 case $vm in /*) ;; *) vm=$(pwd)/$vm ;; esac
 # the header: "RUNE", the version and the fingerprint of the instruction
-# set, as the generated vm/opcodes.def gives it; numbers are 32 bits,
-# little-endian
-header=$(sed -n 's/^# rbc header //p' vm/opcodes.def)
-[ -n "$header" ] || { echo "run-vm-tests: vm/opcodes.def has no rbc header" >&2; exit 2; }
+# set, as the generated vm/opcodes.def (or vm/new/regs.def) gives it;
+# numbers are 32 bits, little-endian
+header=$(sed -n 's/^# rbc header //p' "$def")
+[ -n "$header" ] || { echo "run-vm-tests: $def has no rbc header" >&2; exit 2; }
+# SELF: its opcode, and the number of its operands (four bytes each), which
+# the two instruction sets give differently (the named-function case below)
+selfop=$(awk '!/^#/ && NF { if ($1 == "SELF") print n; n++ }' "$def")
+selfops=$(awk '!/^#/ && NF && $1 == "SELF" { print ($2 == "-") ? 0 : split($2, a, ",") }' "$def")
+[ -n "$selfop" ] && [ -n "$selfops" ] || { echo "run-vm-tests: $def has no SELF" >&2; exit 2; }
 mkdir -p "$out"
 cd "$out" || exit 2
 
@@ -149,9 +158,14 @@ expect debug-inlined-name "bad table of inlined functions" inlname.rbc
 
 # A fatal error names the function it happened in, which is the name the
 # compiler put in the file (docs/bytecode.md). One function called
-# `queens`, one instruction, SELF (opcode 8) where there is no closure.
-printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$one\\010$zero$zero$zero$zero$zero$zero" > named.rbc
-expect named-function "fatal error at pc 1 in queens" named.rbc
+# `queens`, one instruction, SELF where there is no closure: its opcode and
+# its operands (all 0) as the .def gives them, since the two instruction
+# sets number and shape it differently; the pc the error names is the one
+# after the instruction.
+selflen=$((1 + 4 * selfops))
+selfcode=$(printf '\\%03o' "$selfop"; i=0; while [ $i -lt $((4 * selfops)) ]; do printf '\\000'; i=$((i + 1)); done)
+printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$(printf '\\%03o' $selflen)\\000\\000\\000$selfcode$zero$zero$zero$zero$zero$zero" > named.rbc
+expect named-function "fatal error at pc $selflen in queens" named.rbc
 
 # the child of a fork by a second VM (vm/image.c) with no image to read:
 # standard input is empty, and x names no descriptor or handle

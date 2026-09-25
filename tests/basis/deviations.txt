@@ -602,7 +602,7 @@ xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.
 # What Windows cannot do as POSIX does, and the checks that ask sh or start
 # another program of POSIX, which Windows has not: every line says which
 # after `stays:`, and the two VMs fail the same checks.
-rune:ppc64 | Posix.ProcEnv.uname/machine | EMULATED | qemu answers `uname` with the machine it emulates, ppc64, and the `uname -m` this check compares it with runs as a program of the real machine, which is not emulated: the two disagree because the VM is, and there is nothing of Rune in it
+rune:ppc64* | Posix.ProcEnv.uname/machine | EMULATED | qemu answers `uname` with the machine it emulates, ppc64, and the `uname -m` this check compares it with runs as a program of the real machine, which is not emulated: the two disagree because the VM is, and there is nothing of Rune in it
 rune:windows* | Socket.Ctl.getTYPE/unix-dgram | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.recvVecFrom/unix | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.send*ToNB*/full | WINDOWS | stays: the check fills the queue of a datagram socket in the Unix domain, which Windows does not have
