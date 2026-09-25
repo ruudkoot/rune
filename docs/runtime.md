@@ -1,7 +1,7 @@
 # The runtime
 
 `runevm` is the program a compiled Rune program runs on: it loads a `.rbc`
-file, checks it, and interprets it (`vm/`, about 9,500 lines of C99). This
+file, checks it, and interprets it (`vm/`, about 9,500 lines of C). This
 page is about what a running program can count on -- how a value is laid out,
 when the collector moves it, how much memory and how many objects a program
 may have, what makes a run reproducible, and where the platform shows
@@ -166,7 +166,7 @@ Everything the VM needs from the operating system is behind `vm/sys.h`: time,
 files, directories, descriptors, processes, sockets and the `Posix`
 structure. `vm/sys_posix.c` implements it for POSIX systems, `vm/sys_win.c`
 for Windows ([building.md](building.md)), and `vm/sys_none.c` fails every
-call with `ENOSYS`, which keeps the rest of the VM ISO C99 with no platform
+call with `ENOSYS`, which keeps the rest of the VM ISO C with no platform
 code in it (`make SYS=none`).
 
 A call the platform cannot make answers `ENOSYS`, which the library turns

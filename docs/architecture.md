@@ -156,13 +156,18 @@ the payload beside it. The bytecode therefore contains no path, and
 | `vm/heap.c` | Allocation and the Cheney semispace collector. Roots: value stack, globals, constants, frame closures, builtin exception constructors. |
 | `vm/image.c` | `fork` where the system has none (Windows) or `runevm --emulate-fork` asks: the VM's whole state is written to a second `runevm`, started as `runevm --resume`, which moves the heap's pointers to its own heap and carries on in the dispatch loop with `fork` returning 0. |
 | `vm/prims.c` | One function per primitive; the dispatch table is generated from `src/isa/prims.sml`. |
-| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C99. |
+| `vm/sys.h`, `vm/sys_posix.c`, `vm/sys_win.c`, `vm/sys_none.c` | The system layer: what the primitives of time, files, processes, `Posix` and sockets need from the operating system. `sys_posix.c` is the one for POSIX systems and `sys_win.c` the one of `make windows` (see `docs/building.md`); `make SYS=none` links `sys_none.c` instead, which fails every call with `ENOSYS`, so the rest of the VM stays ISO C. |
 | `vm/main.c` | Command line handling. |
+| `vm/new/interp.c`, `vm/new/reg_loop.h` | `vm/new`'s loop for the register bytecode (`bin/runevm-new`; [bytecode.md](bytecode.md), The register bytecode): the words its bodies are written in, and the loop itself, included twice, plain and traced. Its cases are the bodies of `src/isa/regs.sml`, which `runeisa` writes into `vm/new/reg_cases.h`, with `vm/new/reg_labels.h` for the computed goto and the tables of `vm/new/regops.h`. |
+| `vm/new/isa_regs.c`, `vm/new/regvm.h` | What of `vm/new` is its instruction set's: the check of a program (with each function's deepest stack), the disassembler, the fingerprint. Linked in place of `vm/isa_stack.c`. |
+| `vm/new/fastprim.h` | The common case of the primitives `runeopt` does in line, done in the loop from the registers. |
+| `vm/new/ARCHITECTURE.md` | `vm/new` as built, kept current by every change to it ([plans/jit.md](plans/jit.md)). |
 
-Everything but `interp.c` and `main.c` is the runtime, which the Makefile
-also builds as `build/librune.a` for this machine: `bin/runevm` is the two
-linked against it, and a program made by the native code generator
-([native.md](native.md)) links it in place of them.
+Everything but `interp.c`, `main.c` and `vm/new` is the runtime, which the
+Makefile also builds as `build/librune.a` for this machine: `bin/runevm` is
+the two linked against it, `bin/runevm-new` is `vm/new` linked against it,
+and a program made by the native code generator ([native.md](native.md))
+links it in place of them.
 
 GC discipline in C: an allocation may move every heap object, so primitives
 read their arguments from the stack (not popped) until the result exists, and

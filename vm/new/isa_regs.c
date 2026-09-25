@@ -35,8 +35,13 @@ static int operand_ok(const Program *p, uint32_t fi, int kind, int32_t v) {
 
 /* Where every instruction of a program begins, or NULL and a message: the
    opcodes, the operands by their kinds (a register below the frame's
-   number, every register of a list among them), the jump targets and the
-   function entries. A .rbc and an image are untrusted input alike. */
+   number, every register of a list among them), the jump targets, which
+   stay in their function, and the function entries. A .rbc and an image
+   are untrusted input alike. On the way it works out how deep each
+   function's stack goes above its registers (Function.maxstack): the
+   arguments of a primitive, or the one value a call returns and a raise
+   leaves for CATCH. The loop's pushes do not check (vm/new/interp.c),
+   which this is what makes safe. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     for (uint32_t i = 0; i < p->nfuncs; i++) {
         if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
@@ -47,6 +52,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     }
     uint8_t *starts = calloc(p->code_len + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
+    for (uint32_t i = 0; i < p->nfuncs; i++) p->funcs[i].maxstack = 1;
     uint32_t fi = 0;
     uint32_t pc = 0;
     while (pc < p->code_len) {
@@ -68,18 +74,20 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         for (uint32_t i = 0; i < n && !bad; i++)
             bad = !operand_ok(p, fi, RK_REGISTER, read_i32(at + 1 + 4 * (rop_nfixed[op] + i)));
         if (bad) { free(starts); snprintf(err, errlen, "bad register for %s at %u", rop_names[op], pc); return NULL; }
+        if ((op == ROP_PRIM || op == ROP_PRIMPUSH) && n > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n;
         starts[pc] = 1;
         pc += len;
     }
-    /* jump targets and function entries must be instruction boundaries; a
-       SWITCH's table is JUMPs of its own function, which the code goes on
-       after */
+    /* jump targets and function entries must be instruction boundaries,
+       and a jump stays in its function; a SWITCH's table is JUMPs of its
+       own function, which the code goes on after */
     pc = 0;
     fi = 0;
     while (pc < p->code_len) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         const uint8_t *at = p->code + pc;
         uint8_t op = at[0];
+        uint32_t from = p->funcs[fi].code_offset, to = p->funcs[fi].code_end;
         if (op == ROP_SWITCH) {
             uint32_t n = (uint32_t)read_i32(at + 5);
             uint64_t table = (uint64_t)pc + rop_length(at);
@@ -94,18 +102,14 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL) {
                 int32_t t = read_i32(at + 1 + 4 * k);
-                if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
+                if (t < 0 || (uint32_t)t < from || (uint32_t)t >= to || !starts[t]) {
                     free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
                 }
             }
         pc += rop_length(at);
     }
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
+    for (uint32_t i = 0; i < p->nfuncs; i++)
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
-        /* the registers are the frame; what is pushed beyond them, a
-           primitive's arguments and a call's result, is pushed with a check */
-        p->funcs[i].maxstack = 0;
-    }
     return starts;
 }
 
