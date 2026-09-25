@@ -162,6 +162,10 @@ keep these invariants:
   VM changes also run the suite with the
   sanitizer build, `make vm-asan && sh tests/run-tests.sh --vm bin/runevm-asan`,
   and with a collection at (nearly) every allocation, `make test-stress`.
+* `make check` also runs in GitHub Actions on every pull request and every
+  push to `master` (`.github/workflows/check.yml`), on Ubuntu 24.04 with the
+  packages of `cloud/SETUP.md` and the hosts kept in the Actions cache. A
+  pull request is not ready until it passes there too.
 * `make check` never compiles `vm/sys_win.c`, so a green `make check` says
   nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
   system layers is done only once `make windows` builds both VMs and
