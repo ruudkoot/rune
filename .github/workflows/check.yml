@@ -1,0 +1,63 @@
+# make check (AGENTS.md) on every pull request and every push to master, on
+# a machine set up as cloud/SETUP.md describes: the packages make doctor
+# asks for, and the host SML systems of make hosts, kept in the Actions
+# cache between runs (a fresh build of the four takes about 3 minutes).
+name: check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Packages
+        run: |
+          sudo apt-get update -q
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+            libgmp-dev gcc-multilib gdb lldb dwarfdump valgrind
+
+      - name: Host SML systems (cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/rune-hosts
+          key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
+
+      - name: make hosts
+        run: make hosts
+
+      - name: make doctor
+        run: make doctor
+
+      # The runner starts jobs with SIGPIPE ignored, which every process
+      # inherits and a shell cannot undo, so Posix.Signal.pipe/ends-shell
+      # (a shell that sends itself SIGPIPE) would exit instead of dying:
+      # the tests run with it back at its default action.
+      - name: make check
+        run: env --default-signal=PIPE make check
+
+      - name: Keep the reports of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-reports
+          path: |
+            tests/out/matrix/report*.md
+            tests/out/*.stdout
+            tests/out/*.stderr
+            tests/out/*.expected
+          if-no-files-found: ignore
+          retention-days: 7

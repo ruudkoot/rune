@@ -589,12 +589,6 @@ native:mlton@* | @section/widestring/text | SPEC-AMBIGUOUS | as @load/widestring
 xc1:* | INet6Sock.toAddr/* | XC1-NA | INet6Sock.toAddr rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock.any/* | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock.fromAddr/* | XC1-NA | INet6Sock.fromAddr rests on socket_inet6_parts, which tests/basis/host/rune-prim.sml fails with ENOSYS
-xc1:* | INet6Sock.UDP.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to make
-xc1:* | INet6Sock.TCP.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket to make
-xc1:* | INet6Sock.inet6/* | XC1-NA | the check opens a socket, which tests/basis/host/rune-prim.sml fails with ENOSYS
-xc1:* | INet6Sock.sock/* | XC1-NA | the check opens a socket, which tests/basis/host/rune-prim.sml fails with ENOSYS
-xc1:* | INet6Sock.stream_sock/* | XC1-NA | the check opens a socket, which tests/basis/host/rune-prim.sml fails with ENOSYS
-xc1:* | INet6Sock.dgram_sock/* | XC1-NA | the check opens a socket, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock.sock_addr/* | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.any rests on socket_inet6_addr, which tests/basis/host/rune-prim.sml fails with ENOSYS
 

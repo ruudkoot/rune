@@ -562,12 +562,24 @@ struct
     | NONE => ~1
 
   fun time_now () = Int.fromLarge (Time.toMicroseconds (Time.now ()))
-  val cpu = Timer.totalCPUTimer ()
-  fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer cpu)))
-  fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer cpu)))
-  (* the host's own collector, where it accounts for one *)
-  fun time_gc_user () = Int.fromLarge (Time.toMicroseconds (#usr (#gc (Timer.checkCPUTimes cpu))))
-  fun time_gc_sys () = Int.fromLarge (Time.toMicroseconds (#sys (#gc (Timer.checkCPUTimes cpu))))
+  (* The processor times count from the start of the process, so they are
+     read against totalCPUTimer (), asked for anew at every reading and
+     never kept in a val. SML/NJ's totalCPUTimer () returns the readings its
+     runtime took when the process started, as a value, and takes them again
+     whenever a heap image is resumed (resetTimers, run at AtInit). The xc1
+     configurations save the library, this file with it, in an image and
+     start each test from it: a timer kept in a val here would be that of
+     the process that saved the image, and a test would read its own
+     getrusage against another process's, which can come out negative
+     (Timer.totalCPUTimer/non-negative and /includes-earlier-computation
+     failed so, now and then). *)
+  fun cpu () = Timer.totalCPUTimer ()
+  fun time_user () = Int.fromLarge (Time.toMicroseconds (#usr (Timer.checkCPUTimer (cpu ()))))
+  fun time_sys () = Int.fromLarge (Time.toMicroseconds (#sys (Timer.checkCPUTimer (cpu ()))))
+  (* the host's own collector, where it accounts for one; SML/NJ 110.99.9
+     counts it twice in time_user (docs/bugreport/smlnj/Timer.checkCPUTimer) *)
+  fun time_gc_user () = Int.fromLarge (Time.toMicroseconds (#usr (#gc (Timer.checkCPUTimes (cpu ())))))
+  fun time_gc_sys () = Int.fromLarge (Time.toMicroseconds (#sys (#gc (Timer.checkCPUTimes (cpu ())))))
   (* At least n microseconds, as the VM waits: Poly/ML 5.9.2 can return a
      little early, so sleep again for what is left. *)
   fun time_sleep n =

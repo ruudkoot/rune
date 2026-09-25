@@ -4,8 +4,9 @@
    domain over IPv6 and its UDP and TCP sockets. The specification has no
    IPv6, so the expectations here are those of `INET_SOCK` read for 128-bit
    addresses, and the text forms are those of `inet_ntop` and `inet_pton`.
-   A machine without IPv6 is not a failure: the checks that need one are
-   skipped when the loopback address cannot be bound. *)
+   A machine without IPv6 is not a failure: the checks that need a socket
+   of the family are skipped (T.skipUnless) when none can be opened, and
+   those that talk over it when the loopback address cannot be bound. *)
 structure TestINet6Sock =
 struct
   structure S = Sockets
@@ -18,11 +19,24 @@ struct
   fun addr6 s = valOf (INet6Sock.fromString s)
   fun parts a = let val (h, p) = INet6Sock.fromAddr a in INet6Sock.toString h ^ " " ^ Int.toString p end
 
-  (* the machine has IPv6 when a socket can be bound to ::1 *)
+  (* the error a probe below failed with, which the reason a check is
+     skipped names: afnosupport on a machine without IPv6, nosys in the xc1
+     configurations, where tests/basis/host/rune-prim.sml has no sockets *)
+  fun why (OS.SysErr (m, SOME e)) = SOME (" (" ^ OS.errorName e ^ ": " ^ m ^ ")")
+    | why (OS.SysErr (m, NONE)) = SOME (" (" ^ m ^ ")")
+    | why e = SOME (" (" ^ exnName e ^ ")")
+
+  (* the kernel has the family when a socket of it can be opened: NONE, or
+     why not *)
+  val opens = (S.withSocket INet6Sock.TCP.socket (fn (_ : tcp6) => NONE)) handle e => why e
+  val noFamily = "no socket of the INET6 family can be opened here" ^ getOpt (opens, "")
+
+  (* the machine has IPv6 when a socket can be bound to ::1: NONE, or why
+     not *)
   val works =
     (S.withSocket INet6Sock.TCP.socket
-       (fn (s : listener6) => (Socket.bind (s, INet6Sock.toAddr (addr6 "::1", 0)); true)))
-    handle _ => false
+       (fn (s : listener6) => (Socket.bind (s, INet6Sock.toAddr (addr6 "::1", 0)); NONE)))
+    handle e => why e
 
   (*<< text *)
   (* the text of an address is what inet_ntop writes: the longest run of
@@ -71,52 +85,51 @@ struct
   (*<< sockets *)
   (* a datagram to ourselves over the loopback interface, and a stream both
      ways, as in the tests of INetSock *)
-  val () = eqS ("INet6Sock.UDP.socket/datagram-to-itself", if works then "to myself" else "no ipv6",
-                fn () => if not works then "no ipv6"
-                         else S.withSocket INet6Sock.UDP.socket (fn (s : udp6) =>
-                                (Socket.bind (s, INet6Sock.toAddr (addr6 "::1", 0));
-                                 Socket.sendVecTo (s, Socket.Ctl.getSockName s, S.vslice "to myself");
-                                 if S.readable s then
-                                   case Socket.recvVecFromNB (s, 100) of SOME (v, _) => S.text v | NONE => "NONE"
-                                 else "nothing"))
-  )
-  val () = eqS ("INet6Sock.TCP.socket/stream-both-ways", if works then "ping pong" else "no ipv6",
-                fn () => if not works then "no ipv6"
-                         else S.withSocket INet6Sock.TCP.socket (fn (c : tcp6) =>
-                                S.using (fn () => let val l : listener6 = INet6Sock.TCP.socket ()
-                                                  in Socket.bind (l, INet6Sock.toAddr (addr6 "::1", 0));
-                                                     Socket.listen (l, 4); l end,
-                                         S.quietly Socket.close) (fn l =>
-                                  (Socket.connect (c, Socket.Ctl.getSockName l);
-                                   S.using (fn () => #1 (Socket.accept l), S.quietly Socket.close) (fn s =>
-                                     (ignore (S.send (c, "ping")); ignore (S.send (s, "pong"));
-                                      S.recvAll (s, 4) ^ " " ^ S.recvAll (c, 4)))))))
-  val () = eqB ("INet6Sock.TCP.getNODELAY/off-by-default", true,
-                fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) => not (INet6Sock.TCP.getNODELAY s)))
-  val () = eqB ("INet6Sock.TCP.setNODELAY/takes", true,
-                fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
-                           (INet6Sock.TCP.setNODELAY (s, true); INet6Sock.TCP.getNODELAY s)))
-  (* the primed forms take a protocol of the system's numbering; 0 is the
-     one the family would have chosen *)
-  val () = eqB ("INet6Sock.UDP.socket'/protocol-zero", true,
-                fn () => S.withSocket (fn () => INet6Sock.UDP.socket' 0)
-                           (fn (s : udp6) => Socket.Ctl.getTYPE s = Socket.SOCK.dgram))
-  val () = eqB ("INet6Sock.TCP.socket'/protocol-zero", true,
-                fn () => S.withSocket (fn () => INet6Sock.TCP.socket' 0)
-                           (fn (s : tcp6) => Socket.Ctl.getTYPE s = Socket.SOCK.stream))
-  (* the types of the signature: a socket of this family is Socket's, and an
-     address of it is Socket's too *)
-  val () = eqB ("INet6Sock.inet6/is-the-family-of-its-sockets", true,
-                fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
-                           let val a : INet6Sock.sock_addr = Socket.Ctl.getSockName s
-                           in Socket.sameAddr (a, Socket.Ctl.getSockName s) end))
-  val () = eqB ("INet6Sock.sock/is-a-Socket.sock", true,
-                fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
-                           let val d = Socket.sockDesc s in Socket.sameDesc (d, d) end))
-  val () = eqB ("INet6Sock.stream_sock/is-a-stream", true,
-                fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) => Socket.Ctl.getTYPE s = Socket.SOCK.stream))
-  val () = eqB ("INet6Sock.dgram_sock/is-a-datagram", true,
-                fn () => S.withSocket INet6Sock.UDP.socket (fn (s : udp6) => Socket.Ctl.getTYPE s = Socket.SOCK.dgram))
+  val () = T.skipUnless (not (isSome works), "no socket can be bound to ::1 here" ^ getOpt (works, "")) (fn () =>
+   (eqS ("INet6Sock.UDP.socket/datagram-to-itself", "to myself",
+         fn () => S.withSocket INet6Sock.UDP.socket (fn (s : udp6) =>
+                    (Socket.bind (s, INet6Sock.toAddr (addr6 "::1", 0));
+                     Socket.sendVecTo (s, Socket.Ctl.getSockName s, S.vslice "to myself");
+                     if S.readable s then
+                       case Socket.recvVecFromNB (s, 100) of SOME (v, _) => S.text v | NONE => "NONE"
+                     else "nothing")));
+    eqS ("INet6Sock.TCP.socket/stream-both-ways", "ping pong",
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (c : tcp6) =>
+                    S.using (fn () => let val l : listener6 = INet6Sock.TCP.socket ()
+                                      in Socket.bind (l, INet6Sock.toAddr (addr6 "::1", 0));
+                                         Socket.listen (l, 4); l end,
+                             S.quietly Socket.close) (fn l =>
+                      (Socket.connect (c, Socket.Ctl.getSockName l);
+                       S.using (fn () => #1 (Socket.accept l), S.quietly Socket.close) (fn s =>
+                         (ignore (S.send (c, "ping")); ignore (S.send (s, "pong"));
+                          S.recvAll (s, 4) ^ " " ^ S.recvAll (c, 4)))))))))
+  val () = T.skipUnless (not (isSome opens), noFamily) (fn () =>
+   (eqB ("INet6Sock.TCP.getNODELAY/off-by-default", true,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) => not (INet6Sock.TCP.getNODELAY s)));
+    eqB ("INet6Sock.TCP.setNODELAY/takes", true,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
+                    (INet6Sock.TCP.setNODELAY (s, true); INet6Sock.TCP.getNODELAY s)));
+    (* the primed forms take a protocol of the system's numbering; 0 is the
+       one the family would have chosen *)
+    eqB ("INet6Sock.UDP.socket'/protocol-zero", true,
+         fn () => S.withSocket (fn () => INet6Sock.UDP.socket' 0)
+                    (fn (s : udp6) => Socket.Ctl.getTYPE s = Socket.SOCK.dgram));
+    eqB ("INet6Sock.TCP.socket'/protocol-zero", true,
+         fn () => S.withSocket (fn () => INet6Sock.TCP.socket' 0)
+                    (fn (s : tcp6) => Socket.Ctl.getTYPE s = Socket.SOCK.stream));
+    (* the types of the signature: a socket of this family is Socket's, and
+       an address of it is Socket's too *)
+    eqB ("INet6Sock.inet6/is-the-family-of-its-sockets", true,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
+                    let val a : INet6Sock.sock_addr = Socket.Ctl.getSockName s
+                    in Socket.sameAddr (a, Socket.Ctl.getSockName s) end));
+    eqB ("INet6Sock.sock/is-a-Socket.sock", true,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
+                    let val d = Socket.sockDesc s in Socket.sameDesc (d, d) end));
+    eqB ("INet6Sock.stream_sock/is-a-stream", true,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) => Socket.Ctl.getTYPE s = Socket.SOCK.stream));
+    eqB ("INet6Sock.dgram_sock/is-a-datagram", true,
+         fn () => S.withSocket INet6Sock.UDP.socket (fn (s : udp6) => Socket.Ctl.getTYPE s = Socket.SOCK.dgram))))
   val () = eqB ("INet6Sock.sock_addr/is-a-Socket.sock_addr", true,
                 fn () => Socket.sameAddr (INet6Sock.any 0, INet6Sock.any 0))
   val () = eqB ("INet6Sock.in6_addr/admits-equality", true, fn () => addr6 "::1" = addr6 "0:0:0:0:0:0:0:1")
