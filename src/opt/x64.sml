@@ -533,6 +533,7 @@ struct
                  | Opcode.LOCAL =>
                    if forwards i then pending := SOME (h, a) else copy (localSlot a, slot h)
                  | Opcode.SETLOCAL => copy (rslot (h - 1), localSlot a)
+                 | Opcode.TEELOCAL => copy (rslot (h - 1), localSlot a)
                  | Opcode.ENV =>
                    (closureToRax ();
                     line "test %rax, %rax";

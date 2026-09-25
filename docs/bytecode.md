@@ -150,6 +150,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `UNIT` | | Push `()`. |
 | `CON0 t` | tag | Push nullary constructor `t`. |
 | `LOCAL l` / `SETLOCAL l` | slot | Push / pop frame local `l`. |
+| `TEELOCAL l` | slot | Store the top of stack into local `l` and leave it there: `SETLOCAL l; LOCAL l` in one. |
 | `ENV e` | slot | Push slot `e` of the current closure's environment. |
 | `SELF` | | Push the current closure (used for self-recursion). |
 | `GLOBAL g` / `SETGLOBAL g` | global | Push / pop global `g`. Reading an unset global is a fatal error. |

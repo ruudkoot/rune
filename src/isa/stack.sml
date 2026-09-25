@@ -13,54 +13,73 @@ struct
      IsaGen works out from them, which the file carries beside it. *)
   val rbcVersion = 3
 
-  (* What CALL and TAILCALL share: the closure and its function checked, and
-     after the frame, the callee's locals made -- local 0 is the argument,
-     the others start as unit -- and its code entered. *)
+  (* A body that is not shared is written in the words of the loop
+     (vm/interp.c), which keeps the stack pointer, the frame's base, the pc
+     and the count of instructions in its own variables:
+     * PUSH(v), POP(), TOP(k) (the k-th from the top, which can be written)
+       and LOCALV(l) (local l of the frame, which can be written) use the
+       stack; the loader has made room for the deepest the function goes
+       (Function.maxstack), so PUSH does not check;
+     * FRAME is the frame, PC the pc of the next instruction and JUMP_TO(o)
+       goes to o;
+     * SYNC() gives the VM what the loop keeps, before what reads it -- the
+       collector, a raise, a primitive, a frame pushed -- and RELOAD() takes
+       it back after what may have changed it;
+     * FATAL(...) and EXPECT(v, kind, what) stop the program where it is.
+     A shared body (sharedBody) is a function of vm/ops.h, which runeopt's
+     code calls too, and is written against the VM itself (vm_push, vm_pop,
+     vm_top); the loop gives it the VM's state first and takes it back
+     after. *)
+
+  (* What CALL and TAILCALL share: the closure and its function checked. *)
   val callee =
-    ["Value arg = vm_pop(vm);",
-     "Value cv = vm_pop(vm);",
-     "Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, \"closure in call\");",
+    ["Value arg = POP();",
+     "Value cv = POP();",
+     "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
      "int64_t fidx = OBJ_FIELDS(c)[0].u.i;",
-     "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, \"bad function index\");",
+     "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
+  (* and the callee's frame at `at`: room for its locals and its deepest
+     stack, local 0 the argument, the others unit, and its code entered *)
   val enter =
-    ["if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);",
-     "Value *slot = &vm->stack[vm->sp];",
+    ["size_t need = at + fn->nlocals + fn->maxstack;",
+     "if (need > vm->stack_cap) vm_grow_stack(vm, need);",
+     "Value *slot = vm->stack + at;",
      "slot[0] = arg;",
      "for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();",
-     "vm->sp += fn->nlocals;",
-     "vm->pc = fn->code_offset;"]
+     "ENTER(slot, fn);"]
 
   val instructions : instruction list =
     [inst ("HALT", [], (Fixed 0, 0), Halt, "Stop execution.")
-       ["return 0;"],
+       ["SYNC();",
+        "return 0;"],
      inst ("CONST", [("k", Constant)], (Fixed 0, 1), Next, "Push constant pool entry k.")
-       ["vm_push(vm, p->consts[a]);"],
+       ["PUSH(p->consts[a]);"],
      inst ("INT", [("i", Immediate)], (Fixed 0, 1), Next, "Push the small integer i.")
-       ["vm_push(vm, mk_int(a));"],
+       ["PUSH(mk_int(a));"],
      inst ("UNIT", [], (Fixed 0, 1), Next, "Push unit.")
-       ["vm_push(vm, mk_unit());"],
+       ["PUSH(mk_unit());"],
      inst ("CON0", [("t", Tag)], (Fixed 0, 1), Next, "Push the nullary constructor with tag t.")
-       ["vm_push(vm, mk_con0(a));"],
+       ["PUSH(mk_con0(a));"],
      inst ("LOCAL", [("l", Local)], (Fixed 0, 1), Next, "Push local slot l of the current frame.")
-       ["vm_push(vm, vm->stack[fr->base + (size_t)a]);"],
+       ["PUSH(LOCALV(a));"],
      inst ("SETLOCAL", [("l", Local)], (Fixed 1, 0), Next, "Pop the top of stack into local slot l.")
-       ["vm->stack[fr->base + (size_t)a] = vm_pop(vm);"],
+       ["LOCALV(a) = POP();"],
      inst ("ENV", [("e", EnvSlot)], (Fixed 0, 1), Next, "Push slot e of the current closure's environment.")
-       ["Obj *c = fr->closure;",
-        "if (!c || (uint32_t)a + 1 >= c->len) vm_fatal(vm, \"environment slot %d out of range\", a);",
-        "vm_push(vm, OBJ_FIELDS(c)[a + 1]);"],
+       ["Obj *c = FRAME->closure;",
+        "if (!c || (uint32_t)a + 1 >= c->len) FATAL(\"environment slot %d out of range\", a);",
+        "PUSH(OBJ_FIELDS(c)[a + 1]);"],
      inst ("SELF", [], (Fixed 0, 1), Next, "Push the currently executing closure.")
-       ["if (!fr->closure) vm_fatal(vm, \"SELF outside a closure\");",
-        "vm_push(vm, mk_ptr(fr->closure));"],
+       ["if (!FRAME->closure) FATAL(\"SELF outside a closure\");",
+        "PUSH(mk_ptr(FRAME->closure));"],
      inst ("GLOBAL", [("g", Global)], (Fixed 0, 1), Next, "Push global g.")
-       ["if (!vm->global_set[a]) vm_fatal(vm, \"global %d read before initialization\", a);",
-        "vm_push(vm, vm->globals[a]);"],
+       ["if (!vm->global_set[a]) FATAL(\"global %d read before initialization\", a);",
+        "PUSH(vm->globals[a]);"],
      inst ("SETGLOBAL", [("g", Global)], (Fixed 1, 0), Next, "Pop the top of stack into global g.")
-       ["vm->globals[a] = vm_pop(vm);",
+       ["vm->globals[a] = POP();",
         "vm->global_set[a] = 1;"],
      inst ("POP", [], (Fixed 1, 0), Next, "Discard the top of stack.")
-       ["(void)vm_pop(vm);"],
+       ["(void)POP();"],
      sharedBody
        (inst ("TUPLE", [("n", Count)], (OperandValue 0, 1), Next, "Pop n values (first pushed is field 0) and push a tuple.")
           ["if (a == 0) { vm_push(vm, mk_unit()); return; }",
@@ -71,24 +90,24 @@ struct
            "vm->sp -= (size_t)a;",
            "vm_push(vm, mk_ptr(t));"]),
      inst ("SELECT", [("i", Field)], (Fixed 1, 1), Next, "Pop a tuple and push its field i.")
-       ["Value v = vm_pop(vm);",
-        "Obj *t = vm_expect_obj(vm, v, K_TUPLE, \"tuple\");",
-        "if ((uint32_t)a >= t->len) vm_fatal(vm, \"tuple index %d out of range\", a);",
-        "vm_push(vm, OBJ_FIELDS(t)[a]);"],
+       ["Value v = POP();",
+        "Obj *t = EXPECT(v, K_TUPLE, \"tuple\");",
+        "if ((uint32_t)a >= t->len) FATAL(\"tuple index %d out of range\", a);",
+        "PUSH(OBJ_FIELDS(t)[a]);"],
      sharedBody
        (inst ("CON", [("t", Tag)], (Fixed 1, 1), Next, "Pop a value and push constructor t applied to it.")
           ["Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, 1);",
            "OBJ_FIELDS(c)[0] = *vm_top(vm, 0);",
            "*vm_top(vm, 0) = mk_ptr(c);"]),
      inst ("DECON", [], (Fixed 1, 1), Next, "Pop a constructor value and push its argument.")
-       ["Value v = vm_pop(vm);",
-        "Obj *c = vm_expect_obj(vm, v, K_CON, \"constructor with argument\");",
-        "vm_push(vm, OBJ_FIELDS(c)[0]);"],
+       ["Value v = POP();",
+        "Obj *c = EXPECT(v, K_CON, \"constructor with argument\");",
+        "PUSH(OBJ_FIELDS(c)[0]);"],
      inst ("CONTAG", [], (Fixed 1, 1), Next, "Pop a constructor value and push its tag as an int.")
-       ["Value v = vm_pop(vm);",
-        "if (v.tag == T_CON0) vm_push(vm, mk_int(v.u.i));",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) vm_push(vm, mk_int(v.u.p->contag));",
-        "else vm_fatal(vm, \"CONTAG on non-constructor\");"],
+       ["Value v = POP();",
+        "if (v.tag == T_CON0) PUSH(mk_int(v.u.i));",
+        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) PUSH(mk_int(v.u.p->contag));",
+        "else FATAL(\"CONTAG on non-constructor\");"],
      sharedBody
        (inst ("CLOSURE", [("f", Function), ("n", Count)], (OperandValue 1, 1), Next,
               "Pop n values (first pushed is env slot 0) into a new closure of function f.")
@@ -108,44 +127,50 @@ struct
            "OBJ_FIELDS(c)[a + 1] = v;"]),
      inst ("CALL", [], (Fixed 2, 1), Call, "Pop argument, pop closure, and call it.")
        (callee
-        @ ["vm_push_frame(vm, (uint32_t)fidx, c, vm->pc, vm->sp);"]
+        @ ["size_t at = (size_t)(sp - vm->stack);",
+           "vm_push_frame(vm, (uint32_t)fidx, c, PC, at);"]
         @ enter),
      inst ("TAILCALL", [], (Fixed 2, 0), TailCall, "Like CALL but the current frame is replaced.")
        (callee
-        @ ["vm->sp = fr->base;",
-           "fr->func = (uint32_t)fidx;",
-           "fr->closure = c;"]
+        @ ["size_t at = FRAME->base;",
+           "FRAME->func = (uint32_t)fidx;",
+           "FRAME->closure = c;"]
         @ enter),
      inst ("RET", [], (Fixed 1, 0), Return, "Return the top of stack to the caller.")
-       ["Value v = vm_pop(vm);",
-        "vm->sp = fr->base;",
-        "vm->pc = fr->ret_pc;",
-        "if (vm->fp == 0) { vm_push(vm, v); return 0; }",
+       ["Value v = POP();",
+        "size_t at = FRAME->base;",
+        "uint32_t back = FRAME->ret_pc;",
+        "if (vm->fp == 0) { sp = vm->stack + at; PUSH(v); JUMP_TO(back); SYNC(); return 0; }",
         "vm->fp--;",
-        "vm_push(vm, v);"],
+        "sp = vm->stack + at;",
+        "PUSH(v);",
+        "RETURN_TO(back);"],
      inst ("JUMP", [("o", Label)], (Fixed 0, 0), Jump, "Jump to absolute code offset o.")
-       ["vm->pc = (uint32_t)a;"],
+       ["JUMP_TO(a);"],
      inst ("JUMPIFNOT", [("o", Label)], (Fixed 1, 0), Branch, "Pop a bool; jump to o if it is false.")
-       ["Value v = vm_pop(vm);",
-        "if (v.tag != T_CON0) vm_fatal(vm, \"JUMPIFNOT on non-bool\");",
-        "if (v.u.i == 0) vm->pc = (uint32_t)a;"],
+       ["Value v = POP();",
+        "if (v.tag != T_CON0) FATAL(\"JUMPIFNOT on non-bool\");",
+        "if (v.u.i == 0) JUMP_TO(a);"],
      inst ("JUMPIF", [("o", Label)], (Fixed 1, 0), Branch, "Pop a bool; jump to o if it is true.")
-       ["Value v = vm_pop(vm);",
-        "if (v.tag != T_CON0) vm_fatal(vm, \"JUMPIF on non-bool\");",
-        "if (v.u.i != 0) vm->pc = (uint32_t)a;"],
+       ["Value v = POP();",
+        "if (v.tag != T_CON0) FATAL(\"JUMPIF on non-bool\");",
+        "if (v.u.i != 0) JUMP_TO(a);"],
      withHandlers Installs
        (inst ("PUSHHANDLER", [("o", HandlerLabel)], (Fixed 0, 0), Next,
               "Install an exception handler whose code starts at o.")
-          ["vm_push_handler(vm, (uint32_t)a);"]),
+          ["SYNC();",
+           "vm_push_handler(vm, (uint32_t)a);"]),
      withHandlers Removes
        (inst ("POPHANDLER", [], (Fixed 0, 0), Next, "Remove the innermost exception handler.")
-          ["if (vm->hp == 0) vm_fatal(vm, \"POPHANDLER with no handler\");",
+          ["if (vm->hp == 0) FATAL(\"POPHANDLER with no handler\");",
            "vm->hp--;"]),
      raising
        (inst ("RAISE", [], (Fixed 1, 0), Raise, "Pop an exception value and raise it.")
-          ["Value v = vm_pop(vm);",
-           "if (v.tag != T_PTR || v.u.p->kind != K_EXN) vm_fatal(vm, \"RAISE of non-exception\");",
-           "vm_raise(vm, v);"]),
+          ["Value v = POP();",
+           "if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL(\"RAISE of non-exception\");",
+           "SYNC();",
+           "vm_raise(vm, v);",
+           "RELOAD();"]),
      sharedBody
        (inst ("NEWEXN", [("k", StringConstant)], (Fixed 0, 1), Next,
               "Create a fresh exception constructor named by string constant k.")
@@ -154,7 +179,7 @@ struct
            "vm_push(vm, mk_ptr(c));"]),
      inst ("BUILTINEXN", [("i", BuiltinExn)], (Fixed 0, 1), Next,
            "Push builtin exception constructor i (see docs/bytecode.md).")
-       ["vm_push(vm, mk_ptr(vm->builtin_exns[a]));"],
+       ["PUSH(mk_ptr(vm->builtin_exns[a]));"],
      sharedBody
        (inst ("MKEXN", [], (Fixed 2, 1), Next, "Pop payload, pop exception constructor, push the exception value.")
           ["if (vm->sp < 2) vm_fatal(vm, \"stack underflow\");",
@@ -166,31 +191,35 @@ struct
            "vm->sp -= 2;",
            "vm_push(vm, mk_ptr(e));"]),
      inst ("EXNCON", [], (Fixed 1, 1), Next, "Pop an exception value and push its constructor.")
-       ["Value v = vm_pop(vm);",
-        "Obj *e = vm_expect_obj(vm, v, K_EXN, \"exception\");",
-        "vm_push(vm, OBJ_FIELDS(e)[0]);"],
+       ["Value v = POP();",
+        "Obj *e = EXPECT(v, K_EXN, \"exception\");",
+        "PUSH(OBJ_FIELDS(e)[0]);"],
      inst ("EXNARG", [], (Fixed 1, 1), Next, "Pop an exception value and push its payload.")
-       ["Value v = vm_pop(vm);",
-        "Obj *e = vm_expect_obj(vm, v, K_EXN, \"exception\");",
-        "vm_push(vm, OBJ_FIELDS(e)[1]);"],
+       ["Value v = POP();",
+        "Obj *e = EXPECT(v, K_EXN, \"exception\");",
+        "PUSH(OBJ_FIELDS(e)[1]);"],
      raising
        (inst ("PRIM", [("p", Primitive)], (ArityOf 0, 1), Next,
               "Invoke primitive p; pops its arguments and pushes the result.")
-          ["if (vm->sp < prim_arity[a]) vm_fatal(vm, \"stack underflow in primitive %s\", prim_names[a]);",
+          ["SYNC();",
            "/* A primitive that says PRIM_NEW_WORLD has put another program",
-           "   here (Runtime.restore), so the code this loop is reading from",
-           "   has been freed: take it again, and the pc with it. */",
-           "if (prim_table[a](vm) == PRIM_NEW_WORLD) code = p->code;"]),
+           "   here (Runtime.restore); RELOAD takes its code again, and the",
+           "   pc with it. */",
+           "(void)prim_table[a](vm);",
+           "RELOAD();"]),
      inst ("JUMPIFNOTTAG", [("o", Label), ("t", Tag)], (Fixed 1, 0), Branch,
            "Pop a constructor value; jump to o unless its tag is t.")
        ["/* CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o, the test of a match",
         "   against a constructor, in one */",
-        "Value v = vm_pop(vm);",
+        "Value v = POP();",
         "int64_t tag = 0;",
         "if (v.tag == T_CON0) tag = v.u.i;",
         "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
-        "else vm_fatal(vm, \"JUMPIFNOTTAG on non-constructor\");",
-        "if (tag != b) vm->pc = (uint32_t)a;"]]
+        "else FATAL(\"JUMPIFNOTTAG on non-constructor\");",
+        "if (tag != b) JUMP_TO(a);"],
+     inst ("TEELOCAL", [("l", Local)], (Fixed 1, 1), Next,
+           "Store the top of stack into local slot l and leave it there: SETLOCAL l; LOCAL l in one.")
+       ["LOCALV(a) = TOP(0);"]]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

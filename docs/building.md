@@ -23,7 +23,7 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
 ## Prerequisites
 
-* A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`.
+* A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C99 compiler has.
 * The SML systems that build the compiler, which `make hosts`
   (`scripts/fetch-hosts.sh`) installs under `${RUNE_HOSTS:-~/.local/rune-hosts}`:
   MLton 20241230 (the binary release), SML/NJ 110.99.9 built for 64 bits and

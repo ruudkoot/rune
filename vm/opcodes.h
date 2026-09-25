@@ -5,8 +5,8 @@
 /* The version of the layout of an .rbc, and the fingerprint of the
    instruction set, which an .rbc and an image carry. */
 #define RBC_VERSION 3
-#define ISA_FINGERPRINT 0x00a8098cu
-#define ISA_FINGERPRINT_HEX "00a8098c"
+#define ISA_FINGERPRINT 0x008009d4u
+#define ISA_FINGERPRINT_HEX "008009d4"
 
 enum Opcode {
   OP_HALT = 0,  /* Stop execution. */
@@ -44,6 +44,7 @@ enum Opcode {
   OP_EXNARG = 32,  /* Pop an exception value and push its payload. */
   OP_PRIM = 33,  /* Invoke primitive p; pops its arguments and pushes the result. */
   OP_JUMPIFNOTTAG = 34,  /* Pop a constructor value; jump to o unless its tag is t. */
+  OP_TEELOCAL = 35,  /* Store the top of stack into local slot l and leave it there: SETLOCAL l; LOCAL l in one. */
   OP__COUNT
 };
 
@@ -83,6 +84,7 @@ static const char *const op_names[] = {
   "EXNARG",
   "PRIM",
   "JUMPIFNOTTAG",
+  "TEELOCAL",
 };
 
 static const unsigned char op_nargs[] = {
@@ -121,6 +123,206 @@ static const unsigned char op_nargs[] = {
   0,
   1,
   2,
+  1,
+};
+
+/* What each opcode pops: a number (op_pops_fixed), the value of an
+   operand (op_pops_operand, its position), or the arity of the
+   primitive an operand names (op_pops_arity); -1 where not. The
+   loader works out from these, and from what each pushes, how deep
+   each function's stack goes (Function.maxstack). */
+static const signed char op_pops_fixed[] = {
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  1,
+  1,
+  -1,
+  1,
+  1,
+  1,
+  1,
+  -1,
+  2,
+  2,
+  2,
+  1,
+  0,
+  1,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  2,
+  1,
+  1,
+  -1,
+  1,
+  1,
+};
+static const signed char op_pops_operand[] = {
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  0,
+  -1,
+  -1,
+  -1,
+  -1,
+  1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+};
+static const signed char op_pops_arity[] = {
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  0,
+  -1,
+  -1,
+};
+static const unsigned char op_pushes[] = {
+  0,
+  1,
+  1,
+  1,
+  1,
+  1,
+  0,
+  1,
+  1,
+  1,
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  1,
+  1,
+  0,
+  1,
+};
+
+/* Where control goes after each (src/isa/isa.sml, flow). */
+enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT };
+static const unsigned char op_flow[] = {
+  FLOW_HALT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_CALL,
+  FLOW_TAILCALL,
+  FLOW_RETURN,
+  FLOW_JUMP,
+  FLOW_BRANCH,
+  FLOW_BRANCH,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_RAISE,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_BRANCH,
+  FLOW_NEXT,
 };
 
 /* What each operand is, which says what the loader accepts for it
@@ -179,6 +381,7 @@ static const unsigned char op_kinds[][2] = {
   {0, 0},  /* EXNARG */
   {10, 0},  /* PRIM */
   {8, 3},  /* JUMPIFNOTTAG */
+  {4, 0},  /* TEELOCAL */
 };
 
 #endif

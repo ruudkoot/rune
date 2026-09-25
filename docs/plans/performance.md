@@ -474,6 +474,14 @@ Each is S or S-M and changes no output:
     are written at once.
 * **At parity:** fades once programs run natively, but it speeds up `make
   check` and every VM that has no native code (32-bit, PowerPC, Windows).
+* **Done** (middle-end M6): the loop keeps the stack pointer, the frame, its
+  base, the pc and the count in its own variables and gives them to the VM
+  only around what reads them; each case reads its own operands; a push
+  does not check, since the loader works out how deep each function's
+  stack goes; computed goto under `__GNUC__`; tracing in a copy of its own.
+  With `TEELOCAL`: the bootstrap's compile 41% fewer cycles (34.6G to
+  20.5G) and 49% fewer machine instructions; fib 30%, tak 45%,
+  intinf_fact 41%, string_ops 29%, list_ops 20% fewer cycles.
 
 ### 16. The constructor tag in the tuple's header
 

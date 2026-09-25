@@ -2,203 +2,365 @@
    The cases of the interpreter's loop (vm/interp.c), each the body of its
    instruction in src/isa/stack.sml; a shared body is a function of
    vm/ops.h. */
-case OP_HALT: {
+CASE(HALT) {
+    TRACE(OP_HALT, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
     return 0;
-    break;
+    NEXT;
 }
-case OP_CONST: {
-    vm_push(vm, p->consts[a]);
-    break;
+CASE(CONST) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_CONST, a, 0);
+    pc += 5;
+    count++;
+    PUSH(p->consts[a]);
+    NEXT;
 }
-case OP_INT: {
-    vm_push(vm, mk_int(a));
-    break;
+CASE(INT) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_INT, a, 0);
+    pc += 5;
+    count++;
+    PUSH(mk_int(a));
+    NEXT;
 }
-case OP_UNIT: {
-    vm_push(vm, mk_unit());
-    break;
+CASE(UNIT) {
+    TRACE(OP_UNIT, 0, 0);
+    pc += 1;
+    count++;
+    PUSH(mk_unit());
+    NEXT;
 }
-case OP_CON0: {
-    vm_push(vm, mk_con0(a));
-    break;
+CASE(CON0) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_CON0, a, 0);
+    pc += 5;
+    count++;
+    PUSH(mk_con0(a));
+    NEXT;
 }
-case OP_LOCAL: {
-    vm_push(vm, vm->stack[fr->base + (size_t)a]);
-    break;
+CASE(LOCAL) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_LOCAL, a, 0);
+    pc += 5;
+    count++;
+    PUSH(LOCALV(a));
+    NEXT;
 }
-case OP_SETLOCAL: {
-    vm->stack[fr->base + (size_t)a] = vm_pop(vm);
-    break;
+CASE(SETLOCAL) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_SETLOCAL, a, 0);
+    pc += 5;
+    count++;
+    LOCALV(a) = POP();
+    NEXT;
 }
-case OP_ENV: {
-    Obj *c = fr->closure;
-    if (!c || (uint32_t)a + 1 >= c->len) vm_fatal(vm, "environment slot %d out of range", a);
-    vm_push(vm, OBJ_FIELDS(c)[a + 1]);
-    break;
+CASE(ENV) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_ENV, a, 0);
+    pc += 5;
+    count++;
+    Obj *c = FRAME->closure;
+    if (!c || (uint32_t)a + 1 >= c->len) FATAL("environment slot %d out of range", a);
+    PUSH(OBJ_FIELDS(c)[a + 1]);
+    NEXT;
 }
-case OP_SELF: {
-    if (!fr->closure) vm_fatal(vm, "SELF outside a closure");
-    vm_push(vm, mk_ptr(fr->closure));
-    break;
+CASE(SELF) {
+    TRACE(OP_SELF, 0, 0);
+    pc += 1;
+    count++;
+    if (!FRAME->closure) FATAL("SELF outside a closure");
+    PUSH(mk_ptr(FRAME->closure));
+    NEXT;
 }
-case OP_GLOBAL: {
-    if (!vm->global_set[a]) vm_fatal(vm, "global %d read before initialization", a);
-    vm_push(vm, vm->globals[a]);
-    break;
+CASE(GLOBAL) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_GLOBAL, a, 0);
+    pc += 5;
+    count++;
+    if (!vm->global_set[a]) FATAL("global %d read before initialization", a);
+    PUSH(vm->globals[a]);
+    NEXT;
 }
-case OP_SETGLOBAL: {
-    vm->globals[a] = vm_pop(vm);
+CASE(SETGLOBAL) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_SETGLOBAL, a, 0);
+    pc += 5;
+    count++;
+    vm->globals[a] = POP();
     vm->global_set[a] = 1;
-    break;
+    NEXT;
 }
-case OP_POP: {
-    (void)vm_pop(vm);
-    break;
+CASE(POP) {
+    TRACE(OP_POP, 0, 0);
+    pc += 1;
+    count++;
+    (void)POP();
+    NEXT;
 }
-case OP_TUPLE:
-    op_TUPLE(vm, a, b);
-    break;
-case OP_SELECT: {
-    Value v = vm_pop(vm);
-    Obj *t = vm_expect_obj(vm, v, K_TUPLE, "tuple");
-    if ((uint32_t)a >= t->len) vm_fatal(vm, "tuple index %d out of range", a);
-    vm_push(vm, OBJ_FIELDS(t)[a]);
-    break;
+CASE(TUPLE) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_TUPLE, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_TUPLE(vm, a, 0);
+    RELOAD();
+    NEXT;
 }
-case OP_CON:
-    op_CON(vm, a, b);
-    break;
-case OP_DECON: {
-    Value v = vm_pop(vm);
-    Obj *c = vm_expect_obj(vm, v, K_CON, "constructor with argument");
-    vm_push(vm, OBJ_FIELDS(c)[0]);
-    break;
+CASE(SELECT) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_SELECT, a, 0);
+    pc += 5;
+    count++;
+    Value v = POP();
+    Obj *t = EXPECT(v, K_TUPLE, "tuple");
+    if ((uint32_t)a >= t->len) FATAL("tuple index %d out of range", a);
+    PUSH(OBJ_FIELDS(t)[a]);
+    NEXT;
 }
-case OP_CONTAG: {
-    Value v = vm_pop(vm);
-    if (v.tag == T_CON0) vm_push(vm, mk_int(v.u.i));
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) vm_push(vm, mk_int(v.u.p->contag));
-    else vm_fatal(vm, "CONTAG on non-constructor");
-    break;
+CASE(CON) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_CON, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_CON(vm, a, 0);
+    RELOAD();
+    NEXT;
 }
-case OP_CLOSURE:
+CASE(DECON) {
+    TRACE(OP_DECON, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    Obj *c = EXPECT(v, K_CON, "constructor with argument");
+    PUSH(OBJ_FIELDS(c)[0]);
+    NEXT;
+}
+CASE(CONTAG) {
+    TRACE(OP_CONTAG, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    if (v.tag == T_CON0) PUSH(mk_int(v.u.i));
+    else if (v.tag == T_PTR && v.u.p->kind == K_CON) PUSH(mk_int(v.u.p->contag));
+    else FATAL("CONTAG on non-constructor");
+    NEXT;
+}
+CASE(CLOSURE) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_CLOSURE, a, b);
+    pc += 9;
+    count++;
+    SYNC();
     op_CLOSURE(vm, a, b);
-    break;
-case OP_SETENV:
-    op_SETENV(vm, a, b);
-    break;
-case OP_CALL: {
-    Value arg = vm_pop(vm);
-    Value cv = vm_pop(vm);
-    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    RELOAD();
+    NEXT;
+}
+CASE(SETENV) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_SETENV, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_SETENV(vm, a, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(CALL) {
+    TRACE(OP_CALL, 0, 0);
+    pc += 1;
+    count++;
+    Value arg = POP();
+    Value cv = POP();
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
     int64_t fidx = OBJ_FIELDS(c)[0].u.i;
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
-    vm_push_frame(vm, (uint32_t)fidx, c, vm->pc, vm->sp);
-    if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);
-    Value *slot = &vm->stack[vm->sp];
+    size_t at = (size_t)(sp - vm->stack);
+    vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
-    vm->sp += fn->nlocals;
-    vm->pc = fn->code_offset;
-    break;
+    ENTER(slot, fn);
+    NEXT;
 }
-case OP_TAILCALL: {
-    Value arg = vm_pop(vm);
-    Value cv = vm_pop(vm);
-    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+CASE(TAILCALL) {
+    TRACE(OP_TAILCALL, 0, 0);
+    pc += 1;
+    count++;
+    Value arg = POP();
+    Value cv = POP();
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
     int64_t fidx = OBJ_FIELDS(c)[0].u.i;
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
-    vm->sp = fr->base;
-    fr->func = (uint32_t)fidx;
-    fr->closure = c;
-    if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);
-    Value *slot = &vm->stack[vm->sp];
+    size_t at = FRAME->base;
+    FRAME->func = (uint32_t)fidx;
+    FRAME->closure = c;
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
-    vm->sp += fn->nlocals;
-    vm->pc = fn->code_offset;
-    break;
+    ENTER(slot, fn);
+    NEXT;
 }
-case OP_RET: {
-    Value v = vm_pop(vm);
-    vm->sp = fr->base;
-    vm->pc = fr->ret_pc;
-    if (vm->fp == 0) { vm_push(vm, v); return 0; }
+CASE(RET) {
+    TRACE(OP_RET, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    size_t at = FRAME->base;
+    uint32_t back = FRAME->ret_pc;
+    if (vm->fp == 0) { sp = vm->stack + at; PUSH(v); JUMP_TO(back); SYNC(); return 0; }
     vm->fp--;
-    vm_push(vm, v);
-    break;
+    sp = vm->stack + at;
+    PUSH(v);
+    RETURN_TO(back);
+    NEXT;
 }
-case OP_JUMP: {
-    vm->pc = (uint32_t)a;
-    break;
+CASE(JUMP) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_JUMP, a, 0);
+    pc += 5;
+    count++;
+    JUMP_TO(a);
+    NEXT;
 }
-case OP_JUMPIFNOT: {
-    Value v = vm_pop(vm);
-    if (v.tag != T_CON0) vm_fatal(vm, "JUMPIFNOT on non-bool");
-    if (v.u.i == 0) vm->pc = (uint32_t)a;
-    break;
+CASE(JUMPIFNOT) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_JUMPIFNOT, a, 0);
+    pc += 5;
+    count++;
+    Value v = POP();
+    if (v.tag != T_CON0) FATAL("JUMPIFNOT on non-bool");
+    if (v.u.i == 0) JUMP_TO(a);
+    NEXT;
 }
-case OP_JUMPIF: {
-    Value v = vm_pop(vm);
-    if (v.tag != T_CON0) vm_fatal(vm, "JUMPIF on non-bool");
-    if (v.u.i != 0) vm->pc = (uint32_t)a;
-    break;
+CASE(JUMPIF) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_JUMPIF, a, 0);
+    pc += 5;
+    count++;
+    Value v = POP();
+    if (v.tag != T_CON0) FATAL("JUMPIF on non-bool");
+    if (v.u.i != 0) JUMP_TO(a);
+    NEXT;
 }
-case OP_PUSHHANDLER: {
+CASE(PUSHHANDLER) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_PUSHHANDLER, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
     vm_push_handler(vm, (uint32_t)a);
-    break;
+    NEXT;
 }
-case OP_POPHANDLER: {
-    if (vm->hp == 0) vm_fatal(vm, "POPHANDLER with no handler");
+CASE(POPHANDLER) {
+    TRACE(OP_POPHANDLER, 0, 0);
+    pc += 1;
+    count++;
+    if (vm->hp == 0) FATAL("POPHANDLER with no handler");
     vm->hp--;
-    break;
+    NEXT;
 }
-case OP_RAISE: {
-    Value v = vm_pop(vm);
-    if (v.tag != T_PTR || v.u.p->kind != K_EXN) vm_fatal(vm, "RAISE of non-exception");
+CASE(RAISE) {
+    TRACE(OP_RAISE, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL("RAISE of non-exception");
+    SYNC();
     vm_raise(vm, v);
-    break;
+    RELOAD();
+    NEXT;
 }
-case OP_NEWEXN:
-    op_NEWEXN(vm, a, b);
-    break;
-case OP_BUILTINEXN: {
-    vm_push(vm, mk_ptr(vm->builtin_exns[a]));
-    break;
+CASE(NEWEXN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_NEWEXN, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_NEWEXN(vm, a, 0);
+    RELOAD();
+    NEXT;
 }
-case OP_MKEXN:
-    op_MKEXN(vm, a, b);
-    break;
-case OP_EXNCON: {
-    Value v = vm_pop(vm);
-    Obj *e = vm_expect_obj(vm, v, K_EXN, "exception");
-    vm_push(vm, OBJ_FIELDS(e)[0]);
-    break;
+CASE(BUILTINEXN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_BUILTINEXN, a, 0);
+    pc += 5;
+    count++;
+    PUSH(mk_ptr(vm->builtin_exns[a]));
+    NEXT;
 }
-case OP_EXNARG: {
-    Value v = vm_pop(vm);
-    Obj *e = vm_expect_obj(vm, v, K_EXN, "exception");
-    vm_push(vm, OBJ_FIELDS(e)[1]);
-    break;
+CASE(MKEXN) {
+    TRACE(OP_MKEXN, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
+    op_MKEXN(vm, 0, 0);
+    RELOAD();
+    NEXT;
 }
-case OP_PRIM: {
-    if (vm->sp < prim_arity[a]) vm_fatal(vm, "stack underflow in primitive %s", prim_names[a]);
+CASE(EXNCON) {
+    TRACE(OP_EXNCON, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    Obj *e = EXPECT(v, K_EXN, "exception");
+    PUSH(OBJ_FIELDS(e)[0]);
+    NEXT;
+}
+CASE(EXNARG) {
+    TRACE(OP_EXNARG, 0, 0);
+    pc += 1;
+    count++;
+    Value v = POP();
+    Obj *e = EXPECT(v, K_EXN, "exception");
+    PUSH(OBJ_FIELDS(e)[1]);
+    NEXT;
+}
+CASE(PRIM) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_PRIM, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
     /* A primitive that says PRIM_NEW_WORLD has put another program
-       here (Runtime.restore), so the code this loop is reading from
-       has been freed: take it again, and the pc with it. */
-    if (prim_table[a](vm) == PRIM_NEW_WORLD) code = p->code;
-    break;
+       here (Runtime.restore); RELOAD takes its code again, and the
+       pc with it. */
+    (void)prim_table[a](vm);
+    RELOAD();
+    NEXT;
 }
-case OP_JUMPIFNOTTAG: {
+CASE(JUMPIFNOTTAG) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_JUMPIFNOTTAG, a, b);
+    pc += 9;
+    count++;
     /* CONTAG; INT t; PRIM poly_eq; JUMPIFNOT o, the test of a match
        against a constructor, in one */
-    Value v = vm_pop(vm);
+    Value v = POP();
     int64_t tag = 0;
     if (v.tag == T_CON0) tag = v.u.i;
     else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
-    else vm_fatal(vm, "JUMPIFNOTTAG on non-constructor");
-    if (tag != b) vm->pc = (uint32_t)a;
-    break;
+    else FATAL("JUMPIFNOTTAG on non-constructor");
+    if (tag != b) JUMP_TO(a);
+    NEXT;
+}
+CASE(TEELOCAL) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_TEELOCAL, a, 0);
+    pc += 5;
+    count++;
+    LOCALV(a) = TOP(0);
+    NEXT;
 }

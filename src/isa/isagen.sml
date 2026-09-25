@@ -136,6 +136,33 @@ struct
             @ List.map (fn (_, i : instruction) => "  " ^ Int.toString (List.length (#operands i)) ^ ",") is
             @ ["};",
                "",
+               "/* What each opcode pops: a number (op_pops_fixed), the value of an",
+               "   operand (op_pops_operand, its position), or the arity of the",
+               "   primitive an operand names (op_pops_arity); -1 where not. The",
+               "   loader works out from these, and from what each pushes, how deep",
+               "   each function's stack goes (Function.maxstack). */",
+               "static const signed char op_pops_fixed[] = {"]
+            @ List.map (fn (_, i : instruction) => "  " ^ (case #pops i of Fixed n => Int.toString n | _ => "-1") ^ ",") is
+            @ ["};",
+               "static const signed char op_pops_operand[] = {"]
+            @ List.map (fn (_, i : instruction) => "  " ^ (case #pops i of OperandValue k => Int.toString k | _ => "-1") ^ ",") is
+            @ ["};",
+               "static const signed char op_pops_arity[] = {"]
+            @ List.map (fn (_, i : instruction) => "  " ^ (case #pops i of ArityOf k => Int.toString k | _ => "-1") ^ ",") is
+            @ ["};",
+               "static const unsigned char op_pushes[] = {"]
+            @ List.map (fn (_, i : instruction) => "  " ^ Int.toString (#pushes i) ^ ",") is
+            @ ["};",
+               "",
+               "/* Where control goes after each (src/isa/isa.sml, flow). */",
+               "enum OpFlow { FLOW_NEXT, FLOW_BRANCH, FLOW_JUMP, FLOW_CALL, FLOW_TAILCALL, FLOW_RETURN, FLOW_RAISE, FLOW_HALT };",
+               "static const unsigned char op_flow[] = {"]
+            @ List.map (fn (_, i : instruction) =>
+                          "  FLOW_" ^ (case #flow i of
+                                          Next => "NEXT" | Branch => "BRANCH" | Jump => "JUMP" | Call => "CALL"
+                                        | TailCall => "TAILCALL" | Return => "RETURN" | Raise => "RAISE" | Halt => "HALT") ^ ",") is
+            @ ["};",
+               "",
                "/* What each operand is, which says what the loader accepts for it",
                "   (src/isa/isa.sml, kind). */",
                "enum OperandKind {"]
@@ -194,6 +221,11 @@ struct
     let val sp = CharVector.tabulate (n, fn _ => #" ")
     in List.map (fn l => if l = "" then l else sp ^ l) ls end
 
+  (* Each case of the loop (vm/interp.c) reads its own operands, moves the
+     pc past it and counts it, then does its body -- a shared one through
+     its function of vm/ops.h, with the VM given what the loop keeps -- and
+     goes on to the next (NEXT). CASE and NEXT are the loop's: labels and a
+     computed goto, or the cases of a switch. *)
   fun interpCases (instrs : instruction list) : file =
     {path = "vm/interp_cases.h",
      text =
@@ -204,9 +236,37 @@ struct
            "   vm/ops.h. */"]
           @ List.concat
               (List.map (fn (i : instruction) =>
-                           if #shared i then ["case OP_" ^ #name i ^ ":", "    op_" ^ #name i ^ "(vm, a, b);", "    break;"]
-                           else ["case OP_" ^ #name i ^ ": {"] @ indent 4 (#body i) @ ["    break;", "}"])
+                           let
+                             val n = List.length (#operands i)
+                             val reads =
+                               (if n >= 1 then ["int32_t a = read_i32(code + pc + 1);"] else [])
+                               @ (if n >= 2 then ["int32_t b = read_i32(code + pc + 5);"] else [])
+                             val ab = (if n >= 1 then "a" else "0") ^ ", " ^ (if n >= 2 then "b" else "0")
+                             val body =
+                               if #shared i then ["SYNC();", "op_" ^ #name i ^ "(vm, " ^ ab ^ ");", "RELOAD();"]
+                               else #body i
+                           in
+                             ["CASE(" ^ #name i ^ ") {"]
+                             @ indent 4 (reads
+                                         @ ["TRACE(OP_" ^ #name i ^ ", " ^ ab ^ ");",
+                                            "pc += " ^ Int.toString (1 + 4 * n) ^ ";",
+                                            "count++;"]
+                                         @ body
+                                         @ ["NEXT;"])
+                             @ ["}"]
+                           end)
                         instrs))}
+
+  (* The labels of the cases, in the order of the opcodes, for the computed
+     goto of the loop. *)
+  fun interpLabels (instrs : instruction list) : file =
+    {path = "vm/interp_labels.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The labels of the cases of vm/interp_cases.h by opcode, for the",
+           "   dispatch of vm/interp.c by computed goto. */"]
+          @ List.map (fn (i : instruction) => "&&L_" ^ #name i ^ ",") instrs)}
 
   fun opsH (instrs : instruction list) : file =
     {path = "vm/ops.h",
@@ -294,6 +354,6 @@ struct
       val fp = fingerprint (instrs, prims)
     in
       [opcodesDef (instrs, fp), primsDef prims, opcodesH (instrs, fp), primsH prims,
-       interpCases instrs, opsH instrs, opcodesSml (instrs, fp), primsSml prims]
+       interpCases instrs, interpLabels instrs, opsH instrs, opcodesSml (instrs, fp), primsSml prims]
     end
 end

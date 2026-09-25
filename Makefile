@@ -79,7 +79,7 @@ RUNEOPT ?= bin/runeopt
 
 SOURCES  := $(shell grep -v '^[[:space:]]*\#' sources.txt | grep -v '^[[:space:]]*$$')
 GEN_SML  := src/backend/opcodes.sml src/backend/prims.sml src/backend/regcodes.sml
-GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/ops.h vm/new/regops.h vm/new/reg_cases.h
+GEN_C    := vm/opcodes.h vm/prims_table.h vm/interp_cases.h vm/interp_labels.h vm/ops.h vm/new/regops.h vm/new/reg_cases.h
 SOURCES_DOC := $(shell grep -v '^[[:space:]]*\#' sources-doc.txt | grep -v '^[[:space:]]*$$')
 SOURCES_OPT := $(shell grep -v '^[[:space:]]*\#' sources-opt.txt | grep -v '^[[:space:]]*$$')
 SOURCES_ISA := $(shell grep -v '^[[:space:]]*\#' sources-isa.txt | grep -v '^[[:space:]]*$$')
@@ -96,7 +96,7 @@ BUILDGEN := build/rune.mlb build/rune.cm build/polyml-build.sml build/runedoc.ml
 SYS ?= posix
 RT_SRCS := vm/runtime.c vm/heap.c vm/loader.c vm/isa_stack.c vm/prims.c vm/image.c
 VM_SRCS := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_$(SYS).c
-VM_HDRS := vm/vm.h vm/sys.h vm/version.h $(GEN_C)
+VM_HDRS := vm/vm.h vm/loop.h vm/sys.h vm/version.h $(GEN_C)
 RT_OBJS := $(patsubst vm/%.c,build/librune/%.o,$(RT_SRCS) vm/sys_$(SYS).c)
 AR      ?= ar
 

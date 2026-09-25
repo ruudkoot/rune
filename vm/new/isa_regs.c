@@ -82,8 +82,12 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             }
         pc += rop_length(at);
     }
-    for (uint32_t i = 0; i < p->nfuncs; i++)
+    for (uint32_t i = 0; i < p->nfuncs; i++) {
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+        /* the registers are the frame; what is pushed beyond them, a
+           primitive's arguments and a call's result, is pushed with a check */
+        p->funcs[i].maxstack = 0;
+    }
     return starts;
 }
 

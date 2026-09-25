@@ -23,7 +23,7 @@ What it rests on:
 | M3 | Types, and Mid launched dark | done |
 | M4 | The new back end: Low and the stack target | done |
 | M5 | The register target and the first loop of `vm/new` | done |
-| M6 | `vm/portable`: frames and dispatch | |
+| M6 | `vm/portable`: frames and dispatch | done |
 | M7 | The simplifier and tree shaking | |
 | M8 | Known calls and the calling convention | |
 | M9 | Decision trees and `SWITCH` | |
@@ -1044,6 +1044,27 @@ estimated.
   unit stores.
 * **Done when:** ASan, `make test-stress`, `make test-native-stress`,
   Windows and portability pass.
+* **Done:**
+  * **The loop** (`vm/interp.c`, `vm/loop.h`): the bodies of
+    `src/isa/stack.sml` are written in the loop's words (`PUSH`, `POP`,
+    `TOP`, `LOCALV`, `JUMP_TO`, `SYNC`, `RELOAD`), so that the loop keeps
+    the stack pointer, the frame, its base, the pc and the count in its own
+    variables; runeisa writes each case with its own operand reads and a
+    table of labels, for computed goto under `__GNUC__` (a switch with
+    `-DRUNE_SWITCH` and elsewhere); tracing is a second copy of the loop.
+  * **Room:** the loader works out the height of the stack at every
+    instruction, the same on every way to it and never below what it pops,
+    and so how deep each function goes (`Function.maxstack`); a call makes
+    room for that, and a push does not check.
+  * **`TEELOCAL`**, which the stack target makes of a `SETLOCAL` followed by
+    the `LOCAL` of the same local: 3 to 6% fewer instructions.
+  * **The unit stores are left as they are:** the new back end's shared
+    locals had already brought them from 9.7 a call to 1.8 (the bootstrap:
+    333.7M to 100.8M), so the change of format that says which locals need
+    one would save stores, which cost little, and not dispatches.
+  * **Measured:** the bootstrap's compile takes 41% fewer cycles and 49%
+    fewer machine instructions; fib 30%, tak 45%, intinf_fact 41%,
+    string_ops 29% and list_ops 20% fewer cycles.
 
 ### M7. The simplifier and tree shaking (L, about 1,200)
 

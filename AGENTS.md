@@ -101,6 +101,15 @@ keep these invariants:
   `docs/ir.md`. Code is made by the new back end (`Lower`, `Stack`) from
   `-O1`, and by `Codegen` at `-O0`: `make check-levels` holds the two to the
   same output, exit status and allocation for every program.
+* **The stack VM's loop** (`vm/interp.c`, `vm/loop.h`) keeps its state in
+  its own variables: a body of `src/isa/stack.sml` that is not shared is
+  written in the loop's words (`PUSH`, `POP`, `TOP`, `LOCALV`, `JUMP_TO`,
+  and `SYNC()` before anything that reads the VM's stack pointer or pc --
+  the collector, a raise, a primitive, a frame pushed -- with `RELOAD()`
+  after what may change them); a shared one (vm/ops.h, which runeopt's code
+  calls) is written against the VM. A push does not check: the loader works
+  out each function's deepest stack (`vm/isa_stack.c`), so an instruction's
+  `pops`/`pushes` must say what it does.
 * **vm/new** (`vm/new/`, `bin/runevm-new`) runs the register bytecode
   (`src/isa/regs.sml`, `rune --target=registers`) on the runtime of
   `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c` and

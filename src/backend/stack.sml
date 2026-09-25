@@ -182,10 +182,15 @@ struct
       (* ---- the code ---- *)
 
       val code : C.item list ref = ref []
-      (* a position noted where another was, with nothing between, replaces it *)
+      (* a position noted where another was, with nothing between, replaces
+         it; a local stored and read at once is TEELOCAL *)
       fun emit it =
         case (it, !code) of
           (C.Pos _, C.Pos _ :: rest) => code := it :: rest
+        | (C.Op (opc, [k]), C.Op (opc', [k']) :: rest) =>
+            if opc = Opcodes.LOCAL andalso opc' = Opcodes.SETLOCAL andalso k = k' then
+              code := C.Op (Opcodes.TEELOCAL, [k]) :: rest
+            else code := it :: !code
         | _ => code := it :: !code
       val here : (int * int * int) ref = ref (~1, ~1, ~1)
       fun at (sp : Source.span) =

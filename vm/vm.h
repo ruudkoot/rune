@@ -74,6 +74,7 @@ static inline Value mk_bool(int b) { return mk_con0(b ? 1 : 0); }
 typedef struct Function {
     uint32_t code_offset;
     uint32_t code_end;
+    uint32_t maxstack;   /* how deep its operand stack goes: the loader works it out (vm/isa_stack.c) */
     uint32_t nlocals;
     char *name;
 } Function;

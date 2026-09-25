@@ -28,6 +28,17 @@ function main 2
   CONST %nl
   PRIM print
   POP
+  # TEELOCAL: 7, kept on the stack and in local 1
+  INT 7
+  TEELOCAL 1
+  PRIM int_to_string
+  PRIM print
+  POP
+  LOCAL 1
+  POP
+  CONST %nl
+  PRIM print
+  POP
   # CON, CONTAG on a constructor with an argument: 3
   INT 5
   CON 3

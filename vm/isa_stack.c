@@ -13,6 +13,77 @@ static int fail(char *err, size_t errlen, const char *msg) {
     return 0;
 }
 
+/* How deep each function's operand stack goes (Function.maxstack), or 0
+   and a message: the height of the stack above the locals at every
+   instruction a function can reach from its entry, which must be the same
+   whichever way the instruction is reached, and never below what the
+   instruction pops. The loop's pushes and pops do not check (vm/interp.c),
+   which this is what makes safe; the compiler's code always keeps it, as
+   runeopt's check says too (src/opt/rbccheck.sml). A handler's code begins
+   with the exception on the stack where PUSHHANDLER found it. Called once
+   the instructions' starts and operands are known to be sound. */
+static int stack_heights(Program *p, char *err, size_t errlen) {
+    int32_t *height = malloc(((size_t)p->code_len + 1) * sizeof *height);
+    uint32_t *work = malloc(((size_t)p->code_len + 1) * sizeof *work);
+    if (!height || !work) { free(height); free(work); return fail(err, errlen, "out of memory"); }
+    for (uint32_t i = 0; i < p->code_len; i++) height[i] = -1;
+    int ok = 1;
+    for (uint32_t fi = 0; fi < p->nfuncs && ok; fi++) {
+        Function *fn = &p->funcs[fi];
+        uint32_t nwork = 0;
+        int32_t deepest = 0;
+        height[fn->code_offset] = 0;
+        work[nwork++] = fn->code_offset;
+        while (nwork > 0 && ok) {
+            uint32_t pc = work[--nwork];
+            int32_t h = height[pc];
+            uint8_t op = p->code[pc];
+            int len = instr_length(op);
+            int32_t a = op_nargs[op] > 0 ? read_i32(p->code + pc + 1) : 0;
+            int32_t b = op_nargs[op] > 1 ? read_i32(p->code + pc + 5) : 0;
+            int32_t pops = op_pops_fixed[op];
+            if (op_pops_operand[op] >= 0) pops = op_pops_operand[op] == 0 ? a : b;
+            if (op_pops_arity[op] >= 0) pops = prim_arity[op_pops_arity[op] == 0 ? a : b];
+            if (pops > h) {
+                snprintf(err, errlen, "the stack underflows at %u", pc);
+                ok = 0;
+                break;
+            }
+            int32_t after = h - pops + op_pushes[op];
+            if (after > deepest) deepest = after;
+            /* where it goes on, and at what height */
+            uint32_t to[3];
+            int32_t at[3];
+            int nto = 0;
+            int flow = op_flow[op];
+            if (flow == FLOW_NEXT || flow == FLOW_BRANCH || flow == FLOW_CALL) {
+                /* running off the end of the function is the program's
+                   business, which the loop does not look ahead to */
+                if (pc + (uint32_t)len < fn->code_end) { to[nto] = pc + (uint32_t)len; at[nto] = after; nto++; }
+            }
+            for (int k = 0; k < op_nargs[op]; k++) {
+                int32_t t = k == 0 ? a : b;
+                if (op_kinds[op][k] == OPND_LABEL) { to[nto] = (uint32_t)t; at[nto] = after; nto++; }
+                else if (op_kinds[op][k] == OPND_HANDLER_LABEL) { to[nto] = (uint32_t)t; at[nto] = h + 1; nto++; }
+            }
+            for (int k = 0; k < nto; k++) {
+                if (height[to[k]] < 0) {
+                    height[to[k]] = at[k];
+                    if (at[k] > deepest) deepest = at[k];
+                    work[nwork++] = to[k];
+                } else if (height[to[k]] != at[k]) {
+                    snprintf(err, errlen, "the stack is %d and %d deep at %u", height[to[k]], at[k], to[k]);
+                    ok = 0;
+                }
+            }
+        }
+        fn->maxstack = (uint32_t)deepest + 1;
+    }
+    free(height);
+    free(work);
+    return ok;
+}
+
 /* Where every instruction of a program begins, or NULL and a message: the
    opcodes, the ranges of the operands, and the jump targets and function
    entries, which must be instruction boundaries. The caller frees it.
@@ -79,6 +150,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    if (!stack_heights(p, err, errlen)) { free(starts); return NULL; }
     return starts;
 }
 
