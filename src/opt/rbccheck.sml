@@ -4,9 +4,13 @@
    the same on every path into an instruction; no path pops below the
    locals, leaves the function by a jump, or falls off its end; no TAILCALL
    or RET happens with a handler of the function still installed, and no
-   POPHANDLER without one; and every operand fits an int. The compiler's
-   code generator keeps all of it (src/backend/codegen.sml); a file that does
-   not is refused, and runevm remains the place where it runs. *)
+   POPHANDLER without one; every operand fits an int; and every function is
+   given one number of arguments -- as many as every known call of it
+   (CALLK, TAILCALLK) passes, and one where it is made a closure or is the
+   top level -- since its code sets the rest of its locals to unit. The
+   compiler's code generators keep all of it (src/backend/codegen.sml,
+   stack.sml); a file that does not is refused, and runevm remains the
+   place where it runs. *)
 structure RbcCheck =
 struct
   exception Refused of string
@@ -17,13 +21,15 @@ struct
 
   (* What a translation needs to know: every instruction, the function of
      each, the height and handler depth before each (~1 where no path reaches
-     it), and the highest the stack goes above the locals in each function. *)
+     it), the highest the stack goes above the locals in each function, and
+     the number of arguments each is given. *)
   type facts =
     {instrs : instr vector,
      func : int vector,
      height : int vector,
      depth : int vector,
-     maxHeight : int vector}
+     maxHeight : int vector,
+     params : int vector}
 
   val arity : int vector =
     Vector.fromList (List.map (fn (_, _, a) => a) Prims.table)
@@ -167,11 +173,27 @@ struct
           loop [first]
         end
       val () = Vector.appi analyse funcs
+
+      (* the arguments each function is given: ~1 where nothing says yet *)
+      val params = Array.array (nfuncs, ~1)
+      fun give (f, k, pc) =
+        if f < 0 orelse f >= nfuncs then ()
+        else if Array.sub (params, f) < 0 orelse Array.sub (params, f) = k then Array.update (params, f, k)
+        else refuse ("function " ^ name f ^ " is given " ^ Int.toString (Array.sub (params, f)) ^ " and "
+                     ^ Int.toString k ^ " arguments (at " ^ Int.toString pc ^ ")")
+      val () = if nfuncs > 0 then give (0, 1, 0) else ()
+      val () =
+        Vector.app (fn {pc, opc, a, b} =>
+                      if opc = Opcodes.CALLK orelse opc = Opcodes.TAILCALLK then give (a, b, pc)
+                      else if opc = Opcodes.CLOSURE then give (a, 1, pc)
+                      else ())
+                   instrs
     in
       {instrs = instrs,
        func = Array.vector func,
        height = Array.vector height,
        depth = Array.vector depth,
-       maxHeight = Array.vector maxHeight}
+       maxHeight = Array.vector maxHeight,
+       params = Vector.map (fn k => Int.max (k, 1)) (Array.vector params)}
     end
 end

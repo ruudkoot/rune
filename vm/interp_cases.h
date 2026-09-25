@@ -364,3 +364,38 @@ CASE(TEELOCAL) {
     LOCALV(a) = TOP(0);
     NEXT;
 }
+CASE(CALLK) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_CALLK, a, b);
+    pc += 9;
+    count++;
+    Function *fn = &p->funcs[a];
+    size_t at = (size_t)(sp - vm->stack) - (size_t)b;
+    vm_push_frame(vm, (uint32_t)a, NULL, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}
+CASE(TAILCALLK) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(OP_TAILCALLK, a, b);
+    pc += 9;
+    count++;
+    Function *fn = &p->funcs[a];
+    size_t at = FRAME->base;
+    size_t from = (size_t)(sp - vm->stack) - (size_t)b;
+    FRAME->func = (uint32_t)a;
+    FRAME->closure = NULL;
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    memmove(slot, vm->stack + from, (size_t)b * sizeof(Value));
+    for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}

@@ -24,6 +24,7 @@ struct
     | Env of int                          (* a value the running closure captured *)
     | Self                                (* the running closure *)
     | Call of var * var                   (* closure, argument *)
+    | CallK of int * var list             (* a known function, by its id, and its arguments: no closure *)
     | Prim of string * var list
     | Tuple of var list
     | Select of int * var
@@ -51,16 +52,18 @@ struct
     | IfTag of var * int * label * label  (* whether var's constructor has the tag *)
     | Return of var
     | TailCall of var * var
+    | TailCallK of int * var list
     | Raise of var
 
   type block = {label : label, params : var list, instrs : instr list, transfer : transfer}
 
-  (* A function: its parameter, how many values it captures, how many
-     variables it has -- they are numbered from 0 in each function, so that a
-     target keeps what it knows of them in arrays -- and its blocks, the
-     entry first. The top level of the program is a function too, whose
-     parameter is never used. *)
-  type func = {id : int, name : string, param : var, ncaptured : int, nvars : int, blocks : block list,
+  (* A function: its parameters -- one, where it is called through a
+     closure; any number where only a known call (CallK) calls it -- how
+     many values it captures, how many variables it has -- they are numbered
+     from 0 in each function, so that a target keeps what it knows of them
+     in arrays -- and its blocks, the entry first. The top level of the
+     program is a function too, whose parameter is never used. *)
+  type func = {id : int, name : string, params : var list, ncaptured : int, nvars : int, blocks : block list,
                pos : Source.span option}
 
   type program = func list
@@ -77,6 +80,7 @@ struct
     case oper of
       SetGlobal (_, v) => [v]
     | Call (f, a) => [f, a]
+    | CallK (_, vs) => vs
     | Prim (_, vs) => vs
     | Tuple vs => vs
     | Select (_, v) => [v]
@@ -97,6 +101,7 @@ struct
     | IfTag (v, _, _, _) => [v]
     | Return v => [v]
     | TailCall (f, a) => [f, a]
+    | TailCallK (_, vs) => vs
     | Raise v => [v]
 
   fun size (p : program) : int =
@@ -131,6 +136,7 @@ struct
         | Env i => "env " ^ Int.toString i
         | Self => "self"
         | Call (f, a) => "call " ^ vs [f, a]
+        | CallK (f, xs) => "callk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Prim (p, xs) => "prim " ^ p ^ " " ^ vs xs
         | Tuple xs => "tuple " ^ vs xs
         | Select (i, x) => "select " ^ Int.toString i ^ " " ^ v x
@@ -158,13 +164,14 @@ struct
         | IfTag (x, tag, a, b) => "    iftag " ^ v x ^ " " ^ Int.toString tag ^ " " ^ l a ^ " " ^ l b
         | Return x => "    return " ^ v x
         | TailCall (f, a) => "    tailcall " ^ vs [f, a]
+        | TailCallK (f, xs) => "    tailcallk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Raise x => "    raise " ^ v x
       fun block ({label, params, instrs, transfer = t} : block) =
         let val head = "  " ^ l label ^ (if null params then "" else "(" ^ vs params ^ ")") ^ ":"
         in head :: List.filter (fn s => s <> "") (List.map instr instrs) @ [transfer t] end
-      fun func ({id, name, param, ncaptured, blocks, ...} : func) =
+      fun func ({id, name, params, ncaptured, blocks, ...} : func) =
         (restart ();
-         "function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ v param ^ ", " ^ Int.toString ncaptured ^ " captured)")
+         "function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ vs params ^ ", " ^ Int.toString ncaptured ^ " captured)")
         :: List.concat (List.map block blocks)
     in
       String.concatWith "\n" (List.concat (List.map func p))

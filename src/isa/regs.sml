@@ -225,7 +225,35 @@ struct
        (rinst ("RAISE", [("s", reg)], Raise, "Raise the exception in register s.")
           ["Value v = R(a);",
            "if (v.tag != T_PTR || v.u.p->kind != K_EXN) vm_fatal(vm, \"RAISE of non-exception\");",
-           "vm_raise(vm, v);"])]
+           "vm_raise(vm, v);"]),
+     rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
+            "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
+       ["Function *fn = &p->funcs[a];",
+        "if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);",
+        "/* the arguments read before the frame is pushed, which R would read */",
+        "Value *slot = &vm->stack[vm->sp];",
+        "for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));",
+        "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "vm_push_frame(vm, (uint32_t)a, NULL, vm->pc, vm->sp);",
+        "vm->sp += fn->nlocals;",
+        "vm->pc = fn->code_offset;"],
+     rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
+            "Like CALLK, but the current frame is replaced.")
+       ["Function *fn = &p->funcs[a];",
+        "size_t base = fr->base;",
+        "size_t need = vm->sp + n;",
+        "if (base + fn->nlocals > need) need = base + fn->nlocals;",
+        "if (need > vm->stack_cap) vm_grow_stack(vm, need);",
+        "/* the arguments above the frame first, since they are its registers */",
+        "Value *tmp = &vm->stack[vm->sp];",
+        "for (uint32_t i = 0; i < n; i++) tmp[i] = R(LIST(i));",
+        "Value *slot = &vm->stack[base];",
+        "memmove(slot, tmp, (size_t)n * sizeof(Value));",
+        "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "vm->sp = base + fn->nlocals;",
+        "fr->func = (uint32_t)a;",
+        "fr->closure = NULL;",
+        "vm->pc = fn->code_offset;"]]
 
   (* ---- questions about the description ---- *)
 

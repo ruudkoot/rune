@@ -12,7 +12,18 @@
    leaves. A variable bound to another is the other (no copy), and one
    bound to a constant, a global or a captured value is read again where
    it is used. A match against a constructor's tag -- ConTag, poly_eq with
-   the tag, If -- is one IfTag. *)
+   the tag, If -- is one IfTag.
+
+   A call of a function of the top level is a known call (CallK), which
+   passes no closure, since such a function captures nothing and names
+   itself as the global it is; its arguments are as many as its
+   parameters. A function of other than one parameter is only ever called
+   so, and is made no closure.
+
+   A call of a function of itself in tail position, where no handler is
+   pushed, is a jump back to its head: a block after the entry whose
+   parameters are the function's, so that the function is a loop -- the
+   only edge of Low that goes backward. *)
 structure Lower =
 struct
   structure M = Mid
@@ -129,11 +140,18 @@ struct
   val nextFuncId = ref 0
   val funNames : string IntMap.map ref = ref IntMap.empty
 
+  (* The functions of the top level, by their globals: known ones, and the
+     id each is made with, which a known call made before it is given at
+     the end (resolve). *)
+  val knownFuns : unit IntMap.map ref = ref IntMap.empty
+  val globalFids : int IntMap.map ref = ref IntMap.empty
+  fun isKnown g = IntMap.member (!knownFuns, g)
+
   (* A function being made: its blocks so far, the block being filled, and
      how it reads the variables it captures. *)
   type builder = {blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
                   open' : bool ref, nextLabel : int ref, nvars : int ref, env : int IntMap.map, self : int option,
-                  span : Source.span option ref}
+                  span : Source.span option ref, head : L.label option ref}
 
   fun newLabel (b : builder) = let val l = !(#nextLabel b) in #nextLabel b := l + 1; l end
   (* a variable of Low: numbered from 0 in each function, so that a target
@@ -178,6 +196,25 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
+  (* Whether f calls itself in tail position of its body, where no handler
+     is pushed: the calls a loop makes of it. *)
+  fun loops (f : M.fundef) : bool =
+    let
+      fun self (M.Global (g, _)) = g = #name f andalso isKnown g
+        | self (M.Var (x, _)) = x = #name f
+        | self _ = false
+      fun tail e =
+        case e of
+          M.Let (_, _, _, b) => tail b
+        | M.Fun (_, b) => tail b
+        | M.Join (_, _, body, s) => tail body orelse tail s
+        | M.If (_, t, e) => tail t orelse tail e
+        | M.Handle (_, _, h) => tail h      (* its body is no tail position *)
+        | M.Return (M.App (g, xs)) => self g andalso List.length xs = List.length (#params f)
+        | M.Mark (_, a) => tail a
+        | _ => false
+    in tail (#body f) end
+
   (* ---- lowering ---- *)
 
   fun function (f : M.fundef, pos : Source.span option, group : int) : int =
@@ -185,7 +222,7 @@ struct
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val cs = capturesOf f
-      val param = case #params f of [(x, _)] => x | _ => bug "a function of other than one parameter"
+      val param = case #params f of (x, _) :: _ => x | [] => bug "a function of no parameter"
       val recursive = group > 1 orelse IntMap.find (!selfRefs, #name f) = SOME true
       val name =
         case IntMap.find (!funNames, param) of
@@ -194,13 +231,24 @@ struct
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
                          nextLabel = ref 0, nvars = ref 0,
                          env = #1 (List.foldl (fn (x, (m, i)) => (IntMap.insert (m, x, i), i + 1)) (IntMap.empty, 0) cs),
-                         self = SOME (#name f), span = ref pos}
-      val p = newVar b
+                         self = SOME (#name f), span = ref pos, head = ref NONE}
+      val ps = List.map (fn (x, _) => (x, newVar b)) (#params f)
       val () = start (b, newLabel b, [])
+      (* a loop: the entry jumps to the head, whose parameters the body
+         reads, and which the calls of the loop jump back to *)
+      val bound =
+        if loops f then
+          let
+            val l = newLabel b
+            val hs = List.map (fn (x, _) => (x, newVar b)) ps
+          in
+            finish (b, L.Goto (l, List.map #2 ps)); start (b, l, List.map #2 hs); #head b := SOME l; hs
+          end
+        else ps
       val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty,
-                                 subst = IntMap.insert (IntMap.empty, param, p)})
+                                 subst = List.foldl (fn ((x, v), m) => IntMap.insert (m, x, v)) IntMap.empty bound})
     in
-      funcs := {id = id, name = name, param = p, ncaptured = List.length cs, nvars = !(#nvars b),
+      funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
                 blocks = List.rev (!(#blocks b)), pos = pos} :: !funcs;
       id
     end
@@ -228,8 +276,8 @@ struct
     in
       case r of
         M.Atom _ => bug "an atom as an operation"
-      | M.App (f, [a]) => let val f = at f in L.Call (f, at a) end
-      | M.App _ => bug "a call of other than one argument"
+      | M.App (M.Global (g, _), xs) => if isKnown g then L.CallK (g, List.map at xs) else unknown (b, cx, r)
+      | M.App _ => unknown (b, cx, r)
       | M.Prim (p, _, xs) => L.Prim (p, List.map at xs)
       | M.Tuple xs => L.Tuple (List.map at xs)
       | M.Select (i, a) => L.Select (i, at a)
@@ -243,6 +291,12 @@ struct
       | M.ExnArg (_, a) => L.ExnArg (at a)
       | M.SetGlobal (g, a) => L.SetGlobal (g, at a)
     end
+
+  (* a call through a closure, of one argument *)
+  and unknown (b, cx, r : M.rhs) : L.operation =
+    case r of
+      M.App (f, [a]) => let val f = atom (b, cx, f) in L.Call (f, atom (b, cx, a)) end
+    | _ => bug "a call of other than one argument through a closure"
 
   and value (b, cx, r : M.rhs) : L.var =
     case r of
@@ -310,13 +364,35 @@ struct
     | M.Raise a => let val v = atom (b, cx, a) in finish (b, L.Raise v) end
     | M.Return r =>
         (case (#ret cx, r) of
-           (FunRet, M.App (f, [a])) =>
-             if #depth cx = 0 then let val f = atom (b, cx, f) in finish (b, L.TailCall (f, atom (b, cx, a))) end
-             else let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
+           (FunRet, M.App (f, xs)) =>
+             (case (#depth cx, !(#head b), f) of
+                (0, SOME l, M.Global (g, _)) =>
+                  if #self b = SOME g then finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
+                  else knownTail (b, cx, r)
+              | (0, SOME l, M.Var (x, _)) =>
+                  if #self b = SOME x andalso not (IntMap.member (#subst cx, x)) then
+                    finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
+                  else knownTail (b, cx, r)
+              | _ => knownTail (b, cx, r))
          | (FunRet, _) => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
          | (ToBlock (l, d), _) => let val v = value (b, cx, r) in pops (b, #depth cx - d); finish (b, L.Goto (l, [v])) end
          | (Cont k, _) => k (value (b, cx, r)))
     | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME sp; exp (b, a, cx))
+
+  (* a call in tail position of the function: a known tail call, where no
+     handler is pushed, of a function of the top level *)
+  and knownTail (b, cx, r : M.rhs) =
+    case r of
+      M.App (M.Global (g, _), xs) =>
+        if #depth cx = 0 andalso isKnown g then finish (b, L.TailCallK (g, List.map (fn a => atom (b, cx, a)) xs))
+        else tailCall (b, cx, r)
+    | _ => tailCall (b, cx, r)
+
+  (* one through a closure: a tail call where no handler is pushed *)
+  and tailCall (b, cx, r : M.rhs) =
+    case (#depth cx, r) of
+      (0, M.App (f, [a])) => let val f = atom (b, cx, f) in finish (b, L.TailCall (f, atom (b, cx, a))) end
+    | _ => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
 
   (* ConTag of y, poly_eq of it with a tag, and an If on that, each used
      once: y, the tag, and the two branches. *)
@@ -370,17 +446,35 @@ struct
 
   (* ---- the program ---- *)
 
+  (* The ids of the functions known calls call, now that each has one. *)
+  fun resolve (f : L.func) : L.func =
+    let
+      fun fid g = case IntMap.find (!globalFids, g) of SOME i => i | NONE => bug "a known call of no function"
+      fun instr (L.Def (x, L.CallK (g, vs))) = L.Def (x, L.CallK (fid g, vs))
+        | instr i = i
+      fun block ({label, params, instrs, transfer} : L.block) : L.block =
+        {label = label, params = params, instrs = List.map instr instrs,
+         transfer = case transfer of L.TailCallK (g, vs) => L.TailCallK (fid g, vs) | t => t}
+      val {id, name, params, ncaptured, nvars, blocks, pos} = f
+    in
+      {id = id, name = name, params = params, ncaptured = ncaptured, nvars = nvars, blocks = List.map block blocks,
+       pos = pos}
+    end
+
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
       val () = (useCounts := IntMap.empty; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
-                nextFuncId := 0; funNames := names)
+                nextFuncId := 0; funNames := names; globalFids := IntMap.empty;
+                knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
+                                          | (_, m) => m) IntMap.empty p)
       val () = List.app (fn M.Val (_, _, e) => countExp e
                           | M.Funs fs => List.app (countExp o #body) fs
                           | M.Do (_, e) => countExp e) p
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
-                         nextLabel = ref 0, nvars = ref 0, env = IntMap.empty, self = NONE, span = ref NONE}
+                         nextLabel = ref 0, nvars = ref 0, env = IntMap.empty, self = NONE, span = ref NONE,
+                         head = ref NONE}
       val param = newVar b
       val () = start (b, newLabel b, [])
       val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty}
@@ -405,16 +499,20 @@ struct
                         in
                           if null (capturesOf f) then ()
                           else bug "a global function that captures a variable";
-                          ignore (def (b, L.SetGlobal (#name f, def (b, L.Closure (fid, [])))))
+                          globalFids := IntMap.insert (!globalFids, #name f, fid);
+                          case #params f of
+                            [_] => ignore (def (b, L.SetGlobal (#name f, def (b, L.Closure (fid, [])))))
+                          | _ => ()
                         end) fs
         | M.Do (_, e) => defining (e, fn _ => ())
       val () = List.app definition p
       val u = def (b, L.Unit)
       val () = finish (b, L.Return u)
       val () = ignore top
-      val topFunc : L.func = {id = id, name = "<toplevel>", param = param, ncaptured = 0, nvars = !(#nvars b),
+      val topFunc : L.func = {id = id, name = "<toplevel>", params = [param], ncaptured = 0, nvars = !(#nvars b),
                               blocks = List.rev (!(#blocks b)), pos = NONE}
     in
-      IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty (topFunc :: !funcs))
+      IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, resolve f)) IntMap.empty
+                                   (topFunc :: !funcs))
     end
 end

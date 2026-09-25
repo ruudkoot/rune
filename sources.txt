@@ -33,7 +33,9 @@ src/core/midtext.sml
 src/core/tomid.sml
 src/core/target.sml
 src/core/shake.sml
+src/core/lift.sml
 src/core/simplify.sml
+src/core/workers.sml
 src/backend/codegen.sml
 src/backend/low.sml
 src/backend/target.sml

@@ -1,4 +1,4 @@
-(* dump: --dump-after=shake *)
+(* dump: --passes=shake --dump-after=shake *)
 (* Tree shaking: what nothing done for its effect reaches goes -- a
    function nothing calls, a pure value nothing reads, and a function of a
    group whose other member is reached; kept are a value that may raise

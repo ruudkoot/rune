@@ -1,4 +1,4 @@
-(* dump: --dump-after=simplify *)
+(* dump: --passes=shake,simplify --dump-after=simplify *)
 (* Control the simplifier makes branches of: in f, andalso and orelse leave
    a join point that tests its parameter, which two of the jumps give a
    constant -- so it is a join point for each branch (j1, j2), those jumps

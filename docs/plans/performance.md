@@ -408,6 +408,10 @@ Each is S or S-M and changes no output:
     stores and a jump, with a tupled or curried parameter kept in locals;
   * a closed closure made once, into a global.
 * **At parity:** item 14 subsumes the first.
+* **Done** (middle-end M8): a self tail call is a jump back to the head of
+  its function, its arguments stored into the head's parameters; a local
+  group that captures nothing is lifted to the top level, its closure made
+  once. See item 14 for what the two did with it.
 
 ### 13. A generational collector
 
@@ -456,6 +460,13 @@ Each is S or S-M and changes no output:
   budgets.
 * **At parity:** this is what MLton does. It is a step towards parity, not
   work an optimiser would make unnecessary.
+* **Done** (middle-end M8), in Mid and the new back end rather than in
+  `codegen`: `CALLK` and `TAILCALLK` in both bytecodes; workers and
+  wrappers for tupled and curried functions of the top level; local
+  functions that do not escape lambda-lifted. Against M7: tak 48% fewer
+  instructions and almost no allocation, the other programs of `tests/perf`
+  9 to 35% fewer instructions and half the bytes or less, compiles 14%
+  fewer (docs/plans/middle-end.md, M8).
 
 ### 15. `runevm`'s loop
 

@@ -219,7 +219,30 @@ struct
         "if (tag != b) JUMP_TO(a);"],
      inst ("TEELOCAL", [("l", Local)], (Fixed 1, 1), Next,
            "Store the top of stack into local slot l and leave it there: SETLOCAL l; LOCAL l in one.")
-       ["LOCALV(a) = TOP(0);"]]
+       ["LOCALV(a) = TOP(0);"],
+     inst ("CALLK", [("f", Function), ("n", Count)], (OperandValue 1, 1), Call,
+           "Call function f, known, with the n values on top of the stack, which become its locals 0 to n-1; no closure.")
+       ["Function *fn = &p->funcs[a];",
+        "size_t at = (size_t)(sp - vm->stack) - (size_t)b;",
+        "vm_push_frame(vm, (uint32_t)a, NULL, PC, at);",
+        "size_t need = at + fn->nlocals + fn->maxstack;",
+        "if (need > vm->stack_cap) vm_grow_stack(vm, need);",
+        "Value *slot = vm->stack + at;",
+        "for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "ENTER(slot, fn);"],
+     inst ("TAILCALLK", [("f", Function), ("n", Count)], (OperandValue 1, 0), TailCall,
+           "Like CALLK, but the current frame is replaced.")
+       ["Function *fn = &p->funcs[a];",
+        "size_t at = FRAME->base;",
+        "size_t from = (size_t)(sp - vm->stack) - (size_t)b;",
+        "FRAME->func = (uint32_t)a;",
+        "FRAME->closure = NULL;",
+        "size_t need = at + fn->nlocals + fn->maxstack;",
+        "if (need > vm->stack_cap) vm_grow_stack(vm, need);",
+        "Value *slot = vm->stack + at;",
+        "memmove(slot, vm->stack + from, (size_t)b * sizeof(Value));",
+        "for (uint32_t i = (uint32_t)b; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "ENTER(slot, fn);"]]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

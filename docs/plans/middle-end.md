@@ -25,7 +25,7 @@ What it rests on:
 | M5 | The register target and the first loop of `vm/new` | done |
 | M6 | `vm/portable`: frames and dispatch | done |
 | M7 | The simplifier and tree shaking | done |
-| M8 | Known calls and the calling convention | |
+| M8 | Known calls and the calling convention | done |
 | M9 | Decision trees and `SWITCH` | |
 | M10 | The inliner, contification and inline frames | |
 | M11 | Representation | |
@@ -1150,6 +1150,42 @@ estimated.
 * **Blast radius:** Mid, the new back end, two opcodes in both
   bytecodes, the loader and `Rbc`, the native entry, the resume points of
   images, and the budgets.
+* **Done:**
+  * **`CALLK f, n` and `TAILCALLK f, n`** in both bytecodes: the arguments
+    are the callee's first locals, and no closure is passed. The loaders
+    check `n` against the function's locals; `runeopt` pushes the frame
+    inline and jumps straight to the callee's entry, and `RbcCheck`
+    refuses a function given two numbers of arguments.
+  * **Known calls** (stage 1): Low functions take n parameters, and a call
+    of a function of the top level is `CallK`.
+  * **Workers and wrappers** (stages 2 and 3, `src/core/workers.sml`): a
+    parameter that is a tuple only taken apart is flattened, a curried
+    function takes every level's arguments at once, and a wrapper nothing
+    names any more goes.
+  * **Local functions** (stage 4, `src/core/lift.sml`): a group that never
+    escapes is lambda-lifted, given what it captured as parameters; one
+    that captures nothing is lifted even when it escapes, and made once
+    (the static closures of item 12). Lifting before the workers lets a
+    lifted loop lose its argument tuple too.
+  * **Loops:** a self tail call is a jump back to a head block, the first
+    backward edges of Low. They cost a `SETLOCAL` per changed argument
+    and a `JUMP` where `TAILCALLK` is one dispatch, so on `runevm` they
+    execute more instructions in some programs (tak 7%, word_bits 13%),
+    yet fewer cycles in six programs of seven (tak 9%, array_sieve 10%
+    fewer; intinf_fact within the noise), since a jump keeps the frame.
+  * **Measured** against M7 (`runevm --count`, the budgets): tak 48% fewer
+    instructions, word_bits 35%, intinf_fact, real_nbody and array_sieve
+    25%, runedoc 18 to 24%, list_ops 21%, string_ops 18%, compiles 14%;
+    allocation halved or better nearly everywhere (tak, real_nbody and
+    word_bits now allocate almost nothing: their tuples were all argument
+    tuples). In cycles on `runevm` (perf stat): tak 64% fewer, word_bits
+    39%, list_ops 34%, array_sieve 28%, real_nbody 27%, intinf_fact 26%,
+    fib 22%, string_ops 13%. The compiler compiling the same sources (M7's):
+    9.1% fewer cycles, 5.3% fewer instructions, 42% fewer bytes and 39%
+    fewer objects -- after paying for the two new passes, lift about 60M
+    instructions and workers 39M, which are the next to make cheaper (both
+    walk and rebuild most definitions: nearly every one names a function
+    with a worker).
 
 ### M9. Decision trees and `SWITCH` (L, about 900)
 

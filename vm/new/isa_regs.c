@@ -58,6 +58,9 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         int bad = 0;
         for (int k = 0; k < rop_nfixed[op] && !bad; k++)
             bad = !operand_ok(p, fi, rop_kinds[op][k], read_i32(at + 1 + 4 * k));
+        /* a known call gives no more arguments than its function has registers */
+        if ((op == ROP_CALLK || op == ROP_TAILCALLK) && !bad)
+            bad = read_i32(at + 5) > (int32_t)p->funcs[read_i32(at + 1)].nlocals;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", rop_names[op], pc); return NULL; }
         uint32_t len = rop_length(at);
         if (pc + len > p->code_len || (uint64_t)pc + len > p->code_len) { free(starts); fail(err, errlen, "truncated instruction"); return NULL; }

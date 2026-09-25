@@ -11,8 +11,9 @@
      step's type is found from its atoms; a use of a variable gives a type
      for each variable its binder abstracts over, and has the type its
      scheme has at them.
-   Functions take one parameter until the calling convention (M8) gives
-   them more. A breach is a bug of the compiler, raised as Error.Bug. *)
+   * calls: a function of other than one parameter (a worker, M8) is only
+     called, with an argument for each, and never used as a value.
+   A breach is a bug of the compiler, raised as Error.Bug. *)
 structure MidLint =
 struct
   open Mid
@@ -28,6 +29,14 @@ struct
         if Ty.equal (t, want) then ()
         else bug (what ^ " has type " ^ Ty.toString t ^ " where " ^ Ty.toString want ^ " is wanted")
 
+      (* the functions, global and local, of other than one parameter: the
+         types of their parameters *)
+      val nary : Ty.ty list IntMap.map ref = ref IntMap.empty
+      fun naryOf (f : fundef) =
+        case #params f of
+          [_] => ()
+        | ps => nary := IntMap.insert (!nary, #name f, List.map #2 ps)
+
       (* the globals, from their definitions *)
       val globals : scheme IntMap.map ref = ref IntMap.empty
       fun define (g, s) =
@@ -36,7 +45,7 @@ struct
       fun schemeOf (f : fundef) : scheme = (#tyvars f, funTy f)
       val () =
         List.app (fn Val (g, s, _) => define (g, s)
-                   | Funs fs => List.app (fn f => define (#name f, schemeOf f)) fs
+                   | Funs fs => List.app (fn f => (define (#name f, schemeOf f); naryOf f)) fs
                    | Do (gs, _) => List.app define gs) p
 
       fun instance (what, (tyvars, t) : scheme, args) =
@@ -54,7 +63,15 @@ struct
              | NONE => bug (what ^ ": " ^ Ty.toString t ^ " has no constructor " ^ Int.toString tag))
         | _ => bug (what ^ ": " ^ Ty.toString t ^ " is no datatype")
 
+      (* an atom, which must not be a function of other than one parameter:
+         such a one is only called (callee) *)
       fun atom (env : scheme IntMap.map, a : atom) : Ty.ty =
+        case a of
+          Var (x, _) => if IntMap.member (!nary, x) then bug ("v" ^ Int.toString x ^ ", a function of other than one parameter, used as a value") else callee (env, a)
+        | Global (g, _) => if IntMap.member (!nary, g) then bug ("g" ^ Int.toString g ^ ", a function of other than one parameter, used as a value") else callee (env, a)
+        | _ => callee (env, a)
+
+      and callee (env : scheme IntMap.map, a : atom) : Ty.ty =
         case a of
           Var (x, args) =>
             (case IntMap.find (env, x) of
@@ -76,11 +93,22 @@ struct
         in
           case r of
             Atom a => at a
-          | App (f, [a]) =>
-              (case at f of
-                 Ty.Arrow (d, res) => (expect ("an argument", at a, d); res)
-               | t => bug ("an application of what has type " ^ Ty.toString t))
-          | App _ => bug "an application to other than one argument"
+          | App (f, args) =>
+              let
+                val name = case f of Var (x, _) => SOME x | Global (g, _) => SOME g | _ => NONE
+                val n = case Option.mapPartial (fn x => IntMap.find (!nary, x)) name of SOME ps => List.length ps | NONE => 1
+              in
+                case (callee (env, f), args) of
+                  (Ty.Arrow (d, res), [a]) =>
+                    if n = 1 then (expect ("an argument", at a, d); res)
+                    else bug ("a function of " ^ Int.toString n ^ " parameters given 1 argument")
+                | (Ty.Arrow (Ty.Tuple ds, res), _) =>
+                    if n = List.length args andalso n = List.length ds then
+                      (ListPair.app (fn (a, d) => expect ("an argument", at a, d)) (args, ds); res)
+                    else bug ("a function of " ^ Int.toString n ^ " parameters given " ^ Int.toString (List.length args)
+                              ^ " arguments")
+                | (t, _) => bug ("an application of what has type " ^ Ty.toString t)
+              end
           | Prim (p, t, args) =>
               (case t of
                  Ty.Arrow (d, res) =>
@@ -136,7 +164,8 @@ struct
              bind x;
              exp (IntMap.insert (env, x, s), labels, b, want))
         | Fun (fs, b) =>
-            let val env' = List.foldl (fn (f, env) => (bind (#name f); IntMap.insert (env, #name f, schemeOf f))) env fs
+            let val env' = List.foldl (fn (f, env) => (bind (#name f); naryOf f; IntMap.insert (env, #name f, schemeOf f)))
+                                      env fs
             in List.app (fn f => fundef (env', f)) fs; exp (env', labels, b, want) end
         | Join (j, params, body, scope) =>
             (bind j;
@@ -158,9 +187,10 @@ struct
         | Mark (_, a) => exp (env, labels, a, want)
 
       and fundef (env, f as {params, result, body, ...} : fundef) =
-        case params of
-          [(x, t)] => (bind x; exp (IntMap.insert (env, x, ([], t)), IntMap.empty, body, result))
-        | _ => bug ("function v" ^ Int.toString (#name f) ^ " has " ^ Int.toString (List.length params) ^ " parameters")
+        if null params then bug ("function v" ^ Int.toString (#name f) ^ " has no parameter")
+        else
+          (List.app (fn (x, _) => bind x) params;
+           exp (List.foldl (fn ((x, t), env) => IntMap.insert (env, x, ([], t))) env params, IntMap.empty, body, result))
 
       fun def d =
         case d of

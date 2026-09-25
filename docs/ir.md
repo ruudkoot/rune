@@ -11,6 +11,8 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `translate` | the elaborated syntax | `Lambda` (`src/core/lambda.sml`) | `LambdaLint` |
 | `mid` | `Lambda` | `Mid` (`src/core/mid.sml`, by `ToMid`) | `MidLint` |
 | `shake` | `Mid` | `Mid`, what nothing reaches gone (`src/core/shake.sml`), from `-O1` | `MidLint` |
+| `lift` | `Mid` | `Mid`, local functions that never escape made functions of the top level (`src/core/lift.sml`), from `-O1` | `MidLint` |
+| `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`src/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`src/core/simplify.sml`), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`src/backend/low.sml`, by `Lower`) | `LowLint` |
 | `stack` | `Low` | instruction lists (`src/backend/stack.sml`) | none yet |
@@ -25,8 +27,9 @@ allocate the same (`make check-levels`).
 Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
-optimises, says from which level it runs (`Pass.enabled`): `shake` and
-`simplify` (see *The optimisations of Mid*).
+optimises, says from which level it runs (`Pass.enabled`): `shake`,
+`lift`, `workers` and `simplify`, in that order (see *The optimisations of
+Mid*).
 
 ## Options
 
@@ -134,8 +137,9 @@ top level a list of definitions (decision D1 of the plan).
   its effect, which sets the globals it lists). `Translate` marks the rest
   of the program after each declaration of the top level (`Lambda.Rest`,
   which the code generator passes through), and `ToMid` splits it there.
-* **Functions** take a list of parameters; until the calling convention
-  (M8) each takes one.
+* **Functions** take a list of parameters. One of other than one
+  parameter (a worker) is only called, with an argument for each, and
+  never used as a value.
 
 **Types.** Every binder says its type, and a polymorphic one the type
 variables it abstracts over; every use of a variable gives the types it is
@@ -160,6 +164,8 @@ have generalised them: a variable of the program or a function; a variable
   type of its scheme at them. A type variable where nothing abstracts over
   it is a type of its own, equal only to itself: the lint does not check
   that type variables are in scope.
+* **Calls:** a function of other than one parameter is only called, with
+  an argument for each, and never used as a value.
 
 ### Mid as text
 
@@ -197,6 +203,27 @@ does.
   reached, and every one their definitions use. The rest goes, a function
   of a group alone. The whole pass is one rewrite for `--fuel`, since a
   definition kept of those that go would use one that went.
+* **`lift`** (lambda lifting): a group of local functions none of which
+  escapes -- each is only ever called, by name -- becomes a group of the
+  top level. What the group captured it is given instead, as parameters
+  before its own, and every call passes it on; what a function of another
+  lifted group is given counts as captured. What it is given must abstract
+  over no type variables; the lifted functions abstract over the type
+  variables of the functions around them that they name, and every call
+  gives them as themselves. No closure of them is made, and every call of
+  them is a known call.
+* **`workers`** (workers and wrappers, decision D9): a function of the top
+  level with a parameter that is a tuple it only takes apart, or whose
+  body only makes a function and returns it, n deep (curried), becomes a
+  worker,
+  which takes all its arguments as parameters and does what the function
+  did, and a wrapper -- the function as it was, which calls the worker --
+  for its uses as a value. A call of a flattened function calls the worker
+  with the fields of that argument, which `simplify` then finds where the
+  tuple was made; a call of a curried one given all its arguments, each
+  partial application used once, by the next, down the same straight line,
+  calls the worker, and the partial applications, which only made
+  closures, go. A worker is named as its function, for traces.
 * **`simplify`** (shrinking, after Appel and Jim): three rounds over each
   definition, each after a census of the uses of every variable and jumps
   to every join point. A variable bound to an atom is the atom, unless it
@@ -234,8 +261,10 @@ leaves implicit is explicit.
   what it did.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
   point's; an `If` two blocks; a match on a constructor's tag one `IfTag`.
-  Every edge goes forward in the order of the blocks, since Mid has no
-  loops yet.
+  Every edge goes forward in the order of the blocks, but one: a function
+  that calls itself in tail position, where no handler is pushed, is a
+  loop -- its entry jumps to a head block whose parameters are the
+  function's, and each such call jumps back to the head.
 * **Handlers:** a `Handle` is a `Push` of the handler's block, the blocks of
   its region, and that block, whose one parameter is the exception; a jump
   or a return out of a region pops what it leaves, and a call in tail
@@ -243,6 +272,11 @@ leaves implicit is explicit.
 * **Copies:** a variable Mid binds to another is the other, and one bound
   to a constant, a global or a captured value is read again where it is
   used.
+* **Known calls:** a call of a function of the top level is `CallK` (and
+  `TailCallK`), by the function's id, with an argument for each of its
+  parameters and no closure: such a function captures nothing and names
+  itself as its global. A function has a list of parameters; one of other
+  than one parameter is only ever called so, and is made no closure.
 
 ### What a `Low` keeps
 
@@ -251,10 +285,14 @@ leaves implicit is explicit.
 * **SSA:** every variable is defined once in the program and on every way
   to each of its uses; a handler's block sees only what was defined where
   it was pushed, since its region may raise anywhere.
-* **Blocks:** a jump goes forward, to a block of its function, with an
-  argument for each parameter; a handler's block has one parameter.
+* **Blocks:** a jump goes to a block of its function, with an argument for
+  each parameter, and forward -- but a jump back to the head of a loop,
+  where everything that reaches the head is defined, so that only its
+  parameters change on the way round; a handler's block has one parameter.
 * **Handlers:** every way into a block has the same handlers pushed, and a
   function returns, or calls in tail position, with none.
+* **Calls:** a known call is of a function of the program, with as many
+  arguments as it has parameters; a closure is only of a function of one.
 
 Low is untyped: the types become representations after closure
 conversion, which Low will carry when a target needs them (M11).
@@ -270,8 +308,11 @@ middle end may ask of it):
   between them that has an effect. Constants, globals, captured values and
   the running closure are pushed where they are used.
 * **Locals:** every other value has one, shared by linear scan: since every
-  edge goes forward, a value lives from where it is made to its last use in
-  the order of the blocks. The parameter is local 0.
+  edge goes forward -- but the jump back to a loop's head, across which only
+  the head's parameters live -- a value lives from where it is made to its
+  last use in the order of the blocks. An argument of a jump already in
+  its parameter's local is not moved. The parameters are locals 0 to n-1; a known call
+  is its arguments pushed and `CALLK`.
 * **Jumps:** the arguments of a jump are pushed and stored into the block's
   parameters from the last, so they move in parallel; a jump to the next
   block falls through, one to a block that only jumps on goes on, and one
@@ -285,9 +326,10 @@ middle end may ask of it):
 ([bytecode.md](bytecode.md), The register bytecode; decision D4):
 
 * **Registers:** every variable has one, shared by linear scan as the
-  stack target shares locals; the parameter is register 0. One more, the
+  stack target shares locals; the parameters are registers 0 to n-1. One more, the
   scratch, takes what nothing reads and breaks a cycle of moves.
-* **Calls and primitives:** a call is `CALL` then `RESULT`; a primitive
+* **Calls and primitives:** a call is `CALL`, or `CALLK` with its
+  arguments' registers, then `RESULT`; a primitive
   `PRIM` into its register, but one that saves or restores an image
   `PRIMPUSH` then `RESULT`, where an image resumes; a handler's block
   begins with `CATCH`.

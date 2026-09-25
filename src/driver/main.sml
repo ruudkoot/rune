@@ -187,7 +187,10 @@ struct
                             size = Mid.size}
                            f m
               else m
-            val mid = optional ("simplify", Simplify.program) (optional ("shake", Shake.program) mid)
+            val mid = optional ("shake", Shake.program) mid
+            val mid = optional ("lift", Lift.program) mid
+            val mid = optional ("workers", Workers.program) mid
+            val mid = optional ("simplify", Simplify.program) mid
             val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
                                   size = Low.size}
                                  (fn m => Lower.program (m, !Translate.funNames)) mid

@@ -1,4 +1,4 @@
-(* dump: --dump-after=simplify *)
+(* dump: --passes=shake,simplify --dump-after=simplify *)
 (* The simplifier: y is a; the tuple p is known, so #1 p is y and #2 p is
    b, and unused goes; 2 + 3 is 5, so the if is known true; SOME made here
    has a known tag, so the match's other rule and its failure go; sq is

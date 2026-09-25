@@ -511,6 +511,50 @@ struct
                                else callC ("native_call", ["lea " ^ lab next ^ "(%rip), %rsi"]);
                                line "jmp *%rax")) :: !slows
                 end
+              (* M8: a known call (CALLK) pushes the frame here, with no
+                 closure and its base at the first argument, and jumps
+                 straight to the callee's entry for calls of the code; a
+                 full array of frames is the glue's (native_callk). A known
+                 tail call keeps the frame and moves the arguments down to
+                 its first locals, which are below them. *)
+              fun callKTemplate () =
+                let
+                  val tail = opc = Opcodes.TAILCALLK
+                  val slow = lab pc ^ "_slow"
+                  val newBase = num (16 * (nlocals + h - b))
+                in
+                  if tail then
+                    (line "mov VM_FRAMES(%r12), %rdx";
+                     line "mov VM_FP(%r12), %rsi";
+                     line "imul $FRAME_SIZE, %rsi, %rsi";
+                     line "add %rsi, %rdx";
+                     line ("movl $" ^ num a ^ ", FRAME_FUNC(%rdx)");
+                     line "movq $0, FRAME_CLOSURE(%rdx)";
+                     List.app (fn k => copy (rslot (h - b + k), localSlot k)) (List.tabulate (b, fn k => k)))
+                  else
+                    (line "mov VM_FP(%r12), %rdx";
+                     line "add $1, %rdx";
+                     line "cmp VM_FRAMES_CAP(%r12), %rdx";
+                     line ("jae " ^ slow);
+                     line "mov %rdx, VM_FP(%r12)";
+                     line "imul $FRAME_SIZE, %rdx, %rdx";
+                     line "add VM_FRAMES(%r12), %rdx";
+                     line ("movl $" ^ num a ^ ", FRAME_FUNC(%rdx)");
+                     line ("movl $" ^ num next ^ ", FRAME_RET_PC(%rdx)");
+                     line ("lea " ^ newBase ^ "(%rbp), %rsi");
+                     line "shr $4, %rsi";
+                     line "mov %rsi, FRAME_BASE(%rdx)";
+                     line "movq $0, FRAME_CLOSURE(%rdx)";
+                     line ("lea " ^ lab next ^ "(%rip), %rsi");
+                     line "mov %rsi, FRAME_NATIVE_RET(%rdx)";
+                     line ("lea " ^ newBase ^ "(%rbp), %rbp");
+                     slows := (fn () =>
+                                 (put (slow ^ ":\n"); unforward (); flushSp (); setPc ();
+                                  callC ("native_callk", ["mov $" ^ num a ^ ", %esi", "mov $" ^ num b ^ ", %edx",
+                                                          "lea " ^ lab next ^ "(%rip), %rcx"]);
+                                  line "jmp *%rax")) :: !slows);
+                  line ("jmp .Le" ^ Int.toString a)
+                end
               fun jumpIfTemplate () =
                 (line ("cmpb $T_CON0, " ^ rslot (h - 1));
                  line ("jne " ^ check (pc, next, if opc = Opcodes.JUMPIF then fatalJumpIf else fatalJumpIfNot, 0));
@@ -607,6 +651,8 @@ struct
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.CALL => callTemplate ()
                  | Opcode.TAILCALL => callTemplate ()
+                 | Opcode.CALLK => callKTemplate ()
+                 | Opcode.TAILCALLK => callKTemplate ()
                  | Opcode.RET =>
                    (* M10: the result in local 0, where the caller wants it,
                       the frame popped, and a jump to where it returns; the
@@ -725,12 +771,15 @@ struct
           put (sym ^ ":\n");
           cfiFrame ();
           (* the function's own position from its first byte, which is the
-             address a debugger or addr2line is given for it *)
+             address a debugger or addr2line is given for it, and where
+             every call enters: a breakpoint on its line is reached *)
           (case Array.sub (lineStarts, offset) of ~1 => () | k => loc k);
-          reloadFrame ();
-          (* M10: the entry a CALL of the code jumps to, the frame already
-             pushed and rbp its base: the room the frame needs, and its locals
-             but the first set to unit, n stores where the glue had a loop *)
+          (* M10: the entry a CALL of the code jumps to -- the symbol itself
+             (M8), the frame already pushed and rbp its base: the room the
+             frame needs, and its locals but its arguments set to unit, n
+             stores where the glue had a loop -- a CALL gives one argument,
+             a CALLK as many as the function is given (RbcCheck). The glue
+             enters at .Lr, which takes rbp from the frame first. *)
           put (".Le" ^ Int.toString f ^ ":\n");
           line ("lea " ^ num (16 * (nlocals + Vector.sub (#maxHeight facts, f))) ^ "(%rbp), %rax");
           line "shr $4, %rax";
@@ -739,11 +788,13 @@ struct
           put (".Lh" ^ Int.toString f ^ ":\n");
           if nlocals > 1 then line "pxor %xmm1, %xmm1" else ();
           let fun units k = if k >= nlocals then () else (line ("movdqu %xmm1, " ^ localSlot k); units (k + 1))
-          in units 1 end;
+          in units (Vector.sub (#params facts, f)) end;
           slows := (fn () =>
                       (put (".Lg" ^ Int.toString f ^ ":\n");
                        line "mov %rax, %rsi"; line "mov %r12, %rdi"; line "call vm_grow_stack";
                        line reloadStack; line ("jmp .Lh" ^ Int.toString f))) :: !slows;
+          slows := (fn () => (put (".Lr" ^ Int.toString f ^ ":\n"); reloadFrame (); line ("jmp .Le" ^ Int.toString f)))
+                   :: !slows;
           loop first;
           List.app
             (fn (l, next, what, arg) =>
@@ -801,7 +852,7 @@ struct
       put "rune_functions:\n";
       Vector.appi
         (fn (f, {name, ...} : Rbc.func) =>
-           line (".long " ^ symbol (name, f) ^ " - rune_functions, .Le" ^ Int.toString f ^ " - rune_functions, "
+           line (".long .Lr" ^ Int.toString f ^ " - rune_functions, .Le" ^ Int.toString f ^ " - rune_functions, "
                  ^ Int.toString (Vector.sub (#maxHeight facts, f))))
         funcs;
       line ".globl rune_handlers";

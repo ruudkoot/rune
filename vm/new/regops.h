@@ -4,8 +4,8 @@
 
 /* The fingerprint of the register instruction set, which its .rbc
    and its images carry. */
-#define REG_ISA_FINGERPRINT 0x007d001du
-#define REG_ISA_FINGERPRINT_HEX "007d001d"
+#define REG_ISA_FINGERPRINT 0x00f3834eu
+#define REG_ISA_FINGERPRINT_HEX "00f3834e"
 
 enum RegOpcode {
   ROP_HALT = 0,  /* Stop execution. */
@@ -44,6 +44,8 @@ enum RegOpcode {
   ROP_POPHANDLER = 33,  /* Remove the innermost exception handler. */
   ROP_CATCH = 34,  /* Register d := the exception a raise left for the handler this begins. */
   ROP_RAISE = 35,  /* Raise the exception in register s. */
+  ROP_CALLK = 36,  /* Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns. */
+  ROP_TAILCALLK = 37,  /* Like CALLK, but the current frame is replaced. */
   ROP__COUNT
 };
 
@@ -84,6 +86,8 @@ static const char *const rop_names[] = {
   "POPHANDLER",
   "CATCH",
   "RAISE",
+  "CALLK",
+  "TAILCALLK",
 };
 
 /* how many operands come before the list, if there is one */
@@ -124,6 +128,8 @@ static const unsigned char rop_nfixed[] = {
   0,
   1,
   1,
+  2,
+  2,
 };
 
 /* the operand that says how long the list is (-1: no list), and
@@ -165,6 +171,8 @@ static const signed char rop_list_at[] = {
   -1,
   -1,
   -1,
+  1,
+  1,
 };
 static const unsigned char rop_list_prim[] = {
   0,
@@ -183,6 +191,8 @@ static const unsigned char rop_list_prim[] = {
   0,
   1,
   1,
+  0,
+  0,
   0,
   0,
   0,
@@ -264,6 +274,8 @@ static const unsigned char rop_kinds[][4] = {
   {0, 0, 0, 0},  /* POPHANDLER */
   {14, 0, 0, 0},  /* CATCH */
   {14, 0, 0, 0},  /* RAISE */
+  {7, 11, 0, 0},  /* CALLK */
+  {7, 11, 0, 0},  /* TAILCALLK */
 };
 
 #endif

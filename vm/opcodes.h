@@ -5,8 +5,8 @@
 /* The version of the layout of an .rbc, and the fingerprint of the
    instruction set, which an .rbc and an image carry. */
 #define RBC_VERSION 3
-#define ISA_FINGERPRINT 0x008009d4u
-#define ISA_FINGERPRINT_HEX "008009d4"
+#define ISA_FINGERPRINT 0x002982f5u
+#define ISA_FINGERPRINT_HEX "002982f5"
 
 enum Opcode {
   OP_HALT = 0,  /* Stop execution. */
@@ -45,6 +45,8 @@ enum Opcode {
   OP_PRIM = 33,  /* Invoke primitive p; pops its arguments and pushes the result. */
   OP_JUMPIFNOTTAG = 34,  /* Pop a constructor value; jump to o unless its tag is t. */
   OP_TEELOCAL = 35,  /* Store the top of stack into local slot l and leave it there: SETLOCAL l; LOCAL l in one. */
+  OP_CALLK = 36,  /* Call function f, known, with the n values on top of the stack, which become its locals 0 to n-1; no closure. */
+  OP_TAILCALLK = 37,  /* Like CALLK, but the current frame is replaced. */
   OP__COUNT
 };
 
@@ -85,6 +87,8 @@ static const char *const op_names[] = {
   "PRIM",
   "JUMPIFNOTTAG",
   "TEELOCAL",
+  "CALLK",
+  "TAILCALLK",
 };
 
 static const unsigned char op_nargs[] = {
@@ -124,6 +128,8 @@ static const unsigned char op_nargs[] = {
   1,
   2,
   1,
+  2,
+  2,
 };
 
 /* What each opcode pops: a number (op_pops_fixed), the value of an
@@ -168,6 +174,8 @@ static const signed char op_pops_fixed[] = {
   -1,
   1,
   1,
+  -1,
+  -1,
 };
 static const signed char op_pops_operand[] = {
   -1,
@@ -206,6 +214,8 @@ static const signed char op_pops_operand[] = {
   -1,
   -1,
   -1,
+  1,
+  1,
 };
 static const signed char op_pops_arity[] = {
   -1,
@@ -242,6 +252,8 @@ static const signed char op_pops_arity[] = {
   -1,
   -1,
   0,
+  -1,
+  -1,
   -1,
   -1,
 };
@@ -282,6 +294,8 @@ static const unsigned char op_pushes[] = {
   1,
   0,
   1,
+  1,
+  0,
 };
 
 /* Where control goes after each (src/isa/isa.sml, flow). */
@@ -323,6 +337,8 @@ static const unsigned char op_flow[] = {
   FLOW_NEXT,
   FLOW_BRANCH,
   FLOW_NEXT,
+  FLOW_CALL,
+  FLOW_TAILCALL,
 };
 
 /* What each operand is, which says what the loader accepts for it
@@ -382,6 +398,8 @@ static const unsigned char op_kinds[][2] = {
   {10, 0},  /* PRIM */
   {8, 3},  /* JUMPIFNOTTAG */
   {4, 0},  /* TEELOCAL */
+  {7, 11},  /* CALLK */
+  {7, 11},  /* TAILCALLK */
 };
 
 #endif

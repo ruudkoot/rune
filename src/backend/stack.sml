@@ -9,9 +9,13 @@
      them that has an effect, so the order of effects is Low's. Every other
      value has a local, stored where it is made and read where it is used.
    * Locals are shared: every edge of Low goes forward in the order of its
-     blocks, so a value lives from where it is made to its last use in that
-     order, and a local freed there is given again (linear scan). The
-     parameter is local 0, as the VM wants.
+     blocks -- but the jump back to the head of a loop, across which only
+     the head's parameters live -- so a value lives from where it is made
+     to its last use in that order, and a local freed there is given again
+     (linear scan). The
+     parameters are locals 0 to n-1, as the VM wants.
+   * A call of a known function is its arguments pushed and CALLK, which
+     passes no closure (TAILCALLK in tail position).
    * The arguments of a jump are pushed and stored into the block's
      parameters from the last, so they move in parallel; a jump to the next
      block falls through, and one to a block that only returns its
@@ -132,7 +136,8 @@ struct
       fun born x = if Array.sub (first, x) >= 0 then () else Array.update (first, x, !pos)
       fun seen x = Array.update (last, x, !pos)
       fun needsLocal x = not (isTree x) andalso not (isRemat x)
-      val () = (born (#param f); seen (#param f))
+      val () = List.app (fn x => (born x; seen x)) (#params f)
+      fun isParam x = List.exists (fn p => p = x) (#params f)
       val () =
         Vector.app (fn ({params, instrs, transfer, ...} : L.block) =>
                       (pos := !pos + 1;
@@ -143,15 +148,15 @@ struct
                        List.app seen (L.transferUses transfer)))
                    blocks
       val slots : int array = Array.array (nv, ~1)
-      val nslots = ref 1
-      val () = Array.update (slots, #param f, 0)
+      val nslots = ref (Int.max (List.length (#params f), 1))
+      val _ = List.foldl (fn (x, k) => (Array.update (slots, x, k); k + 1)) 0 (#params f)
       val () =
         let
           (* the variables that want a local, in the order they are made *)
           val buckets : int list array = Array.array (!pos + 1, [])
           val () =
             Array.appi (fn (x, s) =>
-                          if s < 0 orelse x = #param f orelse not (needsLocal x) then ()
+                          if s < 0 orelse isParam x orelse not (needsLocal x) then ()
                           else Array.update (buckets, s, x :: Array.sub (buckets, s)))
                        first
           val byStart = Array.foldr (fn (xs, acc) => List.revAppend (xs, acc)) [] buckets
@@ -160,7 +165,9 @@ struct
           (* free: the locals no live variable holds, the lowest first;
              active: (last use, local) of the live ones. A local may be given
              to what the instruction that last reads it makes. *)
-          val paramEnd = Int.max (Array.sub (last, #param f), 0)
+          (* the parameters, each in its local until its last use *)
+          val params = #1 (List.foldl (fn (x, (ps, k)) => ((Int.max (Array.sub (last, x), 0), k) :: ps, k + 1))
+                                      ([], 0) (#params f))
           fun alloc ([], _, _) = ()
             | alloc (x :: rest, free, active) =
                 let
@@ -176,7 +183,7 @@ struct
                   Array.update (slots, x, slot);
                   alloc (rest, free, (e, slot) :: still)
                 end
-        in alloc (byStart, [], [(paramEnd, 0)]) end
+        in alloc (byStart, [], params) end
       fun slotOf x = let val k = Array.sub (slots, x) in if k < 0 then bug ("no local for v" ^ Int.toString x) else k end
 
       (* ---- the code ---- *)
@@ -237,6 +244,7 @@ struct
         | L.Env i => op' (Opcodes.ENV, [i])
         | L.Self => op' (Opcodes.SELF, [])
         | L.Call (f, a) => (load f; load a; op' (Opcodes.CALL, []))
+        | L.CallK (fid, vs) => (List.app load vs; op' (Opcodes.CALLK, [fid, List.length vs]))
         | L.Prim (p, vs) => (List.app load vs; op' (Opcodes.PRIM, [C.primIdx p]))
         | L.Tuple vs => (List.app load vs; op' (Opcodes.TUPLE, [List.length vs]))
         | L.Select (i, v) => (load v; op' (Opcodes.SELECT, [i]))
@@ -289,6 +297,8 @@ struct
               (* a parameter nothing reads is given nothing, where giving it
                  has no effect *)
               val moves = List.filter (fn (v, p) => not (usesOf p = 0 andalso isRemat v)) (ListPair.zip (vs, params))
+              (* and one already in the parameter's local stays there *)
+              val moves = List.filter (fn (v, p) => not (needsLocal v andalso slotOf v = slotOf p)) moves
             in
               List.app (load o #1) moves;
               List.app (fn (_, p) => if usesOf p = 0 then op' (Opcodes.POP, []) else op' (Opcodes.SETLOCAL, [slotOf p]))
@@ -337,6 +347,7 @@ struct
               end
           | L.Return v => (load v; op' (Opcodes.RET, []))
           | L.TailCall (fv, a) => (load fv; load a; op' (Opcodes.TAILCALL, []))
+          | L.TailCallK (fid, vs) => (List.app load vs; op' (Opcodes.TAILCALLK, [fid, List.length vs]))
           | L.Raise v => (load v; op' (Opcodes.RAISE, []))
         end
       val () = Vector.appi block blocks

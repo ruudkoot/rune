@@ -3,8 +3,8 @@ structure RegCodes =
 struct
   (* the fingerprint of the register instruction set, which its .rbc
      carries; the layout's version is the stack bytecode's *)
-  val fingerprint = 8192029
-  val fingerprintHex = "007d001d"
+  val fingerprint = 15958862
+  val fingerprintHex = "00f3834e"
   val HALT = 0
   val MOVE = 1
   val INT = 2
@@ -41,6 +41,8 @@ struct
   val POPHANDLER = 33
   val CATCH = 34
   val RAISE = 35
-  val count = 36
-  val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE"]
+  val CALLK = 36
+  val TAILCALLK = 37
+  val count = 38
+  val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE", "CALLK", "TAILCALLK"]
 end

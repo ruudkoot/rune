@@ -2,14 +2,16 @@
    register bytecode of vm/new (src/isa/regs.sml) from Low.
 
    * Every variable has a register, shared by linear scan as the stack
-     target shares locals: every edge of Low goes forward, so a variable
-     lives from where it is made to its last use in the order of the blocks.
-     The parameter is register 0. One more register, the scratch, takes
-     what nothing reads (a call's result, a primitive's) and breaks a cycle
-     of moves.
-   * A call is CALL and then RESULT, which takes what it returns; a
-     primitive that saves or restores an image is PRIMPUSH and RESULT, so
-     that an image resumes at RESULT; a handler's block begins with CATCH.
+     target shares locals: every edge of Low goes forward, but the jump back
+     to the head of a loop, across which only the head's parameters live, so
+     a variable lives from where it is made to its last use in the order of
+     the blocks. The parameters are registers 0 to n-1. One more register,
+     the scratch, takes what nothing reads (a call's result, a primitive's)
+     and breaks a cycle of moves.
+   * A call is CALL, or CALLK of a known function, and then RESULT, which
+     takes what it returns; a primitive that saves or restores an image is
+     PRIMPUSH and RESULT, so that an image resumes at RESULT; a handler's
+     block begins with CATCH.
    * The arguments of a jump move into the block's parameters in parallel;
      a jump to the next block falls through, and one to a block that only
      returns its parameter returns. *)
@@ -20,7 +22,7 @@ struct
   structure R = RegCodes
 
   type code = Codegen.program
-  val info : Target.t = {name = "registers", machine = Target.Registers, intBits = 64, maxArgs = 1, switch = false,
+  val info : Target.t = {name = "registers", machine = Target.Registers, intBits = 64, maxArgs = 64, switch = false,
                          barriers = false, safepoints = false}
 
   fun bug msg = Error.bug ("Regs: " ^ msg)
@@ -74,7 +76,8 @@ struct
       val pos = ref 0
       fun born x = if Array.sub (first, x) >= 0 then () else Array.update (first, x, !pos)
       fun seen x = Array.update (last, x, !pos)
-      val () = (born (#param f); seen (#param f))
+      val () = List.app (fn x => (born x; seen x)) (#params f)
+      fun isParam x = List.exists (fn p => p = x) (#params f)
       val () =
         Vector.app (fn ({params, instrs, transfer, ...} : L.block) =>
                       (pos := !pos + 1;
@@ -85,20 +88,21 @@ struct
                        List.app seen (L.transferUses transfer)))
                    blocks
       val regs : int array = Array.array (nv, ~1)
-      val () = Array.update (regs, #param f, 0)
-      val nregs = ref 1
+      val _ = List.foldl (fn (x, k) => (Array.update (regs, x, k); k + 1)) 0 (#params f)
+      val nregs = ref (Int.max (List.length (#params f), 1))
       val () =
         let
           val buckets : int list array = Array.array (!pos + 1, [])
           val () =
             Array.appi (fn (x, s) =>
-                          if s < 0 orelse x = #param f orelse usesOf x = 0 then ()
+                          if s < 0 orelse isParam x orelse usesOf x = 0 then ()
                           else Array.update (buckets, s, x :: Array.sub (buckets, s)))
                        first
           val byStart = Array.foldr (fn (xs, acc) => List.revAppend (xs, acc)) [] buckets
           fun insert (k, []) = [k]
             | insert (k, k' :: rest) = if k < k' then k :: k' :: rest else k' :: insert (k, rest)
-          val paramEnd = Int.max (Array.sub (last, #param f), 0)
+          val params = #1 (List.foldl (fn (x, (ps, k)) => ((Int.max (Array.sub (last, x), 0), k) :: ps, k + 1))
+                                      ([], 0) (#params f))
           (* a register is given again only after the instruction that last
              reads it: a register instruction may write its destination
              before it has read every operand (PRIM, TUPLE read theirs first,
@@ -118,7 +122,7 @@ struct
                   Array.update (regs, x, r);
                   alloc (rest, free, (e, r) :: still)
                 end
-        in alloc (byStart, [], [(paramEnd, 0)]) end
+        in alloc (byStart, [], params) end
       val scratch = !nregs
       val nlocals = scratch + 1
       fun reg x = let val r = Array.sub (regs, x) in if r < 0 then scratch else r end
@@ -156,6 +160,7 @@ struct
           | L.Env i => op' (R.ENV, [d, i])
           | L.Self => op' (R.SELF, [d])
           | L.Call (fv, a) => (op' (R.CALL, [reg fv, reg a]); op' (R.RESULT, [d]))
+          | L.CallK (fid, vs) => (op' (R.CALLK, fid :: List.length vs :: List.map reg vs); op' (R.RESULT, [d]))
           | L.Prim (p, vs) =>
               if List.exists (fn q => q = p) imagePrims then
                 (op' (R.PRIMPUSH, C.primIdx p :: List.map reg vs); op' (R.RESULT, [d]))
@@ -244,6 +249,7 @@ struct
              end
          | L.Return v => op' (R.RET, [reg v])
          | L.TailCall (fv, a) => op' (R.TAILCALL, [reg fv, reg a])
+         | L.TailCallK (fid, vs) => op' (R.TAILCALLK, fid :: List.length vs :: List.map reg vs)
          | L.Raise v => op' (R.RAISE, [reg v]))
       val () = Vector.appi block blocks
     in

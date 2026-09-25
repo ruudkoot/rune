@@ -6,8 +6,8 @@
    case of the interpreter's loop that it is named after, taken out of the
    loop: those of the instructions whose bodies are shared (src/isa/isa.sml)
    call the same function the interpreter does (vm/ops.h); CALL, TAILCALL,
-   RET and RAISE, which say where the code goes on, are written again here,
-   and a change to the one is a change to the other.
+   CALLK, RET and RAISE, which say where the code goes on, are written again
+   here, and a change to the one is a change to the other.
 
    What runeopt writes into the program, beside its code: the .rbc, which is
    loaded as runevm loads it; for each function where its code begins and the
@@ -25,7 +25,8 @@
 
 extern const unsigned char rune_rbc[];
 extern const uint32_t rune_rbc_size;
-extern const int32_t rune_functions[];     /* 3 per function: entry - rune_functions, the entry of a call
+extern const int32_t rune_functions[];     /* 3 per function: the glue's entry, which takes the frame's
+                                              base first - rune_functions, the entry of a call
                                               of the code (M10) - rune_functions, highest stack */
 extern const int32_t rune_handlers[];      /* 2 per handler, by pc: pc, code - rune_handlers */
 extern const uint32_t rune_nhandlers;
@@ -82,6 +83,23 @@ const void *native_tailcall(VM *vm) {
     fr->func = f;
     fr->closure = c;
     return enter(vm, f, arg);
+}
+
+/* CALLK (middle-end M8) when the array of frames is full: a frame of
+   function f at the n arguments on top of the stack, which are its first
+   locals, with no closure, the rest of its locals unit. */
+const void *native_callk(VM *vm, uint32_t f, uint32_t n, void *back) {
+    size_t at = vm->sp - n;
+    vm_push_frame(vm, f, NULL, vm->pc, at);
+    vm->frames[vm->fp].native_ret = back;
+    Function *fn = &vm->prog.funcs[f];
+    size_t need = at + fn->nlocals + (size_t)rune_functions[3 * f + 2];
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = &vm->stack[at];
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm->sp = at + fn->nlocals;
+    vm->pc = fn->code_offset;
+    return entry(f);
 }
 
 /* RET: the native code of the caller, or the end of the run. */

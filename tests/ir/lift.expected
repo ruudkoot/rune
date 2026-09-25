@@ -1,0 +1,72 @@
+(* after simplify *)
+(funs
+  (fn g1 ((v1 : int list) (v2 : int)) : int
+    (let (v3 : int) (tag v1)
+    (let (v4 : bool) (prim poly_eq v3 0 : (int * int) -> bool)
+    (if v4
+      (return v2)
+      (let (v5 : int) (tag v1)
+      (let (v6 : bool) (prim poly_eq v5 1 : (int * int) -> bool)
+      (if v6
+        (let (v7 : int * int list) (decon 1 v1)
+        (let (v8 : int) (select 0 v7)
+        (let (v9 : int list) (select 1 v7)
+        (let (v10 : int) (prim int_add v2 v8 : (int * int) -> int)
+        (return (app g1 v9 v10))))))
+        (let (v11 : exncon) (builtinexn 0)
+        (let (v12 : exn) (mkexn v11 ())
+        (raise v12)))))))))))
+(funs
+  (fn g2 ((v13 : int list)) : int
+    (return (app g1 v13 0))))
+(funs
+  (fn g3 ((v14 : int) (v15 : int list)) : int list
+    (let (v16 : int) (tag v15)
+    (let (v17 : bool) (prim poly_eq v16 0 : (int * int) -> bool)
+    (if v17
+      (return (con0 0 : int list))
+      (let (v18 : int) (tag v15)
+      (let (v19 : bool) (prim poly_eq v18 1 : (int * int) -> bool)
+      (if v19
+        (let (v20 : int * int list) (decon 1 v15)
+        (let (v21 : int) (select 0 v20)
+        (let (v22 : int list) (select 1 v20)
+        (let (v23 : int) (prim int_mul v14 v21 : (int * int) -> int)
+        (let (v24 : int list) (app g3 v14 v22)
+        (let (v25 : int * int list) (tuple v23 v24)
+        (return (con 1 v25 : int list))))))))
+        (let (v26 : exncon) (builtinexn 0)
+        (let (v27 : exn) (mkexn v26 ())
+        (raise v27)))))))))))
+(funs
+  (fn g4 ((v28 : int) (v29 : int list)) : int list
+    (return (app g3 v28 v29))))
+(funs
+  (fn g5 ((v30 : int)) : int -> int
+    (fun
+      (fn v31 ((v32 : int)) : int
+        (return (prim int_mul v30 v32 : (int * int) -> int)))
+    (return v31))))
+(funs
+  (fn g6 ((v33 : int -> int) (v34 : int)) : int
+    (let (v35 : int) (app v33 v34)
+    (return (app v33 v35)))))
+(funs
+  (fn g7 ((v36 : int)) : int
+    (return (prim int_add v36 1 : (int * int) -> int))))
+(funs
+  (fn g8 ((v37 : int)) : int
+    (return (app g6 g7 v37))))
+(val g9 : int * int list * int * int
+  (let (v38 : int * int list) (tuple 2 (con0 0 : int list))
+  (let (v39 : int list) (con 1 v38 : int list)
+  (let (v40 : int * int list) (tuple 1 v39)
+  (let (v41 : int list) (con 1 v40 : int list)
+  (let (v42 : int) (app g2 v41)
+  (let (v43 : int * int list) (tuple 3 (con0 0 : int list))
+  (let (v44 : int list) (con 1 v43 : int list)
+  (let (v45 : int list) (app g4 2 v44)
+  (let (v46 : int -> int) (app g5 4)
+  (let (v47 : int) (app v46 5)
+  (let (v48 : int) (app g8 6)
+  (return (tuple v42 v45 v47 v48))))))))))))))

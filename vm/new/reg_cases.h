@@ -236,3 +236,33 @@ case ROP_RAISE: {
     vm_raise(vm, v);
     break;
 }
+case ROP_CALLK: {
+    Function *fn = &p->funcs[a];
+    if (vm->sp + fn->nlocals > vm->stack_cap) vm_grow_stack(vm, vm->sp + fn->nlocals);
+    /* the arguments read before the frame is pushed, which R would read */
+    Value *slot = &vm->stack[vm->sp];
+    for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm_push_frame(vm, (uint32_t)a, NULL, vm->pc, vm->sp);
+    vm->sp += fn->nlocals;
+    vm->pc = fn->code_offset;
+    break;
+}
+case ROP_TAILCALLK: {
+    Function *fn = &p->funcs[a];
+    size_t base = fr->base;
+    size_t need = vm->sp + n;
+    if (base + fn->nlocals > need) need = base + fn->nlocals;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    /* the arguments above the frame first, since they are its registers */
+    Value *tmp = &vm->stack[vm->sp];
+    for (uint32_t i = 0; i < n; i++) tmp[i] = R(LIST(i));
+    Value *slot = &vm->stack[base];
+    memmove(slot, tmp, (size_t)n * sizeof(Value));
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm->sp = base + fn->nlocals;
+    fr->func = (uint32_t)a;
+    fr->closure = NULL;
+    vm->pc = fn->code_offset;
+    break;
+}

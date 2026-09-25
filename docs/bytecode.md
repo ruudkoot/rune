@@ -129,8 +129,13 @@ doubles whenever it is more than half full after a collection, or the share
 Calling convention: push the closure, push the argument, `CALL`. The callee's
 frame has the argument in local 0 and the remaining locals initialised to
 `unit`; `RET` pops the frame and pushes the result. `TAILCALL` reuses the
-current frame. Every function takes exactly one argument (curried functions
-are nested closures; tuples are passed as one value).
+current frame. A function called through a closure takes exactly one
+argument (curried functions are nested closures; tuples are passed as one
+value). A function the compiler knows -- one of the top level -- is called
+without a closure: push its `n` arguments and `CALLK f, n`, and they are its
+locals 0 to `n-1`; the frame has no closure, so such a function reads no
+`ENV` or `SELF`. Every known call of a function passes it the same number of
+arguments.
 
 Exceptions: `PUSHHANDLER o` records the current stack and frame depth; `RAISE`
 pops the innermost handler, restores its depths, pushes the exception value and
@@ -163,6 +168,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
 | `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`). |
+| `CALLK f, n` / `TAILCALLK f, n` | function, count | Call function `f` with the `n` values on top of the stack as its locals 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`); `n` is at most `f`'s locals. |
 | `RET` | | Return the top of stack to the caller. |
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
 | `JUMPIFNOT o` / `JUMPIF o` | offset | Pop a bool, jump if false / true. |
@@ -185,7 +191,8 @@ register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
 refuses the other's file and image.
 
 * **Registers** are the slots of the frame, from its base: register 0 is the
-  argument, the others start as `unit`, and `nlocals` of the function table
+  argument (registers 0 to `n-1` the arguments of a known call), the others
+  start as `unit`, and `nlocals` of the function table
   is their number. The collector sees every one, as it sees the locals of the
   stack bytecode, since the stack pointer stays above them.
 * **Operands** are `i32`, as in the stack bytecode; an instruction that takes
@@ -209,6 +216,7 @@ refuses the other's file and image.
 | `GLOBAL d g` / `SETGLOBAL g s` | register, global | `d :=` global `g` / global `g := s`. |
 | `ENV d e` / `SELF d` | register, slot | `d :=` slot `e` of the running closure / the running closure. |
 | `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`). |
+| `CALLK f n a...` / `TAILCALLK f n a...` | function, count, registers | Call function `f` with the registers `a...` as its registers 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`). |
 | `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
 | `RET s` | register | Return `s` to the caller. |
 | `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise. |

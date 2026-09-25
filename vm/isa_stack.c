@@ -131,6 +131,8 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             case OPND_BUILTIN_EXN: bad = v < 0 || v >= NUM_BUILTIN_EXNS; break;
             }
         }
+        /* a known call gives no more arguments than its function has locals */
+        if ((op == OP_CALLK || op == OP_TAILCALLK) && !bad) bad = (uint32_t)b > p->funcs[a].nlocals;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }

@@ -119,6 +119,14 @@ n4:
   PRIM int_to_string
   PRIM print
   POP
+  # CALLK, TAILCALLK: 20 - 7, by a known call of two arguments that calls
+  # another in tail position with them the other way round: 13
+  INT 20
+  INT 7
+  CALLK &minus 2
+  PRIM int_to_string
+  PRIM print
+  POP
   CONST %nl
   PRIM print
   POP
@@ -204,4 +212,15 @@ rec:
   INT 1
   PRIM int_sub
   TAILCALL
+  RET
+
+function minus 3
+  LOCAL 1
+  LOCAL 0
+  TAILCALLK &flip 2
+
+function flip 2
+  LOCAL 1
+  LOCAL 0
+  PRIM int_sub
   RET

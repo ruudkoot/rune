@@ -4,8 +4,8 @@ struct
   (* the version of the layout of an .rbc, and the fingerprint of the
      instruction set, which an .rbc and an image carry *)
   val rbcVersion = 3
-  val fingerprint = 8391124
-  val fingerprintHex = "008009d4"
+  val fingerprint = 2720501
+  val fingerprintHex = "002982f5"
   val HALT = 0
   val CONST = 1
   val INT = 2
@@ -42,9 +42,11 @@ struct
   val PRIM = 33
   val JUMPIFNOTTAG = 34
   val TEELOCAL = 35
-  val count = 36
-  val names = Vector.fromList ["HALT", "CONST", "INT", "UNIT", "CON0", "LOCAL", "SETLOCAL", "ENV", "SELF", "GLOBAL", "SETGLOBAL", "POP", "TUPLE", "SELECT", "CON", "DECON", "CONTAG", "CLOSURE", "SETENV", "CALL", "TAILCALL", "RET", "JUMP", "JUMPIFNOT", "JUMPIF", "PUSHHANDLER", "POPHANDLER", "RAISE", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "PRIM", "JUMPIFNOTTAG", "TEELOCAL"]
-  val nargs = Vector.fromList [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1]
+  val CALLK = 36
+  val TAILCALLK = 37
+  val count = 38
+  val names = Vector.fromList ["HALT", "CONST", "INT", "UNIT", "CON0", "LOCAL", "SETLOCAL", "ENV", "SELF", "GLOBAL", "SETGLOBAL", "POP", "TUPLE", "SELECT", "CON", "DECON", "CONTAG", "CLOSURE", "SETENV", "CALL", "TAILCALL", "RET", "JUMP", "JUMPIFNOT", "JUMPIF", "PUSHHANDLER", "POPHANDLER", "RAISE", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "PRIM", "JUMPIFNOTTAG", "TEELOCAL", "CALLK", "TAILCALLK"]
+  val nargs = Vector.fromList [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1, 2, 2]
 end
 
 (* The opcodes as a datatype, for code that says what it does with each
@@ -89,6 +91,8 @@ struct
     | PRIM
     | JUMPIFNOTTAG
     | TEELOCAL
-  val all : t vector = Vector.fromList [HALT, CONST, INT, UNIT, CON0, LOCAL, SETLOCAL, ENV, SELF, GLOBAL, SETGLOBAL, POP, TUPLE, SELECT, CON, DECON, CONTAG, CLOSURE, SETENV, CALL, TAILCALL, RET, JUMP, JUMPIFNOT, JUMPIF, PUSHHANDLER, POPHANDLER, RAISE, NEWEXN, BUILTINEXN, MKEXN, EXNCON, EXNARG, PRIM, JUMPIFNOTTAG, TEELOCAL]
+    | CALLK
+    | TAILCALLK
+  val all : t vector = Vector.fromList [HALT, CONST, INT, UNIT, CON0, LOCAL, SETLOCAL, ENV, SELF, GLOBAL, SETGLOBAL, POP, TUPLE, SELECT, CON, DECON, CONTAG, CLOSURE, SETENV, CALL, TAILCALL, RET, JUMP, JUMPIFNOT, JUMPIF, PUSHHANDLER, POPHANDLER, RAISE, NEWEXN, BUILTINEXN, MKEXN, EXNCON, EXNARG, PRIM, JUMPIFNOTTAG, TEELOCAL, CALLK, TAILCALLK]
   fun fromInt (n : int) : t = Vector.sub (all, n)
 end

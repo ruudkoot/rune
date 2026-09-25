@@ -16,8 +16,9 @@ struct
     safepoints : bool       (* whether a loop without calls needs a safepoint *)
   }
 
-  (* runevm's bytecode: 64-bit int, unary calls, no switch yet, and a
-     collector that needs neither barriers nor safepoints. *)
-  val stack : t = {name = "stack", machine = Stack, intBits = 64, maxArgs = 1, switch = false,
+  (* runevm's bytecode: 64-bit int, known calls of up to 64 arguments
+     (CALLK), no switch yet, and a collector that needs neither barriers nor
+     safepoints. *)
+  val stack : t = {name = "stack", machine = Stack, intBits = 64, maxArgs = 64, switch = false,
                    barriers = false, safepoints = false}
 end
