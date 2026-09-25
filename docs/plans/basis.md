@@ -69,7 +69,8 @@ portable enough for a host with a 31-bit `int` to load them, so the `Real`
 and `Math` tests run in `xc1` there too.
 `tests/basis/structures.sh` makes the table of the structures each system
 provides, and `make perf` (`run-matrix.sh --perf`) the table of wall-clock
-times; both are in `docs/basis-compat.md`.
+times; the first is in `docs/basis-compat.md`, the second in
+`docs/performance.md`.
 
 MLton's regression programs, the success measure of this plan, were run
 again: of the 142 programs that `tests/external/mlton-skip.txt` skipped, 38

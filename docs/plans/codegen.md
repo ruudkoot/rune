@@ -11,10 +11,9 @@ per-milestone analysis -- is `git show 938b29a:docs/plans/codegen.md`.
 
 ## Remaining work
 
-* **Time native code again.** The native table of
-  [basis-compat.md](../basis-compat.md) is M7's, before M10 to M15 made
-  native code 1.75 times as fast. `make perf` on a machine with nothing
-  else running, and the table and its notes replaced.
+* **Time native code again: done** (2026-09-25): the table of
+  [performance.md](../performance.md) has `rune:opt` beside every other
+  configuration, after M10 to M15 and the middle-end roadmap.
 * **A source directory for the debug information.** The `.rbc` records its
   files as the compiler was given them, relative. A debugger resolves them
   against the directory the program was assembled in (`DW_AT_comp_dir`), so

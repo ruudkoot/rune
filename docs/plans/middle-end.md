@@ -1397,41 +1397,88 @@ estimated.
 
 ### After M12: follow-ups
 
-Tried after the roadmap was done, each measured on its own against the
-commit before (`runevm --count`, cycles the least of five runs, with the
-native compiler that runeopt makes).
+Tried after the roadmap was done (2026-09-25), at the owner's request,
+each measured on its own against the commit before: instructions by
+`runevm --count`, which are exact; cycles by `perf stat`, the least of five
+runs, which move by about 1.5% from run to run; and the native compiler
+that runeopt makes of `bin/rune.rbc`. "The compiler on the same work" is
+the compiler of each commit compiling one fixed set of sources with no
+optional pass, which measures its code rather than its passes; "the
+bootstrap" is each compiling its own sources as `make` does.
 
-* **The compiler's own compile time: done.** A profile of the bootstrap
-  on `runevm` -- instructions by function, from a counting VM -- found a
-  quarter of it in `IntMap`, the persistent AVL maps, that passes used as
-  tables keyed by stamps: an insert for every variable bound or used. Such
-  a table is only asked, never listed, so `IntTable` does, with the same
-  output byte for byte: `Ty`'s tables of binders, exceptions and
-  realizations, `Translate`'s schemes, `ToMid`'s variables, Lower's uses,
-  substitution, captured variables and free-variable walks, Lift's, the
-  simplifier's tables of what may be inlined or specialised and its
-  copies, and Shake's roots, which were also merged quadratically. A count
-  is kept with one look for its key (`IntTable.bump`). The compiler
-  compiling the same sources: 37.3% fewer instructions and 23.1% fewer
-  cycles; the bootstrap 29.6% and 17.3%; the native compiler 19.6% fewer
-  cycles. What is left is spread thin: `StringMap` in the elaborator's
-  environments and the lexer now cost more than any pass of the middle.
-* **`=` of strings as its own primitive: measured, not kept.** 261 uses in
-  the compiler; no change to instructions, and none to cycles beyond the
-  noise of about 1.5%.
-* **`case Int.compare (a, b)` as comparisons: measured, not kept.** The
-  order's tag tests made `int_lt` and `int_gt` (and `word_`, `char_`):
-  `runevm` runs 0.5% more instructions -- two primitive calls where there
-  was one and two tag tests -- and the bootstrap 1.2% more; native code is
-  1.1% faster at best, within the noise. Where it would pay is a peephole
-  of runeopt's, on `PRIM int_order` and the tests after it.
-* **Lifting local functions that escape: measured, not kept.** A group
-  that captures something and escapes lifted all the same, a closure made
-  where it was that calls the global for its uses as a value (unless one
-  is used as a value in the group itself): 0.6% fewer instructions on the
-  compiler, 1 to 2% on list_ops and string_ops, but `bin/rune.rbc` 9.5%
-  larger -- the lifted functions are inlined and specialised in many more
-  places -- and the bootstrap 9.8% more instructions.
+* **The compiler's own compile time: done** (`a1a145c`).
+  * **How it was found.** MLton's profiler, on the compiler that MLton
+    builds, showed nothing to fix: on MLton an insert into an `IntMap` is
+    cheap. On `runevm` it is not. A throwaway copy of the VM counted the
+    instructions of each pc (in `NEXT` of `vm/loop.h`) and, at `CALL` and
+    `CALLK`, the calls into the maps by caller, and printed both by
+    function at exit (*Measuring*, below). Of the bootstrap's 978 million
+    instructions, 249 million were `IntMap`, 97 million `StringMap` and 92
+    million `IntTable`: the passes used persistent AVL maps as tables keyed
+    by stamps, with an insert for every variable bound or used.
+  * **What changed.** A table that is only asked, never listed, cannot
+    carry its order into the output, so an `IntTable` does, and the output
+    is the same byte for byte, for the compiler and every program of
+    `tests/lang` and `tests/perf`:
+    * `Ty`'s binders, exception arguments and realizations, and
+      `Translate`'s schemes;
+    * `ToMid`'s variables;
+    * Lower's use counts, select counts, substitution, captured variables
+      and virtual values, and its and Lift's free-variable walks -- one
+      table for a walk, since each variable is bound once, so that one
+      bound in a branch is used in no other;
+    * the simplifier's tables of what may be inlined or specialised, and
+      the renaming of its copies;
+    * Shake's live set; and its roots, which were merged set into set once
+      for each definition, quadratically, are a list.
+    A count is kept with one look for its key (`IntTable.bump`), where
+    `find` and `insert` were two.
+  * **Measured.** The compiler on the same work: 37.3% fewer instructions,
+    23.1% fewer cycles; the bootstrap 29.6% and 17.3% (the budget of
+    `make perf-check`, 1,259 to 887 million instructions); the native
+    compiler 19.6% fewer cycles. For a program: `compile-sigs` 12.4% fewer
+    instructions, `compile-hello` 3.3%.
+  * **What is left.** The profile after it, of 826 million instructions:
+    `IntTable` 133 million, `StringMap` 97 million (the elaborator's
+    environments and fixity), the simplifier 79 million, the lexer 56
+    million, `IntMap` 55 million. The middle's passes are each under 3% of
+    the bootstrap; the front end is now where compile time goes.
+  * **Code size** did not change: `bin/rune.rbc` is 790K, 32% more than
+    before M10. The one lever measured is the inliner's size, which buys
+    code for speed (at 8 nodes, about 5% less code and 0.3% more
+    instructions, in M10's measurements).
+* **`=` of strings as its own primitive: measured, not kept.** The
+  simplifier made `poly_eq` at `string` a new primitive, `string_eq`
+  (lengths, then `memcmp`, without the walk of `values_equal`). The
+  compiler has 261 of them. No change to instructions, since it is one
+  primitive for another, and none to cycles beyond the noise, on `runevm`
+  or in native code (15 runs: the least 0.9% slower, the median 0.2%
+  faster).
+* **`case Int.compare (a, b)` as comparisons: measured, not kept.** Where
+  the order that `int_order` (or `word_order`, `char_order`) made is only
+  tested, the simplifier made each test the comparison: `LESS` `int_lt`,
+  `GREATER` `int_gt`, `EQUAL` `imm_eq`, and the order went as dead code.
+  `runevm` then runs 0.5% more instructions -- two primitive calls, and
+  the operands loaded twice, where there was one call and two tag tests --
+  and the bootstrap 1.2% more; native code is 1.1% faster at the least of
+  15 runs and 0.2% at the median, within the noise. Where it would pay is
+  in runeopt, as a peephole on `PRIM int_order` and the `JUMPIFNOTTAG`s
+  after it, which leaves the bytecode, and `runevm`, as they are.
+* **Lifting local functions that escape: measured, not kept.** Lift took a
+  group that captures something and escapes all the same: its functions
+  became globals given what they captured, every call of them a known call
+  of the global, and, where the group was made, a closure of what it
+  captured for each one used as a value, which calls the global in tail
+  position -- the same allocation, and the same traces. Not where a member
+  is used as a value in the group's own code, where no such closure is in
+  scope; and another group that uses one as a value is given the closure
+  too. The compiler on the same work ran 0.6% fewer instructions (cycles
+  within the noise), list_ops 1.1% and string_ops 2.3% fewer; but
+  `bin/rune.rbc` grew 9.5%, since the lifted functions are now inlined and
+  specialised in many more places, and the bootstrap ran 9.8% more
+  instructions. Not tried: lifting only those too big to be inlined where
+  they are, which the inlining of small local functions (M12) already
+  does for the rest.
 
 ### Why this order
 
@@ -1574,6 +1621,17 @@ Here is how to make them again.
   The counts are written at exit. A run gives the same instruction count
   as `runevm --count` (849,568,405 for the bootstrap), and the same
   bytecode.
+* **The profile by function** (after M12, *After M12: follow-ups*): a copy
+  of `vm/` in which `NEXT` in `vm/loop.h` first adds one to a count of the
+  pc it goes to; the `CALL`, `TAILCALL`, `CALLK` and `TAILCALLK` cases of
+  `vm/interp_cases.h` note the caller's and the callee's function, and
+  count by caller the calls into `IntMap`, `StringMap` and `IntTable` made
+  from outside them; `main` copies the table of functions (offsets and
+  names) before the run, since `vm_exit` frees it, and an `atexit` handler
+  sums the counts of each function's pcs and writes them, with the calls,
+  to the file `RUNE_PROFILE` names. Sum by the name before the first dot
+  for the modules. It counts what `runevm --count` counts, one
+  instruction at a time, and the run is about three times as slow.
 * **The analysis:** a script reads the `.rbc`'s code with the lengths of
   `vm/opcodes.def`, joins the counts to it, and adds what is static:
   * the static reads of each local, for a store read once;
