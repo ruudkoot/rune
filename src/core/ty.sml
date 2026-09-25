@@ -23,9 +23,9 @@ struct
   (* ---- the tables ---- *)
 
   (* the type, or scheme, each variable was bound with, by its stamp *)
-  val binders : Types.ty IntMap.map ref = ref IntMap.empty
+  val binders : Types.ty IntTable.table = IntTable.table 8192
   (* the argument of each exception, by its stamp *)
-  val exnArgs : Types.ty option IntMap.map ref = ref IntMap.empty
+  val exnArgs : Types.ty option IntTable.table = IntTable.table 256
   (* each datatype, by the stamp of its type name: the ids of its parameters,
      and each constructor's tag, name and argument, as the elaborator gave it
      or, for one Mid's text declares (MidText), as it is *)
@@ -34,17 +34,17 @@ struct
   val datatypes : datatypeInfo IntMap.map ref = ref IntMap.empty
   (* what each type made abstract by an opaque signature stands for, by the
      stamp of its fresh name *)
-  val realizations : Types.tyfcn IntMap.map ref = ref IntMap.empty
+  val realizations : Types.tyfcn IntTable.table = IntTable.table 256
 
-  fun bindVar (stamp : int, t : Types.ty) = binders := IntMap.insert (!binders, stamp, t)
-  fun bindExn (stamp : int, arg : Types.ty option) = exnArgs := IntMap.insert (!exnArgs, stamp, arg)
+  fun bindVar (stamp : int, t : Types.ty) = IntTable.insert (binders, stamp, t)
+  fun bindExn (stamp : int, arg : Types.ty option) = IntTable.insert (exnArgs, stamp, arg)
   fun bindDatatype (stamp : int, {params, cons} : {params : int list, cons : (int * string * Types.ty option) list}) =
     datatypes := IntMap.insert (!datatypes, stamp,
                                 {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map FromElab a)) cons})
   fun bindDatatypeDirect (stamp : int, {params, cons} : {params : int list, cons : (int * string * ty option) list}) =
     datatypes := IntMap.insert (!datatypes, stamp,
                                 {params = params, cons = List.map (fn (t, n, a) => (t, n, Option.map Direct a)) cons})
-  fun bindRealization (stamp : int, fcn : Types.tyfcn) = realizations := IntMap.insert (!realizations, stamp, fcn)
+  fun bindRealization (stamp : int, fcn : Types.tyfcn) = IntTable.insert (realizations, stamp, fcn)
 
   (* bool and list, which no declaration makes *)
   val () =
@@ -65,7 +65,7 @@ struct
         if level = Types.genericLevel then Gen id else Var id
     | Types.TVar (ref (Types.Bound t)) => fromTypes t
     | Types.TCon (c, args) =>
-        (case IntMap.find (!realizations, #stamp c) of
+        (case IntTable.find (realizations, #stamp c) of
            SOME (Types.TName c') => fromTypes (Types.TCon (c', args))
          | SOME (Types.TAbbrev (params, body)) => fromTypes (Types.substitute (params, args, body))
          | NONE => Con (#stamp c, #name c, List.map fromTypes args))

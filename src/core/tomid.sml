@@ -46,10 +46,10 @@ struct
     | NONE =>
         let
           val s =
-            case IntMap.find (!Ty.binders, g) of
+            case IntTable.find (Ty.binders, g) of
               SOME t => let val t = Ty.fromTypes t in (gens t, t) end
             | NONE =>
-                if IntMap.member (!Ty.exnArgs, g) then ([], Ty.ExnCon)
+                if isSome (IntTable.find (Ty.exnArgs, g)) then ([], Ty.ExnCon)
                 else bug ("global g" ^ Int.toString g ^ " has no type")
         in globalSchemes := IntMap.insert (!globalSchemes, g, s); s end
 
@@ -58,9 +58,10 @@ struct
      * fail: the join point a Fail jumps to, that of the innermost Try whose
        body it is in tail position of;
      * env: the scheme of each local variable. *)
-  type state = {scope : unit IntMap.map, fail : M.label option, env : M.scheme IntMap.map}
+  type state = {scope : unit IntMap.map, fail : M.label option, env : M.scheme IntTable.table}
 
-  fun bindLocal ({scope, fail, env} : state, x, s) : state = {scope = scope, fail = fail, env = IntMap.insert (env, x, s)}
+  (* one table for the program, since each variable is bound once *)
+  fun bindLocal (st : state, x, s) : state = (IntTable.insert (#env st, x, s); st)
   fun withFail ({scope, env, ...} : state, fail) : state = {scope = scope, fail = fail, env = env}
   fun inFunction ({scope, env, ...} : state, tyvars) : state =
     {scope = List.foldl (fn (a, m) => IntMap.insert (m, a, ())) scope tyvars, fail = NONE, env = env}
@@ -101,7 +102,7 @@ struct
     let
       (* the scheme a local variable is bound with, of the value's type *)
       fun scheme (st, x, t) =
-        if IntMap.member (!Ty.binders, x) then (own (st, t), t) else ([], t)
+        if isSome (IntTable.find (Ty.binders, x)) then (own (st, t), t) else ([], t)
 
       fun deliver (ctx : ctx, st : state, v : value) : M.exp =
         case ctx of
@@ -127,7 +128,7 @@ struct
         | _ => f ctx
 
       fun varAtom (st : state, x : int, inst : Ty.ty option) : value =
-        case IntMap.find (#env st, x) of
+        case IntTable.find (#env st, x) of
           SOME s => use (M.Var, x, s, inst)
         | NONE => bug ("v" ^ Int.toString x ^ " is not in scope")
       and use (make, x, (tyvars, t) : M.scheme, inst) : value =
@@ -259,7 +260,7 @@ struct
         let val st' = bindLocal (inFunction (st, tyvars), x, ([], domain t))
         in {name = f, tyvars = tyvars, params = [(x, domain t)], result = codomain t, body = exp (body, st', Ret)} end
 
-      val top : state = {scope = IntMap.empty, fail = NONE, env = IntMap.empty}
+      val top : state = {scope = IntMap.empty, fail = NONE, env = IntTable.table 4096}
 
       (* ---- the top level ---- *)
 

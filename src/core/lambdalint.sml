@@ -38,10 +38,10 @@ struct
         | join (_, a, Never) = a
       (* the type of a global: its scheme, or an exception constructor's *)
       fun globalTy g =
-        case IntMap.find (!Ty.binders, g) of
+        case IntTable.find (Ty.binders, g) of
           SOME t => Ty.fromTypes t
         | NONE =>
-            if IntMap.member (!Ty.exnArgs, g) then Ty.ExnCon
+            if isSome (IntTable.find (Ty.exnArgs, g)) then Ty.ExnCon
             else Error.bug ("global g" ^ Int.toString g ^ " has no type")
       (* the argument of a constructor of the datatype t: SOME NONE for a
          nullary one *)
@@ -89,7 +89,7 @@ struct
                  (* nothing after it runs, but it is checked with the type the
                     variable was declared with, where it was *)
                  (bind x;
-                  case IntMap.find (!Ty.binders, x) of
+                  case IntTable.find (Ty.binders, x) of
                     SOME t => (ignore (go (b, IntMap.insert (scope, x, Ty.fromTypes t), tail)); Never)
                   | NONE => Never))
         | LetRec (bs, b) =>

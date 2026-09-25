@@ -11,6 +11,11 @@ sig
   val find : 'a table * int -> 'a option
   (* the key's value set, whether it had one or not *)
   val insert : 'a table * int * 'a -> unit
+  (* the key's value set to what f makes of the one it had, or of NONE: one
+     look for the key, where find and insert are two *)
+  val update : 'a table * int * ('a option -> 'a) -> unit
+  (* a count kept in the table: one more *)
+  val bump : int table * int -> unit
 end
 
 structure IntTable :> INT_TABLE =
@@ -55,4 +60,14 @@ struct
         SOME r => r := v
       | NONE => (Array.update (!buckets, i, (k, ref v) :: Array.sub (!buckets, i)); count := !count + 1; grow t)
     end
+
+  fun update (t as {buckets, count} : 'a table, k, f) =
+    let val i = slot (!buckets, k)
+    in
+      case lookup (Array.sub (!buckets, i), k) of
+        SOME r => r := f (SOME (!r))
+      | NONE => (Array.update (!buckets, i, (k, ref (f NONE)) :: Array.sub (!buckets, i)); count := !count + 1; grow t)
+    end
+
+  fun bump (t, k) = update (t, k, fn SOME n => n + 1 | NONE => 1)
 end

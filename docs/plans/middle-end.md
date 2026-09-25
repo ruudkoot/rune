@@ -1395,6 +1395,44 @@ estimated.
     instructions, for the inlining the aliases open up, and 1.8% fewer
     cycles. `bin/rune.rbc` is 4.6% larger.
 
+### After M12: follow-ups
+
+Tried after the roadmap was done, each measured on its own against the
+commit before (`runevm --count`, cycles the least of five runs, with the
+native compiler that runeopt makes).
+
+* **The compiler's own compile time: done.** A profile of the bootstrap
+  on `runevm` -- instructions by function, from a counting VM -- found a
+  quarter of it in `IntMap`, the persistent AVL maps, that passes used as
+  tables keyed by stamps: an insert for every variable bound or used. Such
+  a table is only asked, never listed, so `IntTable` does, with the same
+  output byte for byte: `Ty`'s tables of binders, exceptions and
+  realizations, `Translate`'s schemes, `ToMid`'s variables, Lower's uses,
+  substitution, captured variables and free-variable walks, Lift's, the
+  simplifier's tables of what may be inlined or specialised and its
+  copies, and Shake's roots, which were also merged quadratically. A count
+  is kept with one look for its key (`IntTable.bump`). The compiler
+  compiling the same sources: 37.3% fewer instructions and 23.1% fewer
+  cycles; the bootstrap 29.6% and 17.3%; the native compiler 19.6% fewer
+  cycles. What is left is spread thin: `StringMap` in the elaborator's
+  environments and the lexer now cost more than any pass of the middle.
+* **`=` of strings as its own primitive: measured, not kept.** 261 uses in
+  the compiler; no change to instructions, and none to cycles beyond the
+  noise of about 1.5%.
+* **`case Int.compare (a, b)` as comparisons: measured, not kept.** The
+  order's tag tests made `int_lt` and `int_gt` (and `word_`, `char_`):
+  `runevm` runs 0.5% more instructions -- two primitive calls where there
+  was one and two tag tests -- and the bootstrap 1.2% more; native code is
+  1.1% faster at best, within the noise. Where it would pay is a peephole
+  of runeopt's, on `PRIM int_order` and the tests after it.
+* **Lifting local functions that escape: measured, not kept.** A group
+  that captures something and escapes lifted all the same, a closure made
+  where it was that calls the global for its uses as a value (unless one
+  is used as a value in the group itself): 0.6% fewer instructions on the
+  compiler, 1 to 2% on list_ops and string_ops, but `bin/rune.rbc` 9.5%
+  larger -- the lifted functions are inlined and specialised in many more
+  places -- and the bootstrap 9.8% more instructions.
+
 ### Why this order
 
 * **Architecture first.** M1 to M3 change no output, so their checks are

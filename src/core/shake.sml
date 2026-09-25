@@ -117,26 +117,29 @@ struct
       (* what each global's definition uses *)
       val defs : unit IntMap.map IntMap.map ref = ref IntMap.empty
       fun define (g, used) = defs := IntMap.insert (!defs, g, used)
+      (* the roots, as a list with repeats: a union of sets for each
+         definition would be quadratic in them *)
       val roots =
         List.foldl
           (fn (d, roots) =>
              case d of
                Val (g, _, e) =>
                  let val (used, eff) = scan (e, IntMap.empty, false)
-                 in define (g, used); if eff then IntMap.unionWith #1 (used, IntMap.insert (roots, g, ())) else roots end
+                 in define (g, used); if eff then g :: IntMap.foldli (fn (k, (), acc) => k :: acc) roots used else roots end
              | Funs fs =>
                  (List.app (fn f => define (#name f, #1 (scan (#body f, IntMap.empty, false)))) fs; roots)
-             | Do (_, e) => IntMap.unionWith #1 (#1 (scan (e, IntMap.empty, true)), roots))
-          IntMap.empty p
+             | Do (_, e) => IntMap.foldli (fn (k, (), acc) => k :: acc) roots (#1 (scan (e, IntMap.empty, true))))
+          [] p
       (* everything the roots reach *)
-      fun reach ([], seen) = seen
-        | reach (g :: rest, seen) =
-            if IntMap.member (seen, g) then reach (rest, seen)
+      val live : unit IntTable.table = IntTable.table 4096
+      fun reach [] = ()
+        | reach (g :: rest) =
+            if isSome (IntTable.find (live, g)) then reach rest
             else
               let val used = case IntMap.find (!defs, g) of SOME u => IntMap.listKeys u | NONE => []
-              in reach (used @ rest, IntMap.insert (seen, g, ())) end
-      val live = reach (IntMap.listKeys roots, IntMap.empty)
-      fun keep g = IntMap.member (live, g)
+              in IntTable.insert (live, g, ()); reach (used @ rest) end
+      val () = reach roots
+      fun keep g = isSome (IntTable.find (live, g))
       fun def d =
         case d of
           Val (g, _, e) => if keep g orelse #2 (scan (e, IntMap.empty, false)) then SOME d else NONE

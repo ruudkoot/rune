@@ -5,6 +5,7 @@
 # list -- edit only this file. The rules of sources.txt hold here too.
 src/util/scon.sml
 src/util/ordmap.sml
+src/util/inttable.sml
 src/util/source.sml
 src/util/error.sml
 src/frontend/token.sml

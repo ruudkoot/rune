@@ -35,15 +35,15 @@ struct
 
   (* How many times each variable is used, and what each function captures,
      by its name. *)
-  val useCounts : int IntMap.map ref = ref IntMap.empty
+  val useCounts : int IntTable.table ref = ref (IntTable.table 16)
   val captures : int list IntMap.map ref = ref IntMap.empty
   val selfRefs : bool IntMap.map ref = ref IntMap.empty
 
   (* How many uses of each variable take a field of it (Select) in the
      function it is bound in: where that is all its uses, the argument of a
      constructor made of its fields is never made whole (Rep, M11). *)
-  val selectUses : int IntMap.map ref = ref IntMap.empty
-  val binderFn : int IntMap.map ref = ref IntMap.empty
+  val selectUses : int IntTable.table ref = ref (IntTable.table 16)
+  val binderFn : int IntTable.table ref = ref (IntTable.table 16)
   val nextFn = ref 0
   fun countSelects (e : M.exp) : unit =
     let
@@ -52,13 +52,13 @@ struct
       fun sel r =
         case r of
           M.Select (_, M.Var (y, _)) =>
-            if IntMap.find (!binderFn, y) = SOME f then
-              selectUses := IntMap.insert (!selectUses, y, 1 + (case IntMap.find (!selectUses, y) of SOME n => n | NONE => 0))
+            if IntTable.find (!binderFn, y) = SOME f then
+              IntTable.bump (!selectUses, y)
             else ()
         | _ => ()
       fun go e =
         case e of
-          M.Let (x, _, r, b) => (sel r; binderFn := IntMap.insert (!binderFn, x, f); go b)
+          M.Let (x, _, r, b) => (sel r; IntTable.insert (!binderFn, x, f); go b)
         | M.Fun (fs, b) => (List.app (countSelects o #body) fs; go b)
         | M.Join (_, _, jb, sc) => (go jb; go sc)
         | M.If (_, t, e) => (go t; go e)
@@ -67,7 +67,7 @@ struct
         | M.Mark (_, a) => go a
         | _ => ()
     in go e end
-  fun selectsOf x = case IntMap.find (!selectUses, x) of SOME n => n | NONE => 0
+  fun selectsOf x = case IntTable.find (!selectUses, x) of SOME n => n | NONE => 0
 
   (* A variable whose value is not made where it is bound (M11): a tuple
      used once, whose parts a constructor made of its fields, or a field
@@ -76,12 +76,12 @@ struct
      tag, the number of fields, the value). A use that needs it whole makes
      it there (var). *)
   datatype virt = Parts of L.var list | Fields of int * int * L.var
-  val virtuals : virt IntMap.map ref = ref IntMap.empty
+  val virtuals : virt IntTable.table ref = ref (IntTable.table 16)
   fun virtualOf (a : M.atom) : virt option =
-    case a of M.Var (y, _) => IntMap.find (!virtuals, y) | _ => NONE
+    case a of M.Var (y, _) => IntTable.find (!virtuals, y) | _ => NONE
 
-  fun count x = useCounts := IntMap.insert (!useCounts, x, 1 + (case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0))
-  fun usesOf x = case IntMap.find (!useCounts, x) of SOME n => n | NONE => 0
+  fun count x = IntTable.bump (!useCounts, x)
+  fun usesOf x = case IntTable.find (!useCounts, x) of SOME n => n | NONE => 0
 
   fun countAtom a = case a of M.Var (x, _) => count x | _ => ()
   fun countRhs r =
@@ -102,11 +102,16 @@ struct
 
   (* The free variables of e, those in bound left out, added to acc; each
      function's are worked out once (captures). *)
-  fun free (e : M.exp, bound : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
+  fun free (e : M.exp, bound0 : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
     let
+      (* what is bound, in one table for the walk: each variable is bound
+         once, so one bound in a branch is used in no other *)
+      val bound : unit IntTable.table = IntTable.table 64
+      val () = IntMap.appi (fn (x, ()) => IntTable.insert (bound, x, ())) bound0
+      fun isBound x = isSome (IntTable.find (bound, x))
       fun atom (a, acc) =
         case a of
-          M.Var (x, _) => if IntMap.member (bound, x) then acc else IntMap.insert (acc, x, ())
+          M.Var (x, _) => if isBound x then acc else IntMap.insert (acc, x, ())
         | _ => acc
       fun atoms (xs, acc) = List.foldl atom acc xs
       fun rhs (r, acc) =
@@ -124,25 +129,24 @@ struct
         | M.ExnArg (_, a) => atom (a, acc)
         | M.SetGlobal (_, a) => atom (a, acc)
         | _ => acc
-      fun bind (x, b) = IntMap.insert (b, x, ())
+      fun bind x = IntTable.insert (bound, x, ())
+      fun go (e, acc) =
+        case e of
+          M.Let (x, _, r, b) => let val acc = rhs (r, acc) in bind x; go (b, acc) end
+        | M.Fun (fs, b) =>
+            (List.app (fn f => bind (#name f)) fs;
+             go (b, List.foldl (fn (f, acc) =>
+                                  List.foldl (fn (x, acc) => if isBound x then acc else IntMap.insert (acc, x, ()))
+                                             acc (capturesOf f)) acc fs))
+        | M.Join (_, ps, body, s) => (List.app (fn (x, _) => bind x) ps; go (s, go (body, acc)))
+        | M.Jump (_, xs) => atoms (xs, acc)
+        | M.If (c, t, f) => go (f, go (t, atom (c, acc)))
+        | M.Handle (a, x, h) => let val acc = go (a, acc) in bind x; go (h, acc) end
+        | M.Raise a => atom (a, acc)
+        | M.Return r => rhs (r, acc)
+        | M.Mark (_, a) => go (a, acc)
     in
-      case e of
-        M.Let (x, _, r, b) => free (b, bind (x, bound), rhs (r, acc))
-      | M.Fun (fs, b) =>
-          let
-            val bound' = List.foldl (fn (f, m) => bind (#name f, m)) bound fs
-            val acc = List.foldl (fn (f, acc) =>
-                                     List.foldl (fn (x, acc) => if IntMap.member (bound', x) then acc else IntMap.insert (acc, x, ()))
-                                                acc (capturesOf f)) acc fs
-          in free (b, bound', acc) end
-      | M.Join (_, ps, body, s) =>
-          free (s, bound, free (body, List.foldl (fn ((x, _), m) => bind (x, m)) bound ps, acc))
-      | M.Jump (_, xs) => atoms (xs, acc)
-      | M.If (c, t, f) => free (f, bound, free (t, bound, atom (c, acc)))
-      | M.Handle (a, x, h) => free (h, bind (x, bound), free (a, bound, acc))
-      | M.Raise a => atom (a, acc)
-      | M.Return r => rhs (r, acc)
-      | M.Mark (_, a) => free (a, bound, acc)
+      go (e, acc)
     end
 
   (* What a function captures: the variables free in it, but itself, in the
@@ -191,7 +195,7 @@ struct
   (* A function being made: its blocks so far, the block being filled, and
      how it reads the variables it captures. *)
   type builder = {blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
-                  open' : bool ref, nextLabel : int ref, nvars : int ref, env : int IntMap.map, self : int option,
+                  open' : bool ref, nextLabel : int ref, nvars : int ref, env : int IntTable.table, self : int option,
                   span : Source.span option ref, head : L.label option ref}
 
   fun newLabel (b : builder) = let val l = !(#nextLabel b) in #nextLabel b := l + 1; l end
@@ -219,10 +223,11 @@ struct
      handlers the function has pushed, its join points (with the handlers
      pushed where each was made), and the variable of Low each variable of
      Mid bound in the function is. *)
-  type cx = {ret : ret, depth : int, labels : (L.label * int) IntMap.map, subst : L.var IntMap.map}
+  type cx = {ret : ret, depth : int, labels : (L.label * int) IntMap.map, subst : L.var IntTable.table}
 
-  fun bindAs ({ret, depth, labels, subst} : cx, x : int, v : L.var) : cx =
-    {ret = ret, depth = depth, labels = labels, subst = IntMap.insert (subst, x, v)}
+  (* x is v from here on: in one table for the function, since each variable
+     of Mid is bound once *)
+  fun bindAs (cx : cx, x : int, v : L.var) : cx = (IntTable.insert (#subst cx, x, v); cx)
 
   (* An expression with one way out, and that at its end: its value can go
      on in the same block. *)
@@ -271,7 +276,8 @@ struct
         | NONE => if recursive then "fn" ^ Int.toString (#name f) else "fn"
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
                          nextLabel = ref 0, nvars = ref 0,
-                         env = #1 (List.foldl (fn (x, (m, i)) => (IntMap.insert (m, x, i), i + 1)) (IntMap.empty, 0) cs),
+                         env = let val t = IntTable.table 16
+                               in ignore (List.foldl (fn (x, i) => (IntTable.insert (t, x, i); i + 1)) 0 cs); t end,
                          self = SOME (#name f), span = ref pos, head = ref NONE}
       val ps = List.map (fn (x, _) => (x, newVar b)) (#params f)
       val () = start (b, newLabel b, [])
@@ -287,7 +293,8 @@ struct
           end
         else ps
       val () = exp (b, #body f, {ret = FunRet, depth = 0, labels = IntMap.empty,
-                                 subst = List.foldl (fn ((x, v), m) => IntMap.insert (m, x, v)) IntMap.empty bound})
+                                 subst = let val t = IntTable.table 64
+                                         in List.app (fn (x, v) => IntTable.insert (t, x, v)) bound; t end})
     in
       funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
                 blocks = List.rev (!(#blocks b)), pos = pos} :: !funcs;
@@ -305,15 +312,15 @@ struct
     | M.Unit => def (b, L.Unit)
 
   and var (b : builder, cx : cx, x : int) : L.var =
-    case IntMap.find (#subst cx, x) of
+    case IntTable.find (#subst cx, x) of
       SOME y => y
     | NONE =>
-        case IntMap.find (#env b, x) of
+        case IntTable.find (#env b, x) of
           SOME i => def (b, L.Env i)
         | NONE =>
             if #self b = SOME x then def (b, L.Self)
             else
-              case IntMap.find (!virtuals, x) of
+              case IntTable.find (!virtuals, x) of
                 SOME (Parts vs) => def (b, L.Tuple vs)
               | SOME (Fields (tag, n, v)) => def (b, L.Tuple (List.tabulate (n, fn i => def (b, L.Field (tag, i, v)))))
               | NONE => bug ("v" ^ Int.toString x ^ " is not in scope")
@@ -375,18 +382,18 @@ struct
   and virtualised (b, cx, x : int, r : M.rhs) : bool =
     case r of
       M.Tuple (xs as _ :: _ :: _) =>
-        usesOf x = 1 andalso (virtuals := IntMap.insert (!virtuals, x, Parts (List.map (fn a => atom (b, cx, a)) xs)); true)
+        usesOf x = 1 andalso (IntTable.insert (!virtuals, x, Parts (List.map (fn a => atom (b, cx, a)) xs)); true)
     | M.Decon (tag, t, a) =>
         (case Rep.fields (t, tag) of
            SOME n =>
              usesOf x = selectsOf x
-             andalso (virtuals := IntMap.insert (!virtuals, x, Fields (tag, n, atom (b, cx, a))); true)
+             andalso (IntTable.insert (!virtuals, x, Fields (tag, n, atom (b, cx, a))); true)
          | NONE => false)
     | M.Atom (a as M.Var (y, _)) =>
         (* another name for one: the same, where its uses would do *)
         (case virtualOf a of
-           SOME (v as Parts _) => usesOf x = 1 andalso (virtuals := IntMap.insert (!virtuals, x, v); true)
-         | SOME (v as Fields _) => usesOf x = selectsOf x andalso (virtuals := IntMap.insert (!virtuals, x, v); true)
+           SOME (v as Parts _) => usesOf x = 1 andalso (IntTable.insert (!virtuals, x, v); true)
+         | SOME (v as Fields _) => usesOf x = selectsOf x andalso (IntTable.insert (!virtuals, x, v); true)
          | NONE => false)
     | _ => false
 
@@ -469,7 +476,7 @@ struct
                   if #self b = SOME g then finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
                   else knownTail (b, cx, r)
               | (0, SOME l, M.Var (x, _)) =>
-                  if #self b = SOME x andalso not (IntMap.member (#subst cx, x)) then
+                  if #self b = SOME x andalso not (isSome (IntTable.find (#subst cx, x))) then
                     finish (b, L.Goto (l, List.map (fn a => atom (b, cx, a)) xs))
                   else knownTail (b, cx, r)
               | _ => knownTail (b, cx, r))
@@ -590,8 +597,8 @@ struct
 
   fun program (p : M.program, names : string IntMap.map) : L.program =
     let
-      val () = (useCounts := IntMap.empty; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
-                selectUses := IntMap.empty; binderFn := IntMap.empty; nextFn := 0; virtuals := IntMap.empty;
+      val () = (useCounts := IntTable.table 4096; captures := IntMap.empty; selfRefs := IntMap.empty; funcs := [];
+                selectUses := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
                 nextFuncId := 0; funNames := names; globalFids := IntMap.empty;
                 knownFuns := List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
                                           | (_, m) => m) IntMap.empty p)
@@ -604,20 +611,21 @@ struct
       val id = !nextFuncId
       val () = nextFuncId := id + 1
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
-                         nextLabel = ref 0, nvars = ref 0, env = IntMap.empty, self = NONE, span = ref NONE,
+                         nextLabel = ref 0, nvars = ref 0, env = IntTable.table 1, self = NONE, span = ref NONE,
                          head = ref NONE}
       val param = newVar b
       val () = start (b, newLabel b, [])
-      val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = IntMap.empty}
+      val topSubst : L.var IntTable.table = IntTable.table 1024
+      val top : cx = {ret = FunRet, depth = 0, labels = IntMap.empty, subst = topSubst}
       (* a definition's expression, whose value then goes to k *)
       fun defining (e, k : L.var -> unit) =
-        if straight e then exp (b, e, {ret = Cont k, depth = 0, labels = IntMap.empty, subst = IntMap.empty})
+        if straight e then exp (b, e, {ret = Cont k, depth = 0, labels = IntMap.empty, subst = topSubst})
         else
           let
             val l = newLabel b
             val x = newVar b
           in
-            exp (b, e, {ret = ToBlock (l, 0), depth = 0, labels = IntMap.empty, subst = IntMap.empty});
+            exp (b, e, {ret = ToBlock (l, 0), depth = 0, labels = IntMap.empty, subst = topSubst});
             start (b, l, [x]);
             k x
           end

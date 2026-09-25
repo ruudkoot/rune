@@ -12,10 +12,10 @@ structure Rep =
 struct
   (* the number of fields of each constructor of a datatype, by its stamp:
      NONE for one that boxes its argument or has none *)
-  val known : (int * int option) list IntMap.map ref = ref IntMap.empty
+  val known : (int * int option) list IntTable.table = IntTable.table 64
 
   fun ofDatatype (stamp : int) : (int * int option) list =
-    case IntMap.find (!known, stamp) of
+    case IntTable.find (known, stamp) of
       SOME cs => cs
     | NONE =>
         let
@@ -26,7 +26,7 @@ struct
                            | (tag, _, _) => (tag, NONE)) cons
             | NONE => []
         in
-          known := IntMap.insert (!known, stamp, cs); cs
+          IntTable.insert (known, stamp, cs); cs
         end
 
   (* SOME n where the constructor with the tag of the datatype t is made of

@@ -89,9 +89,9 @@ struct
      a use of one says at which instance (Inst), unless it is the scheme
      itself, as a recursive call's is. *)
   datatype scheme = Mono | Poly of Ty.ty | Unknown
-  val schemes : scheme IntMap.map ref = ref IntMap.empty
+  val schemes : scheme IntTable.table ref = ref (IntTable.table 16)
   fun schemeOf (stamp : int) : scheme =
-    case IntMap.find (!schemes, stamp) of
+    case IntTable.find (!schemes, stamp) of
       SOME s => s
     | NONE =>
         let
@@ -102,10 +102,10 @@ struct
             | Ty.Tuple ts => List.exists has ts
             | Ty.Arrow (a, b) => has a orelse has b
             | _ => false
-          val s = case IntMap.find (!Ty.binders, stamp) of
+          val s = case IntTable.find (Ty.binders, stamp) of
                     SOME t => let val t = Ty.fromTypes t in if has t then Poly t else Mono end
                   | NONE => Unknown
-        in schemes := IntMap.insert (!schemes, stamp, s); s end
+        in IntTable.insert (!schemes, stamp, s); s end
 
   (* A use of a variable at the type elaboration found for this use. *)
   fun useOf (e : lexp, stamp : int, t : Types.ty) : lexp =
@@ -424,7 +424,7 @@ struct
               val fty =
                 case patInfo (#info f, #span f) of
                   PIVar (stamp, _) =>
-                    (case IntMap.find (!Ty.binders, stamp) of
+                    (case IntTable.find (Ty.binders, stamp) of
                        SOME t => Ty.fromTypes t
                      | NONE => bug (#span f, "function without a type"))
                 | _ => bug (#span f, "function declared as no variable")
@@ -506,5 +506,5 @@ struct
     end
 
   fun transProgram (decs : dec list) : lexp =
-    (funNames := IntMap.empty; structPath := []; schemes := IntMap.empty; transTopDecs (decs, fn () => Unit))
+    (funNames := IntMap.empty; structPath := []; schemes := IntTable.table 4096; transTopDecs (decs, fn () => Unit))
 end

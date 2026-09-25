@@ -63,7 +63,7 @@ struct
     let
       fun atom a =
         case a of
-          Var (x, _) => IntTable.insert (uses, x, 1 + (case IntTable.find (uses, x) of SOME n => n | NONE => 0))
+          Var (x, _) => IntTable.bump (uses, x)
         | _ => ()
       fun rhs r =
         case r of
@@ -150,7 +150,7 @@ struct
          A definition that names none, and defines none, is left as it is. *)
       val refs : int IntTable.table = IntTable.table 1024
       val redirected : int IntTable.table = IntTable.table 1024
-      fun bump (t, x) = IntTable.insert (t, x, 1 + (case IntTable.find (t, x) of SOME n => n | NONE => 0))
+      fun bump (t, x) = IntTable.bump (t, x)
       fun refsIn (e : exp) : bool =
         let
           val any = ref false

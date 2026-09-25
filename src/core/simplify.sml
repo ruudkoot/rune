@@ -50,7 +50,7 @@ struct
      is only keeps what could go, but every one there is must be counted. *)
   type census = {vars : int IntTable.table, labels : int IntTable.table}
 
-  fun bump (t, k) = IntTable.insert (t, k, 1 + (case IntTable.find (t, k) of SOME n => n | NONE => 0))
+  fun bump (t, k) = IntTable.bump (t, k)
 
   fun censusInto (c as {vars, labels} : census, e : exp) : unit =
     let
@@ -319,38 +319,38 @@ struct
      walk. *)
   and copyWith (s0 : var IntMap.map, e : exp) : exp =
     let
-      fun fresh (s, x) = let val y = freshStamp () in (IntMap.insert (s, x, y), y) end
-      fun name (s, x) = case IntMap.find (s, x) of SOME y => y | NONE => x
-      fun atom s a = case a of Var (x, ts) => Var (name (s, x), ts) | _ => a
-      fun rhs s r =
+      (* the new name of each binder: one table for the whole copy, since
+         stamps are unique and so no name is bound twice in it *)
+      val t : var IntTable.table = IntTable.table 64
+      val () = IntMap.appi (fn (x, y) => IntTable.insert (t, x, y)) s0
+      fun fresh x = let val y = freshStamp () in IntTable.insert (t, x, y); y end
+      fun name x = case IntTable.find (t, x) of SOME y => y | NONE => x
+      fun atom a = case a of Var (x, ts) => Var (name x, ts) | _ => a
+      fun rhs r =
         case r of
-          Atom a => Atom (atom s a)
-        | App (f, xs) => App (atom s f, List.map (atom s) xs)
-        | Prim (p, t, xs) => Prim (p, t, List.map (atom s) xs)
-        | Tuple xs => Tuple (List.map (atom s) xs)
-        | Select (i, a) => Select (i, atom s a)
-        | Con (tag, t, a) => Con (tag, t, atom s a)
-        | Decon (tag, t, a) => Decon (tag, t, atom s a)
-        | ConTag a => ConTag (atom s a)
-        | MkExn (c, a) => MkExn (atom s c, atom s a)
-        | ExnCon a => ExnCon (atom s a)
-        | ExnArg (t, a) => ExnArg (t, atom s a)
-        | SetGlobal (g, a) => SetGlobal (g, atom s a)
+          Atom a => Atom (atom a)
+        | App (f, xs) => App (atom f, List.map atom xs)
+        | Prim (p, ty, xs) => Prim (p, ty, List.map atom xs)
+        | Tuple xs => Tuple (List.map atom xs)
+        | Select (i, a) => Select (i, atom a)
+        | Con (tag, ty, a) => Con (tag, ty, atom a)
+        | Decon (tag, ty, a) => Decon (tag, ty, atom a)
+        | ConTag a => ConTag (atom a)
+        | MkExn (c, a) => MkExn (atom c, atom a)
+        | ExnCon a => ExnCon (atom a)
+        | ExnArg (ty, a) => ExnArg (ty, atom a)
+        | SetGlobal (g, a) => SetGlobal (g, atom a)
         | _ => r
-      fun params (s, ps) =
-        let val (s, acc) = List.foldl (fn ((x, t), (s, acc)) => let val (s, y) = fresh (s, x) in (s, (y, t) :: acc) end)
-                                      (s, []) ps
-        in (s, List.rev acc) end
-      fun exp s e =
+      fun params ps = List.map (fn (x, ty) => (fresh x, ty)) ps
+      fun exp e =
         case e of
-          Let (x, sc, r, b) => let val r = rhs s r val (s', y) = fresh (s, x) in Let (y, sc, r, exp s' b) end
+          Let (x, sc, r, b) => let val r = rhs r val y = fresh x in Let (y, sc, r, exp b) end
         | Fun (fs, b) =>
             let
-              val (s', _) = List.foldl (fn (f, (s, acc)) => let val (s, y) = fresh (s, #name f) in (s, y :: acc) end)
-                                       (s, []) fs
+              val () = List.app (fn f => ignore (fresh (#name f))) fs
               fun fundef ({name = f, tyvars, params = ps, result, body} : fundef) =
                 let
-                  val (s'', ps') = params (s', ps)
+                  val ps' = params ps
                 in
                   case (ps, ps') of
                     ((x, _) :: _, (y, _) :: _) =>
@@ -358,19 +358,19 @@ struct
                          SOME n => Translate.funNames := IntMap.insert (!Translate.funNames, y, n)
                        | NONE => ())
                   | _ => ();
-                  {name = name (s', f), tyvars = tyvars, params = ps', result = result, body = exp s'' body}
+                  {name = name f, tyvars = tyvars, params = ps', result = result, body = exp body}
                 end
-            in Fun (List.map fundef fs, exp s' b) end
+            in Fun (List.map fundef fs, exp b) end
         | Join (j, ps, body, sc) =>
-            let val (sj, j') = fresh (s, j) val (sb, ps') = params (s, ps)
-            in Join (j', ps', exp sb body, exp sj sc) end
-        | Jump (j, xs) => Jump (name (s, j), List.map (atom s) xs)
-        | If (c, t, f) => If (atom s c, exp s t, exp s f)
-        | Handle (a, x, h) => let val (s', y) = fresh (s, x) in Handle (exp s a, y, exp s' h) end
-        | Raise a => Raise (atom s a)
-        | Return r => Return (rhs s r)
-        | Mark (p, a) => Mark (p, exp s a)
-    in exp s0 e end
+            let val j' = fresh j val ps' = params ps
+            in Join (j', ps', exp body, exp sc) end
+        | Jump (j, xs) => Jump (name j, List.map atom xs)
+        | If (c, th, el) => If (atom c, exp th, exp el)
+        | Handle (a, x, h) => let val y = fresh x in Handle (exp a, y, exp h) end
+        | Raise a => Raise (atom a)
+        | Return r => Return (rhs r)
+        | Mark (p, a) => Mark (p, exp a)
+    in exp e end
 
   (* e's positions with a frame more, outermost -- the function e's code
      comes from, called from where the frames are -- in the code that runs
@@ -468,11 +468,12 @@ struct
     | Mark (_, a) => raises a
     | _ => false
 
-  val inlinable : fundef IntMap.map ref = ref IntMap.empty
+  val inlinable : fundef IntTable.table ref = ref (IntTable.table 16)
   (* whether inlining is on, for the local functions registered as they are
      met (keepFun) *)
   val inlining = ref false
-  val once : fundef IntMap.map ref = ref IntMap.empty
+  val once : fundef option IntTable.table ref = ref (IntTable.table 16)     (* NONE: put in place already *)
+  fun onceOf g = case IntTable.find (!once, g) of SOME (SOME f) => SOME f | _ => NONE
   val budget = ref 0
   val here : pos ref = ref (Source.noSpan, [])
   (* how many handlers' regions of its function the code being simplified
@@ -489,7 +490,7 @@ struct
      arguments, and its positions in a frame of g, called from here; k is
      given each result of it (a return). *)
   fun inlined (g : var, ts : Ty.ty list, args : atom list, k : (rhs -> exp) option) : exp option =
-    case (IntMap.find (!once, g), IntMap.find (!inlinable, g)) of
+    case (onceOf g, IntTable.find (!inlinable, g)) of
       (NONE, NONE) => NONE
     | (onceF, smallF) =>
         let
@@ -502,7 +503,7 @@ struct
           else
             let
               val () =
-                if isSome onceF then (once := IntMap.remove (!once, g); budget := !budget + n)
+                if isSome onceF then (IntTable.insert (!once, g, NONE); budget := !budget + n)
                 else budget := !budget - n
               val inst = ListPair.foldl (fn (a, t, s) => IntMap.insert (s, a, t)) IntMap.empty (tyvars, ts)
               (* the parameters, renamed like the rest of the copy *)
@@ -543,8 +544,8 @@ struct
      function, types and functions given, which a call made later uses too.
      The copies are simplified after the definition whose calls made them,
      and put before it. *)
-  val specialisable : (fundef * int list) IntMap.map ref = ref IntMap.empty
-  val globalFuns : unit IntMap.map ref = ref IntMap.empty
+  val specialisable : (fundef * int list) IntTable.table ref = ref (IntTable.table 16)
+  val globalFuns : unit IntTable.table ref = ref (IntTable.table 16)
   val copies : var StringMap.map ref = ref StringMap.empty
   val pendingCopies : fundef list ref = ref []
   val specialiseSize = 64
@@ -651,14 +652,14 @@ struct
   fun specialised (r : rhs) : rhs =
     case r of
       App (Global (h, ts), args) =>
-        (case IntMap.find (!specialisable, h) of
+        (case IntTable.find (!specialisable, h) of
            NONE => r
          | SOME (f, is) =>
              let
                val fixed =
                  List.mapPartial (fn i => case List.nth (args, i) of
                                             a as Global (g, ts') =>
-                                              if IntMap.member (!globalFuns, g) andalso List.all closedTy ts'
+                                              if isSome (IntTable.find (!globalFuns, g)) andalso List.all closedTy ts'
                                               then SOME (i, a) else NONE
                                           | _ => NONE) is
              in
@@ -692,7 +693,7 @@ struct
   fun calleeOf (f : atom) : (var * Ty.ty list) option =
     case f of
       Global (g, ts) => SOME (g, ts)
-    | Var (g, ts) => if IntMap.member (!inlinable, g) then SOME (g, ts) else NONE
+    | Var (g, ts) => if isSome (IntTable.find (!inlinable, g)) then SOME (g, ts) else NONE
     | _ => NONE
 
   (* A round: e simplified in env, with the census taken before. *)
@@ -817,7 +818,7 @@ struct
       val () =
         if !inlining then
           List.app (fn f => if size (#body f) <= inlineSize andalso not (usesItself f) andalso not (raises (#body f))
-                            then inlinable := IntMap.insert (!inlinable, #name f, f) else ()) fs
+                            then IntTable.insert (!inlinable, #name f, f) else ()) fs
         else ()
     in
       Fun (fs, simp (c, env, body))
@@ -1168,31 +1169,30 @@ struct
       val () = inlining := inline
       val uses = globalUses p
       fun calledOnce g = IntTable.find (uses, g) = SOME (1, 1)
+      val () = inlinable := IntTable.table 1024
+      val () = once := IntTable.table 256
       val () =
-        inlinable :=
-          (if not inline then IntMap.empty
-           else
-             List.foldl (fn (Funs fs, m) =>
-                              List.foldl (fn (f, m) =>
-                                            if size (#body f) <= inlineSize andalso not (names (#name f, #body f))
-                                               andalso not (raises (#body f))
-                                            then IntMap.insert (m, #name f, f) else m) m fs
-                          | (_, m) => m) IntMap.empty p)
+        if not inline then ()
+        else
+          List.app (fn Funs fs =>
+                         List.app (fn f =>
+                                     if size (#body f) <= inlineSize andalso not (names (#name f, #body f))
+                                        andalso not (raises (#body f))
+                                     then IntTable.insert (!inlinable, #name f, f) else ()) fs
+                     | _ => ()) p
       val () =
-        once :=
-          (if not inline then IntMap.empty
-           else
-             List.foldl (fn (Funs [f], m) =>
-                              if calledOnce (#name f) andalso not (names (#name f, #body f))
-                              then IntMap.insert (m, #name f, f) else m
-                          | (_, m) => m) IntMap.empty p)
+        if not inline then ()
+        else
+          List.app (fn Funs [f] =>
+                         if calledOnce (#name f) andalso not (names (#name f, #body f))
+                         then IntTable.insert (!once, #name f, SOME f) else ()
+                     | _ => ()) p
       val specialise = Pass.enabled ("specialise", 1)
-      val () = specialisable := IntMap.empty
+      val () = specialisable := IntTable.table 64
       val () = copies := StringMap.empty
       val () = pendingCopies := []
-      val () =
-        globalFuns := List.foldl (fn (Funs fs, m) => List.foldl (fn (f, m) => IntMap.insert (m, #name f, ())) m fs
-                                   | (_, m) => m) IntMap.empty p
+      val () = globalFuns := IntTable.table 1024
+      val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (!globalFuns, #name f, ())) fs | _ => ()) p
       (* each definition may grow by about its size by inlining: twice that
          runs the compiler no faster, in more code *)
       fun simplify e = (budget := size e + 32; here := (Source.noSpan, []); inHandler := 0; rounds (3, e))
@@ -1202,13 +1202,14 @@ struct
         let
           val f' = {name = name, tyvars = tyvars, params = params, result = result, body = simplify body}
         in
-          if IntMap.member (!once, name) then once := IntMap.insert (!once, name, f') else ();
-          if IntMap.member (!inlinable, name) andalso size (#body f') <= inlineSize andalso not (names (name, #body f'))
-          then inlinable := IntMap.insert (!inlinable, name, f') else ();
+          if isSome (onceOf name) then IntTable.insert (!once, name, SOME f') else ();
+          if isSome (IntTable.find (!inlinable, name)) andalso size (#body f') <= inlineSize
+             andalso not (names (name, #body f'))
+          then IntTable.insert (!inlinable, name, f') else ();
           if specialise andalso size (#body f') <= specialiseSize then
             (case staticParams f' of
                [] => ()
-             | is => specialisable := IntMap.insert (!specialisable, name, (f', is)))
+             | is => IntTable.insert (!specialisable, name, (f', is)))
           else ();
           f'
         end

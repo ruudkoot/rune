@@ -94,7 +94,7 @@ struct
 
   (* The type of an exception's payload. *)
   fun exnArgTy (info : exninfo) : Ty.ty =
-    case IntMap.find (!Ty.exnArgs, #stamp info) of
+    case IntTable.find (Ty.exnArgs, #stamp info) of
       SOME (SOME t) => Ty.fromTypes t
     | _ => Error.bug ("exception " ^ #name info ^ " has no payload")
 
@@ -257,7 +257,7 @@ struct
   fun varsOf (ps : pat list) : (int * Ty.ty) list =
     let
       fun ty stamp =
-        case IntMap.find (!Ty.binders, stamp) of
+        case IntTable.find (Ty.binders, stamp) of
           SOME t => Ty.fromTypes t
         | NONE => Error.bug ("pattern variable v" ^ Int.toString stamp ^ " has no type")
       fun localVar (slot, sp, acc) =

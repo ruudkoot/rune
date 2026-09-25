@@ -57,30 +57,36 @@ struct
     | [] => IntMap.empty
 
   (* The variables free in e, bound left out, added to acc. *)
-  fun free (e : exp, bound : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
+  fun free (e : exp, bound0 : unit IntMap.map, acc : unit IntMap.map) : unit IntMap.map =
     let
+      (* what is bound, in one table for the walk: each variable is bound
+         once, so one bound in a branch is used in no other *)
+      val bound : unit IntTable.table = IntTable.table 64
+      val () = IntMap.appi (fn (x, ()) => IntTable.insert (bound, x, ())) bound0
+      fun isBound x = isSome (IntTable.find (bound, x))
+      fun bind x = IntTable.insert (bound, x, ())
       fun atom (a, acc) =
         case a of
-          Var (x, _) => if IntMap.member (bound, x) then acc else IntMap.insert (acc, x, ())
+          Var (x, _) => if isBound x then acc else IntMap.insert (acc, x, ())
         | _ => acc
-      fun bind (x, b) = IntMap.insert (b, x, ())
+      fun go (e, acc) =
+        case e of
+          Let (x, _, r, b) => let val acc = List.foldl atom acc (atomsOfRhs r) in bind x; go (b, acc) end
+        | Fun (fs, b) =>
+            let
+              val inGroup = groupFreeOf fs
+              val acc = IntMap.foldli (fn (x, (), acc) => if isBound x then acc else IntMap.insert (acc, x, ()))
+                                      acc inGroup
+            in List.app (fn f => bind (#name f)) fs; go (b, acc) end
+        | Join (_, ps, body, s) => (List.app (fn (x, _) => bind x) ps; go (s, go (body, acc)))
+        | Jump (_, xs) => List.foldl atom acc xs
+        | If (c, t, f) => go (f, go (t, atom (c, acc)))
+        | Handle (a, x, h) => let val acc = go (a, acc) in bind x; go (h, acc) end
+        | Raise a => atom (a, acc)
+        | Return r => List.foldl atom acc (atomsOfRhs r)
+        | Mark (_, a) => go (a, acc)
     in
-      case e of
-        Let (x, _, r, b) => free (b, bind (x, bound), List.foldl atom acc (atomsOfRhs r))
-      | Fun (fs, b) =>
-          let
-            val bound' = List.foldl (fn (f, m) => bind (#name f, m)) bound fs
-            val inGroup = groupFreeOf fs
-            val acc = IntMap.foldli (fn (x, (), acc) => if IntMap.member (bound, x) then acc else IntMap.insert (acc, x, ()))
-                                    acc inGroup
-          in free (b, bound', acc) end
-      | Join (_, ps, body, s) => free (s, bound, free (body, List.foldl (fn ((x, _), m) => bind (x, m)) bound ps, acc))
-      | Jump (_, xs) => List.foldl atom acc xs
-      | If (c, t, f) => free (f, bound, free (t, bound, atom (c, acc)))
-      | Handle (a, x, h) => free (h, bind (x, bound), free (a, bound, acc))
-      | Raise a => atom (a, acc)
-      | Return r => List.foldl atom acc (atomsOfRhs r)
-      | Mark (_, a) => free (a, bound, acc)
+      go (e, acc)
     end
   and freeFun (f : fundef, bound, acc) =
     free (#body f, List.foldl (fn ((x, _), m) => IntMap.insert (m, x, ())) bound (#params f), acc)
@@ -168,7 +174,7 @@ struct
       (* counted only for local functions, whose names come before their uses *)
       val funs : unit IntTable.table = IntTable.table 1024
       fun bump (t, x) =
-        if isSome (IntTable.find (funs, x)) then IntTable.insert (t, x, 1 + (case IntTable.find (t, x) of SOME n => n | NONE => 0))
+        if isSome (IntTable.find (funs, x)) then IntTable.bump (t, x)
         else ()
       fun useAtom a = case a of Var (x, _) => bump (allUses, x) | _ => ()
       fun scan e =
