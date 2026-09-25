@@ -19,17 +19,20 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `registers` | `Low` | instruction lists of the register bytecode (`src/backend/regs.sml`), with `--target=registers` | none yet |
 | emission | instruction lists | the `.rbc` | |
 
-At `-O0` the code is still generated from `Lambda`, by `Codegen` (stage
-`codegen`), the reference the new back end is compared with (decision D10
-of the plan): `-O0` and `-O2` must give programs that print, exit and
-allocate the same (`make check-levels`).
+`-O0` is the same stages with no optional pass; `-O0` and `-O2` must give
+programs that print and exit the same, traces included (`make
+check-levels`). The first code generator, of `Lambda`, was `-O0` and the
+reference the new back end was compared with until M10 (decision D10 of
+the plan).
 
 Each stage runs through `Pass.stage` (`src/util/pass.sml`), which prints
 what it is given or makes when asked, checks it with the lint of its
 representation, and says what it cost. An optional pass, one that only
 optimises, says from which level it runs (`Pass.enabled`): `trees`, which
 is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
-`workers` and `simplify`, in that order (see *The optimisations of Mid*).
+`workers` and `simplify`, in that order, and `shake` again where `simplify`
+inlined (see *The optimisations of Mid*); `inline` and `specialise` are
+what `simplify` does besides shrinking, each of which may be left out.
 
 ## Options
 
@@ -37,7 +40,7 @@ is how `translate` compiles a match (see *Matches*), then `shake`, `lift`,
 |---|---|
 | `-O0`, `-O1`, `-O2` | the level; `-O1` when none is given |
 | `--passes=P,...` | run these optional passes, whatever the level |
-| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=codegen` |
+| `--dump-before=P`, `--dump-after=P` | print what the pass `P` is given or makes (`all`: every pass); `--dump-lambda` and `--dump-code` are `--dump-after=translate` and `--dump-after=stack` (`registers` with `--target=registers`) |
 | `--lint` | check what every pass makes, and stop with `Error.Bug`, which names the pass, at the first breach |
 | `--fuel=N` | make no more than `N` rewrites: a pass that rewrites asks `Pass.spend` before each |
 | `--pass-stats` | the size of what every pass makes and its time, on standard error |
@@ -56,7 +59,8 @@ so that an expected dump does not change with stamps made elsewhere.
 * **Scope:** every variable is used where a binder of it is in scope: a
   function's parameter, a `Let`, a `LetRec`, a `Handle`.
 * **Unique stamps:** every binder's stamp is bound once in the whole
-  program. The code generator relies on it, since its slots are by stamp.
+  program. Every representation after it relies on it: what a pass knows
+  of a variable is kept by its stamp.
 * **`Fail`:** every `Fail` is in tail position of the body of a `Try` of the
   same function, where it jumps to the `Try`'s fallback with the stack as
   the `Try` found it. Tail position runs through a `Let`'s body, the second
@@ -139,11 +143,20 @@ top level a list of definitions (decision D1 of the plan).
 * **The top level** is a list of definitions: `Val` (a global, the value of
   an expression), `Funs` (global functions) and `Do` (an expression run for
   its effect, which sets the globals it lists). `Translate` marks the rest
-  of the program after each declaration of the top level (`Lambda.Rest`,
-  which the code generator passes through), and `ToMid` splits it there.
+  of the program after each declaration of the top level (`Lambda.Rest`),
+  and `ToMid` splits it there.
 * **Functions** take a list of parameters. One of other than one
   parameter (a worker) is only called, with an argument for each, and
   never used as a value.
+
+**Positions.** A `Mark` gives the place in the source of what follows it,
+and the functions it was inlined from on the way (decision D7), innermost
+first: each one's name and the place it was called from in the next, or in
+the function the code is in, for the last -- or no place, where it was
+called in tail position and so took the place of the next, as a tail
+call's frame does. The line table carries them (the frames of
+[bytecode.md](bytecode.md)), so that a trace shows the frames the calls
+would have left.
 
 **Types.** Every binder says its type, and a polymorphic one the type
 variables it abstracts over; every use of a variable gives the types it is
@@ -189,7 +202,8 @@ program written by hand. The grammar is at the head of
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
-  EXP)`; comments are SML's.
+  FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
+  "NAME")` for one called in tail position; comments are SML's.
 
 ## Matches
 
@@ -266,12 +280,38 @@ does.
   another with its parameter is the other (eta). A join point that tests
   its one parameter, a bool, where a jump gives it a constant, becomes one
   for each branch, which those jumps go to (`andalso` and `orelse` as
-  branches); a raise in a handler's region, in the region's own code, is a
-  jump to the handler, made a join point. What a rewrite makes anew is
-  simplified after a census of its own: nothing it binds is used outside
-  it, so that census is whole where the round's is stale. Stamps being
-  unique, the census and what a round knows are tables (`IntTable`), which
-  forget nothing, and a round that rewrites nothing is the last.
+  branches); one of one parameter whose body is small, where a jump gives
+  it a nullary constructor, is copied there, where its tests of the tag
+  then fold (a case of an inlined `compare`); a raise in a handler's
+  region, in the region's own code, is a jump to the handler, made a join
+  point. What a rewrite makes is added to the round's census, rather than
+  a census taken again of all around it -- a use counted more than there
+  is only keeps what could go. Stamps being unique, the census and what a
+  round knows are tables (`IntTable`), which forget nothing, and a round
+  that rewrites nothing is the last.
+* **`inline`** (in `simplify`, M10): a call of a function of the top level
+  of no more than 12 nodes that does not call itself, and does not always
+  raise -- a call on the way to an error costs nothing worth saving -- is
+  its body, copied at the types of the call, within a budget of growth of
+  each definition of about its own size; a function of the top level
+  named once, by a call, is put there whatever its size, and what is left
+  of it goes (`shake`, again). A call whose value goes on becomes a join
+  point for what follows, which the body's returns jump to. The body's
+  positions gain a frame of the function (see *Positions*): none where the
+  call was in tail position and not in a handler's region -- a tail call
+  -- and the place of the call elsewhere, where the calls in tail position
+  of the body are then marked as made from that place, since their frames
+  would have taken the place of the function's. Bodies are taken as they
+  are once simplified, where the definition came first.
+* **`specialise`** (in `simplify`, M10): a function of the top level of no
+  more than 64 nodes that calls itself, each time passing some parameters
+  of function type on unchanged, is copied for a call that gives those
+  functions of the top level, at types with no type variable of a scheme:
+  in the copy they are known, so their calls are known calls, or inlined
+  (item 6 of [plans/performance.md](plans/performance.md)). One copy for
+  each function, types and functions given, made where the first such call
+  is, simplified after the definition it is in and put before it. A
+  closure given is left as it is.
 
 ## Low
 
@@ -283,8 +323,7 @@ leaves implicit is explicit.
   variables free in it, in the order of their stamps, less itself, which it
   reads as `Self`; captured values are read with `Env i`. The functions of
   a group capture each other, and those not made yet are set after
-  (`SetEnv`). These are `Codegen`'s flat closures, so a program allocates
-  what it did.
+  (`SetEnv`): flat closures.
 * **Blocks:** a join point of Mid is a block whose parameters are the join
   point's; an `If` two blocks; a match on a constructor's tag one `IfTag`,
   and three or more of the same value, each in the else of the one before,
@@ -348,7 +387,8 @@ middle end may ask of it):
   block falls through, one to a block that only jumps on goes on, and one
   to a block that only returns its parameter returns.
 * **Positions** are noted where they change; a tree keeps the position it
-  was made at.
+  was made at. A position's frames are a row of the program's table of
+  inlined frames, each made once (`Code.inlineIdx`).
 
 ### The register target
 
@@ -380,16 +420,12 @@ stack target.
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must
   refuse.
 * **`make check-levels`** (`scripts/check-levels.sh`): every program of
-  `tests/lang` and `tests/perf` compiled at `-O0` (`Codegen`), at `-O2`,
-  and at `-O2` with no optional pass (`--passes=`, the new back end alone),
-  with the lint on and Mid's text checked against itself
-  (`--mid-roundtrip`). All three run, under `runevm --checked` (a `DECON`
-  of another constructor than it names stops the program), and must print
-  and exit the same;
-  the back end alone must also allocate what `-O0`'s code does (the bytes
-  and objects of `runevm --count`), where the optimisations may allocate
-  less. A program that allocates otherwise for a reason is listed with it
-  in `scripts/check-levels.alloc`.
+  `tests/lang` and `tests/perf` compiled at `-O0` and at `-O2`, with the
+  lint on and Mid's text checked against itself (`--mid-roundtrip`). Both
+  run under `runevm --checked` (a `DECON` of another constructor than it
+  names stops the program), and must print and exit the same, on both
+  streams: traces too, where inlining has moved code into another
+  function (`tests/lang/rt.trace_inlined.sml`).
 * **The bootstrap** is compiled with `--lint --mid-roundtrip` whenever it is
   built (`bin/rune.rbc`).
 * **`scripts/bisect-fuel.sh PROGRAM.sml`**: where a program runs otherwise

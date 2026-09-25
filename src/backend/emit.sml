@@ -4,7 +4,7 @@
    that the emitter is cheap when the compiler itself runs on runevm. *)
 structure Emit =
 struct
-  open Lambda Codegen
+  open Lambda Code
 
   val magic = "RUNE"
 
@@ -65,7 +65,7 @@ struct
          array since labels are numbered densely from 0 *)
       val labels : int array = Array.array (#nlabels p, ~1)
       (* where each position begins, in the order the code is laid out *)
-      val lineEntries : (int * int * int * int) list ref = ref []
+      val lineEntries : (int * int * int * int * int) list ref = ref []
       val (starts, codeLen) =
         List.foldl (fn (f : func, (starts, off)) =>
                        let
@@ -73,7 +73,7 @@ struct
                            List.foldl (fn (it, o') =>
                                           (case it of
                                              Lab l => Array.update (labels, l, o')
-                                           | Pos (fi, ln, cl) => lineEntries := (o', fi, ln, cl) :: !lineEntries
+                                           | Pos (fi, ln, cl, inl) => lineEntries := (o', fi, ln, cl, inl) :: !lineEntries
                                            | _ => ();
                                            o' + instrSize it)) off (#code f)
                        in ((#id f, off) :: starts, off') end) ([], 0) (#funcs p)
@@ -82,10 +82,10 @@ struct
       val lineTable =
         let
           fun go ([], _) = []
-            | go ((pc, fi, ln, cl) :: rest, (pc0, fi0, ln0, cl0)) =
-                (uvar (pc - pc0) ^ svar (fi - fi0) ^ svar (ln - ln0) ^ svar (cl - cl0))
-                :: go (rest, (pc, fi, ln, cl))
-        in String.concat (go (List.rev (!lineEntries), (0, 0, 0, 0))) end
+            | go ((pc, fi, ln, cl, inl) :: rest, (pc0, fi0, ln0, cl0, inl0)) =
+                (uvar (pc - pc0) ^ svar (fi - fi0) ^ svar (ln - ln0) ^ svar (cl - cl0) ^ svar (inl - inl0))
+                :: go (rest, (pc, fi, ln, cl, inl))
+        in String.concat (go (List.rev (!lineEntries), (0, 0, 0, 0, 0))) end
       val nlines = List.length (!lineEntries)
       fun labelOffset l =
         let val o' = Array.sub (labels, l) in if o' < 0 then Error.bug "unresolved label" else o' end
@@ -125,12 +125,27 @@ struct
            u32 (#nglobals p),
            u32 (List.length (#funcs p)), String.concat (ListPair.map funcEntry (#funcs p, starts)),
            u32 codeLen]
+      (* The functions inlined on the way to the positions: their names, each
+         once, in the order the frames first name them, and the frames, five
+         numbers each -- the name's, the file, line and column called from,
+         and the frame that call is in. *)
+      val (names, _, nameIdx) =
+        List.foldl (fn ((name, _, _, _, _), acc as (ns, n, m)) =>
+                      if StringMap.member (m, name) then acc else (name :: ns, n + 1, StringMap.insert (m, name, n)))
+                   ([], 0, StringMap.empty) (#inlines p)
+      val frames =
+        String.concat (List.map (fn (name, f, l, c, parent) =>
+                                   uvar (StringMap.lookup (nameIdx, name)) ^ uvar f ^ uvar l ^ uvar c ^ uvar parent)
+                                (#inlines p))
       (* The debug section, after the code: the files positions name, then the
-         table that says which of them each instruction came from. *)
+         table that says which of them each instruction came from, then the
+         functions inlined on the way to them (docs/bytecode.md). *)
       val debug =
         String.concat
           [u32 (List.length (#files p)), String.concat (List.map str (#files p)),
-           u32 nlines, u32 (String.size lineTable), lineTable]
+           u32 nlines, u32 (String.size lineTable), lineTable,
+           u32 (List.length names), String.concat (List.map str (List.rev names)),
+           u32 (List.length (#inlines p)), u32 (String.size frames), frames]
     in
       header :: List.map codeString (#funcs p)
       @ [debug]

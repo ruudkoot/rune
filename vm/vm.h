@@ -80,13 +80,29 @@ typedef struct Function {
 } Function;
 
 /* Where an instruction came from: the file, line and column the compiler
-   recorded for the instructions from `pc` up to the next entry's. */
+   recorded for the instructions from `pc` up to the next entry's, and the
+   functions inlined on the way there (inl, a number of Program.inlines;
+   0: none). */
 typedef struct LineEntry {
     uint32_t pc;
     uint32_t file;
     uint32_t line;
     uint32_t col;
+    uint32_t inl;
 } LineEntry;
+
+/* A function whose code was inlined into another's: its name, where it was
+   called from -- line 0 where it was called in tail position, taking the
+   place of the function it was called from, as a tail call's frame does --
+   and the inlined function that call is in itself (parent, a number below
+   this one's; 0: none). Numbered from 1. */
+typedef struct Inlined {
+    char *name;
+    uint32_t file;
+    uint32_t line;
+    uint32_t col;
+    uint32_t parent;
+} Inlined;
 
 typedef struct Program {
     uint32_t nconsts;
@@ -102,6 +118,8 @@ typedef struct Program {
     char **files;
     uint32_t nlines;
     LineEntry *lines;
+    uint32_t ninlines;
+    Inlined *inlines;
 } Program;
 
 /* ---------------------------------------------------------------- machine */
@@ -270,10 +288,19 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen);
 
 /* What each VM's instruction set gives (vm/isa_stack.c, vm/new/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 4 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 5 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);
+
+/* The frames a trace shows for a VM frame of the function `name` stopped at
+   the line entry e: the functions inlined there and its own, innermost
+   first, at most max of them in out; how many. */
+typedef struct TraceFrame {
+    const char *name;
+    uint32_t file, line, col;
+} TraceFrame;
+uint32_t trace_frames(const Program *p, const LineEntry *e, const char *name, TraceFrame *out, uint32_t max);
 void disassemble(const Program *p, FILE *out);
 
 /* byte length of an instruction, or 0 for an invalid opcode */

@@ -26,6 +26,15 @@ struct
   (* The variables a binder abstracts over (Ty.Gen ids), and its type. *)
   type scheme = int list * Ty.ty
 
+  (* Where code came from: its place in the source, and the functions it was
+     inlined from on the way (M10, decision D7), innermost first -- each the
+     function's name and the place it was called from in the next, or in
+     the function the code is in, for the last; or no place, where it was
+     called in tail position, so that it took the place of the next (its
+     frame in a trace, as a tail call's does). *)
+  type frame = {name : string, site : Source.span option}
+  type pos = Source.span * frame list
+
   datatype atom =
       Var of var * Ty.ty list             (* a local variable, at these types for its variables *)
     | Global of var * Ty.ty list
@@ -59,7 +68,7 @@ struct
     | Handle of exp * var * exp           (* body, the variable bound to the exception, handler *)
     | Raise of atom
     | Return of rhs                       (* the value of the expression *)
-    | Mark of Source.span * exp           (* where in the source what follows came from *)
+    | Mark of pos * exp                   (* where in the source what follows came from *)
   withtype fundef = {name : var, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty, body : exp}
 
   datatype def =

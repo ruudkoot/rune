@@ -1,7 +1,8 @@
 (* The program in an image (vm/image.c), as an .rbc: what runeopt --from-image
    translates, so that the executable resumes the image (docs/native.md,
    Images). An image carries its program whole --
-   constants, functions, code, files and line table -- after the heap, from
+   constants, functions, code, files, line table and the frames of the
+   functions inlined -- after the heap, from
    which the string constants are taken; what comes after the program, the
    state of the world, is not read.
 
@@ -16,7 +17,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 4 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 5 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -155,11 +156,17 @@ struct
       val nlines = u32 r
       fun lines (0, acc) = List.rev acc
         | lines (n, acc) =
-            let val pc = u32 r val file = u32 r val line = u32 r val col = u32 r
-            in lines (n - 1, (pc, file, line, col) :: acc) end
+            let val pc = u32 r val file = u32 r val line = u32 r val col = u32 r val inl = u32 r
+            in lines (n - 1, (pc, file, line, col, inl) :: acc) end
       val ls = lines (nlines, [])
+      val ninlines = u32 r
+      fun inlines (0, acc) = List.rev acc
+        | inlines (n, acc) =
+            let val name = str r val file = u32 r val line = u32 r val col = u32 r val parent = u32 r
+            in inlines (n - 1, (name, file, line, col, parent) :: acc) end
+      val ins = inlines (ninlines, [])
     in
-      Rbc.write {consts = cs, nglobals = nglobals, funcs = fs, code = code, files = fls, lines = ls}
+      Rbc.write {consts = cs, nglobals = nglobals, funcs = fs, code = code, files = fls, lines = ls, inlines = ins}
     end
 
   fun readFile (path : string) : string =

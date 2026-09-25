@@ -15,6 +15,10 @@ struct
   type var = int
   type label = int
 
+  (* A place in the source, and the functions its code was inlined from on
+     the way, innermost first (Mid.pos). *)
+  type pos = Source.span * {name : string, site : Source.span option} list
+
   datatype operation =
       Const of Lambda.const
     | Unit
@@ -44,7 +48,7 @@ struct
       Def of var * operation                     (* var := op *)
     | Push of label                       (* push the handler whose code is the block *)
     | Pop                                 (* pop the handler pushed last *)
-    | At of Source.span                   (* where the instructions that follow came from *)
+    | At of pos                           (* where the instructions that follow came from *)
 
   datatype transfer =
       Goto of label * var list

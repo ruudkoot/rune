@@ -203,6 +203,15 @@ static void write_image(VM *vm, Stream *s, int kind) {
         put_u32(s, p->lines[i].file);
         put_u32(s, p->lines[i].line);
         put_u32(s, p->lines[i].col);
+        put_u32(s, p->lines[i].inl);
+    }
+    put_u32(s, p->ninlines);
+    for (uint32_t i = 0; i < p->ninlines; i++) {
+        put_string(s, p->inlines[i].name);
+        put_u32(s, p->inlines[i].file);
+        put_u32(s, p->inlines[i].line);
+        put_u32(s, p->inlines[i].col);
+        put_u32(s, p->inlines[i].parent);
     }
 
     for (uint32_t i = 0; i < p->nglobals; i++) put_value(s, vm->globals[i], vm);
@@ -516,7 +525,26 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         p->lines[i].file = get_u32(&s);
         p->lines[i].line = get_u32(&s);
         p->lines[i].col = get_u32(&s);
+        p->lines[i].inl = get_u32(&s);
     }
+    p->ninlines = get_u32(&s);
+    if (!s.ok || !fits(p->ninlines, sizeof(Inlined))) return failed(&s, err, errlen, "the image is cut short");
+    p->inlines = calloc(p->ninlines > 0 ? p->ninlines : 1, sizeof(Inlined));
+    if (!p->inlines) return failed(&s, err, errlen, "out of memory");
+    for (uint32_t i = 0; i < p->ninlines && s.ok; i++) {
+        p->inlines[i].name = get_string(&s);
+        p->inlines[i].file = get_u32(&s);
+        p->inlines[i].line = get_u32(&s);
+        p->inlines[i].col = get_u32(&s);
+        p->inlines[i].parent = get_u32(&s);
+        /* an image is untrusted input: a frame names a file and a frame
+           before it (vm_print_trace follows the chain) */
+        if (s.ok && ((p->inlines[i].line != 0 && p->inlines[i].file >= p->nfiles) ||
+                     (p->inlines[i].line == 0 && p->inlines[i].file != 0) || p->inlines[i].parent > i))
+            return failed(&s, err, errlen, "a bad table of inlined functions");
+    }
+    for (uint32_t i = 0; i < p->nlines && s.ok; i++)
+        if (p->lines[i].inl > p->ninlines) return failed(&s, err, errlen, "a bad line table");
 
     if (!s.ok || !fits(p->nglobals, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
     vm->globals = calloc(p->nglobals > 0 ? p->nglobals : 1, sizeof(Value));

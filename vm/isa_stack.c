@@ -6,7 +6,7 @@
 #include "vm.h"
 
 const uint32_t isa_fingerprint = ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 4 isa " ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 5 isa " ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);

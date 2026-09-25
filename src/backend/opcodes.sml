@@ -3,7 +3,7 @@ structure Opcodes =
 struct
   (* the version of the layout of an .rbc, and the fingerprint of the
      instruction set, which an .rbc and an image carry *)
-  val rbcVersion = 3
+  val rbcVersion = 4
   val fingerprint = 14447052
   val fingerprintHex = "00dc71cc"
   val HALT = 0

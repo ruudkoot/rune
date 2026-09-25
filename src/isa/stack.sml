@@ -11,7 +11,7 @@ struct
   (* The version of the layout of an .rbc (docs/bytecode.md), which changes
      when the layout does; what the instructions are is the fingerprint
      IsaGen works out from them, which the file carries beside it. *)
-  val rbcVersion = 3
+  val rbcVersion = 4
 
   (* A body that is not shared is written in the words of the loop
      (vm/interp.c), which keeps the stack pointer, the frame's base, the pc

@@ -169,49 +169,47 @@ struct
                          Translate.transProgram (preludeProg @ userProg))
     end
 
+  (* -O0 is the same stages with no optional pass *)
   and backEnd (_, NONE) = OS.Process.success
     | backEnd (inputs, SOME lam) =
-        if !Pass.level = 0 then
-          (* -O0: the code generator of Lambda (decision D10 of the plan) *)
-          emitProgram (inputs,
-                       Pass.stage {name = "codegen", showIn = SOME Lambda.show, show = Codegen.dump,
-                                   check = fn _ => (), size = Codegen.size}
-                                  (fn lam => Codegen.compile (lam, !Translate.funNames)) lam)
-        else
-          let
-            val mid = midStage (SOME Lambda.show) ToMid.program lam
-            (* the optional passes on Mid (docs/ir.md) *)
-            fun optional (name, f) m =
-              if Pass.enabled (name, 1) then
-                Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
-                            size = Mid.size}
-                           f m
-              else m
-            val mid = optional ("shake", Shake.program) mid
-            val mid = optional ("lift", Lift.program) mid
-            val mid = optional ("workers", Workers.program) mid
-            val mid = optional ("simplify", Simplify.program) mid
-            val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
-                                  size = Low.size}
-                                 (fn m => Lower.program (m, !Translate.funNames)) mid
-          in
-            if !Options.target = "registers" then
-              (Codegen.opcodeNames := RegCodes.names;
-               emitProgramAs (RegCodes.fingerprint, inputs,
-                              Pass.stage {name = "registers", showIn = SOME Low.show, show = Codegen.dump,
-                                          check = fn _ => (), size = Codegen.size}
-                                         Regs.program low))
-            else
-              emitProgram (inputs,
-                           Pass.stage {name = "stack", showIn = SOME Low.show, show = Codegen.dump,
-                                       check = fn _ => (), size = Codegen.size}
-                                      Stack.program low)
-          end
+        let
+          val mid = midStage (SOME Lambda.show) ToMid.program lam
+          (* the optional passes on Mid (docs/ir.md) *)
+          fun optional (name, f) m =
+            if Pass.enabled (name, 1) then
+              Pass.stage {name = name, showIn = SOME MidText.show, show = MidText.show, check = MidLint.check,
+                          size = Mid.size}
+                         f m
+            else m
+          val mid = optional ("shake", Shake.program) mid
+          val mid = optional ("lift", Lift.program) mid
+          val mid = optional ("workers", Workers.program) mid
+          val mid = optional ("simplify", Simplify.program) mid
+          (* what the inliner left of the functions it put in place goes *)
+          val mid =
+            if Pass.enabled ("simplify", 1) andalso Pass.enabled ("inline", 1) then optional ("shake", Shake.program) mid
+            else mid
+          val low = Pass.stage {name = "lower", showIn = SOME MidText.show, show = Low.show, check = LowLint.check,
+                                size = Low.size}
+                               (fn m => Lower.program (m, !Translate.funNames)) mid
+        in
+          if !Options.target = "registers" then
+            (Code.opcodeNames := RegCodes.names;
+             emitProgramAs (RegCodes.fingerprint, inputs,
+                            Pass.stage {name = "registers", showIn = SOME Low.show, show = Code.dump,
+                                        check = fn _ => (), size = Code.size}
+                                       Regs.program low))
+          else
+            emitProgram (inputs,
+                         Pass.stage {name = "stack", showIn = SOME Low.show, show = Code.dump,
+                                     check = fn _ => (), size = Code.size}
+                                    Stack.program low)
+        end
 
-  and emitProgram (inputs : string list, prog : Codegen.program) : OS.Process.status =
+  and emitProgram (inputs : string list, prog : Code.program) : OS.Process.status =
     emitProgramAs (Opcodes.fingerprint, inputs, prog)
 
-  and emitProgramAs (fingerprint : int, inputs : string list, prog : Codegen.program) : OS.Process.status =
+  and emitProgramAs (fingerprint : int, inputs : string list, prog : Code.program) : OS.Process.status =
     let
       val out = case !Options.output of SOME f => f | NONE => defaultOutput (List.hd inputs)
     in

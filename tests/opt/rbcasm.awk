@@ -81,6 +81,6 @@ END {
   for (k = 0; k < nconsts; k++) out = out consts[k]
   out = out le(nglobals, 4) le(nfuncs, 4)
   for (k = 0; k < nfuncs; k++) out = out le(foffset[k], 4) le(flocals[k], 4) le(length(fname[k]), 4) str(fname[k])
-  out = out le(pc, 4) code le(0, 4) le(0, 4) le(0, 4)
+  out = out le(pc, 4) code le(0, 4) le(0, 4) le(0, 4) le(0, 4) le(0, 4) le(0, 4)
   printf "%s", out
 }

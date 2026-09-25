@@ -18,7 +18,10 @@
      exp     := (let (VAR : SCHEME) RHS EXP) | (fun FUNDEF FUNDEF ... EXP)
               | (join LABEL ((VAR : TYPE) ...) EXP EXP) | (jump LABEL ATOM ...)
               | (if ATOM EXP EXP) | (handle VAR EXP EXP) | (raise ATOM)
-              | (return RHS) | (at STRING INT INT EXP)
+              | (return RHS) | (at STRING INT INT FRAME ... EXP)
+     frame   := (in STRING STRING INT INT)   an inlined function's name, and
+                                             where it was called from
+              | (in STRING)                  one called in tail position
      rhs     := ATOM | (app ATOM ATOM ...) | (prim NAME ATOM ... : TYPE) | (tuple ATOM ...)
               | (select INT ATOM) | (con TAG ATOM : TYPE) | (decon TAG ATOM) | (tag ATOM)
               | (newexn STRING) | (builtinexn INT) | (mkexn ATOM ATOM) | (exncon ATOM)
@@ -206,9 +209,13 @@ struct
         | Handle (a, x, h) => let val x = v x in nl n; emit ("(handle " ^ x); exp (n + 2, a); exp (n + 2, h); emit ")" end
         | Raise a => (nl n; emit ("(raise " ^ atom a ^ ")"))
         | Return r => (nl n; emit ("(return " ^ rhs r ^ ")"))
-        | Mark ({file, start, stop}, a) =>
+        | Mark (({file, start, stop}, frames), a) =>
             if marks then
               (nl n; emit ("(at \"" ^ String.toString file ^ "\" " ^ Int.toString start ^ " " ^ Int.toString stop);
+               List.app (fn {name, site = SOME {file, start, stop}} =>
+                              emit (" (in \"" ^ String.toString name ^ "\" \"" ^ String.toString file ^ "\" "
+                                    ^ Int.toString start ^ " " ^ Int.toString stop ^ ")")
+                          | {name, site = NONE} => emit (" (in \"" ^ String.toString name ^ "\")")) frames;
                exp (n, a); emit ")")
             else exp (n, a)
       and fundef (n, f) = fundefNamed (n, v, f)
@@ -571,8 +578,20 @@ struct
             | "raise" => Raise (atom ())
             | "return" => Return (rhs ())
             | "at" =>
-                let val file = str () val start = int () val stop = int ()
-                in Mark ({file = file, start = start, stop = stop}, exp ()) end
+                let
+                  val file = str () val start = int () val stop = int ()
+                  fun frames acc =
+                    if peek () = SOME LP andalso peek2 () = SOME (ID "in") then
+                      let
+                        val () = (eat LP; ignore (next ()))
+                        val name = str ()
+                        val site =
+                          if peek () = SOME RP then NONE
+                          else let val f = str () val s = int () val e = int () in SOME {file = f, start = s, stop = e} end
+                      in eat RP; frames ({name = name, site = site} :: acc) end
+                    else List.rev acc
+                  val fs = frames []
+                in Mark (({file = file, start = start, stop = stop}, fs), exp ()) end
             | k => raise Syntax ("an unknown form " ^ k ^ where' ())
         in eat RP; e end
 

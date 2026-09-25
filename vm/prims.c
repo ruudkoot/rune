@@ -2062,6 +2062,18 @@ static void push_frame(VM *vm, const char *name, const char *file, int64_t line,
     vm_push(vm, mk_ptr(t));
 }
 
+/* The frames of activation i, innermost first: its function's, and those of
+   the functions inlined where it is (trace_frames). */
+static uint32_t frames_at(VM *vm, size_t i, TraceFrame *fs, uint32_t max) {
+    uint32_t f = vm->frames[i].func;
+    const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
+    uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
+    const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
+    if (e && e->file < vm->prog.nfiles) return trace_frames(&vm->prog, e, name, fs, max);
+    fs[0].name = name; fs[0].file = UINT32_MAX; fs[0].line = 0; fs[0].col = 0;
+    return 1;
+}
+
 /* The frames, innermost first, leaving out the innermost `skip` of them --
    which is how Runtime keeps its own frames out of what it reports. Built
    from the outermost inwards so that each cons puts its frame at the head. */
@@ -2069,18 +2081,20 @@ static int p_rt_trace(VM *vm) {
     INT1("rt_trace");
     size_t skip = x < 0 ? 0 : (size_t)x;
     vm_push(vm, mk_con0(0));
-    if (vm->frames_active && vm->fp + 1 > skip) {
-        size_t last = vm->fp - skip;
-        for (size_t i = 0; i <= last; i++) {
-            uint32_t f = vm->frames[i].func;
-            const char *name = f < vm->prog.nfuncs ? vm->prog.funcs[f].name : "?";
-            uint32_t pc = (i == vm->fp) ? vm->pc : vm->frames[i + 1].ret_pc;
-            const LineEntry *e = line_at(&vm->prog, pc > 0 ? pc - 1 : 0);
-            if (e && e->file < vm->prog.nfiles)
-                push_frame(vm, name, vm->prog.files[e->file], e->line, e->col);
-            else
-                push_frame(vm, name, "", 0, 0);
-            vm_cons(vm);
+    if (vm->frames_active) {
+        /* the frames of the trace, not of the VM: those of functions
+           inlined count, as their calls would have */
+        TraceFrame fs[64];
+        size_t total = 0;
+        for (size_t i = 0; i <= vm->fp; i++) total += frames_at(vm, i, fs, 64);
+        size_t keep = total > skip ? total - skip : 0, k = 0;
+        for (size_t i = 0; i <= vm->fp && k < keep; i++) {
+            uint32_t n = frames_at(vm, i, fs, 64);
+            for (uint32_t j = n; j > 0 && k < keep; j--, k++) {
+                const TraceFrame *t = &fs[j - 1];
+                push_frame(vm, t->name, t->file == UINT32_MAX ? "" : vm->prog.files[t->file], t->line, t->col);
+                vm_cons(vm);
+            }
         }
     }
     Value l = vm_pop(vm);

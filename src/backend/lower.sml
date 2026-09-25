@@ -3,8 +3,7 @@
    function captures the variables free in it, in the order of their stamps,
    less itself, which it reads as `Self`; the members of a group made
    together capture each other, and those not made yet are set after
-   (`SetEnv`) -- the flat closures of Codegen, so that a program allocates
-   what it did.
+   (`SetEnv`): flat closures.
 
    A join point becomes a block with its parameters; a Handle a Push, the
    blocks of its body, and the handler's block, whose parameter is the
@@ -391,7 +390,7 @@ struct
          | (FunRet, _) => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
          | (ToBlock (l, d), _) => let val v = value (b, cx, r) in pops (b, #depth cx - d); finish (b, L.Goto (l, [v])) end
          | (Cont k, _) => k (value (b, cx, r)))
-    | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME sp; exp (b, a, cx))
+    | M.Mark (sp, a) => (emit (b, L.At sp); #span b := SOME (#1 sp); exp (b, a, cx))
 
   (* a call in tail position of the function: a known tail call, where no
      handler is pushed, of a function of the top level *)

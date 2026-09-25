@@ -178,7 +178,7 @@ struct
     | (Lines, [path]) =>
         let val p = load path
         in
-          Vector.app (fn {pc, file, line, col} =>
+          Vector.app (fn {pc, file, line, col, ...} =>
                         println (Int.toString pc ^ " " ^ Vector.sub (#files p, file) ^ ":" ^ Int.toString line
                                  ^ ":" ^ Int.toString col))
                      (#lines p);

@@ -324,6 +324,14 @@ convention), which halves allocation and so also takes part of 13's gain.
   xs in go l end`, keeping the order of evaluation.
 * **Gain:** every program gains, not only the compiler. An optimiser that
   uncurries (item 14) subsumes it.
+* **Done** (middle-end M8 and M10): the workers of M8 call themselves
+  directly, with no closure made per element, and M10 copies such a
+  function for a call that gives it a function of the top level, whose
+  calls are then known, and inlined where small (`specialise`, docs/ir.md).
+  Measured against the same compiler without it (`runevm --count`):
+  array_sieve 14.8% fewer instructions, list_ops 7.7%, string_ops 2.5%, the
+  compiler 0.4% -- whose calls mostly give closures, which are not
+  specialised.
 
 ### 7. Jumps, returns and branches
 

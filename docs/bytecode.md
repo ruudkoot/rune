@@ -32,12 +32,18 @@ files       nfiles × { len u32, bytes }      # the sources, as given on the com
 nlines      u32
 table_len   u32
 lines       table_len bytes                  # nlines entries; see below
+nnames      u32
+names       nnames × { len u32, bytes }      # of the functions inlined, each once
+ninlined    u32
+frames_len  u32
+frames      frames_len bytes                 # ninlined frames; see below
 ```
 
-The version is `3`, and it changes when the layout does (`rbcVersion` in
-`src/isa/stack.sml`). A file of version `1`, which has no debug section, or
-`2`, which has no fingerprint, is refused like any other version the VM does
-not know.
+The version is `4`, and it changes when the layout does (`rbcVersion` in
+`src/isa/stack.sml`). A file of version `1`, which has no debug section,
+`2`, which has no fingerprint, or `3`, whose line table knows nothing of
+inlined functions, is refused like any other version the VM does not
+know.
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
@@ -55,8 +61,9 @@ up to the next entry's; the entry covering a `pc` is the last one that begins
 at or before it. Every function's code begins with an entry of its own, so an
 instruction is never attributed to whatever was compiled before it.
 
-An entry is four numbers -- the difference in `pc`, in file, in line and in
-column from the entry before it, counting from `0, 0, 0, 0`. Each is written
+An entry is five numbers -- the difference in `pc`, in file, in line, in
+column and in inlined frame from the entry before it, counting from
+`0, 0, 0, 0, 0`. Each is written
 seven bits at a time, least significant first, with the top bit of a byte
 saying that another follows; the three that may be negative are folded to a
 natural number first (`n` becomes `2n`, and `-n` becomes `2n - 1`) so that a
@@ -72,6 +79,24 @@ whose `pc` is past the code, whose file is not one the table names, or whose
 line or column is below 1 (`tests/vm`). The positions themselves are the
 compiler's business: `make check-positions` verifies that every one of them
 names a line its file really has.
+
+**Inlined functions.** Where the compiler put a function's code into
+another's (middle-end M10), the entries of that code name the function it
+came from: their fifth number is a frame of the `frames` table, numbered
+from 1 (0: none). A frame is the inlined function's name, where it was
+called from, and the frame that call is itself in (0: none; always an
+earlier frame): five natural numbers, written seven bits at a time as the
+line table's are -- the name's place in `names`, the file, the line, the
+column, and the frame. A trace (`vm_print_trace`, `Runtime.trace`) shows each as a
+frame of its own: the inlined function at the entry's position, then the
+function it was called from at the frame's place, and so on out to the
+function whose code it is -- the frames the program would show had nothing
+been inlined. A frame inlined in tail position has no place (file, line
+and column 0): it took the place of the function it was called from, as a
+tail call's frame does, and that function is not shown. The loader
+refuses a frame that does not decode, whose name or file is not one the
+tables have, or whose parent is not earlier, and a table with bytes left
+over.
 
 A constant is a `u8` kind followed by its payload:
 

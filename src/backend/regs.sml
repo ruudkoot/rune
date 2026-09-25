@@ -15,13 +15,13 @@
    * The arguments of a jump move into the block's parameters in parallel;
      a jump to the next block falls through, and one to a block that only
      returns its parameter returns. *)
-structure Regs : TARGET where type code = Codegen.program =
+structure Regs : TARGET where type code = Code.program =
 struct
   structure L = Low
-  structure C = Codegen
+  structure C = Code
   structure R = RegCodes
 
-  type code = Codegen.program
+  type code = Code.program
   val info : Target.t = {name = "registers", machine = Target.Registers, intBits = 64, maxArgs = 64, switch = false,
                          barriers = false, safepoints = false}
 
@@ -133,14 +133,14 @@ struct
         case (it, !code) of
           (C.Pos _, C.Pos _ :: rest) => code := it :: rest
         | _ => code := it :: !code
-      val here : (int * int * int) ref = ref (~1, ~1, ~1)
-      fun at (sp : Source.span) =
+      val here : (int * int * int * int) ref = ref (~1, ~1, ~1, ~1)
+      fun at ((sp, frames) : L.pos) =
         case Source.lineColOf sp of
           NONE => ()
         | SOME (file, line, col) =>
-            let val p = (C.fileIdx file, line, col)
+            let val p = (C.fileIdx file, line, col, C.inlineIdx frames)
             in if p = !here then () else (here := p; emit (C.Pos p)) end
-      val () = case #pos f of SOME sp => at sp | NONE => ()
+      val () = case #pos f of SOME sp => at (sp, []) | NONE => ()
       val labels = Vector.tabulate (nblocks, fn _ => C.newLabel ())
       fun labelOf i = Vector.sub (labels, i)
       fun op' (opc, args) = emit (C.Op (opc, args))
@@ -274,6 +274,7 @@ struct
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
+       inlines = List.rev (!C.inlines),
        nlabels = !C.nextLabel}
     end
 end

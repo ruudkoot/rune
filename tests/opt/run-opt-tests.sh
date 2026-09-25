@@ -78,7 +78,7 @@ zero='\000\000\000\000'
 one='\001\000\000\000'
 two='\002\000\000\000'
 huge='\377\377\377\377'
-nodebug="$zero$zero$zero"
+nodebug="$zero$zero$zero$zero$zero$zero"
 
 # What the loader refuses (as tests/vm has it for runevm).
 printf '' > "$out/empty.rbc"
@@ -98,7 +98,7 @@ refuse opcode "invalid opcode 200 at 0" "$out/opcode.rbc"
 printf "$header$zero$zero$one$zero$one$zero\\005\\000\\000\\000\\005$one$nodebug" > "$out/local.rbc"
 refuse local "bad operand for LOCAL at 0" "$out/local.rbc"
 # a line table entry past the code: dpc 9
-printf "$header$zero$zero$one$zero$one$zero$one\\000$one\\001\\000\\000\\000a$one\\004\\000\\000\\000\\011\\000\\002\\002" > "$out/linepc.rbc"
+printf "$header$zero$zero$one$zero$one$zero$one\\000$one\\001\\000\\000\\000a$one\\005\\000\\000\\000\\011\\000\\002\\002\\000" > "$out/linepc.rbc"
 refuse linepc "line table out of range" "$out/linepc.rbc"
 
 # What the loader accepts and runeopt does not (the contract). Each is one function f

@@ -95,7 +95,7 @@ struct
     | R (r, t) => let val x = fresh () in M.Let (x, ([], t), r, k (M.Var (x, []), t)) end
 
   fun mark (sp, e as M.Mark _) = e
-    | mark (sp, e) = M.Mark (sp, e)
+    | mark (sp, e) = M.Mark ((sp, []), e)
 
   fun program (e : L.lexp) : M.program =
     let

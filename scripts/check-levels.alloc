@@ -1,1 +1,0 @@
-exp.raise_types -O0 keeps "x" of `(raise Fail ...) ^ "x"` among the constants, which are allocated when the program is loaded; -O2 drops the code after the raise

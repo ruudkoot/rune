@@ -22,7 +22,7 @@ struct
 
   (* A function's code runs from offset to stop, where the next one begins. *)
   type func = {offset : int, nlocals : int, name : string, stop : int}
-  type line = {pc : int, file : int, line : int, col : int}
+  type line = {pc : int, file : int, line : int, col : int, inl : int}
 
   type program =
     {consts : const vector,
@@ -167,7 +167,7 @@ struct
       (* acc + d, or out of range if it would leave 0 .. big *)
       fun add (acc, d) =
         if d > 0 andalso acc > big - d then outOfRange () else acc + d
-      fun entries (i, pc, file, line, col, acc) =
+      fun entries (i, pc, file, line, col, inl, acc) =
         if i = n then acc
         else
           let
@@ -175,13 +175,15 @@ struct
             val dfile = case dpc of Broken => Broken | _ => svar (data, q, stop)
             val dline = case dfile of Broken => Broken | _ => svar (data, q, stop)
             val dcol = case dline of Broken => Broken | _ => svar (data, q, stop)
+            val dinl = case dcol of Broken => Broken | _ => svar (data, q, stop)
             fun num (Num v) = v | num _ = outOfRange ()
           in
-            case (dpc, dfile, dline, dcol) of
-              (Broken, _, _, _) => fail "bad line table"
-            | (_, Broken, _, _) => fail "bad line table"
-            | (_, _, Broken, _) => fail "bad line table"
-            | (_, _, _, Broken) => fail "bad line table"
+            case (dpc, dfile, dline, dcol, dinl) of
+              (Broken, _, _, _, _) => fail "bad line table"
+            | (_, Broken, _, _, _) => fail "bad line table"
+            | (_, _, Broken, _, _) => fail "bad line table"
+            | (_, _, _, Broken, _) => fail "bad line table"
+            | (_, _, _, _, Broken) => fail "bad line table"
             | _ =>
                 let
                   val dp = num dpc
@@ -190,14 +192,16 @@ struct
                   val file' = add (file, num dfile)
                   val line' = add (line, num dline)
                   val col' = add (col, num dcol)
+                  val inl' = add (inl, num dinl)
                 in
                   if pc' >= codeLen orelse file' < 0 orelse file' >= nfiles orelse line' < 1 orelse col' < 1
+                     orelse inl' < 0
                   then outOfRange ()
-                  else entries (i + 1, pc', file', line', col',
-                                {pc = pc', file = file', line = line', col = col'} :: acc)
+                  else entries (i + 1, pc', file', line', col', inl',
+                                {pc = pc', file = file', line = line', col = col', inl = inl'} :: acc)
                 end
           end
-      val es = entries (0, 0, 0, 0, 0, [])
+      val es = entries (0, 0, 0, 0, 0, 0, [])
     in
       if !q <> stop then fail "bad line table" else Vector.fromList (List.rev es)
     end
@@ -374,6 +378,41 @@ struct
       val tableLen = rdU32 r
       val () = if !(#error r) orelse nlines > 100000000 orelse not (need (r, tableLen)) then fail "bad line table" else ()
       val lines = lineTable (data, !(#pos r), tableLen, nlines, codeLen, nfiles)
+      val () = #pos r := !(#pos r) + tableLen
+      (* the functions inlined on the way to the positions, as the loader
+         checks them: runeopt's code needs none of them, the VM's traces do *)
+      val nnames = rdU32 r
+      val () = if !(#error r) orelse nnames > 100000000 then fail "bad table of inlined functions" else ()
+      fun names i =
+        if i = nnames then ()
+        else
+          let val n = rdU32 r
+          in if not (need (r, n)) then fail "bad table of inlined functions" else (ignore (take (r, n)); names (i + 1)) end
+      val () = names 0
+      val ninlines = rdU32 r
+      val framesLen = rdU32 r
+      val () = if !(#error r) orelse ninlines > 100000000 orelse not (need (r, framesLen))
+               then fail "bad table of inlined functions" else ()
+      val q = ref (!(#pos r))
+      val stop = !(#pos r) + framesLen
+      fun frames i =
+        if i = ninlines then ()
+        else
+          let
+            fun num () = case uvar (data, q, stop) of Num v => v | _ => fail "bad table of inlined functions"
+            val name = num () val file = num () val line = num () val col = num () val parent = num ()
+          in
+            (* one called in tail position has no place: 0, 0, 0 *)
+            if name >= nnames orelse parent > i
+               orelse (line = 0 andalso (file <> 0 orelse col <> 0))
+               orelse (line <> 0 andalso (file >= nfiles orelse col < 1))
+            then fail "bad table of inlined functions"
+            else frames (i + 1)
+          end
+      val () = frames 0
+      val () = if !q <> stop then fail "bad table of inlined functions" else ()
+      val () = #pos r := stop
+      val () = if Vector.exists (fn {inl, ...} => inl > ninlines) lines then fail "line table out of range" else ()
 
       val fv = Vector.fromList fs
       val funcs =
@@ -431,7 +470,8 @@ struct
   (* An .rbc of a program given as its parts: what load_program reads back
      as that program (runeopt --from-image). *)
   fun write {consts : const list, nglobals : int, funcs : (int * int * string) list, code : string,
-             files : string list, lines : (int * int * int * int) list} : string =
+             files : string list, lines : (int * int * int * int * int) list,
+             inlines : (string * int * int * int * int) list} : string =
     let
       fun const c =
         case c of
@@ -442,17 +482,30 @@ struct
         | CChar c => "\004" ^ String.str (Char.chr c)
       fun func (offset, nlocals, name) = le32 offset ^ le32 nlocals ^ le32 (String.size name) ^ name
       fun table ([], _) = []
-        | table ((pc, file, line, col) :: rest, (pc0, file0, line0, col0)) =
+        | table ((pc, file, line, col, inl) :: rest, (pc0, file0, line0, col0, inl0)) =
             uvarText (IntInf.fromInt (pc - pc0)) :: svarText (file - file0) :: svarText (line - line0)
-            :: svarText (col - col0) :: table (rest, (pc, file, line, col))
-      val tableText = String.concat (table (lines, (0, 0, 0, 0)))
+            :: svarText (col - col0) :: svarText (inl - inl0) :: table (rest, (pc, file, line, col, inl))
+      val tableText = String.concat (table (lines, (0, 0, 0, 0, 0)))
+      (* the names of the functions inlined, each once, and the frames *)
+      fun names ([], ns, _) = List.rev ns
+        | names ((name, _, _, _, _) :: rest, ns, n) =
+            if List.exists (fn m => m = name) ns then names (rest, ns, n) else names (rest, name :: ns, n + 1)
+      val ns = names (inlines, [], 0)
+      fun nameIdx (name, i, m :: rest) = if m = name then i else nameIdx (name, i + 1, rest)
+        | nameIdx (_, i, []) = i
+      fun u n = uvarText (IntInf.fromInt n)
+      val framesText =
+        String.concat (List.map (fn (name, f, l, c, parent) => u (nameIdx (name, 0, ns)) ^ u f ^ u l ^ u c ^ u parent)
+                                inlines)
     in
       String.concat
         (["RUNE", le32 Opcodes.rbcVersion, le32 Opcodes.fingerprint, le32 (List.length consts)] @ List.map const consts
          @ [le32 nglobals, le32 (List.length funcs)] @ List.map func funcs
          @ [le32 (String.size code), code, le32 (List.length files)]
          @ List.map (fn f => le32 (String.size f) ^ f) files
-         @ [le32 (List.length lines), le32 (String.size tableText), tableText])
+         @ [le32 (List.length lines), le32 (String.size tableText), tableText, le32 (List.length ns)]
+         @ List.map (fn n => le32 (String.size n) ^ n) ns
+         @ [le32 (List.length inlines), le32 (String.size framesText), framesText])
     end
 
   (* line_at: the entry that covers pc, the last that begins at or before it. *)

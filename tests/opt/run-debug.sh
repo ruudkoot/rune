@@ -104,11 +104,14 @@ failures=$(printf '%s\n' "$results" | grep -v '^OK$' | grep .)
 status=0
 [ -z "$failures" ] || status=1
 
-# The debuggers, on the first program: a breakpoint at the first line of its
-# own file (the last file of its table), and where they stop.
+# The debuggers, on the first program: a breakpoint at the last line of its
+# own file in the line table -- its source is named as the .rbc is -- and
+# where they stop. (Not the table's last line: code of the Basis Library
+# inlined there may come after it, or be copied where it never runs.)
 if [ $debuggers = 1 ] && [ $# -gt 0 ]; then
   e=$(exe "$1")
-  target=$("$opt" --lines "$1" | tail -1 | cut -d' ' -f2 | sed 's/:[0-9]*$//')
+  src=$(basename "$1" .rbc).sml
+  target=$("$opt" --lines "$1" | cut -d' ' -f2 | grep "\(^\|/\)$src:" | tail -1 | sed 's/:[0-9]*$//')
   file=${target%:*} line=${target##*:}
   base=$(basename "$file")
   if command -v gdb > /dev/null 2>&1; then

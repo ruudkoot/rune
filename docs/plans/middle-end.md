@@ -27,7 +27,7 @@ What it rests on:
 | M7 | The simplifier and tree shaking | done |
 | M8 | Known calls and the calling convention | done |
 | M9 | Decision trees and `SWITCH` | done |
-| M10 | The inliner, contification and inline frames | |
+| M10 | The inliner, contification and inline frames | done |
 | M11 | Representation | |
 | M12 | Whole-program analyses | |
 
@@ -782,7 +782,7 @@ Decided by the owner on 2026-09-24: stack for `vm/portable`, register for
 **Decided: as recommended.**
 
 Keep `Codegen` as `-O0` and the differential reference from M4 until M10,
-then remove it. **Recommended.**
+then remove it. **Recommended.** Removed in M10.
 
 ### D11. The items of performance.md
 
@@ -1247,6 +1247,54 @@ estimated.
   instructions) call `compare` through a functor argument that expansion
   already makes known.
 * **Also:** the old `Codegen` goes (D10).
+* **Done:**
+  * **Inlining** (`simplify`, the optional pass name `inline`; docs/ir.md,
+    *The optimisations of Mid*): a function of the top level of no more
+    than 12 nodes that does not call itself and does not always raise, at
+    each call, within a budget of growth of each definition of about its
+    own size; and a function of the top level named once, by a call,
+    whatever its size, with a second `shake` for what is left of it. Twice
+    the budget, or 16 nodes, ran the compiler no faster than it cost in
+    code and in compile time.
+  * **Inline frames** (D7 B): Mid's positions carry the functions inlined
+    on the way (`Mid.pos`), Low's and the code's too, and the `.rbc` a
+    table of them (version 4: names once, frames of five numbers written
+    as the line table's; images version 5). A trace shows the frames the
+    calls would have left, exactly: a function inlined in tail position
+    takes the place of its caller's frame, and a call in tail position of
+    a function inlined elsewhere shows as made from where that one was
+    called. `Runtime.trace` leaves out frames of the trace, not of the VM.
+    `make check-levels` compares traces too
+    (`tests/lang/rt.trace_inlined.sml`).
+  * **Specialisation** (`specialise`): a function that calls itself passing
+    parameters of function type on unchanged is copied for a call that
+    gives functions of the top level, whose calls are then known and
+    inlined where small (item 6 of performance.md). A closure given is
+    left as it is: in the compiler 164 calls give a function of the top
+    level and 243 a closure, and copying for a closure means lifting it
+    into the copy, a copy per call, for about 1% by the same measure.
+  * **Contification: measured, not built.** After `lift`, the inlining of
+    functions named once and Lower's loops, 12 functions of the compiler
+    (50 calls, all tail calls from one function) are left for it, and none
+    in `tests/perf`; each would save a `TAILCALLK`.
+  * **`Codegen` removed** (D10): `-O0` is the same stages with no optional
+    pass, and `make check-levels` compares it with `-O2`; the instruction
+    lists and the program's tables the targets share are `Code`.
+  * **Compile time:** a census is added to rather than taken again after
+    each rewrite (it was quadratic in the calls inlined into a function),
+    and the last chain of inline frames is kept, since positions come in
+    runs.
+  * **Measured** against M9 (`runevm --count`): array_sieve 15.6% fewer
+    instructions (62% fewer bytes allocated), list_ops 10.9%, string_ops
+    9.6%, intinf_fact and word_bits under 1%, fib, tak and real_nbody the
+    same; compile-hello 20% and compile-sigs 15% under their budgets. The
+    compiler, compiling the same sources with no optional pass, runs 4.5%
+    fewer instructions and 3.3% fewer cycles -- below the estimate, since
+    `Int.compare` had already become a primitive (item 5) and M8 had made
+    the maps' calls known. The bootstrap costs 15% more (1,030 to 1,184
+    million instructions): the compiler is the one large program here, and
+    the passes after inlining see 40% more of it. `bin/rune.rbc` is 24%
+    larger (code 18%, line table 69%, 3,068 inline frames in 29 KB).
 
 ### M11. Representation (L, about 1,000)
 

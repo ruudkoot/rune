@@ -36,7 +36,7 @@ src/core/shake.sml
 src/core/lift.sml
 src/core/simplify.sml
 src/core/workers.sml
-src/backend/codegen.sml
+src/backend/code.sml
 src/backend/low.sml
 src/backend/target.sml
 src/backend/lowlint.sml

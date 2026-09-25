@@ -1,10 +1,9 @@
 # Architecture
 
 ```
-source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► ToMid ──► Shake, Simplify ──► Lower ──► Stack ──► Emit ──► .rbc
-                 tokens     AST        typed AST    Lambda IR     Mid       Mid (-O1)           Low       bytecode
-                                                        │                                                 items
-                                                        └──► Codegen (-O0) ──────────────────────────────┘
+source files ──► Lexer ──► Parser ──► Elaborate ──► Translate ──► ToMid ──► Shake, Lift, Workers, ──► Lower ──► Stack ──► Emit ──► .rbc
+                 tokens     AST        typed AST    Lambda IR     Mid       Simplify (from -O1)      Low       bytecode
+                                                                                                             items (Code)
 .rbc ──► loader (validate) ──► interp (stack machine, prims, Cheney GC)
 
 Low ──► Regs (--target=registers) ──► register .rbc ──► vm/new's first loop
@@ -28,11 +27,10 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Match compilation | `src/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | From `-O1`, a match of two rules or more is a decision tree: each value tested once on a way through, the rules' bodies join points (`Join`, `Jump`), the last constructor of a datatype the rules all name untested (docs/ir.md, *Matches*). Otherwise rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `src/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Mid | `src/core/ty.sml`, `mid.sml`, `tomid.sml`, `midlint.sml`, `midtext.sml` | Lambda → `Mid.program` | A-normal form with join points, typed in the manner of System F, the top level a list of definitions; see [ir.md](ir.md). |
-| Optimisation (`-O1`) | `src/core/shake.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), then shrinking reductions in rounds after a census; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. |
+| Optimisation (from `-O1`) | `src/core/shake.sml`, `lift.sml`, `workers.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), lambda lifting, workers and wrappers, then shrinking reductions in rounds after a census, with inlining (its frames kept for traces) and the specialisation of higher-order functions to known functions; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. `-O0` runs none of them. |
 | Lowering | `src/backend/low.sml`, `lower.sml`, `lowlint.sml` | Mid → `Low.program` | Blocks with parameters in SSA form, one function per function of the program. Flat closure conversion: a function captures its free variables in the order of their stamps; self reference is `Self`; a group of functions patches its closures with `SetEnv`. Handlers are pushed and popped around their regions. |
-| Stack target | `src/backend/target.sml`, `stack.sml` | Low → per-function instruction lists | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. The default from `-O1`. |
+| Stack target | `src/backend/target.sml`, `code.sml`, `stack.sml` | Low → per-function instruction lists (`Code`) | A value used once stays on the stack; the others get locals shared by linear scan; jumps fall through or become returns where they can. `Code` holds the instruction lists and the tables of the program (constants, globals, files, inlined frames) that both targets fill and Emit writes. |
 | Register target | `src/backend/regs.sml`, `regcodes.sml` (generated) | Low → register bytecode | Every variable a register, shared by linear scan; `CALL` then `RESULT`; with `--target=registers`, for `vm/new` ([bytecode.md](bytecode.md), The register bytecode). |
-| Code generation (`-O0`) | `src/backend/codegen.sml` | Lambda → per-function instruction lists | The first back end, the reference the new one is compared with: flat closures as above, a local for every `Let`, tail calls detected syntactically. |
 | Emission | `src/backend/emit.sml` | program → bytes | Resolves labels to absolute offsets, writes the `.rbc` layout documented in `docs/bytecode.md` as string chunks through `TextIO`. |
 | Driver | `src/driver/basismanifest.sml`, `options.sml`, `main.sml` | CLI | `BasisManifest` reads `lib/basis/MANIFEST` and chooses the files a program loads (the documentation generator uses it too). The driver tokenizes the user files, picks the files of the basis library they need from `lib/basis/MANIFEST` (the always-loaded files, the files that provide a name among the identifiers of the program, and the closure of their requires column; `--basis all` takes every file), and compiles those and the user files as one program. `--basis-deps` prints the choice; `--basis-check` verifies the MANIFEST against the sources. |
 
@@ -204,8 +202,8 @@ primitives that construct options.
 ## Adding a language feature (checklist)
 
 1. Lexer/parser/AST as needed; elaboration (types + annotations); translation
-   to Lambda; the rest of the pipeline (Mid, Low, the stack target, and
-   Codegen for `-O0`) only if a new Lambda construct is required.
+   to Lambda; the rest of the pipeline (Mid, Low and the targets) only if
+   a new Lambda construct is required.
 2. If the VM needs a new instruction or primitive: `src/isa/stack.sml` /
    `src/isa/prims.sml` and `make isa`, implement in `vm/`, document in
    `docs/bytecode.md`.

@@ -1,8 +1,8 @@
 (* The stack target (docs/ir.md; docs/plans/middle-end.md, M4): runevm's
-   bytecode from Low, in Codegen's instruction lists, which Emit writes.
+   bytecode from Low, in the instruction lists of Code, which Emit writes.
 
    * Constants, globals, captured values and the running closure are pushed
-     where they are used, as Codegen pushes them, and never kept in a local.
+     where they are used, and never kept in a local.
    * A value used once, by an instruction of its own block that takes it in
      the order the stack gives it, stays on the stack: it is computed where
      that instruction's operands are pushed (a tree), with nothing between
@@ -21,14 +21,14 @@
      parameters from the last, so they move in parallel; a jump to the next
      block falls through, and one to a block that only returns its
      parameter is a return.
-   * A position is noted where it changes, as Codegen does. *)
-structure Stack : TARGET where type code = Codegen.program =
+   * A position is noted where it changes. *)
+structure Stack : TARGET where type code = Code.program =
 struct
-  type code = Codegen.program
+  type code = Code.program
   val info = Target.stack
 
   structure L = Low
-  structure C = Codegen
+  structure C = Code
 
   fun bug msg = Error.bug ("Stack: " ^ msg)
 
@@ -200,23 +200,23 @@ struct
               code := C.Op (Opcodes.TEELOCAL, [k]) :: rest
             else code := it :: !code
         | _ => code := it :: !code
-      val here : (int * int * int) ref = ref (~1, ~1, ~1)
-      fun at (sp : Source.span) =
+      val here : (int * int * int * int) ref = ref (~1, ~1, ~1, ~1)
+      fun at ((sp, frames) : L.pos) =
         case Source.lineColOf sp of
           NONE => ()
         | SOME (file, line, col) =>
-            let val p = (C.fileIdx file, line, col)
+            let val p = (C.fileIdx file, line, col, C.inlineIdx frames)
             in if p = !here then () else (here := p; emit (C.Pos p)) end
-      val () = case #pos f of SOME sp => at sp | NONE => ()
+      val () = case #pos f of SOME sp => at (sp, []) | NONE => ()
       val labels = Vector.tabulate (nblocks, fn _ => C.newLabel ())
       fun labelOf i = Vector.sub (labels, i)
       fun op' (opc, args) = emit (C.Op (opc, args))
 
       (* the code of each tree, kept until its use pushes it, with the
          positions in force where it begins and ends *)
-      val trees : (C.item list * (int * int * int) * (int * int * int)) option array = Array.array (nv, NONE)
+      val trees : (C.item list * (int * int * int * int) * (int * int * int * int)) option array = Array.array (nv, NONE)
       val pendingTrees = ref 0
-      fun restore p = if p = !here orelse p = (~1, ~1, ~1) then () else (here := p; emit (C.Pos p))
+      fun restore p = if p = !here orelse p = (~1, ~1, ~1, ~1) then () else (here := p; emit (C.Pos p))
 
       fun load x =
         case Array.sub (trees, x) of
@@ -378,6 +378,7 @@ struct
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
     in
       {consts = List.rev (!C.consts), nglobals = !C.nglobals, funcs = sorted, files = List.rev (!C.files),
+       inlines = List.rev (!C.inlines),
        nlabels = !C.nextLabel}
     end
 end
