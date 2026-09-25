@@ -107,8 +107,94 @@ struct
                           end) is
             @ ["};",
                "",
+               "/* Where control goes after each, whether it may raise, and what it does",
+               "   to the handlers (src/isa/isa.sml), for the JIT's runs and its check",
+               "   of a function (vm/new/jit/compile.c); the enum is vm/opcodes.h's. */",
+               "static const unsigned char rop_flow[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          "  FLOW_" ^ (case #flow i of
+                                        Next => "NEXT" | Branch => "BRANCH" | Jump => "JUMP" | Call => "CALL"
+                                      | TailCall => "TAILCALL" | Return => "RETURN" | Raise => "RAISE"
+                                      | Halt => "HALT" | Switch => "SWITCH") ^ ",") is
+            @ ["};",
+               "static const unsigned char rop_raises[] = {"]
+            @ List.map (fn (_, i : rinstruction) => "  " ^ (if #raises i then "1" else "0") ^ ",") is
+            @ ["};",
+               "/* 0 keeps the handlers, 1 installs one, 2 removes one */",
+               "static const unsigned char rop_handlers[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          "  " ^ (case #handlers i of Keeps => "0" | Installs => "1" | Removes => "2") ^ ",") is
+            @ ["};",
+               "",
                "#endif"])}
     end
+
+  (* ---- the emitters of the JIT (vm/new/jit/emit.c): the prototypes, so
+     that an instruction without one does not build, and the cases that
+     read each instruction's operands and call it ---- *)
+
+  (* the parameters of an instruction's emitter: the context, the pc, the
+     fixed operands, and a list's registers and length *)
+  fun emitParams (i : rinstruction) =
+    let
+      val nf = List.length (fixed i)
+      val letters = ["a", "b", "c", "d"]
+    in
+      ["Jit *j", "uint32_t pc"]
+      @ List.tabulate (nf, fn k => "int32_t " ^ List.nth (letters, k))
+      @ (case list i of SOME _ => ["const uint8_t *L", "uint32_t n"] | NONE => [])
+    end
+
+  fun jitEmitH (instrs : rinstruction list) : file =
+    {path = "vm/new/jit_emit.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The emitters of tier 1 (vm/new/jit/emit.c), one per instruction of",
+           "   src/isa/regs.sml: an instruction without one does not build. */",
+           "#ifndef RUNE_JIT_EMIT_H",
+           "#define RUNE_JIT_EMIT_H",
+           "",
+           "typedef struct Jit Jit;",
+           ""]
+          @ List.map (fn (i : rinstruction) => "void emit_" ^ #name i ^ "(" ^ commaList (emitParams i) ^ ");") instrs
+          @ ["", "#endif"])}
+
+  fun jitCases (instrs : rinstruction list) : file =
+    {path = "vm/new/jit_cases.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The cases of the JIT's walk over a function (vm/new/jit/compile.c):",
+           "   each instruction's operands read as the loop reads them, and its",
+           "   emitter called. */"]
+          @ List.concat
+              (List.map (fn (i : rinstruction) =>
+                           let
+                             val nf = List.length (fixed i)
+                             val letters = ["a", "b", "c", "d"]
+                             val reads =
+                               List.tabulate (nf, fn k =>
+                                 "int32_t " ^ List.nth (letters, k) ^ " = read_i32(code + pc + " ^ Int.toString (1 + 4 * k) ^ ");")
+                             val len = Int.toString (1 + 4 * nf)
+                             val listReads =
+                               case list i of
+                                 SOME (_, Registers k) =>
+                                   ["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                    "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"]
+                               | SOME (_, PrimArgs k) =>
+                                   ["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                    "uint32_t n = prim_arity[" ^ List.nth (letters, k) ^ "];"]
+                               | _ => []
+                             val args =
+                               ["j", "pc"] @ List.tabulate (nf, fn k => List.nth (letters, k))
+                               @ (case list i of SOME _ => ["L", "n"] | NONE => [])
+                           in
+                             ["case ROP_" ^ #name i ^ ": {"]
+                             @ IsaGen.indent 4 (reads @ listReads @ ["emit_" ^ #name i ^ "(" ^ commaList args ^ ");", "break;"])
+                             @ ["}"]
+                           end)
+                        instrs))}
 
   (* Each case of the loop (vm/new/interp.c) reads its own operands -- the
      fixed ones, and for a list where it begins and how long it is -- moves
@@ -216,6 +302,7 @@ struct
       val () = RegIsa.check instrs
       val fp = fingerprint (instrs, prims)
     in
-      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regLabels instrs, regcodesSml (instrs, fp)]
+      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regLabels instrs, jitEmitH instrs, jitCases instrs,
+       regcodesSml (instrs, fp)]
     end
 end

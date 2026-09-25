@@ -42,6 +42,7 @@ enum RunResult {
 typedef struct CodeObject {
     const void *entry;
     uint32_t tier;
+    uint32_t size;          /* bytes of code */
     uint32_t calls;
     uint32_t loops;
 } CodeObject;
@@ -53,6 +54,11 @@ typedef struct JitProgram {
     uint32_t nfuncs;
     CodeObject *codes;
     const void *at;         /* where native code is entered next (RUN_NATIVE) */
+    /* the code region: one mapping, executable, made writable to add a
+       function's code (M4); its stubs enter native code and leave it */
+    uint8_t *code_mem;
+    size_t code_cap, code_used;
+    const void *enter_at, *leave_at;
     /* --jit-stats */
     uint64_t handed_native;     /* times the interpreter handed a frame to native code */
     uint64_t handed_interp;     /* times native code handed one back */
@@ -72,5 +78,7 @@ int jit_run(VM *vm, JitProgram *jit, const void *at);
 void jit_print_stats(void);
 /* --jit-check: executable memory, and code in it, work on this machine */
 int jit_check(void);
+/* tier 1: function f compiled, or not (vm/new/jit/compile.c) */
+int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
 
 #endif

@@ -1,8 +1,7 @@
 /* The JIT of vm/new (docs/plans/jit.md): its code objects and the driver's
-   protocol (jit.h), and, in M3, no compiler yet -- every entry --jit=all
-   makes is a stub that hands the frame back to the interpreter, so that the
-   protocol is run by every call of every suite before a line of machine
-   code exists. The compiler comes in M4. */
+   protocol (jit.h); the compiler is vm/new/jit (compile.c), tier 1 from
+   M4. Under --jit=all every function tier 1 can compile is compiled when
+   the program is first seen; the rest stay interpreted. */
 #include "jit.h"
 #include "sys.h"
 
@@ -13,11 +12,6 @@
 static JitProgram *the_program;   /* one VM per process, for --jit-stats */
 static VM *the_vm;
 
-/* The stub: an "entry" that is no code. The driver knows it by address and
-   answers RUN_INTERP for it, counting the hand-back. */
-static const int stub_entry = 0;
-const void *const jit_stub = &stub_entry;
-
 static void jit_make(VM *vm, JitProgram *jit) {
     Program *p = &vm->prog;
     free(jit->codes);
@@ -26,12 +20,19 @@ static void jit_make(VM *vm, JitProgram *jit) {
     jit->code = p->code;
     jit->nfuncs = p->nfuncs;
     jit->compiled = 0;
+    /* the code of the program before is left where it is: a frame of an
+       image never returns into it, since native_ret is not carried */
+    jit->code_used = jit->code_mem ? jit->code_used : 0;
     if (vm->jit_mode == JIT_ALL) {
-        for (uint32_t i = 0; i < p->nfuncs; i++) {
-            jit->codes[i].tier = 1;
-            jit->codes[i].entry = jit_stub;   /* published last */
-            jit->compiled++;
+        /* RUNEVM_JIT_FUNCS=LO-HI compiles functions LO to HI alone: for
+           finding, by halving, a function whose code is wrong */
+        uint32_t lo = 0, hi = p->nfuncs;
+        const char *only = getenv("RUNEVM_JIT_FUNCS");
+        if (only) {
+            unsigned long a = 0, b = 0;
+            if (sscanf(only, "%lu-%lu", &a, &b) == 2 && a <= b) { lo = (uint32_t)a; hi = b < p->nfuncs ? (uint32_t)b + 1 : p->nfuncs; }
         }
+        for (uint32_t i = lo; i < hi; i++) jit_compile(vm, jit, i);
     }
 }
 
@@ -48,20 +49,18 @@ JitProgram *jit_program(VM *vm) {
 }
 
 int jit_run(VM *vm, JitProgram *jit, const void *at) {
-    (void)vm;
-    if (at == jit_stub) {
-        jit->handed_interp++;
-        return RUN_INTERP;
-    }
-    fprintf(stderr, "runevm: no code to run at %p\n", at);
-    exit(2);
+    int (*enter)(VM *, const void *);
+    memcpy(&enter, &jit->enter_at, sizeof enter);
+    int r = enter(vm, at);
+    if (r == RUN_INTERP) jit->handed_interp++;
+    return r;
 }
 
 void jit_print_stats(void) {
     JitProgram *jit = the_program;
     if (!jit) return;
-    fprintf(stderr, "runevm: jit: %llu of %u functions with an entry; handed to native code %llu times, back %llu\n",
-            (unsigned long long)jit->compiled, jit->nfuncs,
+    fprintf(stderr, "runevm: jit: %llu of %u functions compiled, %llu bytes of code; handed to native code %llu times, back %llu\n",
+            (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->code_used,
             (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp);
 }
 

@@ -314,6 +314,10 @@ int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm
    not one. vm_jit_check runs --jit-check and gives the exit status. */
 int vm_jit_arg(const char *arg, int *mode, int *stats, int *check);
 int vm_jit_check(void);
+/* RUNEVM_JIT in the environment, the mode where no --jit= is given: taken
+   by vm/new, ignored by runevm (the compiler runs on it); 0 for a mode
+   that is none. */
+int vm_jit_env(const char *mode, int *out);
 
 /* In a program runeopt made (vm/native.c), whether a world read from an
    image runs the program it carries; NULL in runevm, which runs any. */

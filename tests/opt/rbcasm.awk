@@ -10,8 +10,11 @@
 #   function NAME LOCALS      the functions, in order: code follows each
 #   LABEL:                    a place in the code
 #   OPCODE OPERAND...         an operand is a number, @LABEL, %CONST,
-#                             &FUNCTION, or for PRIM the primitive's name
-# There is no debug information.
+#                             &FUNCTION, or a primitive's name where the
+#                             .def says the operand is one (a PRIM's first)
+# An instruction whose last operand the .def writes with "..." (a list of
+# registers, vm/new/regs.def) takes the rest of the line. There is no debug
+# information.
 function le(v, bytes,    s, i, b) {
   s = ""
   if (v < 0) v += 2 ^ (8 * bytes)
@@ -32,6 +35,9 @@ BEGIN {
     split(l, f, /[ \t]+/)
     opnum[f[1]] = n++
     opargs[f[1]] = (f[2] == "-") ? 0 : split(f[2], junk, ",")
+    oplist[f[1]] = (f[2] ~ /\.\.\.$/) ? 1 : 0
+    if (oplist[f[1]]) opargs[f[1]]--
+    opprim[f[1]] = (f[2] ~ /^p(,|$)/) ? 1 : 0
   }
   n = 0
   while ((getline l < primdefs) > 0) {
@@ -58,7 +64,7 @@ $1 == "function" { funcidx[$2] = nfuncs; fname[nfuncs] = $2; flocals[nfuncs] = $
 {
   if (!($1 in opnum)) { print "rbcasm: unknown opcode " $1 > "/dev/stderr"; exit 1 }
   ins[nins] = $0; inspc[nins++] = pc
-  pc += 1 + 4 * opargs[$1]
+  pc += 1 + 4 * (oplist[$1] ? NF - 1 : opargs[$1])
 }
 END {
   code = ""
@@ -67,9 +73,10 @@ END {
     j = (f[1] == "") ? 2 : 1
     op = f[j]
     code = code sprintf("\\%03o", opnum[op])
-    for (a = 1; a <= opargs[op]; a++) {
+    nargs = oplist[op] ? length(f) - j : opargs[op]
+    for (a = 1; a <= nargs; a++) {
       x = f[j + a]
-      if (op == "PRIM") v = primnum[x]
+      if (opprim[op] && a == 1) v = primnum[x]
       else if (x ~ /^@/) v = label[substr(x, 2)]
       else if (x ~ /^%/) v = constidx[substr(x, 2)]
       else if (x ~ /^&/) v = funcidx[substr(x, 2)]

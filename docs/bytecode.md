@@ -248,11 +248,14 @@ refuses the other's file and image.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it.
-* **The JIT** (`docs/plans/jit.md`; `vm/new/ARCHITECTURE.md`, The driver):
-  `--jit=off|baseline|opt|all` says which functions get native code,
-  `--jit-stats` prints at exit what the JIT did, and `--jit-check` runs a
-  few bytes of code from executable memory and exits. `runevm` refuses all
-  three: the JIT is `vm/new`'s.
+* **The JIT** (`docs/plans/jit.md`; `vm/new/ARCHITECTURE.md`, The driver
+  and Tier 1): `--jit=off|baseline|opt|all` says which functions get
+  native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is
+  given, which `runevm` ignores, since the compiler runs on it), `--jit-stats`
+  prints at exit what the JIT did, and `--jit-check` runs a few bytes of
+  code from executable memory and exits. `runevm` refuses all three
+  options: the JIT is `vm/new`'s. Compiled code counts, allocates
+  and prints what the loop does: `scripts/check-jit.sh` holds it to that.
 
 | Opcode | Operands | Effect |
 |---|---|---|

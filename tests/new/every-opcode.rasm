@@ -1,0 +1,184 @@
+# A program that runs every instruction of vm/new/regs.def at least once,
+# HALT, SELF, SETENV and JUMPIF among them, which the compiler never
+# writes, each in a function the JIT compiles: scripts/check-jit.sh makes
+# it with tests/opt/rbcasm.awk, runs it on vm/new interpreted and with
+# every function compiled, and wants the same output and the same counts.
+# A new instruction goes in here too.
+# An operand list (a TUPLE's fields, a PRIM's arguments) is the rest of the
+# line.
+
+const start string "every instruction\n"
+const nl string "\n"
+const exn string "Mine"
+const caught string "caught "
+const done string "done\n"
+const bad string "wrong\n"
+const seven int 7
+globals 2
+
+# main: registers 0 (the argument), 1 to 9
+function main 10
+  CONST 1 %start
+  PRIM print 2 1
+  # INT, MOVE, TUPLE, SELECT: 1 + 2 = 3
+  INT 1 1
+  INT 2 2
+  MOVE 3 2
+  TUPLE 4 2 1 3
+  SELECT 5 0 4
+  SELECT 6 1 4
+  PRIM int_add 7 5 6
+  CALLK &show 1 7
+  RESULT 8
+  # UNIT, CON0, GLOBAL, SETGLOBAL: a global set and read back
+  UNIT 1
+  CON0 2 1
+  SETGLOBAL 0 2
+  GLOBAL 3 0
+  JUMPIFNOT 3 @bad
+  JUMPIF 3 @ok1
+  JUMP @bad
+ok1:
+  # CONST, CONTAG, JUMPIFNOTTAG, SWITCH on a constructor with an argument
+  INT 1 5
+  CON 2 3 1
+  CONTAG 3 2
+  CALLK &show 1 3
+  RESULT 8
+  JUMPIFNOTTAG 2 @bad 3
+  DECON 4 2 3
+  CALLK &show 1 4
+  RESULT 8
+  SWITCH 2 4
+  JUMP @bad
+  JUMP @bad
+  JUMP @bad
+  JUMP @sw3
+  JUMP @bad
+sw3:
+  # CONN, FIELD: a constructor of two fields
+  INT 1 8
+  INT 2 9
+  CONN 3 2 2 1 2
+  FIELD 4 3 2 1
+  CALLK &show 1 4
+  RESULT 8
+  # CLOSURE, CALL, TAILCALL, ENV, SELF, SETENV: a closure of adder over 7,
+  # called, and one that calls itself once
+  CONST 1 %seven
+  CLOSURE 2 &adder 1 1
+  INT 3 100
+  CALL 2 3
+  RESULT 4
+  CALLK &show 1 4
+  RESULT 8
+  CLOSURE 5 &selfish 1 1
+  INT 6 3
+  SETENV 5 0 6
+  INT 3 0
+  CALL 5 3
+  RESULT 4
+  CALLK &show 1 4
+  RESULT 8
+  # exceptions: NEWEXN, MKEXN, RAISE, PUSHHANDLER, CATCH, EXNCON, EXNARG,
+  # BUILTINEXN, POPHANDLER
+  NEWEXN 1 %exn
+  PUSHHANDLER @handler
+  INT 2 42
+  MKEXN 3 1 2
+  RAISE 3
+  JUMP @bad
+handler:
+  CATCH 4
+  EXNCON 5 4
+  EXNARG 6 4
+  CONST 7 %caught
+  PRIM print 8 7
+  CALLK &show 1 6
+  RESULT 8
+  BUILTINEXN 7 2
+  PUSHHANDLER @handler2
+  INT 1 1
+  INT 2 0
+  PRIM int_div 3 1 2
+  JUMP @bad
+handler2:
+  CATCH 4
+  EXNCON 5 4
+  BUILTINEXN 6 3
+  PRIM ptr_eq 7 5 6
+  JUMPIFNOT 7 @bad
+  PUSHHANDLER @never
+  POPHANDLER
+  # a closure that names itself, patches its own environment and tests a
+  # bool with JUMPIF, twice: SELF, SETENV, JUMPIF in a leaf the JIT compiles
+  INT 3 10
+  CLOSURE 1 &twiddle 1 3
+  CON0 2 1
+  CALL 1 2
+  RESULT 4
+  CALL 1 2
+  RESULT 4
+  CALLK &show 1 4
+  RESULT 8
+  # PRIMPUSH and RESULT with a primitive that answers and saves nothing,
+  # then TAILCALLK into finish, which HALTs
+  UNIT 1
+  PRIMPUSH rt_instructions 1
+  RESULT 2
+  INT 1 0
+  TAILCALLK &finish 1 1
+never:
+  JUMP @bad
+bad:
+  CONST 1 %bad
+  PRIM print 2 1
+  HALT
+
+# show n: prints n and a newline
+function show 4
+  PRIM int_to_string 1 0
+  PRIM print 2 1
+  CONST 2 %nl
+  PRIM print 3 2
+  UNIT 3
+  RET 3
+
+# adder: a closure over its environment's first slot, adding its argument
+function adder 3
+  ENV 1 0
+  PRIM int_add 2 0 1
+  RET 2
+
+# selfish: called with 0, calls itself (SELF) with 1 as a tail call, and
+# returns its environment's slot then
+function selfish 4
+  INT 1 1
+  PRIM int_lt 2 0 1
+  JUMPIFNOT 2 @again
+  SELF 3
+  TAILCALL 3 1
+again:
+  ENV 1 0
+  RET 1
+
+# twiddle b: adds one to its environment's slot through its own closure
+# (SELF, SETENV) and returns the slot where b is true, 0 where not
+function twiddle 5
+  SELF 1
+  ENV 2 0
+  INT 3 1
+  PRIM int_add 3 2 3
+  SETENV 1 0 3
+  JUMPIF 0 @yes
+  INT 4 0
+  RET 4
+yes:
+  ENV 4 0
+  RET 4
+
+# finish: prints done and stops
+function finish 3
+  CONST 1 %done
+  PRIM print 2 1
+  HALT

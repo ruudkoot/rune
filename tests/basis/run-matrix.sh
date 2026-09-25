@@ -18,6 +18,8 @@
 #   rune:opt               bin/rune, and every program translated to native
 #                          code by runeopt and run so: bin/runevm-opt
 #                          (RUNEVM_OPT=; docs/native.md)
+#   rune:jit               the same, with every function tier 1 compiles compiled
+#                          (bin/runevm-new-jit, RUNEVM_NEW_JIT=; make test-new-jit)
 #   rune:new               bin/rune making the register bytecode of vm/new
 #                          (bin/rune-new, RUNE_NEW=) and vm/new's first loop
 #                          running it (bin/runevm-new, RUNEVM_NEW=;
@@ -920,6 +922,15 @@ resolve() {
       cmd2=${RUNEVM_NEW:-$root/bin/runevm-new}
       id=rune:new
       [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make bin/rune-new bin/runevm-new)" >&2; return 1; }
+      ;;
+    rune:jit)
+      # The register bytecode with every function tier 1 can compile
+      # compiled (docs/plans/jit.md): bin/runevm-new --jit=all, through the
+      # wrapper make test-new-jit writes.
+      cmd1=${RUNE_NEW:-$root/bin/rune-new}
+      cmd2=${RUNEVM_NEW_JIT:-$root/bin/runevm-new-jit}
+      id=rune:jit
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make test-new-jit)" >&2; return 1; }
       ;;
     rune:linux32|rune:ppc64)
       # The library and the compiler of the `rune` configuration on a VM of
