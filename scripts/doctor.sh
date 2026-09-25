@@ -98,6 +98,14 @@ pkg() {
     *:readelf|*:addr2line) echo binutils ;;
     apt:dwarfdump) echo dwarfdump ;;      *:dwarfdump) echo libdwarf-tools ;;
     apt:llvm-dwarfdump) echo llvm ;;      *:llvm-dwarfdump) echo llvm ;;
+    apt:ppc64libc) echo libc6-dev-ppc64-cross ;;
+    # clang takes the crt files and libgcc from a GCC cross installation;
+    # libgcc-N-dev-ppc64-cross has them, where gcc-powerpc64-linux-gnu
+    # conflicts with gcc-multilib (the 32-bit VM and SML/NJ)
+    apt:ppc64cc) v=$(gcc -dumpversion 2> /dev/null | cut -d . -f 1)
+      echo binutils-powerpc64-linux-gnu libgcc-${v:-13}-dev-ppc64-cross ;;
+    apt:qemuppc) echo qemu-user ;;        dnf:qemuppc) echo qemu-user ;;
+    *:clang) echo clang ;;
     *:gdb|*:lldb|*:bash) echo "$1" ;;
     none:*) echo - ;;
     *:make|*:gawk|*:sed|*:grep|*:diffutils|*:curl|*:tar|*:valgrind) echo "$1" ;;
@@ -120,6 +128,8 @@ manual=""
 ok() { [ $quiet = 1 ] || printf '  ok       %-10s %s\n' "$1" "$2"; }
 warn() { printf '  warn     %-10s %s\n' "$1" "$2"; }
 note() { [ $quiet = 1 ] || printf '  note     %-10s %s\n' "$1" "$2"; }
+# skipped WHAT WHY: a check that cannot run because an earlier one failed.
+skipped() { [ $quiet = 1 ] || printf '  skipped  %-10s %s\n' "$1" "$2"; }
 # bad WHAT MESSAGE THING: a required tool is missing or broken.
 bad() {
   printf '  MISSING  %-10s %s\n' "$1" "$2"
@@ -275,6 +285,30 @@ if in_scope check; then
   else bad timeout "not found on PATH" coreutils
   fi
   ok cpus "$(sh scripts/ncpus.sh) (parallel jobs)"
+  # what tests/basis/inet6sock.sml asks: can a socket be bound to ::1
+  cat > "$tmp/ipv6.c" << 'EOF'
+#define _POSIX_C_SOURCE 200809L
+#include <netinet/in.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+int main(void) {
+    struct sockaddr_in6 a;
+    int s = socket(AF_INET6, SOCK_STREAM, 0);
+    if (s < 0) return 1;
+    memset(&a, 0, sizeof a);
+    a.sin6_family = AF_INET6;
+    a.sin6_addr = in6addr_loopback;
+    if (bind(s, (struct sockaddr *)&a, sizeof a) != 0) { close(s); return 1; }
+    close(s);
+    return 0;
+}
+EOF
+  if ! "$CC" -std=c99 -o "$tmp/ipv6" "$tmp/ipv6.c" > "$tmp/ipv6.log" 2>&1; then
+    note ipv6 "not checked: $CC cannot compile the probe"
+  elif "$tmp/ipv6"; then ok ipv6 "a socket can be bound to ::1"
+  else warn ipv6 "no IPv6 here (no socket can be bound to ::1): make test-basis skips the INet6Sock checks of sockets"
+  fi
 fi
 
 # ---------------------------------------------------------------- matrix
@@ -336,8 +370,14 @@ if in_scope native; then
     else bad native "$CC cannot assemble and link x86-64 code: $(head -1 "$tmp/native.log")" cc
     fi
     for t in gdb lldb readelf addr2line dwarfdump perf; do
-      if path=$(command -v $t 2> /dev/null); then ok $t "$path"
-      else warn $t "not found (optional: the checks of debug information; package: $(pkg $t))"
+      if ! path=$(command -v $t 2> /dev/null); then
+        warn $t "not found (optional: the checks of debug information; package: $(pkg $t))"
+      # Ubuntu's perf is a wrapper that refuses a kernel it has no
+      # linux-tools package for (WSL2, a cloud VM's): present, but not working
+      elif [ $t = perf ] && ! perf --version > /dev/null 2>&1; then
+        tools=$(ls -d /usr/lib/linux-tools/*/perf 2> /dev/null | head -1)
+        warn perf "$path does not run under kernel $(uname -r)${tools:+ (try: ln -sf $tools /usr/local/bin/perf)}"
+      else ok $t "$path"
       fi
     done
     # llvm-dwarfdump is often installed under the name of its version only
@@ -394,27 +434,29 @@ EOF
   if ${PORTCC32:-cc} -std=c99 -m32 -o "$tmp/port32" "$tmp/port.c" > "$tmp/port32.log" 2>&1; then
     ok "${PORTCC32:-cc} -m32" "compiles for a 32-bit x86"
   else
-    bad "${PORTCC32:-cc} -m32" "cannot compile for a 32-bit x86: $(head -1 "$tmp/port32.log")" gcc-multilib
+    bad "${PORTCC32:-cc} -m32" "cannot compile for a 32-bit x86: $(head -1 "$tmp/port32.log")" m32
   fi
   ppcroot=${PPCROOT:-/usr/powerpc64-linux-gnu}
   if ! command -v "${PPCCC:-clang}" > /dev/null 2>&1; then
     bad "${PPCCC:-clang}" "not found on PATH (the PowerPC VM)" clang
   elif [ ! -f "$ppcroot/lib/libc.so.6" ]; then
-    bad "$ppcroot" "no libc for powerpc64 there (PPCROOT names it)" libc6-dev-ppc64-cross
+    bad "$ppcroot" "no libc for powerpc64 there (PPCROOT names it)" ppc64libc
   elif "${PPCCC:-clang}" -std=c99 --target=powerpc64-linux-gnu -B"$ppcroot/bin" -L"$ppcroot/lib" \
         -I"$ppcroot/include" -Wl,-dynamic-linker,"$ppcroot/lib/ld64.so.1" \
         -o "$tmp/portppc" "$tmp/port.c" > "$tmp/portppc.log" 2>&1; then
     ok "${PPCCC:-clang}" "compiles for a big-endian powerpc64"
   else
-    bad "${PPCCC:-clang}" "cannot compile for powerpc64: $(head -1 "$tmp/portppc.log")" binutils-powerpc64-linux-gnu
+    bad "${PPCCC:-clang}" "cannot compile for powerpc64: $(head -1 "$tmp/portppc.log")" ppc64cc
   fi
   qemu=${QEMUPPC:-qemu-ppc64}
   if ! command -v "${qemu%% *}" > /dev/null 2>&1; then
-    bad "${qemu%% *}" "not found on PATH: make test-portability runs the PowerPC VM with it" qemu-user
-  elif [ -x "$tmp/portppc" ] && [ "$("${qemu%% *}" -L "$ppcroot" "$tmp/portppc" 2> /dev/null)" = "8 0" ]; then
+    bad "${qemu%% *}" "not found on PATH: make test-portability runs the PowerPC VM with it" qemuppc
+  elif [ ! -x "$tmp/portppc" ]; then
+    skipped "${qemu%% *}" "the powerpc64 program did not build (see above), so there is nothing to run"
+  elif [ "$("${qemu%% *}" -L "$ppcroot" "$tmp/portppc" 2> /dev/null)" = "8 0" ]; then
     ok "${qemu%% *}" "runs a big-endian powerpc64 program"
   else
-    bad "${qemu%% *}" "cannot run a powerpc64 program here" qemu-user
+    bad "${qemu%% *}" "cannot run a powerpc64 program here" qemuppc
   fi
 fi
 

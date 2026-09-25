@@ -16,7 +16,8 @@
 #    (smlnj32: 31-bit int and word, which has found many portability bugs;
 #    needs gcc -m32). Not the LLVM-based 2025 series, which does not build
 #    without cmake.
-#  * Poly/ML: built from the source release with ./configure && make.
+#  * Poly/ML: built from the source release with ./configure && make (from a
+#    clone of the release's tag where the archive cannot be downloaded).
 # No build here starts from an SML compiler of the machine, so none needs a
 # second stage to shed one: MLton comes as a binary; SML/NJ compiles its C
 # runtime and loads the compiler from the boot files of the same release;
@@ -119,9 +120,19 @@ install_smlnj32() { install_smlnj_bits smlnj32 32; }
 install_polyml() {
   v=$POLYML_VERSION
   if installed polyml "$v"; then echo "polyml $v is already installed"; return; fi
-  fetch "https://github.com/polyml/polyml/archive/refs/tags/v$v.tar.gz" "$prefix/src/polyml-$v.tar.gz"
   rm -rf "$prefix/polyml-$v" "$prefix/src/polyml-$v"
-  tar -xzf "$prefix/src/polyml-$v.tar.gz" -C "$prefix/src"
+  # The release's archive, or, where it cannot be downloaded, a clone of the
+  # release's tag, which has the same sources: a cloud session whose GitHub
+  # access covers only its own repositories is refused the archive (403)
+  # but may clone a public repository (cloud/SETUP.md).
+  if fetch "https://github.com/polyml/polyml/archive/refs/tags/v$v.tar.gz" "$prefix/src/polyml-$v.tar.gz"; then
+    tar -xzf "$prefix/src/polyml-$v.tar.gz" -C "$prefix/src"
+  else
+    rm -f "$prefix/src/polyml-$v.tar.gz"
+    echo "fetch-hosts: the archive of Poly/ML $v could not be downloaded; cloning its tag v$v instead"
+    git clone -q --depth 1 --branch "v$v" https://github.com/polyml/polyml "$prefix/src/polyml-$v" ||
+      { echo "fetch-hosts: neither the archive nor a clone of Poly/ML $v could be fetched" >&2; return 1; }
+  fi
   (cd "$prefix/src/polyml-$v" &&
      ./configure --prefix="$prefix/polyml-$v" &&
      make -j "$jobs" && make compiler && make install) > "$prefix/src/polyml-$v.log" 2>&1 ||
@@ -131,9 +142,26 @@ install_polyml() {
 }
 
 status=0
+# The hosts are installed all at once, each in the background with its
+# output kept apart and shown when all are done: a fresh machine then waits
+# for the slowest (Poly/ML) rather than for the four in turn. The two
+# SML/NJ builds share one download, which is fetched first.
+case " $hosts " in
+  *" smlnj "*|*" smlnj32 "*)
+    if [ ! -f "$prefix/src/smlnj-$SMLNJ_VERSION-config.tgz" ]; then
+      fetch "https://smlnj.cs.uchicago.edu/dist/working/$SMLNJ_VERSION/config.tgz" \
+        "$prefix/src/smlnj-$SMLNJ_VERSION-config.tgz" || status=1
+    fi ;;
+esac
+for h in $hosts; do
+  ( if "install_$h" > "$prefix/src/fetch-$h.out" 2>&1; then echo 0; else echo 1; fi > "$prefix/src/fetch-$h.status" ) &
+done
+wait
 for h in $hosts; do
   echo "== $h"
-  "install_$h" || status=1
+  cat "$prefix/src/fetch-$h.out"
+  [ "$(cat "$prefix/src/fetch-$h.status" 2> /dev/null)" = 0 ] || status=1
+  rm -f "$prefix/src/fetch-$h.out" "$prefix/src/fetch-$h.status"
 done
 
 echo "== installed under $prefix"

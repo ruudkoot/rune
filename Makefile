@@ -26,6 +26,10 @@
 #   make bootstrap  verify that the self-hosted compiler reproduces bin/rune.rbc
 #   make check      everything above
 #   make doctor     check that the tools all targets need are installed
+#   make envcheck   report on the machine: CPU, instruction set, cores and
+#                   neighbours, memory, disk and network (docs/envcheck.md);
+#                   ENVCHECK=--slow for steadier figures, --commit-test to
+#                   find how much memory can be used (it may be killed)
 #   make matrix-quick  the Basis Library suite on Rune and on Rune's library
 #                   compiled by each of the hosts
 #   make matrix     matrix-quick and the suite on each host's own library
@@ -120,7 +124,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -135,6 +139,11 @@ doctor:
 	@PORTCC32="$(PORTCC32)" PPCCC="$(PPCCC)" PPCROOT="$(PPCROOT)" QEMUPPC="$(QEMUPPC)" \
 	  sh scripts/doctor.sh --scope portability || \
 	  echo "doctor: these are optional too: only make portability and make test-portability need them"
+
+# ENVCHECK passes options to scripts/envcheck.sh: --slow, --commit-test,
+# --json FILE, --markdown.
+envcheck:
+	@sh scripts/envcheck.sh $(ENVCHECK)
 
 build/.doctor-%: scripts/doctor.sh
 	@mkdir -p build

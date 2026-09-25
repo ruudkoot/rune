@@ -5,7 +5,9 @@
 val () = print ("pid > 0: " ^ Bool.toString (SysWord.toInt (Posix.Process.pidToWord (Posix.ProcEnv.getpid ())) > 0) ^ "\n")
 val () = print ("uname names the system: "
                 ^ Bool.toString (List.exists (fn (k, v) => k = "sysname" andalso v <> "") (Posix.ProcEnv.uname ())) ^ "\n")
-val () = print ("groups: " ^ Bool.toString (not (List.null (Posix.ProcEnv.getgroups ()))) ^ "\n")
+(* A process may have no supplementary groups (root in a container), so the
+   list may be empty; it is the same list each time it is asked for. *)
+val () = print ("groups: " ^ Bool.toString (Posix.ProcEnv.getgroups () = Posix.ProcEnv.getgroups ()) ^ "\n")
 (* Windows writes it Path *)
 val () = print ("environ has PATH: "
                 ^ Bool.toString (List.exists (String.isPrefix "PATH=" o String.map Char.toUpper) (Posix.ProcEnv.environ ())) ^ "\n")

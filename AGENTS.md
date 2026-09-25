@@ -135,6 +135,12 @@ keep these invariants:
   Poly/ML build files are generated from them — never edit `build/`.
 * The SML systems come from `make hosts` (`${RUNE_HOSTS:-~/.local/rune-hosts}`),
   never from the machine's PATH.
+* In a cloud coding environment (e.g. `CLAUDE_CODE_REMOTE=true`), follow
+  `cloud/SETUP.md` first. On Claude Code on the web its session-start hook
+  (or the environment's setup script, where several repositories keep the
+  hook from running) prepares the machine and writes what it did to
+  `/tmp/rune-session-start.status`; where that file is missing, run
+  `make doctor` and ask the user before installing the packages it reports.
 * The compiler has no built-in library path: `--lib DIR` is required, and each
   `bin/rune*` is a generated wrapper that passes it and execs the payload next
   to it. Nothing absolute is baked into the bytecode. `make install` writes the
@@ -206,3 +212,9 @@ keep these invariants:
   (`vm_fatal` on bytecode type errors), heap pointers never live in C locals
   across an allocation (see the GC discipline in `docs/architecture.md`).
 * Commit messages: imperative, one line summary.
+* Commits are authored by Ruud Koot <inbox@ruudkoot.nl>, also when an agent
+  makes them; an agent commits as Claude <noreply@anthropic.com>, whose
+  commits a cloud session can sign (git's `author.*` and `committer.*`
+  settings, which the session-start hook sets). An agent ends the message
+  with its `Co-Authored-By:` line and nothing else: no `Claude-Session:` or
+  other link to the session.

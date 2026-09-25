@@ -6,8 +6,10 @@
 
    A test file is one structure whose body calls the functions below. Every
    check has a label "Structure.member/case" (no spaces) and prints one line,
-   "PASS label" or "FAIL label -- why"; tests/basis/finish.sml then prints
-   "SUMMARY n checks, k failed" and exits with a failure status when k > 0.
+   "PASS label" or "FAIL label -- why", or "SKIP label -- why" when the
+   machine cannot run it (skipUnless below); tests/basis/finish.sml then
+   prints "SUMMARY n checks, k failed" (with ", s skipped" when s > 0) and
+   exits with a failure status when k > 0.
    The expected values in the tests are the hand-verified part of the suite:
    they are derived from the text of the Basis specification, never copied
    from the output of an implementation. *)
@@ -15,13 +17,41 @@ structure T =
 struct
   val passes = ref 0
   val failures = ref 0
+  val skips = ref 0
+
+  (* the reason the checks being made are skipped, inside skipUnless *)
+  val skipping : string option ref = ref NONE
+
+  fun skip (label : string, why : string) : unit =
+    (skips := !skips + 1; print ("SKIP " ^ label ^ " -- " ^ why ^ "\n"))
 
   fun pass (label : string) : unit =
-    (passes := !passes + 1; print ("PASS " ^ label ^ "\n"))
+    case !skipping of
+      SOME why => skip (label, why)
+    | NONE => (passes := !passes + 1; print ("PASS " ^ label ^ "\n"))
 
   fun fail (label : string, why : string) : unit =
-    (failures := !failures + 1;
-     print ("FAIL " ^ label ^ (if why = "" then "" else " -- " ^ why) ^ "\n"))
+    case !skipping of
+      SOME why' => skip (label, why')
+    | NONE => (failures := !failures + 1;
+               print ("FAIL " ^ label ^ (if why = "" then "" else " -- " ^ why) ^ "\n"))
+
+  (* skipUnless (ok, why) f: the checks that f makes; when not ok, each of
+     them is reported as skipped, with why, and none of their thunks runs.
+     It is for what the machine may lack (an IPv6 address, a terminal),
+     never for what an implementation lacks: that is a failure, which
+     deviations.txt explains. *)
+  fun skipUnless (ok : bool, why : string) (f : unit -> unit) : unit =
+    if ok orelse Option.isSome (!skipping) then f ()
+    else (skipping := SOME why;
+          (f () handle e => (skipping := NONE; raise e));
+          skipping := NONE)
+
+  (* guard label k: k (), which makes the check, unless it is skipped *)
+  fun guard (label : string) (k : unit -> unit) : unit =
+    case !skipping of
+      SOME why => skip (label, why)
+    | NONE => k ()
 
   (* ---- showing values (for failure messages only) ---- *)
   fun unit () = "()"
@@ -43,34 +73,34 @@ struct
   (* ---- checks ---- *)
 
   (* check (label, f): f () is true. *)
-  fun check (label, f : unit -> bool) : unit =
+  fun check (label, f : unit -> bool) : unit = guard label (fn () =>
     case (SOME (f ()) handle _ => NONE) of
       SOME true => pass label
     | SOME false => fail (label, "false")
-    | NONE => fail (label, "raised an exception")
+    | NONE => fail (label, "raised an exception"))
 
   (* eq show (label, expected, f): f () equals expected. *)
-  fun eq show (label, expected, f) : unit =
+  fun eq show (label, expected, f) : unit = guard label (fn () =>
     case (SOME (f ()) handle _ => NONE) of
       SOME v =>
         if v = expected then pass label
         else fail (label, "got " ^ show v ^ ", expected " ^ show expected)
-    | NONE => fail (label, "raised an exception, expected " ^ show expected)
+    | NONE => fail (label, "raised an exception, expected " ^ show expected))
 
   (* Reals: the same IEEE value (NaN equals NaN, 0.0 differs from ~0.0). *)
   fun sameReal (a : real, b : real) : bool =
     if Real.isNan a orelse Real.isNan b then Real.isNan a andalso Real.isNan b
     else Real.== (a, b) andalso Real.signBit a = Real.signBit b
 
-  fun eqReal (label, expected : real, f : unit -> real) : unit =
+  fun eqReal (label, expected : real, f : unit -> real) : unit = guard label (fn () =>
     case (SOME (f ()) handle _ => NONE) of
       SOME v =>
         if sameReal (v, expected) then pass label
         else fail (label, "got " ^ real v ^ ", expected " ^ real expected)
-    | NONE => fail (label, "raised an exception, expected " ^ real expected)
+    | NONE => fail (label, "raised an exception, expected " ^ real expected))
 
   (* approx (label, expected, f): equal up to a relative error of 1E~9. *)
-  fun approx (label, expected : real, f : unit -> real) : unit =
+  fun approx (label, expected : real, f : unit -> real) : unit = guard label (fn () =>
     case (SOME (f ()) handle _ => NONE) of
       SOME v =>
         let
@@ -79,16 +109,16 @@ struct
           if sameReal (v, expected) orelse Real.abs (v - expected) <= 1E~9 * scale then pass label
           else fail (label, "got " ^ real v ^ ", expected about " ^ real expected)
         end
-    | NONE => fail (label, "raised an exception, expected about " ^ real expected)
+    | NONE => fail (label, "raised an exception, expected about " ^ real expected))
 
   (* raises (label, isExpected, f): f () raises an exception that isExpected
      accepts. The predicates below cover the exceptions of the Basis. *)
-  fun raises (label, isExpected : exn -> bool, f : unit -> 'a) : unit =
+  fun raises (label, isExpected : exn -> bool, f : unit -> 'a) : unit = guard label (fn () =>
     case (SOME (ignore (f ())) handle e => (if isExpected e then pass label
                                             else fail (label, "raised a different exception");
                                             NONE)) of
       SOME () => fail (label, "no exception raised")
-    | NONE => ()
+    | NONE => ())
 
   val anyExn = fn (_ : exn) => true
   val isBind = fn Bind => true | _ => false
@@ -137,7 +167,8 @@ struct
     in go 0 end
 
   fun summary () : unit =
-    (print ("SUMMARY " ^ Int.toString (!passes + !failures) ^ " checks, "
-            ^ Int.toString (!failures) ^ " failed\n");
+    (print ("SUMMARY " ^ Int.toString (!passes + !failures + !skips) ^ " checks, "
+            ^ Int.toString (!failures) ^ " failed"
+            ^ (if !skips = 0 then "" else ", " ^ Int.toString (!skips) ^ " skipped") ^ "\n");
      OS.Process.exit (if !failures = 0 then OS.Process.success else OS.Process.failure))
 end

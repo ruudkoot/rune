@@ -42,7 +42,8 @@
 # A test program is harness.sml + the files named in the test's
 # `(* uses: spec-sigs/LIST.sml ... *)` header (relative to tests/basis) + the
 # test + finish.sml. It prints one
-# "PASS label" or "FAIL label -- why" line per check and ends with a SUMMARY
+# "PASS label" or "FAIL label -- why" line per check, or "SKIP label -- why"
+# for one the machine cannot run (T.skipUnless), and ends with a SUMMARY
 # line. When a test does not load in a configuration:
 #  * a structure named in its `(* requires: A B *)` header that the
 #    configuration lacks makes the test ABSENT there;
@@ -451,9 +452,9 @@ run_one_body() {
     # shellcheck disable=SC2046
     if load "$work" run $(sources "$final"); then
       t_first=$(now)
-      grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
+      grep -E '^(PASS|FAIL|SKIP) ' "$work/stdout" >> "$result.tmp"
       claimed=$(sed -n 's/^SUMMARY \([0-9]*\) checks.*/\1/p' "$work/stdout")
-      counted=$(grep -c -E '^(PASS|FAIL) ' "$work/stdout")
+      counted=$(grep -c -E '^(PASS|FAIL|SKIP) ' "$work/stdout")
       [ "$claimed" = "$counted" ] ||
         echo "FAIL @load/$test -- SUMMARY reports $claimed checks but $counted were printed" >> "$result.tmp"
       mv "$result.tmp" "$result"
@@ -480,7 +481,7 @@ run_one_body() {
   if [ $loaded != 0 ]; then
     why=$(first_error "$work/log" "$work/stdout")
     if grep -q '^timed out after ' "$work/log"; then
-      grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
+      grep -E '^(PASS|FAIL|SKIP) ' "$work/stdout" >> "$result.tmp"
       echo "FAIL @load/$test -- timed out after $limit s" >> "$result.tmp"
       mv "$result.tmp" "$result"
       return
@@ -549,7 +550,7 @@ run_one_body() {
     fi
     if [ -z "$final" ]; then
       # Checks that ran before the failure are still reported.
-      grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
+      grep -E '^(PASS|FAIL|SKIP) ' "$work/stdout" >> "$result.tmp"
       echo "FAIL @load/$test -- ${why:-did not load}" >> "$result.tmp"
       mv "$result.tmp" "$result"
       return
@@ -558,13 +559,13 @@ run_one_body() {
 
   # a program that loaded whole has nothing to leave out next time
   [ "$loaded" = 0 ] && printf '%s\n@all\n' "$seckey" > "$kept"
-  grep -E '^(PASS|FAIL) ' "$work/stdout" >> "$result.tmp"
+  grep -E '^(PASS|FAIL|SKIP) ' "$work/stdout" >> "$result.tmp"
   claimed=$(sed -n 's/^SUMMARY \([0-9]*\) checks.*/\1/p' "$work/stdout")
-  counted=$(grep -c -E '^(PASS|FAIL) ' "$work/stdout")
+  counted=$(grep -c -E '^(PASS|FAIL|SKIP) ' "$work/stdout")
   if [ "$claimed" != "$counted" ]; then
     echo "FAIL @load/$test -- SUMMARY reports $claimed checks but $counted were printed" >> "$result.tmp"
   fi
-  dups=$(grep -E '^(PASS|FAIL) ' "$work/stdout" | awk '{ print $2 }' | sort | uniq -d | head -3 | tr '\n' ' ')
+  dups=$(grep -E '^(PASS|FAIL|SKIP) ' "$work/stdout" | awk '{ print $2 }' | sort | uniq -d | head -3 | tr '\n' ' ')
   [ -z "$dups" ] || echo "FAIL @load/$test -- duplicate check labels: $dups" >> "$result.tmp"
   mv "$result.tmp" "$result"
 }
@@ -1154,18 +1155,24 @@ BEGIN {
   nids = readlines(idsfile, ids); ntests = readlines(testsfile, tests)
   for (a = 1; a <= nids; a++) candidates(ids[a])
   while ((getline l < dirsfile) > 0) { split(l, f, "\t"); dir[f[1]] = f[2] }
-  print "# Basis Library suite\n\n| Configuration | Test | Checks | Pass | Explained | Unexplained | Not run |\n|---|---|---|---|---|---|---|" > report
+  print "# Basis Library suite\n\n| Configuration | Test | Checks | Pass | Explained | Unexplained | Skipped | Not run |\n|---|---|---|---|---|---|---|---|" > report
   nun = 0; nx = 0
   for (a = 1; a <= nids; a++) {
     id = ids[a]; d = dir[id]
-    tc = tp = tx = tf = tab = tna = 0
+    tc = tp = tx = tf = tab = tna = ts = 0
     for (b = 1; b <= ntests; b++) {
       t = tests[b]; r = d "/" t ".result"
-      pass = xfail = fail = 0; absent = ""; na = ""; nfails = 0
+      pass = xfail = fail = skipped = 0; absent = ""; na = ""; nfails = 0
       rc = (getline l < r)
       if (rc < 0) { unexplained[++nun] = id " @load/" t " -- no result"; tf++; continue }
       while (rc > 0) {
         if (l ~ /^PASS /) pass++
+        else if (l ~ /^SKIP /) {
+          # a check the machine cannot run: not a failure, and a deviation
+          # that matches it is not stale (it did not run)
+          skipped++; split(l, f, " "); unrun[id, ++nunrun[id]] = f[2]
+          sr = l; sub(/^SKIP [^ ]* -- /, "", sr); skipwhy[id " " t " -- " sr]++
+        }
         else if (l ~ /^ABSENT /) absent = absent substr(l, 8) " "
         else if (l ~ /^NA /) na = na substr(l, 4) " "
         else if (l ~ /^FAIL /) {
@@ -1191,8 +1198,8 @@ BEGIN {
       }
       close(d "/" t ".fails")
       notrun = (absent != "" ? "absent: " absent : "") (na != "" ? "n/a: " na : "")
-      printf "| %s | %s | %d | %d | %d | %d | %s|\n", id, t, pass + xfail + fail, pass, xfail, fail, notrun >> report
-      tc += pass + xfail + fail; tp += pass; tx += xfail; tf += fail
+      printf "| %s | %s | %d | %d | %d | %d | %d | %s|\n", id, t, pass + xfail + fail + skipped, pass, xfail, fail, skipped, notrun >> report
+      tc += pass + xfail + fail + skipped; tp += pass; tx += xfail; tf += fail; ts += skipped
       if (na != "") tna++
       if (absent != "") {
         tab++
@@ -1205,9 +1212,16 @@ BEGIN {
         }
       }
     }
-    printf "%-28s %6d checks: %6d pass, %4d explained, %4d FAILED; of %d tests %d absent, %d n/a\n", id, tc, tp, tx, tf, ntests, tab, tna
+    printf "%-28s %6d checks: %6d pass, %4d explained, %4d FAILED, %d skipped; of %d tests %d absent, %d n/a\n", id, tc, tp, tx, tf, ts, ntests, tab, tna
   }
   status = 0
+  nsw = 0
+  for (k in skipwhy) sw[++nsw] = k
+  if (nsw > 0) {
+    print "skipped (the machine cannot run them; not failures):"
+    for (a = 1; a <= nsw; a++) for (b = a + 1; b <= nsw; b++) if (sw[b] < sw[a]) { x = sw[a]; sw[a] = sw[b]; sw[b] = x }
+    for (k = 1; k <= nsw; k++) { split(sw[k], kk, " -- "); print "  " kk[1] ": " skipwhy[sw[k]] " checks -- " substr(sw[k], length(kk[1]) + 5) }
+  }
   if (nun > 0) {
     status = 1
     print "unexplained failures (add a fix, or a line to tests/basis/deviations.txt):"
@@ -1223,7 +1237,7 @@ BEGIN {
   if (filter == "") {
     for (key in timedout) {
       split(key, kk, SUBSEP); r = dir["rune"] "/" kk[2] ".result"
-      while ((getline l < r) > 0) if (l ~ /^(PASS|FAIL) /) { split(l, f, " "); unrun[kk[1], ++nunrun[kk[1]]] = f[2] }
+      while ((getline l < r) > 0) if (l ~ /^(PASS|FAIL|SKIP) /) { split(l, f, " "); unrun[kk[1], ++nunrun[kk[1]]] = f[2] }
       close(r)
     }
     for (i = 1; i <= ndev; i++) {

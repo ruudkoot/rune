@@ -129,6 +129,16 @@ end
 * Tests that touch the file system run in a scratch directory that is their
   current directory; they use relative file names only, sockets only on the
   loopback interface or Unix domain, and never a fixed port.
+* A check that needs what a machine may lack (an IPv6 address, a terminal)
+  goes in `T.skipUnless (ok, why) (fn () => ...)`, with `ok` found out by
+  the test itself: when it is false, each check inside prints
+  `SKIP label -- why` instead of running, `SUMMARY` counts it as skipped, and
+  the report lists it with its reason. A skipped check is not a failure and
+  needs no line in `deviations.txt`; a line that matches one is not stale,
+  since the check did not run. What an implementation lacks is never
+  skipped: that is a failure, explained in `deviations.txt`.
+  `tests/basis/inet6sock.sml` is the example: without a socket of the
+  family, or without `::1`, its socket checks are skipped.
 * The test must compile without warnings on Rune.
 
 ## Deviations
