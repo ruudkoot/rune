@@ -28,7 +28,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure | |
+| M1 | Measure | done |
 | M2 | Tier 0: the interpreter finished | |
 | M3 | The skeleton: code objects, executable memory, the driver | |
 | M4 | Tier 1, straight-line code, x86-64 | |
@@ -269,11 +269,9 @@ take:
   through the frame's `native_ret`**, **handlers and resume points by pc
   in tables** (`rune_handlers`, `rune_resume`), and **the layout of the
   VM by name** (`vm/native_offsets.c`), never as a number.
-* **Its result:** on 2026-09-25 the compiler compiles itself in 2.82 s
-  as native code, 5.03 s on `runevm` and 0.89 s as MLton's build
-  ([performance.md](../performance.md), *Compiling*): native code is 1.8
-  times `runevm` and MLton 3.2 times native code, after the middle end
-  took most of the interpreter's overhead out of the bytecode itself.
+* **Its result:** half of `runevm`'s cycles on the bootstrap and 0.27
+  to 0.55 of them on `tests/perf` (*The measurements*), after the middle
+  end took most of the interpreter's overhead out of the bytecode itself.
   Where the native time went before the middle end (performance.md,
   *Where the time goes*):
 
@@ -296,48 +294,79 @@ take:
   returns; values kept in registers across a run (performance.md item
   18) at most about 5% for a change of every template.
 
-### The measurements, and why they are stale
+### The measurements
 
-Middle-end M5 measured the same program on the same Low at `-O1`,
-`runevm` against `vm/new` (middle-end.md, M5, *Measured*):
+M1 measured every configuration in cycles and machine instructions
+(`scripts/perf-cycles.sh`, 2026-09-25 at `b49a03a`, an idle machine, the
+least of five runs of `perf stat -e cycles:u,instructions:u`). Each
+program of `tests/perf` is wrapped as `make perf` wraps it, its body run
+R times; the bootstrap is the compiler compiling its own sources. Cycles
+and instructions, and in parentheses the cycles as a fraction of
+`runevm`'s:
 
-| | VM instructions | machine instructions | cycles |
-|---|---|---|---|
-| the bootstrap | 1,333.1M, 747.2M (−44%) | 73.9G, 62.9G (−15%) | 49.7G, 43.8G (−12%) |
-| tak | 1.35M, 0.70M (−48%) | 76.2M, 66.1M | 48.6M, 43.6M (−10%) |
-| intinf_fact | 32.3M, 17.8M (−45%) | 1,798M, 1,523M | 1,039M, 853M (−18%) |
-| real_nbody | 1.34M, 0.60M (−55%) | 74.7M, 75.6M | 44.5M, 46.4M (+4%) |
-| list_ops | 3.62M, 2.47M (−32%) | 233.5M, 234.3M | 145.7M, 158.9M (+9%) |
-| string_ops | 4.12M, 2.81M (−32%) | 273.5M, 280.6M | 178.9M, 195.7M (+9%) |
-| fib | 1.65M, 1.43M (−14%) | 91.9M, 129.7M | 51.8M, 73.4M (+41%) |
+| Program | `runevm` | `vm/new` | native (`runeopt`) | MLton's build |
+|---|---:|---:|---:|---:|
+| array_sieve | 557.6M, 1.51G | 1.08G, 3.31G (1.94) | 301.2M, 298.9M (0.54) | 29.7M, 55.2M (0.05) |
+| fib | 906.9M, 2.35G | 2.08G, 6.34G (2.29) | 371.3M, 566.8M (0.41) | 64.0M, 127.8M (0.07) |
+| intinf_fact | 534.5M, 1.35G | 865.4M, 2.66G (1.62) | 259.7M, 312.6M (0.49) | 0.8M, 0.9M (0.001) |
+| list_ops | 385.9M, 967.6M | 631.1M, 1.96G (1.64) | 180.6M, 246.3M (0.47) | 60.7M, 108.6M (0.16) |
+| real_nbody | 1.05G, 2.97G | 2.52G, 6.89G (2.41) | 439.4M, 462.6M (0.42) | 187.7M, 54.5M (0.18) |
+| string_ops | 697.3M, 1.74G | 1.12G, 3.28G (1.60) | 384.1M, 712.6M (0.55) | 114.1M, 232.2M (0.16) |
+| tak | 246.6M, 690.0M | 519.2M, 1.67G (2.11) | 79.2M, 158.2M (0.32) | 20.1M, 44.8M (0.08) |
+| word_bits | 794.0M, 2.21G | 1.84G, 5.58G (2.32) | 213.7M, 350.2M (0.27) | 16.5M, 53.4M (0.02) |
+| the bootstrap | 13.50G, 21.61G | 17.35G, 41.77G (1.29) | 6.90G, 6.45G (0.51) | 2.14G, 1.78G (0.16) |
 
-The register code executes far fewer instructions, as Shi et al. found,
-and each costs more in the first loop. Then M6 took 41% of the cycles off
-`runevm`'s loop and `vm/new` got nothing. The wall-clock table of
-[performance.md](../performance.md), taken on 2026-09-25 at `a1a145c`,
-shows the result: `vm/new` runs the programs of `tests/perf` 1.5 to 2.6
-times slower than `runevm` (`fib` 12.35 ms against 5.50, `tak` 4.42
-against 1.72), and the compiler compiles itself in 6.01 s on it against
-5.03 s on `runevm`, 2.82 s as native code and 0.89 s as MLton's build.
-What is current in instructions are the budgets: the ratio of
-`tests/perf/new/NAME.budget` to `tests/perf/NAME.budget` is 0.54 for the
-bootstrap, 0.57 for `compile-sigs`, 0.58 for `intinf_fact`, 0.60 for
-`real_nbody`, 0.61 for `tak`, 0.62 for `list_ops` and `array_sieve`, 0.64
-for `string_ops`, 0.75 for `word_bits` and 0.85 for `fib`. Bytes and
-objects are equal on both VMs, as `check-new.sh` requires.
+What the table says:
 
-The M5 table predates M6 and M7 to M12, and the wall clock is not what
-the milestones are measured in. **M1 takes cycles and instructions for
-every configuration** before anything is built, and its table replaces
-the M5 table here.
+* **`vm/new` costs 1.29 times `runevm`'s cycles on the bootstrap and 1.6
+  to 2.4 times on `tests/perf`,** while executing 15 to 46% fewer VM
+  instructions (the budgets below): each VM instruction of the first loop
+  costs about twice the machine instructions of `runevm`'s (41.8G against
+  21.6G on the bootstrap, 6.3G against 2.3G on `fib`). That is the
+  decoding, the frame found again at every access and the second dispatch
+  of every call. Middle-end M5 had measured the same loop at 0.88 of
+  `runevm` before `runevm`'s M6; M6 took 41% off `runevm` and `vm/new` got
+  nothing.
+* **Native code is 0.51 of `runevm` on the bootstrap and 0.27 to 0.55 on
+  `tests/perf`**: the interpreter's overhead, removed one template at a
+  time with every value still in memory. Its instructions per cycle are
+  under one (6.45G in 6.90G), where `runevm`'s loop runs 1.6 and
+  `vm/new`'s 2.4: the interpreters execute many cheap instructions, the
+  native code fewer that wait for memory.
+* **MLton's build is 0.16 of `runevm` on the bootstrap**, 3.2 times
+  faster than the native code there, and 2.3 (`real_nbody`) to 13
+  (`word_bits`) times faster than it on `tests/perf`; `intinf_fact` runs on
+  GMP there and is not a comparison.
+* **Where `vm/new`'s time goes** on the bootstrap (`perf record`, by
+  symbol): the loop 79.9%; the collector 5.6% (`copy_obj` 4.6%,
+  `collect_into` 1.0%); allocation 3.6% (`vm_alloc`, `vm_alloc_fields`);
+  the primitives about 7% (`ref_get` 1.5%, `int_mod` 0.9%, `int_add` 0.7%,
+  `string_order` 0.7%, `imm_eq` 0.7%, `array_sub` 0.6%, and a tail);
+  `memmove` 1.0% (the arguments of a `TAILCALLK`). Four fifths of the time
+  is the loop itself, which is what M2 and tier 1 remove.
+* **In instructions,** the budgets say what the register code saves: the
+  ratio of `tests/perf/new/NAME.budget` to `tests/perf/NAME.budget` (both
+  the measurement plus 10%) is 0.54 for the bootstrap, 0.57 for
+  `compile-sigs`, 0.58 for `intinf_fact`, 0.60 for `real_nbody`, 0.61
+  for `tak`, 0.62 for `list_ops` and `array_sieve`, 0.64 for
+  `string_ops`, 0.75 for `word_bits` and 0.85 for `fib`. Bytes and
+  objects are equal on both VMs, as `check-new.sh` requires.
+* **The wall clock agrees:** [performance.md](../performance.md), taken
+  the same day at `a1a145c`, has `vm/new` 1.5 to 2.6 times slower than
+  `runevm` on `tests/perf`, and the compiler compiling itself in 6.01 s on
+  it, 5.03 s on `runevm`, 2.82 s as native code and 0.89 s as MLton's
+  build.
+
+Every milestone from here is measured with the same script, against the
+milestone before it.
 
 ### The gap to MLton
 
-MLton's build of the compiler compiles it 5.7 times faster than `runevm`
-and 3.2 times faster than the native code, and on `tests/perf` the hosts'
-native code runs 3 to 15 times faster than `runeopt`'s and 10 to 25 times
-faster than `runevm` ([performance.md](../performance.md), 2026-09-25).
-Three things make up most of it, and only one is this roadmap's:
+MLton's build of the compiler compiles it in a sixth of `runevm`'s
+cycles and a third of the native code's, and on `tests/perf` it is 2.3
+to 13 times faster than the native code and 5 to 48 times faster than
+`runevm` (*The measurements*). Three things make up most of it, and only
+one is this roadmap's:
 
 * **Dispatch and memory traffic:** every value is loaded from and
   stored to a 16-byte slot, tag tested, through an interpreter or through
@@ -1344,6 +1373,13 @@ M8 to M12 about 6,000, and are planned again after M7.
 * **Why now:** every number this roadmap was written with predates
   `runevm`'s M6; nothing is estimated from them again.
 * **Done when:** the script is committed and the table is in this file.
+* **Done** (2026-09-25, at `b49a03a`): `scripts/perf-cycles.sh` (the four
+  configurations, `--runs`, `--configs`, a filter, and `--profile CONFIG`
+  for the bootstrap under `perf record`); the table and the profile are
+  in *The measurements*. The numbers to beat: `vm/new` spends 17.35G
+  cycles on the bootstrap against `runevm`'s 13.50G and the native code's
+  6.90G, so D12's first target is 2.5 times, of which M2 is expected to
+  give about 1.4 and tier 1 the rest.
 
 ### M2. Tier 0: the interpreter finished (M, about 400)
 
