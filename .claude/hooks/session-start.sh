@@ -104,6 +104,11 @@ if [ "$source" = startup ] || [ -z "$source" ]; then
   fi
   grep -q 'envcheck.known  *no' /tmp/rune-envcheck.txt &&
     say "a new kind of machine: add an entry to cloud/ENVIRONMENT.md (make envcheck ENVCHECK=--markdown)"
+  cls=$(sed -n 's/^  envcheck\.cpu_class  *//p' /tmp/rune-envcheck.txt)
+  case "$cls" in
+    server*|"") ;;
+    *) say "WARNING: NOT KNOWN TO BE A XEON OR AN EPYC: $cls" ;;
+  esac
 fi
 
 if [ $problems = 0 ]; then say "ready (full output: $log, /tmp/rune-envcheck.txt)"; fi

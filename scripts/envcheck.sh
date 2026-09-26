@@ -198,27 +198,53 @@ case "$(uname -m)" in
     [ "$(get cpu.uarch)" = unknown ] && fail cpu.uarch "family $(get cpu.family), model $(get cpu.model_hex), stepping $(get cpu.stepping) is not in the table: add a row to uarchs[] in scripts/envcheck.c"
     # What the instructions that run say, which a hypervisor cannot hide.
     runs() { case "$(get "isa.$1")" in yes*|MISMATCH:\ runs*) return 0 ;; *) return 1 ;; esac; }
-    by=""
+    hybrid=no; case "$(get cpu.hybrid)" in yes*) hybrid=yes ;; esac
+    # Past what any product has, a guess: RAO-INT is in Intel SDE's future
+    # chip and in no product GCC knows; ACE, the matrix extension Intel and
+    # AMD agreed on, is a cpuid bit of GCC's that no product claims yet; and
+    # a family or model newer than the table's ranges
+    future=""
+    runs rao-int && future="RAO-INT runs (Intel SDE's future chip has it, no product GCC knows does)"
+    runs ace && future="${future:+$future; }cpuid claims ACE (the matrix extension Intel and AMD agreed on)"
+    case "$(get cpu.uarch_by_model_range)" in after*) future="${future:+$future; }the model is $(get cpu.uarch_by_model_range)" ;; esac
+    by=""; kind=""   # kind: what the instructions say of server or client
     if [ "$(get cpu.vendor)" = GenuineIntel ]; then
-      if runs amx-fp8; then by="Diamond Rapids or newer"
-      elif runs avx10.2; then by="Nova Lake or newer (AVX10.2 without AMX-FP8: a client part)"
-      elif runs amx-fp16; then by="Granite Rapids or newer"
-      elif runs amx-tile || runs avx512fp16; then by="Sapphire Rapids or newer"
-      elif runs avx512bf16 && runs avx512vbmi2; then by="Sapphire Rapids or newer"
+      if [ -n "$future" ]; then by="a Xeon after Diamond Rapids (speculative)"
+      elif runs amx-fp8; then by="Diamond Rapids or newer"; kind=server
+      elif runs avx10.2; then by="Nova Lake or newer (AVX10.2 without AMX: a client part)"; kind=client
+      elif runs amx-fp16; then by="Granite Rapids or newer"; kind=server
+      elif runs amx-tile; then by="Sapphire Rapids or newer"; kind=server
+      elif runs avx512fp16 || { runs avx512bf16 && runs avx512vbmi2; }; then by="Sapphire Rapids or newer"
+      elif runs avx512vp2intersect; then by="Tiger Lake (a client part)"; kind=client
       elif runs avx512vbmi2 && runs gfni; then by="Ice Lake or newer (Ice Lake-SP if it has no AVX-512 BF16, AMX)"
-      elif runs avx512bf16; then by="Cooper Lake"
+      elif runs avx512bf16; then by="Cooper Lake"; kind=server
       elif runs avx512vnni; then by="Cascade Lake"
       elif runs avx512f; then by="Skylake-SP"
+      # no AVX-512 from here: E-core Xeons, and client parts, whose P-cores
+      # and E-cores together say so (hybrid)
+      elif runs sha512 || runs sm3 || runs sm4; then
+        if [ $hybrid = yes ]; then by="Arrow Lake S, Lunar Lake or newer (a client part: hybrid)"; kind=client
+        else by="Clearwater Forest or newer (E-cores)"; kind=server; fi
+      elif runs avx-vnni-int8 || runs avx-ifma; then
+        if [ $hybrid = yes ]; then by="Arrow Lake or newer (a client part: hybrid)"; kind=client
+        else by="Sierra Forest or newer (E-cores)"; kind=server; fi
+      # AVX-VNNI without either: Alder Lake to Meteor Lake, and their parts
+      # of E-cores alone (N100), all clients
+      elif runs avx-vnni; then by="Alder Lake or newer (a client part)"; kind=client
       elif runs avx2; then by="Haswell or newer (no AVX-512)"
       fi
     elif [ "$(get cpu.vendor)" = AuthenticAMD ]; then
-      if runs avx512vp2intersect 2>/dev/null; then by="Zen 5"
-      elif runs avx512f; then by="Zen 4 or newer"
+      # server and client parts of one Zen run the same instructions
+      if [ -n "$future" ]; then by="a Zen after Zen 6 (speculative)"
+      elif runs avx512bmm || runs avx512fp16; then by="Zen 6 or newer"
+      elif runs avx512vp2intersect; then by="Zen 5"
+      elif runs avx512f; then by="Zen 4"
       elif runs vaes; then by="Zen 3"
       elif runs avx2; then by="Zen or Zen 2"
       fi
     fi
     [ -n "$by" ] && put cpu.uarch_by_instructions "$by"
+    [ -n "$future" ] && put cpu.future "speculative: $future"
     hidden=$(sed -n 's/^isa\.\([^=]*\)=MISMATCH: runs.*/\1/p' "$res" | tr '\n' ' ' | sed 's/ $//')
     if [ -n "$hidden" ]; then
       put cpu.hidden_by_cpuid "${hidden}: these run although cpuid does not claim them, so the hypervisor presents a CPU model older than the hardware"
@@ -231,6 +257,48 @@ case "$(uname -m)" in
     fail cpu "no cpuid and instruction tests for $(uname -m): add them to scripts/envcheck.c"
     ;;
 esac
+# A Xeon or an EPYC? The model table, the brand string, the hybrid flag and
+# the instructions can each tell; a sign of a client part wins. Firecracker
+# writes "Xeon" into the brand string of any Intel CPU, so only a client's
+# name in it counts.
+cls=${kind:-}; why=${by:+the instructions that run ($by)}
+case "$(get cpu.class_by_model)" in
+  client) cls=client; why="the model ($(get cpu.uarch))" ;;
+  server) [ "$cls" = client ] || { cls=server; why="the model ($(get cpu.uarch))${by:+ and the instructions that run ($by)}"; } ;;
+esac
+[ "${hybrid:-no}" = yes ] && { cls=client; why="its P-cores and E-cores (cpuid's hybrid flag)"; }
+case "$(get cpu.brand)" in
+  *Core*|*Ryzen*|*Celeron*|*Pentium*|*Athlon*|*Atom*) cls=client; why="the brand string ($(get cpu.brand))" ;;
+  *Xeon*|*EPYC*)
+    case "$(get os.virtualization)" in
+      *Firecracker*) ;;
+      *) [ -n "$cls" ] || { cls=server; why="the brand string ($(get cpu.brand))"; } ;;
+    esac ;;
+esac
+case "$(uname -m)" in x86_64) ;; *) cls="not x86"; why="this is $(uname -m)" ;; esac
+case "$cls" in
+  server) put cpu.class "server: a Xeon or an EPYC, by $why" ;;
+  client) put cpu.class "CLIENT: a consumer CPU, not a Xeon or an EPYC, by $why" ;;
+  "not x86") put cpu.class "NOT X86: neither a Xeon nor an EPYC ($why)" ;;
+  *) put cpu.class "UNKNOWN: could not tell whether this is a Xeon or an EPYC${why:+ (${why})}" ;;
+esac
+# not a server: a warning that cannot be missed, here and at the end
+banner() {
+  [ "$cls" = server ] && return 0
+  line='##########################################################################'
+  printf '\n  %s\n' "$line"
+  printf '  ##  %-68s##\n' "WARNING: THIS IS NOT KNOWN TO BE A XEON OR AN EPYC"
+  printf '  ##  %-68s##\n' ""
+  case "$cls" in
+    client) msg="The caches, cores, AVX-512 and AMX, memory bandwidth and clock of a consumer CPU are not those of the cloud's servers: the figures here do not stand for them, and an entry of cloud/ENVIRONMENT.md made from them has to say so." ;;
+    "not x86") msg="The figures here do not stand for the Xeons and EPYCs that cloud/ENVIRONMENT.md describes, and an entry made from them has to say so." ;;
+    *) msg="If it is a server part, add its model to uarchs[] in scripts/envcheck.c with the class S; until then the figures here may not stand for the cloud's servers." ;;
+  esac
+  printf '%s\n' "$(get cpu.class). $msg" |
+    fold -s -w 68 | while IFS= read -r l; do printf '  ##  %-68s##\n' "$l"; done
+  printf '  %s\n\n' "$line"
+}
+banner
 # the topology Linux sees
 sib=$(cat /sys/devices/system/cpu/cpu*/topology/thread_siblings_list 2>/dev/null | sort -u | tr '\n' ' ')
 [ -n "$sib" ] && put topo.linux_thread_siblings "$sib"
@@ -508,6 +576,8 @@ else
     echo "  A new kind of machine: add an entry to cloud/ENVIRONMENT.md (--markdown prints one to start from)."
   fi
 fi
+put envcheck.cpu_class "$(get cpu.class)"
+banner
 
 if [ -n "$json" ]; then
   awk -F= 'BEGIN { print "{" } { k = $1; v = substr($0, length(k) + 2); gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); gsub(/\t/, " ", v)
@@ -528,7 +598,7 @@ if [ $markdown = 1 ]; then
 
 * **Fingerprint:** \`$fp\`
 * **Hypervisor:** $(g os.virtualization); cpuid hypervisor $(g cpu.hypervisor). Kernel $(uname -r); init $(g os.init).
-* **CPU:** $(g cpu.model_name); cpuid says $(g cpu.uarch) (family $(g cpu.family), model $(g cpu.model_hex), stepping $(g cpu.stepping)), the instructions that run say $(g cpu.uarch_by_instructions). $(g cpu.count). Caches as cpuid says: L1d $(g cache.L1d | cut -d, -f1), L2 $(g cache.L2 | cut -d, -f1), L3 $(g cache.L3 | cut -d, -f1); as measured: L1d $(ms L1d), L2 $(ms L2), L3 $(ms L3). Hidden by cpuid: $(hid).
+* **CPU:** $(g cpu.model_name); cpuid says $(g cpu.uarch) (family $(g cpu.family), model $(g cpu.model_hex), stepping $(g cpu.stepping)), the instructions that run say $(g cpu.uarch_by_instructions). $(g cpu.count). Caches as cpuid says: L1d $(g cache.L1d | cut -d, -f1), L2 $(g cache.L2 | cut -d, -f1), L3 $(g cache.L3 | cut -d, -f1); as measured: L1d $(ms L1d), L2 $(ms L2), L3 $(ms L3). Hidden by cpuid: $(hid). Class: $(g cpu.class).
 * **Clock:** $(g clock.scalar.one_core) on one core, $(g clock.scalar.all_cores_each) with all busy; 512-bit FMA $(g fma.512.one_core).
 * **Cores and neighbours:** pairs of vCPUs always on one core: $(g pairs.always_sharing_a_core), sometimes: $(g pairs.sometimes_sharing_a_core); cache line between CPUs $(g pingpong.summary); steal $(g jitter.steal); pauses over 1 ms $(g jitter.pauses_over_1ms), longest $(g jitter.longest_pause).
 * **Memory:** $(g mem.total), swap $(g mem.swap), cgroup limit $(g mem.cgroup_limit); triad $(g membw.triad.one_thread) on one thread, $(g membw.triad.all_threads).

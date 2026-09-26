@@ -50,18 +50,58 @@ set in either), a balloon device, and the free space of the repository,
   Rapids added, is tried with a tile multiply, after configuring the tiles
   and asking Linux for the tile data (`arch_prctl`): on Claude Code on the
   web a Granite Rapids ran it under the Emerald Rapids model of an earlier
-  session, cpuid and fingerprint alike. Diamond Rapids is told the same
-  way, by AMX-FP8 and AVX10.2 (a 512-bit `vminmaxps`), which GCC's
-  `-march=diamondrapids` has and Granite Rapids does not, and which need
-  only the AMX and AVX-512 state an older model has on already; AVX10.2
-  without AMX-FP8 is a client part. APX is not tried: it needs state of its
-  own, which a hypervisor that hides it does not turn on. An instruction
-  new to the assemblers of the day is written as bytes, taken from a newer
-  binutils. The tests of hardware not at hand were checked under Intel's
-  Software Development Emulator, which presents a chosen chip's cpuid and
-  stops a program at an instruction that chip lacks: `sde64 -dmr -- probe
-  isa` claims and runs AMX-FP8 and AVX10.2, and `-gnr` stops at AMX-FP8
-  (the probe is the program `envcheck.sh` builds from `envcheck.c`).
+  session, cpuid and fingerprint alike. The generations are told by what
+  GCC's `-march` targets give each:
+
+  | Runs | Points to |
+  |---|---|
+  | RAO-INT, or cpuid claims ACE | a Xeon after Diamond Rapids, or a Zen after Zen 6 (speculative, `cpu.future`) |
+  | AMX-FP8 | Diamond Rapids |
+  | AVX10.2 without AMX | Nova Lake, a client part |
+  | AMX-FP16 | Granite Rapids |
+  | AMX-TILE | Sapphire or Emerald Rapids |
+  | AVX-512 VP2INTERSECT (Intel) | Tiger Lake, a client part |
+  | SHA512, SM3 or SM4, no AVX-512 | Clearwater Forest (E-cores), or a client part if hybrid |
+  | AVX-VNNI-INT8 or AVX-IFMA, no AVX-512 | Sierra Forest (E-cores), or a client part if hybrid |
+  | AVX-VNNI alone, no AVX-512 | Alder Lake to Meteor Lake, client parts |
+  | AVX-512 BMM or AVX-512 FP16 (AMD) | Zen 6 |
+  | AVX-512 VP2INTERSECT (AMD) | Zen 5 |
+
+  The newest are the ones that need only state an older model has on
+  already (AVX, AVX-512, AMX), so that they run behind it. APX is tried
+  (`mov %r16, %r16`) but needs state of its own in `XCR0`, which a
+  hypervisor that hides it does not turn on: it shows only where it is
+  presented. AVX10 is read from cpuid, with its version and vector lengths
+  (leaf `0x24`; AVX10.1's instructions are AVX-512's), and so is ACE, the
+  matrix extension Intel and AMD agreed on in 2025, of which only GCC's
+  cpuid bit is known (leaf 7.1, ECX bit 11), with its version from a
+  second palette of leaf `0x1d` as GCC reads it. RAO-INT is in Intel SDE's
+  chip `-future` and in no product GCC knows: the one sign of a later Xeon
+  that can be run. Nova Lake adds nothing that Diamond Rapids does not
+  have. An instruction new to the assemblers of the day is written as
+  bytes, taken from a newer binutils (2.47). The tests of hardware not at
+  hand were checked under Intel's Software Development Emulator, which
+  presents a chosen chip's cpuid and runs its instructions: with
+  `-chip_check_disable 1`, `sde64 -<chip> -- probe isa` shows what each
+  of Ice Lake-SP, Tiger Lake, Sapphire, Emerald, Granite and Diamond
+  Rapids, Sierra and Clearwater Forest, Arrow, Lunar, Panther and Nova
+  Lake and the future chip claims, and every claimed instruction runs
+  (the probe is the program `envcheck.sh` builds from `envcheck.c`; the
+  AMX tests come last, as SDE stops a program at a tile instruction on a
+  chip without AMX). SDE knows no AMD instruction, so AVX-512 BMM rests on
+  binutils alone.
+* **A Xeon or an EPYC (`cpu.class`):** the model table says which models
+  are server parts, and a client part shows in a client's name in the
+  brand string (Core, Ryzen, ...), in cpuid's hybrid flag (P-cores and
+  E-cores), or in instructions no server has (AVX10.2 without AMX); a
+  sign of a client part wins. Firecracker writes "Xeon" into the brand
+  string of any Intel CPU, so "Xeon" and "EPYC" there count only outside
+  it. Anything but a server is reported in a block of `#` after the CPU
+  identity and again at the end of the report, and the session-start hook
+  repeats it: a consumer CPU, or one that cannot be told, does not stand
+  for the cloud's servers. A model missing from the table is placed by the
+  ranges GCC gives (Zen 5, Zen 6) or as newer than any known
+  (`cpu.uarch_by_model_range`).
 
 ### Cores, caches and neighbours
 
