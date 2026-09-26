@@ -253,3 +253,52 @@ locally, leave this file alone.
 * **`make check`:** 11 min 29 s from a clean tree (entry 1: about
   14.5 min). It passes, with the 10 INet6Sock socket checks skipped for
   want of IPv6, as in entry 1.
+
+## 3. ChatGPT Codex cloud, 2026-09-25
+
+* **Fingerprint:** `GenuineIntel 6/106/6, 3 CPUs, 17.6 GiB, KVMKVMKVM, kernel 6.18.44`
+* **Service:** ChatGPT Codex cloud. The environment includes `CODEX_CI`,
+  `CODEX_HOME`, `CODEX_THREAD_ID` and `OPENAI_CLUSTER`; `make envcheck` does
+  not recognise these markers yet. Outbound HTTPS uses a proxy.
+* **Hypervisor:** KVM virtual machine, with a Docker container inside it.
+  Kernel `6.18.44`; PID 1 is `tail`. There is no DMI table.
+* **CPU:** Intel Xeon Platinum 8370C at a nominal 2.80 GHz, Ice Lake-SP
+  (family 6, model 0x6a, stepping 6), with 3 visible vCPUs. The cgroup v2
+  CPU bandwidth limit is 200,000 us per 100,000 us, or two CPUs' worth.
+  `cpuid` gives L1d 48 KiB, L1i 32 KiB, L2 1.25 MiB and L3 48 MiB.
+  Twelve extensions run
+  although `cpuid` hides them: CLWB, SHA, GFNI, VAES, VPCLMULQDQ, RDPID,
+  and AVX-512 IFMA, VBMI, VBMI2, VNNI, BITALG and VPOPCNTDQ. AVX-512 BF16
+  and FP16 and AMX do not run. The measured L1d is 48 KiB.
+* **Clock:** measured 2.07 to 2.30 GHz on one core and 1.46 to 1.50 GHz
+  on average with all three busy. 512-bit FMA ran at 4.78 to 4.82 G FMA
+  instructions/s, about 2.1 to 2.3 a cycle at the measured scalar clock.
+* **Cores and neighbours:** the host sometimes schedules vCPUs 0 and 1
+  on two threads of one core. A cache line passed between vCPUs in 55 to
+  190 ns across two runs. Steal was 1.6 to 1.7% with every vCPU busy;
+  pauses longer than 1 ms occurred 13 to 14 times a second per vCPU, with
+  the longest 35.7 ms.
+* **Memory:** 17.6 GiB of RAM, no swap, with a cgroup v2 limit of 16.00
+  GiB and a virtio balloon. STREAM triad measured 13.5 to 14.2 GB/s on
+  one thread and 38.5 to 39.8 GB/s on all three.
+* **OS and disk space:** Ubuntu 24.04.4 LTS, x86_64. The repository,
+  `/tmp` and `/root` share a 32 GB overlay filesystem with 30 GB free;
+  `/dev/shm` is an 8.8 GB tmpfs. The session runs as `root`, in the
+  `C.UTF-8` locale and the `Etc/UTC` time zone. The page size is 4 KiB,
+  the stack limit is 8 MiB and the open-file limit is 16,384. Seccomp is
+  not enabled for the shell.
+* **Disk speed** (`make envcheck`, two fast runs): sequential write 1.71
+  to 1.74 GB/s and read 1.08 to 1.35 GB/s. Random 4 KiB reads reached
+  5,251 to 5,915 IOPS on one thread and 12,542 to 12,868 on three;
+  4 KiB `fdatasync` reached about 114,000 a second.
+* **Where:** the provider could not be identified. AWS, Azure and Google
+  metadata endpoints answered HTTP 403, there is no DMI table, and public
+  IP discovery did not answer. The TSC is 2793.436 MHz.
+* **Network:** only the HTTPS proxy reaches the internet. The GitHub, PyPI,
+  SML/NJ and Ubuntu probes did not answer within three seconds.
+* **Tools present:** gcc 13.3, clang 17.0, GNU make 4.3, git 2.43,
+  Python 3.14, CMake 3.28, Ninja 1.11, Node.js 24.15, npm 11.4 and Rust
+  1.95. MLton, SML/NJ and Poly/ML are not installed; there is no
+  `/tmp/rune-session-start.status` from a setup hook. Consequently
+  `make check` stops at its host checks until `make hosts` has installed
+  them.
