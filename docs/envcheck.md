@@ -5,11 +5,14 @@ what it is, what it can run and how fast it is. It is meant for a new cloud
 session (`cloud/SETUP.md`), where the machine is not the one of the last
 session, and for any machine whose figures are wanted in
 `cloud/ENVIRONMENT.md`. It installs nothing and writes only to a temporary
-directory; the measurements are `scripts/envcheck.c`, compiled when it runs.
+directory, and the fingerprint of its last run to
+`$TMPDIR/rune-envcheck.fingerprint`; the measurements are
+`scripts/envcheck.c`, compiled when it runs.
 
 ```
 make envcheck                              # under a minute
 make envcheck ENVCHECK=--slow              # a few minutes, steadier figures
+make envcheck ENVCHECK=--identity          # what the machine is, under a second
 make envcheck ENVCHECK=--markdown          # also an entry for ENVIRONMENT.md
 make envcheck ENVCHECK="--json out.json"   # also every result as JSON
 make envcheck ENVCHECK=--commit-test       # also how much memory can be used
@@ -233,6 +236,9 @@ it was not run.
 | network | 16 MB or 3 s a source | 100 MB or 15 s a source |
 
 The fast mode must finish within a minute and says so when it does not.
+`--identity` runs only the system and the CPU identity, with the probe
+compiled at `-O0` (a fifth of the time, and nothing it runs is timed),
+and ends with the fingerprint: about half a second.
 With every CPU pair tested, the pair tests grow with the square of the CPU
 count: on more than 24 CPUs only CPU 0 is paired with the others.
 
@@ -248,6 +254,14 @@ machine. An entry of
 `Fingerprint: ...`; when none matches, the report says so, and `--markdown`
 prints an entry to start from. The script never edits that file: an entry
 is checked and written by hand.
+
+Each run keeps its fingerprint in `$TMPDIR/rune-envcheck.fingerprint`
+(`envcheck.machine_changed`), and a run on another kind of machine than
+the last says so in a block of `#`: a cloud session's `/tmp` outlives a
+restart of its container, which can move the session to another machine
+behind the same cpuid (`cloud/ENVIRONMENT.md`, entry 3), and what was
+measured before, timings above all, does not hold after. The session-start
+hook runs `--identity` on a resume for that (`cloud/SETUP.md`).
 
 ## When it fails
 

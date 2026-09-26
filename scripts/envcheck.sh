@@ -1,11 +1,15 @@
 #!/bin/sh
 # Report on the machine this runs on: what it is, what it can do and how fast
-# it is (docs/envcheck.md). Nothing is installed and nothing outside a
-# temporary directory is written; the measurements are scripts/envcheck.c,
+# it is (docs/envcheck.md). Nothing is installed and nothing is written
+# outside a temporary directory but the fingerprint of the last run, in
+# $TMPDIR/rune-envcheck.fingerprint; the measurements are scripts/envcheck.c,
 # compiled here.
-#   scripts/envcheck.sh [--slow] [--commit-test] [--json FILE] [--markdown]
+#   scripts/envcheck.sh [--slow|--identity] [--commit-test] [--json FILE] [--markdown]
 #   --slow         take a few minutes for steadier figures (default: under
 #                  a minute)
+#   --identity     only what the machine is, in under a second: the system,
+#                  the CPU and the fingerprint, and whether it is the machine
+#                  of the last run
 #   --commit-test  last of all, allocate memory until the kernel stops it:
 #                  this can get the shell's processes killed or restart the
 #                  container, so it runs only when asked for
@@ -23,10 +27,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --slow) mode=slow; shift ;;
     --fast) mode=fast; shift ;;
+    --identity) mode=identity; shift ;;
     --commit-test) commit=1; shift ;;
     --json) json=$2; shift 2 ;;
     --markdown) markdown=1; shift ;;
-    *) echo "usage: scripts/envcheck.sh [--slow] [--commit-test] [--json FILE] [--markdown]" >&2; exit 1 ;;
+    *) echo "usage: scripts/envcheck.sh [--slow|--identity] [--commit-test] [--json FILE] [--markdown]" >&2; exit 1 ;;
   esac
 done
 case "$json" in ""|/*) ;; *) json=$(pwd)/$json ;; esac
@@ -43,7 +48,7 @@ fails=$work/failures
 t_start=$(date +%s)
 
 # What each mode spends, in seconds and sizes.
-if [ $mode = fast ]; then
+if [ $mode != slow ]; then
   clock_s=1; fma_s=1; pairs_s=0.2; pairs_which=all; ping_rounds=20000
   cache_kib=65536; membw_mib=64; membw_s=0.4; jitter_s=3
   disk_mib=256; disk_s=0.5; disk_files=2000; net_max=3; net_bytes=16000000
@@ -104,7 +109,9 @@ EOF
 # ---------------------------------------------------------------- build
 if ! have "$CC"; then
   fail build "no C compiler ($CC): every measurement is left out; set CC or install one"
-elif ! "$CC" -std=gnu99 -O2 -pthread -o "$work/probe" scripts/envcheck.c -lm > "$work/cc.log" 2>&1; then
+# the identity only reads cpuid and runs single instructions: -O0 compiles in
+# a fifth of the time
+elif ! "$CC" -std=gnu99 "$( [ $mode = identity ] && echo -O0 || echo -O2 )" -pthread -o "$work/probe" scripts/envcheck.c -lm > "$work/cc.log" 2>&1; then
   fail build "$CC cannot compile scripts/envcheck.c: $(grep -m1 -i error "$work/cc.log")"
 fi
 
@@ -282,21 +289,23 @@ case "$cls" in
   "not x86") put cpu.class "NOT X86: neither a Xeon nor an EPYC ($why)" ;;
   *) put cpu.class "UNKNOWN: could not tell whether this is a Xeon or an EPYC${why:+ (${why})}" ;;
 esac
-# not a server: a warning that cannot be missed, here and at the end
-banner() {
-  [ "$cls" = server ] && return 0
+# box TITLE TEXT: a warning that cannot be missed
+box() {
   line='##########################################################################'
   printf '\n  %s\n' "$line"
-  printf '  ##  %-68s##\n' "WARNING: THIS IS NOT KNOWN TO BE A XEON OR AN EPYC"
-  printf '  ##  %-68s##\n' ""
+  printf '  ##  %-68s##\n' "$1" ""
+  printf '%s\n' "$2" | fold -s -w 68 | while IFS= read -r l; do printf '  ##  %-68s##\n' "$l"; done
+  printf '  %s\n\n' "$line"
+}
+# not a server: such a warning, here and at the end
+banner() {
+  [ "$cls" = server ] && return 0
   case "$cls" in
     client) msg="The caches, cores, AVX-512 and AMX, memory bandwidth and clock of a consumer CPU are not those of the cloud's servers: the figures here do not stand for them, and an entry of cloud/ENVIRONMENT.md made from them has to say so." ;;
     "not x86") msg="The figures here do not stand for the Xeons and EPYCs that cloud/ENVIRONMENT.md describes, and an entry made from them has to say so." ;;
     *) msg="If it is a server part, add its model to uarchs[] in scripts/envcheck.c with the class S; until then the figures here may not stand for the cloud's servers." ;;
   esac
-  printf '%s\n' "$(get cpu.class). $msg" |
-    fold -s -w 68 | while IFS= read -r l; do printf '  ##  %-68s##\n' "$l"; done
-  printf '  %s\n\n' "$line"
+  box "WARNING: THIS IS NOT KNOWN TO BE A XEON OR AN EPYC" "$(get cpu.class). $msg"
 }
 banner
 # the topology Linux sees
@@ -306,6 +315,8 @@ pk=$(cat /sys/devices/system/cpu/cpu*/topology/physical_package_id 2>/dev/null |
 put topo.linux_packages "$pk"
 printf 'time.cpu_identity=%s s\n' "$(( $(date +%s) - s0 ))" >> "$res"
 
+# the identity stops here, before anything that is measured
+if [ $mode != identity ]; then
 # ---------------------------------------------------------------- topology
 section "Cores, caches and neighbours"
 s0=$(date +%s)
@@ -540,6 +551,7 @@ read -r st1 tot1 <<EOF
 $(awk '/^cpu / { t = 0; for (i = 2; i <= 9; i++) t += $i; print $9, t }' /proc/stat)
 EOF
 [ "$tot1" -gt "$tot0" ] && put cpu.steal_during_run "$(awk -v s="$((st1 - st0))" -v t="$((tot1 - tot0))" 'BEGIN { printf "%.2f%% of CPU time", 100 * s / t }')"
+fi   # not the identity
 
 # ---------------------------------------------------------------- summary
 section "Summary"
@@ -576,8 +588,20 @@ else
     echo "  A new kind of machine: add an entry to cloud/ENVIRONMENT.md (--markdown prints one to start from)."
   fi
 fi
+# The fingerprint of the last run, which a session's restarts keep in its
+# /tmp: another one means the session was moved to another kind of machine
+last=${TMPDIR:-/tmp}/rune-envcheck.fingerprint
+prev=$(cat "$last" 2>/dev/null)
+if [ -z "$prev" ]; then put envcheck.machine_changed "not known: no earlier run here"
+elif [ "$prev" = "$fp" ]; then put envcheck.machine_changed "no: the machine of the last run"
+else put envcheck.machine_changed "YES: the last run was on $prev"
+fi
+printf '%s\n' "$fp" > "$last" 2>/dev/null
 put envcheck.cpu_class "$(get cpu.class)"
 banner
+if [ -n "$prev" ] && [ "$prev" != "$fp" ]; then
+  box "WARNING: THE MACHINE HAS CHANGED SINCE THE LAST RUN" "The session was moved to another kind of machine, as a restart of its container can do. Was: $prev. Now: $fp. What was measured on the other, timings above all, does not hold for this one: run make envcheck here, and see cloud/ENVIRONMENT.md."
+fi
 
 if [ -n "$json" ]; then
   awk -F= 'BEGIN { print "{" } { k = $1; v = substr($0, length(k) + 2); gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); gsub(/\t/, " ", v)
@@ -648,7 +672,7 @@ if [ $commit = 1 ]; then
     fail commit-test "not run: the probe program did not compile"
     status=2
   fi
-else
+elif [ $mode != identity ]; then
   printf '\nNot run: the committable-memory test (scripts/envcheck.sh --commit-test), which\nallocates memory until the kernel stops it and can kill this session'"'"'s processes\nor restart the container. Run it on purpose, last.\n'
 fi
 exit $status

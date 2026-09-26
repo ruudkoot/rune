@@ -106,8 +106,10 @@ take precedence over that file and survive a restart.
 `.claude/hooks/session-start.sh`, registered in `.claude/settings.json`,
 runs when a session starts or resumes, only where `CLAUDE_CODE_REMOTE=true`.
 It sets the commit author, installs the packages above that are missing,
-links a `perf` that runs, runs `make hosts` and `make doctor`, and at the
-start of a session `make envcheck`.
+links a `perf` that runs, runs `make hosts` and `make doctor`, and `make
+envcheck`: all of it at the start of a session, and on a resume only what
+the machine is (`--identity`, half a second), since a restart of the
+container can move the session to another kind of machine.
 
 It is synchronous: the session begins once it is done, and what it prints
 is the first thing the session sees. It also keeps its state in
@@ -118,10 +120,11 @@ is the first thing the session sees. It also keeps its state in
 * `ready (...)`: the machine is ready; the lines after it say what the hook
   did, the machine's fingerprint and whether `cloud/ENVIRONMENT.md` knows
   it, and warn when the CPU is not known to be a Xeon or an EPYC (a
-  consumer CPU, or one `make envcheck` cannot place: `docs/envcheck.md`);
+  consumer CPU, or one `make envcheck` cannot place: `docs/envcheck.md`)
+  and when the machine is not the one of the last run of `make envcheck`;
 * `problems (...)`: something failed; the lines after it say what, and the
   full output is in `/tmp/rune-session-start.log` (and `make envcheck`'s in
-  `/tmp/rune-envcheck.txt`).
+  `/tmp/rune-envcheck.txt`, on a resume `/tmp/rune-envcheck-identity.txt`).
 
 No file at all means the hook did not run: do the steps above by hand.
 
@@ -148,7 +151,7 @@ exit 0
 ```
 
 With everything installed it takes about 30 s at the start of a session
-(8.5 s of it `make doctor`, 22 s `make envcheck`) and 7.5 s on resume.
+(8.5 s of it `make doctor`, 22 s `make envcheck`) and 9 s on resume.
 
 ### The cache of the hosts
 

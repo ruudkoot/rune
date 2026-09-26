@@ -11,8 +11,9 @@
 #     under the VM's kernel;
 #  3. make hosts: MLton, SML/NJ (64 and 32 bits) and Poly/ML, from the
 #     cache of the branch cloud-cache where it fits this machine;
-#  4. make doctor, and at the start of a session make envcheck, whose
-#     outcome it summarises.
+#  4. make doctor, and make envcheck, all of it at the start of a session
+#     and on a resume only what the machine is, whose outcome it
+#     summarises, with a warning when the machine changed.
 # It runs synchronously: the session begins once it is done (about 30 s
 # with the cache of the hosts, some minutes without). Where Claude Code
 # does not run it (an environment of several repositories), the
@@ -93,25 +94,36 @@ doctor=$(make doctor 2>&1)
 [ $? = 0 ] || problems=1
 echo "$doctor" >> "$log"
 echo "$doctor" | grep -E '^doctor:|MISSING' | sed 's/^/session-start: /' | tee -a "$report"
+# At the start of a session all of make envcheck; on a resume only what the
+# machine is (under a second), as a restart of the container can move the
+# session to another kind of machine behind the same cpuid.
 if [ "$source" = startup ] || [ -z "$source" ]; then
-  make envcheck > /tmp/rune-envcheck.txt 2>&1
-  st=$?
-  grep -E '^  (envcheck\.(known|fingerprint)|cpu\.uarch(_by_instructions)?|mem\.cgroup_limit) ' /tmp/rune-envcheck.txt |
-    sed 's/^  /session-start: /; s/  */ /g' | tee -a "$report"
-  if [ $st != 0 ]; then
-    say "make envcheck could not do everything: see the end of /tmp/rune-envcheck.txt, and fix it (docs/envcheck.md)"
-    problems=1
-  fi
-  grep -q 'envcheck.known  *no' /tmp/rune-envcheck.txt &&
-    say "a new kind of machine: add an entry to cloud/ENVIRONMENT.md (make envcheck ENVCHECK=--markdown)"
-  cls=$(sed -n 's/^  envcheck\.cpu_class  *//p' /tmp/rune-envcheck.txt)
-  case "$cls" in
-    server*|"") ;;
-    *) say "WARNING: NOT KNOWN TO BE A XEON OR AN EPYC: $cls" ;;
-  esac
+  out=/tmp/rune-envcheck.txt
+  make envcheck > "$out" 2>&1
+else
+  out=/tmp/rune-envcheck-identity.txt
+  sh scripts/envcheck.sh --identity > "$out" 2>&1
+fi
+st=$?
+grep -E '^  (envcheck\.(known|fingerprint)|cpu\.uarch(_by_instructions)?|mem\.cgroup_limit) ' "$out" |
+  sed 's/^  /session-start: /; s/  */ /g' | tee -a "$report"
+if [ $st != 0 ]; then
+  say "make envcheck could not do everything: see the end of $out, and fix it (docs/envcheck.md)"
+  problems=1
+fi
+grep -q 'envcheck.known  *no' "$out" &&
+  say "a new kind of machine: add an entry to cloud/ENVIRONMENT.md (make envcheck ENVCHECK=--markdown)"
+cls=$(sed -n 's/^  envcheck\.cpu_class  *//p' "$out")
+case "$cls" in
+  server*|"") ;;
+  *) say "WARNING: NOT KNOWN TO BE A XEON OR AN EPYC: $cls" ;;
+esac
+was=$(sed -n 's/^  envcheck\.machine_changed  *YES: the last run was on //p' "$out")
+if [ -n "$was" ]; then
+  say "WARNING: THE MACHINE HAS CHANGED: the last make envcheck ran on $was; timings from it do not hold here: run make envcheck (docs/envcheck.md)"
 fi
 
-if [ $problems = 0 ]; then say "ready (full output: $log, /tmp/rune-envcheck.txt)"; fi
+if [ $problems = 0 ]; then say "ready (full output: $log, $out)"; fi
 { if [ $problems = 0 ]; then echo "ready ($(date -u '+%H:%M:%S UTC'))"; else echo "problems ($(date -u '+%H:%M:%S UTC'))"; fi
   cat "$report"; } > "$status.new" && mv "$status.new" "$status"
 rm -f "$report"
