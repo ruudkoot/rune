@@ -229,8 +229,11 @@ to know what a PowerPC binary is, which means qemu registered under
 it ships `ConditionVirtualization=!wsl` for `systemd-binfmt.service` to keep
 its own `WSLInterop` registration, which `make test-windows` needs; register
 qemu beside that one rather than by starting the service, which flushes every
-registration first (`tests/portability-skip.txt` has the command). Without it,
-`rt.fork_image` is the one program to leave out.
+registration first (`tests/portability-skip.txt` has the command). Without it
+`tests/run-portability.sh` refuses to start, naming the command, since the
+child would never start and the parent would wait for it for ever; `make
+doctor` checks the registration too. It does not survive a restart of WSL
+unless the boot command in `/etc/wsl.conf` redoes it.
 
 It found two bugs when it was written. A `Value` was 12 bytes on a 32-bit
 Linux, where the ABI aligns an `int64_t` to four and every other target

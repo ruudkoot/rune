@@ -416,6 +416,13 @@ EOF
   else
     bad "${qemu%% *}" "cannot run a powerpc64 program here" qemu-user
   fi
+  # a fork by the PowerPC VM starts the child by exec of its own binary,
+  # which needs qemu registered with the kernel (tests/portability-skip.txt)
+  if [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ]; then
+    ok binfmt "qemu-ppc64 is registered under /proc/sys/fs/binfmt_misc"
+  else
+    bad binfmt "qemu-ppc64 is not registered under /proc/sys/fs/binfmt_misc: a fork by the PowerPC VM would hang; sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register'"
+  fi
 fi
 
 # ---------------------------------------------------------------- summary
