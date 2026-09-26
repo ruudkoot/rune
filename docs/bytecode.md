@@ -256,6 +256,11 @@ refuses the other's file and image.
   code from executable memory and exits. `runevm` refuses all three
   options: the JIT is `vm/new`'s. Compiled code counts, allocates
   and prints what the loop does: `scripts/check-jit.sh` holds it to that.
+  `--trace` runs every instruction interpreted, whatever `--jit=` says.
+  `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
+  for finding one whose code is wrong by halving, and for the third run
+  of `check-jit.sh`, in which calls, returns and raises cross between the
+  tiers both ways.
 
 | Opcode | Operands | Effect |
 |---|---|---|

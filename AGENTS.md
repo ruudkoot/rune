@@ -136,9 +136,10 @@ keep these invariants:
   and `make test-stress`, and the Windows and portability rules below,
   whose VMs it is built for too. `vm_loop` is a driver and no engine calls
   another (`vm/new/jit.h`): the interpreter hands the VM back, exact,
-  where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`), and native
-  code hands it back where a frame is interpreted; `make test-new-jit`,
-  part of `make check`, holds the driver to never nesting. **The JIT**
+  where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`, `RAISED`),
+  native code hands it back where a frame is interpreted, and a helper
+  native code calls never runs bytecode; `make test-new-jit`, part of
+  `make check`, holds the driver to never nesting. **The JIT**
   (`vm/new/jit/`, `vm/new/ARCHITECTURE.md`, Tier 1): an instruction of the
   register set has, beside its body, an emitter in `vm/new/jit/emit.c`
   (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
@@ -149,9 +150,11 @@ keep these invariants:
   every store into an object through `ms_store_field`, a field of the VM
   by `offsetof`, never a number. What the loop does to `--count`, the code
   does too: `scripts/check-jit.sh` (in `make test-new-jit`) holds every
-  program to the same output and counts in both modes and every
-  instruction to occurring in them. A primitive done in line by the loop
-  and by the code changes with its C in `vm/prims.c`.
+  program, and the compiler compiling itself, to the same output and
+  counts interpreted, compiled and with every other function compiled
+  (`--jit-only=odd`), and every instruction to occurring in them. A
+  primitive done in line by the loop and by the code changes with its C
+  in `vm/prims.c`.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

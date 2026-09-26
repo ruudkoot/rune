@@ -70,7 +70,14 @@
 /* a return into native code, at the address the frame kept */
 #define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
 /* the program became another (Runtime.restore): the JIT's view of it again */
-#define NEW_PROGRAM() (jit = RUN_JIT ? jit_program(vm) : NULL)
+#define NEW_PROGRAM() (jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL)
+/* after a raise (vm_raise, which left the handler it took at hp): on in the
+   handler's native code where it has some, else the next instruction */
+#define RAISED() \
+    do { \
+        if (jit && vm->handlers[vm->hp].native) RETURN_NATIVE(vm->handlers[vm->hp].native); \
+        NEXT; \
+    } while (0)
 
 /* The object v points to, which must be of that kind; the program stops
    with "expected <what>" where it is not, the VM told where it is. */
@@ -124,19 +131,27 @@ int vm_loop(VM *vm) {
     int r = RUN_INTERP;
     for (;;) {
         /* the program may have become another (Runtime.restore) */
-        JitProgram *jit = RUN_JIT ? jit_program(vm) : NULL;
+        JitProgram *jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL;   /* --trace: every instruction, interpreted */
         if (r == RUN_NATIVE) r = jit_run(vm, jit, jit->at);
         else r = vm->trace ? loop_traced(vm, jit) : loop_fast(vm, jit);
         if (r == RUN_HALT) return 0;
     }
 }
 
-int vm_jit_arg(const char *arg, int *mode, int *stats, int *check) {
+int vm_jit_arg(const char *arg, int *mode, int *stats, int *check, const char **only) {
     if (!RUN_JIT) {
         fprintf(stderr, "runevm: %s: this VM is built without the JIT (RUNE_JIT=0)\n", arg);
         return 0;
     }
     if (strcmp(arg, "--jit-stats") == 0) { *stats = 1; return 1; }
+    if (strncmp(arg, "--jit-only=", 11) == 0) {
+        /* LO-HI, odd or even (vm/new/jit.c) */
+        unsigned long a, b;
+        const char *spec = arg + 11;
+        if (strcmp(spec, "odd") == 0 || strcmp(spec, "even") == 0 || (sscanf(spec, "%lu-%lu", &a, &b) == 2 && a <= b)) { *only = spec; return 1; }
+        fprintf(stderr, "runevm: %s: LO-HI, odd or even\n", arg);
+        return 0;
+    }
     if (strcmp(arg, "--jit-check") == 0) { *check = 1; return 1; }
     if (strcmp(arg, "--jit=off") == 0) { *mode = JIT_OFF; return 1; }
     if (strcmp(arg, "--jit=baseline") == 0) { *mode = JIT_BASELINE; return 1; }
@@ -150,8 +165,9 @@ int vm_jit_check(void) { return jit_check(); }
 
 int vm_jit_env(const char *mode, int *out) {
     int stats = 0, check = 0;
+    const char *only = NULL;
     char arg[64];
     snprintf(arg, sizeof arg, "--jit=%s", mode);
-    if (!vm_jit_arg(arg, out, &stats, &check)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
+    if (!vm_jit_arg(arg, out, &stats, &check, &only)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
     return 1;
 }

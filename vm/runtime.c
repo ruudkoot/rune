@@ -83,6 +83,7 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->handlers[vm->hp].pc = pc;
     vm->handlers[vm->hp].sp = vm->sp;
     vm->handlers[vm->hp].fp = vm->fp;
+    vm->handlers[vm->hp].native = NULL;
     vm->hp++;
 }
 

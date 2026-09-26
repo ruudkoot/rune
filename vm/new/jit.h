@@ -36,7 +36,7 @@ enum RunResult {
 
 /* One per function: the tier its code is at and the code's entry, which
    is NULL while the function is interpreted; the counters tier 0 keeps for
-   the tiering policy (M6); and the code's table of pc to address (M4). An
+   the tiering policy (M6); and the code's table of pc to address (M6). An
    entry is published last, with one store, so that a compiling thread
    could publish it too (D13). */
 typedef struct CodeObject {

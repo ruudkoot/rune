@@ -27,7 +27,8 @@ static const char *const fatal_text[] = {
     "global %d read before initialization", "environment slot %d out of range", "SELF outside a closure",
     "tuple index %d out of range", "DECON of a constructor of tag %d where %d is wanted", "CONTAG on non-constructor",
     "MKEXN on non-constructor", "JUMPIF on non-bool", "JUMPIFNOT on non-bool", "JUMPIFNOTTAG on non-constructor",
-    "SWITCH on non-constructor", "FIELD of a constructor of tag %d where %d is wanted", "constructor field %d out of range"
+    "SWITCH on non-constructor", "FIELD of a constructor of tag %d where %d is wanted", "constructor field %d out of range",
+    "POPHANDLER with no handler", "RAISE of non-exception"
 };
 
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
@@ -45,8 +46,9 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
         Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);
     }
+    const void *native = vm->hp ? vm->handlers[vm->hp - 1].native : NULL;
     int r = prim_table[prim](vm);
-    if (r == 1) return RUN_INTERP;
+    if (r == 1) { if (native) { jit_program(vm)->at = native; return RUN_NATIVE; } return RUN_INTERP; }
     if (r == PRIM_NEW_WORLD) vm_fatal(vm, "a primitive that changes the world in PRIM");
     Value v = vm_pop(vm);
     vm->stack[vm->frames[vm->fp].base + (size_t)d] = v;
@@ -80,6 +82,98 @@ int jit_h_ret(VM *vm, int32_t s) {
     }
     if (back_native) { jit_program(vm)->at = back_native; return RUN_NATIVE; }
     return RUN_INTERP;
+}
+
+/* ---- the helpers of the calls, the handlers and PRIMPUSH (M5) ---- */
+
+void jit_h_grow(VM *vm, size_t need) { vm_grow_stack(vm, need); }
+void jit_h_grow_frames(VM *vm) { vm_grow_frames(vm); }
+
+/* the handler a raise would land in, before the raise pops it: its native
+   address, or NULL where it is the interpreter's */
+static const void *handler_native(VM *vm) {
+    return vm->hp ? vm->handlers[vm->hp - 1].native : NULL;
+}
+/* what the driver is to do after a raise: into the handler's native code,
+   or the interpreter */
+static int after_raise(VM *vm, const void *native) {
+    if (native) { jit_program(vm)->at = native; return RUN_NATIVE; }
+    return RUN_INTERP;
+}
+
+/* CALL f x from native code, as the loop does it (src/isa/regs.sml): the
+   frame pushed, returning to the code at after, and the callee's registers
+   made; the callee's entry, or NULL where it is interpreted, the VM exact
+   for it either way. */
+const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after) {
+    Program *p = &vm->prog;
+    Frame *fr = &vm->frames[vm->fp];
+    Value arg = vm->stack[fr->base + (size_t)b];
+    Value cv = vm->stack[fr->base + (size_t)a];
+    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = vm->sp;
+    if (top + fn->nlocals + fn->maxstack > vm->stack_cap) vm_grow_stack(vm, top + fn->nlocals + fn->maxstack);
+    vm_push_frame(vm, (uint32_t)fidx, c, vm->pc, top);
+    vm->frames[vm->fp].native_ret = after;
+    Value *slot = &vm->stack[top];
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm->sp = top + fn->nlocals;
+    vm->pc = fn->code_offset;
+    return jit_program(vm)->codes[fidx].entry;
+}
+/* TAILCALL f x: the frame replaced, its return kept */
+const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b) {
+    Program *p = &vm->prog;
+    Frame *fr = &vm->frames[vm->fp];
+    Value arg = vm->stack[fr->base + (size_t)b];
+    Value cv = vm->stack[fr->base + (size_t)a];
+    Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = fr->base;
+    if (top + fn->nlocals + fn->maxstack > vm->stack_cap) vm_grow_stack(vm, top + fn->nlocals + fn->maxstack);
+    fr->func = (uint32_t)fidx;
+    fr->closure = c;
+    Value *slot = &vm->stack[top];
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    vm->sp = top + fn->nlocals;
+    vm->pc = fn->code_offset;
+    return jit_program(vm)->codes[fidx].entry;
+}
+/* PUSHHANDLER o, the handler's native code at native */
+void jit_h_push_handler(VM *vm, int32_t pc, const void *native) {
+    vm_push_handler(vm, (uint32_t)pc);
+    vm->handlers[vm->hp - 1].native = native;
+}
+/* RAISE s: the handler's native code to go on at, or NULL for the
+   interpreter; an uncaught exception ends the program in vm_raise */
+const void *jit_h_raise(VM *vm, int32_t s) {
+    Value v = vm->stack[vm->frames[vm->fp].base + (size_t)s];
+    const void *native = handler_native(vm);
+    vm_raise(vm, v);
+    return native;
+}
+/* PRIMPUSH p args: the result left on the stack for RESULT; 0 when done,
+   else what the driver is to do -- after a raise, or where the primitive
+   has made the program another (Runtime.restore), which the interpreter
+   takes up at its RESULT */
+int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
+    uint32_t n = prim_arity[prim];
+    for (uint32_t i = 0; i < n; i++) {
+        Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
+        vm_push(vm, v);
+    }
+    const void *native = handler_native(vm);
+    int r = prim_table[prim](vm);
+    if (r == 1) return after_raise(vm, native);
+    if (r == PRIM_NEW_WORLD) return RUN_INTERP;
+    return 0;
 }
 
 /* ---- the context ---- */
@@ -155,7 +249,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         x64_mov_ri(&m->a, ms_arg(m, 3), s.c);
         ms_call(m, (MsHelper)jit_h_fatal);
         x64_int3(&m->a);   /* it never returns */
-    } else {
+    } else if (s.kind == SLOW_ALLOC) {
         ms_sync(m, s.pc, 0);
         x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
         x64_mov_ri(&m->a, ms_arg(m, 2), s.b);
@@ -168,22 +262,32 @@ static void emit_slow(Masm *m, Slow *sp) {
         jit_fill(j, s.a, s.c, s.n, s.d, s.e, s.g, s.L);
         j->next = saved_next;
         x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_GROW) {
+        /* room for n values above the frame's base: the stack grown, and
+           the code's view of it taken again */
+        ms_sync(m, s.pc, 0);
+        x64_lea(&m->a, ms_arg(m, 1), BASEI, -1, 1, (int32_t)s.n);
+        ms_call(m, (MsHelper)jit_h_grow);
+        ms_reload(m);
+        x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_FRAMES) {
+        ms_sync(m, s.pc, 0);
+        ms_call(m, (MsHelper)jit_h_grow_frames);
+        ms_reload(m);
+        x64_jmp(&m->a, &s.back);
+    } else {
+        /* SLOW_RET: the frame of the top level returns through the helper */
+        ms_sync(m, s.pc, 0);
+        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        ms_call(m, (MsHelper)jit_h_ret);
+        ms_handback_rax(m);
     }
 }
 
 /* ---- the scan ---- */
 
-/* the instructions tier 1 compiles (M4: those that neither call, return
-   through the interpreter's frame, raise, nor touch a handler) */
-static int supported(uint8_t op) {
-    switch (op) {
-    case ROP_CALL: case ROP_TAILCALL: case ROP_CALLK: case ROP_TAILCALLK: case ROP_RESULT:
-    case ROP_PRIMPUSH: case ROP_PUSHHANDLER: case ROP_POPHANDLER: case ROP_CATCH: case ROP_RAISE:
-        return 0;
-    default:
-        return 1;
-    }
-}
+/* the instructions tier 1 compiles: every one, since M5 */
+static int supported(uint8_t op) { (void)op; return 1; }
 
 /* the code of a function: each instruction's start, whether it begins a
    run (is a target, or follows an instruction that ends one) and how long
@@ -191,15 +295,17 @@ static int supported(uint8_t op) {
    of JUMPs is data, never run, and not instructions here. */
 typedef struct Scan {
     uint8_t *start;     /* 1 where an instruction begins */
-    uint8_t *target;    /* 1 where a jump lands */
+    uint8_t *target;    /* 1 where a jump lands, or a call returns */
     uint8_t *ends;      /* 1 where the instruction ends a run */
+    uint8_t *phantom;   /* 1 at a RESULT after a call: the callee's RET does it, and it is passed over (M5) */
 } Scan;
 
 static int scan(Jit *j, Scan *sc) {
     const uint8_t *code = j->vm->prog.code;
     uint32_t len = j->to - j->from;
     sc->start = calloc(len + 1, 1); sc->target = calloc(len + 1, 1); sc->ends = calloc(len + 1, 1);
-    if (!sc->start || !sc->target || !sc->ends) return 0;
+    sc->phantom = calloc(len + 1, 1);
+    if (!sc->start || !sc->target || !sc->ends || !sc->phantom) return 0;
     sc->target[0] = 1;
     uint32_t pc = j->from;
     while (pc < j->to) {
@@ -208,6 +314,10 @@ static int scan(Jit *j, Scan *sc) {
         sc->start[pc - j->from] = 1;
         uint32_t l = rop_length(code + pc);
         if (rop_flow[op] != FLOW_NEXT || rop_raises[op]) sc->ends[pc - j->from] = 1;
+        if ((op == ROP_CALL || op == ROP_CALLK) && pc + l < j->to && code[pc + l] == ROP_RESULT) {
+            sc->phantom[pc + l - j->from] = 1;
+            if (pc + l + 5 < j->to) sc->target[pc + l + 5 - j->from] = 1;
+        }
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL)
                 sc->target[(uint32_t)read_i32(code + pc + 1 + 4 * k) - j->from] = 1;
@@ -235,6 +345,7 @@ static int emit_function(Jit *j, Scan *sc) {
     while (pc < j->to && !j->unsupported && !m->a.failed) {
         uint32_t at = pc - j->from;
         if (!sc->start[at]) { pc++; continue; }
+        if (sc->phantom[at]) { pc += rop_length(code + pc); in_run = 0; continue; }
         if (sc->target[at]) { x64_bind(&m->a, &j->labels[at]); in_run = 0; }
         if (!in_run) {
             /* the run's length: to the next end, or the next target */
@@ -242,7 +353,7 @@ static int emit_function(Jit *j, Scan *sc) {
             while (q < j->to) {
                 uint32_t qa = q - j->from;
                 if (sc->start[qa]) {
-                    if (q != pc && sc->target[qa]) break;
+                    if (q != pc && (sc->target[qa] || sc->phantom[qa])) break;
                     k++;
                     if (sc->ends[qa]) break;
                 }
@@ -308,7 +419,7 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
     j.from = fn->code_offset; j.to = fn->code_end;
     uint32_t len = j.to - j.from;
     j.labels = malloc(((size_t)len + 1) * sizeof(X64Label));
-    Scan sc = { NULL, NULL, NULL };
+    Scan sc = { NULL, NULL, NULL, NULL };
     int ok = j.labels != NULL;
     if (ok) for (uint32_t i = 0; i <= len; i++) x64_label_init(&j.labels[i]);
     ok = ok && scan(&j, &sc) && emit_function(&j, &sc);
@@ -324,10 +435,16 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
         if (jit->code_used + size > jit->code_cap) ok = 0;
         else {
             uint8_t *at = jit->code_mem + jit->code_used;
-            if (!sys_code_protect(jit->code_mem, jit->code_cap, 0)) ok = 0;
+            /* the pages the code lands in alone are made writable and
+               executable again: protecting the whole region, 64 MB, for
+               each function was most of a compile on Windows */
+            size_t page = sys_code_page();
+            size_t lo = jit->code_used & ~(page - 1);
+            size_t hi = (jit->code_used + size + page - 1) & ~(page - 1);
+            if (!sys_code_protect(jit->code_mem + lo, hi - lo, 0)) ok = 0;
             else {
                 memcpy(at, j.m.a.buf, j.m.a.n);
-                sys_code_protect(jit->code_mem, jit->code_cap, 1);
+                sys_code_protect(jit->code_mem + lo, hi - lo, 1);
                 sys_code_flush(at, j.m.a.n);
                 jit->code_used += size;
                 jit->codes[f].tier = 1;
@@ -338,7 +455,7 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
         }
     }
     if (j.labels) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.labels[i]); free(j.labels); }
-    free(sc.start); free(sc.target); free(sc.ends);
+    free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);
     ms_free(&j.m);
     return ok;
 #else

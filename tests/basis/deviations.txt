@@ -638,7 +638,7 @@ rune:windows* | Posix.Process.K_GROUP/* | WINDOWS | stays: Windows has no proces
 rune:windows* | Posix.Process.K_SAME_GROUP/* | WINDOWS | stays: Windows has no process groups, and cannot stop a process
 rune:windows* | Posix.Process.waitpid/no-child | WINDOWS | stays: a child of the W_GROUP checks before it is still there, which waiting for its group would have reaped
 rune:windows* | Posix.Process.W_STOPPED/* | WINDOWS | stays: Windows cannot stop a process
-rune:windows* | Posix.Process.W.untraced/* | WINDOWS | stays: Windows cannot stop a process
+rune:windows* | Posix.Process.W.untraced/waitpid-without-it | HOST-FLAKY | Windows cannot stop the child, which runs on to its end; the check's answer is then whether the child is gone within 300 ms: gone under the interpreter, not yet under the JIT, whose second VM compiles the program before it runs (rune:windows-new passes it)
 rune:windows* | Posix.Process.* | WINDOWS | stays: the child the test forks runs /bin/sh or /usr/bin/env, which Windows does not have
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | stays: the test signals a /bin/sh that a child made by fork runs, and Windows has no /bin/sh

@@ -25,6 +25,7 @@ static void usage(void) {
         "  --restore FILE  carry on the world Runtime.save wrote to FILE\n"
         "  --jit=MODE      vm/new: off, baseline, opt or all (docs/plans/jit.md)\n"
         "  --jit-stats     vm/new: what the JIT did, to stderr at exit\n"
+        "  --jit-only=SPEC vm/new: give code to functions LO-HI, or the odd or even ones, alone\n"
         "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
         "  --version       print the version and exit\n");
 }
@@ -44,6 +45,7 @@ int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
     int jit_mode = 0, jit_stats = 0, jit_check = 0, jit_given = 0;
+    const char *jit_only = NULL;
     const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
@@ -65,7 +67,7 @@ int main(int argc, char **argv) {
             if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
         else if (strncmp(argv[i], "--jit", 5) == 0) {
-            if (!vm_jit_arg(argv[i], &jit_mode, &jit_stats, &jit_check)) { usage(); return 2; }
+            if (!vm_jit_arg(argv[i], &jit_mode, &jit_stats, &jit_check, &jit_only)) { usage(); return 2; }
             if (strncmp(argv[i], "--jit=", 6) == 0) jit_given = 1;
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
@@ -90,6 +92,7 @@ int main(int argc, char **argv) {
         vm->checked = checked;
         vm->jit_mode = jit_mode;
         vm->jit_stats = jit_stats;
+        vm->jit_only = jit_only;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -104,6 +107,7 @@ int main(int argc, char **argv) {
         }
         vm->jit_mode = jit_mode;
         vm->jit_stats = jit_stats;
+        vm->jit_only = jit_only;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (i >= argc) { usage(); return 2; }
@@ -117,6 +121,7 @@ int main(int argc, char **argv) {
     vm->checked = checked;
     vm->jit_mode = jit_mode;
     vm->jit_stats = jit_stats;
+    vm->jit_only = jit_only;
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;

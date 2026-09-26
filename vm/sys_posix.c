@@ -1212,6 +1212,10 @@ void *sys_code_alloc(size_t size) {
     void *p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     return p == MAP_FAILED ? NULL : p;
 }
+size_t sys_code_page(void) {
+    long n = sysconf(_SC_PAGESIZE);
+    return n > 0 ? (size_t)n : 4096;
+}
 int sys_code_protect(void *code, size_t size, int executable) {
     return mprotect(code, size, executable ? PROT_READ | PROT_EXEC : PROT_READ | PROT_WRITE) == 0;
 }

@@ -3090,6 +3090,11 @@ void *sys_code_alloc(size_t size) {
     if (!p) last = errno_of_win(GetLastError());
     return p;
 }
+size_t sys_code_page(void) {
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    return si.dwPageSize ? si.dwPageSize : 4096;
+}
 int sys_code_protect(void *code, size_t size, int executable) {
     DWORD old;
     if (!VirtualProtect(code, size, executable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &old)) { last = errno_of_win(GetLastError()); return 0; }

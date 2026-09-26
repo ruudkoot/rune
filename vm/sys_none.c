@@ -231,6 +231,7 @@ int sys_win_dde_stop(int info) { (void)info; return NOSYS_INT; }
 
 /* executable memory: none */
 void *sys_code_alloc(size_t size) { (void)size; fail(); return NULL; }
+size_t sys_code_page(void) { return 4096; }
 int sys_code_protect(void *code, size_t size, int executable) { (void)code; (void)size; (void)executable; fail(); return 0; }
 void sys_code_flush(void *code, size_t size) { (void)code; (void)size; }
 void sys_code_free(void *code, size_t size) { (void)code; (void)size; }
