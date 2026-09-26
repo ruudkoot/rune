@@ -200,7 +200,8 @@ case "$(uname -m)" in
     runs() { case "$(get "isa.$1")" in yes*|MISMATCH:\ runs*) return 0 ;; *) return 1 ;; esac; }
     by=""
     if [ "$(get cpu.vendor)" = GenuineIntel ]; then
-      if runs amx-tile || runs avx512fp16; then by="Sapphire Rapids or newer"
+      if runs amx-fp16; then by="Granite Rapids or newer"
+      elif runs amx-tile || runs avx512fp16; then by="Sapphire Rapids or newer"
       elif runs avx512bf16 && runs avx512vbmi2; then by="Sapphire Rapids or newer"
       elif runs avx512vbmi2 && runs gfni; then by="Ice Lake or newer (Ice Lake-SP if it has no AVX-512 BF16, AMX)"
       elif runs avx512bf16; then by="Cooper Lake"
@@ -253,13 +254,14 @@ else probe 120 cachesizes cachesizes all "$cache_kib"; fi
 kib() {   # kib VALUE: the size at the head of a result, in KiB
   printf '%s\n' "$1" | awk '{ v = $1; u = $2; if (u ~ /^MiB/) v *= 1024; if (v > 0) printf "%d\n", v }'
 }
-for lv in L1d L2 L3; do
+for lv in L1d L1i L2 L3; do
   m=$(kib "$(get cachesize.$lv)"); c=$(kib "$(get cache.$lv)")
   [ -n "$m" ] && [ -n "$c" ] || continue
-  # an exact size must agree; an effective one within a factor of 1.5
-  if [ $lv = L1d ] && [ "$m" != "$c" ]; then
+  # an exact size (L1) must agree; an effective one within a factor of 1.5
+  case $lv in L1?) exact=1 ;; *) exact=0 ;; esac
+  if [ $exact = 1 ] && [ "$m" != "$c" ]; then
     put cache.note.$lv "measured $m KiB, cpuid says $c KiB: the hypervisor presents another CPU's caches"
-  elif [ $lv != L1d ] && awk -v m="$m" -v c="$c" 'BEGIN { exit !(m * 1.5 < c || m > c * 1.5) }'; then
+  elif [ $exact = 0 ] && awk -v m="$m" -v c="$c" 'BEGIN { exit !(m * 1.5 < c || m > c * 1.5) }'; then
     put cache.note.$lv "measured about $m KiB, cpuid says $c KiB$( [ $lv = L3 ] && echo ': this VM gets part of a shared L3')"
   fi
 done
@@ -490,7 +492,11 @@ if [ -z "$fh" ]; then   # systemd's name for it, as cpuid's signature
     xen) fh=XenVMMXenVMM ;; none|"") fh=none ;; *) fh=$(systemd-detect-virt --vm) ;;
   esac
 fi
-fp="$fv $ff/$fm/$fs, $(getconf _NPROCESSORS_ONLN) CPUs, $(get mem.total), ${fh:-none}, kernel ${kflavour:-$(uname -r)}"
+# hardware newer than the model presented (instructions run that cpuid does
+# not claim) is another kind of machine behind the same cpuid: name it
+hw=""
+[ -n "$(get cpu.hidden_by_cpuid)" ] && hw=$(get cpu.uarch_by_instructions | sed 's/ or newer.*//; s/ (.*//')
+fp="$fv $ff/$fm/$fs${hw:+ on $hw}, $(getconf _NPROCESSORS_ONLN) CPUs, $(get mem.total), ${fh:-none}, kernel ${kflavour:-$(uname -r)}"
 put envcheck.fingerprint "$fp"
 if grep -F "Fingerprint" cloud/ENVIRONMENT.md 2>/dev/null | grep -qF "\`$fp\`"; then
   put envcheck.known "yes: cloud/ENVIRONMENT.md describes this kind of machine"

@@ -713,43 +713,54 @@ static int cmd_pingpong(int rounds, const char *which)
    L2 past it, at less than half the bytes a nanosecond. The step as it
    outgrows the decoded-uop cache, earlier, is smaller. cpuid's size is the
    one of the CPU model presented: Granite Rapids showed its 64 KiB under an
-   Emerald Rapids model of 32. */
+   Emerald Rapids model of 32. Three sweeps, keeping the largest edge, as
+   for L1d: another VM's thread on the core makes the cache look smaller. */
 static void l1i_size(void)
 {
     static const unsigned char nop8[8] = {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00};
     size_t max = 256 * 1024 + 4096;
     unsigned char *code = mmap(0, max, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (code == MAP_FAILED) { kv("cachesize.L1i", "not measured (mmap)"); return; }
-    long kib[64];
-    double rate[64];
-    int n = 0;
-    for (long k = 8; k <= 256; k += k < 96 ? 8 : 32) {
-        size_t len = (size_t)k * 1024;
-        if (mprotect(code, max, PROT_READ | PROT_WRITE)) break;
-        for (size_t i = 0; i < len; i += 8) memcpy(code + i, nop8, 8);
-        code[len] = 0xc3;   /* ret */
-        if (mprotect(code, max, PROT_READ | PROT_EXEC)) break;
-        void (*f)(void);
-        memcpy(&f, &code, sizeof f);
-        size_t reps = ((size_t)64 << 20) / len;
-        double best = 1e30;
-        for (int t = 0; t < 5; t++) {
-            double t0 = now();
-            for (size_t r = 0; r < reps; r++) f();
-            double dt = now() - t0;
-            if (dt < best) best = dt;
+    long edge = 0, past = 0;
+    double below = 0, above = 0;
+    int measured = 0;
+    for (int sweep = 0; sweep < 3; sweep++) {
+        long kib[64];
+        double rate[64];
+        int n = 0;
+        for (long k = 8; k <= 256; k += k < 96 ? 8 : 32) {
+            size_t len = (size_t)k * 1024;
+            if (mprotect(code, max, PROT_READ | PROT_WRITE)) break;
+            for (size_t i = 0; i < len; i += 8) memcpy(code + i, nop8, 8);
+            code[len] = 0xc3;   /* ret */
+            if (mprotect(code, max, PROT_READ | PROT_EXEC)) break;
+            void (*f)(void);
+            memcpy(&f, &code, sizeof f);
+            size_t reps = ((size_t)64 << 20) / len;
+            double best = 1e30;
+            for (int t = 0; t < 5; t++) {
+                double t0 = now();
+                for (size_t r = 0; r < reps; r++) f();
+                double dt = now() - t0;
+                if (dt < best) best = dt;
+            }
+            kib[n] = k;
+            rate[n++] = (double)len * reps / best / 1e9;
         }
-        kib[n] = k;
-        rate[n++] = (double)len * reps / best / 1e9;
+        if (n < 2) break;
+        measured = 1;
+        /* the edge: the largest fall from one size to the next, by more than half */
+        int e = 0;
+        for (int i = 1; i + 1 < n; i++) if (rate[i + 1] / rate[i] < rate[e + 1] / rate[e]) e = i;
+        if (rate[e + 1] / rate[e] <= 0.5 && kib[e] > edge) {
+            edge = kib[e]; past = kib[e + 1]; below = rate[e]; above = rate[e + 1];
+        }
     }
     munmap(code, max);
-    if (n < 2) { kv("cachesize.L1i", "not measured (no memory both written and run)"); return; }
-    /* the edge: the largest fall from one size to the next, by more than half */
-    int e = 0;
-    for (int i = 1; i + 1 < n; i++) if (rate[i + 1] / rate[i] < rate[e + 1] / rate[e]) e = i;
-    if (rate[e + 1] / rate[e] > 0.5) { kv("cachesize.L1i", "no step found (the fetch never falls by half)"); return; }
-    kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB)",
-       kib[e], rate[e], rate[e + 1], kib[e], kib[e + 1]);
+    if (!measured) kv("cachesize.L1i", "not measured (no memory both written and run)");
+    else if (!edge) kv("cachesize.L1i", "no step found (the fetch never falls by half)");
+    else kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB; the largest of three sweeps)",
+            edge, below, above, edge, past);
 }
 
 #endif /* __x86_64__ */
@@ -882,8 +893,16 @@ static int cmd_cachesizes(const char *levels, long maxkib)
 #endif
     memset(arena, 0, arena_size);
     double a, z;
-    long l1 = sweep(8, 160, 4, 2000000, &a, &z);
-    size_kv("cachesize.L1d", l1, a, z, "exact: its edge is sharp");
+    /* three times, keeping the largest edge: a thread of another VM on the
+       other hyperthread of the core shares the L1 for a while, and makes it
+       look smaller (40 KiB of 48 in one sweep in four on Granite Rapids) */
+    long l1 = 0;
+    for (int r = 0; r < 3; r++) {
+        double ra, rz;
+        long e = sweep(8, 160, 4, 2000000, &ra, &rz);
+        if (e > l1 || r == 0) { l1 = e; a = ra; z = rz; }
+    }
+    size_kv("cachesize.L1d", l1, a, z, "exact: its edge is sharp; the largest of three sweeps");
 #if defined(__x86_64__)
     l1i_size();
 #endif

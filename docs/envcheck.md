@@ -46,7 +46,11 @@ set in either), a balloon device, and the free space of the repository,
   `cpu.uarch_by_instructions` names the generation the instructions that
   run point to. The reverse, claimed but faulting, is reported as a failure.
   `lzcnt`, `cx16` and `rtm` are only read: running them proves nothing
-  (`lzcnt` runs as `bsr` on a CPU without it).
+  (`lzcnt` runs as `bsr` on a CPU without it). AMX-FP16, which Granite
+  Rapids added, is tried with a tile multiply, after configuring the tiles
+  and asking Linux for the tile data (`arch_prctl`): on Claude Code on the
+  web a Granite Rapids ran it under the Emerald Rapids model of an earlier
+  session, cpuid and fingerprint alike.
 
 ### Cores, caches and neighbours
 
@@ -72,10 +76,17 @@ set in either), a balloon device, and the free space of the repository,
   The size of a level is the last one before the latency crosses the
   geometric middle of its plateau and the next. L1 has a sharp edge and
   comes out exact, and is measured in every run; L2 and L3 fill up
-  gradually, so their sizes are effective ones, measured with `--slow`. A
-  size that differs from `cpuid` (the L1 exactly, the others by more than
-  half) is reported: a hypervisor's CPU template can present another CPU's
-  caches, and a VM gets only part of a shared L3.
+  gradually, so their sizes are effective ones, measured with `--slow`. The
+  L1 instruction cache is measured on x86-64 by the speed of fetching: a
+  straight line of NOPs, run over and over, is fetched at less than half
+  the speed once it no longer fits (an earlier, smaller step is the
+  decoded-uop cache). Each L1 is swept three times and the largest edge
+  kept: a thread of another VM on the other hyperthread of the core shares
+  the L1 for a while and makes it look smaller. A size that differs from
+  `cpuid` (the L1s exactly, the others by more than half) is reported: a
+  hypervisor's CPU template can present another CPU's caches (a Granite
+  Rapids fetched from 64 KiB under a model that claims 32), and a VM gets
+  only part of a shared L3.
 * **Jitter (`jitter`):** a thread on every CPU reads the clock in a loop and
   counts the gaps over 100 us and over 1 ms, which are the times it was not
   running; with the steal time of `/proc/stat` over the same seconds, and
@@ -164,7 +175,7 @@ it was not run.
 | pairs | 0.2 s a pair, in three rounds | 1 s a pair, in three rounds |
 | ping-pong | 20,000 rounds | 200,000 rounds |
 | cache curve | up to 64 MiB | up to 512 MiB |
-| cache sizes | L1 | L1, L2, L3 |
+| cache sizes | L1d, L1i | L1d, L1i, L2, L3 |
 | memory bandwidth | 64 MiB arrays (or twice the L3), 0.4 s | 512 MiB arrays (or twice the L3), 2 s |
 | jitter | 3 s | 10 s |
 | disk | 256 MiB, 0.5 s a test, 2,000 files | 2 GiB, 3 s a test, 20,000 files |
@@ -177,7 +188,11 @@ count: on more than 24 CPUs only CPU 0 is paired with the others.
 ## A known machine, or a new one
 
 The report ends with a fingerprint: vendor, family/model/stepping, CPU
-count, RAM, hypervisor signature and the kernel's flavour. An entry of
+count, RAM, hypervisor signature and the kernel's flavour. Where
+instructions run that `cpuid` does not claim, the hardware they point to
+follows the model (`GenuineIntel 6/207/2 on Granite Rapids, ...`): the same
+cpuid can be presented on newer hardware, which is another kind of
+machine. An entry of
 `cloud/ENVIRONMENT.md` carries the fingerprint of its machine in a line
 `Fingerprint: ...`; when none matches, the report says so, and `--markdown`
 prints an entry to start from. The script never edits that file: an entry
