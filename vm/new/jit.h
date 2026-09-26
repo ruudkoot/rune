@@ -56,6 +56,10 @@ typedef struct CodeObject {
     uint32_t nosr;          /* the table: pcs in order, and each one's offset from the entry */
     uint32_t *osr_pcs;
     uint32_t *osr_offs;
+    /* the functions whose code jumps straight into this one's (M7): they
+       go with it when it is invalidated */
+    uint32_t ncallers, callers_cap;
+    uint32_t *callers;
 } CodeObject;
 
 /* The code objects of the program a VM runs, made when the driver first
@@ -88,7 +92,14 @@ typedef struct JitProgram {
     uint64_t invalidated;       /* code objects invalidated */
     uint64_t dead_bytes;        /* their code, left in the region */
     double compile_seconds;     /* CPU time compiling (clock) */
+    uint64_t *prim_calls;       /* per primitive: calls of jit_h_prim from code (--jit-stats, M7) */
+    /* per function, the lowest register a call must fill with unit, the
+       ones below it being written before anything can collect or read
+       them (M7, jit_fill_from); UINT32_MAX while not yet worked out */
+    uint32_t *fill_from;
 } JitProgram;
+/* the lowest register of function f a call must fill with unit */
+uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f);
 
 /* The state of the VM's JIT, or NULL where the VM is built without one
    (RUNE_JIT=0). */
@@ -114,5 +125,7 @@ const void *jit_osr(const CodeObject *co, uint32_t pc);
    interpreter instead. Never called while native code runs: the driver's
    protocol has none on the machine stack when the interpreter does. */
 void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f);
+/* caller's code jumps straight into callee's: said, for invalidation */
+void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller);
 
 #endif

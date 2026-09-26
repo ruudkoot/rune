@@ -268,6 +268,8 @@ refuses the other's file and image.
   after a call, a handler -- the frame being the same; `--jit-stress=N`
   invalidates the callee's code at every Nth call into it, for testing
   that frames return to the interpreter from code that is gone.
+  `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
+  names compiled functions (`jit:NAME`).
 
 | Opcode | Operands | Effect |
 |---|---|---|

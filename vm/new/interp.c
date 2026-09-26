@@ -103,6 +103,10 @@
     } while (0)
 /* a return into native code, at the address the frame kept */
 #define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
+/* the frame just pushed records where its return goes: the register of
+   the RESULT at pc, the caller's next instruction, if that is one (M7) */
+#define RESULT_OF(at_pc) \
+    (vm->frames[vm->fp].result = code[(at_pc)] == ROP_RESULT ? (uint32_t)read_i32(code + (at_pc) + 1) : UINT32_MAX)
 /* the program became another (Runtime.restore): the JIT's view of it again */
 #define NEW_PROGRAM() (jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL)
 /* after a raise (vm_raise, which left the handler it took at hp): on in the
@@ -147,6 +151,9 @@ static void make_room(VM *vm) {
         size_t n = f->base + fn->nlocals + fn->maxstack;
         if (n > need) need = n;
         f->native_ret = NULL;   /* a frame of an image, or of vm_start, returns into the interpreter */
+        /* where its return goes: the RESULT at its ret_pc, if that is one */
+        f->result = f->ret_pc < vm->prog.code_len && vm->prog.code[f->ret_pc] == ROP_RESULT
+                    ? (uint32_t)read_i32(vm->prog.code + f->ret_pc + 1) : UINT32_MAX;
     }
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
 }
@@ -204,6 +211,7 @@ int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
         return 0;
     }
     if (strcmp(arg, "--jit-stats") == 0) { jit->stats = 1; return 1; }
+    if (strcmp(arg, "--jit-perf-map") == 0) { jit->perf_map = 1; return 1; }
     if (strncmp(arg, "--jit-only=", 11) == 0) {
         /* LO-HI, odd or even (vm/new/jit.c) */
         unsigned long a, b;

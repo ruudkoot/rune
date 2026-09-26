@@ -28,6 +28,7 @@ static void usage(void) {
         "  --jit-only=SPEC vm/new: give code to functions LO-HI, or the odd or even ones, alone\n"
         "  --jit-calls=N, --jit-work=N  vm/new: compile a function at its Nth call, or at N iterations of its loops and calls it makes (baseline)\n"
         "  --jit-stress=N  vm/new: every Nth call into compiled code invalidates it (a test of invalidation)\n"
+        "  --jit-perf-map  vm/new: write /tmp/perf-PID.map, so that perf record names compiled functions\n"
         "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
         "  --version       print the version and exit\n");
 }

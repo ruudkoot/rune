@@ -148,9 +148,14 @@ keep these invariants:
   without it) that does what the body does in the same frame, written
   over the macro-assembler (`vm/new/jit/masm.h`), whose rules it keeps:
   the VM exact (`ms_sync`) before any call into C and reloaded
-  (`ms_reload`) after, no heap pointer in a machine register across one,
-  every store into an object through `ms_store_field`, a field of the VM
-  by `offsetof`, never a number. What the loop does to `--count`, the code
+  (`ms_reload`) after -- unless the C is a helper declared as touching
+  nothing of the VM (`compile.h`) -- no heap pointer in a machine register
+  across one, every store into an object through `ms_store_field`, a
+  field of the VM by `offsetof`, never a number, and the size of a
+  `Frame` computed, never written as a shift (`ms_frame`). A primitive
+  done in line (`prim_inline`) gives exactly what `fastprim.h`'s
+  `prim_fast` gives and goes to its slow path wherever that would answer
+  0. What the loop does to `--count`, the code
   does too: `scripts/check-jit.sh` (in `make test-new-jit`) holds every
   program, and the compiler compiling itself, to the same output and
   counts interpreted, compiled, with every other function compiled

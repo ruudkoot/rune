@@ -32,7 +32,7 @@ enum { VMR = R12, STACKR = R13, BASEI = RBP, BASER = R14, COUNTR = R15 };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX };
 typedef struct Slow {
     X64Label here;
     X64Label back;

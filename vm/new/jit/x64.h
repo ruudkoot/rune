@@ -24,6 +24,7 @@ typedef struct X64Label {
 } X64Label;
 
 typedef struct X64 {
+    uintptr_t base;     /* where the code will be placed, for a jump to an address (0: unknown) */
     uint8_t *buf;
     size_t n, cap;
     int failed;         /* out of memory, or a label never bound: the code is not to be used */
@@ -117,6 +118,7 @@ void x64_movq_xr(X64 *a, int xmm, int r);
 void x64_jmp(X64 *a, X64Label *l);
 void x64_jcc(X64 *a, int cc, X64Label *l);
 void x64_jmp_r(X64 *a, int r);
+void x64_jmp_to(X64 *a, const void *target);   /* jmp rel32 to an address, from base + here; fails when out of reach */
 void x64_jmp_m(X64 *a, int base, int index, int scale, int32_t disp);   /* jmp [base + index*scale + disp] */
 void x64_call_r(X64 *a, int r);
 void x64_ret(X64 *a);

@@ -171,6 +171,11 @@ typedef struct Frame {
     /* In a program runeopt made (vm/native.c), the native code at ret_pc.
        An image does not carry it: it is an address of one process. */
     const void *native_ret;
+    /* In vm/new, the register of the caller's RESULT, which the return
+       writes into, or UINT32_MAX where the caller takes the value from the
+       stack (docs/plans/jit.md, M7). Not in an image: made again from the
+       code at ret_pc when one is read (vm/new/interp.c, make_room). */
+    uint32_t result;
 } Frame;
 
 typedef struct Handler {
@@ -192,6 +197,7 @@ typedef struct Handler {
 typedef struct JitOptions {
     int mode;
     int stats;
+    int perf_map;            /* --jit-perf-map: /tmp/perf-PID.map, for perf record (M7) */
     const char *only;
     uint32_t calls, work;
     uint32_t stress;
@@ -307,6 +313,7 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].ret_pc = ret_pc;
     vm->frames[idx].base = base;
     vm->frames[idx].native_ret = NULL;   /* native code sets its own (vm/native.c, vm/new) */
+    vm->frames[idx].result = UINT32_MAX; /* vm/new's loop and code set it */
     vm->fp = idx;
     vm->frames_active = 1;
 }

@@ -108,7 +108,8 @@ void ms_sync(Masm *m, uint32_t pc, int pushed) {
 /* r := &vm->frames[vm->fp] */
 void ms_frame(Masm *m, int r) {
     x64_mov_rm(&m->a, r, VMR, OFF(fp));
-    x64_shl_ri(&m->a, r, 5);                    /* sizeof(Frame) is 32 */
+    x64_lea(&m->a, r, r, r, 4, 0);              /* sizeof(Frame) is 40: 5 r, then 8 times */
+    x64_shl_ri(&m->a, r, 3);
     x64_add_rm(&m->a, r, VMR, OFF(frames));
 }
 void ms_reload(Masm *m) {
@@ -129,7 +130,9 @@ void ms_call(Masm *m, MsHelper helper) {
     x64_call_r(&m->a, RAX);
     if (m->win) x64_add_ri(&m->a, RSP, 32);
 }
-void ms_count(Masm *m, uint32_t k) { if (k) x64_add_ri(&m->a, COUNTR, (int32_t)k); }
+/* lea, not add: the flags of a comparison just made live through it to
+   the branch after (emit.c, a fused compare and branch, M7) */
+void ms_count(Masm *m, uint32_t k) { if (k) x64_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k); }
 void ms_handback(Masm *m, int code) {
     x64_mov_ri(&m->a, RAX, code);
     ms_handback_rax(m);
