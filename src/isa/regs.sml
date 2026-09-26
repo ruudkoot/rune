@@ -33,8 +33,9 @@
    * ENTER(slot, fn), the frame's registers at slot and fn's code entered;
      HANDOVER(f), the frame handed to the driver where function f has
      native code (vm/new/jit.h), RETURN_NATIVE(at), where a return lands
-     in native code, and NEW_PROGRAM(), the JIT's view made again of a
-     program that became another;
+     in native code, RAISED(), on after a raise, into the handler's native
+     code where it has some, and NEW_PROGRAM(), the JIT's view made again
+     of a program that became another;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
      the object v points to, of that kind, or a fatal error;
    * NEXT, on to the next instruction, for a body that ends early. *)
@@ -157,7 +158,7 @@ struct
            "int r = prim_table[a](vm);",
            "RELOAD();",
            "/* 1: it raised, and the handler has its exception (vm_raise) */",
-           "if (r == 1) NEXT;",
+           "if (r == 1) RAISED();",
            "if (r == PRIM_NEW_WORLD) FATAL(\"a primitive that changes the world in PRIM\");",
            "R(b) = POP();"]),
      rraising
@@ -168,8 +169,10 @@ struct
            "/* one that says PRIM_NEW_WORLD has put another program here",
            "   (Runtime.restore): RELOAD takes its code again, and the pc with",
            "   it, and the JIT's view of the program is made again */",
-           "if (prim_table[a](vm) == PRIM_NEW_WORLD) NEW_PROGRAM();",
-           "RELOAD();"]),
+           "int r = prim_table[a](vm);",
+           "if (r == PRIM_NEW_WORLD) NEW_PROGRAM();",
+           "RELOAD();",
+           "if (r == 1) RAISED();"]),
      rinst ("TUPLE", [("d", reg), ("n", K Count), ("fields", Registers 1)], Next,
             "Register d := a tuple of the n registers of fields.")
        ["if (n == 0) { R(a) = mk_unit(); NEXT; }",
@@ -269,7 +272,8 @@ struct
            "if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL(\"RAISE of non-exception\");",
            "SYNC();",
            "vm_raise(vm, v);",
-           "RELOAD();"]),
+           "RELOAD();",
+           "RAISED();"]),
      rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
             "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
        ["Function *fn = &p->funcs[a];",

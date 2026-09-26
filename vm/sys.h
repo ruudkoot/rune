@@ -263,8 +263,11 @@ const char *sys_getenv(const char *name);       /* NULL when it is not set */
    (executable 1), or writable again (0), and gives 0 on failure;
    sys_code_flush is what a machine needs between writing code and running
    it (its instruction cache), and nothing on x86; sys_code_free gives the
-   memory back. sys_none fails the first with ENOSYS. */
+   memory back; sys_code_page is the page, the unit sys_code_protect works
+   in, so that a caller can protect the pages it wrote alone. sys_none
+   fails the first with ENOSYS. */
 void *sys_code_alloc(size_t size);
+size_t sys_code_page(void);
 int sys_code_protect(void *code, size_t size, int executable);
 void sys_code_flush(void *code, size_t size);
 void sys_code_free(void *code, size_t size);

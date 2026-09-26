@@ -135,7 +135,8 @@ The JIT's view of the program (`JitProgram`, made by `jit_program` when
 the driver first sees a program and again when it becomes another,
 `Runtime.restore`) is a code object per function: its entry, NULL while
 it is interpreted; its tier; the counters tier 0 will keep for the
-tiering policy; and, from M4, its code's table of pc to address. An entry
+tiering policy; and, from M6, its code's table of pc to address, for
+entering the code at a loop's head or where an image resumes. An entry
 is published last, with one store. `--jit=off` runs the interpreter alone,
 `--jit=all` gives every function an entry at load, `baseline` and `opt`
 are the tiers of M6 and M9; `--jit-stats` prints at exit what the JIT did.
@@ -146,12 +147,18 @@ into it and runs them. A VM built with `RUNE_JIT=0` has the interpreter
 alone and refuses `--jit`.
 
 `jit_run` enters native code through the enter stub (*Tier 1*). Under
-`--jit=all` every function tier 1 can compile is compiled when the
-program is first seen; a call from interpreted code into compiled code
-and a return out of it each cross the driver once, which is the cost of
-the protocol, measured in M3 with stubs for entries. `RUNEVM_JIT` in the
-environment names the mode where no `--jit=` does, for the runners that
-start a VM they cannot give options.
+`--jit=all` every function is compiled when the program is first seen
+(since M5; M4 compiled the leaves); a call from interpreted code into
+compiled code, a return out of it and a raise into a handler of the other
+tier (`RAISED` in the loop's words) each cross the driver once, which is
+the cost of the protocol, measured in M3 with stubs for entries.
+`--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
+for finding a function whose code is wrong by halving, and for the run of
+`scripts/check-jit.sh` in which every other function is compiled, so
+that calls, returns and raises cross between the tiers both ways.
+`--trace` runs the interpreter alone. `RUNEVM_JIT` in the environment
+names the mode where no `--jit=` does, for the runners that start a VM
+they cannot give options.
 
 ## Tier 1: the baseline compiler
 
@@ -194,17 +201,21 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
 * **`compile.h`, `compile.c`**: the compiler. A scan of the function finds
   where instructions begin, which are targets of jumps (and of a
   `SWITCH`'s table, whose `JUMP`s are data, never run) and which end a
-  run; a function with an instruction tier 1 does not compile stays
-  interpreted (M4: the calls, `RESULT`, `PRIMPUSH`, the handlers and
-  `RAISE`). Then each instruction's emitter, with a run's length added to
-  the count where the run begins (docs/native.md, *Counting*), the slow
-  paths, and the code copied into the region, which is one 64 MB
-  mapping, executable, made writable to add a function's code; the enter
-  and leave stubs are at its start. A code object's entry is written
-  last. The helpers native code calls: `jit_h_prim` (the primitive from
-  the registers, `fastprim.h`'s way, or pushed and called), `jit_h_alloc`,
-  `jit_h_ret` (`RET` as the loop does it, answering what the driver is to
-  do next) and `jit_h_fatal` (the loop's message).
+  run; every instruction is compiled (since M5; a `RESULT` after a call
+  is a phantom, which the callee's `RET` does, and the instruction after
+  it a target). Then each instruction's emitter, with a run's length
+  added to the count where the run begins (docs/native.md, *Counting*),
+  the slow paths, and the code copied into the region, which is one
+  64 MB mapping, executable, made writable to add a function's code; the
+  enter and leave stubs are at its start. A code object's entry is
+  written last. The helpers native code calls: `jit_h_prim` (the
+  primitive from the registers, `fastprim.h`'s way, or pushed and
+  called), `jit_h_alloc`, `jit_h_ret` (the frame of the top level's
+  `RET`, answering what the driver is to do next), `jit_h_fatal` (the
+  loop's message), `jit_h_call` and `jit_h_tailcall` (a call through a
+  closure), `jit_h_push_handler`, `jit_h_raise`, `jit_h_primpush`, and
+  `jit_h_grow` and `jit_h_grow_frames` (the stack and the frames grown
+  where a call finds no room).
 * **`emit.c`**: the emitters, one per instruction, over the
   macro-assembler. `runeisa` writes `vm/new/jit_emit.h`, their
   prototypes, so that an instruction without one does not build, and
@@ -212,11 +223,75 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   the loop reads them and calls its emitter; the flow, raises and handlers
   of each instruction are the tables of `regops.h`.
 
+Calls, returns, handlers and `PRIMPUSH` in tier 1 (M5): a known call
+(`CALLK`, `TAILCALLK`) is in line -- the room checked (a slow path grows
+the stack, another the frames), the callee's registers made above the
+frame from the caller's, the frame pushed with the address of the code
+after the caller's `RESULT` as its `native_ret`, the callee's registers
+made the code's own (`rbp`, `r14`), and its entry read from its code
+object and jumped to, or, where it has none, the VM made exact for the
+interpreter and handed back. A call through a closure (`CALL`,
+`TAILCALL`) goes through `jit_h_call` and `jit_h_tailcall`, which do what
+the loop does and answer with the callee's entry. `RET` writes the value
+into the register of the caller's `RESULT` -- read from the caller's code
+at `ret_pc`, as the loop's does -- pops the frame, and jumps straight into
+the caller's code where the frame kept a `native_ret`, else hands back to
+the interpreter; the frame of the top level returns through `jit_h_ret`.
+So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine
+and counted by none (compile.c, a phantom), where a `RESULT` after a
+`PRIMPUSH` runs and takes the value the primitive left above the
+registers. `PUSHHANDLER` records, beside the pc, the address of the
+handler's code (`Handler.native`, `vm/vm.h`; NULL from the loop's and from
+an image), so that a raise -- `RAISE` through `jit_h_raise`, a primitive's
+through `jit_h_prim` -- lands in the handler's native code where it has
+some, from the interpreter too (`RAISED` in the loop's words). `--trace`
+runs the interpreter alone.
+
 Correctness is `--count`: the code counts every instruction the loop
 would, allocates every object it would, and prints what it prints, which
-`make test-new-jit` holds it to on every suite (`--jit=all`), with the
-program of every instruction and `tests/opt/prims.sml` on their edge
-cases, `--gc-stress` and the sanitisers.
+`make test-new-jit` holds it to on every suite (`--jit=all`) and with
+every other function compiled (`--jit-only=odd`), with the program of
+every instruction, `tests/opt/prims.sml` on their edge cases and the
+compiler compiling itself, `--gc-stress` and the sanitisers.
+
+## Calls into C: the transition, and the FFI's
+
+Native code calls into C in one way, wherever it does (`masm.c`, `ms_sync`,
+`ms_call`, `ms_reload`), and this is the sequence a foreign function
+call will take too (docs/plans/jit.md, *Prerequisites and flags*, the
+FFI):
+
+1. **`SYNC`:** the VM is made exact where C can look -- `vm->pc` the pc
+   after the instruction (what a trace, an error and an image would
+   name), `vm->sp` the frame's base plus its registers plus what the
+   instruction has pushed, `vm->instructions` the count. `vm->fp` and
+   the frames are always exact: the code keeps them in the VM, never in a
+   register alone.
+2. **The arguments:** the VM in argument 0, the rest in the convention's
+   registers (`ms_arg`); a `Value` never crosses the ABI by value, only
+   by its register number or a pointer, since the two conventions pass a
+   16-byte struct differently.
+3. **The call:** an absolute address in `rax` (the code and the runtime
+   may be anywhere in the address space; Windows puts them far apart),
+   the shadow space of the Windows convention reserved around it. The
+   machine stack is aligned by the enter stub and holds nothing else.
+4. **What C may do:** allocate and so collect (every register is a root,
+   since every value is in its slot), grow the value stack (which moves
+   it), push and pop frames, raise (which pops frames and handlers and
+   leaves the handler's frame on top), change the program
+   (`Runtime.restore`) or end the process. What it may not do is run
+   bytecode: a helper never calls the loop or native code (no nesting;
+   *The driver*), and a foreign function that calls back into SML is the
+   one thing this sequence does not give (the FFI's decision, before M9).
+5. **`RELOAD`:** the stack, the frame's base and its registers taken back
+   from the VM. Nothing that pointed into the heap or the stack before
+   the call is used after it; what the code needs it loads again from a
+   slot.
+6. **The answer:** a helper that may have changed what runs next (a
+   raise into another frame's handler, a call, a primitive that made the
+   program another) answers with where to go: an address to jump to, or
+   a code the driver takes (`RUN_INTERP`, `RUN_NATIVE`, `RUN_HALT`)
+   through the leave stub.
 
 ## Images
 
@@ -225,7 +300,13 @@ the register instruction set's fingerprint in its magic. The places a
 program resumes at are the `RESULT` after a `PRIMPUSH` (`rt_save`,
 `rt_restore`, `posix_fork`, which leave their result on the stack) and,
 for each frame, the `RESULT` after its call. A resumed VM enters
-`vm_loop`, which makes room for its frames first.
+`vm_loop`, which makes room for its frames first. The frames of an image
+carry no native return address and its handlers no native code, so each
+runs interpreted until it returns or is unwound, and what it calls runs
+at its own tier; entering a resumed frame's code at its resume point is
+the table of pc to address, M6. Under `--jit=all` `make test-new-jit`
+holds `--restore`, `Runtime.restore` and the emulated fork to the
+interpreter's output and counts.
 
 ## What is measured, and how
 

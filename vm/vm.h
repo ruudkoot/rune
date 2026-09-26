@@ -177,6 +177,10 @@ typedef struct Handler {
     uint32_t pc;
     size_t sp;
     size_t fp;
+    /* In vm/new, the native code of the handler where the frame that
+       installed it runs compiled (vm/new/jit.h); NULL for the interpreter.
+       An image does not carry it. */
+    const void *native;
 } Handler;
 
 #define NUM_BUILTIN_EXNS 8
@@ -224,6 +228,7 @@ typedef struct VM {
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
     int jit_mode;            /* --jit=MODE in vm/new (vm/new/jit.h); 0, off, in runevm */
     int jit_stats;           /* --jit-stats: what the JIT did, at exit */
+    const char *jit_only;    /* --jit-only=SPEC: which functions alone get code (vm/new/jit.c); NULL for all */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -312,7 +317,7 @@ int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm
 /* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
    vm/new takes and runevm refuses: 1 when the option is taken, 0 when it is
    not one. vm_jit_check runs --jit-check and gives the exit status. */
-int vm_jit_arg(const char *arg, int *mode, int *stats, int *check);
+int vm_jit_arg(const char *arg, int *mode, int *stats, int *check, const char **only);
 int vm_jit_check(void);
 /* RUNEVM_JIT in the environment, the mode where no --jit= is given: taken
    by vm/new, ignored by runevm (the compiler runs on it); 0 for a mode

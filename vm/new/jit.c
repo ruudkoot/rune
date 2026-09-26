@@ -24,15 +24,21 @@ static void jit_make(VM *vm, JitProgram *jit) {
        image never returns into it, since native_ret is not carried */
     jit->code_used = jit->code_mem ? jit->code_used : 0;
     if (vm->jit_mode == JIT_ALL) {
-        /* RUNEVM_JIT_FUNCS=LO-HI compiles functions LO to HI alone: for
-           finding, by halving, a function whose code is wrong */
-        uint32_t lo = 0, hi = p->nfuncs;
-        const char *only = getenv("RUNEVM_JIT_FUNCS");
+        /* --jit-only=LO-HI compiles functions LO to HI alone: for finding,
+           by halving, a function whose code is wrong; =odd or =even
+           compiles every other function, so that calls, returns and raises
+           cross between the tiers both ways (scripts/check-jit.sh). An
+           option, not a variable of the environment, which a program can
+           read: --count must not see the difference. */
+        uint32_t lo = 0, hi = p->nfuncs, step = 1;
+        const char *only = vm->jit_only;
         if (only) {
             unsigned long a = 0, b = 0;
             if (sscanf(only, "%lu-%lu", &a, &b) == 2 && a <= b) { lo = (uint32_t)a; hi = b < p->nfuncs ? (uint32_t)b + 1 : p->nfuncs; }
+            else if (strcmp(only, "odd") == 0) { lo = 1; step = 2; }
+            else if (strcmp(only, "even") == 0) { step = 2; }
         }
-        for (uint32_t i = lo; i < hi; i++) jit_compile(vm, jit, i);
+        for (uint32_t i = lo; i < hi; i += step) jit_compile(vm, jit, i);
     }
 }
 

@@ -32,7 +32,7 @@ What it rests on:
 | M2 | Tier 0: the interpreter finished | done |
 | M3 | The skeleton: code objects, executable memory, the driver | done |
 | M4 | Tier 1, straight-line code, x86-64 | done |
-| M5 | Tier 1 complete, and Windows | |
+| M5 | Tier 1 complete, and Windows | done |
 | M6 | Tiering, OSR entry and the code cache | |
 | M7 | Tier 1 made fast | |
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | |
@@ -1681,6 +1681,89 @@ M8 to M12 about 6,000, and are planned again after M7.
   and Windows are green; stress and sanitiser pass.
 * **Touches:** the FFI (the transition is fixed here), incremental
   compilation (images and entries).
+* **Done** (2026-09-25; `vm/new/jit/emit.c` and `compile.c`, about 450
+  lines more):
+  * **Calls in line.** `CALLK` and `TAILCALLK` check the room (a slow
+    path grows the stack, another the frames), make the callee's
+    registers above the frame from the caller's, push the frame with
+    the address of the code after the caller's `RESULT` as its
+    `native_ret`, make the callee's registers the code's own and jump to
+    the entry read from the callee's code object -- or, where it has
+    none, make the VM exact and hand it to the interpreter. `CALL` and
+    `TAILCALL` go through `jit_h_call` and `jit_h_tailcall`, which do
+    what the loop does and answer with the entry. `RET` writes the value
+    into the register of the caller's `RESULT` (read from the caller's
+    code at `ret_pc`, as the loop's does), pops the frame and jumps into
+    the caller's code where the frame kept a `native_ret`, else hands
+    back; the frame of the top level returns through `jit_h_ret`. A
+    `RESULT` after a call is therefore a phantom that no engine runs or
+    counts, where a `RESULT` after a `PRIMPUSH` runs.
+  * **Handlers.** `PUSHHANDLER` records the handler's native address
+    beside its pc (`Handler.native` in `vm/vm.h`; NULL from the loop and
+    from an image); a raise -- `RAISE` through `jit_h_raise`, a
+    primitive's through `jit_h_prim` or `jit_h_primpush` -- lands in the
+    handler's native code from either tier (`RAISED` in the loop's
+    words). `POPHANDLER` and `CATCH` are in line.
+  * **`PRIMPUSH`** through `jit_h_primpush`; a primitive that makes the
+    program another (`Runtime.restore`) hands back to the interpreter,
+    which takes it up at its `RESULT`. An image's frames carry no
+    `native_ret`, so each runs interpreted until it returns; entering
+    its code at the resume point is M6's table. `--trace` runs the
+    interpreter alone.
+  * **The oracle** (`scripts/check-jit.sh`) runs every program a third
+    time with every other function compiled (`--jit-only=odd`), so that
+    calls, returns and raises cross between the tiers both ways; and the
+    compiler as register bytecode compiles itself under every mode to
+    the same bytes and counts (427,004,094 instructions).
+    `--jit-only=LO-HI|odd|even` replaces M4's `RUNEVM_JIT_FUNCS`
+    variable: an option, since a program can read its environment and
+    `--count` must not see the difference (`basis.posix_process` did:
+    three more characters of environment, six more objects).
+  * **Windows** was done in M4 (the code memory of `sys_win.c`, the Win64
+    convention); `make test-windows` runs `vm/new` under `--jit=all`.
+  * **The transition into C** is written down in `ARCHITECTURE.md`
+    (*Calls into C: the transition, and the FFI's*): sync, the arguments
+    (no `Value` by value across the ABI), the call, what C may do (never
+    run bytecode), reload, the answer.
+  * Under `--jit=all` all 2,101 functions of the compiler are compiled,
+    10.4 MB of code; the driver is crossed 119 times each way in the
+    bootstrap (M4: once per call into a leaf).
+  * The sanitiser found a use-after-free in M4's compiler that nothing
+    else had: the emitter of an allocation held the address of its slow
+    path across the fill, and a fill that adds a slow path of its own
+    (`MKEXN`'s check) moves the array. An index now.
+  * Windows found the cost of protecting the whole 64 MB region twice
+    per function compiled: a child VM of the Basis suite's fork, which
+    compiles the program before it runs, took long enough to start that
+    a check whose answer on Windows is whether the child is gone within
+    300 ms changed its answer. The compiler now protects the pages it
+    wrote alone (`sys_code_page` in `vm/sys.h`), and the check's
+    deviation line says the answer comes and goes (`HOST-FLAKY`).
+* **Measured** (`scripts/perf-cycles.sh --configs new,jit,opt`; cycles,
+  and the fraction of the interpreter's):
+
+  | Program | interpreter | `--jit=all` | `runeopt` |
+  |---|---:|---:|---:|
+  | array_sieve | 443.8M | 424.7M (0.96) | 301.3M (0.68) |
+  | fib | 877.8M | 722.1M (0.82) | 376.1M (0.43) |
+  | intinf_fact | 467.6M | 394.7M (0.84) | 260.8M (0.56) |
+  | list_ops | 339.0M | 252.0M (0.74) | 184.1M (0.54) |
+  | real_nbody | 717.1M | 1.0G (1.43) | 438.0M (0.61) |
+  | string_ops | 725.0M | 579.9M (0.80) | 391.1M (0.54) |
+  | tak | 215.7M | 187.8M (0.87) | 77.3M (0.36) |
+  | word_bits | 542.0M | 700.2M (1.29) | 212.9M (0.39) |
+  | the bootstrap | 11.9G | 9.8G (0.83) | 7.1G (0.60) |
+
+  With every function compiled and calls staying in native code, the
+  bootstrap is at 0.83 of the interpreter (M4, leaves only: 1.03) and
+  the call-bound programs at 0.74-0.87; the primitive-bound ones
+  (`real_nbody`, `word_bits`) are still slower than interpreted, since
+  every `PRIM` is a call into C where the loop has `fastprim.h` in
+  line, which M7 puts into the code. `runeopt` stays ahead (0.60 on the
+  bootstrap): its primitives are in line, its `RET` predicted, its pushed
+  locals read in place -- M7's list, and D12's first target is to pass
+  it.
+
 
 ### M6. Tiering, OSR entry and the code cache (M, about 500)
 

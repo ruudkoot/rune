@@ -182,7 +182,7 @@ CASE(PRIM) {
     int r = prim_table[a](vm);
     RELOAD();
     /* 1: it raised, and the handler has its exception (vm_raise) */
-    if (r == 1) NEXT;
+    if (r == 1) RAISED();
     if (r == PRIM_NEW_WORLD) FATAL("a primitive that changes the world in PRIM");
     R(b) = POP();
     NEXT;
@@ -199,8 +199,10 @@ CASE(PRIMPUSH) {
     /* one that says PRIM_NEW_WORLD has put another program here
        (Runtime.restore): RELOAD takes its code again, and the pc with
        it, and the JIT's view of the program is made again */
-    if (prim_table[a](vm) == PRIM_NEW_WORLD) NEW_PROGRAM();
+    int r = prim_table[a](vm);
+    if (r == PRIM_NEW_WORLD) NEW_PROGRAM();
     RELOAD();
+    if (r == 1) RAISED();
     NEXT;
 }
 CASE(TUPLE) {
@@ -434,6 +436,7 @@ CASE(RAISE) {
     SYNC();
     vm_raise(vm, v);
     RELOAD();
+    RAISED();
     NEXT;
 }
 CASE(CALLK) {

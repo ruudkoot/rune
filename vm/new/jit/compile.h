@@ -28,7 +28,8 @@ typedef struct Jit {
 enum JitFatal {
     FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
     FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
-    FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX
+    FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
+    FATAL_POPHANDLER, FATAL_RAISE
 };
 
 /* the label of the instruction at pc, for a jump */
@@ -51,6 +52,13 @@ int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 int jit_h_ret(VM *vm, int32_t s);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
+void jit_h_grow(VM *vm, size_t need);
+void jit_h_grow_frames(VM *vm);
+const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after);
+const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
+void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
+const void *jit_h_raise(VM *vm, int32_t s);
+int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
