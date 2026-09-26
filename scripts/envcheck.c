@@ -8,7 +8,8 @@
      envcheck-probe pairs SECS all|sample       port sharing of pairs of CPUs
      envcheck-probe pingpong ROUNDS all|sample  a cache line between two CPUs
      envcheck-probe cachecurve MAXKIB           latency of a pointer chase by size
-     envcheck-probe cachesizes l1|all MAXKIB    the caches' sizes from that latency
+     envcheck-probe cachesizes l1|all MAXKIB    the caches' sizes from that latency,
+                                                and L1i from the speed of fetching
      envcheck-probe membw MIB SECS              copy and triad, one thread and all
      envcheck-probe jitter SECS                 pauses of every CPU at once
      envcheck-probe disk DIR MIB SECS NFILES    sequential, random, fsync, files
@@ -38,6 +39,7 @@
 #include <math.h>
 #if defined(__x86_64__)
 #include <cpuid.h>
+#include <sys/syscall.h>
 #endif
 
 /* ---------------------------------------------------------------- helpers */
@@ -172,61 +174,70 @@ static void cpuid_fms(void)
     if (family == 6 || family >= 0xf) model += ((r[0] >> 16) & 0xf) << 4;
 }
 
-/* Family, model and stepping to a microarchitecture. A server part and a
-   client part of one generation have different models. Add rows as new
-   machines turn up: an unknown one is reported for that. */
-static const struct { const char *vendor; unsigned fam, model, smin, smax; const char *name; } uarchs[] = {
-    {"GenuineIntel", 6, 0x2d, 0, 15, "Sandy Bridge-EP"},
-    {"GenuineIntel", 6, 0x3e, 0, 15, "Ivy Bridge-EP"},
-    {"GenuineIntel", 6, 0x3f, 0, 15, "Haswell-EP"},
-    {"GenuineIntel", 6, 0x4f, 0, 15, "Broadwell-EP"},
-    {"GenuineIntel", 6, 0x55, 0, 4, "Skylake-SP"},
-    {"GenuineIntel", 6, 0x55, 5, 7, "Cascade Lake"},
-    {"GenuineIntel", 6, 0x55, 10, 11, "Cooper Lake"},
-    {"GenuineIntel", 6, 0x6a, 0, 15, "Ice Lake-SP"},
-    {"GenuineIntel", 6, 0x6c, 0, 15, "Ice Lake-D"},
-    {"GenuineIntel", 6, 0x8f, 0, 15, "Sapphire Rapids"},
-    {"GenuineIntel", 6, 0xcf, 0, 15, "Emerald Rapids"},
-    {"GenuineIntel", 6, 0xad, 0, 15, "Granite Rapids"},
-    {"GenuineIntel", 6, 0xaf, 0, 15, "Sierra Forest"},
-    {"GenuineIntel", 6, 0x4e, 0, 15, "Skylake (client)"},
-    {"GenuineIntel", 6, 0x5e, 0, 15, "Skylake (client)"},
-    {"GenuineIntel", 6, 0x8e, 0, 15, "Kaby/Coffee/Whiskey Lake (mobile)"},
-    {"GenuineIntel", 6, 0x9e, 0, 15, "Kaby/Coffee Lake"},
-    {"GenuineIntel", 6, 0xa5, 0, 15, "Comet Lake"},
-    {"GenuineIntel", 6, 0xa6, 0, 15, "Comet Lake"},
-    {"GenuineIntel", 6, 0x7d, 0, 15, "Ice Lake (client)"},
-    {"GenuineIntel", 6, 0x7e, 0, 15, "Ice Lake (client)"},
-    {"GenuineIntel", 6, 0x8c, 0, 15, "Tiger Lake"},
-    {"GenuineIntel", 6, 0x8d, 0, 15, "Tiger Lake"},
-    {"GenuineIntel", 6, 0xa7, 0, 15, "Rocket Lake"},
-    {"GenuineIntel", 6, 0x97, 0, 15, "Alder Lake"},
-    {"GenuineIntel", 6, 0x9a, 0, 15, "Alder Lake"},
-    {"GenuineIntel", 6, 0xb7, 0, 15, "Raptor Lake"},
-    {"GenuineIntel", 6, 0xba, 0, 15, "Raptor Lake"},
-    {"GenuineIntel", 6, 0xbf, 0, 15, "Raptor Lake"},
-    {"GenuineIntel", 6, 0xaa, 0, 15, "Meteor Lake"},
-    {"GenuineIntel", 6, 0xac, 0, 15, "Meteor Lake"},
-    {"GenuineIntel", 6, 0xbd, 0, 15, "Lunar Lake"},
-    {"GenuineIntel", 6, 0xc5, 0, 15, "Arrow Lake"},
-    {"GenuineIntel", 6, 0xc6, 0, 15, "Arrow Lake"},
-    {"AuthenticAMD", 0x17, 0x01, 0, 15, "Zen (Naples)"},
-    {"AuthenticAMD", 0x17, 0x08, 0, 15, "Zen+"},
-    {"AuthenticAMD", 0x17, 0x31, 0, 15, "Zen 2 (Rome)"},
-    {"AuthenticAMD", 0x17, 0x60, 0, 15, "Zen 2 (Renoir)"},
-    {"AuthenticAMD", 0x17, 0x71, 0, 15, "Zen 2 (Matisse)"},
-    {"AuthenticAMD", 0x19, 0x01, 0, 15, "Zen 3 (Milan)"},
-    {"AuthenticAMD", 0x19, 0x21, 0, 15, "Zen 3 (Vermeer)"},
-    {"AuthenticAMD", 0x19, 0x44, 0, 15, "Zen 3+ (Rembrandt)"},
-    {"AuthenticAMD", 0x19, 0x50, 0, 15, "Zen 3 (Cezanne)"},
-    {"AuthenticAMD", 0x19, 0x11, 0, 15, "Zen 4 (Genoa)"},
-    {"AuthenticAMD", 0x19, 0x61, 0, 15, "Zen 4 (Raphael)"},
-    {"AuthenticAMD", 0x19, 0x74, 0, 15, "Zen 4 (Phoenix)"},
-    {"AuthenticAMD", 0x19, 0xa0, 0, 15, "Zen 4c (Bergamo)"},
-    {"AuthenticAMD", 0x1a, 0x02, 0, 15, "Zen 5 (Turin)"},
-    {"AuthenticAMD", 0x1a, 0x11, 0, 15, "Zen 5c (Turin dense)"},
-    {"AuthenticAMD", 0x1a, 0x24, 0, 15, "Zen 5 (Strix Point)"},
-    {"AuthenticAMD", 0x1a, 0x44, 0, 15, "Zen 5 (Granite Ridge)"},
+/* Family, model and stepping to a microarchitecture, and whether it is a
+   server part (S: a Xeon or an EPYC), a client part (C) or can be either
+   (?). A server part and a client part of one generation have different
+   models. Add rows as new machines turn up: an unknown one is reported for
+   that. */
+static const struct { const char *vendor; unsigned fam, model, smin, smax; const char *name; char cls; } uarchs[] = {
+    {"GenuineIntel", 6, 0x2d, 0, 15, "Sandy Bridge-EP", 'S'},
+    {"GenuineIntel", 6, 0x3e, 0, 15, "Ivy Bridge-EP", 'S'},
+    {"GenuineIntel", 6, 0x3f, 0, 15, "Haswell-EP", 'S'},
+    {"GenuineIntel", 6, 0x4f, 0, 15, "Broadwell-EP", 'S'},
+    {"GenuineIntel", 6, 0x55, 0, 4, "Skylake-SP", 'S'},
+    {"GenuineIntel", 6, 0x55, 5, 7, "Cascade Lake", 'S'},
+    {"GenuineIntel", 6, 0x55, 10, 11, "Cooper Lake", 'S'},
+    {"GenuineIntel", 6, 0x6a, 0, 15, "Ice Lake-SP", 'S'},
+    {"GenuineIntel", 6, 0x6c, 0, 15, "Ice Lake-D", 'S'},
+    {"GenuineIntel", 6, 0x8f, 0, 15, "Sapphire Rapids", 'S'},
+    {"GenuineIntel", 6, 0xcf, 0, 15, "Emerald Rapids", 'S'},
+    {"GenuineIntel", 6, 0xad, 0, 15, "Granite Rapids", 'S'},
+    {"GenuineIntel", 6, 0xae, 0, 15, "Granite Rapids-D", 'S'},
+    {"GenuineIntel", 6, 0xaf, 0, 15, "Sierra Forest", 'S'},
+    {"GenuineIntel", 6, 0xdd, 0, 15, "Clearwater Forest", 'S'},
+    {"GenuineIntel", 0x13, 0x01, 0, 15, "Diamond Rapids", 'S'},
+    {"GenuineIntel", 6, 0x4e, 0, 15, "Skylake (client)", 'C'},
+    {"GenuineIntel", 6, 0x5e, 0, 15, "Skylake (client)", 'C'},
+    {"GenuineIntel", 6, 0x8e, 0, 15, "Kaby/Coffee/Whiskey Lake (mobile)", 'C'},
+    {"GenuineIntel", 6, 0x9e, 0, 15, "Kaby/Coffee Lake", 'C'},
+    {"GenuineIntel", 6, 0xa5, 0, 15, "Comet Lake", 'C'},
+    {"GenuineIntel", 6, 0xa6, 0, 15, "Comet Lake", 'C'},
+    {"GenuineIntel", 6, 0x7d, 0, 15, "Ice Lake (client)", 'C'},
+    {"GenuineIntel", 6, 0x7e, 0, 15, "Ice Lake (client)", 'C'},
+    {"GenuineIntel", 6, 0x8c, 0, 15, "Tiger Lake", 'C'},
+    {"GenuineIntel", 6, 0x8d, 0, 15, "Tiger Lake", 'C'},
+    {"GenuineIntel", 6, 0xa7, 0, 15, "Rocket Lake", 'C'},
+    {"GenuineIntel", 6, 0x97, 0, 15, "Alder Lake", 'C'},
+    {"GenuineIntel", 6, 0x9a, 0, 15, "Alder Lake", 'C'},
+    {"GenuineIntel", 6, 0xb7, 0, 15, "Raptor Lake", 'C'},
+    {"GenuineIntel", 6, 0xba, 0, 15, "Raptor Lake", 'C'},
+    {"GenuineIntel", 6, 0xbf, 0, 15, "Raptor Lake", 'C'},
+    {"GenuineIntel", 6, 0xaa, 0, 15, "Meteor Lake", 'C'},
+    {"GenuineIntel", 6, 0xac, 0, 15, "Meteor Lake", 'C'},
+    {"GenuineIntel", 6, 0xbd, 0, 15, "Lunar Lake", 'C'},
+    {"GenuineIntel", 6, 0xc5, 0, 15, "Arrow Lake", 'C'},
+    {"GenuineIntel", 6, 0xc6, 0, 15, "Arrow Lake", 'C'},
+    {"GenuineIntel", 6, 0xcc, 0, 15, "Panther Lake", 'C'},
+    {"GenuineIntel", 6, 0xd5, 0, 15, "Panther Lake", 'C'},
+    {"GenuineIntel", 0x12, 0x01, 0, 15, "Nova Lake", 'C'},
+    {"GenuineIntel", 0x12, 0x03, 0, 15, "Nova Lake", 'C'},
+    {"AuthenticAMD", 0x17, 0x01, 0, 15, "Zen (Naples, or Summit Ridge)", '?'},
+    {"AuthenticAMD", 0x17, 0x08, 0, 15, "Zen+", 'C'},
+    {"AuthenticAMD", 0x17, 0x31, 0, 15, "Zen 2 (Rome)", 'S'},
+    {"AuthenticAMD", 0x17, 0x60, 0, 15, "Zen 2 (Renoir)", 'C'},
+    {"AuthenticAMD", 0x17, 0x71, 0, 15, "Zen 2 (Matisse)", 'C'},
+    {"AuthenticAMD", 0x19, 0x01, 0, 15, "Zen 3 (Milan)", 'S'},
+    {"AuthenticAMD", 0x19, 0x21, 0, 15, "Zen 3 (Vermeer)", 'C'},
+    {"AuthenticAMD", 0x19, 0x44, 0, 15, "Zen 3+ (Rembrandt)", 'C'},
+    {"AuthenticAMD", 0x19, 0x50, 0, 15, "Zen 3 (Cezanne)", 'C'},
+    {"AuthenticAMD", 0x19, 0x11, 0, 15, "Zen 4 (Genoa)", 'S'},
+    {"AuthenticAMD", 0x19, 0x61, 0, 15, "Zen 4 (Raphael)", 'C'},
+    {"AuthenticAMD", 0x19, 0x74, 0, 15, "Zen 4 (Phoenix)", 'C'},
+    {"AuthenticAMD", 0x19, 0xa0, 0, 15, "Zen 4c (Bergamo)", 'S'},
+    {"AuthenticAMD", 0x1a, 0x02, 0, 15, "Zen 5 (Turin)", 'S'},
+    {"AuthenticAMD", 0x1a, 0x11, 0, 15, "Zen 5c (Turin dense)", 'S'},
+    {"AuthenticAMD", 0x1a, 0x24, 0, 15, "Zen 5 (Strix Point)", 'C'},
+    {"AuthenticAMD", 0x1a, 0x44, 0, 15, "Zen 5 (Granite Ridge)", 'C'},
 };
 
 static int cmd_cpuid(void)
@@ -251,10 +262,29 @@ static int cmd_cpuid(void)
         kv("cpu.brand", "%s", b);
     }
     const char *ua = 0;
+    char cls = '?';
     for (size_t i = 0; i < sizeof uarchs / sizeof uarchs[0]; i++)
         if (!strcmp(uarchs[i].vendor, vendor) && uarchs[i].fam == family && uarchs[i].model == model
-            && stepping >= uarchs[i].smin && stepping <= uarchs[i].smax) { ua = uarchs[i].name; break; }
+            && stepping >= uarchs[i].smin && stepping <= uarchs[i].smax) { ua = uarchs[i].name; cls = uarchs[i].cls; break; }
     kv("cpu.uarch", "%s", ua ? ua : "unknown");
+    kv("cpu.class_by_model", "%s", cls == 'S' ? "server" : cls == 'C' ? "client" : "unknown");
+    /* a model not in the table: the generation its range belongs to (GCC's
+       cpuinfo.h), or one newer than any it knows */
+    if (!ua) {
+        const char *g = 0;
+        int amd = !strcmp(vendor, "AuthenticAMD"), intel = !strcmp(vendor, "GenuineIntel");
+        if (amd && family == 0x1a && ((model >= 0x50 && model <= 0x5f) || (model >= 0x80 && model <= 0xcf)
+                                      || (model >= 0xd8 && model <= 0xe7))) g = "Zen 6";
+        else if (amd && family == 0x1a && (model <= 0x4f || (model >= 0x60 && model <= 0x77)
+                                           || (model >= 0xd0 && model <= 0xd7))) g = "Zen 5";
+        else if (amd && family > 0x1a) g = "after Zen 6 (a family newer than any known)";
+        else if (intel && (family > 0x13 || (family == 0x13 && model > 0x01)))
+            g = "after Diamond Rapids (a family or model newer than any known)";
+        if (g) kv("cpu.uarch_by_model_range", "%s", g);
+    }
+    /* Intel's parts of P-cores and E-cores together say so; its servers do not */
+    cpuid(7, 0, r);
+    kv("cpu.hybrid", "%s", r[3] >> 15 & 1 ? "yes (P-cores and E-cores: a client part)" : "no");
     cpuid(1, 0, r);
     if (r[2] >> 31 & 1) {
         char hv[13];
@@ -340,11 +370,49 @@ static void t_movbe(void) { __asm__ volatile("movbe (%0), %%eax" :: "r"(membuf) 
 static void t_movdiri(void) { __asm__ volatile("movdiri %%eax, (%0)" :: "r"(membuf) : "memory"); }
 static void t_clflushopt(void) { __asm__ volatile("clflushopt (%0)" :: "r"(membuf) : "memory"); }
 static void t_clwb(void) { __asm__ volatile("clwb (%0)" :: "r"(membuf) : "memory"); }
+/* A tile multiply of an AMX extension needs the tiles configured, and Linux
+   lets a process use the tile data only once it has asked
+   (ARCH_REQ_XCOMP_PERM for XTILEDATA); without it the multiply faults too.
+   The newer extensions are what tells the newest hardware under an older
+   CPU model, where the AMX state is on already. The instructions are given
+   as bytes, from binutils 2.47: older assemblers do not know them. */
+static void amx_config(void)
+{
+    static unsigned char cfg[64] __attribute__((aligned(64)));
+    memset(cfg, 0, sizeof cfg);
+    cfg[0] = 1;   /* palette 1; tiles 0 to 2 of 16 rows of 64 bytes */
+    for (int i = 0; i < 3; i++) { cfg[16 + 2 * i] = 64; cfg[48 + i] = 16; }
+    syscall(SYS_arch_prctl, 0x1023, 18);
+    __asm__ volatile("ldtilecfg %0" :: "m"(cfg) : "memory");
+}
+#define AMX_T(fn, bytes) \
+    static void fn(void) { amx_config(); __asm__ volatile(".byte " bytes "\n\ttilerelease" ::: "memory"); }
+AMX_T(t_amxfp16, "0xc4, 0xe2, 0x6b, 0x5c, 0xc1")   /* tdpfp16ps %tmm2, %tmm1, %tmm0: Granite Rapids on */
+AMX_T(t_amxfp8, "0xc4, 0xe5, 0x68, 0xfd, 0xc1")    /* tdpbf8ps %tmm2, %tmm1, %tmm0: Diamond Rapids on */
+/* AVX10.2 (Diamond Rapids on, and Intel's client parts from Nova Lake):
+   vminmaxps $0, %zmm0, %zmm1, %zmm2, which needs only the AVX-512 state */
+T(t_avx102, ".byte 0x62, 0xf3, 0x75, 0x48, 0x52, 0xd0, 0x00")
+/* Also as bytes from binutils 2.47, as they tell hardware newer than the
+   model presented: */
+T(t_vp2intersect, ".byte 0x62, 0xf2, 0x77, 0x48, 0x68, 0xd0")  /* vp2intersectd %zmm0, %zmm1, %k2: Tiger Lake, Zen 5 on */
+T(t_avxvnniint8, ".byte 0xc4, 0xe2, 0x77, 0x50, 0xd0")       /* vpdpbssd %ymm0, %ymm1, %ymm2: Sierra Forest, Diamond Rapids */
+T(t_avxifma, ".byte 0xc4, 0xe2, 0xf5, 0xb4, 0xd0")           /* {vex} vpmadd52luq %ymm0, %ymm1, %ymm2 */
+T(t_sha512, ".byte 0xc4, 0xe2, 0x77, 0xcb, 0xd0")            /* vsha512rnds2 %xmm0, %ymm1, %ymm2: Clearwater Forest, Diamond Rapids */
+T(t_sm3, ".byte 0xc4, 0xe3, 0x71, 0xde, 0xd0, 0x00")         /* vsm3rnds2 $0, %xmm0, %xmm1, %xmm2 */
+T(t_sm4, ".byte 0xc4, 0xe2, 0x72, 0xda, 0xd0")               /* vsm4key4 %xmm0, %xmm1, %xmm2 */
+T(t_avx512bmm, ".byte 0x62, 0xf6, 0x74, 0x48, 0x80, 0xd0")   /* vbmacor16x16x16 %zmm0, %zmm1, %zmm2: Zen 6 */
+/* APX: mov %r16, %r16, which leaves r16 as it was; it needs APX state of
+   its own in XCR0, which a hypervisor that hides APX does not turn on */
+static void t_apx(void) { __asm__ volatile(".byte 0xd5, 0x58, 0x89, 0xc0" ::: "memory"); }
+/* RAO-INT: aadd %eax, (membuf), an atomic add; in Intel SDE's future chip,
+   and in no product GCC knows */
+static void t_raoint(void) { __asm__ volatile("xor %%eax, %%eax\n\t.byte 0x0f, 0x38, 0xfc, 0x07" :: "D"(membuf) : "eax", "memory"); }
 
 /* An extension: where cpuid claims it (leaf, subleaf, register eax=0 ebx=1
    ecx=2 edx=3, bit), what state the operating system must have enabled
-   (1 AVX, 2 AVX-512, 3 AMX), and one instruction of it, or none where
-   running one says nothing (lzcnt runs as bsr without it). */
+   (1 AVX, 2 AVX-512, 3 AMX, 4 APX), and one instruction of it, or none
+   where running one says nothing (lzcnt runs as bsr without it) or where
+   no assembler knows one yet (ACE, only a cpuid bit in GCC). */
 static const struct { const char *name; unsigned leaf, sub, reg, bit, os; void (*test)(void); } isas[] = {
     {"sse4.2", 1, 0, 2, 20, 0, t_sse42},
     {"popcnt", 1, 0, 2, 23, 0, t_popcnt},
@@ -386,7 +454,28 @@ static const struct { const char *name; unsigned leaf, sub, reg, bit, os; void (
     {"avx512vpopcntdq", 7, 0, 2, 14, 2, t_avx512vpopcntdq},
     {"avx512bf16", 7, 1, 0, 5, 2, t_avx512bf16},
     {"avx512fp16", 7, 0, 3, 23, 2, t_avx512fp16},
+    /* leaf 0x24: EBX[7:0] is the AVX10 version; bit 1 is set in 2 and 3 */
+    {"avx10.2", 0x24, 0, 1, 1, 2, t_avx102},
+    /* AVX10 of any version; AVX10.1's instructions are AVX-512's */
+    {"avx10", 7, 1, 3, 19, 2, 0},
+    {"avx512vp2intersect", 7, 0, 3, 8, 2, t_vp2intersect},
+    {"avx-vnni-int8", 7, 1, 3, 4, 1, t_avxvnniint8},
+    {"avx-ifma", 7, 1, 0, 23, 1, t_avxifma},
+    {"sha512", 7, 1, 0, 0, 1, t_sha512},
+    {"sm3", 7, 1, 0, 1, 1, t_sm3},
+    {"sm4", 7, 1, 0, 2, 1, t_sm4},
+    {"avx512bmm", 0x80000021u, 0, 0, 23, 2, t_avx512bmm},
+    {"apx", 7, 1, 3, 21, 4, t_apx},
+    {"rao-int", 7, 1, 0, 3, 0, t_raoint},
+    /* ACE, the matrix extension Intel and AMD agreed on (x86 Ecosystem
+       Advisory Group, 2025): only its cpuid bit is known */
+    {"ace", 7, 1, 2, 11, 0, 0},
+    /* AMX last: Intel's SDE stops a program at a tile instruction on a chip
+       without AMX, where hardware faults, and the tests after it would not
+       run under it */
     {"amx-tile", 7, 0, 3, 24, 3, t_amx},
+    {"amx-fp16", 7, 1, 0, 21, 3, t_amxfp16},
+    {"amx-fp8", 0x1e, 1, 0, 4, 3, t_amxfp8},
 };
 
 static unsigned long long xcr0(void)
@@ -403,7 +492,7 @@ static int cmd_isa(void)
 {
     cpuid_init();
     unsigned long long x = xcr0();
-    int os_ok[4] = {1, (x & 6) == 6, (x & 0xe6) == 0xe6, (x & 0x60000) == 0x60000};
+    int os_ok[5] = {1, (x & 6) == 6, (x & 0xe6) == 0xe6, (x & 0x60000) == 0x60000, (x & 0x80000) == 0x80000};
     kv("isa.xcr0", "0x%llx", x);
     struct sigaction sa, old;
     memset(&sa, 0, sizeof sa);
@@ -429,6 +518,20 @@ static int cmd_isa(void)
         kv(key, "%s", v);
     }
     sigaction(SIGILL, &old, 0);
+    /* the versions behind the bits of AVX10 (leaf 0x24) and of ACE (as GCC
+       reads it: a second palette of the tile leaf 0x1d) */
+    unsigned r[4], v[4];
+    cpuid(7, 1, r);
+    if (r[3] >> 19 & 1) {
+        cpuid(0x24, 0, v);
+        kv("isa.avx10_version", "%u (vector lengths:%s%s%s)", v[1] & 0xff,
+           v[1] >> 16 & 1 ? " 128" : "", v[1] >> 17 & 1 ? " 256" : "", v[1] >> 18 & 1 ? " 512" : "");
+    }
+    if (r[2] >> 11 & 1) {
+        cpuid(0x1d, 0, v);
+        if (v[0] >= 2) { cpuid(0x1d, 2, v); kv("isa.ace_version", "%u", v[0] & 0xff); }
+        else kv("isa.ace_version", "%s", "not given (leaf 0x1d has no palette 2)");
+    }
     return 0;
 }
 
@@ -522,7 +625,8 @@ static int has(const char *name)
         if (!strcmp(isas[i].name, name)) {
             unsigned r[4];
             cpuid(isas[i].leaf, isas[i].sub, r);
-            int os = isas[i].os == 1 ? (x & 6) == 6 : isas[i].os == 2 ? (x & 0xe6) == 0xe6 : 1;
+            int os = isas[i].os == 1 ? (x & 6) == 6 : isas[i].os == 2 ? (x & 0xe6) == 0xe6
+                   : isas[i].os == 3 ? (x & 0x60000) == 0x60000 : isas[i].os == 4 ? (x & 0x80000) == 0x80000 : 1;
             return (r[isas[i].reg] >> isas[i].bit & 1) && os;
         }
     return 0;
@@ -689,6 +793,63 @@ static int cmd_pingpong(int rounds, const char *which)
     return 0;
 }
 
+/* ---------------------------------------------------------------- l1i */
+
+/* The L1 instruction cache as fetching shows it: a straight line of 8-byte
+   NOPs, run over and over, is fetched at full speed while it fits and from
+   L2 past it, at less than half the bytes a nanosecond. The step as it
+   outgrows the decoded-uop cache, earlier, is smaller. cpuid's size is the
+   one of the CPU model presented: Granite Rapids showed its 64 KiB under an
+   Emerald Rapids model of 32. Three sweeps, keeping the largest edge, as
+   for L1d: another VM's thread on the core makes the cache look smaller. */
+static void l1i_size(void)
+{
+    static const unsigned char nop8[8] = {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00};
+    size_t max = 256 * 1024 + 4096;
+    unsigned char *code = mmap(0, max, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (code == MAP_FAILED) { kv("cachesize.L1i", "not measured (mmap)"); return; }
+    long edge = 0, past = 0;
+    double below = 0, above = 0;
+    int measured = 0;
+    for (int sweep = 0; sweep < 3; sweep++) {
+        long kib[64];
+        double rate[64];
+        int n = 0;
+        for (long k = 8; k <= 256; k += k < 96 ? 8 : 32) {
+            size_t len = (size_t)k * 1024;
+            if (mprotect(code, max, PROT_READ | PROT_WRITE)) break;
+            for (size_t i = 0; i < len; i += 8) memcpy(code + i, nop8, 8);
+            code[len] = 0xc3;   /* ret */
+            if (mprotect(code, max, PROT_READ | PROT_EXEC)) break;
+            void (*f)(void);
+            memcpy(&f, &code, sizeof f);
+            size_t reps = ((size_t)64 << 20) / len;
+            double best = 1e30;
+            for (int t = 0; t < 5; t++) {
+                double t0 = now();
+                for (size_t r = 0; r < reps; r++) f();
+                double dt = now() - t0;
+                if (dt < best) best = dt;
+            }
+            kib[n] = k;
+            rate[n++] = (double)len * reps / best / 1e9;
+        }
+        if (n < 2) break;
+        measured = 1;
+        /* the edge: the largest fall from one size to the next, by more than half */
+        int e = 0;
+        for (int i = 1; i + 1 < n; i++) if (rate[i + 1] / rate[i] < rate[e + 1] / rate[e]) e = i;
+        if (rate[e + 1] / rate[e] <= 0.5 && kib[e] > edge) {
+            edge = kib[e]; past = kib[e + 1]; below = rate[e]; above = rate[e + 1];
+        }
+    }
+    munmap(code, max);
+    if (!measured) kv("cachesize.L1i", "not measured (no memory both written and run)");
+    else if (!edge) kv("cachesize.L1i", "no step found (the fetch never falls by half)");
+    else kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB; the largest of three sweeps)",
+            edge, below, above, edge, past);
+}
+
 #endif /* __x86_64__ */
 
 /* ---------------------------------------------------------------- memory */
@@ -819,8 +980,19 @@ static int cmd_cachesizes(const char *levels, long maxkib)
 #endif
     memset(arena, 0, arena_size);
     double a, z;
-    long l1 = sweep(8, 160, 4, 2000000, &a, &z);
-    size_kv("cachesize.L1d", l1, a, z, "exact: its edge is sharp");
+    /* three times, keeping the largest edge: a thread of another VM on the
+       other hyperthread of the core shares the L1 for a while, and makes it
+       look smaller (40 KiB of 48 in one sweep in four on Granite Rapids) */
+    long l1 = 0;
+    for (int r = 0; r < 3; r++) {
+        double ra, rz;
+        long e = sweep(8, 160, 4, 2000000, &ra, &rz);
+        if (e > l1 || r == 0) { l1 = e; a = ra; z = rz; }
+    }
+    size_kv("cachesize.L1d", l1, a, z, "exact: its edge is sharp; the largest of three sweeps");
+#if defined(__x86_64__)
+    l1i_size();
+#endif
     if (strcmp(levels, "all")) return 0;
     long from = l1 ? l1 * 4 : 256;
     long l2 = sweep(from, 4096, 0, 1000000, &a, &z);

@@ -117,7 +117,8 @@ is the first thing the session sees. It also keeps its state in
   running);
 * `ready (...)`: the machine is ready; the lines after it say what the hook
   did, the machine's fingerprint and whether `cloud/ENVIRONMENT.md` knows
-  it;
+  it, and warn when the CPU is not known to be a Xeon or an EPYC (a
+  consumer CPU, or one `make envcheck` cannot place: `docs/envcheck.md`);
 * `problems (...)`: something failed; the lines after it say what, and the
   full output is in `/tmp/rune-session-start.log` (and `make envcheck`'s in
   `/tmp/rune-envcheck.txt`).

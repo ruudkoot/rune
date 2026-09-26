@@ -46,7 +46,62 @@ set in either), a balloon device, and the free space of the repository,
   `cpu.uarch_by_instructions` names the generation the instructions that
   run point to. The reverse, claimed but faulting, is reported as a failure.
   `lzcnt`, `cx16` and `rtm` are only read: running them proves nothing
-  (`lzcnt` runs as `bsr` on a CPU without it).
+  (`lzcnt` runs as `bsr` on a CPU without it). AMX-FP16, which Granite
+  Rapids added, is tried with a tile multiply, after configuring the tiles
+  and asking Linux for the tile data (`arch_prctl`): on Claude Code on the
+  web a Granite Rapids ran it under the Emerald Rapids model of an earlier
+  session, cpuid and fingerprint alike. The generations are told by what
+  GCC's `-march` targets give each:
+
+  | Runs | Points to |
+  |---|---|
+  | RAO-INT, or cpuid claims ACE | a Xeon after Diamond Rapids, or a Zen after Zen 6 (speculative, `cpu.future`) |
+  | AMX-FP8 | Diamond Rapids |
+  | AVX10.2 without AMX | Nova Lake, a client part |
+  | AMX-FP16 | Granite Rapids |
+  | AMX-TILE | Sapphire or Emerald Rapids |
+  | AVX-512 VP2INTERSECT (Intel) | Tiger Lake, a client part |
+  | SHA512, SM3 or SM4, no AVX-512 | Clearwater Forest (E-cores), or a client part if hybrid |
+  | AVX-VNNI-INT8 or AVX-IFMA, no AVX-512 | Sierra Forest (E-cores), or a client part if hybrid |
+  | AVX-VNNI alone, no AVX-512 | Alder Lake to Meteor Lake, client parts |
+  | AVX-512 BMM or AVX-512 FP16 (AMD) | Zen 6 |
+  | AVX-512 VP2INTERSECT (AMD) | Zen 5 |
+
+  The newest are the ones that need only state an older model has on
+  already (AVX, AVX-512, AMX), so that they run behind it. APX is tried
+  (`mov %r16, %r16`) but needs state of its own in `XCR0`, which a
+  hypervisor that hides it does not turn on: it shows only where it is
+  presented. AVX10 is read from cpuid, with its version and vector lengths
+  (leaf `0x24`; AVX10.1's instructions are AVX-512's), and so is ACE, the
+  matrix extension Intel and AMD agreed on in 2025, of which only GCC's
+  cpuid bit is known (leaf 7.1, ECX bit 11), with its version from a
+  second palette of leaf `0x1d` as GCC reads it. RAO-INT is in Intel SDE's
+  chip `-future` and in no product GCC knows: the one sign of a later Xeon
+  that can be run. Nova Lake adds nothing that Diamond Rapids does not
+  have. An instruction new to the assemblers of the day is written as
+  bytes, taken from a newer binutils (2.47). The tests of hardware not at
+  hand were checked under Intel's Software Development Emulator, which
+  presents a chosen chip's cpuid and runs its instructions: with
+  `-chip_check_disable 1`, `sde64 -<chip> -- probe isa` shows what each
+  of Ice Lake-SP, Tiger Lake, Sapphire, Emerald, Granite and Diamond
+  Rapids, Sierra and Clearwater Forest, Arrow, Lunar, Panther and Nova
+  Lake and the future chip claims, and every claimed instruction runs
+  (the probe is the program `envcheck.sh` builds from `envcheck.c`; the
+  AMX tests come last, as SDE stops a program at a tile instruction on a
+  chip without AMX). SDE knows no AMD instruction, so AVX-512 BMM rests on
+  binutils alone.
+* **A Xeon or an EPYC (`cpu.class`):** the model table says which models
+  are server parts, and a client part shows in a client's name in the
+  brand string (Core, Ryzen, ...), in cpuid's hybrid flag (P-cores and
+  E-cores), or in instructions no server has (AVX10.2 without AMX); a
+  sign of a client part wins. Firecracker writes "Xeon" into the brand
+  string of any Intel CPU, so "Xeon" and "EPYC" there count only outside
+  it. Anything but a server is reported in a block of `#` after the CPU
+  identity and again at the end of the report, and the session-start hook
+  repeats it: a consumer CPU, or one that cannot be told, does not stand
+  for the cloud's servers. A model missing from the table is placed by the
+  ranges GCC gives (Zen 5, Zen 6) or as newer than any known
+  (`cpu.uarch_by_model_range`).
 
 ### Cores, caches and neighbours
 
@@ -72,10 +127,17 @@ set in either), a balloon device, and the free space of the repository,
   The size of a level is the last one before the latency crosses the
   geometric middle of its plateau and the next. L1 has a sharp edge and
   comes out exact, and is measured in every run; L2 and L3 fill up
-  gradually, so their sizes are effective ones, measured with `--slow`. A
-  size that differs from `cpuid` (the L1 exactly, the others by more than
-  half) is reported: a hypervisor's CPU template can present another CPU's
-  caches, and a VM gets only part of a shared L3.
+  gradually, so their sizes are effective ones, measured with `--slow`. The
+  L1 instruction cache is measured on x86-64 by the speed of fetching: a
+  straight line of NOPs, run over and over, is fetched at less than half
+  the speed once it no longer fits (an earlier, smaller step is the
+  decoded-uop cache). Each L1 is swept three times and the largest edge
+  kept: a thread of another VM on the other hyperthread of the core shares
+  the L1 for a while and makes it look smaller. A size that differs from
+  `cpuid` (the L1s exactly, the others by more than half) is reported: a
+  hypervisor's CPU template can present another CPU's caches (a Granite
+  Rapids fetched from 64 KiB under a model that claims 32), and a VM gets
+  only part of a shared L3.
 * **Jitter (`jitter`):** a thread on every CPU reads the clock in a loop and
   counts the gaps over 100 us and over 1 ms, which are the times it was not
   running; with the steal time of `/proc/stat` over the same seconds, and
@@ -164,7 +226,7 @@ it was not run.
 | pairs | 0.2 s a pair, in three rounds | 1 s a pair, in three rounds |
 | ping-pong | 20,000 rounds | 200,000 rounds |
 | cache curve | up to 64 MiB | up to 512 MiB |
-| cache sizes | L1 | L1, L2, L3 |
+| cache sizes | L1d, L1i | L1d, L1i, L2, L3 |
 | memory bandwidth | 64 MiB arrays (or twice the L3), 0.4 s | 512 MiB arrays (or twice the L3), 2 s |
 | jitter | 3 s | 10 s |
 | disk | 256 MiB, 0.5 s a test, 2,000 files | 2 GiB, 3 s a test, 20,000 files |
@@ -177,7 +239,11 @@ count: on more than 24 CPUs only CPU 0 is paired with the others.
 ## A known machine, or a new one
 
 The report ends with a fingerprint: vendor, family/model/stepping, CPU
-count, RAM, hypervisor signature and the kernel's flavour. An entry of
+count, RAM, hypervisor signature and the kernel's flavour. Where
+instructions run that `cpuid` does not claim, the hardware they point to
+follows the model (`GenuineIntel 6/207/2 on Granite Rapids, ...`): the same
+cpuid can be presented on newer hardware, which is another kind of
+machine. An entry of
 `cloud/ENVIRONMENT.md` carries the fingerprint of its machine in a line
 `Fingerprint: ...`; when none matches, the report says so, and `--markdown`
 prints an entry to start from. The script never edits that file: an entry

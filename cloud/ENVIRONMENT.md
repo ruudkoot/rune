@@ -13,7 +13,7 @@ locally, leave this file alone.
 
 ## 1. Claude Code on the web (Anthropic cloud), 2026-09-25
 
-* **Fingerprint:** `GenuineIntel 6/85/7, 4 CPUs, 15.7 GiB, KVMKVMKVM, kernel fc-v37`
+* **Fingerprint:** `GenuineIntel 6/85/7 on Ice Lake, 4 CPUs, 15.7 GiB, KVMKVMKVM, kernel fc-v37`
 * **Where** (`make envcheck`): **Google Cloud, region `us-central1`
   (Council Bluffs, Iowa), a Firecracker microVM nested in an N2 VM on Ice
   Lake hosts.** A connection that bypasses the proxy leaves from
@@ -189,12 +189,14 @@ locally, leave this file alone.
   (266,240 KiB) 20-way. The TSC runs at the base clock, 2.1 GHz. Google
   Cloud's Emerald Rapids is the Xeon Platinum 8581C, of the C4 and N4
   series; the clock measured below fits C4 (3.1 GHz all cores, 4.0 at
-  most) better than N4 (2.9 all cores). Measured (`make envcheck
-  ENVCHECK=--slow`): L1d exactly 48 KiB at 1.4 to 1.6 ns (5 cycles), L2
-  about 1.6 MiB effective at 5.0 ns, L3 about 68 MiB effective at 33 to
-  73 ns, rising with the size: the VM gets part of the host's L3. Then
-  memory at 120 to 260 ns. 4 vCPUs (4 cores, 1 thread per core, 1
-  socket), moved between the host's cores as in entry 1.
+  most) better than N4 (2.9 all cores). AMX-FP16, which Granite Rapids
+  added, faults (tried by hand on 2026-09-25): the hardware is an Emerald
+  Rapids, not the Granite Rapids of entry 3 under the same model. Measured
+  (`make envcheck ENVCHECK=--slow`): L1d exactly 48 KiB at 1.4 to 1.6 ns
+  (5 cycles), L2 about 1.6 MiB effective at 5.0 ns, L3 about 68 MiB
+  effective at 33 to 73 ns, rising with the size: the VM gets part of the
+  host's L3. Then memory at 120 to 260 ns. 4 vCPUs (4 cores, 1 thread per
+  core, 1 socket), moved between the host's cores as in entry 1.
 * **Clock:** measured 3.15 to 3.17 GHz on one core, 3.34 to 3.38 on
   average with all four busy (3.17 to 3.53 each): turbo above the nominal
   2.1 GHz. A chain of `add $1` (or `inc`) instructions, which entry 1
@@ -253,3 +255,66 @@ locally, leave this file alone.
 * **`make check`:** 11 min 29 s from a clean tree (entry 1: about
   14.5 min). It passes, with the 10 INet6Sock socket checks skipped for
   want of IPv6, as in entry 1.
+
+## 3. Claude Code on the web (Anthropic cloud), Granite Rapids, 2026-09-26
+
+* **Fingerprint:** `GenuineIntel 6/207/2 on Granite Rapids, 4 CPUs, 15.7 GiB, KVMKVMKVM, kernel fc-v37`
+* **Service:** as in entry 2, and the same session: it was resumed after a
+  night, and the container restarted on this machine (at 13:27 UTC; it
+  had also restarted on entry 2's the evening before, at 19:24). The disk
+  was kept (the repository, the build, `~/.local/rune-hosts`, `/tmp`), the
+  processes were not. The session-start hook runs `make envcheck` only at
+  the start of a session, not on a resume, so it did not notice: a resumed
+  session can land on another kind of machine behind the same cpuid.
+* **Where** (`make envcheck`): **Google Cloud, region `us-central1`, a
+  Firecracker microVM nested in a VM**, likely of the C4 series, which
+  Google Cloud runs on Emerald Rapids and on Granite Rapids. As in entry 2:
+  the direct egress in `34.172.0.0/15` of `us-central1` (two addresses
+  seen), the proxy's address in none of Google Cloud's ranges, no DMI, the
+  metadata address blocked.
+* **Hypervisor:** as in entry 1.
+* **CPU:** **Granite Rapids** (Xeon 6, Redwood Cove cores) under the
+  Emerald Rapids model of entry 2: `cpuid` gives the same in all that
+  `make envcheck` reads (family 6, model 0xcf, stepping 2, the extensions,
+  the caches: L1d 48 KiB, L1i 32 KiB, L2 2 MiB, L3 260 MiB), and so do the
+  brand string and the TSC of 2.1 GHz, presumably the model and nominal
+  clock the VM was made with, which it keeps on newer hardware as N2 does
+  in entry 1. Two signs that it cannot hide: AMX-FP16, which Granite
+  Rapids added and `cpuid` does not claim, runs on every vCPU (it faulted
+  on entry 2's machine), and the L1 instruction cache holds 64 KiB of code,
+  Redwood Cove's, where `cpuid` says 32: straight-line code is fetched at
+  106 to 137 bytes a ns up to 64 KiB and at 42 to 53 from 72 KiB (`make
+  envcheck`, which measures both since this machine). Measured (`--slow`): L1d exactly 48 KiB at 1.5 ns;
+  L2 about 1.6 MiB effective at 4.8 ns; L3 about 136 MiB effective, twice
+  what entry 2's VM got, at 35 to 76 ns rising with the size; then memory
+  at 170 to 245 ns. In one fast run the L1d came out at 40 KiB, while two
+  vCPUs shared a core: another thread on the core shares the L1, which is
+  why `make envcheck` now keeps the largest of three sweeps.
+* **Clock:** 3.18 to 3.28 GHz on one core, 3.12 to 3.38 on average with all
+  four busy (3.09 to 3.73 each), as on entry 2's Emerald Rapids.
+* **FMA:** 256-bit 6.4 to 7.3 G FMA instructions/s, 512-bit 5.7 to 6.9 G/s,
+  2.0 to 2.4 and 1.8 to 2.2 a cycle of the scalar clock: two FMA units, as
+  in entry 2.
+* **Memory:** as in entry 2: 15.7 GiB, no swap, cgroup limit 13.36 GiB.
+  Triad 12.0 to 12.3 GB/s on one thread, 51.6 to 53.0 GB/s on four.
+* **Disk speed** (`make envcheck`, two fast runs and one slow): sequential
+  write 669 to 1,094 MB/s; read 1.85 to 2.13 GB/s of what was just
+  written, 447 MB/s to 2.57 GB/s after `drop_caches`. Random 4 KiB: 23,800
+  to 33,500 reads or 19,600 to 26,600 writes a second on one thread, 59,700
+  to 68,200 and 64,400 to 67,900 on four. 4 KiB write + `fdatasync`: 3,900
+  to 4,700 a second, 212 to 257 us on average, at most 0.4 s. Small files:
+  create 36,000 to 79,000, stat 710,000 to 975,000, read 309,000 to
+  414,000, delete 195,000 to 258,000 a second. About as entry 2.
+* **Network:** as in entry 2: GitHub 82 to 125 MB/s, PyPI 62 to 141 MB/s,
+  the SML/NJ site 32 to 33 MB/s, Ubuntu's releases 4.7 to 78 MB/s.
+* **Cores and neighbours** (`make envcheck`, three runs): in one run two
+  vCPUs kept 0.64 to 0.69 of their throughput in all three rounds and
+  another pair fell to 0.44 once: two threads of one core, for the length
+  of the run. In the others every pair kept about 0.75 or more. A cache
+  line passes in 60 to 238 ns, median 196 ns in the fast runs and 89 in the
+  slow one; steal 0.7 to 1.4% with all
+  four busy, pauses over 1 ms 1.6 to 3.4 times a second, at most 4 to
+  14 ms.
+* **`make check`:** 7 min 51 s, rebuilding the compilers (the tree had the
+  middle-end of 2026-09-25, which entry 2's 11.5 min did not). It passes,
+  with the 10 INet6Sock socket checks skipped for want of IPv6.
