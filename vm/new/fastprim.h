@@ -13,6 +13,7 @@
 #define RUNE_FASTPRIM_H
 
 #include "vm.h"
+#include <math.h>
 
 #define HEAP_STORE(obj, i, v) (OBJ_FIELDS(obj)[i] = (v))
 
@@ -127,6 +128,7 @@ static inline int prim_fast(int prim, uint32_t n, const Value *base, const uint8
     case PRIM_real_mul: REAL2; r = mk_real(x->u.d * y->u.d); break;
     case PRIM_real_div: REAL2; r = mk_real(x->u.d / y->u.d); break;
     case PRIM_real_neg: if (x->tag != T_REAL) return 0; r = mk_real(-x->u.d); break;
+    case PRIM_real_sqrt: if (x->tag != T_REAL) return 0; r = mk_real(sqrt(x->u.d)); break;
     case PRIM_real_lt: REAL2; r = mk_bool(x->u.d < y->u.d); break;
     case PRIM_real_le: REAL2; r = mk_bool(x->u.d <= y->u.d); break;
     case PRIM_real_gt: REAL2; r = mk_bool(x->u.d > y->u.d); break;

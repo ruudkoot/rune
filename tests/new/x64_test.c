@@ -37,6 +37,9 @@ int main(void) {
     x64_init(&a); x64_mov_mi(&a, R13, 0, 1); fails += expect("mov qword [r13], 1", &a, "49c7450001000000"); x64_free(&a);
     x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "4969cb48000000"); x64_free(&a);
     x64_init(&a); x64_movsd_xx(&a, XMM3, XMM9); fails += expect("movsd xmm3, xmm9", &a, "f2410f10d9"); x64_free(&a);
+    x64_init(&a); x64_sqrtsd(&a, XMM0, XMM1); fails += expect("sqrtsd xmm0, xmm1", &a, "f20f51c1"); x64_free(&a);
+    x64_init(&a); x64_movaps_xx(&a, XMM3, XMM9); fails += expect("movaps xmm3, xmm9", &a, "410f28d9"); x64_free(&a);
+    x64_init(&a); x64_movaps_xx(&a, XMM0, XMM2); fails += expect("movaps xmm0, xmm2", &a, "0f28c2"); x64_free(&a);
     x64_init(&a); x64_cmp8_mi(&a, RAX, 0, 6); fails += expect("cmp byte [rax], 6", &a, "803806"); x64_free(&a);
     x64_init(&a); x64_add_ri(&a, R15, 3); fails += expect("add r15, 3", &a, "4983c703"); x64_free(&a);
     x64_init(&a); x64_lea(&a, RAX, R13, RBP, 1, 48); fails += expect("lea rax, [r13+rbp+48]", &a, "498d442d30"); x64_free(&a);

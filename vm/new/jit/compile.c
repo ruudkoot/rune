@@ -298,7 +298,7 @@ typedef struct Scan {
 } Scan;
 
 X64Label *jit_label(Jit *j, uint32_t pc) { return &j->labels[pc - j->from]; }
-X64Label *jit_landing(Jit *j, uint32_t pc) { return j->tier == 2 ? &j->landings[pc - j->from] : &j->labels[pc - j->from]; }
+X64Label *jit_landing(Jit *j, uint32_t pc) { return j->landings ? &j->landings[pc - j->from] : &j->labels[pc - j->from]; }
 
 #if JIT_TARGET
 /* ---- tier 2: what is live where, and the homes (M9) ---- */
@@ -764,10 +764,26 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
         j.sites = calloc(j.sites_cap, sizeof(Site));
         if (!j.sites) ok = 0;
     }
-    /* tier 2: the homes, where the function has registers a machine
-       register can hold; else its code is tier 1's */
+    /* the entry: unit into the registers not written before anything
+       could see them (jit_fill_from), from the arity up, where the
+       section gives the arity -- else the callers do it (M10) */
+    x64_label_init(&j.entry);
+    x64_bind(&j.m.a, &j.entry);
+    if (ok && fn->has_meta) {
+        uint32_t from = jit_fill_from(vm, jit, f);
+        if (from < fn->arity) from = fn->arity;
+        if (fn->nlocals > from) {
+            x64_xorpd(&j.m.a, XMM1, XMM1);
+            for (uint32_t i = from; i < fn->nlocals; i++) x64_movups_mx(&j.m.a, BASER, (int32_t)(16 * i), XMM1);
+        }
+    }
+    /* tier 2: the representations trusted for the shapes of values (M10),
+       and the homes, where the function has registers a machine register
+       can hold */
     if (ok && tier == 2) {
-        if (liveness(&j, &sc) && choose_homes(&j)) {
+        if (!fn->has_meta) j.tier = 1;
+        else j.m.reps = fn->reps;
+        if (fn->has_meta && liveness(&j, &sc) && choose_homes(&j)) {
             j.landings = malloc(((size_t)len + 1) * sizeof(X64Label));
             if (!j.landings) ok = 0;
             else {
@@ -779,7 +795,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 x64_bind(&j.m.a, &j.landings[0]);
                 land(&j, j.from);
             }
-        } else { j.tier = 1; free(j.live_in); j.live_in = NULL; }
+        } else { free(j.live_in); j.live_in = NULL; }
     }
     ok = ok && emit_function(&j, &sc);
     if (ok) {
@@ -788,7 +804,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     }
     /* tier 2: the landings of the other targets, after the code: the
        homes live there loaded, then on to the instruction */
-    if (ok && j.tier == 2) {
+    if (ok && j.landings) {
         for (uint32_t i = 1; i < len; i++)
             if (sc.target[i] && j.labels[i].at >= 0) {
                 x64_bind(&j.m.a, &j.landings[i]);
@@ -830,7 +846,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 if (co->osr_pcs && co->osr_offs)
                     for (uint32_t i = 0; i < len; i++)
                         if (sc.target[i] && j.labels[i].at >= 0) {
-                            X64Label *l = j.tier == 2 ? &j.landings[i] : &j.labels[i];
+                            X64Label *l = j.landings ? &j.landings[i] : &j.labels[i];
                             co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)l->at; co->nosr++;
                         }
                 free(co->sites);
@@ -846,6 +862,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     }
     if (j.labels) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.labels[i]); free(j.labels); }
     if (j.landings) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.landings[i]); free(j.landings); }
+    x64_label_free(&j.entry);
     free(j.live_in); free(j.homes);
     free(j.sites);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);

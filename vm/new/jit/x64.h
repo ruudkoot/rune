@@ -108,6 +108,8 @@ void x64_movsd_xm(X64 *a, int xmm, int base, int32_t disp);
 void x64_movsd_mx(X64 *a, int base, int32_t disp, int xmm);
 void x64_movsd_xx(X64 *a, int dst, int src);   /* dst := src, the low double */
 void x64_addsd(X64 *a, int dst, int src);
+void x64_sqrtsd(X64 *a, int dst, int src);
+void x64_movaps_xx(X64 *a, int dst, int src);   /* dst := src, the whole register */
 void x64_subsd(X64 *a, int dst, int src);
 void x64_mulsd(X64 *a, int dst, int src);
 void x64_divsd(X64 *a, int dst, int src);

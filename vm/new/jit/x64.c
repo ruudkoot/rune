@@ -229,7 +229,16 @@ static void sse_rr(X64 *a, int prefix, int op, int dst, int src) {
 void x64_movsd_xm(X64 *a, int xmm, int base, int32_t disp) { sse_rm(a, 0xF2, 0x10, xmm, base, disp); }
 void x64_movsd_mx(X64 *a, int base, int32_t disp, int xmm) { sse_rm(a, 0xF2, 0x11, xmm, base, disp); }
 void x64_movsd_xx(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x10, dst, src); }
+/* the whole register, which depends on nothing (movsd between registers
+   merges into its destination, a dependency on what it held: a chain
+   through a loop's iterations, M10) */
+void x64_movaps_xx(X64 *a, int dst, int src) {
+    rex(a, 0, dst, -1, src);
+    x64_byte(a, 0x0F); x64_byte(a, 0x28);
+    modrm_rr(a, dst, src);
+}
 void x64_addsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x58, dst, src); }
+void x64_sqrtsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x51, dst, src); }
 void x64_subsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x5C, dst, src); }
 void x64_mulsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x59, dst, src); }
 void x64_divsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x5E, dst, src); }

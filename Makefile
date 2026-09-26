@@ -732,7 +732,7 @@ test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
 	chmod +x bin/runevm-new-opt
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
 	sh scripts/check-jit.sh -j $(JOBS)
-	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-jit) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
+	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
 	bin/runevm-new --jit-check
 	@mkdir -p build/new
 	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_$(SYS).c

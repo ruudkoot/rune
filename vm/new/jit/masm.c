@@ -32,6 +32,7 @@ void ms_init(Masm *m, uint32_t nlocals, uint32_t maxstack, int win, const void *
     m->from = 0;
     m->sync_pc = 0;
     m->cur_pc = 0;
+    m->reps = NULL;
     m->slow = NULL;
     m->nslow = m->slow_cap = 0;
 }
@@ -76,7 +77,7 @@ void ms_copy(Masm *m, int32_t d, int32_t s) {
     if (d == s) return;
     if (hd && hs) {
         if (hd->kind == HOME_GPR && hs->kind == HOME_GPR) x64_mov_rr(&m->a, hd->reg, hs->reg);
-        else if (hd->kind == HOME_XMM && hs->kind == HOME_XMM) x64_movsd_xx(&m->a, hd->reg, hs->reg);
+        else if (hd->kind == HOME_XMM && hs->kind == HOME_XMM) x64_movaps_xx(&m->a, hd->reg, hs->reg);
         else if (hd->kind == HOME_GPR) x64_movq_rx(&m->a, hd->reg, hs->reg);
         else x64_movq_xr(&m->a, hd->reg, hs->reg);
     } else if (hd) slot_to_home(m, s, hd);
@@ -133,12 +134,12 @@ void ms_value_to(Masm *m, int base, int32_t disp, int32_t s) { ms_store_value(m,
 void ms_value_from(Masm *m, int32_t d, int base, int32_t disp) { ms_load_value(m, d, base, disp); }
 void ms_load_real(Masm *m, int xmm, int32_t s) {
     const Home *h = ms_home(m, s);
-    if (h) x64_movsd_xx(&m->a, xmm, h->reg);   /* a real's home is an xmm */
+    if (h) x64_movaps_xx(&m->a, xmm, h->reg);   /* a real's home is an xmm */
     else x64_movsd_xm(&m->a, xmm, BASER, PAYLOAD(s));
 }
 void ms_set_real(Masm *m, int32_t d, int xmm) {
     const Home *h = ms_home(m, d);
-    if (h) { x64_movsd_xx(&m->a, h->reg, xmm); return; }
+    if (h) { x64_movaps_xx(&m->a, h->reg, xmm); return; }
     x64_mov_mi(&m->a, BASER, SLOT(d), T_REAL);
     x64_movsd_mx(&m->a, BASER, PAYLOAD(d), xmm);
 }
@@ -182,8 +183,19 @@ void ms_reload_homes(Masm *m, uint32_t pc) {
     for (uint32_t r = 0; r < m->nlocals; r++)
         if (m->homes[r].kind != HOME_SLOT && live_at(m, pc, r)) slot_to_home(m, (int32_t)r, &m->homes[r]);
 }
+int ms_immediate(const Masm *m, int32_t s) {
+    if (!m->reps || (uint32_t)s >= m->nlocals) return 0;
+    int rep = m->reps[s];
+    return rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+}
+int ms_trusts(const Masm *m, int32_t s, int kind) {
+    if (!m->reps || (uint32_t)s >= m->nlocals) return 0;
+    int rep = m->reps[s];
+    return rep == REP_PTR || (rep == REP_CON && kind == K_CON);
+}
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, X64Label *unless) {
     m->nfields = UINT32_MAX;   /* an object of the program's, whose length the code tests */
+    if (ms_trusts(m, s, kind)) { x64_mov_rm(&m->a, r, BASER, PAYLOAD(s)); return; }   /* tier 2: the section says so (M10) */
     ms_check_tag(m, s, T_PTR, unless);
     x64_mov_rm(&m->a, r, BASER, PAYLOAD(s));
     x64_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), kind);
@@ -201,11 +213,12 @@ void ms_load_tag_of_con(Masm *m, int r, int32_t s, X64Label *unless) {
     x64_mov_rm(&m->a, r, BASER, PAYLOAD(s));
     x64_jmp(&m->a, &done);
     x64_bind(&m->a, &ptr);
-    x64_cmp8_mi(&m->a, BASER, SLOT(s), T_PTR);
-    x64_jcc(&m->a, CC_NE, unless);
+    /* not nullary: a pointer to a constructor, which the section
+       vouches for at tier 2 (M10); else tested */
+    int trusted = m->reps && (uint32_t)s < m->nlocals && m->reps[s] == REP_CON;
+    if (!trusted) { x64_cmp8_mi(&m->a, BASER, SLOT(s), T_PTR); x64_jcc(&m->a, CC_NE, unless); }
     x64_mov_rm(&m->a, r, BASER, PAYLOAD(s));
-    x64_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), K_CON);
-    x64_jcc(&m->a, CC_NE, unless);
+    if (!trusted) { x64_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), K_CON); x64_jcc(&m->a, CC_NE, unless); }
     x64_movzx16_rm(&m->a, r, r, (int32_t)offsetof(Obj, contag));
     x64_bind(&m->a, &done);
     x64_label_free(&ptr); x64_label_free(&done);

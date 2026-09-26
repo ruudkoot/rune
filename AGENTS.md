@@ -140,8 +140,9 @@ keep these invariants:
   native code hands it back where a frame is interpreted, and a helper
   native code calls never runs bytecode nor compiles any; `make
   test-new-jit`, part of `make check`, holds the driver to never nesting.
-  `runevm-new` tiers up by default (`--jit=baseline`, M6), so every suite
-  runs that way; the oracle runs the other modes. **The JIT**
+  `runevm-new` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
+  M9 `--jit=baseline`), so every suite runs that way; the oracle runs
+  the other modes. **The JIT**
   (`vm/new/jit/`, `vm/new/ARCHITECTURE.md`, Tier 1): an instruction of the
   register set has, beside its body, an emitter in `vm/new/jit/emit.c`
   (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
@@ -171,8 +172,14 @@ keep these invariants:
   scratch, or sets a call's arguments, writes the homes back first
   (`ms_writeback`) and loads them again after (`ms_reload`,
   `ms_reload_homes`, `ms_call_lean`); a place code is entered from
-  outside is a landing (`jit_landing`), never a label. Tier 2 is run
-  by `check-jit.sh` on every program (`--jit=all --jit-tier=2`, and
+  outside is a landing (`jit_landing`), never a label. Tier 2 trusts
+  the representations section for the shape of a value (`ms_trusts`):
+  an emitter that tests a tag, a kind or a length asks it first, and
+  the loop and tier 1 keep every test, so the oracle's interpreted run
+  is what a wrong program is held to. A function's code fills its own
+  registers with unit at its entry; a caller fills only for a callee
+  without an arity in the section, and for the interpreter. Tier 2 is
+  run by `check-jit.sh` on every program (`--jit=all --jit-tier=2`, and
   every other function). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
   of a known representation says so in the register checker's lint

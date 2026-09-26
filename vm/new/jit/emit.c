@@ -137,6 +137,14 @@ static void floor_div(Jit *j, int mod) {
 /* `=` on two values that are neither pointers nor (for poly_eq) reals:
    the tags the same and the payloads the same */
 static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, X64Label *slow) {
+    /* two values of one representation that is an immediate (tier 2,
+       M10): the same tags, so the payloads alone */
+    if (ms_immediate(M, x) && ms_immediate(M, y)) {
+        ms_load_payload(M, RAX, x);
+        ms_cmp_payload(M, RAX, y);
+        set_bool(j, d, CC_E);
+        return;
+    }
     X64Label no, done, heap; x64_label_init(&no); x64_label_init(&done); x64_label_init(&heap);
     /* a pointer, or a real under poly_eq, is values_equal's: the lean
        helper, which touches nothing of the VM (imm_eq's pointer is the
@@ -187,7 +195,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge: case PRIM_word_order:
     case PRIM_word_andb: case PRIM_word_orb: case PRIM_word_xorb: case PRIM_word_notb:
     case PRIM_word_lsl: case PRIM_word_lsr: case PRIM_word_to_int: case PRIM_word_to_int_x: case PRIM_word_from_int:
-    case PRIM_real_add: case PRIM_real_sub: case PRIM_real_mul: case PRIM_real_div: case PRIM_real_neg:
+    case PRIM_real_add: case PRIM_real_sub: case PRIM_real_mul: case PRIM_real_div: case PRIM_real_neg: case PRIM_real_sqrt:
     case PRIM_real_lt: case PRIM_real_le: case PRIM_real_gt: case PRIM_real_ge: case PRIM_real_eq:
     case PRIM_char_ord: case PRIM_char_lt: case PRIM_char_le: case PRIM_char_gt: case PRIM_char_ge: case PRIM_char_order:
     case PRIM_string_size: case PRIM_string_sub: case PRIM_ref_get: case PRIM_ref_set:
@@ -316,6 +324,12 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         x64_mov_ri(A, RCX, INT64_MIN);   /* the sign bit */
         x64_xor_rr(A, RAX, RCX);
         ms_set_reg(M, d, T_REAL, RAX);
+        break;
+    case PRIM_real_sqrt:   /* sqrtsd is what sqrt gives, a NaN for a negative (M10) */
+        ms_check_tag(M, x, T_REAL, slow);
+        ms_load_real(M, XMM0, x);
+        x64_sqrtsd(A, XMM0, XMM0);
+        set_real(j, d);
         break;
     /* a comparison with a NaN is false: ucomisd sets CF, ZF and PF on an
        unordered pair, which `above` reads as false; x < y is y > x */
@@ -456,8 +470,10 @@ void emit_CLOSURE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, const ui
 void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, RAX, c, K_TUPLE, jit_fatal(j, FATAL_EXPECT_TUPLE, 0, 0, 0));
-    x64_cmp32_mi(A, RAX, (int32_t)offsetof(Obj, len), b);
-    x64_jcc(A, CC_BE, jit_fatal(j, FATAL_TUPLE_INDEX, b, 0, 0));
+    if (!ms_trusts(M, c, K_TUPLE)) {   /* the tuple has the field, by its type (tier 2, M10) */
+        x64_cmp32_mi(A, RAX, (int32_t)offsetof(Obj, len), b);
+        x64_jcc(A, CC_BE, jit_fatal(j, FATAL_TUPLE_INDEX, b, 0, 0));
+    }
     ms_load_value(M, a, RAX, (int32_t)sizeof(Obj) + 16 * b);
 }
 void emit_CON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
@@ -596,8 +612,10 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
     (void)pc;
     ms_load_obj(M, RAX, b, K_CON, jit_fatal(j, FATAL_EXPECT_CON_FIELDS, 0, 0, 0));
     checked_tag(j, c, FATAL_FIELD_TAG);
-    x64_cmp32_mi(A, RAX, (int32_t)offsetof(Obj, len), d);
-    x64_jcc(A, CC_BE, jit_fatal(j, FATAL_FIELD_INDEX, d, 0, 0));
+    if (!ms_trusts(M, b, K_CON)) {   /* the constructor has the field, by its type (tier 2, M10) */
+        x64_cmp32_mi(A, RAX, (int32_t)offsetof(Obj, len), d);
+        x64_jcc(A, CC_BE, jit_fatal(j, FATAL_FIELD_INDEX, d, 0, 0));
+    }
     ms_load_value(M, a, RAX, (int32_t)sizeof(Obj) + 16 * d);
 }
 /* ---- calls, returns, handlers, PRIMPUSH (M5) ---- */
@@ -605,6 +623,7 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
 #define FRAME_SIZE ((int32_t)sizeof(Frame))
 #define FR(field) ((int32_t)offsetof(Frame, field))
 
+static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals);
 /* rax := the entry of function f, read from its code object when the call
    is made, since a function is compiled once and not before every caller */
 static void entry_of(Jit *j, uint32_t f) {
@@ -619,7 +638,7 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
        this very function to its entry's label, another's by a jump to
        its address, which makes this function go when that one is
        invalidated (jit_depend) */
-    if (f == j->f) { x64_jmp(A, jit_landing(j, fn->code_offset)); return; }
+    if (f == j->f) { x64_jmp(A, &j->entry); return; }   /* the entry: the fill, then the homes (M10) */
     const void *entry = j->jit->codes[f].entry;
     if (entry) {
         jit_depend(j->jit, f, j->f);
@@ -632,6 +651,11 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
     x64_jcc(A, CC_E, &interp);
     x64_jmp_r(A, RAX);
     x64_bind(A, &interp);
+    /* the interpreter runs it: the fill its code would have done */
+    if (fn->has_meta) {
+        uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
+        fill_unit(j, BASER, fill_from < fn->arity ? fn->arity : fill_from, fn->nlocals);
+    }
     x64_mov32_mi(A, VMR, OFF(pc), (int32_t)fn->code_offset);
     x64_lea(A, RAX, BASEI, -1, 1, (int32_t)fn->nlocals);
     x64_mov_mr(A, VMR, OFF(sp), RAX);
@@ -681,16 +705,23 @@ static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, X64Label *after) {
     x64_mov_mr(A, RCX, FR(native_ret), R8);
     x64_mov_mr(A, VMR, OFF(fp), RAX);
 }
+/* unit into the registers of the function at base_reg from fill_from
+   (M7: the ones the callee does not write before anything could see
+   them; M10: the callee's own code does this at its entry where the
+   section gives its arity, so a caller does it for a callee without one,
+   and for the interpreter) */
+static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals) {
+    if (nlocals <= fill_from) return;
+    x64_xorpd(A, XMM1, XMM1);   /* unit: tag 0, payload 0 */
+    for (uint32_t i = fill_from; i < nlocals; i++) x64_movups_mx(A, base_reg, (int32_t)(16 * i), XMM1);
+}
 /* the registers of a callee at r9: its n arguments from the list, the
-   rest unit */
-static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t nlocals, uint32_t fill_from) {
+   rest unit where the callee's code will not do it */
+static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, const Function *fn) {
     for (uint32_t i = 0; i < n; i++) ms_value_to(M, R9, (int32_t)(16 * i), read_i32(L + 4 * i));
-    /* unit into the registers the callee does not write before anything
-       could see them (jit_fill_from, M7) */
-    if (fill_from < n) fill_from = n;
-    if (nlocals > fill_from) {
-        x64_xorpd(A, XMM1, XMM1);   /* unit: tag 0, payload 0 */
-        for (uint32_t i = fill_from; i < nlocals; i++) x64_movups_mx(A, R9, (int32_t)(16 * i), XMM1);
+    if (!fn->has_meta) {
+        uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
+        fill_unit(j, R9, fill_from < n ? n : fill_from, fn->nlocals);
     }
 }
 
@@ -702,7 +733,7 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
     frame_room(j);
     x64_lea(A, R9, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
-    make_registers(j, n, L, fn->nlocals, jit_fill_from(j->vm, j->jit, (uint32_t)a));
+    make_registers(j, n, L, (uint32_t)a, fn);
     x64_lea(A, RDX, BASEI, -1, 1, (int32_t)j->m.nlocals);
     push_frame(j, (uint32_t)a, (int32_t)j->next, after);
     x64_mov_rr(A, BASEI, RDX);
@@ -722,13 +753,9 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
         x64_movups_xm(A, XMM0, R9, (int32_t)(16 * i));
         x64_movups_mx(A, BASER, (int32_t)(16 * i), XMM0);
     }
-    {
+    if (!fn->has_meta) {
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
-        if (from < n) from = n;
-        if (fn->nlocals > from) {
-            x64_xorpd(A, XMM1, XMM1);
-            for (uint32_t i = from; i < fn->nlocals; i++) x64_movups_mx(A, BASER, (int32_t)(16 * i), XMM1);
-        }
+        fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
     }
     ms_frame(M, RCX);
     x64_mov32_mi(A, RCX, FR(func), a);
@@ -795,11 +822,11 @@ static void room_dynamic(Jit *j, int which, int base_reg) {
     x64_cmp_rm(A, RAX, VMR, OFF(stack_cap));
     x64_jcc(A, CC_A, &M->slow[which].here);
 }
-/* the callee's registers at r9: register 0 from register arg, the rest
-   unit; the callee's nlocals in r8 */
-static void make_registers_dynamic(Jit *j, int32_t arg) {
+/* unit into the callee's registers at r9 (its nlocals in r8, its index in
+   r11) from the first it does not write before anything could see it
+   (jit_fill_from, M7), and at least the second */
+static void fill_unit_dynamic(Jit *j) {
     X64Label loop, done; x64_label_init(&loop); x64_label_init(&done);
-    ms_value_to(M, R9, 0, arg);
     x64_xorpd(A, XMM1, XMM1);
     /* from the first register the callee does not write before anything
        could see it (jit_fill_from, M7), and at least the second */
@@ -826,9 +853,16 @@ static void make_registers_dynamic(Jit *j, int32_t arg) {
     x64_bind(A, &done);
     x64_label_free(&loop); x64_label_free(&done);
 }
+/* the callee's registers at r9: register 0 from register arg, the rest
+   unit where the callee's code will not do it (every function of the
+   program has its arity in the section: jit->all_meta) */
+static void make_registers_dynamic(Jit *j, int32_t arg) {
+    ms_value_to(M, R9, 0, arg);
+    if (!j->jit->all_meta) fill_unit_dynamic(j);
+}
 /* into the callee whose Function is in rcx and whose index is in r11, the
-   frame's rbp and r14 already its own: its code where it has some, else
-   the interpreter, the VM made exact for it */
+   frame's rbp and r14 already its own (r9 too): its code where it has
+   some, else the interpreter, the VM made exact for it */
 static void to_callee_dynamic(Jit *j) {
     X64Label interp; x64_label_init(&interp);
     x64_imul_rri(A, RAX, R11, (int32_t)sizeof(CodeObject));
@@ -839,6 +873,12 @@ static void to_callee_dynamic(Jit *j) {
     x64_jcc(A, CC_E, &interp);
     x64_jmp_r(A, RAX);
     x64_bind(A, &interp);
+    /* the interpreter runs it: the fill its code would have done (its
+       nlocals into r8 again, which the entry's address took) */
+    if (j->jit->all_meta) {
+        x64_mov32_rm(A, R8, RCX, (int32_t)offsetof(Function, nlocals));
+        fill_unit_dynamic(j);
+    }
     x64_mov32_rm(A, RAX, RCX, (int32_t)offsetof(Function, code_offset));
     x64_mov32_mr(A, VMR, OFF(pc), RAX);
     x64_mov32_rm(A, RAX, RCX, (int32_t)offsetof(Function, nlocals));

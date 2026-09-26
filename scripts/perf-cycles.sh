@@ -184,6 +184,8 @@ done
 
 if [ -n "$profile" ]; then
   cmd=$(bootstrap "$profile") || { echo "perf-cycles: cannot build the bootstrap in $profile" >&2; exit 1; }
+  # the JIT's functions named in the report (--jit-perf-map, M7)
+  case "$profile" in jit*) cmd=$(echo "$cmd" | sed 's|^bin/runevm-new |bin/runevm-new --jit-perf-map |') ;; esac
   # shellcheck disable=SC2086
   "$perf" record -e cycles:u -o "$out/boot.$profile.data" -- $cmd > /dev/null 2> "$out/boot.$profile.record.err" || exit 1
   echo

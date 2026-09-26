@@ -285,7 +285,8 @@ refuses the other's file and image.
   `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
   for finding one whose code is wrong by halving, and for the third run
   of `check-jit.sh`, in which calls, returns and raises cross between the
-  tiers both ways. Under `--jit=baseline`, the default, a function is
+  tiers both ways. Under `--jit=opt`, the default since M10 (M6 to M9:
+  `--jit=baseline`, tier 1 by the same counters), a function is
   compiled at its Nth call, or when its work -- the iterations of its
   loops and the calls it makes -- reaches N (`--jit-calls=N`,
   `--jit-work=N`; the defaults are the sweep's, plans/jit.md M6), and the interpreter goes on in a function's code

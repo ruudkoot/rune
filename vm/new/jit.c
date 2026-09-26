@@ -10,9 +10,10 @@
 #include <string.h>
 #include <time.h>
 
-/* the mode, and the thresholds of --jit=baseline, where no option gives
-   them (M6, the sweep) */
-#define JIT_DEFAULT_MODE JIT_BASELINE
+/* the mode (tier 2 by the counters since M10), and the thresholds of
+   --jit=baseline and --jit=opt, where no option gives them (M6, the
+   sweep) */
+#define JIT_DEFAULT_MODE JIT_OPT
 #define DEFAULT_CALLS 100
 #define DEFAULT_WORK 100
 
@@ -102,6 +103,8 @@ static void jit_make(VM *vm, JitProgram *jit) {
     /* what each function's calls must fill: worked out for all now, since
        a call through a closure reads it from the table at run time */
     if (jit->fill_from) for (uint32_t i = 0; i < p->nfuncs; i++) jit_fill_from(vm, jit, i);
+    jit->all_meta = 1;
+    for (uint32_t i = 0; i < p->nfuncs; i++) if (!p->funcs[i].has_meta) jit->all_meta = 0;
     jit->profile = vm->jit.profile;
     if (jit->profile) {
         jit->names = calloc(p->nfuncs ? p->nfuncs : 1, sizeof(char *));

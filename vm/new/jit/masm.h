@@ -78,7 +78,19 @@ typedef struct Masm {
     uint32_t from;
     uint32_t sync_pc;     /* the pc of the last ms_sync, for the reload after */
     uint32_t cur_pc;      /* the pc of the instruction being emitted: what is live at its entry is written back */
+    /* tier 2 (M10): the representations of the registers, trusted for the
+       shape of a value -- a register the section says holds a pointer
+       holds a pointer to an object of the kind the instruction expects,
+       and a tuple or a constructor has the fields it names -- so that the
+       tag, kind and length tests the loop and tier 1 make are left out;
+       NULL: every value tested */
+    const uint8_t *reps;
 } Masm;
+/* whether the shape of R(s) is trusted for an object of kind (REP_PTR; a
+   constructor with fields for K_CON from a datatype with nullary ones too) */
+int ms_trusts(const Masm *m, int32_t s, int kind);
+/* whether R(s) is an immediate by the section: an int, a word, a char or a nullary constructor */
+int ms_immediate(const Masm *m, int32_t s);
 
 /* An emitter that names a register the frame has not, or a field the
    object has not, is a mistake of the VM's own, not of the program's: the

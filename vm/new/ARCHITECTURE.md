@@ -141,8 +141,9 @@ the driver first sees a program and again when it becomes another,
 it is interpreted; its tier; the counters tier 0 keeps for the tiering
 policy; and its code's table of pc to address. An entry is published
 last, with one store. `--jit=off` runs the interpreter alone, `--jit=all`
-gives every function an entry at load, `--jit=baseline` (the default)
-compiles a function when its counters say so, `opt` is tier 2 (M9);
+gives every function an entry at load, `--jit=baseline` compiles a
+function at tier 1 when its counters say so, `--jit=opt` (the default
+since M10) at tier 2 (M9);
 `--jit-stats` prints at exit what the JIT did.
 
 **Tiering (M6).** Tier 0 counts, per function, its calls (in
@@ -392,8 +393,27 @@ which of them live in a machine register:
   the homes use, so the enter stub saves them and the leave stub restores
   them (160 bytes below its pushes).
 
-`--jit=opt` compiles at tier 2 what `--jit=baseline` would at tier 1, by
-the same counters; `--jit-tier=N` fixes the tier under any mode, so
+Tier 2 also **trusts the section for the shape of a value** (M10): a
+register the section says holds a pointer holds a pointer to an object
+of the kind the instruction expects, and a tuple or a constructor has
+the field the instruction names, so the tag, kind and length tests the
+loop and tier 1 make are left out (`ms_trusts`, `ms_load_obj`; a
+`SELECT` or `FIELD` on a trusted register is a load; a datatype value
+that is not nullary is a pointer to a constructor,
+`ms_load_tag_of_con`), and `=` on two
+values of one immediate representation compares the payloads alone
+(`ms_immediate`). The loader's lint holds a program to its section; a
+program that lies to it runs wrongly at tier 2 where the interpreter
+and tier 1 would have stopped it. **A function's code fills its own
+registers with unit** at its entry (M10), from its arity up
+(`jit_fill_from` says from where), so a call to a function with an
+arity in the section does not; a caller fills for a callee without one,
+and for the interpreter where the callee has no code (`fill_unit`,
+`fill_unit_dynamic`; `jit->all_meta` says every function has an
+arity). `Math.sqrt` is in line (`sqrtsd`).
+
+`--jit=opt`, the default since M10, compiles at tier 2 what
+`--jit=baseline` would at tier 1, by the same counters; `--jit-tier=N` fixes the tier under any mode, so
 `--jit=all --jit-tier=2` is every function at tier 2 (the oracle's fifth
 mode, and its sixth every other function, so that tiers 1 and 2 call and
 raise into each other); `--jit-stats` says how many were compiled at

@@ -37,7 +37,7 @@ What it rests on:
 | M7 | Tier 1 made fast | done |
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | done |
 | M9 | Tier 2: the registers given homes | done |
-| M10 | Tier 2: the optimisations | |
+| M10 | Tier 2: the optimisations | done |
 | M11 | Deoptimisation, OSR exit and invalidation | |
 | M12 | aarch64 | |
 
@@ -2279,6 +2279,126 @@ Nothing here changes what `--count` counts (D5).
 * **Target:** D12's second.
 * **Done when:** each item's measurement is in this file; `--count`
   exact; stress and sanitiser green.
+* **Done** (2026-09-26; `vm/new/jit/masm.{h,c}`, `emit.c`, `compile.c`,
+  `x64.{h,c}`, `jit.c`, `fastprim.h`, about 200 lines; the Makefile,
+  `run-matrix.sh`, `perf-cycles.sh`; ARCHITECTURE.md, bytecode.md,
+  AGENTS.md). The order followed the profile of the bootstrap at tier
+  2 (`perf-cycles.sh --profile jit-all+t2`, which now names the JIT's
+  functions): the collector 14%, then `IntTable.lookup`, `find`,
+  `update`, `insert` (10% together), `app` and `map` (5%), `StringMap`
+  and `IntMap`'s walks, `Ty.fromTypes`, `Simplify.simp`. Each item
+  built was measured on `tests/perf` and the bootstrap (`--runs 3`,
+  least cycles) and kept; the bootstrap's instruction count is the
+  reliable signal between runs (cycles vary by 1 to 2%).
+  1. **Registers across blocks:** M9's homes are the function's
+     throughout, so this was done. What remains -- more than three
+     general registers -- was weighed and not built: the emitters use
+     `r8` to `r11` as scratch in 63 places (calls, returns, tables),
+     each of which would have to write the homes back first.
+  2. **Inlining and devirtualisation:** measured, not built. The
+     middle end inlines the small known callees before the bytecode
+     (its M10), and M8's profile of the bootstrap says the calls
+     through a closure that matter are megamorphic: `app` 1.7 million,
+     `map` 1.1 million, `List.exists` 0.4 million, `foldl` 0.4 million
+     calls, each to hundreds of callees, against 0.34 million at the
+     monomorphic `IntTable.update` and 0.26 million at the bimorphic
+     `Array.go`. A guard and a direct call save about 20 instructions
+     of the dynamic call's 45 at those sites: about 20 million
+     instructions of the bootstrap's 6.5 billion, 0.3%, for a change
+     of the tiering policy (tier 2 would need tier 1's profiles, so a
+     function would have to pass through tier 1 first). Not worth it
+     until the calling convention changes (item 7).
+  3. **Shape checks left out where the section says the shape.** Tier
+     2 trusts the representations: a register the section says holds a
+     pointer holds a pointer to an object of the kind the instruction
+     expects, a tuple or a constructor has the field named, and a
+     datatype value that is not nullary is a pointer to a constructor
+     (`ms_trusts`, `ms_load_obj`, `ms_load_tag_of_con`). `SELECT`,
+     `FIELD`, `DECON`, the calls through a closure, `RAISE` and the
+     primitives on strings, arrays and refs lose their tag, kind and
+     length tests; the `--checked` test of a constructor's tag stays.
+     The bootstrap: 7.7 to 7.0 billion instructions (-9%), 7.2 to 6.7
+     billion cycles; `intinf_fact` 319 to 294 million instructions,
+     `list_ops` 244 to 221. The loader's lint holds a program to its
+     section; a program that lies to it runs wrongly at tier 2 where
+     the interpreter and tier 1 stop it.
+  4. **Compare-and-branch and `SWITCH` as a table:** M7 did both.
+  5. **Bounds checks hoisted out of loops:** measured, not built. The
+     loops over strings and arrays in the profile (`Source.go`, the
+     lexer, 1 million iterations; `Array.go`) are 1 to 2% of the
+     bootstrap, of which the bounds test is a fraction; hoisting needs
+     an induction-variable analysis over the section's loops for that.
+  6. **The allocations of a block as one bump:** measured, not built.
+     An allocation in line is a `--gc-stress` test, a room test, the
+     bump, two counts and the header; combining the two or three of a
+     block would save about six instructions per object after the
+     first, about 1% of the bootstrap's instructions (24 million
+     objects), for slow paths that must allocate all of a block's
+     objects through the helper and fill them in order. The collector's
+     14% is not the JIT's to take.
+  7. **Unboxed arguments across known calls:** not built, as planned
+     for last; the measure of what it would give is fib and tak below,
+     which are calls and little else. A `CALLK` writes the caller's
+     live homes back (two stores each), copies the arguments into the
+     callee's slots (two stores each), pushes the frame (seven stores)
+     and the callee's entry loads its parameters' homes: for tak,
+     about 25 memory operations around five instructions of work.
+     Arguments passed in the callee's homes, which are deterministic
+     from the bytecode, would take a second entry per function and the
+     parallel-move problem; M11's deoptimisation wants the frame's
+     slots exact at every safepoint anyway, which this keeps.
+  8. **Equality by representation:** `=` on two values of one
+     immediate representation compares the payloads alone
+     (`ms_immediate`); the pointer and real cases go on to
+     `values_equal`. Small.
+  Beside the list: **`Math.sqrt` in line** (`sqrtsd`, and in
+  `fastprim.h`, so the loop's fast path gives the same): real_nbody
+  spent 10% in the C call; **a function's code fills its own registers
+  with unit** at its entry (from `jit_fill_from` and the section's
+  arity), so a call to a function with an arity in the section does
+  not, and the call through a closure loses its fill loop (a caller
+  fills for a callee without an arity, and for the interpreter where
+  the callee has no code): the bootstrap 7.0 to 6.7 billion
+  instructions with items 8 and the square root; **xmm homes copied
+  with `movaps`**: `movsd` between registers merges into its
+  destination, a dependency on what it held, which chained the
+  iterations of real_nbody's loop -- with the square root in line the
+  program ran 1.04 of tier 1 at half the instructions until then, 0.61
+  after; and **the default mode is `--jit=opt`**, tier 2 by the
+  counters, since the default is what is measured: the Basis matrix's
+  `rune:jit` runs every function at tier 2 (`bin/runevm-new-opt`),
+  `rune:new` the default.
+* **Measured** (`scripts/perf-cycles.sh --runs 3 --configs new,jit,jit-all+t2`;
+  `new` the default, now tier 2 by the counters; `jit` every function
+  at tier 1; `jit-all+t2` every function at tier 2):
+
+  | Program | default (cycles) | all at tier 1 | all at tier 2 |
+  |---|---:|---:|---:|
+  | array_sieve | 154.4M | 1.69 | 0.99 |
+  | fib | 268.8M | 1.34 | 1.01 |
+  | intinf_fact | 215.4M | 1.10 | 0.99 |
+  | list_ops | 157.1M | 1.16 | 1.00 |
+  | real_nbody | 176.0M | 1.65 | 1.00 |
+  | string_ops | 350.4M | 1.11 | 0.99 |
+  | tak | 76.7M | 1.06 | 0.99 |
+  | word_bits | 73.4M | 2.35 | 1.01 |
+  | bootstrap | 6.7G | 1.04 | 1.00 |
+
+  The default is now within 1% of every function at tier 2, and
+  against M9's default (tier 1 by the counters, 7.2 billion cycles on
+  the bootstrap) 0.93. D12's second target, 1.5x tier 1 on the
+  compute-bound programs, is met on word_bits (2.35x), array_sieve
+  (1.69x) and real_nbody (1.65x), not on fib (1.34x) and tak (1.06x),
+  whose time is the calls: item 7's, when it is built. Under the
+  default 1,243 of the compiler's 2,130 functions are compiled, all at
+  tier 2, in 0.095 s. Against MLton (`--configs new,mlton`, cycles of
+  MLton's build as a fraction of the default's): array_sieve 0.20, fib
+  0.25, tak 0.26, word_bits 0.22, list_ops 0.40, string_ops 0.32,
+  real_nbody 1.06, the bootstrap 0.32 (2.2 against 6.8 billion). D12's
+  "within 2x of MLton" holds for real_nbody alone: the rest is the
+  16-byte value, the frame in the VM and the arguments through the
+  slots -- item 7, D10 and the heap roadmap, not more of this
+  milestone's kind.
 
 ### M11. Deoptimisation, OSR exit and invalidation (L, about 1,000)
 

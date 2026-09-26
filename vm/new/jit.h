@@ -122,6 +122,7 @@ typedef struct JitProgram {
        ones below it being written before anything can collect or read
        them (M7, jit_fill_from); UINT32_MAX while not yet worked out */
     uint32_t *fill_from;
+    int all_meta;               /* every function has its arity in the section: a callee's code fills its own registers (M10) */
 } JitProgram;
 /* the lowest register of function f a call must fill with unit */
 uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f);

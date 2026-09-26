@@ -37,6 +37,7 @@ typedef struct Jit {
        code is entered from outside -- a call returning, a raise, the
        interpreter mid-way, the entry itself -- which load the homes live
        there and go on to the instruction's label */
+    X64Label entry;         /* the code's start: the fill of the registers with unit (M10), then the entry's landing */
     int tier;
     Home *homes;
     uint64_t *live_in;
