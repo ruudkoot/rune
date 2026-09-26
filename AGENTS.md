@@ -146,7 +146,7 @@ keep these invariants:
   to it. Nothing absolute is baked into the bytecode. `make install` writes the
   same kind of wrapper for the installed tree (`scripts/install.sh`).
 * The compiler must build with every host SML system and with itself
-  (`make boot`), and all five builds must produce identical bytecode. Follow
+  (`make boot`), and all six builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
   on `Int` width, only `structure`/`signature`/`functor` at top level,
   deterministic iteration, and sources that stay inside the language

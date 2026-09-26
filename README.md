@@ -3,8 +3,8 @@
 Rune is a Standard ML '97 compiler that targets a compact stack bytecode, plus
 `runevm`, a portable C99 interpreter with a copying garbage collector. The
 compiler is written in portable Standard ML and builds unchanged with
-**MLton**, **SML/NJ** and **Poly/ML** — all three produce byte-identical
-bytecode. It also compiles itself, and that is the compiler Rune ships:
+**MLton**, **SML/NJ**, **Poly/ML** and **MLKit** — all four produce
+byte-identical bytecode. It also compiles itself, and that is the compiler Rune ships:
 `bin/rune` is `bin/rune.rbc`, the compiler as bytecode, running on `runevm`.
 The host builds bootstrap it and keep it honest; `make bootstrap` checks that
 it reproduces itself byte for byte.
@@ -68,10 +68,10 @@ See [docs/building.md](docs/building.md). In short:
 make hosts         # install the SML systems Rune is built with, under ~/.local/rune-hosts
 make doctor        # check the environment: compilers, tools, how to install what is missing
 make               # bin/rune (the self-hosted compiler) + bin/runevm
-make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml
+make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml, bin/rune-mlkit
 make test          # run the suite with bin/rune
-make test-all      # ... with each of the four host builds
-make check-cross   # identical bytecode from all five builds, the self-hosted one included
+make test-all      # ... with each of the five host builds
+make check-cross   # identical bytecode from all six builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
 make test-basis    # the Basis Library suite (tests/basis) with bin/rune
 make perf-check    # instruction and allocation budgets (tests/perf); same numbers on every machine

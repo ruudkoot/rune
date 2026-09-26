@@ -9,8 +9,9 @@
 #
 #   --prefix DIR   install under DIR (default: /usr/local as root, ~/.local otherwise)
 #   --destdir DIR  prepend DIR to every destination, for staged installs
-#   --host NAME    install the host build bin/rune-NAME (mlton, smlnj or polyml)
-#                  instead of the bytecode compiler; rune then points at it
+#   --host NAME    install the host build bin/rune-NAME (mlton, smlnj, polyml
+#                  or mlkit) instead of the bytecode compiler; rune then
+#                  points at it
 #   --uninstall    remove what an install with the same options put there
 #
 # This script never builds anything; `make install` builds first when it is not
@@ -41,8 +42,8 @@ while [ $# -gt 0 ]; do
 done
 
 case "$host" in
-  ""|mlton|smlnj|polyml) ;;
-  *) echo "install.sh: unknown host: $host (mlton, smlnj or polyml)" >&2; exit 2 ;;
+  ""|mlton|smlnj|polyml|mlkit) ;;
+  *) echo "install.sh: unknown host: $host (mlton, smlnj, polyml or mlkit)" >&2; exit 2 ;;
 esac
 
 if [ -z "$prefix" ]; then

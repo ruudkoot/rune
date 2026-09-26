@@ -25,7 +25,8 @@ struct
     in
       List.app add words;
       (* A workaround for a bug of MLton 20241230, which miscompiles the
-         code this was meant to be (docs/bugreport/mlton/BUGREPORT.md):
+         code this was meant to be
+         (docs/bugreport/mlton/SplitTypes/BUGREPORT.md):
 
              List.app add words; Array.vector a
 

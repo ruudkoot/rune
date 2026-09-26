@@ -13,7 +13,8 @@ problem, do them by hand before building or testing anything:
 2. **Ask the user before installing packages.** Show them what `make doctor`
    reported and the commands below, and install only once they agree.
 3. **Run `make hosts`** once the packages are in, which fetches and builds
-   MLton, SML/NJ (64 and 32 bits) and Poly/ML under `~/.local/rune-hosts`.
+   MLton, SML/NJ (64 and 32 bits), Poly/ML and MLKit under
+   `~/.local/rune-hosts`.
    `make doctor` should then pass.
 4. **Run `make envcheck`** (under a minute, `docs/envcheck.md`): it reports
    what the machine is and how fast, and says whether `cloud/ENVIRONMENT.md`
@@ -156,8 +157,9 @@ With everything installed it takes about 30 s at the start of a session
 ### The cache of the hosts
 
 The host SML systems take 162 s to build on a fresh machine (`make hosts`
-builds the four at once; one after another they took about 260 s: MLton 1,
-SML/NJ 49 and 53, Poly/ML 157). The branch `cloud-cache` holds them
+builds the five at once; one after another they took about 275 s: MLton 1,
+SML/NJ 49 and 53, Poly/ML 157, MLKit 15, whose binary release is 73 MB to
+fetch). The branch `cloud-cache` holds them
 prebuilt, 66 MB in `cloud/cache/`, and the hook restores them from it in
 about 7 s where they are missing (`scripts/cloud-cache.sh restore`): a
 hook without the hosts took 16 s in all. The cache carries a key of the
@@ -179,7 +181,8 @@ The session's GitHub access covers only the repositories attached to it, so
 the download of Poly/ML's archive (`github.com/polyml/polyml/archive/...`)
 gets a 403. A `git clone` of a public repository is allowed, and
 `scripts/fetch-hosts.sh` then builds Poly/ML from a clone of the release's
-tag, which has the same sources. The hosts take about 285 MB.
+tag, which has the same sources. The hosts take about 600 MB, 245 MB of it
+MLKit's (its Basis Library comes compiled for each of its modes).
 
 ### What lasts
 
