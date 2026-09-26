@@ -7,7 +7,7 @@
 | Signature | [`NET_PROT_DB`](../sig/NET_PROT_DB.md) |
 | Status | optional |
 | Members | 6 |
-| Tests | 7 checks |
+| Tests | 11 checks |
 | Source | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 ## Synopsis

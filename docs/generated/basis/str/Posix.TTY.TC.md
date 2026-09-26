@@ -7,7 +7,7 @@
 | Signatures | none: [`POSIX_TTY`](../sig/POSIX_TTY.md) specifies it inside [`Posix.TTY`](../str/Posix.TTY.md) |
 | Status | optional |
 | Members | 21 |
-| Tests | 10 checks |
+| Tests | 19 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 ## Members

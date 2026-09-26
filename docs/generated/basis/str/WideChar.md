@@ -7,7 +7,7 @@
 | Signature | [`CHAR`](../sig/CHAR.md) |
 | Status | optional |
 | Members | 35 |
-| Tests | 67 checks |
+| Tests | 86 checks |
 | Source | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 ## Synopsis
@@ -22,7 +22,7 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/CHAR.md#type-char) | *a type of its own* |
+| type | [`char`](../sig/CHAR.md#type-char) | `char` |
 | type | [`string`](../sig/CHAR.md#type-string) | `WideTextIO.vector` |
 | val | [`<`](../sig/CHAR.md#val-op-lt) | `char * char -> bool` |
 | val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `char * char -> bool` |

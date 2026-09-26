@@ -7,7 +7,7 @@
 | Signature | [`OS_PROCESS`](../sig/OS_PROCESS.md) |
 | Status | required |
 | Members | 10 |
-| Tests | 35 checks |
+| Tests | 37 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
@@ -22,7 +22,7 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`status`](../sig/OS_PROCESS.md#type-status) | *a type of its own* |
+| type | [`status`](../sig/OS_PROCESS.md#type-status) | `status` |
 | val | [`atExit`](../sig/OS_PROCESS.md#val-atexit) | `(unit -> unit) -> unit` |
 | val | [`exit`](../sig/OS_PROCESS.md#val-exit) | `status -> 'a` |
 | val | [`failure`](../sig/OS_PROCESS.md#val-failure) | `status` |
@@ -31,7 +31,7 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 | val | [`sleep`](../sig/OS_PROCESS.md#val-sleep) | `Time.time -> unit` |
 | val | [`success`](../sig/OS_PROCESS.md#val-success) | `status` |
 | val | [`system`](../sig/OS_PROCESS.md#val-system) | `string -> status` |
-| val | [`terminate`](../sig/OS_PROCESS.md#val-terminate) | `status -> 'b` |
+| val | [`terminate`](../sig/OS_PROCESS.md#val-terminate) | `status -> 'a` |
 
 ## Notes
 

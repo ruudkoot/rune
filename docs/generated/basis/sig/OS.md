@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 9 of 9 entries documented |
-| Tests | 45 checks of 5 entries |
+| Tests | 38 checks of 4 entries |
 | Source | [lib/basis/sig\_os.sml](../../../../lib/basis/sig_os.sml) |
 
 ## Synopsis
@@ -100,14 +100,6 @@ eqtype syserror
 ```
 
 The type of a condition the system reports.
-
-<details><summary>Tests (7)</summary>
-
-For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `inverts-errorName-notdir` &middot; `unknown-name` &middot; `empty-name`
-
-For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `errorName-*` &middot; `same-condition` &middot; `not-a-name` &middot; `Posix-errors`
-
-</details>
 
 ### <a name="exn-syserr"></a>`SysErr`
 

@@ -7,7 +7,7 @@
 | Signatures | none: [`WINDOWS`](../sig/WINDOWS.md) specifies it inside [`Windows`](../str/Windows.md) |
 | Status | optional |
 | Members | 19 |
-| Tests | 9 checks |
+| Tests | 18 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
 ## Members
@@ -16,7 +16,7 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md) and [`BIT_FLAGS`](../sig/BI
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`flags`](../sig/BIT_FLAGS.md#val-flags) | *a type of its own* |
+| type | [`flags`](../sig/BIT_FLAGS.md#type-flags) | *a type of its own* |
 | val | [`all`](../sig/BIT_FLAGS.md#val-all) | `flags` |
 | val | [`allAccess`](../sig/WINDOWS.md#val-key.allaccess) | `flags` |
 | val | [`allSet`](../sig/BIT_FLAGS.md#val-allset) | `flags * flags -> bool` |

@@ -7,7 +7,7 @@
 | Signature | [`STRING_CVT`](../sig/STRING_CVT.md) |
 | Status | required |
 | Members | 11 |
-| Tests | 111 checks |
+| Tests | 170 checks |
 | Source | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
 
 ## Synopsis
@@ -29,13 +29,13 @@ What each means is on [`STRING_CVT`](../sig/STRING_CVT.md); the types are this s
 | datatype | [`radix`](../sig/STRING_CVT.md#type-radix) | `BIN` &#124; `OCT` &#124; `DEC` &#124; `HEX` |
 | type | [`reader`](../sig/STRING_CVT.md#type-reader) | `'b -> ('a * 'b) option` |
 | datatype | [`realfmt`](../sig/STRING_CVT.md#type-realfmt) | `SCI` &#124; `FIX` &#124; `GEN` &#124; `EXACT` |
-| val | [`dropl`](../sig/STRING_CVT.md#val-dropl) | `(char -> bool) -> ('a -> (char * 'a) option) -> 'a -> 'a` |
+| val | [`dropl`](../sig/STRING_CVT.md#val-dropl) | `(char -> bool) -> (char, 'a) reader -> 'a -> 'a` |
 | val | [`padLeft`](../sig/STRING_CVT.md#val-padleft) | `char -> int -> string -> string` |
 | val | [`padRight`](../sig/STRING_CVT.md#val-padright) | `char -> int -> string -> string` |
-| val | [`scanString`](../sig/STRING_CVT.md#val-scanstring) | `((cs -> (char * cs) option) -> cs -> ('b * cs) option) -> string -> 'b option` |
-| val | [`skipWS`](../sig/STRING_CVT.md#val-skipws) | `('c -> (char * 'c) option) -> 'c -> 'c` |
-| val | [`splitl`](../sig/STRING_CVT.md#val-splitl) | `(char -> bool) -> ('d -> (char * 'd) option) -> 'd -> string * 'd` |
-| val | [`takel`](../sig/STRING_CVT.md#val-takel) | `(char -> bool) -> ('e -> (char * 'e) option) -> 'e -> string` |
+| val | [`scanString`](../sig/STRING_CVT.md#val-scanstring) | `((char, cs) reader -> ('a, cs) reader) -> string -> 'a option` |
+| val | [`skipWS`](../sig/STRING_CVT.md#val-skipws) | `(char, 'a) reader -> 'a -> 'a` |
+| val | [`splitl`](../sig/STRING_CVT.md#val-splitl) | `(char -> bool) -> (char, 'a) reader -> 'a -> string * 'a` |
+| val | [`takel`](../sig/STRING_CVT.md#val-takel) | `(char -> bool) -> (char, 'a) reader -> 'a -> string` |
 
 ## Notes
 

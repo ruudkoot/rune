@@ -7,7 +7,7 @@
 | Signature | [`IO`](../sig/IO.md) |
 | Status | required |
 | Members | 6 |
-| Tests | 21 checks |
+| Tests | 41 checks |
 | Source | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
 
 ## Synopsis

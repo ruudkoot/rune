@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 59 checks |
+| Tests | 134 checks |
 | Source | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 
 ## Synopsis
@@ -37,9 +37,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int64.int -> bool) -> vector -> Int64.int option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int64.int -> bool) -> vector -> (int * Int64.int) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int64.int * 'b -> 'b) -> 'b -> vector -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int64.int * 'c -> 'c) -> 'c -> vector -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int64.int * 'd -> 'd) -> 'd -> vector -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int64.int list -> vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int64.int -> Int64.int) -> vector -> vector` |

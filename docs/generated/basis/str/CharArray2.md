@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 154 checks |
+| Tests | 257 checks |
 | Source | [lib/basis/chararray2.sml](../../../../lib/basis/chararray2.sml) |
 
 ## Synopsis
@@ -25,22 +25,22 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY2.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `char` |
 | type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `string` |
 | val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `traversal -> (char -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `traversal -> (int * int * char -> unit) -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `traversal -> (int * int * char -> unit) -> region -> unit` |
 | val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * char -> array` |
 | val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> string` |
-| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : {base : array, col : int, ncols : int option, nrows : int option, row : int}} -> unit` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
 | val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
 | val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `traversal -> (char * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `traversal -> (int * int * char * 'b -> 'b) -> 'b -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> 'b` |
+| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `traversal -> (int * int * char * 'a -> 'a) -> 'a -> region -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `char list list -> array` |
 | val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `traversal -> (char -> char) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `traversal -> (int * int * char -> char) -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `traversal -> (int * int * char -> char) -> region -> unit` |
 | val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
 | val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
 | val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> string` |

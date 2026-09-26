@@ -7,7 +7,7 @@
 | Signature | [`COMMAND_LINE`](../sig/COMMAND_LINE.md) |
 | Status | required |
 | Members | 2 |
-| Tests | 3 checks |
+| Tests | 4 checks |
 | Source | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
 
 ## Synopsis

@@ -7,7 +7,7 @@
 | Signature | [`TIMER`](../sig/TIMER.md) |
 | Status | required |
 | Members | 10 |
-| Tests | 14 checks |
+| Tests | 27 checks |
 | Source | [lib/basis/timer.sml](../../../../lib/basis/timer.sml) |
 
 ## Synopsis

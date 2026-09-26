@@ -7,7 +7,7 @@
 | Signature | [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md) |
 | Status | optional |
 | Members | 4 |
-| Tests | 9 checks |
+| Tests | 12 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 ## Synopsis
@@ -23,9 +23,9 @@ What each means is on [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md); the types are th
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`socket`](../sig/GENERIC_SOCK.md#val-socket) | `NetHostDB.addr_family * Socket.SOCK.sock_type -> ('a, 'b) Socket.sock` |
-| val | [`socket'`](../sig/GENERIC_SOCK.md#val-socket-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('c, 'd) Socket.sock` |
-| val | [`socketPair`](../sig/GENERIC_SOCK.md#val-socketpair) | `NetHostDB.addr_family * Socket.SOCK.sock_type -> ('e, 'f) Socket.sock * ('e, 'f) Socket.sock` |
-| val | [`socketPair'`](../sig/GENERIC_SOCK.md#val-socketpair-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('g, 'h) Socket.sock * ('g, 'h) Socket.sock` |
+| val | [`socket'`](../sig/GENERIC_SOCK.md#val-socket-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('a, 'b) Socket.sock` |
+| val | [`socketPair`](../sig/GENERIC_SOCK.md#val-socketpair) | `NetHostDB.addr_family * Socket.SOCK.sock_type -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock` |
+| val | [`socketPair'`](../sig/GENERIC_SOCK.md#val-socketpair-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock` |
 
 ## Notes
 

@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | required |
 | Members | 22 |
-| Tests | 61 checks |
+| Tests | 137 checks |
 | Source | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
 
 ## Synopsis
@@ -33,9 +33,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word8.word -> bool) -> vector -> Word8.word option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word8.word -> bool) -> vector -> (int * Word8.word) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word8.word * 'b -> 'b) -> 'b -> vector -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word8.word * 'c -> 'c) -> 'c -> vector -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word8.word * 'd -> 'd) -> 'd -> vector -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word8.word list -> vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word8.word -> Word8.word) -> vector -> vector` |

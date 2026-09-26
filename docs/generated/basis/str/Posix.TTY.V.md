@@ -7,7 +7,7 @@
 | Signatures | none: [`POSIX_TTY`](../sig/POSIX_TTY.md) specifies it inside [`Posix.TTY`](../str/Posix.TTY.md) |
 | Status | optional |
 | Members | 16 |
-| Tests | 12 checks |
+| Tests | 22 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 "Indices for the special control characters"
@@ -18,7 +18,7 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`cc`](../sig/POSIX_TTY.md#val-v.cc) | *a type of its own* |
+| type | [`cc`](../sig/POSIX_TTY.md#type-v.cc) | *a type of its own* |
 | val | [`cc`](../sig/POSIX_TTY.md#val-v.cc) | `(int * char) list -> cc` |
 | val | [`eof`](../sig/POSIX_TTY.md#val-v.eof) | `int` |
 | val | [`eol`](../sig/POSIX_TTY.md#val-v.eol) | `int` |

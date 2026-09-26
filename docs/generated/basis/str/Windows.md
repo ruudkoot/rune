@@ -7,7 +7,7 @@
 | Signature | [`WINDOWS`](../sig/WINDOWS.md) |
 | Status | optional |
 | Members | 19 |
-| Tests | 14 checks |
+| Tests | 16 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
 ## Synopsis
@@ -30,18 +30,18 @@ What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structu
 | --- | --- | --- |
 | type | [`proc`](../sig/WINDOWS.md#type-proc) | *a type of its own* |
 | val | [`binInstreamOf`](../sig/WINDOWS.md#val-bininstreamof) | `(BinIO.instream, 'a) proc -> BinIO.instream` |
-| val | [`binOutstreamOf`](../sig/WINDOWS.md#val-binoutstreamof) | `('b, BinIO.outstream) proc -> BinIO.outstream` |
-| val | [`execute`](../sig/WINDOWS.md#val-execute) | `string * string -> ('c, 'd) proc` |
-| val | [`exit`](../sig/WINDOWS.md#val-exit) | `word -> 'e` |
+| val | [`binOutstreamOf`](../sig/WINDOWS.md#val-binoutstreamof) | `('a, BinIO.outstream) proc -> BinIO.outstream` |
+| val | [`execute`](../sig/WINDOWS.md#val-execute) | `string * string -> ('a, 'b) proc` |
+| val | [`exit`](../sig/WINDOWS.md#val-exit) | `word -> 'a` |
 | val | [`findExecutable`](../sig/WINDOWS.md#val-findexecutable) | `string -> string option` |
 | val | [`fromStatus`](../sig/WINDOWS.md#val-fromstatus) | `OS.Process.status -> word` |
 | val | [`getVolumeInformation`](../sig/WINDOWS.md#val-getvolumeinformation) | `string -> {maximumComponentLength : int, serialNumber : word, systemName : string, volumeName : string}` |
 | val | [`launchApplication`](../sig/WINDOWS.md#val-launchapplication) | `string * string -> unit` |
 | val | [`openDocument`](../sig/WINDOWS.md#val-opendocument) | `string -> unit` |
-| val | [`reap`](../sig/WINDOWS.md#val-reap) | `('f, 'g) proc -> OS.Process.status` |
+| val | [`reap`](../sig/WINDOWS.md#val-reap) | `('a, 'b) proc -> OS.Process.status` |
 | val | [`simpleExecute`](../sig/WINDOWS.md#val-simpleexecute) | `string * string -> OS.Process.status` |
-| val | [`textInstreamOf`](../sig/WINDOWS.md#val-textinstreamof) | `(TextIO.instream, 'h) proc -> TextIO.instream` |
-| val | [`textOutstreamOf`](../sig/WINDOWS.md#val-textoutstreamof) | `('i, TextIO.outstream) proc -> TextIO.outstream` |
+| val | [`textInstreamOf`](../sig/WINDOWS.md#val-textinstreamof) | `(TextIO.instream, 'a) proc -> TextIO.instream` |
+| val | [`textOutstreamOf`](../sig/WINDOWS.md#val-textoutstreamof) | `('a, TextIO.outstream) proc -> TextIO.outstream` |
 | structure | [`Config`](../str/Windows.Config.md) |  |
 | structure | [`DDE`](../str/Windows.DDE.md) |  |
 | structure | [`Key`](../str/Windows.Key.md) |  |

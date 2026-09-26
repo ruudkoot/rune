@@ -7,7 +7,7 @@
 | Signature | [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 60 checks |
+| Tests | 65 checks |
 | Source | [lib/basis/posix\_procenv.sml](../../../../lib/basis/posix_procenv.sml) |
 
 ## Synopsis
@@ -26,7 +26,7 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 | --- | --- | --- |
 | type | [`file_desc`](../sig/POSIX_PROC_ENV.md#type-file_desc) | *a type of its own* |
 | type | [`gid`](../sig/POSIX_PROC_ENV.md#type-gid) | *a type of its own* |
-| type | [`pid`](../sig/POSIX_PROC_ENV.md#type-pid) | *a type of its own* |
+| type | [`pid`](../sig/POSIX_PROC_ENV.md#type-pid) | `pid` |
 | type | [`uid`](../sig/POSIX_PROC_ENV.md#type-uid) | *a type of its own* |
 | val | [`ctermid`](../sig/POSIX_PROC_ENV.md#val-ctermid) | `unit -> string` |
 | val | [`environ`](../sig/POSIX_PROC_ENV.md#val-environ) | `unit -> string list` |

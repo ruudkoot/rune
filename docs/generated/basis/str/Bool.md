@@ -7,7 +7,7 @@
 | Signature | [`BOOL`](../sig/BOOL.md) |
 | Status | required |
 | Members | 5 |
-| Tests | 91 checks |
+| Tests | 103 checks |
 | Source | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
 
 ## Synopsis

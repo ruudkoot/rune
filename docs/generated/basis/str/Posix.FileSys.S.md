@@ -7,7 +7,7 @@
 | Signature | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | Status | optional |
 | Members | 24 |
-| Tests | 49 checks |
+| Tests | 65 checks |
 | Source | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
 
 ## Synopsis
@@ -22,7 +22,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`flags`](../sig/BIT_FLAGS.md#val-flags) | `mode` |
+| type | [`flags`](../sig/BIT_FLAGS.md#type-flags) | `mode` |
 | type | [`mode`](../sig/POSIX_FILE_SYS.md#type-s.mode) | *a type of its own* |
 | val | [`all`](../sig/BIT_FLAGS.md#val-all) | `mode` |
 | val | [`allSet`](../sig/BIT_FLAGS.md#val-allset) | `mode * mode -> bool` |

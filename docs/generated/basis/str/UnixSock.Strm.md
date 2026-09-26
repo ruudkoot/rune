@@ -7,7 +7,7 @@
 | Signatures | none: [`UNIX_SOCK`](../sig/UNIX_SOCK.md) specifies it inside [`UnixSock`](../str/UnixSock.md) |
 | Status | optional |
 | Members | 2 |
-| Tests | 5 checks |
+| Tests | 6 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 ## Members
@@ -17,7 +17,7 @@ What each means is on [`UNIX_SOCK`](../sig/UNIX_SOCK.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`socket`](../sig/UNIX_SOCK.md#val-strm.socket) | `unit -> (unix', 'a stream') Socket.sock` |
-| val | [`socketPair`](../sig/UNIX_SOCK.md#val-strm.socketpair) | `unit -> (unix', 'b stream') Socket.sock * (unix', 'b stream') Socket.sock` |
+| val | [`socketPair`](../sig/UNIX_SOCK.md#val-strm.socketpair) | `unit -> (unix', 'a stream') Socket.sock * (unix', 'a stream') Socket.sock` |
 
 ---
 

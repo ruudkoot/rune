@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 41 of 41 entries documented |
-| Tests | 86 checks of 33 entries |
+| Tests | 85 checks of 32 entries |
 | Source | [lib/basis/sig\_posix\_io.sml](../../../../lib/basis/sig_posix_io.sml) |
 
 ## Synopsis
@@ -629,12 +629,6 @@ The type of a lock description.
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
-
-</details>
-
-<details><summary>Tests (1)</summary>
-
-For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `fields`
 
 </details>
 

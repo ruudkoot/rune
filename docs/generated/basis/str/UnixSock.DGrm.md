@@ -7,7 +7,7 @@
 | Signatures | none: [`UNIX_SOCK`](../sig/UNIX_SOCK.md) specifies it inside [`UnixSock`](../str/UnixSock.md) |
 | Status | optional |
 | Members | 2 |
-| Tests | 4 checks |
+| Tests | 5 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 ## Members

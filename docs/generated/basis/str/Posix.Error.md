@@ -7,7 +7,7 @@
 | Signature | [`POSIX_ERROR`](../sig/POSIX_ERROR.md) |
 | Status | optional |
 | Members | 49 |
-| Tests | 35 checks |
+| Tests | 77 checks |
 | Source | [lib/basis/posix\_error.sml](../../../../lib/basis/posix_error.sml) |
 
 ## Synopsis
@@ -25,7 +25,7 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | *a type of its own* |
+| type | [`syserror`](../sig/POSIX_ERROR.md#type-syserror) | `syserror` |
 | val | [`acces`](../sig/POSIX_ERROR.md#val-acces) | `syserror` |
 | val | [`again`](../sig/POSIX_ERROR.md#val-again) | `syserror` |
 | val | [`badf`](../sig/POSIX_ERROR.md#val-badf) | `syserror` |

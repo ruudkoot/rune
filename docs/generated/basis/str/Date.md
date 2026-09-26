@@ -7,7 +7,7 @@
 | Signature | [`DATE`](../sig/DATE.md) |
 | Status | required |
 | Members | 24 |
-| Tests | 209 checks |
+| Tests | 225 checks |
 | Source | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
 
 ## Synopsis
@@ -24,8 +24,8 @@ What each means is on [`DATE`](../sig/DATE.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`date`](../sig/DATE.md#val-date) | *a type of its own* |
-| datatype | [`month`](../sig/DATE.md#val-month) | `Jan` &#124; `Feb` &#124; `Mar` &#124; `Apr` &#124; `May` &#124; `Jun` &#124; `Jul` &#124; `Aug` &#124; `Sep` &#124; `Oct` &#124; `Nov` &#124; `Dec` |
+| type | [`date`](../sig/DATE.md#type-date) | *a type of its own* |
+| datatype | [`month`](../sig/DATE.md#type-month) | `Jan` &#124; `Feb` &#124; `Mar` &#124; `Apr` &#124; `May` &#124; `Jun` &#124; `Jul` &#124; `Aug` &#124; `Sep` &#124; `Oct` &#124; `Nov` &#124; `Dec` |
 | datatype | [`weekday`](../sig/DATE.md#type-weekday) | `Mon` &#124; `Tue` &#124; `Wed` &#124; `Thu` &#124; `Fri` &#124; `Sat` &#124; `Sun` |
 | exception | [`Date`](../sig/DATE.md#exn-date) |  |
 | val | [`compare`](../sig/DATE.md#val-compare) | `date * date -> order` |

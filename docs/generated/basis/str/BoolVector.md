@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 37 checks |
+| Tests | 66 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -38,9 +38,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(bool -> bool) -> vector -> bool option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * bool -> bool) -> vector -> (int * bool) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(bool * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * bool * 'b -> 'b) -> 'b -> vector -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(bool * 'c -> 'c) -> 'c -> vector -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * bool * 'd -> 'd) -> 'd -> vector -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * bool * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(bool * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * bool * 'a -> 'a) -> 'a -> vector -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `bool list -> vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(bool -> bool) -> vector -> vector` |

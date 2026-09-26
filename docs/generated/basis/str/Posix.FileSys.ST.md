@@ -7,7 +7,7 @@
 | Signatures | none: [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md) specifies it inside [`Posix.FileSys`](../str/Posix.FileSys.md) |
 | Status | optional |
 | Members | 18 |
-| Tests | 21 checks |
+| Tests | 28 checks |
 | Source | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
 
 What stat reports. The kind is posix\_stat's: 0 regular file, 1

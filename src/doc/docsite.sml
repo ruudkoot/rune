@@ -1395,10 +1395,21 @@ struct
          that claims a signature is described there, and one of a structure
          specified inside another's signature, such as `Posix.FileSys.S`, is
          described on that signature's page under its path. *)
+      (* A signature can name a type and a value alike -- `ARRAY` has both a
+         type and a value `array` -- so what a member is keys the anchor with
+         its name. *)
+      fun anchorKey (signat : string, kind : string, path : string list, name : string) =
+        String.concatWith "." (signat :: path @ [name]) ^ ":" ^ kind
+      fun kindOfEntry (e : I.entryRecord) =
+        case #kind e of
+          I.Val => "val"
+        | I.Exception => "exn"
+        | I.Structure => "str"
+        | _ => "type"
       val memberAnchors =
         List.foldl (fn (sg : I.signatureRecord, m) =>
                       List.foldl (fn (e : I.entryRecord, m) =>
-                                    StringMap.insert (m, String.concatWith "." (#name sg :: #path e @ [#name e]),
+                                    StringMap.insert (m, anchorKey (#name sg, kindOfEntry e, #path e, #name e),
                                                       DocAnchor.anchor {bound = I.BEntry (#kind e), path = #path e,
                                                                         name = #name e}))
                                  m (P.entriesOf (#body sg)))
@@ -1442,9 +1453,18 @@ struct
         in
           walk (R.bodyOf (index, signat))
         end
-      fun anchorIn ((signat, path) : string * string list, member : string) =
+      (* what a member is, as the anchors of a page spell it *)
+      fun kindOfMember (m : DocElab.member) =
+        case m of
+          DocElab.MVal _ => "val"
+        | DocElab.MCon _ => "val"
+        | DocElab.MExn _ => "exn"
+        | DocElab.MType _ => "type"
+        | DocElab.MData _ => "type"
+        | DocElab.MStr => "str"
+      fun anchorIn ((signat, path) : string * string list, kind : string, member : string) =
         Option.map (fn a => (R.sigPage signat, a))
-                   (StringMap.find (memberAnchors, String.concatWith "." (signat :: path @ [member])))
+                   (StringMap.find (memberAnchors, anchorKey (signat, kind, path, member)))
       (* what a structure's page needs beyond its record: where its members are
          described, and the status and area it inherits when it claims nothing *)
       val pages =
@@ -1481,12 +1501,12 @@ struct
                  List.filter (fn cand =>
                                 case members of
                                   NONE => true
-                                | SOME ms => List.exists (fn (m, _) => isSome (anchorIn (cand, m))) ms)
+                                | SOME ms => List.exists (fn (m, k) => isSome (anchorIn (cand, kindOfMember k, m))) ms)
                              candidates
-               fun anchorOf (member : string) =
+               fun anchorOf (kind : string, member : string) =
                  let
                    fun try [] = NONE
-                     | try (cand :: rest) = (case anchorIn (cand, member) of SOME t => SOME t | NONE => try rest)
+                     | try (cand :: rest) = (case anchorIn (cand, kind, member) of SOME t => SOME t | NONE => try rest)
                  in try describing end
                fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
                val describedBy = distinct (List.map #1 describing)
@@ -1624,7 +1644,9 @@ struct
                                  val shown = List.filter (fn (_, DocElab.MCon _) => false | _ => true) ms
                                in
                                  SOME {name = name, members = List.length shown,
-                                       described = List.length (List.filter (fn (m, _) => isSome (anchorOf m)) shown)}
+                                       described = List.length (List.filter (fn (m, k) =>
+                                                                              isSome (anchorOf (kindOfMember k, m)))
+                                                                            shown)}
                                end)
                         pages
       val strPages =

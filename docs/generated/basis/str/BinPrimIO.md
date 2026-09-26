@@ -7,7 +7,7 @@
 | Signature | [`PRIM_IO`](../sig/PRIM_IO.md) |
 | Status | required |
 | Members | 14 |
-| Tests | 50 checks |
+| Tests | 59 checks |
 | Source | [lib/basis/binprimio.sml](../../../../lib/basis/binprimio.sml) |
 
 ## Synopsis
@@ -24,12 +24,12 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/PRIM_IO.md#type-array) | *a type of its own* |
+| type | [`array`](../sig/PRIM_IO.md#type-array) | `array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `Word8ArraySlice.slice` |
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `Word8.word` |
 | type | [`pos`](../sig/PRIM_IO.md#type-pos) | `int` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
-| type | [`vector`](../sig/PRIM_IO.md#type-vector) | *a type of its own* |
+| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `vector` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `Word8VectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |

@@ -7,7 +7,7 @@
 | Signature | [`INTEGER`](../sig/INTEGER.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 165 checks |
+| Tests | 323 checks |
 | Source | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
 
 ## Synopsis

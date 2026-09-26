@@ -7,7 +7,7 @@
 | Signature | [`STRING`](../sig/STRING.md) |
 | Status | optional |
 | Members | 31 |
-| Tests | 51 checks |
+| Tests | 64 checks |
 | Source | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 ## Synopsis
@@ -26,7 +26,7 @@ What each means is on [`STRING`](../sig/STRING.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/STRING.md#type-char) | *a type of its own* |
+| type | [`char`](../sig/STRING.md#type-char) | `char` |
 | type | [`string`](../sig/STRING.md#type-string) | `WideTextIO.vector` |
 | val | [`<`](../sig/STRING.md#val-op-lt) | `WideTextIO.vector * WideTextIO.vector -> bool` |
 | val | [`<=`](../sig/STRING.md#val-op-lt-eq) | `WideTextIO.vector * WideTextIO.vector -> bool` |

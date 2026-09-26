@@ -22,37 +22,37 @@ The types are this structure's own.
 | datatype | `instream` | `In` |
 | type | `out_pos` | `{position : pos, stream : outstream}` |
 | datatype | `outstream` | `Out` |
-| type | `pos` | *a type of its own* |
-| type | `reader` | *a type of its own* |
+| type | `pos` | `pos` |
+| type | `reader` | `reader` |
 | datatype | `segment` | `Unread` &#124; `Chunk` &#124; `Eos` |
 | type | `state` | `{active : bool ref, augmented : reader, closed : bool ref, reader : reader}` |
 | datatype | `status` | `Active` &#124; `Terminated` &#124; `Closed` |
-| type | `vector` | *a type of its own* |
-| type | `writer` | *a type of its own* |
+| type | `vector` | `vector` |
+| type | `writer` | `writer` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
 | val | `endOfStream` | `instream -> bool` |
 | val | `filePosIn` | `instream -> pos` |
-| val | `filePosOut` | `{position : pos, stream : outstream} -> pos` |
+| val | `filePosOut` | `out_pos -> pos` |
 | val | `flushAll` | `outstream * string -> unit` |
 | val | `flushBuffer` | `outstream * string -> unit` |
 | val | `flushDevice` | `outstream * string -> unit` |
 | val | `flushOut` | `outstream -> unit` |
-| val | `force` | `segment ref * {active : bool ref, augmented : reader, closed : bool ref, reader : reader} * string -> segment` |
+| val | `force` | `segment ref * state * string -> segment` |
 | val | `getBufferMode` | `outstream -> IO.buffer_mode` |
-| val | `getPosOut` | `outstream -> {position : pos, stream : outstream}` |
+| val | `getPosOut` | `outstream -> out_pos` |
 | val | `getReader` | `instream -> reader * vector` |
 | val | `getWriter` | `outstream -> writer * IO.buffer_mode` |
 | val | `guarded` | `string * string -> ('a -> 'b) -> 'a -> 'b` |
 | val | `hasNewline` | `vector -> bool` |
-| val | `here` | `(unit -> 'c) option -> 'c option` |
+| val | `here` | `(unit -> 'a) option -> 'a option` |
 | val | `input` | `instream -> vector * instream` |
 | val | `input1` | `instream -> (WideChar.char * instream) option` |
 | val | `inputAll` | `instream -> vector * instream` |
 | val | `inputLine` | `instream -> (vector * instream) option` |
 | val | `inputN` | `instream * int -> vector * instream` |
-| val | `ioError` | `string * string * exn -> 'd` |
+| val | `ioError` | `string * string * exn -> 'a` |
 | val | `mkInstream` | `reader * vector -> instream` |
 | val | `mkOutstream` | `writer * IO.buffer_mode -> outstream` |
 | val | `mkOutstreamOver` | `writer * IO.buffer_mode * {flush : unit -> unit, write : vector -> unit} -> outstream` |
@@ -62,7 +62,7 @@ The types are this structure's own.
 | val | `outputWith` | `outstream * vector * string -> unit` |
 | val | `readerName` | `reader -> string` |
 | val | `setBufferMode` | `outstream * IO.buffer_mode -> unit` |
-| val | `setPosOut` | `{position : pos, stream : outstream} -> outstream` |
+| val | `setPosOut` | `out_pos -> outstream` |
 | val | `writeAll` | `writer * vector * string -> unit` |
 | val | `writerName` | `writer -> string` |
 

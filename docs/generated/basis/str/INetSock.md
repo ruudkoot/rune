@@ -7,7 +7,7 @@
 | Signature | [`INET_SOCK`](../sig/INET_SOCK.md) |
 | Status | optional |
 | Members | 11 |
-| Tests | 12 checks |
+| Tests | 13 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 ## Synopsis
@@ -29,10 +29,10 @@ What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this str
 | type | [`sock`](../sig/INET_SOCK.md#type-sock) | `(inet', 'a) Socket.sock` |
 | type | [`sock_addr`](../sig/INET_SOCK.md#type-sock_addr) | `inet' Socket.sock_addr` |
 | type | [`stream_sock`](../sig/INET_SOCK.md#type-stream_sock) | `(inet', 'a stream') Socket.sock` |
-| val | [`any`](../sig/INET_SOCK.md#val-any) | `int -> inet' Socket.sock_addr` |
-| val | [`fromAddr`](../sig/INET_SOCK.md#val-fromaddr) | `inet' Socket.sock_addr -> NetHostDB.in_addr * int` |
+| val | [`any`](../sig/INET_SOCK.md#val-any) | `int -> sock_addr` |
+| val | [`fromAddr`](../sig/INET_SOCK.md#val-fromaddr) | `sock_addr -> NetHostDB.in_addr * int` |
 | val | [`inetAF`](../sig/INET_SOCK.md#val-inetaf) | `NetHostDB.addr_family` |
-| val | [`toAddr`](../sig/INET_SOCK.md#val-toaddr) | `NetHostDB.in_addr * int -> inet' Socket.sock_addr` |
+| val | [`toAddr`](../sig/INET_SOCK.md#val-toaddr) | `NetHostDB.in_addr * int -> sock_addr` |
 | structure | [`TCP`](../str/INetSock.TCP.md) |  |
 | structure | [`UDP`](../str/INetSock.UDP.md) |  |
 

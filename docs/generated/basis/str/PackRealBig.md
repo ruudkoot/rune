@@ -7,7 +7,7 @@
 | Signature | [`PACK_REAL`](../sig/PACK_REAL.md) |
 | Status | optional |
 | Members | 8 |
-| Tests | 14 checks |
+| Tests | 22 checks |
 | Source | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
 ## Synopsis
@@ -22,7 +22,7 @@ What each means is on [`PACK_REAL`](../sig/PACK_REAL.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`real`](../sig/PACK_REAL.md#type-real) | *a type of its own* |
+| type | [`real`](../sig/PACK_REAL.md#type-real) | `real` |
 | val | [`bytesPerElem`](../sig/PACK_REAL.md#val-bytesperelem) | `int` |
 | val | [`fromBytes`](../sig/PACK_REAL.md#val-frombytes) | `BinIO.vector -> real` |
 | val | [`isBigEndian`](../sig/PACK_REAL.md#val-isbigendian) | `bool` |

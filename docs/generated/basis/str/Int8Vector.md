@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 59 checks |
+| Tests | 134 checks |
 | Source | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 
 ## Synopsis
@@ -36,9 +36,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int8.int -> bool) -> vector -> Int8.int option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int8.int -> bool) -> vector -> (int * Int8.int) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int8.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int8.int * 'b -> 'b) -> 'b -> vector -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int8.int * 'c -> 'c) -> 'c -> vector -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int8.int * 'd -> 'd) -> 'd -> vector -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int8.int * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int8.int * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int8.int * 'a -> 'a) -> 'a -> vector -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int8.int list -> vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int8.int -> Int8.int) -> vector -> vector` |

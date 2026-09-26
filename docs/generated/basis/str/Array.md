@@ -7,7 +7,7 @@
 | Signature | [`ARRAY`](../sig/ARRAY.md) |
 | Status | required |
 | Members | 25 |
-| Tests | 96 checks |
+| Tests | 202 checks |
 | Source | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
 
 ## Synopsis
@@ -24,31 +24,31 @@ What each means is on [`ARRAY`](../sig/ARRAY.md); the types are this structure's
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/ARRAY.md#val-array) | *a type of its own* |
-| type | [`vector`](../sig/ARRAY.md#val-vector) | *a type of its own* |
+| type | [`array`](../sig/ARRAY.md#type-array) | `'a array` |
+| type | [`vector`](../sig/ARRAY.md#type-vector) | `'a vector` |
 | val | [`all`](../sig/ARRAY.md#val-all) | `('a -> bool) -> 'a array -> bool` |
-| val | [`app`](../sig/ARRAY.md#val-app) | `('b -> unit) -> 'b array -> unit` |
-| val | [`appi`](../sig/ARRAY.md#val-appi) | `(int * 'c -> unit) -> 'c array -> unit` |
-| val | [`array`](../sig/ARRAY.md#val-array) | `int * 'd -> 'd array` |
-| val | [`collate`](../sig/ARRAY.md#val-collate) | `('e * 'e -> order) -> 'e array * 'e array -> order` |
-| val | [`copy`](../sig/ARRAY.md#val-copy) | `{di : int, dst : 'f array, src : 'f array} -> unit` |
-| val | [`copyVec`](../sig/ARRAY.md#val-copyvec) | `{di : int, dst : 'g array, src : 'g vector} -> unit` |
-| val | [`exists`](../sig/ARRAY.md#val-exists) | `('h -> bool) -> 'h array -> bool` |
-| val | [`find`](../sig/ARRAY.md#val-find) | `('i -> bool) -> 'i array -> 'i option` |
-| val | [`findi`](../sig/ARRAY.md#val-findi) | `(int * 'j -> bool) -> 'j array -> (int * 'j) option` |
-| val | [`foldl`](../sig/ARRAY.md#val-foldl) | `('k * 'l -> 'l) -> 'l -> 'k array -> 'l` |
-| val | [`foldli`](../sig/ARRAY.md#val-foldli) | `(int * 'm * 'n -> 'n) -> 'n -> 'm array -> 'n` |
-| val | [`foldr`](../sig/ARRAY.md#val-foldr) | `('o * 'p -> 'p) -> 'p -> 'o array -> 'p` |
-| val | [`foldri`](../sig/ARRAY.md#val-foldri) | `(int * 'q * 'r -> 'r) -> 'r -> 'q array -> 'r` |
-| val | [`fromList`](../sig/ARRAY.md#val-fromlist) | `'s list -> 's array` |
-| val | [`length`](../sig/ARRAY.md#val-length) | `'t array -> int` |
+| val | [`app`](../sig/ARRAY.md#val-app) | `('a -> unit) -> 'a array -> unit` |
+| val | [`appi`](../sig/ARRAY.md#val-appi) | `(int * 'a -> unit) -> 'a array -> unit` |
+| val | [`array`](../sig/ARRAY.md#val-array) | `int * 'a -> 'a array` |
+| val | [`collate`](../sig/ARRAY.md#val-collate) | `('a * 'a -> order) -> 'a array * 'a array -> order` |
+| val | [`copy`](../sig/ARRAY.md#val-copy) | `{di : int, dst : 'a array, src : 'a array} -> unit` |
+| val | [`copyVec`](../sig/ARRAY.md#val-copyvec) | `{di : int, dst : 'a array, src : 'a vector} -> unit` |
+| val | [`exists`](../sig/ARRAY.md#val-exists) | `('a -> bool) -> 'a array -> bool` |
+| val | [`find`](../sig/ARRAY.md#val-find) | `('a -> bool) -> 'a array -> 'a option` |
+| val | [`findi`](../sig/ARRAY.md#val-findi) | `(int * 'a -> bool) -> 'a array -> (int * 'a) option` |
+| val | [`foldl`](../sig/ARRAY.md#val-foldl) | `('a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`foldli`](../sig/ARRAY.md#val-foldli) | `(int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`foldr`](../sig/ARRAY.md#val-foldr) | `('a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`foldri`](../sig/ARRAY.md#val-foldri) | `(int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`fromList`](../sig/ARRAY.md#val-fromlist) | `'a list -> 'a array` |
+| val | [`length`](../sig/ARRAY.md#val-length) | `'a array -> int` |
 | val | [`maxLen`](../sig/ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/ARRAY.md#val-modify) | `('u -> 'u) -> 'u array -> unit` |
-| val | [`modifyi`](../sig/ARRAY.md#val-modifyi) | `(int * 'v -> 'v) -> 'v array -> unit` |
-| val | [`sub`](../sig/ARRAY.md#val-sub) | `'w array * int -> 'w` |
-| val | [`tabulate`](../sig/ARRAY.md#val-tabulate) | `int * (int -> 'x) -> 'x array` |
-| val | [`update`](../sig/ARRAY.md#val-update) | `'y array * int * 'y -> unit` |
-| val | [`vector`](../sig/ARRAY.md#val-vector) | `'z array -> 'z vector` |
+| val | [`modify`](../sig/ARRAY.md#val-modify) | `('a -> 'a) -> 'a array -> unit` |
+| val | [`modifyi`](../sig/ARRAY.md#val-modifyi) | `(int * 'a -> 'a) -> 'a array -> unit` |
+| val | [`sub`](../sig/ARRAY.md#val-sub) | `'a array * int -> 'a` |
+| val | [`tabulate`](../sig/ARRAY.md#val-tabulate) | `int * (int -> 'a) -> 'a array` |
+| val | [`update`](../sig/ARRAY.md#val-update) | `'a array * int * 'a -> unit` |
+| val | [`vector`](../sig/ARRAY.md#val-vector) | `'a array -> 'a vector` |
 
 ## Notes
 
@@ -56,6 +56,13 @@ What each means is on [`ARRAY`](../sig/ARRAY.md); the types are this structure's
 
 > **Implementation** `Array.maxLen/value`. 100000000, the same as
 > [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen).
+
+### tabulate
+
+> **Reading** `Array.tabulate/Size-before-f`. The specification does not say
+> whether the length is checked before `f` is applied. It is: a length out
+> of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all, so no effect of `f`
+> happens for an array that is never made.
 
 <details><summary>Other implementations (1)</summary>
 

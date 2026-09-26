@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 87 checks |
+| Tests | 190 checks |
 | Source | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `IntInf.int` |
-| type | [`vector`](../sig/MONO_ARRAY.md#val-vector) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(IntInf.int -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(IntInf.int -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * IntInf.int -> unit) -> array -> unit` |
@@ -36,9 +36,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(IntInf.int -> bool) -> array -> IntInf.int option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * IntInf.int -> bool) -> array -> (int * IntInf.int) option` |
 | val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(IntInf.int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * IntInf.int * 'b -> 'b) -> 'b -> array -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(IntInf.int * 'c -> 'c) -> 'c -> array -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * IntInf.int * 'd -> 'd) -> 'd -> array -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * IntInf.int * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(IntInf.int * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * IntInf.int * 'a -> 'a) -> 'a -> array -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `IntInf.int list -> array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |

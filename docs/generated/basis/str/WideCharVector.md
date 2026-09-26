@@ -7,7 +7,7 @@
 | Signatures | [`MONO_VECTOR`](../sig/MONO_VECTOR.md), [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 56 checks |
+| Tests | 131 checks |
 | Source | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 ## Synopsis
@@ -37,9 +37,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md) and [`MONO_VECTOR_E
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(WideChar.char -> bool) -> vector -> WideChar.char option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * WideChar.char -> bool) -> vector -> (int * WideChar.char) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * WideChar.char * 'b -> 'b) -> 'b -> vector -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(WideChar.char * 'c -> 'c) -> 'c -> vector -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * WideChar.char * 'd -> 'd) -> 'd -> vector -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `WideChar.char list -> vector` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(WideChar.char -> WideChar.char) -> vector -> vector` |

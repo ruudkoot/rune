@@ -7,7 +7,7 @@
 | Signature | [`POSIX_IO`](../sig/POSIX_IO.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 61 checks |
+| Tests | 83 checks |
 | Source | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
 
 ## Synopsis
@@ -24,10 +24,10 @@ What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`file_desc`](../sig/POSIX_IO.md#type-file_desc) | *a type of its own* |
+| type | [`file_desc`](../sig/POSIX_IO.md#type-file_desc) | `file_desc` |
 | datatype | [`lock_type`](../sig/POSIX_IO.md#type-lock_type) | `F_RDLCK` &#124; `F_WRLCK` &#124; `F_UNLCK` |
 | datatype | [`open_mode`](../sig/POSIX_IO.md#type-open_mode) | `O_RDONLY` &#124; `O_WRONLY` &#124; `O_RDWR` |
-| type | [`pid`](../sig/POSIX_IO.md#type-pid) | *a type of its own* |
+| type | [`pid`](../sig/POSIX_IO.md#type-pid) | `pid` |
 | datatype | [`whence`](../sig/POSIX_IO.md#type-whence) | `SEEK_SET` &#124; `SEEK_CUR` &#124; `SEEK_END` |
 | val | [`close`](../sig/POSIX_IO.md#val-close) | `file_desc -> unit` |
 | val | [`dup`](../sig/POSIX_IO.md#val-dup) | `file_desc -> file_desc` |

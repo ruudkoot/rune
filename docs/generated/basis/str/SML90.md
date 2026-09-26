@@ -7,7 +7,7 @@
 | Signature | [`SML90`](../sig/SML90.md) |
 | Status | optional |
 | Members | 36 |
-| Tests | 39 checks |
+| Tests | 57 checks |
 | Source | [lib/basis/sml90.sml](../../../../lib/basis/sml90.sml) |
 
 ## Synopsis

@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 34 checks |
+| Tests | 62 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `bool` |
-| type | [`vector`](../sig/MONO_ARRAY.md#val-vector) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(bool -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(bool -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * bool -> unit) -> array -> unit` |
@@ -36,9 +36,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(bool -> bool) -> array -> bool option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * bool -> bool) -> array -> (int * bool) option` |
 | val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(bool * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * bool * 'b -> 'b) -> 'b -> array -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(bool * 'c -> 'c) -> 'c -> array -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * bool * 'd -> 'd) -> 'd -> array -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * bool * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(bool * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * bool * 'a -> 'a) -> 'a -> array -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `bool list -> array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |

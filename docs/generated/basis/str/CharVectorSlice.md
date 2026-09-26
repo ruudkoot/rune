@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md) |
 | Status | required |
 | Members | 26 |
-| Tests | 114 checks |
+| Tests | 211 checks |
 | Source | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
 
 ## Synopsis
@@ -27,8 +27,8 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `char` |
-| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `substring` |
-| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `string` |
+| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | `substring` |
+| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `string` |
 | val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(char -> bool) -> substring -> bool` |
 | val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(char -> unit) -> substring -> unit` |
 | val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * char -> unit) -> substring -> unit` |
@@ -39,9 +39,9 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(char -> bool) -> substring -> char option` |
 | val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * char -> bool) -> substring -> (int * char) option` |
 | val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * char * 'b -> 'b) -> 'b -> substring -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(char * 'c -> 'c) -> 'c -> substring -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * char * 'd -> 'd) -> 'd -> substring -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> substring -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> substring -> 'a` |
 | val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `string -> substring` |
 | val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `substring -> (char * substring) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `substring -> bool` |

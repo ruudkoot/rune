@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 87 checks |
+| Tests | 190 checks |
 | Source | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Word64.word` |
-| type | [`vector`](../sig/MONO_ARRAY.md#val-vector) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Word64.word -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Word64.word -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Word64.word -> unit) -> array -> unit` |
@@ -36,9 +36,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Word64.word -> bool) -> array -> Word64.word option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Word64.word -> bool) -> array -> (int * Word64.word) option` |
 | val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Word64.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word64.word * 'b -> 'b) -> 'b -> array -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word64.word * 'c -> 'c) -> 'c -> array -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word64.word * 'd -> 'd) -> 'd -> array -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word64.word * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word64.word * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word64.word * 'a -> 'a) -> 'a -> array -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Word64.word list -> array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |

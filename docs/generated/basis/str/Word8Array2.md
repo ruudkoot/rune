@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 153 checks |
+| Tests | 255 checks |
 | Source | [lib/basis/word8array2.sml](../../../../lib/basis/word8array2.sml) |
 
 ## Synopsis
@@ -25,22 +25,22 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY2.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `Word8.word` |
 | type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
-| type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `vector` |
 | val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `traversal -> (Word8.word -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `traversal -> (int * int * Word8.word -> unit) -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `traversal -> (int * int * Word8.word -> unit) -> region -> unit` |
 | val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * Word8.word -> array` |
 | val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> vector` |
-| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : {base : array, col : int, ncols : int option, nrows : int option, row : int}} -> unit` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
 | val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
 | val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `traversal -> (Word8.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `traversal -> (int * int * Word8.word * 'b -> 'b) -> 'b -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> 'b` |
+| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `traversal -> (int * int * Word8.word * 'a -> 'a) -> 'a -> region -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `Word8.word list list -> array` |
 | val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `traversal -> (Word8.word -> Word8.word) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `traversal -> (int * int * Word8.word -> Word8.word) -> {base : array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `traversal -> (int * int * Word8.word -> Word8.word) -> region -> unit` |
 | val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
 | val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
 | val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> vector` |

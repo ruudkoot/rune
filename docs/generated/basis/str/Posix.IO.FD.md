@@ -7,7 +7,7 @@
 | Signature | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | Status | optional |
 | Members | 10 |
-| Tests | 45 checks |
+| Tests | 48 checks |
 | Source | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
 
 ## Synopsis
@@ -25,7 +25,7 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_IO`](../sig
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`flags`](../sig/BIT_FLAGS.md#val-flags) | *a type of its own* |
+| type | [`flags`](../sig/BIT_FLAGS.md#type-flags) | *a type of its own* |
 | val | [`all`](../sig/BIT_FLAGS.md#val-all) | `flags` |
 | val | [`allSet`](../sig/BIT_FLAGS.md#val-allset) | `flags * flags -> bool` |
 | val | [`anySet`](../sig/BIT_FLAGS.md#val-anyset) | `flags * flags -> bool` |

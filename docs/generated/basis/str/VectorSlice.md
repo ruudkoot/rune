@@ -7,7 +7,7 @@
 | Signature | [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md) |
 | Status | required |
 | Members | 24 |
-| Tests | 105 checks |
+| Tests | 205 checks |
 | Source | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
 
 ## Synopsis
@@ -25,30 +25,30 @@ What each means is on [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`slice`](../sig/VECTOR_SLICE.md#val-slice) | *a type of its own* |
+| type | [`slice`](../sig/VECTOR_SLICE.md#type-slice) | *a type of its own* |
 | val | [`all`](../sig/VECTOR_SLICE.md#val-all) | `('a -> bool) -> 'a slice -> bool` |
-| val | [`app`](../sig/VECTOR_SLICE.md#val-app) | `('b -> unit) -> 'b slice -> unit` |
-| val | [`appi`](../sig/VECTOR_SLICE.md#val-appi) | `(int * 'c -> unit) -> 'c slice -> unit` |
-| val | [`base`](../sig/VECTOR_SLICE.md#val-base) | `'d slice -> 'd vector * int * int` |
-| val | [`collate`](../sig/VECTOR_SLICE.md#val-collate) | `('e * 'e -> order) -> 'e slice * 'e slice -> order` |
-| val | [`concat`](../sig/VECTOR_SLICE.md#val-concat) | `'f slice list -> 'f vector` |
-| val | [`exists`](../sig/VECTOR_SLICE.md#val-exists) | `('g -> bool) -> 'g slice -> bool` |
-| val | [`find`](../sig/VECTOR_SLICE.md#val-find) | `('h -> bool) -> 'h slice -> 'h option` |
-| val | [`findi`](../sig/VECTOR_SLICE.md#val-findi) | `(int * 'i -> bool) -> 'i slice -> (int * 'i) option` |
-| val | [`foldl`](../sig/VECTOR_SLICE.md#val-foldl) | `('j * 'k -> 'k) -> 'k -> 'j slice -> 'k` |
-| val | [`foldli`](../sig/VECTOR_SLICE.md#val-foldli) | `(int * 'l * 'm -> 'm) -> 'm -> 'l slice -> 'm` |
-| val | [`foldr`](../sig/VECTOR_SLICE.md#val-foldr) | `('n * 'o -> 'o) -> 'o -> 'n slice -> 'o` |
-| val | [`foldri`](../sig/VECTOR_SLICE.md#val-foldri) | `(int * 'p * 'q -> 'q) -> 'q -> 'p slice -> 'q` |
-| val | [`full`](../sig/VECTOR_SLICE.md#val-full) | `'r vector -> 'r slice` |
-| val | [`getItem`](../sig/VECTOR_SLICE.md#val-getitem) | `'s slice -> ('s * 's slice) option` |
-| val | [`isEmpty`](../sig/VECTOR_SLICE.md#val-isempty) | `'t slice -> bool` |
-| val | [`length`](../sig/VECTOR_SLICE.md#val-length) | `'u slice -> int` |
-| val | [`map`](../sig/VECTOR_SLICE.md#val-map) | `('v -> 'w) -> 'v slice -> 'w vector` |
-| val | [`mapi`](../sig/VECTOR_SLICE.md#val-mapi) | `(int * 'x -> 'y) -> 'x slice -> 'y vector` |
-| val | [`slice`](../sig/VECTOR_SLICE.md#val-slice) | `'z vector * int * int option -> 'z slice` |
-| val | [`sub`](../sig/VECTOR_SLICE.md#val-sub) | `'t26 slice * int -> 't26` |
-| val | [`subslice`](../sig/VECTOR_SLICE.md#val-subslice) | `'t27 slice * int * int option -> 't27 slice` |
-| val | [`vector`](../sig/VECTOR_SLICE.md#val-vector) | `'t28 slice -> 't28 vector` |
+| val | [`app`](../sig/VECTOR_SLICE.md#val-app) | `('a -> unit) -> 'a slice -> unit` |
+| val | [`appi`](../sig/VECTOR_SLICE.md#val-appi) | `(int * 'a -> unit) -> 'a slice -> unit` |
+| val | [`base`](../sig/VECTOR_SLICE.md#val-base) | `'a slice -> 'a vector * int * int` |
+| val | [`collate`](../sig/VECTOR_SLICE.md#val-collate) | `('a * 'a -> order) -> 'a slice * 'a slice -> order` |
+| val | [`concat`](../sig/VECTOR_SLICE.md#val-concat) | `'a slice list -> 'a vector` |
+| val | [`exists`](../sig/VECTOR_SLICE.md#val-exists) | `('a -> bool) -> 'a slice -> bool` |
+| val | [`find`](../sig/VECTOR_SLICE.md#val-find) | `('a -> bool) -> 'a slice -> 'a option` |
+| val | [`findi`](../sig/VECTOR_SLICE.md#val-findi) | `(int * 'a -> bool) -> 'a slice -> (int * 'a) option` |
+| val | [`foldl`](../sig/VECTOR_SLICE.md#val-foldl) | `('a * 'b -> 'b) -> 'b -> 'a slice -> 'b` |
+| val | [`foldli`](../sig/VECTOR_SLICE.md#val-foldli) | `(int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b` |
+| val | [`foldr`](../sig/VECTOR_SLICE.md#val-foldr) | `('a * 'b -> 'b) -> 'b -> 'a slice -> 'b` |
+| val | [`foldri`](../sig/VECTOR_SLICE.md#val-foldri) | `(int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b` |
+| val | [`full`](../sig/VECTOR_SLICE.md#val-full) | `'a vector -> 'a slice` |
+| val | [`getItem`](../sig/VECTOR_SLICE.md#val-getitem) | `'a slice -> ('a * 'a slice) option` |
+| val | [`isEmpty`](../sig/VECTOR_SLICE.md#val-isempty) | `'a slice -> bool` |
+| val | [`length`](../sig/VECTOR_SLICE.md#val-length) | `'a slice -> int` |
+| val | [`map`](../sig/VECTOR_SLICE.md#val-map) | `('a -> 'b) -> 'a slice -> 'b vector` |
+| val | [`mapi`](../sig/VECTOR_SLICE.md#val-mapi) | `(int * 'a -> 'b) -> 'a slice -> 'b vector` |
+| val | [`slice`](../sig/VECTOR_SLICE.md#val-slice) | `'a vector * int * int option -> 'a slice` |
+| val | [`sub`](../sig/VECTOR_SLICE.md#val-sub) | `'a slice * int -> 'a` |
+| val | [`subslice`](../sig/VECTOR_SLICE.md#val-subslice) | `'a slice * int * int option -> 'a slice` |
+| val | [`vector`](../sig/VECTOR_SLICE.md#val-vector) | `'a slice -> 'a vector` |
 
 ## Notes
 

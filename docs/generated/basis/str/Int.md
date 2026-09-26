@@ -7,7 +7,7 @@
 | Signature | [`INTEGER`](../sig/INTEGER.md) |
 | Status | required |
 | Members | 30 |
-| Tests | 170 checks |
+| Tests | 346 checks |
 | Source | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
 
 ## Synopsis
@@ -27,7 +27,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`int`](../sig/INTEGER.md#type-int) | *a type of its own* |
+| type | [`int`](../sig/INTEGER.md#type-int) | `int` |
 | val | [`*`](../sig/INTEGER.md#val-op-star) | `int * int -> int` |
 | val | [`+`](../sig/INTEGER.md#val-op-plus) | `int * int -> int` |
 | val | [`-`](../sig/INTEGER.md#val-op-minus) | `int * int -> int` |

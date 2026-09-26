@@ -7,7 +7,7 @@
 | Signature | [`OS_PATH`](../sig/OS_PATH.md) |
 | Status | required |
 | Members | 27 |
-| Tests | 72 checks |
+| Tests | 104 checks |
 | Source | [lib/basis/ospath.sml](../../../../lib/basis/ospath.sml) |
 
 ## Synopsis

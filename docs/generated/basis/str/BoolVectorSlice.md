@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 31 checks |
+| Tests | 50 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -23,8 +23,8 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `bool` |
-| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | *a type of its own* |
+| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | *a type of its own* |
+| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `vector` |
 | val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(bool -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(bool -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * bool -> unit) -> slice -> unit` |
@@ -35,9 +35,9 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(bool -> bool) -> slice -> bool option` |
 | val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * bool -> bool) -> slice -> (int * bool) option` |
 | val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(bool * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * bool * 'b -> 'b) -> 'b -> slice -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(bool * 'c -> 'c) -> 'c -> slice -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * bool * 'd -> 'd) -> 'd -> slice -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * bool * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(bool * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * bool * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `vector -> slice` |
 | val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (bool * slice) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `slice -> bool` |

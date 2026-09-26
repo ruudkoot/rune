@@ -7,7 +7,7 @@
 | Signature | [`GENERAL`](../sig/GENERAL.md) |
 | Status | required |
 | Members | 20 |
-| Tests | 104 checks |
+| Tests | 139 checks |
 | Source | [lib/basis/general.sml](../../../../lib/basis/general.sml) |
 
 ## Synopsis
@@ -24,11 +24,11 @@ What each means is on [`GENERAL`](../sig/GENERAL.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`exn`](../sig/GENERAL.md#type-exn) | *a type of its own* |
+| type | [`exn`](../sig/GENERAL.md#type-exn) | `exn` |
 | datatype | [`order`](../sig/GENERAL.md#type-order) | `LESS` &#124; `EQUAL` &#124; `GREATER` |
 | type | [`unit`](../sig/GENERAL.md#type-unit) | `unit` |
 | val | [`!`](../sig/GENERAL.md#val-op-bang) | `'a ref -> 'a` |
-| val | [`:=`](../sig/GENERAL.md#val-op-colon-eq) | `'b ref * 'b -> unit` |
+| val | [`:=`](../sig/GENERAL.md#val-op-colon-eq) | `'a ref * 'a -> unit` |
 | exception | [`Bind`](../sig/GENERAL.md#exn-bind) |  |
 | exception | [`Chr`](../sig/GENERAL.md#exn-chr) |  |
 | exception | [`Div`](../sig/GENERAL.md#exn-div) |  |
@@ -39,11 +39,11 @@ What each means is on [`GENERAL`](../sig/GENERAL.md); the types are this structu
 | exception | [`Size`](../sig/GENERAL.md#exn-size) |  |
 | exception | [`Span`](../sig/GENERAL.md#exn-span) |  |
 | exception | [`Subscript`](../sig/GENERAL.md#exn-subscript) |  |
-| val | [`before`](../sig/GENERAL.md#val-before) | `'c * unit -> 'c` |
+| val | [`before`](../sig/GENERAL.md#val-before) | `'a * unit -> 'a` |
 | val | [`exnMessage`](../sig/GENERAL.md#val-exnmessage) | `exn -> string` |
 | val | [`exnName`](../sig/GENERAL.md#val-exnname) | `exn -> string` |
-| val | [`ignore`](../sig/GENERAL.md#val-ignore) | `'d -> unit` |
-| val | [`o`](../sig/GENERAL.md#val-o) | `('e -> 'f) * ('g -> 'e) -> 'g -> 'f` |
+| val | [`ignore`](../sig/GENERAL.md#val-ignore) | `'a -> unit` |
+| val | [`o`](../sig/GENERAL.md#val-o) | `('a -> 'b) * ('c -> 'a) -> 'c -> 'b` |
 
 ## Notes
 

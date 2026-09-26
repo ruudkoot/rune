@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 87 checks |
+| Tests | 190 checks |
 | Source | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Real32.real` |
-| type | [`vector`](../sig/MONO_ARRAY.md#val-vector) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Real32.real -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Real32.real -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Real32.real -> unit) -> array -> unit` |
@@ -36,9 +36,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Real32.real -> bool) -> array -> Real32.real option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Real32.real -> bool) -> array -> (int * Real32.real) option` |
 | val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Real32.real * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Real32.real * 'b -> 'b) -> 'b -> array -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Real32.real * 'c -> 'c) -> 'c -> array -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Real32.real * 'd -> 'd) -> 'd -> array -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Real32.real * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Real32.real * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Real32.real * 'a -> 'a) -> 'a -> array -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Real32.real list -> array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |

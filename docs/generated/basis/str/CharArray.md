@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | required |
 | Members | 26 |
-| Tests | 104 checks |
+| Tests | 209 checks |
 | Source | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `char` |
-| type | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `string` |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `string` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(char -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(char -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * char -> unit) -> array -> unit` |
@@ -36,9 +36,9 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(char -> bool) -> array -> char option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * char -> bool) -> array -> (int * char) option` |
 | val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * char * 'b -> 'b) -> 'b -> array -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(char * 'c -> 'c) -> 'c -> array -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * char * 'd -> 'd) -> 'd -> array -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> array -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `char list -> array` |
 | val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |

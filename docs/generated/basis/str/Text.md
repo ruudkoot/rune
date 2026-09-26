@@ -7,7 +7,7 @@
 | Signature | [`TEXT`](../sig/TEXT.md) |
 | Status | required |
 | Members | 7 |
-| Tests | 24 checks |
+| Tests | 25 checks |
 | Source | [lib/basis/text.sml](../../../../lib/basis/text.sml) |
 
 ## Synopsis

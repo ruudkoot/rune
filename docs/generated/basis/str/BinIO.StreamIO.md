@@ -7,7 +7,7 @@
 | Signature | [`STREAM_IO`](../sig/STREAM_IO.md) |
 | Status | required |
 | Members | 29 |
-| Tests | 99 checks |
+| Tests | 129 checks |
 | Source | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 ## Synopsis
@@ -26,13 +26,13 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/STREAM_IO.md#type-elem) | `Word8.word` |
-| type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
+| type | [`instream`](../sig/STREAM_IO.md#type-instream) | `instream` |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
-| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
+| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | `outstream` |
 | type | [`pos`](../sig/STREAM_IO.md#type-pos) | `int` |
-| type | [`reader`](../sig/STREAM_IO.md#type-reader) | *a type of its own* |
-| type | [`vector`](../sig/STREAM_IO.md#type-vector) | *a type of its own* |
-| type | [`writer`](../sig/STREAM_IO.md#type-writer) | *a type of its own* |
+| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `reader` |
+| type | [`vector`](../sig/STREAM_IO.md#type-vector) | `vector` |
+| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `writer` |
 | val | [`canInput`](../sig/STREAM_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |

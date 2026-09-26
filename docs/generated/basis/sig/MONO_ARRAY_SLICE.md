@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 383 checks of 28 entries |
+| Tests | 330 checks of 26 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -139,18 +139,6 @@ The type of slices of one of these.
 
 </details>
 
-<details><summary>Tests (40)</summary>
-
-For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `high-bytes`
-
-For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `String.extract*`
-
-For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `SOME` &middot; `NONE` &middot; `NONE-at-length` &middot; `Subscript-NONE-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
-
-In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-array` &middot; `of-empty-array-Subscript` (raises Subscript) &middot; `sees-later-updates-of-the-array` &middot; `base-is-the-same-array` &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
-
-</details>
-
 ### <a name="type-vector"></a>`vector`
 
 ```sml
@@ -158,18 +146,6 @@ type vector
 ```
 
 The type of these vectors.
-
-<details><summary>Tests (13)</summary>
-
-For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `every-byte`
-
-For `CharArraySlice`, in [tests/basis/chararrayslice.sml](../../../../tests/basis/chararrayslice.sml): `is-a-string` &middot; `empty-string` &middot; `is-CharVector.vector` &middot; `String.substring*`
-
-For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `is-a-snapshot`
-
-In [tests/basis/fn/mono\_array\_slice\_fn.sml](../../../../tests/basis/fn/mono_array_slice_fn.sml), applied to `Word8ArraySlice`, `CharArraySlice`, `IntArraySlice`, `Int8ArraySlice`, `Int16ArraySlice`, `Int32ArraySlice`, `LargeIntArraySlice`, `WordArraySlice`, `Word16ArraySlice`, `Word32ArraySlice`, `RealArraySlice`, `Int64ArraySlice`, `LargeWordArraySlice`, `Word64ArraySlice`, `LargeRealArraySlice`, `Real64ArraySlice`, `Real32ArraySlice`, `WideCharArraySlice`: `middle` &middot; `full` &middot; `empty` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
-
-</details>
 
 ### <a name="type-vector_slice"></a>`vector_slice`
 

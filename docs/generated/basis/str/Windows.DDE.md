@@ -7,7 +7,7 @@
 | Signatures | none: [`WINDOWS`](../sig/WINDOWS.md) specifies it inside [`Windows`](../str/Windows.md) |
 | Status | optional |
 | Members | 4 |
-| Tests | 2 checks |
+| Tests | 3 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
 ## Members

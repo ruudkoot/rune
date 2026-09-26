@@ -7,7 +7,7 @@
 | Signature | [`LIST`](../sig/LIST.md) |
 | Status | required |
 | Members | 27 |
-| Tests | 48 checks |
+| Tests | 99 checks |
 | Source | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
 
 ## Synopsis
@@ -25,32 +25,32 @@ What each means is on [`LIST`](../sig/LIST.md); the types are this structure's o
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | [`list`](../sig/LIST.md#type-list) | `nil` &#124; `::` |
-| val | [`@`](../sig/LIST.md#val-op-at) | `'b list * 'b list -> 'b list` |
+| val | [`@`](../sig/LIST.md#val-op-at) | `'a list * 'a list -> 'a list` |
 | exception | [`Empty`](../sig/LIST.md#exn-empty) |  |
-| val | [`all`](../sig/LIST.md#val-all) | `('c -> bool) -> 'c list -> bool` |
-| val | [`app`](../sig/LIST.md#val-app) | `('d -> unit) -> 'd list -> unit` |
-| val | [`collate`](../sig/LIST.md#val-collate) | `('e * 'e -> order) -> 'e list * 'e list -> order` |
-| val | [`concat`](../sig/LIST.md#val-concat) | `'f list list -> 'f list` |
-| val | [`drop`](../sig/LIST.md#val-drop) | `'g list * int -> 'g list` |
-| val | [`exists`](../sig/LIST.md#val-exists) | `('h -> bool) -> 'h list -> bool` |
-| val | [`filter`](../sig/LIST.md#val-filter) | `('i -> bool) -> 'i list -> 'i list` |
-| val | [`find`](../sig/LIST.md#val-find) | `('j -> bool) -> 'j list -> 'j option` |
-| val | [`foldl`](../sig/LIST.md#val-foldl) | `('k * 'l -> 'l) -> 'l -> 'k list -> 'l` |
-| val | [`foldr`](../sig/LIST.md#val-foldr) | `('m * 'n -> 'n) -> 'n -> 'm list -> 'n` |
-| val | [`getItem`](../sig/LIST.md#val-getitem) | `'o list -> ('o * 'o list) option` |
-| val | [`hd`](../sig/LIST.md#val-hd) | `'p list -> 'p` |
-| val | [`last`](../sig/LIST.md#val-last) | `'q list -> 'q` |
-| val | [`length`](../sig/LIST.md#val-length) | `'r list -> int` |
-| val | [`map`](../sig/LIST.md#val-map) | `('s -> 't) -> 's list -> 't list` |
-| val | [`mapPartial`](../sig/LIST.md#val-mappartial) | `('u -> 'v option) -> 'u list -> 'v list` |
-| val | [`nth`](../sig/LIST.md#val-nth) | `'w list * int -> 'w` |
-| val | [`null`](../sig/LIST.md#val-null) | `'x list -> bool` |
-| val | [`partition`](../sig/LIST.md#val-partition) | `('y -> bool) -> 'y list -> 'y list * 'y list` |
-| val | [`rev`](../sig/LIST.md#val-rev) | `'z list -> 'z list` |
-| val | [`revAppend`](../sig/LIST.md#val-revappend) | `'t26 list * 't26 list -> 't26 list` |
-| val | [`tabulate`](../sig/LIST.md#val-tabulate) | `int * (int -> 't27) -> 't27 list` |
-| val | [`take`](../sig/LIST.md#val-take) | `'t28 list * int -> 't28 list` |
-| val | [`tl`](../sig/LIST.md#val-tl) | `'t29 list -> 't29 list` |
+| val | [`all`](../sig/LIST.md#val-all) | `('a -> bool) -> 'a list -> bool` |
+| val | [`app`](../sig/LIST.md#val-app) | `('a -> unit) -> 'a list -> unit` |
+| val | [`collate`](../sig/LIST.md#val-collate) | `('a * 'a -> order) -> 'a list * 'a list -> order` |
+| val | [`concat`](../sig/LIST.md#val-concat) | `'a list list -> 'a list` |
+| val | [`drop`](../sig/LIST.md#val-drop) | `'a list * int -> 'a list` |
+| val | [`exists`](../sig/LIST.md#val-exists) | `('a -> bool) -> 'a list -> bool` |
+| val | [`filter`](../sig/LIST.md#val-filter) | `('a -> bool) -> 'a list -> 'a list` |
+| val | [`find`](../sig/LIST.md#val-find) | `('a -> bool) -> 'a list -> 'a option` |
+| val | [`foldl`](../sig/LIST.md#val-foldl) | `('a * 'b -> 'b) -> 'b -> 'a list -> 'b` |
+| val | [`foldr`](../sig/LIST.md#val-foldr) | `('a * 'b -> 'b) -> 'b -> 'a list -> 'b` |
+| val | [`getItem`](../sig/LIST.md#val-getitem) | `'a list -> ('a * 'a list) option` |
+| val | [`hd`](../sig/LIST.md#val-hd) | `'a list -> 'a` |
+| val | [`last`](../sig/LIST.md#val-last) | `'a list -> 'a` |
+| val | [`length`](../sig/LIST.md#val-length) | `'a list -> int` |
+| val | [`map`](../sig/LIST.md#val-map) | `('a -> 'b) -> 'a list -> 'b list` |
+| val | [`mapPartial`](../sig/LIST.md#val-mappartial) | `('a -> 'b option) -> 'a list -> 'b list` |
+| val | [`nth`](../sig/LIST.md#val-nth) | `'a list * int -> 'a` |
+| val | [`null`](../sig/LIST.md#val-null) | `'a list -> bool` |
+| val | [`partition`](../sig/LIST.md#val-partition) | `('a -> bool) -> 'a list -> 'a list * 'a list` |
+| val | [`rev`](../sig/LIST.md#val-rev) | `'a list -> 'a list` |
+| val | [`revAppend`](../sig/LIST.md#val-revappend) | `'a list * 'a list -> 'a list` |
+| val | [`tabulate`](../sig/LIST.md#val-tabulate) | `int * (int -> 'a) -> 'a list` |
+| val | [`take`](../sig/LIST.md#val-take) | `'a list * int -> 'a list` |
+| val | [`tl`](../sig/LIST.md#val-tl) | `'a list -> 'a list` |
 
 ---
 

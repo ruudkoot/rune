@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 120 checks |
+| Tests | 240 checks |
 | Source | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
 
 ## Synopsis
@@ -22,10 +22,10 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `Word64.word` |
-| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | *a type of its own* |
+| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `vector` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `Word64VectorSlice.slice` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(Word64.word -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(Word64.word -> unit) -> slice -> unit` |
@@ -38,9 +38,9 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(Word64.word -> bool) -> slice -> Word64.word option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * Word64.word -> bool) -> slice -> (int * Word64.word) option` |
 | val | [`foldl`](../sig/MONO_ARRAY_SLICE.md#val-foldl) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * Word64.word * 'b -> 'b) -> 'b -> slice -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(Word64.word * 'c -> 'c) -> 'c -> slice -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * Word64.word * 'd -> 'd) -> 'd -> slice -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * Word64.word * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (Word64.word * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |

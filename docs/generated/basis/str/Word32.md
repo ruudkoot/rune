@@ -7,7 +7,7 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | optional |
 | Members | 38 |
-| Tests | 135 checks |
+| Tests | 251 checks |
 | Source | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
 
 ## Synopsis

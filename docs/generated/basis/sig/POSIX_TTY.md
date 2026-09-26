@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 110 of 110 entries documented |
-| Tests | 115 checks of 97 entries |
+| Tests | 110 checks of 95 entries |
 | Source | [lib/basis/sig\_posix\_tty.sml](../../../../lib/basis/sig_posix_tty.sml) |
 
 ## Synopsis
@@ -397,12 +397,6 @@ type cc
 ```
 
 The type of the array of control characters.
-
-<details><summary>Tests (4)</summary>
-
-For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `given` &middot; `unspecified-nul` &middot; `empty` &middot; `several`
-
-</details>
 
 #### <a name="val-v.cc"></a>`cc`
 
@@ -1259,12 +1253,6 @@ type termios
 ```
 
 The whole of a terminal's settings.
-
-<details><summary>Tests (1)</summary>
-
-For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `fieldsOf`
-
-</details>
 
 ### <a name="val-termios"></a>`termios`
 

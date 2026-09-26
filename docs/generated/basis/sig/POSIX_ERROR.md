@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 49 of 49 entries documented |
-| Tests | 81 checks of 49 entries |
+| Tests | 77 checks of 48 entries |
 | Source | [lib/basis/sig\_posix\_error.sml](../../../../lib/basis/sig_posix_error.sml) |
 
 ## Synopsis
@@ -112,12 +112,6 @@ type syserror = OS.syserror
 ```
 
 The type of a condition the system reports: the [`syserror`](#val-syserror) of [`OS`](../sig/OS.md).
-
-<details><summary>Tests (4)</summary>
-
-For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `inverts-errorName-all` &middot; `unknown-name` &middot; `empty-name` &middot; `is-OS.syserror`
-
-</details>
 
 ### <a name="val-toword"></a>`toWord`
 

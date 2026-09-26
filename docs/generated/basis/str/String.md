@@ -7,7 +7,7 @@
 | Signature | [`STRING`](../sig/STRING.md) |
 | Status | required |
 | Members | 31 |
-| Tests | 214 checks |
+| Tests | 321 checks |
 | Source | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
 
 ## Synopsis
@@ -24,8 +24,8 @@ What each means is on [`STRING`](../sig/STRING.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/STRING.md#type-char) | *a type of its own* |
-| type | [`string`](../sig/STRING.md#type-string) | *a type of its own* |
+| type | [`char`](../sig/STRING.md#type-char) | `char` |
+| type | [`string`](../sig/STRING.md#type-string) | `string` |
 | val | [`<`](../sig/STRING.md#val-op-lt) | `string * string -> bool` |
 | val | [`<=`](../sig/STRING.md#val-op-lt-eq) | `string * string -> bool` |
 | val | [`>`](../sig/STRING.md#val-op-gt) | `string * string -> bool` |

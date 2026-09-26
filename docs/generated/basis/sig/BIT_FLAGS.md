@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 9 |
 | Documentation | 9 of 9 entries documented |
-| Tests | 70 checks of 9 entries |
+| Tests | 60 checks of 8 entries |
 | Source | [lib/basis/sig\_bit\_flags.sml](../../../../lib/basis/sig_bit_flags.sml) |
 
 ## Synopsis
@@ -82,16 +82,6 @@ eqtype flags
 The type of a set of flags.
 
 Two are equal when they hold the same flags.
-
-<details><summary>Tests (10)</summary>
-
-For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty` &middot; `one` &middot; `union`
-
-For `Posix.FileSys.O`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `append-and-sync`
-
-In [tests/basis/fn/bit\_flags\_fn.sml](../../../../tests/basis/fn/bit_flags_fn.sml), applied to `Posix.Process.W`, `Posix.FileSys.O`, `Posix.FileSys.S`, `Posix.IO.FD`, `Posix.IO.O`, `Posix.TTY.I`, `Posix.TTY.O`, `Posix.TTY.C`, `Posix.TTY.L`: `empty-list` &middot; `singleton` &middot; `idempotent` &middot; `commutative` &middot; `three` &middot; `of-all-named`
-
-</details>
 
 ### <a name="val-toword"></a>`toWord`
 

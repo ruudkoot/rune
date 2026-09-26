@@ -7,7 +7,7 @@
 | Signature | [`TIME`](../sig/TIME.md) |
 | Status | required |
 | Members | 25 |
-| Tests | 126 checks |
+| Tests | 180 checks |
 | Source | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
 
 ## Synopsis

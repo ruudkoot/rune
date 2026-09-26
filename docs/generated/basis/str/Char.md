@@ -7,7 +7,7 @@
 | Signature | [`CHAR`](../sig/CHAR.md) |
 | Status | required |
 | Members | 35 |
-| Tests | 247 checks |
+| Tests | 400 checks |
 | Source | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
 
 ## Synopsis
@@ -24,8 +24,8 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/CHAR.md#type-char) | *a type of its own* |
-| type | [`string`](../sig/CHAR.md#type-string) | *a type of its own* |
+| type | [`char`](../sig/CHAR.md#type-char) | `char` |
+| type | [`string`](../sig/CHAR.md#type-string) | `string` |
 | val | [`<`](../sig/CHAR.md#val-op-lt) | `char * char -> bool` |
 | val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `char * char -> bool` |
 | val | [`>`](../sig/CHAR.md#val-op-gt) | `char * char -> bool` |

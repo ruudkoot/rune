@@ -39,7 +39,7 @@ The types are this structure's own.
 | type | `elem` | `WideChar.char` |
 | datatype | `instream` | `InStream` |
 | datatype | `outstream` | `OutStream` |
-| type | `vector` | *a type of its own* |
+| type | `vector` | `vector` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
@@ -47,7 +47,7 @@ The types are this structure's own.
 | val | `flushOut` | `outstream -> unit` |
 | val | `getInstream` | `instream -> StreamIO.instream` |
 | val | `getOutstream` | `outstream -> StreamIO.outstream` |
-| val | `getPosOut` | `outstream -> {position : StreamIO.pos, stream : StreamIO.outstream}` |
+| val | `getPosOut` | `outstream -> StreamIO.out_pos` |
 | val | `input` | `instream -> vector` |
 | val | `input1` | `instream -> WideChar.char option` |
 | val | `inputAll` | `instream -> vector` |
@@ -67,7 +67,7 @@ The types are this structure's own.
 | val | `scanStream` | `((StreamIO.instream -> (WideChar.char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
 | val | `setInstream` | `instream * StreamIO.instream -> unit` |
 | val | `setOutstream` | `outstream * StreamIO.outstream -> unit` |
-| val | `setPosOut` | `outstream * {position : StreamIO.pos, stream : StreamIO.outstream} -> unit` |
+| val | `setPosOut` | `outstream * StreamIO.out_pos -> unit` |
 | val | `stdErr` | `outstream` |
 | val | `stdIn` | `instream` |
 | val | `stdOut` | `outstream` |

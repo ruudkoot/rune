@@ -94,12 +94,20 @@ sig
 
      Implementation: `Array2.array/Size`. How large is too large is not
      fixed: an array is too large when the number of its elements is no
-     `int`, or when it exceeds what an array can hold. *)
+     `int`, or when it exceeds what an array can hold.
+
+     Law: `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+
+     Example: `dimensions (array (2, 3, 0)) = (2, 3)` *)
   val array : int * int * 'a -> 'a array
 
   (* `fromList rows` is a new array of the lists of `rows`, one row each.
 
-     Raises: `Size` if the lists are not all of one length.
+     Raises: `Size` if the lists are not all of one length, or if the array
+     would be too large.
+
+     Law: `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
+     every row `i` and column `j` of the array
 
      Example: `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0),
      dimensions a) end = (3, (2, 2))` *)
@@ -109,41 +117,72 @@ sig
 
      `f` is applied in the order that `trv` gives.
 
-     Raises: `Size` if `r < 0`, `c < 0` or the array would be too large,
-     before `f` is applied at all.
+     Raises: `Size` if `r < 0`, `c < 0` or the array would be too large.
+
+     Reading: `Array2.tabulate/Size-before-f`. The specification does not say
+     whether the dimensions are checked before `f` is applied. They are: an
+     array that is too large, or has a negative dimension, raises `Size`
+     without applying `f` at all.
 
      Reading: `Array2.tabulate/traversal-order`. "Initialized in traversal
      order" is read as: `f (0, 0)` is applied first whichever traversal is
      asked for, and its result fills the array before the rest is
-     computed. *)
+     computed.
+
+     Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
+     `0 <= j < c`, when `f` has no effects
+
+     Example: `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) =
+     Vector.fromList [10, 11, 12]` *)
   val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 
   (* ---- Elements ---- *)
 
   (* `sub (arr, i, j)` is the element of `arr` in row `i` and column `j`.
 
-     Raises: `Subscript` if `i` or `j` is outside the array. *)
+     Raises: `Subscript` if `i` or `j` is outside the array.
+
+     Example: `sub (fromList [[1, 2], [3, 4]], 0, 1) = 2` *)
   val sub : 'a array * int * int -> 'a
 
   (* `update (arr, i, j, x)` puts `x` in row `i` and column `j` of `arr`.
 
-     Raises: `Subscript` if `i` or `j` is outside the array. *)
+     Raises: `Subscript` if `i` or `j` is outside the array.
+
+     Law: `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
+     column `j` of `arr`
+
+     Example: `let val a = array (2, 2, 0) in update (a, 1, 0, 7); row (a, 1)
+     end = Vector.fromList [7, 0]` *)
   val update : 'a array * int * int * 'a -> unit
 
   (* ---- Shape ---- *)
 
-  (* `dimensions arr` is the pair of the number of rows and the number of columns. *)
+  (* `dimensions arr` is the pair of the number of rows and the number of columns.
+
+     Example: `dimensions (fromList [[1, 2, 3]]) = (1, 3)` *)
   val dimensions : 'a array -> int * int
 
-  (* `nCols arr` is the number of columns. *)
+  (* `nCols arr` is the number of columns.
+
+     Law: `nCols arr = #2 (dimensions arr)`
+
+     Example: `nCols (fromList [[1, 2, 3]]) = 3` *)
   val nCols : 'a array -> int
 
-  (* `nRows arr` is the number of rows. *)
+  (* `nRows arr` is the number of rows.
+
+     Law: `nRows arr = #1 (dimensions arr)`
+
+     Example: `nRows (fromList [[1, 2, 3]]) = 1` *)
   val nRows : 'a array -> int
 
   (* `row (arr, i)` is a vector of the elements of row `i`, left to right.
 
      Raises: `Subscript` if `i` is no row of `arr`.
+
+     Law: `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))`
+     for every row `i` of `arr`
 
      Example: `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]` *)
   val row : 'a array * int -> 'a Vector.vector
@@ -151,6 +190,9 @@ sig
   (* `column (arr, j)` is a vector of the elements of column `j`, top to bottom.
 
      Raises: `Subscript` if `j` is no column of `arr`.
+
+     Law: `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))`
+     for every column `j` of `arr`
 
      Example: `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]` *)
   val column : 'a array * int -> 'a Vector.vector
@@ -167,7 +209,11 @@ sig
 
      Reading: `Array2.copy/Subscript-dst-nothing-row-beyond`. The place the
      region is copied to must be inside `dst` even when the region is empty,
-     so a corner outside `dst` raises although nothing would be copied. *)
+     so a corner outside `dst` raises although nothing would be copied.
+
+     Example: `let val a = fromList [[1, 2], [3, 4]] in copy {src = {base = a,
+     row = 0, col = 0, nrows = SOME 1, ncols = NONE}, dst = a, dst_row = 1,
+     dst_col = 0}; row (a, 1) end = Vector.fromList [1, 2]` *)
   val copy : {src : 'a region, dst : 'a array, dst_row : int, dst_col : int} -> unit
 
   (* ---- Traversing ---- *)
@@ -178,18 +224,38 @@ sig
 
      Reading: `Array2.appi/nothing-rows-at-the-end`. "0 <= #row reg <=
      nRows" allows a region to begin at the edge of the array: such a region
-     and one of no rows or no columns are valid, and traverse nothing. *)
+     and one of no rows or no columns are valid, and traverse nothing.
+
+     Example: `let val r = ref [] in appi ColMajor (fn (i, j, _) => r := (i, j)
+     :: !r) {base = array (2, 2, 0), row = 0, col = 0, nrows = NONE, ncols =
+     NONE}; !r end = [(1, 1), (0, 1), (1, 0), (0, 0)]` *)
   val appi : traversal -> (int * int * 'a -> unit) -> 'a region -> unit
 
-  (* `app trv f arr` applies `f` to every element of `arr`, in the order `trv` gives, for its effect. *)
+  (* `app trv f arr` applies `f` to every element of `arr`, in the order `trv` gives, for its effect.
+
+     Law: `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row =
+     0, col = 0, nrows = NONE, ncols = NONE}`
+
+     Example: `let val r = ref [] in app ColMajor (fn x => r := x :: !r)
+     (fromList [[1, 2], [3, 4]]); !r end = [4, 2, 3, 1]` *)
   val app : traversal -> ('a -> unit) -> 'a array -> unit
 
   (* `foldi trv f init reg` combines the elements of the region, giving `f` the row and the column as well.
 
-     Raises: `Subscript` if `reg` is not a valid region. *)
+     The elements are combined in the order `trv` gives, the first with
+     `init`.
+
+     Raises: `Subscript` if `reg` is not a valid region.
+
+     Example: `foldi RowMajor (fn (i, j, x, acc) => (i, j, x) :: acc) []
+     {base = fromList [[1, 2], [3, 4]], row = 1, col = 0, nrows = NONE, ncols
+     = NONE} = [(1, 1, 4), (1, 0, 3)]` *)
   val foldi : traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b
 
   (* `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
+
+     Law: `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc))
+     init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
 
      Example: `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2,
      1]`
@@ -200,9 +266,21 @@ sig
 
   (* `modifyi trv f reg` replaces each element of the region by `f` of its row, its column and that element.
 
-     Raises: `Subscript` if `reg` is not a valid region. *)
+     The array is changed in place, in the order `trv` gives.
+
+     Raises: `Subscript` if `reg` is not a valid region.
+
+     Example: `let val a = fromList [[1, 2], [3, 4]] in modifyi RowMajor (fn
+     (i, _, x) => x + 10 * i) {base = a, row = 0, col = 1, nrows = NONE, ncols
+     = NONE}; column (a, 1) end = Vector.fromList [2, 14]` *)
   val modifyi : traversal -> (int * int * 'a -> 'a) -> 'a region -> unit
 
-  (* `modify trv f arr` replaces every element of `arr` by `f` of it, in the order `trv` gives. *)
+  (* `modify trv f arr` replaces every element of `arr` by `f` of it, in the order `trv` gives.
+
+     Law: `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr,
+     row = 0, col = 0, nrows = NONE, ncols = NONE}`
+
+     Example: `let val a = fromList [[1, 2], [3, 4]] in modify RowMajor (fn x
+     => x * x) a; row (a, 1) end = Vector.fromList [9, 16]` *)
   val modify : traversal -> ('a -> 'a) -> 'a array -> unit
 end

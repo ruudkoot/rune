@@ -7,7 +7,7 @@
 | Status | extension |
 | Implementations | 1 |
 | Documentation | 12 of 12 entries documented |
-| Tests | 43 checks of 10 entries |
+| Tests | 35 checks of 9 entries |
 | Source | [lib/basis/runtime\_sig.sml](../../../../lib/basis/runtime_sig.sml) |
 
 ## Synopsis
@@ -99,12 +99,6 @@ one object of two fields, is 40.
 | <a name="fld-stats.collections"></a>`collections` | `int` |  |
 | <a name="fld-stats.live"></a>`live` | `int` |  |
 | <a name="fld-stats.heapsize"></a>`heapSize` | `int` |  |
-
-<details><summary>Tests (8)</summary>
-
-For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
-
-</details>
 
 ### <a name="val-stats"></a>`stats`
 

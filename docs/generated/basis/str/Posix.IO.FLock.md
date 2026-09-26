@@ -16,7 +16,7 @@ What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`flock`](../sig/POSIX_IO.md#val-flock.flock) | *a type of its own* |
+| type | [`flock`](../sig/POSIX_IO.md#type-flock.flock) | *a type of its own* |
 | val | [`flock`](../sig/POSIX_IO.md#val-flock.flock) | `{len : int, ltype : Posix.IO.lock_type, pid : Posix.IO.pid option, start : int, whence : Posix.IO.whence} -> flock` |
 | val | [`len`](../sig/POSIX_IO.md#val-flock.len) | `flock -> int` |
 | val | [`ltype`](../sig/POSIX_IO.md#val-flock.ltype) | `flock -> Posix.IO.lock_type` |

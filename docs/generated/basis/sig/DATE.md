@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 24 of 24 entries documented |
-| Tests | 232 checks of 23 entries |
+| Tests | 205 checks of 21 entries |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
 ## Synopsis
@@ -147,12 +147,6 @@ The months of the year.
 | <a name="con-nov"></a>`Nov` |  |  |
 | <a name="con-dec"></a>`Dec` |  |  |
 
-<details><summary>Tests (1)</summary>
-
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
-
-</details>
-
 ### <a name="type-date"></a>`date`
 
 ```sml
@@ -165,12 +159,6 @@ The type of a calendar reading.
 
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
 - **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date
-
-</details>
-
-<details><summary>Tests (26)</summary>
-
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
 
 </details>
 

@@ -7,7 +7,7 @@
 | Signature | [`REAL`](../sig/REAL.md) |
 | Status | required |
 | Members | 64 |
-| Tests | 553 checks |
+| Tests | 885 checks |
 | Source | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 ## Synopsis
@@ -24,7 +24,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`real`](../sig/REAL.md#type-real) | *a type of its own* |
+| type | [`real`](../sig/REAL.md#type-real) | `real` |
 | val | [`!=`](../sig/REAL.md#val-op-bang-eq) | `real * real -> bool` |
 | val | [`*`](../sig/REAL.md#val-op-star) | `real * real -> real` |
 | val | [`*+`](../sig/REAL.md#val-op-star-plus) | `real * real * real -> real` |

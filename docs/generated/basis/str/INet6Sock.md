@@ -32,11 +32,11 @@ What each means is on [`INET6_SOCK`](../sig/INET6_SOCK.md); the types are this s
 | type | [`sock`](../sig/INET6_SOCK.md#type-sock) | `(inet6', 'a) Socket.sock` |
 | type | [`sock_addr`](../sig/INET6_SOCK.md#type-sock_addr) | `inet6' Socket.sock_addr` |
 | type | [`stream_sock`](../sig/INET6_SOCK.md#type-stream_sock) | `(inet6', 'a stream') Socket.sock` |
-| val | [`any`](../sig/INET6_SOCK.md#val-any) | `int -> inet6' Socket.sock_addr` |
-| val | [`fromAddr`](../sig/INET6_SOCK.md#val-fromaddr) | `inet6' Socket.sock_addr -> in6_addr * int` |
+| val | [`any`](../sig/INET6_SOCK.md#val-any) | `int -> sock_addr` |
+| val | [`fromAddr`](../sig/INET6_SOCK.md#val-fromaddr) | `sock_addr -> in6_addr * int` |
 | val | [`fromString`](../sig/INET6_SOCK.md#val-fromstring) | `string -> in6_addr option` |
 | val | [`inet6AF`](../sig/INET6_SOCK.md#val-inet6af) | `NetHostDB.addr_family` |
-| val | [`toAddr`](../sig/INET6_SOCK.md#val-toaddr) | `in6_addr * int -> inet6' Socket.sock_addr` |
+| val | [`toAddr`](../sig/INET6_SOCK.md#val-toaddr) | `in6_addr * int -> sock_addr` |
 | val | [`toString`](../sig/INET6_SOCK.md#val-tostring) | `in6_addr -> string` |
 | structure | [`TCP`](../str/INet6Sock.TCP.md) |  |
 | structure | [`UDP`](../str/INet6Sock.UDP.md) |  |

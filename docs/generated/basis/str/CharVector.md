@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | required |
 | Members | 22 |
-| Tests | 78 checks |
+| Tests | 160 checks |
 | Source | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
 
 ## Synopsis
@@ -35,9 +35,9 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(char -> bool) -> string -> char option` |
 | val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * char -> bool) -> string -> (int * char) option` |
 | val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> string -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * char * 'b -> 'b) -> 'b -> string -> 'b` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(char * 'c -> 'c) -> 'c -> string -> 'c` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * char * 'd -> 'd) -> 'd -> string -> 'd` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> string -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> string -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> string -> 'a` |
 | val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `char list -> string` |
 | val | [`length`](../sig/MONO_VECTOR.md#val-length) | `string -> int` |
 | val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(char -> char) -> string -> string` |

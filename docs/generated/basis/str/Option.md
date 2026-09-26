@@ -7,7 +7,7 @@
 | Signature | [`OPTION`](../sig/OPTION.md) |
 | Status | required |
 | Members | 12 |
-| Tests | 55 checks |
+| Tests | 96 checks |
 | Source | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
 
 ## Synopsis
@@ -26,16 +26,16 @@ What each means is on [`OPTION`](../sig/OPTION.md); the types are this structure
 | --- | --- | --- |
 | datatype | [`option`](../sig/OPTION.md#type-option) | `NONE` &#124; `SOME` |
 | exception | [`Option`](../sig/OPTION.md#exn-option) |  |
-| val | [`app`](../sig/OPTION.md#val-app) | `('b -> unit) -> 'b option -> unit` |
-| val | [`compose`](../sig/OPTION.md#val-compose) | `('c -> 'd) * ('e -> 'c option) -> 'e -> 'd option` |
-| val | [`composePartial`](../sig/OPTION.md#val-composepartial) | `('f -> 'g option) * ('h -> 'f option) -> 'h -> 'g option` |
-| val | [`filter`](../sig/OPTION.md#val-filter) | `('i -> bool) -> 'i -> 'i option` |
-| val | [`getOpt`](../sig/OPTION.md#val-getopt) | `'j option * 'j -> 'j` |
-| val | [`isSome`](../sig/OPTION.md#val-issome) | `'k option -> bool` |
-| val | [`join`](../sig/OPTION.md#val-join) | `'l option option -> 'l option` |
-| val | [`map`](../sig/OPTION.md#val-map) | `('m -> 'n) -> 'm option -> 'n option` |
-| val | [`mapPartial`](../sig/OPTION.md#val-mappartial) | `('o -> 'p option) -> 'o option -> 'p option` |
-| val | [`valOf`](../sig/OPTION.md#val-valof) | `'q option -> 'q` |
+| val | [`app`](../sig/OPTION.md#val-app) | `('a -> unit) -> 'a option -> unit` |
+| val | [`compose`](../sig/OPTION.md#val-compose) | `('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option` |
+| val | [`composePartial`](../sig/OPTION.md#val-composepartial) | `('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option` |
+| val | [`filter`](../sig/OPTION.md#val-filter) | `('a -> bool) -> 'a -> 'a option` |
+| val | [`getOpt`](../sig/OPTION.md#val-getopt) | `'a option * 'a -> 'a` |
+| val | [`isSome`](../sig/OPTION.md#val-issome) | `'a option -> bool` |
+| val | [`join`](../sig/OPTION.md#val-join) | `'a option option -> 'a option` |
+| val | [`map`](../sig/OPTION.md#val-map) | `('a -> 'b) -> 'a option -> 'b option` |
+| val | [`mapPartial`](../sig/OPTION.md#val-mappartial) | `('a -> 'b option) -> 'a option -> 'b option` |
+| val | [`valOf`](../sig/OPTION.md#val-valof) | `'a option -> 'a` |
 
 ---
 

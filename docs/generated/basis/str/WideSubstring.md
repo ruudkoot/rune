@@ -7,7 +7,7 @@
 | Signature | [`SUBSTRING`](../sig/SUBSTRING.md) |
 | Status | optional |
 | Members | 39 |
-| Tests | 44 checks |
+| Tests | 54 checks |
 | Source | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 ## Synopsis
@@ -22,9 +22,9 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/SUBSTRING.md#type-char) | *a type of its own* |
-| type | [`string`](../sig/SUBSTRING.md#val-string) | `WideTextIO.vector` |
-| type | [`substring`](../sig/SUBSTRING.md#val-substring) | `WideCharVectorSlice.slice` |
+| type | [`char`](../sig/SUBSTRING.md#type-char) | `char` |
+| type | [`string`](../sig/SUBSTRING.md#type-string) | `WideTextIO.vector` |
+| type | [`substring`](../sig/SUBSTRING.md#type-substring) | `WideCharVectorSlice.slice` |
 | val | [`app`](../sig/SUBSTRING.md#val-app) | `(char -> unit) -> WideCharVectorSlice.slice -> unit` |
 | val | [`base`](../sig/SUBSTRING.md#val-base) | `WideCharVectorSlice.slice -> WideTextIO.vector * int * int` |
 | val | [`collate`](../sig/SUBSTRING.md#val-collate) | `(char * char -> order) -> WideCharVectorSlice.slice * WideCharVectorSlice.slice -> order` |
@@ -38,7 +38,7 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 | val | [`fields`](../sig/SUBSTRING.md#val-fields) | `(char -> bool) -> WideCharVectorSlice.slice -> WideCharVectorSlice.slice list` |
 | val | [`first`](../sig/SUBSTRING.md#val-first) | `WideCharVectorSlice.slice -> char option` |
 | val | [`foldl`](../sig/SUBSTRING.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> WideCharVectorSlice.slice -> 'a` |
-| val | [`foldr`](../sig/SUBSTRING.md#val-foldr) | `(char * 'b -> 'b) -> 'b -> WideCharVectorSlice.slice -> 'b` |
+| val | [`foldr`](../sig/SUBSTRING.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> WideCharVectorSlice.slice -> 'a` |
 | val | [`full`](../sig/SUBSTRING.md#val-full) | `WideTextIO.vector -> WideCharVectorSlice.slice` |
 | val | [`getc`](../sig/SUBSTRING.md#val-getc) | `WideCharVectorSlice.slice -> (char * WideCharVectorSlice.slice) option` |
 | val | [`isEmpty`](../sig/SUBSTRING.md#val-isempty) | `WideCharVectorSlice.slice -> bool` |

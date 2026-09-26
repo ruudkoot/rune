@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 39 of 39 entries documented |
-| Tests | 574 checks of 38 entries |
+| Tests | 535 checks of 36 entries |
 | Source | [lib/basis/sig\_substring.sml](../../../../lib/basis/sig_substring.sml) |
 
 ## Synopsis
@@ -120,14 +120,6 @@ The type of substrings: a base string, a start in it and a length.
 
 </details>
 
-<details><summary>Tests (30)</summary>
-
-For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `whole` &middot; `to-the-end` &middot; `zero-at-start` &middot; `zero-inside` &middot; `zero-at-size` &middot; `empty-string` &middot; `string-middle` &middot; `string-zero` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-end-beyond-size` (raises Subscript) &middot; `Subscript-start-beyond-size` (raises Subscript) &middot; `Subscript-negative-start` (raises Subscript) &middot; `Subscript-negative-start-zero-size` (raises Subscript) &middot; `Subscript-negative-size` (raises Subscript) &middot; `Subscript-negative-size-at-size` (raises Subscript) &middot; `Subscript-negative-size-end-inside` (raises Subscript) &middot; `Subscript-both-negative` (raises Subscript) &middot; `Subscript-empty-string-size` (raises Subscript) &middot; `Subscript-empty-string-start` (raises Subscript) &middot; `Subscript-on-every-invalid-argument` &middot; `Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `Subscript-not-Overflow-start-zero-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-start` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-both` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-and-largest` (raises Subscript)
-
-For `WideSubstring`, in [tests/basis/widesubstring.sml](../../../../tests/basis/widesubstring.sml): `middle`
-
-</details>
-
 ### <a name="type-char"></a>`char`
 
 ```sml
@@ -143,14 +135,6 @@ eqtype string
 ```
 
 The type of the strings these are substrings of.
-
-<details><summary>Tests (9)</summary>
-
-For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `empty` &middot; `whole` &middot; `last-character` &middot; `String.substring-of-base` &middot; `characters-0-and-255` &middot; `long` &middot; `law-*`
-
-For `WideSubstring`, in [tests/basis/widesubstring.sml](../../../../tests/basis/widesubstring.sml): `gives-the-characters`
-
-</details>
 
 ## Taking a substring apart
 

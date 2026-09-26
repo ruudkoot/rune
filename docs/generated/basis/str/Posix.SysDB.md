@@ -7,7 +7,7 @@
 | Signature | [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md) |
 | Status | optional |
 | Members | 8 |
-| Tests | 5 checks |
+| Tests | 13 checks |
 | Source | [lib/basis/posix\_sysdb.sml](../../../../lib/basis/posix_sysdb.sml) |
 
 ## Synopsis
@@ -24,8 +24,8 @@ What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`gid`](../sig/POSIX_SYS_DB.md#type-gid) | *a type of its own* |
-| type | [`uid`](../sig/POSIX_SYS_DB.md#type-uid) | *a type of its own* |
+| type | [`gid`](../sig/POSIX_SYS_DB.md#type-gid) | `gid` |
+| type | [`uid`](../sig/POSIX_SYS_DB.md#type-uid) | `uid` |
 | val | [`getgrgid`](../sig/POSIX_SYS_DB.md#val-getgrgid) | `gid -> Group.group` |
 | val | [`getgrnam`](../sig/POSIX_SYS_DB.md#val-getgrnam) | `string -> Group.group` |
 | val | [`getpwnam`](../sig/POSIX_SYS_DB.md#val-getpwnam) | `string -> Passwd.passwd` |

@@ -27,8 +27,8 @@ What each means is on [`UNIX_SOCK`](../sig/UNIX_SOCK.md); the types are this str
 | type | [`sock_addr`](../sig/UNIX_SOCK.md#type-sock_addr) | `unix' Socket.sock_addr` |
 | type | [`stream_sock`](../sig/UNIX_SOCK.md#type-stream_sock) | `(unix', 'a stream') Socket.sock` |
 | type | [`unix`](../sig/UNIX_SOCK.md#type-unix) | `unix'` |
-| val | [`fromAddr`](../sig/UNIX_SOCK.md#val-fromaddr) | `unix' Socket.sock_addr -> string` |
-| val | [`toAddr`](../sig/UNIX_SOCK.md#val-toaddr) | `string -> unix' Socket.sock_addr` |
+| val | [`fromAddr`](../sig/UNIX_SOCK.md#val-fromaddr) | `sock_addr -> string` |
+| val | [`toAddr`](../sig/UNIX_SOCK.md#val-toaddr) | `string -> sock_addr` |
 | val | [`unixAF`](../sig/UNIX_SOCK.md#val-unixaf) | `NetHostDB.addr_family` |
 | structure | [`DGrm`](../str/UnixSock.DGrm.md) |  |
 | structure | [`Strm`](../str/UnixSock.Strm.md) |  |

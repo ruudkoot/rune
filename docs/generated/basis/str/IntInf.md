@@ -7,7 +7,7 @@
 | Signatures | [`INT_INF`](../sig/INT_INF.md), [`INTEGER`](../sig/INTEGER.md) |
 | Status | optional |
 | Members | 40 |
-| Tests | 265 checks |
+| Tests | 487 checks |
 | Source | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 ## Synopsis

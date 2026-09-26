@@ -7,7 +7,7 @@
 | Signature | [`ARRAY2`](../sig/ARRAY2.md) |
 | Status | optional |
 | Members | 20 |
-| Tests | 150 checks |
+| Tests | 249 checks |
 | Source | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
 ## Synopsis
@@ -25,8 +25,8 @@ Array2: two-dimensional arrays, stored row by row in one array.
 > (`ARRAY2/sealed-and-equal-at-any-element`); MLton and SML/NJ read it the
 > same way, Poly/ML does not. `RuneArray2` is the implementation under the
 > seal, which `RuneMonoArray2Fn` builds the monomorphic two-dimensional
-> arrays on: their [`array`](../sig/ARRAY2.md#val-array) is monomorphic, so it admits equality however it
-> is made, which is what [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) asks for.
+> arrays on: the type of such an array is monomorphic, so it admits equality
+> however it is made, which is what [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) asks for.
 
 ## Members
 
@@ -34,26 +34,26 @@ What each means is on [`ARRAY2`](../sig/ARRAY2.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/ARRAY2.md#val-array) | *a type of its own* |
+| type | [`array`](../sig/ARRAY2.md#type-array) | *a type of its own* |
 | type | [`region`](../sig/ARRAY2.md#type-region) | `{base : 'a array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | val | [`app`](../sig/ARRAY2.md#val-app) | `traversal -> ('a -> unit) -> 'a array -> unit` |
-| val | [`appi`](../sig/ARRAY2.md#val-appi) | `traversal -> (int * int * 'b -> unit) -> {base : 'b array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
-| val | [`array`](../sig/ARRAY2.md#val-array) | `int * int * 'c -> 'c array` |
-| val | [`column`](../sig/ARRAY2.md#val-column) | `'d array * int -> 'd vector` |
-| val | [`copy`](../sig/ARRAY2.md#val-copy) | `{dst : 'e array, dst_col : int, dst_row : int, src : {base : 'e array, col : int, ncols : int option, nrows : int option, row : int}} -> unit` |
-| val | [`dimensions`](../sig/ARRAY2.md#val-dimensions) | `'f array -> int * int` |
-| val | [`fold`](../sig/ARRAY2.md#val-fold) | `traversal -> ('g * 'h -> 'h) -> 'h -> 'g array -> 'h` |
-| val | [`foldi`](../sig/ARRAY2.md#val-foldi) | `traversal -> (int * int * 'i * 'j -> 'j) -> 'j -> {base : 'i array, col : int, ncols : int option, nrows : int option, row : int} -> 'j` |
-| val | [`fromList`](../sig/ARRAY2.md#val-fromlist) | `'k list list -> 'k array` |
-| val | [`modify`](../sig/ARRAY2.md#val-modify) | `traversal -> ('l -> 'l) -> 'l array -> unit` |
-| val | [`modifyi`](../sig/ARRAY2.md#val-modifyi) | `traversal -> (int * int * 'm -> 'm) -> {base : 'm array, col : int, ncols : int option, nrows : int option, row : int} -> unit` |
-| val | [`nCols`](../sig/ARRAY2.md#val-ncols) | `'n array -> int` |
-| val | [`nRows`](../sig/ARRAY2.md#val-nrows) | `'o array -> int` |
-| val | [`row`](../sig/ARRAY2.md#val-row) | `'p array * int -> 'p vector` |
-| val | [`sub`](../sig/ARRAY2.md#val-sub) | `'q array * int * int -> 'q` |
-| val | [`tabulate`](../sig/ARRAY2.md#val-tabulate) | `traversal -> int * int * (int * int -> 'r) -> 'r array` |
-| val | [`update`](../sig/ARRAY2.md#val-update) | `'s array * int * int * 's -> unit` |
+| val | [`appi`](../sig/ARRAY2.md#val-appi) | `traversal -> (int * int * 'a -> unit) -> 'a region -> unit` |
+| val | [`array`](../sig/ARRAY2.md#val-array) | `int * int * 'a -> 'a array` |
+| val | [`column`](../sig/ARRAY2.md#val-column) | `'a array * int -> 'a vector` |
+| val | [`copy`](../sig/ARRAY2.md#val-copy) | `{dst : 'a array, dst_col : int, dst_row : int, src : 'a region} -> unit` |
+| val | [`dimensions`](../sig/ARRAY2.md#val-dimensions) | `'a array -> int * int` |
+| val | [`fold`](../sig/ARRAY2.md#val-fold) | `traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`foldi`](../sig/ARRAY2.md#val-foldi) | `traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b` |
+| val | [`fromList`](../sig/ARRAY2.md#val-fromlist) | `'a list list -> 'a array` |
+| val | [`modify`](../sig/ARRAY2.md#val-modify) | `traversal -> ('a -> 'a) -> 'a array -> unit` |
+| val | [`modifyi`](../sig/ARRAY2.md#val-modifyi) | `traversal -> (int * int * 'a -> 'a) -> 'a region -> unit` |
+| val | [`nCols`](../sig/ARRAY2.md#val-ncols) | `'a array -> int` |
+| val | [`nRows`](../sig/ARRAY2.md#val-nrows) | `'a array -> int` |
+| val | [`row`](../sig/ARRAY2.md#val-row) | `'a array * int -> 'a vector` |
+| val | [`sub`](../sig/ARRAY2.md#val-sub) | `'a array * int * int -> 'a` |
+| val | [`tabulate`](../sig/ARRAY2.md#val-tabulate) | `traversal -> int * int * (int * int -> 'a) -> 'a array` |
+| val | [`update`](../sig/ARRAY2.md#val-update) | `'a array * int * int * 'a -> unit` |
 
 ## Notes
 
@@ -84,6 +84,11 @@ What each means is on [`ARRAY2`](../sig/ARRAY2.md); the types are this structure
 > anything, so a bad region changes nothing.
 
 ### tabulate
+
+> **Reading** `Array2.tabulate/Size-before-f`. The specification does not say
+> whether the dimensions are checked before `f` is applied. They are: an
+> array that is too large, or has a negative dimension, raises [`Size`](../sig/GENERAL.md#exn-size)
+> without applying `f` at all.
 
 > **Reading** `Array2.tabulate/traversal-order`. "Initialized in traversal
 > order" is read as: `f (0, 0)` is applied first whichever traversal is

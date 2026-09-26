@@ -7,7 +7,7 @@
 | Signatures | [`TEXT_IO`](../sig/TEXT_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
 | Members | 36 |
-| Tests | 165 checks |
+| Tests | 234 checks |
 | Source | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 ## Synopsis
@@ -26,8 +26,8 @@ What each means is on [`TEXT_IO`](../sig/TEXT_IO.md) and [`IMPERATIVE_IO`](../si
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/TEXT_IO.md#type-elem) | `char` |
-| type | [`instream`](../sig/TEXT_IO.md#type-instream) | *a type of its own* |
-| type | [`outstream`](../sig/TEXT_IO.md#type-outstream) | *a type of its own* |
+| type | [`instream`](../sig/TEXT_IO.md#type-instream) | `instream` |
+| type | [`outstream`](../sig/TEXT_IO.md#type-outstream) | `outstream` |
 | type | [`vector`](../sig/TEXT_IO.md#type-vector) | `string` |
 | val | [`canInput`](../sig/TEXT_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/TEXT_IO.md#val-closein) | `instream -> unit` |

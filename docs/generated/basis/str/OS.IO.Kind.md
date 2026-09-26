@@ -7,7 +7,7 @@
 | Signatures | none: [`OS_IO`](../sig/OS_IO.md) specifies it inside [`OS.IO`](../str/OS.IO.md) |
 | Status | required |
 | Members | 7 |
-| Tests | 10 checks |
+| Tests | 17 checks |
 | Source | [lib/basis/osio.sml](../../../../lib/basis/osio.sml) |
 
 ## Members

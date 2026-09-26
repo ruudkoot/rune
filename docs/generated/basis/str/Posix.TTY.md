@@ -7,7 +7,7 @@
 | Signature | [`POSIX_TTY`](../sig/POSIX_TTY.md) |
 | Status | optional |
 | Members | 37 |
-| Tests | 11 checks |
+| Tests | 28 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 ## Synopsis
@@ -22,10 +22,10 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`file_desc`](../sig/POSIX_TTY.md#type-file_desc) | *a type of its own* |
-| type | [`pid`](../sig/POSIX_TTY.md#type-pid) | *a type of its own* |
+| type | [`file_desc`](../sig/POSIX_TTY.md#type-file_desc) | `file_desc` |
+| type | [`pid`](../sig/POSIX_TTY.md#type-pid) | `pid` |
 | type | [`speed`](../sig/POSIX_TTY.md#type-speed) | *a type of its own* |
-| type | [`termios`](../sig/POSIX_TTY.md#val-termios) | *a type of its own* |
+| type | [`termios`](../sig/POSIX_TTY.md#type-termios) | *a type of its own* |
 | val | [`b0`](../sig/POSIX_TTY.md#val-b0) | `speed` |
 | val | [`b110`](../sig/POSIX_TTY.md#val-b110) | `speed` |
 | val | [`b1200`](../sig/POSIX_TTY.md#val-b1200) | `speed` |

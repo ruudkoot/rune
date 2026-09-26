@@ -7,7 +7,7 @@
 | Signature | [`BYTE`](../sig/BYTE.md) |
 | Status | required |
 | Members | 7 |
-| Tests | 45 checks |
+| Tests | 67 checks |
 | Source | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
 
 ## Synopsis

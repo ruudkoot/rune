@@ -7,7 +7,7 @@
 | Signature | [`OS`](../sig/OS.md) |
 | Status | required |
 | Members | 9 |
-| Tests | 36 checks |
+| Tests | 38 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
@@ -25,7 +25,7 @@ What each means is on [`OS`](../sig/OS.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/OS.md#val-syserror) | *a type of its own* |
+| type | [`syserror`](../sig/OS.md#type-syserror) | `syserror` |
 | exception | [`SysErr`](../sig/OS.md#exn-syserr) | `of string * syserror option` |
 | val | [`errorMsg`](../sig/OS.md#val-errormsg) | `syserror -> string` |
 | val | [`errorName`](../sig/OS.md#val-errorname) | `syserror -> string` |

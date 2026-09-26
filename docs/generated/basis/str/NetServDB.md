@@ -7,7 +7,7 @@
 | Signature | [`NET_SERV_DB`](../sig/NET_SERV_DB.md) |
 | Status | optional |
 | Members | 7 |
-| Tests | 13 checks |
+| Tests | 17 checks |
 | Source | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 ## Synopsis

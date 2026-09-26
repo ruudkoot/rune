@@ -7,7 +7,7 @@
 | Signature | [`PACK_WORD`](../sig/PACK_WORD.md) |
 | Status | optional |
 | Members | 7 |
-| Tests | 11 checks |
+| Tests | 26 checks |
 | Source | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
 
 ## Synopsis

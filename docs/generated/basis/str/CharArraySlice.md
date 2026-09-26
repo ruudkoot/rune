@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | required |
 | Members | 30 |
-| Tests | 137 checks |
+| Tests | 258 checks |
 | Source | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
 
 ## Synopsis
@@ -22,10 +22,10 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `char` |
-| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `string` |
+| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `string` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `substring` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(char -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(char -> unit) -> slice -> unit` |
@@ -38,9 +38,9 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(char -> bool) -> slice -> char option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * char -> bool) -> slice -> (int * char) option` |
 | val | [`foldl`](../sig/MONO_ARRAY_SLICE.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * char * 'b -> 'b) -> 'b -> slice -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(char * 'c -> 'c) -> 'c -> slice -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * char * 'd -> 'd) -> 'd -> slice -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (char * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |

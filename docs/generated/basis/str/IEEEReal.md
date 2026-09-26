@@ -7,7 +7,7 @@
 | Signature | [`IEEE_REAL`](../sig/IEEE_REAL.md) |
 | Status | optional |
 | Members | 10 |
-| Tests | 47 checks |
+| Tests | 50 checks |
 | Source | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
 
 ## Synopsis
@@ -29,11 +29,11 @@ What each means is on [`IEEE_REAL`](../sig/IEEE_REAL.md); the types are this str
 | datatype | [`real_order`](../sig/IEEE_REAL.md#type-real_order) | `LESS` &#124; `EQUAL` &#124; `GREATER` &#124; `UNORDERED` |
 | datatype | [`rounding_mode`](../sig/IEEE_REAL.md#type-rounding_mode) | `TO_NEAREST` &#124; `TO_NEGINF` &#124; `TO_POSINF` &#124; `TO_ZERO` |
 | exception | [`Unordered`](../sig/IEEE_REAL.md#exn-unordered) |  |
-| val | [`fromString`](../sig/IEEE_REAL.md#val-fromstring) | `string -> {class : float_class, digits : int list, exp : int, sign : bool} option` |
+| val | [`fromString`](../sig/IEEE_REAL.md#val-fromstring) | `string -> decimal_approx option` |
 | val | [`getRoundingMode`](../sig/IEEE_REAL.md#val-getroundingmode) | `unit -> rounding_mode` |
-| val | [`scan`](../sig/IEEE_REAL.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> ({class : float_class, digits : int list, exp : int, sign : bool} * 'a) option` |
+| val | [`scan`](../sig/IEEE_REAL.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (decimal_approx * 'a) option` |
 | val | [`setRoundingMode`](../sig/IEEE_REAL.md#val-setroundingmode) | `rounding_mode -> unit` |
-| val | [`toString`](../sig/IEEE_REAL.md#val-tostring) | `{class : float_class, digits : int list, exp : int, sign : bool} -> string` |
+| val | [`toString`](../sig/IEEE_REAL.md#val-tostring) | `decimal_approx -> string` |
 
 ## Notes
 

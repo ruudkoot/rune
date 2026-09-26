@@ -7,7 +7,7 @@
 | Signatures | none: [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md) specifies it inside [`Posix.SysDB`](../str/Posix.SysDB.md) |
 | Status | optional |
 | Members | 4 |
-| Tests | 3 checks |
+| Tests | 7 checks |
 | Source | [lib/basis/posix\_sysdb.sml](../../../../lib/basis/posix_sysdb.sml) |
 
 ## Members

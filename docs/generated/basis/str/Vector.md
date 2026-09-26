@@ -7,7 +7,7 @@
 | Signature | [`VECTOR`](../sig/VECTOR.md) |
 | Status | required |
 | Members | 21 |
-| Tests | 67 checks |
+| Tests | 148 checks |
 | Source | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
 
 ## Synopsis
@@ -24,27 +24,27 @@ What each means is on [`VECTOR`](../sig/VECTOR.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`vector`](../sig/VECTOR.md#type-vector) | *a type of its own* |
+| type | [`vector`](../sig/VECTOR.md#type-vector) | `'a vector` |
 | val | [`all`](../sig/VECTOR.md#val-all) | `('a -> bool) -> 'a vector -> bool` |
-| val | [`app`](../sig/VECTOR.md#val-app) | `('b -> unit) -> 'b vector -> unit` |
-| val | [`appi`](../sig/VECTOR.md#val-appi) | `(int * 'c -> unit) -> 'c vector -> unit` |
-| val | [`collate`](../sig/VECTOR.md#val-collate) | `('d * 'd -> order) -> 'd vector * 'd vector -> order` |
-| val | [`concat`](../sig/VECTOR.md#val-concat) | `'e vector list -> 'e vector` |
-| val | [`exists`](../sig/VECTOR.md#val-exists) | `('f -> bool) -> 'f vector -> bool` |
-| val | [`find`](../sig/VECTOR.md#val-find) | `('g -> bool) -> 'g vector -> 'g option` |
-| val | [`findi`](../sig/VECTOR.md#val-findi) | `(int * 'h -> bool) -> 'h vector -> (int * 'h) option` |
-| val | [`foldl`](../sig/VECTOR.md#val-foldl) | `('i * 'j -> 'j) -> 'j -> 'i vector -> 'j` |
-| val | [`foldli`](../sig/VECTOR.md#val-foldli) | `(int * 'k * 'l -> 'l) -> 'l -> 'k vector -> 'l` |
-| val | [`foldr`](../sig/VECTOR.md#val-foldr) | `('m * 'n -> 'n) -> 'n -> 'm vector -> 'n` |
-| val | [`foldri`](../sig/VECTOR.md#val-foldri) | `(int * 'o * 'p -> 'p) -> 'p -> 'o vector -> 'p` |
-| val | [`fromList`](../sig/VECTOR.md#val-fromlist) | `'q list -> 'q vector` |
-| val | [`length`](../sig/VECTOR.md#val-length) | `'r vector -> int` |
-| val | [`map`](../sig/VECTOR.md#val-map) | `('s -> 't) -> 's vector -> 't vector` |
-| val | [`mapi`](../sig/VECTOR.md#val-mapi) | `(int * 'u -> 'v) -> 'u vector -> 'v vector` |
+| val | [`app`](../sig/VECTOR.md#val-app) | `('a -> unit) -> 'a vector -> unit` |
+| val | [`appi`](../sig/VECTOR.md#val-appi) | `(int * 'a -> unit) -> 'a vector -> unit` |
+| val | [`collate`](../sig/VECTOR.md#val-collate) | `('a * 'a -> order) -> 'a vector * 'a vector -> order` |
+| val | [`concat`](../sig/VECTOR.md#val-concat) | `'a vector list -> 'a vector` |
+| val | [`exists`](../sig/VECTOR.md#val-exists) | `('a -> bool) -> 'a vector -> bool` |
+| val | [`find`](../sig/VECTOR.md#val-find) | `('a -> bool) -> 'a vector -> 'a option` |
+| val | [`findi`](../sig/VECTOR.md#val-findi) | `(int * 'a -> bool) -> 'a vector -> (int * 'a) option` |
+| val | [`foldl`](../sig/VECTOR.md#val-foldl) | `('a * 'b -> 'b) -> 'b -> 'a vector -> 'b` |
+| val | [`foldli`](../sig/VECTOR.md#val-foldli) | `(int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b` |
+| val | [`foldr`](../sig/VECTOR.md#val-foldr) | `('a * 'b -> 'b) -> 'b -> 'a vector -> 'b` |
+| val | [`foldri`](../sig/VECTOR.md#val-foldri) | `(int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b` |
+| val | [`fromList`](../sig/VECTOR.md#val-fromlist) | `'a list -> 'a vector` |
+| val | [`length`](../sig/VECTOR.md#val-length) | `'a vector -> int` |
+| val | [`map`](../sig/VECTOR.md#val-map) | `('a -> 'b) -> 'a vector -> 'b vector` |
+| val | [`mapi`](../sig/VECTOR.md#val-mapi) | `(int * 'a -> 'b) -> 'a vector -> 'b vector` |
 | val | [`maxLen`](../sig/VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/VECTOR.md#val-sub) | `'w vector * int -> 'w` |
-| val | [`tabulate`](../sig/VECTOR.md#val-tabulate) | `int * (int -> 'x) -> 'x vector` |
-| val | [`update`](../sig/VECTOR.md#val-update) | `'y vector * int * 'y -> 'y vector` |
+| val | [`sub`](../sig/VECTOR.md#val-sub) | `'a vector * int -> 'a` |
+| val | [`tabulate`](../sig/VECTOR.md#val-tabulate) | `int * (int -> 'a) -> 'a vector` |
+| val | [`update`](../sig/VECTOR.md#val-update) | `'a vector * int * 'a -> 'a vector` |
 
 ## Notes
 

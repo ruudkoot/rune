@@ -7,7 +7,7 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | required |
 | Members | 38 |
-| Tests | 138 checks |
+| Tests | 255 checks |
 | Source | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
 
 ## Synopsis

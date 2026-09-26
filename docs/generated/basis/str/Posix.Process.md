@@ -7,7 +7,7 @@
 | Signature | [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md) |
 | Status | optional |
 | Members | 21 |
-| Tests | 52 checks |
+| Tests | 61 checks |
 | Source | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
 
 ## Synopsis
@@ -27,13 +27,13 @@ What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are 
 | datatype | [`exit_status`](../sig/POSIX_PROCESS.md#type-exit_status) | `W_EXITED` &#124; `W_EXITSTATUS` &#124; `W_SIGNALED` &#124; `W_STOPPED` |
 | datatype | [`killpid_arg`](../sig/POSIX_PROCESS.md#type-killpid_arg) | `K_PROC` &#124; `K_SAME_GROUP` &#124; `K_GROUP` |
 | type | [`pid`](../sig/POSIX_PROCESS.md#type-pid) | *a type of its own* |
-| type | [`signal`](../sig/POSIX_PROCESS.md#type-signal) | *a type of its own* |
+| type | [`signal`](../sig/POSIX_PROCESS.md#type-signal) | `signal` |
 | datatype | [`waitpid_arg`](../sig/POSIX_PROCESS.md#type-waitpid_arg) | `W_ANY_CHILD` &#124; `W_CHILD` &#124; `W_SAME_GROUP` &#124; `W_GROUP` |
 | val | [`alarm`](../sig/POSIX_PROCESS.md#val-alarm) | `Time.time -> Time.time` |
 | val | [`exec`](../sig/POSIX_PROCESS.md#val-exec) | `string * string list -> 'a` |
-| val | [`exece`](../sig/POSIX_PROCESS.md#val-exece) | `string * string list * string list -> 'b` |
-| val | [`execp`](../sig/POSIX_PROCESS.md#val-execp) | `string * string list -> 'c` |
-| val | [`exit`](../sig/POSIX_PROCESS.md#val-exit) | `Word8.word -> 'd` |
+| val | [`exece`](../sig/POSIX_PROCESS.md#val-exece) | `string * string list * string list -> 'a` |
+| val | [`execp`](../sig/POSIX_PROCESS.md#val-execp) | `string * string list -> 'a` |
+| val | [`exit`](../sig/POSIX_PROCESS.md#val-exit) | `Word8.word -> 'a` |
 | val | [`fork`](../sig/POSIX_PROCESS.md#val-fork) | `unit -> pid option` |
 | val | [`fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) | `OS.Process.status -> exit_status` |
 | val | [`kill`](../sig/POSIX_PROCESS.md#val-kill) | `killpid_arg * signal -> unit` |

@@ -7,7 +7,7 @@
 | Signatures | [`BIN_IO`](../sig/BIN_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
 | Members | 28 |
-| Tests | 107 checks |
+| Tests | 152 checks |
 | Source | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 ## Synopsis
@@ -26,9 +26,9 @@ What each means is on [`BIN_IO`](../sig/BIN_IO.md) and [`IMPERATIVE_IO`](../sig/
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/IMPERATIVE_IO.md#type-elem) | `Word8.word` |
-| type | [`instream`](../sig/IMPERATIVE_IO.md#type-instream) | *a type of its own* |
-| type | [`outstream`](../sig/IMPERATIVE_IO.md#type-outstream) | *a type of its own* |
-| type | [`vector`](../sig/IMPERATIVE_IO.md#type-vector) | *a type of its own* |
+| type | [`instream`](../sig/IMPERATIVE_IO.md#type-instream) | `instream` |
+| type | [`outstream`](../sig/IMPERATIVE_IO.md#type-outstream) | `outstream` |
+| type | [`vector`](../sig/IMPERATIVE_IO.md#type-vector) | `vector` |
 | val | [`canInput`](../sig/IMPERATIVE_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/IMPERATIVE_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/IMPERATIVE_IO.md#val-closeout) | `outstream -> unit` |

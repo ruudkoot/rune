@@ -17,9 +17,9 @@ What each means is on [`INET6_SOCK`](../sig/INET6_SOCK.md); the types are this s
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`getNODELAY`](../sig/INET6_SOCK.md#val-tcp.getnodelay) | `(inet6', 'a stream') Socket.sock -> bool` |
-| val | [`setNODELAY`](../sig/INET6_SOCK.md#val-tcp.setnodelay) | `(inet6', 'b stream') Socket.sock * bool -> unit` |
-| val | [`socket`](../sig/INET6_SOCK.md#val-tcp.socket) | `unit -> (inet6', 'c stream') Socket.sock` |
-| val | [`socket'`](../sig/INET6_SOCK.md#val-tcp.socket-prime) | `int -> (inet6', 'd stream') Socket.sock` |
+| val | [`setNODELAY`](../sig/INET6_SOCK.md#val-tcp.setnodelay) | `(inet6', 'a stream') Socket.sock * bool -> unit` |
+| val | [`socket`](../sig/INET6_SOCK.md#val-tcp.socket) | `unit -> (inet6', 'a stream') Socket.sock` |
+| val | [`socket'`](../sig/INET6_SOCK.md#val-tcp.socket-prime) | `int -> (inet6', 'a stream') Socket.sock` |
 
 ---
 

@@ -178,6 +178,25 @@ struct
                                  (Option.getOpt (StringMap.find (#tests env, #name c ^ "." ^ member), [])))
                 (#claims env))
 
+  (* The checks of an entry. A label names a member by its name alone,
+     `Array.array/Size-negative`, so where a signature has a type and a value
+     of one name -- `ARRAY` has both an `array` -- the checks are the value's,
+     which is what they call; counted under both, they would count twice. *)
+  fun sitesOfEntry (env : env, sigName : string, e : I.entryRecord) : (string * DocTests.site) list =
+    case sitesOf (env, sigName, String.concatWith "." (#path e @ [#name e])) of
+      [] => []
+    | sites =>
+        let
+          (* only a type with checks needs to know whether a value shares its name *)
+          val isType = case #kind e of I.Type => true | I.Eqtype => true | I.Datatype => true | _ => false
+          val valueToo =
+            isType andalso List.exists (fn e' : I.entryRecord => #kind e' = I.Val andalso #name e' = #name e
+                                                                 andalso #path e' = #path e)
+                                       (entriesOf (R.bodyOf (#index env, sigName)))
+        in
+          if valueToo then [] else sites
+        end
+
   fun distinct (xs : string list) : string list =
     List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
 
@@ -331,8 +350,7 @@ struct
                                                      List.map (fn n => String.concatWith "." (structure' :: #path g @ [n]))
                                                               (#name g :: List.map #name (#cons g)))
                                                   group))
-      ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord =>
-                                                  sitesOf (env, sigName, String.concatWith "." (#path g @ [#name g]))) group))
+      ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord => sitesOfEntry (env, sigName, g)) group))
       ^ inner
     end
 
@@ -434,7 +452,8 @@ struct
                           describedBy : string list,
                           members : (string * DocElab.member) list option,
                           area : string option, status : string,
-                          anchorOf : string -> (string * string) option}) : string =
+                          (* where a signature describes a member of this kind and name *)
+                          anchorOf : string * string -> (string * string) option}) : string =
     let
       val page = R.strPage name
       val sigNames = List.map (fn c : DocClaims.claim => #signat c) mine
@@ -453,17 +472,17 @@ struct
         | _ => NONE
       fun sigLink sg = "[" ^ M.code sg ^ "](" ^ href (env, page, {page = R.sigPage sg, anchor = ""}, span) ^ ")"
       (* a member links to where a signature describes it, when one does *)
-      fun linked (m : string) =
-        case anchorOf m of
+      fun linked (kind : string, m : string) =
+        case anchorOf (kind, m) of
           SOME t => "[" ^ M.code m ^ "](" ^ href (env, page, {page = #1 t, anchor = #2 t}, span) ^ ")"
         | NONE => M.code m
-      fun row (m, DocElab.MVal ty) = SOME ["val", linked m, M.code ty]
-        | row (m, DocElab.MExn NONE) = SOME ["exception", linked m, ""]
-        | row (m, DocElab.MExn (SOME ty)) = SOME ["exception", linked m, M.code ("of " ^ ty)]
-        | row (m, DocElab.MType {defn = SOME d, ...}) = SOME ["type", linked m, M.code d]
-        | row (m, DocElab.MType {defn = NONE, ...}) = SOME ["type", linked m, "*a type of its own*"]
+      fun row (m, DocElab.MVal ty) = SOME ["val", linked ("val", m), M.code ty]
+        | row (m, DocElab.MExn NONE) = SOME ["exception", linked ("exn", m), ""]
+        | row (m, DocElab.MExn (SOME ty)) = SOME ["exception", linked ("exn", m), M.code ("of " ^ ty)]
+        | row (m, DocElab.MType {defn = SOME d, ...}) = SOME ["type", linked ("type", m), M.code d]
+        | row (m, DocElab.MType {defn = NONE, ...}) = SOME ["type", linked ("type", m), "*a type of its own*"]
         | row (m, DocElab.MData {cons, ...}) =
-            SOME ["datatype", linked m, String.concatWith " &#124; " (List.map M.code cons)]
+            SOME ["datatype", linked ("type", m), String.concatWith " &#124; " (List.map M.code cons)]
         (* a substructure has a page of its own, and says which signature it implements *)
         | row (m, DocElab.MStr) =
             let
@@ -473,21 +492,23 @@ struct
               SOME ["structure",
                     (case #strPageOf env full of
                        SOME p => "[" ^ M.code m ^ "](" ^ href (env, page, {page = p, anchor = ""}, span) ^ ")"
-                     | NONE => linked m),
+                     | NONE => linked ("str", m)),
                     String.concatWith ", " (List.map (fn c => sigLink (#signat c)) its)]
             end
         (* a constructor belongs to the datatype's row *)
         | row (_, DocElab.MCon _) = NONE
       val rows = case members of SOME ms => List.mapPartial row ms | NONE => []
-      (* the checks of the suite that name this structure *)
-      val sites =
+      (* the checks of the suite that name this structure, member by member:
+         two members may each have a case of one name, `Array.sub/basic` and
+         `Array.update/basic`, and those are two checks *)
+      val checks =
         case members of
-          NONE => []
+          NONE => 0
         | SOME ms =>
-            List.concat (List.map (fn (m, _) =>
-                                     List.map (fn s => (name, s))
-                                              (Option.getOpt (StringMap.find (#tests env, name ^ "." ^ m), [])))
-                                  ms)
+            List.foldl (fn (m, n) =>
+                          n + countSites (List.map (fn s => (name, s))
+                                                   (Option.getOpt (StringMap.find (#tests env, name ^ "." ^ m), []))))
+                       0 (distinct (List.map #1 ms))
       val annotated =
         annotationsBlock (env, first,
                           fn structure' =>
@@ -512,7 +533,7 @@ struct
                   ["Members", if List.null rows then "known only by elaborating the library"
                               else Int.toString (List.length rows)],
                   ["Tests", if StringMap.isEmpty (#tests env) then "not listed"
-                            else Int.toString (countSites sites) ^ " checks"],
+                            else Int.toString checks ^ " checks"],
                   ["Source", sourceLink (env, #root env, file)]])
       ^ (if List.null mine then ""
          else "## Synopsis\n\n"
@@ -574,7 +595,7 @@ struct
                   ["Documentation", Int.toString documented ^ " of " ^ Int.toString (List.length es) ^ " entries documented"],
                   ["Tests",
                    let
-                     val perEntry = List.map (fn e : I.entryRecord => sitesOf (env, name, String.concatWith "." (#path e @ [#name e]))) es
+                     val perEntry = List.map (fn e : I.entryRecord => sitesOfEntry (env, name, e)) es
                      val checked = List.length (List.filter (fn l => not (List.null l)) perEntry)
                    in
                      if StringMap.isEmpty (#tests env) then "not listed"

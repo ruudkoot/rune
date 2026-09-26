@@ -7,7 +7,7 @@
 | Signature | [`LIST_PAIR`](../sig/LIST_PAIR.md) |
 | Status | required |
 | Members | 15 |
-| Tests | 42 checks |
+| Tests | 140 checks |
 | Source | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
 
 ## Synopsis
@@ -26,19 +26,19 @@ What each means is on [`LIST_PAIR`](../sig/LIST_PAIR.md); the types are this str
 | --- | --- | --- |
 | exception | [`UnequalLengths`](../sig/LIST_PAIR.md#exn-unequallengths) |  |
 | val | [`all`](../sig/LIST_PAIR.md#val-all) | `('a * 'b -> bool) -> 'a list * 'b list -> bool` |
-| val | [`allEq`](../sig/LIST_PAIR.md#val-alleq) | `('c * 'd -> bool) -> 'c list * 'd list -> bool` |
-| val | [`app`](../sig/LIST_PAIR.md#val-app) | `('e * 'f -> unit) -> 'e list * 'f list -> unit` |
-| val | [`appEq`](../sig/LIST_PAIR.md#val-appeq) | `('g * 'h -> unit) -> 'g list * 'h list -> unit` |
-| val | [`exists`](../sig/LIST_PAIR.md#val-exists) | `('i * 'j -> bool) -> 'i list * 'j list -> bool` |
-| val | [`foldl`](../sig/LIST_PAIR.md#val-foldl) | `('k * 'l * 'm -> 'm) -> 'm -> 'k list * 'l list -> 'm` |
-| val | [`foldlEq`](../sig/LIST_PAIR.md#val-foldleq) | `('n * 'o * 'p -> 'p) -> 'p -> 'n list * 'o list -> 'p` |
-| val | [`foldr`](../sig/LIST_PAIR.md#val-foldr) | `('q * 'r * 's -> 's) -> 's -> 'q list * 'r list -> 's` |
-| val | [`foldrEq`](../sig/LIST_PAIR.md#val-foldreq) | `('t * 'u * 'v -> 'v) -> 'v -> 't list * 'u list -> 'v` |
-| val | [`map`](../sig/LIST_PAIR.md#val-map) | `('w * 'x -> 'y) -> 'w list * 'x list -> 'y list` |
-| val | [`mapEq`](../sig/LIST_PAIR.md#val-mapeq) | `('z * 't26 -> 't27) -> 'z list * 't26 list -> 't27 list` |
-| val | [`unzip`](../sig/LIST_PAIR.md#val-unzip) | `('t28 * 't29) list -> 't28 list * 't29 list` |
-| val | [`zip`](../sig/LIST_PAIR.md#val-zip) | `'t30 list * 't31 list -> ('t30 * 't31) list` |
-| val | [`zipEq`](../sig/LIST_PAIR.md#val-zipeq) | `'t32 list * 't33 list -> ('t32 * 't33) list` |
+| val | [`allEq`](../sig/LIST_PAIR.md#val-alleq) | `('a * 'b -> bool) -> 'a list * 'b list -> bool` |
+| val | [`app`](../sig/LIST_PAIR.md#val-app) | `('a * 'b -> unit) -> 'a list * 'b list -> unit` |
+| val | [`appEq`](../sig/LIST_PAIR.md#val-appeq) | `('a * 'b -> unit) -> 'a list * 'b list -> unit` |
+| val | [`exists`](../sig/LIST_PAIR.md#val-exists) | `('a * 'b -> bool) -> 'a list * 'b list -> bool` |
+| val | [`foldl`](../sig/LIST_PAIR.md#val-foldl) | `('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c` |
+| val | [`foldlEq`](../sig/LIST_PAIR.md#val-foldleq) | `('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c` |
+| val | [`foldr`](../sig/LIST_PAIR.md#val-foldr) | `('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c` |
+| val | [`foldrEq`](../sig/LIST_PAIR.md#val-foldreq) | `('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c` |
+| val | [`map`](../sig/LIST_PAIR.md#val-map) | `('a * 'b -> 'c) -> 'a list * 'b list -> 'c list` |
+| val | [`mapEq`](../sig/LIST_PAIR.md#val-mapeq) | `('a * 'b -> 'c) -> 'a list * 'b list -> 'c list` |
+| val | [`unzip`](../sig/LIST_PAIR.md#val-unzip) | `('a * 'b) list -> 'a list * 'b list` |
+| val | [`zip`](../sig/LIST_PAIR.md#val-zip) | `'a list * 'b list -> ('a * 'b) list` |
+| val | [`zipEq`](../sig/LIST_PAIR.md#val-zipeq) | `'a list * 'b list -> ('a * 'b) list` |
 
 ## Notes
 

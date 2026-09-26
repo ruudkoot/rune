@@ -17,9 +17,9 @@ What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`getNODELAY`](../sig/INET_SOCK.md#val-tcp.getnodelay) | `(inet', 'a stream') Socket.sock -> bool` |
-| val | [`setNODELAY`](../sig/INET_SOCK.md#val-tcp.setnodelay) | `(inet', 'b stream') Socket.sock * bool -> unit` |
-| val | [`socket`](../sig/INET_SOCK.md#val-tcp.socket) | `unit -> (inet', 'c stream') Socket.sock` |
-| val | [`socket'`](../sig/INET_SOCK.md#val-tcp.socket-prime) | `int -> (inet', 'd stream') Socket.sock` |
+| val | [`setNODELAY`](../sig/INET_SOCK.md#val-tcp.setnodelay) | `(inet', 'a stream') Socket.sock * bool -> unit` |
+| val | [`socket`](../sig/INET_SOCK.md#val-tcp.socket) | `unit -> (inet', 'a stream') Socket.sock` |
+| val | [`socket'`](../sig/INET_SOCK.md#val-tcp.socket-prime) | `int -> (inet', 'a stream') Socket.sock` |
 
 ---
 

@@ -7,7 +7,7 @@
 | Signature | [`MATH`](../sig/MATH.md) |
 | Status | required |
 | Members | 18 |
-| Tests | 152 checks |
+| Tests | 256 checks |
 | Source | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 ## Synopsis
@@ -22,7 +22,7 @@ What each means is on [`MATH`](../sig/MATH.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`real`](../sig/MATH.md#type-real) | *a type of its own* |
+| type | [`real`](../sig/MATH.md#type-real) | `real` |
 | val | [`acos`](../sig/MATH.md#val-acos) | `real -> real` |
 | val | [`asin`](../sig/MATH.md#val-asin) | `real -> real` |
 | val | [`atan`](../sig/MATH.md#val-atan) | `real -> real` |

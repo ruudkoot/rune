@@ -7,7 +7,7 @@
 | Signature | [`SUBSTRING`](../sig/SUBSTRING.md) |
 | Status | required |
 | Members | 39 |
-| Tests | 256 checks |
+| Tests | 481 checks |
 | Source | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
 
 ## Synopsis
@@ -24,9 +24,9 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/SUBSTRING.md#type-char) | *a type of its own* |
-| type | [`string`](../sig/SUBSTRING.md#val-string) | *a type of its own* |
-| type | [`substring`](../sig/SUBSTRING.md#val-substring) | *a type of its own* |
+| type | [`char`](../sig/SUBSTRING.md#type-char) | `char` |
+| type | [`string`](../sig/SUBSTRING.md#type-string) | `string` |
+| type | [`substring`](../sig/SUBSTRING.md#type-substring) | *a type of its own* |
 | val | [`app`](../sig/SUBSTRING.md#val-app) | `(char -> unit) -> substring -> unit` |
 | val | [`base`](../sig/SUBSTRING.md#val-base) | `substring -> string * int * int` |
 | val | [`collate`](../sig/SUBSTRING.md#val-collate) | `(char * char -> order) -> substring * substring -> order` |
@@ -40,7 +40,7 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 | val | [`fields`](../sig/SUBSTRING.md#val-fields) | `(char -> bool) -> substring -> substring list` |
 | val | [`first`](../sig/SUBSTRING.md#val-first) | `substring -> char option` |
 | val | [`foldl`](../sig/SUBSTRING.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`foldr`](../sig/SUBSTRING.md#val-foldr) | `(char * 'b -> 'b) -> 'b -> substring -> 'b` |
+| val | [`foldr`](../sig/SUBSTRING.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
 | val | [`full`](../sig/SUBSTRING.md#val-full) | `string -> substring` |
 | val | [`getc`](../sig/SUBSTRING.md#val-getc) | `substring -> (char * substring) option` |
 | val | [`isEmpty`](../sig/SUBSTRING.md#val-isempty) | `substring -> bool` |

@@ -7,7 +7,7 @@
 | Signatures | [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md), [`STREAM_IO`](../sig/STREAM_IO.md) |
 | Status | required |
 | Members | 31 |
-| Tests | 117 checks |
+| Tests | 145 checks |
 | Source | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 ## Synopsis
@@ -26,13 +26,13 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/STREAM_IO.md#type-elem) | `char` |
-| type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
+| type | [`instream`](../sig/STREAM_IO.md#type-instream) | `instream` |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
-| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
-| type | [`pos`](../sig/STREAM_IO.md#type-pos) | *a type of its own* |
-| type | [`reader`](../sig/STREAM_IO.md#type-reader) | *a type of its own* |
+| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | `outstream` |
+| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `pos` |
+| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `reader` |
 | type | [`vector`](../sig/STREAM_IO.md#type-vector) | `string` |
-| type | [`writer`](../sig/STREAM_IO.md#type-writer) | *a type of its own* |
+| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `writer` |
 | val | [`canInput`](../sig/STREAM_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |

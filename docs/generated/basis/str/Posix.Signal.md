@@ -7,7 +7,7 @@
 | Signature | [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md) |
 | Status | optional |
 | Members | 23 |
-| Tests | 9 checks |
+| Tests | 34 checks |
 | Source | [lib/basis/posix\_signal.sml](../../../../lib/basis/posix_signal.sml) |
 
 ## Synopsis
@@ -24,7 +24,7 @@ What each means is on [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`signal`](../sig/POSIX_SIGNAL.md#type-signal) | *a type of its own* |
+| type | [`signal`](../sig/POSIX_SIGNAL.md#type-signal) | `signal` |
 | val | [`abrt`](../sig/POSIX_SIGNAL.md#val-abrt) | `signal` |
 | val | [`alrm`](../sig/POSIX_SIGNAL.md#val-alrm) | `signal` |
 | val | [`bus`](../sig/POSIX_SIGNAL.md#val-bus) | `signal` |

@@ -7,7 +7,7 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | required |
 | Members | 38 |
-| Tests | 141 checks |
+| Tests | 269 checks |
 | Source | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 
 ## Synopsis
@@ -26,7 +26,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`word`](../sig/WORD.md#type-word) | *a type of its own* |
+| type | [`word`](../sig/WORD.md#type-word) | `word` |
 | val | [`*`](../sig/WORD.md#val-op-star) | `word * word -> word` |
 | val | [`+`](../sig/WORD.md#val-op-plus) | `word * word -> word` |
 | val | [`-`](../sig/WORD.md#val-op-minus) | `word * word -> word` |

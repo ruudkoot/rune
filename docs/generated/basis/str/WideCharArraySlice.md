@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 119 checks |
+| Tests | 239 checks |
 | Source | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 ## Synopsis
@@ -22,10 +22,10 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | *a type of its own* |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `WideChar.char` |
-| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | *a type of its own* |
+| type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
+| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `vector` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `WideCharVectorSlice.slice` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(WideChar.char -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(WideChar.char -> unit) -> slice -> unit` |
@@ -38,9 +38,9 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(WideChar.char -> bool) -> slice -> WideChar.char option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * WideChar.char -> bool) -> slice -> (int * WideChar.char) option` |
 | val | [`foldl`](../sig/MONO_ARRAY_SLICE.md#val-foldl) | `(WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * WideChar.char * 'b -> 'b) -> 'b -> slice -> 'b` |
-| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(WideChar.char * 'c -> 'c) -> 'c -> slice -> 'c` |
-| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * WideChar.char * 'd -> 'd) -> 'd -> slice -> 'd` |
+| val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (WideChar.char * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |

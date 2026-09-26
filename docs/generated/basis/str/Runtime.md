@@ -28,16 +28,16 @@ What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structu
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`frame`](../sig/RUNTIME.md#type-frame) | `{column : int, file : string, function : string, line : int}` |
-| type | [`stats`](../sig/RUNTIME.md#val-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, objects : int}` |
+| type | [`stats`](../sig/RUNTIME.md#type-stats) | `{bytes : int, collections : int, heapSize : int, instructions : int, live : int, objects : int}` |
 | datatype | [`world`](../sig/RUNTIME.md#type-world) | `Saved` &#124; `Restored` |
 | val | [`collect`](../sig/RUNTIME.md#val-collect) | `unit -> unit` |
 | val | [`printTrace`](../sig/RUNTIME.md#val-printtrace) | `TextIO.outstream -> unit` |
-| val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * {bytes : int, collections : int, heapSize : int, instructions : int, live : int, objects : int}` |
-| val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'b` |
-| val | [`same`](../sig/RUNTIME.md#val-same) | `'c * 'c -> bool` |
+| val | [`profile`](../sig/RUNTIME.md#val-profile) | `(unit -> 'a) -> 'a * stats` |
+| val | [`restore`](../sig/RUNTIME.md#val-restore) | `string -> 'a` |
+| val | [`same`](../sig/RUNTIME.md#val-same) | `'a * 'a -> bool` |
 | val | [`save`](../sig/RUNTIME.md#val-save) | `string -> world` |
-| val | [`stats`](../sig/RUNTIME.md#val-stats) | `unit -> {bytes : int, collections : int, heapSize : int, instructions : int, live : int, objects : int}` |
-| val | [`trace`](../sig/RUNTIME.md#val-trace) | `unit -> {column : int, file : string, function : string, line : int} list` |
+| val | [`stats`](../sig/RUNTIME.md#val-stats) | `unit -> stats` |
+| val | [`trace`](../sig/RUNTIME.md#val-trace) | `unit -> frame list` |
 | val | [`version`](../sig/RUNTIME.md#val-version) | `string` |
 
 ---

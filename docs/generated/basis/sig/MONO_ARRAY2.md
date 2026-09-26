@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 18 |
 | Documentation | 22 of 22 entries documented |
-| Tests | 340 checks of 19 entries |
+| Tests | 312 checks of 18 entries |
 | Source | [lib/basis/sig\_mono\_array2.sml](../../../../lib/basis/sig_mono_array2.sml) |
 
 ## Synopsis
@@ -136,14 +136,6 @@ Two are equal when they are the same array.
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 - **Poly/ML** &mdash; as Array2.array: array (0, \~1, x) does not raise Size
 - **Poly/ML** &mdash; as in Array2: two arrays without rows are equal
-
-</details>
-
-<details><summary>Tests (28)</summary>
-
-For `BoolArray2`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `no-rows` &middot; `Size-negative` (raises Size) &middot; `same-elements-not-equal` &middot; `same-array-is-equal`
-
-In [tests/basis/fn/mono\_array2\_fn.sml](../../../../tests/basis/fn/mono_array2_fn.sml), applied to `CharArray2`, `Word8Array2`, `IntArray2`, `Int8Array2`, `Int16Array2`, `Int32Array2`, `LargeIntArray2`, `WordArray2`, `Word16Array2`, `Word32Array2`, `RealArray2`, `Int64Array2`, `LargeWordArray2`, `Word64Array2`, `LargeRealArray2`, `Real64Array2`, `Real32Array2`: `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
 
 </details>
 

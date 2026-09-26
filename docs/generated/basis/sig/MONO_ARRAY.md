@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 26 of 26 entries documented |
-| Tests | 362 checks of 26 entries |
+| Tests | 309 checks of 24 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -112,16 +112,6 @@ The type of these arrays.
 
 Two are equal when they are the same array, whatever they hold.
 
-<details><summary>Tests (24)</summary>
-
-For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `string-of-init`
-
-For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `same-elements-not-equal`
-
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `model*` &middot; `identity*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
-
-</details>
-
 ### <a name="type-elem"></a>`elem`
 
 ```sml
@@ -145,48 +135,6 @@ type vector
 ```
 
 The type of these vectors.
-
-<details><summary>Tests (29)</summary>
-
-For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8array.sml): `is-Word8Vector.vector`
-
-For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `is-a-string` &middot; `empty-string` &middot; `is-CharVector.vector` &middot; `string-is-a-snapshot` &middot; `implode*`
-
-For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `is-a-snapshot`
-
-For `IntArray`, in [tests/basis/mono.int.sml](../../../../tests/basis/mono.int.sml): `extremes`
-
-For `Int8Array`, in [tests/basis/mono.int8.sml](../../../../tests/basis/mono.int8.sml): `extremes`
-
-For `Int16Array`, in [tests/basis/mono.int16.sml](../../../../tests/basis/mono.int16.sml): `extremes`
-
-For `Int32Array`, in [tests/basis/mono.int32.sml](../../../../tests/basis/mono.int32.sml): `extremes`
-
-For `LargeIntArray`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/mono.largeint.sml): `extremes`
-
-For `WordArray`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
-
-For `Word16Array`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
-
-For `Word32Array`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
-
-For `RealArray`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `specials`
-
-For `Int64Array`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
-
-For `LargeWordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
-
-For `Word64Array`, in [tests/basis/mono.word64.sml](../../../../tests/basis/mono.word64.sml): `extremes`
-
-For `LargeRealArray`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
-
-For `Real64Array`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `specials`
-
-For `Real32Array`, in [tests/basis/mono.real32.sml](../../../../tests/basis/mono.real32.sml): `specials`
-
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `empty` &middot; `after-update` &middot; `is-a-snapshot` &middot; `model*` &middot; `long`
-
-</details>
 
 ### <a name="val-maxlen"></a>`maxLen`
 

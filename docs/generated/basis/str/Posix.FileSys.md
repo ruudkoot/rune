@@ -7,7 +7,7 @@
 | Signature | [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md) |
 | Status | optional |
 | Members | 52 |
-| Tests | 130 checks |
+| Tests | 151 checks |
 | Source | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
 
 ## Synopsis
@@ -26,12 +26,12 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | --- | --- | --- |
 | datatype | [`access_mode`](../sig/POSIX_FILE_SYS.md#type-access_mode) | `A_READ` &#124; `A_WRITE` &#124; `A_EXEC` |
 | type | [`dev`](../sig/POSIX_FILE_SYS.md#type-dev) | *a type of its own* |
-| type | [`dirstream`](../sig/POSIX_FILE_SYS.md#type-dirstream) | *a type of its own* |
-| type | [`file_desc`](../sig/POSIX_FILE_SYS.md#type-file_desc) | *a type of its own* |
-| type | [`gid`](../sig/POSIX_FILE_SYS.md#type-gid) | *a type of its own* |
+| type | [`dirstream`](../sig/POSIX_FILE_SYS.md#type-dirstream) | `dirstream` |
+| type | [`file_desc`](../sig/POSIX_FILE_SYS.md#type-file_desc) | `file_desc` |
+| type | [`gid`](../sig/POSIX_FILE_SYS.md#type-gid) | `gid` |
 | type | [`ino`](../sig/POSIX_FILE_SYS.md#type-ino) | *a type of its own* |
 | datatype | [`open_mode`](../sig/POSIX_FILE_SYS.md#type-open_mode) | `O_RDONLY` &#124; `O_WRONLY` &#124; `O_RDWR` |
-| type | [`uid`](../sig/POSIX_FILE_SYS.md#type-uid) | *a type of its own* |
+| type | [`uid`](../sig/POSIX_FILE_SYS.md#type-uid) | `uid` |
 | val | [`access`](../sig/POSIX_FILE_SYS.md#val-access) | `string * access_mode list -> bool` |
 | val | [`chdir`](../sig/POSIX_FILE_SYS.md#val-chdir) | `string -> unit` |
 | val | [`chmod`](../sig/POSIX_FILE_SYS.md#val-chmod) | `string * S.mode -> unit` |

@@ -7,7 +7,7 @@
 | Signature | [`UNIX`](../sig/UNIX.md) |
 | Status | optional |
 | Members | 14 |
-| Tests | 28 checks |
+| Tests | 36 checks |
 | Source | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
 
 ## Synopsis
@@ -26,18 +26,18 @@ What each means is on [`UNIX`](../sig/UNIX.md); the types are this structure's o
 | --- | --- | --- |
 | datatype | [`exit_status`](../sig/UNIX.md#type-exit_status) | `W_EXITED` &#124; `W_EXITSTATUS` &#124; `W_SIGNALED` &#124; `W_STOPPED` |
 | type | [`proc`](../sig/UNIX.md#type-proc) | *a type of its own* |
-| type | [`signal`](../sig/UNIX.md#type-signal) | *a type of its own* |
+| type | [`signal`](../sig/UNIX.md#type-signal) | `signal` |
 | val | [`binInstreamOf`](../sig/UNIX.md#val-bininstreamof) | `(BinIO.instream, 'a) proc -> BinIO.instream` |
-| val | [`binOutstreamOf`](../sig/UNIX.md#val-binoutstreamof) | `('b, BinIO.outstream) proc -> BinIO.outstream` |
-| val | [`execute`](../sig/UNIX.md#val-execute) | `string * string list -> ('c, 'd) proc` |
-| val | [`executeInEnv`](../sig/UNIX.md#val-executeinenv) | `string * string list * string list -> ('e, 'f) proc` |
-| val | [`exit`](../sig/UNIX.md#val-exit) | `Word8.word -> 'g` |
+| val | [`binOutstreamOf`](../sig/UNIX.md#val-binoutstreamof) | `('a, BinIO.outstream) proc -> BinIO.outstream` |
+| val | [`execute`](../sig/UNIX.md#val-execute) | `string * string list -> ('a, 'b) proc` |
+| val | [`executeInEnv`](../sig/UNIX.md#val-executeinenv) | `string * string list * string list -> ('a, 'b) proc` |
+| val | [`exit`](../sig/UNIX.md#val-exit) | `Word8.word -> 'a` |
 | val | [`fromStatus`](../sig/UNIX.md#val-fromstatus) | `OS.Process.status -> exit_status` |
-| val | [`kill`](../sig/UNIX.md#val-kill) | `('h, 'i) proc * signal -> unit` |
-| val | [`reap`](../sig/UNIX.md#val-reap) | `('j, 'k) proc -> OS.Process.status` |
+| val | [`kill`](../sig/UNIX.md#val-kill) | `('a, 'b) proc * signal -> unit` |
+| val | [`reap`](../sig/UNIX.md#val-reap) | `('a, 'b) proc -> OS.Process.status` |
 | val | [`streamsOf`](../sig/UNIX.md#val-streamsof) | `(TextIO.instream, TextIO.outstream) proc -> TextIO.instream * TextIO.outstream` |
-| val | [`textInstreamOf`](../sig/UNIX.md#val-textinstreamof) | `(TextIO.instream, 'l) proc -> TextIO.instream` |
-| val | [`textOutstreamOf`](../sig/UNIX.md#val-textoutstreamof) | `('m, TextIO.outstream) proc -> TextIO.outstream` |
+| val | [`textInstreamOf`](../sig/UNIX.md#val-textinstreamof) | `(TextIO.instream, 'a) proc -> TextIO.instream` |
+| val | [`textOutstreamOf`](../sig/UNIX.md#val-textoutstreamof) | `('a, TextIO.outstream) proc -> TextIO.outstream` |
 
 ## Notes
 
