@@ -318,6 +318,8 @@ static int scan(Jit *j, Scan *sc) {
             sc->phantom[pc + l - j->from] = 1;
             if (pc + l + 5 < j->to) sc->target[pc + l + 5 - j->from] = 1;
         }
+        /* the RESULT after a PRIMPUSH: where an image resumes (M6) */
+        if (op == ROP_PRIMPUSH && pc + l < j->to && code[pc + l] == ROP_RESULT) sc->target[pc + l - j->from] = 1;
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL)
                 sc->target[(uint32_t)read_i32(code + pc + 1 + 4 * k) - j->from] = 1;
@@ -447,9 +449,20 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
                 sys_code_protect(jit->code_mem + lo, hi - lo, 1);
                 sys_code_flush(at, j.m.a.n);
                 jit->code_used += size;
-                jit->codes[f].tier = 1;
-                jit->codes[f].size = (uint32_t)j.m.a.n;
-                jit->codes[f].entry = at;   /* published last */
+                /* the table of pc to address: every target bound (M6) */
+                uint32_t nosr = 0;
+                for (uint32_t i = 0; i < len; i++) if (sc.target[i] && j.labels[i].at >= 0) nosr++;
+                CodeObject *co = &jit->codes[f];
+                free(co->osr_pcs); free(co->osr_offs);
+                co->osr_pcs = malloc((nosr ? nosr : 1) * sizeof *co->osr_pcs);
+                co->osr_offs = malloc((nosr ? nosr : 1) * sizeof *co->osr_offs);
+                co->nosr = 0;
+                if (co->osr_pcs && co->osr_offs)
+                    for (uint32_t i = 0; i < len; i++)
+                        if (sc.target[i] && j.labels[i].at >= 0) { co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)j.labels[i].at; co->nosr++; }
+                co->tier = 1;
+                co->size = (uint32_t)j.m.a.n;
+                co->entry = at;   /* published last */
                 jit->compiled++;
             }
         }

@@ -2,11 +2,13 @@
 # Cycles and instructions of every configuration, on the programs of
 # tests/perf and on the compiler compiling itself (docs/plans/jit.md, M1):
 #   scripts/perf-cycles.sh [--runs N] [--configs C1,C2,...] [--profile CONFIG] [FILTER]
-# The configurations are rune (bin/runevm), new (bin/runevm-new), opt
-# (runeopt's native code) and mlton (MLton's build); all four unless
-# --configs says otherwise. jit is bin/runevm-new --jit=all, every function
-# given to the JIT (docs/plans/jit.md, M3), and the same for jit-off, -baseline
-# and -opt. Each program is wrapped as `make perf` wraps it
+# The configurations are rune (bin/runevm), new (bin/runevm-new as it
+# runs by default: tiering up, since M6), opt (runeopt's native code) and
+# mlton (MLton's build); all four unless --configs says otherwise. jit is
+# bin/runevm-new --jit=all, every function given to the JIT
+# (docs/plans/jit.md, M3), and the same for jit-off (the interpreter
+# alone), -baseline and -opt; jit-baseline+c10+w100 is --jit=baseline
+# --jit-calls=10 --jit-work=100 (M6, the sweep). Each program is wrapped as `make perf` wraps it
 # (tests/basis/run-matrix.sh, wall_program): its body as a function called R
 # times, R from the `wall R` line of its .budget, so that a run is long
 # enough to measure and the numbers stand beside docs/performance.md's. The
@@ -58,7 +60,22 @@ wrap() {
 }
 
 # jit_mode CONFIG: the --jit option of the jit configurations
-jit_mode() { case "$1" in jit) echo "--jit=all" ;; *) echo "--jit=${1#jit-}" ;; esac; }
+jit_mode() {
+  case "$1" in jit) echo "--jit=all"; return ;; esac
+  spec=${1#jit-}
+  opts="--jit=${spec%%+*}"
+  rest=${spec#"${spec%%+*}"}
+  while [ -n "$rest" ]; do
+    rest=${rest#+}
+    item=${rest%%+*}
+    rest=${rest#"$item"}
+    case $item in
+      c*) opts="$opts --jit-calls=${item#c}" ;;
+      w*) opts="$opts --jit-work=${item#w}" ;;
+    esac
+  done
+  echo "$opts"
+}
 
 # build CONFIG NAME FILE: what runs FILE (a program) in CONFIG, as a command
 # line on stdout; nothing where the configuration cannot be built.

@@ -138,8 +138,10 @@ keep these invariants:
   another (`vm/new/jit.h`): the interpreter hands the VM back, exact,
   where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`, `RAISED`),
   native code hands it back where a frame is interpreted, and a helper
-  native code calls never runs bytecode; `make test-new-jit`, part of
-  `make check`, holds the driver to never nesting. **The JIT**
+  native code calls never runs bytecode nor compiles any; `make
+  test-new-jit`, part of `make check`, holds the driver to never nesting.
+  `runevm-new` tiers up by default (`--jit=baseline`, M6), so every suite
+  runs that way; the oracle runs the other modes. **The JIT**
   (`vm/new/jit/`, `vm/new/ARCHITECTURE.md`, Tier 1): an instruction of the
   register set has, beside its body, an emitter in `vm/new/jit/emit.c`
   (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
@@ -151,10 +153,13 @@ keep these invariants:
   by `offsetof`, never a number. What the loop does to `--count`, the code
   does too: `scripts/check-jit.sh` (in `make test-new-jit`) holds every
   program, and the compiler compiling itself, to the same output and
-  counts interpreted, compiled and with every other function compiled
-  (`--jit-only=odd`), and every instruction to occurring in them. A
-  primitive done in line by the loop and by the code changes with its C
-  in `vm/prims.c`.
+  counts interpreted, compiled, with every other function compiled
+  (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
+  occurring in them. A primitive done in line by the loop and by the
+  code changes with its C in `vm/prims.c`. A native address lives in a
+  frame's `native_ret`, a handler's `native` and the driver's `jit->at`
+  and nowhere else, so that invalidating a function's code is a walk
+  over the frames and handlers (`jit_invalidate`).
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test

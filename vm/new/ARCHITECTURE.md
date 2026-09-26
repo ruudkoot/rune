@@ -134,12 +134,52 @@ be switched (green threads), copied (continuations) and rebuilt
 The JIT's view of the program (`JitProgram`, made by `jit_program` when
 the driver first sees a program and again when it becomes another,
 `Runtime.restore`) is a code object per function: its entry, NULL while
-it is interpreted; its tier; the counters tier 0 will keep for the
-tiering policy; and, from M6, its code's table of pc to address, for
-entering the code at a loop's head or where an image resumes. An entry
-is published last, with one store. `--jit=off` runs the interpreter alone,
-`--jit=all` gives every function an entry at load, `baseline` and `opt`
-are the tiers of M6 and M9; `--jit-stats` prints at exit what the JIT did.
+it is interpreted; its tier; the counters tier 0 keeps for the tiering
+policy; and its code's table of pc to address. An entry is published
+last, with one store. `--jit=off` runs the interpreter alone, `--jit=all`
+gives every function an entry at load, `--jit=baseline` (the default)
+compiles a function when its counters say so, `opt` is tier 2 (M9);
+`--jit-stats` prints at exit what the JIT did.
+
+**Tiering (M6).** Tier 0 counts, per function, its calls (in
+`HANDOVER`, at every call) and its work -- the iterations of its loops
+(in `BACKWARD`, at every `JUMP` back) and the calls it makes (in
+`HANDOVER` too, for the caller) -- and compiles the function at the
+threshold (`--jit-calls=N`, `--jit-work=N`; the defaults are the
+sweep's, docs/plans/jit.md M6). The work counts for a function called
+once that runs long: the compiler's top level, or a driver loop; its
+code is entered when its next callee returns. The counters are instruction-based, so
+which functions are compiled, and when, is the same on every run of a
+program, and `--count` is the same in every mode. The interpreter goes
+on in a function's code wherever a run of instructions begins: the
+table of pc to address (`jit_osr`) has an entry for every target of the
+compiler's scan -- a jump's target, a loop's head, a handler, the
+instruction after a call, the `RESULT` after a `PRIMPUSH` -- and since a
+run's count is added where the run begins, entering there is exact.
+So a loop that got hot is entered at its head with the frame as it is
+(`BACKWARD`), a frame pushed before its function was compiled goes on
+in the code when its callee returns (`RESUME_NATIVE` in `RET`), a
+handler pushed by the interpreter runs its code when raised into
+(`RESUME_NATIVE` in `RAISED`), and the driver enters the code of any
+frame it is handed at such a place -- the top level's at its first
+instruction, an image's at its resume point. There is no OSR exit:
+tier 1's frame is the interpreter's, so there is nothing to
+reconstruct; leaving code for the interpreter is handing the VM back.
+
+**Invalidation.** `jit_invalidate` resets a function's entry and its
+counters and frees its table, and walks the VM's frames and handlers:
+every `native_ret` and `Handler.native` that lies in the function's
+code becomes NULL, so that a return or a raise into it goes to the
+interpreter, which goes on from `ret_pc` or the handler's pc. That is
+the whole of it, because the frames are the VM's (D4) and because no
+native code is on the machine stack while the interpreter runs (the
+driver's protocol): invalidation is only ever called from tier 0. The
+code's bytes stay in the region (dead bytes, counted by `--jit-stats`;
+reclaiming them is a later concern). `--jit-stress=N` invalidates the
+callee's code at every Nth call into compiled code, so that
+`scripts/check-jit.sh` holds every program to the interpreter's output
+and counts while functions are compiled, entered mid-way, invalidated
+and compiled again.
 `--jit-check` allocates executable memory through the system layer
 (`sys_code_alloc`, `sys_code_protect`, `sys_code_flush`,
 `sys_code_free`; `vm/sys.h`), writes a few bytes of this machine's code

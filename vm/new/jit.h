@@ -16,9 +16,12 @@
 
 #include "vm.h"
 
-/* --jit=MODE (vm->jit_mode): which tiers run */
+/* --jit=MODE (vm->jit.mode): which tiers run. No option gives
+   JIT_DEFAULT, which jit_program makes the mode of the sweep's choosing
+   (M6) the first time it is asked. */
 enum JitMode {
-    JIT_OFF = 0,        /* the interpreter alone */
+    JIT_DEFAULT = 0,    /* no --jit= given: JIT_DEFAULT_MODE (vm/new/jit.c) */
+    JIT_OFF,            /* the interpreter alone */
     JIT_BASELINE,       /* tiers 0 and 1, by the counters (M6) */
     JIT_OPT,            /* tiers 0, 1 and 2 (M9) */
     JIT_ALL             /* every function compiled at load, as BEAM does */
@@ -36,15 +39,23 @@ enum RunResult {
 
 /* One per function: the tier its code is at and the code's entry, which
    is NULL while the function is interpreted; the counters tier 0 keeps for
-   the tiering policy (M6); and the code's table of pc to address (M6). An
-   entry is published last, with one store, so that a compiling thread
-   could publish it too (D13). */
+   the tiering policy (M6: calls of the function, and its work -- the
+   iterations of its loops and the calls it makes -- against the thresholds
+   of JitProgram); and the code's table of pc to
+   address, one entry for each place a run of instructions begins (a jump's
+   target, a loop's head, a handler, the instruction after a call, the
+   RESULT after a PRIMPUSH), where the interpreter may enter the code with
+   the frame as it is (M6: jit_osr). An entry is published last, with one
+   store, so that a compiling thread could publish it too (D13). */
 typedef struct CodeObject {
     const void *entry;
     uint32_t tier;
     uint32_t size;          /* bytes of code */
     uint32_t calls;
-    uint32_t loops;
+    uint32_t work;
+    uint32_t nosr;          /* the table: pcs in order, and each one's offset from the entry */
+    uint32_t *osr_pcs;
+    uint32_t *osr_offs;
 } CodeObject;
 
 /* The code objects of the program a VM runs, made when the driver first
@@ -59,10 +70,24 @@ typedef struct JitProgram {
     uint8_t *code_mem;
     size_t code_cap, code_used;
     const void *enter_at, *leave_at;
+    /* the policy (M6): --jit=baseline compiles a function at its
+       calls_threshold-th call, or when its work -- the iterations of its
+       loops and the calls it makes, so that a function called once that
+       runs long is compiled too, and entered when its callee returns --
+       reaches work_threshold; --jit-stress=N invalidates the callee's code
+       at every Nth call into compiled code */
+    uint32_t calls_threshold, work_threshold;
+    uint32_t stress;
+    uint64_t stress_count;
+    int full;                   /* the region is full: nothing more is compiled */
     /* --jit-stats */
     uint64_t handed_native;     /* times the interpreter handed a frame to native code */
     uint64_t handed_interp;     /* times native code handed one back */
     uint64_t compiled;          /* functions given an entry */
+    uint64_t osr_entries;       /* times the interpreter went on in a function's code mid-way */
+    uint64_t invalidated;       /* code objects invalidated */
+    uint64_t dead_bytes;        /* their code, left in the region */
+    double compile_seconds;     /* CPU time compiling (clock) */
 } JitProgram;
 
 /* The state of the VM's JIT, or NULL where the VM is built without one
@@ -80,5 +105,14 @@ void jit_print_stats(void);
 int jit_check(void);
 /* tier 1: function f compiled, or not (vm/new/jit/compile.c) */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
+/* The policy's compile: f compiled and timed, unless the region is full. */
+void jit_tier_up(VM *vm, JitProgram *jit, uint32_t f);
+/* Where the code of co goes on at pc, or NULL where no run begins there. */
+const void *jit_osr(const CodeObject *co, uint32_t pc);
+/* Function f interpreted again: its entry reset, and every frame and
+   handler that would return into its code made to return to the
+   interpreter instead. Never called while native code runs: the driver's
+   protocol has none on the machine stack when the interpreter does. */
+void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f);
 
 #endif
