@@ -28,7 +28,8 @@ static const char *const fatal_text[] = {
     "tuple index %d out of range", "DECON of a constructor of tag %d where %d is wanted", "CONTAG on non-constructor",
     "MKEXN on non-constructor", "JUMPIF on non-bool", "JUMPIFNOT on non-bool", "JUMPIFNOTTAG on non-constructor",
     "SWITCH on non-constructor", "FIELD of a constructor of tag %d where %d is wanted", "constructor field %d out of range",
-    "POPHANDLER with no handler", "RAISE of non-exception"
+    "POPHANDLER with no handler", "RAISE of non-exception", "expected closure in call", "bad function index",
+    "a primitive that changes the world in PRIM"
 };
 
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
@@ -38,7 +39,97 @@ void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
 /* PRIM p d args: the common case in the loop's way (fastprim.h), or the
    primitive itself with its arguments pushed. 0 when done; else what the
    driver is to do, the machine unwound to a handler. */
+/* The registers of a function a call need not fill with unit: those
+   written -- and not read -- before the first instruction at which a
+   collection could see them or control could arrive from elsewhere. The
+   walk is the function's entry prefix in order, stopped at the first
+   instruction that may allocate or raise (rop_raises, or one of the
+   allocating ones), calls, branches, jumps or is a target; a register
+   read there before it is written needs the fill (unit is what the loop
+   would read). The answer is the lowest register needing it: the calls
+   fill from there up, since the compiler numbers registers by first use
+   (src/backend/regs.sml), which keeps the answer tight. */
+uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f) {
+    if (jit->fill_from[f] != UINT32_MAX) return jit->fill_from[f];
+    const Program *p = &vm->prog;
+    const Function *fn = &p->funcs[f];
+    const uint8_t *code = p->code;
+    uint32_t nlocals = fn->nlocals;
+    /* the targets of jumps within the function: where control arrives */
+    uint8_t *target = calloc(fn->code_end - fn->code_offset + 1, 1);
+    uint32_t lowest = nlocals;   /* nothing needs the fill, so far */
+    if (!target) { jit->fill_from[f] = 0; return 0; }
+    for (uint32_t pc = fn->code_offset; pc < fn->code_end; ) {
+        uint8_t op = code[pc];
+        uint32_t l = rop_length(code + pc);
+        for (int k = 0; k < rop_nfixed[op]; k++)
+            if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL) {
+                int32_t t = read_i32(code + pc + 1 + 4 * k);
+                if (t >= (int32_t)fn->code_offset && (uint32_t)t < fn->code_end) target[t - fn->code_offset] = 1;
+            }
+        if (op == ROP_SWITCH) {
+            uint32_t n = (uint32_t)read_i32(code + pc + 5);
+            for (uint32_t k = 0; k < n; k++) {
+                int32_t t = read_i32(code + pc + l + 5 * k + 1);
+                if (t >= (int32_t)fn->code_offset && (uint32_t)t < fn->code_end) target[t - fn->code_offset] = 1;
+            }
+            if (pc + l + 5 * n < fn->code_end) target[pc + l + 5 * n - fn->code_offset] = 1;
+            pc += l + 5 * n;
+        } else pc += l;
+    }
+    uint64_t written = 0;   /* registers 0..63; a function with more is filled whole */
+    if (nlocals > 64) { free(target); jit->fill_from[f] = 0; return 0; }
+    for (uint32_t pc = fn->code_offset; pc < fn->code_end; ) {
+        if (pc != fn->code_offset && target[pc - fn->code_offset]) break;
+        uint8_t op = code[pc];
+        uint32_t l = rop_length(code + pc);
+        /* what it reads: every register operand but the destination, and
+           the list's registers */
+        int dest = rop_dest[op];
+        for (int k = 0; k < rop_nfixed[op]; k++)
+            if (rop_kinds[op][k] == RK_REGISTER && k != dest) {
+                uint32_t r = (uint32_t)read_i32(code + pc + 1 + 4 * k);
+                if (r < nlocals && !(written & ((uint64_t)1 << r)) && r < lowest) lowest = r;
+            }
+        if (rop_list_at[op] >= 0 && !rop_list_prim[op]) {
+            uint32_t n = (uint32_t)read_i32(code + pc + 1 + 4 * rop_list_at[op]);
+            const uint8_t *L = code + pc + 1 + 4 * rop_nfixed[op];
+            for (uint32_t i = 0; i < n; i++) {
+                uint32_t r = (uint32_t)read_i32(L + 4 * i);
+                if (r < nlocals && !(written & ((uint64_t)1 << r)) && r < lowest) lowest = r;
+            }
+        } else if (rop_list_at[op] >= 0) {
+            /* a primitive's arguments: as many as its arity */
+            int prim = read_i32(code + pc + 1 + 4 * rop_list_at[op]);
+            uint32_t n = prim_arity[prim];
+            const uint8_t *L = code + pc + 1 + 4 * rop_nfixed[op];
+            for (uint32_t i = 0; i < n; i++) {
+                uint32_t r = (uint32_t)read_i32(L + 4 * i);
+                if (r < nlocals && !(written & ((uint64_t)1 << r)) && r < lowest) lowest = r;
+            }
+        }
+        /* a point a collection can happen, a call, a raise, or a branch:
+           the rest of the registers must be unit for it */
+        int flow = rop_flow[op];
+        if (rop_raises[op] || flow != FLOW_NEXT || op == ROP_TUPLE || op == ROP_CLOSURE || op == ROP_CON
+            || op == ROP_CONN || op == ROP_NEWEXN || op == ROP_MKEXN || op == ROP_PUSHHANDLER) break;
+        if (dest >= 0) {
+            uint32_t r = (uint32_t)read_i32(code + pc + 1 + 4 * dest);
+            if (r < nlocals) written |= (uint64_t)1 << r;
+        }
+        pc += l;
+    }
+    /* the lowest register not written before the stop, or read before */
+    for (uint32_t r = 0; r < nlocals && r < lowest; r++)
+        if (!(written & ((uint64_t)1 << r))) { lowest = r; break; }
+    free(target);
+    jit->fill_from[f] = lowest;
+    return lowest;
+}
+
 int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
+    JitProgram *jit = jit_program(vm);
+    if (jit->prim_calls) jit->prim_calls[prim]++;
     Value *base = vm->stack + vm->frames[vm->fp].base;
     uint32_t n = prim_arity[prim];
     if (prim_fast(prim, n, base, L, &base[d])) return 0;
@@ -163,6 +254,16 @@ const void *jit_h_raise(VM *vm, int32_t s) {
    else what the driver is to do -- after a raise, or where the primitive
    has made the program another (Runtime.restore), which the interpreter
    takes up at its RESULT */
+int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
+    (void)vm;
+    uint32_t n = a->len < b->len ? a->len : b->len;
+    int c = n ? memcmp(OBJ_BYTES(a), OBJ_BYTES(b), n) : 0;
+    if (c != 0) return c < 0 ? 0 : 2;
+    if (a->len == b->len) return 1;
+    return a->len < b->len ? 0 : 2;
+}
+int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { (void)vm; return values_equal(*x, *y); }
+
 int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
     uint32_t n = prim_arity[prim];
     for (uint32_t i = 0; i < n; i++) {
@@ -270,11 +371,39 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
         x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_GROW_RAX) {
+        /* the need in rax; then the instruction (at s.d) over again, since
+           the call clobbered what it had found */
+        x64_mov_rr(&m->a, ms_arg(m, 1), RAX);   /* before the sync, which uses rax */
+        ms_sync(m, s.pc, 0);
+        ms_call(m, (MsHelper)jit_h_grow);
+        ms_reload(m);
+        x64_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_FRAMES) {
         ms_sync(m, s.pc, 0);
         ms_call(m, (MsHelper)jit_h_grow_frames);
         ms_reload(m);
         x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_PRIM) {
+        /* a primitive done in line, in a case that is the helper's (M7):
+           back where the code went on, or, after a raise, the VM handed
+           back with what the driver is to do */
+        ms_sync(m, s.pc, 0);
+        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        x64_mov_ri(&m->a, ms_arg(m, 2), s.b);
+        x64_mov_ri(&m->a, ms_arg(m, 3), (int64_t)(intptr_t)s.L);
+        ms_call(m, (MsHelper)jit_h_prim);
+        ms_reload(m);
+        x64_test_rr(&m->a, RAX, RAX);
+        X64Label hand; x64_label_init(&hand);
+        x64_jcc(&m->a, CC_NE, &hand);
+        /* a comparison's bool back into the flags, as the fast path leaves
+           it, for the branch fused onto it (s.c) */
+        if (s.c) x64_cmp_mi(&m->a, BASER, 16 * s.b + 8, 0);
+        x64_jmp(&m->a, &s.back);
+        x64_bind(&m->a, &hand);
+        x64_label_free(&hand);
+        ms_handback_rax(m);
     } else {
         /* SLOW_RET: the frame of the top level returns through the helper */
         ms_sync(m, s.pc, 0);
@@ -367,6 +496,10 @@ static int emit_function(Jit *j, Scan *sc) {
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
+        /* the flags of a comparison hold to the next instruction, unless
+           control can arrive there from elsewhere (M7) */
+        j->flags_prev = sc->target[at] ? -1 : j->flags_for;
+        j->flags_for = -1;
         switch (op) {
 #include "jit_cases.h"
         default: j->unsupported = 1;
@@ -418,6 +551,10 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
     j.vm = vm; j.jit = jit; j.f = f;
+    j.flags_for = j.flags_prev = -1;
+    /* where the code will be placed: a known call jumps to its callee's
+       code by a rel32 from there */
+    j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
     j.from = fn->code_offset; j.to = fn->code_end;
     uint32_t len = j.to - j.from;
     j.labels = malloc(((size_t)len + 1) * sizeof(X64Label));

@@ -22,6 +22,10 @@ typedef struct Jit {
     X64Label *labels;       /* one per byte of the function's code, bound where an instruction that is a target begins */
     uint32_t from, to;      /* the function's code */
     int unsupported;        /* an instruction tier 1 does not compile was met */
+    /* a fused compare and branch (M7): the register whose bool the flags
+       hold (ZF: it is false) after the instruction just emitted, or -1;
+       and the same for the instruction before this one */
+    int32_t flags_for, flags_prev;
 } Jit;
 
 /* what native code says on a fatal error: the message of the interpreter */
@@ -29,7 +33,7 @@ enum JitFatal {
     FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
     FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
     FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
-    FATAL_POPHANDLER, FATAL_RAISE
+    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD
 };
 
 /* the label of the instruction at pc, for a jump */
@@ -59,6 +63,11 @@ const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
 int jit_h_primpush(VM *vm, int prim, const uint8_t *L);
+/* helpers that touch no state of the VM (no allocation, no raise, nothing
+   moved), so that the code calls them with nothing synced or reloaded
+   (M7): the VM is their first argument all the same, unused */
+int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
+int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);

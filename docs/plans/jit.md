@@ -34,7 +34,7 @@ What it rests on:
 | M4 | Tier 1, straight-line code, x86-64 | done |
 | M5 | Tier 1 complete, and Windows | done |
 | M6 | Tiering, OSR entry and the code cache | done |
-| M7 | Tier 1 made fast | |
+| M7 | Tier 1 made fast | done |
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | |
 | M9 | Tier 2: the IR and the back end | |
 | M10 | Tier 2: the optimisations | |
@@ -1907,6 +1907,106 @@ M8 to M12 about 6,000, and are planned again after M7.
 * **Done when:** measured; `--count` exact; stress and sanitiser green.
   The owner decides here whether to go on, and what `runeopt` is now
   for (D11).
+* **Done** (2026-09-26; `vm/new/jit/emit.c`, `compile.c`, `jit.c`,
+  `masm.c`, `x64.c`, `src/isa/reggen.sml`, `vm/vm.h`, about 900 lines):
+  * **The primitives in line** (`prim_inline` in `emit.c`): the sixty of
+    `fastprim.h`, each exactly what `prim_fast` gives and to a slow path
+    -- the helper, which does the primitive as the loop would and may
+    raise -- wherever `prim_fast` would answer 0. `int_div` and `int_mod`
+    floor as `runeopt`'s templates do; the real comparisons take
+    `ucomisd`'s unordered flags as false; `poly_eq` on a pointer or a
+    real, and `string_order`, go to lean helpers (`jit_h_values_equal`,
+    `jit_h_string_order`) that touch nothing of the VM, called with
+    nothing synced or reloaded; `ref_new` is an allocation in line.
+  * **A primitive not in line** is called as the loop calls it: its
+    arguments pushed above the registers, the VM exact, the primitive's
+    own C, the result taken from the stack; after a raise, on in the
+    handler's code where it has some. No helper between. `--jit-stats`
+    counts the calls of each primitive from code, most called first: what
+    to do in line next (the bootstrap's: `string_from_char`,
+    `string_concat`, `string_extract`, `int_to_string`, `array_new`, all
+    allocating).
+  * **A comparison and its branch as one:** the comparison leaves its
+    bool in the flags (`flags_for`), the count of a run is added with
+    `lea`, which leaves the flags alone, and a `JUMPIF` or `JUMPIFNOT` on
+    that register right after branches on the flags with no tag test and
+    no load; a comparison's slow path puts the bool back into the flags.
+  * **Calls through a closure in line** (`CALL`, `TAILCALL`): the closure
+    checked, its function found, the room made (a slow path grows the
+    stack and starts the instruction over; the frames are checked first,
+    since their slow path clobbers what was found), the registers made
+    and the frame pushed, the entry read from the code object and jumped
+    to. **Known calls jump straight into the callee's code** where it has
+    some: a call to the function itself to its entry's label, another's
+    by `jmp rel32` to its address (the code's placement is known before
+    it is emitted). A function whose code jumps into another's goes with
+    it when that one is invalidated (`jit_depend`, the callers recorded
+    at the jump; `jit_invalidate` walks them), rather than its code being
+    patched.
+  * **The return** writes into the register of the caller's `RESULT`,
+    which the frame records when it is pushed (`Frame.result`, `vm/vm.h`;
+    `UINT32_MAX` where the caller takes the value from the stack; made
+    again from the code at `ret_pc` for an image's frames), and jumps: no
+    decoding of the caller's code, in the loop's `RET` either.
+  * **Unit only where it is needed:** a call fills with unit the callee's
+    registers from the lowest one not provably written before the first
+    instruction at which a collection could see it or control could
+    arrive from elsewhere (`jit_fill_from`, from the generator's
+    `rop_dest`, the operand an instruction writes). Little in practice:
+    the walk stops at the first `PRIM` that may raise, since raising a
+    built-in exception allocates.
+  * **`--jit-perf-map`** writes `/tmp/perf-PID.map`, so that `perf
+    record` names compiled functions (`jit:NAME`).
+  * **What the Basis suite found** that the oracle's programs had not:
+    a call through a closure deep enough to grow the stack hung (the
+    sync before the growing helper clobbered the register holding the
+    need, so the stack never grew enough), and, once it grew, counted
+    the instruction again (the restart landed on the instruction's
+    label, which a jump target binds before the run's count; now the
+    slow path's own label, after it). `tests/lang/rt.deeprec_closure`
+    recurses 200,000 deep through a closure from now on, so the oracle
+    covers that path.
+  * Not done, by the profile: slots cached in machine registers within a
+    run (the profile after the above shows no load/store bottleneck left
+    that it would remove before tier 2's registers do, M9), `JUMPIFNOTTAG`
+    and `SWITCH` without the kind test, helpers as `call rel32` (the
+    region near the runtime).
+* **Measured** (`scripts/perf-cycles.sh --configs jit-off,jit-baseline,jit,opt`;
+  cycles, as a fraction of the interpreter's):
+
+  | Program | interpreter | default (`baseline`) | `--jit=all` | `runeopt` |
+  |---|---:|---:|---:|---:|
+  | array_sieve | 434.8M | 253.3M (0.58) | 253.6M (0.58) | 297.8M (0.68) |
+  | fib | 830.8M | 352.3M (0.42) | 352.4M (0.42) | 370.3M (0.45) |
+  | intinf_fact | 454.2M | 233.5M (0.51) | 232.4M (0.51) | 258.4M (0.57) |
+  | list_ops | 334.6M | 172.9M (0.52) | 172.7M (0.52) | 182.5M (0.55) |
+  | real_nbody | 657.7M | 359.5M (0.55) | 359.5M (0.55) | 435.6M (0.66) |
+  | string_ops | 663.8M | 386.0M (0.58) | 384.2M (0.58) | 392.2M (0.59) |
+  | tak | 224.8M | 81.5M (0.36) | 81.3M (0.36) | 77.3M (0.34) |
+  | word_bits | 533.3M | 168.4M (0.32) | 170.2M (0.32) | 212.2M (0.40) |
+  | the bootstrap | 11.8G | 6.6G (0.57) | 6.7G (0.57) | 6.8G (0.58) |
+
+  D12's first target -- at or above `runeopt` on the bootstrap and every
+  program of `tests/perf` -- is met on the bootstrap (0.57 against 0.58)
+  and on seven of the eight programs, by 2% (`string_ops`) to 20%
+  (`word_bits`, `real_nbody`: the primitives in line, where `runeopt`'s
+  are too, but on tagged 16-byte values read once), and missed on `tak`
+  by 5%: `tak` is nothing but calls of three arguments, and its
+  remaining cost is the frame pushed and popped through memory (the
+  room checked, five fields written, five registers filled with unit,
+  which no analysis can elide since its first `PRIM` may raise), where
+  `runeopt`'s stack machine writes less per call; its profile is 17%
+  process start-up besides (`_dl_relocate_object`, the runtime's
+  `memset`), the same for both. Each step on the way was measured
+  (`~/.cache` notes of the session, summarised in the commit): the
+  primitives in line and the fused branches took the bootstrap from 0.81
+  to 0.64 and turned the primitive-bound programs from slower than the
+  interpreter to the fastest; the calls in line, the direct primitive
+  calls and the direct jumps took it to 0.57; the fill elision and the
+  frame's result register were worth 1-2% each. Tier 1 is done with;
+  what it does not have is machine registers across instructions, which
+  is tier 2's (M9).
+
 
 ### M8. Preparing tier 2: representations in the image, profiles in tier 1 (M, about 600)
 

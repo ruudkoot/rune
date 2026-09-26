@@ -36,9 +36,10 @@
      in native code, RAISED(), on after a raise, into the handler's native
      code where it has some, BACKWARD(t), a loop's jump back, counted and
      gone on in the function's code where it has some, RESUME_NATIVE(f, pc),
-     on in function f's code at pc where a run begins there, and
-     NEW_PROGRAM(), the JIT's view made again of a program that became
-     another;
+     on in function f's code at pc where a run begins there, RESULT_OF(pc),
+     the frame just pushed told the register of the RESULT at pc, if that
+     is one, and NEW_PROGRAM(), the JIT's view made again of a program
+     that became another;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
      the object v points to, of that kind, or a fatal error;
    * NEXT, on to the next instruction, for a body that ends early. *)
@@ -121,7 +122,8 @@ struct
        (callee
         @ ["size_t top = (size_t)(sp - vm->stack);",
            "ROOM(top, fn);",
-           "vm_push_frame(vm, (uint32_t)fidx, c, pc, top);"]
+           "vm_push_frame(vm, (uint32_t)fidx, c, pc, top);",
+           "RESULT_OF(pc);"]
         @ enter
         @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
@@ -138,6 +140,7 @@ struct
        ["Value v = R(a);",
         "uint32_t back = fr->ret_pc;",
         "const void *back_native = fr->native_ret;",
+        "uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */",
         "size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */",
         "if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }",
         "vm->fp--;",
@@ -147,7 +150,7 @@ struct
         "/* the caller goes on at RESULT d, which takes the value: written",
         "   into d here, and RESULT passed over; anything else takes it from",
         "   the stack, as an image resumed at RESULT does */",
-        "if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }",
+        "if (result != UINT32_MAX) { R(result) = v; pc = back + 5; }",
         "else { PUSH(v); pc = back; }",
         "/* a caller in native code takes the frame back where it left it (M5);",
         "   one that kept no address, but whose function has code, goes on in it (M6) */",
@@ -292,6 +295,7 @@ struct
         "for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));",
         "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
         "vm_push_frame(vm, (uint32_t)a, NULL, pc, top);",
+        "RESULT_OF(pc);",
         "ENTER(slot, fn);",
         "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,

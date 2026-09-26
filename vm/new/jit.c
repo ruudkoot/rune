@@ -17,7 +17,22 @@
 #define DEFAULT_WORK 100
 
 static void free_tables(JitProgram *jit) {
-    for (uint32_t i = 0; jit->codes && i < jit->nfuncs; i++) { free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); }
+    for (uint32_t i = 0; jit->codes && i < jit->nfuncs; i++) {
+        free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); free(jit->codes[i].callers);
+    }
+}
+
+void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller) {
+    CodeObject *co = &jit->codes[callee];
+    for (uint32_t i = 0; i < co->ncallers; i++) if (co->callers[i] == caller) return;
+    if (co->ncallers == co->callers_cap) {
+        uint32_t cap = co->callers_cap ? co->callers_cap * 2 : 4;
+        uint32_t *c = realloc(co->callers, cap * sizeof *c);
+        if (!c) return;   /* not recorded: the caller keeps jumping into dead code, which is the same code */
+        co->callers = c;
+        co->callers_cap = cap;
+    }
+    co->callers[co->ncallers++] = caller;
 }
 
 static JitProgram *the_program;   /* one VM per process, for --jit-stats */
@@ -28,6 +43,9 @@ static void jit_make(VM *vm, JitProgram *jit) {
     free_tables(jit);
     free(jit->codes);
     jit->codes = calloc(p->nfuncs ? p->nfuncs : 1, sizeof(CodeObject));
+    free(jit->fill_from);
+    jit->fill_from = malloc((p->nfuncs ? p->nfuncs : 1) * sizeof *jit->fill_from);
+    if (jit->fill_from) for (uint32_t i = 0; i < p->nfuncs; i++) jit->fill_from[i] = UINT32_MAX;
     if (!jit->codes) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
     jit->code = p->code;
     jit->nfuncs = p->nfuncs;
@@ -35,6 +53,9 @@ static void jit_make(VM *vm, JitProgram *jit) {
     /* the code of the program before is left where it is: a frame of an
        image never returns into it, since native_ret is not carried */
     jit->code_used = jit->code_mem ? jit->code_used : 0;
+    /* what each function's calls must fill: worked out for all now, since
+       a call through a closure reads it from the table at run time */
+    if (jit->fill_from) for (uint32_t i = 0; i < p->nfuncs; i++) jit_fill_from(vm, jit, i);
     jit->calls_threshold = vm->jit.calls ? vm->jit.calls : DEFAULT_CALLS;
     jit->work_threshold = vm->jit.work ? vm->jit.work : DEFAULT_WORK;
     jit->stress = vm->jit.stress;
@@ -57,10 +78,25 @@ static void jit_make(VM *vm, JitProgram *jit) {
     }
 }
 
+/* --jit-perf-map: a line per function compiled, in the form perf reads
+   (tools/perf/Documentation/jit-interface.txt): start, size, name */
+static void perf_map(VM *vm, JitProgram *jit, uint32_t f) {
+    static FILE *map;
+    if (!map) {
+        char name[64];
+        snprintf(name, sizeof name, "/tmp/perf-%lld.map", (long long)sys_getpid());
+        map = fopen(name, "w");
+        if (!map) return;
+    }
+    fprintf(map, "%llx %x jit:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].entry, (unsigned)jit->codes[f].size, vm->prog.funcs[f].name);
+    fflush(map);
+}
+
 void jit_tier_up(VM *vm, JitProgram *jit, uint32_t f) {
     if (jit->full || jit->codes[f].entry) return;
     clock_t t0 = clock();
     if (!jit_compile(vm, jit, f) && jit->code_used + (1u << 20) > jit->code_cap) jit->full = 1;
+    else if (vm->jit.perf_map && jit->codes[f].entry) perf_map(vm, jit, f);
     jit->compile_seconds += (double)(clock() - t0) / CLOCKS_PER_SEC;
 }
 
@@ -96,6 +132,13 @@ void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     jit->dead_bytes += co->size;
     co->size = 0;
     jit->invalidated++;
+    /* the functions whose code jumps straight into this one's go with it */
+    uint32_t n = co->ncallers;
+    uint32_t *callers = co->callers;
+    co->ncallers = co->callers_cap = 0;
+    co->callers = NULL;
+    for (uint32_t i = 0; i < n; i++) jit_invalidate(vm, jit, callers[i]);
+    free(callers);
 }
 
 JitProgram *jit_program(VM *vm) {
@@ -104,6 +147,7 @@ JitProgram *jit_program(VM *vm) {
     if (!the_program) {
         the_program = calloc(1, sizeof(JitProgram));
         if (!the_program) { fprintf(stderr, "runevm: out of memory (JIT)\n"); exit(2); }
+        if (vm->jit.stats) the_program->prim_calls = calloc(PRIM__COUNT, sizeof(uint64_t));
         the_vm = vm;
         if (vm->jit.stats) atexit(jit_print_stats);
     }
@@ -126,6 +170,23 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->invalidated);
+    /* the primitives called from code, most called first: what is not in
+       line yet, or in line and out of its fast case */
+    if (jit->prim_calls) {
+        uint64_t total = 0;
+        for (int p = 0; p < PRIM__COUNT; p++) total += jit->prim_calls[p];
+        if (total) {
+            fprintf(stderr, "runevm: jit: %llu primitives called from code:", (unsigned long long)total);
+            for (int k = 0; k < 8; k++) {
+                int best = -1;
+                for (int p = 0; p < PRIM__COUNT; p++) if (jit->prim_calls[p] && (best < 0 || jit->prim_calls[p] > jit->prim_calls[best])) best = p;
+                if (best < 0) break;
+                fprintf(stderr, " %s %llu", prim_names[best], (unsigned long long)jit->prim_calls[best]);
+                jit->prim_calls[best] = 0;
+            }
+            fprintf(stderr, "\n");
+        }
+    }
 }
 
 /* A function of no arguments that returns 42, as this machine's code, or

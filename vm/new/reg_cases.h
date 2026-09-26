@@ -107,6 +107,7 @@ CASE(CALL) {
     size_t top = (size_t)(sp - vm->stack);
     ROOM(top, fn);
     vm_push_frame(vm, (uint32_t)fidx, c, pc, top);
+    RESULT_OF(pc);
     Value *slot = vm->stack + top;
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
@@ -152,6 +153,7 @@ CASE(RET) {
     Value v = R(a);
     uint32_t back = fr->ret_pc;
     const void *back_native = fr->native_ret;
+    uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */
     size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
     if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
     vm->fp--;
@@ -161,7 +163,7 @@ CASE(RET) {
     /* the caller goes on at RESULT d, which takes the value: written
        into d here, and RESULT passed over; anything else takes it from
        the stack, as an image resumed at RESULT does */
-    if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }
+    if (result != UINT32_MAX) { R(result) = v; pc = back + 5; }
     else { PUSH(v); pc = back; }
     /* a caller in native code takes the frame back where it left it (M5);
        one that kept no address, but whose function has code, goes on in it (M6) */
@@ -460,6 +462,7 @@ CASE(CALLK) {
     for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));
     for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
     vm_push_frame(vm, (uint32_t)a, NULL, pc, top);
+    RESULT_OF(pc);
     ENTER(slot, fn);
     HANDOVER((uint32_t)a);
     NEXT;

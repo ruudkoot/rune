@@ -46,9 +46,13 @@ stores into the heap are `SETENV`, the primitives `ref_set` and
 
 ## Frames, registers and the stack
 
-A frame is `{func, ret_pc, base, closure, native_ret}` in the array
-`vm->frames`; the handlers `{pc, sp, fp}` are a second array; the value
-stack a third. All three grow by doubling (`realloc`), which moves the
+A frame is `{func, ret_pc, base, closure, native_ret, result}` in the
+array `vm->frames` -- `result` the register of the caller's `RESULT`,
+recorded when the frame is pushed, so that a return writes into it
+without decoding the caller's code (M7; `UINT32_MAX` where the caller
+takes the value from the stack; not in an image, made again from the
+code at `ret_pc` when one is read); the handlers `{pc, sp, fp, native}`
+are a second array; the value stack a third. All three grow by doubling (`realloc`), which moves the
 value stack.
 
 A function's registers are its slots on the value stack from its frame's
@@ -271,12 +275,22 @@ after the caller's `RESULT` as its `native_ret`, the callee's registers
 made the code's own (`rbp`, `r14`), and its entry read from its code
 object and jumped to, or, where it has none, the VM made exact for the
 interpreter and handed back. A call through a closure (`CALL`,
-`TAILCALL`) goes through `jit_h_call` and `jit_h_tailcall`, which do what
-the loop does and answer with the callee's entry. `RET` writes the value
-into the register of the caller's `RESULT` -- read from the caller's code
-at `ret_pc`, as the loop's does -- pops the frame, and jumps straight into
-the caller's code where the frame kept a `native_ret`, else hands back to
-the interpreter; the frame of the top level returns through `jit_h_ret`.
+`TAILCALL`) is in line too since M7: the closure checked, its function
+found, the room made (a slow path grows the stack and starts the
+instruction over; the frames are checked first, since their slow path
+clobbers what was found), the registers made and the frame pushed, and
+the entry read from the callee's code object. A known call whose callee
+has code jumps straight into it (M7): a call to the function itself to
+its entry's label, another's by `jmp rel32` to its address, the code's
+placement being known before it is emitted; a function whose code jumps
+into another's goes with it when that one is invalidated (`jit_depend`:
+the callers are recorded at the jump, and `jit_invalidate` walks them),
+rather than its code being patched. `RET` writes the value into the
+register of the caller's `RESULT` -- which the frame records when it is
+pushed (`Frame.result`), as the loop's `RET` reads it too -- pops the
+frame, and jumps straight into the caller's code where the frame kept a
+`native_ret`, else hands back to the interpreter; the frame of the top
+level returns through `jit_h_ret`.
 So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine
 and counted by none (compile.c, a phantom), where a `RESULT` after a
 `PRIMPUSH` runs and takes the value the primitive left above the
@@ -286,6 +300,31 @@ an image), so that a raise -- `RAISE` through `jit_h_raise`, a primitive's
 through `jit_h_prim` -- lands in the handler's native code where it has
 some, from the interpreter too (`RAISED` in the loop's words). `--trace`
 runs the interpreter alone.
+
+Made fast (M7): **the primitives of `fastprim.h` are in line**
+(`prim_inline` in `emit.c`), each exactly what `prim_fast` gives and to
+a slow path -- the helper, which does the primitive as the loop would
+and may raise -- wherever `prim_fast` would answer 0 (a tag that is not
+the one, an overflow, a divisor of 0 or -1, an index out of bounds);
+`poly_eq` on a pointer or a real and `string_order` go to helpers that
+touch nothing of the VM (`jit_h_values_equal`, `jit_h_string_order`),
+called with nothing synced or reloaded, and `ref_new` is an allocation
+in line. **A primitive not in line is called as the loop calls it:** its
+arguments pushed above the registers, the VM exact, the primitive's own
+C, the result it left on the stack taken; after a raise, on in the
+handler's code where it has some, else the interpreter. **A comparison
+and its branch are one:** the comparison leaves its bool in the flags
+(`flags_for`), the count of a run is added with `lea`, which leaves the
+flags alone, and a `JUMPIF` or `JUMPIFNOT` on that register right after
+branches on them, with no tag test and no load; a comparison's slow path
+puts the bool back into the flags. **Unit goes only where it is
+needed:** a call fills the callee's registers from the lowest one not
+provably written before the first instruction at which a collection
+could see it or control could arrive from elsewhere (`jit_fill_from`,
+from the generator's `rop_dest`, the operand an instruction writes;
+little in practice, since a `PRIM` that may raise allocates). And
+`--jit-stats` counts the calls of each primitive from code, most called
+first, and `--jit-perf-map` writes `/tmp/perf-PID.map` for `perf record`.
 
 Correctness is `--count`: the code counts every instruction the loop
 would, allocates every object it would, and prints what it prints, which
@@ -319,7 +358,9 @@ FFI):
    since every value is in its slot), grow the value stack (which moves
    it), push and pop frames, raise (which pops frames and handlers and
    leaves the handler's frame on top), change the program
-   (`Runtime.restore`) or end the process. What it may not do is run
+   (`Runtime.restore`) or end the process. A helper that does none of
+   these -- compares two strings, `values_equal` -- is called with
+   nothing synced or reloaded (M7), and says so where it is declared. What it may not do is run
    bytecode: a helper never calls the loop or native code (no nesting;
    *The driver*), and a foreign function that calls back into SML is the
    one thing this sequence does not give (the FFI's decision, before M9).

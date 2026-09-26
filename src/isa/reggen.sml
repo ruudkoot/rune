@@ -125,6 +125,18 @@ struct
             @ List.map (fn (_, i : rinstruction) =>
                           "  " ^ (case #handlers i of Keeps => "0" | Installs => "1" | Removes => "2") ^ ",") is
             @ ["};",
+               "/* the operand that is the register the instruction writes (named d",
+               "   in src/isa/regs.sml), or -1: every other register operand, and a",
+               "   list's, is read (the JIT's unit-fill elision, docs/plans/jit.md M7) */",
+               "static const signed char rop_dest[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          let
+                            fun find (_, []) = "-1"
+                              | find (k, (name, _) :: rest) = if name = "d" then Int.toString k else find (k + 1, rest)
+                          in
+                            "  " ^ find (0, #operands i) ^ ","
+                          end) is
+            @ ["};",
                "",
                "#endif"])}
     end
