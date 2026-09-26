@@ -348,6 +348,9 @@ vm-asan: bin/runevm-asan bin/runevm-new-asan
 test-new-asan: bin/runevm-new-asan bin/rune-new $(RUNE)
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan
 	RUNEVM_JIT=all sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-asan-opt
+	chmod +x bin/runevm-new-asan-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-opt --out tests/out/new-asan-opt
 
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
@@ -431,6 +434,8 @@ test-windows: windows $(RUNE) bin/rune-new
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
 	  --vm bin/runevm-new.exe --vm bin/runevm-new32.exe
+	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new.exe
 	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
 # ------------------------------------------------------------- portability
@@ -596,9 +601,12 @@ test-stress: $(RUNE) vm bin/rune-new | build/.doctor-check
 	chmod +x bin/runevm-new-stress
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-jit-stress
 	chmod +x bin/runevm-new-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-opt-stress
+	chmod +x bin/runevm-new-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-stress --out tests/out/new-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit-stress --out tests/out/new-jit-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt-stress --out tests/out/new-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE)) RUNEVM="$(ROOT)/bin/runevm-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
@@ -720,6 +728,9 @@ test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all "$$@"\n' > bin/runevm-new-jit
 	chmod +x bin/runevm-new-jit
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-opt
+	chmod +x bin/runevm-new-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
 	sh scripts/check-jit.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-jit) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
 	bin/runevm-new --jit-check

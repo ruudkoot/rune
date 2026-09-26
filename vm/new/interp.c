@@ -66,7 +66,7 @@
     do { \
         if (jit) { \
             CodeObject *co_ = &jit->codes[(f)]; \
-            if (vm->jit.mode == JIT_BASELINE) { \
+            if (JIT_TIERS(vm->jit.mode)) { \
                 /* the caller's work too: called once but calling for ever, it \
                    is compiled here and entered when this callee returns */ \
                 CodeObject *me_ = &jit->codes[fr->func]; \
@@ -84,7 +84,7 @@
     do { \
         if (jit) { \
             CodeObject *co_ = &jit->codes[fr->func]; \
-            if (!co_->entry && vm->jit.mode == JIT_BASELINE && ++co_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
+            if (!co_->entry && JIT_TIERS(vm->jit.mode) && ++co_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
             if (co_->entry) { \
                 const void *at_ = jit_osr(co_, (t)); \
                 if (at_) { pc = (t); SYNC(); jit->at = at_; jit->osr_entries++; return RUN_NATIVE; } \
@@ -186,7 +186,7 @@ int vm_loop(VM *vm) {
                interpreter's own calls keep in HANDOVER; compiled only here,
                never from native code, whose pages the compiler would make
                writable under it */
-            if (!co->entry && vm->jit.mode == JIT_BASELINE && vm->pc == vm->prog.funcs[f].code_offset
+            if (!co->entry && JIT_TIERS(vm->jit.mode) && vm->pc == vm->prog.funcs[f].code_offset
                 && ++co->calls >= jit->calls_threshold) jit_tier_up(vm, jit, f);
             const void *at = co->entry ? jit_osr(co, vm->pc) : NULL;
             if (at) { jit->at = at; jit->osr_entries++; r = RUN_NATIVE; }
@@ -224,6 +224,12 @@ int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
     if (strncmp(arg, "--jit-calls=", 12) == 0) return count_arg(arg, 12, &jit->calls);
     if (strncmp(arg, "--jit-work=", 11) == 0) return count_arg(arg, 11, &jit->work);
     if (strncmp(arg, "--jit-stress=", 13) == 0) return count_arg(arg, 13, &jit->stress);
+    if (strncmp(arg, "--jit-tier=", 11) == 0) {
+        if (!count_arg(arg, 11, &jit->tier)) return 0;
+        if (jit->tier <= 2) return 1;
+        fprintf(stderr, "runevm: %s: the tiers are 1 and 2\n", arg);
+        return 0;
+    }
     if (strcmp(arg, "--jit-check") == 0) { *check = 1; return 1; }
     if (strcmp(arg, "--jit=off") == 0) { jit->mode = JIT_OFF; return 1; }
     if (strcmp(arg, "--jit=baseline") == 0) { jit->mode = JIT_BASELINE; return 1; }

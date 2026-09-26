@@ -294,7 +294,16 @@ refuses the other's file and image.
   invalidates the callee's code at every Nth call into it, for testing
   that frames return to the interpreter from code that is gone.
   `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
-  names compiled functions (`jit:NAME`).
+  names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). Under
+  `--jit=opt` a function is compiled by the same counters at tier 2
+  (plans/jit.md M9; ARCHITECTURE.md, Tier 2), whose code keeps ints,
+  words, chars, nullary constructors and reals of the function's
+  registers in machine registers and writes them back to their slots at
+  every safepoint; `--jit-tier=N` (1 or 2) fixes the tier under any
+  mode, so `--jit=all --jit-tier=2` compiles every function at tier 2,
+  the fifth run of `check-jit.sh` (`RUNEVM_JIT_TIER=N` in the environment
+  where no `--jit-tier=` is given, as `RUNEVM_JIT` for the mode: the
+  Windows suite runs `tests/lang` at tier 2 so).
 
 | Opcode | Operands | Effect |
 |---|---|---|
@@ -369,6 +378,10 @@ raised as noted.
   plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
   suites run so (`tests/run-tests.sh`, `make check-levels`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm --stack-size N file.rbc` sets the most bytes the stack (its
+  values, frames or handlers) may grow to, 1 GiB by default: a recursion
+  without end ends with `stack overflow` and status 2, not with the
+  machine's memory gone (`tests/lang/rt.stack_limit`);
 * `runevm --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);
 * `runevm --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,

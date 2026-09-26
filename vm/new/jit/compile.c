@@ -289,7 +289,187 @@ int jit_h_primpush(VM *vm, int prim, const uint8_t *L) {
 
 /* ---- the context ---- */
 
+/* the scan of a function (below): what the analysis of tier 2 walks */
+typedef struct Scan {
+    uint8_t *start;     /* 1 where an instruction begins */
+    uint8_t *target;    /* 1 where a jump lands, or a call returns */
+    uint8_t *ends;      /* 1 where the instruction ends a run */
+    uint8_t *phantom;   /* 1 at a RESULT after a call: the callee's RET does it, and it is passed over (M5) */
+} Scan;
+
 X64Label *jit_label(Jit *j, uint32_t pc) { return &j->labels[pc - j->from]; }
+X64Label *jit_landing(Jit *j, uint32_t pc) { return j->tier == 2 ? &j->landings[pc - j->from] : &j->labels[pc - j->from]; }
+
+#if JIT_TARGET
+/* ---- tier 2: what is live where, and the homes (M9) ---- */
+
+/* The registers an instruction reads and the one it writes, as the tables
+   say; a primitive's arguments as many as its arity. */
+static void uses_defs(const Program *p, uint32_t pc, uint64_t *uses, uint64_t *def) {
+    const uint8_t *code = p->code;
+    uint8_t op = code[pc];
+    *uses = 0; *def = 0;
+    int dest = rop_dest[op];
+    for (int k = 0; k < rop_nfixed[op]; k++)
+        if (rop_kinds[op][k] == RK_REGISTER) {
+            int32_t r = read_i32(code + pc + 1 + 4 * k);
+            if (r >= 0 && r < 64) { if (k == dest) *def |= (uint64_t)1 << r; else *uses |= (uint64_t)1 << r; }
+        }
+    if (rop_list_at[op] >= 0) {
+        uint32_t n;
+        if (rop_list_prim[op]) {
+            int prim = read_i32(code + pc + 1 + 4 * rop_list_at[op]);
+            n = prim >= 0 && prim < PRIM__COUNT ? prim_arity[prim] : 0;
+        } else n = (uint32_t)read_i32(code + pc + 1 + 4 * rop_list_at[op]);
+        const uint8_t *L = code + pc + 1 + 4 * rop_nfixed[op];
+        for (uint32_t i = 0; i < n; i++) {
+            int32_t r = read_i32(L + 4 * i);
+            if (r >= 0 && r < 64) *uses |= (uint64_t)1 << r;
+        }
+    }
+}
+
+/* live_in[at]: the registers live at the entry of the instruction at
+   from + at, by the usual backward walk to a fixed point. An instruction
+   that may raise has every handler of the function among its successors,
+   since a raise anywhere in a handler's region lands there. */
+static int liveness(Jit *j, const Scan *sc) {
+    const Program *p = &j->vm->prog;
+    const uint8_t *code = p->code;
+    uint32_t len = j->to - j->from;
+    uint64_t *live = calloc(len + 1, sizeof *live);
+    if (!live) return 0;
+    /* the handlers' labels */
+    uint64_t handlers_live = 0;
+    int changed = 1;
+    while (changed) {
+        changed = 0;
+        handlers_live = 0;
+        for (uint32_t pc = j->from; pc < j->to; ) {
+            uint8_t op = code[pc];
+            uint32_t l = rop_length(code + pc);   /* before the table of a SWITCH is passed over */
+            if (op == ROP_PUSHHANDLER) {
+                int32_t h = read_i32(code + pc + 1);
+                if (h >= (int32_t)j->from && (uint32_t)h < j->to) handlers_live |= live[h - j->from];
+            }
+            if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
+            pc += l;
+        }
+        /* backwards over the instructions */
+        uint32_t *starts = malloc((len + 1) * sizeof *starts);
+        if (!starts) { free(live); return 0; }
+        uint32_t nstarts = 0;
+        for (uint32_t at = 0; at < len; at++) if (sc->start[at]) starts[nstarts++] = at;
+        for (uint32_t k = nstarts; k-- > 0; ) {
+            uint32_t at = starts[k], pc = j->from + at;
+            uint8_t op = code[pc];
+            uint32_t l = rop_length(code + pc);
+            uint64_t out = 0;
+            int flow = rop_flow[op];
+            /* the successors */
+            if (flow == FLOW_NEXT || flow == FLOW_BRANCH || flow == FLOW_CALL) {
+                uint32_t nx = pc + l;
+                if (op == ROP_SWITCH) nx += 5 * (uint32_t)read_i32(code + pc + 5);
+                if (nx < j->to) out |= live[nx - j->from];
+            }
+            for (int q = 0; q < rop_nfixed[op]; q++)
+                if (rop_kinds[op][q] == RK_LABEL || rop_kinds[op][q] == RK_HANDLER_LABEL) {
+                    int32_t t = read_i32(code + pc + 1 + 4 * q);
+                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
+                }
+            if (op == ROP_SWITCH) {
+                uint32_t n = (uint32_t)read_i32(code + pc + 5);
+                for (uint32_t e = 0; e < n; e++) {
+                    int32_t t = read_i32(code + pc + l + 5 * e + 1);
+                    if (t >= (int32_t)j->from && (uint32_t)t < j->to) out |= live[t - j->from];
+                }
+                uint32_t past = pc + l + 5 * n;
+                if (past < j->to) out |= live[past - j->from];
+            }
+            uint64_t uses, def;
+            uses_defs(p, pc, &uses, &def);
+            uint64_t in = uses | (out & ~def);
+            /* a raise, in the instruction or in what it calls, happens
+               before the instruction defines anything: what a handler
+               needs is live at its entry */
+            if (rop_raises[op] || flow == FLOW_CALL || flow == FLOW_TAILCALL) in |= handlers_live;
+            if (in != live[at]) { live[at] = in; changed = 1; }
+        }
+        free(starts);
+    }
+    j->live_in = live;
+    return 1;
+}
+
+/* The homes: the registers of a representation a machine register can hold
+   -- an int, a word, a char, a nullary constructor in rbx, rsi or rdi (the
+   general registers the emitters never use as scratch), a real in xmm2 to
+   xmm15 -- the most used first, a use inside a loop counting for eight. */
+static int choose_homes(Jit *j) {
+    const Program *p = &j->vm->prog;
+    const Function *fn = &p->funcs[j->f];
+    const uint8_t *code = p->code;
+    uint32_t n = fn->nlocals;
+    if (!fn->has_meta || n > 64) return 0;
+    uint32_t *weight = calloc(n, sizeof *weight);
+    Home *homes = calloc(n, sizeof *homes);
+    if (!weight || !homes) { free(weight); free(homes); return 0; }
+    /* each loop: from its head to the last jump back to it */
+    uint32_t *last = calloc(fn->nloops ? fn->nloops : 1, sizeof *last);
+    if (!last) { free(weight); free(homes); return 0; }
+    for (uint32_t k = 0; k < fn->nloops; k++) last[k] = fn->loops[k];
+    for (uint32_t q = j->from; q < j->to; ) {
+        uint32_t l = rop_length(code + q);
+        if (code[q] == ROP_JUMP)
+            for (uint32_t k = 0; k < fn->nloops; k++)
+                if ((uint32_t)read_i32(code + q + 1) == fn->loops[k]) last[k] = q;
+        if (code[q] == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + q + 5);
+        q += l;
+    }
+    for (uint32_t pc = j->from; pc < j->to; ) {
+        uint8_t op = code[pc];
+        uint32_t l = rop_length(code + pc);
+        int in_loop = 0;
+        for (uint32_t k = 0; k < fn->nloops; k++)
+            if (pc >= fn->loops[k] && pc <= last[k]) in_loop = 1;
+        uint64_t uses, def;
+        uses_defs(p, pc, &uses, &def);
+        for (uint32_t r = 0; r < n; r++)
+            if (((uses | def) >> r) & 1) weight[r] += in_loop ? 8 : 1;
+        if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(code + pc + 5);
+        pc += l;
+    }
+    free(last);
+    static const int gprs[3] = { RBX, RSI, RDI };
+    int ngpr = 0, nxmm = 0;
+    for (;;) {
+        uint32_t best = UINT32_MAX;
+        for (uint32_t r = 0; r < n; r++) {
+            if (homes[r].kind != HOME_SLOT || weight[r] == 0) continue;
+            int rep = fn->reps[r];
+            int gpr = rep == REP_INT || rep == REP_WORD || rep == REP_CHAR || rep == REP_CON0;
+            int xmm = rep == REP_REAL;
+            if (!(gpr && ngpr < 3) && !(xmm && nxmm < 14)) continue;
+            if (best == UINT32_MAX || weight[r] > weight[best]) best = r;
+        }
+        if (best == UINT32_MAX) break;
+        int rep = fn->reps[best];
+        if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(XMM2 + nxmm++); homes[best].tag = T_REAL; }
+        else {
+            homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
+            homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR : T_CON0);
+        }
+    }
+    free(weight);
+    if (ngpr == 0 && nxmm == 0) { free(homes); return 0; }
+    j->homes = homes;
+    return 1;
+}
+/* the homes live at the entry of pc loaded from their slots */
+static void land(Jit *j, uint32_t pc) {
+    ms_reload_homes(&j->m, pc);
+}
+#endif
 
 X64Label *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg) {
     Slow *s = ms_slow(&j->m, SLOW_FATAL, j->next);
@@ -351,6 +531,7 @@ void jit_unsupported(Jit *j) { j->unsupported = 1; }
 static void emit_slow(Masm *m, Slow *sp) {
     Jit *j = (Jit *)m;   /* the Masm is the first member */
     Slow s = *sp;
+    m->cur_pc = s.cur;
     if (s.kind == SLOW_FATAL) {
         /* rcx, a value the message wants, before anything uses it */
         if (s.d) x64_mov_rr(&m->a, ms_arg(m, 2), RCX);
@@ -384,8 +565,9 @@ static void emit_slow(Masm *m, Slow *sp) {
     } else if (s.kind == SLOW_GROW_RAX) {
         /* the need in rax; then the instruction (at s.d) over again, since
            the call clobbered what it had found */
-        x64_mov_rr(&m->a, ms_arg(m, 1), RAX);   /* before the sync, which uses rax */
+        x64_mov_rr(&m->a, R11, RAX);   /* kept across the sync, which uses rax and writes the homes back (an argument's register may be one) */
         ms_sync(m, s.pc, 0);
+        x64_mov_rr(&m->a, ms_arg(m, 1), R11);
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
         x64_jmp(&m->a, &s.back);
@@ -438,13 +620,6 @@ static int supported(uint8_t op) { (void)op; return 1; }
    run (is a target, or follows an instruction that ends one) and how long
    its run is; 0 where an instruction is not supported. A SWITCH's table
    of JUMPs is data, never run, and not instructions here. */
-typedef struct Scan {
-    uint8_t *start;     /* 1 where an instruction begins */
-    uint8_t *target;    /* 1 where a jump lands, or a call returns */
-    uint8_t *ends;      /* 1 where the instruction ends a run */
-    uint8_t *phantom;   /* 1 at a RESULT after a call: the callee's RET does it, and it is passed over (M5) */
-} Scan;
-
 static int scan(Jit *j, Scan *sc) {
     const uint8_t *code = j->vm->prog.code;
     uint32_t len = j->to - j->from;
@@ -515,6 +690,7 @@ static int emit_function(Jit *j, Scan *sc) {
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
+        m->cur_pc = pc;
         /* the flags of a comparison hold to the next instruction, unless
            control can arrive there from elsewhere (M7) */
         j->flags_prev = sc->target[at] ? -1 : j->flags_for;
@@ -561,7 +737,9 @@ int jit_region_init(VM *vm, JitProgram *jit) {
 #endif
 }
 
-int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
+int jit_compile(VM *vm, JitProgram *jit, uint32_t f) { return jit_compile_tier(vm, jit, f, 1); }
+
+int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
 #if JIT_TARGET
     if (!jit->code_mem && !jit_region_init(vm, jit)) return 0;
     Program *p = &vm->prog;
@@ -571,6 +749,7 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
+    j.tier = tier;
     /* where the code will be placed: a known call jumps to its callee's
        code by a rel32 from there */
     j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
@@ -585,9 +764,38 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
         j.sites = calloc(j.sites_cap, sizeof(Site));
         if (!j.sites) ok = 0;
     }
+    /* tier 2: the homes, where the function has registers a machine
+       register can hold; else its code is tier 1's */
+    if (ok && tier == 2) {
+        if (liveness(&j, &sc) && choose_homes(&j)) {
+            j.landings = malloc(((size_t)len + 1) * sizeof(X64Label));
+            if (!j.landings) ok = 0;
+            else {
+                for (uint32_t i = 0; i <= len; i++) x64_label_init(&j.landings[i]);
+                j.m.homes = j.homes;
+                j.m.live = j.live_in;
+                j.m.from = j.from;
+                /* the entry: the parameters' homes loaded */
+                x64_bind(&j.m.a, &j.landings[0]);
+                land(&j, j.from);
+            }
+        } else { j.tier = 1; free(j.live_in); j.live_in = NULL; }
+    }
     ok = ok && emit_function(&j, &sc);
     if (ok) {
         ms_emit_slow_paths(&j.m, emit_slow);
+        ok = !j.m.a.failed;
+    }
+    /* tier 2: the landings of the other targets, after the code: the
+       homes live there loaded, then on to the instruction */
+    if (ok && j.tier == 2) {
+        for (uint32_t i = 1; i < len; i++)
+            if (sc.target[i] && j.labels[i].at >= 0) {
+                x64_bind(&j.m.a, &j.landings[i]);
+                j.m.cur_pc = j.from + i;
+                land(&j, j.from + i);
+                x64_jmp(&j.m.a, &j.labels[i]);
+            }
         ok = !j.m.a.failed;
     }
     if (ok) {
@@ -618,26 +826,33 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
                 co->osr_pcs = malloc((nosr ? nosr : 1) * sizeof *co->osr_pcs);
                 co->osr_offs = malloc((nosr ? nosr : 1) * sizeof *co->osr_offs);
                 co->nosr = 0;
+                /* tier 2 is entered at its landings, which load the homes */
                 if (co->osr_pcs && co->osr_offs)
                     for (uint32_t i = 0; i < len; i++)
-                        if (sc.target[i] && j.labels[i].at >= 0) { co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)j.labels[i].at; co->nosr++; }
+                        if (sc.target[i] && j.labels[i].at >= 0) {
+                            X64Label *l = j.tier == 2 ? &j.landings[i] : &j.labels[i];
+                            co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)l->at; co->nosr++;
+                        }
                 free(co->sites);
                 co->sites = j.sites; co->nsites = j.nsites;
                 j.sites = NULL;
-                co->tier = 1;
+                co->tier = (uint32_t)j.tier;
                 co->size = (uint32_t)j.m.a.n;
                 co->entry = at;   /* published last */
                 jit->compiled++;
+                if (j.tier == 2) jit->compiled_opt++;
             }
         }
     }
     if (j.labels) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.labels[i]); free(j.labels); }
+    if (j.landings) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.landings[i]); free(j.landings); }
+    free(j.live_in); free(j.homes);
     free(j.sites);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);
     ms_free(&j.m);
     return ok;
 #else
-    (void)vm; (void)jit; (void)f;
+    (void)vm; (void)jit; (void)f; (void)tier;
     return 0;
 #endif
 }

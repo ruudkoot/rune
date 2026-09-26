@@ -1,0 +1,1 @@
+runevm: stack overflow: the stack would exceed 1048576 bytes (--stack-size N raises the limit)

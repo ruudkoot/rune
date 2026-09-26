@@ -8,7 +8,8 @@
 # bin/runevm-new --jit=all, every function given to the JIT
 # (docs/plans/jit.md, M3), and the same for jit-off (the interpreter
 # alone), -baseline and -opt; jit-baseline+c10+w100 is --jit=baseline
-# --jit-calls=10 --jit-work=100 (M6, the sweep). Each program is wrapped as `make perf` wraps it
+# --jit-calls=10 --jit-work=100 (M6, the sweep), and +t2 adds --jit-tier=2
+# (M9: jit-all+t2 is every function at tier 2). Each program is wrapped as `make perf` wraps it
 # (tests/basis/run-matrix.sh, wall_program): its body as a function called R
 # times, R from the `wall R` line of its .budget, so that a run is long
 # enough to measure and the numbers stand beside docs/performance.md's. The
@@ -72,6 +73,7 @@ jit_mode() {
     case $item in
       c*) opts="$opts --jit-calls=${item#c}" ;;
       w*) opts="$opts --jit-work=${item#w}" ;;
+      t*) opts="$opts --jit-tier=${item#t}" ;;
     esac
   done
   echo "$opts"

@@ -26,6 +26,9 @@ enum JitMode {
     JIT_OPT,            /* tiers 0, 1 and 2 (M9) */
     JIT_ALL             /* every function compiled at load, as BEAM does */
 };
+/* the modes in which the loop tiers a function up by its counters (M6):
+   to tier 1 under baseline, to tier 2 under opt (M9) */
+#define JIT_TIERS(mode) ((mode) == JIT_BASELINE || (mode) == JIT_OPT)
 
 /* What an engine says when it hands the VM back to the driver, with the
    VM exact (sp, pc, fp, the count) */
@@ -106,6 +109,7 @@ typedef struct JitProgram {
     uint64_t handed_native;     /* times the interpreter handed a frame to native code */
     uint64_t handed_interp;     /* times native code handed one back */
     uint64_t compiled;          /* functions given an entry */
+    uint64_t compiled_opt;      /* of them, at tier 2 (M9) */
     uint64_t osr_entries;       /* times the interpreter went on in a function's code mid-way */
     uint64_t invalidated;       /* code objects invalidated */
     uint64_t dead_bytes;        /* their code, left in the region */
@@ -137,6 +141,7 @@ void jit_print_stats(void);
 int jit_check(void);
 /* tier 1: function f compiled, or not (vm/new/jit/compile.c) */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
+int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier);   /* at tier 1 or 2 (M9) */
 /* The policy's compile: f compiled and timed, unless the region is full. */
 void jit_tier_up(VM *vm, JitProgram *jit, uint32_t f);
 /* Where the code of co goes on at pc, or NULL where no run begins there. */

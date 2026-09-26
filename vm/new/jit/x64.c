@@ -228,6 +228,7 @@ static void sse_rr(X64 *a, int prefix, int op, int dst, int src) {
 }
 void x64_movsd_xm(X64 *a, int xmm, int base, int32_t disp) { sse_rm(a, 0xF2, 0x10, xmm, base, disp); }
 void x64_movsd_mx(X64 *a, int base, int32_t disp, int xmm) { sse_rm(a, 0xF2, 0x11, xmm, base, disp); }
+void x64_movsd_xx(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x10, dst, src); }
 void x64_addsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x58, dst, src); }
 void x64_subsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x5C, dst, src); }
 void x64_mulsd(X64 *a, int dst, int src) { sse_rr(a, 0xF2, 0x59, dst, src); }

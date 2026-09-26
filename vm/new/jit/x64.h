@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 enum X64Reg { RAX = 0, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15 };
-enum X64Xmm { XMM0 = 0, XMM1, XMM2, XMM3 };
+enum X64Xmm { XMM0 = 0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15 };
 /* the condition of a jcc or setcc: the low four bits of its opcode */
 enum X64Cond { CC_O = 0, CC_NO, CC_B, CC_AE, CC_E, CC_NE, CC_BE, CC_A, CC_S, CC_NS, CC_P, CC_NP, CC_L, CC_GE, CC_LE, CC_G };
 
@@ -106,6 +106,7 @@ void x64_setcc_r8(X64 *a, int cc, int r);    /* the low byte of r (rax..rbx: no 
 /* SSE2 on doubles */
 void x64_movsd_xm(X64 *a, int xmm, int base, int32_t disp);
 void x64_movsd_mx(X64 *a, int base, int32_t disp, int xmm);
+void x64_movsd_xx(X64 *a, int dst, int src);   /* dst := src, the low double */
 void x64_addsd(X64 *a, int dst, int src);
 void x64_subsd(X64 *a, int dst, int src);
 void x64_mulsd(X64 *a, int dst, int src);

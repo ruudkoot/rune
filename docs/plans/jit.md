@@ -36,7 +36,7 @@ What it rests on:
 | M6 | Tiering, OSR entry and the code cache | done |
 | M7 | Tier 1 made fast | done |
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | done |
-| M9 | Tier 2: the IR and the back end | |
+| M9 | Tier 2: the registers given homes | done |
 | M10 | Tier 2: the optimisations | |
 | M11 | Deoptimisation, OSR exit and invalidation | |
 | M12 | aarch64 | |
@@ -2140,7 +2140,7 @@ to come:
 * **Unchanged:** M11 as planned; D10 (the 16-byte value) and the FFI's
   callback question stand before M9, as the decisions of 2026-09-25 say.
 
-### M9. Tier 2: the IR and the back end (XL, about 3,000)
+### M9. Tier 2: the registers given homes (planned as the IR and the back end, XL, about 3,000; built as L, about 500)
 
 * **What:**
   * bytecode and metadata to a control-flow graph in SSA, blocks with
@@ -2157,6 +2157,101 @@ to come:
   exact; `--gc-stress 1` and the sanitiser pass; measured against tier 1.
 * **Touches:** the FFI (a typed convention appears), green threads
   (nothing outside the frame at a safepoint).
+* **Done** (2026-09-26; `vm/new/jit/masm.{h,c}`, `compile.{h,c}`,
+  `emit.c`, `x64.{h,c}`, `jit.{h,c}`, `interp.c`, about 500 lines of C;
+  `vm/runtime.c` and `vm/main.c` for the stack's limit; the oracle, the
+  Makefile, `ARCHITECTURE.md`, `bytecode.md`, `AGENTS.md`):
+  * **Not the IR the plan named.** The SSA form and the linear scan
+    were planned when the bytecode carried no representations. Since M8
+    the compiler's `Regs` has allocated the function's registers by
+    liveness within a representation class, and the section says what
+    each holds; a second allocation over SSA would have redone that
+    work to reach the same registers. What tier 1 cannot do is keep a
+    value out of its tagged slot, and that needs no IR: tier 2 is
+    tier 1's code with the values of some registers kept in machine
+    registers -- their *homes* -- for the whole of the function
+    (ARCHITECTURE.md, Tier 2).
+  * **The homes.** Per function, the registers whose representation a
+    machine register can hold, the most used first, a use inside a loop
+    (the section's heads to the last jump back) counting for eight: an
+    int, a word, a char or a nullary constructor in `rbx`, `rsi` or
+    `rdi`, a real in `xmm2` to `xmm15`. A pointer never has a home, so
+    the roots are the slots as before; a home holds the payload alone,
+    the tag being the representation's. The macro-assembler's accessors
+    consult the homes, so the emitters are tier 1's unchanged, and a
+    tag test of a homed register is decided as the code is made.
+  * **Liveness and safepoints.** The registers live at each instruction's
+    entry, backwards over the function, the handlers being successors of
+    every instruction that may raise or call, at its entry. `ms_sync`
+    writes the live homes back with their tags before the VM is made
+    exact; `ms_reload` loads what is live at the entry and at the end of
+    the instruction again after (C clobbers `rsi`, `rdi` and every xmm).
+    A helper that touches nothing of the VM still needs the homes written
+    back before its arguments are set -- the argument registers are
+    homes -- and loaded again after (`ms_call_lean`); a `CALL`, `CALLK`
+    or `TAILCALL` writes them back first. Wherever code is entered from
+    outside -- the entry, after a call, a handler, what the interpreter
+    enters mid-way -- a *landing* loads the homes live there and goes on
+    to the label (`jit_landing`); the OSR table, `native_ret` and a
+    handler's `native` hold landings. Windows keeps `xmm6` to `xmm15`
+    across C, so the enter stub saves them.
+  * **Modes.** `--jit=opt` compiles at tier 2 by the counters `baseline`
+    uses (they did not fire under `opt` before: fixed), `--jit-tier=N`
+    fixes the tier under any mode, `--jit-stats` counts tier 2's
+    functions, the perf map names them `jit2:`. A function whose
+    registers give no home gets tier 1's code. The oracle runs every
+    program at tier 2 and with every other function at tier 2, and the
+    compiler compiling itself at tier 2; `make test-new-jit`,
+    `test-new-asan` and `test-stress` run `tests/lang` at tier 2 too.
+  * **Not built:** unit written into dead pointer slots at safepoints
+    (the re-plan's idea for roots precise by liveness) -- the deviation
+    M8 records stands; the calling convention stays tier 1's, as
+    planned.
+  * **What went wrong on the way, for the record.** Three bugs of the
+    same shape: a call into C clobbers `rsi` and `rdi` by its arguments
+    before the write-back (`PUSHHANDLER` had no reload at all; the slow
+    path that grows the stack moved its argument first), which made
+    `Int.grow`'s `Overflow` handler never run and the recursion never
+    end -- the VM's stack grew to 29 GiB and the kernel killed WSL. So
+    both VMs now stop a stack at 1 GiB (`--stack-size N`,
+    `tests/lang/rt.stack_limit`, the resumed child of a fork included),
+    and the oracle runs each program under `timeout`. Then the two
+    forward walks of the analysis skipped a `SWITCH`'s table and then
+    took the length of the byte they landed on: the compile itself
+    looped, on every program with a `SWITCH` in a function with homes.
+    And `RET` made a homed value whole in its slot with two 8-byte stores
+    and loaded it with one 16-byte load, a store-forwarding stall on
+    every return: fib was 7% slower than tier 1 until the value was
+    stored where it goes straight from its home (then 23% faster).
+* **Measured** (`scripts/perf-cycles.sh --configs new,jit,jit-all+t2,jit-opt`,
+  `--runs 5`, least cycles; `new` is the default, tier 1 by the
+  counters; `jit` every function at tier 1; `jit-all+t2` every function
+  at tier 2; `jit-opt` tier 2 by the counters):
+
+  | Program | tier 1 (default) | all at tier 1 | all at tier 2 | `--jit=opt` |
+  |---|---:|---:|---:|---:|
+  | array_sieve | 263.0M | 1.00 | 0.59 | 0.59 |
+  | fib | 364.8M | 0.99 | 0.77 | 0.77 |
+  | intinf_fact | 238.2M | 0.99 | 0.94 | 0.94 |
+  | list_ops | 183.4M | 1.00 | 0.90 | 0.91 |
+  | real_nbody | 359.9M | 1.00 | 0.90 | 0.89 |
+  | string_ops | 393.2M | 0.98 | 0.91 | 0.92 |
+  | tak | 83.7M | 1.01 | 0.94 | 0.95 |
+  | word_bits | 170.9M | 1.01 | 0.48 | 0.50 |
+  | bootstrap | 7.2G | 0.98 | 0.97 | 0.99 |
+
+  Cycles of the default in the second column, the others as fractions
+  of it. The loops over ints and words gain the most (word_bits 2.1x,
+  array_sieve 1.7x); fib 1.3x from its arguments and results in
+  registers; the rest 5 to 10%, the bootstrap 1 to 3%. Under `--jit=all`
+  1,443 of the compiler's 2,130 functions get homes, the code is 4%
+  larger (12.1 MB against 11.6) and takes the same time to make
+  (0.13 s); under `--jit=opt` 1,243 functions are compiled, 858 of them
+  at tier 2. D12's second target -- 1.5x tier 1 on the compute-bound
+  programs -- is met on word_bits alone: fib, tak and real_nbody keep
+  their time in the calls, the tuples and the allocation, which are
+  M10's items (registers across the calls, `SELECT` without checks,
+  the allocations of a block as one), not this milestone's.
 
 ### M10. Tier 2: the optimisations (XL, about 2,000)
 

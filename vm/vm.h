@@ -228,6 +228,7 @@ typedef struct JitOptions {
     const char *only;
     uint32_t calls, work;
     uint32_t stress;
+    uint32_t tier;           /* --jit-tier=N: the tier functions are compiled at (0: the mode's; M9) */
 } JitOptions;
 
 #define NUM_BUILTIN_EXNS 8
@@ -237,6 +238,7 @@ typedef struct VM {
 
     Value *stack;
     size_t sp, stack_cap;
+    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
 
     Frame *frames;
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */

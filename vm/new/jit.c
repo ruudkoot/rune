@@ -143,14 +143,20 @@ static void perf_map(VM *vm, JitProgram *jit, uint32_t f) {
         map = fopen(name, "w");
         if (!map) return;
     }
-    fprintf(map, "%llx %x jit:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].entry, (unsigned)jit->codes[f].size, vm->prog.funcs[f].name);
+    fprintf(map, "%llx %x jit%u:%s\n", (unsigned long long)(uintptr_t)jit->codes[f].entry, (unsigned)jit->codes[f].size, (unsigned)jit->codes[f].tier, vm->prog.funcs[f].name);
     fflush(map);
 }
 
+/* the tier a function is compiled at: --jit-tier=N, else tier 2 under
+   --jit=opt and tier 1 under the other modes (M9) */
+static int tier_of(const VM *vm) {
+    if (vm->jit.tier) return (int)vm->jit.tier;
+    return vm->jit.mode == JIT_OPT ? 2 : 1;
+}
 void jit_tier_up(VM *vm, JitProgram *jit, uint32_t f) {
     if (jit->full || jit->codes[f].entry) return;
     clock_t t0 = clock();
-    if (!jit_compile(vm, jit, f) && jit->code_used + (1u << 20) > jit->code_cap) jit->full = 1;
+    if (!jit_compile_tier(vm, jit, f, tier_of(vm)) && jit->code_used + (1u << 20) > jit->code_cap) jit->full = 1;
     else if (vm->jit.perf_map && jit->codes[f].entry) perf_map(vm, jit, f);
     jit->compile_seconds += (double)(clock() - t0) / CLOCKS_PER_SEC;
 }
@@ -221,8 +227,8 @@ int jit_run(VM *vm, JitProgram *jit, const void *at) {
 void jit_print_stats(void) {
     JitProgram *jit = the_program;
     if (!jit) return;
-    fprintf(stderr, "runevm: jit: %llu of %u functions compiled in %.3f s, %llu bytes of code (%llu dead); handed to native code %llu times, back %llu; entered mid-way %llu times; %llu invalidated\n",
-            (unsigned long long)jit->compiled, jit->nfuncs, jit->compile_seconds, (unsigned long long)jit->code_used,
+    fprintf(stderr, "runevm: jit: %llu of %u functions compiled (%llu at tier 2) in %.3f s, %llu bytes of code (%llu dead); handed to native code %llu times, back %llu; entered mid-way %llu times; %llu invalidated\n",
+            (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->invalidated);
     if (jit->profile) print_profile(jit);

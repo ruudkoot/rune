@@ -164,7 +164,16 @@ keep these invariants:
   code changes with its C in `vm/prims.c`. A native address lives in a
   frame's `native_ret`, a handler's `native` and the driver's `jit->at`
   and nowhere else, so that invalidating a function's code is a walk
-  over the frames and handlers (`jit_invalidate`). **The representations
+  over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
+  ARCHITECTURE.md): an emitter reads and writes a register through the
+  macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
+  `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
+  scratch, or sets a call's arguments, writes the homes back first
+  (`ms_writeback`) and loads them again after (`ms_reload`,
+  `ms_reload_homes`, `ms_call_lean`); a place code is entered from
+  outside is a landing (`jit_landing`), never a label. Tier 2 is run
+  by `check-jit.sh` on every program (`--jit=all --jit-tier=2`, and
+  every other function). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
   of a known representation says so in the register checker's lint
   (`vm/new/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same

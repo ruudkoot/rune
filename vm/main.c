@@ -8,6 +8,8 @@ static void usage(void) {
     fprintf(stderr,
         "usage: runevm [options] file.rbc [args ...]\n"
         "  --heap-size N   initial semispace size in bytes (default 4194304)\n"
+        "  --stack-size N  the most bytes the stack may grow to (default 1073741824): a\n"
+        "                  recursion without end stops here, not at the machine's memory\n"
         "  --disasm        print the bytecode and exit\n"
         "  --trace         trace every instruction to stderr\n"
         "  --stats         print heap statistics to stderr at exit\n"
@@ -46,7 +48,7 @@ static int size_arg(const char *text, size_t *out) {
 }
 
 int main(int argc, char **argv) {
-    size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
+    size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
     int jit_check = 0, jit_given = 0;
     JitOptions jit;
@@ -57,6 +59,8 @@ int main(int argc, char **argv) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &heap)) { usage(); return 2; }
             if (heap < 4096) heap = 4096;
+        } else if (strcmp(argv[i], "--stack-size") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &stack) || stack < 65536) { usage(); return 2; }
         } else if (strcmp(argv[i], "--disasm") == 0) disasm = 1;
         else if (strcmp(argv[i], "--trace") == 0) trace = 1;
         else if (strcmp(argv[i], "--stats") == 0) stats = 1;
@@ -83,12 +87,20 @@ int main(int argc, char **argv) {
     /* RUNEVM_JIT names the mode where no --jit= does: for the test runners,
        which start a VM they cannot give options (vm/new; docs/bytecode.md) */
     if (!jit_given && getenv("RUNEVM_JIT") && !vm_jit_env(getenv("RUNEVM_JIT"), &jit.mode)) return 2;
+    /* and RUNEVM_JIT_TIER the tier, where no --jit-tier= does (M9) */
+    if (!jit.tier && getenv("RUNEVM_JIT_TIER")) {
+        const char *t = getenv("RUNEVM_JIT_TIER");
+        if (strcmp(t, "1") == 0) jit.tier = 1;
+        else if (strcmp(t, "2") == 0) jit.tier = 2;
+        else { fprintf(stderr, "runevm: RUNEVM_JIT_TIER=%s: 1 or 2\n", t); return 2; }
+    }
     if (jit_check) return vm_jit_check();
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which
            gives it `Restored` */
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
+        if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
         if (!vm || !vm_restore(vm, restore, err, sizeof err)) {
             fprintf(stderr, "runevm: --restore: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -103,6 +115,7 @@ int main(int argc, char **argv) {
            the parent's, and it carries on where the parent forked */
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
+        if (vm) vm->stack_limit = stack;
         if (!vm || !vm_resume(vm, resume, err, sizeof err)) {
             fprintf(stderr, "runevm: --resume: %s\n", vm ? err : "out of memory");
             if (vm) vm_destroy(vm);
@@ -124,6 +137,7 @@ int main(int argc, char **argv) {
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;
+    vm->stack_limit = stack;
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
 

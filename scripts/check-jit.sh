@@ -12,7 +12,9 @@
 # callee's code at every fifth call into it (--jit=baseline --jit-calls=1
 # --jit-work=1 --jit-stress=5, M6), so that frames pushed interpreted
 # return into code, loops are entered mid-way, and frames that would
-# return into dead code return to the interpreter.
+# return into dead code return to the interpreter. A fifth compiles every
+# function at tier 2 (--jit=all --jit-tier=2, M9), whose code keeps
+# values in machine registers, and a sixth every other one at tier 2.
 #   scripts/check-jit.sh [--rune BIN] [--vm BIN] [-j N]
 set -u
 cd "$(dirname "$0")/.."
@@ -31,6 +33,11 @@ while [ $# -gt 0 ]; do
 done
 out=tests/out/jit-check
 mkdir -p "$out"
+# a run that never ends (code that loops, or a compile that does) is
+# stopped after ten minutes where the system has timeout, so that the
+# oracle reports it rather than waiting
+limit=""
+command -v timeout > /dev/null 2>&1 && limit="timeout 600"
 
 # --one BASE: one program, BASE without .sml; prints a line when it fails
 if [ -n "$one" ]; then
@@ -45,19 +52,23 @@ if [ -n "$one" ]; then
     echo "FAIL jit.$name: $(grep -m1 . "$out/$name/cerr")"; exit 0
   fi
   "$vm" --disasm "$out/$name/prog.rbc" > "$out/$name/disasm" 2> /dev/null
-  for mode in off all odd stress; do
+  for mode in off all odd stress opt optodd; do
     jit="--jit=$mode"
     [ "$mode" = odd ] && jit="--jit=all --jit-only=odd"
     [ "$mode" = stress ] && jit="--jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=5"
+    [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
+    [ "$mode" = optodd ] && jit="--jit=all --jit-only=odd --jit-tier=2"
     # shellcheck disable=SC2086
-    (cd "$out/$name" && "$root/$vm" --count $jit $vmargs prog.rbc $args < "$stdin" > "stdout.$mode" 2> "stderr.$mode")
+    (cd "$out/$name" && $limit "$root/$vm" --count $jit $vmargs prog.rbc $args < "$stdin" > "stdout.$mode" 2> "stderr.$mode")
     echo "exit $?" >> "$out/$name/stderr.$mode"
     sed -n 's/^runevm: count: //p' "$out/$name/stderr.$mode" > "$out/$name/count.$mode"
   done
-  for mode in all odd stress; do
+  for mode in all odd stress opt optodd; do
     what="--jit=all"
     [ "$mode" = odd ] && what="every other function compiled"
     [ "$mode" = stress ] && what="tiering up and invalidating (--jit-stress)"
+    [ "$mode" = opt ] && what="every function at tier 2 (--jit-tier=2)"
+    [ "$mode" = optodd ] && what="every other function at tier 2"
     if ! cmp -s "$out/$name/stdout.off" "$out/$name/stdout.$mode"; then
       echo "FAIL jit.$name: prints differently with $what: $(diff "$out/$name/stdout.off" "$out/$name/stdout.$mode" | head -2 | tail -1)"
     elif ! cmp -s "$out/$name/count.off" "$out/$name/count.$mode"; then
@@ -79,10 +90,11 @@ fails=$(echo "$progs" | xargs -P "$jobs" -I{} sh "$0" --rune "$rune" --vm "$vm" 
 mkdir -p "$out/every-opcode"
 printf "$(awk -v opdefs=vm/new/regs.def -v primdefs=vm/prims.def -f tests/opt/rbcasm.awk tests/new/every-opcode.rasm)" > "$out/every-opcode/prog.rbc"
 "$vm" --disasm "$out/every-opcode/prog.rbc" > "$out/every-opcode/disasm" 2> /dev/null
-for mode in off all odd stress; do
+for mode in off all odd stress opt; do
   jit="--jit=$mode"
   [ "$mode" = odd ] && jit="--jit=all --jit-only=odd"
   [ "$mode" = stress ] && jit="--jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=5"
+  [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
   # shellcheck disable=SC2086
   "$vm" --count $jit "$out/every-opcode/prog.rbc" > "$out/every-opcode/stdout.$mode" 2> "$out/every-opcode/stderr.$mode"
   echo "exit $?" >> "$out/every-opcode/stderr.$mode"
@@ -96,6 +108,9 @@ elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.odd" || !
 elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.stress" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.stress"; then
   fails="$fails${fails:+
 }FAIL jit.every-opcode: tests/new/every-opcode.rasm differs under --jit-stress: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.stress" | head -2 | tail -1)"
+elif ! cmp -s "$out/every-opcode/stdout.off" "$out/every-opcode/stdout.opt" || ! cmp -s "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.opt"; then
+  fails="$fails${fails:+
+}FAIL jit.every-opcode: tests/new/every-opcode.rasm differs at tier 2: $(diff "$out/every-opcode/stderr.off" "$out/every-opcode/stderr.opt" | head -2 | tail -1)"
 elif ! grep -q "^exit 0" "$out/every-opcode/stderr.off"; then
   fails="$fails${fails:+
 }FAIL jit.every-opcode: tests/new/every-opcode.rasm fails: $(head -1 "$out/every-opcode/stderr.off")"
@@ -122,15 +137,18 @@ if ! "$rune" -o "$out/bootstrap/rune.rbc" $srcs 2> "$out/bootstrap/cerr"; then
   fails="$fails${fails:+
 }FAIL jit.bootstrap: the compiler does not compile to the register bytecode: $(head -1 "$out/bootstrap/cerr")"
 else
-  # baseline with the default thresholds too: the mode make check runs in
-  for mode in off all odd baseline; do
+  # baseline with the default thresholds too: the mode make check runs in;
+  # and tier 2 for every function (M9)
+  for mode in off all odd baseline opt; do
     jit="--jit=$mode"; [ "$mode" = odd ] && jit="--jit=all --jit-only=odd"
+    [ "$mode" = opt ] && jit="--jit=all --jit-tier=2"
     # shellcheck disable=SC2086
     "$vm" --count $jit --heap-size 67108864 "$out/bootstrap/rune.rbc" --lib lib -o "$out/bootstrap/by.$mode.rbc" $srcs 2> "$out/bootstrap/stderr.$mode"
     echo "exit $?" >> "$out/bootstrap/stderr.$mode"
   done
-  for mode in all odd baseline; do
+  for mode in all odd baseline opt; do
     what="--jit=$mode"; [ "$mode" = odd ] && what="every other function compiled"
+    [ "$mode" = opt ] && what="every function at tier 2"
     if ! cmp -s "$out/bootstrap/by.off.rbc" "$out/bootstrap/by.$mode.rbc"; then
       fails="$fails${fails:+
 }FAIL jit.bootstrap: the compiler makes other bytecode with $what"
@@ -147,4 +165,4 @@ if [ -n "$fails" ]; then
   echo "check-jit: $(echo "$fails" | grep -c FAIL) of $n programs differ between --jit=off and --jit=all"
   exit 1
 fi
-echo "check-jit: $n programs print and count the same under --jit=off, --jit=all, with every other function compiled and under --jit-stress, and use every instruction"
+echo "check-jit: $n programs print and count the same under --jit=off, --jit=all, with every other function compiled, under --jit-stress and at tier 2, and use every instruction"

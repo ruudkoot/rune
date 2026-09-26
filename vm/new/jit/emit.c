@@ -12,7 +12,6 @@
 #define M (&j->m)
 #define A (&j->m.a)
 #define OFF(field) ((int32_t)offsetof(VM, field))
-#define SLOT(k) ((int32_t)(16 * (k)))
 
 void emit_HALT(Jit *j, uint32_t pc) {
     (void)pc;
@@ -71,8 +70,6 @@ void emit_SELF(Jit *j, uint32_t pc, int32_t a) {
    overflow, a divisor of 0 or -1, an index out of bounds, a real or a
    pointer under `=`. Every argument is read before the result is written,
    since the result's register may be one of them. */
-#define PAY(k) ((int32_t)(16 * (k) + 8))
-#define TAGOF(k) ((int32_t)(16 * (k)))
 
 /* the bool of the flags into d */
 static void set_bool(Jit *j, int32_t d, int cc) {
@@ -101,13 +98,10 @@ static void two(Jit *j, int32_t x, int32_t y, int tag, X64Label *slow) {
 static void two_real(Jit *j, int32_t x, int32_t y, X64Label *slow) {
     ms_check_tag(M, x, T_REAL, slow);
     ms_check_tag(M, y, T_REAL, slow);
-    x64_movsd_xm(A, XMM0, BASER, PAY(x));
-    x64_movsd_xm(A, XMM1, BASER, PAY(y));
+    ms_load_real(M, XMM0, x);
+    ms_load_real(M, XMM1, y);
 }
-static void set_real(Jit *j, int32_t d) {
-    x64_mov_mi(A, BASER, TAGOF(d), T_REAL);
-    x64_movsd_mx(A, BASER, PAY(d), XMM0);
-}
+static void set_real(Jit *j, int32_t d) { ms_set_real(M, d, XMM0); }
 /* rcx := the index in y, checked against the length of the object in rax */
 static void index_of(Jit *j, int32_t y, X64Label *slow) {
     ms_check_tag(M, y, T_INT, slow);
@@ -159,7 +153,7 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, X64Label *s
     x64_cmp_rr(A, RAX, RCX);
     x64_jcc(A, CC_NE, &no);
     ms_load_payload(M, RAX, x);
-    x64_cmp_rm(A, RAX, BASER, PAY(y));
+    ms_cmp_payload(M, RAX, y);
     set_bool(j, d, CC_E);
     x64_jmp(A, &done);
     x64_bind(A, &no);
@@ -168,9 +162,10 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, X64Label *s
     if (poly) {
         x64_jmp(A, &done);
         x64_bind(A, &heap);
+        ms_writeback(M, M->cur_pc);   /* the slots of x and y whole, and the homes safe (M9) */
         x64_lea(A, ms_arg(M, 1), BASER, -1, 1, 16 * x);
         x64_lea(A, ms_arg(M, 2), BASER, -1, 1, 16 * y);
-        ms_call(M, (MsHelper)jit_h_values_equal);
+        ms_call_lean(M, (MsHelper)jit_h_values_equal);
         ms_set_reg(M, d, T_CON0, RAX);
         x64_test_rr(A, RAX, RAX);
     }
@@ -213,9 +208,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_string_order:
         /* the two strings to the lean helper, which touches nothing of the
            VM: no sync, no reload */
+        ms_writeback(M, M->cur_pc);
         ms_load_obj(M, ms_arg(M, 1), x, K_STRING, slow);
         ms_load_obj(M, ms_arg(M, 2), y, K_STRING, slow);
-        ms_call(M, (MsHelper)jit_h_string_order);
+        ms_call_lean(M, (MsHelper)jit_h_string_order);
         ms_set_reg(M, d, T_CON0, RAX);
         break;
     case PRIM_ref_new:
@@ -397,8 +393,6 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     }
     return 1;
 }
-#undef PAY
-#undef TAGOF
 
 /* a primitive not done in line, called as the loop calls it (M7): its
    arguments pushed above the registers, the VM exact, the primitive's own
@@ -413,10 +407,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
         x64_mov_ri(A, RAX, (int64_t)(intptr_t)&j->jit->prim_calls[a]);
         x64_add_mi(A, RAX, 0, 1);
     }
-    for (uint32_t i = 0; i < n; i++) {
-        x64_movups_xm(A, XMM0, BASER, 16 * read_i32(L + 4 * i));
-        x64_movups_mx(A, BASER, (int32_t)(16 * (j->m.nlocals + i)), XMM0);
-    }
+    for (uint32_t i = 0; i < n; i++) ms_value_to(M, BASER, (int32_t)(16 * (j->m.nlocals + i)), read_i32(L + 4 * i));
     ms_sync(M, j->next, (int)n);
     ms_call(M, (MsHelper)prim_table[a]);
     ms_reload(M);
@@ -424,8 +415,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
     x64_jcc(A, CC_E, &raised);
     x64_test_rr(A, RAX, RAX);
     x64_jcc(A, CC_NE, jit_fatal(j, FATAL_NEW_WORLD, 0, 0, 0));
-    x64_movups_xm(A, XMM0, BASER, (int32_t)(16 * j->m.nlocals));
-    x64_movups_mx(A, BASER, 16 * b, XMM0);
+    ms_value_from(M, b, BASER, (int32_t)(16 * j->m.nlocals));
     x64_jmp(A, &done);
     x64_bind(A, &raised);
     x64_mov_rm(A, RCX, VMR, OFF(hp));
@@ -552,7 +542,7 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
         if (j->flags_prev == a) x64_jcc(A, cc, &M->slow[which].here);
         else {
             ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
-            x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
+            ms_test_false(M, a);
             x64_jcc(A, cc, &M->slow[which].here);
         }
         count_site(j, s, (int)offsetof(Site, n1));
@@ -560,7 +550,7 @@ static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) 
     }
     if (j->flags_prev == a) { x64_jcc(A, cc, jit_label(j, (uint32_t)b)); return; }
     ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
-    x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
+    ms_test_false(M, a);
     x64_jcc(A, cc, jit_label(j, (uint32_t)b));
 }
 /* a branch on the bool a comparison just left in the flags (M7): no tag
@@ -629,7 +619,7 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
        this very function to its entry's label, another's by a jump to
        its address, which makes this function go when that one is
        invalidated (jit_depend) */
-    if (f == j->f) { x64_jmp(A, jit_label(j, fn->code_offset)); return; }
+    if (f == j->f) { x64_jmp(A, jit_landing(j, fn->code_offset)); return; }
     const void *entry = j->jit->codes[f].entry;
     if (entry) {
         jit_depend(j->jit, f, j->f);
@@ -694,10 +684,7 @@ static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, X64Label *after) {
 /* the registers of a callee at r9: its n arguments from the list, the
    rest unit */
 static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t nlocals, uint32_t fill_from) {
-    for (uint32_t i = 0; i < n; i++) {
-        x64_movups_xm(A, XMM0, BASER, 16 * read_i32(L + 4 * i));
-        x64_movups_mx(A, R9, (int32_t)(16 * i), XMM0);
-    }
+    for (uint32_t i = 0; i < n; i++) ms_value_to(M, R9, (int32_t)(16 * i), read_i32(L + 4 * i));
     /* unit into the registers the callee does not write before anything
        could see them (jit_fill_from, M7) */
     if (fill_from < n) fill_from = n;
@@ -710,7 +697,8 @@ static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t nlocal
 void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
-    X64Label *after = jit_label(j, j->next + 5);   /* past the RESULT */
+    X64Label *after = jit_landing(j, j->next + 5);   /* past the RESULT */
+    ms_writeback(M, pc);   /* the homes to their slots: the callee has the registers, and after loads them again (M9) */
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
     frame_room(j);
     x64_lea(A, R9, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
@@ -729,10 +717,7 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
     room(j, need);
     /* the arguments above the frame first, since they are its registers */
     x64_lea(A, R9, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
-    for (uint32_t i = 0; i < n; i++) {
-        x64_movups_xm(A, XMM0, BASER, 16 * read_i32(L + 4 * i));
-        x64_movups_mx(A, R9, (int32_t)(16 * i), XMM0);
-    }
+    for (uint32_t i = 0; i < n; i++) ms_value_to(M, R9, (int32_t)(16 * i), read_i32(L + 4 * i));
     for (uint32_t i = 0; i < n; i++) {
         x64_movups_xm(A, XMM0, R9, (int32_t)(16 * i));
         x64_movups_mx(A, BASER, (int32_t)(16 * i), XMM0);
@@ -775,6 +760,7 @@ static void called(Jit *j, uint32_t pc) {
     ms_call(M, (MsHelper)jit_h_called);
     x64_add_ri(A, RSP, 8);
     x64_pop_r(A, R11); x64_pop_r(A, R10); x64_pop_r(A, RCX);
+    ms_reload_homes(M, pc);   /* written back at the instruction's start (M9) */
 }
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
@@ -813,8 +799,7 @@ static void room_dynamic(Jit *j, int which, int base_reg) {
    unit; the callee's nlocals in r8 */
 static void make_registers_dynamic(Jit *j, int32_t arg) {
     X64Label loop, done; x64_label_init(&loop); x64_label_init(&done);
-    x64_movups_xm(A, XMM0, BASER, 16 * arg);
-    x64_movups_mx(A, R9, 0, XMM0);
+    ms_value_to(M, R9, 0, arg);
     x64_xorpd(A, XMM1, XMM1);
     /* from the first register the callee does not write before anything
        could see it (jit_fill_from, M7), and at least the second */
@@ -864,8 +849,8 @@ static void to_callee_dynamic(Jit *j) {
     x64_label_free(&interp);
 }
 void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    (void)pc;
-    X64Label *after = jit_label(j, j->next + 5);   /* past the RESULT */
+    X64Label *after = jit_landing(j, j->next + 5);   /* past the RESULT */
+    ms_writeback(M, pc);   /* before the restart label: the slots stay right across a restart (M9) */
     int grow = grow_slow(j);
     if (grow < 0) return;
     /* the frames first: their slow path comes back to its check with the
@@ -898,7 +883,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     to_callee_dynamic(j);
 }
 void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    (void)pc;
+    ms_writeback(M, pc);   /* the profile's helper (called) clobbers the homes; the slots stay right (M9) */
     int grow = grow_slow(j);
     if (grow < 0) return;
     closure_function(j, a, R10);
@@ -919,8 +904,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
    left on the stack, above the registers */
 void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    x64_movups_xm(A, XMM0, BASER, (int32_t)(16 * j->m.nlocals));
-    x64_movups_mx(A, BASER, 16 * a, XMM0);
+    ms_value_from(M, a, BASER, (int32_t)(16 * j->m.nlocals));
 }
 /* RET: the value into the register of the caller's RESULT, then on into
    the caller's code where it has some, else the VM made exact and handed
@@ -938,7 +922,12 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
        register of its RESULT (M7), the callee's base (the caller's stack top) */
     x64_imul_rri(A, RCX, RDX, FRAME_SIZE);
     x64_add_rm(A, RCX, VMR, OFF(frames));
-    x64_movups_xm(A, XMM0, BASER, 16 * a);
+    /* the value, kept across the frame's popping: in xmm0, or in its home
+       (tier 2), which the popping leaves alone and which is stored whole
+       where it goes, rather than through its slot (a 16-byte load of two
+       8-byte stores stalls) */
+    const Home *h = ms_home(M, a);
+    if (!h) ms_load_xmm(M, XMM0, a);
     x64_mov_rm(A, R9, RCX, FR(native_ret));
     x64_movsxd_rmi(A, R8, RCX, -1, 1, FR(result));
     x64_mov_rm(A, R10, RCX, FR(base));
@@ -954,7 +943,8 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     /* into the caller's code, which has a RESULT (its phantom): the value
        into its register, and on past it */
     x64_shl_ri(A, R8, 4);
-    x64_movups_mix(A, BASER, R8, 1, 0, XMM0);
+    if (h) { x64_lea(A, R11, BASER, R8, 1, 0); ms_value_to(M, R11, 0, a); }
+    else x64_movups_mix(A, BASER, R8, 1, 0, XMM0);
     x64_jmp_r(A, R9);
     x64_bind(A, &interp);
     /* the interpreter goes on: at the RESULT's register and past it, or
@@ -963,13 +953,15 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     x64_cmp_ri(A, R8, -1);
     x64_jcc(A, CC_E, &no_result);
     x64_shl_ri(A, R8, 4);
-    x64_movups_mix(A, BASER, R8, 1, 0, XMM0);
+    if (h) { x64_lea(A, R11, BASER, R8, 1, 0); ms_value_to(M, R11, 0, a); }
+    else x64_movups_mix(A, BASER, R8, 1, 0, XMM0);
     x64_add_ri(A, RAX, 5);
     x64_jmp(A, &go);
     x64_bind(A, &no_result);
     x64_mov_rr(A, RDX, R10);
     x64_shl_ri(A, RDX, 4);
-    x64_movups_mix(A, STACKR, RDX, 1, 0, XMM0);
+    if (h) { x64_lea(A, R11, STACKR, RDX, 1, 0); ms_value_to(M, R11, 0, a); }
+    else x64_movups_mix(A, STACKR, RDX, 1, 0, XMM0);
     x64_add_ri(A, R10, 1);
     x64_bind(A, &go);
     x64_mov32_mr(A, VMR, OFF(pc), RAX);
@@ -996,8 +988,9 @@ void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_sync(M, j->next, 0);
     x64_mov_ri(A, ms_arg(M, 1), a);
-    x64_lea_rip(A, ms_arg(M, 2), jit_label(j, (uint32_t)a));
+    x64_lea_rip(A, ms_arg(M, 2), jit_landing(j, (uint32_t)a));
     ms_call(M, (MsHelper)jit_h_push_handler);
+    ms_reload_homes(M, pc);   /* the stack did not move; the homes the call clobbered (M9) */
 }
 void emit_POPHANDLER(Jit *j, uint32_t pc) {
     (void)pc;
@@ -1007,8 +1000,7 @@ void emit_POPHANDLER(Jit *j, uint32_t pc) {
 }
 void emit_CATCH(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    x64_movups_xm(A, XMM0, BASER, (int32_t)(16 * j->m.nlocals));
-    x64_movups_mx(A, BASER, 16 * a, XMM0);
+    ms_value_from(M, a, BASER, (int32_t)(16 * j->m.nlocals));
 }
 void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;

@@ -333,6 +333,75 @@ every other function compiled (`--jit-only=odd`), with the program of
 every instruction, `tests/opt/prims.sml` on their edge cases and the
 compiler compiling itself, `--gc-stress` and the sanitisers.
 
+## Tier 2: the registers given homes
+
+Tier 2 (docs/plans/jit.md, M9) is tier 1's code with the values of some
+of the frame's registers kept in machine registers -- their *homes* --
+for the whole of the function, rather than in their tagged slots. The
+roadmap planned an SSA form and a linear scan here; what the bytecode
+brings since M8 made that redundant: the compiler's `Regs` has already
+allocated the function's registers by liveness, within a representation
+class, and the representations section says what each register holds.
+So tier 2 takes the registers as they are and chooses, per function,
+which of them live in a machine register:
+
+* **Which.** A register whose representation a machine register can
+  hold -- an int, a word, a char or a nullary constructor in `rbx`,
+  `rsi` or `rdi`, a real in `xmm2` to `xmm15` -- the most used first, a
+  use inside a loop (the section's loop heads to the last jump back)
+  counting for eight (`choose_homes`, `compile.c`). Three general
+  registers, since the emitters use the others as scratch and for the
+  arguments of calls into C. A pointer never has a home: the collector's
+  roots are the slots, as at tier 1, and a home holds a payload alone,
+  the tag being the representation's (`Home`, `masm.h`).
+* **The accessors know.** Every operation of the macro-assembler that
+  reads or writes a register (`ms_copy`, `ms_set`, `ms_load_payload`,
+  `ms_check_tag`, `ms_store_field`, `ms_value_to`, ...) consults the
+  homes, so the emitters are tier 1's, unchanged: a tag test of a homed
+  register is decided when the code is made (the tag is the
+  representation's), and the slot is made whole where 16 bytes are
+  copied (`ms_load_xmm`, a `RET`).
+* **Liveness.** The registers live at the entry of each instruction are
+  computed backwards over the function (`liveness`), the handlers of the
+  function being successors of every instruction that may raise or call
+  -- at the instruction's entry, since a raise happens before it defines
+  anything.
+* **Safepoints.** `ms_sync` writes the homes live at the instruction's
+  entry back to their slots, with their tags, before the VM is made
+  exact; `ms_reload` loads again, after the call into C, the homes live
+  at the entry and at the end of the instruction (C may have written the
+  slot of the register the instruction defines, and clobbered `rsi`,
+  `rdi` and the xmm registers). A helper that touches nothing of the VM
+  (`ms_call_lean`) still clobbers the homes, so the emitter writes them
+  back before it sets the arguments -- the arguments' registers are
+  homes -- and the call loads them again. The slow path that grows the
+  stack and starts the instruction over keeps its argument in `r11`
+  across the write-back for the same reason.
+* **Calls.** A `CALL`, `CALLK` or `TAILCALL` writes the homes back
+  first: the callee has the machine registers, and what is live after
+  the call is loaded again at its *landing*.
+* **Landings.** Wherever code is entered from outside -- the entry,
+  the instruction after a call, a handler, the loop heads and run starts
+  the interpreter enters mid-way (`jit_osr`) -- a landing loads the homes
+  live there and goes on to the instruction's label (`jit_landing`);
+  the entry's landing loads the parameters' homes, and a call to the
+  function itself jumps to it. Jumps within the function go to the
+  labels, since the homes are the function's throughout. The OSR table,
+  a handler's `native` and a frame's `native_ret` hold landings.
+* **Windows.** The convention there has C keep `xmm6` to `xmm15`, which
+  the homes use, so the enter stub saves them and the leave stub restores
+  them (160 bytes below its pushes).
+
+`--jit=opt` compiles at tier 2 what `--jit=baseline` would at tier 1, by
+the same counters; `--jit-tier=N` fixes the tier under any mode, so
+`--jit=all --jit-tier=2` is every function at tier 2 (the oracle's fifth
+mode, and its sixth every other function, so that tiers 1 and 2 call and
+raise into each other); `--jit-stats` says how many were compiled at
+tier 2, and the perf map names them `jit2:NAME`. A function whose
+registers give no home is compiled as tier 1's code. The counts of
+`--count` are unchanged by construction: the code is tier 1's, and the
+run counting with it.
+
 ## Calls into C: the transition, and the FFI's
 
 Native code calls into C in one way, wherever it does (`masm.c`, `ms_sync`,

@@ -31,6 +31,16 @@ typedef struct Jit {
        code is emitted */
     Site *sites;
     uint32_t nsites, sites_cap;
+    /* tier 2 (M9): the homes of the registers (NULL at tier 1), which
+       registers are live at the entry of each instruction (a bit per
+       register, one word per byte of code), and the landings: where the
+       code is entered from outside -- a call returning, a raise, the
+       interpreter mid-way, the entry itself -- which load the homes live
+       there and go on to the instruction's label */
+    int tier;
+    Home *homes;
+    uint64_t *live_in;
+    X64Label *landings;
 } Jit;
 
 /* what native code says on a fatal error: the message of the interpreter */
@@ -55,6 +65,9 @@ X64Label *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* an instruction tier 1 does not compile: the function stays interpreted */
 void jit_unsupported(Jit *j);
+/* where the code is entered from outside at pc (tier 2: a landing that
+   loads the homes; tier 1: the instruction's label) */
+X64Label *jit_landing(Jit *j, uint32_t pc);
 /* a site of the profile for the instruction at pc, or NULL without --jit-profile (M8) */
 Site *jit_site(Jit *j, int kind, uint32_t pc);
 
@@ -78,6 +91,7 @@ int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 
 /* the compiler: 1 when function f now has an entry, 0 when it stays interpreted */
 int jit_compile(VM *vm, JitProgram *jit, uint32_t f);
+int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier);
 /* the code region and its stubs, made once; 0 on failure */
 int jit_region_init(VM *vm, JitProgram *jit);
 
