@@ -50,7 +50,18 @@ set in either), a balloon device, and the free space of the repository,
   Rapids added, is tried with a tile multiply, after configuring the tiles
   and asking Linux for the tile data (`arch_prctl`): on Claude Code on the
   web a Granite Rapids ran it under the Emerald Rapids model of an earlier
-  session, cpuid and fingerprint alike.
+  session, cpuid and fingerprint alike. Diamond Rapids is told the same
+  way, by AMX-FP8 and AVX10.2 (a 512-bit `vminmaxps`), which GCC's
+  `-march=diamondrapids` has and Granite Rapids does not, and which need
+  only the AMX and AVX-512 state an older model has on already; AVX10.2
+  without AMX-FP8 is a client part. APX is not tried: it needs state of its
+  own, which a hypervisor that hides it does not turn on. An instruction
+  new to the assemblers of the day is written as bytes, taken from a newer
+  binutils. The tests of hardware not at hand were checked under Intel's
+  Software Development Emulator, which presents a chosen chip's cpuid and
+  stops a program at an instruction that chip lacks: `sde64 -dmr -- probe
+  isa` claims and runs AMX-FP8 and AVX10.2, and `-gnr` stops at AMX-FP8
+  (the probe is the program `envcheck.sh` builds from `envcheck.c`).
 
 ### Cores, caches and neighbours
 

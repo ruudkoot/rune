@@ -200,7 +200,9 @@ case "$(uname -m)" in
     runs() { case "$(get "isa.$1")" in yes*|MISMATCH:\ runs*) return 0 ;; *) return 1 ;; esac; }
     by=""
     if [ "$(get cpu.vendor)" = GenuineIntel ]; then
-      if runs amx-fp16; then by="Granite Rapids or newer"
+      if runs amx-fp8; then by="Diamond Rapids or newer"
+      elif runs avx10.2; then by="Nova Lake or newer (AVX10.2 without AMX-FP8: a client part)"
+      elif runs amx-fp16; then by="Granite Rapids or newer"
       elif runs amx-tile || runs avx512fp16; then by="Sapphire Rapids or newer"
       elif runs avx512bf16 && runs avx512vbmi2; then by="Sapphire Rapids or newer"
       elif runs avx512vbmi2 && runs gfni; then by="Ice Lake or newer (Ice Lake-SP if it has no AVX-512 BF16, AMX)"

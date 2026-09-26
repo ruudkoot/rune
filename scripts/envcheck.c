@@ -191,6 +191,7 @@ static const struct { const char *vendor; unsigned fam, model, smin, smax; const
     {"GenuineIntel", 6, 0xcf, 0, 15, "Emerald Rapids"},
     {"GenuineIntel", 6, 0xad, 0, 15, "Granite Rapids"},
     {"GenuineIntel", 6, 0xaf, 0, 15, "Sierra Forest"},
+    {"GenuineIntel", 0x13, 0x01, 0, 15, "Diamond Rapids"},
     {"GenuineIntel", 6, 0x4e, 0, 15, "Skylake (client)"},
     {"GenuineIntel", 6, 0x5e, 0, 15, "Skylake (client)"},
     {"GenuineIntel", 6, 0x8e, 0, 15, "Kaby/Coffee/Whiskey Lake (mobile)"},
@@ -342,20 +343,28 @@ static void t_movbe(void) { __asm__ volatile("movbe (%0), %%eax" :: "r"(membuf) 
 static void t_movdiri(void) { __asm__ volatile("movdiri %%eax, (%0)" :: "r"(membuf) : "memory"); }
 static void t_clflushopt(void) { __asm__ volatile("clflushopt (%0)" :: "r"(membuf) : "memory"); }
 static void t_clwb(void) { __asm__ volatile("clwb (%0)" :: "r"(membuf) : "memory"); }
-/* AMX-FP16 (Granite Rapids on): a tile multiply needs the tiles configured,
-   and Linux lets a process use the tile data only once it has asked
+/* A tile multiply of an AMX extension needs the tiles configured, and Linux
+   lets a process use the tile data only once it has asked
    (ARCH_REQ_XCOMP_PERM for XTILEDATA); without it the multiply faults too.
-   tdpfp16ps %tmm2, %tmm1, %tmm0 is given as bytes, which an assembler
-   older than binutils 2.40 does not know. */
-static void t_amxfp16(void)
+   The newer extensions are what tells the newest hardware under an older
+   CPU model, where the AMX state is on already. The instructions are given
+   as bytes, from binutils 2.47: older assemblers do not know them. */
+static void amx_config(void)
 {
     static unsigned char cfg[64] __attribute__((aligned(64)));
     memset(cfg, 0, sizeof cfg);
     cfg[0] = 1;   /* palette 1; tiles 0 to 2 of 16 rows of 64 bytes */
     for (int i = 0; i < 3; i++) { cfg[16 + 2 * i] = 64; cfg[48 + i] = 16; }
     syscall(SYS_arch_prctl, 0x1023, 18);
-    __asm__ volatile("ldtilecfg %0\n\t.byte 0xc4, 0xe2, 0x6b, 0x5c, 0xc1\n\ttilerelease" :: "m"(cfg) : "memory");
+    __asm__ volatile("ldtilecfg %0" :: "m"(cfg) : "memory");
 }
+#define AMX_T(fn, bytes) \
+    static void fn(void) { amx_config(); __asm__ volatile(".byte " bytes "\n\ttilerelease" ::: "memory"); }
+AMX_T(t_amxfp16, "0xc4, 0xe2, 0x6b, 0x5c, 0xc1")   /* tdpfp16ps %tmm2, %tmm1, %tmm0: Granite Rapids on */
+AMX_T(t_amxfp8, "0xc4, 0xe5, 0x68, 0xfd, 0xc1")    /* tdpbf8ps %tmm2, %tmm1, %tmm0: Diamond Rapids on */
+/* AVX10.2 (Diamond Rapids on, and Intel's client parts from Nova Lake):
+   vminmaxps $0, %zmm0, %zmm1, %zmm2, which needs only the AVX-512 state */
+T(t_avx102, ".byte 0x62, 0xf3, 0x75, 0x48, 0x52, 0xd0, 0x00")
 
 /* An extension: where cpuid claims it (leaf, subleaf, register eax=0 ebx=1
    ecx=2 edx=3, bit), what state the operating system must have enabled
@@ -404,6 +413,9 @@ static const struct { const char *name; unsigned leaf, sub, reg, bit, os; void (
     {"avx512fp16", 7, 0, 3, 23, 2, t_avx512fp16},
     {"amx-tile", 7, 0, 3, 24, 3, t_amx},
     {"amx-fp16", 7, 1, 0, 21, 3, t_amxfp16},
+    {"amx-fp8", 0x1e, 1, 0, 4, 3, t_amxfp8},
+    /* leaf 0x24: EBX[7:0] is the AVX10 version; bit 1 is set in 2 and 3 */
+    {"avx10.2", 0x24, 0, 1, 1, 2, t_avx102},
 };
 
 static unsigned long long xcr0(void)
