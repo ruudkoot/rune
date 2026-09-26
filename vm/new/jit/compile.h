@@ -26,6 +26,11 @@ typedef struct Jit {
        hold (ZF: it is false) after the instruction just emitted, or -1;
        and the same for the instruction before this one */
     int32_t flags_for, flags_prev;
+    /* the profile's sites (--jit-profile, M8): as many as the scan counted
+       calls through a closure, branches and jumps back, filled as the
+       code is emitted */
+    Site *sites;
+    uint32_t nsites, sites_cap;
 } Jit;
 
 /* what native code says on a fatal error: the message of the interpreter */
@@ -50,6 +55,8 @@ X64Label *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* an instruction tier 1 does not compile: the function stays interpreted */
 void jit_unsupported(Jit *j);
+/* a site of the profile for the instruction at pc, or NULL without --jit-profile (M8) */
+Site *jit_site(Jit *j, int kind, uint32_t pc);
 
 /* the helpers native code calls */
 int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L);

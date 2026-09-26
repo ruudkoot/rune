@@ -253,6 +253,46 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     for (uint32_t i = 0; i < p->nlines; i++)
         if (p->lines[i].inl > p->ninlines) return fail(err, errlen, "line table out of range");
 
+    /* the representations section: what the compiler says of each function
+       beside its code, or nothing (docs/bytecode.md) */
+    {
+        uint32_t nmeta = rd_u32(&r);
+        if (r.error || (nmeta != 0 && nmeta != p->nfuncs)) return fail(err, errlen, "bad representations section");
+        for (uint32_t i = 0; i < nmeta; i++) {
+            Function *fn = &p->funcs[i];
+            fn->has_meta = 1;
+            fn->arity = rd_u32(&r);
+            uint32_t nregs = rd_u32(&r);
+            if (r.error || nregs != fn->nlocals || !need(&r, nregs)) return fail(err, errlen, "bad representations section");
+            fn->reps = malloc(nregs ? nregs : 1);
+            if (!fn->reps) return fail(err, errlen, "out of memory");
+            memcpy(fn->reps, data + r.pos, nregs);
+            r.pos += nregs;
+            for (uint32_t k = 0; k < nregs; k++) if (fn->reps[k] >= REP__COUNT) return fail(err, errlen, "bad representations section");
+            fn->nblocks = rd_u32(&r);
+            if (r.error || fn->nblocks > 10000000) return fail(err, errlen, "bad representations section");
+            fn->blocks = calloc(fn->nblocks ? fn->nblocks : 1, sizeof(MetaBlock));
+            if (!fn->blocks) return fail(err, errlen, "out of memory");
+            for (uint32_t b = 0; b < fn->nblocks; b++) {
+                fn->blocks[b].pc = rd_u32(&r);
+                fn->blocks[b].nparams = rd_u32(&r);
+                if (r.error || fn->blocks[b].nparams > nregs) return fail(err, errlen, "bad representations section");
+                fn->blocks[b].params = calloc(fn->blocks[b].nparams ? fn->blocks[b].nparams : 1, sizeof(uint32_t));
+                if (!fn->blocks[b].params) return fail(err, errlen, "out of memory");
+                for (uint32_t k = 0; k < fn->blocks[b].nparams; k++) {
+                    fn->blocks[b].params[k] = rd_u32(&r);
+                    if (fn->blocks[b].params[k] >= nregs) return fail(err, errlen, "bad representations section");
+                }
+            }
+            fn->nloops = rd_u32(&r);
+            if (r.error || fn->nloops > 10000000) return fail(err, errlen, "bad representations section");
+            fn->loops = calloc(fn->nloops ? fn->nloops : 1, sizeof(uint32_t));
+            if (!fn->loops) return fail(err, errlen, "out of memory");
+            for (uint32_t k = 0; k < fn->nloops; k++) fn->loops[k] = rd_u32(&r);
+            if (r.error) return fail(err, errlen, "bad representations section");
+        }
+    }
+
     for (uint32_t i = 0; i < p->nfuncs; i++)
         p->funcs[i].code_end = (i + 1 < p->nfuncs) ? p->funcs[i + 1].code_offset : p->code_len;
 
@@ -294,4 +334,17 @@ const LineEntry *line_at(const Program *p, uint32_t pc) {
         if (p->lines[mid].pc <= pc) lo = mid; else hi = mid;
     }
     return &p->lines[lo];
+}
+
+void program_free_meta(Program *p) {
+    for (uint32_t i = 0; p->funcs && i < p->nfuncs; i++) {
+        Function *fn = &p->funcs[i];
+        free(fn->reps);
+        for (uint32_t b = 0; fn->blocks && b < fn->nblocks; b++) free(fn->blocks[b].params);
+        free(fn->blocks);
+        free(fn->loops);
+        fn->reps = NULL; fn->blocks = NULL; fn->loops = NULL;
+        fn->nblocks = fn->nloops = 0;
+        fn->has_meta = 0;
+    }
 }

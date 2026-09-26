@@ -127,6 +127,16 @@ uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f) {
     return lowest;
 }
 
+Site *jit_site(Jit *j, int kind, uint32_t pc) {
+    if (!j->sites || j->nsites >= j->sites_cap) return NULL;
+    Site *s = &j->sites[j->nsites++];
+    s->kind = (uint32_t)kind;
+    s->pc = pc;
+    s->f0 = s->f1 = UINT32_MAX;
+    s->n0 = s->n1 = s->other = 0;
+    return s;
+}
+
 int jit_h_prim(VM *vm, int prim, int32_t d, const uint8_t *L) {
     JitProgram *jit = jit_program(vm);
     if (jit->prim_calls) jit->prim_calls[prim]++;
@@ -379,6 +389,12 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
         x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_TAKEN) {
+        /* the way taken of a branch counted (--jit-profile), then on to
+           its target */
+        x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)((const char *)s.L + offsetof(Site, n0)));
+        x64_add_mi(&m->a, R11, 0, 1);
+        x64_jmp(&m->a, jit_label(j, (uint32_t)s.a));
     } else if (s.kind == SLOW_FRAMES) {
         ms_sync(m, s.pc, 0);
         ms_call(m, (MsHelper)jit_h_grow_frames);
@@ -449,6 +465,9 @@ static int scan(Jit *j, Scan *sc) {
         }
         /* the RESULT after a PRIMPUSH: where an image resumes (M6) */
         if (op == ROP_PRIMPUSH && pc + l < j->to && code[pc + l] == ROP_RESULT) sc->target[pc + l - j->from] = 1;
+        /* the sites of the profile (M8) */
+        if (op == ROP_CALL || op == ROP_TAILCALL || op == ROP_JUMPIF || op == ROP_JUMPIFNOT
+            || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) <= pc)) j->sites_cap++;
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL)
                 sc->target[(uint32_t)read_i32(code + pc + 1 + 4 * k) - j->from] = 1;
@@ -561,7 +580,12 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
     Scan sc = { NULL, NULL, NULL, NULL };
     int ok = j.labels != NULL;
     if (ok) for (uint32_t i = 0; i <= len; i++) x64_label_init(&j.labels[i]);
-    ok = ok && scan(&j, &sc) && emit_function(&j, &sc);
+    ok = ok && scan(&j, &sc);
+    if (ok && vm->jit.profile && j.sites_cap) {
+        j.sites = calloc(j.sites_cap, sizeof(Site));
+        if (!j.sites) ok = 0;
+    }
+    ok = ok && emit_function(&j, &sc);
     if (ok) {
         ms_emit_slow_paths(&j.m, emit_slow);
         ok = !j.m.a.failed;
@@ -597,6 +621,9 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
                 if (co->osr_pcs && co->osr_offs)
                     for (uint32_t i = 0; i < len; i++)
                         if (sc.target[i] && j.labels[i].at >= 0) { co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)j.labels[i].at; co->nosr++; }
+                free(co->sites);
+                co->sites = j.sites; co->nsites = j.nsites;
+                j.sites = NULL;
                 co->tier = 1;
                 co->size = (uint32_t)j.m.a.n;
                 co->entry = at;   /* published last */
@@ -605,6 +632,7 @@ int jit_compile(VM *vm, JitProgram *jit, uint32_t f) {
         }
     }
     if (j.labels) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.labels[i]); free(j.labels); }
+    free(j.sites);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);
     ms_free(&j.m);
     return ok;

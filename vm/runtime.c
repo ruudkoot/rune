@@ -231,6 +231,7 @@ void vm_init(VM *vm, size_t heap) {
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
 void vm_release(VM *vm) {
+    program_free_meta(&vm->prog);
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);

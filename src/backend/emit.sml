@@ -146,9 +146,29 @@ struct
            u32 nlines, u32 (String.size lineTable), lineTable,
            u32 (List.length names), String.concat (List.map str (List.rev names)),
            u32 (List.length (#inlines p)), u32 (String.size frames), frames]
+      (* The representations section (docs/bytecode.md): what the register
+         target says of each function, or nothing (the stack target's
+         program) *)
+      val meta =
+        if List.all (fn f => not (isSome (#meta f))) (#funcs p) then u32 0
+        else
+          u32 (List.length (#funcs p))
+          ^ String.concat
+              (List.map (fn (f : func) =>
+                           case #meta f of
+                             NONE => Error.bug "a function without its representations"
+                           | SOME m =>
+                               u32 (#arity m) ^ u32 (List.length (#reps m))
+                               ^ String.concat (List.map u8 (#reps m))
+                               ^ u32 (List.length (#blocks m))
+                               ^ String.concat (List.map (fn (l, ps) => u32 (labelOffset l) ^ u32 (List.length ps)
+                                                                        ^ String.concat (List.map u32 ps)) (#blocks m))
+                               ^ u32 (List.length (#loops m))
+                               ^ String.concat (List.map (fn l => u32 (labelOffset l)) (#loops m)))
+                        (#funcs p))
     in
       header :: List.map codeString (#funcs p)
-      @ [debug]
+      @ [debug, meta]
     end
 
   (* The file of a program of the stack bytecode, or with the fingerprint of

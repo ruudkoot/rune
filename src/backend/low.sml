@@ -15,6 +15,20 @@ struct
   type var = int
   type label = int
 
+  (* What a variable holds, from the type Mid gave it (Lower, repOfTy): a
+     target that keeps values out of their tagged slots (the JIT's tier 2,
+     docs/plans/jit.md M8, M9) needs to know. Any is a variable of a
+     polymorphic type, or one nothing is known of; Con0 a datatype of
+     nullary constructors only (bool, order: a T_CON0 value); Ptr a value
+     always in the heap (a tuple, a string, an array, a ref, a closure, an
+     exception, a datatype of non-nullary constructors only); Con a datatype
+     with both kinds of constructor (a list). The numbers are the file's
+     (docs/bytecode.md, The representations). *)
+  datatype rep = RAny | RInt | RWord | RReal | RChar | RCon0 | RPtr | RCon | RUnit
+  fun repCode r = case r of RAny => 0 | RInt => 1 | RWord => 2 | RReal => 3 | RChar => 4 | RCon0 => 5 | RPtr => 6 | RCon => 7 | RUnit => 8
+  fun repName r = case r of RAny => "any" | RInt => "int" | RWord => "word" | RReal => "real" | RChar => "char"
+                          | RCon0 => "con0" | RPtr => "ptr" | RCon => "con" | RUnit => "unit"
+
   (* A place in the source, and the functions its code was inlined from on
      the way, innermost first (Mid.pos). *)
   type pos = Source.span * {name : string, site : Source.span option} list
@@ -73,7 +87,7 @@ struct
      in arrays -- and its blocks, the entry first. The top level of the
      program is a function too, whose parameter is never used. *)
   type func = {id : int, name : string, params : var list, ncaptured : int, nvars : int, blocks : block list,
-               pos : Source.span option}
+               pos : Source.span option, reps : rep vector}   (* by variable; nvars long *)
 
   type program = func list
 
@@ -184,10 +198,18 @@ struct
       fun block ({label, params, instrs, transfer = t} : block) =
         let val head = "  " ^ l label ^ (if null params then "" else "(" ^ vs params ^ ")") ^ ":"
         in head :: List.filter (fn s => s <> "") (List.map instr instrs) @ [transfer t] end
-      fun func ({id, name, params, ncaptured, blocks, ...} : func) =
-        (restart ();
-         "function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ vs params ^ ", " ^ Int.toString ncaptured ^ " captured)")
-        :: List.concat (List.map block blocks)
+      fun func ({id, name, params, ncaptured, blocks, reps, ...} : func) =
+        let
+          val () = restart ()
+          val head = "function f" ^ Int.toString id ^ " " ^ name ^ " (" ^ vs params ^ ", " ^ Int.toString ncaptured ^ " captured)"
+          val body = List.concat (List.map block blocks)
+          (* each variable's representation, where it is not any: after the
+             blocks, which number the variables as they did *)
+          val typed =
+            Vector.foldri (fn (x, r, acc) => if r = RAny then acc else (v x ^ ":" ^ repName r) :: acc) [] reps
+        in
+          head :: body @ (if null typed then [] else ["  reps " ^ String.concatWith " " typed])
+        end
     in
       String.concatWith "\n" (List.concat (List.map func p))
     end

@@ -4,7 +4,7 @@
 
 /* The version of the layout of an .rbc, and the fingerprint of the
    instruction set, which an .rbc and an image carry. */
-#define RBC_VERSION 4
+#define RBC_VERSION 5
 #define ISA_FINGERPRINT 0x00a8ea18u
 #define ISA_FINGERPRINT_HEX "00a8ea18"
 

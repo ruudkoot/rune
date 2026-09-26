@@ -90,6 +90,13 @@ struct
       val regs : int array = Array.array (nv, ~1)
       val _ = List.foldl (fn (x, k) => (Array.update (regs, x, k); k + 1)) 0 (#params f)
       val nregs = ref (Int.max (List.length (#params f), 1))
+      (* what each register holds: the representation of the variables it
+         is shared among, which are of one representation (M8), so that a
+         target can keep it out of its slot; the parameters' from theirs *)
+      fun repOf x = Vector.sub (#reps f, x)
+      val regReps : L.rep list ref = ref []   (* in reverse order of the registers *)
+      val () = regReps := List.rev (List.map repOf (#params f))
+      val () = if List.length (#params f) = 0 then regReps := [L.RAny] else ()
       val () =
         let
           val buckets : int list array = Array.array (!pos + 1, [])
@@ -107,6 +114,13 @@ struct
              reads it: a register instruction may write its destination
              before it has read every operand (PRIM, TUPLE read theirs first,
              but a list and a result must not share) *)
+          (* the free registers, each with what it holds: one is given
+             again only to a variable of the same representation *)
+          val repOfReg : L.rep array ref = ref (Array.fromList (List.rev (!regReps)))
+          fun regRep k = Array.sub (!repOfReg, k)
+          fun take (r, []) = NONE
+            | take (r, k :: more) = if regRep k = r then SOME (k, more)
+                                    else case take (r, more) of SOME (k', rest) => SOME (k', k :: rest) | NONE => NONE
           fun alloc ([], _, _) = ()
             | alloc (x :: rest, free, active) =
                 let
@@ -114,9 +128,16 @@ struct
                   val (expired, still) = List.partition (fn (e, _) => e < s) active
                   val free = List.foldl (fn ((_, k), fr) => insert (k, fr)) free expired
                   val (r, free) =
-                    case free of
-                      k :: more => (k, more)
-                    | [] => let val k = !nregs in nregs := k + 1; (k, []) end
+                    case take (repOf x, free) of
+                      SOME (k, more) => (k, more)
+                    | NONE =>
+                        let val k = !nregs
+                        in
+                          nregs := k + 1;
+                          regReps := repOf x :: !regReps;
+                          repOfReg := Array.tabulate (k + 1, fn i => if i < k then Array.sub (!repOfReg, i) else repOf x);
+                          (k, free)
+                        end
                   val e = let val e = Array.sub (last, x) in if e < 0 then s else e end
                 in
                   Array.update (regs, x, r);
@@ -266,7 +287,20 @@ struct
          | L.Raise v => op' (R.RAISE, [reg v]))
       val () = Vector.appi block blocks
     in
-      {id = #id f, nlocals = nlocals, code = List.rev (!code), name = #name f}
+      {id = #id f, nlocals = nlocals, code = List.rev (!code), name = #name f,
+       meta = SOME {arity = List.length (#params f),
+                    (* the registers' representations, then the scratch, which holds anything *)
+                    reps = List.map L.repCode (List.rev (!regReps)) @ [L.repCode L.RAny],
+                    blocks = List.tabulate (nblocks, fn i => (labelOf i, List.map reg (#params (Vector.sub (blocks, i))))),
+                    (* a loop head: a block some block at or after it jumps to *)
+                    loops = List.filter (fn l => l >= 0)
+                              (List.tabulate (nblocks, fn i =>
+                                 if Vector.exists (fn (bl : L.block) =>
+                                                     List.exists (fn t => blockIndex t = i)
+                                                                 (L.succs (#transfer bl))
+                                                     andalso blockIndex (#label bl) >= i)
+                                                  blocks
+                                 then labelOf i else ~1))}}
     end
 
   fun program (p : L.program) : C.program =

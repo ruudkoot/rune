@@ -35,6 +35,7 @@ int main(void) {
     x64_init(&a); x64_movups_xm(&a, XMM0, R13, 16); fails += expect("movups xmm0, [r13+16]", &a, "410f104510"); x64_free(&a);
     x64_init(&a); x64_movups_xmi(&a, XMM1, R13, RBP, 1, 32); fails += expect("movups xmm1, [r13+rbp+32]", &a, "410f104c2d20"); x64_free(&a);
     x64_init(&a); x64_mov_mi(&a, R13, 0, 1); fails += expect("mov qword [r13], 1", &a, "49c7450001000000"); x64_free(&a);
+    x64_init(&a); x64_imul_rri(&a, RCX, R11, 72); fails += expect("imul rcx, r11, 72", &a, "4969cb48000000"); x64_free(&a);
     x64_init(&a); x64_cmp8_mi(&a, RAX, 0, 6); fails += expect("cmp byte [rax], 6", &a, "803806"); x64_free(&a);
     x64_init(&a); x64_add_ri(&a, R15, 3); fails += expect("add r15, 3", &a, "4983c703"); x64_free(&a);
     x64_init(&a); x64_lea(&a, RAX, R13, RBP, 1, 48); fails += expect("lea rax, [r13+rbp+48]", &a, "498d442d30"); x64_free(&a);

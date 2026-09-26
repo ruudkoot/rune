@@ -196,7 +196,49 @@ struct
      how it reads the variables it captures. *)
   type builder = {blocks : L.block list ref, label : L.label ref, params : L.var list ref, instrs : L.instr list ref,
                   open' : bool ref, nextLabel : int ref, nvars : int ref, env : int IntTable.table, self : int option,
-                  span : Source.span option ref, head : L.label option ref}
+                  span : Source.span option ref, head : L.label option ref,
+                  reps : L.rep IntTable.table}   (* what each variable holds, where known (RAny otherwise) *)
+
+  (* The representation of a value of a type (Low.rep): the built-in types
+     by their names; a datatype by its constructors (nullary only: a
+     T_CON0; none nullary: in the heap; both: either); a tuple, a
+     function, an exception in the heap; a type variable any. *)
+  fun repOfTy (t : Ty.ty) : L.rep =
+    case t of
+      Ty.Tuple [] => L.RUnit
+    | Ty.Tuple _ => L.RPtr
+    | Ty.Arrow _ => L.RPtr
+    | Ty.ExnCon => L.RPtr
+    | Ty.Gen _ => L.RAny
+    | Ty.Var _ => L.RAny
+    | Ty.Con (stamp, name, _) =>
+        if stamp = #stamp Types.intTycon then L.RInt
+        else if stamp = #stamp Types.wordTycon then L.RWord
+        else if stamp = #stamp Types.realTycon then L.RReal
+        else if stamp = #stamp Types.charTycon then L.RChar
+        else if stamp = #stamp Types.stringTycon then L.RPtr
+        else if stamp = #stamp Types.exnTycon then L.RPtr
+        else
+          case Ty.datatypeOf stamp of
+            SOME {cons, ...} =>
+              let
+                val nullary = List.exists (fn (_, _, NONE) => true | _ => false) cons
+                val withArg = List.exists (fn (_, _, SOME _) => true | _ => false) cons
+              in
+                if nullary andalso withArg then L.RCon
+                else if nullary then L.RCon0
+                else if withArg then L.RPtr
+                else L.RAny
+              end
+          | NONE =>
+              (* a type name of the basis the elaborator made no datatype of:
+                 array, vector, ref, and the abstract ones, are in the heap *)
+              if name = "array" orelse name = "vector" orelse name = "ref" then L.RPtr else L.RAny
+  fun setRep (b : builder, x : L.var, r : L.rep) =
+    if r = L.RAny then () else
+    case IntTable.find (#reps b, x) of
+      SOME _ => ()   (* the first word stands: a variable that is another's has the other's *)
+    | NONE => IntTable.insert (#reps b, x, r)
 
   fun newLabel (b : builder) = let val l = !(#nextLabel b) in #nextLabel b := l + 1; l end
   (* a variable of Low: numbered from 0 in each function, so that a target
@@ -204,6 +246,8 @@ struct
   fun newVar (b : builder) = let val v = !(#nvars b) in #nvars b := v + 1; v end
   fun emit (b : builder, i) = if !(#open' b) then #instrs b := i :: !(#instrs b) else ()
   fun def (b : builder, oper) = let val x = newVar b in emit (b, L.Def (x, oper)); x end
+  (* a variable defined by an operation whose representation is known *)
+  fun defAs (b : builder, oper, r : L.rep) = let val x = def (b, oper) in setRep (b, x, r); x end
   fun finish (b : builder, t : L.transfer) =
     if !(#open' b) then
       (#blocks b := {label = !(#label b), params = !(#params b), instrs = List.rev (!(#instrs b)), transfer = t}
@@ -278,8 +322,8 @@ struct
                          nextLabel = ref 0, nvars = ref 0,
                          env = let val t = IntTable.table 16
                                in ignore (List.foldl (fn (x, i) => (IntTable.insert (t, x, i); i + 1)) 0 cs); t end,
-                         self = SOME (#name f), span = ref pos, head = ref NONE}
-      val ps = List.map (fn (x, _) => (x, newVar b)) (#params f)
+                         self = SOME (#name f), span = ref pos, head = ref NONE, reps = IntTable.table 64}
+      val ps = List.map (fn (x, t) => let val v = newVar b in setRep (b, v, repOfTy t); (x, v) end) (#params f)
       val () = start (b, newLabel b, [])
       (* a loop: the entry jumps to the head, whose parameters the body
          reads, and which the calls of the loop jump back to *)
@@ -287,7 +331,7 @@ struct
         if loops f then
           let
             val l = newLabel b
-            val hs = List.map (fn (x, _) => (x, newVar b)) ps
+            val hs = List.map (fn (x, t) => let val v = newVar b in setRep (b, v, repOfTy t); (x, v) end) (#params f)
           in
             finish (b, L.Goto (l, List.map #2 ps)); start (b, l, List.map #2 hs); #head b := SOME l; hs
           end
@@ -297,7 +341,9 @@ struct
                                          in List.app (fn (x, v) => IntTable.insert (t, x, v)) bound; t end})
     in
       funcs := {id = id, name = name, params = List.map #2 ps, ncaptured = List.length cs, nvars = !(#nvars b),
-                blocks = List.rev (!(#blocks b)), pos = pos} :: !funcs;
+                blocks = List.rev (!(#blocks b)), pos = pos,
+                reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny)}
+               :: !funcs;
       id
     end
 
@@ -307,9 +353,9 @@ struct
     case a of
       M.Var (x, _) => var (b, cx, x)
     | M.Global (g, _) => def (b, L.Global g)
-    | M.Const (c, _) => def (b, L.Const c)
-    | M.Con0 (tag, _) => def (b, L.Con0 tag)
-    | M.Unit => def (b, L.Unit)
+    | M.Const (c, t) => defAs (b, L.Const c, repOfTy t)
+    | M.Con0 (tag, t) => defAs (b, L.Con0 tag, repOfTy t)
+    | M.Unit => defAs (b, L.Unit, L.RUnit)
 
   and var (b : builder, cx : cx, x : int) : L.var =
     case IntTable.find (#subst cx, x) of
@@ -376,7 +422,25 @@ struct
         (case virtualOf a of
            SOME (Parts vs) => List.nth (vs, i)
          | _ => def (b, oper (b, cx, r)))
-    | _ => def (b, oper (b, cx, r))
+    | _ => defAs (b, oper (b, cx, r), repOfRhs r)
+
+  (* what an operation makes, where its shape says: a primitive's result
+     from its type at this use, a tuple, a constructor, an exception in the
+     heap, a tag an int; the rest the binder's type says (Let) *)
+  and repOfRhs (r : M.rhs) : L.rep =
+    case r of
+      M.Prim (_, Ty.Arrow (_, res), _) => repOfTy res
+    | M.Tuple (_ :: _) => L.RPtr
+    | M.Tuple [] => L.RUnit
+    | M.Con (_, t, _) => repOfTy t
+    | M.ConTag _ => L.RInt
+    | M.NewExn _ => L.RPtr
+    | M.BuiltinExn _ => L.RPtr
+    | M.MkExn _ => L.RPtr
+    | M.ExnCon _ => L.RPtr
+    | M.ExnArg (t, _) => repOfTy t
+    | M.SetGlobal _ => L.RUnit
+    | _ => L.RAny
 
   (* x bound to r, where its value need not be made there (virt) *)
   and virtualised (b, cx, x : int, r : M.rhs) : bool =
@@ -403,7 +467,7 @@ struct
      whose rest fills it on. *)
   and exp (b : builder, e : M.exp, cx : cx) : unit =
     case e of
-      M.Let (x, _, r, body) =>
+      M.Let (x, scheme, r, body) =>
         (case tagTest (x, r, body) of
            SOME (y, tag, sp, t, f) =>
              (case switchOf (y, [(tag, sp, t)], f) of
@@ -430,7 +494,9 @@ struct
                   end)
          | NONE =>
              if virtualised (b, cx, x, r) then exp (b, body, cx)
-             else exp (b, body, bindAs (cx, x, value (b, cx, r))))
+             else
+               let val v = value (b, cx, r)
+               in setRep (b, v, repOfTy (#2 scheme)); exp (b, body, bindAs (cx, x, v)) end)
     | M.Fun (fs, body) => exp (b, body, closures (b, cx, fs))
     | M.Join (j, ps, jbody, scope) =>
         let val l = newLabel b
@@ -589,10 +655,10 @@ struct
       fun block ({label, params, instrs, transfer} : L.block) : L.block =
         {label = label, params = params, instrs = List.map instr instrs,
          transfer = case transfer of L.TailCallK (g, vs) => L.TailCallK (fid g, vs) | t => t}
-      val {id, name, params, ncaptured, nvars, blocks, pos} = f
+      val {id, name, params, ncaptured, nvars, blocks, pos, reps} = f
     in
       {id = id, name = name, params = params, ncaptured = ncaptured, nvars = nvars, blocks = List.map block blocks,
-       pos = pos}
+       pos = pos, reps = reps}
     end
 
   fun program (p : M.program, names : string IntMap.map) : L.program =
@@ -612,7 +678,7 @@ struct
       val () = nextFuncId := id + 1
       val b : builder = {blocks = ref [], label = ref 0, params = ref [], instrs = ref [], open' = ref false,
                          nextLabel = ref 0, nvars = ref 0, env = IntTable.table 1, self = NONE, span = ref NONE,
-                         head = ref NONE}
+                         head = ref NONE, reps = IntTable.table 64}
       val param = newVar b
       val () = start (b, newLabel b, [])
       val topSubst : L.var IntTable.table = IntTable.table 1024
@@ -649,7 +715,8 @@ struct
       val () = finish (b, L.Return u)
       val () = ignore top
       val topFunc : L.func = {id = id, name = "<toplevel>", params = [param], ncaptured = 0, nvars = !(#nvars b),
-                              blocks = List.rev (!(#blocks b)), pos = NONE}
+                              blocks = List.rev (!(#blocks b)), pos = NONE,
+                              reps = Vector.tabulate (!(#nvars b), fn x => case IntTable.find (#reps b, x) of SOME r => r | NONE => L.RAny)}
     in
       IntMap.listItems (List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, resolve f)) IntMap.empty
                                    (topFunc :: !funcs))

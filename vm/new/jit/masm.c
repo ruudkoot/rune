@@ -108,8 +108,7 @@ void ms_sync(Masm *m, uint32_t pc, int pushed) {
 /* r := &vm->frames[vm->fp] */
 void ms_frame(Masm *m, int r) {
     x64_mov_rm(&m->a, r, VMR, OFF(fp));
-    x64_lea(&m->a, r, r, r, 4, 0);              /* sizeof(Frame) is 40: 5 r, then 8 times */
-    x64_shl_ri(&m->a, r, 3);
+    x64_imul_rri(&m->a, r, r, (int32_t)sizeof(Frame));
     x64_add_rm(&m->a, r, VMR, OFF(frames));
 }
 void ms_reload(Masm *m) {

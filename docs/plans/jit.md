@@ -35,7 +35,7 @@ What it rests on:
 | M5 | Tier 1 complete, and Windows | done |
 | M6 | Tiering, OSR entry and the code cache | done |
 | M7 | Tier 1 made fast | done |
-| M8 | Preparing tier 2: representations in the image, profiles in tier 1 | |
+| M8 | Preparing tier 2: representations in the image, profiles in tier 1 | done |
 | M9 | Tier 2: the IR and the back end | |
 | M10 | Tier 2: the optimisations | |
 | M11 | Deoptimisation, OSR exit and invalidation | |
@@ -2030,6 +2030,115 @@ M8 to M12 about 6,000, and are planned again after M7.
 * **Done when:** the lint is green on every program; the profiles show
   in `--jit-stats`; `--count` unchanged.
 * **Touches:** incremental compilation (the section per unit).
+* **Done** (2026-09-26; `src/backend/{low,lower,regs,code,emit}.sml`,
+  `src/isa/{stack,isagen}.sml`, `vm/{loader,image,isa_stack}.c`,
+  `vm/new/isa_regs.c`, `vm/new/jit/*`, about 600 lines):
+  * **The compiler.** Low carries a representation per variable
+    (`Low.rep`: any, int, word, real, char, a nullary constructor, in the
+    heap, either, unit), from the type Mid gives each binder, parameter
+    and join parameter (`Lower.repOfTy`) and from what an operation makes
+    (`repOfRhs`: a primitive's result from its type at the use, a tuple, a
+    constructor, an exception). `Regs` shares a register only among
+    variables of one representation, so a register holds one kind of
+    value throughout; a function's `meta` -- its arity, its registers'
+    representations, its blocks with their parameters' registers, its
+    loop heads -- goes into the file's representations section after the
+    debug section (`rbcVersion` 5; the stack target writes none). The
+    five builds write the same bytes (`check-cross`).
+  * **The VM.** The loader reads the section into the `Function`; the
+    register set's checker holds it to the code (blocks and loops begin
+    at instructions of their functions; where an instruction says what it
+    writes -- `INT`, `CONST`, `UNIT`, `CON0`, `CONTAG`, the allocating
+    ones, a `PRIM` whose result its description types, `prim_result` from
+    the generator -- the register's representation agrees, or the file is
+    refused); an image carries it (image version 6); the stack set's
+    checker refuses one.
+  * **Profiles in tier 1** (`--jit-profile`): a site per call through a
+    closure (the first two callees seen and their counts, and the rest),
+    per branch (taken, not) and per jump back (times round), kept
+    beside the code object and filled by the code -- a lean helper at a
+    call site, a count in line at a branch's ways and a loop's back
+    edge -- with no code emitted for them otherwise; `--jit-stats` shows
+    the hottest six of each kind. On the bootstrap they say what M10's
+    guarded devirtualisation will find: `IntTable.update`'s call site is
+    monomorphic (339,929 calls of one function), `Array.go`'s bimorphic,
+    `app`'s and `map`'s megamorphic (1.7 million and 1.0 million calls of
+    others); `IntTable.lookup`'s loop goes round 1.07 million times and
+    its branch is taken 56% of the time.
+  * **What the Basis suite found:** with a register shared only among
+    values of one representation, a register that held a list stays a
+    root after its last use until another pointer needs it, and
+    `Runtime.collect/drops-what-is-unreachable` sees the list survive a
+    collection. Every register is a root by design (conservative in
+    liveness; `runevm`'s locals happened to be reused by an int there).
+    Recorded as a deviation of `vm/new`; roots precise by liveness are
+    what tier 2's write-back at safepoints gives (M9), and a liveness
+    mask per safepoint would give the interpreter the same.
+  * **What else the chain found:** `runeopt` keeps its own reader of
+    images and of `.rbc` files (`src/opt/rbcimage.sml`, `rbc.sml`), which
+    now know the new image version and pass over the section, and its
+    writer says `nmeta` 0; and `tests/run-portability.sh` ran `vm/new`'s
+    language suite into the shared `tests/out`, leaving register
+    bytecode where `test-opt` reads stack bytecode -- it has its own
+    directory now.
+* **Measured:** `--count` the same in every mode on every program (the
+  oracle), the lint green on every program of the suites and on the
+  compiler compiling itself, the section 4% of the compiler's file. But
+  the bootstrap's count went from 427 million instructions to 458
+  million, nearly all of it the compiler's own new work (the
+  representations, the allocation by class, the section): M7's compiler
+  and M8's compiling the same sources make programs that run in 455.4
+  and 458.0 million instructions, 0.6% apart, which is the moves at the
+  blocks' boundaries that a register reused across representations used
+  to spare (3,285 `MOVE`s in the compiler's code where there were
+  2,402). Coalescing a jump's argument with its parameter's register
+  would take that back; tier 2's registers make the moves free anyway.
+  The cycles keep M7's ratio (0.57 of the interpreter on the bootstrap,
+  `--runs 3`).
+
+### Re-planned after M7 and M8 (2026-09-26)
+
+What the first eight milestones taught, and what it changes in the four
+to come:
+
+* **Tier 1 is at `runeopt`'s level** (M7): D12's first target is met, so
+  the question D11 leaves to the owner -- what `runeopt` is now for --
+  is open now. Nothing below depends on the answer.
+* **What tier 2 is for is narrower and clearer.** Tier 1 already does the
+  primitives, the calls and the returns in line; what it cannot do is
+  keep a value out of its tagged slot across instructions. The profile
+  of the bootstrap under tier 1 (M7, `--jit-perf-map`) is the collector
+  (12%), then the compiler's own loops (`IntTable.lookup`, `StringMap`,
+  `Source.go`); M8's profiles say which call sites are monomorphic
+  (`IntTable.update`), which bimorphic (`Array.go`) and which
+  megamorphic (`app`, `map`, `foldl`: no devirtualisation there). So M9
+  builds the SSA form from the section (blocks, parameters, loop heads,
+  representations are all there), keeps ints, words, reals and chars in
+  machine registers within a function, and writes every live value back
+  with its tag at a safepoint -- and, since it knows what is live,
+  writes unit into a dead pointer slot there, which makes a tier-2 frame's
+  roots precise by liveness (the deviation M8 records is the
+  interpreter's and tier 1's).
+* **The run counting carries over:** tier 2 counts a run of instructions
+  where the run begins, as tier 1 does, so `--count` stays exact by
+  construction whatever the registers do (D5).
+* **The calling convention stays tier 1's** in M9: arguments in the
+  callee's slots, the frame in the VM, entry through the code object. A
+  typed convention (unboxed arguments across known calls) is M10's last
+  item, as planned, and where the FFI's convention appears.
+* **M10's order** follows the profile: registers and unboxed values
+  across blocks first (the loops), guarded devirtualisation of the
+  monomorphic and bimorphic sites second, `SELECT`/`FIELD`/`DECON`
+  without checks third; the rest as measured.
+* **M12 is bigger than sized.** The emitters of M5 to M7 (`emit.c`, the
+  primitives in line, the calls) use the encoder directly for what the
+  macro-assembler does not offer; a second target needs the
+  macro-assembler to grow to what they use (about forty operations) and
+  the emitters rewritten over it, before an aarch64 encoder is of use:
+  XL rather than L, or an L of its own before it. The owner decides its
+  place when M11 is done.
+* **Unchanged:** M11 as planned; D10 (the 16-byte value) and the FFI's
+  callback question stand before M9, as the decisions of 2026-09-25 say.
 
 ### M9. Tier 2: the IR and the back end (XL, about 3,000)
 

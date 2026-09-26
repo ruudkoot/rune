@@ -187,6 +187,23 @@ struct
                "#endif"])}
     end
 
+  (* The representation of a primitive's result, from the type its
+     description gives it ("int * int -> int"): the part after the arrow,
+     which names a built-in type, or a type variable or a type made of
+     others, of which nothing is said (0). *)
+  fun resultRep (ty : string) : int =
+    let
+      val (_, after) = Substring.position "-> " (Substring.full ty)
+      val res = Substring.string (Substring.dropl Char.isSpace (Substring.triml 3 after))
+    in
+      case res of
+        "int" => 1 | "word" => 2 | "real" => 3 | "char" => 4 | "bool" => 5 | "order" => 5
+      | "string" => 6 | "exn" => 6 | "unit" => 8
+      | _ => if String.isSuffix " array" res orelse String.isSuffix " vector" res orelse String.isSuffix " ref" res then 6
+             else if String.isSuffix " list" res then 7
+             else 0
+    end
+
   fun primsH (prims : primitive list) : file =
     let
       val ps = numbered prims
@@ -210,6 +227,13 @@ struct
                "",
                "static const unsigned char prim_arity[] = {"]
             @ List.map (fn (_, p : primitive) => "  " ^ Int.toString (#arity p) ^ ",") ps
+            @ ["};",
+               "",
+               "/* what each primitive's result is (the representations of",
+               "   docs/bytecode.md: 0 any, 1 int, 2 word, 3 real, 4 char, 5 a nullary",
+               "   constructor, 6 in the heap, 7 either, 8 unit), from its type */",
+               "static const unsigned char prim_result[] = {"]
+            @ List.map (fn (_, p : primitive) => "  " ^ Int.toString (resultRep (#ty p)) ^ ",") ps
             @ ["};",
                "",
                "#define RUNE_PRIM_LIST(X) \\"]

@@ -374,6 +374,20 @@ FFI):
    a code the driver takes (`RUN_INTERP`, `RUN_NATIVE`, `RUN_HALT`)
    through the leave stub.
 
+## What the compiler says beside the code
+
+The register bytecode's representations section (docs/bytecode.md; the
+compiler-runtime contract of docs/plans/jit.md, M8) says, per function,
+its arity, what each register holds -- one representation per register,
+since the compiler shares a register only among values of one -- its
+blocks with their parameters' registers, and its loop heads; the loader
+(`vm/loader.c`) reads it into the `Function`, the register set's checker
+(`vm/new/isa_regs.c`) holds it to the code, an image carries it. Tier 1
+reads none of it; tier 2 (M9) is its reader: a register whose
+representation is an int, a word or a real can live in a machine register
+without a tag test, one in the heap can be dereferenced without a kind
+test, and the blocks and loops give the control-flow graph back.
+
 ## Images
 
 An image (`vm/image.c`) is in bytecode terms and shared with `runevm`, with

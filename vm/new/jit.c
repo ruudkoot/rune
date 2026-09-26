@@ -19,7 +19,53 @@
 static void free_tables(JitProgram *jit) {
     for (uint32_t i = 0; jit->codes && i < jit->nfuncs; i++) {
         free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); free(jit->codes[i].callers);
+        free(jit->codes[i].sites);
+        if (jit->names) free(jit->names[i]);
     }
+    free(jit->names);
+    jit->names = NULL;
+}
+
+void jit_h_called(VM *vm, Site *s, uint32_t f) {
+    (void)vm;
+    if (s->f0 == f) s->n0++;
+    else if (s->f0 == UINT32_MAX) { s->f0 = f; s->n0 = 1; }
+    else if (s->f1 == f) s->n1++;
+    else if (s->f1 == UINT32_MAX) { s->f1 = f; s->n1 = 1; }
+    else s->other++;
+}
+
+/* --jit-stats: the hottest sites of each kind */
+static void print_profile(JitProgram *jit) {
+    const char *kinds[3] = { "calls through a closure", "branches", "loops" };
+    if (!jit->names) return;
+#define NAME(f) (jit->names[(f)] ? jit->names[(f)] : "?")
+    for (int kind = 0; kind < 3; kind++) {
+        for (int k = 0; k < 6; k++) {
+            uint32_t bf = UINT32_MAX, bs = 0;
+            uint64_t best = 0;
+            for (uint32_t f = 0; f < jit->nfuncs; f++)
+                for (uint32_t i = 0; i < jit->codes[f].nsites; i++) {
+                    Site *s = &jit->codes[f].sites[i];
+                    if ((int)s->kind != kind) continue;
+                    uint64_t n = s->kind == SITE_CALL ? s->n0 + s->n1 + s->other : s->kind == SITE_BRANCH ? s->n0 + s->n1 : s->n0;
+                    if (n > best) { best = n; bf = f; bs = i; }
+                }
+            if (bf == UINT32_MAX || best == 0) break;
+            if (k == 0) fprintf(stderr, "runevm: jit: the hottest %s:\n", kinds[kind]);
+            Site *s = &jit->codes[bf].sites[bs];
+            fprintf(stderr, "  %s at %u:", NAME(bf), s->pc);
+            if (s->kind == SITE_CALL) {
+                if (s->f0 != UINT32_MAX && s->f0 < jit->nfuncs) fprintf(stderr, " %s %llu", NAME(s->f0), (unsigned long long)s->n0);
+                if (s->f1 != UINT32_MAX && s->f1 < jit->nfuncs) fprintf(stderr, ", %s %llu", NAME(s->f1), (unsigned long long)s->n1);
+                if (s->other) fprintf(stderr, ", others %llu", (unsigned long long)s->other);
+                fprintf(stderr, "\n");
+            } else if (s->kind == SITE_BRANCH) fprintf(stderr, " taken %llu, not %llu\n", (unsigned long long)s->n0, (unsigned long long)s->n1);
+            else fprintf(stderr, " %llu times round\n", (unsigned long long)s->n0);
+            s->n0 = s->n1 = s->other = 0;   /* out of the running */
+        }
+    }
+#undef NAME
 }
 
 void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller) {
@@ -56,6 +102,15 @@ static void jit_make(VM *vm, JitProgram *jit) {
     /* what each function's calls must fill: worked out for all now, since
        a call through a closure reads it from the table at run time */
     if (jit->fill_from) for (uint32_t i = 0; i < p->nfuncs; i++) jit_fill_from(vm, jit, i);
+    jit->profile = vm->jit.profile;
+    if (jit->profile) {
+        jit->names = calloc(p->nfuncs ? p->nfuncs : 1, sizeof(char *));
+        for (uint32_t i = 0; jit->names && i < p->nfuncs; i++) {
+            size_t n = strlen(p->funcs[i].name);
+            jit->names[i] = malloc(n + 1);
+            if (jit->names[i]) memcpy(jit->names[i], p->funcs[i].name, n + 1);
+        }
+    }
     jit->calls_threshold = vm->jit.calls ? vm->jit.calls : DEFAULT_CALLS;
     jit->work_threshold = vm->jit.work ? vm->jit.work : DEFAULT_WORK;
     jit->stress = vm->jit.stress;
@@ -170,6 +225,7 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->invalidated);
+    if (jit->profile) print_profile(jit);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */
     if (jit->prim_calls) {

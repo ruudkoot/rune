@@ -527,23 +527,46 @@ void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     x64_jcc(A, CC_BE, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
     ms_store_field(M, RAX, (uint32_t)b + 1, c);
 }
-void emit_JUMP(Jit *j, uint32_t pc, int32_t a) { (void)pc; x64_jmp(A, jit_label(j, (uint32_t)a)); }
+/* --jit-profile (M8): the count at s's field; add clobbers the flags, so
+   after any branch on them */
+static void count_site(Jit *j, Site *s, int field) {
+    x64_mov_ri(A, R11, (int64_t)(intptr_t)((char *)s + field));
+    x64_add_mi(A, R11, 0, 1);
+}
+void emit_JUMP(Jit *j, uint32_t pc, int32_t a) {
+    /* a jump back is a loop's: counted under --jit-profile (M8) */
+    if ((uint32_t)a <= pc) { Site *s = jit_site(j, SITE_LOOP, pc); if (s) count_site(j, s, (int)offsetof(Site, n0)); }
+    x64_jmp(A, jit_label(j, (uint32_t)a));
+}
+/* a branch, its two ways counted under --jit-profile: the way taken
+   through a stub after the code (the flags of a fused comparison are
+   live, so the count of the way not taken comes after the jump) */
+static void branch(Jit *j, uint32_t pc, int32_t a, int32_t b, int cc, int what) {
+    Site *s = jit_site(j, SITE_BRANCH, pc);
+    if (s) {
+        Slow *st = ms_slow(M, SLOW_TAKEN, j->next);
+        if (!st) return;
+        st->L = (const uint8_t *)s;
+        st->a = b;
+        int which = M->nslow - 1;
+        if (j->flags_prev == a) x64_jcc(A, cc, &M->slow[which].here);
+        else {
+            ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
+            x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
+            x64_jcc(A, cc, &M->slow[which].here);
+        }
+        count_site(j, s, (int)offsetof(Site, n1));
+        return;
+    }
+    if (j->flags_prev == a) { x64_jcc(A, cc, jit_label(j, (uint32_t)b)); return; }
+    ms_check_tag(M, a, T_CON0, jit_fatal(j, what, 0, 0, 0));
+    x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
+    x64_jcc(A, cc, jit_label(j, (uint32_t)b));
+}
 /* a branch on the bool a comparison just left in the flags (M7): no tag
    test, since the comparison made it, and no load */
-void emit_JUMPIF(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    (void)pc;
-    if (j->flags_prev == a) { x64_jcc(A, CC_NE, jit_label(j, (uint32_t)b)); return; }
-    ms_check_tag(M, a, T_CON0, jit_fatal(j, FATAL_JUMPIF, 0, 0, 0));
-    x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
-    x64_jcc(A, CC_NE, jit_label(j, (uint32_t)b));
-}
-void emit_JUMPIFNOT(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    (void)pc;
-    if (j->flags_prev == a) { x64_jcc(A, CC_E, jit_label(j, (uint32_t)b)); return; }
-    ms_check_tag(M, a, T_CON0, jit_fatal(j, FATAL_JUMPIFNOT, 0, 0, 0));
-    x64_cmp_mi(A, BASER, SLOT(a) + 8, 0);
-    x64_jcc(A, CC_E, jit_label(j, (uint32_t)b));
-}
+void emit_JUMPIF(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b, CC_NE, FATAL_JUMPIF); }
+void emit_JUMPIFNOT(Jit *j, uint32_t pc, int32_t a, int32_t b) { branch(j, pc, a, b, CC_E, FATAL_JUMPIFNOT); }
 void emit_JUMPIFNOTTAG(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_tag_of_con(M, RAX, a, jit_fatal(j, FATAL_JUMPIFNOTTAG, 0, 0, 0));
@@ -657,8 +680,7 @@ static int32_t result_at(Jit *j, uint32_t pc) {
 }
 static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, X64Label *after) {
     x64_mov_rm(A, RCX, VMR, OFF(frames));
-    x64_lea(A, R8, RAX, RAX, 4, 0);   /* FRAME_SIZE, 40: 5 rax, then 8 times */
-    x64_shl_ri(A, R8, 3);
+    x64_imul_rri(A, R8, RAX, FRAME_SIZE);
     x64_add_rr(A, RCX, R8);
     x64_mov32_mi(A, RCX, FR(func), (int32_t)f);
     x64_mov32_mi(A, RCX, FR(ret_pc), ret_pc);
@@ -739,6 +761,21 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
    object, jumped to -- or, where it has none, the VM made exact for the
    interpreter and handed back. */
 
+/* --jit-profile (M8): the function called through a closure at pc (r11)
+   told to the site's helper, which touches nothing of the VM */
+static void called(Jit *j, uint32_t pc) {
+    Site *s = jit_site(j, SITE_CALL, pc);
+    if (!s) return;
+    /* what closure_function found (rcx, r10, r11) kept across the call:
+       three pushes and eight bytes keep the machine stack aligned */
+    x64_push_r(A, RCX); x64_push_r(A, R10); x64_push_r(A, R11);
+    x64_sub_ri(A, RSP, 8);
+    x64_mov_ri(A, ms_arg(M, 1), (int64_t)(intptr_t)s);
+    x64_mov_rr(A, ms_arg(M, 2), R11);
+    ms_call(M, (MsHelper)jit_h_called);
+    x64_add_ri(A, RSP, 8);
+    x64_pop_r(A, R11); x64_pop_r(A, R10); x64_pop_r(A, RCX);
+}
 /* obj := the closure in register a; r11 := the index of its function,
    checked; rcx := that Function */
 static void closure_function(Jit *j, int32_t a, int obj) {
@@ -747,8 +784,7 @@ static void closure_function(Jit *j, int32_t a, int obj) {
     x64_mov_rm(A, R11, obj, (int32_t)sizeof(Obj) + 8);   /* field 0: the index */
     x64_cmp_ri(A, R11, (int32_t)p->nfuncs);
     x64_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
-    x64_lea(A, RCX, R11, R11, 2, 0);                      /* 3 r11 */
-    x64_shl_ri(A, RCX, 3);                                /* 24 r11: sizeof(Function) */
+    x64_imul_rri(A, RCX, R11, (int32_t)sizeof(Function));
     x64_mov_ri(A, R8, (int64_t)(intptr_t)p->funcs);
     x64_add_rr(A, RCX, R8);
 }
@@ -810,8 +846,7 @@ static void make_registers_dynamic(Jit *j, int32_t arg) {
    the interpreter, the VM made exact for it */
 static void to_callee_dynamic(Jit *j) {
     X64Label interp; x64_label_init(&interp);
-    x64_mov_ri(A, RAX, (int64_t)sizeof(CodeObject));
-    x64_imul_rr(A, RAX, R11);
+    x64_imul_rri(A, RAX, R11, (int32_t)sizeof(CodeObject));
     x64_mov_ri(A, R8, (int64_t)(intptr_t)j->jit->codes);
     x64_add_rr(A, RAX, R8);
     x64_mov_rm(A, RAX, RAX, (int32_t)offsetof(CodeObject, entry));
@@ -837,6 +872,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
        registers clobbered, so nothing may be live across it */
     frame_room(j);
     closure_function(j, a, R10);
+    called(j, pc);
     x64_lea(A, RDX, BASEI, -1, 1, (int32_t)j->m.nlocals);   /* the callee's base */
     room_dynamic(j, grow, RDX);
     /* the callee's registers above the frame */
@@ -847,8 +883,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     x64_mov_rm(A, RAX, VMR, OFF(fp));
     x64_add_ri(A, RAX, 1);
     x64_mov_rm(A, RSI, VMR, OFF(frames));
-    x64_lea(A, RDI, RAX, RAX, 4, 0);   /* sizeof(Frame), 40 */
-    x64_shl_ri(A, RDI, 3);
+    x64_imul_rri(A, RDI, RAX, FRAME_SIZE);
     x64_add_rr(A, RSI, RDI);
     x64_mov32_mr(A, RSI, (int32_t)offsetof(Frame, func), R11);
     x64_mov32_mi(A, RSI, (int32_t)offsetof(Frame, ret_pc), (int32_t)j->next);
@@ -867,6 +902,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     int grow = grow_slow(j);
     if (grow < 0) return;
     closure_function(j, a, R10);
+    called(j, pc);
     room_dynamic(j, grow, BASEI);
     /* the callee's registers are this frame's, from its base */
     x64_mov32_rm(A, R8, RCX, (int32_t)offsetof(Function, nlocals));
@@ -900,8 +936,7 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     x64_jcc(A, CC_E, &s->here);
     /* the frame: rcx; what it kept: where the caller's code goes on, the
        register of its RESULT (M7), the callee's base (the caller's stack top) */
-    x64_lea(A, RCX, RDX, RDX, 4, 0);
-    x64_shl_ri(A, RCX, 3);
+    x64_imul_rri(A, RCX, RDX, FRAME_SIZE);
     x64_add_rm(A, RCX, VMR, OFF(frames));
     x64_movups_xm(A, XMM0, BASER, 16 * a);
     x64_mov_rm(A, R9, RCX, FR(native_ret));

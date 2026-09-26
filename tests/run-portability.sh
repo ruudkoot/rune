@@ -81,8 +81,10 @@ for vm in $vms; do
   # tests/portability-skip.txt is empty, and says what would go in it.
   skip="--skip tests/portability-skip.txt"
   echo "=== $name: the language suite and tests/vm"
+  # its own directory: the bytecode of vm/new's compiler is not the stack
+  # bytecode that tests/out holds for the other suites (test-opt reads it)
   # shellcheck disable=SC2086
-  sh tests/run-tests.sh -j "$jobs" --rune "$rune" --vm "$vm" $skip $filter || status=1
+  sh tests/run-tests.sh -j "$jobs" --rune "$rune" --vm "$vm" --out "$out/$name-lang" $skip $filter || status=1
   sh tests/vm/run-vm-tests.sh --vm "$vm" --out "$out/$name-vm" --def "$def" || status=1
 done
 

@@ -5,7 +5,7 @@
 #include "regvm.h"
 
 const uint32_t isa_fingerprint = REG_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 5 isa " REG_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 6 isa " REG_ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -110,6 +110,61 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    /* the representations section, where the file has one: its blocks
+       and loop heads begin at instructions of their functions, and each
+       register's representation agrees with what the code writes into it,
+       where the instruction says (docs/bytecode.md, The representations) */
+    for (uint32_t fi = 0; fi < p->nfuncs; fi++) {
+        const Function *fn = &p->funcs[fi];
+        if (!fn->has_meta) continue;
+        for (uint32_t b = 0; b < fn->nblocks; b++)
+            if (fn->blocks[b].pc < fn->code_offset || fn->blocks[b].pc >= fn->code_end || !starts[fn->blocks[b].pc]) {
+                free(starts); snprintf(err, errlen, "a block of %s begins at %u, which is no instruction of it", fn->name, fn->blocks[b].pc); return NULL;
+            }
+        for (uint32_t k = 0; k < fn->nloops; k++)
+            if (fn->loops[k] < fn->code_offset || fn->loops[k] >= fn->code_end || !starts[fn->loops[k]]) {
+                free(starts); snprintf(err, errlen, "a loop of %s begins at %u, which is no instruction of it", fn->name, fn->loops[k]); return NULL;
+            }
+        for (uint32_t at = fn->code_offset; at < fn->code_end; ) {
+            uint8_t op = p->code[at];
+            uint32_t l = rop_length(p->code + at);
+            int made = -1;   /* what the instruction writes, where it says */
+            switch (op) {
+            case ROP_INT: case ROP_CONTAG: made = REP_INT; break;
+            case ROP_UNIT: made = REP_UNIT; break;
+            case ROP_CON0: made = REP_CON0; break;
+            case ROP_TUPLE: case ROP_CLOSURE: case ROP_NEWEXN: case ROP_BUILTINEXN: case ROP_MKEXN:
+            case ROP_SELF: case ROP_EXNCON: case ROP_CON: case ROP_CONN: made = REP_PTR; break;
+            case ROP_CONST: {
+                int32_t c = read_i32(p->code + at + 5);
+                if (c >= 0 && (uint32_t)c < p->nconsts)
+                    made = p->consts[c].tag == T_INT ? REP_INT : p->consts[c].tag == T_WORD ? REP_WORD
+                         : p->consts[c].tag == T_REAL ? REP_REAL : p->consts[c].tag == T_CHAR ? REP_CHAR
+                         : p->consts[c].tag == T_PTR ? REP_PTR : -1;
+                break;
+            }
+            case ROP_PRIM: {
+                int32_t prim = read_i32(p->code + at + 1);
+                if (prim >= 0 && prim < PRIM__COUNT && prim_result[prim] != REP_ANY) made = prim_result[prim];
+                break;
+            }
+            default: break;
+            }
+            if (made >= 0 && rop_dest[op] >= 0) {
+                int32_t d = read_i32(p->code + at + 1 + 4 * rop_dest[op]);
+                int have = d >= 0 && (uint32_t)d < fn->nlocals ? fn->reps[d] : REP_ANY;
+                int ok = have == REP_ANY || have == made
+                      || (have == REP_CON && (made == REP_CON0 || made == REP_PTR));
+                if (!ok) {
+                    free(starts);
+                    snprintf(err, errlen, "the representation of register %d of %s disagrees with the code at %u", d, fn->name, at);
+                    return NULL;
+                }
+            }
+            if (op == ROP_SWITCH) at += l + 5 * (uint32_t)read_i32(p->code + at + 5);
+            else at += l;
+        }
+    }
     return starts;
 }
 

@@ -110,13 +110,37 @@ static inline Value mk_bool(int b) { return mk_con0(b ? 1 : 0); }
 
 /* ---------------------------------------------------------------- program */
 
+/* A block of a function, as the compiler laid it out: where it begins and
+   the registers of its parameters (the representations section,
+   docs/bytecode.md). */
+typedef struct MetaBlock {
+    uint32_t pc;
+    uint32_t nparams;
+    uint32_t *params;
+} MetaBlock;
+
 typedef struct Function {
     uint32_t code_offset;
     uint32_t code_end;
     uint32_t maxstack;   /* how deep its operand stack goes: the loader works it out (vm/isa_stack.c) */
     uint32_t nlocals;
     char *name;
+    /* The representations section of the register bytecode (docs/bytecode.md;
+       docs/plans/jit.md, M8): what the compiler says of the function beside
+       its code, for the JIT's tier 2. has_meta is 0 where the file says
+       nothing (the stack bytecode, a hand-made file). */
+    int has_meta;
+    uint32_t arity;
+    uint8_t *reps;       /* nlocals of them: what each register holds (REP_*) */
+    uint32_t nblocks;
+    MetaBlock *blocks;
+    uint32_t nloops;
+    uint32_t *loops;     /* the pcs of the loop heads */
 } Function;
+
+/* What a register holds, as the compiler says (Low.rep; the numbers are the
+   file's) */
+enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP__COUNT };
 
 /* Where an instruction came from: the file, line and column the compiler
    recorded for the instructions from `pc` up to the next entry's, and the
@@ -160,6 +184,8 @@ typedef struct Program {
     uint32_t ninlines;
     Inlined *inlines;
 } Program;
+/* the representations section freed with the program (vm/loader.c) */
+void program_free_meta(Program *p);
 
 /* ---------------------------------------------------------------- machine */
 
@@ -198,6 +224,7 @@ typedef struct JitOptions {
     int mode;
     int stats;
     int perf_map;            /* --jit-perf-map: /tmp/perf-PID.map, for perf record (M7) */
+    int profile;             /* --jit-profile: the profiles of tier 1's code, shown by --jit-stats (M8) */
     const char *only;
     uint32_t calls, work;
     uint32_t stress;

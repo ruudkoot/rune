@@ -75,6 +75,9 @@ printf 'RUNE\002\000\000\000' > version2.rbc
 expect version2 "unsupported bytecode version" version2.rbc
 printf 'RUNE\003\000\000\000' > version3.rbc
 expect version3 "unsupported bytecode version" version3.rbc
+# version 4, before the representations section
+printf 'RUNE\004\000\000\000' > version4.rbc
+expect version4 "unsupported bytecode version" version4.rbc
 
 # the right version with the fingerprint of another instruction set
 printf "$(printf '%s\n' "$header" | cut -c1-20)\\377\\377\\377\\377" > isa.rbc
@@ -164,7 +167,7 @@ expect debug-inlined-name "bad table of inlined functions" inlname.rbc
 # after the instruction.
 selflen=$((1 + 4 * selfops))
 selfcode=$(printf '\\%03o' "$selfop"; i=0; while [ $i -lt $((4 * selfops)) ]; do printf '\\000'; i=$((i + 1)); done)
-printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$(printf '\\%03o' $selflen)\\000\\000\\000$selfcode$zero$zero$zero$zero$zero$zero" > named.rbc
+printf "$header$zero$zero$one$zero$one\\006\\000\\000\\000queens$(printf '\\%03o' $selflen)\\000\\000\\000$selfcode$zero$zero$zero$zero$zero$zero$zero" > named.rbc
 expect named-function "fatal error at pc $selflen in queens" named.rbc
 
 # the child of a fork by a second VM (vm/image.c) with no image to read:

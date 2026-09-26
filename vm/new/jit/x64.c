@@ -181,6 +181,7 @@ void x64_sub_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 5, dst, imm); }
 void x64_and_ri(X64 *a, int dst, int32_t imm) { alu_ri(a, 4, dst, imm); }
 void x64_cmp_ri(X64 *a, int r, int32_t imm) { alu_ri(a, 7, r, imm); }
 void x64_imul_rr(X64 *a, int dst, int src) { op_rr(a, 1, 0x0F, 0xAF, dst, src); }
+void x64_imul_rri(X64 *a, int dst, int src, int32_t imm) { op_rr(a, 1, 0x69, -1, dst, src); x64_u32(a, (uint32_t)imm); }
 void x64_neg_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 3, r); }
 void x64_not_r(X64 *a, int r) { op_rr(a, 1, 0xF7, -1, 2, r); }
 void x64_shl_ri(X64 *a, int r, int imm) { op_rr(a, 1, 0xC1, -1, 4, r); x64_byte(a, (uint8_t)imm); }

@@ -212,6 +212,7 @@ int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
     }
     if (strcmp(arg, "--jit-stats") == 0) { jit->stats = 1; return 1; }
     if (strcmp(arg, "--jit-perf-map") == 0) { jit->perf_map = 1; return 1; }
+    if (strcmp(arg, "--jit-profile") == 0) { jit->profile = 1; return 1; }
     if (strncmp(arg, "--jit-only=", 11) == 0) {
         /* LO-HI, odd or even (vm/new/jit.c) */
         unsigned long a, b;

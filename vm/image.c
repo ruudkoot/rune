@@ -213,6 +213,25 @@ static void write_image(VM *vm, Stream *s, int kind) {
         put_u32(s, p->inlines[i].col);
         put_u32(s, p->inlines[i].parent);
     }
+    /* the representations section, as the file has it */
+    {
+        uint32_t nmeta = p->nfuncs && p->funcs[0].has_meta ? p->nfuncs : 0;
+        put_u32(s, nmeta);
+        for (uint32_t i = 0; i < nmeta; i++) {
+            const Function *fn = &p->funcs[i];
+            put_u32(s, fn->arity);
+            put_u32(s, fn->nlocals);
+            put(s, fn->reps, fn->nlocals);
+            put_u32(s, fn->nblocks);
+            for (uint32_t b = 0; b < fn->nblocks; b++) {
+                put_u32(s, fn->blocks[b].pc);
+                put_u32(s, fn->blocks[b].nparams);
+                for (uint32_t k = 0; k < fn->blocks[b].nparams; k++) put_u32(s, fn->blocks[b].params[k]);
+            }
+            put_u32(s, fn->nloops);
+            for (uint32_t k = 0; k < fn->nloops; k++) put_u32(s, fn->loops[k]);
+        }
+    }
 
     for (uint32_t i = 0; i < p->nglobals; i++) put_value(s, vm->globals[i], vm);
     put(s, vm->global_set, p->nglobals);
@@ -542,6 +561,36 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         if (s.ok && ((p->inlines[i].line != 0 && p->inlines[i].file >= p->nfiles) ||
                      (p->inlines[i].line == 0 && p->inlines[i].file != 0) || p->inlines[i].parent > i))
             return failed(&s, err, errlen, "a bad table of inlined functions");
+    }
+    /* the representations section */
+    {
+        uint32_t nmeta = get_u32(&s);
+        if (!s.ok || (nmeta != 0 && nmeta != p->nfuncs)) return failed(&s, err, errlen, "the image is cut short");
+        for (uint32_t i = 0; i < nmeta && s.ok; i++) {
+            Function *fn = &p->funcs[i];
+            fn->has_meta = 1;
+            fn->arity = get_u32(&s);
+            uint32_t nregs = get_u32(&s);
+            if (!s.ok || nregs != fn->nlocals) return failed(&s, err, errlen, "the image is cut short");
+            fn->reps = get_new(&s, nregs);
+            fn->nblocks = get_u32(&s);
+            if (!s.ok || !fits(fn->nblocks, sizeof(MetaBlock))) return failed(&s, err, errlen, "the image is cut short");
+            fn->blocks = calloc(fn->nblocks ? fn->nblocks : 1, sizeof(MetaBlock));
+            if (!fn->blocks) return failed(&s, err, errlen, "out of memory");
+            for (uint32_t b = 0; b < fn->nblocks && s.ok; b++) {
+                fn->blocks[b].pc = get_u32(&s);
+                fn->blocks[b].nparams = get_u32(&s);
+                if (!s.ok || !fits(fn->blocks[b].nparams, sizeof(uint32_t))) return failed(&s, err, errlen, "the image is cut short");
+                fn->blocks[b].params = calloc(fn->blocks[b].nparams ? fn->blocks[b].nparams : 1, sizeof(uint32_t));
+                if (!fn->blocks[b].params) return failed(&s, err, errlen, "out of memory");
+                for (uint32_t k = 0; k < fn->blocks[b].nparams; k++) fn->blocks[b].params[k] = get_u32(&s);
+            }
+            fn->nloops = get_u32(&s);
+            if (!s.ok || !fits(fn->nloops, sizeof(uint32_t))) return failed(&s, err, errlen, "the image is cut short");
+            fn->loops = calloc(fn->nloops ? fn->nloops : 1, sizeof(uint32_t));
+            if (!fn->loops) return failed(&s, err, errlen, "out of memory");
+            for (uint32_t k = 0; k < fn->nloops; k++) fn->loops[k] = get_u32(&s);
+        }
     }
     for (uint32_t i = 0; i < p->nlines && s.ok; i++)
         if (p->lines[i].inl > p->ninlines) return failed(&s, err, errlen, "a bad line table");

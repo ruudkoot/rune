@@ -81,6 +81,7 @@ void x64_sub_ri(X64 *a, int dst, int32_t imm);
 void x64_and_ri(X64 *a, int dst, int32_t imm);
 void x64_cmp_ri(X64 *a, int r, int32_t imm);
 void x64_imul_rr(X64 *a, int dst, int src);
+void x64_imul_rri(X64 *a, int dst, int src, int32_t imm);   /* dst := src * imm */
 void x64_neg_r(X64 *a, int r);
 void x64_not_r(X64 *a, int r);
 void x64_shl_ri(X64 *a, int r, int imm);

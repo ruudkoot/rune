@@ -60,7 +60,25 @@ typedef struct CodeObject {
        go with it when it is invalidated */
     uint32_t ncallers, callers_cap;
     uint32_t *callers;
+    /* the profile of the code, under --jit-profile (M8): a site per call
+       through a closure, per branch and per jump back, in the order the
+       code was emitted; NULL otherwise */
+    uint32_t nsites;
+    struct Site *sites;
 } CodeObject;
+
+/* A site of a profile: what a call through a closure called (the first
+   two functions, and how often each, and how often anything else), which
+   way a branch went, how often a loop went round. */
+enum SiteKind { SITE_CALL, SITE_BRANCH, SITE_LOOP };
+typedef struct Site {
+    uint32_t kind, pc;
+    uint32_t f0, f1;        /* SITE_CALL: the callees seen first and second (UINT32_MAX: none yet) */
+    uint64_t n0, n1, other; /* SITE_CALL: their counts, and the others'; SITE_BRANCH: taken, not; SITE_LOOP: n0 */
+} Site;
+/* a call through a closure at site s called function f (a lean helper of
+   the code under --jit-profile: touches nothing of the VM) */
+void jit_h_called(VM *vm, Site *s, uint32_t f);
 
 /* The code objects of the program a VM runs, made when the driver first
    sees it, and again when the program changes (Runtime.restore). */
@@ -93,6 +111,9 @@ typedef struct JitProgram {
     uint64_t dead_bytes;        /* their code, left in the region */
     double compile_seconds;     /* CPU time compiling (clock) */
     uint64_t *prim_calls;       /* per primitive: calls of jit_h_prim from code (--jit-stats, M7) */
+    int profile;                /* --jit-profile (M8): the sites counted, and the functions' names kept
+                                   (the program is gone when the statistics print at exit) */
+    char **names;
     /* per function, the lowest register a call must fill with unit, the
        ones below it being written before anything can collect or read
        them (M7, jit_fill_from); UINT32_MAX while not yet worked out */

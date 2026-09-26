@@ -37,13 +37,38 @@ names       nnames × { len u32, bytes }      # of the functions inlined, each o
 ninlined    u32
 frames_len  u32
 frames      frames_len bytes                 # ninlined frames; see below
+nmeta       u32                              # 0, or nfuncs: the representations; see below
+meta        nmeta × { arity u32, nregs u32, reps nregs × u8,
+                      nblocks u32, blocks nblocks × { pc u32, nparams u32, params nparams × u32 },
+                      nloops u32, loops nloops × u32 }
 ```
 
-The version is `4`, and it changes when the layout does (`rbcVersion` in
+The version is `5`, and it changes when the layout does (`rbcVersion` in
 `src/isa/stack.sml`). A file of version `1`, which has no debug section,
-`2`, which has no fingerprint, or `3`, whose line table knows nothing of
-inlined functions, is refused like any other version the VM does not
-know.
+`2`, which has no fingerprint, `3`, whose line table knows nothing of
+inlined functions, or `4`, which has no representations section, is
+refused like any other version the VM does not know.
+
+**The representations** say, per function, what the compiler knows of it
+beside its code, for a target that keeps values out of their tagged slots
+(the JIT's tier 2, [plans/jit.md](plans/jit.md), M8): its arity; what each
+of its registers holds, as a number -- `0` anything, `1` an int, `2` a
+word, `3` a real, `4` a char, `5` a nullary constructor (a bool, an
+order), `6` a value in the heap (a tuple, a string, an array, a ref, a
+closure, an exception, a datatype of non-nullary constructors only), `7`
+either a nullary constructor or a value in the heap (a list), `8` unit --
+a register being shared only among values of one representation
+(`src/backend/regs.sml`); its blocks, each by the `pc` it begins at and
+the registers of its parameters, so that the SSA form the compiler had
+can be had again; and the `pc`s of its loop heads. The register bytecode
+carries the section (`nmeta` is `nfuncs`); the stack bytecode none
+(`nmeta` is `0`), and a hand-made file of either may say `0`. The loader
+holds the section to the code: a block or a loop begins at an instruction
+of its function, and where an instruction says what it writes -- `INT`,
+`CONST`, `UNIT`, `CON0`, `CONTAG`, the allocating ones, a `PRIM` whose
+result its description types (`prim_result` in `vm/prims_table.h`) --
+the register's representation agrees, or the file is refused ("the
+representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,

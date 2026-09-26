@@ -164,7 +164,11 @@ keep these invariants:
   code changes with its C in `vm/prims.c`. A native address lives in a
   frame's `native_ret`, a handler's `native` and the driver's `jit->at`
   and nowhere else, so that invalidating a function's code is a walk
-  over the frames and handlers (`jit_invalidate`).
+  over the frames and handlers (`jit_invalidate`). **The representations
+  section** (`docs/bytecode.md`): a new instruction that writes a register
+  of a known representation says so in the register checker's lint
+  (`vm/new/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same
+  of the operation.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
