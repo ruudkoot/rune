@@ -54,6 +54,22 @@ cd "$(dirname "$0")/.."
 root=$(pwd)
 [ -n "$vms" ] || vms="bin/runevm32 bin/runevm-ppc64"
 [ -n "$jobs" ] || jobs=$(sh scripts/ncpus.sh)
+# A VM under qemu forks by exec of its own binary, which the kernel must
+# know how to start: without qemu registered under binfmt_misc the child
+# never starts and the parent (rt.fork_image) waits for it for ever. Said
+# here, before anything runs, rather than found by a hang; the registration
+# does not survive a restart of WSL unless its boot command does it
+# (tests/portability-skip.txt has the command).
+for vm in $vms; do
+  case $(basename "$vm") in
+    *ppc64*)
+      if [ ! -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ]; then
+        echo "run-portability: qemu-ppc64 is not registered under /proc/sys/fs/binfmt_misc, so a fork by $vm would hang" >&2
+        echo "  register it with: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register'" >&2
+        exit 2
+      fi ;;
+  esac
+done
 status=0
 out=tests/out/portability
 rm -rf "$out"
