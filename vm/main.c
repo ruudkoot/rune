@@ -26,6 +26,8 @@ static void usage(void) {
         "  --jit=MODE      vm/new: off, baseline, opt or all (docs/plans/jit.md)\n"
         "  --jit-stats     vm/new: what the JIT did, to stderr at exit\n"
         "  --jit-only=SPEC vm/new: give code to functions LO-HI, or the odd or even ones, alone\n"
+        "  --jit-calls=N, --jit-work=N  vm/new: compile a function at its Nth call, or at N iterations of its loops and calls it makes (baseline)\n"
+        "  --jit-stress=N  vm/new: every Nth call into compiled code invalidates it (a test of invalidation)\n"
         "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
         "  --version       print the version and exit\n");
 }
@@ -44,8 +46,9 @@ static int size_arg(const char *text, size_t *out) {
 int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0;
-    int jit_mode = 0, jit_stats = 0, jit_check = 0, jit_given = 0;
-    const char *jit_only = NULL;
+    int jit_check = 0, jit_given = 0;
+    JitOptions jit;
+    memset(&jit, 0, sizeof jit);
     const char *resume = NULL, *restore = NULL;
     int i = 1;
     for (; i < argc; i++) {
@@ -67,7 +70,7 @@ int main(int argc, char **argv) {
             if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
         else if (strncmp(argv[i], "--jit", 5) == 0) {
-            if (!vm_jit_arg(argv[i], &jit_mode, &jit_stats, &jit_check, &jit_only)) { usage(); return 2; }
+            if (!vm_jit_arg(argv[i], &jit, &jit_check)) { usage(); return 2; }
             if (strncmp(argv[i], "--jit=", 6) == 0) jit_given = 1;
         }
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
@@ -77,7 +80,7 @@ int main(int argc, char **argv) {
     }
     /* RUNEVM_JIT names the mode where no --jit= does: for the test runners,
        which start a VM they cannot give options (vm/new; docs/bytecode.md) */
-    if (!jit_given && getenv("RUNEVM_JIT") && !vm_jit_env(getenv("RUNEVM_JIT"), &jit_mode)) return 2;
+    if (!jit_given && getenv("RUNEVM_JIT") && !vm_jit_env(getenv("RUNEVM_JIT"), &jit.mode)) return 2;
     if (jit_check) return vm_jit_check();
     if (restore) {
         /* a world Runtime.save wrote: it carries on from that call, which
@@ -90,9 +93,7 @@ int main(int argc, char **argv) {
             return 2;
         }
         vm->checked = checked;
-        vm->jit_mode = jit_mode;
-        vm->jit_stats = jit_stats;
-        vm->jit_only = jit_only;
+        vm->jit = jit;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (resume) {
@@ -105,9 +106,7 @@ int main(int argc, char **argv) {
             if (vm) vm_destroy(vm);
             return 2;
         }
-        vm->jit_mode = jit_mode;
-        vm->jit_stats = jit_stats;
-        vm->jit_only = jit_only;
+        vm->jit = jit;
         vm_exit(vm, vm_loop(vm));   /* does not return */
     }
     if (i >= argc) { usage(); return 2; }
@@ -119,9 +118,7 @@ int main(int argc, char **argv) {
     vm->gc_stress = gc_stress;
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;
-    vm->jit_mode = jit_mode;
-    vm->jit_stats = jit_stats;
-    vm->jit_only = jit_only;
+    vm->jit = jit;
     vm->progname = argv[i];
     vm->argc = argc - i - 1;
     vm->argv = argv + i + 1;

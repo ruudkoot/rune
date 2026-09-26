@@ -260,7 +260,14 @@ refuses the other's file and image.
   `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
   for finding one whose code is wrong by halving, and for the third run
   of `check-jit.sh`, in which calls, returns and raises cross between the
-  tiers both ways.
+  tiers both ways. Under `--jit=baseline`, the default, a function is
+  compiled at its Nth call, or when its work -- the iterations of its
+  loops and the calls it makes -- reaches N (`--jit-calls=N`,
+  `--jit-work=N`; the defaults are the sweep's, plans/jit.md M6), and the interpreter goes on in a function's code
+  wherever a run of instructions begins -- a loop's head, the instruction
+  after a call, a handler -- the frame being the same; `--jit-stress=N`
+  invalidates the callee's code at every Nth call into it, for testing
+  that frames return to the interpreter from code that is gone.
 
 | Opcode | Operands | Effect |
 |---|---|---|

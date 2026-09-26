@@ -183,6 +183,20 @@ typedef struct Handler {
     const void *native;
 } Handler;
 
+/* The --jit options of vm/new (vm/new/jit.h, docs/plans/jit.md): the mode;
+   --jit-stats; --jit-only=SPEC, which functions alone get code; the
+   thresholds of --jit=baseline, in calls of a function and in its work,
+   the iterations of its loops and the calls it makes (0: the defaults);
+   --jit-stress=N, every Nth call into compiled code invalidating it
+   instead. */
+typedef struct JitOptions {
+    int mode;
+    int stats;
+    const char *only;
+    uint32_t calls, work;
+    uint32_t stress;
+} JitOptions;
+
 #define NUM_BUILTIN_EXNS 8
 
 typedef struct VM {
@@ -226,9 +240,7 @@ typedef struct VM {
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
-    int jit_mode;            /* --jit=MODE in vm/new (vm/new/jit.h); 0, off, in runevm */
-    int jit_stats;           /* --jit-stats: what the JIT did, at exit */
-    const char *jit_only;    /* --jit-only=SPEC: which functions alone get code (vm/new/jit.c); NULL for all */
+    JitOptions jit;          /* the --jit options, vm/new's (vm/new/jit.h); all 0 in runevm */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -317,7 +329,7 @@ int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm
 /* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
    vm/new takes and runevm refuses: 1 when the option is taken, 0 when it is
    not one. vm_jit_check runs --jit-check and gives the exit status. */
-int vm_jit_arg(const char *arg, int *mode, int *stats, int *check, const char **only);
+int vm_jit_arg(const char *arg, JitOptions *jit, int *check);
 int vm_jit_check(void);
 /* RUNEVM_JIT in the environment, the mode where no --jit= is given: taken
    by vm/new, ignored by runevm (the compiler runs on it); 0 for a mode

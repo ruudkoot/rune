@@ -163,8 +163,10 @@ CASE(RET) {
        the stack, as an image resumed at RESULT does */
     if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }
     else { PUSH(v); pc = back; }
-    /* a caller in native code takes the frame back where it left it (M5) */
+    /* a caller in native code takes the frame back where it left it (M5);
+       one that kept no address, but whose function has code, goes on in it (M6) */
     if (back_native) RETURN_NATIVE(back_native);
+    RESUME_NATIVE(fr->func, pc);
     NEXT;
 }
 CASE(PRIM) {
@@ -361,6 +363,9 @@ CASE(JUMP) {
     TRACE(ROP_JUMP, a, 0, 0);
     pc += 5;
     count++;
+    /* a jump back is a loop's: counted, and where the function has
+       code, gone on in it (M6) */
+    if ((uint32_t)a < pc) BACKWARD((uint32_t)a);
     pc = (uint32_t)a;
     NEXT;
 }

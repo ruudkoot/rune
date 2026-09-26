@@ -33,7 +33,7 @@ What it rests on:
 | M3 | The skeleton: code objects, executable memory, the driver | done |
 | M4 | Tier 1, straight-line code, x86-64 | done |
 | M5 | Tier 1 complete, and Windows | done |
-| M6 | Tiering, OSR entry and the code cache | |
+| M6 | Tiering, OSR entry and the code cache | done |
 | M7 | Tier 1 made fast | |
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | |
 | M9 | Tier 2: the IR and the back end | |
@@ -1788,6 +1788,102 @@ M8 to M12 about 6,000, and are planned again after M7.
   with one `--count`.
 * **Touches:** green threads and the collector (the poll points),
   incremental compilation (invalidation).
+* **Done** (2026-09-26; `vm/new/interp.c`, `jit.c`, `jit/compile.c`,
+  `src/isa/regs.sml`, about 250 lines):
+  * **Counters and thresholds.** Tier 0 counts a function's calls (in
+    `HANDOVER`, and in the driver, where a call from native code into an
+    interpreted function arrives at its first instruction) and its work:
+    the iterations of its loops (`BACKWARD`, a `JUMP` back) and the calls
+    it makes, so that a function called once that runs long -- the
+    compiler's top level -- is compiled too, and entered when its next
+    callee returns. `--jit=baseline` compiles at the threshold
+    (`--jit-calls=N`, `--jit-work=N`). Without the two additions the
+    bootstrap crossed the driver 13 million times (callees compiled only
+    when the interpreter called them; the top level never): with them,
+    2,020 times. The counters are instruction-based: what is compiled,
+    and when, is the same on every run, and `--count` is the same in
+    every mode. Compiling happens in tier 0 alone: native code never
+    compiles, since the compiler makes the pages it writes writable and
+    the code running might share one.
+  * **Entry mid-way.** A code object's table of pc to address has an
+    entry wherever a run begins (the scan's targets: a jump's target, a
+    loop's head, a handler, the instruction after a call, the `RESULT`
+    after a `PRIMPUSH`, which M6 makes a target), and a run's count is
+    added where it begins, so entering there is exact. The interpreter
+    enters a hot loop at its head (`BACKWARD`), a frame pushed before its
+    function was compiled when its callee returns (`RESUME_NATIVE` in
+    `RET`), a handler pushed by the interpreter when raised into
+    (`RESUME_NATIVE` in `RAISED`); the driver enters the code of any
+    frame it is handed at such a place (the top level's at its first
+    instruction, an image's at its resume point). There is no OSR exit
+    to build: tier 1's frame is the interpreter's.
+  * **Invalidation** (`jit_invalidate`): the entry and the counters
+    reset, the table freed, and every `native_ret` and `Handler.native`
+    in the function's code made NULL by a walk over the frames and
+    handlers -- the whole of it, since nothing else holds a native
+    address and no native code is on the machine stack while the
+    interpreter runs. The code's bytes stay in the region (dead bytes in
+    `--jit-stats`; reclaiming is later). `--jit-stress=N` invalidates the
+    callee's code at every Nth call into compiled code.
+  * **The oracle** runs every program a fourth time under
+    `--jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=5` (compiled
+    at the first call or iteration, entered mid-way, invalidated every
+    fifth call, compiled again), and the bootstrap under the default
+    baseline too; the `--jit` options are one record (`JitOptions`,
+    `vm/vm.h`).
+  * **`--jit-stats`** adds the time compiling, the dead bytes, the
+    entries mid-way and the invalidations; `scripts/perf-cycles.sh` takes
+    `jit-baseline+c10+w100` for the sweep.
+* **The sweep** (`scripts/perf-cycles.sh --runs 3`; cycles, as a
+  fraction of the interpreter's):
+
+  | Program | `all` | c1 w1 | c2 w2 | c10 w10 | c100 w100 | c1000 w1000 | c2 w100 | c100 w2 |
+  |---|---:|---:|---:|---:|---:|---:|---:|---:|
+  | array_sieve | 0.96 | 0.94 | 0.97 | 0.94 | 0.95 | 0.93 | 0.92 | 1.00 |
+  | fib | 0.89 | 0.81 | 0.81 | 0.84 | 0.81 | 0.85 | 0.82 | 0.81 |
+  | intinf_fact | 0.80 | 0.84 | 0.84 | 0.82 | 0.82 | 0.84 | 0.80 | 0.81 |
+  | list_ops | 0.75 | 0.74 | 0.74 | 0.75 | 0.74 | 0.75 | 0.75 | 0.74 |
+  | real_nbody | 1.42 | 1.43 | 1.46 | 1.38 | 1.40 | 1.42 | 1.37 | 1.39 |
+  | string_ops | 0.84 | 0.80 | 0.81 | 0.81 | 0.79 | 0.80 | 0.79 | 0.80 |
+  | tak | 0.81 | 0.82 | 0.81 | 0.81 | 0.82 | 0.82 | 0.83 | 0.82 |
+  | word_bits | 1.25 | 1.19 | 1.22 | 1.22 | 1.21 | 1.19 | 1.21 | 1.23 |
+  | the bootstrap | 0.82 | 0.81 | 0.81 | 0.80 | 0.79 | 0.83 | 0.79 | 0.83 |
+
+  The thresholds hardly matter: the compiler is fast (the bootstrap's
+  1,233 functions in 0.08 s), so compiling early costs nothing, and
+  compiling late costs only the interpreter's time until then (1000/1000
+  is the one slower column). What decides is the counting itself: with
+  calls counted only at the interpreter's call sites and no work
+  counter, the bootstrap crossed the driver 13 million times and was no
+  faster than M5's `--jit=all` on the call-bound programs.
+
+* **The default:** `--jit=baseline` with `--jit-calls=100
+  --jit-work=100` (`JIT_DEFAULT_MODE`, `DEFAULT_CALLS`, `DEFAULT_WORK` in
+  `vm/new/jit.c`): the fastest column with the least code (1,233 of the
+  compiler's 2,101 functions compiled, 6.1 MB, against 1,429 and 6.9 MB
+  at 2/2). `runevm-new` tiers up by default from here; the suites of
+  `make check` run that way, and the oracle runs the other modes.
+* **Measured** (`--runs 5`, the default against `--jit=all`, the
+  interpreter and `runeopt`):
+
+  | Program | interpreter | default (`baseline`) | `--jit=all` | `runeopt` |
+  |---|---:|---:|---:|---:|
+  | array_sieve | 432.8M | 427.3M (0.99) | 417.3M (0.96) | 298.4M (0.69) |
+  | fib | 829.4M | 725.5M (0.87) | 732.0M (0.88) | 371.9M (0.45) |
+  | intinf_fact | 452.2M | 365.9M (0.81) | 376.2M (0.83) | 259.4M (0.57) |
+  | list_ops | 335.8M | 247.0M (0.74) | 247.0M (0.74) | 181.8M (0.54) |
+  | real_nbody | 679.7M | 1.0G (1.48) | 978.5M (1.44) | 436.3M (0.64) |
+  | string_ops | 669.7M | 544.5M (0.81) | 543.7M (0.81) | 380.2M (0.57) |
+  | tak | 221.9M | 185.9M (0.84) | 197.2M (0.89) | 77.4M (0.35) |
+  | word_bits | 526.9M | 684.8M (1.30) | 655.4M (1.24) | 211.7M (0.40) |
+  | the bootstrap | 11.5G | 9.3G (0.81) | 9.4G (0.82) | 6.6G (0.58) |
+
+  The default is `--jit=all` within noise everywhere, compiling 1,233
+  of the compiler's 2,101 functions instead of all, and the
+  interpreter's `perf-cycles.sh` configuration `new` is now this
+  default (`jit-off` is the interpreter alone). The primitive-bound
+  programs stay M7's.
+
 
 ### M7. Tier 1 made fast (L, about 1,000)
 

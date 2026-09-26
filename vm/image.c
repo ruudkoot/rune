@@ -707,9 +707,7 @@ int vm_become(VM *vm, const char *path) {
         next->native = 1;
     }
     /* the JIT's options are this process's, not the image's (vm/new) */
-    next->jit_mode = vm->jit_mode;
-    next->jit_stats = vm->jit_stats;
-    next->jit_only = vm->jit_only;
+    next->jit = vm->jit;
     /* Nothing of this world is read again, so it goes before the other takes
        its place; the path was copied out of the heap by the caller. */
     vm_release(vm);

@@ -34,8 +34,11 @@
      HANDOVER(f), the frame handed to the driver where function f has
      native code (vm/new/jit.h), RETURN_NATIVE(at), where a return lands
      in native code, RAISED(), on after a raise, into the handler's native
-     code where it has some, and NEW_PROGRAM(), the JIT's view made again
-     of a program that became another;
+     code where it has some, BACKWARD(t), a loop's jump back, counted and
+     gone on in the function's code where it has some, RESUME_NATIVE(f, pc),
+     on in function f's code at pc where a run begins there, and
+     NEW_PROGRAM(), the JIT's view made again of a program that became
+     another;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
      the object v points to, of that kind, or a fatal error;
    * NEXT, on to the next instruction, for a body that ends early. *)
@@ -146,8 +149,10 @@ struct
         "   the stack, as an image resumed at RESULT does */",
         "if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }",
         "else { PUSH(v); pc = back; }",
-        "/* a caller in native code takes the frame back where it left it (M5) */",
-        "if (back_native) RETURN_NATIVE(back_native);"],
+        "/* a caller in native code takes the frame back where it left it (M5);",
+        "   one that kept no address, but whose function has code, goes on in it (M6) */",
+        "if (back_native) RETURN_NATIVE(back_native);",
+        "RESUME_NATIVE(fr->func, pc);"],
      rraising
        (rinst ("PRIM", [("p", K Primitive), ("d", reg), ("args", PrimArgs 0)], Next,
                "Register d := primitive p applied to the registers of args.")
@@ -238,7 +243,10 @@ struct
         "if ((uint32_t)b + 1 >= o->len) FATAL(\"environment slot %d out of range\", b);",
         "OBJ_FIELDS(o)[b + 1] = R(c);"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
-       ["pc = (uint32_t)a;"],
+       ["/* a jump back is a loop's: counted, and where the function has",
+        "   code, gone on in it (M6) */",
+        "if ((uint32_t)a < pc) BACKWARD((uint32_t)a);",
+        "pc = (uint32_t)a;"],
      rinst ("JUMPIF", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds true.")
        ["Value v = R(a);",
         "if (v.tag != T_CON0) FATAL(\"JUMPIF on non-bool\");",

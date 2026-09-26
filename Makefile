@@ -705,7 +705,8 @@ test-new: bin/rune-new bin/runevm-new $(RUNE) vm
 # interpreted and compiled (scripts/check-jit.sh); the Basis Library suite
 # as rune:jit; the executable memory of the system layer (--jit-check);
 # and a recursion 200,000 deep under a machine stack of 1 MB, which holds
-# the driver to never nesting.
+# the driver to never nesting, compiled at load and while tiering up and
+# invalidating (M6).
 test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all "$$@"\n' > bin/runevm-new-jit
 	chmod +x bin/runevm-new-jit
@@ -722,6 +723,8 @@ test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
 	bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
 	(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
 	  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
+	(ulimit -s 1024 && bin/runevm-new --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec-tiered.out) && \
+	  cmp tests/out/new-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: nor while tiering up and invalidating"
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@

@@ -64,8 +64,42 @@
    (vm/new/jit.h): the VM made exact first */
 #define HANDOVER(f) \
     do { \
-        const void *at_ = jit_entry(jit, (f)); \
-        if (at_) { SYNC(); jit->at = at_; jit->handed_native++; return RUN_NATIVE; } \
+        if (jit) { \
+            CodeObject *co_ = &jit->codes[(f)]; \
+            if (vm->jit.mode == JIT_BASELINE) { \
+                /* the caller's work too: called once but calling for ever, it \
+                   is compiled here and entered when this callee returns */ \
+                CodeObject *me_ = &jit->codes[fr->func]; \
+                if (!me_->entry && ++me_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
+                if (!co_->entry && ++co_->calls >= jit->calls_threshold) jit_tier_up(vm, jit, (f)); \
+            } \
+            if (co_->entry && jit->stress && ++jit->stress_count % jit->stress == 0) jit_invalidate(vm, jit, (f)); \
+            if (co_->entry) { SYNC(); jit->at = co_->entry; jit->handed_native++; return RUN_NATIVE; } \
+        } \
+    } while (0)
+/* a JUMP back to t, the head of a loop (M6): the function's counter, its
+   code where the counter says so, and on in the code at t where it has
+   some, the frame being the same */
+#define BACKWARD(t) \
+    do { \
+        if (jit) { \
+            CodeObject *co_ = &jit->codes[fr->func]; \
+            if (!co_->entry && vm->jit.mode == JIT_BASELINE && ++co_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
+            if (co_->entry) { \
+                const void *at_ = jit_osr(co_, (t)); \
+                if (at_) { pc = (t); SYNC(); jit->at = at_; jit->osr_entries++; return RUN_NATIVE; } \
+            } \
+        } \
+    } while (0)
+/* on at pc in the code of function f, where it has some and a run begins
+   there (M6): a return into a frame that kept no native address, a raise
+   into a handler that kept none */
+#define RESUME_NATIVE(f, at_pc) \
+    do { \
+        if (jit && jit->codes[(f)].entry) { \
+            const void *at_ = jit_osr(&jit->codes[(f)], (at_pc)); \
+            if (at_) { SYNC(); jit->at = at_; jit->osr_entries++; return RUN_NATIVE; } \
+        } \
     } while (0)
 /* a return into native code, at the address the frame kept */
 #define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
@@ -76,6 +110,7 @@
 #define RAISED() \
     do { \
         if (jit && vm->handlers[vm->hp].native) RETURN_NATIVE(vm->handlers[vm->hp].native); \
+        RESUME_NATIVE(fr->func, pc); \
         NEXT; \
     } while (0)
 
@@ -132,31 +167,59 @@ int vm_loop(VM *vm) {
     for (;;) {
         /* the program may have become another (Runtime.restore) */
         JitProgram *jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL;   /* --trace: every instruction, interpreted */
+        /* a frame handed to the interpreter whose function has code, at a
+           place a run begins, goes on in the code (M6): the top level's
+           frame at its first instruction, a frame of an image at its
+           resume point */
+        if (r == RUN_INTERP && jit) {
+            uint32_t f = vm->frames[vm->fp].func;
+            CodeObject *co = &jit->codes[f];
+            /* a call from native code into an interpreted function lands here,
+               at the function's first instruction: its counter (M6), which the
+               interpreter's own calls keep in HANDOVER; compiled only here,
+               never from native code, whose pages the compiler would make
+               writable under it */
+            if (!co->entry && vm->jit.mode == JIT_BASELINE && vm->pc == vm->prog.funcs[f].code_offset
+                && ++co->calls >= jit->calls_threshold) jit_tier_up(vm, jit, f);
+            const void *at = co->entry ? jit_osr(co, vm->pc) : NULL;
+            if (at) { jit->at = at; jit->osr_entries++; r = RUN_NATIVE; }
+        }
         if (r == RUN_NATIVE) r = jit_run(vm, jit, jit->at);
         else r = vm->trace ? loop_traced(vm, jit) : loop_fast(vm, jit);
         if (r == RUN_HALT) return 0;
     }
 }
 
-int vm_jit_arg(const char *arg, int *mode, int *stats, int *check, const char **only) {
+/* --jit-NAME=N: a count of at least 1 */
+static int count_arg(const char *arg, size_t prefix, uint32_t *out) {
+    char *end;
+    unsigned long v = strtoul(arg + prefix, &end, 10);
+    if (*end || v == 0 || v > 0xffffffffu) { fprintf(stderr, "runevm: %s: a count of at least 1\n", arg); return 0; }
+    *out = (uint32_t)v;
+    return 1;
+}
+int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
     if (!RUN_JIT) {
         fprintf(stderr, "runevm: %s: this VM is built without the JIT (RUNE_JIT=0)\n", arg);
         return 0;
     }
-    if (strcmp(arg, "--jit-stats") == 0) { *stats = 1; return 1; }
+    if (strcmp(arg, "--jit-stats") == 0) { jit->stats = 1; return 1; }
     if (strncmp(arg, "--jit-only=", 11) == 0) {
         /* LO-HI, odd or even (vm/new/jit.c) */
         unsigned long a, b;
         const char *spec = arg + 11;
-        if (strcmp(spec, "odd") == 0 || strcmp(spec, "even") == 0 || (sscanf(spec, "%lu-%lu", &a, &b) == 2 && a <= b)) { *only = spec; return 1; }
+        if (strcmp(spec, "odd") == 0 || strcmp(spec, "even") == 0 || (sscanf(spec, "%lu-%lu", &a, &b) == 2 && a <= b)) { jit->only = spec; return 1; }
         fprintf(stderr, "runevm: %s: LO-HI, odd or even\n", arg);
         return 0;
     }
+    if (strncmp(arg, "--jit-calls=", 12) == 0) return count_arg(arg, 12, &jit->calls);
+    if (strncmp(arg, "--jit-work=", 11) == 0) return count_arg(arg, 11, &jit->work);
+    if (strncmp(arg, "--jit-stress=", 13) == 0) return count_arg(arg, 13, &jit->stress);
     if (strcmp(arg, "--jit-check") == 0) { *check = 1; return 1; }
-    if (strcmp(arg, "--jit=off") == 0) { *mode = JIT_OFF; return 1; }
-    if (strcmp(arg, "--jit=baseline") == 0) { *mode = JIT_BASELINE; return 1; }
-    if (strcmp(arg, "--jit=opt") == 0) { *mode = JIT_OPT; return 1; }
-    if (strcmp(arg, "--jit=all") == 0) { *mode = JIT_ALL; return 1; }
+    if (strcmp(arg, "--jit=off") == 0) { jit->mode = JIT_OFF; return 1; }
+    if (strcmp(arg, "--jit=baseline") == 0) { jit->mode = JIT_BASELINE; return 1; }
+    if (strcmp(arg, "--jit=opt") == 0) { jit->mode = JIT_OPT; return 1; }
+    if (strcmp(arg, "--jit=all") == 0) { jit->mode = JIT_ALL; return 1; }
     fprintf(stderr, "runevm: %s: the modes are off, baseline, opt and all\n", arg);
     return 0;
 }
@@ -164,10 +227,12 @@ int vm_jit_arg(const char *arg, int *mode, int *stats, int *check, const char **
 int vm_jit_check(void) { return jit_check(); }
 
 int vm_jit_env(const char *mode, int *out) {
-    int stats = 0, check = 0;
-    const char *only = NULL;
+    JitOptions jit;
+    int check = 0;
     char arg[64];
+    memset(&jit, 0, sizeof jit);
     snprintf(arg, sizeof arg, "--jit=%s", mode);
-    if (!vm_jit_arg(arg, out, &stats, &check, &only)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
+    if (!vm_jit_arg(arg, &jit, &check)) { fprintf(stderr, "runevm: RUNEVM_JIT=%s: not a mode\n", mode); return 0; }
+    *out = jit.mode;
     return 1;
 }
