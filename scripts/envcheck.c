@@ -8,7 +8,8 @@
      envcheck-probe pairs SECS all|sample       port sharing of pairs of CPUs
      envcheck-probe pingpong ROUNDS all|sample  a cache line between two CPUs
      envcheck-probe cachecurve MAXKIB           latency of a pointer chase by size
-     envcheck-probe cachesizes l1|all MAXKIB    the caches' sizes from that latency
+     envcheck-probe cachesizes l1|all MAXKIB    the caches' sizes from that latency,
+                                                and L1i from the speed of fetching
      envcheck-probe membw MIB SECS              copy and triad, one thread and all
      envcheck-probe jitter SECS                 pauses of every CPU at once
      envcheck-probe disk DIR MIB SECS NFILES    sequential, random, fsync, files
@@ -38,6 +39,7 @@
 #include <math.h>
 #if defined(__x86_64__)
 #include <cpuid.h>
+#include <sys/syscall.h>
 #endif
 
 /* ---------------------------------------------------------------- helpers */
@@ -340,6 +342,20 @@ static void t_movbe(void) { __asm__ volatile("movbe (%0), %%eax" :: "r"(membuf) 
 static void t_movdiri(void) { __asm__ volatile("movdiri %%eax, (%0)" :: "r"(membuf) : "memory"); }
 static void t_clflushopt(void) { __asm__ volatile("clflushopt (%0)" :: "r"(membuf) : "memory"); }
 static void t_clwb(void) { __asm__ volatile("clwb (%0)" :: "r"(membuf) : "memory"); }
+/* AMX-FP16 (Granite Rapids on): a tile multiply needs the tiles configured,
+   and Linux lets a process use the tile data only once it has asked
+   (ARCH_REQ_XCOMP_PERM for XTILEDATA); without it the multiply faults too.
+   tdpfp16ps %tmm2, %tmm1, %tmm0 is given as bytes, which an assembler
+   older than binutils 2.40 does not know. */
+static void t_amxfp16(void)
+{
+    static unsigned char cfg[64] __attribute__((aligned(64)));
+    memset(cfg, 0, sizeof cfg);
+    cfg[0] = 1;   /* palette 1; tiles 0 to 2 of 16 rows of 64 bytes */
+    for (int i = 0; i < 3; i++) { cfg[16 + 2 * i] = 64; cfg[48 + i] = 16; }
+    syscall(SYS_arch_prctl, 0x1023, 18);
+    __asm__ volatile("ldtilecfg %0\n\t.byte 0xc4, 0xe2, 0x6b, 0x5c, 0xc1\n\ttilerelease" :: "m"(cfg) : "memory");
+}
 
 /* An extension: where cpuid claims it (leaf, subleaf, register eax=0 ebx=1
    ecx=2 edx=3, bit), what state the operating system must have enabled
@@ -387,6 +403,7 @@ static const struct { const char *name; unsigned leaf, sub, reg, bit, os; void (
     {"avx512bf16", 7, 1, 0, 5, 2, t_avx512bf16},
     {"avx512fp16", 7, 0, 3, 23, 2, t_avx512fp16},
     {"amx-tile", 7, 0, 3, 24, 3, t_amx},
+    {"amx-fp16", 7, 1, 0, 21, 3, t_amxfp16},
 };
 
 static unsigned long long xcr0(void)
@@ -689,6 +706,52 @@ static int cmd_pingpong(int rounds, const char *which)
     return 0;
 }
 
+/* ---------------------------------------------------------------- l1i */
+
+/* The L1 instruction cache as fetching shows it: a straight line of 8-byte
+   NOPs, run over and over, is fetched at full speed while it fits and from
+   L2 past it, at less than half the bytes a nanosecond. The step as it
+   outgrows the decoded-uop cache, earlier, is smaller. cpuid's size is the
+   one of the CPU model presented: Granite Rapids showed its 64 KiB under an
+   Emerald Rapids model of 32. */
+static void l1i_size(void)
+{
+    static const unsigned char nop8[8] = {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00};
+    size_t max = 256 * 1024 + 4096;
+    unsigned char *code = mmap(0, max, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (code == MAP_FAILED) { kv("cachesize.L1i", "not measured (mmap)"); return; }
+    long kib[64];
+    double rate[64];
+    int n = 0;
+    for (long k = 8; k <= 256; k += k < 96 ? 8 : 32) {
+        size_t len = (size_t)k * 1024;
+        if (mprotect(code, max, PROT_READ | PROT_WRITE)) break;
+        for (size_t i = 0; i < len; i += 8) memcpy(code + i, nop8, 8);
+        code[len] = 0xc3;   /* ret */
+        if (mprotect(code, max, PROT_READ | PROT_EXEC)) break;
+        void (*f)(void);
+        memcpy(&f, &code, sizeof f);
+        size_t reps = ((size_t)64 << 20) / len;
+        double best = 1e30;
+        for (int t = 0; t < 5; t++) {
+            double t0 = now();
+            for (size_t r = 0; r < reps; r++) f();
+            double dt = now() - t0;
+            if (dt < best) best = dt;
+        }
+        kib[n] = k;
+        rate[n++] = (double)len * reps / best / 1e9;
+    }
+    munmap(code, max);
+    if (n < 2) { kv("cachesize.L1i", "not measured (no memory both written and run)"); return; }
+    /* the edge: the largest fall from one size to the next, by more than half */
+    int e = 0;
+    for (int i = 1; i + 1 < n; i++) if (rate[i + 1] / rate[i] < rate[e + 1] / rate[e]) e = i;
+    if (rate[e + 1] / rate[e] > 0.5) { kv("cachesize.L1i", "no step found (the fetch never falls by half)"); return; }
+    kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB)",
+       kib[e], rate[e], rate[e + 1], kib[e], kib[e + 1]);
+}
+
 #endif /* __x86_64__ */
 
 /* ---------------------------------------------------------------- memory */
@@ -821,6 +884,9 @@ static int cmd_cachesizes(const char *levels, long maxkib)
     double a, z;
     long l1 = sweep(8, 160, 4, 2000000, &a, &z);
     size_kv("cachesize.L1d", l1, a, z, "exact: its edge is sharp");
+#if defined(__x86_64__)
+    l1i_size();
+#endif
     if (strcmp(levels, "all")) return 0;
     long from = l1 ? l1 * 4 : 256;
     long l2 = sweep(from, 4096, 0, 1000000, &a, &z);
