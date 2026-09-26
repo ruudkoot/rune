@@ -802,6 +802,7 @@ static int cmd_pingpong(int rounds, const char *which)
    one of the CPU model presented: Granite Rapids showed its 64 KiB under an
    Emerald Rapids model of 32. Three sweeps, keeping the largest edge, as
    for L1d: another VM's thread on the core makes the cache look smaller. */
+static long l1i_chase(unsigned char *code, size_t max, double *in, double *out);
 static void l1i_size(void)
 {
     static const unsigned char nop8[8] = {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -843,11 +844,72 @@ static void l1i_size(void)
             edge = kib[e]; past = kib[e + 1]; below = rate[e]; above = rate[e + 1];
         }
     }
+    double in = 0, out = 0;
+    long about = measured && !edge ? l1i_chase(code, max, &in, &out) : 0;
     munmap(code, max);
     if (!measured) kv("cachesize.L1i", "not measured (no memory both written and run)");
-    else if (!edge) kv("cachesize.L1i", "no step found (the fetch never falls by half)");
-    else kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB; the largest of three sweeps)",
-            edge, below, above, edge, past);
+    else if (edge) kv("cachesize.L1i", "%ld KiB (%.0f bytes of code a ns below it, %.0f past it; exact: the edge is between %ld and %ld KiB; the largest of three sweeps)",
+                      edge, below, above, edge, past);
+    else if (about) kv("cachesize.L1i", "%ld KiB (%.2f ns a jump below it, %.2f past it; about: a chase of jumps, as straight-line code did not slow past it; the largest of three sweeps)",
+                       about, in, out);
+    else kv("cachesize.L1i", "no step found (neither straight-line code nor a chase of jumps slows)");
+}
+
+/* Where straight-line code does not slow past the L1i (Cascade Lake decodes
+   16 bytes a cycle, and L2 keeps up with that), a chase of jumps through
+   the cache lines in a random order: each line is dec %rdi; jnz to the next
+   line; ret, 2 cycles a jump while they fit. The rise comes a little past
+   the size (36 KiB on Cascade Lake's 32: the decoded-uop cache holds some
+   lines too), and a larger one follows where the branch predictor no
+   longer holds every target and cannot fetch ahead (64 KiB there): the
+   first rise by 30% over 16 KiB is the edge, an approximate one. Three
+   sweeps, keeping the largest edge. */
+static long l1i_chase(unsigned char *code, size_t max, double *in, double *out)
+{
+    static size_t order[4096];
+    long best = 0;
+    for (int sweep = 0; sweep < 3; sweep++) {
+        double base = 0;
+        for (long k = 8; k <= 128; k += 4) {
+            size_t n = (size_t)k * 1024 / 64;
+            if ((size_t)k * 1024 > max || mprotect(code, max, PROT_READ | PROT_WRITE)) return best;
+            memset(code, 0xcc, n * 64);   /* int3 between the lines */
+            for (size_t i = 0; i < n; i++) order[i] = i;
+            unsigned long s = 88172645463325252ul;
+            for (size_t i = n - 1; i > 0; i--) {
+                s ^= s << 13; s ^= s >> 7; s ^= s << 17;
+                size_t j = s % (i + 1), t = order[i];
+                order[i] = order[j]; order[j] = t;
+            }
+            for (size_t i = 0; i < n; i++) {
+                unsigned char *l = code + order[i] * 64, *to = code + order[(i + 1) % n] * 64;
+                int32_t rel = (int32_t)(to - (l + 9));
+                l[0] = 0x48; l[1] = 0xff; l[2] = 0xcf;   /* dec %rdi */
+                l[3] = 0x0f; l[4] = 0x85;                /* jnz rel32 */
+                memcpy(l + 5, &rel, 4);
+                l[9] = 0xc3;                             /* ret */
+            }
+            if (mprotect(code, max, PROT_READ | PROT_EXEC)) return best;
+            void (*f)(long);
+            unsigned char *start = code + order[0] * 64;
+            memcpy(&f, &start, sizeof f);
+            long jumps = 2000000;
+            double t = 1e30;
+            for (int r = 0; r < 3; r++) {
+                double t0 = now();
+                f(jumps);
+                double dt = now() - t0;
+                if (dt < t) t = dt;
+            }
+            double ns = t / jumps * 1e9;
+            if (k == 16) base = ns;
+            if (base > 0 && ns > base * 1.3) {
+                if (k - 4 > best) { best = k - 4; *in = base; *out = ns; }
+                break;
+            }
+        }
+    }
+    return best;
 }
 
 #endif /* __x86_64__ */

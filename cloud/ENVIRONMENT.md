@@ -318,3 +318,58 @@ locally, leave this file alone.
 * **`make check`:** 7 min 51 s, rebuilding the compilers (the tree had the
   middle-end of 2026-09-25, which entry 2's 11.5 min did not). It passes,
   with the 10 INet6Sock socket checks skipped for want of IPv6.
+
+## 4. Claude Code on the web (Anthropic cloud), Cascade Lake, 2026-09-26
+
+* **Fingerprint:** `GenuineIntel 6/85/7, 4 CPUs, 15.7 GiB, KVMKVMKVM, kernel fc-v37`
+* **Service:** as in entry 3, and the same session, resumed once more: its
+  container restarted on this machine at 21:21 UTC, and the hook's
+  `envcheck.sh --identity` said so ("THE MACHINE HAS CHANGED"). Before
+  the fingerprint named hardware newer than its cpuid, this machine and
+  entry 1's had the same one.
+* **Where** (`make envcheck`): **Google Cloud, region `us-central1`**
+  (the direct egress in `34.44.0.0/15`), a Firecracker microVM nested in
+  a VM, likely of the N2 series on its first hardware, Cascade Lake, where
+  entry 1 was one on the Ice Lake hosts that followed.
+* **Hypervisor:** as in entry 1.
+* **CPU:** a real **Cascade Lake**, presented as what it is: none of the
+  extensions Ice Lake added runs (SHA, GFNI, VAES, RDPID, AVX-512 IFMA,
+  VBMI, VBMI2, BITALG, VPOPCNTDQ), where entry 1's ran all ten under the
+  same model, and AVX-512 VNNI does. The brand string and the TSC say
+  2.8 GHz (`tsc: Detected 2800.244 MHz`). `cpuid` gives L1d 32 KiB, L1i
+  32 KiB, L2 1 MiB and L3 33 MiB (33,792 KiB) 11-way, and this time they
+  are the hardware's. Measured (`--slow`): L1d exactly 32 KiB at 1.2 ns
+  (4 cycles, Cascade Lake's, where Ice Lake's 48 KiB take 5); L1i about
+  36 KiB by a chase of jumps (straight-line code runs at 53 bytes a ns on
+  both sides of it, the decoders' 16 bytes a cycle, which L2 keeps up
+  with: `make envcheck` measures it so since this machine); L2 about
+  792 KiB effective at 4.3 ns; L3 about 6.75 MiB effective at 23.5 ns, a
+  small part of the host's, as in entry 1; then memory at 115 to 195 ns.
+* **Clock:** 3.27 to 3.28 GHz on one core, 3.17 to 3.20 on average with
+  all four busy (3.09 to 3.25 each), as entry 1's 3.2.
+* **FMA:** 256-bit 5.3 G FMA instructions/s, 1.63 a cycle of the scalar
+  clock, 512-bit 4.7 G/s, 1.45 a cycle: with two FMA units, AVX2 runs at
+  about 2.7 GHz and AVX-512 at about 2.4, Cascade Lake's lower clocks for
+  them.
+* **Memory:** 15.7 GiB, no swap, the shell's cgroup limited to 13.36 GiB
+  as on the others. The session-start hook runs in a cgroup of its own,
+  without that limit, and reported none: it no longer reports the line.
+  Triad 9.6 GB/s on one thread, 41.4 GB/s on four, the lowest of the four
+  machines.
+* **Disk speed** (`--slow`): sequential write 630 MB/s, read 1.23 GB/s of
+  what was just written, 254 MB/s after `drop_caches`. Random 4 KiB:
+  18,200 reads or 16,300 writes a second on one thread, 47,200 and 41,900
+  on four, median 52 to 80 us. 4 KiB write + `fdatasync`: 2,977 a second,
+  336 us on average. Small files: create 46,000, stat 625,000, read
+  254,000, delete 117,000 a second. Like entry 1, slower than entries 2
+  and 3.
+* **Network:** GitHub 91 MB/s, PyPI 123 MB/s, the SML/NJ site 33 MB/s,
+  Ubuntu's releases 64 MB/s (one run).
+* **Cores and neighbours** (one slow run): every pair kept 0.95 or more of
+  its throughput; a cache line passes in 109 to 185 ns, median 173; steal
+  1.05% with all four busy, pauses over 1 ms 3.1 times a second, at most
+  17 ms.
+* **`make check`:** 10 min 2 s with the build in place (entry 3's 7 min
+  51 s rebuilt the compilers as well, on the same tree): the slowest of
+  the four here, as its cores are. It passes, with the 10 INet6Sock
+  socket checks skipped for want of IPv6.

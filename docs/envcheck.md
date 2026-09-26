@@ -134,10 +134,16 @@ set in either), a balloon device, and the free space of the repository,
   L1 instruction cache is measured on x86-64 by the speed of fetching: a
   straight line of NOPs, run over and over, is fetched at less than half
   the speed once it no longer fits (an earlier, smaller step is the
-  decoded-uop cache). Each L1 is swept three times and the largest edge
+  decoded-uop cache). Where it does not slow (Cascade Lake decodes 16
+  bytes a cycle, which L2 keeps up with: 53 bytes a ns on both sides), a
+  chase of jumps through the cache lines in a random order takes over: 2
+  cycles a jump while they fit, and the first rise by 30% is the edge,
+  an approximate one (36 KiB for Cascade Lake's 32; a larger rise comes
+  where the branch predictor no longer holds every target, at 64 KiB
+  there). Each L1 is swept three times and the largest edge
   kept: a thread of another VM on the other hyperthread of the core shares
   the L1 for a while and makes it look smaller. A size that differs from
-  `cpuid` (the L1s exactly, the others by more than half) is reported: a
+  `cpuid` (an exact L1 exactly, the others by more than half) is reported: a
   hypervisor's CPU template can present another CPU's caches (a Granite
   Rapids fetched from 64 KiB under a model that claims 32), and a VM gets
   only part of a shared L3.

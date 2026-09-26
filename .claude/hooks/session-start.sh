@@ -105,7 +105,9 @@ else
   sh scripts/envcheck.sh --identity > "$out" 2>&1
 fi
 st=$?
-grep -E '^  (envcheck\.(known|fingerprint)|cpu\.uarch(_by_instructions)?|mem\.cgroup_limit) ' "$out" |
+# (not mem.cgroup_limit: the hook runs in a cgroup of its own, without the
+# limit of the shell's, and would say none)
+grep -E '^  (envcheck\.(known|fingerprint)|cpu\.uarch(_by_instructions)?) ' "$out" |
   sed 's/^  /session-start: /; s/  */ /g' | tee -a "$report"
 if [ $st != 0 ]; then
   say "make envcheck could not do everything: see the end of $out, and fix it (docs/envcheck.md)"

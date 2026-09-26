@@ -340,6 +340,7 @@ for lv in L1d L1i L2 L3; do
   [ -n "$m" ] && [ -n "$c" ] || continue
   # an exact size (L1) must agree; an effective one within a factor of 1.5
   case $lv in L1?) exact=1 ;; *) exact=0 ;; esac
+  case "$(get cachesize.$lv)" in *about:*) exact=0 ;; esac   # the L1i by a chase of jumps
   if [ $exact = 1 ] && [ "$m" != "$c" ]; then
     put cache.note.$lv "measured $m KiB, cpuid says $c KiB: the hypervisor presents another CPU's caches"
   elif [ $exact = 0 ] && awk -v m="$m" -v c="$c" 'BEGIN { exit !(m * 1.5 < c || m > c * 1.5) }'; then
