@@ -19,7 +19,7 @@ structure ListPair : LIST_PAIR
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `ListPair` | ListPair | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
+| [`ListPair`](../str/ListPair.md) | ListPair | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
 
 Two lists walked side by side: pairing, and the traversals that take a
 function of an element of each.
@@ -42,33 +42,19 @@ not, so that a program can say which it means.
 signature LIST_PAIR =
 sig
   exception <a href="#exn-unequallengths">UnequalLengths</a>
-
   val <a href="#val-zip">zip</a> : 'a list * 'b list -&gt; ('a * 'b) list
-
   val <a href="#val-zipeq">zipEq</a> : 'a list * 'b list -&gt; ('a * 'b) list
-
   val <a href="#val-unzip">unzip</a> : ('a * 'b) list -&gt; 'a list * 'b list
-
   val <a href="#val-app">app</a> : ('a * 'b -&gt; unit) -&gt; 'a list * 'b list -&gt; unit
-
   val <a href="#val-appeq">appEq</a> : ('a * 'b -&gt; unit) -&gt; 'a list * 'b list -&gt; unit
-
   val <a href="#val-map">map</a> : ('a * 'b -&gt; 'c) -&gt; 'a list * 'b list -&gt; 'c list
-
   val <a href="#val-mapeq">mapEq</a> : ('a * 'b -&gt; 'c) -&gt; 'a list * 'b list -&gt; 'c list
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldleq">foldlEq</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldreq">foldrEq</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-all">all</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
-
   val <a href="#val-exists">exists</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
-
   val <a href="#val-alleq">allEq</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
 end
 </pre>

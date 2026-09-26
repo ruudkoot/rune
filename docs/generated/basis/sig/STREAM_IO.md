@@ -21,9 +21,9 @@ structure TextIO.StreamIO : STREAM_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinIO.StreamIO` | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| [`BinIO.StreamIO`](../str/BinIO.StreamIO.md) | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `StreamIO` | Functional streams over a [`PRIM_IO`](../sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](STREAM_IO.md) of it. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| `TextIO.StreamIO` | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams as values: reading gives the elements and the stream that is left,
 so a stream can be kept, read twice, and read from again where it was.
@@ -62,61 +62,33 @@ Whatever a reader or a writer raises is caught and raised again as the
 signature STREAM_IO =
 sig
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-instream">instream</a>
-
   type <a href="#type-outstream">outstream</a>
-
   type <a href="#type-out_pos">out_pos</a>
-
   type <a href="#type-reader">reader</a>
-
   type <a href="#type-writer">writer</a>
-
   type <a href="#type-pos">pos</a>
-
   val <a href="#val-input">input</a> : instream -&gt; vector * instream
-
   val <a href="#val-input1">input1</a> : instream -&gt; (elem * instream) option
-
   val <a href="#val-inputn">inputN</a> : instream * int -&gt; vector * instream
-
   val <a href="#val-inputall">inputAll</a> : instream -&gt; vector * instream
-
   val <a href="#val-caninput">canInput</a> : instream * int -&gt; int option
-
   val <a href="#val-closein">closeIn</a> : instream -&gt; unit
-
   val <a href="#val-endofstream">endOfStream</a> : instream -&gt; bool
-
   val <a href="#val-output">output</a> : outstream * vector -&gt; unit
-
   val <a href="#val-output1">output1</a> : outstream * elem -&gt; unit
-
   val <a href="#val-flushout">flushOut</a> : outstream -&gt; unit
-
   val <a href="#val-closeout">closeOut</a> : outstream -&gt; unit
-
   val <a href="#val-mkinstream">mkInstream</a> : reader * vector -&gt; instream
-
   val <a href="#val-getreader">getReader</a> : instream -&gt; reader * vector
-
   val <a href="#val-fileposin">filePosIn</a> : instream -&gt; pos
-
   val <a href="#val-setbuffermode">setBufferMode</a> : outstream * IO.buffer_mode -&gt; unit
-
   val <a href="#val-getbuffermode">getBufferMode</a> : outstream -&gt; IO.buffer_mode
-
   val <a href="#val-mkoutstream">mkOutstream</a> : writer * IO.buffer_mode -&gt; outstream
-
   val <a href="#val-getwriter">getWriter</a> : outstream -&gt; writer * IO.buffer_mode
-
   val <a href="#val-getposout">getPosOut</a> : outstream -&gt; out_pos
-
   val <a href="#val-setposout">setPosOut</a> : out_pos -&gt; outstream
-
   val <a href="#val-fileposout">filePosOut</a> : out_pos -&gt; pos
 end
 </pre>

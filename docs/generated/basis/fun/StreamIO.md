@@ -30,8 +30,8 @@ of it.
 > **Deviation** `StreamIO/takes-the-slice-structures`. The specification gives
 > this functor no slice structures, yet it has to hand its writer vector
 > slices, and [`PRIM_IO`](../sig/PRIM_IO.md) offers no way to make one. Like MLton's, this one
-> also takes [`VectorSlice`](../sig/VECTOR_SLICE.md) and [`ArraySlice`](../sig/ARRAY_SLICE.md), and its [`PrimIO`](../fun/PrimIO.md) must have
-> positions of the integer type of [`Position`](../sig/INTEGER.md), which `filePosIn` counts with.
+> also takes [`VectorSlice`](../str/VectorSlice.md) and [`ArraySlice`](../str/ArraySlice.md), and its [`PrimIO`](../fun/PrimIO.md) must have
+> positions of the integer type of [`Position`](../str/Int.md), which `filePosIn` counts with.
 
 > **Implementation** `StreamIO/LINE_BUF-is-BLOCK_BUF`. No element of an
 > arbitrary type is known to be a newline, so a stream built here treats

@@ -19,6 +19,10 @@ struct
      signature, relative to the root of the output. *)
   type index = {signatures : I.module StringMap.map,
                 structures : string StringMap.map,
+                (* the page that describes a structure, by its name: the name of
+                   a structure leads to its own page, a member of it to where a
+                   signature describes it *)
+                strPages : string StringMap.map,
                 functors : unit StringMap.map,
                 (* a name of the top-level environment that is a member of a
                    structure: `Subscript` is General.Subscript, `map` List.map *)
@@ -26,6 +30,7 @@ struct
 
   fun sigPage (name : string) : string = "sig/" ^ name ^ ".md"
   fun funPage (name : string) : string = "fun/" ^ name ^ ".md"
+  fun strPage (name : string) : string = "str/" ^ name ^ ".md"
 
   (* The identifier that a piece of code is, if it is just that. *)
   fun identifier (c : string) : (string list * string) option =
@@ -172,6 +177,9 @@ struct
                 if StringMap.member (#signatures index, x) then Target {page = sigPage x, anchor = ""}
                 else if StringMap.member (#functors index, x) then Target {page = funPage x, anchor = ""}
                 else
+                  case StringMap.find (#strPages index, x) of
+                    SOME page => Target {page = page, anchor = ""}
+                  | NONE =>
                   case StringMap.find (#structures index, x) of
                     SOME s => Target {page = sigPage s, anchor = ""}
                   | NONE =>
@@ -205,11 +213,13 @@ struct
     | [] => NONE
 
   fun emptyIndex () : index =
-    {signatures = StringMap.empty, structures = StringMap.empty, functors = StringMap.empty, tops = StringMap.empty}
+    {signatures = StringMap.empty, structures = StringMap.empty, strPages = StringMap.empty,
+     functors = StringMap.empty, tops = StringMap.empty}
 
   (* The index of some modules: every signature, every structure with the
      signature it claims first, every public functor. *)
-  fun indexOf (modules : I.module list, claims : DocClaims.claim list, isPublic : string -> bool) : index =
+  fun indexOf (modules : I.module list, claims : DocClaims.claim list, isPublic : string -> bool,
+               strPages : string StringMap.map) : index =
     let
       val signatures =
         List.foldl (fn (m as I.Signature {name, ...}, acc) => StringMap.insert (acc, name, m) | (_, acc) => acc)
@@ -223,7 +233,8 @@ struct
         List.foldl (fn (I.Functor {name, ...}, acc) => if isPublic name then StringMap.insert (acc, name, ()) else acc
                      | (_, acc) => acc)
                    StringMap.empty modules
-      val partial = {signatures = signatures, structures = structures, functors = functors, tops = StringMap.empty}
+      val partial = {signatures = signatures, structures = structures, strPages = strPages,
+                     functors = functors, tops = StringMap.empty}
       (* the first structure that declares a member to be an unqualified name
          gives that name its description *)
       val tops =
@@ -241,6 +252,6 @@ struct
                      | (_, acc) => acc)
                    StringMap.empty modules
     in
-      {signatures = signatures, structures = structures, functors = functors, tops = tops}
+      {signatures = signatures, structures = structures, strPages = strPages, functors = functors, tops = tops}
     end
 end

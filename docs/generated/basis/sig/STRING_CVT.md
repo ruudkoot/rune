@@ -19,7 +19,7 @@ structure StringCvt : STRING_CVT
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `StringCvt` | StringCvt: the types and helpers of the fmt and scan functions. Written on primitives, without another structure, because most others require it. | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
+| [`StringCvt`](../str/StringCvt.md) | StringCvt: the types and helpers of the fmt and scan functions. Written on primitives, without another structure, because most others require it. | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
 
 The types and helpers of the conversions between values and text: the
 formats of `fmt`, the readers of `scan`.
@@ -46,35 +46,24 @@ still has the stream it passed.
 <pre>
 signature STRING_CVT =
 sig
-
   datatype <a href="#type-radix">radix</a>
     = <a href="#con-bin">BIN</a>
     | <a href="#con-oct">OCT</a>
     | <a href="#con-dec">DEC</a>
     | <a href="#con-hex">HEX</a>
-
   datatype <a href="#type-realfmt">realfmt</a>
     = <a href="#con-sci">SCI</a> of int option
     | <a href="#con-fix">FIX</a> of int option
     | <a href="#con-gen">GEN</a> of int option
     | <a href="#con-exact">EXACT</a>
-
   type ('a, 'b) <a href="#type-reader">reader</a> = 'b -&gt; ('a * 'b) option
-
   val <a href="#val-padleft">padLeft</a> : char -&gt; int -&gt; string -&gt; string
-
   val <a href="#val-padright">padRight</a> : char -&gt; int -&gt; string -&gt; string
-
   val <a href="#val-splitl">splitl</a> : (char -&gt; bool) -&gt; (char, 'a) reader -&gt; 'a -&gt; string * 'a
-
   val <a href="#val-takel">takel</a> : (char -&gt; bool) -&gt; (char, 'a) reader -&gt; 'a -&gt; string
-
   val <a href="#val-dropl">dropl</a> : (char -&gt; bool) -&gt; (char, 'a) reader -&gt; 'a -&gt; 'a
-
   val <a href="#val-skipws">skipWS</a> : (char, 'a) reader -&gt; 'a -&gt; 'a
-
   type <a href="#type-cs">cs</a>
-
   val <a href="#val-scanstring">scanString</a> : ((char, cs) reader -&gt; ('a, cs) reader) -&gt; string -&gt; 'a option
 end
 </pre>

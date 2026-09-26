@@ -49,7 +49,8 @@ struct
     end
   end
 
-  (* A descriptor is the system's own file descriptor, wrapped (`RuneIODesc.FD`).
+  (* A descriptor is the system's own file descriptor, wrapped in a
+     constructor that the signature does not name.
 
      Implements: OS_IO *)
   structure IO = RuneIODesc

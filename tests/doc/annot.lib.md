@@ -19,7 +19,7 @@ structure Shape : SHAPE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Shape` |  | [tests/doc/annot.lib/shape.sml](../../../../../tests/doc/annot.lib/shape.sml) |
+| [`Shape`](../str/Shape.md) |  | [tests/doc/annot.lib/shape.sml](../../../../../tests/doc/annot.lib/shape.sml) |
 
 Shapes.
 
@@ -37,13 +37,9 @@ sig
   datatype <a href="#type-shape">shape</a>
     = <a href="#con-circle">Circle</a> of int
     | <a href="#con-square">Square</a> of int
-
   val <a href="#val-area">area</a> : shape -&gt; int
-
   val <a href="#val-scale">scale</a> : shape * int -&gt; shape
-
   val <a href="#val-name">name</a> : shape -&gt; string
-
   val <a href="#val-grow">grow</a> : shape -&gt; shape
 end
 </pre>

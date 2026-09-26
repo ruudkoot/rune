@@ -1,9 +1,12 @@
 # How to read these pages
 
-There is a page for every signature. A structure is documented by the signature it implements:
-`List.map` is on the page of `LIST`.
+There is a page for every signature and one for every structure. **The signature says what a
+member means; the structure says what it is here.** So `LIST` is where `map` is described, and
+`List` is where its type is `('a -> 'b) -> 'a list -> 'b list`; `MONO_VECTOR` describes `sub`
+once for the nineteen structures that implement it, and `Word8Vector` shows that its `sub` is
+`vector * int -> Word8.word`. Nothing is written twice in the sources.
 
-## A page
+## A signature's page
 
 - The table at the top says whether the specification requires the signature, how much of it is
   documented, and where its source is.
@@ -25,6 +28,24 @@ There is a page for every signature. A structure is documented by the signature 
 - **Tests**, folded: the checks of the test suite whose labels name the member, by the structure
   they are written for, or by the test functor and the structures it is applied to.
 - **Other implementations**, folded, is not from the comments of the library: what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
+
+## A structure's page
+
+- The table at the top says which signatures the structure implements, whether the specification
+  requires it, how many members it has, how many checks of the test suite name it, and where its
+  source is. *none* means that no signature of the library describes it, or that the signature of
+  the structure around it does.
+- **Synopsis**: how the source binds the structure to its signatures.
+- What the comment above the structure says, which is what is true of this structure and not of
+  every one that implements the signature.
+- **Members**: every member a program can name, with the type elaboration gives it here, and a
+  link to where a signature describes it. A type is shown under the shortest name that reaches
+  it, so that the element of `Word8Vector` is `Word8.word` and not `elem`; *a type of its own* is
+  a type that only this structure makes.
+- **Notes**: the notes whose id names this structure, wherever they are written. A reading of the
+  specification is written in the signature's file, since it holds for every structure that
+  implements it, and its id names the structure whose checks pin it.
+- A member that no signature describes is not linked; [coverage.md](coverage.md) counts them.
 
 ## Anchors
 

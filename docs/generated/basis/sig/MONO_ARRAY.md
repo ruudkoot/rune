@@ -37,25 +37,25 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BoolArray` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| `CharArray` |  | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
-| `Int16Array` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| `Int32Array` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64Array` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| `Int8Array` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| `IntArray` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| `LargeIntArray` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
-| `LargeRealArray` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| `LargeWordArray` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| `Real32Array` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
-| `Real64Array` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| `RealArray` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| `WideCharArray` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| `Word16Array` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| `Word32Array` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64Array` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8Array` |  | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
-| `WordArray` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`BoolArray`](../str/BoolArray.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`CharArray`](../str/CharArray.md) |  | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
+| [`Int16Array`](../str/Int16Array.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32Array`](../str/Int32Array.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64Array`](../str/Int64Array.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8Array`](../str/Int8Array.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArray`](../str/IntArray.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`LargeIntArray`](../str/LargeIntArray.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeRealArray`](../str/RealArray.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| [`LargeWordArray`](../str/WordArray.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`Real32Array`](../str/Real32Array.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real64Array`](../str/RealArray.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| [`RealArray`](../str/RealArray.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharArray`](../str/WideCharArray.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16Array`](../str/Word16Array.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32Array`](../str/Word32Array.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64Array`](../str/Word64Array.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8Array`](../str/Word8Array.md) |  | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
+| [`WordArray`](../str/WordArray.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 Mutable sequences of one element type.
 
@@ -74,55 +74,30 @@ Mutable sequences of one element type.
 signature MONO_ARRAY =
 sig
   eqtype <a href="#type-array">array</a>
-
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-array">array</a> : int * elem -&gt; array
-
   val <a href="#val-fromlist">fromList</a> : elem list -&gt; array
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; elem) -&gt; array
-
   val <a href="#val-length">length</a> : array -&gt; int
-
   val <a href="#val-sub">sub</a> : array * int -&gt; elem
-
   val <a href="#val-update">update</a> : array * int * elem -&gt; unit
-
   val <a href="#val-vector">vector</a> : array -&gt; vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : array, <a href="#fld-copy.dst">dst</a> : array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
-
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : vector, <a href="#fld-copyvec.dst">dst</a> : array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; array -&gt; unit
-
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; array -&gt; unit
-
   val <a href="#val-modifyi">modifyi</a> : (int * elem -&gt; elem) -&gt; array -&gt; unit
-
   val <a href="#val-modify">modify</a> : (elem -&gt; elem) -&gt; array -&gt; unit
-
   val <a href="#val-foldli">foldli</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; array -&gt; (int * elem) option
-
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; array -&gt; elem option
-
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; array -&gt; bool
-
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; array -&gt; bool
-
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; array * array -&gt; order
 end
 </pre>
@@ -153,7 +128,7 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../sig/MONO_VECTOR.md), `char` for [`CharVector`](../sig/MONO_VECTOR.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
 
 <details><summary>Tests (2)</summary>
 

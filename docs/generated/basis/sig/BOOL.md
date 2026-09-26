@@ -19,7 +19,7 @@ structure Bool : BOOL
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Bool` | Bool | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
+| [`Bool`](../str/Bool.md) | Bool | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
 
 Booleans: negation, and conversion to and from text.
 
@@ -34,13 +34,9 @@ top-level environment.
 signature BOOL =
 sig
   datatype <a href="#type-bool">bool</a> = datatype bool
-
   val <a href="#val-not">not</a> : bool -&gt; bool
-
   val <a href="#val-tostring">toString</a> : bool -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (bool, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; bool option
 end
 </pre>

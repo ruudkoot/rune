@@ -19,13 +19,13 @@ structure NetProtDB : NET_PROT_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `NetProtDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetProtDB`](../str/NetProtDB.md) |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The protocol database: turning the name of a network protocol into its
 number, and back.
 
 This is what the system knows from `/etc/protocols`: that `"tcp"` is 6 and
-`"udp"` is 17. The numbers are the ones [`Socket`](../sig/SOCKET.md)'s `socket'` functions
+`"udp"` is 17. The numbers are the ones [`Socket`](../str/Socket.md)'s `socket'` functions
 take.
 
 ## Interface
@@ -34,15 +34,10 @@ take.
 signature NET_PROT_DB =
 sig
   type <a href="#type-entry">entry</a>
-
   val <a href="#val-name">name</a> : entry -&gt; string
-
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
-
   val <a href="#val-protocol">protocol</a> : entry -&gt; int
-
   val <a href="#val-getbyname">getByName</a> : string -&gt; entry option
-
   val <a href="#val-getbynumber">getByNumber</a> : int -&gt; entry option
 end
 </pre>

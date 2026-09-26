@@ -19,7 +19,7 @@ structure Vector : VECTOR
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Vector` | Vector: immutable arrays with structural equality. | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
+| [`Vector`](../str/Vector.md) | Vector: immutable arrays with structural equality. | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
 
 Vectors: immutable sequences of a fixed length, of any element type.
 
@@ -51,45 +51,25 @@ order they visit: both pass the index.
 signature VECTOR =
 sig
   type 'a <a href="#type-vector">vector</a> = 'a vector
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-fromlist">fromList</a> : 'a list -&gt; 'a vector
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a vector
-
   val <a href="#val-length">length</a> : 'a vector -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a vector * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a vector * int * 'a -&gt; 'a vector
-
   val <a href="#val-concat">concat</a> : 'a vector list -&gt; 'a vector
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a vector -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a vector -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * 'a -&gt; 'b) -&gt; 'a vector -&gt; 'b vector
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a vector -&gt; 'b vector
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a vector -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a vector * 'a vector -&gt; order
 end
 </pre>

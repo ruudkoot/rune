@@ -23,6 +23,29 @@ struct
   fun isPublic (name : string) : bool =
     not (String.isPrefix "Rune" name orelse String.isPrefix "RUNE_" name)
 
+  (* The structure of a dotted name, as the sources declare it. *)
+  fun structAt (ms : I.module list, names : string list) : I.structRecord option =
+    case names of
+      [] => NONE
+    | n :: rest =>
+        (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
+           SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
+         | _ => NONE)
+
+  fun dotted (name : string) : string list = String.fields (fn c => c = #".") name
+
+  (* A structure that is bound to another one by name has that one's body: the
+     prose, the notes and the substructures of `Posix.FileSys` are those of
+     `RunePosixFileSys`, which is where the sources write them. DocClaims
+     follows the same binding for the claims. *)
+  fun bodyOf (tops : I.module list, r : I.structRecord) : I.structRecord =
+    case #rhs r of
+      I.Alias target =>
+        (case List.find (fn I.Struct {name, ...} => name = target | _ => false) tops of
+           SOME (I.Struct r') => r'
+         | _ => r)
+    | _ => r
+
   fun sort (less : 'a * 'a -> bool) (xs : 'a list) : 'a list =
     let
       fun merge ([], ys) = ys
@@ -89,7 +112,84 @@ struct
                                                                   SOME l => l @ [s] | NONE => [s])))
                              StringMap.empty sites
       val claims = DocClaims.ofModules isPublic modules
-      val index = R.indexOf (modules, claims, isPublic)
+      (* The signature of a structure around this one specifies a structure at
+         its path: `SOCKET` specifies `Ctl` inside `Socket`. *)
+      fun itemsOfSig (signat : string) : I.item list =
+        case List.find (fn I.Signature {name, ...} => name = signat | _ => false) modules of
+          SOME (I.Signature {body, ...}) => body
+        | _ => []
+      fun specifiesStructureAt (signat : string, path : string list) : bool =
+        List.exists (fn e : I.entryRecord => #kind e = I.Structure andalso #path e @ [#name e] = path)
+                    (P.entriesOf (itemsOfSig signat))
+      (* what a structure bound by name to another public one is bound to *)
+      val bindings : (string * string) list ref = ref []
+      (* Every public structure of the sources that has a page of its own:
+         one that says which signature it implements; one that no signature
+         describes, such as `WideTextIO`, which matches none of the library's
+         and is documented here alone; and one that the signature of a
+         structure around it specifies, such as `Socket.Ctl`. A structure that
+         is bound by name to another public structure is that structure, and
+         has no page of its own: `Text.Char` is `Char`. *)
+      val paged : (string * I.structRecord * I.structRecord * DocClaims.claim list) list =
+        let
+          fun boundToPublic (r : I.structRecord) =
+            case #rhs r of
+              I.Alias t => isPublic t andalso List.exists (fn I.Struct {name, ...} => name = t | _ => false) modules
+            | _ => false
+          (* around: the nearest structure that claims a signature, and what it claims *)
+          fun walk (prefix, around, r : I.structRecord) =
+            if not (isPublic (#name r)) then []
+            else if boundToPublic r then
+              (case #rhs r of
+                 I.Alias t => (bindings := (prefix ^ #name r, t) :: !bindings; [])
+               | _ => [])
+            else
+              let
+                val name = prefix ^ #name r
+                val body = bodyOf (modules, r)
+                val mine = List.filter (fn c : DocClaims.claim => #name c = name) claims
+                val here =
+                  if not (List.null mine) then [(name, r, body, mine)]
+                  else
+                    (case around of
+                       NONE => if List.null (#doc body) then [] else [(name, r, body, [])]
+                     | SOME (outer : string, signat) =>
+                         if specifiesStructureAt (signat, List.drop (dotted name, List.length (dotted outer)))
+                         then [(name, r, body, [])] else [])
+                val around' = case mine of c :: _ => SOME (name, #signat c) | [] => around
+              in
+                here @ List.concat (List.map (fn I.Struct sub => walk (name ^ ".", around', sub) | _ => [])
+                                             (#subs body))
+              end
+        in
+          List.concat (List.map (fn I.Struct r => walk ("", NONE, r) | _ => []) modules)
+        end
+      (* The page of a structure, following what it is bound to: the page of
+         `Position` is the page of `Int`, since that is what it is. *)
+      fun strPageOf (name : string) : string option =
+        if List.exists (fn (n, _, _, _) => n = name) paged then SOME (R.strPage name)
+        else
+          let
+            fun try [] = NONE
+              | try ((n, t) :: rest) =
+                  if n = name then strPageOf t
+                  else if String.isPrefix (n ^ ".") name
+                  then strPageOf (t ^ String.extract (name, String.size n, NONE))
+                  else try rest
+          in
+            try (!bindings)
+          end
+      (* the name of every structure that leads somewhere, so that prose that
+         names one links to its page *)
+      val strPages =
+        List.foldl (fn (name, m) => case strPageOf name of
+                                      SOME page => StringMap.insert (m, name, page)
+                                    | NONE => m)
+                   StringMap.empty
+                   (List.map (fn (n, _, _, _) => n) paged
+                    @ List.map (fn (n, _) => n) (!bindings)
+                    @ List.map (fn c : DocClaims.claim => #name c) claims)
+      val index = R.indexOf (modules, claims, isPublic, strPages)
       val links = ref []
       val anchors = ref []
       val declared = List.concat (List.map (fn I.Decl {names, ...} => names | _ => []) modules)
@@ -134,10 +234,11 @@ struct
           first modules
         end
     in
-      (claims, index,
+      (claims, index, paged,
        fn root => {index = index, root = root, up = out, claims = claims, notesOf = notesOf modules,
                    topLevel = topLevel, tests = tests, annotations = annotated,
                    ratchet = fn s => List.exists (fn r => r = s) ratchet,
+                   strPageOf = strPageOf,
                    links = links, anchors = anchors} : P.env)
     end
 
@@ -183,7 +284,8 @@ struct
       "# " ^ M.escape title ^ "\n\n"
       ^ String.concat (List.map (M.block link) overview)
       ^ "[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md)"
-      ^ " &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md)"
+      ^ " &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md)"
+      ^ " &middot; [what depends on what](depends.md)"
       ^ (if hasTypes then " &middot; [types that are one type](types.md)" else "")
       ^ " &middot; [readings of the specification](readings.md)"
       ^ " &middot; [what is documented](coverage.md) &middot; index: "
@@ -198,7 +300,11 @@ struct
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
 
-  fun coverage (sigs : I.signatureRecord list, unpinned : DocNotes.note list) : string =
+  (* structures: every structure that has a page, with how many members it has
+     and how many of them a signature describes. *)
+  fun coverage (sigs : I.signatureRecord list,
+                structures : {name : string, members : int, described : int} list,
+                unpinned : DocNotes.note list) : string =
     let
       fun counts (s : I.signatureRecord) =
         let
@@ -221,6 +327,27 @@ struct
       ^ "(a value whose type shows an arrow) is expected to begin its description with a usage head.\n\n"
       ^ M.table (["Signature", "Entries", "Documented", "", "Functions", "With a usage head"],
                  List.map row rows @ [["**all**", Int.toString te, Int.toString td, percent (td, te), Int.toString tf, Int.toString th]])
+      ^ (if List.null structures then ""
+         else
+           let
+             val undescribed = List.filter (fn r => #described r < #members r) structures
+             val (tm, td) = List.foldl (fn (r, (m, d)) => (m + #members r, d + #described r)) (0, 0) structures
+           in
+             "## Members a signature describes\n\n"
+             ^ "Every structure has a page of its own, which shows its members with the types it gives them and\n"
+             ^ "sends the reader to the signature that says what each means. A member that no signature describes\n"
+             ^ "is one a program can name and nothing explains: it is a name beyond the signature, which\n"
+             ^ "[structures.md](structures.md) lists, or the structure matches no signature of the library.\n\n"
+             ^ Int.toString (List.length structures) ^ " structures have a page, with "
+             ^ Int.toString tm ^ " members, of which " ^ Int.toString td ^ " (" ^ percent (td, tm)
+             ^ ") are described by a signature.\n\n"
+             ^ (if List.null undescribed then ""
+                else M.table (["Structure", "Members", "Described", ""],
+                              List.map (fn r => ["[" ^ M.code (#name r) ^ "](" ^ R.strPage (#name r) ^ ")",
+                                                 Int.toString (#members r), Int.toString (#described r),
+                                                 percent (#described r, #members r)])
+                                       (sort (fn (a, b) => String.compare (#name a, #name b) = LESS) undescribed)))
+           end)
       ^ (case List.filter (fn (_, n) => n > 0) (List.map (fn s : I.signatureRecord => (#name s, List.length (DocExamples.ofSignature s))) sigs) of
            [] => ""
          | withExamples =>
@@ -237,7 +364,9 @@ struct
               ^ String.concat (List.map (fn n : DocNotes.note =>
                                            "- " ^ M.code (#id n) ^ " (" ^ M.escape (#kind n) ^ ")"
                                            ^ (if #signat n = "" then "" else ", " ^ #signat n)
-                                           ^ (if #structure' n = "" then "" else ", in " ^ M.code (#structure' n)) ^ "\n") unpinned)
+                                           ^ (if #structure' n = "" then "" else ", in " ^ M.code (#structure' n)) ^ "\n")
+                                        (sort (fn (a : DocNotes.note, b : DocNotes.note) =>
+                                                 String.compare (#id a, #id b) = LESS) unpinned))
               ^ "\n")
       ^ "---\n\n<sub>Generated by runedoc; do not edit.</sub>\n"
     end
@@ -246,9 +375,12 @@ struct
      they are, when the pages have them. *)
   fun conventions (annotated : (string * string) option) : string =
     "# How to read these pages\n\n"
-    ^ "There is a page for every signature. A structure is documented by the signature it implements:\n"
-    ^ "`List.map` is on the page of `LIST`.\n\n"
-    ^ "## A page\n\n"
+    ^ "There is a page for every signature and one for every structure. **The signature says what a\n"
+    ^ "member means; the structure says what it is here.** So `LIST` is where `map` is described, and\n"
+    ^ "`List` is where its type is `('a -> 'b) -> 'a list -> 'b list`; `MONO_VECTOR` describes `sub`\n"
+    ^ "once for the nineteen structures that implement it, and `Word8Vector` shows that its `sub` is\n"
+    ^ "`vector * int -> Word8.word`. Nothing is written twice in the sources.\n\n"
+    ^ "## A signature's page\n\n"
     ^ "- The table at the top says whether the specification requires the signature, how much of it is\n"
     ^ "  documented, and where its source is.\n"
     ^ "- **Synopsis**: the signature's declaration, then what its comment says about it as a whole.\n"
@@ -274,6 +406,22 @@ struct
            ^ (if intro = "" then "." else ": " ^ M.escape intro) ^ "\n"
        | NONE => "")
     ^ "\n"
+    ^ "## A structure's page\n\n"
+    ^ "- The table at the top says which signatures the structure implements, whether the specification\n"
+    ^ "  requires it, how many members it has, how many checks of the test suite name it, and where its\n"
+    ^ "  source is. *none* means that no signature of the library describes it, or that the signature of\n"
+    ^ "  the structure around it does.\n"
+    ^ "- **Synopsis**: how the source binds the structure to its signatures.\n"
+    ^ "- What the comment above the structure says, which is what is true of this structure and not of\n"
+    ^ "  every one that implements the signature.\n"
+    ^ "- **Members**: every member a program can name, with the type elaboration gives it here, and a\n"
+    ^ "  link to where a signature describes it. A type is shown under the shortest name that reaches\n"
+    ^ "  it, so that the element of `Word8Vector` is `Word8.word` and not `elem`; *a type of its own* is\n"
+    ^ "  a type that only this structure makes.\n"
+    ^ "- **Notes**: the notes whose id names this structure, wherever they are written. A reading of the\n"
+    ^ "  specification is written in the signature's file, since it holds for every structure that\n"
+    ^ "  implements it, and its id names the structure whose checks pin it.\n"
+    ^ "- A member that no signature describes is not linked; [coverage.md](coverage.md) counts them.\n\n"
     ^ "## Anchors\n\n"
     ^ "Every entry has an anchor `kind-name`, where the kind is one of `val`, `type`, `exn`, `con`\n"
     ^ "(constructor), `fld` (field) and `str` (substructure), and the name is in lower case. A prime is\n"
@@ -302,32 +450,38 @@ struct
   (* strict: the library has a list of what is documented in full, and then a
      structure that shows a program more than its signatures name is an error:
      it needs a seal file in the MANIFEST. *)
+  (* rows: every structure that has a page, with the claims it makes and the
+     status of its page, so that the index reaches all of them. *)
   fun structuresPage (env : P.env, title : string, modules : I.module list, sigStatus : string -> string,
+                      rows' : {name : string, rhs : I.rhs, file : string, mine : DocClaims.claim list,
+                               (* the signature that specifies it, when it claims none itself *)
+                               within : string option, status : string} list,
                       namesOf : (string list -> string list option) option, strict : bool) : string =
     let
       val claims = sort (fn (a : DocClaims.claim, b : DocClaims.claim) =>
                            case String.compare (#name a, #name b) of
                              LESS => true | GREATER => false | EQUAL => #signat a < #signat b)
                         (List.filter (fn c : DocClaims.claim => not (#isFunctor c)) (#claims env))
-      fun structAt (ms : I.module list, names) =
-        case names of
-          [] => NONE
-        | n :: rest =>
-            (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
-               SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
-             | _ => NONE)
-      fun definedAs (c : DocClaims.claim) =
-        case structAt (modules, String.fields (fn ch => ch = #".") (#name c)) of
-          SOME {rhs = I.Alias s, ...} => "is " ^ M.code s
-        | SOME {rhs = I.Apply (f, _), ...} => "an application of " ^ M.code f
+      fun definedAs (rhs : I.rhs) =
+        case rhs of
+          I.Alias s => "is " ^ P.strLink (env, "structures.md", s)
+        | I.Apply (f, _) => "an application of " ^ M.code f
         | _ => ""
       fun sigLink s = "[" ^ M.code s ^ "](" ^ P.href (env, "structures.md", {page = R.sigPage s, anchor = ""}, Source.noSpan) ^ ")"
-      fun row (c : DocClaims.claim) =
-        [M.code (#name c), (if #opaque c then ":> " else ": ") ^ sigLink (#signat c),
-         if #realisations c = "" then "" else M.code (#realisations c),
-         (case #status c of SOME st => st | NONE => sigStatus (#signat c)),
-         definedAs c,
-         P.sourceLink (env, "", #file c)]
+      (* one row per claim; a structure that claims nothing has one of its own *)
+      fun rowsOf {name, rhs, file, mine, within, status} =
+        case mine of
+          [] => [[P.strLink (env, "structures.md", name),
+                  (case within of SOME sg => "*in* " ^ sigLink sg | NONE => "*none*"),
+                  "", status, definedAs rhs, P.sourceLink (env, "", file)]]
+        | _ => List.map (fn c : DocClaims.claim =>
+                           [P.strLink (env, "structures.md", name),
+                            (if #opaque c then ":> " else ": ") ^ sigLink (#signat c),
+                            if #realisations c = "" then "" else M.code (#realisations c),
+                            (case #status c of SOME st => st | NONE => sigStatus (#signat c)),
+                            definedAs rhs,
+                            P.sourceLink (env, "", file)])
+                        mine
       (* What a structure declares beyond the signatures it claims: of a
          written-out structure what its body declares, in the order of the
          source; of one that is another by name, or an application of a
@@ -381,12 +535,16 @@ struct
     in
       "# Structures and what they implement\n\n"
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
-      ^ "Every public structure of the library that says which signature it implements. A structure is\n"
-      ^ "documented on the page of its signature. `:>` means that the source seals the structure with the\n"
-      ^ "signature, so that its types are its own; `:` that it matches it, which the test suite checks.\n"
-      ^ "Either way a program sees the members that the signature names and no others, unless the structure\n"
-      ^ "is listed at the end of this page.\n\n"
-      ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"], List.map row claims)
+      ^ "Every public structure of the library, with the signature it says it implements. Each has a page of\n"
+      ^ "its own, which shows its members with the types it gives them; the signature's page says what they\n"
+      ^ "mean. A signature of *none* means that no signature of the library names the structure, or that the\n"
+      ^ "signature of the structure around it specifies it: its own page is then the only place it is\n"
+      ^ "described.\n\n"
+      ^ "`:>` means that the source seals the structure with the signature, so that its types are its own;\n"
+      ^ "`:` that it matches it, which the test suite checks. Either way a program sees the members that the\n"
+      ^ "signature names and no others, unless the structure is listed at the end of this page.\n\n"
+      ^ M.table (["Structure", "Signature", "Realisations", "Status", "", "Source"],
+                 List.concat (List.map rowsOf (sort (fn (a, b) => String.compare (#name a, #name b) = LESS) rows')))
       ^ (if List.null beyondRows then ""
          else "## Names beyond the signature\n\n"
               ^ "What a program can name in a structure although its signatures do not specify it: these structures\n"
@@ -608,6 +766,7 @@ struct
                                "[" ^ #signat o' ^ "](" ^ P.href ({index = #index env, root = "../", up = #up env,
                                                                   claims = #claims env, notesOf = #notesOf env,
                                                                   ratchet = #ratchet env, topLevel = #topLevel env,
+                                                                  strPageOf = #strPageOf env,
                                                                   tests = #tests env, annotations = #annotations env,
                                                                   links = #links env, anchors = #anchors env},
                                                                  path, {page = R.sigPage (#signat o'), anchor = #anchor o'},
@@ -685,15 +844,8 @@ struct
                   sites : DocTests.site list, tests : string) : int =
     let
       val scopes = List.foldl (fn (s : DocTests.site, m) => StringMap.insert (m, #scope s, ())) StringMap.empty sites
-      fun structAt (ms : I.module list, names) =
-        case names of
-          [] => NONE
-        | n :: rest =>
-            (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
-               SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
-             | _ => NONE)
       fun aliasOf name =
-        case structAt (modules, String.fields (fn c => c = #".") name) of
+        case structAt (modules, dotted name) of
           SOME {rhs = I.Alias t, ...} => SOME t
         | _ => NONE
       (* the public structures that are bound to this one by name: Math is Real.Math *)
@@ -743,19 +895,12 @@ struct
                  names : (string * int * int) list) : string =
     let
       val page = "types.md"
-      fun structAt (ms : I.module list, path) =
-        case path of
-          [] => NONE
-        | n :: rest =>
-            (case List.find (fn I.Struct {name, ...} => name = n | _ => false) ms of
-               SOME (I.Struct r) => if List.null rest then SOME r else structAt (#subs r, rest)
-             | _ => NONE)
       (* a structure on the way to the type is another public structure by name *)
       fun isAlias (path : string list) =
         let
           fun upTo k = k >= 1 andalso
                        ((case structAt (modules, List.take (path, k)) of
-                           SOME {rhs = I.Alias t, ...} => isPublic (List.hd (String.fields (fn c => c = #".") t))
+                           SOME {rhs = I.Alias t, ...} => isPublic (List.hd (dotted t))
                          | _ => false)
                         orelse upTo (k - 1))
         in
@@ -948,8 +1093,9 @@ struct
         case labels of
           SOME ls => if DocNotes.isPinned ls n then "" else " *(no check pins it)*"
         | NONE => ""
+      fun byId (a : DocNotes.note, b : DocNotes.note) = String.compare (#id a, #id b) = LESS
       fun section (kind, heading, intro) =
-        case List.filter (fn n : DocNotes.note => #kind n = kind) notes of
+        case sort byId (List.filter (fn n : DocNotes.note => #kind n = kind) notes) of
           [] => ""
         | ns =>
             "## " ^ heading ^ "\n\n" ^ intro ^ "\n\n"
@@ -1019,6 +1165,185 @@ struct
   fun exampleStructureOf (claims : DocClaims.claim list, sigStatus : string -> string) : string -> string option =
     DocExamples.structureOf (claims, fn c : DocClaims.claim => case #status c of SOME st => st | NONE => sigStatus (#signat c))
 
+  (* ---- what depends on what ---- *)
+  (* The graph the MANIFEST records: a node is one source file, named by the
+     public modules it declares, and an edge is a `requires`. A file that
+     declares nothing public is left out, and what it needs is added to what
+     needs it, so that the graph is of the library a program sees and not of
+     the plumbing. An edge that a path already implies is left out (the
+     transitive reduction of the graph, which the load order makes acyclic):
+     that is what makes it readable, since it turns 560 requirements into 238
+     edges. The areas are those of the signatures. *)
+  fun dependsPage (env : P.env, title : string, entries : BasisManifest.entry list,
+                   areaOfModule : string -> string option) : string =
+    let
+      val entries = List.filter (fn e : BasisManifest.entry => #when e <> BasisManifest.Seal) entries
+      fun isModule (n : string) = n <> "" andalso Char.isUpper (String.sub (n, 0))
+      fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
+      (* every file that provides a name: `OS` is a structure and a signature,
+         and a file that needs the name needs both, as the loader does *)
+      val owner =
+        List.foldl (fn (e : BasisManifest.entry, m) =>
+                      List.foldl (fn (p, m) =>
+                                    StringMap.insert (m, p, #file e :: Option.getOpt (StringMap.find (m, p), [])))
+                                 m (#provides e))
+                   StringMap.empty entries
+      val publicOf =
+        List.foldl (fn (e : BasisManifest.entry, m) =>
+                      StringMap.insert (m, #file e, List.filter (fn p => isModule p andalso isPublic p) (#provides e)))
+                   StringMap.empty entries
+      fun modulesOf (f : string) = Option.getOpt (StringMap.find (publicOf, f), [])
+      val needs =
+        List.foldl (fn (e : BasisManifest.entry, m) =>
+                      StringMap.insert (m, #file e,
+                                        distinct (List.filter (fn f => f <> #file e)
+                                                              (List.concat
+                                                                 (List.map (fn r => Option.getOpt (StringMap.find (owner, r), []))
+                                                                           (#requires e ()))))))
+                   StringMap.empty entries
+      fun needsOf (f : string) = Option.getOpt (StringMap.find (needs, f), [])
+      val files = List.mapPartial (fn e : BasisManifest.entry =>
+                                     if List.null (modulesOf (#file e)) then NONE else SOME (#file e))
+                                  entries
+      (* the public files a file needs, through the plumbing between them *)
+      fun expand (f : string) : string list =
+        let
+          fun go ([], _, acc) = List.rev acc
+            | go (g :: rest, seen, acc) =
+                if StringMap.member (seen, g) then go (rest, seen, acc)
+                else if List.null (modulesOf g) then go (needsOf g @ rest, StringMap.insert (seen, g, ()), acc)
+                else go (rest, StringMap.insert (seen, g, ()), g :: acc)
+        in
+          go (needsOf f, StringMap.insert (StringMap.empty, f, ()), [])
+        end
+      val succ = List.foldl (fn (f, m) => StringMap.insert (m, f, expand f)) StringMap.empty files
+      fun succOf (f : string) = Option.getOpt (StringMap.find (succ, f), [])
+      (* every file a file needs, at any distance: computed once for each *)
+      val closures : unit StringMap.map StringMap.map ref = ref StringMap.empty
+      fun closureOf (f : string) : unit StringMap.map =
+        case StringMap.find (!closures, f) of
+          SOME m => m
+        | NONE =>
+            let
+              val m = List.foldl (fn (s, m) => StringMap.unionWith (fn _ => ()) (StringMap.insert (m, s, ()), closureOf s))
+                                 StringMap.empty (succOf f)
+            in
+              closures := StringMap.insert (!closures, f, m); m
+            end
+      fun edgesOf (f : string) : string list =
+        List.filter (fn b => not (List.exists (fn s => s <> b andalso StringMap.member (closureOf s, b)) (succOf f)))
+                    (succOf f)
+      val edges = List.concat (List.map (fn f => List.map (fn g => (f, g)) (edgesOf f)) files)
+      (* ---- the nodes ---- *)
+      fun areaOfFile (f : string) : string =
+        case List.mapPartial areaOfModule (modulesOf f) of
+          a :: _ => a
+        | [] => "Not in an area"
+      (* the label of a node: the module, the modules, or the family they are *)
+      fun labelOf (f : string) : string =
+        case modulesOf f of
+          [one] => one
+        | ms =>
+            let
+              fun prefix (p, []) = p
+                | prefix (p, m :: rest) =
+                    let
+                      fun common (i) = if i < String.size p andalso i < String.size m
+                                          andalso String.sub (p, i) = String.sub (m, i)
+                                       then common (i + 1) else i
+                    in prefix (String.substring (p, 0, common 0), rest) end
+              val p = case ms of m :: rest => prefix (m, rest) | [] => ""
+            in
+              if List.length ms >= 4 andalso String.size p >= 3
+              then p ^ "* (" ^ Int.toString (List.length ms) ^ ")"
+              else String.concatWith "<br>" ms
+            end
+      val ids = List.foldl (fn ((f, k), m) => StringMap.insert (m, f, "n" ^ Int.toString k)) StringMap.empty
+                           (ListPair.zip (files, List.tabulate (List.length files, fn k => k)))
+      fun idOf (f : string) = Option.getOpt (StringMap.find (ids, f), "n")
+      (* a file that declares only signatures: every name it declares is in capitals *)
+      fun isSignatureFile (f : string) =
+        List.all (fn n => not (CharVector.exists Char.isLower n)) (modulesOf f)
+      fun node (f : string) =
+        "  " ^ idOf f ^ (if isSignatureFile f then "([\"" ^ labelOf f ^ "\"])" else "[\"" ^ labelOf f ^ "\"]")
+      val areas = distinct (List.map areaOfFile files)
+      fun filesOf (a : string) = List.filter (fn f => areaOfFile f = a) files
+      fun mermaid (lines : string list) : string =
+        "```mermaid\n" ^ String.concatWith "\n" lines ^ "\n```\n\n"
+      (* ---- the areas ---- *)
+      val areaIds = List.foldl (fn ((a, k), m) => StringMap.insert (m, a, "a" ^ Int.toString k)) StringMap.empty
+                               (ListPair.zip (areas, List.tabulate (List.length areas, fn k => k)))
+      fun areaId (a : string) = Option.getOpt (StringMap.find (areaIds, a), "a")
+      val areaEdges =
+        List.foldl (fn ((f, g), acc) =>
+                      let val (a, b) = (areaOfFile f, areaOfFile g)
+                      in
+                        if a = b then acc
+                        else
+                          case List.find (fn (a', b', _) => a' = a andalso b' = b) acc of
+                            SOME _ => List.map (fn (a', b', n) => if a' = a andalso b' = b then (a', b', n + 1) else (a', b', n)) acc
+                          | NONE => acc @ [(a, b, 1)]
+                      end)
+                   [] edges
+      val areaEdges = sort (fn ((a, b, _), (a', b', _)) =>
+                              case String.compare (a, a') of
+                                LESS => true | GREATER => false | EQUAL => String.compare (b, b') = LESS)
+                           areaEdges
+      fun areaGraph () =
+        mermaid (["flowchart LR"]
+                 @ List.map (fn a => "  " ^ areaId a ^ "[\"" ^ a ^ "<br>(" ^ Int.toString (List.length (filesOf a)) ^ ")\"]") areas
+                 @ List.map (fn (a, b, n) => "  " ^ areaId a ^ " -- " ^ Int.toString n ^ " --> " ^ areaId b) areaEdges)
+      fun areaSection (a : string) =
+        let
+          val here = filesOf a
+          fun inside f = areaOfFile f = a
+          val inner = List.concat (List.map (fn f => List.mapPartial (fn g => if inside g then SOME (f, g) else NONE) (edgesOf f)) here)
+          val outward =
+            List.foldl (fn ((f, g), acc) =>
+                          let val b = areaOfFile g
+                          in
+                            if b = a then acc
+                            else
+                              case List.find (fn (b', _) => b' = b) acc of
+                                SOME _ => List.map (fn (b', n) => if b' = b then (b', n + 1) else (b', n)) acc
+                              | NONE => acc @ [(b, 1)]
+                          end)
+                       [] (List.concat (List.map (fn f => List.map (fn g => (f, g)) (edgesOf f)) here))
+        in
+          "## " ^ M.escape a ^ "\n\n"
+          ^ mermaid (["flowchart TD"]
+                     @ List.map node here
+                     @ List.map (fn (f, g) => "  " ^ idOf f ^ " --> " ^ idOf g) inner)
+          ^ (if List.null outward then ""
+             else "It also needs "
+                  ^ String.concatWith ", " (List.map (fn (b, n) => M.escape b ^ " (" ^ Int.toString n ^ ")") outward)
+                  ^ ".\n\n")
+        end
+    in
+      "# What depends on what\n\n"
+      ^ "[" ^ M.escape title ^ "](README.md)\n\n"
+      ^ "A node is one file of the library, named by the modules it declares; a family of structures that\n"
+      ^ "one file declares, such as the five of `Int8`, is one node. An arrow from one node to another\n"
+      ^ "means that the first needs the second to compile, as the library's MANIFEST records it. An arrow\n"
+      ^ "that a path of other arrows already implies is left out, so that what is left is the shape of the\n"
+      ^ "library and not a wall of lines: the "
+      ^ Int.toString (List.foldl (fn (f, n) => n + List.length (succOf f)) 0 files) ^ " requirements between the "
+      ^ Int.toString (List.length files) ^ " files become " ^ Int.toString (List.length edges) ^ " arrows.\n"
+      ^ "The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a\n"
+      ^ "file that is compiled earlier.\n\n"
+      ^ "A rounded node declares signatures, a square one structures. The library writes its structures\n"
+      ^ "first and the signatures of the specification after them, so an arrow from a signature to a\n"
+      ^ "structure means that the signature's text names that structure's types, as `STREAM_IO` names\n"
+      ^ "those of `TextPrimIO`; the structure is bound to the signature later still, in a seal file, which\n"
+      ^ "is no part of this graph.\n\n"
+      ^ "## The areas\n\n"
+      ^ "How the areas of the library rest on each other; the number on an arrow is how many files of the\n"
+      ^ "one need a file of the other.\n\n"
+      ^ areaGraph ()
+      ^ String.concat (List.map areaSection areas)
+      ^ "---\n\n<sub>Generated by runedoc from the MANIFEST; do not edit.</sub>\n"
+    end
+
   fun build {dir : string, prelude : string option, title : string, out : string, tests : string option,
              annotations : string option} : file list =
     let
@@ -1027,7 +1352,7 @@ struct
       val ratchet = ratchetOf dir
       val sites = case tests of SOME t => DocTests.suite t | NONE => []
       val annotated = Option.map DocAnnot.load annotations
-      val (claims, index, env) = envOf (modules, upFrom out, ratchet, sites, annotated)
+      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkRatchet (dir, sigs, ratchet)
       (* with a suite: every specified member of a claimed structure has a check *)
@@ -1064,6 +1389,254 @@ struct
         | NONE => ()
       val functors = List.mapPartial (fn I.Functor f => if isPublic (#name f) then SOME f else NONE | _ => NONE) modules
       val sigPages = List.map (fn s : I.signatureRecord => (R.sigPage (#name s), P.signaturePage (env "../", title) s)) sigs
+      (* ---- a page for every structure ----
+         Where the signature describes a member, so that a structure's page can
+         send the reader there instead of repeating it: a member of a structure
+         that claims a signature is described there, and one of a structure
+         specified inside another's signature, such as `Posix.FileSys.S`, is
+         described on that signature's page under its path. *)
+      val memberAnchors =
+        List.foldl (fn (sg : I.signatureRecord, m) =>
+                      List.foldl (fn (e : I.entryRecord, m) =>
+                                    StringMap.insert (m, String.concatWith "." (#name sg :: #path e @ [#name e]),
+                                                      DocAnchor.anchor {bound = I.BEntry (#kind e), path = #path e,
+                                                                        name = #name e}))
+                                 m (P.entriesOf (#body sg)))
+                   StringMap.empty sigs
+      (* the nearest structure around this one that claims a signature *)
+      fun claimedAround (name : string) : DocClaims.claim option =
+        let
+          fun up (parts : string list) =
+            if List.length parts <= 1 then NONE
+            else
+              let val outer = List.take (parts, List.length parts - 1)
+              in
+                case List.find (fn c : DocClaims.claim => #name c = String.concatWith "." outer) claims of
+                  SOME c => SOME c
+                | NONE => up outer
+              end
+        in
+          up (dotted name)
+        end
+      (* the signature that a signature names for the structure it specifies at
+         a path: `REAL` says `structure Math : MATH` *)
+      fun sigrefAt (signat : string, path : string list) : string option =
+        case List.find (fn e : I.entryRecord =>
+                          #kind e = I.Structure andalso #path e @ [#name e] = path)
+                       (P.entriesOf (R.bodyOf (index, signat))) of
+          SOME e => #sigref e
+        | NONE => NONE
+      (* the signatures that a signature includes at a path: `WINDOWS` writes
+         `structure Key : sig include BIT_FLAGS ... end` *)
+      fun includedAt (signat : string, path : string list) : string list =
+        let
+          (* entriesOf drops the includes; the signature's items still have them *)
+          fun walk (items : I.item list) =
+            List.concat (List.map (fn I.Item (I.Entry e) =>
+                                        (if #kind e = I.Include andalso #path e = path
+                                         then (case #sigref e of SOME sg => [sg] | NONE => [])
+                                         else [])
+                                        @ (case #body e of SOME inner => walk inner | NONE => [])
+                                    | _ => [])
+                                  items)
+        in
+          walk (R.bodyOf (index, signat))
+        end
+      fun anchorIn ((signat, path) : string * string list, member : string) =
+        Option.map (fn a => (R.sigPage signat, a))
+                   (StringMap.find (memberAnchors, String.concatWith "." (signat :: path @ [member])))
+      (* what a structure's page needs beyond its record: where its members are
+         described, and the status and area it inherits when it claims nothing *)
+      val pages =
+        List.map
+          (fn (name, r : I.structRecord, body : I.structRecord, mine) =>
+             let
+               val around = claimedAround name
+               val within = case (mine, around) of
+                              ([], SOME c) => SOME (#name c, #signat c)
+                            | _ => NONE
+               (* the path of this structure inside the one whose signature describes it *)
+               val under = case around of
+                             SOME c => List.drop (dotted name, List.length (dotted (#name c)))
+                           | NONE => []
+               val members = Option.mapPartial (fn lib => DocElab.membersOf (lib, isPublic) (dotted name)) elaborated
+               (* Where a member may be described: on the page of a signature
+                  this structure claims; on the page of the signature of a
+                  structure around it, under the path down to this one, where
+                  that signature writes the specification out (`POSIX_FILE_SYS`
+                  writes the flags of `S`); and on the page of the signature
+                  that it names for it (`REAL` says `structure Math : MATH`). *)
+               val candidates =
+                 List.map (fn c : DocClaims.claim => (#signat c, [] : string list)) mine
+                 @ (case around of SOME c => [(#signat c, under)] | NONE => [])
+                 @ (case around of
+                      SOME c => (case sigrefAt (#signat c, under) of SOME sg => [(sg, [])] | NONE => [])
+                    | NONE => [])
+                 @ (case around of
+                      SOME c => List.map (fn sg => (sg, [] : string list)) (includedAt (#signat c, under))
+                    | NONE => [])
+               (* only those that describe a member, so that the page names the
+                  signatures a reader has something to read on *)
+               val describing =
+                 List.filter (fn cand =>
+                                case members of
+                                  NONE => true
+                                | SOME ms => List.exists (fn (m, _) => isSome (anchorIn (cand, m))) ms)
+                             candidates
+               fun anchorOf (member : string) =
+                 let
+                   fun try [] = NONE
+                     | try (cand :: rest) = (case anchorIn (cand, member) of SOME t => SOME t | NONE => try rest)
+                 in try describing end
+               fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
+               val describedBy = distinct (List.map #1 describing)
+               val first = case describedBy of sg :: _ => sg | [] => ""
+               (* the area of a described structure is its signature's; one that
+                  no signature describes names its own *)
+               val () =
+                 if List.null describedBy orelse not (isSome (P.areaOf (#doc body))) then ()
+                 else DocDiag.error (#span body, "`Area:` belongs to " ^ first ^ ", which describes "
+                                                 ^ name ^ ": the structure's comment does not name an area")
+               val area = case StringMap.find (#signatures index, first) of
+                            SOME (I.Signature {doc, ...}) => P.areaOf doc
+                          | _ => P.areaOf (#doc body)
+               val status = case mine of
+                              c :: _ => (case #status c of SOME st => st | NONE => sigStatus (#signat c))
+                            | [] => (case around of
+                                       SOME c => (case #status c of SOME st => st | NONE => sigStatus (#signat c))
+                                     | NONE => P.statusOf (#doc body))
+             in
+               {name = name, r = r, body = body, mine = mine, within = within, describedBy = describedBy,
+                anchorOf = anchorOf, area = area, status = status, members = members}
+             end)
+          paged
+      (* Every public structure of the library is documented: it says which
+         signature it implements, its comment describes it, or it is another
+         structure by name and that one's page describes it. *)
+      val () =
+        List.app (fn I.Struct r =>
+                       if not (isPublic (#name r)) orelse isSome (#strPageOf (env "") (#name r)) then ()
+                       else DocDiag.error (#span r, "structure " ^ #name r ^ " is documented nowhere: give its comment"
+                                                    ^ " an `Implements:` paragraph, or a comment that describes it")
+                   | _ => ())
+                 modules
+      (* A note is written where it is read: a reading of the specification
+         belongs to the signature's file, since it holds for every structure
+         that implements it, and its id names the structure whose checks pin it
+         (a check names a structure, never a signature). A structure's page
+         therefore shows the notes whose id names it, wherever they are
+         written: `String.maxSize/value` is written in `STRING` and is about
+         `String`, `WideChar.isAlpha/ascii-classes` in `CHAR` and is about
+         `WideChar`. Nothing is written twice in the sources. *)
+      val routedNotes =
+        let
+          val names = List.map (fn {name, ...} => name) pages
+          fun scopeOf (id : string) =
+            Substring.string (Substring.takel (fn c => c <> #"/") (Substring.full id))
+          (* the longest structure whose name the id begins with, so that
+             `Posix.Error.name/...` is `Posix.Error`'s and not `Posix`'s *)
+          fun homeOf (id : string) =
+            let val scope = scopeOf id
+            in
+              List.foldl (fn (n, best) =>
+                            if (scope = n orelse String.isPrefix (n ^ ".") scope)
+                               andalso (case best of NONE => true | SOME b => String.size n > String.size b)
+                            then SOME n else best)
+                         NONE names
+            end
+        in
+          List.mapPartial (fn n : DocNotes.note =>
+                             if #structure' n <> "" then NONE     (* already on the structure's page *)
+                             else Option.map (fn home => (home, #member n, #block n)) (homeOf (#id n)))
+                          notes
+        end
+      fun notesOfStructure (name : string, own : (string * I.doc) list) : (string * I.doc) list =
+        let
+          val routed = List.mapPartial (fn (home, member, b) => if home = name then SOME (member, [b]) else NONE)
+                                       routedNotes
+          fun add ((member, doc), acc) =
+            case List.find (fn (m, _) => m = member) acc of
+              SOME _ => List.map (fn (m, d) => if m = member then (m, d @ doc) else (m, d)) acc
+            | NONE => acc @ [(member, doc)]
+        in
+          sort (fn ((a, _), (b, _)) => String.compare (a, b) = LESS) (List.foldl add [] (own @ routed))
+        end
+      (* The rows of structures.md: every structure that claims a signature --
+         `Position` claims INTEGER although its page is `Int`'s, since that is
+         what it is -- and every structure that has a page of its own. *)
+      val indexRows =
+        let
+          val claimed = List.filter (fn c : DocClaims.claim => not (#isFunctor c)) claims
+          fun distinct xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
+          val names = distinct (List.map (fn c : DocClaims.claim => #name c) claimed
+                                @ List.map (fn {name, ...} => name) pages)
+        in
+          List.map (fn n =>
+                      let
+                        val mine = List.filter (fn c : DocClaims.claim => #name c = n) claimed
+                        val page = List.find (fn {name, ...} => name = n) pages
+                        val r = case page of
+                                  SOME {r, ...} => SOME r
+                                | NONE => structAt (modules, dotted n)
+                        val file = case (page, mine) of
+                                     (SOME {body, ...}, _) => #file body
+                                   | (NONE, c :: _) => #file c
+                                   | (NONE, []) => (case r of SOME r' => #file r' | NONE => "")
+                        val status = case (mine, page) of
+                                       (c :: _, _) => (case #status c of SOME st => st | NONE => sigStatus (#signat c))
+                                     | ([], SOME {status, ...}) => status
+                                     | ([], NONE) => "required"
+                      in
+                        {name = n, rhs = (case r of SOME r' => #rhs r' | NONE => I.Other),
+                         file = file, mine = mine, status = status,
+                         within = Option.mapPartial (fn {within, ...} => Option.map #2 within) page}
+                      end)
+                   names
+        end
+      (* the area of a module: a signature names it, and a structure has the
+         area of the signature that describes it *)
+      val areaOfModule =
+        let
+          val ofSig = List.foldl (fn (sg : I.signatureRecord, m) =>
+                                    case P.areaOf (#doc sg) of
+                                      SOME a => StringMap.insert (m, #name sg, a)
+                                    | NONE => m)
+                                 StringMap.empty sigs
+          (* a structure or a functor has the area of the signature it claims *)
+          val m = List.foldl (fn (c : DocClaims.claim, m) =>
+                                case StringMap.find (ofSig, #signat c) of
+                                  SOME a => StringMap.insert (m, #name c, a)
+                                | NONE => m)
+                             ofSig claims
+          val m = List.foldl (fn ({name, area, ...}, m) =>
+                                case area of SOME a => StringMap.insert (m, name, a) | NONE => m)
+                             m pages
+        in
+          fn name => StringMap.find (m, name)
+        end
+      (* how much of each structure a signature describes, for coverage.md *)
+      val structureCoverage =
+        List.mapPartial (fn {name, anchorOf, members, ...} =>
+                           case members of
+                             NONE => NONE
+                           | SOME ms =>
+                               let
+                                 val shown = List.filter (fn (_, DocElab.MCon _) => false | _ => true) ms
+                               in
+                                 SOME {name = name, members = List.length shown,
+                                       described = List.length (List.filter (fn (m, _) => isSome (anchorOf m)) shown)}
+                               end)
+                        pages
+      val strPages =
+        List.map
+          (fn {name, body : I.structRecord, mine, within, describedBy, anchorOf, area, status, members, ...} =>
+             (R.strPage name,
+              P.structurePage (env "../", title)
+                {name = name, file = #file body, span = #span body, doc = #doc body,
+                 notes = notesOfStructure (name, #notes body),
+                 mine = mine, within = within, describedBy = describedBy, anchorOf = anchorOf,
+                 members = members, area = area, status = status}))
+          pages
       val funPages = List.map (fn {name, file, span, doc, param, result, ...} =>
                                  (R.funPage name, functorPage (env "../", title) (name, file, span, doc, param, result)))
                               functors
@@ -1072,13 +1645,16 @@ struct
         ("README.md", readme (env "", title, overviewOf dir, sigs, List.map (fn f => (#name f, #doc f)) functors, letters,
                               isSome elaborated))
         :: ("conventions.md", conventions (Option.map (fn a : DocAnnot.file => (#title a, #intro a)) annotated))
-        :: ("coverage.md", coverage (sigs, case labels of
+        :: ("coverage.md", coverage (sigs, structureCoverage,
+                                     case labels of
                                                   SOME ls => List.filter (fn n : DocNotes.note =>
                                                                             (#kind n = "Deviation" orelse #kind n = "Limitation")
                                                                             andalso not (DocNotes.isPinned ls n)) notes
                                                 | NONE => []))
-        :: ("structures.md", structuresPage (env "", title, modules, sigStatus, Option.map DocElab.namesOf elaborated,
-                                             not (List.null ratchet)))
+        :: ("structures.md",
+            structuresPage (env "", title, modules, sigStatus, indexRows,
+                            Option.map DocElab.namesOf elaborated, not (List.null ratchet)))
+        :: ("depends.md", dependsPage (env "", title, BasisManifest.readManifest dir, areaOfModule))
         :: ("top-level.md", topLevelPage (env "", title, modules))
         :: ("exceptions.md", exceptionsPage (env "", title, sigs))
         :: ("readings.md", readingsPage (env "", title, notes, labels))
@@ -1089,7 +1665,7 @@ struct
                                          sigStatus,
                                          List.map (fn s : I.signatureRecord => (#name s, #file s))
                                                   (List.filter (fn s : I.signatureRecord => isPublic (#name s)) sigs)))
-        :: sigPages @ funPages @ indexFiles
+        :: sigPages @ strPages @ funPages @ indexFiles
         (* what only elaboration knows *)
         @ (case elaborated of
              SOME lib => [("types.md", typesPage (env "", title, modules, lib, DocElab.typeNames (lib, isPublic)))]
@@ -1120,7 +1696,7 @@ struct
   fun examples {dir : string} : file list =
     let
       val modules = load dir
-      val (claims, index, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"
@@ -1136,7 +1712,7 @@ struct
   fun checkCoverage {dir : string, tests : string} : int =
     let
       val modules = load dir
-      val (claims, index, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
     in
       coverageOf (modules, claims, index, DocTests.suite tests, tests)
     end

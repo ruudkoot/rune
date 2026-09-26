@@ -19,7 +19,7 @@ structure Option : OPTION
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Option` | Option | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
+| [`Option`](../str/Option.md) | Option | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
 
 Optional values: a value that may be missing, and what a partial function
 returns instead of raising an exception.
@@ -39,27 +39,16 @@ sig
   datatype 'a <a href="#type-option">option</a>
     = <a href="#con-none">NONE</a>
     | <a href="#con-some">SOME</a> of 'a
-
   exception <a href="#exn-option">Option</a>
-
   val <a href="#val-getopt">getOpt</a> : 'a option * 'a -&gt; 'a
-
   val <a href="#val-issome">isSome</a> : 'a option -&gt; bool
-
   val <a href="#val-valof">valOf</a> : 'a option -&gt; 'a
-
   val <a href="#val-filter">filter</a> : ('a -&gt; bool) -&gt; 'a -&gt; 'a option
-
   val <a href="#val-join">join</a> : 'a option option -&gt; 'a option
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a option -&gt; unit
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a option -&gt; 'b option
-
   val <a href="#val-mappartial">mapPartial</a> : ('a -&gt; 'b option) -&gt; 'a option -&gt; 'b option
-
   val <a href="#val-compose">compose</a> : ('a -&gt; 'b) * ('c -&gt; 'a option) -&gt; 'c -&gt; 'b option
-
   val <a href="#val-composepartial">composePartial</a> : ('a -&gt; 'b option) * ('c -&gt; 'a option) -&gt; 'c -&gt; 'b option
 end
 </pre>

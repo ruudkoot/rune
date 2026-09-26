@@ -2,6 +2,7 @@
 ./claims.tsv
 ./conventions.md
 ./coverage.md
+./depends.md
 ./exceptions.md
 ./index/e.md
 ./index/p.md
@@ -9,6 +10,7 @@
 ./notes.tsv
 ./readings.md
 ./sig/STACK.md
+./str/Stack.md
 ./structures.md
 ./top-level.md
 ./types.md

@@ -2,17 +2,22 @@
 
 [elab](README.md)
 
-Every public structure of the library that says which signature it implements. A structure is
-documented on the page of its signature. `:>` means that the source seals the structure with the
-signature, so that its types are its own; `:` that it matches it, which the test suite checks.
-Either way a program sees the members that the signature names and no others, unless the structure
-is listed at the end of this page.
+Every public structure of the library, with the signature it says it implements. Each has a page of
+its own, which shows its members with the types it gives them; the signature's page says what they
+mean. A signature of *none* means that no signature of the library names the structure, or that the
+signature of the structure around it specifies it: its own page is then the only place it is
+described.
+
+`:>` means that the source seals the structure with the signature, so that its types are its own;
+`:` that it matches it, which the test suite checks. Either way a program sees the members that the
+signature names and no others, unless the structure is listed at the end of this page.
 
 | Structure | Signature | Realisations | Status |  | Source |
 | --- | --- | --- | --- | --- | --- |
-| `Box` | : [`BOX`](sig/BOX.md) | `where type elem = int` | required | an application of `RuneBoxFn` | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
-| `Chest` | : [`BOX`](sig/BOX.md) | `where type elem = string` | required |  | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
-| `Crate` | : [`BOX`](sig/BOX.md) | `where type elem = int` | required | is `Box` | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
+| [`Box`](str/Box.md) | : [`BOX`](sig/BOX.md) | `where type elem = int` | required | an application of `RuneBoxFn` | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
+| [`Chest`](str/Chest.md) | : [`BOX`](sig/BOX.md) | `where type elem = string` | required |  | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
+| [`Chest.Label`](str/Chest.Label.md) | *in* [`BOX`](sig/BOX.md) |  | required |  | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
+| [`Crate`](str/Box.md) | : [`BOX`](sig/BOX.md) | `where type elem = int` | required | is [`Box`](str/Box.md) | [tests/doc/elab.lib/box.sml](../../../../tests/doc/elab.lib/box.sml) |
 
 ## Names beyond the signature
 

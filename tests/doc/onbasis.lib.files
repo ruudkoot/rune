@@ -2,11 +2,13 @@
 ./claims.tsv
 ./conventions.md
 ./coverage.md
+./depends.md
 ./exceptions.md
 ./index/c.md
 ./notes.tsv
 ./readings.md
 ./sig/WORDS.md
+./str/Words.md
 ./structures.md
 ./top-level.md
 ./types.md

@@ -19,7 +19,7 @@ structure Array2 :> ARRAY2  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Array2` |  | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
+| [`Array2`](../str/Array2.md) |  | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
 Two-dimensional arrays: mutable rectangles of elements, indexed by a row
 and a column.
@@ -54,7 +54,7 @@ the elements are visited in, and so what an effect sees.
 
 Why the sentence is taken to be a slip rather than a requirement: [`ARRAY`](../sig/ARRAY.md)
 carries it too and has no defect there, because the top level pins `'a array` to [`Array.array`](../sig/ARRAY.md#val-array), so that type \*is\* the built-in and the seal
-settles nothing. [`Array2`](ARRAY2.md) is optional and has no such anchor -- no system
+settles nothing. [`Array2`](../str/Array2.md) is optional and has no such anchor -- no system
 has a top-level `'a array2` \-- so its seal bites. The paragraph it sits in
 opens "As with 1-dimensional arrays", which is how adapted text reads;
 [`VECTOR`](../sig/VECTOR.md) writes `eqtype 'a vector` and says nothing of the kind, so the
@@ -78,49 +78,30 @@ they hold, and are built on the implementation under the seal.
 signature ARRAY2 =
 sig
   eqtype 'a <a href="#type-array">array</a>
-
   type 'a <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : 'a array,
                     <a href="#fld-region.row">row</a> : int,
                     <a href="#fld-region.col">col</a> : int,
                     <a href="#fld-region.nrows">nrows</a> : int option,
                     <a href="#fld-region.ncols">ncols</a> : int option}
-
   datatype <a href="#type-traversal">traversal</a>
     = <a href="#con-rowmajor">RowMajor</a>
     | <a href="#con-colmajor">ColMajor</a>
-
   val <a href="#val-array">array</a> : int * int * 'a -&gt; 'a array
-
   val <a href="#val-fromlist">fromList</a> : 'a list list -&gt; 'a array
-
   val <a href="#val-tabulate">tabulate</a> : traversal -&gt; int * int * (int * int -&gt; 'a) -&gt; 'a array
-
   val <a href="#val-sub">sub</a> : 'a array * int * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a array * int * int * 'a -&gt; unit
-
   val <a href="#val-dimensions">dimensions</a> : 'a array -&gt; int * int
-
   val <a href="#val-ncols">nCols</a> : 'a array -&gt; int
-
   val <a href="#val-nrows">nRows</a> : 'a array -&gt; int
-
   val <a href="#val-row">row</a> : 'a array * int -&gt; 'a Vector.vector
-
   val <a href="#val-column">column</a> : 'a array * int -&gt; 'a Vector.vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a region, <a href="#fld-copy.dst">dst</a> : 'a array, <a href="#fld-copy.dst_row">dst_row</a> : int, <a href="#fld-copy.dst_col">dst_col</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : traversal -&gt; (int * int * 'a -&gt; unit) -&gt; 'a region -&gt; unit
-
   val <a href="#val-app">app</a> : traversal -&gt; ('a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-foldi">foldi</a> : traversal -&gt; (int * int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a region -&gt; 'b
-
   val <a href="#val-fold">fold</a> : traversal -&gt; ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-modifyi">modifyi</a> : traversal -&gt; (int * int * 'a -&gt; 'a) -&gt; 'a region -&gt; unit
-
   val <a href="#val-modify">modify</a> : traversal -&gt; ('a -&gt; 'a) -&gt; 'a array -&gt; unit
 end
 </pre>

@@ -27,15 +27,15 @@ structure Posix.TTY.O : BIT_FLAGS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.FileSys.O` | The flags of open and the bits of a mode, as words. "all represents the union of all flags", also those of the system that O does not name (O\_CLOEXEC, and O\_LARGEFILE, which getfl reports): the bits of a C int. fromWord keeps the bits of all, so that "toWord o fromWord" is "fn w =\> SysWord.andb (w, toWord all)". | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
-| `Posix.FileSys.S` |  | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
-| `Posix.IO.FD` | The flags of a descriptor, as words; like the flags of open, all of them are the bits of a C int (Posix.FileSys.O). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
-| `Posix.IO.O` |  | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
-| `Posix.Process.W` | The flags of waitpid. WNOHANG is not one of them: waitpid\_nh adds it. | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
-| `Posix.TTY.C` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.I` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.L` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| `Posix.TTY.O` |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.FileSys.O`](../str/Posix.FileSys.O.md) | The flags of open and the bits of a mode, as words. "all represents the union of all flags", also those of the system that O does not name (O\_CLOEXEC, and O\_LARGEFILE, which getfl reports): the bits of a C int. fromWord keeps the bits of all, so that "toWord o fromWord" is "fn w =\> SysWord.andb (w, toWord all)". | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| [`Posix.FileSys.S`](../str/Posix.FileSys.S.md) |  | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| [`Posix.IO.FD`](../str/Posix.IO.FD.md) | The flags of a descriptor, as words; like the flags of open, all of them are the bits of a C int (Posix.FileSys.O). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| [`Posix.IO.O`](../str/Posix.IO.O.md) |  | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| [`Posix.Process.W`](../str/Posix.Process.W.md) | The flags of waitpid. WNOHANG is not one of them: waitpid\_nh adds it. | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
+| [`Posix.TTY.C`](../str/Posix.TTY.C.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.I`](../str/Posix.TTY.I.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.L`](../str/Posix.TTY.L.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.O`](../str/Posix.TTY.O.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 A set of flags held as the bits of a word: what every collection of system
 flags in [`POSIX`](../sig/POSIX.md) has in common.
@@ -62,21 +62,13 @@ to speak to something that is not SML.
 signature BIT_FLAGS =
 sig
   eqtype <a href="#type-flags">flags</a>
-
   val <a href="#val-toword">toWord</a> : flags -&gt; SysWord.word
-
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; flags
-
   val <a href="#val-all">all</a> : flags
-
   val <a href="#val-flags">flags</a> : flags list -&gt; flags
-
   val <a href="#val-intersect">intersect</a> : flags list -&gt; flags
-
   val <a href="#val-clear">clear</a> : flags * flags -&gt; flags
-
   val <a href="#val-allset">allSet</a> : flags * flags -&gt; bool
-
   val <a href="#val-anyset">anySet</a> : flags * flags -&gt; bool
 end
 </pre>

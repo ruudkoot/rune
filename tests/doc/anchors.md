@@ -30,7 +30,6 @@ sig
   val <a href="#val-socket-prime">socket'</a> : int -&gt; int
   val <a href="#val-file_desc">file_desc</a> : int
   structure <a href="#str-ctl">Ctl</a> : sig val <a href="#val-ctl.getdebug">getDEBUG</a> : unit -&gt; bool end
-
   val <a href="#val-tostring">toString</a> : int -&gt; string
   val <a href="#val-tostring">tostring</a> : int -&gt; string
 end

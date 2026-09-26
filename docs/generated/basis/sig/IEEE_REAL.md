@@ -19,7 +19,7 @@ structure IEEEReal : IEEE_REAL  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `IEEEReal` | IEEEReal: the types of IEEE arithmetic that do not depend on a precision. | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
+| [`IEEEReal`](../str/IEEEReal.md) | IEEEReal: the types of IEEE arithmetic that do not depend on a precision. | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
 
 The parts of IEEE 754 arithmetic that are not about one real number: the
 rounding mode, the classes a number can belong to, and an exact decimal
@@ -36,35 +36,26 @@ text without losing anything.
 signature IEEE_REAL =
 sig
   exception <a href="#exn-unordered">Unordered</a>
-
   datatype <a href="#type-real_order">real_order</a> = <a href="#con-less">LESS</a> | <a href="#con-equal">EQUAL</a> | <a href="#con-greater">GREATER</a> | <a href="#con-unordered">UNORDERED</a>
-
   datatype <a href="#type-float_class">float_class</a>
     = <a href="#con-nan">NAN</a>
     | <a href="#con-inf">INF</a>
     | <a href="#con-zero">ZERO</a>
     | <a href="#con-normal">NORMAL</a>
     | <a href="#con-subnormal">SUBNORMAL</a>
-
   datatype <a href="#type-rounding_mode">rounding_mode</a>
     = <a href="#con-to_nearest">TO_NEAREST</a>
     | <a href="#con-to_neginf">TO_NEGINF</a>
     | <a href="#con-to_posinf">TO_POSINF</a>
     | <a href="#con-to_zero">TO_ZERO</a>
-
   val <a href="#val-setroundingmode">setRoundingMode</a> : rounding_mode -&gt; unit
-
   val <a href="#val-getroundingmode">getRoundingMode</a> : unit -&gt; rounding_mode
-
   type <a href="#type-decimal_approx">decimal_approx</a> = {<a href="#fld-decimal_approx.class">class</a> : float_class,
                          <a href="#fld-decimal_approx.sign">sign</a> : bool,
                          <a href="#fld-decimal_approx.digits">digits</a> : int list,
                          <a href="#fld-decimal_approx.exp">exp</a> : int}
-
   val <a href="#val-tostring">toString</a> : decimal_approx -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (decimal_approx, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; decimal_approx option
 end
 </pre>

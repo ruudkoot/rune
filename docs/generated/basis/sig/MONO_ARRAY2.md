@@ -36,24 +36,24 @@ structure WordArray2 :> MONO_ARRAY2 where type vector = WordVector.vector where 
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BoolArray2` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| `CharArray2` | CharArray2: two-dimensional arrays of characters (optional in the specification), whose rows and columns are strings. | [lib/basis/chararray2.sml](../../../../lib/basis/chararray2.sml) |
-| `Int16Array2` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| `Int32Array2` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64Array2` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| `Int8Array2` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| `IntArray2` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| `LargeIntArray2` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
-| `LargeRealArray2` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| `LargeWordArray2` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| `Real32Array2` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
-| `Real64Array2` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| `RealArray2` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| `Word16Array2` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| `Word32Array2` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64Array2` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8Array2` | Word8Array2: two-dimensional arrays of bytes (optional in the specification), whose rows and columns are Word8Vector.vector values. | [lib/basis/word8array2.sml](../../../../lib/basis/word8array2.sml) |
-| `WordArray2` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`BoolArray2`](../str/BoolArray2.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`CharArray2`](../str/CharArray2.md) | CharArray2: two-dimensional arrays of characters (optional in the specification), whose rows and columns are strings. | [lib/basis/chararray2.sml](../../../../lib/basis/chararray2.sml) |
+| [`Int16Array2`](../str/Int16Array2.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32Array2`](../str/Int32Array2.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64Array2`](../str/Int64Array2.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8Array2`](../str/Int8Array2.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArray2`](../str/IntArray2.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`LargeIntArray2`](../str/LargeIntArray2.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeRealArray2`](../str/RealArray2.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| [`LargeWordArray2`](../str/WordArray2.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`Real32Array2`](../str/Real32Array2.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real64Array2`](../str/RealArray2.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| [`RealArray2`](../str/RealArray2.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`Word16Array2`](../str/Word16Array2.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32Array2`](../str/Word32Array2.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64Array2`](../str/Word64Array2.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8Array2`](../str/Word8Array2.md) | Word8Array2: two-dimensional arrays of bytes (optional in the specification), whose rows and columns are Word8Vector.vector values. | [lib/basis/word8array2.sml](../../../../lib/basis/word8array2.sml) |
+| [`WordArray2`](../str/WordArray2.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 Two-dimensional arrays of one element type, as [`ARRAY2`](../sig/ARRAY2.md) describes them for
 any element type.
@@ -88,47 +88,26 @@ polymorphic one.
 signature MONO_ARRAY2 =
 sig
   eqtype <a href="#type-array">array</a>
-
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : array, <a href="#fld-region.row">row</a> : int, <a href="#fld-region.col">col</a> : int, <a href="#fld-region.nrows">nrows</a> : int option, <a href="#fld-region.ncols">ncols</a> : int option}
-
   datatype <a href="#type-traversal">traversal</a> = datatype Array2.traversal
-
   val <a href="#val-array">array</a> : int * int * elem -&gt; array
-
   val <a href="#val-fromlist">fromList</a> : elem list list -&gt; array
-
   val <a href="#val-tabulate">tabulate</a> : traversal -&gt; int * int * (int * int -&gt; elem) -&gt; array
-
   val <a href="#val-sub">sub</a> : array * int * int -&gt; elem
-
   val <a href="#val-update">update</a> : array * int * int * elem -&gt; unit
-
   val <a href="#val-dimensions">dimensions</a> : array -&gt; int * int
-
   val <a href="#val-ncols">nCols</a> : array -&gt; int
-
   val <a href="#val-nrows">nRows</a> : array -&gt; int
-
   val <a href="#val-row">row</a> : array * int -&gt; vector
-
   val <a href="#val-column">column</a> : array * int -&gt; vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : region, <a href="#fld-copy.dst">dst</a> : array, <a href="#fld-copy.dst_row">dst_row</a> : int, <a href="#fld-copy.dst_col">dst_col</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : traversal -&gt; (int * int * elem -&gt; unit) -&gt; region -&gt; unit
-
   val <a href="#val-app">app</a> : traversal -&gt; (elem -&gt; unit) -&gt; array -&gt; unit
-
   val <a href="#val-foldi">foldi</a> : traversal -&gt; (int * int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; region -&gt; 'b
-
   val <a href="#val-fold">fold</a> : traversal -&gt; (elem * 'b -&gt; 'b) -&gt; 'b -&gt; array -&gt; 'b
-
   val <a href="#val-modifyi">modifyi</a> : traversal -&gt; (int * int * elem -&gt; elem) -&gt; region -&gt; unit
-
   val <a href="#val-modify">modify</a> : traversal -&gt; (elem -&gt; elem) -&gt; array -&gt; unit
 end
 </pre>
@@ -146,7 +125,7 @@ Two are equal when they are the same array.
 > **Implementation** `MONO_ARRAY2.array/abstract-over-Array2`. An
 > [`IntArray2.array`](#val-array) is an [`Array2.array`](../sig/ARRAY2.md#val-array) of its elements underneath, but
 > the type is abstract. It is built on the implementation beneath the
-> sealed [`Array2`](../sig/ARRAY2.md) rather than on [`Array2`](../sig/ARRAY2.md) itself, because this signature
+> sealed [`Array2`](../str/Array2.md) rather than on [`Array2`](../str/Array2.md) itself, because this signature
 > asks for an `eqtype array` and a sealed `'a Array2.array` gives none at
 > [`real`](../sig/REAL.md#val-fromint) \-- see the erratum `ARRAY2/sealed-and-equal-at-any-element`. As
 > for [`MONO_VECTOR.vector`](../sig/MONO_VECTOR.md#type-vector), no check can pin an abstract type; what holds
@@ -217,7 +196,7 @@ it reaches, with `NONE` for "to the edge".
 datatype traversal = datatype Array2.traversal
 ```
 
-Which way a traversal goes: the [`traversal`](#type-traversal) of [`Array2`](../sig/ARRAY2.md), so that the two
+Which way a traversal goes: the [`traversal`](#type-traversal) of [`Array2`](../str/Array2.md), so that the two
 structures speak of one type.
 
 ## Making an array

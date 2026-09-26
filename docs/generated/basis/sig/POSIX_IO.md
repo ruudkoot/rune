@@ -19,7 +19,7 @@ structure Posix.IO : POSIX_IO  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.IO` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.IO`](../str/Posix.IO.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 File descriptors: reading and writing them, duplicating them, positioning
 them, locking them, and turning them into readers and writers.
@@ -50,78 +50,51 @@ they wrap a descriptor as a [`PRIM_IO`](../sig/PRIM_IO.md) reader or writer, whi
 signature POSIX_IO =
 sig
   eqtype <a href="#type-file_desc">file_desc</a>
-
   eqtype <a href="#type-pid">pid</a>
-
   val <a href="#val-pipe">pipe</a> : unit -&gt; {<a href="#fld-pipe.infd">infd</a> : file_desc, <a href="#fld-pipe.outfd">outfd</a> : file_desc}
-
   val <a href="#val-dup">dup</a> : file_desc -&gt; file_desc
-
   val <a href="#val-dup2">dup2</a> : {<a href="#fld-dup2.old">old</a> : file_desc, <a href="#fld-dup2.new">new</a> : file_desc} -&gt; unit
-
   val <a href="#val-close">close</a> : file_desc -&gt; unit
-
   val <a href="#val-readvec">readVec</a> : file_desc * int -&gt; Word8Vector.vector
-
   val <a href="#val-readarr">readArr</a> : file_desc * Word8ArraySlice.slice -&gt; int
-
   val <a href="#val-writevec">writeVec</a> : file_desc * Word8VectorSlice.slice -&gt; int
-
   val <a href="#val-writearr">writeArr</a> : file_desc * Word8ArraySlice.slice -&gt; int
-
   datatype <a href="#type-whence">whence</a>
     = <a href="#con-seek_set">SEEK_SET</a>
     | <a href="#con-seek_cur">SEEK_CUR</a>
     | <a href="#con-seek_end">SEEK_END</a>
-
   structure <a href="#str-fd">FD</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-fd.cloexec">cloexec</a> : flags
   end
-
   structure <a href="#str-o">O</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-o.append">append</a> : flags
-
     val <a href="#val-o.nonblock">nonblock</a> : flags
-
     val <a href="#val-o.sync">sync</a> : flags
   end
-
   datatype <a href="#type-open_mode">open_mode</a>
     = <a href="#con-o_rdonly">O_RDONLY</a>
     | <a href="#con-o_wronly">O_WRONLY</a>
     | <a href="#con-o_rdwr">O_RDWR</a>
-
   val <a href="#val-dupfd">dupfd</a> : {<a href="#fld-dupfd.old">old</a> : file_desc, <a href="#fld-dupfd.base">base</a> : file_desc}
               -&gt; file_desc
-
   val <a href="#val-getfd">getfd</a> : file_desc -&gt; FD.flags
-
   val <a href="#val-setfd">setfd</a> : file_desc * FD.flags -&gt; unit
-
   val <a href="#val-getfl">getfl</a> : file_desc -&gt; O.flags * open_mode
-
   val <a href="#val-setfl">setfl</a> : file_desc * O.flags -&gt; unit
-
   val <a href="#val-lseek">lseek</a> : file_desc * Position.int * whence
               -&gt; Position.int
-
   val <a href="#val-fsync">fsync</a> : file_desc -&gt; unit
-
   datatype <a href="#type-lock_type">lock_type</a>
     = <a href="#con-f_rdlck">F_RDLCK</a>
     | <a href="#con-f_wrlck">F_WRLCK</a>
     | <a href="#con-f_unlck">F_UNLCK</a>
-
   structure <a href="#str-flock">FLock</a> :
   sig
     type <a href="#type-flock.flock">flock</a>
-
     val <a href="#val-flock.flock">flock</a> : {
                   <a href="#fld-flock.flock.ltype">ltype</a> : lock_type,
                   <a href="#fld-flock.flock.whence">whence</a> : whence,
@@ -129,36 +102,25 @@ sig
                   <a href="#fld-flock.flock.len">len</a> : Position.int,
                   <a href="#fld-flock.flock.pid">pid</a> : pid option
                 } -&gt; flock
-
     val <a href="#val-flock.ltype">ltype</a> : flock -&gt; lock_type
-
     val <a href="#val-flock.whence">whence</a> : flock -&gt; whence
-
     val <a href="#val-flock.start">start</a> : flock -&gt; Position.int
-
     val <a href="#val-flock.len">len</a> : flock -&gt; Position.int
-
     val <a href="#val-flock.pid">pid</a> : flock -&gt; pid option
   end
-
   val <a href="#val-getlk">getlk</a> : file_desc * FLock.flock -&gt; FLock.flock
-
   val <a href="#val-setlk">setlk</a> : file_desc * FLock.flock -&gt; FLock.flock
-
   val <a href="#val-setlkw">setlkw</a> : file_desc * FLock.flock -&gt; FLock.flock
-
   val <a href="#val-mkbinreader">mkBinReader</a> : {
                       <a href="#fld-mkbinreader.fd">fd</a> : file_desc,
                       <a href="#fld-mkbinreader.name">name</a> : string,
                       <a href="#fld-mkbinreader.initblkmode">initBlkMode</a> : bool
                     } -&gt; BinPrimIO.reader
-
   val <a href="#val-mktextreader">mkTextReader</a> : {
                        <a href="#fld-mktextreader.fd">fd</a> : file_desc,
                        <a href="#fld-mktextreader.name">name</a> : string,
                        <a href="#fld-mktextreader.initblkmode">initBlkMode</a> : bool
                      } -&gt; TextPrimIO.reader
-
   val <a href="#val-mkbinwriter">mkBinWriter</a> : {
                       <a href="#fld-mkbinwriter.fd">fd</a> : file_desc,
                       <a href="#fld-mkbinwriter.name">name</a> : string,
@@ -166,7 +128,6 @@ sig
                       <a href="#fld-mkbinwriter.initblkmode">initBlkMode</a> : bool,
                       <a href="#fld-mkbinwriter.chunksize">chunkSize</a> : int
                     } -&gt; BinPrimIO.writer
-
   val <a href="#val-mktextwriter">mkTextWriter</a> : {
                        <a href="#fld-mktextwriter.fd">fd</a> : file_desc,
                        <a href="#fld-mktextwriter.name">name</a> : string,

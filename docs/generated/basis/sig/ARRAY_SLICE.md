@@ -19,7 +19,7 @@ structure ArraySlice : ARRAY_SLICE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `ArraySlice` | ArraySlice: an array, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/arrayslice.sml](../../../../lib/basis/arrayslice.sml) |
+| [`ArraySlice`](../str/ArraySlice.md) | ArraySlice: an array, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/arrayslice.sml](../../../../lib/basis/arrayslice.sml) |
 
 A stretch of an array, without a copy of it: a base array and a start and
 a length inside it.
@@ -45,55 +45,30 @@ Positions inside a slice are counted from its own start.
 signature ARRAY_SLICE =
 sig
   type 'a <a href="#type-slice">slice</a>
-
   val <a href="#val-length">length</a> : 'a slice -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a slice * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a slice * int * 'a -&gt; unit
-
   val <a href="#val-full">full</a> : 'a Array.array -&gt; 'a slice
-
   val <a href="#val-slice">slice</a> : 'a Array.array * int * int option -&gt; 'a slice
-
   val <a href="#val-subslice">subslice</a> : 'a slice * int * int option -&gt; 'a slice
-
   val <a href="#val-base">base</a> : 'a slice -&gt; 'a Array.array * int * int
-
   val <a href="#val-vector">vector</a> : 'a slice -&gt; 'a Vector.vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a slice, <a href="#fld-copy.dst">dst</a> : 'a Array.array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
-
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : 'a VectorSlice.slice, <a href="#fld-copyvec.dst">dst</a> : 'a Array.array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
-
   val <a href="#val-isempty">isEmpty</a> : 'a slice -&gt; bool
-
   val <a href="#val-getitem">getItem</a> : 'a slice -&gt; ('a * 'a slice) option
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-modifyi">modifyi</a> : (int * 'a -&gt; 'a) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-modify">modify</a> : ('a -&gt; 'a) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a slice -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a slice * 'a slice -&gt; order
 end
 </pre>

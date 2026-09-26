@@ -19,7 +19,7 @@ structure Timer : TIMER
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Timer` | Timer: how long something took. | [lib/basis/timer.sml](../../../../lib/basis/timer.sml) |
+| [`Timer`](../str/Timer.md) | Timer: how long something took. | [lib/basis/timer.sml](../../../../lib/basis/timer.sml) |
 
 Stopwatches: how much processor time and how much wall-clock time have
 passed since a timer was started.
@@ -46,25 +46,16 @@ garbage collector took.
 signature TIMER =
 sig
   type <a href="#type-cpu_timer">cpu_timer</a>
-
   type <a href="#type-real_timer">real_timer</a>
-
   val <a href="#val-startcputimer">startCPUTimer</a> : unit -&gt; cpu_timer
-
   val <a href="#val-checkcputimes">checkCPUTimes</a> : cpu_timer
                       -&gt; {<a href="#fld-checkcputimes.nongc">nongc</a> : {usr : Time.time, sys : Time.time},
                           <a href="#fld-checkcputimes.gc">gc</a> : {usr : Time.time, sys : Time.time}}
-
   val <a href="#val-checkcputimer">checkCPUTimer</a> : cpu_timer -&gt; {<a href="#fld-checkcputimer.usr">usr</a> : Time.time, <a href="#fld-checkcputimer.sys">sys</a> : Time.time}
-
   val <a href="#val-checkgctime">checkGCTime</a> : cpu_timer -&gt; Time.time
-
   val <a href="#val-totalcputimer">totalCPUTimer</a> : unit -&gt; cpu_timer
-
   val <a href="#val-startrealtimer">startRealTimer</a> : unit -&gt; real_timer
-
   val <a href="#val-checkrealtimer">checkRealTimer</a> : real_timer -&gt; Time.time
-
   val <a href="#val-totalrealtimer">totalRealTimer</a> : unit -&gt; real_timer
 end
 </pre>

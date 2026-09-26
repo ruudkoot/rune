@@ -19,7 +19,7 @@ structure Runtime : RUNTIME  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Runtime` |  | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
+| [`Runtime`](../str/Runtime.md) |  | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 What a program can ask about the machine it is running on: how much work it
 has done, and how much memory that took.
@@ -32,14 +32,14 @@ allocation moves the numbers of the heap, so they cannot drift apart while
 they are being read.
 
 This signature is Rune's own. Nothing here is portable, and a program that
-only wants the time a computation took should use [`Timer`](../sig/TIMER.md), which is.
+only wants the time a computation took should use [`Timer`](../str/Timer.md), which is.
 
 > **Deviation** `RUNTIME/not-in-the-specification`. The specification says
 > nothing about the implementation a program is running on: it has no
 > structure for allocation, for collection, or for what a call costs, and
 > deliberately so, since those are where implementations differ most. This
 > signature is therefore Rune's alone and a program that uses it does not
-> port. What the specification does give is [`Timer`](../sig/TIMER.md), whose `checkGCTime` is
+> port. What the specification does give is [`Timer`](../str/Timer.md), whose `checkGCTime` is
 > the one thing it says about a collector.
 
 ## Interface
@@ -49,27 +49,16 @@ signature RUNTIME =
 sig
   type <a href="#type-stats">stats</a> = { <a href="#fld-stats.instructions">instructions</a> : int, <a href="#fld-stats.bytes">bytes</a> : int, <a href="#fld-stats.objects">objects</a> : int,
                  <a href="#fld-stats.collections">collections</a> : int, <a href="#fld-stats.live">live</a> : int, <a href="#fld-stats.heapsize">heapSize</a> : int }
-
   val <a href="#val-stats">stats</a> : unit -&gt; stats
-
   val <a href="#val-profile">profile</a> : (unit -&gt; 'a) -&gt; 'a * stats
-
   val <a href="#val-collect">collect</a> : unit -&gt; unit
-
   type <a href="#type-frame">frame</a> = { <a href="#fld-frame.function">function</a> : string, <a href="#fld-frame.file">file</a> : string, <a href="#fld-frame.line">line</a> : int, <a href="#fld-frame.column">column</a> : int }
-
   val <a href="#val-trace">trace</a> : unit -&gt; frame list
-
   val <a href="#val-printtrace">printTrace</a> : TextIO.outstream -&gt; unit
-
   val <a href="#val-same">same</a> : 'a * 'a -&gt; bool
-
   datatype <a href="#type-world">world</a> = <a href="#con-saved">Saved</a> | <a href="#con-restored">Restored</a>
-
   val <a href="#val-save">save</a> : string -&gt; world
-
   val <a href="#val-restore">restore</a> : string -&gt; 'a
-
   val <a href="#val-version">version</a> : string
 end
 </pre>

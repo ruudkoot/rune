@@ -79,6 +79,53 @@ Sized M: the page kind is mostly the signature page, and the routing is a
 rule on note ids. Step 4 is the one that touches many files, and it is a move
 rather than a rewrite.
 
+## What it turned out to be, when it was built (2026-09-26)
+
+Steps 1 and 2 are as described. Step 5 is, except that `DOCUMENTED` did not
+have to change: it is the ratchet of the *entries* of a signature, and a
+structure has no entries of its own, so what keeps a new structure from going
+undocumented is a check instead -- a public structure that neither claims a
+signature nor has a comment that describes it is an error -- and coverage.md
+gained a table of how much of each structure a signature describes. Steps 3
+and 4 are not as described: they rested on the
+assumption that a note id naming a structure means the note is about that
+structure alone. It does not. **A note id is a test label**, and a check must
+name a concrete structure, never a signature: `Int.mod/minInt-by-minus-one` is
+a *reading of `INTEGER`* that holds for every structure implementing it, and
+it names `Int` because that is where the check that pins it lives. Of the 324
+notes, 229 have an id naming a structure -- not the forty the plan expected --
+and most of them belong where they are written.
+
+So nothing moved in the sources, and the warning of step 3 was not written:
+there is nothing in an id to warn about. Instead `runedoc` **routes** a note
+to the page of the structure its id names, wherever the note is written. A
+note has one home in the sources (the file where it is read) and appears on
+two pages: the signature's, where it belongs to the member's description, and
+the structure's, under **Notes**. The plan's two examples come out right
+without an edit: `String.maxSize/value` is written in `STRING` and shows on
+`String`, `WideChar.isAlpha/ascii-classes` is written in `CHAR` and shows on
+`WideChar`, since the id of each names the structure and not the signature.
+
+Three more things the work found:
+
+* **A structure that claims no signature needs a page most of all.**
+  `WideTextIO` matches no signature of the library -- the transcription of
+  `TEXT_IO` writes `string` and `char` -- and was named nowhere in the
+  documentation. It now has a page, and a check errors when a public
+  structure is documented nowhere.
+* **A page is needed for the substructures a signature specifies**, such as
+  `Socket.Ctl`, `Posix.FileSys.S` and `OS.IO.Kind`: 195 structures have a page
+  in all. A structure that is bound by name to another public one -- `Position`
+  is `Int`, `Text.Char` is `Char` -- has no page of its own, and every link to
+  it leads to the page of what it is.
+* **The types have to be printed under the name that reaches them.** The
+  compiler's printer writes the name a type was declared under, and tells two
+  of one name apart by a stamp (`instream/1371`), which means nothing to a
+  reader. `Types.toStringNamed` now takes the caller's names, and a structure
+  page shows `Word8Vector.sub` as `vector * int -> Word8.word`: `vector`
+  because the structure names it, `Word8.word` because `elem` names the use
+  and not the type, and `StreamIO.instream` rather than a stamp.
+
 ## Recommendation
 
 Do it. The library has 210 structures and 65 signatures, and a reader looking

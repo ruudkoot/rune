@@ -31,7 +31,9 @@ struct
       "Raises" => place = Value orelse place = DeclarationDoc
     | "Law" => place = Value orelse place = DeclarationDoc
     | "Complexity" => place = Value orelse place = DeclarationDoc
-    | "Area" => place = SignatureDoc orelse place = FunctorDoc
+      (* a structure names its area only when no signature describes it, which
+         DocSite checks: the area of a described structure is its signature's *)
+    | "Area" => place = SignatureDoc orelse place = StructureDoc orelse place = FunctorDoc
     | "Status" => place = SignatureDoc orelse place = StructureDoc orelse place = FunctorDoc
     | "Implements" => place = StructureDoc orelse place = FunctorDoc
     | _ => true

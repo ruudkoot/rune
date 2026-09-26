@@ -37,32 +37,32 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BoolVector` | The monomorphic vectors and arrays of booleans and their slices, and the two-dimensional arrays (all optional in the specification), in one file: a program that names one of them loads the five. The vector is a polymorphic vector (RuneMonoVectorFn), the array a polymorphic array. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| `CharVector` | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
-| `Int16Vector` | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| `Int32Vector` | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64Vector` | The vectors, arrays, slices and two-dimensional arrays of Int64 (optional in the specification). Int64.int is a type of its own, so these are their own structures and not those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| `Int8Vector` | The monomorphic vectors and arrays of Int8.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| `IntVector` | The monomorphic vectors and arrays of int, their slices and the two-dimensional arrays (optional in the specification). Int64Vector and the rest of that family are these (mono\_int64.sml). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| `LargeIntVector` | The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
-| `LargeRealVector` | LargeReal is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| `LargeWordVector` | LargeWord is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| `Real32Vector` | The monomorphic vectors and arrays of Real32.real, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
-| `Real64Vector` | Real64 is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| `RealVector` | The monomorphic vectors and arrays of real, their slices and the two-dimensional arrays (optional in the specification). The elements do not admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them. LargeRealVector, Real64Vector and the rest of those families are these (mono\_largereal.sml, mono\_real64.sml). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| `WideCharVector` | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| `Word16Vector` | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| `Word32Vector` | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64Vector` | The vectors, arrays, slices and two-dimensional arrays of Word64 (optional in the specification). Word64.word is a type of its own, so these are their own structures and not those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8Vector` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
-| `WordVector` | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`BoolVector`](../str/BoolVector.md) | The monomorphic vectors and arrays of booleans and their slices, and the two-dimensional arrays (all optional in the specification), in one file: a program that names one of them loads the five. The vector is a polymorphic vector (RuneMonoVectorFn), the array a polymorphic array. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`CharVector`](../str/CharVector.md) | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
+| [`Int16Vector`](../str/Int16Vector.md) | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32Vector`](../str/Int32Vector.md) | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64Vector`](../str/Int64Vector.md) | The vectors, arrays, slices and two-dimensional arrays of Int64 (optional in the specification). Int64.int is a type of its own, so these are their own structures and not those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8Vector`](../str/Int8Vector.md) | The monomorphic vectors and arrays of Int8.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntVector`](../str/IntVector.md) | The monomorphic vectors and arrays of int, their slices and the two-dimensional arrays (optional in the specification). Int64Vector and the rest of that family are these (mono\_int64.sml). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`LargeIntVector`](../str/LargeIntVector.md) | The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeRealVector`](../str/RealVector.md) | LargeReal is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| [`LargeWordVector`](../str/WordVector.md) | LargeWord is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`Real32Vector`](../str/Real32Vector.md) | The monomorphic vectors and arrays of Real32.real, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real64Vector`](../str/RealVector.md) | Real64 is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| [`RealVector`](../str/RealVector.md) | The monomorphic vectors and arrays of real, their slices and the two-dimensional arrays (optional in the specification). The elements do not admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them. LargeRealVector, Real64Vector and the rest of those families are these (mono\_largereal.sml, mono\_real64.sml). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharVector`](../str/WideCharVector.md) | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16Vector`](../str/Word16Vector.md) | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32Vector`](../str/Word32Vector.md) | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64Vector`](../str/Word64Vector.md) | The vectors, arrays, slices and two-dimensional arrays of Word64 (optional in the specification). Word64.word is a type of its own, so these are their own structures and not those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8Vector`](../str/Word8Vector.md) |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
+| [`WordVector`](../str/WordVector.md) | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 The sequences of one element type: vectors, arrays and their slices, as
 [`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md) and [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md) describe them for any
 element type.
 
 Fixing the element type lets an implementation pack the elements, so
-[`Word8Vector`](MONO_VECTOR.md) need not hold one machine word per byte, and it gives the
+[`Word8Vector`](../str/Word8Vector.md) need not hold one machine word per byte, and it gives the
 byte- and character-oriented parts of the library ([`BYTE`](../sig/BYTE.md), [`TEXT`](../sig/TEXT.md),
 [`BIN_IO`](../sig/BIN_IO.md)) a sequence type to name. The members are those of the
 polymorphic signatures, with [`elem`](#type-elem) for the element type; what they mean
@@ -71,30 +71,30 @@ length.
 
 > **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes
 > `type vector`, not `eqtype`, so that a family whose elements do not admit
-> equality can have a vector -- [`RealVector`](MONO_VECTOR.md) needs that. Where a vector has
-> to admit equality the page says so on the instance instead: [`CharVector`](MONO_VECTOR.md)
+> equality can have a vector -- [`RealVector`](../str/RealVector.md) needs that. Where a vector has
+> to admit equality the page says so on the instance instead: [`CharVector`](../str/CharVector.md)
 > is declared `where type vector = String.string`, and [`STRING`](../sig/STRING.md) writes
-> `eqtype string`. \*\*[`WideCharVector`](MONO_VECTOR.md) is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\*\* [`TEXT`](../sig/TEXT.md) shares
-> [`String.string`](../sig/STRING.md#type-string) with [`CharVector.vector`](#type-vector), and [`WideText`](../sig/TEXT.md) is declared
+> `eqtype string`. \*\*[`WideCharVector`](../str/WideCharVector.md) is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\*\* [`TEXT`](../sig/TEXT.md) shares
+> [`String.string`](../sig/STRING.md#type-string) with [`CharVector.vector`](#type-vector), and [`WideText`](../str/WideText.md) is declared
 > `where type String.string = WideString.string`, so
 > [`WideText.CharVector.vector`](#type-vector) is [`WideString.string`](../sig/STRING.md#type-string), which [`STRING`](../sig/STRING.md) makes
 > an equality type. Any implementation whose [`WideText.CharVector`](../sig/TEXT.md#str-charvector) is the
-> top-level [`WideCharVector`](MONO_VECTOR.md) \-- every one that has both -- must therefore
+> top-level [`WideCharVector`](../str/WideCharVector.md) \-- every one that has both -- must therefore
 > give [`WideCharVector.vector`](#type-vector) equality, and the declaration the page gives
 > it cannot. \*\*The whole of the defect is one missing constraint\*\*:
-> `where type vector = WideString.string`, which [`CharVector`](MONO_VECTOR.md) has and
-> [`WideCharVector`](MONO_VECTOR.md) does not. That makes this a milder fault than the one on
+> `where type vector = WideString.string`, which [`CharVector`](../str/CharVector.md) has and
+> [`WideCharVector`](../str/WideCharVector.md) does not. That makes this a milder fault than the one on
 > the page of [`ARRAY2`](../sig/ARRAY2.md), where no constraint can help because there is no
 > type to pin to; here [`WideString.string`](../sig/STRING.md#type-string) is already there and [`STRING`](../sig/STRING.md)
 > already makes it an equality type.
 
 Rune gives the equality the other way, by sealing with [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md).
 That is a consequence of \*this\* library's order and not of the fault:
-[`WideString`](../sig/STRING.md) is built on [`WideCharVector`](MONO_VECTOR.md) (`type string = V.vector`, and
-every operation delegates), so [`WideCharVector`](MONO_VECTOR.md) is where the type name is
+[`WideString`](../str/WideString.md) is built on [`WideCharVector`](../str/WideCharVector.md) (`type string = V.vector`, and
+every operation delegates), so [`WideCharVector`](../str/WideCharVector.md) is where the type name is
 born and there is nothing yet to pin it to. Following the page as it
-should have been written would mean giving [`WideString`](../sig/STRING.md) a representation
-of its own and pinning [`WideCharVector`](MONO_VECTOR.md) to it -- a change to two files,
+should have been written would mean giving [`WideString`](../str/WideString.md) a representation
+of its own and pinning [`WideCharVector`](../str/WideCharVector.md) to it -- a change to two files,
 not a rename -- and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) would then be unnecessary.
 
 <details><summary>Other implementations (1)</summary>
@@ -109,47 +109,26 @@ not a rename -- and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) would then be u
 signature MONO_VECTOR =
 sig
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-elem">elem</a>
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-fromlist">fromList</a> : elem list -&gt; vector
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; elem) -&gt; vector
-
   val <a href="#val-length">length</a> : vector -&gt; int
-
   val <a href="#val-sub">sub</a> : vector * int -&gt; elem
-
   val <a href="#val-update">update</a> : vector * int * elem -&gt; vector
-
   val <a href="#val-concat">concat</a> : vector list -&gt; vector
-
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; vector -&gt; unit
-
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; vector -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * elem -&gt; elem) -&gt; vector -&gt; vector
-
   val <a href="#val-map">map</a> : (elem -&gt; elem) -&gt; vector -&gt; vector
-
   val <a href="#val-foldli">foldli</a> : (int * elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
-
   val <a href="#val-foldri">foldri</a> : (int * elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
-
   val <a href="#val-foldl">foldl</a> : (elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
-
   val <a href="#val-foldr">foldr</a> : (elem * 'a -&gt; 'a) -&gt; 'a -&gt; vector -&gt; 'a
-
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; vector -&gt; (int * elem) option
-
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; vector -&gt; elem option
-
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
-
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
-
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; vector * vector -&gt; order
 end
 </pre>
@@ -187,7 +166,7 @@ For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charve
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](MONO_VECTOR.md), `char` for [`CharVector`](MONO_VECTOR.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
 
 <details><summary>Tests (2)</summary>
 

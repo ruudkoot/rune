@@ -24,19 +24,19 @@ structure PackWord64Little : PACK_WORD  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `PackWord16Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord16Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord32Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord32Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord64Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord64Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord16Big`](../str/PackWord16Big.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord16Little`](../str/PackWord16Little.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord32Big`](../str/PackWord32Big.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord32Little`](../str/PackWord32Little.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord64Big`](../str/PackWord64Big.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord64Little`](../str/PackWord64Little.md) |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
 
 Reading and writing a word in a vector or an array of bytes, in a fixed
 byte order.
 
 A structure of this signature packs words of [`bytesPerElem`](#val-bytesperelem) bytes: the
-name says how many bits and which end comes first, so [`PackWord32Big`](PACK_WORD.md) puts
-the most significant byte first and [`PackWord32Little`](PACK_WORD.md) the least. This is
+name says how many bits and which end comes first, so [`PackWord32Big`](../str/PackWord32Big.md) puts
+the most significant byte first and [`PackWord32Little`](../str/PackWord32Little.md) the least. This is
 what a program uses to read a binary file or a protocol whose layout is
 given in bytes, whatever the byte order of the machine it runs on.
 
@@ -52,17 +52,11 @@ the bytes from `bytesPerElem * i` on.
 signature PACK_WORD =
 sig
   val <a href="#val-bytesperelem">bytesPerElem</a> : int
-
   val <a href="#val-isbigendian">isBigEndian</a> : bool
-
   val <a href="#val-subvec">subVec</a> : Word8Vector.vector * int -&gt; LargeWord.word
-
   val <a href="#val-subvecx">subVecX</a> : Word8Vector.vector * int -&gt; LargeWord.word
-
   val <a href="#val-subarr">subArr</a> : Word8Array.array * int -&gt; LargeWord.word
-
   val <a href="#val-subarrx">subArrX</a> : Word8Array.array * int -&gt; LargeWord.word
-
   val <a href="#val-update">update</a> : Word8Array.array * int * LargeWord.word -&gt; unit
 end
 </pre>

@@ -19,7 +19,7 @@ structure Posix.SysDB : POSIX_SYS_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.SysDB` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.SysDB`](../str/Posix.SysDB.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The password and group databases: turning a user or group name into a
 number, and back.
@@ -43,41 +43,26 @@ whatever the system's name service offers. They do not change anything.
 signature POSIX_SYS_DB =
 sig
   eqtype <a href="#type-uid">uid</a>
-
   eqtype <a href="#type-gid">gid</a>
-
   structure <a href="#str-passwd">Passwd</a> :
   sig
     type <a href="#type-passwd.passwd">passwd</a>
-
     val <a href="#val-passwd.name">name</a> : passwd -&gt; string
-
     val <a href="#val-passwd.uid">uid</a> : passwd -&gt; uid
-
     val <a href="#val-passwd.gid">gid</a> : passwd -&gt; gid
-
     val <a href="#val-passwd.home">home</a> : passwd -&gt; string
-
     val <a href="#val-passwd.shell">shell</a> : passwd -&gt; string
   end
-
   structure <a href="#str-group">Group</a> :
   sig
     type <a href="#type-group.group">group</a>
-
     val <a href="#val-group.name">name</a> : group -&gt; string
-
     val <a href="#val-group.gid">gid</a> : group -&gt; gid
-
     val <a href="#val-group.members">members</a> : group -&gt; string list
   end
-
   val <a href="#val-getgrgid">getgrgid</a> : gid -&gt; Group.group
-
   val <a href="#val-getgrnam">getgrnam</a> : string -&gt; Group.group
-
   val <a href="#val-getpwuid">getpwuid</a> : uid -&gt; Passwd.passwd
-
   val <a href="#val-getpwnam">getpwnam</a> : string -&gt; Passwd.passwd
 end
 </pre>

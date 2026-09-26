@@ -19,7 +19,7 @@ structure OS.FileSys : OS_FILE_SYS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.FileSys` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.FileSys`](../str/OS.FileSys.md) |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The file system: reading directories, moving about in them, and asking
 what a file is and when it changed.
@@ -44,58 +44,33 @@ A directory is read as a stream: [`openDir`](#val-opendir), then [`readDir`](#va
 signature OS_FILE_SYS =
 sig
   type <a href="#type-dirstream">dirstream</a>
-
   val <a href="#val-opendir">openDir</a> : string -&gt; dirstream
-
   val <a href="#val-readdir">readDir</a> : dirstream -&gt; string option
-
   val <a href="#val-rewinddir">rewindDir</a> : dirstream -&gt; unit
-
   val <a href="#val-closedir">closeDir</a> : dirstream -&gt; unit
-
   val <a href="#val-chdir">chDir</a> : string -&gt; unit
-
   val <a href="#val-getdir">getDir</a> : unit -&gt; string
-
   val <a href="#val-mkdir">mkDir</a> : string -&gt; unit
-
   val <a href="#val-rmdir">rmDir</a> : string -&gt; unit
-
   val <a href="#val-isdir">isDir</a> : string -&gt; bool
-
   val <a href="#val-islink">isLink</a> : string -&gt; bool
-
   val <a href="#val-readlink">readLink</a> : string -&gt; string
-
   val <a href="#val-fullpath">fullPath</a> : string -&gt; string
-
   val <a href="#val-realpath">realPath</a> : string -&gt; string
-
   val <a href="#val-modtime">modTime</a> : string -&gt; Time.time
-
   val <a href="#val-filesize">fileSize</a> : string -&gt; Position.int
-
   val <a href="#val-settime">setTime</a> : string * Time.time option -&gt; unit
-
   val <a href="#val-remove">remove</a> : string -&gt; unit
-
   val <a href="#val-rename">rename</a> : {<a href="#fld-rename.old">old</a> : string, <a href="#fld-rename.new">new</a> : string} -&gt; unit
-
   datatype <a href="#type-access_mode">access_mode</a>
     = <a href="#con-a_read">A_READ</a>
     | <a href="#con-a_write">A_WRITE</a>
     | <a href="#con-a_exec">A_EXEC</a>
-
   val <a href="#val-access">access</a> : string * access_mode list -&gt; bool
-
   val <a href="#val-tmpname">tmpName</a> : unit -&gt; string
-
   eqtype <a href="#type-file_id">file_id</a>
-
   val <a href="#val-fileid">fileId</a> : string -&gt; file_id
-
   val <a href="#val-hash">hash</a> : file_id -&gt; word
-
   val <a href="#val-compare">compare</a> : file_id * file_id -&gt; order
 end
 </pre>

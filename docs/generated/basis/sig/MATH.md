@@ -22,16 +22,16 @@ structure Real64.Math : MATH
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `LargeReal.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real64.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`LargeReal.Math`](../str/Real.Math.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Math`](../str/Math.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real.Math`](../str/Real.Math.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real64.Math`](../str/Real.Math.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 The elementary functions of a real type: roots, the trigonometric and
 hyperbolic functions, exponentials and logarithms.
 
 A structure of this signature belongs to a [`REAL`](../sig/REAL.md) structure and computes
-with its type, so [`Math`](MATH.md) is [`Real.Math`](../sig/REAL.md#str-math). Angles are in radians. None of
+with its type, so [`Math`](../str/Math.md) is [`Real.Math`](../sig/REAL.md#str-math). Angles are in radians. None of
 these functions raises: where the mathematical function has no value the
 answer is a NaN, and where it grows without bound it is an infinity, as
 IEEE 754 prescribes.
@@ -47,39 +47,22 @@ usually wrong.
 signature MATH =
 sig
   type <a href="#type-real">real</a>
-
   val <a href="#val-pi">pi</a> : real
-
   val <a href="#val-e">e</a> : real
-
   val <a href="#val-sqrt">sqrt</a> : real -&gt; real
-
   val <a href="#val-sin">sin</a> : real -&gt; real
-
   val <a href="#val-cos">cos</a> : real -&gt; real
-
   val <a href="#val-tan">tan</a> : real -&gt; real
-
   val <a href="#val-asin">asin</a> : real -&gt; real
-
   val <a href="#val-acos">acos</a> : real -&gt; real
-
   val <a href="#val-atan">atan</a> : real -&gt; real
-
   val <a href="#val-atan2">atan2</a> : real * real -&gt; real
-
   val <a href="#val-exp">exp</a> : real -&gt; real
-
   val <a href="#val-pow">pow</a> : real * real -&gt; real
-
   val <a href="#val-ln">ln</a> : real -&gt; real
-
   val <a href="#val-log10">log10</a> : real -&gt; real
-
   val <a href="#val-sinh">sinh</a> : real -&gt; real
-
   val <a href="#val-cosh">cosh</a> : real -&gt; real
-
   val <a href="#val-tanh">tanh</a> : real -&gt; real
 end
 </pre>

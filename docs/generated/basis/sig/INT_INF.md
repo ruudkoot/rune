@@ -19,7 +19,7 @@ structure IntInf : INT_INF  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, and the
 operations that make sense only, or mostly, without a bound.
@@ -32,7 +32,7 @@ infinitely many leading ones and `notb i` is `~(i + 1)`.
 
 > **Implementation** `IntInf.int/limbs`. A sign and a list of digits in base
 > 2^30, written in SML on top of the 64-bit [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
-> values, so `=` compares them. [`LargeInt`](../sig/INTEGER.md) is [`IntInf`](INT_INF.md).
+> values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
 > **Implementation** `INT_INF/constants`. An integer constant may have the type
 > [`IntInf.int`](../sig/INTEGER.md#type-int), and then be of any size, and the overloaded operators work
@@ -51,25 +51,15 @@ infinitely many leading ones and `notb i` is `~(i + 1)`.
 signature INT_INF =
 sig
   include INTEGER
-
   val <a href="#val-divmod">divMod</a> : int * int -&gt; int * int
-
   val <a href="#val-quotrem">quotRem</a> : int * int -&gt; int * int
-
   val <a href="#val-pow">pow</a> : int * Int.int -&gt; int
-
   val <a href="#val-log2">log2</a> : int -&gt; Int.int
-
   val <a href="#val-orb">orb</a> : int * int -&gt; int
-
   val <a href="#val-xorb">xorb</a> : int * int -&gt; int
-
   val <a href="#val-andb">andb</a> : int * int -&gt; int
-
   val <a href="#val-notb">notb</a> : int -&gt; int
-
   val <a href="#val-op-lt-lt">&lt;&lt;</a> : int * Word.word -&gt; int
-
   val <a href="#val-op-tilde-gt-gt">~&gt;&gt;</a> : int * Word.word -&gt; int
 end
 </pre>

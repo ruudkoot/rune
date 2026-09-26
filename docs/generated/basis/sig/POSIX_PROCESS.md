@@ -19,7 +19,7 @@ structure Posix.Process : POSIX_PROCESS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.Process` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Process`](../str/Posix.Process.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Processes: making them, replacing them, waiting for them and ending them.
 
@@ -43,61 +43,40 @@ and [`waitpid`](#val-waitpid) report how it ended as an [`exit_status`](#type-ex
 signature POSIX_PROCESS =
 sig
   eqtype <a href="#type-signal">signal</a>
-
   eqtype <a href="#type-pid">pid</a>
-
   val <a href="#val-wordtopid">wordToPid</a> : SysWord.word -&gt; pid
-
   val <a href="#val-pidtoword">pidToWord</a> : pid -&gt; SysWord.word
-
   val <a href="#val-fork">fork</a> : unit -&gt; pid option
-
   val <a href="#val-exec">exec</a> : string * string list -&gt; 'a
-
   val <a href="#val-exece">exece</a> : string * string list * string list -&gt; 'a
-
   val <a href="#val-execp">execp</a> : string * string list -&gt; 'a
-
   datatype <a href="#type-waitpid_arg">waitpid_arg</a>
     = <a href="#con-w_any_child">W_ANY_CHILD</a>
     | <a href="#con-w_child">W_CHILD</a> of pid
     | <a href="#con-w_same_group">W_SAME_GROUP</a>
     | <a href="#con-w_group">W_GROUP</a> of pid
-
   datatype <a href="#type-exit_status">exit_status</a>
     = <a href="#con-w_exited">W_EXITED</a>
     | <a href="#con-w_exitstatus">W_EXITSTATUS</a> of Word8.word
     | <a href="#con-w_signaled">W_SIGNALED</a> of signal
     | <a href="#con-w_stopped">W_STOPPED</a> of signal
-
   val <a href="#val-fromstatus">fromStatus</a> : OS.Process.status -&gt; exit_status
-
   structure <a href="#str-w">W</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-w.untraced">untraced</a> : flags
   end
-
   val <a href="#val-wait">wait</a> : unit -&gt; pid * exit_status
-
   val <a href="#val-waitpid">waitpid</a> : waitpid_arg * W.flags list -&gt; pid * exit_status
-
   val <a href="#val-waitpid_nh">waitpid_nh</a> : waitpid_arg * W.flags list -&gt; (pid * exit_status) option
-
   val <a href="#val-exit">exit</a> : Word8.word -&gt; 'a
-
   datatype <a href="#type-killpid_arg">killpid_arg</a>
     = <a href="#con-k_proc">K_PROC</a> of pid
     | <a href="#con-k_same_group">K_SAME_GROUP</a>
     | <a href="#con-k_group">K_GROUP</a> of pid
-
   val <a href="#val-kill">kill</a> : killpid_arg * signal -&gt; unit
-
   val <a href="#val-alarm">alarm</a> : Time.time -&gt; Time.time
-
   val <a href="#val-pause">pause</a> : unit -&gt; unit
-
   val <a href="#val-sleep">sleep</a> : Time.time -&gt; Time.time
 end
 </pre>

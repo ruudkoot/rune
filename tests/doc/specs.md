@@ -79,19 +79,16 @@ sig
   datatype <a href="#type-order">order</a> = datatype order
   exception <a href="#exn-empty">Empty</a>
   exception <a href="#exn-bad">Bad</a> of {<a href="#fld-bad.line">line</a> : int, <a href="#fld-bad.why">why</a> : string} and <a href="#exn-worse">Worse</a> of string
-
   val <a href="#val-empty">empty</a> : 'a seq
   val <a href="#val-insert">insert</a> : key * 'a -&gt; 'a seq -&gt; 'a seq
   and <a href="#val-remove">remove</a> : key -&gt; 'a seq -&gt; 'a seq
   val op <a href="#val-op-at-at">@@</a> : 'a seq * 'a seq -&gt; 'a seq
   val <a href="#val-fold">fold</a> : ({<a href="#fld-fold.key">key</a> : key, <a href="#fld-fold.value">value</a> : 'a} * 'b -&gt; 'b) -&gt; 'b -&gt; 'a seq -&gt; 'b
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a seq -&gt; 'a option
-
   structure <a href="#str-key">Key</a> : ORDERED where type t = key
   structure <a href="#str-limits">Limits</a> : sig val <a href="#val-limits.maxlen">maxLen</a> : int  val <a href="#val-limits.minlen">minLen</a> : int end
   structure <a href="#str-a">A</a> : ORDERED and <a href="#str-b">B</a> : ORDERED
   sharing type A.t = B.t
-
   include ORDERED
   include ORDERED where type t = key
 end

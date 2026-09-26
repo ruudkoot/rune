@@ -21,9 +21,9 @@ structure Sealed :> COUNTER
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Counter` | A counter of machine integers. | [tests/doc/claims.sml](../tests/doc/claims.sml) |
+| [`Counter`](../str/Counter.md) | A counter of machine integers. | [tests/doc/claims.sml](../tests/doc/claims.sml) |
 | `CounterFn` |  | [tests/doc/claims.sml](../tests/doc/claims.sml) |
-| `Sealed` |  | [tests/doc/claims.sml](../tests/doc/claims.sml) |
+| [`Sealed`](../str/Counter.md) |  | [tests/doc/claims.sml](../tests/doc/claims.sml) |
 
 Claims: what a structure says it implements, and the notes of its body.
 

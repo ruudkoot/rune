@@ -20,16 +20,16 @@ structure WideText : TEXT where type Char.char = WideChar.char where type String
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Text` | Text: the structures of the default character type. | [lib/basis/text.sml](../../../../lib/basis/text.sml) |
-| `WideText` | WideText: the structures of the wide character (optional in the specification), as Text is of char. | [lib/basis/widetext.sml](../../../../lib/basis/widetext.sml) |
+| [`Text`](../str/Text.md) | Text: the structures of the default character type. | [lib/basis/text.sml](../../../../lib/basis/text.sml) |
+| [`WideText`](../str/WideText.md) | WideText: the structures of the wide character (optional in the specification), as Text is of char. | [lib/basis/widetext.sml](../../../../lib/basis/widetext.sml) |
 
 The structures of one kind of text, gathered so that their types can be
 named as one: characters, strings, substrings and the vectors and arrays
 of characters, with the constraints that tie them together.
 
-[`Text`](TEXT.md) is the text of 8-bit characters, whose [`Text.Char`](#str-char) is [`Char`](#str-char) and
-whose [`Text.String`](#str-string) is [`String`](#str-string); the optional [`WideText`](TEXT.md) is the same for
-[`WideChar`](../sig/CHAR.md). A program that is to work at either kind takes the structure as
+[`Text`](../str/Text.md) is the text of 8-bit characters, whose [`Text.Char`](#str-char) is [`Char`](#str-char) and
+whose [`Text.String`](#str-string) is [`String`](#str-string); the optional [`WideText`](../str/WideText.md) is the same for
+[`WideChar`](../str/WideChar.md). A program that is to work at either kind takes the structure as
 a functor argument and names the types through it.
 
 ## Interface
@@ -38,29 +38,19 @@ a functor argument and names the types through it.
 signature TEXT =
 sig
   structure <a href="#str-char">Char</a> : CHAR
-
   structure <a href="#str-string">String</a> : STRING
-
   structure <a href="#str-substring">Substring</a> : SUBSTRING
-
   structure <a href="#str-charvector">CharVector</a> : MONO_VECTOR
-
   structure <a href="#str-chararray">CharArray</a> : MONO_ARRAY
-
   structure <a href="#str-charvectorslice">CharVectorSlice</a> : MONO_VECTOR_SLICE
-
   structure <a href="#str-chararrayslice">CharArraySlice</a> : MONO_ARRAY_SLICE
-
   sharing type Char.char = String.char = Substring.char
     = CharVector.elem = CharArray.elem = CharVectorSlice.elem
     = CharArraySlice.elem
-
   sharing type Char.string = String.string = Substring.string
     = CharVector.vector = CharArray.vector
     = CharVectorSlice.vector = CharArraySlice.vector
-
   sharing type CharArray.array = CharArraySlice.array
-
   sharing type CharVectorSlice.slice
     = CharArraySlice.vector_slice
 end
@@ -74,7 +64,7 @@ structure Char : CHAR
 
 A substructure: its members are described on the page of [`CHAR`](../sig/CHAR.md).
 
-The characters: [`Char`](#str-char) for [`Text`](TEXT.md), [`WideChar`](../sig/CHAR.md) for [`WideText`](TEXT.md).
+The characters: [`Char`](#str-char) for [`Text`](../str/Text.md), [`WideChar`](../str/WideChar.md) for [`WideText`](../str/WideText.md).
 
 <details><summary>Tests (5)</summary>
 

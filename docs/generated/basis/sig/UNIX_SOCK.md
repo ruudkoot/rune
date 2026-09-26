@@ -19,7 +19,7 @@ structure UnixSock : UNIX_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `UnixSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`UnixSock`](../str/UnixSock.md) |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Sockets of the Unix family: an address is a path in the file system, and
 the connection never leaves the machine.
@@ -38,32 +38,21 @@ to its parent.
 signature UNIX_SOCK =
 sig
   type <a href="#type-unix">unix</a>
-
   type 'sock_type <a href="#type-sock">sock</a> = (unix, 'sock_type) Socket.sock
-
   type 'mode <a href="#type-stream_sock">stream_sock</a> = 'mode Socket.stream sock
-
   type <a href="#type-dgram_sock">dgram_sock</a> = Socket.dgram sock
-
   type <a href="#type-sock_addr">sock_addr</a> = unix Socket.sock_addr
-
   val <a href="#val-unixaf">unixAF</a> : Socket.AF.addr_family
-
   val <a href="#val-toaddr">toAddr</a> : string -&gt; sock_addr
-
   val <a href="#val-fromaddr">fromAddr</a> : sock_addr -&gt; string
-
   structure <a href="#str-strm">Strm</a> :
   sig
     val <a href="#val-strm.socket">socket</a> : unit -&gt; 'mode stream_sock
-
     val <a href="#val-strm.socketpair">socketPair</a> : unit -&gt; 'mode stream_sock * 'mode stream_sock
   end
-
   structure <a href="#str-dgrm">DGrm</a> :
   sig
     val <a href="#val-dgrm.socket">socket</a> : unit -&gt; dgram_sock
-
     val <a href="#val-dgrm.socketpair">socketPair</a> : unit -&gt; dgram_sock * dgram_sock
   end
 end

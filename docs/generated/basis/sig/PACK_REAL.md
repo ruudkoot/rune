@@ -24,18 +24,18 @@ structure PackRealLittle : PACK_REAL where type real = Real.real  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `PackReal32Big` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| `PackReal32Little` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| `PackReal64Big` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackReal64Little` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackRealBig` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackRealLittle` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal32Big`](../str/PackReal32Big.md) |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal32Little`](../str/PackReal32Little.md) |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal64Big`](../str/PackRealBig.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal64Little`](../str/PackRealLittle.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealBig`](../str/PackRealBig.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealLittle`](../str/PackRealLittle.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
 Reading and writing a real number in a vector or an array of bytes, in its
 IEEE 754 encoding and a fixed byte order.
 
-[`PackRealBig`](PACK_REAL.md) writes the most significant byte of the encoding first and
-[`PackRealLittle`](PACK_REAL.md) the least, so a program can read or write a binary file
+[`PackRealBig`](../str/PackRealBig.md) writes the most significant byte of the encoding first and
+[`PackRealLittle`](../str/PackRealLittle.md) the least, so a program can read or write a binary file
 whose layout is given, whatever the byte order of the machine. The bytes
 are the encoding itself: the sign, the exponent and the significand as
 IEEE 754 lays them out.
@@ -50,19 +50,12 @@ IEEE 754 lays them out.
 signature PACK_REAL =
 sig
   type <a href="#type-real">real</a>
-
   val <a href="#val-bytesperelem">bytesPerElem</a> : int
-
   val <a href="#val-isbigendian">isBigEndian</a> : bool
-
   val <a href="#val-tobytes">toBytes</a> : real -&gt; Word8Vector.vector
-
   val <a href="#val-frombytes">fromBytes</a> : Word8Vector.vector -&gt; real
-
   val <a href="#val-subvec">subVec</a> : Word8Vector.vector * int -&gt; real
-
   val <a href="#val-subarr">subArr</a> : Word8Array.array * int -&gt; real
-
   val <a href="#val-update">update</a> : Word8Array.array * int * real -&gt; unit
 end
 </pre>

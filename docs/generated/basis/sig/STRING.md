@@ -20,8 +20,8 @@ structure WideString :> STRING where type string = WideCharVector.vector where t
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `String` | String: 8-bit byte strings. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
-| `WideString` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
+| [`String`](../str/String.md) | String: 8-bit byte strings. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
+| [`WideString`](../str/WideString.md) |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 Strings: immutable sequences of characters, with the operations that take
 them apart, put them together, compare them and write them as the text of
@@ -34,15 +34,15 @@ every operation that makes one does copy, so building a long string by
 repeated [`^`](#val-op-caret) costs time quadratic in the result: collect the pieces in a
 list and [`concat`](#val-concat) them once.
 
-The signature is that of [`String`](STRING.md), whose characters are of type [`char`](#type-char), and
-of the optional [`WideString`](STRING.md), which is why it specifies a type [`char`](#type-char) of
+The signature is that of [`String`](../str/String.md), whose characters are of type [`char`](#type-char), and
+of the optional [`WideString`](../str/WideString.md), which is why it specifies a type [`char`](#type-char) of
 its own. The strings of the library are compared by their characters'
 codes, and that order is what [`<`](#val-op-lt), [`compare`](#val-compare) and [`Substring.compare`](../sig/SUBSTRING.md#val-compare) use.
 
 > **Erratum** `STRING/string-types`. The specification writes the types of
 > [`toString`](#val-tostring), [`scan`](#val-scan), [`fromString`](#val-fromstring), [`toCString`](#val-tocstring) and [`fromCString`](#val-fromcstring) with
 > [`String.string`](#type-string), because the text of an escape is always of 8-bit
-> characters, also for [`WideString`](STRING.md). They are kept as written.
+> characters, also for [`WideString`](../str/WideString.md). They are kept as written.
 
 ## Contents
 
@@ -60,64 +60,36 @@ codes, and that order is what [`<`](#val-op-lt), [`compare`](#val-compare) and [
 <pre>
 signature STRING =
 sig
-
   eqtype <a href="#type-string">string</a>
-
   eqtype <a href="#type-char">char</a>
-
   val <a href="#val-maxsize">maxSize</a> : int
-
   val <a href="#val-size">size</a> : string -&gt; int
-
   val <a href="#val-sub">sub</a> : string * int -&gt; char
-
   val <a href="#val-extract">extract</a> : string * int * int option -&gt; string
-
   val <a href="#val-substring">substring</a> : string * int * int -&gt; string
-
   val <a href="#val-op-caret">^</a> : string * string -&gt; string
-
   val <a href="#val-concat">concat</a> : string list -&gt; string
-
   val <a href="#val-concatwith">concatWith</a> : string -&gt; string list -&gt; string
-
   val <a href="#val-str">str</a> : char -&gt; string
-
   val <a href="#val-implode">implode</a> : char list -&gt; string
-
   val <a href="#val-explode">explode</a> : string -&gt; char list
-
   val <a href="#val-map">map</a> : (char -&gt; char) -&gt; string -&gt; string
-
   val <a href="#val-translate">translate</a> : (char -&gt; string) -&gt; string -&gt; string
-
   val <a href="#val-tokens">tokens</a> : (char -&gt; bool) -&gt; string -&gt; string list
-
   val <a href="#val-fields">fields</a> : (char -&gt; bool) -&gt; string -&gt; string list
-
   val <a href="#val-isprefix">isPrefix</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-issubstring">isSubstring</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-issuffix">isSuffix</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-compare">compare</a> : string * string -&gt; order
-
   val <a href="#val-collate">collate</a> : (char * char -&gt; order) -&gt; string * string -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : string * string -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : string * string -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : string * string -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : string * string -&gt; bool
-
   val <a href="#val-tostring">toString</a> : string -&gt; String.string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (string, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : String.string -&gt; string option
-
   val <a href="#val-tocstring">toCString</a> : string -&gt; String.string
-
   val <a href="#val-fromcstring">fromCString</a> : String.string -&gt; string option
 end
 </pre>
@@ -147,7 +119,7 @@ The type of strings of these characters.
 eqtype char
 ```
 
-The type of the characters of such a string: [`Char.char`](../sig/CHAR.md#type-char) for [`String`](STRING.md).
+The type of the characters of such a string: [`Char.char`](../sig/CHAR.md#type-char) for [`String`](../str/String.md).
 
 ### <a name="val-maxsize"></a>`maxSize`
 

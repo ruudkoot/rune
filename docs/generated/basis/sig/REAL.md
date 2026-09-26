@@ -22,17 +22,17 @@ structure Real64 : REAL  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `LargeReal` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real` | Real: IEEE double precision. | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real32` |  | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
-| `Real64` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`LargeReal`](../str/Real.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real`](../str/Real.md) | Real: IEEE double precision. | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real32`](../str/Real32.md) |  | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
+| [`Real64`](../str/Real.md) |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 Floating-point numbers: IEEE 754 arithmetic, the numbers that are not
 ordinary (the infinities, the NaNs and the negative zero), and the
 conversions to and from integers and text.
 
-[`Real`](REAL.md) is the default structure, [`LargeReal`](REAL.md) the widest, and the sized
-ones are [`Real32`](REAL.md) and [`Real64`](REAL.md). A NaN, "not a number", is what an
+[`Real`](../str/Real.md) is the default structure, [`LargeReal`](../str/Real.md) the widest, and the sized
+ones are [`Real32`](../str/Real32.md) and [`Real64`](../str/Real.md). A NaN, "not a number", is what an
 operation answers where there is no value to give: it is equal to nothing,
 itself included, so [`==`](#val-op-eq-eq) is `false` for it and [`compare`](#val-compare) raises
 [`Unordered`](../sig/IEEE_REAL.md#exn-unordered). Because of that the equality of the language is not available
@@ -47,8 +47,8 @@ in [`real`](#type-real), [`floor`](#val-floor) and its like give an `int` and ra
 would not fit.
 
 > **Implementation** `Real.real/binary64`. [`Real.real`](#type-real) is the top-level [`real`](#type-real),
-> the 64-bit IEEE double ([`radix`](#val-radix) 2, [`precision`](#val-precision) 53\), and so are [`LargeReal`](REAL.md)
-> and [`Real64`](REAL.md); the optional [`Real32`](REAL.md) is binary32. The conversions to and
+> the 64-bit IEEE double ([`radix`](#val-radix) 2, [`precision`](#val-precision) 53\), and so are [`LargeReal`](../str/Real.md)
+> and [`Real64`](../str/Real.md); the optional [`Real32`](../str/Real32.md) is binary32. The conversions to and
 > from text are correctly rounded, through the C library.
 
 ## Contents
@@ -69,130 +69,69 @@ would not fit.
 <pre>
 signature REAL =
 sig
-
   type <a href="#type-real">real</a>
-
   structure <a href="#str-math">Math</a> : MATH where type real = real
-
   val <a href="#val-radix">radix</a> : int
-
   val <a href="#val-precision">precision</a> : int
-
   val <a href="#val-maxfinite">maxFinite</a> : real
-
   val <a href="#val-minpos">minPos</a> : real
-
   val <a href="#val-minnormalpos">minNormalPos</a> : real
-
   val <a href="#val-posinf">posInf</a> : real
-
   val <a href="#val-neginf">negInf</a> : real
-
   val <a href="#val-op-plus">+</a> : real * real -&gt; real
-
   val <a href="#val-op-minus">-</a> : real * real -&gt; real
-
   val <a href="#val-op-star">*</a> : real * real -&gt; real
-
   val <a href="#val-op-slash">/</a> : real * real -&gt; real
-
   val <a href="#val-rem">rem</a> : real * real -&gt; real
-
   val <a href="#val-op-star-plus">*+</a> : real * real * real -&gt; real
-
   val <a href="#val-op-star-minus">*-</a> : real * real * real -&gt; real
-
   val <a href="#val-op-tilde">~</a> : real -&gt; real
-
   val <a href="#val-abs">abs</a> : real -&gt; real
-
   val <a href="#val-min">min</a> : real * real -&gt; real
-
   val <a href="#val-max">max</a> : real * real -&gt; real
-
   val <a href="#val-sign">sign</a> : real -&gt; int
-
   val <a href="#val-signbit">signBit</a> : real -&gt; bool
-
   val <a href="#val-samesign">sameSign</a> : real * real -&gt; bool
-
   val <a href="#val-copysign">copySign</a> : real * real -&gt; real
-
   val <a href="#val-compare">compare</a> : real * real -&gt; order
-
   val <a href="#val-comparereal">compareReal</a> : real * real -&gt; IEEEReal.real_order
-
   val <a href="#val-op-lt">&lt;</a> : real * real -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : real * real -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : real * real -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : real * real -&gt; bool
-
   val <a href="#val-op-eq-eq">==</a> : real * real -&gt; bool
-
   val <a href="#val-op-bang-eq">!=</a> : real * real -&gt; bool
-
   val <a href="#val-op-question-eq">?=</a> : real * real -&gt; bool
-
   val <a href="#val-unordered">unordered</a> : real * real -&gt; bool
-
   val <a href="#val-isfinite">isFinite</a> : real -&gt; bool
-
   val <a href="#val-isnan">isNan</a> : real -&gt; bool
-
   val <a href="#val-isnormal">isNormal</a> : real -&gt; bool
-
   val <a href="#val-class">class</a> : real -&gt; IEEEReal.float_class
-
   val <a href="#val-tomanexp">toManExp</a> : real -&gt; {<a href="#fld-tomanexp.man">man</a> : real, <a href="#fld-tomanexp.exp">exp</a> : int}
-
   val <a href="#val-frommanexp">fromManExp</a> : {<a href="#fld-frommanexp.man">man</a> : real, <a href="#fld-frommanexp.exp">exp</a> : int} -&gt; real
-
   val <a href="#val-split">split</a> : real -&gt; {<a href="#fld-split.whole">whole</a> : real, <a href="#fld-split.frac">frac</a> : real}
-
   val <a href="#val-realmod">realMod</a> : real -&gt; real
-
   val <a href="#val-nextafter">nextAfter</a> : real * real -&gt; real
-
   val <a href="#val-checkfloat">checkFloat</a> : real -&gt; real
-
   val <a href="#val-realfloor">realFloor</a> : real -&gt; real
-
   val <a href="#val-realceil">realCeil</a> : real -&gt; real
-
   val <a href="#val-realtrunc">realTrunc</a> : real -&gt; real
-
   val <a href="#val-realround">realRound</a> : real -&gt; real
-
   val <a href="#val-floor">floor</a> : real -&gt; int
-
   val <a href="#val-ceil">ceil</a> : real -&gt; int
-
   val <a href="#val-trunc">trunc</a> : real -&gt; int
-
   val <a href="#val-round">round</a> : real -&gt; int
-
   val <a href="#val-toint">toInt</a> : IEEEReal.rounding_mode -&gt; real -&gt; int
-
   val <a href="#val-tolargeint">toLargeInt</a> : IEEEReal.rounding_mode -&gt; real -&gt; LargeInt.int
-
   val <a href="#val-fromint">fromInt</a> : int -&gt; real
-
   val <a href="#val-fromlargeint">fromLargeInt</a> : LargeInt.int -&gt; real
-
   val <a href="#val-tolarge">toLarge</a> : real -&gt; LargeReal.real
-
   val <a href="#val-fromlarge">fromLarge</a> : IEEEReal.rounding_mode -&gt; LargeReal.real -&gt; real
-
   val <a href="#val-fmt">fmt</a> : StringCvt.realfmt -&gt; real -&gt; string
-
   val <a href="#val-tostring">toString</a> : real -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (real, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; real option
-
   val <a href="#val-todecimal">toDecimal</a> : real -&gt; IEEEReal.decimal_approx
-
   val <a href="#val-fromdecimal">fromDecimal</a> : IEEEReal.decimal_approx -&gt; real option
 end
 </pre>
@@ -1281,7 +1220,7 @@ val toLargeInt : IEEEReal.rounding_mode -> real -> LargeInt.int
 
 `toLargeInt mode x` is `x` rounded to a [`LargeInt.int`](../sig/INTEGER.md#type-int) in the given rounding mode.
 
-Where [`LargeInt`](../sig/INTEGER.md) has no bounds this loses nothing, however large `x` is.
+Where [`LargeInt`](../str/IntInf.md) has no bounds this loses nothing, however large `x` is.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `x` is an infinity, or if the result does not fit
 a bounded [`LargeInt.int`](../sig/INTEGER.md#type-int); [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
@@ -1378,8 +1317,8 @@ val fromLarge : IEEEReal.rounding_mode -> LargeReal.real -> real
 
 `fromLarge mode x` is the number of this type nearest to `x`, rounded in the given mode.
 
-> **Reading** `LargeReal/at-least-Real`. [`LargeReal`](REAL.md) is at least as wide as
-> [`Real`](REAL.md), so this rounds only where it is wider.
+> **Reading** `LargeReal/at-least-Real`. [`LargeReal`](../str/Real.md) is at least as wide as
+> [`Real`](../str/Real.md), so this rounds only where it is wider.
 
 <details><summary>Tests (10)</summary>
 

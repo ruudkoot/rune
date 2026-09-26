@@ -76,6 +76,20 @@ documented when a comment describes it, alone or together with the entry before 
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
 | **all** | 1658 | 1658 | 100% | 1127 | 1127 |
 
+## Members a signature describes
+
+Every structure has a page of its own, which shows its members with the types it gives them and
+sends the reader to the signature that says what each means. A member that no signature describes
+is one a program can name and nothing explains: it is a name beyond the signature, which
+[structures.md](structures.md) lists, or the structure matches no signature of the library.
+
+195 structures have a page, with 4231 members, of which 4147 (98%) are described by a signature.
+
+| Structure | Members | Described |  |
+| --- | --- | --- | --- |
+| [`WideTextIO`](str/WideTextIO.md) | 37 | 0 | 0% |
+| [`WideTextIO.StreamIO`](str/WideTextIO.StreamIO.md) | 47 | 0 | 0% |
+
 ## Examples that are run
 
 An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the
@@ -86,13 +100,13 @@ test suite: 252 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.m
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not
 be pinned: many are about the text and not about behaviour.
 
-- `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
-- `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
-- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
-- `SML90/is-history` (Limitation), SML90
-- `SML90.Interrupt/never-raised` (Limitation), SML90
+- `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
+- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
+- `SML90.Interrupt/never-raised` (Limitation), SML90
+- `SML90/is-history` (Limitation), SML90
+- `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 
 ---
 

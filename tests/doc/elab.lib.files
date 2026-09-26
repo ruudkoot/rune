@@ -2,6 +2,7 @@
 ./claims.tsv
 ./conventions.md
 ./coverage.md
+./depends.md
 ./exceptions.md
 ./index/b.md
 ./index/e.md
@@ -12,6 +13,9 @@
 ./notes.tsv
 ./readings.md
 ./sig/BOX.md
+./str/Box.md
+./str/Chest.Label.md
+./str/Chest.md
 ./structures.md
 ./top-level.md
 ./types.md

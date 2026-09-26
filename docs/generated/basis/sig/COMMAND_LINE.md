@@ -19,7 +19,7 @@ structure CommandLine : COMMAND_LINE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `CommandLine` | CommandLine | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
+| [`CommandLine`](../str/CommandLine.md) | CommandLine | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
 
 The name of the program and the arguments it was given.
 
@@ -29,7 +29,6 @@ The name of the program and the arguments it was given.
 signature COMMAND_LINE =
 sig
   val <a href="#val-name">name</a> : unit -&gt; string
-
   val <a href="#val-arguments">arguments</a> : unit -&gt; string list
 end
 </pre>

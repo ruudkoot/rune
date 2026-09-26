@@ -19,21 +19,21 @@ structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char  
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `WideCharVector` | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharVector`](../str/WideCharVector.md) | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 The same as [`MONO_VECTOR`](../sig/MONO_VECTOR.md), with a vector type that admits equality.
 
 > **Deviation** `MONO_VECTOR_EQ/not-in-the-specification`. This signature is
 > not in the specification, and it is here because the specification asks
 > for something it gives no way to say: [`WideCharVector.vector`](../sig/MONO_VECTOR.md#type-vector) has to admit
-> equality, and the declaration the page gives [`WideCharVector`](../sig/MONO_VECTOR.md) cannot make
+> equality, and the declaration the page gives [`WideCharVector`](../str/WideCharVector.md) cannot make
 > it -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.
 > [`MONO_VECTOR`](../sig/MONO_VECTOR.md) writes `type vector`, not `eqtype`, so that a family whose
 > elements do not admit equality can have a vector; a family whose vector is
 > a type of its own and does admit it is sealed with this instead. The
 > specification's own way out is `where type vector = WideString.string` on
-> the instance, which Rune cannot use because [`WideString`](../sig/STRING.md) is declared after
-> [`WideCharVector`](../sig/MONO_VECTOR.md) and is built on it -- [`WideString.string`](../sig/STRING.md#type-string) must be a type
+> the instance, which Rune cannot use because [`WideString`](../str/WideString.md) is declared after
+> [`WideCharVector`](../str/WideCharVector.md) and is built on it -- [`WideString.string`](../sig/STRING.md#type-string) must be a type
 > name of its own for wide string constants to be overloaded at it.
 
 ## Interface
@@ -42,47 +42,26 @@ The same as [`MONO_VECTOR`](../sig/MONO_VECTOR.md), with a vector type that admi
 signature MONO_VECTOR_EQ =
 sig
   eqtype <a href="#type-vector">vector</a>
-
   type <a href="#type-elem">elem</a>
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-fromlist">fromList</a> : elem list -&gt; vector
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; elem) -&gt; vector
-
   val <a href="#val-length">length</a> : vector -&gt; int
-
   val <a href="#val-sub">sub</a> : vector * int -&gt; elem
-
   val <a href="#val-update">update</a> : vector * int * elem -&gt; vector
-
   val <a href="#val-concat">concat</a> : vector list -&gt; vector
-
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; vector -&gt; unit
-
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; vector -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * elem -&gt; elem) -&gt; vector -&gt; vector
-
   val <a href="#val-map">map</a> : (elem -&gt; elem) -&gt; vector -&gt; vector
-
   val <a href="#val-foldli">foldli</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; vector -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; vector -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; vector -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; vector -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; vector -&gt; (int * elem) option
-
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; vector -&gt; elem option
-
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
-
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; vector -&gt; bool
-
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; vector * vector -&gt; order
 end
 </pre>
@@ -101,7 +80,7 @@ The type of these vectors, which admits equality.
 type elem
 ```
 
-The type of the elements: [`WideChar.char`](../sig/CHAR.md#type-char) for [`WideCharVector`](../sig/MONO_VECTOR.md).
+The type of the elements: [`WideChar.char`](../sig/CHAR.md#type-char) for [`WideCharVector`](../str/WideCharVector.md).
 
 <details><summary>Tests (1)</summary>
 

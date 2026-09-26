@@ -20,15 +20,15 @@ structure WideChar :> CHAR where type char = WideChar.char where type string = W
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Char` | Char: 8-bit characters. | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
-| `WideChar` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Char`](../str/Char.md) | Char: 8-bit characters. | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
+| [`WideChar`](../str/WideChar.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 Characters: their codes and order, the classes they belong to, and their
 conversion to and from the text of SML and C character constants.
 
 A character is a small non-negative integer, its code, and the characters
-are ordered as their codes are. The signature is that of [`Char`](CHAR.md), whose
-characters are the elements of [`string`](#type-string), and of the optional [`WideChar`](CHAR.md),
+are ordered as their codes are. The signature is that of [`Char`](../str/Char.md), whose
+characters are the elements of [`string`](#type-string), and of the optional [`WideChar`](../str/WideChar.md),
 which is why it specifies a type [`string`](#type-string) of its own.
 
 The classes ([`isAlpha`](#val-isalpha), [`isSpace`](#val-isspace) and the rest) are those of the ASCII
@@ -38,8 +38,8 @@ character set and do not depend on a locale.
 > [`toString`](#val-tostring), [`scan`](#val-scan), [`fromString`](#val-fromstring), [`toCString`](#val-tocstring) and [`fromCString`](#val-fromcstring) with
 > [`String.string`](../sig/STRING.md#type-string) and [`Char.char`](#type-char) rather than with the [`string`](#type-string) and [`char`](#type-char)
 > of the signature, because the text is always one of 8-bit characters, also
-> for [`WideChar`](CHAR.md). They are kept as written; that [`Char.char`](#type-char) is [`char`](#type-char) and
-> [`Char.string`](#type-string) is [`String.string`](../sig/STRING.md#type-string) is a constraint on the structure [`Char`](CHAR.md).
+> for [`WideChar`](../str/WideChar.md). They are kept as written; that [`Char.char`](#type-char) is [`char`](#type-char) and
+> [`Char.string`](#type-string) is [`String.string`](../sig/STRING.md#type-string) is a constraint on the structure [`Char`](../str/Char.md).
 
 > **Erratum** `CHAR/fromString-sample`. The third example of the page's table
 > for [`fromString`](#val-fromstring) is not the text of an SML string; the page of [`STRING`](../sig/STRING.md)
@@ -58,72 +58,40 @@ character set and do not depend on a locale.
 <pre>
 signature CHAR =
 sig
-
   eqtype <a href="#type-char">char</a>
-
   eqtype <a href="#type-string">string</a>
-
   val <a href="#val-minchar">minChar</a> : char
-
   val <a href="#val-maxchar">maxChar</a> : char
-
   val <a href="#val-maxord">maxOrd</a> : int
-
   val <a href="#val-ord">ord</a> : char -&gt; int
-
   val <a href="#val-chr">chr</a> : int -&gt; char
-
   val <a href="#val-succ">succ</a> : char -&gt; char
-
   val <a href="#val-pred">pred</a> : char -&gt; char
-
   val <a href="#val-compare">compare</a> : char * char -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : char * char -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : char * char -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : char * char -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : char * char -&gt; bool
-
   val <a href="#val-contains">contains</a> : string -&gt; char -&gt; bool
-
   val <a href="#val-notcontains">notContains</a> : string -&gt; char -&gt; bool
-
   val <a href="#val-isascii">isAscii</a> : char -&gt; bool
-
   val <a href="#val-tolower">toLower</a> : char -&gt; char
-
   val <a href="#val-toupper">toUpper</a> : char -&gt; char
-
   val <a href="#val-isalpha">isAlpha</a> : char -&gt; bool
-
   val <a href="#val-isalphanum">isAlphaNum</a> : char -&gt; bool
-
   val <a href="#val-iscntrl">isCntrl</a> : char -&gt; bool
-
   val <a href="#val-isdigit">isDigit</a> : char -&gt; bool
-
   val <a href="#val-isgraph">isGraph</a> : char -&gt; bool
-
   val <a href="#val-ishexdigit">isHexDigit</a> : char -&gt; bool
-
   val <a href="#val-islower">isLower</a> : char -&gt; bool
-
   val <a href="#val-isprint">isPrint</a> : char -&gt; bool
-
   val <a href="#val-isspace">isSpace</a> : char -&gt; bool
-
   val <a href="#val-ispunct">isPunct</a> : char -&gt; bool
-
   val <a href="#val-isupper">isUpper</a> : char -&gt; bool
-
   val <a href="#val-tostring">toString</a> : char -&gt; String.string
-
   val <a href="#val-scan">scan</a> : (Char.char, 'a) StringCvt.reader -&gt; (char, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : String.string -&gt; char option
-
   val <a href="#val-tocstring">toCString</a> : char -&gt; String.string
-
   val <a href="#val-fromcstring">fromCString</a> : String.string -&gt; char option
 end
 </pre>
@@ -147,7 +115,7 @@ The type of characters.
 eqtype string
 ```
 
-The type of strings of these characters: [`String.string`](../sig/STRING.md#type-string) for [`Char`](CHAR.md).
+The type of strings of these characters: [`String.string`](../sig/STRING.md#type-string) for [`Char`](../str/Char.md).
 
 ### <a name="val-minchar"></a>`minChar`
 
@@ -189,8 +157,8 @@ val maxOrd : int
 
 The largest code of a character.
 
-> **Implementation** `Char.maxOrd/value`. 255 for [`Char`](CHAR.md), and 1114111, the
-> last code point of Unicode, for [`WideChar`](CHAR.md).
+> **Implementation** `Char.maxOrd/value`. 255 for [`Char`](../str/Char.md), and 1114111, the
+> last code point of Unicode, for [`WideChar`](../str/WideChar.md).
 
 <details><summary>Tests (3)</summary>
 
