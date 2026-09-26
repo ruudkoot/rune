@@ -19,7 +19,7 @@ structure Windows : WINDOWS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Windows` | Windows: the registry, the configuration of the machine, DDE, programs started with pipes to them, and the codes a process ends with, over the primitives win\_\* of vm/prims.def. On a system other than Windows every call of the system raises OS.SysErr with ENOSYS; the constants (the flags of Key, the codes of Status) are there everywhere. | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
+| [`Windows`](../str/Windows.md) | Windows: the registry, the configuration of the machine, DDE, programs started with pipes to them, and the codes a process ends with, over the primitives win\_\* of vm/prims.def. On a system other than Windows every call of the system raises OS.SysErr with ENOSYS; the constants (the flags of Key, the codes of Status) are there everywhere. | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
 The operating system Windows: the registry, the configuration of the
 machine, dynamic data exchange, programs started with a pipe each way, and
@@ -52,192 +52,108 @@ and [`exit`](#val-exit) (below).
 <pre>
 signature WINDOWS =
 sig
-
   structure <a href="#str-key">Key</a> : sig
     include BIT_FLAGS
-
     val <a href="#val-key.allaccess">allAccess</a> : flags
-
     val <a href="#val-key.createlink">createLink</a> : flags
-
     val <a href="#val-key.createsubkey">createSubKey</a> : flags
-
     val <a href="#val-key.enumeratesubkeys">enumerateSubKeys</a> : flags
-
     val <a href="#val-key.execute">execute</a> : flags
-
     val <a href="#val-key.notify">notify</a> : flags
-
     val <a href="#val-key.queryvalue">queryValue</a> : flags
-
     val <a href="#val-key.read">read</a> : flags
-
     val <a href="#val-key.setvalue">setValue</a> : flags
-
     val <a href="#val-key.write">write</a> : flags
   end
-
   structure <a href="#str-reg">Reg</a> : sig
     eqtype <a href="#type-reg.hkey">hkey</a>
-
     val <a href="#val-reg.classesroot">classesRoot</a> : hkey
-
     val <a href="#val-reg.currentuser">currentUser</a> : hkey
-
     val <a href="#val-reg.localmachine">localMachine</a> : hkey
-
     val <a href="#val-reg.users">users</a> : hkey
-
     val <a href="#val-reg.performancedata">performanceData</a> : hkey
-
     val <a href="#val-reg.currentconfig">currentConfig</a> : hkey
-
     val <a href="#val-reg.dyndata">dynData</a> : hkey
-
     datatype <a href="#type-reg.create_result">create_result</a>
       = <a href="#con-reg.created_new_key">CREATED_NEW_KEY</a> of hkey
       | <a href="#con-reg.opened_existing_key">OPENED_EXISTING_KEY</a> of hkey
-
     val <a href="#val-reg.createkeyex">createKeyEx</a> : hkey * string * Key.flags -&gt; create_result
-
     val <a href="#val-reg.openkeyex">openKeyEx</a> : hkey * string * Key.flags -&gt; hkey
-
     val <a href="#val-reg.closekey">closeKey</a> : hkey -&gt; unit
-
     val <a href="#val-reg.deletekey">deleteKey</a> : hkey * string -&gt; unit
-
     val <a href="#val-reg.deletevalue">deleteValue</a> : hkey * string -&gt; unit
-
     val <a href="#val-reg.enumkeyex">enumKeyEx</a> : hkey * int -&gt; string option
-
     val <a href="#val-reg.enumvalueex">enumValueEx</a> : hkey * int -&gt; string option
-
     datatype <a href="#type-reg.value">value</a>
       = <a href="#con-reg.sz">SZ</a> of string
       | <a href="#con-reg.dword">DWORD</a> of SysWord.word
       | <a href="#con-reg.binary">BINARY</a> of Word8Vector.vector
       | <a href="#con-reg.multi_sz">MULTI_SZ</a> of string list
       | <a href="#con-reg.expand_sz">EXPAND_SZ</a> of string
-
     val <a href="#val-reg.queryvalueex">queryValueEx</a> : hkey * string -&gt; value option
-
     val <a href="#val-reg.setvalueex">setValueEx</a> : hkey * string * value -&gt; unit
   end
-
   structure <a href="#str-config">Config</a> : sig
     val <a href="#val-config.platformwin32s">platformWin32s</a> : SysWord.word
-
     val <a href="#val-config.platformwin32windows">platformWin32Windows</a> : SysWord.word
-
     val <a href="#val-config.platformwin32nt">platformWin32NT</a> : SysWord.word
-
     val <a href="#val-config.platformwin32ce">platformWin32CE</a> : SysWord.word
-
     val <a href="#val-config.getversionex">getVersionEx</a> : unit -&gt; {<a href="#fld-config.getversionex.majorversion">majorVersion</a> : SysWord.word, <a href="#fld-config.getversionex.minorversion">minorVersion</a> : SysWord.word,
                                 <a href="#fld-config.getversionex.buildnumber">buildNumber</a> : SysWord.word, <a href="#fld-config.getversionex.platformid">platformId</a> : SysWord.word, <a href="#fld-config.getversionex.csdversion">csdVersion</a> : string}
-
     val <a href="#val-config.getwindowsdirectory">getWindowsDirectory</a> : unit -&gt; string
-
     val <a href="#val-config.getsystemdirectory">getSystemDirectory</a> : unit -&gt; string
-
     val <a href="#val-config.getcomputername">getComputerName</a> : unit -&gt; string
-
     val <a href="#val-config.getusername">getUserName</a> : unit -&gt; string
   end
-
   structure <a href="#str-dde">DDE</a> : sig
     type <a href="#type-dde.info">info</a>
-
     val <a href="#val-dde.startdialog">startDialog</a> : string * string -&gt; info
-
     val <a href="#val-dde.executestring">executeString</a> : info * string * int * Time.time -&gt; unit
-
     val <a href="#val-dde.stopdialog">stopDialog</a> : info -&gt; unit
   end
-
   val <a href="#val-getvolumeinformation">getVolumeInformation</a> : string -&gt; {<a href="#fld-getvolumeinformation.volumename">volumeName</a> : string, <a href="#fld-getvolumeinformation.systemname">systemName</a> : string,
                                         <a href="#fld-getvolumeinformation.serialnumber">serialNumber</a> : SysWord.word, <a href="#fld-getvolumeinformation.maximumcomponentlength">maximumComponentLength</a> : int}
-
   val <a href="#val-findexecutable">findExecutable</a> : string -&gt; string option
-
   val <a href="#val-launchapplication">launchApplication</a> : string * string -&gt; unit
-
   val <a href="#val-opendocument">openDocument</a> : string -&gt; unit
-
   val <a href="#val-simpleexecute">simpleExecute</a> : string * string -&gt; OS.Process.status
-
   type ('a, 'b) <a href="#type-proc">proc</a>
-
   val <a href="#val-execute">execute</a> : string * string -&gt; ('a, 'b) proc
-
   val <a href="#val-textinstreamof">textInstreamOf</a> : (TextIO.instream, 'a) proc -&gt; TextIO.instream
-
   val <a href="#val-bininstreamof">binInstreamOf</a> : (BinIO.instream, 'a) proc -&gt; BinIO.instream
-
   val <a href="#val-textoutstreamof">textOutstreamOf</a> : ('a, TextIO.outstream) proc -&gt; TextIO.outstream
-
   val <a href="#val-binoutstreamof">binOutstreamOf</a> : ('a, BinIO.outstream) proc -&gt; BinIO.outstream
-
   val <a href="#val-reap">reap</a> : ('a, 'b) proc -&gt; OS.Process.status
-
   structure <a href="#str-status">Status</a> : sig
     type <a href="#type-status.status">status</a> = SysWord.word
-
     val <a href="#val-status.accessviolation">accessViolation</a> : status
-
     val <a href="#val-status.arrayboundsexceeded">arrayBoundsExceeded</a> : status
-
     val <a href="#val-status.breakpoint">breakpoint</a> : status
-
     val <a href="#val-status.controlcexit">controlCExit</a> : status
-
     val <a href="#val-status.datatypemisalignment">datatypeMisalignment</a> : status
-
     val <a href="#val-status.floatdenormaloperand">floatDenormalOperand</a> : status
-
     val <a href="#val-status.floatdividebyzero">floatDivideByZero</a> : status
-
     val <a href="#val-status.floatinexactresult">floatInexactResult</a> : status
-
     val <a href="#val-status.floatinvalidoperation">floatInvalidOperation</a> : status
-
     val <a href="#val-status.floatoverflow">floatOverflow</a> : status
-
     val <a href="#val-status.floatstackcheck">floatStackCheck</a> : status
-
     val <a href="#val-status.floatunderflow">floatUnderflow</a> : status
-
     val <a href="#val-status.guardpageviolation">guardPageViolation</a> : status
-
     val <a href="#val-status.integerdividebyzero">integerDivideByZero</a> : status
-
     val <a href="#val-status.integeroverflow">integerOverflow</a> : status
-
     val <a href="#val-status.illegalinstruction">illegalInstruction</a> : status
-
     val <a href="#val-status.invaliddisposition">invalidDisposition</a> : status
-
     val <a href="#val-status.invalidhandle">invalidHandle</a> : status
-
     val <a href="#val-status.inpageerror">inPageError</a> : status
-
     val <a href="#val-status.noncontinuableexception">noncontinuableException</a> : status
-
     val <a href="#val-status.pending">pending</a> : status
-
     val <a href="#val-status.privilegedinstruction">privilegedInstruction</a> : status
-
     val <a href="#val-status.singlestep">singleStep</a> : status
-
     val <a href="#val-status.stackoverflow">stackOverflow</a> : status
-
     val <a href="#val-status.timeout">timeout</a> : status
-
     val <a href="#val-status.userapc">userAPC</a> : status
   end
-
   val <a href="#val-fromstatus">fromStatus</a> : OS.Process.status -&gt; Status.status
-
   val <a href="#val-exit">exit</a> : Status.status -&gt; 'a
 end
 </pre>

@@ -19,7 +19,7 @@ structure Posix.Signal : POSIX_SIGNAL  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.Signal` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Signal`](../str/Posix.Signal.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The signals a process may be sent, by name.
 
@@ -47,49 +47,27 @@ catch them.
 signature POSIX_SIGNAL =
 sig
   eqtype <a href="#type-signal">signal</a>
-
   val <a href="#val-toword">toWord</a> : signal -&gt; SysWord.word
-
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; signal
-
   val <a href="#val-abrt">abrt</a> : signal
-
   val <a href="#val-alrm">alrm</a> : signal
-
   val <a href="#val-bus">bus</a> : signal
-
   val <a href="#val-fpe">fpe</a> : signal
-
   val <a href="#val-hup">hup</a> : signal
-
   val <a href="#val-ill">ill</a> : signal
-
   val <a href="#val-int">int</a> : signal
-
   val <a href="#val-kill">kill</a> : signal
-
   val <a href="#val-pipe">pipe</a> : signal
-
   val <a href="#val-quit">quit</a> : signal
-
   val <a href="#val-segv">segv</a> : signal
-
   val <a href="#val-term">term</a> : signal
-
   val <a href="#val-usr1">usr1</a> : signal
-
   val <a href="#val-usr2">usr2</a> : signal
-
   val <a href="#val-chld">chld</a> : signal
-
   val <a href="#val-cont">cont</a> : signal
-
   val <a href="#val-stop">stop</a> : signal
-
   val <a href="#val-tstp">tstp</a> : signal
-
   val <a href="#val-ttin">ttin</a> : signal
-
   val <a href="#val-ttou">ttou</a> : signal
 end
 </pre>

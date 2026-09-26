@@ -19,7 +19,7 @@ structure Text : TEXT where type t = string  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Text` | A structure says what it implements. | [tests/doc/text.sml](../tests/doc/text.sml) |
+| [`Text`](../str/Text.md) | A structure says what it implements. | [tests/doc/text.sml](../tests/doc/text.sml) |
 
 The language of doc comments. Plain prose is a paragraph, and so is this
 second sentence; `code` stands between backquotes and may
@@ -55,27 +55,17 @@ val ys = List.rev xs
 signature TEXT =
 sig
   type <a href="#type-t">t</a>
-
   val <a href="#val-take">take</a> : 'a list * int -&gt; 'a list
-
   val <a href="#val-op-at">@</a> : 'a list * 'a list -&gt; 'a list
-
   val <a href="#val-op-lt-lt">&lt;&lt;</a> : word * word -&gt; word
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
-
   val <a href="#val-scan">scan</a> : (char, 'a) reader -&gt; (int, 'a) reader
-
   val <a href="#val-make">make</a> : {<a href="#fld-make.size">size</a> : int, <a href="#fld-make.fill">fill</a> : char} -&gt; t
-
   val <a href="#val-maxsize">maxSize</a> : int
-
   val <a href="#val-tolarge">toLarge</a> : int -&gt; IntInf.int
   val <a href="#val-fromlarge">fromLarge</a> : IntInf.int -&gt; int
   val <a href="#val-unrelated">unrelated</a> : int
-
   val <a href="#val-first">first</a> : int -&gt; int
-
   val <a href="#val-second">second</a> : int -&gt; int
 end
 </pre>

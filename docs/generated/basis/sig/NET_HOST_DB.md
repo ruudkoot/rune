@@ -19,7 +19,7 @@ structure NetHostDB : NET_HOST_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `NetHostDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetHostDB`](../str/NetHostDB.md) |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The host database: turning a host name into an address, and back.
 
@@ -46,31 +46,18 @@ dotted form of an address.
 signature NET_HOST_DB =
 sig
   eqtype <a href="#type-in_addr">in_addr</a>
-
   eqtype <a href="#type-addr_family">addr_family</a>
-
   type <a href="#type-entry">entry</a>
-
   val <a href="#val-name">name</a> : entry -&gt; string
-
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
-
   val <a href="#val-addrtype">addrType</a> : entry -&gt; addr_family
-
   val <a href="#val-addr">addr</a> : entry -&gt; in_addr
-
   val <a href="#val-addrs">addrs</a> : entry -&gt; in_addr list
-
   val <a href="#val-getbyname">getByName</a> : string -&gt; entry option
-
   val <a href="#val-getbyaddr">getByAddr</a> : in_addr -&gt; entry option
-
   val <a href="#val-gethostname">getHostName</a> : unit -&gt; string
-
   val <a href="#val-tostring">toString</a> : in_addr -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (in_addr, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; in_addr option
 end
 </pre>

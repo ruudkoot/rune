@@ -27,23 +27,23 @@ structure Position : INTEGER
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `FixedInt` | The largest fixed-precision integer: [`Int`](INTEGER.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
-| `Int` | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
-| `Int16` | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
-| `Int32` | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
-| `Int64` | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
-| `Int8` | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
-| `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
-| `LargeInt` | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
-| `Position` | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
+| [`FixedInt`](../str/Int.md) | The largest fixed-precision integer: [`Int`](../str/Int.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| [`Int`](../str/Int.md) | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
+| [`Int16`](../str/Int16.md) | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
+| [`Int32`](../str/Int32.md) | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
+| [`Int64`](../str/Int.md) | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| [`Int8`](../str/Int8.md) | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`LargeInt`](../str/IntInf.md) | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`Position`](../str/Int.md) | Position: the positions in a file. On the VM it is Int. | [lib/basis/position.sml](../../../../lib/basis/position.sml) |
 
 Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/GENERAL.md#exn-overflow)
 rather than wrapping round.
 
 The structures that implement this signature differ only in how many bits
-they keep: [`Int`](INTEGER.md) is the default one, [`Int8`](INTEGER.md) to [`Int64`](INTEGER.md) are the sized ones,
-[`LargeInt`](INTEGER.md) is the largest there is, and [`Position`](INTEGER.md) is what a file position
-is measured in. [`IntInf`](../sig/INT_INF.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
+they keep: [`Int`](../str/Int.md) is the default one, [`Int8`](../str/Int8.md) to [`Int64`](../str/Int.md) are the sized ones,
+[`LargeInt`](../str/IntInf.md) is the largest there is, and [`Position`](../str/Int.md) is what a file position
+is measured in. [`IntInf`](../str/IntInf.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
 bounds at all: there [`precision`](#val-precision), [`minInt`](#val-minint) and [`maxInt`](#val-maxint) are `NONE` and
 nothing overflows.
 
@@ -71,62 +71,35 @@ infix [`div`](#val-div) and [`mod`](#val-mod) mean.
 <pre>
 signature INTEGER =
 sig
-
   eqtype <a href="#type-int">int</a>
-
   val <a href="#val-tolarge">toLarge</a> : int -&gt; LargeInt.int
-
   val <a href="#val-fromlarge">fromLarge</a> : LargeInt.int -&gt; int
-
   val <a href="#val-toint">toInt</a> : int -&gt; Int.int
-
   val <a href="#val-fromint">fromInt</a> : Int.int -&gt; int
-
   val <a href="#val-precision">precision</a> : Int.int option
-
   val <a href="#val-minint">minInt</a> : int option
-
   val <a href="#val-maxint">maxInt</a> : int option
-
   val <a href="#val-op-plus">+</a> : int * int -&gt; int
-
   val <a href="#val-op-minus">-</a> : int * int -&gt; int
-
   val <a href="#val-op-star">*</a> : int * int -&gt; int
-
   val <a href="#val-div">div</a> : int * int -&gt; int
-
   val <a href="#val-mod">mod</a> : int * int -&gt; int
-
   val <a href="#val-quot">quot</a> : int * int -&gt; int
-
   val <a href="#val-rem">rem</a> : int * int -&gt; int
-
   val <a href="#val-compare">compare</a> : int * int -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : int * int -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : int * int -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : int * int -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : int * int -&gt; bool
-
   val <a href="#val-op-tilde">~</a> : int -&gt; int
-
   val <a href="#val-abs">abs</a> : int -&gt; int
-
   val <a href="#val-min">min</a> : int * int -&gt; int
-
   val <a href="#val-max">max</a> : int * int -&gt; int
-
   val <a href="#val-sign">sign</a> : int -&gt; Int.int
-
   val <a href="#val-samesign">sameSign</a> : int * int -&gt; bool
-
   val <a href="#val-fmt">fmt</a> : StringCvt.radix -&gt; int -&gt; string
-
   val <a href="#val-tostring">toString</a> : int -&gt; string
-
   val <a href="#val-scan">scan</a> : StringCvt.radix -&gt; (char, 'a) StringCvt.reader -&gt; (int, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; int option
 end
 </pre>
@@ -142,8 +115,8 @@ eqtype int
 The type of integers of this structure.
 
 > **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int), of
-> 64 bits, and so are [`Int64`](INTEGER.md), [`FixedInt`](INTEGER.md) and [`Position`](INTEGER.md); [`Int8`](INTEGER.md), [`Int16`](INTEGER.md)
-> and [`Int32`](INTEGER.md) keep a value of their own width, and [`LargeInt`](INTEGER.md) is [`IntInf`](../sig/INT_INF.md),
+> 64 bits, and so are [`Int64`](../str/Int.md), [`FixedInt`](../str/Int.md) and [`Position`](../str/Int.md); [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md)
+> and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md),
 > which has no width. Constants of each are checked against its range
 > where they are written.
 
@@ -163,7 +136,7 @@ For `Int`, in [tests/basis/int.sml](../../../../tests/basis/int.sml): `is-toplev
 val toLarge : int -> LargeInt.int
 ```
 
-`toLarge i` is `i` as an integer of [`LargeInt`](INTEGER.md), which loses nothing.
+`toLarge i` is `i` as an integer of [`LargeInt`](../str/IntInf.md), which loses nothing.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -209,7 +182,7 @@ In [tests/basis/fn/integer\_fn.sml](../../../../tests/basis/fn/integer_fn.sml), 
 val toInt : int -> Int.int
 ```
 
-`toInt i` is `i` as an integer of the default structure [`Int`](INTEGER.md).
+`toInt i` is `i` as an integer of the default structure [`Int`](../str/Int.md).
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of [`Int.int`](#type-int).
 

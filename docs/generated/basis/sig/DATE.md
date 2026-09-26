@@ -19,7 +19,7 @@ structure Date : DATE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Date` | Date: a moment as a person writes it down. | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
+| [`Date`](../str/Date.md) | Date: a moment as a person writes it down. | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
 
 A moment as a person writes it down: a year, a month, a day and a time of
 day, in some time zone.
@@ -50,7 +50,6 @@ February.
 signature DATE =
 sig
   datatype <a href="#type-weekday">weekday</a> = <a href="#con-mon">Mon</a> | <a href="#con-tue">Tue</a> | <a href="#con-wed">Wed</a> | <a href="#con-thu">Thu</a> | <a href="#con-fri">Fri</a> | <a href="#con-sat">Sat</a> | <a href="#con-sun">Sun</a>
-
   datatype <a href="#type-month">month</a>
     = <a href="#con-jan">Jan</a>
     | <a href="#con-feb">Feb</a>
@@ -64,11 +63,8 @@ sig
     | <a href="#con-oct">Oct</a>
     | <a href="#con-nov">Nov</a>
     | <a href="#con-dec">Dec</a>
-
   type <a href="#type-date">date</a>
-
   exception <a href="#exn-date">Date</a>
-
   val <a href="#val-date">date</a> : {<a href="#fld-date.year">year</a> : int,
               <a href="#fld-date.month">month</a> : month,
               <a href="#fld-date.day">day</a> : int,
@@ -76,43 +72,24 @@ sig
               <a href="#fld-date.minute">minute</a> : int,
               <a href="#fld-date.second">second</a> : int,
               <a href="#fld-date.offset">offset</a> : Time.time option} -&gt; date
-
   val <a href="#val-year">year</a> : date -&gt; int
-
   val <a href="#val-month">month</a> : date -&gt; month
-
   val <a href="#val-day">day</a> : date -&gt; int
-
   val <a href="#val-hour">hour</a> : date -&gt; int
-
   val <a href="#val-minute">minute</a> : date -&gt; int
-
   val <a href="#val-second">second</a> : date -&gt; int
-
   val <a href="#val-weekday">weekDay</a> : date -&gt; weekday
-
   val <a href="#val-yearday">yearDay</a> : date -&gt; int
-
   val <a href="#val-offset">offset</a> : date -&gt; Time.time option
-
   val <a href="#val-isdst">isDst</a> : date -&gt; bool option
-
   val <a href="#val-localoffset">localOffset</a> : unit -&gt; Time.time
-
   val <a href="#val-fromtimelocal">fromTimeLocal</a> : Time.time -&gt; date
-
   val <a href="#val-fromtimeuniv">fromTimeUniv</a> : Time.time -&gt; date
-
   val <a href="#val-totime">toTime</a> : date -&gt; Time.time
-
   val <a href="#val-compare">compare</a> : date * date -&gt; order
-
   val <a href="#val-fmt">fmt</a> : string -&gt; date -&gt; string
-
   val <a href="#val-tostring">toString</a> : date -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (date, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; date option
 end
 </pre>

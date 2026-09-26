@@ -19,7 +19,7 @@ structure Unix : UNIX where type exit_status = Posix.Process.exit_status where t
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Unix` | Unix: running a program and talking to it through pipes. | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
+| [`Unix`](../str/Unix.md) | Unix: running a program and talking to it through pipes. | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
 
 Running another program and talking to it: a child process with a pipe
 each way.
@@ -48,35 +48,22 @@ restriction being what it is.
 signature UNIX =
 sig
   type ('a, 'b) <a href="#type-proc">proc</a>
-
   type <a href="#type-signal">signal</a>
-
   datatype <a href="#type-exit_status">exit_status</a>
     = <a href="#con-w_exited">W_EXITED</a>
     | <a href="#con-w_exitstatus">W_EXITSTATUS</a> of Word8.word
     | <a href="#con-w_signaled">W_SIGNALED</a> of signal
     | <a href="#con-w_stopped">W_STOPPED</a> of signal
-
   val <a href="#val-fromstatus">fromStatus</a> : OS.Process.status -&gt; exit_status
-
   val <a href="#val-executeinenv">executeInEnv</a> : string * string list * string list -&gt; ('a, 'b) proc
-
   val <a href="#val-execute">execute</a> : string * string list -&gt; ('a, 'b) proc
-
   val <a href="#val-textinstreamof">textInstreamOf</a> : (TextIO.instream, 'a) proc -&gt; TextIO.instream
-
   val <a href="#val-bininstreamof">binInstreamOf</a> : (BinIO.instream, 'a) proc -&gt; BinIO.instream
-
   val <a href="#val-textoutstreamof">textOutstreamOf</a> : ('a, TextIO.outstream) proc -&gt; TextIO.outstream
-
   val <a href="#val-binoutstreamof">binOutstreamOf</a> : ('a, BinIO.outstream) proc -&gt; BinIO.outstream
-
   val <a href="#val-streamsof">streamsOf</a> : (TextIO.instream, TextIO.outstream) proc -&gt; TextIO.instream * TextIO.outstream
-
   val <a href="#val-reap">reap</a> : ('a, 'b) proc -&gt; OS.Process.status
-
   val <a href="#val-kill">kill</a> : ('a, 'b) proc * signal -&gt; unit
-
   val <a href="#val-exit">exit</a> : Word8.word -&gt; 'a
 end
 </pre>

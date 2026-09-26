@@ -19,7 +19,7 @@ structure OS : OS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS` | OS: the errors of the system, the file system, paths, the process and the I/O descriptors. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS`](../str/OS.md) | OS: the errors of the system, the file system, paths, the process and the I/O descriptors. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The operating system: its errors, its file system, its paths, its
 processes and its I/O descriptors, gathered into one structure.
@@ -42,21 +42,13 @@ programs.
 signature OS =
 sig
   structure <a href="#str-filesys">FileSys</a> : OS_FILE_SYS
-
   structure <a href="#str-io">IO</a> : OS_IO
-
   structure <a href="#str-path">Path</a> : OS_PATH
-
   structure <a href="#str-process">Process</a> : OS_PROCESS
-
   eqtype <a href="#type-syserror">syserror</a>
-
   exception <a href="#exn-syserr">SysErr</a> of string * syserror option
-
   val <a href="#val-errormsg">errorMsg</a> : syserror -&gt; string
-
   val <a href="#val-errorname">errorName</a> : syserror -&gt; string
-
   val <a href="#val-syserror">syserror</a> : string -&gt; syserror option
 end
 </pre>

@@ -19,7 +19,7 @@ structure Time :> TIME
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Time` | Time: a length of time, held as microseconds. | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
+| [`Time`](../str/Time.md) | Time: a length of time, held as microseconds. | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
 
 A length of time, and a point in time counted from a fixed reference.
 
@@ -45,53 +45,29 @@ rather than [`Overflow`](../sig/GENERAL.md#exn-overflow).
 signature TIME =
 sig
   eqtype <a href="#type-time">time</a>
-
   exception <a href="#exn-time">Time</a>
-
   val <a href="#val-zerotime">zeroTime</a> : time
-
   val <a href="#val-fromreal">fromReal</a> : LargeReal.real -&gt; time
-
   val <a href="#val-toreal">toReal</a> : time -&gt; LargeReal.real
-
   val <a href="#val-toseconds">toSeconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tomilliseconds">toMilliseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tomicroseconds">toMicroseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tonanoseconds">toNanoseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-fromseconds">fromSeconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-frommilliseconds">fromMilliseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-frommicroseconds">fromMicroseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-fromnanoseconds">fromNanoseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-op-plus">+</a> : time * time -&gt; time
-
   val <a href="#val-op-minus">-</a> : time * time -&gt; time
-
   val <a href="#val-compare">compare</a> : time * time -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : time * time -&gt; bool
-
   val <a href="#val-op-lt-eq">&lt;=</a> : time * time -&gt; bool
-
   val <a href="#val-op-gt">&gt;</a> : time * time -&gt; bool
-
   val <a href="#val-op-gt-eq">&gt;=</a> : time * time -&gt; bool
-
   val <a href="#val-now">now</a> : unit -&gt; time
-
   val <a href="#val-fmt">fmt</a> : int -&gt; time -&gt; string
-
   val <a href="#val-tostring">toString</a> : time -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (time, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; time option
 end
 </pre>
@@ -248,7 +224,7 @@ val toNanoseconds : time -> LargeInt.int
 `toNanoseconds t` is the whole nanoseconds of `t`, truncated towards zero.
 
 > **Implementation** `Time.toNanoseconds/beyond-64-bits`. The result is a
-> [`LargeInt.int`](../sig/INTEGER.md#type-int) and is exact however large it is; a [`LargeInt`](../sig/INTEGER.md) of bounded
+> [`LargeInt.int`](../sig/INTEGER.md#type-int) and is exact however large it is; a [`LargeInt`](../str/IntInf.md) of bounded
 > precision would raise [`Overflow`](../sig/GENERAL.md#exn-overflow) instead.
 
 <details><summary>Tests (4)</summary>

@@ -97,11 +97,17 @@ set is closed and case-sensitive.
 | `Complexity:` | a value | prose |
 | `Example:` | anything | code; a piece that is an equation, `e = v`, is run (below) |
 | `See also:` | anything | references in backquotes |
-| `Area:` | a signature, a functor | the area of the library's overview page that lists it |
+| `Area:` | a signature, a functor, a structure that no signature describes | the area of the library's overview page that lists it |
 | `Status:` | a signature, structure or functor | `required`, `optional` or `extension`; a signature without one is required, a structure without one has the status of its signature |
 | `Implements:` | a structure, a functor | the signature it implements, with its `where type`s |
 | `Reading:` `Erratum:` `Deviation:` `Implementation:` `Limitation:` | anything | a note: its id in backquotes, then prose. `Reading (the suite differs):` is the one modifier |
 | `Pinned by:` | directly after a note | labels (or globs of labels) of the checks of `tests/basis` that pin the note |
+
+A structure that no signature of the library describes -- `WideTextIO` matches
+none, since the transcription of `TEXT_IO` writes `string` and `char` -- names
+its own area, because there is no signature to take it from. Where a signature
+does describe the structure, the area is that signature's and the structure's
+comment must not name one.
 
 A structure says what it implements in the comment above it, because most
 structures of the library are not sealed with their signature:

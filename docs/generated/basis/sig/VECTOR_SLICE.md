@@ -19,7 +19,7 @@ structure VectorSlice : VECTOR_SLICE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `VectorSlice` | VectorSlice: a vector, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
+| [`VectorSlice`](../str/VectorSlice.md) | VectorSlice: a vector, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
 
 A stretch of a vector, without a copy of it: a base vector and a start and
 a length inside it.
@@ -43,51 +43,28 @@ gives back. Positions inside a slice are counted from its own start, so
 signature VECTOR_SLICE =
 sig
   type 'a <a href="#type-slice">slice</a>
-
   val <a href="#val-length">length</a> : 'a slice -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a slice * int -&gt; 'a
-
   val <a href="#val-full">full</a> : 'a Vector.vector -&gt; 'a slice
-
   val <a href="#val-slice">slice</a> : 'a Vector.vector * int * int option -&gt; 'a slice
-
   val <a href="#val-subslice">subslice</a> : 'a slice * int * int option -&gt; 'a slice
-
   val <a href="#val-base">base</a> : 'a slice -&gt; 'a Vector.vector * int * int
-
   val <a href="#val-vector">vector</a> : 'a slice -&gt; 'a Vector.vector
-
   val <a href="#val-concat">concat</a> : 'a slice list -&gt; 'a Vector.vector
-
   val <a href="#val-isempty">isEmpty</a> : 'a slice -&gt; bool
-
   val <a href="#val-getitem">getItem</a> : 'a slice -&gt; ('a * 'a slice) option
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a slice -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * 'a -&gt; 'b) -&gt; 'a slice -&gt; 'b Vector.vector
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a slice -&gt; 'b Vector.vector
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a slice -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a slice -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a slice -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a slice * 'a slice -&gt; order
 end
 </pre>

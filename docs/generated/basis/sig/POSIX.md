@@ -19,7 +19,7 @@ structure Posix : POSIX where type FileSys.dirstream = OS.FileSys.dirstream wher
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix` | Posix: the interface of the operating system itself. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix`](../str/Posix.md) | Posix: the interface of the operating system itself. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The POSIX interface: the system calls of a Unix-like system, gathered into
 eight substructures.
@@ -37,7 +37,7 @@ others without conversion.
 
 > **Erratum** `POSIX/opaque-in-the-page`. The page declares
 > `structure Posix :> POSIX`, so the types that no `where` clause fixes are
-> abstract; the suite matches [`Posix`](POSIX.md) against this signature both
+> abstract; the suite matches [`Posix`](../str/Posix.md) against this signature both
 > transparently and opaquely.
 
 ## Interface
@@ -46,29 +46,22 @@ others without conversion.
 signature POSIX =
 sig
   structure <a href="#str-error">Error</a> : POSIX_ERROR
-
   structure <a href="#str-signal">Signal</a> : POSIX_SIGNAL
-
   structure <a href="#str-process">Process</a> : POSIX_PROCESS
     where type signal = Signal.signal
-
   structure <a href="#str-procenv">ProcEnv</a> : POSIX_PROC_ENV
     where type pid = Process.pid
-
   structure <a href="#str-filesys">FileSys</a> : POSIX_FILE_SYS
     where type file_desc = ProcEnv.file_desc
     where type uid = ProcEnv.uid
     where type gid = ProcEnv.gid
-
   structure <a href="#str-io">IO</a> : POSIX_IO
     where type pid = Process.pid
     where type file_desc = ProcEnv.file_desc
     where type open_mode = FileSys.open_mode
-
   structure <a href="#str-sysdb">SysDB</a> : POSIX_SYS_DB
     where type uid = ProcEnv.uid
     where type gid = ProcEnv.gid
-
   structure <a href="#str-tty">TTY</a> : POSIX_TTY
     where type pid = Process.pid
     where type file_desc = ProcEnv.file_desc

@@ -19,7 +19,7 @@ structure OS.Process : OS_PROCESS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.Process` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.Process`](../str/OS.Process.md) |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The process itself: its environment, the commands it runs, and how it
 ends.
@@ -34,23 +34,14 @@ run, the streams are flushed, and only then does the process stop.
 signature OS_PROCESS =
 sig
   type <a href="#type-status">status</a>
-
   val <a href="#val-success">success</a> : status
-
   val <a href="#val-failure">failure</a> : status
-
   val <a href="#val-issuccess">isSuccess</a> : status -&gt; bool
-
   val <a href="#val-system">system</a> : string -&gt; status
-
   val <a href="#val-atexit">atExit</a> : (unit -&gt; unit) -&gt; unit
-
   val <a href="#val-exit">exit</a> : status -&gt; 'a
-
   val <a href="#val-terminate">terminate</a> : status -&gt; 'a
-
   val <a href="#val-getenv">getEnv</a> : string -&gt; string option
-
   val <a href="#val-sleep">sleep</a> : Time.time -&gt; unit
 end
 </pre>

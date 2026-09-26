@@ -21,9 +21,9 @@ structure TextIO : IMPERATIVE_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| [`BinIO`](../str/BinIO.md) | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `ImperativeIO` | Imperative streams over a [`STREAM_IO`](../sig/STREAM_IO.md) of a new element type: what [`TEXT_IO`](../sig/TEXT_IO.md) and [`BIN_IO`](../sig/BIN_IO.md) are for characters and bytes. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| `TextIO` | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO`](../str/TextIO.md) | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams that remember where they are: a cell holding a functional stream,
 which every operation replaces by what it left.
@@ -46,7 +46,7 @@ it gained, as [`STREAM_IO`](../sig/STREAM_IO.md) describes.
 > **Implementation** `IMPERATIVE_IO/functor-is-sealed`. The functor
 > [`ImperativeIO`](../fun/ImperativeIO.md) is ascribed this signature, so what it gives a program is
 > what the signature names. The library's own `RuneImperativeIOFn`, which it
-> is built on, is not: [`TextIO`](../sig/TEXT_IO.md), [`BinIO`](../sig/BIN_IO.md) and `WideTextIO` take the streams
+> is built on, is not: [`TextIO`](../str/TextIO.md), [`BinIO`](../str/BinIO.md) and [`WideTextIO`](../str/WideTextIO.md) take the streams
 > apart, and the constructors are not in this signature.
 
 ## Contents
@@ -61,53 +61,29 @@ it gained, as [`STREAM_IO`](../sig/STREAM_IO.md) describes.
 signature IMPERATIVE_IO =
 sig
   structure <a href="#str-streamio">StreamIO</a> : STREAM_IO
-
   type <a href="#type-vector">vector</a> = StreamIO.vector
-
   type <a href="#type-elem">elem</a> = StreamIO.elem
-
   type <a href="#type-instream">instream</a>
-
   type <a href="#type-outstream">outstream</a>
-
   val <a href="#val-input">input</a> : instream -&gt; vector
-
   val <a href="#val-input1">input1</a> : instream -&gt; elem option
-
   val <a href="#val-inputn">inputN</a> : instream * int -&gt; vector
-
   val <a href="#val-inputall">inputAll</a> : instream -&gt; vector
-
   val <a href="#val-caninput">canInput</a> : instream * int -&gt; int option
-
   val <a href="#val-lookahead">lookahead</a> : instream -&gt; elem option
-
   val <a href="#val-closein">closeIn</a> : instream -&gt; unit
-
   val <a href="#val-endofstream">endOfStream</a> : instream -&gt; bool
-
   val <a href="#val-output">output</a> : outstream * vector -&gt; unit
-
   val <a href="#val-output1">output1</a> : outstream * elem -&gt; unit
-
   val <a href="#val-flushout">flushOut</a> : outstream -&gt; unit
-
   val <a href="#val-closeout">closeOut</a> : outstream -&gt; unit
-
   val <a href="#val-mkinstream">mkInstream</a> : StreamIO.instream -&gt; instream
-
   val <a href="#val-getinstream">getInstream</a> : instream -&gt; StreamIO.instream
-
   val <a href="#val-setinstream">setInstream</a> : instream * StreamIO.instream -&gt; unit
-
   val <a href="#val-mkoutstream">mkOutstream</a> : StreamIO.outstream -&gt; outstream
-
   val <a href="#val-getoutstream">getOutstream</a> : outstream -&gt; StreamIO.outstream
-
   val <a href="#val-setoutstream">setOutstream</a> : outstream * StreamIO.outstream -&gt; unit
-
   val <a href="#val-getposout">getPosOut</a> : outstream -&gt; StreamIO.out_pos
-
   val <a href="#val-setposout">setPosOut</a> : outstream * StreamIO.out_pos -&gt; unit
 end
 </pre>

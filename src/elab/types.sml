@@ -250,12 +250,18 @@ struct
   type printer = {names : (int * string) list ref, tycons : (string * int) list ref}
   fun newPrinter () : printer = {names = ref [], tycons = ref []}
 
-  fun toStringWith ({names, tycons} : printer) t =
+  (* nameOf: the name the caller has for a type, such as the path that reaches
+     it; where it has none, the name the type was declared under, and a stamp
+     when another type of that name was shown already. *)
+  fun toStringNamed (nameOf : tycon -> string option, {names, tycons} : printer) t =
     let
       fun tcName (c : tycon) =
-        case List.find (fn (n, _) => n = #name c) (!tycons) of
-          SOME (_, s) => if s = #stamp c then #name c else #name c ^ "/" ^ Int.toString (#stamp c)
-        | NONE => (tycons := (#name c, #stamp c) :: !tycons; #name c)
+        case nameOf c of
+          SOME n => n
+        | NONE =>
+            (case List.find (fn (n, _) => n = #name c) (!tycons) of
+               SOME (_, s) => if s = #stamp c then #name c else #name c ^ "/" ^ Int.toString (#stamp c)
+             | NONE => (tycons := (#name c, #stamp c) :: !tycons; #name c))
       fun tvName (id, eq) =
         case List.find (fn (i, _) => i = id) (!names) of
           SOME (_, s) => s
@@ -292,6 +298,8 @@ struct
             else "{" ^ String.concatWith ", " (List.map (fn (l, t) => l ^ " : " ^ go (0, t)) fields) ^ "}"
         | TArrow (a, b) => paren (prec >= 1, go (1, a) ^ " -> " ^ go (0, b))
     in go (0, t) end
+
+  fun toStringWith (p : printer) t = toStringNamed (fn _ => NONE, p) t
 
   fun toString t = toStringWith (newPrinter ()) t
 end

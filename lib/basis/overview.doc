@@ -7,12 +7,15 @@ compiler enforces; where the specification is silent, ambiguous or wrong, a
 note on the member says how Rune reads it, and the page of readings,
 linked below, collects them all.
 
-Start at a signature, not at a structure. `LIST` describes what `List` does,
-`INTEGER` what `Int`, `Int32`, `LargeInt` and `Position` all do, and
-`MONO_VECTOR` what `Word8Vector` and `CharVector` do; the page of structures
-says which structure implements which signature. A name that needs no
-structure in front of it, such as `hd` or `print`, is on the page of the
-top-level environment, also linked below.
+A signature says what a member means, and a structure says what it is here.
+So `LIST` describes what `List` does, `INTEGER` what `Int`, `Int32`,
+`LargeInt` and `Position` all do, and `MONO_VECTOR` what `Word8Vector` and
+`CharVector` do, while the page of a structure shows its members with the
+types it gives them: `Word8Vector.sub` is `vector * int -> Word8.word` where
+`MONO_VECTOR` can only write `vector * int -> elem`. Follow a member to the
+signature to read what it means, and a structure to its own page to see what
+it is. A name that needs no structure in front of it, such as `hd` or
+`print`, is on the page of the top-level environment, also linked below.
 
 Three things are worth knowing before reading further. Sequences are indexed
 from 0, and a slice is a stretch of one that costs nothing to pass. A

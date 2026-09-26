@@ -19,14 +19,14 @@ structure Byte : BYTE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Byte` | Byte: between bytes and characters. A Word8Vector.vector is a string, so the conversions of whole vectors cost nothing. | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
+| [`Byte`](../str/Byte.md) | Byte: between bytes and characters. A Word8Vector.vector is a string, so the conversions of whole vectors cost nothing. | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
 
 Between bytes and characters: the same eight bits read as a [`Word8.word`](../sig/WORD.md#type-word)
 and as a `char`.
 
 The conversions are of the codes, not of any encoding: the byte 200 is the
 character whose code is 200, whatever a locale would make of it. Text that
-comes in as bytes (from [`BinIO`](../sig/BIN_IO.md), a socket, [`Word8Array`](../sig/MONO_ARRAY.md)) becomes a string
+comes in as bytes (from [`BinIO`](../str/BinIO.md), a socket, [`Word8Array`](../str/Word8Array.md)) becomes a string
 here, and the other way round.
 
 > **Implementation** `Byte/free`. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a `string` in this
@@ -38,17 +38,11 @@ here, and the other way round.
 signature BYTE =
 sig
   val <a href="#val-bytetochar">byteToChar</a> : Word8.word -&gt; char
-
   val <a href="#val-chartobyte">charToByte</a> : char -&gt; Word8.word
-
   val <a href="#val-bytestostring">bytesToString</a> : Word8Vector.vector -&gt; string
-
   val <a href="#val-stringtobytes">stringToBytes</a> : string -&gt; Word8Vector.vector
-
   val <a href="#val-unpackstringvec">unpackStringVec</a> : Word8VectorSlice.slice -&gt; string
-
   val <a href="#val-unpackstring">unpackString</a> : Word8ArraySlice.slice -&gt; string
-
   val <a href="#val-packstring">packString</a> : Word8Array.array * int * substring -&gt; unit
 end
 </pre>

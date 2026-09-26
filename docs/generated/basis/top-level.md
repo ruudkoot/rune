@@ -21,7 +21,7 @@ of that structure's signature.
 |  | Also |  |
 | --- | --- | --- |
 | `Fail` | [`General.Fail`](sig/GENERAL.md#exn-fail) | Raised where a program has nothing better to raise; its argument says what went wrong. |
-| `Option` | [`Option.Option`](sig/OPTION.md#exn-option) | Raised by [`valOf`](sig/OPTION.md#val-valof) when there is no value. It is the top-level [`Option`](sig/OPTION.md). |
+| `Option` | [`Option.Option`](sig/OPTION.md#exn-option) | Raised by [`valOf`](sig/OPTION.md#val-valof) when there is no value. It is the top-level [`Option`](str/Option.md). |
 | `Empty` | [`List.Empty`](sig/LIST.md#exn-empty) | Raised by [`hd`](sig/LIST.md#val-hd), [`tl`](sig/LIST.md#val-tl) and `last` when they are given the empty list. It is the same exception as the top-level [`Empty`](sig/LIST.md#exn-empty). |
 | `Span` | [`General.Span`](sig/GENERAL.md#exn-span) | Raised by [`Substring.span`](sig/SUBSTRING.md#val-span) when its two arguments are not substrings of one string, or lie the wrong way round. |
 | `Unordered` | [`IEEEReal.Unordered`](sig/IEEE_REAL.md#exn-unordered) | Raised by [`Real.compare`](sig/REAL.md#val-compare) when one of its arguments is a NaN, which no order relates to anything. It is the top-level [`Unordered`](sig/IEEE_REAL.md#exn-unordered). |

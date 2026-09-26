@@ -19,7 +19,7 @@ structure Posix.TTY : POSIX_TTY  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.TTY` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.TTY`](../str/Posix.TTY.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Terminals: their modes, their speeds and the characters that control them.
 
@@ -53,170 +53,95 @@ character means end of file, which interrupts, which erases.
 signature POSIX_TTY =
 sig
   eqtype <a href="#type-pid">pid</a>
-
   eqtype <a href="#type-file_desc">file_desc</a>
-
   structure <a href="#str-v">V</a> :
   sig
     val <a href="#val-v.eof">eof</a> : int
-
     val <a href="#val-v.eol">eol</a> : int
-
     val <a href="#val-v.erase">erase</a> : int
-
     val <a href="#val-v.intr">intr</a> : int
-
     val <a href="#val-v.kill">kill</a> : int
-
     val <a href="#val-v.min">min</a> : int
-
     val <a href="#val-v.quit">quit</a> : int
-
     val <a href="#val-v.susp">susp</a> : int
-
     val <a href="#val-v.time">time</a> : int
-
     val <a href="#val-v.start">start</a> : int
-
     val <a href="#val-v.stop">stop</a> : int
-
     val <a href="#val-v.nccs">nccs</a> : int
-
     type <a href="#type-v.cc">cc</a>
-
     val <a href="#val-v.cc">cc</a> : (int * char) list -&gt; cc
-
     val <a href="#val-v.update">update</a> : cc * (int * char) list -&gt; cc
-
     val <a href="#val-v.sub">sub</a> : cc * int -&gt; char
   end
-
   structure <a href="#str-i">I</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-i.brkint">brkint</a> : flags
-
     val <a href="#val-i.icrnl">icrnl</a> : flags
-
     val <a href="#val-i.ignbrk">ignbrk</a> : flags
-
     val <a href="#val-i.igncr">igncr</a> : flags
-
     val <a href="#val-i.ignpar">ignpar</a> : flags
-
     val <a href="#val-i.inlcr">inlcr</a> : flags
-
     val <a href="#val-i.inpck">inpck</a> : flags
-
     val <a href="#val-i.istrip">istrip</a> : flags
-
     val <a href="#val-i.ixoff">ixoff</a> : flags
-
     val <a href="#val-i.ixon">ixon</a> : flags
-
     val <a href="#val-i.parmrk">parmrk</a> : flags
   end
-
   structure <a href="#str-o">O</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-o.opost">opost</a> : flags
   end
-
   structure <a href="#str-c">C</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-c.clocal">clocal</a> : flags
-
     val <a href="#val-c.cread">cread</a> : flags
-
     val <a href="#val-c.cs5">cs5</a> : flags
-
     val <a href="#val-c.cs6">cs6</a> : flags
-
     val <a href="#val-c.cs7">cs7</a> : flags
-
     val <a href="#val-c.cs8">cs8</a> : flags
-
     val <a href="#val-c.csize">csize</a> : flags
-
     val <a href="#val-c.cstopb">cstopb</a> : flags
-
     val <a href="#val-c.hupcl">hupcl</a> : flags
-
     val <a href="#val-c.parenb">parenb</a> : flags
-
     val <a href="#val-c.parodd">parodd</a> : flags
   end
-
   structure <a href="#str-l">L</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-l.echo">echo</a> : flags
-
     val <a href="#val-l.echoe">echoe</a> : flags
-
     val <a href="#val-l.echok">echok</a> : flags
-
     val <a href="#val-l.echonl">echonl</a> : flags
-
     val <a href="#val-l.icanon">icanon</a> : flags
-
     val <a href="#val-l.iexten">iexten</a> : flags
-
     val <a href="#val-l.isig">isig</a> : flags
-
     val <a href="#val-l.noflsh">noflsh</a> : flags
-
     val <a href="#val-l.tostop">tostop</a> : flags
   end
-
   eqtype <a href="#type-speed">speed</a>
-
   val <a href="#val-comparespeed">compareSpeed</a> : speed * speed -&gt; order
-
   val <a href="#val-speedtoword">speedToWord</a> : speed -&gt; SysWord.word
-
   val <a href="#val-wordtospeed">wordToSpeed</a> : SysWord.word -&gt; speed
-
   val <a href="#val-b0">b0</a> : speed
-
   val <a href="#val-b50">b50</a> : speed
-
   val <a href="#val-b75">b75</a> : speed
-
   val <a href="#val-b110">b110</a> : speed
-
   val <a href="#val-b134">b134</a> : speed
-
   val <a href="#val-b150">b150</a> : speed
-
   val <a href="#val-b200">b200</a> : speed
-
   val <a href="#val-b300">b300</a> : speed
-
   val <a href="#val-b600">b600</a> : speed
-
   val <a href="#val-b1200">b1200</a> : speed
-
   val <a href="#val-b1800">b1800</a> : speed
-
   val <a href="#val-b2400">b2400</a> : speed
-
   val <a href="#val-b4800">b4800</a> : speed
-
   val <a href="#val-b9600">b9600</a> : speed
-
   val <a href="#val-b19200">b19200</a> : speed
-
   val <a href="#val-b38400">b38400</a> : speed
-
   type <a href="#type-termios">termios</a>
-
   val <a href="#val-termios">termios</a> : {<a href="#fld-termios.iflag">iflag</a> : I.flags,
                  <a href="#fld-termios.oflag">oflag</a> : O.flags,
                  <a href="#fld-termios.cflag">cflag</a> : C.flags,
@@ -225,7 +150,6 @@ sig
                  <a href="#fld-termios.ispeed">ispeed</a> : speed,
                  <a href="#fld-termios.ospeed">ospeed</a> : speed}
                 -&gt; termios
-
   val <a href="#val-fieldsof">fieldsOf</a> : termios
                  -&gt; {<a href="#fld-fieldsof.iflag">iflag</a> : I.flags,
                      <a href="#fld-fieldsof.oflag">oflag</a> : O.flags,
@@ -234,70 +158,40 @@ sig
                      <a href="#fld-fieldsof.cc">cc</a> : V.cc,
                      <a href="#fld-fieldsof.ispeed">ispeed</a> : speed,
                      <a href="#fld-fieldsof.ospeed">ospeed</a> : speed}
-
   val <a href="#val-getiflag">getiflag</a> : termios -&gt; I.flags
-
   val <a href="#val-getoflag">getoflag</a> : termios -&gt; O.flags
-
   val <a href="#val-getcflag">getcflag</a> : termios -&gt; C.flags
-
   val <a href="#val-getlflag">getlflag</a> : termios -&gt; L.flags
-
   val <a href="#val-getcc">getcc</a> : termios -&gt; V.cc
-
   structure <a href="#str-cf">CF</a> :
   sig
     val <a href="#val-cf.getospeed">getospeed</a> : termios -&gt; speed
-
     val <a href="#val-cf.getispeed">getispeed</a> : termios -&gt; speed
-
     val <a href="#val-cf.setospeed">setospeed</a> : termios * speed -&gt; termios
-
     val <a href="#val-cf.setispeed">setispeed</a> : termios * speed -&gt; termios
   end
-
   structure <a href="#str-tc">TC</a> :
   sig
     eqtype <a href="#type-tc.set_action">set_action</a>
-
     val <a href="#val-tc.sanow">sanow</a> : set_action
-
     val <a href="#val-tc.sadrain">sadrain</a> : set_action
-
     val <a href="#val-tc.saflush">saflush</a> : set_action
-
     eqtype <a href="#type-tc.flow_action">flow_action</a>
-
     val <a href="#val-tc.ooff">ooff</a> : flow_action
-
     val <a href="#val-tc.oon">oon</a> : flow_action
-
     val <a href="#val-tc.ioff">ioff</a> : flow_action
-
     val <a href="#val-tc.ion">ion</a> : flow_action
-
     eqtype <a href="#type-tc.queue_sel">queue_sel</a>
-
     val <a href="#val-tc.iflush">iflush</a> : queue_sel
-
     val <a href="#val-tc.oflush">oflush</a> : queue_sel
-
     val <a href="#val-tc.ioflush">ioflush</a> : queue_sel
-
     val <a href="#val-tc.getattr">getattr</a> : file_desc -&gt; termios
-
     val <a href="#val-tc.setattr">setattr</a> : file_desc * set_action * termios -&gt; unit
-
     val <a href="#val-tc.sendbreak">sendbreak</a> : file_desc * int -&gt; unit
-
     val <a href="#val-tc.drain">drain</a> : file_desc -&gt; unit
-
     val <a href="#val-tc.flush">flush</a> : file_desc * queue_sel -&gt; unit
-
     val <a href="#val-tc.flow">flow</a> : file_desc * flow_action -&gt; unit
-
     val <a href="#val-tc.getpgrp">getpgrp</a> : file_desc -&gt; pid
-
     val <a href="#val-tc.setpgrp">setpgrp</a> : file_desc * pid -&gt; unit
   end
 end
@@ -585,7 +479,7 @@ A break sends the interrupt signal.
 > **Reading** `Posix.TTY.I/bits-are-posix's`. The page says nothing about
 > what bits these flags have; the suite follows POSIX and asks that
 > every named flag of [`I`](#str-i) and [`L`](#str-l) have non-zero bits of its own inside
-> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through [`SysWord`](../sig/WORD.md) rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
+> [`all`](../sig/BIT_FLAGS.md#val-all), comparing through [`SysWord`](../str/Word.md) rather than through [`allSet`](../sig/BIT_FLAGS.md#val-allset).
 
 <details><summary>Tests (2)</summary>
 

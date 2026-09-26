@@ -19,7 +19,7 @@ structure Posix.ProcEnv : POSIX_PROC_ENV  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.ProcEnv` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.ProcEnv`](../str/Posix.ProcEnv.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The process's own identity: who it is, who owns it, which group and
 session it belongs to, and what its environment holds.
@@ -49,68 +49,39 @@ than about the process.
 signature POSIX_PROC_ENV =
 sig
   eqtype <a href="#type-pid">pid</a>
-
   eqtype <a href="#type-uid">uid</a>
-
   eqtype <a href="#type-gid">gid</a>
-
   eqtype <a href="#type-file_desc">file_desc</a>
-
   val <a href="#val-uidtoword">uidToWord</a> : uid -&gt; SysWord.word
-
   val <a href="#val-wordtouid">wordToUid</a> : SysWord.word -&gt; uid
-
   val <a href="#val-gidtoword">gidToWord</a> : gid -&gt; SysWord.word
-
   val <a href="#val-wordtogid">wordToGid</a> : SysWord.word -&gt; gid
-
   val <a href="#val-getpid">getpid</a> : unit -&gt; pid
-
   val <a href="#val-getppid">getppid</a> : unit -&gt; pid
-
   val <a href="#val-getuid">getuid</a> : unit -&gt; uid
-
   val <a href="#val-geteuid">geteuid</a> : unit -&gt; uid
-
   val <a href="#val-getgid">getgid</a> : unit -&gt; gid
-
   val <a href="#val-getegid">getegid</a> : unit -&gt; gid
-
   val <a href="#val-setuid">setuid</a> : uid -&gt; unit
-
   val <a href="#val-setgid">setgid</a> : gid -&gt; unit
-
   val <a href="#val-getgroups">getgroups</a> : unit -&gt; gid list
-
   val <a href="#val-getlogin">getlogin</a> : unit -&gt; string
-
   val <a href="#val-getpgrp">getpgrp</a> : unit -&gt; pid
-
   val <a href="#val-setsid">setsid</a> : unit -&gt; pid
-
   val <a href="#val-setpgid">setpgid</a> : {<a href="#fld-setpgid.pid">pid</a> : pid option, <a href="#fld-setpgid.pgid">pgid</a> : pid option} -&gt; unit
-
   val <a href="#val-uname">uname</a> : unit -&gt; (string * string) list
-
   val <a href="#val-time">time</a> : unit -&gt; Time.time
-
   val <a href="#val-times">times</a> : unit
               -&gt; {<a href="#fld-times.elapsed">elapsed</a> : Time.time,
                   <a href="#fld-times.utime">utime</a> : Time.time,
                   <a href="#fld-times.stime">stime</a> : Time.time,
                   <a href="#fld-times.cutime">cutime</a> : Time.time,
                   <a href="#fld-times.cstime">cstime</a> : Time.time}
-
   val <a href="#val-getenv">getenv</a> : string -&gt; string option
-
   val <a href="#val-environ">environ</a> : unit -&gt; string list
-
   val <a href="#val-ctermid">ctermid</a> : unit -&gt; string
-
   val <a href="#val-ttyname">ttyname</a> : file_desc -&gt; string
-
   val <a href="#val-isatty">isatty</a> : file_desc -&gt; bool
-
   val <a href="#val-sysconf">sysconf</a> : string -&gt; SysWord.word
 end
 </pre>

@@ -19,7 +19,7 @@ structure TextIO.StreamIO : TEXT_STREAM_IO where type reader = TextPrimIO.reader
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `TextIO.StreamIO` | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 The functional streams of [`STREAM_IO`](../sig/STREAM_IO.md) where the elements are characters,
 with the two operations that only text has: reading a line and writing a
@@ -36,9 +36,7 @@ sig
   include STREAM_IO
     where type vector = CharVector.vector
     where type elem = Char.char
-
   val <a href="#val-inputline">inputLine</a> : instream -&gt; (string * instream) option
-
   val <a href="#val-outputsubstr">outputSubstr</a> : outstream * substring -&gt; unit
 end
 </pre>

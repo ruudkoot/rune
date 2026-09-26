@@ -20,8 +20,8 @@ structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Substring` | Substring: a string, a start index and a length. | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
-| `WideSubstring` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
+| [`Substring`](../str/Substring.md) | Substring: a string, a start index and a length. | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
+| [`WideSubstring`](../str/WideSubstring.md) |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 A stretch of a string, without a copy of it: a base string and a start and
 a length inside it.
@@ -33,8 +33,8 @@ whole of `s`, `string ss` copies the stretch out. The functions that split
 come in pairs, one for each end: `l` takes from the left and `r` from the
 right.
 
-The signature is that of [`Substring`](SUBSTRING.md), over [`String`](../sig/STRING.md), and of the optional
-[`WideSubstring`](SUBSTRING.md).
+The signature is that of [`Substring`](../str/Substring.md), over [`String`](../str/String.md), and of the optional
+[`WideSubstring`](../str/WideSubstring.md).
 
 > **Erratum** `SUBSTRING/span-exception`. The specification does not say in the
 > signature that [`span`](#val-span) raises an exception, although its description does;
@@ -58,83 +58,44 @@ The signature is that of [`Substring`](SUBSTRING.md), over [`String`](../sig/STR
 <pre>
 signature SUBSTRING =
 sig
-
   type <a href="#type-substring">substring</a>
-
   eqtype <a href="#type-char">char</a>
-
   eqtype <a href="#type-string">string</a>
-
   val <a href="#val-sub">sub</a> : substring * int -&gt; char
-
   val <a href="#val-size">size</a> : substring -&gt; int
-
   val <a href="#val-base">base</a> : substring -&gt; string * int * int
-
   val <a href="#val-extract">extract</a> : string * int * int option -&gt; substring
-
   val <a href="#val-substring">substring</a> : string * int * int -&gt; substring
-
   val <a href="#val-full">full</a> : string -&gt; substring
-
   val <a href="#val-string">string</a> : substring -&gt; string
-
   val <a href="#val-isempty">isEmpty</a> : substring -&gt; bool
-
   val <a href="#val-getc">getc</a> : substring -&gt; (char * substring) option
-
   val <a href="#val-first">first</a> : substring -&gt; char option
-
   val <a href="#val-triml">triml</a> : int -&gt; substring -&gt; substring
-
   val <a href="#val-trimr">trimr</a> : int -&gt; substring -&gt; substring
-
   val <a href="#val-slice">slice</a> : substring * int * int option -&gt; substring
-
   val <a href="#val-concat">concat</a> : substring list -&gt; string
-
   val <a href="#val-concatwith">concatWith</a> : string -&gt; substring list -&gt; string
-
   val <a href="#val-explode">explode</a> : substring -&gt; char list
-
   val <a href="#val-isprefix">isPrefix</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-issubstring">isSubstring</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-issuffix">isSuffix</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-compare">compare</a> : substring * substring -&gt; order
-
   val <a href="#val-collate">collate</a> : (char * char -&gt; order) -&gt; substring * substring -&gt; order
-
   val <a href="#val-splitl">splitl</a> : (char -&gt; bool) -&gt; substring -&gt; substring * substring
-
   val <a href="#val-splitr">splitr</a> : (char -&gt; bool) -&gt; substring -&gt; substring * substring
-
   val <a href="#val-splitat">splitAt</a> : substring * int -&gt; substring * substring
-
   val <a href="#val-dropl">dropl</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-dropr">dropr</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-takel">takel</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-taker">taker</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-position">position</a> : string -&gt; substring -&gt; substring * substring
-
   val <a href="#val-span">span</a> : substring * substring -&gt; substring
-
   val <a href="#val-translate">translate</a> : (char -&gt; string) -&gt; substring -&gt; string
-
   val <a href="#val-tokens">tokens</a> : (char -&gt; bool) -&gt; substring -&gt; substring list
-
   val <a href="#val-fields">fields</a> : (char -&gt; bool) -&gt; substring -&gt; substring list
-
   val <a href="#val-app">app</a> : (char -&gt; unit) -&gt; substring -&gt; unit
-
   val <a href="#val-foldl">foldl</a> : (char * 'a -&gt; 'a) -&gt; 'a -&gt; substring -&gt; 'a
-
   val <a href="#val-foldr">foldr</a> : (char * 'a -&gt; 'a) -&gt; 'a -&gt; substring -&gt; 'a
 end
 </pre>
@@ -173,7 +134,7 @@ For `WideSubstring`, in [tests/basis/widesubstring.sml](../../../../tests/basis/
 eqtype char
 ```
 
-The type of the characters: [`Char.char`](../sig/CHAR.md#type-char) for [`Substring`](SUBSTRING.md).
+The type of the characters: [`Char.char`](../sig/CHAR.md#type-char) for [`Substring`](../str/Substring.md).
 
 ### <a name="type-string"></a>`string`
 

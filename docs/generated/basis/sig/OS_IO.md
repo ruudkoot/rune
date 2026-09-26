@@ -19,7 +19,7 @@ structure OS.IO : OS_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.IO` | A descriptor is the system's own file descriptor, wrapped (`RuneIODesc.FD`). | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.IO`](../str/OS.IO.md) | A descriptor is the system's own file descriptor, wrapped in a constructor that the signature does not name. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 Descriptors of open files, devices, pipes and sockets, and waiting until
 some of them are ready for input or output.
@@ -40,17 +40,11 @@ threads. The structure is [`OS.IO`](../sig/OS.md#str-io).
 <pre>
 signature OS_IO =
 sig
-
   eqtype <a href="#type-iodesc">iodesc</a>
-
   val <a href="#val-hash">hash</a> : iodesc -&gt; word
-
   val <a href="#val-compare">compare</a> : iodesc * iodesc -&gt; order
-
   eqtype <a href="#type-iodesc_kind">iodesc_kind</a>
-
   val <a href="#val-kind">kind</a> : iodesc -&gt; iodesc_kind
-
   structure <a href="#str-kind">Kind</a> :
   sig
     val <a href="#val-kind.file">file</a> : iodesc_kind
@@ -61,31 +55,18 @@ sig
     val <a href="#val-kind.socket">socket</a> : iodesc_kind
     val <a href="#val-kind.device">device</a> : iodesc_kind
   end
-
   eqtype <a href="#type-poll_desc">poll_desc</a>
-
   type <a href="#type-poll_info">poll_info</a>
-
   val <a href="#val-polldesc">pollDesc</a> : iodesc -&gt; poll_desc option
-
   val <a href="#val-polltoiodesc">pollToIODesc</a> : poll_desc -&gt; iodesc
-
   exception <a href="#exn-poll">Poll</a>
-
   val <a href="#val-pollin">pollIn</a> : poll_desc -&gt; poll_desc
-
   val <a href="#val-pollout">pollOut</a> : poll_desc -&gt; poll_desc
-
   val <a href="#val-pollpri">pollPri</a> : poll_desc -&gt; poll_desc
-
   val <a href="#val-poll">poll</a> : poll_desc list * Time.time option -&gt; poll_info list
-
   val <a href="#val-isin">isIn</a> : poll_info -&gt; bool
-
   val <a href="#val-isout">isOut</a> : poll_info -&gt; bool
-
   val <a href="#val-ispri">isPri</a> : poll_info -&gt; bool
-
   val <a href="#val-infotopolldesc">infoToPollDesc</a> : poll_info -&gt; poll_desc
 end
 </pre>

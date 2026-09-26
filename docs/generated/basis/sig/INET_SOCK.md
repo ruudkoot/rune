@@ -19,7 +19,7 @@ structure INetSock : INET_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `INetSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`INetSock`](../str/INetSock.md) |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Sockets of the internet family: an address is a host and a port.
 
@@ -32,7 +32,7 @@ address on every interface of this machine.
 
 > **Implementation** `INET_SOCK/ipv4-only`. This signature is the
 > specification's, and the specification's Internet sockets are IPv4: an
-> address here is an `in_addr` of [`NetHostDB`](../sig/NET_HOST_DB.md) and a port. IPv6 is in
+> address here is an `in_addr` of [`NetHostDB`](../str/NetHostDB.md) and a port. IPv6 is in
 > [`INET6_SOCK`](../sig/INET6_SOCK.md), which is Rune's own and has the same shape for 128-bit
 > addresses.
 
@@ -42,38 +42,24 @@ address on every interface of this machine.
 signature INET_SOCK =
 sig
   type <a href="#type-inet">inet</a>
-
   type 'sock_type <a href="#type-sock">sock</a> = (inet, 'sock_type) Socket.sock
-
   type 'mode <a href="#type-stream_sock">stream_sock</a> = 'mode Socket.stream sock
-
   type <a href="#type-dgram_sock">dgram_sock</a> = Socket.dgram sock
-
   type <a href="#type-sock_addr">sock_addr</a> = inet Socket.sock_addr
-
   val <a href="#val-inetaf">inetAF</a> : Socket.AF.addr_family
-
   val <a href="#val-toaddr">toAddr</a> : NetHostDB.in_addr * int -&gt; sock_addr
-
   val <a href="#val-fromaddr">fromAddr</a> : sock_addr -&gt; NetHostDB.in_addr * int
-
   val <a href="#val-any">any</a> : int -&gt; sock_addr
-
   structure <a href="#str-udp">UDP</a> :
   sig
     val <a href="#val-udp.socket">socket</a> : unit -&gt; dgram_sock
-
     val <a href="#val-udp.socket-prime">socket'</a> : int -&gt; dgram_sock
   end
-
   structure <a href="#str-tcp">TCP</a> :
   sig
     val <a href="#val-tcp.socket">socket</a> : unit -&gt; 'mode stream_sock
-
     val <a href="#val-tcp.socket-prime">socket'</a> : int -&gt; 'mode stream_sock
-
     val <a href="#val-tcp.getnodelay">getNODELAY</a> : 'mode stream_sock -&gt; bool
-
     val <a href="#val-tcp.setnodelay">setNODELAY</a> : 'mode stream_sock * bool -&gt; unit
   end
 end

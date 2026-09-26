@@ -19,7 +19,7 @@ structure GenericSock : GENERIC_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `GenericSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`GenericSock`](../str/GenericSock.md) |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Making a socket of any family the system has, when the family is not known
 until the program runs.
@@ -38,12 +38,9 @@ be. That is the price of choosing the family at run time.
 signature GENERIC_SOCK =
 sig
   val <a href="#val-socket">socket</a> : Socket.AF.addr_family * Socket.SOCK.sock_type -&gt; ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socketpair">socketPair</a> : Socket.AF.addr_family * Socket.SOCK.sock_type
                    -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socket-prime">socket'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int -&gt; ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socketpair-prime">socketPair'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int
                     -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 end

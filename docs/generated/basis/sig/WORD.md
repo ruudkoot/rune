@@ -25,13 +25,13 @@ structure Word8 : WORD
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `LargeWord` |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| `SysWord` |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| `Word` | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| `Word16` | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
-| `Word32` | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
-| `Word64` | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
-| `Word8` | Word8: words of 8 bits, the element type of the byte-oriented structures. | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
+| [`LargeWord`](../str/Word.md) |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`SysWord`](../str/Word.md) |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`Word`](../str/Word.md) | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`Word16`](../str/Word16.md) | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
+| [`Word32`](../str/Word32.md) | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
+| [`Word64`](../str/Word.md) | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
+| [`Word8`](../str/Word8.md) | Word8: words of 8 bits, the element type of the byte-oriented structures. | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
 
 Words: integers of a fixed number of bits, without a sign, whose
 arithmetic wraps round instead of overflowing, and which can be taken
@@ -47,9 +47,9 @@ Where a word is read as a signed number ([`toIntX`](#val-tointx), [`toLargeX`](#
 top bit is the sign, as in two's complement. The functions with an `X` in
 their name are those that sign-extend; the others fill with zeros.
 
-The structures differ in their width: [`Word`](WORD.md) is the default one and
-[`Word8`](WORD.md), [`Word16`](WORD.md), [`Word32`](WORD.md) and [`Word64`](WORD.md) are the sized ones; [`LargeWord`](WORD.md)
-is the widest, and [`SysWord`](WORD.md) is what the operating system's flags are
+The structures differ in their width: [`Word`](../str/Word.md) is the default one and
+[`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word.md) are the sized ones; [`LargeWord`](../str/Word.md)
+is the widest, and [`SysWord`](../str/Word.md) is what the operating system's flags are
 counted in.
 
 ## Contents
@@ -67,78 +67,43 @@ counted in.
 <pre>
 signature WORD =
 sig
-
   eqtype <a href="#type-word">word</a>
-
   val <a href="#val-wordsize">wordSize</a> : int
-
   val <a href="#val-tolarge">toLarge</a> : word -&gt; LargeWord.word
-
   val <a href="#val-tolargex">toLargeX</a> : word -&gt; LargeWord.word
-
   val <a href="#val-tolargeword">toLargeWord</a> : word -&gt; LargeWord.word
-
   val <a href="#val-tolargewordx">toLargeWordX</a> : word -&gt; LargeWord.word
-
   val <a href="#val-fromlarge">fromLarge</a> : LargeWord.word -&gt; word
-
   val <a href="#val-fromlargeword">fromLargeWord</a> : LargeWord.word -&gt; word
-
   val <a href="#val-tolargeint">toLargeInt</a> : word -&gt; LargeInt.int
-
   val <a href="#val-tolargeintx">toLargeIntX</a> : word -&gt; LargeInt.int
-
   val <a href="#val-fromlargeint">fromLargeInt</a> : LargeInt.int -&gt; word
-
   val <a href="#val-toint">toInt</a> : word -&gt; int
-
   val <a href="#val-tointx">toIntX</a> : word -&gt; int
-
   val <a href="#val-fromint">fromInt</a> : int -&gt; word
-
   val <a href="#val-andb">andb</a> : word * word -&gt; word
-
   val <a href="#val-orb">orb</a> : word * word -&gt; word
-
   val <a href="#val-xorb">xorb</a> : word * word -&gt; word
-
   val <a href="#val-notb">notb</a> : word -&gt; word
-
   val <a href="#val-op-lt-lt">&lt;&lt;</a> : word * Word.word -&gt; word
-
   val <a href="#val-op-gt-gt">&gt;&gt;</a> : word * Word.word -&gt; word
-
   val <a href="#val-op-tilde-gt-gt">~&gt;&gt;</a> : word * Word.word -&gt; word
-
   val <a href="#val-op-plus">+</a> : word * word -&gt; word
-
   val <a href="#val-op-minus">-</a> : word * word -&gt; word
-
   val <a href="#val-op-star">*</a> : word * word -&gt; word
-
   val <a href="#val-div">div</a> : word * word -&gt; word
-
   val <a href="#val-mod">mod</a> : word * word -&gt; word
-
   val <a href="#val-compare">compare</a> : word * word -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : word * word -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : word * word -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : word * word -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : word * word -&gt; bool
-
   val <a href="#val-op-tilde">~</a> : word -&gt; word
-
   val <a href="#val-min">min</a> : word * word -&gt; word
-
   val <a href="#val-max">max</a> : word * word -&gt; word
-
   val <a href="#val-fmt">fmt</a> : StringCvt.radix -&gt; word -&gt; string
-
   val <a href="#val-tostring">toString</a> : word -&gt; string
-
   val <a href="#val-scan">scan</a> : StringCvt.radix -&gt; (char, 'a) StringCvt.reader -&gt; (word, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; word option
 end
 </pre>
@@ -154,8 +119,8 @@ eqtype word
 The type of words of this structure.
 
 > **Implementation** `Word.word/64-bits`. [`Word.word`](#type-word) is the top-level
-> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](WORD.md), [`SysWord`](WORD.md) and [`Word64`](WORD.md);
-> [`Word8`](WORD.md), [`Word16`](WORD.md) and [`Word32`](WORD.md) are kept in a word of the machine whose
+> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](../str/Word.md), [`SysWord`](../str/Word.md) and [`Word64`](../str/Word.md);
+> [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of the machine whose
 > upper bits are zero.
 
 > **Implementation** `Word.word/constants-overloaded`. A word constant has the
@@ -207,7 +172,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLarge : word -> LargeWord.word
 ```
 
-`toLarge w` is `w` as a word of [`LargeWord`](WORD.md), with zeros in the bits above [`wordSize`](#val-wordsize).
+`toLarge w` is `w` as a word of [`LargeWord`](../str/Word.md), with zeros in the bits above [`wordSize`](#val-wordsize).
 
 <details><summary>Tests (5)</summary>
 
@@ -221,7 +186,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLargeX : word -> LargeWord.word
 ```
 
-`toLargeX w` is `w` as a word of [`LargeWord`](WORD.md), with the top bit of `w` copied into the bits above it.
+`toLargeX w` is `w` as a word of [`LargeWord`](../str/Word.md), with the top bit of `w` copied into the bits above it.
 
 **Law** `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
 
@@ -300,7 +265,7 @@ val toLargeInt : word -> LargeInt.int
 `toLargeInt w` is the number that `w` stands for, between 0 and `2^wordSize - 1`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is no [`LargeInt.int`](../sig/INTEGER.md#type-int), which cannot
-happen where [`LargeInt`](../sig/INTEGER.md) is [`IntInf`](../sig/INT_INF.md).
+happen where [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
 <details><summary>Tests (5)</summary>
 
@@ -692,7 +657,7 @@ val >= : word * word -> bool
 
 `a < b`, `a <= b`, `a > b` and `a >= b` compare two words as unsigned numbers.
 
-A word whose top bit is set is the larger, not the smaller: at [`Word8`](WORD.md),
+A word whose top bit is set is the larger, not the smaller: at [`Word8`](../str/Word8.md),
 `0wxFF > 0w1`.
 
 <details><summary>Tests (5)</summary>

@@ -37,25 +37,25 @@ structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vect
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BoolArraySlice` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| `CharArraySlice` |  | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
-| `Int16ArraySlice` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| `Int32ArraySlice` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64ArraySlice` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| `Int8ArraySlice` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| `IntArraySlice` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| `LargeIntArraySlice` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
-| `LargeRealArraySlice` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| `LargeWordArraySlice` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| `Real32ArraySlice` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
-| `Real64ArraySlice` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| `RealArraySlice` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| `WideCharArraySlice` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| `Word16ArraySlice` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| `Word32ArraySlice` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64ArraySlice` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8ArraySlice` |  | [lib/basis/word8arrayslice.sml](../../../../lib/basis/word8arrayslice.sml) |
-| `WordArraySlice` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`BoolArraySlice`](../str/BoolArraySlice.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`CharArraySlice`](../str/CharArraySlice.md) |  | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
+| [`Int16ArraySlice`](../str/Int16ArraySlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32ArraySlice`](../str/Int32ArraySlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64ArraySlice`](../str/Int64ArraySlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8ArraySlice`](../str/Int8ArraySlice.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArraySlice`](../str/IntArraySlice.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`LargeIntArraySlice`](../str/LargeIntArraySlice.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeRealArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| [`LargeWordArraySlice`](../str/WordArraySlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`Real32ArraySlice`](../str/Real32ArraySlice.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real64ArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| [`RealArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharArraySlice`](../str/WideCharArraySlice.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16ArraySlice`](../str/Word16ArraySlice.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32ArraySlice`](../str/Word32ArraySlice.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64ArraySlice`](../str/Word64ArraySlice.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8ArraySlice`](../str/Word8ArraySlice.md) |  | [lib/basis/word8arrayslice.sml](../../../../lib/basis/word8arrayslice.sml) |
+| [`WordArraySlice`](../str/WordArraySlice.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 A stretch of an array of one element type, without a copy of it.
 
@@ -71,63 +71,34 @@ A stretch of an array of one element type, without a copy of it.
 signature MONO_ARRAY_SLICE =
 sig
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-array">array</a>
-
   type <a href="#type-slice">slice</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-vector_slice">vector_slice</a>
-
   val <a href="#val-length">length</a> : slice -&gt; int
-
   val <a href="#val-sub">sub</a> : slice * int -&gt; elem
-
   val <a href="#val-update">update</a> : slice * int * elem -&gt; unit
-
   val <a href="#val-full">full</a> : array -&gt; slice
-
   val <a href="#val-slice">slice</a> : array * int * int option -&gt; slice
-
   val <a href="#val-subslice">subslice</a> : slice * int * int option -&gt; slice
-
   val <a href="#val-base">base</a> : slice -&gt; array * int * int
-
   val <a href="#val-vector">vector</a> : slice -&gt; vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : slice, <a href="#fld-copy.dst">dst</a> : array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
-
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : vector_slice, <a href="#fld-copyvec.dst">dst</a> : array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
-
   val <a href="#val-isempty">isEmpty</a> : slice -&gt; bool
-
   val <a href="#val-getitem">getItem</a> : slice -&gt; (elem * slice) option
-
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; slice -&gt; unit
-
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; slice -&gt; unit
-
   val <a href="#val-modifyi">modifyi</a> : (int * elem -&gt; elem) -&gt; slice -&gt; unit
-
   val <a href="#val-modify">modify</a> : (elem -&gt; elem) -&gt; slice -&gt; unit
-
   val <a href="#val-foldli">foldli</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; slice -&gt; (int * elem) option
-
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; slice -&gt; elem option
-
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; slice -&gt; bool
-
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; slice -&gt; bool
-
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; slice * slice -&gt; order
 end
 </pre>
@@ -138,7 +109,7 @@ end
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../sig/MONO_VECTOR.md), `char` for [`CharVector`](../sig/MONO_VECTOR.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
 
 <details><summary>Tests (1)</summary>
 

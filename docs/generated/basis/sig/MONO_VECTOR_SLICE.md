@@ -37,25 +37,25 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BoolVectorSlice` |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| `CharVectorSlice` | CharVectorSlice: its slice is the substring of Substring, so it is written on Substring rather than being an instance of RuneMonoVectorSliceFn. The \-i functions pass the index in the slice. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
-| `Int16VectorSlice` |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| `Int32VectorSlice` |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| `Int64VectorSlice` |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| `Int8VectorSlice` |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| `IntVectorSlice` |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| `LargeIntVectorSlice` |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
-| `LargeRealVectorSlice` |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
-| `LargeWordVectorSlice` |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| `Real32VectorSlice` |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
-| `Real64VectorSlice` |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| `RealVectorSlice` |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| `WideCharVectorSlice` |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| `Word16VectorSlice` |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| `Word32VectorSlice` |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| `Word64VectorSlice` |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| `Word8VectorSlice` |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
-| `WordVectorSlice` |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`BoolVectorSlice`](../str/BoolVectorSlice.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`CharVectorSlice`](../str/CharVectorSlice.md) | CharVectorSlice: its slice is the substring of Substring, so it is written on Substring rather than being an instance of RuneMonoVectorSliceFn. The \-i functions pass the index in the slice. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
+| [`Int16VectorSlice`](../str/Int16VectorSlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32VectorSlice`](../str/Int32VectorSlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64VectorSlice`](../str/Int64VectorSlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8VectorSlice`](../str/Int8VectorSlice.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntVectorSlice`](../str/IntVectorSlice.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`LargeIntVectorSlice`](../str/LargeIntVectorSlice.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeRealVectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
+| [`LargeWordVectorSlice`](../str/WordVectorSlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
+| [`Real32VectorSlice`](../str/Real32VectorSlice.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real64VectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
+| [`RealVectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharVectorSlice`](../str/WideCharVectorSlice.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16VectorSlice`](../str/Word16VectorSlice.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32VectorSlice`](../str/Word32VectorSlice.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64VectorSlice`](../str/Word64VectorSlice.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8VectorSlice`](../str/Word8VectorSlice.md) |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
+| [`WordVectorSlice`](../str/WordVectorSlice.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 A stretch of a vector of one element type, without a copy of it.
 
@@ -75,55 +75,30 @@ A stretch of a vector of one element type, without a copy of it.
 signature MONO_VECTOR_SLICE =
 sig
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-slice">slice</a>
-
   val <a href="#val-length">length</a> : slice -&gt; int
-
   val <a href="#val-sub">sub</a> : slice * int -&gt; elem
-
   val <a href="#val-full">full</a> : vector -&gt; slice
-
   val <a href="#val-slice">slice</a> : vector * int * int option -&gt; slice
-
   val <a href="#val-subslice">subslice</a> : slice * int * int option -&gt; slice
-
   val <a href="#val-base">base</a> : slice -&gt; vector * int * int
-
   val <a href="#val-vector">vector</a> : slice -&gt; vector
-
   val <a href="#val-concat">concat</a> : slice list -&gt; vector
-
   val <a href="#val-isempty">isEmpty</a> : slice -&gt; bool
-
   val <a href="#val-getitem">getItem</a> : slice -&gt; (elem * slice) option
-
   val <a href="#val-appi">appi</a> : (int * elem -&gt; unit) -&gt; slice -&gt; unit
-
   val <a href="#val-app">app</a> : (elem -&gt; unit) -&gt; slice -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * elem -&gt; elem) -&gt; slice -&gt; vector
-
   val <a href="#val-map">map</a> : (elem -&gt; elem) -&gt; slice -&gt; vector
-
   val <a href="#val-foldli">foldli</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : (elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * elem * 'b -&gt; 'b) -&gt; 'b -&gt; slice -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * elem -&gt; bool) -&gt; slice -&gt; (int * elem) option
-
   val <a href="#val-find">find</a> : (elem -&gt; bool) -&gt; slice -&gt; elem option
-
   val <a href="#val-exists">exists</a> : (elem -&gt; bool) -&gt; slice -&gt; bool
-
   val <a href="#val-all">all</a> : (elem -&gt; bool) -&gt; slice -&gt; bool
-
   val <a href="#val-collate">collate</a> : (elem * elem -&gt; order) -&gt; slice * slice -&gt; order
 end
 </pre>
@@ -134,7 +109,7 @@ end
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../sig/MONO_VECTOR.md), `char` for [`CharVector`](../sig/MONO_VECTOR.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
 
 <details><summary>Tests (1)</summary>
 

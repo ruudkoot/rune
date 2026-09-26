@@ -19,7 +19,7 @@ structure OS.Path : OS_PATH
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.Path` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.Path`](../str/OS.Path.md) |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 Paths as text: taking them apart, putting them together, and nothing else.
 
@@ -49,57 +49,31 @@ systems.
 signature OS_PATH =
 sig
   exception <a href="#exn-path">Path</a>
-
   exception <a href="#exn-invalidarc">InvalidArc</a>
-
   val <a href="#val-parentarc">parentArc</a> : string
-
   val <a href="#val-currentarc">currentArc</a> : string
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; {<a href="#fld-fromstring.isabs">isAbs</a> : bool, <a href="#fld-fromstring.vol">vol</a> : string, <a href="#fld-fromstring.arcs">arcs</a> : string list}
-
   val <a href="#val-tostring">toString</a> : {<a href="#fld-tostring.isabs">isAbs</a> : bool, <a href="#fld-tostring.vol">vol</a> : string, <a href="#fld-tostring.arcs">arcs</a> : string list} -&gt; string
-
   val <a href="#val-validvolume">validVolume</a> : {<a href="#fld-validvolume.isabs">isAbs</a> : bool, <a href="#fld-validvolume.vol">vol</a> : string} -&gt; bool
-
   val <a href="#val-getvolume">getVolume</a> : string -&gt; string
-
   val <a href="#val-getparent">getParent</a> : string -&gt; string
-
   val <a href="#val-splitdirfile">splitDirFile</a> : string -&gt; {<a href="#fld-splitdirfile.dir">dir</a> : string, <a href="#fld-splitdirfile.file">file</a> : string}
-
   val <a href="#val-joindirfile">joinDirFile</a> : {<a href="#fld-joindirfile.dir">dir</a> : string, <a href="#fld-joindirfile.file">file</a> : string} -&gt; string
-
   val <a href="#val-dir">dir</a> : string -&gt; string
-
   val <a href="#val-file">file</a> : string -&gt; string
-
   val <a href="#val-splitbaseext">splitBaseExt</a> : string -&gt; {<a href="#fld-splitbaseext.base">base</a> : string, <a href="#fld-splitbaseext.ext">ext</a> : string option}
-
   val <a href="#val-joinbaseext">joinBaseExt</a> : {<a href="#fld-joinbaseext.base">base</a> : string, <a href="#fld-joinbaseext.ext">ext</a> : string option} -&gt; string
-
   val <a href="#val-base">base</a> : string -&gt; string
-
   val <a href="#val-ext">ext</a> : string -&gt; string option
-
   val <a href="#val-mkcanonical">mkCanonical</a> : string -&gt; string
-
   val <a href="#val-iscanonical">isCanonical</a> : string -&gt; bool
-
   val <a href="#val-mkabsolute">mkAbsolute</a> : {<a href="#fld-mkabsolute.path">path</a> : string, <a href="#fld-mkabsolute.relativeto">relativeTo</a> : string} -&gt; string
-
   val <a href="#val-mkrelative">mkRelative</a> : {<a href="#fld-mkrelative.path">path</a> : string, <a href="#fld-mkrelative.relativeto">relativeTo</a> : string} -&gt; string
-
   val <a href="#val-isabsolute">isAbsolute</a> : string -&gt; bool
-
   val <a href="#val-isrelative">isRelative</a> : string -&gt; bool
-
   val <a href="#val-isroot">isRoot</a> : string -&gt; bool
-
   val <a href="#val-concat">concat</a> : string * string -&gt; string
-
   val <a href="#val-fromunixpath">fromUnixPath</a> : string -&gt; string
-
   val <a href="#val-tounixpath">toUnixPath</a> : string -&gt; string
 end
 </pre>

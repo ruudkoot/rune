@@ -19,7 +19,7 @@ structure BinIO : BIN_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| [`BinIO`](../str/BinIO.md) | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 Binary files: the imperative streams of bytes, with the ways of opening a
 file.
@@ -39,11 +39,8 @@ sig
     where type StreamIO.reader = BinPrimIO.reader
     where type StreamIO.writer = BinPrimIO.writer
     where type StreamIO.pos = BinPrimIO.pos
-
   val <a href="#val-openin">openIn</a> : string -&gt; instream
-
   val <a href="#val-openout">openOut</a> : string -&gt; outstream
-
   val <a href="#val-openappend">openAppend</a> : string -&gt; outstream
 end
 </pre>

@@ -9,12 +9,15 @@ compiler enforces; where the specification is silent, ambiguous or wrong, a
 note on the member says how Rune reads it, and the page of readings,
 linked below, collects them all.
 
-Start at a signature, not at a structure. [`LIST`](sig/LIST.md) describes what [`List`](sig/LIST.md) does,
-[`INTEGER`](sig/INTEGER.md) what [`Int`](sig/INTEGER.md), [`Int32`](sig/INTEGER.md), [`LargeInt`](sig/INTEGER.md) and [`Position`](sig/INTEGER.md) all do, and
-[`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](sig/MONO_VECTOR.md) and [`CharVector`](sig/MONO_VECTOR.md) do; the page of structures
-says which structure implements which signature. A name that needs no
-structure in front of it, such as [`hd`](sig/LIST.md#val-hd) or `print`, is on the page of the
-top-level environment, also linked below.
+A signature says what a member means, and a structure says what it is here.
+So [`LIST`](sig/LIST.md) describes what [`List`](str/List.md) does, [`INTEGER`](sig/INTEGER.md) what [`Int`](str/Int.md), [`Int32`](str/Int32.md),
+[`LargeInt`](str/IntInf.md) and [`Position`](str/Int.md) all do, and [`MONO_VECTOR`](sig/MONO_VECTOR.md) what [`Word8Vector`](str/Word8Vector.md) and
+[`CharVector`](str/CharVector.md) do, while the page of a structure shows its members with the
+types it gives them: [`Word8Vector.sub`](sig/MONO_VECTOR.md#val-sub) is `vector * int -> Word8.word` where
+[`MONO_VECTOR`](sig/MONO_VECTOR.md) can only write `vector * int -> elem`. Follow a member to the
+signature to read what it means, and a structure to its own page to see what
+it is. A name that needs no structure in front of it, such as [`hd`](sig/LIST.md#val-hd) or
+`print`, is on the page of the top-level environment, also linked below.
 
 Three things are worth knowing before reading further. Sequences are indexed
 from 0, and a slice is a stretch of one that costs nothing to pass. A
@@ -22,10 +25,10 @@ function that can fail either returns an [`option`](sig/OPTION.md#type-option) o
 which it does is said for every one. And the optional parts of the library,
 the wide characters, the sized integers, [`POSIX`](sig/POSIX.md) and the sockets, are marked
 as optional, because a program that uses them is not bound to run on every
-implementation. Every optional part is there, [`Windows`](sig/WINDOWS.md) too, whose calls of
+implementation. Every optional part is there, [`Windows`](str/Windows.md) too, whose calls of
 the system answer on Windows only.
 
-[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [structures and what they implement](structures.md) &middot; [exceptions](exceptions.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
+[How to read these pages](conventions.md) &middot; [the top-level environment](top-level.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [types that are one type](types.md) &middot; [readings of the specification](readings.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [g](index/g.md) [h](index/h.md) [i](index/i.md) [j](index/j.md) [k](index/k.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [x](index/x.md) [y](index/y.md) [z](index/z.md) [symbols](index/symbols.md)
 
 ## Sequences
 

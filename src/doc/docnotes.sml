@@ -17,6 +17,7 @@ struct
   structure T = DocText
 
   type note = {id : string, kind : string, differs : bool,
+               block : T.block,               (* the paragraph itself, to show it again elsewhere *)
                signat : string,               (* the signature it is about, or "" *)
                member : string,               (* the member, with its substructures; "" for the whole *)
                structure' : string,           (* for a note of a structure's or functor's body *)
@@ -24,10 +25,10 @@ struct
                text : T.inline list, file : string, span : Source.span}
 
   (* The notes among some blocks: each with the `Pinned by:` that follows it. *)
-  fun ofDoc (doc : I.doc) : (string * bool * T.inline list * string list) list =
+  fun ofDoc (doc : I.doc) : (T.block * string list) list =
     case doc of
       [] => []
-    | T.Reserved {keyword, modifier, body} :: rest =>
+    | (b as T.Reserved {keyword, ...}) :: rest =>
         if not (T.isNote keyword) then ofDoc rest
         else
           let
@@ -37,13 +38,18 @@ struct
                   (List.mapPartial (fn T.Code c => SOME c | _ => NONE) pins, more)
               | _ => ([], rest)
           in
-            (keyword, isSome modifier, body, globs) :: ofDoc rest'
+            (b, globs) :: ofDoc rest'
           end
     | _ :: rest => ofDoc rest
 
-  fun make (signat, member, structure', file, span) (kind, differs, body, globs) : note =
-    {id = Option.getOpt (T.firstCode body, ""), kind = kind, differs = differs, signat = signat, member = member,
-     structure' = structure', globs = globs, text = body, file = file, span = span}
+  fun make (signat, member, structure', file, span) (block, globs) : note =
+    case block of
+      T.Reserved {keyword, modifier, body} =>
+        {id = Option.getOpt (T.firstCode body, ""), kind = keyword, differs = isSome modifier, block = block,
+         signat = signat, member = member, structure' = structure', globs = globs, text = body,
+         file = file, span = span}
+    | _ => {id = "", kind = "", differs = false, block = block, signat = signat, member = member,
+            structure' = structure', globs = globs, text = [], file = file, span = span}
 
   fun ofItems (signat : string, file : string) (items : I.item list) : note list =
     List.concat

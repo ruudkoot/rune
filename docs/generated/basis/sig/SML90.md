@@ -19,12 +19,12 @@ structure SML90 : SML90  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `SML90` | SML90: the initial basis of the 1990 Definition, over Real.Math, String and TextIO. As in MLton's (unexposed) SML90, which Poly/ML agrees with: the arithmetic exceptions are Overflow and Mod is Div, which the Library raises in their place; Sqrt, Ln, Ord, Io and Interrupt are new, and sqrt, ln, ord and the functions on streams raise them. | [lib/basis/sml90.sml](../../../../lib/basis/sml90.sml) |
+| [`SML90`](../str/SML90.md) | SML90: the initial basis of the 1990 Definition, over Real.Math, String and TextIO. As in MLton's (unexposed) SML90, which Poly/ML agrees with: the arithmetic exceptions are Overflow and Mod is Div, which the Library raises in their place; Sqrt, Ln, Ord, Io and Interrupt are new, and sqrt, ln, ord and the functions on streams raise them. | [lib/basis/sml90.sml](../../../../lib/basis/sml90.sml) |
 
 What the 1990 library looked like, kept so that old programs still run.
 
 Before the Basis Library there was the library of the first Definition:
-[`std_in`](#val-std_in) and [`open_in`](#val-open_in) instead of [`TextIO`](../sig/TEXT_IO.md), [`explode`](#val-explode) giving a list of
+[`std_in`](#val-std_in) and [`open_in`](#val-open_in) instead of [`TextIO`](../str/TextIO.md), [`explode`](#val-explode) giving a list of
 one-character strings instead of a list of characters, and an exception
 for every arithmetic fault instead of [`Overflow`](../sig/GENERAL.md#exn-overflow) and [`Div`](../sig/GENERAL.md#exn-div). This signature
 is that library, and nothing here is meant for a new program.
@@ -43,75 +43,40 @@ of what [`MATH`](../sig/MATH.md), [`CHAR`](../sig/CHAR.md) and [`STRING`](../sig
 signature SML90 =
 sig
   type <a href="#type-instream">instream</a>
-
   type <a href="#type-outstream">outstream</a>
-
   exception <a href="#exn-abs">Abs</a>
-
   exception <a href="#exn-quot">Quot</a>
-
   exception <a href="#exn-prod">Prod</a>
-
   exception <a href="#exn-neg">Neg</a>
-
   exception <a href="#exn-sum">Sum</a>
-
   exception <a href="#exn-diff">Diff</a>
-
   exception <a href="#exn-floor">Floor</a>
-
   exception <a href="#exn-exp">Exp</a>
-
   exception <a href="#exn-sqrt">Sqrt</a>
-
   exception <a href="#exn-ln">Ln</a>
-
   exception <a href="#exn-ord">Ord</a>
-
   exception <a href="#exn-mod">Mod</a>
-
   exception <a href="#exn-io">Io</a> of string
-
   exception <a href="#exn-interrupt">Interrupt</a>
-
   val <a href="#val-sqrt">sqrt</a> : real -&gt; real
-
   val <a href="#val-exp">exp</a> : real -&gt; real
-
   val <a href="#val-ln">ln</a> : real -&gt; real
-
   val <a href="#val-sin">sin</a> : real -&gt; real
-
   val <a href="#val-cos">cos</a> : real -&gt; real
-
   val <a href="#val-arctan">arctan</a> : real -&gt; real
-
   val <a href="#val-ord">ord</a> : string -&gt; int
-
   val <a href="#val-chr">chr</a> : int -&gt; string
-
   val <a href="#val-explode">explode</a> : string -&gt; string list
-
   val <a href="#val-implode">implode</a> : string list -&gt; string
-
   val <a href="#val-lookahead">lookahead</a> : instream -&gt; string
-
   val <a href="#val-std_in">std_in</a> : instream
-
   val <a href="#val-std_out">std_out</a> : outstream
-
   val <a href="#val-open_in">open_in</a> : string -&gt; instream
-
   val <a href="#val-open_out">open_out</a> : string -&gt; outstream
-
   val <a href="#val-close_in">close_in</a> : instream -&gt; unit
-
   val <a href="#val-close_out">close_out</a> : outstream -&gt; unit
-
   val <a href="#val-input">input</a> : instream * int -&gt; string
-
   val <a href="#val-output">output</a> : outstream * string -&gt; unit
-
   val <a href="#val-end_of_stream">end_of_stream</a> : instream -&gt; bool
 end
 </pre>

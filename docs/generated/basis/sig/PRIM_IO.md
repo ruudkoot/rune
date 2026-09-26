@@ -22,10 +22,10 @@ structure WideTextPrimIO : PRIM_IO where type array = WideCharArray.array where 
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinPrimIO` | BinPrimIO: readers and writers of bytes. | [lib/basis/binprimio.sml](../../../../lib/basis/binprimio.sml) |
+| [`BinPrimIO`](../str/BinPrimIO.md) | BinPrimIO: readers and writers of bytes. | [lib/basis/binprimio.sml](../../../../lib/basis/binprimio.sml) |
 | `PrimIO` | Readers and writers of a new element type: the [`PRIM_IO`](PRIM_IO.md) of it, built from the vectors, arrays and slices of that type. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| `TextPrimIO` | TextPrimIO: readers and writers of characters. | [lib/basis/textprimio.sml](../../../../lib/basis/textprimio.sml) |
-| `WideTextPrimIO` | WideTextPrimIO and WideTextIO (optional in the specification): the readers, writers and imperative streams of the wide character. | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
+| [`TextPrimIO`](../str/TextPrimIO.md) | TextPrimIO: readers and writers of characters. | [lib/basis/textprimio.sml](../../../../lib/basis/textprimio.sml) |
+| [`WideTextPrimIO`](../str/WideTextPrimIO.md) | WideTextPrimIO (optional in the specification): the readers and writers of the wide character. | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 The layer under the streams: a reader is a source of elements, a writer a
 sink for them, and both are records of the operations they happen to have.
@@ -48,8 +48,8 @@ stream.
 what these raise into the `cause` of an [`IO.Io`](../sig/IO.md#exn-io).
 
 > **Erratum** `PRIM_IO/slices-of-the-instances`. The specification
-> leaves [`vector_slice`](#type-vector_slice) and [`array_slice`](#type-array_slice) abstract; in [`TextPrimIO`](PRIM_IO.md) and
-> [`BinPrimIO`](PRIM_IO.md) they are the slice types of the corresponding structures,
+> leaves [`vector_slice`](#type-vector_slice) and [`array_slice`](#type-array_slice) abstract; in [`TextPrimIO`](../str/TextPrimIO.md) and
+> [`BinPrimIO`](../str/BinPrimIO.md) they are the slice types of the corresponding structures,
 > which is what every implementation does and what the suite relies on.
 
 ## Interface
@@ -58,19 +58,12 @@ what these raise into the `cause` of an [`IO.Io`](../sig/IO.md#exn-io).
 signature PRIM_IO =
 sig
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-vector_slice">vector_slice</a>
-
   type <a href="#type-array">array</a>
-
   type <a href="#type-array_slice">array_slice</a>
-
   eqtype <a href="#type-pos">pos</a>
-
   val <a href="#val-compare">compare</a> : pos * pos -&gt; order
-
   datatype <a href="#type-reader">reader</a> =
     <a href="#con-rd">RD</a> of {<a href="#fld-rd.name">name</a> : string,
            <a href="#fld-rd.chunksize">chunkSize</a> : int,
@@ -87,7 +80,6 @@ sig
            <a href="#fld-rd.verifypos">verifyPos</a> : (unit -&gt; pos) option,
            <a href="#fld-rd.close">close</a> : unit -&gt; unit,
            <a href="#fld-rd.iodesc">ioDesc</a> : RuneIODesc.iodesc option}
-
   datatype <a href="#type-writer">writer</a> =
     <a href="#con-wr">WR</a> of {<a href="#fld-wr.name">name</a> : string,
            <a href="#fld-wr.chunksize">chunkSize</a> : int,
@@ -103,15 +95,10 @@ sig
            <a href="#fld-wr.verifypos">verifyPos</a> : (unit -&gt; pos) option,
            <a href="#fld-wr.close">close</a> : unit -&gt; unit,
            <a href="#fld-wr.iodesc">ioDesc</a> : RuneIODesc.iodesc option}
-
   val <a href="#val-openvector">openVector</a> : vector -&gt; reader
-
   val <a href="#val-nullrd">nullRd</a> : unit -&gt; reader
-
   val <a href="#val-nullwr">nullWr</a> : unit -&gt; writer
-
   val <a href="#val-augmentreader">augmentReader</a> : reader -&gt; reader
-
   val <a href="#val-augmentwriter">augmentWriter</a> : writer -&gt; writer
 end
 </pre>
@@ -165,7 +152,7 @@ eqtype pos
 The type of positions in the source or the sink.
 
 > **Implementation** `PRIM_IO.pos/of-the-instances`. [`BinPrimIO.pos`](#type-pos) is the
-> integer type of [`Position`](../sig/INTEGER.md), and a position is the offset of a byte from
+> integer type of [`Position`](../str/Int.md), and a position is the offset of a byte from
 > the start of the file, so [`compare`](#val-compare) is the order of those numbers.
 > [`TextPrimIO.pos`](#type-pos) is abstract, as the specification leaves it: a program
 > can compare positions and give them back to `setPos`, and nothing more.

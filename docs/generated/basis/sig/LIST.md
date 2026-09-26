@@ -19,7 +19,7 @@ structure List : LIST
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `List` | List | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
+| [`List`](../str/List.md) | List | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
 
 Polymorphic, immutable, singly linked lists.
 
@@ -50,59 +50,32 @@ also in the top-level environment.
 <pre>
 signature LIST =
 sig
-
   datatype <a href="#type-list">list</a> = datatype list
-
   exception <a href="#exn-empty">Empty</a>
-
   val <a href="#val-null">null</a> : 'a list -&gt; bool
-
   val <a href="#val-length">length</a> : 'a list -&gt; int
-
   val <a href="#val-op-at">@</a> : 'a list * 'a list -&gt; 'a list
-
   val <a href="#val-hd">hd</a> : 'a list -&gt; 'a
-
   val <a href="#val-tl">tl</a> : 'a list -&gt; 'a list
-
   val <a href="#val-last">last</a> : 'a list -&gt; 'a
-
   val <a href="#val-getitem">getItem</a> : 'a list -&gt; ('a * 'a list) option
-
   val <a href="#val-nth">nth</a> : 'a list * int -&gt; 'a
-
   val <a href="#val-take">take</a> : 'a list * int -&gt; 'a list
-
   val <a href="#val-drop">drop</a> : 'a list * int -&gt; 'a list
-
   val <a href="#val-rev">rev</a> : 'a list -&gt; 'a list
-
   val <a href="#val-concat">concat</a> : 'a list list -&gt; 'a list
-
   val <a href="#val-revappend">revAppend</a> : 'a list * 'a list -&gt; 'a list
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a list -&gt; unit
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a list -&gt; 'b list
-
   val <a href="#val-mappartial">mapPartial</a> : ('a -&gt; 'b option) -&gt; 'a list -&gt; 'b list
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a option
-
   val <a href="#val-filter">filter</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a list
-
   val <a href="#val-partition">partition</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a list * 'a list
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a list -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a list -&gt; bool
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a list
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a list * 'a list -&gt; order
 end
 </pre>

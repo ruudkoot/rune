@@ -1,5 +1,29 @@
-(* WideTextPrimIO and WideTextIO (optional in the specification): the readers,
-   writers and imperative streams of the wide character.
+(* WideTextPrimIO (optional in the specification): the readers and writers of
+   the wide character.
+
+   Implements: PRIM_IO where type array = WideCharArray.array where type vector
+   = WideCharVector.vector where type elem = WideChar.char where type
+   vector_slice = WideCharVectorSlice.slice where type array_slice =
+   WideCharArraySlice.slice
+
+   Status: optional *)
+structure WideTextPrimIO =
+  RunePrimIOFn (structure V = WideCharVector
+                structure A = WideCharArray
+                structure VS = WideCharVectorSlice
+                structure AS = WideCharArraySlice
+                val someElem = WideChar.chr 0
+                type pos = RuneWideTextPos.pos
+                val compare = RuneWideTextPos.compare
+                val index = SOME {fromInt = RuneWideTextPos.fromInt, toInt = RuneWideTextPos.toInt})
+
+(* WideTextIO (optional in the specification): the imperative streams of the
+   wide character. The specification names no signature for it -- the
+   transcription of TEXT_IO writes its types as `string` and `char`, which are
+   those of `TextIO` -- so this page is where the structure is described. Its
+   members are those of TEXT_IO over `WideString.string` and `WideChar.char`.
+
+   Area: Input and output
 
    Implementation: `WideTextIO/files-hold-utf-8`. The specification names no
    encoding, so a stream of `WideTextIO` is a stream of `TextIO` encoded in
@@ -21,22 +45,7 @@
 
    Pinned by: `WideTextIO.openIn/the-reader-has-no-positions`
 
-   Implements: PRIM_IO where type array = WideCharArray.array where type vector
-   = WideCharVector.vector where type elem = WideChar.char where type
-   vector_slice = WideCharVectorSlice.slice where type array_slice =
-   WideCharArraySlice.slice
-
    Status: optional *)
-structure WideTextPrimIO =
-  RunePrimIOFn (structure V = WideCharVector
-                structure A = WideCharArray
-                structure VS = WideCharVectorSlice
-                structure AS = WideCharArraySlice
-                val someElem = WideChar.chr 0
-                type pos = RuneWideTextPos.pos
-                val compare = RuneWideTextPos.compare
-                val index = SOME {fromInt = RuneWideTextPos.fromInt, toInt = RuneWideTextPos.toInt})
-
 structure WideTextIO =
 struct
   local

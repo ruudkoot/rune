@@ -19,7 +19,7 @@ structure NetServDB : NET_SERV_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `NetServDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetServDB`](../str/NetServDB.md) |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The service database: turning the name of a network service into its port,
 and back.
@@ -35,17 +35,11 @@ whichever entry comes first.
 signature NET_SERV_DB =
 sig
   type <a href="#type-entry">entry</a>
-
   val <a href="#val-name">name</a> : entry -&gt; string
-
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
-
   val <a href="#val-port">port</a> : entry -&gt; int
-
   val <a href="#val-protocol">protocol</a> : entry -&gt; string
-
   val <a href="#val-getbyname">getByName</a> : string * string option -&gt; entry option
-
   val <a href="#val-getbyport">getByPort</a> : int * string option -&gt; entry option
 end
 </pre>

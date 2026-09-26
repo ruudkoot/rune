@@ -19,7 +19,7 @@ structure Posix.Error : POSIX_ERROR  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.Error` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Error`](../str/Posix.Error.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The conditions the system reports when a call fails, and their names.
 
@@ -54,101 +54,53 @@ here covers. [`errorName`](#val-errorname) names those too.
 signature POSIX_ERROR =
 sig
   type <a href="#type-syserror">syserror</a> = OS.syserror
-
   val <a href="#val-toword">toWord</a> : syserror -&gt; SysWord.word
-
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; syserror
-
   val <a href="#val-errormsg">errorMsg</a> : syserror -&gt; string
-
   val <a href="#val-errorname">errorName</a> : syserror -&gt; string
-
   val <a href="#val-syserror">syserror</a> : string -&gt; syserror option
-
   val <a href="#val-acces">acces</a> : syserror
-
   val <a href="#val-again">again</a> : syserror
-
   val <a href="#val-badf">badf</a> : syserror
-
   val <a href="#val-badmsg">badmsg</a> : syserror
-
   val <a href="#val-busy">busy</a> : syserror
-
   val <a href="#val-canceled">canceled</a> : syserror
-
   val <a href="#val-child">child</a> : syserror
-
   val <a href="#val-deadlk">deadlk</a> : syserror
-
   val <a href="#val-dom">dom</a> : syserror
-
   val <a href="#val-exist">exist</a> : syserror
-
   val <a href="#val-fault">fault</a> : syserror
-
   val <a href="#val-fbig">fbig</a> : syserror
-
   val <a href="#val-inprogress">inprogress</a> : syserror
-
   val <a href="#val-intr">intr</a> : syserror
-
   val <a href="#val-inval">inval</a> : syserror
-
   val <a href="#val-io">io</a> : syserror
-
   val <a href="#val-isdir">isdir</a> : syserror
-
   val <a href="#val-loop">loop</a> : syserror
-
   val <a href="#val-mfile">mfile</a> : syserror
-
   val <a href="#val-mlink">mlink</a> : syserror
-
   val <a href="#val-msgsize">msgsize</a> : syserror
-
   val <a href="#val-nametoolong">nametoolong</a> : syserror
-
   val <a href="#val-nfile">nfile</a> : syserror
-
   val <a href="#val-nodev">nodev</a> : syserror
-
   val <a href="#val-noent">noent</a> : syserror
-
   val <a href="#val-noexec">noexec</a> : syserror
-
   val <a href="#val-nolck">nolck</a> : syserror
-
   val <a href="#val-nomem">nomem</a> : syserror
-
   val <a href="#val-nospc">nospc</a> : syserror
-
   val <a href="#val-nosys">nosys</a> : syserror
-
   val <a href="#val-notdir">notdir</a> : syserror
-
   val <a href="#val-notempty">notempty</a> : syserror
-
   val <a href="#val-notsup">notsup</a> : syserror
-
   val <a href="#val-notty">notty</a> : syserror
-
   val <a href="#val-nxio">nxio</a> : syserror
-
   val <a href="#val-perm">perm</a> : syserror
-
   val <a href="#val-pipe">pipe</a> : syserror
-
   val <a href="#val-range">range</a> : syserror
-
   val <a href="#val-rofs">rofs</a> : syserror
-
   val <a href="#val-spipe">spipe</a> : syserror
-
   val <a href="#val-srch">srch</a> : syserror
-
   val <a href="#val-toobig">toobig</a> : syserror
-
   val <a href="#val-xdev">xdev</a> : syserror
 end
 </pre>

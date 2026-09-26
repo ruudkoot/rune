@@ -19,7 +19,7 @@ structure TextIO : TEXT_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `TextIO` | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO`](../str/TextIO.md) | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Text files and the standard streams: the imperative streams of characters,
 with the ways of opening a file.
@@ -43,11 +43,11 @@ for newline. [`BIN_IO`](../sig/BIN_IO.md) is the same for bytes.
 > substructure first, then the members of [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) in full, then the
 > ones of [`TEXT_IO`](TEXT_IO.md).
 
-> **Deviation** `TEXT_IO/WideTextIO-not-matched`. The optional `WideTextIO` is
+> **Deviation** `TEXT_IO/WideTextIO-not-matched`. The optional [`WideTextIO`](../str/WideTextIO.md) is
 > not matched against this signature, because the types here are written
 > `string` and `char`; the suite checks that its readers and writers match
-> [`PRIM_IO`](../sig/PRIM_IO.md), and that its vectors are the strings of [`WideString`](../sig/STRING.md) and its
-> elements the characters of [`WideChar`](../sig/CHAR.md), instead.
+> [`PRIM_IO`](../sig/PRIM_IO.md), and that its vectors are the strings of [`WideString`](../str/WideString.md) and its
+> elements the characters of [`WideChar`](../str/WideChar.md), instead.
 
 ## Contents
 
@@ -63,75 +63,40 @@ sig
     where type reader = TextPrimIO.reader
     where type writer = TextPrimIO.writer
     where type pos = TextPrimIO.pos
-
   type <a href="#type-vector">vector</a> = StreamIO.vector
-
   type <a href="#type-elem">elem</a> = StreamIO.elem
-
   type <a href="#type-instream">instream</a>
-
   type <a href="#type-outstream">outstream</a>
-
   val <a href="#val-input">input</a> : instream -&gt; vector
-
   val <a href="#val-input1">input1</a> : instream -&gt; elem option
-
   val <a href="#val-inputn">inputN</a> : instream * int -&gt; vector
-
   val <a href="#val-inputall">inputAll</a> : instream -&gt; vector
-
   val <a href="#val-caninput">canInput</a> : instream * int -&gt; int option
-
   val <a href="#val-lookahead">lookahead</a> : instream -&gt; elem option
-
   val <a href="#val-closein">closeIn</a> : instream -&gt; unit
-
   val <a href="#val-endofstream">endOfStream</a> : instream -&gt; bool
-
   val <a href="#val-output">output</a> : outstream * vector -&gt; unit
-
   val <a href="#val-output1">output1</a> : outstream * elem -&gt; unit
-
   val <a href="#val-flushout">flushOut</a> : outstream -&gt; unit
-
   val <a href="#val-closeout">closeOut</a> : outstream -&gt; unit
-
   val <a href="#val-mkinstream">mkInstream</a> : StreamIO.instream -&gt; instream
-
   val <a href="#val-getinstream">getInstream</a> : instream -&gt; StreamIO.instream
-
   val <a href="#val-setinstream">setInstream</a> : instream * StreamIO.instream -&gt; unit
-
   val <a href="#val-mkoutstream">mkOutstream</a> : StreamIO.outstream -&gt; outstream
-
   val <a href="#val-getoutstream">getOutstream</a> : outstream -&gt; StreamIO.outstream
-
   val <a href="#val-setoutstream">setOutstream</a> : outstream * StreamIO.outstream -&gt; unit
-
   val <a href="#val-getposout">getPosOut</a> : outstream -&gt; StreamIO.out_pos
-
   val <a href="#val-setposout">setPosOut</a> : outstream * StreamIO.out_pos -&gt; unit
-
   val <a href="#val-inputline">inputLine</a> : instream -&gt; string option
-
   val <a href="#val-outputsubstr">outputSubstr</a> : outstream * substring -&gt; unit
-
   val <a href="#val-openin">openIn</a> : string -&gt; instream
-
   val <a href="#val-openout">openOut</a> : string -&gt; outstream
-
   val <a href="#val-openappend">openAppend</a> : string -&gt; outstream
-
   val <a href="#val-openstring">openString</a> : string -&gt; instream
-
   val <a href="#val-stdin">stdIn</a> : instream
-
   val <a href="#val-stdout">stdOut</a> : outstream
-
   val <a href="#val-stderr">stdErr</a> : outstream
-
   val <a href="#val-print">print</a> : string -&gt; unit
-
   val <a href="#val-scanstream">scanStream</a> : ((Char.char, StreamIO.instream) StringCvt.reader
                     -&gt; ('a, StreamIO.instream) StringCvt.reader)
                    -&gt; instream -&gt; 'a option
@@ -149,7 +114,7 @@ structure StreamIO : TEXT_STREAM_IO
 
 A substructure: its members are described on the page of [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md).
 
-The functional text streams underneath, with the readers and writers of [`TextPrimIO`](../sig/PRIM_IO.md).
+The functional text streams underneath, with the readers and writers of [`TextPrimIO`](../str/TextPrimIO.md).
 
 ## The members of IMPERATIVE\_IO
 
@@ -855,7 +820,7 @@ val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
 
 `scanStream scan f` runs a scanner over `f` and moves `f` to where it stopped.
 
-`scan` is a function of the shape that [`StringCvt`](../sig/STRING_CVT.md) describes: it takes a
+`scan` is a function of the shape that [`StringCvt`](../str/StringCvt.md) describes: it takes a
 reader and reads from a source, here the functional stream underneath.
 
 > **Reading** `TextIO.scanStream/moves-only-on-success`. By the

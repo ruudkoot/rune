@@ -19,7 +19,7 @@ structure Posix.FileSys : POSIX_FILE_SYS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.FileSys` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.FileSys`](../str/Posix.FileSys.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Files and directories as POSIX has them: opening them, linking and
 removing them, and reading and setting what the system records about them.
@@ -52,202 +52,113 @@ conditions are the ones [`POSIX_ERROR`](../sig/POSIX_ERROR.md) names.
 signature POSIX_FILE_SYS =
 sig
   eqtype <a href="#type-uid">uid</a>
-
   eqtype <a href="#type-gid">gid</a>
-
   eqtype <a href="#type-file_desc">file_desc</a>
-
   val <a href="#val-fdtoword">fdToWord</a> : file_desc -&gt; SysWord.word
-
   val <a href="#val-wordtofd">wordToFD</a> : SysWord.word -&gt; file_desc
-
   val <a href="#val-fdtoiod">fdToIOD</a> : file_desc -&gt; OS.IO.iodesc
-
   val <a href="#val-iodtofd">iodToFD</a> : OS.IO.iodesc -&gt; file_desc option
-
   type <a href="#type-dirstream">dirstream</a>
-
   val <a href="#val-opendir">opendir</a> : string -&gt; dirstream
-
   val <a href="#val-readdir">readdir</a> : dirstream -&gt; string option
-
   val <a href="#val-rewinddir">rewinddir</a> : dirstream -&gt; unit
-
   val <a href="#val-closedir">closedir</a> : dirstream -&gt; unit
-
   val <a href="#val-chdir">chdir</a> : string -&gt; unit
-
   val <a href="#val-getcwd">getcwd</a> : unit -&gt; string
-
   val <a href="#val-stdin">stdin</a> : file_desc
-
   val <a href="#val-stdout">stdout</a> : file_desc
-
   val <a href="#val-stderr">stderr</a> : file_desc
-
   structure <a href="#str-s">S</a> :
   sig
     eqtype <a href="#type-s.mode">mode</a>
-
     include BIT_FLAGS
       where type flags = mode
-
     val <a href="#val-s.irwxu">irwxu</a> : mode
-
     val <a href="#val-s.irusr">irusr</a> : mode
-
     val <a href="#val-s.iwusr">iwusr</a> : mode
-
     val <a href="#val-s.ixusr">ixusr</a> : mode
-
     val <a href="#val-s.irwxg">irwxg</a> : mode
-
     val <a href="#val-s.irgrp">irgrp</a> : mode
-
     val <a href="#val-s.iwgrp">iwgrp</a> : mode
-
     val <a href="#val-s.ixgrp">ixgrp</a> : mode
-
     val <a href="#val-s.irwxo">irwxo</a> : mode
-
     val <a href="#val-s.iroth">iroth</a> : mode
-
     val <a href="#val-s.iwoth">iwoth</a> : mode
-
     val <a href="#val-s.ixoth">ixoth</a> : mode
-
     val <a href="#val-s.isuid">isuid</a> : mode
-
     val <a href="#val-s.isgid">isgid</a> : mode
   end
-
   structure <a href="#str-o">O</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-o.append">append</a> : flags
-
     val <a href="#val-o.excl">excl</a> : flags
-
     val <a href="#val-o.noctty">noctty</a> : flags
-
     val <a href="#val-o.nonblock">nonblock</a> : flags
-
     val <a href="#val-o.sync">sync</a> : flags
-
     val <a href="#val-o.trunc">trunc</a> : flags
   end
-
   datatype <a href="#type-open_mode">open_mode</a>
     = <a href="#con-o_rdonly">O_RDONLY</a>
     | <a href="#con-o_wronly">O_WRONLY</a>
     | <a href="#con-o_rdwr">O_RDWR</a>
-
   val <a href="#val-openf">openf</a> : string * open_mode * O.flags -&gt; file_desc
-
   val <a href="#val-createf">createf</a> : string * open_mode * O.flags * S.mode
                 -&gt; file_desc
-
   val <a href="#val-creat">creat</a> : string * S.mode -&gt; file_desc
-
   val <a href="#val-umask">umask</a> : S.mode -&gt; S.mode
-
   val <a href="#val-link">link</a> : {<a href="#fld-link.old">old</a> : string, <a href="#fld-link.new">new</a> : string} -&gt; unit
-
   val <a href="#val-mkdir">mkdir</a> : string * S.mode -&gt; unit
-
   val <a href="#val-mkfifo">mkfifo</a> : string * S.mode -&gt; unit
-
   val <a href="#val-unlink">unlink</a> : string -&gt; unit
-
   val <a href="#val-rmdir">rmdir</a> : string -&gt; unit
-
   val <a href="#val-rename">rename</a> : {<a href="#fld-rename.old">old</a> : string, <a href="#fld-rename.new">new</a> : string} -&gt; unit
-
   val <a href="#val-symlink">symlink</a> : {<a href="#fld-symlink.old">old</a> : string, <a href="#fld-symlink.new">new</a> : string} -&gt; unit
-
   val <a href="#val-readlink">readlink</a> : string -&gt; string
-
   eqtype <a href="#type-dev">dev</a>
-
   val <a href="#val-wordtodev">wordToDev</a> : SysWord.word -&gt; dev
-
   val <a href="#val-devtoword">devToWord</a> : dev -&gt; SysWord.word
-
   eqtype <a href="#type-ino">ino</a>
-
   val <a href="#val-wordtoino">wordToIno</a> : SysWord.word -&gt; ino
-
   val <a href="#val-inotoword">inoToWord</a> : ino -&gt; SysWord.word
-
   structure <a href="#str-st">ST</a> :
   sig
     type <a href="#type-st.stat">stat</a>
-
     val <a href="#val-st.isdir">isDir</a> : stat -&gt; bool
-
     val <a href="#val-st.ischr">isChr</a> : stat -&gt; bool
-
     val <a href="#val-st.isblk">isBlk</a> : stat -&gt; bool
-
     val <a href="#val-st.isreg">isReg</a> : stat -&gt; bool
-
     val <a href="#val-st.isfifo">isFIFO</a> : stat -&gt; bool
-
     val <a href="#val-st.islink">isLink</a> : stat -&gt; bool
-
     val <a href="#val-st.issock">isSock</a> : stat -&gt; bool
-
     val <a href="#val-st.mode">mode</a> : stat -&gt; S.mode
-
     val <a href="#val-st.ino">ino</a> : stat -&gt; ino
-
     val <a href="#val-st.dev">dev</a> : stat -&gt; dev
-
     val <a href="#val-st.nlink">nlink</a> : stat -&gt; int
-
     val <a href="#val-st.uid">uid</a> : stat -&gt; uid
-
     val <a href="#val-st.gid">gid</a> : stat -&gt; gid
-
     val <a href="#val-st.size">size</a> : stat -&gt; Position.int
-
     val <a href="#val-st.atime">atime</a> : stat -&gt; Time.time
-
     val <a href="#val-st.mtime">mtime</a> : stat -&gt; Time.time
-
     val <a href="#val-st.ctime">ctime</a> : stat -&gt; Time.time
   end
-
   val <a href="#val-stat">stat</a> : string -&gt; ST.stat
-
   val <a href="#val-lstat">lstat</a> : string -&gt; ST.stat
-
   val <a href="#val-fstat">fstat</a> : file_desc -&gt; ST.stat
-
   datatype <a href="#type-access_mode">access_mode</a>
     = <a href="#con-a_read">A_READ</a>
     | <a href="#con-a_write">A_WRITE</a>
     | <a href="#con-a_exec">A_EXEC</a>
-
   val <a href="#val-access">access</a> : string * access_mode list -&gt; bool
-
   val <a href="#val-chmod">chmod</a> : string * S.mode -&gt; unit
-
   val <a href="#val-fchmod">fchmod</a> : file_desc * S.mode -&gt; unit
-
   val <a href="#val-chown">chown</a> : string * uid * gid -&gt; unit
-
   val <a href="#val-fchown">fchown</a> : file_desc * uid * gid -&gt; unit
-
   val <a href="#val-utime">utime</a> : string
               * {<a href="#fld-utime.actime">actime</a> : Time.time, <a href="#fld-utime.modtime">modtime</a> : Time.time} option
               -&gt; unit
-
   val <a href="#val-ftruncate">ftruncate</a> : file_desc * Position.int -&gt; unit
-
   val <a href="#val-pathconf">pathconf</a> : string * string -&gt; SysWord.word option
-
   val <a href="#val-fpathconf">fpathconf</a> : file_desc * string -&gt; SysWord.word option
 end
 </pre>

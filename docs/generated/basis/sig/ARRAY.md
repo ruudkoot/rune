@@ -19,7 +19,7 @@ structure Array : ARRAY
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Array` | Array: mutable arrays with identity equality. | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
+| [`Array`](../str/Array.md) | Array: mutable arrays with identity equality. | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
 
 Arrays: mutable sequences of a fixed length, of any element type.
 
@@ -49,53 +49,29 @@ copying it, and [`ARRAY2`](../sig/ARRAY2.md) is the two-dimensional version.
 signature ARRAY =
 sig
   type 'a <a href="#type-array">array</a> = 'a array
-
   type 'a <a href="#type-vector">vector</a> = 'a Vector.vector
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-array">array</a> : int * 'a -&gt; 'a array
-
   val <a href="#val-fromlist">fromList</a> : 'a list -&gt; 'a array
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a array
-
   val <a href="#val-length">length</a> : 'a array -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a array * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a array * int * 'a -&gt; unit
-
   val <a href="#val-vector">vector</a> : 'a array -&gt; 'a vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a array, <a href="#fld-copy.dst">dst</a> : 'a array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
-
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : 'a vector, <a href="#fld-copyvec.dst">dst</a> : 'a array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-modifyi">modifyi</a> : (int * 'a -&gt; 'a) -&gt; 'a array -&gt; unit
-
   val <a href="#val-modify">modify</a> : ('a -&gt; 'a) -&gt; 'a array -&gt; unit
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a array -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a array -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a array -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a array -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a array * 'a array -&gt; order
 end
 </pre>
