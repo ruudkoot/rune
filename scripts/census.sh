@@ -100,7 +100,8 @@ for w in "$@"; do
   if [ -z "$sline" ] || [ "$sline" != "$cline" ]; then echo "FAIL $w: counts differ: stock [$sline] census [$cline] (docs/testing.md: the same streams and directory for both?)"; status=1; continue; fi
   if ! cmp -s "$dir/stock.stdout" "$dir/census.stdout"; then echo "FAIL $w: the outputs differ"; status=1; continue; fi
   "$census" --census-static "$rbc" > "$dir/static.tsv" 2> /dev/null
-  { echo "count $sline"; echo "wall $wall s"; echo "every $every"; [ -n "$summary" ] && echo "mode summary"; grep '^runevm: [0-9]* collections' "$dir/census.stderr"; } > "$dir/DONE"
+  # cwd, cmd and out: how the stock VM was run, and the file it wrote, for tools/heapsim/validate.sh to run it again at other heap settings
+  { echo "count $sline"; echo "wall $wall s"; echo "every $every"; [ -n "$summary" ] && echo "mode summary"; echo "cwd $cwd"; echo "cmd $rbc $args"; [ -n "$outfile" ] && echo "out $root/$outfile"; grep '^runevm: [0-9]* collections' "$dir/census.stderr"; } > "$dir/DONE"
   echo "ok   $w: $wall s; $cline"
 done
 exit $status

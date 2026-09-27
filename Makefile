@@ -136,7 +136,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan vm-census test-census mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan vm-census test-census heapsim check-heapsim check-layouts mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -451,6 +451,28 @@ bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) vm/census.h
 # census (scripts/check-census.sh). Part of make check.
 test-census: bin/runevm-census bin/runevm-new bin/rune-new
 	sh scripts/check-census.sh
+
+# The heap-layout tools (docs/plans/heap-layout.md, M2): the trace-driven
+# simulator bin/heapsim and its synthetic-trace generator bin/heapsim-gen
+# (tools/heapsim), and the layout harness (tests/layouts). check-heapsim
+# runs the simulator's unit tests against the generator and holds its copier
+# model to the stock VM's --stats on two small workloads that collect
+# (their census traces made on the way); check-layouts builds the harness with $(CC) and
+# checks that every kernel's checksum is the same under every layout. Both
+# are part of make check.
+bin/heapsim: tools/heapsim/sim.c vm/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -Ivm -o $@ tools/heapsim/sim.c -lm
+bin/heapsim-gen: tools/heapsim/gen.c vm/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -Ivm -o $@ tools/heapsim/gen.c -lm
+heapsim: bin/heapsim bin/heapsim-gen
+check-heapsim: heapsim bin/runevm-census bin/runevm-new bin/rune-new bin/rune.rbc
+	sh tools/heapsim/test.sh
+	sh tools/heapsim/validate.sh compile-sigs intinf_fact
+check-layouts:
+	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
+	sh tests/layouts/check.sh $(notdir $(CC))
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -972,6 +994,8 @@ check:
 	@$(MAKE) --no-print-directory test-new
 	@$(MAKE) --no-print-directory test-new-jit
 	@$(MAKE) --no-print-directory test-census
+	@$(MAKE) --no-print-directory check-heapsim
+	@$(MAKE) --no-print-directory check-layouts
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions

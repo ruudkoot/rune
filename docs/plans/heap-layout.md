@@ -37,8 +37,8 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure in the tree | done 2026-09-27, branch `heap-layout` |
-| M2 | The simulator and the harness in the tree | |
+| M1 | Measure in the tree | done 2026-09-27, `7a67008` |
+| M2 | The simulator and the harness in the tree | done 2026-09-27 |
 | M3 | The layout behind an interface | |
 | M4 | Prototypes at full scale; the gate | |
 | M5 | The chosen layout, complete | |
@@ -311,8 +311,8 @@ compile-sigs and runedoc as programs), the least cycles of five runs of
 `perf stat`, the profiles from a frame-pointer build of the same tree
 under `perf record` with three runs aggregated. The bootstrap runs from
 a 64 MiB semispace as `make perf` runs it. Every number a later
-milestone compares against is here or in `$D/results` of the drafts
-directory (M1 puts the scripts in the tree).
+milestone compares against is here, or is made again by the scripts
+of M1 and M2 (`tests/out/heapsim`, `tests/out/layouts`).
 
 **The bootstrap today**, in four configurations (`rune` = `runevm`, the
 stack VM; `jit-off` = `runevm-new --jit=off`; `new` = `runevm-new` as it
@@ -1365,7 +1365,8 @@ polymorphic register, which bounds what a raw typed field can be and
 what a box at `any` costs under L4 (the pc-weighted shares are in the
 dynamic tables).
 
-**The dynamic census** (`$D/traces/NAME/census.txt`; every trace's
+**The dynamic census** (`census.txt` of each trace, `tests/out/census/NAME`
+since M1; every trace's
 `--count` line equals the stock VM's, its records sum to its bytes and
 objects, and its samples end in the objects alive at exit):
 
@@ -1654,8 +1655,8 @@ program's name change nothing, and two runs alike in these give the
 same count every time. Both are the program's inputs and the system's answers
 showing in the count, which runtime.md's promise excludes by name, and
 not a defect of the VM; a count is reproduced only with the driver's
-exact arguments and redirections (`sim/validate.sh` does; M1's check
-does too).
+exact arguments and redirections (`tools/heapsim/validate.sh` does;
+M1's check does too).
 
 **Heap bytes under each layout** (`sim-heap-bytes.md`; the ratio to L0's
 bytes allocated, boxes included, boxing at the store level):
@@ -1789,7 +1790,7 @@ Twenty configurations build with gcc 13 and clang 18 and every kernel
 gives one checksum under all of them, at a 64 MiB semispace and at small
 ones that force collections every few megabytes (`check.sh`). The timed
 tables are `harness-cycles.md`, `-instructions.md`, `-l1d.md`, `-gc.md`
-and `-counters.md` in `$D/results` (least of five runs of `perf stat`
+and `-counters.md`, made by `tests/layouts/tables.py` (least of five runs of `perf stat`
 on one core, five more when the spread exceeds 5%, both compilers).
 Cycles as a ratio to L0 under the same compiler, gcc 13 first and clang
 18 in parentheses where the two differ by more than 10%; `~` marks a
@@ -3138,7 +3139,12 @@ they from it:
   compile-sigs and runedoc-page as programs;
   `tests/external/run-mlton-bench.sh` runs MLton's benchmarks from
   `/home/ruud/reference` at the sizes of `tests/perf/mlton-bench.txt`
-  and checks their counts. M2 adds the simulator and the harness.
+  and checks their counts. M2 put the simulator in `tools/heapsim`
+  (`bin/heapsim`, `bin/heapsim-gen`; `test.sh`, `validate.sh`, `sweep.sh`,
+  `report.py`; `make check-heapsim` in `make check`) and the harness in
+  `tests/layouts` (`make -C tests/layouts`, `check.sh`, `measure.sh`,
+  `micro.sh`, `tables.py`; `make check-layouts` in `make check`), each
+  with a README saying how the tables of *The experiments* are made.
 
 ## References
 
