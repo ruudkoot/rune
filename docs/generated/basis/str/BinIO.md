@@ -7,7 +7,7 @@
 | Signatures | [`BIN_IO`](../sig/BIN_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
 | Members | 28 |
-| Tests | 152 checks |
+| Tests | 155 checks |
 | Source | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 ## Synopsis
@@ -26,9 +26,9 @@ What each means is on [`BIN_IO`](../sig/BIN_IO.md) and [`IMPERATIVE_IO`](../sig/
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/IMPERATIVE_IO.md#type-elem) | `Word8.word` |
-| type | [`instream`](../sig/IMPERATIVE_IO.md#type-instream) | `instream` |
-| type | [`outstream`](../sig/IMPERATIVE_IO.md#type-outstream) | `outstream` |
-| type | [`vector`](../sig/IMPERATIVE_IO.md#type-vector) | `vector` |
+| type | [`instream`](../sig/IMPERATIVE_IO.md#type-instream) | *a type of its own* |
+| type | [`outstream`](../sig/IMPERATIVE_IO.md#type-outstream) | *a type of its own* |
+| type | [`vector`](../sig/IMPERATIVE_IO.md#type-vector) | `Word8Vector.vector` |
 | val | [`canInput`](../sig/IMPERATIVE_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/IMPERATIVE_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/IMPERATIVE_IO.md#val-closeout) | `outstream -> unit` |
@@ -37,17 +37,17 @@ What each means is on [`BIN_IO`](../sig/BIN_IO.md) and [`IMPERATIVE_IO`](../sig/
 | val | [`getInstream`](../sig/IMPERATIVE_IO.md#val-getinstream) | `instream -> StreamIO.instream` |
 | val | [`getOutstream`](../sig/IMPERATIVE_IO.md#val-getoutstream) | `outstream -> StreamIO.outstream` |
 | val | [`getPosOut`](../sig/IMPERATIVE_IO.md#val-getposout) | `outstream -> StreamIO.out_pos` |
-| val | [`input`](../sig/IMPERATIVE_IO.md#val-input) | `instream -> vector` |
+| val | [`input`](../sig/IMPERATIVE_IO.md#val-input) | `instream -> Word8Vector.vector` |
 | val | [`input1`](../sig/IMPERATIVE_IO.md#val-input1) | `instream -> Word8.word option` |
-| val | [`inputAll`](../sig/IMPERATIVE_IO.md#val-inputall) | `instream -> vector` |
-| val | [`inputN`](../sig/IMPERATIVE_IO.md#val-inputn) | `instream * int -> vector` |
+| val | [`inputAll`](../sig/IMPERATIVE_IO.md#val-inputall) | `instream -> Word8Vector.vector` |
+| val | [`inputN`](../sig/IMPERATIVE_IO.md#val-inputn) | `instream * int -> Word8Vector.vector` |
 | val | [`lookahead`](../sig/IMPERATIVE_IO.md#val-lookahead) | `instream -> Word8.word option` |
 | val | [`mkInstream`](../sig/IMPERATIVE_IO.md#val-mkinstream) | `StreamIO.instream -> instream` |
 | val | [`mkOutstream`](../sig/IMPERATIVE_IO.md#val-mkoutstream) | `StreamIO.outstream -> outstream` |
 | val | [`openAppend`](../sig/BIN_IO.md#val-openappend) | `string -> outstream` |
 | val | [`openIn`](../sig/BIN_IO.md#val-openin) | `string -> instream` |
 | val | [`openOut`](../sig/BIN_IO.md#val-openout) | `string -> outstream` |
-| val | [`output`](../sig/IMPERATIVE_IO.md#val-output) | `outstream * vector -> unit` |
+| val | [`output`](../sig/IMPERATIVE_IO.md#val-output) | `outstream * Word8Vector.vector -> unit` |
 | val | [`output1`](../sig/IMPERATIVE_IO.md#val-output1) | `outstream * Word8.word -> unit` |
 | val | [`setInstream`](../sig/IMPERATIVE_IO.md#val-setinstream) | `instream * StreamIO.instream -> unit` |
 | val | [`setOutstream`](../sig/IMPERATIVE_IO.md#val-setoutstream) | `outstream * StreamIO.outstream -> unit` |

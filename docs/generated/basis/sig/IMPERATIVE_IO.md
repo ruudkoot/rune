@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 3 |
 | Documentation | 25 of 25 entries documented |
-| Tests | 245 checks of 24 entries |
+| Tests | 248 checks of 24 entries |
 | Source | [lib/basis/sig\_imperative\_io.sml](../../../../lib/basis/sig_imperative_io.sml) |
 
 ## Synopsis
@@ -42,6 +42,12 @@ on, and put it back to read the same elements again.
 The end of a stream is not a state: an imperative stream sits at a place
 in the chain of its functional stream, and a file that grows delivers what
 it gained, as [`STREAM_IO`](../sig/STREAM_IO.md) describes.
+
+> **Erratum** `IMPERATIVE_IO/getOutStream`. The specification's code for
+> [`output`](#val-output) and [`flushOut`](#val-flushout) calls `getOutStream`; the member is
+> [`getOutstream`](#val-getoutstream). Taken as written, that code would also flush the stream
+> before every [`output`](#val-output), since [`getOutstream`](#val-getoutstream) flushes: it shows what the
+> operations do to the stream underneath, not how often they flush.
 
 > **Implementation** `IMPERATIVE_IO/functor-is-sealed`. The functor
 > [`ImperativeIO`](../fun/ImperativeIO.md) is ascribed this signature, so what it gives a program is
@@ -183,6 +189,10 @@ of stream.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+**Law** `input f = let val (v, s) = StreamIO.input (getInstream f) in setInstream (f, s); v end`
+
+**Example** `Byte.bytesToString (input (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")))) = "abc"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -211,6 +221,8 @@ val input1 : instream -> elem option
 > that returns `NONE` leaves the stream positioned after the end of stream
 > it found, as `StreamIO.inputN (f, 1)` does, so a following [`input1`](#val-input1)
 > delivers what the source has gained since.
+
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in (input1 f, input1 f, input1 f) end = (SOME 0w97, SOME 0w98, NONE)`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -246,6 +258,8 @@ long.
 > number of elements to be returned exceeds the greatest length of a
 > vector, as [`STREAM_IO`](../sig/STREAM_IO.md) puts it, not when `n` does.
 
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abcde"), Byte.stringToBytes "")) in Byte.bytesToString (inputN (f, 2)) ^ "|" ^ Byte.bytesToString (inputAll f) end = "ab|cde"`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -275,6 +289,8 @@ val inputAll : instream -> vector
 > real for a file: a read after one delivers what was appended since, so a
 > second [`inputAll`](#val-inputall) need not be empty.
 
+**Law** `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in setInstream (f, s); v end`
+
 <details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -303,6 +319,8 @@ val canInput : instream * int -> int option
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
+**Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)`
+
 <details><summary>Tests (18)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `characters-available` &middot; `one` &middot; `more-than-there-is` &middot; `empty-file` &middot; `at-end-of-stream` &middot; `removes-nothing` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `closed-stream`
@@ -325,6 +343,10 @@ val lookahead : instream -> elem option
 > at all, an end of stream included: at one it gives `NONE` and leaves the
 > stream before that end of stream, which a following [`input`](#val-input) then
 > consumes.
+
+**Law** `lookahead f = Option.map #1 (StreamIO.input1 (getInstream f))`
+
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in (lookahead f, input1 f) end = (SOME 0w97, SOME 0w97)`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -357,6 +379,8 @@ val closeIn : instream -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails while closing.
 
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in closeIn f; input1 f end = NONE`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; characters buffered before closeIn are still read after it
@@ -387,6 +411,10 @@ val endOfStream : instream -> bool
 > consume the end of stream it finds: it stays `true` until a read does,
 > that read gives nothing, and only afterwards is what the source gained
 > seen.
+
+**Law** `endOfStream f = StreamIO.endOfStream (getInstream f)`
+
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "a"), Byte.stringToBytes "")) in (endOfStream f, input1 f, endOfStream f) end = (false, SOME 0w97, true)`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -538,6 +566,11 @@ val setInstream : instream * StreamIO.instream -> unit
 
 `setInstream (f, s)` makes `f` continue at `s`.
 
+With [`getInstream`](#val-getinstream), this is how a program reads ahead and goes back: the
+stream it put aside is where the reading resumes.
+
+**Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")) val s = getInstream f in ignore (input1 f); setInstream (f, s); input1 f end = SOME 0w97`
+
 <details><summary>Tests (3)</summary>
 
 In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `BinIO`: `redirects` &middot; `after-getInstream-and-input` &middot; `reread`
@@ -608,11 +641,11 @@ val getPosOut : outstream -> StreamIO.out_pos
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer has no positions, or the flush fails.
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (4)</summary>
 
 For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file`
 
-For `BinIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offset`
+For `BinIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offset` &middot; `flushes`
 
 In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `BinIO`: `Io-without-positions` (raises)
 
@@ -634,11 +667,11 @@ val setPosOut : outstream * StreamIO.out_pos -> unit
 
 </details>
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (5)</summary>
 
 For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-overwrites`
 
-For `BinIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `overwrites` &middot; `file-overwrites`
+For `BinIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `overwrites` &middot; `flushes` &middot; `Io-without-setPos` (raises) &middot; `file-overwrites`
 
 </details>
 

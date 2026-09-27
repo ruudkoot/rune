@@ -26,7 +26,7 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 | --- | --- | --- |
 | type | [`file_desc`](../sig/POSIX_PROC_ENV.md#type-file_desc) | *a type of its own* |
 | type | [`gid`](../sig/POSIX_PROC_ENV.md#type-gid) | *a type of its own* |
-| type | [`pid`](../sig/POSIX_PROC_ENV.md#type-pid) | `pid` |
+| type | [`pid`](../sig/POSIX_PROC_ENV.md#type-pid) | `Posix.Process.pid` |
 | type | [`uid`](../sig/POSIX_PROC_ENV.md#type-uid) | *a type of its own* |
 | val | [`ctermid`](../sig/POSIX_PROC_ENV.md#val-ctermid) | `unit -> string` |
 | val | [`environ`](../sig/POSIX_PROC_ENV.md#val-environ) | `unit -> string list` |
@@ -36,15 +36,15 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 | val | [`getgid`](../sig/POSIX_PROC_ENV.md#val-getgid) | `unit -> gid` |
 | val | [`getgroups`](../sig/POSIX_PROC_ENV.md#val-getgroups) | `unit -> gid list` |
 | val | [`getlogin`](../sig/POSIX_PROC_ENV.md#val-getlogin) | `unit -> string` |
-| val | [`getpgrp`](../sig/POSIX_PROC_ENV.md#val-getpgrp) | `unit -> pid` |
-| val | [`getpid`](../sig/POSIX_PROC_ENV.md#val-getpid) | `unit -> pid` |
-| val | [`getppid`](../sig/POSIX_PROC_ENV.md#val-getppid) | `unit -> pid` |
+| val | [`getpgrp`](../sig/POSIX_PROC_ENV.md#val-getpgrp) | `unit -> Posix.Process.pid` |
+| val | [`getpid`](../sig/POSIX_PROC_ENV.md#val-getpid) | `unit -> Posix.Process.pid` |
+| val | [`getppid`](../sig/POSIX_PROC_ENV.md#val-getppid) | `unit -> Posix.Process.pid` |
 | val | [`getuid`](../sig/POSIX_PROC_ENV.md#val-getuid) | `unit -> uid` |
 | val | [`gidToWord`](../sig/POSIX_PROC_ENV.md#val-gidtoword) | `gid -> word` |
 | val | [`isatty`](../sig/POSIX_PROC_ENV.md#val-isatty) | `file_desc -> bool` |
 | val | [`setgid`](../sig/POSIX_PROC_ENV.md#val-setgid) | `gid -> unit` |
-| val | [`setpgid`](../sig/POSIX_PROC_ENV.md#val-setpgid) | `{pgid : pid option, pid : pid option} -> unit` |
-| val | [`setsid`](../sig/POSIX_PROC_ENV.md#val-setsid) | `unit -> pid` |
+| val | [`setpgid`](../sig/POSIX_PROC_ENV.md#val-setpgid) | `{pgid : Posix.Process.pid option, pid : Posix.Process.pid option} -> unit` |
+| val | [`setsid`](../sig/POSIX_PROC_ENV.md#val-setsid) | `unit -> Posix.Process.pid` |
 | val | [`setuid`](../sig/POSIX_PROC_ENV.md#val-setuid) | `uid -> unit` |
 | val | [`sysconf`](../sig/POSIX_PROC_ENV.md#val-sysconf) | `string -> word` |
 | val | [`time`](../sig/POSIX_PROC_ENV.md#val-time) | `unit -> Time.time` |

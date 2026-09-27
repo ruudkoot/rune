@@ -27,7 +27,7 @@ What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are 
 | datatype | [`exit_status`](../sig/POSIX_PROCESS.md#type-exit_status) | `W_EXITED` &#124; `W_EXITSTATUS` &#124; `W_SIGNALED` &#124; `W_STOPPED` |
 | datatype | [`killpid_arg`](../sig/POSIX_PROCESS.md#type-killpid_arg) | `K_PROC` &#124; `K_SAME_GROUP` &#124; `K_GROUP` |
 | type | [`pid`](../sig/POSIX_PROCESS.md#type-pid) | *a type of its own* |
-| type | [`signal`](../sig/POSIX_PROCESS.md#type-signal) | `signal` |
+| type | [`signal`](../sig/POSIX_PROCESS.md#type-signal) | `Unix.signal` |
 | datatype | [`waitpid_arg`](../sig/POSIX_PROCESS.md#type-waitpid_arg) | `W_ANY_CHILD` &#124; `W_CHILD` &#124; `W_SAME_GROUP` &#124; `W_GROUP` |
 | val | [`alarm`](../sig/POSIX_PROCESS.md#val-alarm) | `Time.time -> Time.time` |
 | val | [`exec`](../sig/POSIX_PROCESS.md#val-exec) | `string * string list -> 'a` |
@@ -35,14 +35,14 @@ What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are 
 | val | [`execp`](../sig/POSIX_PROCESS.md#val-execp) | `string * string list -> 'a` |
 | val | [`exit`](../sig/POSIX_PROCESS.md#val-exit) | `Word8.word -> 'a` |
 | val | [`fork`](../sig/POSIX_PROCESS.md#val-fork) | `unit -> pid option` |
-| val | [`fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) | `OS.Process.status -> exit_status` |
-| val | [`kill`](../sig/POSIX_PROCESS.md#val-kill) | `killpid_arg * signal -> unit` |
+| val | [`fromStatus`](../sig/POSIX_PROCESS.md#val-fromstatus) | `OS.Process.status -> Unix.exit_status` |
+| val | [`kill`](../sig/POSIX_PROCESS.md#val-kill) | `killpid_arg * Unix.signal -> unit` |
 | val | [`pause`](../sig/POSIX_PROCESS.md#val-pause) | `unit -> unit` |
 | val | [`pidToWord`](../sig/POSIX_PROCESS.md#val-pidtoword) | `pid -> word` |
 | val | [`sleep`](../sig/POSIX_PROCESS.md#val-sleep) | `Time.time -> Time.time` |
-| val | [`wait`](../sig/POSIX_PROCESS.md#val-wait) | `unit -> pid * exit_status` |
-| val | [`waitpid`](../sig/POSIX_PROCESS.md#val-waitpid) | `waitpid_arg * W.flags list -> pid * exit_status` |
-| val | [`waitpid_nh`](../sig/POSIX_PROCESS.md#val-waitpid_nh) | `waitpid_arg * W.flags list -> (pid * exit_status) option` |
+| val | [`wait`](../sig/POSIX_PROCESS.md#val-wait) | `unit -> pid * Unix.exit_status` |
+| val | [`waitpid`](../sig/POSIX_PROCESS.md#val-waitpid) | `waitpid_arg * W.flags list -> pid * Unix.exit_status` |
+| val | [`waitpid_nh`](../sig/POSIX_PROCESS.md#val-waitpid_nh) | `waitpid_arg * W.flags list -> (pid * Unix.exit_status) option` |
 | val | [`wordToPid`](../sig/POSIX_PROCESS.md#val-wordtopid) | `word -> pid` |
 | structure | [`W`](../str/Posix.Process.W.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 

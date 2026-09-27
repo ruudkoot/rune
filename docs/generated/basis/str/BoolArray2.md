@@ -26,23 +26,23 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `bool` |
 | type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
-| type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `vector` |
-| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `traversal -> (bool -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `traversal -> (int * int * bool -> unit) -> region -> unit` |
+| type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `BoolVector.vector` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (bool -> unit) -> array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * bool -> unit) -> region -> unit` |
 | val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * bool -> array` |
-| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> vector` |
+| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> BoolVector.vector` |
 | val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
 | val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
-| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `traversal -> (bool * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `traversal -> (int * int * bool * 'a -> 'a) -> 'a -> region -> 'a` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (bool * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * bool * 'a -> 'a) -> 'a -> region -> 'a` |
 | val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `bool list list -> array` |
-| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `traversal -> (bool -> bool) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `traversal -> (int * int * bool -> bool) -> region -> unit` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (bool -> bool) -> array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * bool -> bool) -> region -> unit` |
 | val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
 | val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
-| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> vector` |
+| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> BoolVector.vector` |
 | val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `array * int * int -> bool` |
-| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `traversal -> int * int * (int * int -> bool) -> array` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> bool) -> array` |
 | val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `array * int * int * bool -> unit` |
 
 <details><summary>Other implementations (2)</summary>

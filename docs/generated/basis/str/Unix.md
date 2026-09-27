@@ -26,7 +26,7 @@ What each means is on [`UNIX`](../sig/UNIX.md); the types are this structure's o
 | --- | --- | --- |
 | datatype | [`exit_status`](../sig/UNIX.md#type-exit_status) | `W_EXITED` &#124; `W_EXITSTATUS` &#124; `W_SIGNALED` &#124; `W_STOPPED` |
 | type | [`proc`](../sig/UNIX.md#type-proc) | *a type of its own* |
-| type | [`signal`](../sig/UNIX.md#type-signal) | `signal` |
+| type | [`signal`](../sig/UNIX.md#type-signal) | *a type of its own* |
 | val | [`binInstreamOf`](../sig/UNIX.md#val-bininstreamof) | `(BinIO.instream, 'a) proc -> BinIO.instream` |
 | val | [`binOutstreamOf`](../sig/UNIX.md#val-binoutstreamof) | `('a, BinIO.outstream) proc -> BinIO.outstream` |
 | val | [`execute`](../sig/UNIX.md#val-execute) | `string * string list -> ('a, 'b) proc` |

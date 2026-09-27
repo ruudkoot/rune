@@ -97,6 +97,8 @@ val length : 'a slice -> int
 
 `length sl` is the number of elements of `sl`.
 
+**Example** `length (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = 2`
+
 <details><summary>Tests (7)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `full` &middot; `middle` &middot; `NONE` &middot; `empty` &middot; `empty-array` &middot; `is-third-of-base` &middot; `model-*`
@@ -112,6 +114,11 @@ val sub : 'a slice * int -> 'a
 `sub (sl, i)` is the element of `sl` at position `i`, counting from the start of the slice.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
+
+**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for
+`0 <= k < Array.length arr - i`
+
+**Example** `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`
 
 <details><summary>Tests (13)</summary>
 
@@ -129,6 +136,10 @@ val update : 'a slice * int * 'a -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
 
+**Law** `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i < length sl`
+
+**Example** `let val a = Array.fromList [1, 2, 3] in update (slice (a, 1, NONE), 0, 9); Array.vector a end = Vector.fromList [1, 9, 3]`
+
 <details><summary>Tests (14)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `first` &middot; `last` &middot; `twice-same-index` &middot; `seen-by-sub` &middot; `seen-through-another-slice` &middot; `full` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-beyond-the-array` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
@@ -143,7 +154,11 @@ For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrays
 val full : 'a Array.array -> 'a slice
 ```
 
-`full arr` is the whole of `arr` as a slice.
+`full arr` is the whole of `arr` as a slice: `slice (arr, 0, NONE)`.
+
+**Law** `base (full arr) = (arr, 0, Array.length arr)`
+
+**Example** `length (full (Array.fromList [1, 2, 3])) = 3`
 
 <details><summary>Tests (6)</summary>
 
@@ -159,7 +174,11 @@ val slice : 'a Array.array * int * int option -> 'a slice
 
 `slice (arr, i, NONE)` is the stretch of `arr` from position `i` to its end, and `slice (arr, i, SOME n)` the `n` elements from `i`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > Array.length arr`, or, with `SOME n`, if `n < 0` or `i + n > Array.length arr`.
+
+**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` when the slice exists
+
+**Example** `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`
 
 > **Reading** `ArraySlice.slice/Subscript-not-Overflow`. When `i + n` is no
 > `int` the slice does not exist, and [`Subscript`](../sig/GENERAL.md#exn-subscript) says so, never [`Overflow`](../sig/GENERAL.md#exn-overflow);
@@ -188,7 +207,13 @@ val subslice : 'a slice * int * int option -> 'a slice
 
 The bounds are those of `sl`, not of the array it is a slice of.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `sl`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
+`n < 0` or `i + n > length sl`.
+
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for
+`0 <= k < length sl - i`
+
+**Example** `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 1, SOME 1)) = Vector.fromList [3]`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -210,6 +235,8 @@ val base : 'a slice -> 'a Array.array * int * int
 
 `base sl` is the triple of the array that `sl` is a stretch of, where it starts in that array, and how long it is.
 
+**Example** `let val (_, i, n) = base (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) in (i, n) end = (1, 2)`
+
 <details><summary>Tests (4)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `middle` &middot; `empty` &middot; `the-array-itself` &middot; `model-*`
@@ -223,6 +250,8 @@ val vector : 'a slice -> 'a Vector.vector
 ```
 
 `vector sl` is an immutable vector of the elements of `sl`, which is a copy.
+
+**Law** `vector sl = Vector.tabulate (length sl, fn i => sub (sl, i))`
 
 **Example** `vector (slice (Array.fromList [1, 2, 3], 1, NONE)) = Vector.fromList [2, 3]`
 
@@ -247,6 +276,8 @@ every element arrives as it was before the copy began.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > Array.length dst`,
 and then nothing has been copied.
+
+**Example** `let val a = Array.fromList [1, 2, 3, 4] in copy {src = slice (a, 0, SOME 3), dst = a, di = 1}; Array.vector a end = Vector.fromList [1, 1, 2, 3]`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -274,8 +305,9 @@ val copyVec : {src : 'a VectorSlice.slice, dst : 'a Array.array, di : int} -> un
 
 `copyVec {src, dst, di}` copies the elements of the vector slice `src` into `dst`, starting at position `di`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if they do not fit, and then nothing has been
-copied.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + VectorSlice.length src > Array.length dst`, and then nothing has been copied.
+
+**Example** `let val a = Array.array (3, 0) in copyVec {src = VectorSlice.slice (Vector.fromList [7, 8, 9], 1, NONE), dst = a, di = 0}; Array.vector a end = Vector.fromList [8, 9, 0]`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -303,6 +335,10 @@ val isEmpty : 'a slice -> bool
 
 `isEmpty sl` is `true` when `sl` has no elements.
 
+**Law** `isEmpty sl = (length sl = 0)`
+
+**Example** `isEmpty (slice (Array.fromList [1], 1, NONE)) = true`
+
 <details><summary>Tests (6)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `empty` &middot; `empty-array` &middot; `at-length` &middot; `one` &middot; `middle` &middot; `model-*`
@@ -316,6 +352,10 @@ val getItem : 'a slice -> ('a * 'a slice) option
 ```
 
 `getItem sl` is `NONE` for an empty slice and `SOME (x, rest)` for the first element and what follows it.
+
+`rest` is a slice of the same array, so it is had for nothing.
+
+**Example** `(case getItem (full (Array.fromList [1, 2])) of SOME (x, rest) => (x, length rest) | NONE => (0, 0)) = (1, 1)`
 
 <details><summary>Tests (9)</summary>
 
@@ -335,6 +375,8 @@ val appi : (int * 'a -> unit) -> 'a slice -> unit
 
 The index is that of the element in the slice, counted from 0.
 
+**Example** `let val r = ref [] in appi (fn (i, x) => r := (i, x) :: !r) (slice (Array.fromList ["a", "b", "c"], 1, NONE)); !r end = [(1, "c"), (0, "b")]`
+
 <details><summary>Tests (4)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `index-in-the-slice` &middot; `full` &middot; `empty` &middot; `model-*`
@@ -348,6 +390,8 @@ val app : ('a -> unit) -> 'a slice -> unit
 ```
 
 `app f sl` applies `f` to every element, from 0 up, for its effect.
+
+**Law** `app f sl = appi (f o #2) sl`
 
 <details><summary>Tests (4)</summary>
 
@@ -363,6 +407,11 @@ val modifyi : (int * 'a -> 'a) -> 'a slice -> unit
 
 `modifyi f sl` replaces the element at each position by `f` of the index and that element, in place.
 
+The index is that of the element in the slice, and the elements are
+replaced from 0 up.
+
+**Example** `let val a = Array.fromList [10, 20, 30] in modifyi (fn (i, x) => x + i) (slice (a, 1, NONE)); Array.vector a end = Vector.fromList [10, 20, 31]`
+
 <details><summary>Tests (5)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `index-in-the-slice` &middot; `full` &middot; `empty` &middot; `order` &middot; `model-*`
@@ -376,6 +425,8 @@ val modify : ('a -> 'a) -> 'a slice -> unit
 ```
 
 `modify f sl` replaces every element by `f` of it, in place, from 0 up.
+
+**Law** `modify f sl = modifyi (fn (_, x) => f x) sl`
 
 **Example** `let val a = Array.fromList [1, 2, 3, 4] in modify (fn _ => 0) (slice (a, 1, SOME 2)); Array.vector a end = Vector.fromList [1, 0, 0, 4]`
 
@@ -393,6 +444,10 @@ val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldli f init sl` combines the elements from the left, giving `f` the index as well.
 
+The index is that of the element in the slice, counted from 0.
+
+**Example** `foldli (fn (i, x, acc) => (i, x) :: acc) [] (slice (Array.fromList ["a", "b", "c"], 1, NONE)) = [(1, "c"), (0, "b")]`
+
 <details><summary>Tests (4)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
@@ -406,6 +461,10 @@ val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 ```
 
 `foldri f init sl` combines the elements from the right, giving `f` the index as well.
+
+The index is that of the element in the slice, counted from 0.
+
+**Example** `foldri (fn (i, x, acc) => (i, x) :: acc) [] (slice (Array.fromList ["a", "b", "c"], 1, NONE)) = [(0, "b"), (1, "c")]`
 
 <details><summary>Tests (4)</summary>
 
@@ -421,6 +480,10 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldl f init sl` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Law** `foldl f init sl = foldli (fn (_, a, x) => f (a, x)) init sl`
+
+**Example** `foldl (op ::) [] (full (Array.fromList [1, 2, 3])) = [3, 2, 1]`
+
 <details><summary>Tests (5)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*` &middot; `long`
@@ -434,6 +497,10 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 ```
 
 `foldr f init sl` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Law** `foldr f init sl = foldri (fn (_, a, x) => f (a, x)) init sl`
+
+**Example** `foldr (op ::) [] (full (Array.fromList [1, 2, 3])) = [1, 2, 3]`
 
 <details><summary>Tests (5)</summary>
 
@@ -451,6 +518,11 @@ val findi : (int * 'a -> bool) -> 'a slice -> (int * 'a) option
 
 `findi p sl` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`.
 
+The index is that of the element in the slice; `p` is applied from 0 up,
+and not after the first position that satisfies it.
+
+**Example** `findi (fn (_, x) => x = 3) (slice (Array.fromList [3, 1, 3], 1, NONE)) = SOME (1, 3)`
+
 <details><summary>Tests (9)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `not-before-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -465,6 +537,10 @@ val find : ('a -> bool) -> 'a slice -> 'a option
 
 `find p sl` is `SOME x` for the first element that satisfies `p`, or `NONE`.
 
+**Law** `find p sl = Option.map #2 (findi (fn (_, x) => p x) sl)`
+
+**Example** `find (fn x => x > 1) (full (Array.fromList [1, 2, 3])) = SOME 2`
+
 <details><summary>Tests (7)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `first-match` &middot; `last-element` &middot; `none` &middot; `not-before-the-slice` &middot; `empty` &middot; `stops` &middot; `model-*`
@@ -477,7 +553,13 @@ For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrays
 val exists : ('a -> bool) -> 'a slice -> bool
 ```
 
-`exists p sl` is `true` when some element satisfies `p`.
+`exists p sl` is `true` when some element satisfies `p`; it stops at the first that does.
+
+Only the elements of the slice are looked at, not the rest of its array.
+
+**Law** `exists p sl = isSome (find p sl)`
+
+**Example** `exists (fn x => x = 1) (slice (Array.fromList [1, 2, 3], 1, NONE)) = false`
 
 <details><summary>Tests (7)</summary>
 
@@ -491,7 +573,11 @@ For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrays
 val all : ('a -> bool) -> 'a slice -> bool
 ```
 
-`all p sl` is `true` when every element satisfies `p`.
+`all p sl` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+**Law** `all p sl = not (exists (not o p) sl)`
+
+**Example** `all (fn x => x > 1) (slice (Array.fromList [1, 2, 3], 1, NONE)) = true`
 
 <details><summary>Tests (7)</summary>
 
@@ -506,6 +592,10 @@ val collate : ('a * 'a -> order) -> 'a slice * 'a slice -> order
 ```
 
 `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`.
+
+**Law** `collate cmp (sl, tl) = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] tl)`
+
+**Example** `collate Int.compare (slice (Array.fromList [1, 2, 3], 1, NONE), full (Array.fromList [2])) = GREATER`
 
 <details><summary>Tests (16)</summary>
 

@@ -17,10 +17,10 @@ What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this struc
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`flock`](../sig/POSIX_IO.md#type-flock.flock) | *a type of its own* |
-| val | [`flock`](../sig/POSIX_IO.md#val-flock.flock) | `{len : int, ltype : Posix.IO.lock_type, pid : Posix.IO.pid option, start : int, whence : Posix.IO.whence} -> flock` |
+| val | [`flock`](../sig/POSIX_IO.md#val-flock.flock) | `{len : int, ltype : Posix.IO.lock_type, pid : Posix.Process.pid option, start : int, whence : Posix.IO.whence} -> flock` |
 | val | [`len`](../sig/POSIX_IO.md#val-flock.len) | `flock -> int` |
 | val | [`ltype`](../sig/POSIX_IO.md#val-flock.ltype) | `flock -> Posix.IO.lock_type` |
-| val | [`pid`](../sig/POSIX_IO.md#val-flock.pid) | `flock -> Posix.IO.pid option` |
+| val | [`pid`](../sig/POSIX_IO.md#val-flock.pid) | `flock -> Posix.Process.pid option` |
 | val | [`start`](../sig/POSIX_IO.md#val-flock.start) | `flock -> int` |
 | val | [`whence`](../sig/POSIX_IO.md#val-flock.whence) | `flock -> Posix.IO.whence` |
 

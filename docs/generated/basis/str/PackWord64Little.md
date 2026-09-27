@@ -24,11 +24,11 @@ What each means is on [`PACK_WORD`](../sig/PACK_WORD.md); the types are this str
 | --- | --- | --- |
 | val | [`bytesPerElem`](../sig/PACK_WORD.md#val-bytesperelem) | `int` |
 | val | [`isBigEndian`](../sig/PACK_WORD.md#val-isbigendian) | `bool` |
-| val | [`subArr`](../sig/PACK_WORD.md#val-subarr) | `BinPrimIO.array * int -> word` |
-| val | [`subArrX`](../sig/PACK_WORD.md#val-subarrx) | `BinPrimIO.array * int -> word` |
-| val | [`subVec`](../sig/PACK_WORD.md#val-subvec) | `BinIO.vector * int -> word` |
-| val | [`subVecX`](../sig/PACK_WORD.md#val-subvecx) | `BinIO.vector * int -> word` |
-| val | [`update`](../sig/PACK_WORD.md#val-update) | `BinPrimIO.array * int * word -> unit` |
+| val | [`subArr`](../sig/PACK_WORD.md#val-subarr) | `Word8Array.array * int -> word` |
+| val | [`subArrX`](../sig/PACK_WORD.md#val-subarrx) | `Word8Array.array * int -> word` |
+| val | [`subVec`](../sig/PACK_WORD.md#val-subvec) | `Word8Vector.vector * int -> word` |
+| val | [`subVecX`](../sig/PACK_WORD.md#val-subvecx) | `Word8Vector.vector * int -> word` |
+| val | [`update`](../sig/PACK_WORD.md#val-update) | `Word8Array.array * int * word -> unit` |
 
 <details><summary>Other implementations (2)</summary>
 

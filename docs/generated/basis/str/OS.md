@@ -25,7 +25,7 @@ What each means is on [`OS`](../sig/OS.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/OS.md#type-syserror) | `syserror` |
+| type | [`syserror`](../sig/OS.md#type-syserror) | *a type of its own* |
 | exception | [`SysErr`](../sig/OS.md#exn-syserr) | `of string * syserror option` |
 | val | [`errorMsg`](../sig/OS.md#val-errormsg) | `syserror -> string` |
 | val | [`errorName`](../sig/OS.md#val-errorname) | `syserror -> string` |

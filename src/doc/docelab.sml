@@ -166,17 +166,33 @@ struct
   (* The types a structure names, as against those it borrows: `Word8.word` is
      a name of the type, where `Word8Vector.elem` and `BinIO.elem` are names of
      a use of it, so only the first is a name to show it under. *)
-  fun namedTypes (into : string -> bool) (prefix : string, e : Env.env) : (int * string) list =
+  fun namedTypes (into : string -> bool) (prefix : string, e : Env.env) : (int * string * bool) list =
     case e of
       Env.Env {tys, strs, ...} =>
         List.mapPartial (fn (name, Env.TyStr {fcn, ...}) =>
                            case tyconOf fcn of
-                             SOME c => if #name c = name then SOME (#stamp c, prefix ^ name) else NONE
+                             SOME c => if #name c = name
+                                       then SOME (#stamp c, prefix ^ name,
+                                                  case fcn of Types.TName _ => true | _ => false)
+                                       else NONE
                            | NONE => NONE)
                         (StringMap.listItemsi tys)
         @ List.concat (List.map (fn (name, sub) =>
                                    if into name then namedTypes into (prefix ^ name ^ ".", sub) else [])
                                 (StringMap.listItemsi strs))
+
+  (* Of the names of one type, the one that declares it: where the type is a
+     type name and not an abbreviation of one. The byte vector is
+     `Word8Vector.vector`, which declares it, and not `BinIO.vector`, which is
+     shorter and only says which vector `BinIO` reads; a type that nothing
+     public declares -- `BinIO.instream`, made in a structure the seal hides --
+     has the shortest of its names. *)
+  fun owner ((stamp, name, declared), m : (string * bool) IntMap.map) : (string * bool) IntMap.map =
+    case IntMap.find (m, stamp) of
+      SOME (n, d) =>
+        if (declared andalso not d) orelse (declared = d andalso better (name, n))
+        then IntMap.insert (m, stamp, (name, declared)) else m
+    | NONE => IntMap.insert (m, stamp, (name, declared))
 
   (* Every type of the library by the stamp of the type name it stands for,
      under the shortest path that names it: `word`, not `Word.word`, and
@@ -188,7 +204,7 @@ struct
     case !allNames of
       SOME m => m
     | NONE =>
-        let val m = List.foldl best IntMap.empty (namedTypes public ("", env))
+        let val m = IntMap.map #1 (List.foldl owner IntMap.empty (namedTypes public ("", env)))
         in allNames := SOME m; m end
 
   fun membersOf (lib : library, public : string -> bool) (path : string list) : (string * member) list option =
@@ -204,11 +220,18 @@ struct
              it, `Word8.word` because `elem` is not a name of the type but of
              this structure's use of it, and a reader of `word` would think of
              `Word.word`. *)
-          val here = List.foldl best IntMap.empty (namedTypes (fn _ => true) ("", structure'))
+          val here = List.foldl (fn ((stamp, name, _), m) => best ((stamp, name), m)) IntMap.empty
+                                (namedTypes (fn _ => true) ("", structure'))
+          val self = String.concatWith "." path ^ "."
+          (* a type this structure owns has its name here; any other, the name
+             of the structure that declares it *)
+          fun ownedHere (c : Types.tycon) =
+            case IntMap.find (namesByStamp (lib, public), #stamp c) of
+              SOME n => String.isPrefix self n
+            | NONE => true
           fun nameOf (c : Types.tycon) =
-            case IntMap.find (here, #stamp c) of
-              SOME n => SOME n
-            | NONE => IntMap.find (namesByStamp (lib, public), #stamp c)
+            if ownedHere c then IntMap.find (here, #stamp c)
+            else IntMap.find (namesByStamp (lib, public), #stamp c)
           (* Elaboration expands an abbreviation, so a type the source writes
              `'a region` reaches here as the record it stands for. The
              abbreviations of this structure and of the structures below it
@@ -303,10 +326,20 @@ struct
              declared it; one that stands for another shows what it stands for,
              applied to its parameters, as `Word8Vector.elem` is `Word8.word`
              and `Array.array` is `'a array`, the type of the top level. *)
-          fun defnOf (fcn : Types.tyfcn) : string option =
-            case fcn of
-              Types.TName _ => NONE
-            | Types.TAbbrev _ =>
+          fun defnOf (member : string, fcn : Types.tyfcn) : string option =
+            case (fcn, tyconOf fcn) of
+              (Types.TName _, _) => NONE
+            | (_, SOME c) =>
+                (* `Array.array` is the top level's, which is also written
+                   `array`: only a type this structure owns is its own *)
+                if ownedHere c andalso nameOf c = SOME member then NONE
+                else
+                  let
+                    fun param k = Types.freshTvar (0, Types.KRigid ("'" ^ String.str (Char.chr (Char.ord #"a" + k))), false)
+                  in
+                    SOME (print' (inside (Types.applyFcn (fcn, List.tabulate (Types.fcnArity fcn, param)))))
+                  end
+            | (Types.TAbbrev _, NONE) =>
                 let
                   fun param k = Types.freshTvar (0, Types.KRigid ("'" ^ String.str (Char.chr (Char.ord #"a" + k))), false)
                 in
@@ -322,7 +355,7 @@ struct
             List.map (fn (name, Env.TyStr {fcn, cons}) =>
                         (name,
                          if List.null cons
-                         then MType {arity = Types.fcnArity fcn, defn = defnOf fcn}
+                         then MType {arity = Types.fcnArity fcn, defn = defnOf (name, fcn)}
                          else MData {arity = Types.fcnArity fcn, cons = List.map #1 cons}))
                      (StringMap.listItemsi tys)
           val valMembers =

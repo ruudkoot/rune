@@ -7,7 +7,7 @@
 | Signature | [`STREAM_IO`](../sig/STREAM_IO.md) |
 | Status | required |
 | Members | 29 |
-| Tests | 129 checks |
+| Tests | 130 checks |
 | Source | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 ## Synopsis
@@ -26,13 +26,13 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/STREAM_IO.md#type-elem) | `Word8.word` |
-| type | [`instream`](../sig/STREAM_IO.md#type-instream) | `instream` |
+| type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
-| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | `outstream` |
+| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
 | type | [`pos`](../sig/STREAM_IO.md#type-pos) | `int` |
-| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `reader` |
-| type | [`vector`](../sig/STREAM_IO.md#type-vector) | `vector` |
-| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `writer` |
+| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `BinPrimIO.reader` |
+| type | [`vector`](../sig/STREAM_IO.md#type-vector) | `Word8Vector.vector` |
+| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `BinPrimIO.writer` |
 | val | [`canInput`](../sig/STREAM_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |
@@ -42,26 +42,27 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 | val | [`flushOut`](../sig/STREAM_IO.md#val-flushout) | `outstream -> unit` |
 | val | [`getBufferMode`](../sig/STREAM_IO.md#val-getbuffermode) | `outstream -> IO.buffer_mode` |
 | val | [`getPosOut`](../sig/STREAM_IO.md#val-getposout) | `outstream -> out_pos` |
-| val | [`getReader`](../sig/STREAM_IO.md#val-getreader) | `instream -> reader * vector` |
-| val | [`getWriter`](../sig/STREAM_IO.md#val-getwriter) | `outstream -> writer * IO.buffer_mode` |
-| val | [`input`](../sig/STREAM_IO.md#val-input) | `instream -> vector * instream` |
+| val | [`getReader`](../sig/STREAM_IO.md#val-getreader) | `instream -> BinPrimIO.reader * Word8Vector.vector` |
+| val | [`getWriter`](../sig/STREAM_IO.md#val-getwriter) | `outstream -> BinPrimIO.writer * IO.buffer_mode` |
+| val | [`input`](../sig/STREAM_IO.md#val-input) | `instream -> Word8Vector.vector * instream` |
 | val | [`input1`](../sig/STREAM_IO.md#val-input1) | `instream -> (Word8.word * instream) option` |
-| val | [`inputAll`](../sig/STREAM_IO.md#val-inputall) | `instream -> vector * instream` |
-| val | [`inputN`](../sig/STREAM_IO.md#val-inputn) | `instream * int -> vector * instream` |
-| val | [`mkInstream`](../sig/STREAM_IO.md#val-mkinstream) | `reader * vector -> instream` |
-| val | [`mkOutstream`](../sig/STREAM_IO.md#val-mkoutstream) | `writer * IO.buffer_mode -> outstream` |
-| val | [`output`](../sig/STREAM_IO.md#val-output) | `outstream * vector -> unit` |
+| val | [`inputAll`](../sig/STREAM_IO.md#val-inputall) | `instream -> Word8Vector.vector * instream` |
+| val | [`inputN`](../sig/STREAM_IO.md#val-inputn) | `instream * int -> Word8Vector.vector * instream` |
+| val | [`mkInstream`](../sig/STREAM_IO.md#val-mkinstream) | `BinPrimIO.reader * Word8Vector.vector -> instream` |
+| val | [`mkOutstream`](../sig/STREAM_IO.md#val-mkoutstream) | `BinPrimIO.writer * IO.buffer_mode -> outstream` |
+| val | [`output`](../sig/STREAM_IO.md#val-output) | `outstream * Word8Vector.vector -> unit` |
 | val | [`output1`](../sig/STREAM_IO.md#val-output1) | `outstream * Word8.word -> unit` |
 | val | [`setBufferMode`](../sig/STREAM_IO.md#val-setbuffermode) | `outstream * IO.buffer_mode -> unit` |
 | val | [`setPosOut`](../sig/STREAM_IO.md#val-setposout) | `out_pos -> outstream` |
 
-<details><summary>Other implementations (18)</summary>
+<details><summary>Other implementations (19)</summary>
 
 - **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
 - **SML/NJ 110.99.9** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
 - **MLton, Poly/ML** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 - **MLton** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 - **MLton, SML/NJ 110.99.9** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, SML/NJ** &mdash; another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 - **SML/NJ 110.99.9** &mdash; getReader of a closed or truncated stream raises nothing
 - **SML/NJ 110.99.9** &mdash; getWriter of a closed stream raises nothing
 - **Poly/ML** &mdash; input lets the exception of the reader through instead of raising Io with it as the cause

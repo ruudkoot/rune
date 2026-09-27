@@ -16,24 +16,24 @@ What each means is on [`MATH`](../sig/MATH.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`real`](../sig/MATH.md#type-real) | `real` |
-| val | [`acos`](../sig/MATH.md#val-acos) | `real -> real` |
-| val | [`asin`](../sig/MATH.md#val-asin) | `real -> real` |
-| val | [`atan`](../sig/MATH.md#val-atan) | `real -> real` |
-| val | [`atan2`](../sig/MATH.md#val-atan2) | `real * real -> real` |
-| val | [`cos`](../sig/MATH.md#val-cos) | `real -> real` |
-| val | [`cosh`](../sig/MATH.md#val-cosh) | `real -> real` |
-| val | [`e`](../sig/MATH.md#val-e) | `real` |
-| val | [`exp`](../sig/MATH.md#val-exp) | `real -> real` |
-| val | [`ln`](../sig/MATH.md#val-ln) | `real -> real` |
-| val | [`log10`](../sig/MATH.md#val-log10) | `real -> real` |
-| val | [`pi`](../sig/MATH.md#val-pi) | `real` |
-| val | [`pow`](../sig/MATH.md#val-pow) | `real * real -> real` |
-| val | [`sin`](../sig/MATH.md#val-sin) | `real -> real` |
-| val | [`sinh`](../sig/MATH.md#val-sinh) | `real -> real` |
-| val | [`sqrt`](../sig/MATH.md#val-sqrt) | `real -> real` |
-| val | [`tan`](../sig/MATH.md#val-tan) | `real -> real` |
-| val | [`tanh`](../sig/MATH.md#val-tanh) | `real -> real` |
+| type | [`real`](../sig/MATH.md#type-real) | `Real32.real` |
+| val | [`acos`](../sig/MATH.md#val-acos) | `Real32.real -> Real32.real` |
+| val | [`asin`](../sig/MATH.md#val-asin) | `Real32.real -> Real32.real` |
+| val | [`atan`](../sig/MATH.md#val-atan) | `Real32.real -> Real32.real` |
+| val | [`atan2`](../sig/MATH.md#val-atan2) | `Real32.real * Real32.real -> Real32.real` |
+| val | [`cos`](../sig/MATH.md#val-cos) | `Real32.real -> Real32.real` |
+| val | [`cosh`](../sig/MATH.md#val-cosh) | `Real32.real -> Real32.real` |
+| val | [`e`](../sig/MATH.md#val-e) | `Real32.real` |
+| val | [`exp`](../sig/MATH.md#val-exp) | `Real32.real -> Real32.real` |
+| val | [`ln`](../sig/MATH.md#val-ln) | `Real32.real -> Real32.real` |
+| val | [`log10`](../sig/MATH.md#val-log10) | `Real32.real -> Real32.real` |
+| val | [`pi`](../sig/MATH.md#val-pi) | `Real32.real` |
+| val | [`pow`](../sig/MATH.md#val-pow) | `Real32.real * Real32.real -> Real32.real` |
+| val | [`sin`](../sig/MATH.md#val-sin) | `Real32.real -> Real32.real` |
+| val | [`sinh`](../sig/MATH.md#val-sinh) | `Real32.real -> Real32.real` |
+| val | [`sqrt`](../sig/MATH.md#val-sqrt) | `Real32.real -> Real32.real` |
+| val | [`tan`](../sig/MATH.md#val-tan) | `Real32.real -> Real32.real` |
+| val | [`tanh`](../sig/MATH.md#val-tanh) | `Real32.real -> Real32.real` |
 
 ---
 

@@ -27,31 +27,31 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `char` |
-| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | `substring` |
+| type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | `Substring.substring` |
 | type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `string` |
-| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(char -> bool) -> substring -> bool` |
-| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(char -> unit) -> substring -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * char -> unit) -> substring -> unit` |
-| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `substring -> string * int * int` |
-| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(char * char -> order) -> substring * substring -> order` |
-| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `substring list -> string` |
-| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(char -> bool) -> substring -> bool` |
-| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(char -> bool) -> substring -> char option` |
-| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * char -> bool) -> substring -> (int * char) option` |
-| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> substring -> 'a` |
-| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `string -> substring` |
-| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `substring -> (char * substring) option` |
-| val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `substring -> bool` |
-| val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `substring -> int` |
-| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(char -> char) -> substring -> string` |
-| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * char -> char) -> substring -> string` |
-| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `string * int * int option -> substring` |
-| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `substring * int -> char` |
-| val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `substring * int * int option -> substring` |
-| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `substring -> string` |
+| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(char -> bool) -> Substring.substring -> bool` |
+| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(char -> unit) -> Substring.substring -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * char -> unit) -> Substring.substring -> unit` |
+| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `Substring.substring -> string * int * int` |
+| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(char * char -> order) -> Substring.substring * Substring.substring -> order` |
+| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `Substring.substring list -> string` |
+| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(char -> bool) -> Substring.substring -> bool` |
+| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(char -> bool) -> Substring.substring -> char option` |
+| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * char -> bool) -> Substring.substring -> (int * char) option` |
+| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(char * 'a -> 'a) -> 'a -> Substring.substring -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> Substring.substring -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> Substring.substring -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> Substring.substring -> 'a` |
+| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `string -> Substring.substring` |
+| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `Substring.substring -> (char * Substring.substring) option` |
+| val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `Substring.substring -> bool` |
+| val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `Substring.substring -> int` |
+| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(char -> char) -> Substring.substring -> string` |
+| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * char -> char) -> Substring.substring -> string` |
+| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `string * int * int option -> Substring.substring` |
+| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `Substring.substring * int -> char` |
+| val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `Substring.substring * int * int option -> Substring.substring` |
+| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `Substring.substring -> string` |
 
 ## Notes
 

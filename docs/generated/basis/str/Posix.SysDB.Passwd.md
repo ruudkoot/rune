@@ -17,11 +17,11 @@ What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are th
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`passwd`](../sig/POSIX_SYS_DB.md#type-passwd.passwd) | *a type of its own* |
-| val | [`gid`](../sig/POSIX_SYS_DB.md#val-passwd.gid) | `passwd -> Posix.SysDB.gid` |
+| val | [`gid`](../sig/POSIX_SYS_DB.md#val-passwd.gid) | `passwd -> Posix.ProcEnv.gid` |
 | val | [`home`](../sig/POSIX_SYS_DB.md#val-passwd.home) | `passwd -> string` |
 | val | [`name`](../sig/POSIX_SYS_DB.md#val-passwd.name) | `passwd -> string` |
 | val | [`shell`](../sig/POSIX_SYS_DB.md#val-passwd.shell) | `passwd -> string` |
-| val | [`uid`](../sig/POSIX_SYS_DB.md#val-passwd.uid) | `passwd -> Posix.SysDB.uid` |
+| val | [`uid`](../sig/POSIX_SYS_DB.md#val-passwd.uid) | `passwd -> Posix.ProcEnv.uid` |
 
 ---
 

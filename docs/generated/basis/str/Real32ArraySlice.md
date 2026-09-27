@@ -22,18 +22,18 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `Real32Array.array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `Real32.real` |
 | type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `Real32Vector.vector` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `Real32VectorSlice.slice` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(Real32.real -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(Real32.real -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY_SLICE.md#val-appi) | `(int * Real32.real -> unit) -> slice -> unit` |
-| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> array * int * int` |
+| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> Real32Array.array * int * int` |
 | val | [`collate`](../sig/MONO_ARRAY_SLICE.md#val-collate) | `(Real32.real * Real32.real -> order) -> slice * slice -> order` |
-| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : array, src : slice} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : array, src : Real32VectorSlice.slice} -> unit` |
+| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : Real32Array.array, src : slice} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : Real32Array.array, src : Real32VectorSlice.slice} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY_SLICE.md#val-exists) | `(Real32.real -> bool) -> slice -> bool` |
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(Real32.real -> bool) -> slice -> Real32.real option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * Real32.real -> bool) -> slice -> (int * Real32.real) option` |
@@ -41,17 +41,17 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * Real32.real * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(Real32.real * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * Real32.real * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
+| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `Real32Array.array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (Real32.real * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_ARRAY_SLICE.md#val-length) | `slice -> int` |
 | val | [`modify`](../sig/MONO_ARRAY_SLICE.md#val-modify) | `(Real32.real -> Real32.real) -> slice -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY_SLICE.md#val-modifyi) | `(int * Real32.real -> Real32.real) -> slice -> unit` |
-| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `array * int * int option -> slice` |
+| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `Real32Array.array * int * int option -> slice` |
 | val | [`sub`](../sig/MONO_ARRAY_SLICE.md#val-sub) | `slice * int -> Real32.real` |
 | val | [`subslice`](../sig/MONO_ARRAY_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * Real32.real -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> Real32Vector.vector` |
 
 <details><summary>Other implementations (2)</summary>
 

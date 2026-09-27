@@ -24,13 +24,13 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `real` |
 | type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `RealVector.vector` |
 | val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(real -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(real -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * real -> unit) -> slice -> unit` |
-| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> vector * int * int` |
+| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> RealVector.vector * int * int` |
 | val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(real * real -> order) -> slice * slice -> order` |
-| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> vector` |
+| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> RealVector.vector` |
 | val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(real -> bool) -> slice -> bool` |
 | val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(real -> bool) -> slice -> real option` |
 | val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * real -> bool) -> slice -> (int * real) option` |
@@ -38,16 +38,16 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * real * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(real * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * real * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `vector -> slice` |
+| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `RealVector.vector -> slice` |
 | val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (real * slice) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `slice -> int` |
-| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(real -> real) -> slice -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * real -> real) -> slice -> vector` |
-| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `vector * int * int option -> slice` |
+| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(real -> real) -> slice -> RealVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * real -> real) -> slice -> RealVector.vector` |
+| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `RealVector.vector * int * int option -> slice` |
 | val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> real` |
 | val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
-| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> vector` |
+| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> RealVector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

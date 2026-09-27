@@ -24,12 +24,12 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/PRIM_IO.md#type-array) | `array` |
+| type | [`array`](../sig/PRIM_IO.md#type-array) | `Word8Array.array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `Word8ArraySlice.slice` |
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `Word8.word` |
 | type | [`pos`](../sig/PRIM_IO.md#type-pos) | `int` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
-| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `vector` |
+| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `Word8Vector.vector` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `Word8VectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
@@ -37,7 +37,7 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | val | [`compare`](../sig/PRIM_IO.md#val-compare) | `int * int -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
-| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `vector -> reader` |
+| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `Word8Vector.vector -> reader` |
 
 <details><summary>Other implementations (1)</summary>
 

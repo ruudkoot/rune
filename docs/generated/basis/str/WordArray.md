@@ -24,14 +24,14 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `word` |
-| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `WordVector.vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(word -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(word -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * word -> unit) -> array -> unit` |
 | val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * word -> array` |
 | val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(word * word -> order) -> array * array -> order` |
 | val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : vector} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : WordVector.vector} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(word -> bool) -> array -> bool` |
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(word -> bool) -> array -> word option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * word -> bool) -> array -> (int * word) option` |
@@ -47,7 +47,7 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> word` |
 | val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> word) -> array` |
 | val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * word -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> WordVector.vector` |
 
 ---
 

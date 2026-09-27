@@ -22,7 +22,7 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`status`](../sig/OS_PROCESS.md#type-status) | `status` |
+| type | [`status`](../sig/OS_PROCESS.md#type-status) | *a type of its own* |
 | val | [`atExit`](../sig/OS_PROCESS.md#val-atexit) | `(unit -> unit) -> unit` |
 | val | [`exit`](../sig/OS_PROCESS.md#val-exit) | `status -> 'a` |
 | val | [`failure`](../sig/OS_PROCESS.md#val-failure) | `status` |

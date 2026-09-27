@@ -251,6 +251,8 @@ Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a lar
 *IO.StreamIO.inputN/allAndN-random-* | SML/NJ 110.99.9 | inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
 *IO.StreamIO.output*/Io-terminated* | SML/NJ 110.99.9 | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 *IO.setPosOut/* | SML/NJ 110.99.9 | setPosOut neither flushes nor moves the writer: output goes on at the end
+*.StreamIO.filePosIn/Io-closed | MLton | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
+*.StreamIO.filePosIn/Io-closed | SML/NJ | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 *IO.input1/passes-an-end-of-stream | SML/NJ 110.99.9 | input1 never moves past an end-of-stream
 TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ 110.99.9 | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 *IO.[gs]etOutstream/flushes* | Poly/ML | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")

@@ -22,18 +22,18 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `LargeIntArray.array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `IntInf.int` |
 | type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `LargeIntVector.vector` |
 | type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `LargeIntVectorSlice.slice` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(IntInf.int -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(IntInf.int -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY_SLICE.md#val-appi) | `(int * IntInf.int -> unit) -> slice -> unit` |
-| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> array * int * int` |
+| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> LargeIntArray.array * int * int` |
 | val | [`collate`](../sig/MONO_ARRAY_SLICE.md#val-collate) | `(IntInf.int * IntInf.int -> order) -> slice * slice -> order` |
-| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : array, src : slice} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : array, src : LargeIntVectorSlice.slice} -> unit` |
+| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : LargeIntArray.array, src : slice} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : LargeIntArray.array, src : LargeIntVectorSlice.slice} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY_SLICE.md#val-exists) | `(IntInf.int -> bool) -> slice -> bool` |
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(IntInf.int -> bool) -> slice -> IntInf.int option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * IntInf.int -> bool) -> slice -> (int * IntInf.int) option` |
@@ -41,17 +41,17 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * IntInf.int * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(IntInf.int * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * IntInf.int * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
+| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `LargeIntArray.array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (IntInf.int * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_ARRAY_SLICE.md#val-length) | `slice -> int` |
 | val | [`modify`](../sig/MONO_ARRAY_SLICE.md#val-modify) | `(IntInf.int -> IntInf.int) -> slice -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY_SLICE.md#val-modifyi) | `(int * IntInf.int -> IntInf.int) -> slice -> unit` |
-| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `array * int * int option -> slice` |
+| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `LargeIntArray.array * int * int option -> slice` |
 | val | [`sub`](../sig/MONO_ARRAY_SLICE.md#val-sub) | `slice * int -> IntInf.int` |
 | val | [`subslice`](../sig/MONO_ARRAY_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * IntInf.int -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> LargeIntVector.vector` |
 
 <details><summary>Other implementations (2)</summary>
 

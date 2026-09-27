@@ -26,52 +26,52 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | --- | --- | --- |
 | datatype | [`access_mode`](../sig/POSIX_FILE_SYS.md#type-access_mode) | `A_READ` &#124; `A_WRITE` &#124; `A_EXEC` |
 | type | [`dev`](../sig/POSIX_FILE_SYS.md#type-dev) | *a type of its own* |
-| type | [`dirstream`](../sig/POSIX_FILE_SYS.md#type-dirstream) | `dirstream` |
-| type | [`file_desc`](../sig/POSIX_FILE_SYS.md#type-file_desc) | `file_desc` |
-| type | [`gid`](../sig/POSIX_FILE_SYS.md#type-gid) | `gid` |
+| type | [`dirstream`](../sig/POSIX_FILE_SYS.md#type-dirstream) | `OS.FileSys.dirstream` |
+| type | [`file_desc`](../sig/POSIX_FILE_SYS.md#type-file_desc) | `Posix.ProcEnv.file_desc` |
+| type | [`gid`](../sig/POSIX_FILE_SYS.md#type-gid) | `Posix.ProcEnv.gid` |
 | type | [`ino`](../sig/POSIX_FILE_SYS.md#type-ino) | *a type of its own* |
 | datatype | [`open_mode`](../sig/POSIX_FILE_SYS.md#type-open_mode) | `O_RDONLY` &#124; `O_WRONLY` &#124; `O_RDWR` |
-| type | [`uid`](../sig/POSIX_FILE_SYS.md#type-uid) | `uid` |
-| val | [`access`](../sig/POSIX_FILE_SYS.md#val-access) | `string * access_mode list -> bool` |
+| type | [`uid`](../sig/POSIX_FILE_SYS.md#type-uid) | `Posix.ProcEnv.uid` |
+| val | [`access`](../sig/POSIX_FILE_SYS.md#val-access) | `string * OS.FileSys.access_mode list -> bool` |
 | val | [`chdir`](../sig/POSIX_FILE_SYS.md#val-chdir) | `string -> unit` |
 | val | [`chmod`](../sig/POSIX_FILE_SYS.md#val-chmod) | `string * S.mode -> unit` |
-| val | [`chown`](../sig/POSIX_FILE_SYS.md#val-chown) | `string * uid * gid -> unit` |
-| val | [`closedir`](../sig/POSIX_FILE_SYS.md#val-closedir) | `dirstream -> unit` |
-| val | [`creat`](../sig/POSIX_FILE_SYS.md#val-creat) | `string * S.mode -> file_desc` |
-| val | [`createf`](../sig/POSIX_FILE_SYS.md#val-createf) | `string * open_mode * O.flags * S.mode -> file_desc` |
+| val | [`chown`](../sig/POSIX_FILE_SYS.md#val-chown) | `string * Posix.ProcEnv.uid * Posix.ProcEnv.gid -> unit` |
+| val | [`closedir`](../sig/POSIX_FILE_SYS.md#val-closedir) | `OS.FileSys.dirstream -> unit` |
+| val | [`creat`](../sig/POSIX_FILE_SYS.md#val-creat) | `string * S.mode -> Posix.ProcEnv.file_desc` |
+| val | [`createf`](../sig/POSIX_FILE_SYS.md#val-createf) | `string * open_mode * O.flags * S.mode -> Posix.ProcEnv.file_desc` |
 | val | [`devToWord`](../sig/POSIX_FILE_SYS.md#val-devtoword) | `dev -> word` |
-| val | [`fchmod`](../sig/POSIX_FILE_SYS.md#val-fchmod) | `file_desc * S.mode -> unit` |
-| val | [`fchown`](../sig/POSIX_FILE_SYS.md#val-fchown) | `file_desc * uid * gid -> unit` |
-| val | [`fdToIOD`](../sig/POSIX_FILE_SYS.md#val-fdtoiod) | `file_desc -> OS.IO.iodesc` |
-| val | [`fdToWord`](../sig/POSIX_FILE_SYS.md#val-fdtoword) | `file_desc -> word` |
-| val | [`fpathconf`](../sig/POSIX_FILE_SYS.md#val-fpathconf) | `file_desc * string -> word option` |
-| val | [`fstat`](../sig/POSIX_FILE_SYS.md#val-fstat) | `file_desc -> ST.stat` |
-| val | [`ftruncate`](../sig/POSIX_FILE_SYS.md#val-ftruncate) | `file_desc * int -> unit` |
+| val | [`fchmod`](../sig/POSIX_FILE_SYS.md#val-fchmod) | `Posix.ProcEnv.file_desc * S.mode -> unit` |
+| val | [`fchown`](../sig/POSIX_FILE_SYS.md#val-fchown) | `Posix.ProcEnv.file_desc * Posix.ProcEnv.uid * Posix.ProcEnv.gid -> unit` |
+| val | [`fdToIOD`](../sig/POSIX_FILE_SYS.md#val-fdtoiod) | `Posix.ProcEnv.file_desc -> OS.IO.iodesc` |
+| val | [`fdToWord`](../sig/POSIX_FILE_SYS.md#val-fdtoword) | `Posix.ProcEnv.file_desc -> word` |
+| val | [`fpathconf`](../sig/POSIX_FILE_SYS.md#val-fpathconf) | `Posix.ProcEnv.file_desc * string -> word option` |
+| val | [`fstat`](../sig/POSIX_FILE_SYS.md#val-fstat) | `Posix.ProcEnv.file_desc -> ST.stat` |
+| val | [`ftruncate`](../sig/POSIX_FILE_SYS.md#val-ftruncate) | `Posix.ProcEnv.file_desc * int -> unit` |
 | val | [`getcwd`](../sig/POSIX_FILE_SYS.md#val-getcwd) | `unit -> string` |
 | val | [`inoToWord`](../sig/POSIX_FILE_SYS.md#val-inotoword) | `ino -> word` |
-| val | [`iodToFD`](../sig/POSIX_FILE_SYS.md#val-iodtofd) | `OS.IO.iodesc -> file_desc option` |
+| val | [`iodToFD`](../sig/POSIX_FILE_SYS.md#val-iodtofd) | `OS.IO.iodesc -> Posix.ProcEnv.file_desc option` |
 | val | [`link`](../sig/POSIX_FILE_SYS.md#val-link) | `{new : string, old : string} -> unit` |
 | val | [`lstat`](../sig/POSIX_FILE_SYS.md#val-lstat) | `string -> ST.stat` |
 | val | [`mkdir`](../sig/POSIX_FILE_SYS.md#val-mkdir) | `string * S.mode -> unit` |
 | val | [`mkfifo`](../sig/POSIX_FILE_SYS.md#val-mkfifo) | `string * S.mode -> unit` |
-| val | [`opendir`](../sig/POSIX_FILE_SYS.md#val-opendir) | `string -> dirstream` |
-| val | [`openf`](../sig/POSIX_FILE_SYS.md#val-openf) | `string * open_mode * O.flags -> file_desc` |
+| val | [`opendir`](../sig/POSIX_FILE_SYS.md#val-opendir) | `string -> OS.FileSys.dirstream` |
+| val | [`openf`](../sig/POSIX_FILE_SYS.md#val-openf) | `string * open_mode * O.flags -> Posix.ProcEnv.file_desc` |
 | val | [`pathconf`](../sig/POSIX_FILE_SYS.md#val-pathconf) | `string * string -> word option` |
-| val | [`readdir`](../sig/POSIX_FILE_SYS.md#val-readdir) | `dirstream -> string option` |
+| val | [`readdir`](../sig/POSIX_FILE_SYS.md#val-readdir) | `OS.FileSys.dirstream -> string option` |
 | val | [`readlink`](../sig/POSIX_FILE_SYS.md#val-readlink) | `string -> string` |
 | val | [`rename`](../sig/POSIX_FILE_SYS.md#val-rename) | `{new : string, old : string} -> unit` |
-| val | [`rewinddir`](../sig/POSIX_FILE_SYS.md#val-rewinddir) | `dirstream -> unit` |
+| val | [`rewinddir`](../sig/POSIX_FILE_SYS.md#val-rewinddir) | `OS.FileSys.dirstream -> unit` |
 | val | [`rmdir`](../sig/POSIX_FILE_SYS.md#val-rmdir) | `string -> unit` |
 | val | [`stat`](../sig/POSIX_FILE_SYS.md#val-stat) | `string -> ST.stat` |
-| val | [`stderr`](../sig/POSIX_FILE_SYS.md#val-stderr) | `file_desc` |
-| val | [`stdin`](../sig/POSIX_FILE_SYS.md#val-stdin) | `file_desc` |
-| val | [`stdout`](../sig/POSIX_FILE_SYS.md#val-stdout) | `file_desc` |
+| val | [`stderr`](../sig/POSIX_FILE_SYS.md#val-stderr) | `Posix.ProcEnv.file_desc` |
+| val | [`stdin`](../sig/POSIX_FILE_SYS.md#val-stdin) | `Posix.ProcEnv.file_desc` |
+| val | [`stdout`](../sig/POSIX_FILE_SYS.md#val-stdout) | `Posix.ProcEnv.file_desc` |
 | val | [`symlink`](../sig/POSIX_FILE_SYS.md#val-symlink) | `{new : string, old : string} -> unit` |
 | val | [`umask`](../sig/POSIX_FILE_SYS.md#val-umask) | `S.mode -> S.mode` |
 | val | [`unlink`](../sig/POSIX_FILE_SYS.md#val-unlink) | `string -> unit` |
 | val | [`utime`](../sig/POSIX_FILE_SYS.md#val-utime) | `string * {actime : Time.time, modtime : Time.time} option -> unit` |
 | val | [`wordToDev`](../sig/POSIX_FILE_SYS.md#val-wordtodev) | `word -> dev` |
-| val | [`wordToFD`](../sig/POSIX_FILE_SYS.md#val-wordtofd) | `word -> file_desc` |
+| val | [`wordToFD`](../sig/POSIX_FILE_SYS.md#val-wordtofd) | `word -> Posix.ProcEnv.file_desc` |
 | val | [`wordToIno`](../sig/POSIX_FILE_SYS.md#val-wordtoino) | `word -> ino` |
 | structure | [`O`](../str/Posix.FileSys.O.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |
 | structure | [`S`](../str/Posix.FileSys.S.md) | [`BIT_FLAGS`](../sig/BIT_FLAGS.md) |

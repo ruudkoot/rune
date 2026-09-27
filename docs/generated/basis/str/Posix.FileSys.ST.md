@@ -24,7 +24,7 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`atime`](../sig/POSIX_FILE_SYS.md#val-st.atime) | `stat -> Time.time` |
 | val | [`ctime`](../sig/POSIX_FILE_SYS.md#val-st.ctime) | `stat -> Time.time` |
 | val | [`dev`](../sig/POSIX_FILE_SYS.md#val-st.dev) | `stat -> Posix.FileSys.dev` |
-| val | [`gid`](../sig/POSIX_FILE_SYS.md#val-st.gid) | `stat -> Posix.SysDB.gid` |
+| val | [`gid`](../sig/POSIX_FILE_SYS.md#val-st.gid) | `stat -> Posix.ProcEnv.gid` |
 | val | [`ino`](../sig/POSIX_FILE_SYS.md#val-st.ino) | `stat -> Posix.FileSys.ino` |
 | val | [`isBlk`](../sig/POSIX_FILE_SYS.md#val-st.isblk) | `stat -> bool` |
 | val | [`isChr`](../sig/POSIX_FILE_SYS.md#val-st.ischr) | `stat -> bool` |
@@ -37,7 +37,7 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 | val | [`mtime`](../sig/POSIX_FILE_SYS.md#val-st.mtime) | `stat -> Time.time` |
 | val | [`nlink`](../sig/POSIX_FILE_SYS.md#val-st.nlink) | `stat -> int` |
 | val | [`size`](../sig/POSIX_FILE_SYS.md#val-st.size) | `stat -> int` |
-| val | [`uid`](../sig/POSIX_FILE_SYS.md#val-st.uid) | `stat -> Posix.SysDB.uid` |
+| val | [`uid`](../sig/POSIX_FILE_SYS.md#val-st.uid) | `stat -> Posix.ProcEnv.uid` |
 
 ## Notes
 

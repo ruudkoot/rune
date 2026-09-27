@@ -170,9 +170,9 @@ reading one reads both.
 | --- | --- | --- | --- | --- | --- | --- |
 | [`Array`](../generated/basis/str/Array.md) | done | done | done | done | done | done |
 | [`Array2`](../generated/basis/str/Array2.md) | done | done | done | done | done | done |
-| [`ArraySlice`](../generated/basis/str/ArraySlice.md) |  |  |  |  |  |  |
-| [`BinIO`](../generated/basis/str/BinIO.md) |  |  |  |  |  |  |
-| [`BinIO.StreamIO`](../generated/basis/str/BinIO.StreamIO.md) |  |  |  |  |  |  |
+| [`ArraySlice`](../generated/basis/str/ArraySlice.md) | done | done | done | done | done | done |
+| [`BinIO`](../generated/basis/str/BinIO.md) | done | done | done | done | done | done |
+| [`BinIO.StreamIO`](../generated/basis/str/BinIO.StreamIO.md) | done | done | done | done | done | done |
 | [`BinPrimIO`](../generated/basis/str/BinPrimIO.md) |  |  |  |  |  |  |
 | [`Bool`](../generated/basis/str/Bool.md) |  |  |  |  |  |  |
 | [`BoolArray`](../generated/basis/str/BoolArray.md) |  |  |  |  |  |  |

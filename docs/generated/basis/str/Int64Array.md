@@ -24,14 +24,14 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Int64.int` |
-| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Int64Vector.vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Int64.int -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Int64.int -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Int64.int -> unit) -> array -> unit` |
 | val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Int64.int -> array` |
 | val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Int64.int * Int64.int -> order) -> array * array -> order` |
 | val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : vector} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : Int64Vector.vector} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Int64.int -> bool) -> array -> bool` |
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Int64.int -> bool) -> array -> Int64.int option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Int64.int -> bool) -> array -> (int * Int64.int) option` |
@@ -47,7 +47,7 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> Int64.int` |
 | val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Int64.int) -> array` |
 | val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * Int64.int -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> Int64Vector.vector` |
 
 ---
 

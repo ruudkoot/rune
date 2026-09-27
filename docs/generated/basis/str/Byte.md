@@ -26,10 +26,10 @@ What each means is on [`BYTE`](../sig/BYTE.md); the types are this structure's o
 |  | Member | Is |
 | --- | --- | --- |
 | val | [`byteToChar`](../sig/BYTE.md#val-bytetochar) | `Word8.word -> char` |
-| val | [`bytesToString`](../sig/BYTE.md#val-bytestostring) | `BinIO.vector -> string` |
+| val | [`bytesToString`](../sig/BYTE.md#val-bytestostring) | `Word8Vector.vector -> string` |
 | val | [`charToByte`](../sig/BYTE.md#val-chartobyte) | `char -> Word8.word` |
-| val | [`packString`](../sig/BYTE.md#val-packstring) | `BinPrimIO.array * int * substring -> unit` |
-| val | [`stringToBytes`](../sig/BYTE.md#val-stringtobytes) | `string -> BinIO.vector` |
+| val | [`packString`](../sig/BYTE.md#val-packstring) | `Word8Array.array * int * Substring.substring -> unit` |
+| val | [`stringToBytes`](../sig/BYTE.md#val-stringtobytes) | `string -> Word8Vector.vector` |
 | val | [`unpackString`](../sig/BYTE.md#val-unpackstring) | `Word8ArraySlice.slice -> string` |
 | val | [`unpackStringVec`](../sig/BYTE.md#val-unpackstringvec) | `Word8VectorSlice.slice -> string` |
 

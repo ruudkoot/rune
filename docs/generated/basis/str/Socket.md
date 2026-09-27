@@ -32,8 +32,8 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 | type | [`out_flags`](../sig/SOCKET.md#type-out_flags) | `{don't_route : bool, oob : bool}` |
 | type | [`passive`](../sig/SOCKET.md#type-passive) | `passive'` |
 | datatype | [`shutdown_mode`](../sig/SOCKET.md#type-shutdown_mode) | `NO_RECVS` &#124; `NO_SENDS` &#124; `NO_RECVS_OR_SENDS` |
-| type | [`sock`](../sig/SOCKET.md#type-sock) | `('a, 'b) sock` |
-| type | [`sock_addr`](../sig/SOCKET.md#type-sock_addr) | `'a sock_addr` |
+| type | [`sock`](../sig/SOCKET.md#type-sock) | *a type of its own* |
+| type | [`sock_addr`](../sig/SOCKET.md#type-sock_addr) | *a type of its own* |
 | type | [`sock_desc`](../sig/SOCKET.md#type-sock_desc) | *a type of its own* |
 | type | [`stream`](../sig/SOCKET.md#type-stream) | `'a stream'` |
 | val | [`accept`](../sig/SOCKET.md#val-accept) | `('a, passive' stream') sock -> ('a, active' stream') sock * 'a sock_addr` |
@@ -42,7 +42,7 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 | val | [`close`](../sig/SOCKET.md#val-close) | `('a, 'b) sock -> unit` |
 | val | [`connect`](../sig/SOCKET.md#val-connect) | `('a, 'b) sock * 'a sock_addr -> unit` |
 | val | [`connectNB`](../sig/SOCKET.md#val-connectnb) | `('a, 'b) sock * 'a sock_addr -> bool` |
-| val | [`familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) | `'a sock_addr -> AF.addr_family` |
+| val | [`familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) | `'a sock_addr -> NetHostDB.addr_family` |
 | val | [`ioDesc`](../sig/SOCKET.md#val-iodesc) | `('a, 'b) sock -> OS.IO.iodesc` |
 | val | [`listen`](../sig/SOCKET.md#val-listen) | `('a, passive' stream') sock * int -> unit` |
 | val | [`recvArr`](../sig/SOCKET.md#val-recvarr) | `('a, active' stream') sock * Word8ArraySlice.slice -> int` |
@@ -53,14 +53,14 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 | val | [`recvArrFromNB'`](../sig/SOCKET.md#val-recvarrfromnb-prime) | `('a, dgram') sock * Word8ArraySlice.slice * in_flags -> (int * 'a sock_addr) option` |
 | val | [`recvArrNB`](../sig/SOCKET.md#val-recvarrnb) | `('a, active' stream') sock * Word8ArraySlice.slice -> int option` |
 | val | [`recvArrNB'`](../sig/SOCKET.md#val-recvarrnb-prime) | `('a, active' stream') sock * Word8ArraySlice.slice * in_flags -> int option` |
-| val | [`recvVec`](../sig/SOCKET.md#val-recvvec) | `('a, active' stream') sock * int -> BinIO.vector` |
-| val | [`recvVec'`](../sig/SOCKET.md#val-recvvec-prime) | `('a, active' stream') sock * int * in_flags -> BinIO.vector` |
-| val | [`recvVecFrom`](../sig/SOCKET.md#val-recvvecfrom) | `('a, dgram') sock * int -> BinIO.vector * 'a sock_addr` |
-| val | [`recvVecFrom'`](../sig/SOCKET.md#val-recvvecfrom-prime) | `('a, dgram') sock * int * in_flags -> BinIO.vector * 'a sock_addr` |
-| val | [`recvVecFromNB`](../sig/SOCKET.md#val-recvvecfromnb) | `('a, dgram') sock * int -> (BinIO.vector * 'a sock_addr) option` |
-| val | [`recvVecFromNB'`](../sig/SOCKET.md#val-recvvecfromnb-prime) | `('a, dgram') sock * int * in_flags -> (BinIO.vector * 'a sock_addr) option` |
-| val | [`recvVecNB`](../sig/SOCKET.md#val-recvvecnb) | `('a, active' stream') sock * int -> BinIO.vector option` |
-| val | [`recvVecNB'`](../sig/SOCKET.md#val-recvvecnb-prime) | `('a, active' stream') sock * int * in_flags -> BinIO.vector option` |
+| val | [`recvVec`](../sig/SOCKET.md#val-recvvec) | `('a, active' stream') sock * int -> Word8Vector.vector` |
+| val | [`recvVec'`](../sig/SOCKET.md#val-recvvec-prime) | `('a, active' stream') sock * int * in_flags -> Word8Vector.vector` |
+| val | [`recvVecFrom`](../sig/SOCKET.md#val-recvvecfrom) | `('a, dgram') sock * int -> Word8Vector.vector * 'a sock_addr` |
+| val | [`recvVecFrom'`](../sig/SOCKET.md#val-recvvecfrom-prime) | `('a, dgram') sock * int * in_flags -> Word8Vector.vector * 'a sock_addr` |
+| val | [`recvVecFromNB`](../sig/SOCKET.md#val-recvvecfromnb) | `('a, dgram') sock * int -> (Word8Vector.vector * 'a sock_addr) option` |
+| val | [`recvVecFromNB'`](../sig/SOCKET.md#val-recvvecfromnb-prime) | `('a, dgram') sock * int * in_flags -> (Word8Vector.vector * 'a sock_addr) option` |
+| val | [`recvVecNB`](../sig/SOCKET.md#val-recvvecnb) | `('a, active' stream') sock * int -> Word8Vector.vector option` |
+| val | [`recvVecNB'`](../sig/SOCKET.md#val-recvvecnb-prime) | `('a, active' stream') sock * int * in_flags -> Word8Vector.vector option` |
 | val | [`sameAddr`](../sig/SOCKET.md#val-sameaddr) | `'a sock_addr * 'a sock_addr -> bool` |
 | val | [`sameDesc`](../sig/SOCKET.md#val-samedesc) | `sock_desc * sock_desc -> bool` |
 | val | [`select`](../sig/SOCKET.md#val-select) | `{exs : sock_desc list, rds : sock_desc list, timeout : Time.time option, wrs : sock_desc list} -> {exs : sock_desc list, rds : sock_desc list, wrs : sock_desc list}` |

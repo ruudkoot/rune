@@ -26,7 +26,7 @@ What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | [`access_mode`](../sig/OS_FILE_SYS.md#type-access_mode) | `A_READ` &#124; `A_WRITE` &#124; `A_EXEC` |
-| type | [`dirstream`](../sig/OS_FILE_SYS.md#type-dirstream) | `dirstream` |
+| type | [`dirstream`](../sig/OS_FILE_SYS.md#type-dirstream) | *a type of its own* |
 | type | [`file_id`](../sig/OS_FILE_SYS.md#type-file_id) | *a type of its own* |
 | val | [`access`](../sig/OS_FILE_SYS.md#val-access) | `string * access_mode list -> bool` |
 | val | [`chDir`](../sig/OS_FILE_SYS.md#val-chdir) | `string -> unit` |

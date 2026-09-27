@@ -26,8 +26,8 @@ What each means is on [`TEXT_IO`](../sig/TEXT_IO.md) and [`IMPERATIVE_IO`](../si
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/TEXT_IO.md#type-elem) | `char` |
-| type | [`instream`](../sig/TEXT_IO.md#type-instream) | `instream` |
-| type | [`outstream`](../sig/TEXT_IO.md#type-outstream) | `outstream` |
+| type | [`instream`](../sig/TEXT_IO.md#type-instream) | *a type of its own* |
+| type | [`outstream`](../sig/TEXT_IO.md#type-outstream) | *a type of its own* |
 | type | [`vector`](../sig/TEXT_IO.md#type-vector) | `string` |
 | val | [`canInput`](../sig/TEXT_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/TEXT_IO.md#val-closein) | `instream -> unit` |
@@ -51,7 +51,7 @@ What each means is on [`TEXT_IO`](../sig/TEXT_IO.md) and [`IMPERATIVE_IO`](../si
 | val | [`openString`](../sig/TEXT_IO.md#val-openstring) | `string -> instream` |
 | val | [`output`](../sig/TEXT_IO.md#val-output) | `outstream * string -> unit` |
 | val | [`output1`](../sig/TEXT_IO.md#val-output1) | `outstream * char -> unit` |
-| val | [`outputSubstr`](../sig/TEXT_IO.md#val-outputsubstr) | `outstream * substring -> unit` |
+| val | [`outputSubstr`](../sig/TEXT_IO.md#val-outputsubstr) | `outstream * Substring.substring -> unit` |
 | val | [`print`](../sig/TEXT_IO.md#val-print) | `string -> unit` |
 | val | [`scanStream`](../sig/TEXT_IO.md#val-scanstream) | `((StreamIO.instream -> (char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
 | val | [`setInstream`](../sig/TEXT_IO.md#val-setinstream) | `instream * StreamIO.instream -> unit` |

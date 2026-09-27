@@ -20,21 +20,21 @@ The types are this structure's own.
 | --- | --- | --- |
 | type | `elem` | `WideChar.char` |
 | datatype | `instream` | `In` |
-| type | `out_pos` | `{position : pos, stream : outstream}` |
+| type | `out_pos` | `{position : WideTextPrimIO.pos, stream : outstream}` |
 | datatype | `outstream` | `Out` |
-| type | `pos` | `pos` |
-| type | `reader` | `reader` |
+| type | `pos` | `WideTextPrimIO.pos` |
+| type | `reader` | `WideTextPrimIO.reader` |
 | datatype | `segment` | `Unread` &#124; `Chunk` &#124; `Eos` |
-| type | `state` | `{active : bool ref, augmented : reader, closed : bool ref, reader : reader}` |
+| type | `state` | `{active : bool ref, augmented : WideTextPrimIO.reader, closed : bool ref, reader : WideTextPrimIO.reader}` |
 | datatype | `status` | `Active` &#124; `Terminated` &#124; `Closed` |
-| type | `vector` | `vector` |
-| type | `writer` | `writer` |
+| type | `vector` | `WideCharVector.vector` |
+| type | `writer` | `WideTextPrimIO.writer` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
 | val | `endOfStream` | `instream -> bool` |
-| val | `filePosIn` | `instream -> pos` |
-| val | `filePosOut` | `out_pos -> pos` |
+| val | `filePosIn` | `instream -> WideTextPrimIO.pos` |
+| val | `filePosOut` | `out_pos -> WideTextPrimIO.pos` |
 | val | `flushAll` | `outstream * string -> unit` |
 | val | `flushBuffer` | `outstream * string -> unit` |
 | val | `flushDevice` | `outstream * string -> unit` |
@@ -42,29 +42,29 @@ The types are this structure's own.
 | val | `force` | `segment ref * state * string -> segment` |
 | val | `getBufferMode` | `outstream -> IO.buffer_mode` |
 | val | `getPosOut` | `outstream -> out_pos` |
-| val | `getReader` | `instream -> reader * vector` |
-| val | `getWriter` | `outstream -> writer * IO.buffer_mode` |
+| val | `getReader` | `instream -> WideTextPrimIO.reader * WideCharVector.vector` |
+| val | `getWriter` | `outstream -> WideTextPrimIO.writer * IO.buffer_mode` |
 | val | `guarded` | `string * string -> ('a -> 'b) -> 'a -> 'b` |
-| val | `hasNewline` | `vector -> bool` |
+| val | `hasNewline` | `WideCharVector.vector -> bool` |
 | val | `here` | `(unit -> 'a) option -> 'a option` |
-| val | `input` | `instream -> vector * instream` |
+| val | `input` | `instream -> WideCharVector.vector * instream` |
 | val | `input1` | `instream -> (WideChar.char * instream) option` |
-| val | `inputAll` | `instream -> vector * instream` |
-| val | `inputLine` | `instream -> (vector * instream) option` |
-| val | `inputN` | `instream * int -> vector * instream` |
+| val | `inputAll` | `instream -> WideCharVector.vector * instream` |
+| val | `inputLine` | `instream -> (WideCharVector.vector * instream) option` |
+| val | `inputN` | `instream * int -> WideCharVector.vector * instream` |
 | val | `ioError` | `string * string * exn -> 'a` |
-| val | `mkInstream` | `reader * vector -> instream` |
-| val | `mkOutstream` | `writer * IO.buffer_mode -> outstream` |
-| val | `mkOutstreamOver` | `writer * IO.buffer_mode * {flush : unit -> unit, write : vector -> unit} -> outstream` |
-| val | `output` | `outstream * vector -> unit` |
+| val | `mkInstream` | `WideTextPrimIO.reader * WideCharVector.vector -> instream` |
+| val | `mkOutstream` | `WideTextPrimIO.writer * IO.buffer_mode -> outstream` |
+| val | `mkOutstreamOver` | `WideTextPrimIO.writer * IO.buffer_mode * {flush : unit -> unit, write : WideCharVector.vector -> unit} -> outstream` |
+| val | `output` | `outstream * WideCharVector.vector -> unit` |
 | val | `output1` | `outstream * WideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
-| val | `outputWith` | `outstream * vector * string -> unit` |
-| val | `readerName` | `reader -> string` |
+| val | `outputWith` | `outstream * WideCharVector.vector * string -> unit` |
+| val | `readerName` | `WideTextPrimIO.reader -> string` |
 | val | `setBufferMode` | `outstream * IO.buffer_mode -> unit` |
 | val | `setPosOut` | `out_pos -> outstream` |
-| val | `writeAll` | `writer * vector * string -> unit` |
-| val | `writerName` | `writer -> string` |
+| val | `writeAll` | `WideTextPrimIO.writer * WideCharVector.vector * string -> unit` |
+| val | `writerName` | `WideTextPrimIO.writer -> string` |
 
 ---
 

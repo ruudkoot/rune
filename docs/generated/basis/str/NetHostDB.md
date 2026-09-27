@@ -24,9 +24,9 @@ What each means is on [`NET_HOST_DB`](../sig/NET_HOST_DB.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`addr_family`](../sig/NET_HOST_DB.md#type-addr_family) | `addr_family` |
+| type | [`addr_family`](../sig/NET_HOST_DB.md#type-addr_family) | *a type of its own* |
 | type | [`entry`](../sig/NET_HOST_DB.md#type-entry) | *a type of its own* |
-| type | [`in_addr`](../sig/NET_HOST_DB.md#type-in_addr) | `in_addr` |
+| type | [`in_addr`](../sig/NET_HOST_DB.md#type-in_addr) | *a type of its own* |
 | val | [`addr`](../sig/NET_HOST_DB.md#val-addr) | `entry -> in_addr` |
 | val | [`addrType`](../sig/NET_HOST_DB.md#val-addrtype) | `entry -> addr_family` |
 | val | [`addrs`](../sig/NET_HOST_DB.md#val-addrs) | `entry -> in_addr list` |

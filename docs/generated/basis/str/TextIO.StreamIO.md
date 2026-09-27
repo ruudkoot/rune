@@ -26,34 +26,34 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/STREAM_IO.md#type-elem) | `char` |
-| type | [`instream`](../sig/STREAM_IO.md#type-instream) | `instream` |
+| type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
-| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | `outstream` |
-| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `pos` |
-| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `reader` |
+| type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
+| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `TextPrimIO.pos` |
+| type | [`reader`](../sig/STREAM_IO.md#type-reader) | `TextPrimIO.reader` |
 | type | [`vector`](../sig/STREAM_IO.md#type-vector) | `string` |
-| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `writer` |
+| type | [`writer`](../sig/STREAM_IO.md#type-writer) | `TextPrimIO.writer` |
 | val | [`canInput`](../sig/STREAM_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |
 | val | [`endOfStream`](../sig/STREAM_IO.md#val-endofstream) | `instream -> bool` |
-| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> pos` |
-| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> pos` |
+| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> TextPrimIO.pos` |
+| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> TextPrimIO.pos` |
 | val | [`flushOut`](../sig/STREAM_IO.md#val-flushout) | `outstream -> unit` |
 | val | [`getBufferMode`](../sig/STREAM_IO.md#val-getbuffermode) | `outstream -> IO.buffer_mode` |
 | val | [`getPosOut`](../sig/STREAM_IO.md#val-getposout) | `outstream -> out_pos` |
-| val | [`getReader`](../sig/STREAM_IO.md#val-getreader) | `instream -> reader * string` |
-| val | [`getWriter`](../sig/STREAM_IO.md#val-getwriter) | `outstream -> writer * IO.buffer_mode` |
+| val | [`getReader`](../sig/STREAM_IO.md#val-getreader) | `instream -> TextPrimIO.reader * string` |
+| val | [`getWriter`](../sig/STREAM_IO.md#val-getwriter) | `outstream -> TextPrimIO.writer * IO.buffer_mode` |
 | val | [`input`](../sig/STREAM_IO.md#val-input) | `instream -> string * instream` |
 | val | [`input1`](../sig/STREAM_IO.md#val-input1) | `instream -> (char * instream) option` |
 | val | [`inputAll`](../sig/STREAM_IO.md#val-inputall) | `instream -> string * instream` |
 | val | [`inputLine`](../sig/TEXT_STREAM_IO.md#val-inputline) | `instream -> (string * instream) option` |
 | val | [`inputN`](../sig/STREAM_IO.md#val-inputn) | `instream * int -> string * instream` |
-| val | [`mkInstream`](../sig/STREAM_IO.md#val-mkinstream) | `reader * string -> instream` |
-| val | [`mkOutstream`](../sig/STREAM_IO.md#val-mkoutstream) | `writer * IO.buffer_mode -> outstream` |
+| val | [`mkInstream`](../sig/STREAM_IO.md#val-mkinstream) | `TextPrimIO.reader * string -> instream` |
+| val | [`mkOutstream`](../sig/STREAM_IO.md#val-mkoutstream) | `TextPrimIO.writer * IO.buffer_mode -> outstream` |
 | val | [`output`](../sig/STREAM_IO.md#val-output) | `outstream * string -> unit` |
 | val | [`output1`](../sig/STREAM_IO.md#val-output1) | `outstream * char -> unit` |
-| val | [`outputSubstr`](../sig/TEXT_STREAM_IO.md#val-outputsubstr) | `outstream * substring -> unit` |
+| val | [`outputSubstr`](../sig/TEXT_STREAM_IO.md#val-outputsubstr) | `outstream * Substring.substring -> unit` |
 | val | [`setBufferMode`](../sig/STREAM_IO.md#val-setbuffermode) | `outstream * IO.buffer_mode -> unit` |
 | val | [`setPosOut`](../sig/STREAM_IO.md#val-setposout) | `out_pos -> outstream` |
 

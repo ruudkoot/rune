@@ -17,7 +17,7 @@ What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are th
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`group`](../sig/POSIX_SYS_DB.md#type-group.group) | *a type of its own* |
-| val | [`gid`](../sig/POSIX_SYS_DB.md#val-group.gid) | `group -> Posix.SysDB.gid` |
+| val | [`gid`](../sig/POSIX_SYS_DB.md#val-group.gid) | `group -> Posix.ProcEnv.gid` |
 | val | [`members`](../sig/POSIX_SYS_DB.md#val-group.members) | `group -> string list` |
 | val | [`name`](../sig/POSIX_SYS_DB.md#val-group.name) | `group -> string` |
 

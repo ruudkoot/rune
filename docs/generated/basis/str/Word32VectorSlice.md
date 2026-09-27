@@ -24,13 +24,13 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `Word32.word` |
 | type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | *a type of its own* |
-| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `Word32Vector.vector` |
 | val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(Word32.word -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(Word32.word -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * Word32.word -> unit) -> slice -> unit` |
-| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> vector * int * int` |
+| val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> Word32Vector.vector * int * int` |
 | val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(Word32.word * Word32.word -> order) -> slice * slice -> order` |
-| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> vector` |
+| val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> Word32Vector.vector` |
 | val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(Word32.word -> bool) -> slice -> bool` |
 | val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(Word32.word -> bool) -> slice -> Word32.word option` |
 | val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * Word32.word -> bool) -> slice -> (int * Word32.word) option` |
@@ -38,16 +38,16 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * Word32.word * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(Word32.word * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * Word32.word * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `vector -> slice` |
+| val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `Word32Vector.vector -> slice` |
 | val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (Word32.word * slice) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `slice -> int` |
-| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(Word32.word -> Word32.word) -> slice -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * Word32.word -> Word32.word) -> slice -> vector` |
-| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `vector * int * int option -> slice` |
+| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(Word32.word -> Word32.word) -> slice -> Word32Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * Word32.word -> Word32.word) -> slice -> Word32Vector.vector` |
+| val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `Word32Vector.vector * int * int option -> slice` |
 | val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> Word32.word` |
 | val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
-| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> vector` |
+| val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> Word32Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

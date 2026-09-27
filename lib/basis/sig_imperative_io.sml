@@ -20,6 +20,12 @@
 
    See also: `STREAM_IO`, `TEXT_IO`, `BIN_IO`, `PRIM_IO`
 
+   Erratum: `IMPERATIVE_IO/getOutStream`. The specification's code for
+   `output` and `flushOut` calls `getOutStream`; the member is
+   `getOutstream`. Taken as written, that code would also flush the stream
+   before every `output`, since `getOutstream` flushes: it shows what the
+   operations do to the stream underneath, not how often they flush.
+
    Implementation: `IMPERATIVE_IO/functor-is-sealed`. The functor
    `ImperativeIO` is ascribed this signature, so what it gives a program is
    what the signature names. The library's own `RuneImperativeIOFn`, which it
@@ -57,7 +63,12 @@ sig
      At an end of stream it is the empty vector and `f` moves past that end
      of stream.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Law: `input f = let val (v, s) = StreamIO.input (getInstream f) in
+     setInstream (f, s); v end`
+
+     Example: `Byte.bytesToString (input (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")))) = "abc"` *)
   val input : instream -> vector
 
   (* `input1 f` is `SOME` of the next element, or `NONE` at an end of stream.
@@ -69,7 +80,10 @@ sig
      it found, as `StreamIO.inputN (f, 1)` does, so a following `input1`
      delivers what the source has gained since.
 
-     Pinned by: `*IO.input1/file-grows-after-end-of-stream` *)
+     Pinned by: `*IO.input1/file-grows-after-end-of-stream`
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in (input1 f, input1 f,
+     input1 f) end = (SOME 0w97, SOME 0w98, NONE)` *)
   val input1 : instream -> elem option
 
   (* `inputN (f, n)` is `n` elements, or all there are before the next end of stream.
@@ -82,7 +96,11 @@ sig
      number of elements to be returned exceeds the greatest length of a
      vector, as `STREAM_IO` puts it, not when `n` does.
 
-     Pinned by: `*IO.inputN/more-than-maxSize-of-a-short-file` *)
+     Pinned by: `*IO.inputN/more-than-maxSize-of-a-short-file`
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abcde"), Byte.stringToBytes "")) in
+     Byte.bytesToString (inputN (f, 2)) ^ "|" ^ Byte.bytesToString (inputAll
+     f) end = "ab|cde"` *)
   val inputN : instream * int -> vector
 
   (* `inputAll f` is everything up to the next end of stream.
@@ -93,12 +111,17 @@ sig
      real for a file: a read after one delivers what was appended since, so a
      second `inputAll` need not be empty.
 
-     Pinned by: `*IO.inputAll/file-grows-after-end-of-stream` *)
+     Pinned by: `*IO.inputAll/file-grows-after-end-of-stream`
+
+     Law: `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in
+     setInstream (f, s); v end` *)
   val inputAll : instream -> vector
 
   (* `canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.
 
-     Raises: `Size` if `n < 0`. *)
+     Raises: `Size` if `n < 0`.
+
+     Law: `canInput (f, n) = StreamIO.canInput (getInstream f, n)` *)
   val canInput : instream * int -> int option
 
   (* `lookahead f` is `SOME` of the next element without removing it, or `NONE` at an end of stream.
@@ -111,7 +134,12 @@ sig
      consumes.
 
      Pinned by: `*IO.lookahead/does-not-pass-an-end-of-stream`,
-     `*IO.lookahead/does-not-remove` *)
+     `*IO.lookahead/does-not-remove`
+
+     Law: `lookahead f = Option.map #1 (StreamIO.input1 (getInstream f))`
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in (lookahead f, input1 f)
+     end = (SOME 0w97, SOME 0w97)` *)
   val lookahead : instream -> elem option
 
   (* `closeIn f` closes the stream and its reader.
@@ -121,7 +149,10 @@ sig
      stream had read ahead of the program is dropped, so nothing can be read
      after `closeIn`. Closing twice is allowed.
 
-     Raises: `IO.Io` if the reader fails while closing. *)
+     Raises: `IO.Io` if the reader fails while closing.
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in closeIn f; input1 f end
+     = NONE` *)
   val closeIn : instream -> unit
 
   (* `endOfStream f` is `true` when nothing is left before the next end of stream.
@@ -133,7 +164,12 @@ sig
      that read gives nothing, and only afterwards is what the source gained
      seen.
 
-     Pinned by: `*IO.endOfStream/file-grows-after-end-of-stream` *)
+     Pinned by: `*IO.endOfStream/file-grows-after-end-of-stream`
+
+     Law: `endOfStream f = StreamIO.endOfStream (getInstream f)`
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "a"), Byte.stringToBytes "")) in (endOfStream f, input1 f,
+     endOfStream f) end = (false, SOME 0w97, true)` *)
   val endOfStream : instream -> bool
 
   (* ---- Writing ---- *)
@@ -168,7 +204,13 @@ sig
   (* `getInstream f` is the functional stream that `f` is at. *)
   val getInstream : instream -> StreamIO.instream
 
-  (* `setInstream (f, s)` makes `f` continue at `s`. *)
+  (* `setInstream (f, s)` makes `f` continue at `s`.
+
+     With `getInstream`, this is how a program reads ahead and goes back: the
+     stream it put aside is where the reading resumes.
+
+     Example: `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")) val s = getInstream f in
+     ignore (input1 f); setInstream (f, s); input1 f end = SOME 0w97` *)
   val setInstream : instream * StreamIO.instream -> unit
 
   (* `mkOutstream s` is an imperative stream holding the functional stream `s`. *)

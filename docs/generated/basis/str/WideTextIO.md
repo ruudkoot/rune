@@ -39,7 +39,7 @@ The types are this structure's own.
 | type | `elem` | `WideChar.char` |
 | datatype | `instream` | `InStream` |
 | datatype | `outstream` | `OutStream` |
-| type | `vector` | `vector` |
+| type | `vector` | `WideCharVector.vector` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
@@ -48,22 +48,22 @@ The types are this structure's own.
 | val | `getInstream` | `instream -> StreamIO.instream` |
 | val | `getOutstream` | `outstream -> StreamIO.outstream` |
 | val | `getPosOut` | `outstream -> StreamIO.out_pos` |
-| val | `input` | `instream -> vector` |
+| val | `input` | `instream -> WideCharVector.vector` |
 | val | `input1` | `instream -> WideChar.char option` |
-| val | `inputAll` | `instream -> vector` |
-| val | `inputLine` | `instream -> vector option` |
-| val | `inputN` | `instream * int -> vector` |
+| val | `inputAll` | `instream -> WideCharVector.vector` |
+| val | `inputLine` | `instream -> WideCharVector.vector option` |
+| val | `inputN` | `instream * int -> WideCharVector.vector` |
 | val | `lookahead` | `instream -> WideChar.char option` |
 | val | `mkInstream` | `StreamIO.instream -> instream` |
 | val | `mkOutstream` | `StreamIO.outstream -> outstream` |
 | val | `openAppend` | `string -> outstream` |
 | val | `openIn` | `string -> instream` |
 | val | `openOut` | `string -> outstream` |
-| val | `openString` | `vector -> instream` |
-| val | `output` | `outstream * vector -> unit` |
+| val | `openString` | `WideCharVector.vector -> instream` |
+| val | `output` | `outstream * WideCharVector.vector -> unit` |
 | val | `output1` | `outstream * WideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
-| val | `print` | `vector -> unit` |
+| val | `print` | `WideCharVector.vector -> unit` |
 | val | `scanStream` | `((StreamIO.instream -> (WideChar.char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
 | val | `setInstream` | `instream * StreamIO.instream -> unit` |
 | val | `setOutstream` | `outstream * StreamIO.outstream -> unit` |

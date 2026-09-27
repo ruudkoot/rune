@@ -25,7 +25,7 @@ What each means is on [`OS_IO`](../sig/OS_IO.md); the types are this structure's
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`iodesc`](../sig/OS_IO.md#type-iodesc) | `iodesc` |
+| type | [`iodesc`](../sig/OS_IO.md#type-iodesc) | *a type of its own* |
 | type | [`iodesc_kind`](../sig/OS_IO.md#type-iodesc_kind) | *a type of its own* |
 | type | [`poll_desc`](../sig/OS_IO.md#type-poll_desc) | *a type of its own* |
 | type | [`poll_info`](../sig/OS_IO.md#type-poll_info) | *a type of its own* |

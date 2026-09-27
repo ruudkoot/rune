@@ -25,12 +25,12 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/PRIM_IO.md#type-array) | `array` |
+| type | [`array`](../sig/PRIM_IO.md#type-array) | `WideCharArray.array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `WideCharArraySlice.slice` |
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `WideChar.char` |
-| type | [`pos`](../sig/PRIM_IO.md#type-pos) | `pos` |
+| type | [`pos`](../sig/PRIM_IO.md#type-pos) | *a type of its own* |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
-| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `vector` |
+| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `WideCharVector.vector` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `WideCharVectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
@@ -38,7 +38,7 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | val | [`compare`](../sig/PRIM_IO.md#val-compare) | `pos * pos -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
-| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `vector -> reader` |
+| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `WideCharVector.vector -> reader` |
 
 ---
 

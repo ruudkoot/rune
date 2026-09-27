@@ -73,17 +73,26 @@ sig
      the reader's own name is the `name`.
 
      Pinned by: `*IO.StreamIO.input/Io-when-the-reader-fails`,
-     `*IO.StreamIO.input/Io-name-is-the-reader's` *)
+     `*IO.StreamIO.input/Io-name-is-the-reader's`
+
+     Law: `#1 (input f) = #1 (input f)`: a stream in hand does not change
+
+     Example: `Byte.bytesToString (#1 (input (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"` *)
   val input : instream -> vector * instream
 
   (* `input1 f` is `SOME` of the first element and the stream after it, or `NONE` at an end of stream.
 
      Raises: `IO.Io` if the reader fails.
 
+     Law: `isSome (input1 f) = not (endOfStream f)` when the reader does not
+     fail
+
+     A stream is a value, and reading from it gives another, so reading the
+     same stream twice gives the same element:
+
      Example: `let val s = TextIO.getInstream (TextIO.openString "abc") in
      (Option.map #1 (TextIO.StreamIO.input1 s), Option.map #1
-     (TextIO.StreamIO.input1 s)) end = (SOME #"a", SOME #"a")` for a stream is
-     a value, and reading from it gives another. *)
+     (TextIO.StreamIO.input1 s)) end = (SOME #"a", SOME #"a")` *)
   val input1 : instream -> (elem * instream) option
 
   (* `inputN (f, n)` is `n` elements and the stream after them, or all there are before the next end of stream.
@@ -96,10 +105,16 @@ sig
      the one `inputAll` would give: immediately past that end of stream.
      Exactly `n` elements that end at one leave the stream before it.
 
-     Pinned by: `*IO.StreamIO.inputN/fewer-then-past-the-end-of-stream` *)
+     Pinned by: `*IO.StreamIO.inputN/fewer-then-past-the-end-of-stream`
+
+     Example: `let val (v, f) = inputN (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes ""), 2) in
+     (Byte.bytesToString v, Byte.bytesToString (#1 (inputAll f))) end = ("ab",
+     "c")` *)
   val inputN : instream * int -> vector * instream
 
-  (* `inputAll f` is everything up to the next end of stream, and the stream past it. *)
+  (* `inputAll f` is everything up to the next end of stream, and the stream past it.
+
+     Example: `Byte.bytesToString (#1 (inputAll (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")))) = "abc"` *)
   val inputAll : instream -> vector * instream
 
   (* `canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.
@@ -111,14 +126,19 @@ sig
      the stream keeps: such a lookahead commits the stream to those elements.
      A reader without `readVecNB` is asked for `avail` instead.
 
-     Raises: `Size` if `n < 0`. *)
+     Raises: `Size` if `n < 0`.
+
+     Example: `canInput (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes ""), 2) = SOME 2` *)
   val canInput : instream * int -> int option
 
   (* `closeIn f` marks the stream closed and closes its reader.
 
      Closing a truncated or an already closed stream is allowed and does
      nothing more. A closed stream reads as if it ended where what had
-     already been read ends. *)
+     already been read ends.
+
+     Example: `let val f = mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "") in closeIn f;
+     Byte.bytesToString (#1 (inputAll f)) end = ""` *)
   val closeIn : instream -> unit
 
   (* `endOfStream f` is `true` when nothing is left before the next end of stream.
@@ -128,7 +148,10 @@ sig
      that read returns the empty vector, and only afterwards are elements
      that the source gained seen.
 
-     Raises: `IO.Io` if the reader fails while it is asked for more. *)
+     Raises: `IO.Io` if the reader fails while it is asked for more.
+
+     Example: `let val f = mkInstream (BinPrimIO.openVector (Byte.stringToBytes "a"), Byte.stringToBytes "") in (endOfStream f,
+     endOfStream (#2 (inputAll f))) end = (false, true)` *)
   val endOfStream : instream -> bool
 
   (* ---- Writing ---- *)
@@ -174,7 +197,11 @@ sig
      again. What it held is gone all the same: the buffer is emptied before
      the writer is asked, as `flushOut` does it.
 
-     Pinned by: `*IO.StreamIO.closeOut/left-open-when-flushing-fails` *)
+     Pinned by: `*IO.StreamIO.closeOut/left-open-when-flushing-fails`
+
+     Example: `(let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in
+     closeOut f; output1 (f, 0w0); "written" end handle IO.Io {cause =
+     IO.ClosedStream, ...} => "closed") = "closed"` *)
   val closeOut : outstream -> unit
 
   (* ---- Readers and writers ---- *)
@@ -183,13 +210,17 @@ sig
 
      `v` is what was taken from the reader already and is being handed back;
      the reader is augmented, so the stream uses whatever reads can be built
-     from it. *)
+     from it.
+
+     Example: `Byte.bytesToString (#1 (inputAll (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "bc"), Byte.stringToBytes "a")))) = "abc"` *)
   val mkInstream : reader * vector -> instream
 
   (* `getReader f` is the reader of `f` and what was read ahead but not consumed, and truncates `f`.
 
      The reader is the one that was given to `mkInstream`, not the augmented
-     one.
+     one. The vector is, as the specification defines it, what `(closeIn f;
+     #1 (inputAll f))` would give in its place: what was read ahead and not
+     consumed.
 
      Raises: `IO.Io` if `f` is closed or already truncated.
 
@@ -198,13 +229,25 @@ sig
      `ClosedStream` for it as for a closed one.
 
      Pinned by: `*IO.StreamIO.getReader/Io-truncated`,
-     `*IO.StreamIO.getReader/Io-closed` *)
+     `*IO.StreamIO.getReader/Io-closed`
+
+     Example: `(case input1 (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")) of SOME (_, g) =>
+     Byte.bytesToString (#2 (getReader g)) | NONE => "") = "bc"` *)
   val getReader : instream -> reader * vector
 
   (* `filePosIn f` is the position of the element that would be read next.
 
      Raises: `IO.Io` if the stream has no positions, or if it has been
      truncated or closed.
+
+     Reading: `StreamIO.filePosIn/Io-closed`. The specification raises `Io`
+     for a truncated stream and says nothing of a closed one. A closed one
+     raises too, with the cause `ClosedStream`: closing closed the reader that
+     may have to be asked where it is, and the stream is done with, as a
+     truncated one is. MLton and SML/NJ give a position instead; Poly/ML
+     raises.
+
+     Pinned by: `*IO.StreamIO.filePosIn/Io-closed`
 
      Reading: `StreamIO.filePosIn/what-is-unsupported`. "Does not support the
      operation" means that the reader has no `getPos`, and the cause of the
@@ -214,20 +257,36 @@ sig
 
      Pinned by: `*IO.StreamIO.filePosIn/Io-without-positions`,
      `*IO.StreamIO.filePosIn/Io-cause`,
-     `*IO.StreamIO.filePosIn/Io-truncated` *)
+     `*IO.StreamIO.filePosIn/Io-truncated`
+
+     Example: `(case input1 (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) of SOME (_, g) =>
+     filePosIn g | NONE => ~1) = 1` *)
   val filePosIn : instream -> pos
 
   (* ---- Buffering ---- *)
 
   (* `setBufferMode (f, mode)` makes `f` hold back what `mode` says.
 
-     Changing to `NO_BUF` flushes what is held; changing between `LINE_BUF`
-     and `BLOCK_BUF` does not.
+     Changing to `NO_BUF` flushes what is held.
 
-     Raises: `IO.Io` if that flush fails. *)
+     Raises: `IO.Io` if that flush fails.
+
+     Reading: `StreamIO.setBufferMode/no-flush-between-buffers`. The
+     specification says that `NO_BUF` flushes and nothing of the other
+     changes. Changing between `LINE_BUF` and `BLOCK_BUF` does not flush:
+     what is held stays until the new mode lets it go.
+
+     Pinned by: `*IO.StreamIO.setBufferMode/*-does-not-flush`
+
+     Law: `(setBufferMode (f, mode); getBufferMode f) = mode`
+
+     Example: `let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in
+     setBufferMode (f, IO.BLOCK_BUF); getBufferMode f end = IO.BLOCK_BUF` *)
   val setBufferMode : outstream * IO.buffer_mode -> unit
 
-  (* `getBufferMode f` is the mode `f` holds back by. *)
+  (* `getBufferMode f` is the mode `f` holds back by.
+
+     Law: `getBufferMode (mkOutstream (wr, mode)) = mode` *)
   val getBufferMode : outstream -> IO.buffer_mode
 
   (* `mkOutstream (wr, mode)` is a stream that writes through `wr`, holding back what `mode` says.
@@ -235,7 +294,10 @@ sig
      Reading: `StreamIO.mkOutstream/the-writer-is-augmented`. The
      specification does not say whether the writer is augmented here; this
      one augments it, and `getWriter` still gives back the writer that was
-     passed in. *)
+     passed in.
+
+     Example: `getBufferMode (mkOutstream (BinPrimIO.nullWr (), IO.LINE_BUF)) =
+     IO.LINE_BUF` *)
   val mkOutstream : writer * IO.buffer_mode -> outstream
 
   (* `getWriter f` flushes `f`, terminates it, and is its writer and its buffer mode.
@@ -246,7 +308,12 @@ sig
      already terminated gives its writer and its mode again without flushing;
      only a closed one raises.
 
-     Pinned by: `*IO.StreamIO.getWriter/Io-closed` *)
+     Pinned by: `*IO.StreamIO.getWriter/Io-closed`
+
+     Law: `#2 (getWriter (mkOutstream (wr, mode))) = mode`
+
+     Example: `#2 (getWriter (mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF))) =
+     IO.NO_BUF` *)
   val getWriter : outstream -> writer * IO.buffer_mode
 
   (* `getPosOut f` flushes `f` and is the position it is now at, together with `f` itself.

@@ -25,55 +25,55 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/POSIX_ERROR.md#type-syserror) | `syserror` |
-| val | [`acces`](../sig/POSIX_ERROR.md#val-acces) | `syserror` |
-| val | [`again`](../sig/POSIX_ERROR.md#val-again) | `syserror` |
-| val | [`badf`](../sig/POSIX_ERROR.md#val-badf) | `syserror` |
-| val | [`badmsg`](../sig/POSIX_ERROR.md#val-badmsg) | `syserror` |
-| val | [`busy`](../sig/POSIX_ERROR.md#val-busy) | `syserror` |
-| val | [`canceled`](../sig/POSIX_ERROR.md#val-canceled) | `syserror` |
-| val | [`child`](../sig/POSIX_ERROR.md#val-child) | `syserror` |
-| val | [`deadlk`](../sig/POSIX_ERROR.md#val-deadlk) | `syserror` |
-| val | [`dom`](../sig/POSIX_ERROR.md#val-dom) | `syserror` |
-| val | [`errorMsg`](../sig/POSIX_ERROR.md#val-errormsg) | `syserror -> string` |
-| val | [`errorName`](../sig/POSIX_ERROR.md#val-errorname) | `syserror -> string` |
-| val | [`exist`](../sig/POSIX_ERROR.md#val-exist) | `syserror` |
-| val | [`fault`](../sig/POSIX_ERROR.md#val-fault) | `syserror` |
-| val | [`fbig`](../sig/POSIX_ERROR.md#val-fbig) | `syserror` |
-| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `word -> syserror` |
-| val | [`inprogress`](../sig/POSIX_ERROR.md#val-inprogress) | `syserror` |
-| val | [`intr`](../sig/POSIX_ERROR.md#val-intr) | `syserror` |
-| val | [`inval`](../sig/POSIX_ERROR.md#val-inval) | `syserror` |
-| val | [`io`](../sig/POSIX_ERROR.md#val-io) | `syserror` |
-| val | [`isdir`](../sig/POSIX_ERROR.md#val-isdir) | `syserror` |
-| val | [`loop`](../sig/POSIX_ERROR.md#val-loop) | `syserror` |
-| val | [`mfile`](../sig/POSIX_ERROR.md#val-mfile) | `syserror` |
-| val | [`mlink`](../sig/POSIX_ERROR.md#val-mlink) | `syserror` |
-| val | [`msgsize`](../sig/POSIX_ERROR.md#val-msgsize) | `syserror` |
-| val | [`nametoolong`](../sig/POSIX_ERROR.md#val-nametoolong) | `syserror` |
-| val | [`nfile`](../sig/POSIX_ERROR.md#val-nfile) | `syserror` |
-| val | [`nodev`](../sig/POSIX_ERROR.md#val-nodev) | `syserror` |
-| val | [`noent`](../sig/POSIX_ERROR.md#val-noent) | `syserror` |
-| val | [`noexec`](../sig/POSIX_ERROR.md#val-noexec) | `syserror` |
-| val | [`nolck`](../sig/POSIX_ERROR.md#val-nolck) | `syserror` |
-| val | [`nomem`](../sig/POSIX_ERROR.md#val-nomem) | `syserror` |
-| val | [`nospc`](../sig/POSIX_ERROR.md#val-nospc) | `syserror` |
-| val | [`nosys`](../sig/POSIX_ERROR.md#val-nosys) | `syserror` |
-| val | [`notdir`](../sig/POSIX_ERROR.md#val-notdir) | `syserror` |
-| val | [`notempty`](../sig/POSIX_ERROR.md#val-notempty) | `syserror` |
-| val | [`notsup`](../sig/POSIX_ERROR.md#val-notsup) | `syserror` |
-| val | [`notty`](../sig/POSIX_ERROR.md#val-notty) | `syserror` |
-| val | [`nxio`](../sig/POSIX_ERROR.md#val-nxio) | `syserror` |
-| val | [`perm`](../sig/POSIX_ERROR.md#val-perm) | `syserror` |
-| val | [`pipe`](../sig/POSIX_ERROR.md#val-pipe) | `syserror` |
-| val | [`range`](../sig/POSIX_ERROR.md#val-range) | `syserror` |
-| val | [`rofs`](../sig/POSIX_ERROR.md#val-rofs) | `syserror` |
-| val | [`spipe`](../sig/POSIX_ERROR.md#val-spipe) | `syserror` |
-| val | [`srch`](../sig/POSIX_ERROR.md#val-srch) | `syserror` |
-| val | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | `string -> syserror option` |
-| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `syserror -> word` |
-| val | [`toobig`](../sig/POSIX_ERROR.md#val-toobig) | `syserror` |
-| val | [`xdev`](../sig/POSIX_ERROR.md#val-xdev) | `syserror` |
+| type | [`syserror`](../sig/POSIX_ERROR.md#type-syserror) | `OS.syserror` |
+| val | [`acces`](../sig/POSIX_ERROR.md#val-acces) | `OS.syserror` |
+| val | [`again`](../sig/POSIX_ERROR.md#val-again) | `OS.syserror` |
+| val | [`badf`](../sig/POSIX_ERROR.md#val-badf) | `OS.syserror` |
+| val | [`badmsg`](../sig/POSIX_ERROR.md#val-badmsg) | `OS.syserror` |
+| val | [`busy`](../sig/POSIX_ERROR.md#val-busy) | `OS.syserror` |
+| val | [`canceled`](../sig/POSIX_ERROR.md#val-canceled) | `OS.syserror` |
+| val | [`child`](../sig/POSIX_ERROR.md#val-child) | `OS.syserror` |
+| val | [`deadlk`](../sig/POSIX_ERROR.md#val-deadlk) | `OS.syserror` |
+| val | [`dom`](../sig/POSIX_ERROR.md#val-dom) | `OS.syserror` |
+| val | [`errorMsg`](../sig/POSIX_ERROR.md#val-errormsg) | `OS.syserror -> string` |
+| val | [`errorName`](../sig/POSIX_ERROR.md#val-errorname) | `OS.syserror -> string` |
+| val | [`exist`](../sig/POSIX_ERROR.md#val-exist) | `OS.syserror` |
+| val | [`fault`](../sig/POSIX_ERROR.md#val-fault) | `OS.syserror` |
+| val | [`fbig`](../sig/POSIX_ERROR.md#val-fbig) | `OS.syserror` |
+| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `word -> OS.syserror` |
+| val | [`inprogress`](../sig/POSIX_ERROR.md#val-inprogress) | `OS.syserror` |
+| val | [`intr`](../sig/POSIX_ERROR.md#val-intr) | `OS.syserror` |
+| val | [`inval`](../sig/POSIX_ERROR.md#val-inval) | `OS.syserror` |
+| val | [`io`](../sig/POSIX_ERROR.md#val-io) | `OS.syserror` |
+| val | [`isdir`](../sig/POSIX_ERROR.md#val-isdir) | `OS.syserror` |
+| val | [`loop`](../sig/POSIX_ERROR.md#val-loop) | `OS.syserror` |
+| val | [`mfile`](../sig/POSIX_ERROR.md#val-mfile) | `OS.syserror` |
+| val | [`mlink`](../sig/POSIX_ERROR.md#val-mlink) | `OS.syserror` |
+| val | [`msgsize`](../sig/POSIX_ERROR.md#val-msgsize) | `OS.syserror` |
+| val | [`nametoolong`](../sig/POSIX_ERROR.md#val-nametoolong) | `OS.syserror` |
+| val | [`nfile`](../sig/POSIX_ERROR.md#val-nfile) | `OS.syserror` |
+| val | [`nodev`](../sig/POSIX_ERROR.md#val-nodev) | `OS.syserror` |
+| val | [`noent`](../sig/POSIX_ERROR.md#val-noent) | `OS.syserror` |
+| val | [`noexec`](../sig/POSIX_ERROR.md#val-noexec) | `OS.syserror` |
+| val | [`nolck`](../sig/POSIX_ERROR.md#val-nolck) | `OS.syserror` |
+| val | [`nomem`](../sig/POSIX_ERROR.md#val-nomem) | `OS.syserror` |
+| val | [`nospc`](../sig/POSIX_ERROR.md#val-nospc) | `OS.syserror` |
+| val | [`nosys`](../sig/POSIX_ERROR.md#val-nosys) | `OS.syserror` |
+| val | [`notdir`](../sig/POSIX_ERROR.md#val-notdir) | `OS.syserror` |
+| val | [`notempty`](../sig/POSIX_ERROR.md#val-notempty) | `OS.syserror` |
+| val | [`notsup`](../sig/POSIX_ERROR.md#val-notsup) | `OS.syserror` |
+| val | [`notty`](../sig/POSIX_ERROR.md#val-notty) | `OS.syserror` |
+| val | [`nxio`](../sig/POSIX_ERROR.md#val-nxio) | `OS.syserror` |
+| val | [`perm`](../sig/POSIX_ERROR.md#val-perm) | `OS.syserror` |
+| val | [`pipe`](../sig/POSIX_ERROR.md#val-pipe) | `OS.syserror` |
+| val | [`range`](../sig/POSIX_ERROR.md#val-range) | `OS.syserror` |
+| val | [`rofs`](../sig/POSIX_ERROR.md#val-rofs) | `OS.syserror` |
+| val | [`spipe`](../sig/POSIX_ERROR.md#val-spipe) | `OS.syserror` |
+| val | [`srch`](../sig/POSIX_ERROR.md#val-srch) | `OS.syserror` |
+| val | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | `string -> OS.syserror option` |
+| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `OS.syserror -> word` |
+| val | [`toobig`](../sig/POSIX_ERROR.md#val-toobig) | `OS.syserror` |
+| val | [`xdev`](../sig/POSIX_ERROR.md#val-xdev) | `OS.syserror` |
 
 ## Notes
 

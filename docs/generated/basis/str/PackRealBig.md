@@ -24,12 +24,12 @@ What each means is on [`PACK_REAL`](../sig/PACK_REAL.md); the types are this str
 | --- | --- | --- |
 | type | [`real`](../sig/PACK_REAL.md#type-real) | `real` |
 | val | [`bytesPerElem`](../sig/PACK_REAL.md#val-bytesperelem) | `int` |
-| val | [`fromBytes`](../sig/PACK_REAL.md#val-frombytes) | `BinIO.vector -> real` |
+| val | [`fromBytes`](../sig/PACK_REAL.md#val-frombytes) | `Word8Vector.vector -> real` |
 | val | [`isBigEndian`](../sig/PACK_REAL.md#val-isbigendian) | `bool` |
-| val | [`subArr`](../sig/PACK_REAL.md#val-subarr) | `BinPrimIO.array * int -> real` |
-| val | [`subVec`](../sig/PACK_REAL.md#val-subvec) | `BinIO.vector * int -> real` |
-| val | [`toBytes`](../sig/PACK_REAL.md#val-tobytes) | `real -> BinIO.vector` |
-| val | [`update`](../sig/PACK_REAL.md#val-update) | `BinPrimIO.array * int * real -> unit` |
+| val | [`subArr`](../sig/PACK_REAL.md#val-subarr) | `Word8Array.array * int -> real` |
+| val | [`subVec`](../sig/PACK_REAL.md#val-subvec) | `Word8Vector.vector * int -> real` |
+| val | [`toBytes`](../sig/PACK_REAL.md#val-tobytes) | `real -> Word8Vector.vector` |
+| val | [`update`](../sig/PACK_REAL.md#val-update) | `Word8Array.array * int * real -> unit` |
 
 <details><summary>Other implementations (1)</summary>
 

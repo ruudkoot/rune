@@ -16,7 +16,7 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`sock_type`](../sig/SOCKET.md#type-sock.sock_type) | `sock_type` |
+| type | [`sock_type`](../sig/SOCKET.md#type-sock.sock_type) | *a type of its own* |
 | val | [`dgram`](../sig/SOCKET.md#val-sock.dgram) | `sock_type` |
 | val | [`fromString`](../sig/SOCKET.md#val-sock.fromstring) | `string -> sock_type option` |
 | val | [`list`](../sig/SOCKET.md#val-sock.list) | `unit -> (string * sock_type) list` |

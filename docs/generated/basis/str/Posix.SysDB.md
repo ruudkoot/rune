@@ -24,12 +24,12 @@ What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`gid`](../sig/POSIX_SYS_DB.md#type-gid) | `gid` |
-| type | [`uid`](../sig/POSIX_SYS_DB.md#type-uid) | `uid` |
-| val | [`getgrgid`](../sig/POSIX_SYS_DB.md#val-getgrgid) | `gid -> Group.group` |
+| type | [`gid`](../sig/POSIX_SYS_DB.md#type-gid) | `Posix.ProcEnv.gid` |
+| type | [`uid`](../sig/POSIX_SYS_DB.md#type-uid) | `Posix.ProcEnv.uid` |
+| val | [`getgrgid`](../sig/POSIX_SYS_DB.md#val-getgrgid) | `Posix.ProcEnv.gid -> Group.group` |
 | val | [`getgrnam`](../sig/POSIX_SYS_DB.md#val-getgrnam) | `string -> Group.group` |
 | val | [`getpwnam`](../sig/POSIX_SYS_DB.md#val-getpwnam) | `string -> Passwd.passwd` |
-| val | [`getpwuid`](../sig/POSIX_SYS_DB.md#val-getpwuid) | `uid -> Passwd.passwd` |
+| val | [`getpwuid`](../sig/POSIX_SYS_DB.md#val-getpwuid) | `Posix.ProcEnv.uid -> Passwd.passwd` |
 | structure | [`Group`](../str/Posix.SysDB.Group.md) |  |
 | structure | [`Passwd`](../str/Posix.SysDB.Passwd.md) |  |
 

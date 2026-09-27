@@ -24,14 +24,14 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `IntInf.int` |
-| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `LargeIntVector.vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(IntInf.int -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(IntInf.int -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * IntInf.int -> unit) -> array -> unit` |
 | val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * IntInf.int -> array` |
 | val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(IntInf.int * IntInf.int -> order) -> array * array -> order` |
 | val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : vector} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : LargeIntVector.vector} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(IntInf.int -> bool) -> array -> bool` |
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(IntInf.int -> bool) -> array -> IntInf.int option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * IntInf.int -> bool) -> array -> (int * IntInf.int) option` |
@@ -47,7 +47,7 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> IntInf.int` |
 | val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> IntInf.int) -> array` |
 | val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * IntInf.int -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> LargeIntVector.vector` |
 
 ---
 

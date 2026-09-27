@@ -148,6 +148,11 @@ struct
      operation, or if f has been truncated." *)
   val () = T.raises ("BinIO.StreamIO.filePosIn/Io-truncated", isIo,
                      fn () => let val f = S.mkInstream (memReader ("abc", 0), fromString "") in ignore (S.getReader f); S.filePosIn f end)
+  (* The page names a truncated stream and is silent on a closed one; closing
+     closes the reader that would be asked where it is, and the stream is
+     done with as a truncated one is (StreamIO.filePosIn/Io-closed). *)
+  val () = T.raises ("BinIO.StreamIO.filePosIn/Io-closed", isIo,
+                     fn () => let val f = S.mkInstream (memReader ("abc", 0), fromString "") in S.closeIn f; S.filePosIn f end)
 
   (* ==== getPosOut, setPosOut, filePosOut ==== *)
   (* getPosOut "returns the current position of the stream f"; filePosOut
@@ -232,6 +237,40 @@ struct
                            val (w, _) = memWriter ()
                            val out = BinIO.mkOutstream (S.mkOutstream (w, IO.BLOCK_BUF))
                          in BinIO.output (out, fromString "ab"); posInt (S.filePosOut (BinIO.getPosOut out)) end)
+  (* STREAM_IO: getPosOut raises Io "if any implicit flushing fails", so it
+     flushes; setPosOut "flushes the output buffer of the stream underlying
+     opos, sets the current position". The imperative operations work on the
+     stream underneath. *)
+  val () = eqS ("BinIO.getPosOut/flushes", "ab",
+                fn () => let
+                           val (w, contents) = memWriter ()
+                           val out = BinIO.mkOutstream (S.mkOutstream (w, IO.BLOCK_BUF))
+                         in BinIO.output (out, fromString "ab"); ignore (BinIO.getPosOut out); !contents end)
+  val () = eqS ("BinIO.setPosOut/flushes", "abcd",
+                fn () => let
+                           val (w, contents) = memWriter ()
+                           val out = BinIO.mkOutstream (S.mkOutstream (w, IO.BLOCK_BUF))
+                           val () = BinIO.output (out, fromString "ab")
+                           val p = BinIO.getPosOut out
+                           val () = BinIO.output (out, fromString "cd")
+                         in BinIO.setPosOut (out, p); !contents end)
+  (* "This raises the exception Io if the stream does not support the
+     operation": a writer that can tell its position and not set it *)
+  val () = T.raises ("BinIO.setPosOut/Io-without-setPos", isIo,
+                     fn () => let
+                                val (w, _) = memWriter ()
+                                val w' = case w of
+                                           BinPrimIO.WR {name, chunkSize, writeVec, writeArr, writeVecNB, writeArrNB,
+                                                         block, canOutput, getPos, endPos, verifyPos, close, ioDesc,
+                                                         ...} =>
+                                             BinPrimIO.WR {name = name, chunkSize = chunkSize, writeVec = writeVec,
+                                                           writeArr = writeArr, writeVecNB = writeVecNB,
+                                                           writeArrNB = writeArrNB, block = block, canOutput = canOutput,
+                                                           getPos = getPos, setPos = NONE, endPos = endPos,
+                                                           verifyPos = verifyPos, close = close, ioDesc = ioDesc}
+                                val out = BinIO.mkOutstream (S.mkOutstream (w', IO.BLOCK_BUF))
+                                val p = BinIO.getPosOut out
+                              in BinIO.setPosOut (out, p) end)
 
   (* ==== files ==== *)
   val made : string list ref = ref []

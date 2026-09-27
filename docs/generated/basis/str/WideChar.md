@@ -22,15 +22,15 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/CHAR.md#type-char) | `char` |
-| type | [`string`](../sig/CHAR.md#type-string) | `WideTextIO.vector` |
+| type | [`char`](../sig/CHAR.md#type-char) | *a type of its own* |
+| type | [`string`](../sig/CHAR.md#type-string) | `WideCharVector.vector` |
 | val | [`<`](../sig/CHAR.md#val-op-lt) | `char * char -> bool` |
 | val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `char * char -> bool` |
 | val | [`>`](../sig/CHAR.md#val-op-gt) | `char * char -> bool` |
 | val | [`>=`](../sig/CHAR.md#val-op-gt-eq) | `char * char -> bool` |
 | val | [`chr`](../sig/CHAR.md#val-chr) | `int -> char` |
 | val | [`compare`](../sig/CHAR.md#val-compare) | `char * char -> order` |
-| val | [`contains`](../sig/CHAR.md#val-contains) | `WideTextIO.vector -> char -> bool` |
+| val | [`contains`](../sig/CHAR.md#val-contains) | `WideCharVector.vector -> char -> bool` |
 | val | [`fromCString`](../sig/CHAR.md#val-fromcstring) | `string -> char option` |
 | val | [`fromString`](../sig/CHAR.md#val-fromstring) | `string -> char option` |
 | val | [`isAlpha`](../sig/CHAR.md#val-isalpha) | `char -> bool` |
@@ -48,7 +48,7 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 | val | [`maxChar`](../sig/CHAR.md#val-maxchar) | `char` |
 | val | [`maxOrd`](../sig/CHAR.md#val-maxord) | `int` |
 | val | [`minChar`](../sig/CHAR.md#val-minchar) | `char` |
-| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideTextIO.vector -> char -> bool` |
+| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideCharVector.vector -> char -> bool` |
 | val | [`ord`](../sig/CHAR.md#val-ord) | `char -> int` |
 | val | [`pred`](../sig/CHAR.md#val-pred) | `char -> char` |
 | val | [`scan`](../sig/CHAR.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (char * 'a) option` |

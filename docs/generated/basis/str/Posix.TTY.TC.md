@@ -19,11 +19,11 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 | type | [`flow_action`](../sig/POSIX_TTY.md#type-tc.flow_action) | *a type of its own* |
 | type | [`queue_sel`](../sig/POSIX_TTY.md#type-tc.queue_sel) | *a type of its own* |
 | type | [`set_action`](../sig/POSIX_TTY.md#type-tc.set_action) | *a type of its own* |
-| val | [`drain`](../sig/POSIX_TTY.md#val-tc.drain) | `Posix.IO.file_desc -> unit` |
-| val | [`flow`](../sig/POSIX_TTY.md#val-tc.flow) | `Posix.IO.file_desc * flow_action -> unit` |
-| val | [`flush`](../sig/POSIX_TTY.md#val-tc.flush) | `Posix.IO.file_desc * queue_sel -> unit` |
-| val | [`getattr`](../sig/POSIX_TTY.md#val-tc.getattr) | `Posix.IO.file_desc -> Posix.TTY.termios` |
-| val | [`getpgrp`](../sig/POSIX_TTY.md#val-tc.getpgrp) | `Posix.IO.file_desc -> Posix.IO.pid` |
+| val | [`drain`](../sig/POSIX_TTY.md#val-tc.drain) | `Posix.ProcEnv.file_desc -> unit` |
+| val | [`flow`](../sig/POSIX_TTY.md#val-tc.flow) | `Posix.ProcEnv.file_desc * flow_action -> unit` |
+| val | [`flush`](../sig/POSIX_TTY.md#val-tc.flush) | `Posix.ProcEnv.file_desc * queue_sel -> unit` |
+| val | [`getattr`](../sig/POSIX_TTY.md#val-tc.getattr) | `Posix.ProcEnv.file_desc -> Posix.TTY.termios` |
+| val | [`getpgrp`](../sig/POSIX_TTY.md#val-tc.getpgrp) | `Posix.ProcEnv.file_desc -> Posix.Process.pid` |
 | val | [`iflush`](../sig/POSIX_TTY.md#val-tc.iflush) | `queue_sel` |
 | val | [`ioff`](../sig/POSIX_TTY.md#val-tc.ioff) | `flow_action` |
 | val | [`ioflush`](../sig/POSIX_TTY.md#val-tc.ioflush) | `queue_sel` |
@@ -34,9 +34,9 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 | val | [`sadrain`](../sig/POSIX_TTY.md#val-tc.sadrain) | `set_action` |
 | val | [`saflush`](../sig/POSIX_TTY.md#val-tc.saflush) | `set_action` |
 | val | [`sanow`](../sig/POSIX_TTY.md#val-tc.sanow) | `set_action` |
-| val | [`sendbreak`](../sig/POSIX_TTY.md#val-tc.sendbreak) | `Posix.IO.file_desc * int -> unit` |
-| val | [`setattr`](../sig/POSIX_TTY.md#val-tc.setattr) | `Posix.IO.file_desc * set_action * Posix.TTY.termios -> unit` |
-| val | [`setpgrp`](../sig/POSIX_TTY.md#val-tc.setpgrp) | `Posix.IO.file_desc * Posix.IO.pid -> unit` |
+| val | [`sendbreak`](../sig/POSIX_TTY.md#val-tc.sendbreak) | `Posix.ProcEnv.file_desc * int -> unit` |
+| val | [`setattr`](../sig/POSIX_TTY.md#val-tc.setattr) | `Posix.ProcEnv.file_desc * set_action * Posix.TTY.termios -> unit` |
+| val | [`setpgrp`](../sig/POSIX_TTY.md#val-tc.setpgrp) | `Posix.ProcEnv.file_desc * Posix.Process.pid -> unit` |
 
 ## Notes
 

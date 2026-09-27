@@ -22,8 +22,8 @@ What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`file_desc`](../sig/POSIX_TTY.md#type-file_desc) | `file_desc` |
-| type | [`pid`](../sig/POSIX_TTY.md#type-pid) | `pid` |
+| type | [`file_desc`](../sig/POSIX_TTY.md#type-file_desc) | `Posix.ProcEnv.file_desc` |
+| type | [`pid`](../sig/POSIX_TTY.md#type-pid) | `Posix.Process.pid` |
 | type | [`speed`](../sig/POSIX_TTY.md#type-speed) | *a type of its own* |
 | type | [`termios`](../sig/POSIX_TTY.md#type-termios) | *a type of its own* |
 | val | [`b0`](../sig/POSIX_TTY.md#val-b0) | `speed` |

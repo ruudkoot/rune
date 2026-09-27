@@ -24,14 +24,14 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Real32.real` |
-| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `vector` |
+| type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Real32Vector.vector` |
 | val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Real32.real -> bool) -> array -> bool` |
 | val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Real32.real -> unit) -> array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Real32.real -> unit) -> array -> unit` |
 | val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Real32.real -> array` |
 | val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Real32.real * Real32.real -> order) -> array * array -> order` |
 | val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : vector} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : Real32Vector.vector} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Real32.real -> bool) -> array -> bool` |
 | val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Real32.real -> bool) -> array -> Real32.real option` |
 | val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Real32.real -> bool) -> array -> (int * Real32.real) option` |
@@ -47,7 +47,7 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> Real32.real` |
 | val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Real32.real) -> array` |
 | val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * Real32.real -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> vector` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> Real32Vector.vector` |
 
 ---
 

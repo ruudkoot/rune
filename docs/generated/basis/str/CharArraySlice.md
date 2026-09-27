@@ -22,18 +22,18 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `array` |
+| type | [`array`](../sig/MONO_ARRAY_SLICE.md#type-array) | `CharArray.array` |
 | type | [`elem`](../sig/MONO_ARRAY_SLICE.md#type-elem) | `char` |
 | type | [`slice`](../sig/MONO_ARRAY_SLICE.md#type-slice) | *a type of its own* |
 | type | [`vector`](../sig/MONO_ARRAY_SLICE.md#type-vector) | `string` |
-| type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `substring` |
+| type | [`vector_slice`](../sig/MONO_ARRAY_SLICE.md#type-vector_slice) | `Substring.substring` |
 | val | [`all`](../sig/MONO_ARRAY_SLICE.md#val-all) | `(char -> bool) -> slice -> bool` |
 | val | [`app`](../sig/MONO_ARRAY_SLICE.md#val-app) | `(char -> unit) -> slice -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY_SLICE.md#val-appi) | `(int * char -> unit) -> slice -> unit` |
-| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> array * int * int` |
+| val | [`base`](../sig/MONO_ARRAY_SLICE.md#val-base) | `slice -> CharArray.array * int * int` |
 | val | [`collate`](../sig/MONO_ARRAY_SLICE.md#val-collate) | `(char * char -> order) -> slice * slice -> order` |
-| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : array, src : slice} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : array, src : substring} -> unit` |
+| val | [`copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) | `{di : int, dst : CharArray.array, src : slice} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY_SLICE.md#val-copyvec) | `{di : int, dst : CharArray.array, src : Substring.substring} -> unit` |
 | val | [`exists`](../sig/MONO_ARRAY_SLICE.md#val-exists) | `(char -> bool) -> slice -> bool` |
 | val | [`find`](../sig/MONO_ARRAY_SLICE.md#val-find) | `(char -> bool) -> slice -> char option` |
 | val | [`findi`](../sig/MONO_ARRAY_SLICE.md#val-findi) | `(int * char -> bool) -> slice -> (int * char) option` |
@@ -41,13 +41,13 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`foldli`](../sig/MONO_ARRAY_SLICE.md#val-foldli) | `(int * char * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldr`](../sig/MONO_ARRAY_SLICE.md#val-foldr) | `(char * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`foldri`](../sig/MONO_ARRAY_SLICE.md#val-foldri) | `(int * char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `array -> slice` |
+| val | [`full`](../sig/MONO_ARRAY_SLICE.md#val-full) | `CharArray.array -> slice` |
 | val | [`getItem`](../sig/MONO_ARRAY_SLICE.md#val-getitem) | `slice -> (char * slice) option` |
 | val | [`isEmpty`](../sig/MONO_ARRAY_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_ARRAY_SLICE.md#val-length) | `slice -> int` |
 | val | [`modify`](../sig/MONO_ARRAY_SLICE.md#val-modify) | `(char -> char) -> slice -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY_SLICE.md#val-modifyi) | `(int * char -> char) -> slice -> unit` |
-| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `array * int * int option -> slice` |
+| val | [`slice`](../sig/MONO_ARRAY_SLICE.md#val-slice) | `CharArray.array * int * int option -> slice` |
 | val | [`sub`](../sig/MONO_ARRAY_SLICE.md#val-sub) | `slice * int -> char` |
 | val | [`subslice`](../sig/MONO_ARRAY_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * char -> unit` |
