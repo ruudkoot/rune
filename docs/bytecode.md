@@ -367,7 +367,9 @@ raised as noted.
 
 * `runevm --disasm file.rbc` prints constants, globals and code;
 * `runevm --trace file.rbc` traces every instruction to stderr;
-* `runevm --stats file.rbc` prints heap statistics at exit;
+* `runevm --stats file.rbc` prints heap statistics at exit (collections,
+  bytes allocated, semispace, live, copied, the largest live size, the
+  collector's time);
 * `runevm --count file.rbc` prints the instructions executed and the bytes and
   objects allocated at exit (also after the `exit` primitive and an uncaught
   exception). The numbers depend on the program and its input only, not on

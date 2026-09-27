@@ -15,7 +15,13 @@
 #include "vm.h"
 #include <math.h>
 
+#ifdef RUNE_CENSUS
+/* the value stored is always the last argument, register L[n-1] */
+#define HEAP_STORE(obj, i, v) (census_store_fast((obj), (uint32_t)(i), (v), read_i32(L + 4 * (size_t)(n - 1))), OBJ_FIELDS(obj)[i] = (v))
+void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg);
+#else
 #define HEAP_STORE(obj, i, v) (OBJ_FIELDS(obj)[i] = (v))
+#endif
 
 /* LESS, EQUAL or GREATER, the nullary constructors 0, 1 and 2 */
 static inline Value fast_order(int lt, int gt) { return mk_con0(1 + gt - lt); }
@@ -167,6 +173,7 @@ static inline int prim_fast(int prim, uint32_t n, const Value *base, const uint8
 #undef REAL2
 #undef CHAR2
 #undef OBJ
+    CENSUS_PRIM_RESULT(prim, r);
     *out = r;
     return 1;
 }

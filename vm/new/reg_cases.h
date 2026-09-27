@@ -99,6 +99,7 @@ CASE(CALL) {
     TRACE(ROP_CALL, a, b, 0);
     pc += 9;
     count++;
+    CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
     int64_t fidx = OBJ_FIELDS(c)[0].u.i;
@@ -129,6 +130,7 @@ CASE(TAILCALL) {
     TRACE(ROP_TAILCALL, a, b, 0);
     pc += 9;
     count++;
+    CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
     int64_t fidx = OBJ_FIELDS(c)[0].u.i;
@@ -151,6 +153,7 @@ CASE(RET) {
     pc += 5;
     count++;
     Value v = R(a);
+    CENSUS_CALL(4, v, CENSUS_REP(p, fr->func, a));
     uint32_t back = fr->ret_pc;
     const void *back_native = fr->native_ret;
     uint32_t result = fr->result;   /* the register of the caller's RESULT, if it has one */
@@ -176,6 +179,7 @@ CASE(PRIM) {
     int32_t b = read_i32(code + pc + 5);
     const uint8_t *L = code + pc + 9;
     uint32_t n = prim_arity[a];
+    CENSUS_PRIM(pc, fr->func, a);
     TRACE(ROP_PRIM, a, b, 0);
     pc += 9 + 4 * n;
     count++;
@@ -195,6 +199,7 @@ CASE(PRIMPUSH) {
     int32_t a = read_i32(code + pc + 1);
     const uint8_t *L = code + pc + 5;
     uint32_t n = prim_arity[a];
+    CENSUS_PRIM(pc, fr->func, a);
     TRACE(ROP_PRIMPUSH, a, 0, 0);
     pc += 5 + 4 * n;
     count++;
@@ -214,6 +219,7 @@ CASE(TUPLE) {
     int32_t b = read_i32(code + pc + 5);
     const uint8_t *L = code + pc + 9;
     uint32_t n = (uint32_t)b;
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_TUPLE, a, b, 0);
     pc += 9 + 4 * n;
     count++;
@@ -231,6 +237,7 @@ CASE(CLOSURE) {
     int32_t c = read_i32(code + pc + 9);
     const uint8_t *L = code + pc + 13;
     uint32_t n = (uint32_t)c;
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_CLOSURE, a, b, c);
     pc += 13 + 4 * n;
     count++;
@@ -258,6 +265,7 @@ CASE(CON) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
     int32_t c = read_i32(code + pc + 9);
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_CON, a, b, c);
     pc += 13;
     count++;
@@ -294,6 +302,7 @@ CASE(CONTAG) {
 CASE(NEWEXN) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_NEWEXN, a, b, 0);
     pc += 9;
     count++;
@@ -316,6 +325,7 @@ CASE(MKEXN) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
     int32_t c = read_i32(code + pc + 9);
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_MKEXN, a, b, c);
     pc += 13;
     count++;
@@ -357,6 +367,7 @@ CASE(SETENV) {
     count++;
     Obj *o = EXPECT(R(a), K_CLOSURE, "closure");
     if ((uint32_t)b + 1 >= o->len) FATAL("environment slot %d out of range", b);
+    CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));
     OBJ_FIELDS(o)[b + 1] = R(c);
     NEXT;
 }
@@ -454,6 +465,7 @@ CASE(CALLK) {
     TRACE(ROP_CALLK, a, b, 0);
     pc += 9 + 4 * n;
     count++;
+    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
     Function *fn = &p->funcs[a];
     size_t top = (size_t)(sp - vm->stack);
     ROOM(top, fn);
@@ -475,6 +487,7 @@ CASE(TAILCALLK) {
     TRACE(ROP_TAILCALLK, a, b, 0);
     pc += 9 + 4 * n;
     count++;
+    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
     Function *fn = &p->funcs[a];
     size_t top = fr->base;
     size_t need = (size_t)(sp - vm->stack) + n;
@@ -515,6 +528,7 @@ CASE(CONN) {
     int32_t c = read_i32(code + pc + 9);
     const uint8_t *L = code + pc + 13;
     uint32_t n = (uint32_t)c;
+    CENSUS_SITE(pc, fr->func);
     TRACE(ROP_CONN, a, b, c);
     pc += 13 + 4 * n;
     count++;

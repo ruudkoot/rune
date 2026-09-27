@@ -242,9 +242,11 @@ int vm_raise(VM *vm, Value exn) {
 }
 
 int vm_raise_builtin(VM *vm, int k) {
+    CENSUS_RUNTIME_BEGIN();
     Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
     OBJ_FIELDS(e)[0] = mk_ptr(vm->builtin_exns[k]);
     OBJ_FIELDS(e)[1] = mk_unit();
+    CENSUS_RUNTIME_END();
     return vm_raise(vm, mk_ptr(e));
 }
 
@@ -329,13 +331,16 @@ void vm_destroy(VM *vm) {
 
 void vm_exit(VM *vm, int status) {
     fflush(stdout);
+    CENSUS_EXIT(vm);
     if (vm->count)
         fprintf(stderr, "runevm: count: %llu instructions, %llu bytes, %llu objects\n",
                 (unsigned long long)vm->instructions, (unsigned long long)vm->bytes_allocated,
                 (unsigned long long)vm->objects_allocated);
     if (vm->stats)
-        fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live\n",
-                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used);
+        fprintf(stderr, "runevm: %zu collections, %llu bytes allocated, semispace %zu bytes, %zu live, "
+                "copied %llu, max live %zu, gc %lld us\n",
+                vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->heap_size, vm->heap_used,
+                (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us));
     fflush(stderr);
     vm_destroy(vm);
     exit(status);

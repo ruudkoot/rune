@@ -59,8 +59,9 @@ Print the bytecode of the program and exit without running it.
 Trace every instruction executed to standard error.
 .TP
 .B \-\-stats
-Print the number of collections, bytes allocated, semispace size and live bytes
-to standard error at exit.
+Print the number of collections, bytes allocated, semispace size, live bytes,
+bytes copied by all collections, the most a collection kept and the
+collector's processor time to standard error at exit.
 .TP
 .B \-\-count
 Print the instructions executed and the bytes and objects allocated to standard

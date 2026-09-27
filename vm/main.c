@@ -1,6 +1,9 @@
 /* runevm: portable interpreter for Rune bytecode. */
 #include "version.h"
 #include "vm.h"
+#ifdef RUNE_CENSUS
+#include "jit.h"
+#endif
 
 #include <errno.h>
 
@@ -36,7 +39,16 @@ static void usage(void) {
         "  --jit-perf-map  vm/new: write /tmp/perf-PID.map, so that perf record names compiled functions\n"
         "  --jit-profile   vm/new: count what compiled code calls, branches and loops on (--jit-stats shows them)\n"
         "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
-        "  --version       print the version and exit\n");
+        "  --version       print the version and exit\n"
+#ifdef RUNE_CENSUS
+        "  --census-dir DIR     census VM: write the allocation traces of docs/census.md into DIR\n"
+        "  --census-every N     census VM: a forced collection every N bytes allocated (default 262144; 0 = none)\n"
+        "  --census-fields 0|1  census VM: write fields.bin (default 1)\n"
+        "  --census-summary     census VM: no trace files (but pcs.bin) and no per-object arrays: census.txt alone\n"
+        "  --census-ids N       census VM: the objects expected, so that the per-object arrays are allocated once\n"
+        "  --census-static      census VM: print the static census of the program (docs/census.md) and exit\n"
+#endif
+        );
 }
 
 /* A size in bytes or a count: a decimal number that fits a size_t, which is
@@ -58,6 +70,11 @@ int main(int argc, char **argv) {
     JitOptions jit;
     memset(&jit, 0, sizeof jit);
     const char *resume = NULL, *restore = NULL;
+#ifdef RUNE_CENSUS
+    const char *census_dir = NULL;
+    size_t census_every_arg = 262144, census_fields = 1, census_ids = 0;
+    int census_summary = 0, census_static_mode = 0;
+#endif
     int i = 1;
     for (; i < argc; i++) {
         if (strcmp(argv[i], "--heap-size") == 0 && i + 1 < argc) {
@@ -87,6 +104,20 @@ int main(int argc, char **argv) {
             if (!vm_jit_arg(argv[i], &jit, &jit_check)) { usage(); return 2; }
             if (strncmp(argv[i], "--jit=", 6) == 0) jit_given = 1;
         }
+#ifdef RUNE_CENSUS
+        else if (strcmp(argv[i], "--census-dir") == 0 && i + 1 < argc) census_dir = argv[++i];
+        else if (strcmp(argv[i], "--census-every") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &census_every_arg)) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--census-fields") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &census_fields) || census_fields > 1) { usage(); return 2; }
+        }
+        else if (strcmp(argv[i], "--census-summary") == 0) census_summary = 1;
+        else if (strcmp(argv[i], "--census-static") == 0) census_static_mode = 1;
+        else if (strcmp(argv[i], "--census-ids") == 0 && i + 1 < argc) {
+            if (!size_arg(argv[++i], &census_ids)) { usage(); return 2; }
+        }
+#endif
         else if (strcmp(argv[i], "--version") == 0) { printf("runevm %s\n", RUNE_VERSION); return 0; }
         else if (strcmp(argv[i], "--help") == 0) { usage(); return 0; }
         else if (argv[i][0] == '-' && argv[i][1] != 0) { usage(); return 2; }
@@ -152,6 +183,13 @@ int main(int argc, char **argv) {
     vm->equality_work = equality_work;
     vm_init(vm, heap);
     vm->heap_fill = (unsigned)heap_fill;
+#ifdef RUNE_CENSUS
+    /* the census VM interprets everything: the JIT allocates in line
+       (vm/new/jit/masm.c) with its own idea of the header */
+    if (jit.mode != JIT_OFF) fprintf(stderr, "runevm-census: --jit ignored: the interpreter alone runs\n");
+    vm->jit.mode = JIT_OFF;
+    if (census_dir) census_init(vm, census_dir, (uint64_t)census_every_arg, (int)census_fields, census_summary, (uint64_t)census_ids);
+#endif
 
     char err[256];
     if (!load_program(vm, argv[i], err, sizeof err)) {
@@ -160,6 +198,9 @@ int main(int argc, char **argv) {
         return 2;
     }
     if (disasm) { disassemble(&vm->prog, stdout); vm_destroy(vm); return 0; }
+#ifdef RUNE_CENSUS
+    if (census_static_mode) { census_static(&vm->prog, argv[i], stdout); vm_destroy(vm); return 0; }
+#endif
 
     vm_exit(vm, vm_run(vm));   /* does not return */
     return 0;

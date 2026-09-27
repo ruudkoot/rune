@@ -22,13 +22,14 @@ static int LOOP_NAME(VM *vm, JitProgram *jit) {
 #include "reg_labels.h"
     };
 #define CASE(name) L_##name:
-#define NEXT goto *dispatch[code[pc]]
+#define NEXT do { CENSUS_NEXT(pc); goto *dispatch[code[pc]]; } while (0)
     NEXT;
 #include "reg_cases.h"
 #else
 #define CASE(name) case ROP_##name:
 #define NEXT continue
     for (;;) {
+        CENSUS_NEXT(pc);
         switch (code[pc]) {
 #include "reg_cases.h"
         default:

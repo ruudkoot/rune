@@ -242,9 +242,23 @@ struct
                                | _ => ([], "pc += " ^ len ^ ";")
                              val traced =
                                commaList (List.tabulate (3, fn k => if k < nf then List.nth (letters, k) else "0"))
+                             (* the census VM's hook at a site that allocates or runs a
+                                primitive (vm/census.h; nothing in the stock build): the
+                                instruction's own pc, before the prologue moves it *)
+                             val census =
+                               case #name i of
+                                 "TUPLE" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CLOSURE" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CON" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "CONN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "NEWEXN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "MKEXN" => ["CENSUS_SITE(pc, fr->func);"]
+                               | "PRIM" => ["CENSUS_PRIM(pc, fr->func, a);"]
+                               | "PRIMPUSH" => ["CENSUS_PRIM(pc, fr->func, a);"]
+                               | _ => []
                            in
                              ["CASE(" ^ #name i ^ ") {"]
-                             @ IsaGen.indent 4 (reads @ listReads
+                             @ IsaGen.indent 4 (reads @ listReads @ census
                                                 @ ["TRACE(ROP_" ^ #name i ^ ", " ^ traced ^ ");",
                                                    advance,
                                                    "count++;"]

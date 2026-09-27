@@ -13,6 +13,7 @@
 #define ARG(n) (vm->stack[vm->sp - 1 - (size_t)(n)])   /* ARG(0) is the last argument */
 
 static int ret(VM *vm, int arity, Value v) {
+    CENSUS_PRIM_RESULT(census_prim, v);
     vm->sp -= (size_t)arity;
     vm_push(vm, v);
     return 0;
@@ -1580,7 +1581,7 @@ static int p_ref_new(VM *vm) {
     return ret(vm, 1, mk_ptr(r));
 }
 static int p_ref_get(VM *vm) { Obj *r = check_obj(vm, ARG(0), K_REF, "ref_get"); return ret(vm, 1, OBJ_FIELDS(r)[0]); }
-static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); OBJ_FIELDS(r)[0] = ARG(0); return ret(vm, 2, mk_unit()); }
+static int p_ref_set(VM *vm) { Obj *r = check_obj(vm, ARG(1), K_REF, "ref_set"); CENSUS_STORE(r, 0, ARG(0), 1, 15); OBJ_FIELDS(r)[0] = ARG(0); return ret(vm, 2, mk_unit()); }
 
 static int p_array_new(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "array_new");
@@ -1604,6 +1605,7 @@ static int p_array_update(VM *vm) {
     check_tag(vm, ARG(1), T_INT, "array_update");
     int64_t i = ARG(1).u.i;
     if (i < 0 || (uint64_t)i >= a->len) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    CENSUS_STORE(a, i, ARG(0), 2, 15);
     OBJ_FIELDS(a)[i] = ARG(0);
     return ret(vm, 3, mk_unit());
 }
@@ -1847,7 +1849,9 @@ static int p_posix_fork(VM *vm) {
     fflush(stdout);
     fflush(stderr);
     if (vm->emulate_fork || !sys_has_fork()) return ret(vm, 1, mk_int(vm_fork(vm)));
-    return ret(vm, 1, mk_int(sys_fork()));
+    int64_t pid = sys_fork();
+    if (pid == 0) CENSUS_FORK_CHILD();   /* the child traces nothing: the parent's files are its */
+    return ret(vm, 1, mk_int(pid));
 }
 
 static int exec_with(VM *vm, Value pathValue, Value argsValue, char **envp, int search, int arity) {

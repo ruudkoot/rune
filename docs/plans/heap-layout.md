@@ -37,7 +37,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Measure in the tree | |
+| M1 | Measure in the tree | done 2026-09-27, branch `heap-layout` |
 | M2 | The simulator and the harness in the tree | |
 | M3 | The layout behind an interface | |
 | M4 | Prototypes at full scale; the gate | |
@@ -50,9 +50,9 @@ The owner decided every decision on 2026-09-27 (*Decisions*), D1 to D5
 provisionally on the experiments here and finally at the gate of M4,
 on the prototypes' numbers, with the alternatives they named
 benchmarked there. The JIT roadmap finished the same day (M11
-`798c002`, M12 `1f7e55b`, merged as PR #21, `d278153`), so M1 starts
-when the owner names the branch. M5 to M8 are sized now and
-planned again at the gate.
+`798c002`, M12 `1f7e55b`, merged as PR #21, `d278153`), and the
+milestones run on branch `heap-layout`, one commit each. M5 to M8 are
+sized now and planned again at the gate.
 
 ## The request
 
@@ -1381,6 +1381,15 @@ objects, and its samples end in the objects alive at exit):
 | list_ops | 1,008,344 | 2,830,064 | 70,766 | 11 | 0.1 s |
 | array_sieve | 1,844,333 | 1,881,600 | 18,208 | 8 | 0.0 s |
 | fib, tak, word_bits, real_nbody | | 584 to 4,624 | 23 to 126 | 1 | 0.0 s |
+
+M1 rebuilt the census from the tree (`make vm-census`, `scripts/census.sh
+bootstrap`, 2026-09-27) and reproduced this table's first row to the
+object: 458,049,116 instructions, 1,087,242,872 bytes and 24,051,681
+objects in 4,136 samples, 321 s, the 12 instructions, 664 bytes and 17
+objects more being the position closures of a seekable standard input
+(`docs/testing.md`), and every share by kind and every first-order size
+ratio equal to the fourth decimal (L1 0.5908, L1 with pairs 0.5022,
+L4-mono 0.6319, L4-uniform 0.7067).
 
 The bootstrap, by kind and by shape (bytes; compile-sigs in brackets
 where it differs):
@@ -3115,7 +3124,21 @@ they from it:
 * **The harness** for a layout's mutator cost on the compiler's data
   structures, both compilers, ratios to today.
 * **The scripts of M1 and M2** are how every milestone's table is made;
-  *The experiments* says how this roadmap's were.
+  *The experiments* says how this roadmap's were. M1 put them in the
+  tree: `make vm-census` builds the census VM (`docs/census.md`:
+  `--census-dir`, `--census-every`, `--census-summary`,
+  `--census-static`), `scripts/census.sh WORKLOAD...` runs a workload on
+  the stock and the census VM and keeps the traces under
+  `tests/out/census`, `scripts/check-census.sh` is its check in `make
+  check`; `--stats` prints bytes copied, the largest live size and the
+  collector's time; `scripts/perf-cycles.sh` takes `--events`,
+  `--vm-opts`, `--gc` (the collector's table), `--profile CONFIG[:PROGRAM]`
+  (by symbol, then by group through `scripts/perf-groups.awk`),
+  `--mlton-bench DIR NFILE` and `--sweep` (the heap-size sweep), with
+  compile-sigs and runedoc-page as programs;
+  `tests/external/run-mlton-bench.sh` runs MLton's benchmarks from
+  `/home/ruud/reference` at the sizes of `tests/perf/mlton-bench.txt`
+  and checks their counts. M2 adds the simulator and the harness.
 
 ## References
 

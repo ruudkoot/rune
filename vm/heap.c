@@ -4,6 +4,24 @@
 #include "vm.h"
 #include "sys.h"
 
+/* The census VM (vm/census.h) carries an id word in every header, 8 bytes
+   more per object: the sizes the stock VM counts and collects by are kept
+   apart (STOCK, USED_STOCK), so that --count prints the stock numbers and
+   a collection happens where the stock VM's would, and each semispace is
+   made half again as large as its stock size, room for the extra word of
+   every object (at most a third more, 32 bytes for the stock 24). */
+#ifdef RUNE_CENSUS
+#define STOCK(size) ((size) - 8)
+#define REAL_SPACE(n) ((n) + (n) / 2)
+#define USED_STOCK(vm) ((vm)->census_used_stock)
+#define ADD_STOCK(vm, size) ((vm)->census_used_stock += STOCK(size))
+#else
+#define STOCK(size) (size)
+#define REAL_SPACE(n) (n)
+#define USED_STOCK(vm) ((vm)->heap_used)
+#define ADD_STOCK(vm, size) ((void)0)
+#endif
+
 static size_t payload_size(size_t bytes) {
     size_t s = (bytes + 15) & ~(size_t)15;
     return s < 16 ? 16 : s;
@@ -17,9 +35,12 @@ size_t obj_size(const Obj *o) {
 void heap_init(VM *vm, size_t semispace_bytes) {
     if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
     vm->heap_size = semispace_bytes;
-    vm->heap_from = malloc(semispace_bytes);
+    vm->heap_from = malloc(REAL_SPACE(semispace_bytes));
     vm->heap_to = NULL;
     vm->heap_used = 0;
+#ifdef RUNE_CENSUS
+    vm->census_used_stock = 0;
+#endif
     vm->heap_fill = 50;
     vm->gc_count = 0;
     vm->live_last = 0;
@@ -28,23 +49,29 @@ void heap_init(VM *vm, size_t semispace_bytes) {
     vm->gc_sys_us = 0;
     vm->bytes_allocated = 0;
     vm->objects_allocated = 0;
+    vm->copied = 0;
+    vm->max_live = 0;
     if (!vm->heap_from) { fprintf(stderr, "runevm: cannot allocate heap\n"); exit(2); }
 }
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
     size_t size = sizeof(Obj) + payload_size(payload_bytes);
-    if (size > vm->heap_size - vm->heap_used ||
-        (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0)) {
-        vm_gc(vm, size);
+    CENSUS_FLUSH();
+    if (STOCK(size) > vm->heap_size - USED_STOCK(vm) ||
+        (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0) ||
+        CENSUS_FORCED()) {
+        vm_gc(vm, STOCK(size));
     }
     Obj *o = (Obj *)(vm->heap_from + vm->heap_used);
     vm->heap_used += size;
-    vm->bytes_allocated += size;
+    ADD_STOCK(vm, size);
+    vm->bytes_allocated += STOCK(size);
     vm->objects_allocated++;
     o->kind = kind;
     o->pad = 0;
     o->contag = contag;
     o->len = len;
+    CENSUS_ALLOC(vm, o, size);
     return o;
 }
 
@@ -69,6 +96,9 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len) {
 
 static char *to_space;
 static size_t to_used;
+#ifdef RUNE_CENSUS
+static size_t to_used_stock;
+#endif
 
 static Obj *copy_obj(Obj *o) {
     if (o->kind == K_FORWARD) return *(Obj **)OBJ_BYTES(o);
@@ -84,6 +114,10 @@ static Obj *copy_obj(Obj *o) {
     default: memcpy(n, o, size); break;
     }
     to_used += size;
+#ifdef RUNE_CENSUS
+    to_used_stock += STOCK(size);
+#endif
+    CENSUS_SURVIVE(n, size);
     o->kind = K_FORWARD;
     *(Obj **)OBJ_BYTES(o) = n;
     return n;
@@ -101,11 +135,15 @@ static void collect_into(VM *vm, size_t new_size) {
     if (vm->heap_to && new_size == vm->heap_size) to_space = vm->heap_to;
     else {
         free(vm->heap_to);
-        to_space = malloc(new_size);
+        to_space = malloc(REAL_SPACE(new_size));
         if (!to_space) { fprintf(stderr, "runevm: out of memory\n"); exit(2); }
     }
     vm->heap_to = NULL;
     to_used = 0;
+#ifdef RUNE_CENSUS
+    to_used_stock = 0;
+    census_collect_begin();
+#endif
 
     /* roots */
     for (size_t i = 0; i < vm->sp; i++) copy_value(&vm->stack[i]);
@@ -133,8 +171,13 @@ static void collect_into(VM *vm, size_t new_size) {
     else free(vm->heap_from);
     vm->heap_from = to_space;
     vm->heap_used = to_used;
+#ifdef RUNE_CENSUS
+    USED_STOCK(vm) = to_used_stock;
+#endif
     vm->heap_size = new_size;
     vm->gc_count++;
+    vm->copied += to_used;
+    if (to_used > vm->max_live) vm->max_live = to_used;
     to_space = NULL;
 }
 
@@ -163,6 +206,7 @@ void vm_gc(VM *vm, size_t needed) {
        checkGCTime: read once around the whole of it, so that growing the
        heap counts as one collection and not two. */
     int64_t user0 = sys_time_user(), sys0 = sys_time_sys();
+    CENSUS_GC_BEGIN(vm);
     /* Where the heap must grow, collecting into a space of the same size
        and then again into a larger one made the largest collections of a
        run. So guess first whether it must: the survivors grow about as
@@ -178,11 +222,12 @@ void vm_gc(VM *vm, size_t needed) {
         if (guess < vm->live_last || guess > vm->heap_size) guess = vm->heap_size;
     }
     collect_into(vm, grown(vm, vm->heap_size, guess, needed));
-    size_t want = grown(vm, vm->heap_size, vm->heap_used, needed);
+    size_t want = grown(vm, vm->heap_size, USED_STOCK(vm), needed);
     if (want != vm->heap_size) collect_into(vm, want);
     if (needed > vm->heap_size - vm->heap_used) vm_limit(vm, "heap limit exceeded");
     vm->live_before = vm->live_last;
-    vm->live_last = vm->heap_used;
+    vm->live_last = USED_STOCK(vm);
+    CENSUS_GC_END(vm);
     vm->gc_user_us += sys_time_user() - user0;
     vm->gc_sys_us += sys_time_sys() - sys0;
 }

@@ -136,7 +136,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan vm-census test-census mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -435,6 +435,22 @@ NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS) $(filter-out
 bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
 	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
+
+# The census VM (docs/census.md; docs/plans/heap-layout.md, M1): vm/new's
+# loop on the runtime with -DRUNE_CENSUS, which enables the hooks of
+# vm/census.h. It interprets everything (the JIT allocates in line) and
+# prints the stock VM's --count line, which scripts/check-census.sh checks.
+CENSUS_SRCS := $(NEW_SRCS) vm/census.c vm/census_static.c
+vm-census: bin/runevm-census
+bin/runevm-census: $(CENSUS_SRCS) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) vm/census.h vm/layouts.h | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_JIT=1 -DRUNE_CENSUS -Ivm -Ivm/new -o $@ $(CENSUS_SRCS) -lm
+
+# The census VM against the stock one on a small program: the same --count
+# line, every byte and object in census.txt, the summary mode and the static
+# census (scripts/check-census.sh). Part of make check.
+test-census: bin/runevm-census bin/runevm-new bin/rune-new
+	sh scripts/check-census.sh
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -955,6 +971,7 @@ check:
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-new
 	@$(MAKE) --no-print-directory test-new-jit
+	@$(MAKE) --no-print-directory test-census
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory bench-smoke
 	@$(MAKE) --no-print-directory check-positions

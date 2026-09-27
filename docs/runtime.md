@@ -62,7 +62,9 @@ maintains, not the address of the moment.
   for twice the memory. A heap that would have to double past
   what a `size_t` can hold ends the run with `runevm: out of memory`.
 * `runevm --stats` prints, at exit, the number of collections, the bytes
-  allocated, the size of a semispace and the bytes live.
+  allocated, the size of a semispace, the bytes live, the bytes every
+  collection copied in all, the most a collection kept, and the collector's
+  processor time in microseconds.
 * `runevm --gc-stress N` collects before every *N*th allocation. With `N = 1`
   every allocation moves everything, which is how `make test-stress` finds a
   primitive that keeps a heap pointer in a C variable across an allocation.

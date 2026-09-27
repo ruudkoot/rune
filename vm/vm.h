@@ -87,6 +87,9 @@ struct Obj {
     uint8_t pad;
     uint16_t contag;
     uint32_t len;   /* number of fields, or byte length for strings */
+#ifdef RUNE_CENSUS
+    uint64_t id;    /* the census VM (vm/census.h): the object's number in allocation order */
+#endif
     /* payload follows: Value fields[] or char bytes[] */
 };
 
@@ -257,6 +260,9 @@ typedef struct VM {
     char *heap_from, *heap_to;
     size_t heap_size;        /* size of one semispace */
     size_t heap_used;
+#ifdef RUNE_CENSUS
+    size_t census_used_stock;  /* heap_used as the stock VM would count it (8-byte headers): the collector's trigger */
+#endif
     size_t gc_count;
     size_t live_last;        /* bytes the last collection kept, and the one before it: */
     size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
@@ -264,6 +270,8 @@ typedef struct VM {
     int64_t gc_sys_us;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
+    uint64_t copied;         /* bytes every collection copied, in all (--stats) */
+    size_t max_live;         /* the most a collection kept (--stats) */
     uint64_t instructions;   /* executed so far */
     size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     unsigned heap_fill;      /* --heap-fill P: the heap grows until at most P% of it is in use
@@ -431,5 +439,7 @@ static inline int32_t read_i32(const uint8_t *p) {
     return (int32_t)u;
 }
 static inline uint32_t read_u32(const uint8_t *p) { return (uint32_t)read_i32(p); }
+
+#include "census.h"
 
 #endif
