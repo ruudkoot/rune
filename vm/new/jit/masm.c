@@ -271,6 +271,15 @@ void ms_call(Masm *m, MsHelper helper) {
 /* lea, not add: the flags of a comparison just made live through it to
    the branch after (emit.c, a fused compare and branch, M7) */
 void ms_count(Masm *m, uint32_t k) { if (k) x64_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k); }
+void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
+    ms_writeback(m, pc);
+    x64_mov32_mi(&m->a, VMR, OFF(pc), (int32_t)pc);
+    x64_lea(&m->a, RAX, BASEI, -1, 1, (int32_t)m->nlocals);
+    x64_mov_mr(&m->a, VMR, OFF(sp), RAX);
+    x64_lea(&m->a, RAX, COUNTR, -1, 1, -(int32_t)remaining);
+    x64_mov_mr(&m->a, VMR, OFF(instructions), RAX);
+    ms_handback(m, RUN_INTERP);
+}
 void ms_handback(Masm *m, int code) {
     x64_mov_ri(&m->a, RAX, code);
     ms_handback_rax(m);

@@ -229,6 +229,7 @@ typedef struct JitOptions {
     uint32_t calls, work;
     uint32_t stress;
     uint32_t tier;           /* --jit-tier=N: the tier functions are compiled at (0: the mode's; M9) */
+    uint32_t deopt_stress;   /* --deopt-stress=N: code leaves for the interpreter at every Nth instruction boundary (M11) */
 } JitOptions;
 
 #define NUM_BUILTIN_EXNS 8

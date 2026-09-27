@@ -178,9 +178,14 @@ keep these invariants:
   the loop and tier 1 keep every test, so the oracle's interpreted run
   is what a wrong program is held to. A function's code fills its own
   registers with unit at its entry; a caller fills only for a callee
-  without an arity in the section, and for the interpreter. Tier 2 is
-  run by `check-jit.sh` on every program (`--jit=all --jit-tier=2`, and
-  every other function). **The representations
+  without an arity in the section, and for the interpreter. An
+  instruction's effects are complete at its end, and the code may
+  leave for the interpreter at any boundary (`ms_exit`,
+  `--deopt-stress`): an emitter that keeps anything outside the frame
+  across a boundary -- other than a comparison's flags for the branch
+  fused onto it -- breaks that. Tier 2 is run by `check-jit.sh` on
+  every program (`--jit=all --jit-tier=2`, every other function, and
+  leaving after every instruction). **The representations
   section** (`docs/bytecode.md`): a new instruction that writes a register
   of a known representation says so in the register checker's lint
   (`vm/new/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same

@@ -294,7 +294,10 @@ refuses the other's file and image.
   after a call, a handler -- the frame being the same; `--jit-stress=N`
   invalidates the callee's code at every Nth call into it, for testing
   that frames return to the interpreter from code that is gone.
-  `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
+  `--deopt-stress=N` makes compiled code leave for the interpreter at
+  every Nth instruction boundary (plans/jit.md M11; ARCHITECTURE.md,
+  Deoptimisation), a test that the frame is exact everywhere, which the
+  oracle runs at N = 1. `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
   names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). Under
   `--jit=opt` a function is compiled by the same counters at tier 2
   (plans/jit.md M9; ARCHITECTURE.md, Tier 2), whose code keeps ints,

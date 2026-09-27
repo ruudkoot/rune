@@ -422,6 +422,39 @@ registers give no home is compiled as tier 1's code. The counts of
 `--count` are unchanged by construction: the code is tier 1's, and the
 run counting with it.
 
+## Deoptimisation: leaving the code (M11)
+
+The roadmap planned maps from machine registers to the interpreter's
+at every safepoint, and inline frames made VM frames again. The design
+as built needs neither: tier 2 has no inlining, and at every safepoint
+the frame is the interpreter's -- the slots hold every value with its
+tag (the homes written back), the VM its stack pointer, pc and count.
+So leaving the code for the interpreter -- an *OSR exit*, the
+deoptimisation this JIT has -- is a jump to the leave stub with
+`RUN_INTERP` and the pc to go on at, which the code did for a callee
+without code, a return into a frame without `native_ret` and a raise
+into a handler without `native` since M5, and which invalidation with
+frames live relies on since M6 (`jit_invalidate` walks the frames and
+handlers, and a frame returning into code that is gone returns to the
+interpreter; `--jit-stress=N` tests that at every Nth call).
+
+What M11 adds is the exit at an arbitrary *instruction boundary*
+(`ms_exit`): after an instruction whose effects are complete and whose
+successor is the next -- not a branch, a call, a return, a raise, nor a
+`PRIMPUSH`, whose `RESULT` takes its value from the stack -- and not
+between a comparison and the branch fused onto it, the homes live at
+the boundary are written back, the VM made exact, and the count of the
+run, which was added at the run's start for all of its instructions,
+reduced by the instructions of the run the interpreter will now count
+itself, so that `--count` stays exact. `--deopt-stress=N` makes the
+code leave at every Nth such boundary (a counter in the code, a slow
+path per boundary): the oracle runs every program with `N = 1`, the
+code leaving after every instruction it enters, and the compiler
+compiling itself with `N = 7`, and holds both to the interpreter's
+output and counts. `--jit-stats` counts the exits (`left mid-way`).
+Speculation without a fallback, which would need a deoptimisation with
+a reason, was not built: M10 found no site where it would pay.
+
 ## Calls into C: the transition, and the FFI's
 
 Native code calls into C in one way, wherever it does (`masm.c`, `ms_sync`,

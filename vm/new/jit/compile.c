@@ -582,6 +582,14 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_call(m, (MsHelper)jit_h_grow_frames);
         ms_reload(m);
         x64_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_DEOPT) {
+        /* --deopt-stress: the Nth boundary reached (r11 is the counter's
+           address): the count begun again, the exit counted, and out
+           to the interpreter at s.pc, s.n instructions of the run left */
+        x64_mov_mi(&m->a, R11, 0, 0);
+        x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)&j->jit->deopts);
+        x64_add_mi(&m->a, R11, 0, 1);
+        ms_exit(m, s.pc, s.n);
     } else if (s.kind == SLOW_PRIM) {
         /* a primitive done in line, in a case that is the helper's (M7):
            back where the code went on, or, after a raise, the VM handed
@@ -667,6 +675,7 @@ static int emit_function(Jit *j, Scan *sc) {
     Masm *m = &j->m;
     uint32_t pc = j->from;
     int in_run = 0;
+    uint32_t run_left = 0;   /* the instructions of the run after this one, for an exit (M11) */
     while (pc < j->to && !j->unsupported && !m->a.failed) {
         uint32_t at = pc - j->from;
         if (!sc->start[at]) { pc++; continue; }
@@ -686,7 +695,9 @@ static int emit_function(Jit *j, Scan *sc) {
             }
             ms_count(m, k);
             in_run = 1;
+            run_left = k;
         }
+        if (run_left) run_left--;
         uint8_t op = code[pc];
         uint32_t l = rop_length(code + pc);
         j->next = pc + l;
@@ -700,6 +711,22 @@ static int emit_function(Jit *j, Scan *sc) {
         default: j->unsupported = 1;
         }
         if (sc->ends[at]) in_run = 0;
+        /* --deopt-stress=N (M11): after an instruction whose effects are
+           complete and whose successor is the next (not a branch, a call,
+           a return, a raise, nor a PRIMPUSH, whose RESULT is the
+           interpreter's to take from the stack), and not between a
+           comparison and the branch fused onto it (the flags), the
+           Nth boundary leaves for the interpreter */
+        if (j->jit->deopt_stress && !j->unsupported && rop_flow[op] == FLOW_NEXT && op != ROP_PRIMPUSH && j->flags_for < 0) {
+            Slow *s = ms_slow(m, SLOW_DEOPT, j->next);
+            if (s) {
+                s->n = run_left;
+                x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)&j->jit->deopt_count);
+                x64_add_mi(&m->a, R11, 0, 1);
+                x64_cmp_mi(&m->a, R11, 0, (int32_t)j->jit->deopt_stress);
+                x64_jcc(&m->a, CC_AE, &s->here);
+            }
+        }
         if (op == ROP_SWITCH) {
             uint32_t n = (uint32_t)read_i32(code + pc + 5);
             pc += l + 5 * n;

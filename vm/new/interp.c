@@ -224,6 +224,7 @@ int vm_jit_arg(const char *arg, JitOptions *jit, int *check) {
     if (strncmp(arg, "--jit-calls=", 12) == 0) return count_arg(arg, 12, &jit->calls);
     if (strncmp(arg, "--jit-work=", 11) == 0) return count_arg(arg, 11, &jit->work);
     if (strncmp(arg, "--jit-stress=", 13) == 0) return count_arg(arg, 13, &jit->stress);
+    if (strncmp(arg, "--deopt-stress=", 15) == 0) return count_arg(arg, 15, &jit->deopt_stress);
     if (strncmp(arg, "--jit-tier=", 11) == 0) {
         if (!count_arg(arg, 11, &jit->tier)) return 0;
         if (jit->tier <= 2) return 1;

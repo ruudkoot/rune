@@ -32,7 +32,7 @@ enum { VMR = R12, STACKR = R13, BASEI = RBP, BASER = R14, COUNTR = R15 };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT };
 typedef struct Slow {
     X64Label here;
     X64Label back;
@@ -146,6 +146,11 @@ void ms_call(Masm *m, MsHelper helper);                            /* the VM as 
 void ms_call_lean(Masm *m, MsHelper helper);
 void ms_count(Masm *m, uint32_t k);
 void ms_handback(Masm *m, int code);                               /* the VM handed back with that answer */
+/* the code left at the boundary after an instruction, for the interpreter
+   to go on at pc (M11, OSR exit): the homes live there written back, the
+   VM made exact, and the count less the `remaining` instructions of the
+   run counted at its start that the interpreter will count itself */
+void ms_exit(Masm *m, uint32_t pc, uint32_t remaining);
 void ms_handback_rax(Masm *m);                                     /* with the answer in rax */
 
 /* the heap: rax := an object of n fields, or to slow where it would not

@@ -351,6 +351,9 @@ test-new-asan: bin/runevm-new-asan bin/rune-new $(RUNE)
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-asan-opt
 	chmod +x bin/runevm-new-asan-opt
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-opt --out tests/out/new-asan-opt
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 --deopt-stress=1 "$$@"\n' > bin/runevm-new-asan-deopt
+	chmod +x bin/runevm-new-asan-deopt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-deopt --out tests/out/new-asan-deopt
 
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin

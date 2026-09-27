@@ -123,6 +123,9 @@ typedef struct JitProgram {
        them (M7, jit_fill_from); UINT32_MAX while not yet worked out */
     uint32_t *fill_from;
     int all_meta;               /* every function has its arity in the section: a callee's code fills its own registers (M10) */
+    uint32_t deopt_stress;      /* --deopt-stress=N (M11): the code counts instruction boundaries here and leaves at every Nth */
+    uint64_t deopt_count;
+    uint64_t deopts;            /* how many times it left so */
 } JitProgram;
 /* the lowest register of function f a call must fill with unit */
 uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f);

@@ -38,7 +38,7 @@ What it rests on:
 | M8 | Preparing tier 2: representations in the image, profiles in tier 1 | done |
 | M9 | Tier 2: the registers given homes | done |
 | M10 | Tier 2: the optimisations | done |
-| M11 | Deoptimisation, OSR exit and invalidation | |
+| M11 | Deoptimisation, OSR exit and invalidation | done |
 | M12 | aarch64 | |
 
 The owner decided D1 to D14 on 2026-09-25 (*Decisions*); what starts
@@ -2414,6 +2414,35 @@ Nothing here changes what `--count` counts (D5).
   (`tests/lang/rt.trace_*` under each `--jit=`); the invalidation test of
   M6 passes with tier-2 frames.
 * **Touches:** incremental compilation (module reload).
+* **Done** (2026-09-27; `vm/new/jit/masm.{h,c}`, `compile.c`, `jit.{h,c}`,
+  `interp.c`, `vm/main.c`, about 80 lines; the oracle, the Makefile;
+  ARCHITECTURE.md, bytecode.md, AGENTS.md). Smaller than planned,
+  because the design as built made most of it unnecessary
+  (ARCHITECTURE.md, Deoptimisation):
+  * **The maps** from machine registers to the interpreter's exist
+    already: tier 2 keeps no value outside the frame across a
+    safepoint (M9's write-back), so the frame is the interpreter's at
+    every one. **Inline frames** do not arise: tier 2 inlines nothing
+    (M10, item 2). **Invalidation with frames live** is M6's, tested
+    by `--jit-stress` since then, and tier 2's frames are tier 1's.
+  * **Built: the OSR exit** at an instruction boundary (`ms_exit`):
+    the homes live at the boundary written back, the VM made exact,
+    and the run's count -- added at the run's start for all of it --
+    reduced by what the interpreter will count itself, so `--count`
+    stays exact; and **`--deopt-stress=N`**, which makes the code leave
+    at every Nth boundary after an instruction whose effects are
+    complete and whose successor is the next (not a branch, a call, a
+    return, a raise, nor a `PRIMPUSH`), and not between a comparison
+    and its fused branch. The oracle's seventh mode runs every program
+    leaving after every instruction (`N = 1`; fib leaves 300,228 times
+    and counts the same) and the compiler compiling itself at `N = 7`;
+    `make test-new-asan` runs `tests/lang` so under the sanitiser.
+    This is the strongest test of M9's liveness there is: a home not
+    written back is a stale slot the interpreter reads.
+  * **Not built:** uncommon traps without a fallback (a deoptimisation
+    with a reason): M10 found no speculation that pays. **Traces:**
+    `--trace` runs the interpreter alone (M5), so a trace is the same
+    at every tier by construction.
 
 ### M12. aarch64 (L, about 900)
 

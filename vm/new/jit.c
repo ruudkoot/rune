@@ -117,6 +117,7 @@ static void jit_make(VM *vm, JitProgram *jit) {
     jit->calls_threshold = vm->jit.calls ? vm->jit.calls : DEFAULT_CALLS;
     jit->work_threshold = vm->jit.work ? vm->jit.work : DEFAULT_WORK;
     jit->stress = vm->jit.stress;
+    jit->deopt_stress = vm->jit.deopt_stress;
     if (vm->jit.mode == JIT_ALL) {
         /* --jit-only=LO-HI compiles functions LO to HI alone: for finding,
            by halving, a function whose code is wrong; =odd or =even
@@ -230,10 +231,10 @@ int jit_run(VM *vm, JitProgram *jit, const void *at) {
 void jit_print_stats(void) {
     JitProgram *jit = the_program;
     if (!jit) return;
-    fprintf(stderr, "runevm: jit: %llu of %u functions compiled (%llu at tier 2) in %.3f s, %llu bytes of code (%llu dead); handed to native code %llu times, back %llu; entered mid-way %llu times; %llu invalidated\n",
+    fprintf(stderr, "runevm: jit: %llu of %u functions compiled (%llu at tier 2) in %.3f s, %llu bytes of code (%llu dead); handed to native code %llu times, back %llu; entered mid-way %llu times, left mid-way %llu; %llu invalidated\n",
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
-            (unsigned long long)jit->osr_entries, (unsigned long long)jit->invalidated);
+            (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
     if (jit->profile) print_profile(jit);
     /* the primitives called from code, most called first: what is not in
        line yet, or in line and out of its fast case */

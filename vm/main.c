@@ -30,6 +30,7 @@ static void usage(void) {
         "  --jit-only=SPEC vm/new: give code to functions LO-HI, or the odd or even ones, alone\n"
         "  --jit-calls=N, --jit-work=N  vm/new: compile a function at its Nth call, or at N iterations of its loops and calls it makes (baseline)\n"
         "  --jit-stress=N  vm/new: every Nth call into compiled code invalidates it (a test of invalidation)\n"
+        "  --deopt-stress=N  vm/new: compiled code leaves for the interpreter at every Nth instruction (a test of the frames' exactness)\n"
         "  --jit-perf-map  vm/new: write /tmp/perf-PID.map, so that perf record names compiled functions\n"
         "  --jit-profile   vm/new: count what compiled code calls, branches and loops on (--jit-stats shows them)\n"
         "  --jit-check     vm/new: run a few bytes of code from executable memory and exit\n"
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--heap-fill") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &heap_fill) || heap_fill < 1 || heap_fill > 100) { usage(); return 2; }
         }
-        else if (strncmp(argv[i], "--jit", 5) == 0) {
+        else if (strncmp(argv[i], "--jit", 5) == 0 || strncmp(argv[i], "--deopt-stress=", 15) == 0) {
             if (!vm_jit_arg(argv[i], &jit, &jit_check)) { usage(); return 2; }
             if (strncmp(argv[i], "--jit=", 6) == 0) jit_given = 1;
         }
