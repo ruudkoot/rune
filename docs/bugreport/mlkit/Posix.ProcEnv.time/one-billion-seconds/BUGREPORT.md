@@ -19,8 +19,8 @@ the tag `v4.7.23`, byte for byte, so the code below is unchanged there;
   seconds into a quotient and a remainder of 10^9, and the ML code adds
   the status field to the quotient instead of the remainder.
 * **Required behaviour:** the
-  [`POSIX_PROC_ENV` specification](https://smlfamily.github.io/Basis/posix-proc-env.html):
-  "`time ()` returns the elapsed wall time since the Epoch."
+  [`POSIX_PROC_ENV` specification](https://smlfamily.github.io/Basis/posix-proc-env.html)
+  says of `time`: "The elapsed wall time since the Epoch."
 
 ## Environment
 

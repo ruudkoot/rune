@@ -10,6 +10,9 @@ This has not been sent to MLKit. No release has a fix: 4.7.21, 4.7.22 and
 `Mul.sml` included. It was not built here, so the bug has not been seen
 on `master` itself.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
 ## Summary
 
 * **The trigger:** a recursive function passes itself to a higher-order

@@ -21,7 +21,7 @@ argues that the specification asks otherwise.
   all cases, the sign and class field capture the sign and class of r."
   The sign of a NaN is observable: `signBit r` "returns true if and only if
   the sign of r (infinities, zeros, and NaN, included) is negative", and
-  `fromDecimal` of a `NAN` class "generates a signed NaN". (The page's
+  of `fromDecimal`: "If class is NAN, a signed NaN is generated." (The page's
   introduction says the Library models NaNs "as a single value ... ignoring
   the sign bit"; the sentences above, which name NaNs and "all cases", are
   the ones that speak of `toDecimal` and `signBit`.)

@@ -8,6 +8,9 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same code: `basis/IntInf.sml` and `basis/Time.sml` are identical
 to 4.7.23's.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
 ## Summary
 
 * **The trigger:** `IntInf.fromInt i` (= `LargeInt.fromInt`) for an `int`
@@ -24,12 +27,12 @@ to 4.7.23's.
   `toMicroseconds`, `toString` and `fmt` of the result raise `Overflow`.
   `Date.toTime` of a date after 2038-01-19 03:14:07 UTC raises `Time`.
 * **Required behaviour:**
-  [`INTEGER`](https://smlfamily.github.io/Basis/integer.html) `fromInt`:
-  "converts a value from type Int.int to type int. If the value cannot be
-  represented as a value of type int, the Overflow exception is raised" --
-  every `int` can be an `IntInf.int`, whose `precision` is `NONE`; and
-  `toInt` raises `Overflow` only when "the argument cannot be represented as
-  an int". [`TIME`](https://smlfamily.github.io/Basis/time.html) `toSeconds`
+  [`INTEGER`](https://smlfamily.github.io/Basis/integer.html) says of
+  `toInt` and `fromInt`: "These convert between integer values of types int
+  and the default integer type. They raise Overflow if the value does not
+  fit." Every `int` fits in an `IntInf.int`, whose `precision` is `NONE`,
+  and every `IntInf.int` from -2^62 to 2^62 - 1 fits in MLKit's 63-bit
+  `int`. [`TIME`](https://smlfamily.github.io/Basis/time.html) `toSeconds`
   and the like raise `Overflow` "When the result is not representable by
   LargeInt.int", which never happens for an unbounded `LargeInt`; and
   [`DATE`](https://smlfamily.github.io/Basis/date.html): "A conforming Date

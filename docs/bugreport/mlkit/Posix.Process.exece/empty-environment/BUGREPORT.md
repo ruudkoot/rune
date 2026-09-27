@@ -9,6 +9,10 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 the tag `v4.7.23`, byte for byte, so the code below is unchanged there;
 `master` was not built.
 
+Related upstream: [#79](https://github.com/melsman/mlkit/issues/79), closed
+in 2021, fixed a segmentation fault of `exece`. This report is about a
+different matter, the empty environment.
+
 ## Summary
 
 * **The trigger:** `Posix.Process.exece (path, args, [])`, and so also

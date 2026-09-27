@@ -8,6 +8,11 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same code: `src/Runtime/Time.c` and `basis/Date.sml` are identical
 to 4.7.23's.
 
+Related upstream: [#213](https://github.com/melsman/mlkit/issues/213), fixed
+by [#215](https://github.com/melsman/mlkit/pull/215) on 2026-09-11, stopped
+`Date.fmt ""` from crashing in the same runtime function, `sml_strftime`.
+That fix did not touch `tm_zone`, which this report is about.
+
 ## Summary
 
 * **The trigger:** `Date.fmt` (or `Date.toString`'s kin) with the directive

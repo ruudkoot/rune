@@ -1,7 +1,7 @@
 (* filePosIn of an input stream that getReader has truncated *)
 fun write (name, s) = let val out = TextIO.openOut name in TextIO.output (out, s); TextIO.closeOut out end
 fun describe f =
-  (Position.toString (f ()) ^ ", no exception")
+  (ignore (f ()); "a position, no exception")
   handle IO.Io {function, name, cause} =>
            "Io {function = \"" ^ function ^ "\", name = \"" ^ name ^ "\", cause = " ^ exnName cause ^ "}"
        | e => exnName e

@@ -10,6 +10,17 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 `src/Compiler/Backend` directory is identical), so the code below is
 unchanged there; `master` was not built.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
+Related upstream: [#192](https://github.com/melsman/mlkit/issues/192),
+closed in December 2025 by commit `7d8b815a`, lifted the limit of six
+arguments on calls through auto-conversion (`compile_c_call_auto`). The
+calls of this report are ordinary `prim` calls (`compile_c_call_prim`),
+which passed arguments on the stack before that; but the auto-converted
+calls with a seventh argument go through the same `maybe_align`, so they are
+likely to be misaligned in the same way (not tried here).
+
 ## Summary
 
 * **The trigger:** a call of a C function with seven arguments, so that
@@ -101,7 +112,7 @@ val () = print (g ^ "\n")
 ```
 
 ```
-$ ./ok
+$ mlkit -o ok ok-getgrgid.mlb && ./ok
 calling Posix.SysDB.getgrgid
 raised Overflow
 ```

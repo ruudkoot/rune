@@ -9,6 +9,9 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 `src/Compiler/Backend/X64/CodeGenUtilX64.sml` as the tag `v4.7.23`, byte
 for byte, so the code below is unchanged there; `master` was not built.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
 ## Summary
 
 * **The trigger:** a call of `Posix.FileSys.unlink`, `rmdir`, `rename`,

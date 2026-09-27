@@ -29,8 +29,8 @@ the bug is not fixed there either.
   `[+~-]?[0-9]+` (and the same sign, once, for the other radices), and
   `scan` returns the number "parsed from a prefix of the character stream".
   So `"1~2"` is `SOME (1, "~2")`, and `"++5"`, `"~~5"` and `"~-1"` have no
-  prefix in the format: `NONE`. `fromString` "is equivalent to
-  `StringCvt.scanString (scan StringCvt.DEC)`".
+  prefix in the format: `NONE`. Of `fromString` the page says: "It is
+  equivalent to the expression StringCvt.scanString (scan StringCvt.DEC)."
 
 ## Environment
 

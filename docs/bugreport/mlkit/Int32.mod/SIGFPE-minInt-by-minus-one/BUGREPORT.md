@@ -8,6 +8,11 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same `src/Runtime/Math.c` as 4.7.23 (the files are identical), so
 the bug is not fixed there either.
 
+Related upstream: [#214](https://github.com/melsman/mlkit/issues/214),
+closed on 2026-09-10 before 4.7.23 was released, fixed the same crash of
+`Int64.quot (minInt, ~1)`. `mod` of the same operands still crashes in
+4.7.23.
+
 ## Summary
 
 * **The trigger:** `Int32.mod (valOf Int32.minInt, ~1)`,

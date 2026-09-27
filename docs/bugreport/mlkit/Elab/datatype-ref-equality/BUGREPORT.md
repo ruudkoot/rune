@@ -8,6 +8,9 @@ This has not been sent to MLKit. MLKit's `master` at `c49fbea`
 (2026-09-25) has the same `src/Common/EfficientElab/StatObject.sml` as the
 tag `v4.7.23`, so the bug is still there.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
 ## Summary
 
 * **The trigger:** a datatype with a constructor whose argument is `t ref`

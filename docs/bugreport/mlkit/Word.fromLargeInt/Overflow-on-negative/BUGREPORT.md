@@ -8,6 +8,11 @@ Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)
 has the same `basis/IntInfRep.sml` as 4.7.23 (the files are identical), so
 the bug is not fixed there either.
 
+Related upstream: [#116](https://github.com/melsman/mlkit/issues/116), fixed
+by [#117](https://github.com/melsman/mlkit/pull/117) in 2022, made
+`Word64.fromLargeInt` convert large positive numbers. The negative numbers
+of this report still raise `Overflow`.
+
 ## Summary
 
 * **The trigger:** `Word.fromLargeInt i`, `Word32.fromLargeInt i`,

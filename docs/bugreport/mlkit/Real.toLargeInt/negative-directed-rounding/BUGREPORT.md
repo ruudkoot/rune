@@ -18,9 +18,9 @@ has the same code: `basis/Real.sml` is identical to 4.7.23's.
   ~2.5` is `~2`, `toLargeInt TO_POSINF ~2.5` is `~3`. `Real.toInt` with the
   same modes is right.
 * **Required behaviour:** the
-  [Basis `REAL` specification](https://smlfamily.github.io/Basis/real.html):
-  "toInt mode x, toLargeInt mode x: These functions convert the argument x
-  to an integral type using the specified rounding mode", and `TO_NEGINF` of
+  [Basis `REAL` specification](https://smlfamily.github.io/Basis/real.html)
+  says of `toInt mode x` and `toLargeInt mode x`: "These functions convert
+  the argument x to an integral type using the specified rounding mode", and `TO_NEGINF` of
   [`IEEEReal`](https://smlfamily.github.io/Basis/ieee-float.html) rounds
   towards negative infinity.
 

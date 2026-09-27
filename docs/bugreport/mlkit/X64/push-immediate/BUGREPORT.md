@@ -9,6 +9,15 @@ This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
 `v4.7.23` (the whole `src/Compiler/Backend` directory is identical), so the
 code below is unchanged there; `master` was not built.
 
+A search of MLKit's issues and pull requests, their titles, texts and
+comments, up to #229 of 2026-09-25, found no report of it (2026-09-27).
+
+Related upstream: [#84](https://github.com/melsman/mlkit/issues/84), fixed
+by [#85](https://github.com/melsman/mlkit/pull/85) in 2021, was an assembler
+error of the same kind ("operand type mismatch for push") for the `int`
+constant `~1073741825`. The `word` constants of this report still produce a
+`pushq` that the assembler rejects.
+
 ## Summary
 
 * **The trigger:** a call that passes a `word` constant between

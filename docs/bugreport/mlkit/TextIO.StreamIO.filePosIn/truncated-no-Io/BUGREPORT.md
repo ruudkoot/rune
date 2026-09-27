@@ -1,6 +1,6 @@
 # MLKit 4.7.23: `TextIO.StreamIO.filePosIn` of a truncated stream raises nothing
 
-**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** MLton raises nothing either, and SML/NJ raises only once the stream is closed.
+**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** MLton raises nothing either, and SML/NJ raises only once the stream is closed; Poly/ML raises `Io` after `getReader`.
 
 ## Status: not reported upstream
 
@@ -41,7 +41,7 @@ built here. The code comes from MLton's Basis Library, whose release
 (* filePosIn of an input stream that getReader has truncated *)
 fun write (name, s) = let val out = TextIO.openOut name in TextIO.output (out, s); TextIO.closeOut out end
 fun describe f =
-  (Position.toString (f ()) ^ ", no exception")
+  (ignore (f ()); "a position, no exception")
   handle IO.Io {function, name, cause} =>
            "Io {function = \"" ^ function ^ "\", name = \"" ^ name ^ "\", cause = " ^ exnName cause ^ "}"
        | e => exnName e
@@ -59,9 +59,9 @@ val () = print ("filePosIn after closeIn:    " ^ describe (fn () => TextIO.Strea
 
 ```
 $ mlkit -o bug bug.mlb && ./bug
-filePosIn before getReader: 0, no exception
-filePosIn after getReader:  0, no exception
-filePosIn after closeIn:    0, no exception
+filePosIn before getReader: a position, no exception
+filePosIn after getReader:  a position, no exception
+filePosIn after closeIn:    a position, no exception
 ```
 
 The second and third lines should report `Io`.
