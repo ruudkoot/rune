@@ -140,7 +140,7 @@ val addr : entry -> in_addr
 
 **Law** `addr e = hd (addrs e)`
 
-**Example** `Option.map (toString o addr) (getByName "localhost")` is `SOME "127.0.0.1"` on a machine whose `/etc/hosts` has the usual line for it.
+On a machine whose `/etc/hosts` has the usual line for it, `Option.map (toString o addr) (getByName "localhost")` is `SOME "127.0.0.1"`.
 
 <details><summary>Tests (1)</summary>
 
@@ -184,8 +184,7 @@ val getByAddr : in_addr -> entry option
 
 `getByAddr a` is `SOME` of what the database records about the host at `a`, or `NONE`.
 
-**Example** `Option.map name (getByAddr (valOf (fromString "127.0.0.1")))` is
-`SOME "localhost"` on most machines.
+On most machines `Option.map name (getByAddr (valOf (fromString "127.0.0.1")))` is `SOME "localhost"`.
 
 <details><summary>Tests (1)</summary>
 

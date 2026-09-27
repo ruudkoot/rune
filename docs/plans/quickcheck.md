@@ -27,7 +27,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | The Example rule | |
+| M1 | The Example rule | done 2026-09-28 |
 | M2 | Libraries: `rune --library` | |
 | M3 | `lib/random` | |
 | M4 | The property core | |
@@ -1261,6 +1261,17 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - `docs/doc-comments.md`'s "Examples that run" says so, and `tests/doc/examples.lib` gets a case for a span that is no `bool`.
 * **Why now:** it is independent of everything else and small. It also touches the same comments as M7's law rewrites, so it is better done and regenerated (`make docs`) before them.
 * **Done when:** every code span of every `Example:` paragraph is run (789 of 810 are today), `make check` passes, and `make docs` output is committed.
+* **Done** (2026-09-28):
+  - **The rule in runedoc.** `DocExamples.ofDoc` takes every code span of an `Example:` paragraph (`isEquation` is gone). Each is elaborated as a closed `bool` at `make check-docs` and run at `make test-basis`.
+  - **The Basis.** 795 examples of 65 signatures hold, where 789 were run before. The rewritten spans are:
+    - the side pieces of `foldl` and `foldr`, now equations;
+    - `Word8.toInt 0wxFF = 255`, `LargeWord.wordSize = 64` and `size "a\\nb" = 4`, results the prose gave, now claims;
+    - `fmt StringCvt.EXACT 0.1 = IEEEReal.toString (toDecimal 0.1)`;
+    - the four whose results depend on the machine's `/etc` files (`NetHostDB`, `NetProtDB`, `NetServDB`), now prose.
+    
+    The `<=` claim of `RUNTIME` and the `all (op =)` piece of `LIST_PAIR` were `bool`s already, and now run.
+  - **The fixture.** `tests/doc/examples.lib` has a span that is no `bool` (an error at its comment) and a claim that is no equation (`andalso`, run).
+  - **The texts.** `docs/doc-comments.md`, `AGENTS.md`, `docs/architecture.md`, `man/runedoc.1`, `runedoc --help` and the pages' own legend and coverage text say the new rule.
 
 ### M2. Libraries (S–M, about 400)
 

@@ -94,8 +94,7 @@ val port : entry -> int
 
 `port e` is the port the service is reached at.
 
-**Example** `Option.map port (getByName ("http", SOME "tcp"))` is `SOME 80`
-where `/etc/services` lists HTTP.
+Where `/etc/services` lists HTTP, `Option.map port (getByName ("http", SOME "tcp"))` is `SOME 80`.
 
 <details><summary>Other implementations (1)</summary>
 

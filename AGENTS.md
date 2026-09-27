@@ -272,8 +272,8 @@ keep these invariants:
   `docs/generated/basis` is made from the library's comments: after changing
   a signature or a comment of `lib/basis`, run `make docs` and commit what it
   writes (`make check-docs` fails on a stale tree). Never edit it by hand.
-  An `Example:` that is an equation, `e = v`, is compiled by `make docs` and
-  run by `make test-basis`; give a description an example where it shows
+  Every piece of an `Example:` is a claim, a closed `bool` that is true; it is
+  compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,

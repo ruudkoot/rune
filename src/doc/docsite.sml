@@ -394,8 +394,8 @@ struct
            [] => ""
          | withExamples =>
              "## Examples that are run\n\n"
-             ^ "An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the\n"
-             ^ "test suite: " ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, in "
+             ^ "Every example is a closed expression of type `bool` that is true: it is elaborated when these pages\n"
+             ^ "are made and tried by the test suite: " ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, in "
              ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
                                                 withExamples)
              ^ ".\n\n")
@@ -431,8 +431,8 @@ struct
     ^ "  specification and then its description, which for a function begins with the function applied\n"
     ^ "  to arguments, such as `take (l, i)`: those names are the names of the arguments in what follows.\n"
     ^ "  **Raises** names an exception and says when it is raised; **Law** is an equation that holds;\n"
-    ^ "  **Example**, **Complexity** and **See also** are what they say. An example that is an equation,\n"
-    ^ "  `e = v`, is more than an illustration: it is compiled when the pages are made, with the members of\n"
+    ^ "  **Example**, **Complexity** and **See also** are what they say. An example is more than an\n"
+    ^ "  illustration: it is a claim that is true, compiled when the pages are made, with the members of\n"
     ^ "  the signature in scope, and the test suite tries it.\n"
     ^ "- A datatype has a table of its constructors, a record one of its fields.\n"
     ^ "- A quoted block is a note on how the library reads its specification: a **Reading** of text that is\n"
@@ -1423,7 +1423,7 @@ struct
                                      else ())
                                   (P.entriesOf (#body s)))
                       sigs;
-             (* the examples that are equations, under the structure they are read in *)
+             (* the examples, under the structure they are read in *)
              List.app (fn s : I.signatureRecord =>
                          List.app (fn e => DocElab.checkExample lib (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
                                   (DocExamples.ofSignature s))
@@ -1756,7 +1756,7 @@ struct
     end
 
   (* The programs that try the examples of the signatures, one for each
-     signature that has an example that is an equation. *)
+     signature that has an example. *)
   fun examples {dir : string} : file list =
     let
       val modules = load dir

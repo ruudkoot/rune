@@ -359,7 +359,7 @@ val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 > is applied to the pairs of the common prefix before the lengths are
 > known.
 
-**Example** `allEq (op =) ([1, 2], [1, 2, 3]) = false` where `all (op =) ([1, 2], [1, 2, 3])` is `true`.
+**Example** `allEq (op =) ([1, 2], [1, 2, 3]) = false`, where `all (op =) ([1, 2], [1, 2, 3])` holds.
 
 <details><summary>Tests (16)</summary>
 

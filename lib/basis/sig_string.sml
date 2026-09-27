@@ -291,8 +291,8 @@ sig
      such a sequence gives `SOME ""`, and so does one that a bad escape
      follows.
 
-     Example: `fromString "a\\nb" = SOME "a\nb"`, where the first text has the
-     two characters `\` and `n` in it. *)
+     Example: `fromString "a\\nb" = SOME "a\nb"`, where the first text has a
+     backslash and an n in it: `size "a\\nb" = 4`. *)
   val fromString : String.string -> string option
 
   (* `toCString s` is the text that stands for `s` inside a C string constant.

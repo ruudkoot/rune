@@ -57,8 +57,8 @@ sig
 
      Law: `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
 
-     Example: `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF`, in Rune, whose
-     `LargeWord` has 64 bits *)
+     Example: `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF` in Rune, where
+     `LargeWord.wordSize = 64` *)
   val toLargeX : word -> LargeWord.word
 
   (* `toLargeWord w` is another name for `toLarge`, which the specification deprecates. *)
@@ -118,7 +118,7 @@ sig
 
      Raises: `Overflow` if that number is outside the range of `Int.int`.
 
-     Example: `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF` is 255. *)
+     Example: `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF = 255`. *)
   val toIntX : word -> int
 
   (* `fromInt i` is the word with the low `wordSize` bits of `i`.

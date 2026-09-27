@@ -1,6 +1,6 @@
 #!/bin/sh
-# Try the examples of the library's documentation (docs/doc-comments.md): an
-# `Example:` that is an equation, `e = v`, has to hold.
+# Try the examples of the library's documentation (docs/doc-comments.md): every
+# piece of an `Example:` is a claim of type bool, and has to hold.
 #   tests/basis/run-examples.sh
 # runedoc writes a program for every signature that has such examples into
 # tests/out/basis-examples; each is compiled and run with Rune, and prints a

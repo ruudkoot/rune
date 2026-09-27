@@ -23,8 +23,8 @@ struct
     \  --annotations FILE  what others say about the members, as lines\n\
     \                  `label-glob | whom it is about | text`; shown with the\n\
     \                  members that have a check with such a label\n\
-    \  --examples DIR  write the examples of the comments that are equations,\n\
-    \                  `e = v`, as a program for each signature, and stop\n\
+    \  --examples DIR  write the examples of the comments, claims of type bool,\n\
+    \                  as a program for each signature, and stop\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\

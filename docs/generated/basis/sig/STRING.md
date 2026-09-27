@@ -703,8 +703,8 @@ val fromString : String.string -> string option
 > such a sequence gives `SOME ""`, and so does one that a bad escape
 > follows.
 
-**Example** `fromString "a\\nb" = SOME "a\nb"`, where the first text has the
-two characters `\` and `n` in it.
+**Example** `fromString "a\\nb" = SOME "a\nb"`, where the first text has a
+backslash and an n in it: `size "a\\nb" = 4`.
 
 <details><summary>Other implementations (2)</summary>
 

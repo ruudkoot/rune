@@ -1415,7 +1415,7 @@ application already raises.
 **Example** `fmt (StringCvt.GEN (SOME 4)) 123456.0 = "123500"`, for the
 digits beyond the four become zeros where the fixed form is the shorter.
 
-**Example** `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString (toDecimal 0.1)`.
+**Example** `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `fmt StringCvt.EXACT 0.1 = IEEEReal.toString (toDecimal 0.1)`.
 
 <details><summary>Other implementations (10)</summary>
 

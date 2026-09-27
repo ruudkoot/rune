@@ -423,8 +423,8 @@ sig
      Example: `fmt (StringCvt.GEN (SOME 4)) 123456.0 = "123500"`, for the
      digits beyond the four become zeros where the fixed form is the shorter.
 
-     Example: `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString
-     (toDecimal 0.1)`. *)
+     Example: `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `fmt StringCvt.EXACT
+     0.1 = IEEEReal.toString (toDecimal 0.1)`. *)
   val fmt : StringCvt.realfmt -> real -> string
 
   (* `toString x` is the text of `x` in the general notation with the default number of digits.

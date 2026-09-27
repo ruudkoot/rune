@@ -13,14 +13,15 @@ sig
 
   (* `add (a, b)` is the sum of `a` and `b`.
 
-     Example: `add (zero, zero) = zero` holds, `add zero` is no equation and
-     is only shown, and another structure is named in full: `Euros.add
-     (Euros.zero, Euros.zero) = Euros.zero`. *)
+     Example: `add (zero, zero) = zero` holds, `add (zero, zero)` is no
+     bool and is an error, and another structure is named in full:
+     `Euros.add (Euros.zero, Euros.zero) = Euros.zero`. *)
   val add : t * t -> t
 
   (* `show a` is `a` for a reader.
 
-     Example: `show zero = "0"`
+     Example: `show zero = "0"`, and `show zero = "0" andalso add (zero, zero)
+     = zero`, a claim that is no equation
 
      Example: `show zero = 0` is ill-typed, `show nothing = "0"` names what is
      not there, and `show = show` compares what has no equality. *)

@@ -196,8 +196,8 @@ val toLargeX : word -> LargeWord.word
 
 **Law** `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
 
-**Example** `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF`, in Rune, whose
-[`LargeWord`](../str/Word.md) has 64 bits
+**Example** `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF` in Rune, where
+`LargeWord.wordSize = 64`
 
 <details><summary>Tests (6)</summary>
 
@@ -372,7 +372,7 @@ val toIntX : word -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is outside the range of [`Int.int`](../sig/INTEGER.md#type-int).
 
-**Example** `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF` is 255.
+**Example** `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF = 255`.
 
 <details><summary>Tests (15)</summary>
 
