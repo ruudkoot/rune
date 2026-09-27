@@ -16,6 +16,9 @@
 structure Int32Array :> MONO_ARRAY where type vector = Int32Vector.vector where type elem = Int32.int
 ```
 
+Int32Array: mutable arrays of 32-bit integers, a type of their own with
+identity equality, whose vectors are those of [`Int32Vector`](../str/Int32Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

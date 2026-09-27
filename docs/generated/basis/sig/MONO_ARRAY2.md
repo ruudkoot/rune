@@ -38,11 +38,11 @@ structure WordArray2 :> MONO_ARRAY2 where type vector = WordVector.vector where 
 | --- | --- | --- |
 | [`BoolArray2`](../str/BoolArray2.md) | BoolArray2: two-dimensional arrays of booleans, whose rows and columns are [`BoolVector`](../str/BoolVector.md) vectors. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharArray2`](../str/CharArray2.md) | CharArray2: two-dimensional arrays of characters (optional in the specification), whose rows and columns are strings. | [lib/basis/chararray2.sml](../../../../lib/basis/chararray2.sml) |
-| [`Int16Array2`](../str/Int16Array2.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| [`Int32Array2`](../str/Int32Array2.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| [`Int64Array2`](../str/Int64Array2.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| [`Int8Array2`](../str/Int8Array2.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| [`IntArray2`](../str/IntArray2.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`Int16Array2`](../str/Int16Array2.md) | Int16Array2: two-dimensional arrays of 16-bit integers, whose rows and columns are [`Int16Vector`](../str/Int16Vector.md) vectors. | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32Array2`](../str/Int32Array2.md) | Int32Array2: two-dimensional arrays of 32-bit integers, whose rows and columns are [`Int32Vector`](../str/Int32Vector.md) vectors. | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64Array2`](../str/Int64Array2.md) | Int64Array2: two-dimensional arrays of 64-bit integers, whose rows and columns are [`Int64Vector`](../str/Int64Vector.md) vectors. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8Array2`](../str/Int8Array2.md) | Int8Array2: two-dimensional arrays of 8-bit integers, whose rows and columns are [`Int8Vector`](../str/Int8Vector.md) vectors. | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArray2`](../str/IntArray2.md) | IntArray2: two-dimensional arrays of integers of the default `int`, whose rows and columns are [`IntVector`](../str/IntVector.md) vectors. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntArray2`](../str/LargeIntArray2.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArray2`](../str/RealArray2.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordArray2`](../str/WordArray2.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |

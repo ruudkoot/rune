@@ -335,6 +335,7 @@ Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a lar
 IEEEReal.scan/huge-exponent | MLton | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IEEEReal.scan/huge-exponent | SML/NJ | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IEEEReal.scan/huge-exponent | Poly/ML | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
+IntInf.pow/*one-to-minus-* | SML/NJ | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
 *.StreamIO.filePosIn/Io-closed | SML/NJ | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 *IO.input1/passes-an-end-of-stream | SML/NJ 110.99.9 | input1 never moves past an end-of-stream
 TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ 110.99.9 | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")

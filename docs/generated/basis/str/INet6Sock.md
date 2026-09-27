@@ -7,7 +7,7 @@
 | Signature | [`INET6_SOCK`](../sig/INET6_SOCK.md) |
 | Status | extension |
 | Members | 14 |
-| Tests | 23 checks |
+| Tests | 25 checks |
 | Source | [lib/basis/inet6sock.sml](../../../../lib/basis/inet6sock.sml) |
 
 ## Synopsis
@@ -15,6 +15,10 @@
 ```sml
 structure INet6Sock : INET6_SOCK
 ```
+
+INet6Sock: the sockets and addresses of IPv6, Rune's own and not part of
+the specification. The text of an address is written and read here, in
+SML, and the sockets are the system's.
 
 ## Members
 

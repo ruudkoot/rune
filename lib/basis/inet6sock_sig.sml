@@ -58,26 +58,36 @@ sig
 
   (* `toString a` is the text of `a` as `inet_ntop` writes it.
 
-     Example: `toString (valOf (fromString "0:0:0:0:0:0:0:1")) = "::1"` *)
+     Law: `fromString (toString a) = SOME a`
+
+     Example: `toString (valOf (fromString "0:0:0:0:0:0:0:1")) = "::1"`
+
+     Example: `toString (valOf (fromString "1:2:3:0:0:0:0:0")) = "1:2:3::"` *)
   val toString : in6_addr -> string
 
   (* `fromString s` is the address that the whole of `s` names, or `NONE`.
 
-     The forms are those of `inet_pton`, so `"::1"`, `"fe80::1"` and
+     The forms are those of `inet_pton`, so `"::1"`, `"fe80::1"`, `"1::"` and
      `"::ffff:127.0.0.1"` are addresses and `"127.0.0.1"` is not.
 
      Example: `fromString "not an address" = NONE` *)
   val fromString : string -> in6_addr option
 
-  (* The address family of these sockets, `Socket.AF.fromString "INET6"`. *)
+  (* The address family of these sockets, `Socket.AF.fromString "INET6"`.
+
+     Example: `Socket.AF.toString inet6AF = "INET6"` *)
   val inet6AF : Socket.AF.addr_family
 
   (* `toAddr (a, port)` is the address of that host and port.
 
-     Raises: `SysErr` if the system will not make it. *)
+     Raises: `SysErr` if the system will not make it.
+
+     Example: `#2 (fromAddr (toAddr (valOf (fromString "::1"), 8080))) = 8080` *)
   val toAddr : in6_addr * int -> sock_addr
 
-  (* `any port` is the address of that port on every interface of the machine. *)
+  (* `any port` is the address of that port on every interface of the machine.
+
+     Example: `toString (#1 (fromAddr (any 80))) = "::"` *)
   val any : int -> sock_addr
 
   (* `fromAddr addr` is the host and the port of `addr`.
@@ -107,7 +117,9 @@ sig
     (* `getNODELAY sock` is whether small writes go out at once (`TCP_NODELAY`). *)
     val getNODELAY : 'mode stream_sock -> bool
 
-    (* `setNODELAY (sock, b)` sets it. *)
+    (* `setNODELAY (sock, b)` sets it.
+
+       Law: `(setNODELAY (sock, b); getNODELAY sock) = b` *)
     val setNODELAY : 'mode stream_sock * bool -> unit
   end
 end

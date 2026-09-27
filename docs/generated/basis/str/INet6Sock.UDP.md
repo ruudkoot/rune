@@ -10,6 +10,9 @@
 | Tests | 2 checks |
 | Source | [lib/basis/inet6sock.sml](../../../../lib/basis/inet6sock.sml) |
 
+The datagram sockets of IPv6, which carry messages that may be lost or
+arrive out of order.
+
 ## Members
 
 What each means is on [`INET6_SOCK`](../sig/INET6_SOCK.md); the types are this structure's own.

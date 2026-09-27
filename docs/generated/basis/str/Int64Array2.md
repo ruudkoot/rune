@@ -16,6 +16,9 @@
 structure Int64Array2 :> MONO_ARRAY2 where type vector = Int64Vector.vector where type elem = Int64.int
 ```
 
+Int64Array2: two-dimensional arrays of 64-bit integers, whose rows and
+columns are [`Int64Vector`](../str/Int64Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

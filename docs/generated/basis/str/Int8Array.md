@@ -16,6 +16,9 @@
 structure Int8Array :> MONO_ARRAY where type vector = Int8Vector.vector where type elem = Int8.int
 ```
 
+Int8Array: mutable arrays of 8-bit integers, a type of their own with
+identity equality, whose vectors are those of [`Int8Vector`](../str/Int8Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

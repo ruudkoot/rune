@@ -16,6 +16,9 @@
 structure IntArraySlice :> MONO_ARRAY_SLICE where type vector = IntVector.vector where type vector_slice = IntVectorSlice.slice where type array = IntArray.array where type elem = int
 ```
 
+IntArraySlice: stretches of [`IntArray`](../str/IntArray.md) arrays, without a copy: an update
+through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

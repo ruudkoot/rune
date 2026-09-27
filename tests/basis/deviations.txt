@@ -547,6 +547,7 @@ native:mlton@* | *PrimIO.*/readVec-Size-negative | SPEC-AMBIGUOUS | a read of a 
 native:mlton@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:smlnj*@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:polyml@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
+native:smlnj*@* | IntInf.pow/*one-to-minus-* | HOST-BUG | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
 native:smlnj*@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 native:smlnj*@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
 native:smlnj*@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")

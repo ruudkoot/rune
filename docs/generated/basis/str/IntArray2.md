@@ -16,6 +16,9 @@
 structure IntArray2 :> MONO_ARRAY2 where type vector = IntVector.vector where type elem = int
 ```
 
+IntArray2: two-dimensional arrays of integers of the default `int`, whose
+rows and columns are [`IntVector`](../str/IntVector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

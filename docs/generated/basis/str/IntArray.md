@@ -16,6 +16,9 @@
 structure IntArray :> MONO_ARRAY where type vector = IntVector.vector where type elem = int
 ```
 
+IntArray: mutable arrays of integers of the default `int`, a type of their
+own with identity equality, whose vectors are those of [`IntVector`](../str/IntVector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

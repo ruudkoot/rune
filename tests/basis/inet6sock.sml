@@ -46,6 +46,24 @@ struct
                 fn () => Option.map INet6Sock.toString (INet6Sock.fromString "0:0:0:0:0:0:0:1"))
   val () = eqO ("INet6Sock.toString/unspecified", SOME "::", fn () => Option.map INet6Sock.toString (INet6Sock.fromString "::"))
   val () = eqO ("INet6Sock.toString/full", SOME "fe80::1", fn () => Option.map INet6Sock.toString (INet6Sock.fromString "fe80:0:0:0:0:0:0:1"))
+  (* a "::" that ends the address, as inet_ntop writes a trailing run of
+     zeros: it was read as no "::" at all, and the address refused *)
+  val () = eqO ("INet6Sock.fromString/trailing-double-colon", SOME "1:2:3::",
+                fn () => Option.map INet6Sock.toString (INet6Sock.fromString "1:2:3::"))
+  (* The text toString writes is read back as the same address: 40 addresses
+     of eight random groups, a third of them zero so that runs of zeros are
+     written `::` *)
+  val () = T.seed 6
+  val () = T.repeat (40, fn k =>
+    let
+      val groups = List.tabulate (8, fn _ => if T.range (0, 2) = 0 then 0 else T.range (0, 65535))
+      val text = String.concatWith ":" (List.map (Int.fmt StringCvt.HEX) groups)
+    in
+      T.check ("INet6Sock.fromString/of-toString-random-" ^ Int.toString k,
+               fn () => case INet6Sock.fromString text of
+                          SOME a => INet6Sock.fromString (INet6Sock.toString a) = SOME a
+                        | NONE => false)
+    end)
   val () = eqB ("INet6Sock.fromString/same-address", true,
                 fn () => INet6Sock.fromString "::1" = INet6Sock.fromString "0:0:0:0:0:0:0:1")
   val () = eqB ("INet6Sock.fromString/other-address", false,
@@ -109,6 +127,10 @@ struct
     eqB ("INet6Sock.TCP.setNODELAY/takes", true,
          fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
                     (INet6Sock.TCP.setNODELAY (s, true); INet6Sock.TCP.getNODELAY s)));
+    eqB ("INet6Sock.TCP.setNODELAY/takes-false-again", false,
+         fn () => S.withSocket INet6Sock.TCP.socket (fn (s : tcp6) =>
+                    (INet6Sock.TCP.setNODELAY (s, true); INet6Sock.TCP.setNODELAY (s, false);
+                     INet6Sock.TCP.getNODELAY s)));
     (* the primed forms take a protocol of the system's numbering; 0 is the
        one the family would have chosen *)
     eqB ("INet6Sock.UDP.socket'/protocol-zero", true,

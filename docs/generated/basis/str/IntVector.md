@@ -16,9 +16,12 @@
 structure IntVector :> MONO_VECTOR where type elem = int
 ```
 
+IntVector: immutable vectors of integers of the default `int`.
+
 The monomorphic vectors and arrays of int, their slices and the
-two-dimensional arrays (optional in the specification). Int64Vector and the
-rest of that family are these (mono\_int64.sml).
+two-dimensional arrays (optional in the specification). They are not those
+of [`Int64`](../str/Int64.md): [`Int64.int`](../sig/INTEGER.md#type-int) is a type of its own, and so are the structures of
+its family (mono\_int64.sml).
 
 ## Members
 

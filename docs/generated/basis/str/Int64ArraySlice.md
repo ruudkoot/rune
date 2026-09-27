@@ -16,6 +16,9 @@
 structure Int64ArraySlice :> MONO_ARRAY_SLICE where type vector = Int64Vector.vector where type vector_slice = Int64VectorSlice.slice where type array = Int64Array.array where type elem = Int64.int
 ```
 
+Int64ArraySlice: stretches of [`Int64Array`](../str/Int64Array.md) arrays, without a copy: an
+update through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

@@ -39,11 +39,11 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 | --- | --- | --- |
 | [`BoolVectorSlice`](../str/BoolVectorSlice.md) | BoolVectorSlice: stretches of [`BoolVector`](../str/BoolVector.md) vectors, without a copy. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharVectorSlice`](../str/CharVectorSlice.md) | CharVectorSlice: the substrings, seen as slices of vectors of characters. Its [`slice`](#val-slice) is [`Substring.substring`](../sig/SUBSTRING.md#val-substring), as the specification requires, so a slice made here is a substring there and the other way round. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
-| [`Int16VectorSlice`](../str/Int16VectorSlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| [`Int32VectorSlice`](../str/Int32VectorSlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| [`Int64VectorSlice`](../str/Int64VectorSlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| [`Int8VectorSlice`](../str/Int8VectorSlice.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| [`IntVectorSlice`](../str/IntVectorSlice.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`Int16VectorSlice`](../str/Int16VectorSlice.md) | Int16VectorSlice: stretches of [`Int16Vector`](../str/Int16Vector.md) vectors, without a copy. | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32VectorSlice`](../str/Int32VectorSlice.md) | Int32VectorSlice: stretches of [`Int32Vector`](../str/Int32Vector.md) vectors, without a copy. | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64VectorSlice`](../str/Int64VectorSlice.md) | Int64VectorSlice: stretches of [`Int64Vector`](../str/Int64Vector.md) vectors, without a copy. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8VectorSlice`](../str/Int8VectorSlice.md) | Int8VectorSlice: stretches of [`Int8Vector`](../str/Int8Vector.md) vectors, without a copy. | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntVectorSlice`](../str/IntVectorSlice.md) | IntVectorSlice: stretches of [`IntVector`](../str/IntVector.md) vectors, without a copy. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntVectorSlice`](../str/LargeIntVectorSlice.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealVectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordVectorSlice`](../str/WordVectorSlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |

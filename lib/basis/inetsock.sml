@@ -31,12 +31,16 @@ struct
         [host, port] => (RuneNet.ofText host, number port)
       | _ => raise RuneError.lastError ()
 
+    (* The datagram sockets of IPv4, which carry messages that may be lost or
+       arrive out of order. *)
     structure UDP =
     struct
       fun socket () : dgram_sock = RuneSocket.socket (inetAF, RuneSocket.SOCK.dgram)
       fun socket' protocol : dgram_sock = RuneSocket.socket' (inetAF, RuneSocket.SOCK.dgram, protocol)
     end
 
+    (* The stream sockets of IPv4, which carry a connection's bytes in order,
+       and the one option of TCP itself, `TCP_NODELAY`. *)
     structure TCP =
     struct
       fun 'mode socket () : 'mode stream_sock = RuneSocket.socket (inetAF, RuneSocket.SOCK.stream)
@@ -95,7 +99,10 @@ struct
   fun socketPair' (af, ty, protocol) = RuneSocket.socketPair' (af, ty, protocol)
 end
 
-(* Implements: INET_SOCK
+(* INetSock: the sockets and addresses of IPv4, through the system's sockets
+   and `NetHostDB`'s addresses.
+
+   Implements: INET_SOCK
 
    Status: optional *)
 structure INetSock = RuneINetSock

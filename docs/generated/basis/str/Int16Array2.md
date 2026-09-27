@@ -16,6 +16,9 @@
 structure Int16Array2 :> MONO_ARRAY2 where type vector = Int16Vector.vector where type elem = Int16.int
 ```
 
+Int16Array2: two-dimensional arrays of 16-bit integers, whose rows and
+columns are [`Int16Vector`](../str/Int16Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

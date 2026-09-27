@@ -193,45 +193,45 @@ reading one reads both.
 | [`General`](../generated/basis/str/General.md) | done | done | done | done | done | done |
 | [`GenericSock`](../generated/basis/str/GenericSock.md) | done | done | done | n/a | n/a | done |
 | [`IEEEReal`](../generated/basis/str/IEEEReal.md) | done | done | done | done | done | done |
-| [`INet6Sock`](../generated/basis/str/INet6Sock.md) |  |  |  |  |  |  |
-| [`INet6Sock.TCP`](../generated/basis/str/INet6Sock.TCP.md) |  |  |  |  |  |  |
-| [`INet6Sock.UDP`](../generated/basis/str/INet6Sock.UDP.md) |  |  |  |  |  |  |
-| [`INetSock`](../generated/basis/str/INetSock.md) |  |  |  |  |  |  |
-| [`INetSock.TCP`](../generated/basis/str/INetSock.TCP.md) |  |  |  |  |  |  |
-| [`INetSock.UDP`](../generated/basis/str/INetSock.UDP.md) |  |  |  |  |  |  |
-| [`IO`](../generated/basis/str/IO.md) |  |  |  |  |  |  |
+| [`INet6Sock`](../generated/basis/str/INet6Sock.md) | done | done | done | done | done | done |
+| [`INet6Sock.TCP`](../generated/basis/str/INet6Sock.TCP.md) | done | done | done | n/a | done | done |
+| [`INet6Sock.UDP`](../generated/basis/str/INet6Sock.UDP.md) | done | done | done | n/a | n/a | done |
+| [`INetSock`](../generated/basis/str/INetSock.md) | done | done | done | done | done | done |
+| [`INetSock.TCP`](../generated/basis/str/INetSock.TCP.md) | done | done | done | n/a | done | done |
+| [`INetSock.UDP`](../generated/basis/str/INetSock.UDP.md) | done | done | done | n/a | n/a | done |
+| [`IO`](../generated/basis/str/IO.md) | done | done | done | done | n/a | done |
 | [`Int`](../generated/basis/str/Int.md) | done | done | done | done | done | done |
-| [`Int16`](../generated/basis/str/Int16.md) |  |  |  |  |  |  |
-| [`Int16Array`](../generated/basis/str/Int16Array.md) |  |  |  |  |  |  |
-| [`Int16Array2`](../generated/basis/str/Int16Array2.md) |  |  |  |  |  |  |
-| [`Int16ArraySlice`](../generated/basis/str/Int16ArraySlice.md) |  |  |  |  |  |  |
-| [`Int16Vector`](../generated/basis/str/Int16Vector.md) |  |  |  |  |  |  |
-| [`Int16VectorSlice`](../generated/basis/str/Int16VectorSlice.md) |  |  |  |  |  |  |
-| [`Int32`](../generated/basis/str/Int32.md) |  |  |  |  |  |  |
-| [`Int32Array`](../generated/basis/str/Int32Array.md) |  |  |  |  |  |  |
-| [`Int32Array2`](../generated/basis/str/Int32Array2.md) |  |  |  |  |  |  |
-| [`Int32ArraySlice`](../generated/basis/str/Int32ArraySlice.md) |  |  |  |  |  |  |
-| [`Int32Vector`](../generated/basis/str/Int32Vector.md) |  |  |  |  |  |  |
-| [`Int32VectorSlice`](../generated/basis/str/Int32VectorSlice.md) |  |  |  |  |  |  |
+| [`Int16`](../generated/basis/str/Int16.md) | done | done | done | done | done | done |
+| [`Int16Array`](../generated/basis/str/Int16Array.md) | done | done | done | done | done | done |
+| [`Int16Array2`](../generated/basis/str/Int16Array2.md) | done | done | done | done | done | done |
+| [`Int16ArraySlice`](../generated/basis/str/Int16ArraySlice.md) | done | done | done | done | done | done |
+| [`Int16Vector`](../generated/basis/str/Int16Vector.md) | done | done | done | done | done | done |
+| [`Int16VectorSlice`](../generated/basis/str/Int16VectorSlice.md) | done | done | done | done | done | done |
+| [`Int32`](../generated/basis/str/Int32.md) | done | done | done | done | done | done |
+| [`Int32Array`](../generated/basis/str/Int32Array.md) | done | done | done | done | done | done |
+| [`Int32Array2`](../generated/basis/str/Int32Array2.md) | done | done | done | done | done | done |
+| [`Int32ArraySlice`](../generated/basis/str/Int32ArraySlice.md) | done | done | done | done | done | done |
+| [`Int32Vector`](../generated/basis/str/Int32Vector.md) | done | done | done | done | done | done |
+| [`Int32VectorSlice`](../generated/basis/str/Int32VectorSlice.md) | done | done | done | done | done | done |
 | [`Int64`](../generated/basis/str/Int64.md) | done | done | done | done | done | done |
-| [`Int64Array`](../generated/basis/str/Int64Array.md) |  |  |  |  |  |  |
-| [`Int64Array2`](../generated/basis/str/Int64Array2.md) |  |  |  |  |  |  |
-| [`Int64ArraySlice`](../generated/basis/str/Int64ArraySlice.md) |  |  |  |  |  |  |
-| [`Int64Vector`](../generated/basis/str/Int64Vector.md) |  |  |  |  |  |  |
-| [`Int64VectorSlice`](../generated/basis/str/Int64VectorSlice.md) |  |  |  |  |  |  |
-| [`Int8`](../generated/basis/str/Int8.md) |  |  |  |  |  |  |
-| [`Int8Array`](../generated/basis/str/Int8Array.md) |  |  |  |  |  |  |
-| [`Int8Array2`](../generated/basis/str/Int8Array2.md) |  |  |  |  |  |  |
-| [`Int8ArraySlice`](../generated/basis/str/Int8ArraySlice.md) |  |  |  |  |  |  |
-| [`Int8Vector`](../generated/basis/str/Int8Vector.md) |  |  |  |  |  |  |
-| [`Int8VectorSlice`](../generated/basis/str/Int8VectorSlice.md) |  |  |  |  |  |  |
-| [`IntArray`](../generated/basis/str/IntArray.md) |  |  |  |  |  |  |
-| [`IntArray2`](../generated/basis/str/IntArray2.md) |  |  |  |  |  |  |
-| [`IntArraySlice`](../generated/basis/str/IntArraySlice.md) |  |  |  |  |  |  |
-| [`IntInf`](../generated/basis/str/IntInf.md) |  |  |  |  |  |  |
-| [`IntVector`](../generated/basis/str/IntVector.md) |  |  |  |  |  |  |
-| [`IntVectorSlice`](../generated/basis/str/IntVectorSlice.md) |  |  |  |  |  |  |
-| [`LargeInt`](../generated/basis/str/IntInf.md) |  |  |  |  |  |  |
+| [`Int64Array`](../generated/basis/str/Int64Array.md) | done | done | done | done | done | done |
+| [`Int64Array2`](../generated/basis/str/Int64Array2.md) | done | done | done | done | done | done |
+| [`Int64ArraySlice`](../generated/basis/str/Int64ArraySlice.md) | done | done | done | done | done | done |
+| [`Int64Vector`](../generated/basis/str/Int64Vector.md) | done | done | done | done | done | done |
+| [`Int64VectorSlice`](../generated/basis/str/Int64VectorSlice.md) | done | done | done | done | done | done |
+| [`Int8`](../generated/basis/str/Int8.md) | done | done | done | done | done | done |
+| [`Int8Array`](../generated/basis/str/Int8Array.md) | done | done | done | done | done | done |
+| [`Int8Array2`](../generated/basis/str/Int8Array2.md) | done | done | done | done | done | done |
+| [`Int8ArraySlice`](../generated/basis/str/Int8ArraySlice.md) | done | done | done | done | done | done |
+| [`Int8Vector`](../generated/basis/str/Int8Vector.md) | done | done | done | done | done | done |
+| [`Int8VectorSlice`](../generated/basis/str/Int8VectorSlice.md) | done | done | done | done | done | done |
+| [`IntArray`](../generated/basis/str/IntArray.md) | done | done | done | done | done | done |
+| [`IntArray2`](../generated/basis/str/IntArray2.md) | done | done | done | done | done | done |
+| [`IntArraySlice`](../generated/basis/str/IntArraySlice.md) | done | done | done | done | done | done |
+| [`IntInf`](../generated/basis/str/IntInf.md) | done | done | done | done | done | done |
+| [`IntVector`](../generated/basis/str/IntVector.md) | done | done | done | done | done | done |
+| [`IntVectorSlice`](../generated/basis/str/IntVectorSlice.md) | done | done | done | done | done | done |
+| [`LargeInt`](../generated/basis/str/IntInf.md) | done | done | done | done | done | done |
 | [`LargeIntArray`](../generated/basis/str/LargeIntArray.md) |  |  |  |  |  |  |
 | [`LargeIntArray2`](../generated/basis/str/LargeIntArray2.md) |  |  |  |  |  |  |
 | [`LargeIntArraySlice`](../generated/basis/str/LargeIntArraySlice.md) |  |  |  |  |  |  |

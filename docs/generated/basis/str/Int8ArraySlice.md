@@ -16,6 +16,9 @@
 structure Int8ArraySlice :> MONO_ARRAY_SLICE where type vector = Int8Vector.vector where type vector_slice = Int8VectorSlice.slice where type array = Int8Array.array where type elem = Int8.int
 ```
 
+Int8ArraySlice: stretches of [`Int8Array`](../str/Int8Array.md) arrays, without a copy: an update
+through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

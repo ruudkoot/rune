@@ -16,6 +16,9 @@
 structure INetSock : INET_SOCK
 ```
 
+INetSock: the sockets and addresses of IPv4, through the system's sockets
+and [`NetHostDB`](../str/NetHostDB.md)'s addresses.
+
 ## Members
 
 What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this structure's own.

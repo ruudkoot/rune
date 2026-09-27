@@ -16,6 +16,9 @@
 structure Int16Array :> MONO_ARRAY where type vector = Int16Vector.vector where type elem = Int16.int
 ```
 
+Int16Array: mutable arrays of 16-bit integers, a type of their own with
+identity equality, whose vectors are those of [`Int16Vector`](../str/Int16Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

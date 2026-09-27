@@ -7,8 +7,11 @@
 | Signatures | none: [`INET6_SOCK`](../sig/INET6_SOCK.md) specifies it inside [`INet6Sock`](../str/INet6Sock.md) |
 | Status | extension |
 | Members | 4 |
-| Tests | 4 checks |
+| Tests | 5 checks |
 | Source | [lib/basis/inet6sock.sml](../../../../lib/basis/inet6sock.sml) |
+
+The stream sockets of IPv6, which carry a connection's bytes in order,
+and the one option of TCP itself, `TCP_NODELAY`.
 
 ## Members
 

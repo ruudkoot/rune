@@ -11,15 +11,13 @@
 
    Status: optional
 
-   See also: `SOCKET`, `NET_HOST_DB`, `UNIX_SOCK`, `GENERIC_SOCK`
+   See also: `SOCKET`, `NET_HOST_DB`, `UNIX_SOCK`, `GENERIC_SOCK`, `INET6_SOCK`
 
    Implementation: `INET_SOCK/ipv4-only`. This signature is the
    specification's, and the specification's Internet sockets are IPv4: an
    address here is an `in_addr` of `NetHostDB` and a port. IPv6 is in
    `INET6_SOCK`, which is Rune's own and has the same shape for 128-bit
-   addresses.
-
-   See also: `INET6_SOCK` *)
+   addresses. *)
 signature INET_SOCK =
 sig
   (* The type that marks the internet family, and holds nothing. *)
@@ -37,10 +35,17 @@ sig
   (* The type of an address of this family: a host and a port. *)
   type sock_addr = inet Socket.sock_addr
 
-  (* The address family of the internet sockets, for `Socket.familyOfAddr` to give back. *)
+  (* The address family of the internet sockets, for `Socket.familyOfAddr` to give back.
+
+     Example: `Socket.AF.toString inetAF = "INET"` *)
   val inetAF : Socket.AF.addr_family
 
-  (* `toAddr (a, port)` is the address of the port `port` at the host address `a`. *)
+  (* `toAddr (a, port)` is the address of the port `port` at the host address `a`.
+
+     Law: `fromAddr (toAddr (a, port)) = (a, port)`
+
+     Example: `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"),
+     8080))) = 8080` *)
   val toAddr : NetHostDB.in_addr * int -> sock_addr
 
   (* `fromAddr a` is the host address and the port that `a` names.
@@ -53,7 +58,9 @@ sig
 
      It is what a program binds to when it will answer on whichever
      interface a connection arrives at; a port of 0 asks the system to choose
-     one. *)
+     one.
+
+     Example: `NetHostDB.toString (#1 (fromAddr (any 80))) = "0.0.0.0"` *)
   val any : int -> sock_addr
 
   (* Sockets that send messages, over UDP. *)
@@ -92,7 +99,9 @@ sig
     (* `getNODELAY sock` is `true` when small writes go out at once rather than being gathered. *)
     val getNODELAY : 'mode stream_sock -> bool
 
-    (* `setNODELAY (sock, b)` sends small writes at once, or lets them be gathered. *)
+    (* `setNODELAY (sock, b)` sends small writes at once, or lets them be gathered.
+
+       Law: `(setNODELAY (sock, b); getNODELAY sock) = b` *)
     val setNODELAY : 'mode stream_sock * bool -> unit
   end
 end

@@ -16,6 +16,8 @@
 structure Int64Vector :> MONO_VECTOR where type elem = Int64.int
 ```
 
+Int64Vector: immutable vectors of 64-bit integers.
+
 The vectors, arrays, slices and two-dimensional arrays of Int64 (optional
 in the specification). Int64.int is a type of its own, so these are their own
 structures and not those of Int.

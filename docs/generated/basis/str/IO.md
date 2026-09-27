@@ -16,7 +16,9 @@
 structure IO : IO
 ```
 
-IO: the exceptions and the buffering modes shared by the I/O structures.
+IO: the exceptions and the buffering modes shared by the I/O structures:
+[`Io`](../sig/IO.md#exn-io), which every operation of them raises, the four exceptions that are
+its causes, and [`buffer_mode`](../sig/IO.md#type-buffer_mode).
 
 ## Members
 

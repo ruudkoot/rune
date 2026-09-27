@@ -16,6 +16,9 @@
 structure Int64Array :> MONO_ARRAY where type vector = Int64Vector.vector where type elem = Int64.int
 ```
 
+Int64Array: mutable arrays of 64-bit integers, a type of their own with
+identity equality, whose vectors are those of [`Int64Vector`](../str/Int64Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

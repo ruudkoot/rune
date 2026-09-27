@@ -7,7 +7,7 @@
 | Status | extension |
 | Implementations | 1 |
 | Documentation | 20 of 20 entries documented |
-| Tests | 29 checks of 18 entries |
+| Tests | 32 checks of 18 entries |
 | Source | [lib/basis/inet6sock\_sig.sml](../../../../lib/basis/inet6sock_sig.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure INet6Sock : INET6_SOCK  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`INet6Sock`](../str/INet6Sock.md) |  | [lib/basis/inet6sock.sml](../../../../lib/basis/inet6sock.sml) |
+| [`INet6Sock`](../str/INet6Sock.md) | INet6Sock: the sockets and addresses of IPv6, Rune's own and not part of the specification. The text of an address is written and read here, in SML, and the sockets are the system's. | [lib/basis/inet6sock.sml](../../../../lib/basis/inet6sock.sml) |
 
 Sockets of the Internet protocol version 6, as [`INET_SOCK`](../sig/INET_SOCK.md) describes them
 for version 4.
@@ -178,7 +178,11 @@ val toString : in6_addr -> string
 
 `toString a` is the text of `a` as `inet_ntop` writes it.
 
+**Law** `fromString (toString a) = SOME a`
+
 **Example** `toString (valOf (fromString "0:0:0:0:0:0:0:1")) = "::1"`
+
+**Example** `toString (valOf (fromString "1:2:3:0:0:0:0:0")) = "1:2:3::"`
 
 <details><summary>Tests (4)</summary>
 
@@ -194,14 +198,14 @@ val fromString : string -> in6_addr option
 
 `fromString s` is the address that the whole of `s` names, or `NONE`.
 
-The forms are those of `inet_pton`, so `"::1"`, `"fe80::1"` and
+The forms are those of `inet_pton`, so `"::1"`, `"fe80::1"`, `"1::"` and
 `"::ffff:127.0.0.1"` are addresses and `"127.0.0.1"` is not.
 
 **Example** `fromString "not an address" = NONE`
 
-<details><summary>Tests (6)</summary>
+<details><summary>Tests (8)</summary>
 
-For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6sock.sml): `same-address` &middot; `other-address` &middot; `not-an-IPv4-address` &middot; `mapped-IPv4` &middot; `not-an-address` &middot; `trailing-text`
+For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6sock.sml): `trailing-double-colon` &middot; `of-toString-random-*` &middot; `same-address` &middot; `other-address` &middot; `not-an-IPv4-address` &middot; `mapped-IPv4` &middot; `not-an-address` &middot; `trailing-text`
 
 </details>
 
@@ -212,6 +216,8 @@ val inet6AF : Socket.AF.addr_family
 ```
 
 The address family of these sockets, `Socket.AF.fromString "INET6"`.
+
+**Example** `Socket.AF.toString inet6AF = "INET6"`
 
 <details><summary>Tests (3)</summary>
 
@@ -229,6 +235,8 @@ val toAddr : in6_addr * int -> sock_addr
 
 **Raises** `SysErr` if the system will not make it.
 
+**Example** `#2 (fromAddr (toAddr (valOf (fromString "::1"), 8080))) = 8080`
+
 <details><summary>Tests (2)</summary>
 
 For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6sock.sml): `round-trip` &middot; `family-is-INET6`
@@ -242,6 +250,8 @@ val any : int -> sock_addr
 ```
 
 `any port` is the address of that port on every interface of the machine.
+
+**Example** `toString (#1 (fromAddr (any 80))) = "::"`
 
 <details><summary>Tests (1)</summary>
 
@@ -351,9 +361,11 @@ val setNODELAY : 'mode stream_sock * bool -> unit
 
 `setNODELAY (sock, b)` sets it.
 
-<details><summary>Tests (1)</summary>
+**Law** `(setNODELAY (sock, b); getNODELAY sock) = b`
 
-For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6sock.sml): `takes`
+<details><summary>Tests (2)</summary>
+
+For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6sock.sml): `takes` &middot; `takes-false-again`
 
 </details>
 

@@ -19,7 +19,7 @@ structure IO : IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`IO`](../str/IO.md) | IO: the exceptions and the buffering modes shared by the I/O structures. | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
+| [`IO`](../str/IO.md) | IO: the exceptions and the buffering modes shared by the I/O structures: [`Io`](#exn-io), which every operation of them raises, the four exceptions that are its causes, and [`buffer_mode`](#type-buffer_mode). | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
 
 What the whole of the I/O stack shares: the exception it raises and the
 ways a stream may hold output back.
@@ -72,6 +72,8 @@ it.
 > raising the exception" is taken unqualified: `"openIn"`, not
 > `"TextIO.openIn"`, as MLton and SML/NJ take it. Poly/ML writes the
 > qualified name.
+
+**Example** `((TextIO.openIn "no such file"; "") handle Io {function, ...} => function) = "openIn"`
 
 | Field | Type | Description |
 | --- | --- | --- |

@@ -16,6 +16,9 @@
 structure Int16ArraySlice :> MONO_ARRAY_SLICE where type vector = Int16Vector.vector where type vector_slice = Int16VectorSlice.slice where type array = Int16Array.array where type elem = Int16.int
 ```
 
+Int16ArraySlice: stretches of [`Int16Array`](../str/Int16Array.md) arrays, without a copy: an
+update through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

@@ -16,6 +16,8 @@
 structure Int8VectorSlice :> MONO_VECTOR_SLICE where type vector = Int8Vector.vector where type elem = Int8.int
 ```
 
+Int8VectorSlice: stretches of [`Int8Vector`](../str/Int8Vector.md) vectors, without a copy.
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

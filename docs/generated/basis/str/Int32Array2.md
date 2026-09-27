@@ -16,6 +16,9 @@
 structure Int32Array2 :> MONO_ARRAY2 where type vector = Int32Vector.vector where type elem = Int32.int
 ```
 
+Int32Array2: two-dimensional arrays of 32-bit integers, whose rows and
+columns are [`Int32Vector`](../str/Int32Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

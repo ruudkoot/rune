@@ -39,11 +39,11 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | --- | --- | --- |
 | [`BoolArray`](../str/BoolArray.md) | BoolArray: mutable arrays of booleans, a type of their own with identity equality, whose vectors are those of [`BoolVector`](../str/BoolVector.md). | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharArray`](../str/CharArray.md) | CharArray: mutable arrays of characters, a type of their own with identity equality. Their vectors are strings: [`vector`](#val-vector) gives a `string`, and [`copyVec`](#val-copyvec) copies one in. | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
-| [`Int16Array`](../str/Int16Array.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| [`Int32Array`](../str/Int32Array.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| [`Int64Array`](../str/Int64Array.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| [`Int8Array`](../str/Int8Array.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| [`IntArray`](../str/IntArray.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`Int16Array`](../str/Int16Array.md) | Int16Array: mutable arrays of 16-bit integers, a type of their own with identity equality, whose vectors are those of [`Int16Vector`](../str/Int16Vector.md). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32Array`](../str/Int32Array.md) | Int32Array: mutable arrays of 32-bit integers, a type of their own with identity equality, whose vectors are those of [`Int32Vector`](../str/Int32Vector.md). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64Array`](../str/Int64Array.md) | Int64Array: mutable arrays of 64-bit integers, a type of their own with identity equality, whose vectors are those of [`Int64Vector`](../str/Int64Vector.md). | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8Array`](../str/Int8Array.md) | Int8Array: mutable arrays of 8-bit integers, a type of their own with identity equality, whose vectors are those of [`Int8Vector`](../str/Int8Vector.md). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArray`](../str/IntArray.md) | IntArray: mutable arrays of integers of the default `int`, a type of their own with identity equality, whose vectors are those of [`IntVector`](../str/IntVector.md). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntArray`](../str/LargeIntArray.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArray`](../str/RealArray.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordArray`](../str/WordArray.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |

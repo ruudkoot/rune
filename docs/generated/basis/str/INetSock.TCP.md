@@ -10,6 +10,9 @@
 | Tests | 10 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
+The stream sockets of IPv4, which carry a connection's bytes in order,
+and the one option of TCP itself, `TCP_NODELAY`.
+
 ## Members
 
 What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this structure's own.

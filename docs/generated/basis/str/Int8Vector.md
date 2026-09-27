@@ -16,6 +16,8 @@
 structure Int8Vector :> MONO_VECTOR where type elem = Int8.int
 ```
 
+Int8Vector: immutable vectors of 8-bit integers.
+
 The monomorphic vectors and arrays of Int8.int, their slices and the
 two-dimensional arrays (optional in the specification).
 

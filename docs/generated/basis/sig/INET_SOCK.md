@@ -19,7 +19,7 @@ structure INetSock : INET_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`INetSock`](../str/INetSock.md) |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`INetSock`](../str/INetSock.md) | INetSock: the sockets and addresses of IPv4, through the system's sockets and [`NetHostDB`](../str/NetHostDB.md)'s addresses. | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Sockets of the internet family: an address is a host and a port.
 
@@ -113,6 +113,8 @@ val inetAF : Socket.AF.addr_family
 
 The address family of the internet sockets, for [`Socket.familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) to give back.
 
+**Example** `Socket.AF.toString inetAF = "INET"`
+
 <details><summary>Tests (2)</summary>
 
 For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `named-INET` &middot; `fromString-INET`
@@ -126,6 +128,10 @@ val toAddr : NetHostDB.in_addr * int -> sock_addr
 ```
 
 `toAddr (a, port)` is the address of the port `port` at the host address `a`.
+
+**Law** `fromAddr (toAddr (a, port)) = (a, port)`
+
+**Example** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"), 8080))) = 8080`
 
 <details><summary>Tests (3)</summary>
 
@@ -160,6 +166,8 @@ val any : int -> sock_addr
 It is what a program binds to when it will answer on whichever
 interface a connection arrives at; a port of 0 asks the system to choose
 one.
+
+**Example** `NetHostDB.toString (#1 (fromAddr (any 80))) = "0.0.0.0"`
 
 <details><summary>Tests (5)</summary>
 
@@ -265,6 +273,8 @@ val setNODELAY : 'mode stream_sock * bool -> unit
 
 `setNODELAY (sock, b)` sends small writes at once, or lets them be gathered.
 
+**Law** `(setNODELAY (sock, b); getNODELAY sock) = b`
+
 <details><summary>Tests (3)</summary>
 
 For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `on` &middot; `off-again` &middot; `connected`
@@ -273,7 +283,7 @@ For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.s
 
 ## See also
 
-[`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`UNIX_SOCK`](../sig/UNIX_SOCK.md), [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md) &middot; [`INET6_SOCK`](../sig/INET6_SOCK.md)
+[`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`UNIX_SOCK`](../sig/UNIX_SOCK.md), [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md), [`INET6_SOCK`](../sig/INET6_SOCK.md)
 
 ---
 

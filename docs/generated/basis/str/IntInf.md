@@ -7,7 +7,7 @@
 | Signatures | [`INT_INF`](../sig/INT_INF.md), [`INTEGER`](../sig/INTEGER.md) |
 | Status | optional |
 | Members | 40 |
-| Tests | 487 checks |
+| Tests | 491 checks |
 | Source | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 ## Synopsis
@@ -82,14 +82,18 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 > 2^30, written in SML on top of the 64-bit [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
 > values, so `=` compares them. [`LargeInt`](IntInf.md) is [`IntInf`](IntInf.md).
 
-<details><summary>Other implementations (7)</summary>
+<details><summary>Other implementations (11)</summary>
 
 - **SML/NJ** &mdash; IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+- **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
+- **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is 98 and "1+2" is 102, not 1 (IntInf.sml reads every group of digits with NumScan.scanInt, which takes a sign)
 - **SML/NJ** &mdash; IntInf.pow (i, j) is 0 for \| i \| = 1 and j \< 0
+- **SML/NJ** &mdash; pow (1, j) and pow (\~1, j) for a negative j are 0, where the page has "\|i\| = 1: i^j"
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 - **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
 - **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+- **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
 - **Poly/ML 5.9.2** &mdash; IntInf.\~\>\> of a negative number that does not fit a machine word rounds towards zero, not down (\~2^100 \~\>\> 0w101 is 0, not \~1); 5.7.1 rounds down
 
 </details>

@@ -16,6 +16,8 @@
 structure Int32Vector :> MONO_VECTOR where type elem = Int32.int
 ```
 
+Int32Vector: immutable vectors of 32-bit integers.
+
 The monomorphic vectors and arrays of Int32.int, their slices and the
 two-dimensional arrays (optional in the specification).
 

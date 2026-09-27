@@ -16,6 +16,9 @@
 structure Int8Array2 :> MONO_ARRAY2 where type vector = Int8Vector.vector where type elem = Int8.int
 ```
 
+Int8Array2: two-dimensional arrays of 8-bit integers, whose rows and
+columns are [`Int8Vector`](../str/Int8Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

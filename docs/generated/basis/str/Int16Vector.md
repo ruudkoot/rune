@@ -16,6 +16,8 @@
 structure Int16Vector :> MONO_VECTOR where type elem = Int16.int
 ```
 
+Int16Vector: immutable vectors of 16-bit integers.
+
 The monomorphic vectors and arrays of Int16.int, their slices and the
 two-dimensional arrays (optional in the specification).
 

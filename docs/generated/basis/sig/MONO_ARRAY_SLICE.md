@@ -39,11 +39,11 @@ structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vect
 | --- | --- | --- |
 | [`BoolArraySlice`](../str/BoolArraySlice.md) | BoolArraySlice: stretches of [`BoolArray`](../str/BoolArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharArraySlice`](../str/CharArraySlice.md) | CharArraySlice: stretches of [`CharArray`](../str/CharArray.md) arrays, without a copy: an update through a slice changes the array. Its vector slices are substrings. | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
-| [`Int16ArraySlice`](../str/Int16ArraySlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
-| [`Int32ArraySlice`](../str/Int32ArraySlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
-| [`Int64ArraySlice`](../str/Int64ArraySlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
-| [`Int8ArraySlice`](../str/Int8ArraySlice.md) |  | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
-| [`IntArraySlice`](../str/IntArraySlice.md) |  | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
+| [`Int16ArraySlice`](../str/Int16ArraySlice.md) | Int16ArraySlice: stretches of [`Int16Array`](../str/Int16Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
+| [`Int32ArraySlice`](../str/Int32ArraySlice.md) | Int32ArraySlice: stretches of [`Int32Array`](../str/Int32Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
+| [`Int64ArraySlice`](../str/Int64ArraySlice.md) | Int64ArraySlice: stretches of [`Int64Array`](../str/Int64Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
+| [`Int8ArraySlice`](../str/Int8ArraySlice.md) | Int8ArraySlice: stretches of [`Int8Array`](../str/Int8Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
+| [`IntArraySlice`](../str/IntArraySlice.md) | IntArraySlice: stretches of [`IntArray`](../str/IntArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
 | [`LargeIntArraySlice`](../str/LargeIntArraySlice.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordArraySlice`](../str/WordArraySlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |

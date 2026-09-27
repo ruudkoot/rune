@@ -10,6 +10,9 @@
 | Tests | 6 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
+The datagram sockets of IPv4, which carry messages that may be lost or
+arrive out of order.
+
 ## Members
 
 What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this structure's own.

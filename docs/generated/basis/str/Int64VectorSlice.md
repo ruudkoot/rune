@@ -16,6 +16,8 @@
 structure Int64VectorSlice :> MONO_VECTOR_SLICE where type vector = Int64Vector.vector where type elem = Int64.int
 ```
 
+Int64VectorSlice: stretches of [`Int64Vector`](../str/Int64Vector.md) vectors, without a copy.
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

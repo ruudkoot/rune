@@ -16,6 +16,8 @@
 structure Int32VectorSlice :> MONO_VECTOR_SLICE where type vector = Int32Vector.vector where type elem = Int32.int
 ```
 
+Int32VectorSlice: stretches of [`Int32Vector`](../str/Int32Vector.md) vectors, without a copy.
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

@@ -32,7 +32,10 @@ sig
      `"TextIO.openIn"`, as MLton and SML/NJ take it. Poly/ML writes the
      qualified name.
 
-     Pinned by: `*IO.open*/Io-function` *)
+     Pinned by: `*IO.open*/Io-function`
+
+     Example: `((TextIO.openIn "no such file"; "") handle Io {function, ...} =>
+     function) = "openIn"` *)
   exception Io of {name : string, function : string, cause : exn}
 
   (* The cause of an `Io` when an operation would have to wait and nothing can make it wait.
