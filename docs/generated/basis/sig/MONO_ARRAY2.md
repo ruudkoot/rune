@@ -537,11 +537,13 @@ too.
 | <a name="fld-copy.dst_row"></a>`dst_row` | `int` |  |
 | <a name="fld-copy.dst_col"></a>`dst_col` | `int` |  |
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (5)</summary>
 
+- **MLKit** &mdash; copy, of Array2 and of the MONO\_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 - **MLton** &mdash; as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 - **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; copy of the MONO\_ARRAY2 structures checks the destination region against the dimensions of the source's base array instead of those of dst: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), and Overflow when dst\_row + nrows or dst\_col + ncols overflows
 
 </details>
 
@@ -567,10 +569,11 @@ val appi : traversal -> (int * int * elem -> unit) -> region -> unit
 
 **Example** `let val r = ref [] in appi ColMajor (fn (i, j, _) => r := (i, j) :: !r) {base = array (2, 2, 0), row = 0, col = 0, nrows = NONE, ncols = NONE}; !r end = [(1, 1), (0, 1), (1, 0), (0, 0)]`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi of the MONO\_ARRAY2 structures raise Overflow instead of Subscript when row + nrows or col + ncols overflows
 
 </details>
 
@@ -620,10 +623,11 @@ val foldi : traversal -> (int * int * elem * 'b -> 'b) -> 'b -> region -> 'b
 
 **Example** `foldi RowMajor (fn (i, j, x, acc) => (i, j, x) :: acc) [] {base = fromList [[1, 2], [3, 4]], row = 1, col = 0, nrows = NONE, ncols = NONE} = [(1, 1, 4), (1, 0, 3)]`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi of the MONO\_ARRAY2 structures raise Overflow instead of Subscript when row + nrows or col + ncols overflows
 
 </details>
 
@@ -677,10 +681,11 @@ val modifyi : traversal -> (int * int * elem -> elem) -> region -> unit
 
 **Example** `let val a = fromList [[1, 2], [3, 4]] in modifyi RowMajor (fn (i, _, x) => x + 10 * i) {base = a, row = 0, col = 1, nrows = NONE, ncols = NONE}; IntVector.foldr (op ::) [] (column (a, 1)) end = [2, 14]`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi of the MONO\_ARRAY2 structures raise Overflow instead of Subscript when row + nrows or col + ncols overflows
 
 </details>
 

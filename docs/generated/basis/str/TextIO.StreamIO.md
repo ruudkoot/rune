@@ -67,13 +67,13 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 > every line returned ends in one, and the stream returned is past that
 > end of stream. At an end of stream itself it is `NONE`.
 
-<details><summary>Other implementations (20)</summary>
+<details><summary>Other implementations (21)</summary>
 
 - **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
 - **SML/NJ 110.99.9** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
-- **MLton, Poly/ML** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
-- **MLton** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
-- **MLton, SML/NJ 110.99.9** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, Poly/ML, MLKit** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+- **MLton, MLKit** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+- **MLton, SML/NJ 110.99.9, MLKit** &mdash; filePosIn of a truncated stream raises nothing
 - **SML/NJ 110.99.9** &mdash; openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 - **SML/NJ 110.99.9** &mdash; getReader of a closed or truncated stream raises nothing
 - **SML/NJ 110.99.9** &mdash; getWriter of a closed stream raises nothing
@@ -87,6 +87,7 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
 - **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 - **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+- **MLKit** &mdash; output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 - **Poly/ML** &mdash; outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
 - **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 

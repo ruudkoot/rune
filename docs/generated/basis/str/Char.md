@@ -125,7 +125,7 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 - **MLton, SML/NJ, Poly/ML** &mdash; Overflow instead of NONE for a \\x escape whose value exceeds Int.maxInt
 - **MLton** &mdash; fromCString accepts the SML escape \\uxxxx
 - **SML/NJ** &mdash; fromCString does not accept \\^c
-- **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
+- **Poly/ML, MLKit** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 - **MLton** &mdash; scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
 - **SML/NJ, Poly/ML** &mdash; scan leaves an escaped formatting sequence that follows the character in the stream
 

@@ -118,7 +118,13 @@ What each means is on [`STRING`](../sig/STRING.md); the types are this structure
 > when the program is compiled, for the characters have eight bits; at
 > [`WideString.string`](../sig/STRING.md#type-string) it is a character.
 
-<details><summary>Other implementations (8)</summary>
+### tokens
+
+> **Reading** `String.tokens/order`. The specification says the tokens are
+> "derived from s from left to right", and not how often `p` is asked:
+> `p` is applied once to each character, from left to right.
+
+<details><summary>Other implementations (9)</summary>
 
 - **MLton, SML/NJ, Poly/ML** &mdash; converts an unescaped double quote, which the specification says fromCString does not accept
 - **SML/NJ** &mdash; fromCString does not accept \\^c
@@ -128,6 +134,7 @@ What each means is on [`STRING`](../sig/STRING.md); the types are this structure
 - **SML/NJ** &mdash; NONE instead of SOME "" when only an escaped formatting sequence can be scanned
 - **SML/NJ** &mdash; isSubstring "" "" is false
 - **SML/NJ** &mdash; isSubstring "" "" is false (the law draws two empty strings)
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
 
 </details>
 

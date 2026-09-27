@@ -375,10 +375,12 @@ val offset : date -> Time.time option
 
 **Example** `offset (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME Time.zeroTime`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **MLton** &mdash; offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
 - **SML/NJ** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24\*d) is added to the hours")
+- **MLKit** &mdash; offset reports the time west of UTC modulo a day, never negative: 5:30 east gives 18:30 west (66600 s)
+- **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, and offset reports it modulo a day (82800 s)
 
 </details>
 
@@ -481,10 +483,11 @@ time `t` at or after the epoch
 
 **Example** `toString (fromTimeUniv (Time.fromSeconds 86400)) = "Fri Jan 02 00:00:00 1970"`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton, SML/NJ (32-bit), SML/NJ** &mdash; toTime of a date before 1970 raises Date
 - **SML/NJ 110.99.9** &mdash; fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+- **MLKit** &mdash; toTime of a date before 1970 raises Date, and fromTimeUniv truncates a negative time towards zero instead of flooring it to its second
 
 </details>
 
@@ -510,7 +513,7 @@ val toTime : date -> Time.time
 
 **Example** `Time.toSeconds (toTime (date {year = 1970, month = Jan, day = 2, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime})) = 86400`
 
-<details><summary>Other implementations (11)</summary>
+<details><summary>Other implementations (14)</summary>
 
 - **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
@@ -522,7 +525,10 @@ val toTime : date -> Time.time
 - **SML/NJ 110.99.9 (64-bit)** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
 - **SML/NJ (32-bit)** &mdash; toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
 - **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
-- **Poly/ML** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+- **Poly/ML, MLKit** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+- **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
+- **MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
+- **MLKit** &mdash; toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 
 </details>
 
@@ -575,13 +581,14 @@ val fmt : string -> date -> string
 > zone for a local date, `UTC` for a date at the offset zero and nothing for
 > one at any other offset. A `%` that ends the format is written as it is.
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (6)</summary>
 
 - **SML/NJ** &mdash; fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
 - **SML/NJ (32-bit)** &mdash; fmt "%Z" raises Date for a UTC date
 - **Poly/ML** &mdash; fmt "" raises Date instead of giving ""
 - **MLton, SML/NJ 110.99.9 (64-bit)** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 - **Poly/ML** &mdash; fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+- **MLKit** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST") or garbage: the runtime's sml\_strftime leaves tm\_zone unset, and strftime reads it (for a local date it may crash)
 
 </details>
 
@@ -630,7 +637,7 @@ val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
-- **SML/NJ** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+- **SML/NJ, MLKit** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
 
 </details>
 

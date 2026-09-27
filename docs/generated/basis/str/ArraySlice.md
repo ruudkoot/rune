@@ -61,10 +61,11 @@ What each means is on [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md); the types are this
 > [`subslice`](../sig/ARRAY_SLICE.md#val-subslice), [`copy`](../sig/ARRAY_SLICE.md#val-copy) and [`copyVec`](../sig/ARRAY_SLICE.md#val-copyvec) are the same with their sums, and so are
 > the slices of the monomorphic arrays.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 - **Poly/ML** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows
+- **MLKit** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows: they check di + \|src\| \> \|dst\| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 
 </details>
 

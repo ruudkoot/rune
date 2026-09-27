@@ -56,11 +56,12 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * bool -> unit` |
 | val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> BoolVector.vector` |
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 - **Poly/ML** &mdash; copy with di = Int.maxInt raises Overflow instead of Subscript
+- **MLKit** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows: they check di + \|src\| \> \|dst\| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 
 </details>
 

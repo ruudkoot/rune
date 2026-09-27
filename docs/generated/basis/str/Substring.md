@@ -92,6 +92,12 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 > [`CharVectorSlice.slice`](../sig/MONO_VECTOR_SLICE.md#val-slice), the slice of a vector of characters, so the two
 > structures describe one type.
 
+### tokens
+
+> **Reading** `Substring.tokens/order`. The specification says the tokens
+> are derived "from left to right", and not how often `p` is asked: `p`
+> is applied once to each character, from left to right.
+
 ### triml
 
 > **Reading** `Substring.triml/Subscript-negative-k`. The specification says
@@ -105,12 +111,13 @@ What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this str
 > start for [`trimr`](../sig/SUBSTRING.md#val-trimr). The suite checks that it is empty and lies inside the
 > same string.
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (6)</summary>
 
 - **Poly/ML** &mdash; substring (s, i, j) raises Overflow instead of Subscript when i + j overflows
 - **Poly/ML** &mdash; extract (s, i, SOME j) raises Overflow instead of Subscript when i + j overflows
 - **Poly/ML** &mdash; extract (s, i, NONE) raises Overflow instead of Subscript for the smallest int (\|s\| - i overflows)
 - **SML/NJ** &mdash; isSubstring "" ss is false when ss is empty
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
 - **MLton, SML/NJ** &mdash; triml k and trimr k with k \< 0 raise Subscript only when applied to a substring
 
 </details>

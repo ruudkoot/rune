@@ -65,11 +65,14 @@ What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](
 > always set `isuid`; `isgid` is only bound to stay set when the file's
 > group is one of the process's own groups.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (6)</summary>
 
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
 - **MLton** &mdash; allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
 - **MLton** &mdash; all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all)
 - **Poly/ML** &mdash; fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all) and fromWord makes flags outside all
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
 
 </details>
 

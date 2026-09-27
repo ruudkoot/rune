@@ -128,17 +128,18 @@ What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structu
 > arcs, which no string produces; where it cannot hold, the exception
 > [`Path`](../sig/OS_PATH.md#exn-path) counts as holding too.
 
-<details><summary>Other implementations (11)</summary>
+<details><summary>Other implementations (12)</summary>
 
+- **MLKit** &mdash; concat (p, "") adds an empty arc to p: concat ("a", "") is "a/", not "a" ("the path consisting of path followed by t", the empty path having no arcs)
 - **Poly/ML** &mdash; toString {isAbs = false, vol = "", arcs = \[""\]} returns "" instead of raising Path, and fromString "" has no arcs
 - **SML/NJ** &mdash; fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
 - **Poly/ML** &mdash; fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
 - **SML/NJ** &mdash; the random canonical paths come from mkCanonical, which raises Fail on "./" and "a/../"
 - **Poly/ML** &mdash; getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
 - **SML/NJ** &mdash; mkCanonical raises Fail on the random paths that reduce to no arc but end with an empty one ("./", "a/../")
-- **MLton, SML/NJ** &mdash; joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+- **MLton, SML/NJ, MLKit** &mdash; joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
 - **SML/NJ** &mdash; mkCanonical raises Fail on a relative path that reduces to no arc but ends with an empty one ("./", ".//", "a/../") instead of returning "."
-- **MLton, SML/NJ** &mdash; the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+- **MLton, SML/NJ, MLKit** &mdash; the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
 - **Poly/ML** &mdash; toString {isAbs = false, vol = "", arcs = \[""\]} returns "" instead of raising Path ("if isAbs is false and arcs has an initial empty arc")
 - **Poly/ML** &mdash; toUnixPath "/" is "" instead of "/"
 

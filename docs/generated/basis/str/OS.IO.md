@@ -97,11 +97,12 @@ What each means is on [`OS_IO`](../sig/OS_IO.md); the types are this structure's
 > asking twice is asking once, the order of asking does not matter, and one
 > that asks for input is not equal to one that asks for output.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **Poly/ML 5.9.2** &mdash; the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
 - **MLton** &mdash; poll of a descriptor that has been closed returns \[\] instead of raising OS.SysErr
 - **Poly/ML** &mdash; poll returns the poll\_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
+- **MLKit** &mdash; poll of a descriptor that has been closed returns a poll\_info with no condition instead of raising OS.SysErr: the runtime ignores POLLNVAL
 
 </details>
 

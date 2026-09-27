@@ -34,8 +34,11 @@ What each means is on [`PACK_REAL`](../sig/PACK_REAL.md); the types are this str
 | val | [`toBytes`](../sig/PACK_REAL.md#val-tobytes) | `real -> Word8Vector.vector` |
 | val | [`update`](../sig/PACK_REAL.md#val-update) | `Word8Array.array * int * real -> unit` |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (4)</summary>
 
+- **MLKit** &mdash; PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
+- **MLKit** &mdash; fromBytes does not check the length: of a vector shorter than 8 bytes it reads 8 bytes, past the end of the vector, instead of raising Subscript
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **Poly/ML** &mdash; update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr \< bytesPerElem \* (i + 1)")
 
 </details>

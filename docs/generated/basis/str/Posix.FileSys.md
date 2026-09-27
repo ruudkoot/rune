@@ -124,9 +124,16 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 > **Reading** `Posix.FileSys.umask/not-for-chmod`. The mask applies to files
 > that are created; [`chmod`](../sig/POSIX_FILE_SYS.md#val-chmod) sets what it is given, mask or no mask.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (9)</summary>
 
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+- **MLKit** &mdash; chmod, with which the check sets the mode of the file first, ignores the mode and sets 01001 (---------t): the runtime passes it the flags it made for open, O\_WRONLY \| O\_TRUNC
+- **MLKit** &mdash; link never raises OS.SysErr: the library calls C's link, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+- **MLKit** &mdash; rename and rmdir never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
 - **Poly/ML 5.9.2** &mdash; wordToFD 0w0 is not equal (=) to stdin: equality of file\_desc is that of the object
+- **MLKit** &mdash; symlink and unlink never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): umask returns the previous mask in C's code, untranslated, and the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions
 - **Poly/ML** &mdash; wordToFD makes a new file\_desc that is not equal (=) to the file\_desc with the same number: equality of file\_desc is that of the object
 
 </details>

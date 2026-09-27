@@ -68,16 +68,22 @@ What each means is on [`UNIX`](../sig/UNIX.md); the types are this structure's o
 > failing. A child that is merely stopped does not end the wait, since
 > [`Posix.Process.W.untraced`](../sig/POSIX_PROCESS.md#val-w.untraced) is not asked for.
 
-<details><summary>Other implementations (8)</summary>
+<details><summary>Other implementations (14)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED)
 - **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+- **MLKit** &mdash; a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
+- **MLKit** &mdash; exece (and so Unix.executeInEnv) with the environment \[\] passes on the environment of the process: the runtime installs the list only when it is not empty
 - **SML/NJ** &mdash; Unix.exit does not flush the output streams that are open
 - **Poly/ML 5.9.2** &mdash; a forked child that calls Unix.exit never ends
 - **SML/NJ** &mdash; Unix.exit does not run the actions of OS.Process.atExit
+- **MLKit** &mdash; Unix.exit is Posix.Process.exit: it neither runs the actions of OS.Process.atExit nor flushes the output streams
 - **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that a signal ended is W\_EXITSTATUS 0w255, not W\_SIGNALED: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 

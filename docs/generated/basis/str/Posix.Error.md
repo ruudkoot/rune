@@ -106,11 +106,16 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 > ends the writer with [`Posix.Signal.pipe`](../sig/POSIX_SIGNAL.md#val-pipe) or, when that signal is ignored
 > or caught, fails with this condition; the suite accepts both.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (8)</summary>
 
+- **MLKit** &mdash; errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
 - **Poly/ML** &mdash; Posix.IO.close of a descriptor that is already closed raises no exception
+- **MLKit** &mdash; Posix.IO.close never raises OS.SysErr: the library calls C's close, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+- **MLKit** &mdash; the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on \`f': No such file or directory"
 - **SML/NJ** &mdash; ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+- **MLKit** &mdash; compiler bug: the X64 backend compares the pointer of \_\_is\_null with the address of a boxed 0, so the library never sees that a C function returned NULL: ttyname of a descriptor that is not a terminal returns NULL as its string instead of raising OS.SysErr
 - **SML/NJ 110.99.9** &mdash; Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+- **MLKit** &mdash; lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml\_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
 
 </details>
 

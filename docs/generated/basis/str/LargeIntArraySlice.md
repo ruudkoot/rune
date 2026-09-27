@@ -56,10 +56,11 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * IntInf.int -> unit` |
 | val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> LargeIntVector.vector` |
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 - **Poly/ML** &mdash; copy with di = Int.maxInt raises Overflow instead of Subscript
+- **MLKit** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows: they check di + \|src\| \> \|dst\| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 
 </details>
 

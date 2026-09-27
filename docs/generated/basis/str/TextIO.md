@@ -109,20 +109,22 @@ What each means is on [`TEXT_IO`](../sig/TEXT_IO.md) and [`IMPERATIVE_IO`](../si
 > stopped when it returns `SOME`, and not at all when it returns `NONE`,
 > whatever the scanner read while trying.
 
-<details><summary>Other implementations (14)</summary>
+<details><summary>Other implementations (16)</summary>
 
 - **Poly/ML** &mdash; characters buffered before closeIn are still read after it
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
-- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-- **MLton** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, MLKit** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
 - **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
 - **Poly/ML** &mdash; another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+- **MLKit** &mdash; inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 - **Poly/ML** &mdash; another reading of the specification: inputLine that returned NONE reads on when the file has grown; the test takes the STREAM\_IO model, as MLton and SML/NJ do
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
+- **MLKit** &mdash; another reading of the specification: inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE\_IO puts it; the test takes STREAM\_IO's reading, that Size is about the number of elements returned
 - **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
 - **SML/NJ** &mdash; inputAll (openString "") raises Io {cause = Div, ...}
-- **MLton** &mdash; output1 on a closed stream raises Io with function "output"
+- **MLton, MLKit** &mdash; output1 on a closed stream raises Io with function "output"
 - **SML/NJ** &mdash; another reading of the specification: reports function "outputSubstr"; the test takes outputSubstr to be "equivalent to" output, as MLton and Poly/ML do
 - **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 

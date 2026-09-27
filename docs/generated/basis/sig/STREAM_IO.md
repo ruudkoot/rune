@@ -331,7 +331,7 @@ already been read ends.
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, Poly/ML** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+- **MLton, Poly/ML, MLKit** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 
 </details>
 
@@ -405,10 +405,11 @@ val output1 : outstream * elem -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) as [`output`](#val-output) does.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 - **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+- **MLKit** &mdash; output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 
 </details>
 
@@ -463,7 +464,7 @@ val closeOut : outstream -> unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+- **MLton, MLKit** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 
 </details>
 
@@ -563,7 +564,7 @@ truncated or closed.
 
 <details><summary>Other implementations (2)</summary>
 
-- **MLton, SML/NJ 110.99.9** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, SML/NJ 110.99.9, MLKit** &mdash; filePosIn of a truncated stream raises nothing
 - **MLton, SML/NJ** &mdash; another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 
 </details>

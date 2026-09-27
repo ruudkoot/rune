@@ -33,9 +33,10 @@ What each means is on [`PACK_WORD`](../sig/PACK_WORD.md); the types are this str
 | val | [`subVecX`](../sig/PACK_WORD.md#val-subvecx) | `Word8Vector.vector * int -> word` |
 | val | [`update`](../sig/PACK_WORD.md#val-update) | `Word8Array.array * int * word -> unit` |
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **MLKit** &mdash; subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 - **SML/NJ (32-bit)** &mdash; update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
 
 </details>

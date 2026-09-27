@@ -76,6 +76,12 @@ What each means is on [`TIME`](../sig/TIME.md); the types are this structure's o
 > is not fixed; the suite asks only that a value either come out exact or
 > raise [`Time`](../sig/TIME.md#exn-time), never something else and never a wrong number.
 
+### fromString
+
+> **Reading** `Time.fromString/nanoseconds-lost-or-kept`. As [`scan`](../sig/TIME.md#val-scan) reads
+> it, the digits of the fraction after the sixth are dropped rather than
+> rounded: `"0.000000999"` is no microsecond.
+
 ### scan
 
 > **Reading** `Time.scan/digits-past-the-sixth`. Any number of digits may be
@@ -94,14 +100,16 @@ What each means is on [`TIME`](../sig/TIME.md); the types are this structure's o
 > point for all time values"; the suite takes it to lie in the past, so
 > `now ()` is greater.
 
-<details><summary>Other implementations (10)</summary>
+<details><summary>Other implementations (12)</summary>
 
+- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
 - **SML/NJ, Poly/ML** &mdash; fromReal of an infinite real raises Overflow, not Time
 - **Poly/ML** &mdash; fmt with a negative number of digits does not raise Size
 - **Poly/ML** &mdash; fmt goes through a real: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
 - **MLton** &mdash; fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
 - **MLton, SML/NJ, Poly/ML** &mdash; fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
 - **MLton, SML/NJ** &mdash; fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+- **MLKit** &mdash; another reading of the specification: fromString rounds a fraction beyond the microsecond to the nearest microsecond (0.000000999 is 1 microsecond); the test takes the reading of MLton, SML/NJ and Poly/ML, that a fraction below the resolution is dropped or kept, as fromReal's "fractions of a microsecond may be lost"
 - **Poly/ML** &mdash; toMilliseconds rounds a negative time towards minus infinity (\~1500 us gives \~2), not "towards 0"
 - **Poly/ML** &mdash; toSeconds rounds a negative time towards minus infinity (\~2.01 s gives \~3), not "towards 0"
 - **Poly/ML** &mdash; toSeconds rounds a negative time towards minus infinity (\~0.999 s gives \~1), not "towards 0"

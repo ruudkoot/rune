@@ -63,12 +63,13 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`~`](../sig/WORD.md#val-op-tilde) | `Word32.word -> Word32.word` |
 | val | [`~>>`](../sig/WORD.md#val-op-tilde-gt-gt) | `Word32.word * word -> Word32.word` |
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (7)</summary>
 
+- **MLKit** &mdash; fromLargeInt raises Overflow for a number below \~2^63 instead of taking its low-order wordSize bits: IntInfRep.toWord64 converts a negative number through a checked int64 (a positive one wraps modulo 2^64)
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
-- **Poly/ML** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+- **MLKit, Poly/ML** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
-- **Poly/ML** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+- **MLKit, Poly/ML** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
 - **SML/NJ (64-bit)** &mdash; LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
 - **Poly/ML** &mdash; \~\>\> by a shift of all ones gives 0, not the word filled with its sign bit
 

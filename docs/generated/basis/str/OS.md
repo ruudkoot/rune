@@ -57,8 +57,9 @@ What each means is on [`OS`](../sig/OS.md); the types are this structure's own.
 > it, and different conditions have different names, so [`syserror`](../sig/OS.md#val-syserror) and
 > [`errorName`](../sig/OS.md#val-errorname) invert each other.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
+- **MLKit** &mdash; the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on \`f': No such file or directory"
 - **Poly/ML** &mdash; OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
 
 </details>
