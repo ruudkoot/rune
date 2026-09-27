@@ -1,0 +1,3 @@
+- error recovery / multiple error per pass in lexer, parser, type checker
+- data type instead of string to report errors
+  - automatic documention via runedoc
