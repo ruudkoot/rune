@@ -10,8 +10,8 @@
 # seal      it is compiled before the programs that mention a name it
 #           provides, and for no file of the library: see the end of the list
 # host      how tests/basis/host/gen-host-basis.sh gives the file to MLton,
-#           SML/NJ and Poly/ML: yes (as it is), swap (without the types and
-#           exceptions a host must keep its own of) or no
+#           SML/NJ, Poly/ML and MLKit: yes (as it is), swap (without the
+#           types and exceptions a host must keep its own of) or no
 # provides  the structures, signatures, functors and top-level types the
 #           file declares. A name the library needs for itself and offers to
 #           nobody is written `RuneFoo` or `RUNE_FOO`: the documentation

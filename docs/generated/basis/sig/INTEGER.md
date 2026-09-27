@@ -882,11 +882,13 @@ structure.
 
 **Example** `StringCvt.scanString (scan StringCvt.HEX) "0x1F" = SOME 31`
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (7)</summary>
 
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 - **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
 - **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+- **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
+- **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
 - **SML/NJ (32-bit)** &mdash; Int64.scan raises an exception for a value that does not fit 32 bits
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
 
@@ -917,9 +919,11 @@ It reads decimal digits only, so a prefix of base 16 stops it after the
 
 **Example** `fromString "0x1F" = SOME 0`
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
+- **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
+- **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is 98 and "1+2" is 102, not 1 (IntInf.sml reads every group of digits with NumScan.scanInt, which takes a sign)
 - **SML/NJ (32-bit)** &mdash; Int64.fromString raises an exception for a value that does not fit 32 bits
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
 

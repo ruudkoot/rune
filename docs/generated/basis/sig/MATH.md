@@ -325,6 +325,12 @@ It is negative infinity at zero and a NaN for a negative `x`.
 
 **Example** `Real.toString (ln 0.0) = "~inf"`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; ln and log10 of a NaN are \~inf: ln tests r == 0.0 first, with an == that holds when neither \< nor \> does
+
+</details>
+
 <details><summary>Tests (13)</summary>
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `e` &middot; `two` &middot; `ten` &middot; `half` &middot; `minPos` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `law-product-is-sum`
@@ -340,6 +346,12 @@ val log10 : real -> real
 `log10 x` is the logarithm of `x` to base 10.
 
 It is negative infinity at zero and a NaN for a negative `x`.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; ln and log10 of a NaN are \~inf: ln tests r == 0.0 first, with an == that holds when neither \< nor \> does
+
+</details>
 
 <details><summary>Tests (13)</summary>
 

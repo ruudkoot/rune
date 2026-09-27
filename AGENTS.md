@@ -58,7 +58,7 @@ keep these invariants:
   the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
-  Poly/ML); `make matrix` adds the suite on each host's own library.
+  Poly/ML, MLKit); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through their descriptions,
   `src/isa/stack.sml` and `src/isa/prims.sml` (then `make isa`, which writes
   the generated files and `vm/opcodes.def` and `vm/prims.def`; `make
@@ -220,7 +220,7 @@ keep these invariants:
   to it. Nothing absolute is baked into the bytecode. `make install` writes the
   same kind of wrapper for the installed tree (`scripts/install.sh`).
 * The compiler must build with every host SML system and with itself
-  (`make boot`), and all five builds must produce identical bytecode. Follow
+  (`make boot`), and all six builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
   on `Int` width, only `structure`/`signature`/`functor` at top level,
   deterministic iteration, and sources that stay inside the language

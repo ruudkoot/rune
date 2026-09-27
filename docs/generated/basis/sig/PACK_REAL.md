@@ -153,8 +153,10 @@ NaN
 
 **Example** `Real.== (PackReal64Little.fromBytes (PackReal64Little.toBytes 2.5), 2.5) = true`
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (3)</summary>
 
+- **MLKit** &mdash; PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
+- **MLKit** &mdash; fromBytes does not check the length: of a vector shorter than 8 bytes it reads 8 bytes, past the end of the vector, instead of raising Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 
 </details>
@@ -177,8 +179,9 @@ val subVec : Word8Vector.vector * int -> real
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
 
@@ -202,8 +205,9 @@ val subArr : Word8Array.array * int -> real
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
 
@@ -227,9 +231,10 @@ val update : Word8Array.array * int * real -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **Poly/ML** &mdash; update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr \< bytesPerElem \* (i + 1)")
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ (32-bit)** &mdash; update writes nothing into the array
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript

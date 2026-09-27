@@ -27,7 +27,7 @@ once for the nineteen structures that implement it, and `Word8Vector` shows that
   when there is one.
 - **Tests**, folded: the checks of the test suite whose labels name the member, by the structure
   they are written for, or by the test functor and the structures it is applied to.
-- **Other implementations**, folded, is not from the comments of the library: what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
+- **Other implementations**, folded, is not from the comments of the library: what the test suite of the library finds MLton, SML/NJ, Poly/ML and MLKit to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
 
 ## A structure's page
 

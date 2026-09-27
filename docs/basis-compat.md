@@ -2,7 +2,7 @@
 
 How Rune's Basis Library relates to the
 [specification](https://smlfamily.github.io/Basis/) and to the libraries of
-MLton, SML/NJ and Poly/ML. Everything here comes from the suite in
+MLton, SML/NJ, Poly/ML and MLKit. Everything here comes from the suite in
 `tests/basis`: each difference below is a line of
 `tests/basis/deviations.txt`, and a run fails when a line no longer matches
 what happens. [plans/basis.md](plans/basis.md) has the plan this belongs to.
@@ -19,6 +19,7 @@ The hosts are the releases `make hosts` installs under
 | SML/NJ | 110.99.9, 64-bit build (`smlnj`) | 63 bits | 63 bits |
 | SML/NJ | 110.99.9, 32-bit build (`smlnj32`) | 31 bits | 31 bits |
 | Poly/ML | 5.9.2 | 63 bits | 63 bits |
+| MLKit | 4.7.23 | 63 bits | 63 bits |
 
 The 32-bit SML/NJ is there for its narrow `int` and `word`, which have found
 many places where the library or a test depended on their width.
@@ -56,30 +57,34 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
 
 ## Summary
 
-The last run of `make matrix` (every configuration). A check that fails is explained by a line of
+The last run of `make matrix` (every configuration), on 2026-09-27 on a
+virtual machine of 4 CPUs without IPv6. A check that fails is explained by a line of
 `tests/basis/deviations.txt` or fails the run. A test is absent where the
 system lacks a structure it requires (an optional one: the hosts lack most
 of the monomorphic families and some of `IntN`, `WordN` and `Pack*`; see the
 table of structures below), and N/A in an `xc1` configuration whose host does
 not load the file of lib/basis it needs.
 
-| Configuration | Checks | Pass | Explained | Tests absent | Tests N/A |
-|---|---:|---:|---:|---:|---:|
-| `rune` | 136,062 | 136,061 | 1 | 0 | 0 |
-| `native:mlton@20241230` | 135,890 | 135,543 | 347 | 4 | 0 |
-| `native:smlnj@110.99.9` | 60,598 | 59,944 | 654 | 56 | 0 |
-| `native:smlnj32@110.99.9` | 51,190 | 49,731 | 1,459 | 56 | 0 |
-| `native:polyml@5.9.2` | 67,182 | 66,467 | 715 | 47 | 0 |
-| `xc1:mlton@20241230` | 136,042 | 135,734 | 308 | 0 | 0 |
-| `xc1:smlnj@110.99.9` | 136,055 | 135,648 | 407 | 0 | 0 |
-| `xc1:smlnj32@110.99.9` | 93,260 | 91,160 | 2,100 | 0 | 35 |
-| `xc1:polyml@5.9.2` | 136,014 | 135,656 | 358 | 0 | 0 |
+| Configuration | Checks | Pass | Explained | Skipped | Tests absent | Tests N/A |
+|---|---:|---:|---:|---:|---:|---:|
+| `rune` | 137,276 | 137,266 | 0 | 10 | 0 | 0 |
+| `native:mlton@20241230` | 136,934 | 136,587 | 347 | 0 | 10 | 0 |
+| `native:smlnj@110.99.9` | 61,627 | 60,969 | 658 | 0 | 63 | 0 |
+| `native:smlnj32@110.99.9` | 48,918 | 47,462 | 1,456 | 0 | 63 | 0 |
+| `native:polyml@5.9.2` | 68,207 | 67,487 | 720 | 0 | 52 | 0 |
+| `native:mlkit@4.7.23` | 111,531 | 110,554 | 977 | 0 | 43 | 0 |
+| `xc1:mlton@20241230` | 137,220 | 136,897 | 313 | 10 | 2 | 0 |
+| `xc1:smlnj@110.99.9` | 137,240 | 136,820 | 410 | 10 | 2 | 0 |
+| `xc1:smlnj32@110.99.9` | 93,306 | 91,191 | 2,105 | 10 | 2 | 38 |
+| `xc1:polyml@5.9.2` | 137,192 | 136,818 | 364 | 10 | 2 | 0 |
+| `xc1:mlkit@4.7.23` | 137,119 | 136,624 | 485 | 10 | 2 | 0 |
 
-On Rune the one failure is a reading of the specification (below). The
-`xc1` configurations fail it too, the checks the shim cannot run (sockets,
-`poll`), the checks where a host's function under a primitive of the shim is
-wrong, and on the 32-bit SML/NJ whatever needs more than 31 bits of `int`
-(`Time` counts microseconds since 1970).
+On Rune every check passes; the 10 skipped are those of `INet6Sock` that
+need a socket of IPv6, which the machine did not have. The `xc1`
+configurations fail the checks the shim cannot run (sockets, `poll`, and on
+MLKit what its `Posix` lacks), the checks where a host's function under a
+primitive of the shim is wrong, and on the 32-bit SML/NJ whatever needs more
+than 31 bits of `int` (`Time` counts microseconds since 1970).
 
 ## Structures each system provides
 
@@ -87,112 +92,118 @@ wrong, and on the 32-bit SML/NJ whatever needs more than 31 bits of `int`
 structure of the specification on each system (the 32-bit SML/NJ has the
 library of the 64-bit one):
 
-| Structure | Rune | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 |
-|---|:---:|:---:|:---:|:---:|
-| `BoolArray` | yes | yes | | yes |
-| `BoolArray2` | yes | yes | | yes |
-| `BoolArraySlice` | yes | yes | | |
-| `BoolVector` | yes | yes | | yes |
-| `BoolVectorSlice` | yes | yes | | |
-| `CharArray2` | yes | yes | | yes |
-| `Int8` | yes | yes | | |
-| `Int16` | yes | yes | | |
-| `Int64` | yes | yes | yes | |
-| `IntArray` | yes | yes | | yes |
-| `IntArray2` | yes | yes | | yes |
-| `IntArraySlice` | yes | yes | | yes |
-| `IntVector` | yes | yes | | yes |
-| `IntVectorSlice` | yes | yes | | yes |
-| `Int8Array` | yes | yes | | |
-| `Int8Array2` | yes | yes | | |
-| `Int8ArraySlice` | yes | yes | | |
-| `Int8Vector` | yes | yes | | |
-| `Int8VectorSlice` | yes | yes | | |
-| `Int16Array` | yes | yes | | |
-| `Int16Array2` | yes | yes | | |
-| `Int16ArraySlice` | yes | yes | | |
-| `Int16Vector` | yes | yes | | |
-| `Int16VectorSlice` | yes | yes | | |
-| `Int32Array` | yes | yes | | |
-| `Int32Array2` | yes | yes | | |
-| `Int32ArraySlice` | yes | yes | | |
-| `Int32Vector` | yes | yes | | |
-| `Int32VectorSlice` | yes | yes | | |
-| `Int64Array` | yes | yes | | |
-| `Int64Array2` | yes | yes | | |
-| `Int64ArraySlice` | yes | yes | | |
-| `Int64Vector` | yes | yes | | |
-| `Int64VectorSlice` | yes | yes | | |
-| `LargeIntArray` | yes | yes | | |
-| `LargeIntArray2` | yes | yes | | |
-| `LargeIntArraySlice` | yes | yes | | |
-| `LargeIntVector` | yes | yes | | |
-| `LargeIntVectorSlice` | yes | yes | | |
-| `LargeRealArray` | yes | yes | | |
-| `LargeRealArray2` | yes | yes | | |
-| `LargeRealArraySlice` | yes | yes | | |
-| `LargeRealVector` | yes | yes | | |
-| `LargeRealVectorSlice` | yes | yes | | |
-| `LargeWordArray` | yes | yes | | |
-| `LargeWordArray2` | yes | yes | | |
-| `LargeWordArraySlice` | yes | yes | | |
-| `LargeWordVector` | yes | yes | | |
-| `LargeWordVectorSlice` | yes | yes | | |
-| `PackRealBig` | yes | yes | | yes |
-| `PackRealLittle` | yes | yes | | yes |
-| `PackReal64Big` | yes | yes | yes | |
-| `PackReal64Little` | yes | yes | yes | |
-| `PackWord64Big` | yes | yes | yes | |
-| `PackWord64Little` | yes | yes | yes | |
-| `RealArray2` | yes | yes | | yes |
-| `Real32` | yes | yes | | yes |
-| `Real32Array` | yes | yes | | |
-| `Real32Array2` | yes | yes | | |
-| `Real32ArraySlice` | yes | yes | | |
-| `Real32Vector` | yes | yes | | |
-| `Real32VectorSlice` | yes | yes | | |
-| `PackReal32Big` | yes | yes | | yes |
-| `PackReal32Little` | yes | yes | | yes |
-| `Real64` | yes | yes | yes | |
-| `Real64Array` | yes | yes | yes | |
-| `Real64Array2` | yes | yes | | |
-| `Real64ArraySlice` | yes | yes | yes | |
-| `Real64Vector` | yes | yes | yes | |
-| `Real64VectorSlice` | yes | yes | yes | |
-| `SML90` | yes | | yes | yes |
-| `WideChar` | yes | yes | | |
-| `WideCharArray` | yes | yes | | |
-| `WideCharVector` | yes | yes | | |
-| `WideString` | yes | yes | | |
-| `WideSubstring` | yes | yes | | |
-| `WideText` | yes | yes | | |
-| `WideTextIO` | yes | | | |
-| `WideTextPrimIO` | yes | | | |
-| `Windows` | yes | | | |
-| `WordArray` | yes | yes | | |
-| `WordArray2` | yes | yes | | |
-| `WordArraySlice` | yes | yes | | |
-| `WordVector` | yes | yes | | |
-| `WordVectorSlice` | yes | yes | | |
-| `Word16` | yes | yes | | yes |
-| `Word16Array` | yes | yes | | |
-| `Word16Array2` | yes | yes | | |
-| `Word16ArraySlice` | yes | yes | | |
-| `Word16Vector` | yes | yes | | |
-| `Word16VectorSlice` | yes | yes | | |
-| `Word32Array` | yes | yes | | |
-| `Word32Array2` | yes | yes | | |
-| `Word32ArraySlice` | yes | yes | | |
-| `Word32Vector` | yes | yes | | |
-| `Word32VectorSlice` | yes | yes | | |
-| `Word64Array` | yes | yes | | |
-| `Word64Array2` | yes | yes | | |
-| `Word64ArraySlice` | yes | yes | | |
-| `Word64Vector` | yes | yes | | |
-| `Word64VectorSlice` | yes | yes | | |
-| `Word8Array2` | yes | yes | | yes |
+| Structure | Rune | MLton 20241230 | SML/NJ 110.99.9 | Poly/ML 5.9.2 | MLKit 4.7.23 |
+|---|:---:|:---:|:---:|:---:|:---:|
+| `BoolArray` | yes | yes | | yes | yes |
+| `BoolArray2` | yes | yes | | yes | yes |
+| `BoolArraySlice` | yes | yes | | | yes |
+| `BoolVector` | yes | yes | | yes | yes |
+| `BoolVectorSlice` | yes | yes | | | yes |
+| `CharArray2` | yes | yes | | yes | |
+| `GenericSock` | yes | yes | yes | yes | |
+| `Int8` | yes | yes | | | yes |
+| `Int16` | yes | yes | | | yes |
+| `Int64` | yes | yes | yes | | yes |
+| `IntArray` | yes | yes | | yes | yes |
+| `IntArray2` | yes | yes | | yes | yes |
+| `IntArraySlice` | yes | yes | | yes | yes |
+| `IntVector` | yes | yes | | yes | yes |
+| `IntVectorSlice` | yes | yes | | yes | yes |
+| `Int8Array` | yes | yes | | | yes |
+| `Int8Array2` | yes | yes | | | yes |
+| `Int8ArraySlice` | yes | yes | | | yes |
+| `Int8Vector` | yes | yes | | | yes |
+| `Int8VectorSlice` | yes | yes | | | yes |
+| `Int16Array` | yes | yes | | | yes |
+| `Int16Array2` | yes | yes | | | yes |
+| `Int16ArraySlice` | yes | yes | | | yes |
+| `Int16Vector` | yes | yes | | | yes |
+| `Int16VectorSlice` | yes | yes | | | yes |
+| `Int32Array` | yes | yes | | | yes |
+| `Int32Array2` | yes | yes | | | yes |
+| `Int32ArraySlice` | yes | yes | | | yes |
+| `Int32Vector` | yes | yes | | | yes |
+| `Int32VectorSlice` | yes | yes | | | yes |
+| `Int64Array` | yes | yes | | | yes |
+| `Int64Array2` | yes | yes | | | yes |
+| `Int64ArraySlice` | yes | yes | | | yes |
+| `Int64Vector` | yes | yes | | | yes |
+| `Int64VectorSlice` | yes | yes | | | yes |
+| `LargeIntArray` | yes | yes | | | yes |
+| `LargeIntArray2` | yes | yes | | | yes |
+| `LargeIntArraySlice` | yes | yes | | | yes |
+| `LargeIntVector` | yes | yes | | | yes |
+| `LargeIntVectorSlice` | yes | yes | | | yes |
+| `LargeRealArray` | yes | yes | | | yes |
+| `LargeRealArray2` | yes | yes | | | yes |
+| `LargeRealArraySlice` | yes | yes | | | yes |
+| `LargeRealVector` | yes | yes | | | yes |
+| `LargeRealVectorSlice` | yes | yes | | | yes |
+| `LargeWordArray` | yes | yes | | | yes |
+| `LargeWordArray2` | yes | yes | | | yes |
+| `LargeWordArraySlice` | yes | yes | | | yes |
+| `LargeWordVector` | yes | yes | | | yes |
+| `LargeWordVectorSlice` | yes | yes | | | yes |
+| `NetProtDB` | yes | yes | yes | yes | |
+| `NetServDB` | yes | yes | yes | yes | |
+| `PackRealBig` | yes | yes | | yes | yes |
+| `PackRealLittle` | yes | yes | | yes | yes |
+| `PackReal64Big` | yes | yes | yes | | yes |
+| `PackReal64Little` | yes | yes | yes | | yes |
+| `PackWord16Big` | yes | yes | yes | yes | |
+| `PackWord16Little` | yes | yes | yes | yes | |
+| `PackWord64Big` | yes | yes | yes | | |
+| `PackWord64Little` | yes | yes | yes | | |
+| `RealArray2` | yes | yes | | yes | yes |
+| `Real32` | yes | yes | | yes | |
+| `Real32Array` | yes | yes | | | |
+| `Real32Array2` | yes | yes | | | |
+| `Real32ArraySlice` | yes | yes | | | |
+| `Real32Vector` | yes | yes | | | |
+| `Real32VectorSlice` | yes | yes | | | |
+| `PackReal32Big` | yes | yes | | yes | |
+| `PackReal32Little` | yes | yes | | yes | |
+| `Real64` | yes | yes | yes | | yes |
+| `Real64Array` | yes | yes | yes | | yes |
+| `Real64Array2` | yes | yes | | | yes |
+| `Real64ArraySlice` | yes | yes | yes | | yes |
+| `Real64Vector` | yes | yes | yes | | yes |
+| `Real64VectorSlice` | yes | yes | yes | | yes |
+| `SML90` | yes | | yes | yes | |
+| `UnixSock` | yes | yes | yes | yes | |
+| `WideChar` | yes | yes | | | |
+| `WideCharArray` | yes | yes | | | |
+| `WideCharVector` | yes | yes | | | |
+| `WideString` | yes | yes | | | |
+| `WideSubstring` | yes | yes | | | |
+| `WideText` | yes | yes | | | |
+| `WideTextIO` | yes | | | | |
+| `WideTextPrimIO` | yes | | | | |
+| `Windows` | yes | | | | |
+| `WordArray` | yes | yes | | | yes |
+| `WordArray2` | yes | yes | | | yes |
+| `WordArraySlice` | yes | yes | | | yes |
+| `WordVector` | yes | yes | | | yes |
+| `WordVectorSlice` | yes | yes | | | yes |
+| `Word16` | yes | yes | | yes | yes |
+| `Word16Array` | yes | yes | | | yes |
+| `Word16Array2` | yes | yes | | | yes |
+| `Word16ArraySlice` | yes | yes | | | yes |
+| `Word16Vector` | yes | yes | | | yes |
+| `Word16VectorSlice` | yes | yes | | | yes |
+| `Word32Array` | yes | yes | | | yes |
+| `Word32Array2` | yes | yes | | | yes |
+| `Word32ArraySlice` | yes | yes | | | yes |
+| `Word32Vector` | yes | yes | | | yes |
+| `Word32VectorSlice` | yes | yes | | | yes |
+| `Word64Array` | yes | yes | | | yes |
+| `Word64Array2` | yes | yes | | | yes |
+| `Word64ArraySlice` | yes | yes | | | yes |
+| `Word64Vector` | yes | yes | | | yes |
+| `Word64VectorSlice` | yes | yes | | | yes |
+| `Word8Array2` | yes | yes | | yes | |
 
-Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `Byte`, `Char`, `CharArray`, `CharArraySlice`, `CharVector`, `CharVectorSlice`, `CommandLine`, `Date`, `General`, `IEEEReal`, `IO`, `Int`, `LargeInt`, `LargeReal`, `LargeWord`, `List`, `ListPair`, `Math`, `OS`, `OS.FileSys`, `OS.IO`, `OS.Path`, `OS.Process`, `Option`, `Position`, `Real`, `String`, `StringCvt`, `Substring`, `Text`, `TextIO`, `TextPrimIO`, `Time`, `Timer`, `Vector`, `VectorSlice`, `Word`, `Word8`, `Word8Array`, `Word8ArraySlice`, `Word8Vector`, `Word8VectorSlice`, `Array2`, `FixedInt`, `GenericSock`, `INetSock`, `Int32`, `IntInf`, `NetHostDB`, `NetProtDB`, `NetServDB`, `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `Posix`, `RealArray`, `RealArraySlice`, `RealVector`, `RealVectorSlice`, `Socket`, `Unix`, `UnixSock`, `Word32`, `Word64`.
+Provided by all of them: `Array`, `ArraySlice`, `BinIO`, `BinPrimIO`, `Bool`, `Byte`, `Char`, `CharArray`, `CharArraySlice`, `CharVector`, `CharVectorSlice`, `CommandLine`, `Date`, `General`, `IEEEReal`, `IO`, `Int`, `LargeInt`, `LargeReal`, `LargeWord`, `List`, `ListPair`, `Math`, `OS`, `OS.FileSys`, `OS.IO`, `OS.Path`, `OS.Process`, `Option`, `Position`, `Real`, `String`, `StringCvt`, `Substring`, `Text`, `TextIO`, `TextPrimIO`, `Time`, `Timer`, `Vector`, `VectorSlice`, `Word`, `Word8`, `Word8Array`, `Word8ArraySlice`, `Word8Vector`, `Word8VectorSlice`, `Array2`, `FixedInt`, `INetSock`, `Int32`, `IntInf`, `NetHostDB`, `PackWord32Big`, `PackWord32Little`, `Posix`, `RealArray`, `RealArraySlice`, `RealVector`, `RealVectorSlice`, `Socket`, `Unix`, `Word32`, `Word64`.
 
 ## Representation choices in Rune
 
@@ -252,7 +263,9 @@ Fixed along the way, each with the deviation lines it removed: the
 operand and a second operand of two or more limbs, which gave a zero that was
 not equal to 0; `exnName` and `exnMessage`; the input functions of a closed
 `TextIO` stream; `IEEEReal.Unordered`, which was an exception of its own and
-not the `Unordered` of the top-level environment. Found by MLton's regression
+not the `Unordered` of the top-level environment (a name the specification's
+top level does not have, and which Rune's has since lost too). Found by
+MLton's regression
 programs (M8): `OS.Path.mkRelative` canonicalised its `path` and dropped its
 trailing `/`, `mkAbsolute` and `mkRelative` did not raise `Path` for a
 relative `relativeTo`, `joinDirFile` doubled the `/` of the root,
@@ -269,7 +282,7 @@ documentation has every line under the member it is about, in a block
 "Other implementations" (`tests/basis/gen-annotations.sh` makes
 `tests/basis/annotations.txt` from `deviations.txt` for it).
 
-* **MLton 20241230** (71 lines). `Bool.scan` and `fromString` are
+* **MLton 20241230** (72 lines). `Bool.scan` and `fromString` are
   case-sensitive and skip no whitespace. `Real.rem (0.0, 0.0)` is 0.0, and
   `rem` is computed in floating point, so it can exceed `y`. `Char.scan`
   leaves an escaped formatting sequence in the stream after an escape;
@@ -288,7 +301,7 @@ documentation has every line under the member it is about, in a block
   `Socket.Ctl.getNREAD` answers ~1 and `getATMARK` always true; `NetServDB`
   does not convert ports from network byte order. `getOutstream` and
   `setOutstream` do not flush.
-* **SML/NJ 110.99.9, 64-bit** (151 lines). `exnMessage` of the standard
+* **SML/NJ 110.99.9, 64-bit** (152 lines). `exnMessage` of the standard
   exceptions does not contain `exnName`, and an exception value built under
   one name and matched under another takes the default rule.
   `Vector.update` out of range returns the vector; `Array.tabulate (~1, f)`
@@ -308,7 +321,7 @@ documentation has every line under the member it is about, in a block
   negative count raises `Subscript`. On a loaded machine it sometimes gets a
   floating-point result wrong (about one run in ten of 32 at once, never
   alone): those are the `HOST-FLAKY` lines, which need not match.
-* **SML/NJ 110.99.9, 32-bit** (159 lines). Everything of the 64-bit build,
+* **SML/NJ 110.99.9, 32-bit** (160 lines). Everything of the 64-bit build,
   and: `Int64` is emulated with two words and comes out wrong throughout
   (`Int64.+ (~2, ~3)` is 1073741819), `Int32.div (minInt, ~1)` kills the
   runtime with the processor's trap instead of raising `Overflow`, the
@@ -317,7 +330,7 @@ documentation has every line under the member it is about, in a block
   bytes, and `lseek` with a negative offset gives a position of its own.
   Its `int` and `word` have 31 bits, which is what the `WIDTH` lines of that
   configuration record.
-* **Poly/ML 5.9.2** (106 lines). `Real.round` and `realRound` of
+* **Poly/ML 5.9.2** (108 lines). `Real.round` and `realRound` of
   0.49999999999999994 give 1, `realRound (2^52 + 1)` is `2^52 + 2` and
   `realRound (~0.25)` loses the sign; `toString` and `GEN` print integral
   values with `.0` and do not choose the shorter notation; `toDecimal` gives
@@ -332,10 +345,42 @@ documentation has every line under the member it is about, in a block
   `closeIn` are still read after it. `OS.Path` mishandles the root and the
   current arc; `OS.errorName` gives the C name. A forked child that calls
   `Posix.Process.exit` never ends, and the runtime ignores `SIGPIPE`.
-* **All of them.** `fromCString` converts an unescaped double quote;
-  `Char.fromCString` raises `Overflow` for a `\x` escape beyond
-  `Int.maxInt`; `Char.scan` leaves a trailing escaped formatting sequence in
-  the stream.
+* **MLKit 4.7.23** (107 lines). Most of its library departs somewhere, and
+  the suite found about sixty bugs, each written up under
+  `docs/bugreport/mlkit/` with a program and, mostly, a patch. `Array2.copy`
+  and that of the monomorphic `Array2`s check the destination against the
+  source's dimensions and write past the end of a smaller one; the regions
+  of `appi`, `foldi` and `modifyi` let invalid ones through, and the copies
+  of slices raise `Overflow` for `Subscript`. `LargeIntVector` and its kin
+  hold `Word64.word`. `Word.fromLargeInt` raises `Overflow` for a negative
+  number, `Word.scan` reads `0w` as `0wx`, `IntInf.scan` reads a sign inside
+  the digits (and makes numbers that `toString` never ends on), and
+  `IntInf.fromInt` goes through 32 bits, so that `Time` ends in 2038. `0.0 +
+  ~0.0` is `~0.0` (the optimiser), `ceil` and `trunc` fail at `minInt`,
+  `toString` and `GEN` are C's `%g` with `.0` added, the signs of NaNs are
+  lost or reversed, and `Math.ln` of a NaN is `~inf`; `PackReal` reads past
+  a short vector. `Date.toTime` fails before 1970 and after 2038, `offset`
+  reports zones east of UTC as west, and `fmt "%Z"` reads memory it never
+  set. At an end of stream `inputAll` and `input1` stop before it rather
+  than past it, `getOutstream` and `setOutstream` do not flush, and
+  `output1` on a closed stream names `output`; all but the first are in
+  MLton's library too, which MLKit's streams come from. In `Posix`:
+  `unlink`, `rmdir`, `rename`, `link` and `close` never raise, `S` codes the
+  modes its own way and `chmod` ignores the mode, `ST` has no times and `IO`
+  no locks or `fsync`, `errorName again` is `"wouldblock"`, and a `SysErr`
+  carries a message of its own; `Unix.reap` and `OS.Process.system` lose the
+  exit status, and `exece` with `[]` passes the environment on. The x86-64
+  code generator pushes a word constant as an immediate that the assembler
+  rejects, never sees a `NULL` from C, and calls some C functions with the
+  stack misaligned; and the compiler stops on a function passed to itself
+  that raises an exception with an argument (worked around in
+  `src/elab/unifyexn.sml`), gives a datatype holding `t ref` no equality,
+  and gives a large literal the wrong default type.
+* **MLton, SML/NJ and Poly/ML.** `fromCString` converts an unescaped
+  double quote; `Char.fromCString` raises `Overflow` for a `\x` escape
+  beyond `Int.maxInt`; `Char.scan` leaves a trailing escaped formatting
+  sequence in the stream; `Time.fromReal` of a NaN raises `Domain`. MLKit
+  does none of these.
 
 ## Readings of the specification
 
@@ -409,8 +454,8 @@ reach inside it. The note is
 
 * A file of `lib/basis` that a host does not load is left out of the `xc1`
   configuration of that host; the tests of its structures are N/A there. The
-  report lists the files and the first error. Today four are left out, all
-  on the 32-bit SML/NJ:
+  report lists the files and the first error. Today five are left out, all
+  on the 32-bit SML/NJ, with the seal files of their structures:
 
   | Host | File | Why |
   |---|---|---|
@@ -418,8 +463,10 @@ reach inside it. The note is
   | SML/NJ 110.99.9, 32-bit | `int32.sml` | `Int32` needs constants beyond a 31-bit `int` |
   | SML/NJ 110.99.9, 32-bit | `timer.sml` | it counts microseconds in an `int` |
   | SML/NJ 110.99.9, 32-bit | `pack_real32.sml` | the 32 bits of binary32 are no 31-bit `word` constant |
+  | SML/NJ 110.99.9, 32-bit | `windows.sml` | the codes of Windows' exceptions, such as `0wxC0000005`, are no 31-bit `word` constants |
 
-  So 35 of the 202 tests are N/A there, and none elsewhere. Four files have
+  So 38 of the 220 tests are N/A there, and none elsewhere; MLKit, too,
+  loads every file. Four files have
   been made portable to get that far: `int.sml` and `word.sml` find their
   precision by doubling until `Overflow` and by shifting a bit out,
   `real.sml` computes `minPos` as `minNormalPos / 2^52` (SML/NJ misreads the
@@ -454,9 +501,16 @@ reach inside it. The note is
   table of host sockets per family and mode to bridge them, so its socket
   and database primitives fail with `ENOSYS`. The tests of M7 are in
   `tests/lang`, which runs on Rune only.
-* The host's `OS.Process.exit` knows two statuses, so
-  `RunePrim.exit` maps 0 and 1 to them and leaves other statuses to
-  `Posix.Process.exit`.
+* The host's `OS.Process.exit` knows two statuses, and the number of
+  `failure` is the host's (MLKit's is ~1, an exit status of 255), so
+  `RunePrim.exit` maps 0 to `success` and ends with any other status as
+  `Posix.Process.exit` does, once it has flushed `stdOut`.
+* MLKit 4.7.23 leaves out of its `Posix` `FileSys.utime`, the times of
+  `FileSys.ST`, `IO.fsync` and the locks of `IO`. The shim defines each of
+  them to fail with `ENOSYS` and then opens the host's structure, whose
+  member takes the place of the default where the host has one; so on MLKit
+  the primitives that need them fail with `ENOSYS` (`xc1:mlkit` lines of
+  category `XC1-NA`), and nothing changes on the other hosts.
 * `poly_eq`, `imm_eq` and `ptr_eq` are what Rune's compiler makes of `=`
   (`imm_eq` where it knows the values are never in the heap) and of
   exception matching. No library source names them and they are not part of

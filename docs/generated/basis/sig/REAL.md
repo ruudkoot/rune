@@ -297,6 +297,12 @@ val + : real * real -> real
 
 `x + y` is the sum, correctly rounded.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; the optimiser compiles 0.0 + e and e + 0.0 as e, so 0.0 + \~0.0 is \~0.0, not 0.0 (with --no\_optimiser it is 0.0)
+
+</details>
+
 <details><summary>Tests (21)</summary>
 
 For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `basic` &middot; `negative` &middot; `double-rounding` &middot; `finite-posInf` &middot; `finite-negInf` &middot; `posInf-posInf` &middot; `negInf-negInf` &middot; `posInf-negInf` &middot; `negInf-posInf` &middot; `nan-left` &middot; `nan-right` &middot; `overflow-is-posInf` &middot; `zero-plus-negzero` &middot; `negzero-plus-negzero` &middot; `law-commutative`
@@ -902,7 +908,7 @@ val nextAfter : real * real -> real
 
 <details><summary>Other implementations (3)</summary>
 
-- **MLton, Poly/ML** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
+- **MLton, Poly/ML, MLKit** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
 - **Poly/ML** &mdash; Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
 - **MLton, Poly/ML 5.9.2** &mdash; another reading of the specification: as Real.nextAfter/equal-zeros-returns-r\*: returns t
 
@@ -1101,12 +1107,14 @@ val ceil : real -> int
 
 Also in the [top-level environment](../top-level.md): `ceil`.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (6)</summary>
 
 - **SML/NJ** &mdash; Real.ceil minPos is 0
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **MLKit** &mdash; ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
+- **MLKit** &mdash; ceil of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
 </details>
 
@@ -1132,11 +1140,12 @@ val trunc : real -> int
 
 Also in the [top-level environment](../top-level.md): `trunc`.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **MLKit** &mdash; trunc of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
 </details>
 
@@ -1196,11 +1205,13 @@ val toInt : IEEEReal.rounding_mode -> real -> int
 
 **Example** `toInt IEEEReal.TO_NEAREST 2.5 = 2`
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **MLKit** &mdash; toInt TO\_POSINF is ceil, which gives minInt for 2^62 instead of raising Overflow
+- **MLKit** &mdash; toInt TO\_POSINF and TO\_ZERO are ceil and trunc, which raise Overflow for minInt = \~2^62
 
 </details>
 
@@ -1225,11 +1236,13 @@ Where [`LargeInt`](../str/IntInf.md) has no bounds this loses nothing, however l
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `x` is an infinity, or if the result does not fit
 a bounded [`LargeInt.int`](../sig/INTEGER.md#type-int); [`Domain`](../sig/GENERAL.md#exn-domain) if `x` is a NaN.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF are exchanged for it: toLargeInt TO\_NEGINF \~2.5 is \~2
+- **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF disagree with floor and ceil on negative reals
 
 </details>
 
@@ -1278,9 +1291,10 @@ val fromLargeInt : LargeInt.int -> real
 > reals goes to the one whose last digit is even, and the digits that are
 > dropped decide the rest.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
 - **Poly/ML 5.9.2** &mdash; fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 
 </details>
@@ -1367,7 +1381,7 @@ digits beyond the four become zeros where the fixed form is the shorter.
 
 **Example** `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString (toDecimal 0.1)`.
 
-<details><summary>Other implementations (8)</summary>
+<details><summary>Other implementations (10)</summary>
 
 - **MLton** &mdash; another reading of the specification: SCI, FIX and GEN print \~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "\~0.0"
 - **Poly/ML** &mdash; GEN prints integral values with ".0" ("1.0")
@@ -1377,6 +1391,8 @@ digits beyond the four become zeros where the fixed form is the shorter.
 - **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
 - **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
 - **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+- **MLKit** &mdash; fmt (GEN \_) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "\~0.0"), and 9.6 at one digit is "1E1", not "10"
+- **MLKit** &mdash; fmt (GEN \_) is C's %g: it chooses the notation by the exponent, not the shorter one ("0.001", "10000000000.0", "1.235E5"), and adds ".0" to an integral value
 
 </details>
 
@@ -1402,10 +1418,12 @@ val toString : real -> string
 
 **Example** `toString ~1.5E~5 = "~1.5E~5"`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **Poly/ML** &mdash; toString prints integral values with ".0" ("1.0")
 - **Poly/ML** &mdash; toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+- **MLKit** &mdash; toString is C's %.12g with ".0" added to an integral result ("1.0")
+- **MLKit** &mdash; toString is C's %.12g: it chooses the notation by the exponent, not the shorter one ("10000000000.0", "0.000125")
 
 </details>
 
@@ -1518,9 +1536,10 @@ it into `x` again.
 
 **Example** `#digits (toDecimal 0.1) = [1]`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML 5.9.2** &mdash; toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+- **MLKit** &mdash; toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")
 - **Poly/ML 5.9.2** &mdash; toDecimal of a zero has exp 1, not 0
 
 </details>
@@ -1543,6 +1562,13 @@ val fromDecimal : IEEEReal.decimal_approx -> real option
 
 The current rounding mode is used. A `d` whose value is too large gives
 an infinity and one too small a zero.
+
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
+- **MLKit** &mdash; fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO\_NEAREST: under TO\_NEGINF {sign = true, digits = \[1\], exp = 0} is \~0.09999999999999999, not \~0.1
+
+</details>
 
 <details><summary>Tests (41)</summary>
 

@@ -106,9 +106,10 @@ How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) o
 | <a name="con-w_signaled"></a>`W_SIGNALED` | `signal` | a signal ended it |
 | <a name="con-w_stopped"></a>`W_STOPPED` | `signal` | a signal stopped it; it has not ended |
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED)
 
 </details>
@@ -121,9 +122,10 @@ val fromStatus : OS.Process.status -> exit_status
 
 `fromStatus st` is what the status `st` says about how the process ended.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -153,9 +155,11 @@ runs another program, so a later child does not hold them open.
 > knows at once that it cannot be run, this raises [`OS.SysErr`](../sig/OS.md#exn-syserr), which
 > the page allows as well.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+- **MLKit** &mdash; exece (and so Unix.executeInEnv) with the environment \[\] passes on the environment of the process: the runtime installs the list only when it is not empty
+- **MLKit** &mdash; a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
 
 </details>
 
@@ -178,9 +182,10 @@ val execute : string * string list -> ('a, 'b) proc
 > **Reading** `Unix.execute/current-directory`. The page does not say which
 > directory the child runs in; it is this process's current one.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+- **MLKit** &mdash; a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
 
 </details>
 
@@ -275,9 +280,10 @@ val reap : ('a, 'b) proc -> OS.Process.status
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the wait fails.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -297,9 +303,10 @@ val kill : ('a, 'b) proc * signal -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the signal may not be sent.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that a signal ended is W\_EXITSTATUS 0w255, not W\_SIGNALED: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -321,11 +328,12 @@ val exit : Word8.word -> 'a
 > and then leaves through the VM's exit, which flushes every file; that is
 > taken to satisfy "flushes and closes all I/O streams".
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **SML/NJ** &mdash; Unix.exit does not flush the output streams that are open
 - **Poly/ML 5.9.2** &mdash; a forked child that calls Unix.exit never ends
 - **SML/NJ** &mdash; Unix.exit does not run the actions of OS.Process.atExit
+- **MLKit** &mdash; Unix.exit is Posix.Process.exit: it neither runs the actions of OS.Process.atExit nor flushes the output streams
 
 </details>
 

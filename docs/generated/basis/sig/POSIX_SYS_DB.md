@@ -37,6 +37,12 @@ whatever the system's name service offers. They do not change anything.
 > holds on Linux and the BSDs, and compares the other fields with what
 > `getent` prints.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
+
+</details>
+
 ## Interface
 
 <pre>

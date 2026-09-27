@@ -28,18 +28,19 @@
 #   portability            rune:linux32 and rune:ppc64, and their -new
 #                          forms with rune:aarch64-new (bin/runevm-new-aarch64
 #                          under qemu, its JIT on; docs/plans/jit.md M12)
-#   native:mlton  native:smlnj  native:smlnj32  native:polyml
+#   native:mlton  native:smlnj  native:smlnj32  native:polyml  native:mlkit
 #                          the suite against the host's own Basis Library
-#   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml
+#   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml  xc1:mlkit
 #                          the suite against Rune's Basis Library (lib/basis)
 #                          compiled by the host; see below
-#   hosts                  native:HOST for the four hosts
-#   xc1                    xc1:HOST for the four hosts
+#   hosts                  native:HOST for the five hosts
+#   xc1                    xc1:HOST for the five hosts
 #   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
 # ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ built
-# for 64 bits (smlnj) and for 32 (smlnj32: 31-bit int and word) and Poly/ML;
-# MLTON=, SMLNJ=, SMLNJ32= and POLY= override their commands. A configuration
+# for 64 bits (smlnj) and for 32 (smlnj32: 31-bit int and word), Poly/ML and
+# MLKit (63-bit int and word); MLTON=, SMLNJ=, SMLNJ32=, POLY= and MLKIT=
+# override their commands, MLKIT_LIB= MLKit's library. A configuration
 # is reported under an id that carries the version of the host, e.g.
 # native:smlnj32@110.99.9; tests/basis/deviations.txt matches on it.
 #
@@ -56,7 +57,8 @@
 #    and count as the failed check @section/TEST/NAME;
 #  * a test that still does not load counts as the failed check @load/TEST,
 #    and so does one that runs for more than RUNE_MATRIX_TIMEOUT seconds
-#    (default 120), which is not tried again without its sections.
+#    (default 120), which is not tried again without its sections. An MLKit
+#    program may have RUNE_MATRIX_MEMORY KiB of virtual memory (4 GiB).
 #
 # An xc1 program starts with structure RunePrim, the primitives of
 # vm/prims.def written on the host's Basis Library, and the files of lib/basis
@@ -100,7 +102,9 @@
 # A host that keeps a session -- SML/NJ and Poly/ML -- gets a heap image with
 # the library in it once the probe has found which of its files load, so that
 # a program uses only its own sources: that is what most of a run costs there.
-# RUNE_MATRIX_NO_IMAGE=1 turns it off.
+# RUNE_MATRIX_NO_IMAGE=1 turns it off. MLKit, which compiles each file of a
+# program apart and keeps what it compiled, compiles the library once, after
+# the probe, and the programs use that.
 #
 # --perf times the programs of tests/perf instead (`make perf`), one at a
 # time, in the same configurations. A program's top-level declarations become
@@ -152,6 +156,8 @@ root=$(pwd)
 suite=$root/tests/basis
 out=$root/tests/out/matrix
 limit=${RUNE_MATRIX_TIMEOUT:-120}
+# the virtual memory an MLKit program may have, in KiB (4 GiB)
+mlkit_memory=${RUNE_MATRIX_MEMORY:-4194304}
 mkdir -p "$out"
 # Files of this invocation (several may run at once, on different tests).
 run=${RUNE_MATRIX_RUN:-$out/run.$$}
@@ -188,6 +194,25 @@ write_driver() {
     for f in "$@"; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
     printf ') handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\\n"); OS.Process.exit OS.Process.failure);\n'
   } > "$driver"
+}
+
+# mlkit_error LOG: put first in LOG, where first_error finds it, MLKit's
+# first error as one line, "error: FILE, line L, column C: MESSAGE". MLKit
+# writes the place, the code under it and the message on lines of their own,
+# and a warning the same way ("Match not exhaustive." and the like).
+mlkit_error() {
+  mlkit_why=$(awk '
+    /, line [0-9]+, column [0-9]+:$/ { place = $0; sub(/:$/, "", place); next }
+    place != "" && /^[^ ]/ {
+      if ($0 !~ /^(Match not exhaustive|Pattern not exhaustive|That rule is redundant)\.$/) {
+        print "error: " place ": " $0
+        exit
+      }
+      place = ""
+    }' "$1")
+  [ -n "$mlkit_why" ] || return 0
+  { echo "$mlkit_why"; cat "$1"; } > "$1.new"
+  mv "$1.new" "$1"
 }
 
 # write_mlb FILE SOURCES...
@@ -278,6 +303,41 @@ load() {
       # shellcheck disable=SC2086
       timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 || return 1
       (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
+      ;;
+    *:mlkit)
+      # MLKit keeps what it compiles in MLB/ beside each source and in the
+      # directory it runs in, and uses it again for as long as the source and
+      # what it depends on stay the same. The files of the program are copied
+      # into its directory, so that the jobs that run at once share none;
+      # those of an xc1 library ($cfgout/basis) are compiled where they
+      # stand, once, before any test (probe_basis), and only read after that.
+      # cmd2 is the directory of MLKit's own library, $(SML_LIB).
+      mlkit_files=""
+      n=0
+      for f in "$@"; do
+        case "$f" in
+          "$cfgout"/basis/*) mlkit_files="$mlkit_files $f" ;;
+          *)
+            n=$((n + 1))
+            mkdir -p "$loaddir/src/$n"
+            cp "$f" "$loaddir/src/$n/"
+            mlkit_files="$mlkit_files $loaddir/src/$n/$(basename "$f")"
+            ;;
+        esac
+      done
+      # shellcheck disable=SC2086
+      write_mlb "$loaddir/prog.mlb" $mlkit_files
+      if [ "$mode" = check ]; then
+        (cd "$loaddir" && SML_LIB=$cmd2 timeout $((limit * 8)) "$cmd1" --no_messages -c prog.mlb > log 2>&1) ||
+          { mlkit_error "$loaddir/log"; return 1; }
+        return
+      fi
+      (cd "$loaddir" && SML_LIB=$cmd2 timeout "$limit" "$cmd1" --no_messages -o prog prog.mlb > log 2>&1) ||
+        { mlkit_error "$loaddir/log"; return 1; }
+      # with a cap on its memory: IntInf.toString of a number that MLKit's
+      # IntInf.scan made wrong allocates until the machine has no more
+      # (docs/bugreport/mlkit/IntInf.scan/sign-inside-the-digits)
+      (cd "$loaddir" && ulimit -v "$mlkit_memory" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
       ;;
     *:smlnj|*:smlnj32)
       # With a heap image of the library the program starts from it and uses
@@ -766,6 +826,21 @@ save_image() {
   return 0
 }
 
+# mlkit_library: on MLKit, compile the library of the configuration where it
+# stands (load), which the programs of its tests then only read; quick when
+# it is compiled already. Fails with the reason in basis.done.
+mlkit_library() {
+  [ "$host" = mlkit ] || return 0
+  # shellcheck disable=SC2046
+  if load "$cfgout/basis.work" check $(cat "$cfgout/basis/prelude" "$cfgout/basis.loaded") "$cfgout/basis/ok.sml"; then
+    rm -rf "$cfgout/basis.work"
+    return 0
+  fi
+  echo "the library does not compile: $(first_error "$cfgout/basis.work/log" "$cfgout/basis.work/stdout")" > "$cfgout/basis.done"
+  echo "run-matrix: $cfgout: $(cat "$cfgout/basis.done")" >&2
+  return 1
+}
+
 # probe_basis ID: generate the library sources of xc1 configuration ID and
 # find the files of lib/basis that load on its host, in
 #   basis.loaded    their paths, in load order
@@ -777,6 +852,7 @@ probe_basis() {
   kind=xc1
   host=$(config_field "$1" 3)
   cmd1=$(config_field "$1" 4)
+  cmd2=$(config_field "$1" 5)
   cfgout=$out/$(dirname_of "$1")
   mkdir -p "$cfgout"
   # A shell error in a probe must release the test jobs waiting below. In
@@ -790,6 +866,7 @@ probe_basis() {
   if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/basis.loaded" ] &&
      [ -d "$cfgout/basis" ]; then
     echo "cached 0 $(since "$t_probe")" > "$cfgout/basis.time"
+    mlkit_library || return
     echo ok > "$cfgout/basis.done"
     if [ ! -f "$cfgout/basis.image" ]; then
       save_image "$(cat "$cfgout/basis/prelude")" "$(cat "$cfgout/basis.loaded")"
@@ -852,6 +929,7 @@ probe_basis() {
     awk -F '\t' -v f="$f" '$1 == f { n = split($2, m, " "); for (i = 1; i <= n; i++) print m[i] }' "$gen/files" >> "$cfgout/basis.provides"
   done
   rm -rf "$cfgout/basis.work"
+  mlkit_library || return
   save_image "$prelude" "$accepted"
   echo "probed $tried $(since "$t_probe")" > "$cfgout/basis.time"
   echo "$key" > "$cfgout/basis.key"
@@ -872,8 +950,8 @@ hosts_prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 expand() {
   for c in $(echo "$1" | tr ',' ' '); do
     case "$c" in
-      hosts) echo native:mlton native:smlnj native:smlnj32 native:polyml ;;
-      xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml ;;
+      hosts) echo native:mlton native:smlnj native:smlnj32 native:polyml native:mlkit ;;
+      xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml xc1:mlkit ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
       portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new rune:aarch64-new ;;
@@ -990,6 +1068,12 @@ resolve() {
     native:polyml|xc1:polyml)
       cmd1=${POLY:-$hosts_prefix/polyml/bin/poly}
       version=$("$cmd1" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9][0-9.]*\).*/\1/p')
+      ;;
+    native:mlkit|xc1:mlkit)
+      cmd1=${MLKIT:-$hosts_prefix/mlkit/bin/mlkit}
+      # its own library, which it finds only through $(SML_LIB)
+      cmd2=${MLKIT_LIB:-$(dirname "$(dirname "$cmd1")")/lib/mlkit}
+      version=$("$cmd1" --version 2> /dev/null | sed -n '1s/^MLKit v\([0-9][0-9.]*\).*/\1/p')
       ;;
     *) echo "run-matrix: unknown configuration '$1'" >&2; return 1 ;;
   esac

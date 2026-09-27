@@ -1,6 +1,6 @@
 #!/bin/sh
 # Verify that every build of runeopt (MLton, SML/NJ in 64 and 32 bits,
-# Poly/ML and, when built, the one compiled by Rune) says the same of the same
+# Poly/ML, MLKit and, when built, the one compiled by Rune) says the same of the same
 # programs: what the native code generator makes of a program must not depend
 # on who built it (docs/native.md). scripts/check-cross.sh runs this.
 #   scripts/check-opt-cross.sh
@@ -8,7 +8,7 @@ set -u
 cd "$(dirname "$0")/.."
 out=tests/out/opt-cross
 mkdir -p "$out"
-builds="mlton smlnj smlnj32 polyml"
+builds="mlton smlnj smlnj32 polyml mlkit"
 [ -x bin/runeopt-boot ] && builds="$builds boot"
 status=0
 

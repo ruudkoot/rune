@@ -1,0 +1,78 @@
+--- a/src/Runtime/Posix.c
++++ b/src/Runtime/Posix.c
+@@ -938,11 +938,11 @@
+   if (!b)
+   {
+     res = errno;
+-    third(triple) = res;
++    third(triple) = convertIntToML(res);
+     return triple;
+   }
+   res = getgrgid_r(gid, &gbuf, b, s-1, &gbuf2);
+-  third(triple) = res;
++  third(triple) = convertIntToML(res);
+   if (res)
+   {
+     free(b);
+@@ -984,11 +984,11 @@
+   if (!b)
+   {
+     res = errno;
+-    third(triple) = res;
++    third(triple) = convertIntToML(res);
+     return triple;
+   }
+   res = getgrnam_r(name, &gbuf, b, s-1, &gbuf2);
+-  third(triple) = res;
++  third(triple) = convertIntToML(res);
+   if (res)
+   {
+     free(b);
+@@ -1029,11 +1029,11 @@
+   if (!b)
+   {
+     res = errno;
+-    elemRecordML(tuple,4) = res;
++    elemRecordML(tuple,4) = convertIntToML(res);
+     return tuple;
+   }
+   res = getpwuid_r(uid, &pbuf, b, s-1, &pbuf2);
+-  elemRecordML(tuple,4) = res;
++  elemRecordML(tuple,4) = convertIntToML(res);
+   if (res)
+   {
+     free(b);
+@@ -1045,7 +1045,7 @@
+     raise_exn(ctx,exn);
+   }
+   elemRecordML(tuple,0) = (long) REG_POLY_CALL(convertStringToML, nameR, pbuf2->pw_name);
+-  elemRecordML(tuple,1) = (long) pbuf2->pw_gid;
++  elemRecordML(tuple,1) = convertIntToML((long) pbuf2->pw_gid);
+   elemRecordML(tuple,2) = (long) REG_POLY_CALL(convertStringToML, homeR, pbuf2->pw_dir);
+   elemRecordML(tuple,3) = (long) REG_POLY_CALL(convertStringToML, shellR, pbuf2->pw_shell);
+   free(b);
+@@ -1065,11 +1065,11 @@
+   if (!b)
+   {
+     res = errno;
+-    elemRecordML(tuple,4) = res;
++    elemRecordML(tuple,4) = convertIntToML(res);
+     return tuple;
+   }
+   res = getpwnam_r(name, &pbuf, b, s-1, &pbuf2);
+-  elemRecordML(tuple,4) = res;
++  elemRecordML(tuple,4) = convertIntToML(res);
+   if (res)
+   {
+     free(b);
+@@ -1080,8 +1080,8 @@
+     free(b);
+     raise_exn(ctx,exn);
+   }
+-  elemRecordML(tuple,0) = (long) pbuf2->pw_uid;
+-  elemRecordML(tuple,1) = (long) pbuf2->pw_gid;
++  elemRecordML(tuple,0) = convertIntToML((long) pbuf2->pw_uid);
++  elemRecordML(tuple,1) = convertIntToML((long) pbuf2->pw_gid);
+   elemRecordML(tuple,2) = (long) REG_POLY_CALL(convertStringToML, homeR, pbuf2->pw_dir);
+   elemRecordML(tuple,3) = (long) REG_POLY_CALL(convertStringToML, shellR, pbuf2->pw_shell);
+   free(b);

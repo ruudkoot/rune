@@ -199,7 +199,7 @@ Library that are not listed are not available.
 
 | ID | Structure | Status | Notes |
 |---|---|---|---|
-| basis.general | Top-level `option`, `order`, `Fail`, `Option`, `Empty`, `Span`, `Unordered`, `not`, `ignore`, `o`, `before`, `getOpt`, `isSome`, `valOf`, `print`, `exnName`, `exnMessage`, `ref`, `!`, `:=`; structure `General` | Supported | |
+| basis.general | Top-level `option`, `order`, `Fail`, `Option`, `Empty`, `Span`, `not`, `ignore`, `o`, `before`, `getOpt`, `isSome`, `valOf`, `print`, `exnName`, `exnMessage`, `ref`, `!`, `:=`; structure `General` | Supported | |
 | basis.bool | `Bool`: `not`, `toString`, `scan`, `fromString` | Supported | |
 | basis.int | `Int`: `precision`, `minInt`, `maxInt`, `toInt`, `fromInt`, `toLarge`, `fromLarge`, arithmetic, `quot`, `rem`, `abs`, `min`, `max`, `sign`, `sameSign`, `compare`, comparisons, `fmt`, `toString`, `scan`, `fromString` | Supported | 64 bits. `toLarge`/`fromLarge` convert to/from `IntInf`. |
 | basis.word | `Word`: `wordSize`, conversions (`toLarge`..., `toLargeInt`..., `toInt`...), arithmetic, comparisons, `andb`, `orb`, `xorb`, `notb`, `<<`, `>>`, `~>>`, `min`, `max`, `compare`, `fmt`, `toString`, `scan`, `fromString`; `LargeWord` = `SysWord` = `Word` | Supported | 64 bits. `SysWord` is the word of `Posix` (`fdToWord`, `pidToWord`, ...). |

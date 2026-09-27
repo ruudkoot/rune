@@ -741,7 +741,7 @@ val fromString : String.string -> char option
 
 <details><summary>Other implementations (1)</summary>
 
-- **Poly/ML** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
+- **Poly/ML, MLKit** &mdash; another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 
 </details>
 

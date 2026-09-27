@@ -285,9 +285,10 @@ and then nothing has been copied.
 | <a name="fld-copy.dst"></a>`dst` | `'a Array.array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows
+- **MLKit** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows: they check di + \|src\| \> \|dst\| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 
 </details>
 
@@ -315,9 +316,10 @@ val copyVec : {src : 'a VectorSlice.slice, dst : 'a Array.array, di : int} -> un
 | <a name="fld-copyvec.dst"></a>`dst` | `'a Array.array` |  |
 | <a name="fld-copyvec.di"></a>`di` | `int` |  |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows
+- **MLKit** &mdash; copy and copyVec raise Overflow instead of Subscript when di + \|src\| overflows: they check di + \|src\| \> \|dst\| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 
 </details>
 

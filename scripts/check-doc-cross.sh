@@ -1,6 +1,6 @@
 #!/bin/sh
 # Verify that every build of runedoc (MLton, SML/NJ in 64 and 32 bits,
-# Poly/ML and, when built, the one compiled by Rune) writes the same output
+# Poly/ML, MLKit and, when built, the one compiled by Rune) writes the same output
 # for the same input: the documentation must not depend on who built the
 # generator. scripts/check-cross.sh runs this.
 #   scripts/check-doc-cross.sh
@@ -8,7 +8,7 @@ set -u
 cd "$(dirname "$0")/.."
 out=tests/out/doc-cross
 mkdir -p "$out"
-builds="mlton smlnj smlnj32 polyml"
+builds="mlton smlnj smlnj32 polyml mlkit"
 [ -x bin/runedoc-boot ] && builds="$builds boot"
 status=0
 

@@ -3,8 +3,8 @@
 Rune is a Standard ML '97 compiler that targets a compact stack bytecode, plus
 `runevm`, a portable C interpreter with a copying garbage collector. The
 compiler is written in portable Standard ML and builds unchanged with
-**MLton**, **SML/NJ** and **Poly/ML** — all three produce byte-identical
-bytecode. It also compiles itself, and that is the compiler Rune ships:
+**MLton**, **SML/NJ**, **Poly/ML** and **MLKit** — all four produce
+byte-identical bytecode. It also compiles itself, and that is the compiler Rune ships:
 `bin/rune` is `bin/rune.rbc`, the compiler as bytecode, running on `runevm`.
 The host builds bootstrap it and keep it honest; `make bootstrap` checks that
 it reproduces itself byte for byte.
@@ -42,8 +42,8 @@ description of the supported language. Every feature row there has an id
 **[docs/generated/basis](docs/generated/basis/README.md)** is the
 documentation of the library: a page for every signature, with what each
 member does, how Rune reads the specification where it leaves a choice, the
-checks of the test suite that pin it, and what MLton, SML/NJ and Poly/ML do
-differently. `runedoc` generates it from the comments of `lib/basis`
+checks of the test suite that pin it, and what MLton, SML/NJ, Poly/ML and
+MLKit do differently. `runedoc` generates it from the comments of `lib/basis`
 ([docs/doc-comments.md](docs/doc-comments.md)).
 
 ## Layout
@@ -54,7 +54,7 @@ differently. `runedoc` generates it from the comments of `lib/basis`
 | `vm/` | the virtual machine |
 | `src/isa/` | the instruction set and the primitives, described in Standard ML; `runeisa` writes the tables of the VM and the compiler from them |
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
-| `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ and Poly/ML) |
+| `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ, Poly/ML and MLKit) |
 | `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [native.md](docs/native.md), [performance.md](docs/performance.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
 | `examples/` | small programs; `examples/runtime/` is the `Runtime` structure, which is Rune's own |
 | `scripts/` | build-file and table generators, consistency checks, `doctor.sh`, `install.sh` |
@@ -68,10 +68,10 @@ See [docs/building.md](docs/building.md). In short:
 make hosts         # install the SML systems Rune is built with, under ~/.local/rune-hosts
 make doctor        # check the environment: compilers, tools, how to install what is missing
 make               # bin/rune (the self-hosted compiler) + bin/runevm
-make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml
+make host-builds   # bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml, bin/rune-mlkit
 make test          # run the suite with bin/rune
-make test-all      # ... with each of the four host builds
-make check-cross   # identical bytecode from all five builds, the self-hosted one included
+make test-all      # ... with each of the five host builds
+make check-cross   # identical bytecode from all six builds, the self-hosted one included
 make check-docs    # docs <-> tests <-> .def files in sync
 make test-basis    # the Basis Library suite (tests/basis) with bin/rune
 make perf-check    # instruction and allocation budgets (tests/perf); same numbers on every machine

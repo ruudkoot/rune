@@ -386,7 +386,7 @@ otherwise there is none.
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ** &mdash; the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+- **MLton, SML/NJ, MLKit** &mdash; the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
 
 </details>
 
@@ -413,7 +413,7 @@ val joinBaseExt : {base : string, ext : string option} -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ** &mdash; joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+- **MLton, SML/NJ, MLKit** &mdash; joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
 
 </details>
 
@@ -633,6 +633,12 @@ volume that `q` does not.
 > join.
 
 **Example** `concat ("a/", "b") = "a/b"`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; concat (p, "") adds an empty arc to p: concat ("a", "") is "a/", not "a" ("the path consisting of path followed by t", the empty path having no arcs)
+
+</details>
 
 <details><summary>Tests (4)</summary>
 

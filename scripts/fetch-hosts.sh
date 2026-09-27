@@ -3,13 +3,14 @@
 # suite compares it with, under a user-local prefix (`make hosts`). Nothing is
 # installed system-wide, no root access is needed, and an SML system that the
 # machine itself has is never used.
-#   scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml]     (default: all four)
+#   scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml] [mlkit]     (default: all five)
 # Prefix: ${RUNE_HOSTS:-$HOME/.local/rune-hosts}. Each system goes to
 # <prefix>/<host>-<version>, and <prefix>/<host> is a symlink to it, so
-# <prefix>/mlton/bin/mlton, <prefix>/smlnj/bin/sml, <prefix>/smlnj32/bin/sml
-# and <prefix>/polyml/bin/poly are the commands. MLTON_VERSION, SMLNJ_VERSION
-# and POLYML_VERSION select other releases. `make doctor` checks the tools
-# this script needs.
+# <prefix>/mlton/bin/mlton, <prefix>/smlnj/bin/sml, <prefix>/smlnj32/bin/sml,
+# <prefix>/polyml/bin/poly and <prefix>/mlkit/bin/mlkit are the commands.
+# MLTON_VERSION, SMLNJ_VERSION, POLYML_VERSION and MLKIT_VERSION (with
+# MLKIT_SHA256) select other releases. `make doctor` checks the tools this
+# script needs.
 #  * MLton: the binary release from github.com/MLton/mlton (MLton is written
 #    in SML and needs an MLton to build; links against the system's GMP).
 #  * SML/NJ: config/install.sh of the 110.99 series, 64-bit (smlnj) and 32-bit
@@ -18,29 +19,41 @@
 #    without cmake.
 #  * Poly/ML: built from the source release with ./configure && make (from a
 #    clone of the release's tag where the archive cannot be downloaded).
+#  * MLKit: the binary release from github.com/melsman/mlkit on Linux x86-64
+#    (built by MLKit itself, needing no GMP), checked against its SHA-256;
+#    elsewhere, or with MLKIT_FROM_SOURCE=1, built from a clone of the
+#    release's tag with the MLton above. That takes more memory than a
+#    machine of 16 GB has: there MLton was killed at 14 GB, and ran out with
+#    its heap held to 11 GB (2026-09-27), so this way is untested. Its
+#    library is found through SML_LIB, which the Makefile and the Basis
+#    matrix set: nothing is written to ~/.mlkit.
 # No build here starts from an SML compiler of the machine, so none needs a
-# second stage to shed one: MLton comes as a binary; SML/NJ compiles its C
+# second stage to shed one: MLton and MLKit come as binaries (MLKit from
+# source is compiled by the MLton of the prefix); SML/NJ compiles its C
 # runtime and loads the compiler from the boot files of the same release;
 # Poly/ML's make bootstraps from the release's own portable image, and `make
 # compiler` then rebuilds the compiler with the result. To make sure of it,
-# the builds run with a PATH on which mlton, sml, poly and polyc fail.
+# the builds run with a PATH on which mlton, sml, poly, polyc and mlkit fail.
 set -eu
 
 MLTON_VERSION=${MLTON_VERSION:-20241230}
 SMLNJ_VERSION=${SMLNJ_VERSION:-110.99.9}
 POLYML_VERSION=${POLYML_VERSION:-5.9.2}
+MLKIT_VERSION=${MLKIT_VERSION:-4.7.23}
+# the SHA-256 of mlkit-bin-dist-linux.tgz of that release: set both to change
+MLKIT_SHA256=${MLKIT_SHA256:-dca20115d8f3ff0a30ac7c5a7c3abc520b7cc7f3204f91f9895a1bfec3bc6c43}
 
 force=0
 hosts=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --force) force=1 ;;
-    mlton|smlnj|smlnj32|polyml) hosts="$hosts $1" ;;
-    *) echo "usage: scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml]" >&2; exit 2 ;;
+    mlton|smlnj|smlnj32|polyml|mlkit) hosts="$hosts $1" ;;
+    *) echo "usage: scripts/fetch-hosts.sh [--force] [mlton] [smlnj] [smlnj32] [polyml] [mlkit]" >&2; exit 2 ;;
   esac
   shift
 done
-[ -n "$hosts" ] || hosts="mlton smlnj smlnj32 polyml"
+[ -n "$hosts" ] || hosts="mlton smlnj smlnj32 polyml mlkit"
 
 cd "$(dirname "$0")/.."
 jobs=$(sh scripts/ncpus.sh)
@@ -50,7 +63,7 @@ mkdir -p "$prefix/src"
 # The guard: commands that stand for the machine's own SML systems and fail.
 guard=$prefix/src/guard-bin
 mkdir -p "$guard"
-for c in mlton sml poly polyc; do
+for c in mlton sml poly polyc mlkit; do
   printf '#!/bin/sh\necho "fetch-hosts: a build ran the machine'"'"'s %s ($0 $*)" >&2\nexit 1\n' "$c" > "$guard/$c"
   chmod +x "$guard/$c"
 done
@@ -141,6 +154,36 @@ install_polyml() {
   activate polyml "$v"
 }
 
+# MLKit: the binary release where there is one, else (or with
+# MLKIT_FROM_SOURCE=1) its tag built with the MLton of the prefix, which then
+# has to be there first (below).
+mlkit_binary() { [ "${MLKIT_FROM_SOURCE:-0}" != 1 ] && [ "$(uname -s)-$(uname -m)" = Linux-x86_64 ]; }
+install_mlkit() {
+  v=$MLKIT_VERSION
+  if installed mlkit "$v"; then echo "mlkit $v is already installed"; return; fi
+  rm -rf "$prefix/mlkit-$v" "$prefix/src/mlkit-bin-dist-linux" "$prefix/src/mlkit-$v"
+  if mlkit_binary; then
+    fetch "https://github.com/melsman/mlkit/releases/download/v$v/mlkit-bin-dist-linux.tgz" "$prefix/src/mlkit-$v.tgz"
+    echo "$MLKIT_SHA256  $prefix/src/mlkit-$v.tgz" | sha256sum -c --quiet - ||
+      { echo "fetch-hosts: mlkit-bin-dist-linux.tgz of MLKit $v is not the one of MLKIT_SHA256" >&2; return 1; }
+    tar -xzf "$prefix/src/mlkit-$v.tgz" -C "$prefix/src"
+    (cd "$prefix/src/mlkit-bin-dist-linux" && make install PREFIX="$prefix/mlkit-$v") > "$prefix/src/mlkit-$v.log" 2>&1 ||
+      { echo "fetch-hosts: installing MLKit failed; see $prefix/src/mlkit-$v.log" >&2; return 1; }
+    rm -rf "$prefix/src/mlkit-bin-dist-linux"
+  else
+    [ -x "$prefix/mlton/bin/mlton" ] ||
+      { echo "fetch-hosts: MLKit has no binary release for $(uname -s) $(uname -m), and building it needs the MLton of $prefix" >&2; return 1; }
+    git clone -q --depth 1 --branch "v$v" https://github.com/melsman/mlkit "$prefix/src/mlkit-$v" ||
+      { echo "fetch-hosts: the tag v$v of MLKit could not be cloned" >&2; return 1; }
+    (cd "$prefix/src/mlkit-$v" && PATH=$prefix/mlton/bin:$PATH &&
+       ./autobuild && ./configure --with-compiler="$prefix/mlton/bin/mlton" --prefix="$prefix/mlkit-$v" &&
+       make mlkit && make mlkit_libs && make install) > "$prefix/src/mlkit-$v.log" 2>&1 ||
+      { echo "fetch-hosts: building MLKit failed; see $prefix/src/mlkit-$v.log" >&2; return 1; }
+    rm -rf "$prefix/src/mlkit-$v"
+  fi
+  activate mlkit "$v"
+}
+
 status=0
 # The hosts are installed all at once, each in the background with its
 # output kept apart and shown when all are done: a fresh machine then waits
@@ -153,10 +196,17 @@ case " $hosts " in
         "$prefix/src/smlnj-$SMLNJ_VERSION-config.tgz" || status=1
     fi ;;
 esac
+install_one() {   # install_one HOST: in the background, its output kept apart
+  ( if "install_$1" > "$prefix/src/fetch-$1.out" 2>&1; then echo 0; else echo 1; fi > "$prefix/src/fetch-$1.status" ) &
+}
+later=""
 for h in $hosts; do
-  ( if "install_$h" > "$prefix/src/fetch-$h.out" 2>&1; then echo 0; else echo 1; fi > "$prefix/src/fetch-$h.status" ) &
+  # MLKit from source is compiled by the MLton being installed
+  if [ "$h" = mlkit ] && ! mlkit_binary; then later=mlkit; continue; fi
+  install_one "$h"
 done
 wait
+[ -z "$later" ] || { install_one mlkit; wait; }
 for h in $hosts; do
   echo "== $h"
   cat "$prefix/src/fetch-$h.out"
@@ -169,4 +219,5 @@ echo "== installed under $prefix"
 [ -x "$prefix/smlnj/bin/sml" ] && "$prefix/smlnj/bin/sml" @SMLversion
 [ -x "$prefix/smlnj32/bin/sml" ] && "$prefix/smlnj32/bin/sml" @SMLversion
 [ -x "$prefix/polyml/bin/poly" ] && "$prefix/polyml/bin/poly" -v
+[ -x "$prefix/mlkit/bin/mlkit" ] && "$prefix/mlkit/bin/mlkit" --version | head -1
 exit $status

@@ -254,7 +254,13 @@ sig
 
      Law: `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
 
-     Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]` *)
+     Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
+
+     Reading: `Substring.tokens/order`. The specification says the tokens
+     are derived "from left to right", and not how often `p` is asked: `p`
+     is applied once to each character, from left to right.
+
+     Pinned by: `Substring.tokens/order` *)
   val tokens : (char -> bool) -> substring -> substring list
 
   (* `fields p ss` is the pieces of `ss` that the characters satisfying `p` separate.

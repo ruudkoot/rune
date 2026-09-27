@@ -365,15 +365,64 @@ struct
   val vector_length = Vector.length
   val vector_sub = Vector.sub
 
+  (* ---- what the host's Posix may lack ----
+     MLKit 4.7.23 leaves out of its Posix FileSys.utime, the times of
+     FileSys.ST, IO.fsync and the locks of IO. Each is defined here, and the
+     host's own structure, opened after the default, takes its place where
+     the host has it, so nothing changes on a host that has them. The
+     default fails with ENOSYS, except that utime with the two times the same
+     is OS.FileSys.setTime, which sets both; posix_stat gives ~1 for a time
+     the host cannot tell, and os_mod_time takes OS.FileSys.modTime. *)
+  structure Posix =
+  struct
+    open Posix
+    fun lacks name = raise OS.SysErr (name ^ ": not in the host's Posix", SOME Posix.Error.nosys)
+    structure FileSys =
+    struct
+      fun utime (path, NONE) = OS.FileSys.setTime (path, NONE)
+        | utime (path, SOME {actime, modtime}) =
+          if Time.compare (actime, modtime) = EQUAL then OS.FileSys.setTime (path, SOME modtime)
+          else lacks "utime"
+      open Posix.FileSys
+      structure ST =
+      struct
+        fun atime (_ : Posix.FileSys.ST.stat) : Time.time = lacks "ST.atime"
+        fun mtime (_ : Posix.FileSys.ST.stat) : Time.time = lacks "ST.mtime"
+        fun ctime (_ : Posix.FileSys.ST.stat) : Time.time = lacks "ST.ctime"
+        open Posix.FileSys.ST
+      end
+    end
+    structure IO =
+    struct
+      fun fsync (_ : Posix.IO.file_desc) : unit = lacks "fsync"
+      structure FLock =
+      struct
+        type flock = {ltype : Posix.IO.lock_type, whence : Posix.IO.whence, start : Position.int,
+                      len : Position.int, pid : Posix.Process.pid option}
+        fun flock (l : flock) = l
+        fun ltype (l : flock) = #ltype l
+        fun whence (l : flock) = #whence l
+        fun start (l : flock) = #start l
+        fun len (l : flock) = #len l
+        fun pid (l : flock) = #pid l
+      end
+      fun getlk (_ : Posix.IO.file_desc, _ : FLock.flock) : FLock.flock = lacks "getlk"
+      fun setlk (_ : Posix.IO.file_desc, _ : FLock.flock) : FLock.flock = lacks "setlk"
+      fun setlkw (_ : Posix.IO.file_desc, _ : FLock.flock) : FLock.flock = lacks "setlkw"
+      open Posix.IO
+    end
+  end
+
   (* ---- standard streams and the process ---- *)
   val print = TextIO.print
   fun print_err s = (TextIO.output (TextIO.stdErr, s); TextIO.flushOut TextIO.stdErr)
   fun flush_out () = TextIO.flushOut TextIO.stdOut
   fun input_line () = TextIO.inputLine TextIO.stdIn
   fun input_all () = TextIO.inputAll TextIO.stdIn
-  (* OS.Process.exit flushes the host's streams but knows two statuses only. *)
+  (* OS.Process.exit flushes the host's streams but knows two statuses only,
+     and the number of failure is the host's: MLKit's is ~1, an exit status
+     of 255. The others end as posix_exit does, once stdout is flushed. *)
   fun exit 0 = OS.Process.exit OS.Process.success
-    | exit 1 = OS.Process.exit OS.Process.failure
     | exit n =
       (TextIO.flushOut TextIO.stdOut; Posix.Process.exit (Word8.fromInt n))
   fun posix_exit n = Posix.Process.exit (Word8.fromInt n)
@@ -494,11 +543,11 @@ struct
     | file_avail h =
       (case lookup h of
          SOME (Reader {fd, buf, pos, taken, ...}) =>
-           let
-             val buffered = String.size (!buf) - !pos
-             val theEnd = Position.toInt (Posix.FileSys.ST.size (Posix.FileSys.fstat fd))
-           in buffered + theEnd - !taken end
-           handle OS.SysErr _ => ~1
+           (let
+              val buffered = String.size (!buf) - !pos
+              val theEnd = Position.toInt (Posix.FileSys.ST.size (Posix.FileSys.fstat fd))
+            in buffered + theEnd - !taken end
+            handle OS.SysErr _ => ~1)
        | _ => 0)
 
   (* The position of a file: for a reader what it has taken from the file
@@ -678,7 +727,12 @@ struct
   fun os_file_size path =
     notedValue (fn () => Position.toInt (Posix.FileSys.ST.size (Posix.FileSys.stat path)), ~1)
   fun os_mod_time path =
-    notedValue (fn () => Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.mtime (Posix.FileSys.stat path))), ~1)
+    notedValue (fn () =>
+      let
+        val t = Posix.FileSys.ST.mtime (Posix.FileSys.stat path)
+                handle e as OS.SysErr (_, SOME err) =>
+                  if err = Posix.Error.nosys then OS.FileSys.modTime path else raise e
+      in Int.fromLarge (Time.toSeconds t) end, ~1)
   fun os_set_time (path, seconds, now) =
     noted (fn () =>
       Posix.FileSys.utime (path, if now = 1 then NONE
@@ -1120,6 +1174,8 @@ struct
       val st = if path = "" then Posix.FileSys.fstat (fdOf n)
                else if follow = 1 then Posix.FileSys.lstat path
                else Posix.FileSys.stat path
+      (* ~1 for a time the host's Posix cannot tell (MLKit's) *)
+      fun seconds time = Int.fromLarge (Time.toSeconds (time st)) handle OS.SysErr _ => ~1
       val kind = if Posix.FileSys.ST.isReg st then 0
                  else if Posix.FileSys.ST.isDir st then 1
                  else if Posix.FileSys.ST.isLink st then 2
@@ -1136,9 +1192,7 @@ struct
        SysWord.toInt (Posix.ProcEnv.uidToWord (Posix.FileSys.ST.uid st)),
        SysWord.toInt (Posix.ProcEnv.gidToWord (Posix.FileSys.ST.gid st)),
        Position.toInt (Posix.FileSys.ST.size st),
-       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.atime st)),
-       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.mtime st)),
-       Int.fromLarge (Time.toSeconds (Posix.FileSys.ST.ctime st))]
+       seconds Posix.FileSys.ST.atime, seconds Posix.FileSys.ST.mtime, seconds Posix.FileSys.ST.ctime]
     end
     handle OS.SysErr (_, e) => (noteError e; [])
 

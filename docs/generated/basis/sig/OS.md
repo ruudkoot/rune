@@ -125,6 +125,12 @@ val errorMsg : syserror -> string
 
 `errorMsg e` is the text the system gives for `e`, meant for a person to read.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on \`f': No such file or directory"
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `is-the-message-of-SysErr` &middot; `is-the-message-of-SysErr-notdir` &middot; `nonempty`
