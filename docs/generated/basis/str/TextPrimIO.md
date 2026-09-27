@@ -41,7 +41,7 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+- **MLton, MLKit** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 
 </details>
 

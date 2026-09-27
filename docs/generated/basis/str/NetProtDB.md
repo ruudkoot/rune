@@ -16,6 +16,9 @@
 structure NetProtDB : NET_PROT_DB
 ```
 
+NetProtDB: the protocol database of the system, `/etc/protocols` or
+whatever the machine is set up to use.
+
 ## Members
 
 What each means is on [`NET_PROT_DB`](../sig/NET_PROT_DB.md); the types are this structure's own.

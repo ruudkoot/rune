@@ -43,7 +43,9 @@ sig
     | W_SIGNALED of signal       (* a signal ended it *)
     | W_STOPPED of signal        (* a signal stopped it; it has not ended *)
 
-  (* `fromStatus st` is what the status `st` says about how the process ended. *)
+  (* `fromStatus st` is what the status `st` says about how the process ended.
+
+     Example: `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3` *)
   val fromStatus : OS.Process.status -> exit_status
 
   (* `executeInEnv (path, args, env)` starts the program at `path` with the arguments `args` and the environment `env`.
@@ -71,7 +73,9 @@ sig
      Reading: `Unix.execute/current-directory`. The page does not say which
      directory the child runs in; it is this process's current one.
 
-     Pinned by: `Unix.execute/directory` *)
+     Pinned by: `Unix.execute/directory`
+
+     Example: `let val p = execute ("/bin/echo", ["hi"]) in TextIO.inputAll (textInstreamOf p) before ignore (reap p) end = "hi\n"` *)
   val execute : string * string list -> ('a, 'b) proc
 
   (* `textInstreamOf pr` is the text stream that what `pr` writes is read from. *)
@@ -96,7 +100,9 @@ sig
      failing. A child that is merely stopped does not end the wait, since
      `Posix.Process.W.untraced` is not asked for.
 
-     Raises: `OS.SysErr` if the wait fails. *)
+     Raises: `OS.SysErr` if the wait fails.
+
+     Example: `fromStatus (reap (execute ("/bin/sh", ["-c", "exit 4"]))) = W_EXITSTATUS 0w4` *)
   val reap : ('a, 'b) proc -> OS.Process.status
 
   (* `kill (pr, s)` sends the signal `s` to the child `pr`.

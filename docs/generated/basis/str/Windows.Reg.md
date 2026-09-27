@@ -10,6 +10,8 @@
 | Tests | 26 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
+Windows.Reg: the keys and values of the registry.
+
 ## Members
 
 What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structure's own.

@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 240 checks |
+| Tests | 242 checks |
 | Source | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure RealArraySlice :> MONO_ARRAY_SLICE where type vector = RealVector.vector where type vector_slice = RealVectorSlice.slice where type array = RealArray.array where type elem = real
 ```
+
+RealArraySlice: stretches of [`RealArray`](../str/RealArray.md) arrays, without a copy: an update
+through a slice changes the array.
 
 ## Members
 

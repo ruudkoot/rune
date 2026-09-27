@@ -19,7 +19,7 @@ structure Posix.Signal : POSIX_SIGNAL  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.Signal`](../str/Posix.Signal.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Signal`](../str/Posix.Signal.md) | Posix.Signal: the signals of POSIX and their numbers. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The signals a process may be sent, by name.
 
@@ -105,6 +105,8 @@ val fromWord : SysWord.word -> signal
 ```
 
 `fromWord w` is the signal numbered `w`, which need not be one named here.
+
+**Law** `fromWord (toWord s) = s`
 
 **Example** `fromWord 0w15 = term`
 

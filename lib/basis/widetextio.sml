@@ -55,7 +55,9 @@ struct
                       val advance = SOME RuneWideTextPos.advance
                       val isNewline = fn c => WideChar.ord c = 10)
   in
-    (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings. *)
+    (* WideTextIO.StreamIO: the functional streams of wide text under
+       `WideTextIO`, with the operations on lines and substrings of
+       TEXT_STREAM_IO. *)
     structure StreamIO =
     struct
       open SI

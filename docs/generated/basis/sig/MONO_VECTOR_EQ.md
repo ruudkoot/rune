@@ -19,7 +19,7 @@ structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char  
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`WideCharVector`](../str/WideCharVector.md) | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharVector`](../str/WideCharVector.md) | WideCharVector: immutable vectors of wide characters, which are the strings of [`WideString`](../str/WideString.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
 
 The same as [`MONO_VECTOR`](../sig/MONO_VECTOR.md), with a vector type that admits equality.
 
@@ -115,6 +115,8 @@ val fromList : elem list -> vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
+**Example** `fromList [WideChar.chr 65, WideChar.chr 0x3BB] = fromList [WideChar.chr 65, WideChar.chr 0x3BB]`
+
 <details><summary>Tests (7)</summary>
 
 In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `basic` &middot; `nil` &middot; `singleton` &middot; `every-sample` &middot; `length` &middot; `round-trip*` &middot; `long`
@@ -145,6 +147,8 @@ val length : vector -> int
 
 `length x` is the number of elements.
 
+**Example** `length (fromList [WideChar.chr 0x10000]) = 1`
+
 <details><summary>Tests (5)</summary>
 
 In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `empty` &middot; `five` &middot; `tabulate` &middot; `model*` &middot; `long`
@@ -161,6 +165,8 @@ val sub : vector * int -> elem
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
 
+**Example** `WideChar.ord (sub (fromList [WideChar.chr 65, WideChar.chr 0x3BB], 1)) = 0x3BB`
+
 <details><summary>Tests (9)</summary>
 
 In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `WideCharVector`: `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
@@ -176,6 +182,8 @@ val update : vector * int * elem -> vector
 `update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `v`.
+
+**Example** `update (fromList [WideChar.chr 65], 0, WideChar.chr 66) = fromList [WideChar.chr 66]`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -254,6 +262,8 @@ val map : (elem -> elem) -> vector -> vector
 ```
 
 `map f v` is the vector of the results of `f` on each element, in order.
+
+**Example** `map WideChar.toUpper (fromList [WideChar.chr 97]) = fromList [WideChar.chr 65]`
 
 <details><summary>Tests (7)</summary>
 
@@ -380,6 +390,8 @@ val collate : (elem * elem -> order) -> vector * vector -> order
 ```
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+**Example** `collate WideChar.compare (fromList [WideChar.chr 65], fromList [WideChar.chr 66]) = LESS`
 
 <details><summary>Tests (13)</summary>
 

@@ -42,27 +42,45 @@ struct
   end
 end
 
-(* Implements: PACK_WORD
+(* PackWord16Big: words of 16 bits as 2 bytes of `Word8` vectors and
+   arrays, the most significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord16Big = RunePackWordFn (val bytesPerElem = 2 val isBigEndian = true)
-(* Implements: PACK_WORD
+(* PackWord16Little: words of 16 bits as 2 bytes of `Word8` vectors and
+   arrays, the least significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord16Little = RunePackWordFn (val bytesPerElem = 2 val isBigEndian = false)
-(* Implements: PACK_WORD
+(* PackWord32Big: words of 32 bits as 4 bytes of `Word8` vectors and
+   arrays, the most significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord32Big = RunePackWordFn (val bytesPerElem = 4 val isBigEndian = true)
-(* Implements: PACK_WORD
+(* PackWord32Little: words of 32 bits as 4 bytes of `Word8` vectors and
+   arrays, the least significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord32Little = RunePackWordFn (val bytesPerElem = 4 val isBigEndian = false)
-(* Implements: PACK_WORD
+(* PackWord64Big: words of 64 bits as 8 bytes of `Word8` vectors and
+   arrays, the most significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord64Big = RunePackWordFn (val bytesPerElem = 8 val isBigEndian = true)
-(* Implements: PACK_WORD
+(* PackWord64Little: words of 64 bits as 8 bytes of `Word8` vectors and
+   arrays, the least significant byte first.
+
+   Implements: PACK_WORD
 
    Status: optional *)
 structure PackWord64Little = RunePackWordFn (val bytesPerElem = 8 val isBigEndian = false)

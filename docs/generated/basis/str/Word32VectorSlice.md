@@ -16,6 +16,8 @@
 structure Word32VectorSlice :> MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word
 ```
 
+Word32VectorSlice: stretches of [`Word32Vector`](../str/Word32Vector.md) vectors, without a copy.
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

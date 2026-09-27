@@ -7,7 +7,7 @@
 | Signatures | none: it matches no signature of the library |
 | Status | optional |
 | Members | 37 |
-| Tests | 19 checks |
+| Tests | 46 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 WideTextIO (optional in the specification): the imperative streams of the

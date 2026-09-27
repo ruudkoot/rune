@@ -93,8 +93,13 @@ struct
   end
 end
 
-(* Implements: MONO_VECTOR where type elem = Word8.word *)
+(* Word8Vector: immutable vectors of bytes, what binary input and output read
+   and write.
+
+   Implements: MONO_VECTOR where type elem = Word8.word *)
 structure Word8Vector = RuneByteVector.V
-(* Implements: MONO_VECTOR_SLICE where type vector = Word8Vector.vector where
+(* Word8VectorSlice: stretches of `Word8Vector` vectors, without a copy.
+
+   Implements: MONO_VECTOR_SLICE where type vector = Word8Vector.vector where
    type elem = Word8.word *)
 structure Word8VectorSlice = RuneByteVector.S

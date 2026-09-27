@@ -16,6 +16,9 @@
 structure Posix.IO.O : BIT_FLAGS
 ```
 
+Posix.IO.O: the flags of the open file that a descriptor is on, which
+are those of [`Posix.FileSys.O`](../str/Posix.FileSys.O.md).
+
 ## Members
 
 What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_IO`](../sig/POSIX_IO.md); the types are this structure's own.

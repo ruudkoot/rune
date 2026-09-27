@@ -27,7 +27,14 @@ sig
   (* The type of an output stream, as the old library had it. *)
   type outstream
 
-  (* Raised where `abs` of the least integer would overflow. *)
+  (* Raised where `abs` of the least integer would overflow.
+
+     Implementation: `SML90.Abs/is-Overflow`. As in MLton and Poly/ML, `Abs`,
+     `Quot`, `Prod`, `Neg`, `Sum`, `Diff`, `Floor` and `Exp` are `Overflow`,
+     and `Mod` is `Div`: the operations of the Library raise those, and a
+     handler for one of the old names catches them.
+
+     Pinned by: `SML90.Abs/is-Overflow`, `SML90.Mod/is-Div` *)
   exception Abs
 
   (* Raised by division that overflows; division by zero raises `Mod`. *)
@@ -90,7 +97,9 @@ sig
 
   (* `sqrt x` is the square root of `x`.
 
-     Raises: `Sqrt` if `x` is negative. *)
+     Raises: `Sqrt` if `x` is negative.
+
+     Example: `((sqrt ~1.0; "root") handle Sqrt => "Sqrt") = "Sqrt"` *)
   val sqrt : real -> real
 
   (* `exp x` is `e` to the power `x`.
@@ -100,7 +109,9 @@ sig
 
   (* `ln x` is the natural logarithm of `x`.
 
-     Raises: `Ln` if `x` is not positive. *)
+     Raises: `Ln` if `x` is not positive.
+
+     Example: `((ln 0.0; "log") handle Ln => "Ln") = "Ln"` *)
   val ln : real -> real
 
   (* `sin x` is the sine of `x` radians. *)
@@ -170,6 +181,8 @@ sig
   val close_out : outstream -> unit
 
   (* `input (f, n)` is at most `n` characters read from `f`, and fewer at the end of the stream.
+
+     Law: `input (f, n) = ""` exactly when `end_of_stream f`, for `n > 0`
 
      Raises: `Io` if the stream cannot be read. *)
   val input : instream * int -> string

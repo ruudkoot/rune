@@ -16,6 +16,9 @@
 structure NetHostDB : NET_HOST_DB
 ```
 
+NetHostDB: the host database of the system, and the dotted text of IPv4
+addresses.
+
 ## Members
 
 What each means is on [`NET_HOST_DB`](../sig/NET_HOST_DB.md); the types are this structure's own.
@@ -47,7 +50,7 @@ What each means is on [`NET_HOST_DB`](../sig/NET_HOST_DB.md); the types are this
 
 > **Implementation** `NetHostDB.in_addr/abstract`. The specification leaves
 > [`in_addr`](../sig/NET_HOST_DB.md#type-in_addr) and [`addr_family`](../sig/NET_HOST_DB.md#type-addr_family) abstract, and so are they here: [`toString`](../sig/NET_HOST_DB.md#val-tostring) and
-> [`fromString`](../sig/NET_HOST_DB.md#val-fromstring) are the way in and out of an address, and [`Socket.AF`](../sig/SOCKET.md#str-af) names
+> [`fromString`](../sig/NET_HOST_DB.md#val-fromstring) are the way in and out of an address, and [`Socket.AF`](../str/Socket.AF.md) names
 > the families.
 
 ### getHostName

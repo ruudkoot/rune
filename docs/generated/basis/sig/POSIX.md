@@ -28,7 +28,7 @@ Where [`OS`](../sig/OS.md) offers what any system can do, this offers what POSIX
 prescribes, and offers it plainly: `fork`, `exec`, `dup`, `stat`, the
 signals, the password and group files, the terminal settings. Failure is
 always [`OS.SysErr`](../sig/OS.md#exn-syserr), carrying the `errno` the call set, which
-[`Posix.Error`](#str-error) names.
+[`Posix.Error`](../str/Posix.Error.md) names.
 
 The `where type` clauses tie the substructures together: a `file_desc`
 from [`FileSys`](#str-filesys) is the one [`IO`](#str-io) reads from, a `pid` from [`Process`](#str-process) is the

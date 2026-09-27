@@ -10,7 +10,8 @@
 | Tests | 28 checks |
 | Source | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
 
-What stat reports. The kind is posix\_stat's: 0 regular file, 1
+Posix.FileSys.ST: what [`stat`](../sig/POSIX_FILE_SYS.md#val-stat) reports about a file, and the functions
+that read it. The kind is posix\_stat's: 0 regular file, 1
 directory, 2 symbolic link, 4 FIFO, 5 socket, 6 character device, 7
 block device, and 3 anything else (vm/sys\_posix.c, kind\_of).
 

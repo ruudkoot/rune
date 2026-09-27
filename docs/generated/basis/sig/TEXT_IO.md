@@ -19,7 +19,7 @@ structure TextIO : TEXT_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`TextIO`](../str/TextIO.md) | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO`](../str/TextIO.md) | TextIO: text files and the standard streams, read and written a character, a line or a string at a time: the imperative text streams of TEXT\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Text files and the standard streams: the imperative streams of characters,
 with the ways of opening a file.
@@ -184,6 +184,8 @@ val input : instream -> vector
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
+**Example** `input (openString "abc") = "abc"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -205,6 +207,8 @@ val input1 : instream -> elem option
 `input1 f` is `SOME` of the next character, or `NONE` at an end of stream.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
+
+**Example** `input1 (openString "ab") = SOME #"a"`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -233,6 +237,8 @@ val inputN : instream * int -> vector
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`, or if the string to be returned would be
 longer than [`String.maxSize`](../sig/STRING.md#val-maxsize).
 
+**Example** `inputN (openString "abcd", 2) = "ab"`
+
 <details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -257,6 +263,8 @@ val inputAll : instream -> vector
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails; [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer
 than [`String.maxSize`](../sig/STRING.md#val-maxsize).
+
+**Example** `inputAll (openString "ab\ncd") = "ab\ncd"`
 
 <details><summary>Other implementations (4)</summary>
 
@@ -284,6 +292,8 @@ val canInput : instream * int -> int option
 `canInput (f, n)` is how many of `n` characters, at most, can be read without waiting, or `NONE`.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
+
+**Example** `canInput (openString "ab", 1) = SOME 1`
 
 <details><summary>Tests (9)</summary>
 
@@ -327,6 +337,8 @@ val closeIn : instream -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be closed.
 
+**Example** `let val f = openString "ab" in closeIn f; input f end = ""`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; characters buffered before closeIn are still read after it
@@ -350,6 +362,8 @@ val endOfStream : instream -> bool
 `endOfStream f` is `true` when nothing is left before the next end of stream.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
+
+**Example** `endOfStream (openString "") = true`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -380,6 +394,8 @@ nothing written, or if the file cannot be written to.
 > suite runs on, a text file holds exactly the characters written to it:
 > no newline is translated and no character is dropped, for all 256
 > of them.
+
+**Example** `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, "hi"); closeOut out; inputAll (openIn p) before OS.FileSys.remove p end = "hi"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -476,6 +492,8 @@ val getInstream : instream -> StreamIO.instream
 ```
 
 `getInstream f` is the functional stream that `f` is at.
+
+**Example** `Option.map #1 (StreamIO.input1 (getInstream (openString "ab"))) = SOME #"a"`
 
 <details><summary>Tests (4)</summary>
 

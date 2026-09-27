@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 190 checks |
+| Tests | 192 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where type elem = word
 ```
+
+WordArray: mutable arrays of words, a type of their own with identity
+equality, whose vectors are those of [`WordVector`](../str/WordVector.md).
 
 ## Members
 

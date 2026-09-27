@@ -19,7 +19,7 @@ structure Posix.TTY : POSIX_TTY  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.TTY`](../str/Posix.TTY.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.TTY`](../str/Posix.TTY.md) | Posix.TTY: the settings of a terminal, and the operations on it. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Terminals: their modes, their speeds and the characters that control them.
 
@@ -203,7 +203,7 @@ end
 eqtype pid
 ```
 
-The type of the number that names a process, the one of [`Posix.Process`](../sig/POSIX.md#str-process).
+The type of the number that names a process, the one of [`Posix.Process`](../str/Posix.Process.md).
 
 ### <a name="type-file_desc"></a>`file_desc`
 
@@ -406,6 +406,8 @@ val cc : (int * char) list -> cc
 
 `cc l` is the array in which each position of `l` holds its character, and every other position `#"\000"`.
 
+**Example** `V.sub (V.cc [(V.eof, #"\^D")], V.eof) = #"\^D"`
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `given` &middot; `unspecified-nul` &middot; `empty` &middot; `several`
@@ -422,6 +424,8 @@ val update : cc * (int * char) list -> cc
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if a position is outside `[0, nccs)`.
 
+**Example** `V.sub (V.update (V.cc [], [(V.intr, #"\^C")]), V.intr) = #"\^C"`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `overwrites` &middot; `empty-list`
@@ -437,6 +441,8 @@ val sub : cc * int -> char
 `sub (c, i)` is the character at position `i`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `[0, nccs)`.
+
+**Example** `(V.sub (V.cc [], V.nccs) handle Subscript => #"x") = #"x"`
 
 <details><summary>Tests (3)</summary>
 
@@ -988,6 +994,8 @@ val compareSpeed : speed * speed -> order
 
 `compareSpeed (s, t)` orders two speeds, the slower first.
 
+**Example** `compareSpeed (b9600, b38400) = LESS`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `basic` &middot; `antisymmetric`
@@ -1015,6 +1023,8 @@ val wordToSpeed : SysWord.word -> speed
 ```
 
 `wordToSpeed w` is the speed whose `speed_t` value is `w`.
+
+**Law** `wordToSpeed (speedToWord s) = s`
 
 <details><summary>Tests (2)</summary>
 
@@ -1300,6 +1310,8 @@ val fieldsOf : termios
 
 `fieldsOf t` is the fields of `t`, the record that [`termios`](#val-termios) takes.
 
+**Law** `fieldsOf (termios r)` has the fields of `r`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-fieldsof.iflag"></a>`iflag` | `I.flags` |  |
@@ -1323,6 +1335,9 @@ val getiflag : termios -> I.flags
 ```
 
 `getiflag t` is the input flags of `t`.
+
+**Law** `getiflag t = #iflag (fieldsOf t)`, and so for the other flags and
+for [`getcc`](#val-getcc)
 
 <details><summary>Tests (1)</summary>
 
@@ -1432,6 +1447,10 @@ val setospeed : termios * speed -> termios
 
 `setospeed (t, s)` is `t` with `s` as the speed it sends at.
 
+**Law** `CF.getospeed (CF.setospeed (t, s)) = s`
+
+**Example** `CF.getospeed (CF.setospeed (termios {iflag = I.flags [], oflag = O.flags [], cflag = C.flags [], lflag = L.flags [], cc = V.cc [], ispeed = b9600, ospeed = b9600}, b38400)) = b38400`
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.TTY`, in [tests/basis/posix\_tty.sml](../../../../tests/basis/posix_tty.sml): `copy`
@@ -1445,6 +1464,8 @@ val setispeed : termios * speed -> termios
 ```
 
 `setispeed (t, s)` is `t` with `s` as the speed it receives at.
+
+**Law** `CF.getispeed (CF.setispeed (t, s)) = s`
 
 <details><summary>Tests (1)</summary>
 

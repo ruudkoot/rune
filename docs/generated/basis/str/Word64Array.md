@@ -16,6 +16,9 @@
 structure Word64Array :> MONO_ARRAY where type vector = Word64Vector.vector where type elem = Word64.word
 ```
 
+Word64Array: mutable arrays of 64-bit words, a type of their own with
+identity equality, whose vectors are those of [`Word64Vector`](../str/Word64Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

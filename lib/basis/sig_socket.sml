@@ -72,7 +72,9 @@ sig
     (* `list ()` is the families this system has, each with its name. *)
     val list : unit -> (string * addr_family) list
 
-    (* `toString af` is the name of `af`. *)
+    (* `toString af` is the name of `af`.
+
+       Example: `AF.toString INetSock.inetAF = "INET"` *)
     val toString : addr_family -> string
 
     (* `fromString s` is `SOME` of the family called `s`, or `NONE`.
@@ -81,7 +83,9 @@ sig
        constant without its leading `"AF_"`: `"INET"` and `"UNIX"`, so
        `"AF_INET"` gives `NONE`.
 
-       Pinned by: `Socket.AF.fromString/*` *)
+       Pinned by: `Socket.AF.fromString/*`
+
+       Law: `AF.fromString (AF.toString af) = SOME af` *)
     val fromString : string -> addr_family option
   end
 
@@ -100,10 +104,14 @@ sig
     (* `list ()` is the kinds this system has, each with its name. *)
     val list : unit -> (string * sock_type) list
 
-    (* `toString st` is the name of `st`. *)
+    (* `toString st` is the name of `st`.
+
+       Example: `SOCK.toString SOCK.stream = "STREAM"` *)
     val toString : sock_type -> string
 
-    (* `fromString s` is `SOME` of the kind called `s`, or `NONE`. *)
+    (* `fromString s` is `SOME` of the kind called `s`, or `NONE`.
+
+       Law: `SOCK.fromString (SOCK.toString st) = SOME st` *)
     val fromString : string -> sock_type option
   end
 
@@ -183,7 +191,10 @@ sig
     (* `setRCVBUF (sock, n)` asks for `n` bytes of room for what arrives. *)
     val setRCVBUF : ('af, 'sock_type) sock * int -> unit
 
-    (* `getTYPE sock` is the kind of socket that `sock` is. *)
+    (* `getTYPE sock` is the kind of socket that `sock` is.
+
+       Example: `let val s = INetSock.TCP.socket () in Ctl.getTYPE s =
+       SOCK.stream before close s end = true` *)
     val getTYPE : ('af, 'sock_type) sock -> SOCK.sock_type
 
     (* `getERROR sock` is `true` when the socket has an error waiting, which reading it clears. *)
@@ -215,7 +226,9 @@ sig
   (* `sameAddr (a, b)` is `true` when the two addresses are the same one. *)
   val sameAddr : 'af sock_addr * 'af sock_addr -> bool
 
-  (* `familyOfAddr a` is the address family that `a` belongs to. *)
+  (* `familyOfAddr a` is the address family that `a` belongs to.
+
+     Example: `familyOfAddr (INetSock.any 0) = INetSock.inetAF` *)
   val familyOfAddr : 'af sock_addr -> AF.addr_family
 
   (* `bind (sock, a)` gives the socket the address `a`.
@@ -272,7 +285,10 @@ sig
      for sending sees the end of its stream, after everything sent before it
      has arrived.
 
-     Pinned by: `Socket.shutdown/*`, `Socket.NO_SENDS/data-sent-before-arrives` *)
+     Pinned by: `Socket.shutdown/*`, `Socket.NO_SENDS/data-sent-before-arrives`
+
+     Example: `let val (a, b) = UnixSock.Strm.socketPair () in shutdown (a,
+     NO_SENDS); Word8Vector.length (recvVec (b, 10)) end = 0` *)
   val shutdown : ('af, 'mode stream) sock * shutdown_mode -> unit
 
   (* The type that names a socket to `select`, whatever its family and mode. *)
@@ -292,7 +308,10 @@ sig
      `timeout` is negative.
 
      Implementation: `Socket.select/is-poll`. It is `OS.IO.poll`, so a
-     negative timeout is refused rather than taken to mean "no timeout". *)
+     negative timeout is refused rather than taken to mean "no timeout".
+
+     Example: `null (#rds (select {rds = [], wrs = [], exs = [], timeout = SOME
+     Time.zeroTime})) = true` *)
   val select : {rds : sock_desc list, wrs : sock_desc list, exs : sock_desc list, timeout : Time.time option}
                -> {rds : sock_desc list, wrs : sock_desc list, exs : sock_desc list}
 
@@ -308,7 +327,11 @@ sig
   (* `sendVec (sock, sl)` sends the bytes of `sl` and is the number it sent, which may be fewer.
 
      Raises: `OS.SysErr` if the socket is not connected, or the other end has
-     gone. *)
+     gone.
+
+     Example: `let val (a, b) = UnixSock.Strm.socketPair () in ignore (sendVec
+     (a, Word8VectorSlice.full (Byte.stringToBytes "hi"))); Byte.bytesToString
+     (recvVec (b, 2)) end = "hi"` *)
   val sendVec : ('af, active stream) sock * Word8VectorSlice.slice -> int
 
   (* `sendArr (sock, sl)` sends the bytes of the array stretch `sl` and is the number it sent. *)
@@ -336,7 +359,8 @@ sig
 
      The empty vector means that the other end has finished sending.
 
-     Raises: `OS.SysErr` if the socket is not connected.
+     Raises: `OS.SysErr` if the socket is not connected; `Size` if `n` is
+     negative or more than `Word8Vector.maxLen`.
 
      Reading: `Socket.recvVec/zero-returns-at-once`. "If `n` is 0 the empty
      vector is returned": it is returned at once, without waiting for
@@ -344,7 +368,8 @@ sig
 
      Pinned by: `Socket.recvVec/zero*`
 
-     Raises: `Size` if `n` is negative or more than `Word8Vector.maxLen`. *)
+     Example: `let val (a, _) = UnixSock.Strm.socketPair () in
+     Word8Vector.length (recvVec (a, 0)) end = 0` *)
   val recvVec : ('af, active stream) sock * int -> Word8Vector.vector
 
   (* `recvVec' (sock, n, flags)` is `recvVec` with the flags `flags`. *)

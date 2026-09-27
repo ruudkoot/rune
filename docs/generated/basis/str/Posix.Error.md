@@ -16,6 +16,9 @@
 structure Posix.Error : POSIX_ERROR
 ```
 
+Posix.Error: the conditions a failing call reports, with their names
+and numbers.
+
 ## Members
 
 What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this structure's own.

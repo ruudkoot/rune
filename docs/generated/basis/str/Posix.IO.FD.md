@@ -16,7 +16,8 @@
 structure Posix.IO.FD : BIT_FLAGS
 ```
 
-The flags of a descriptor, as words; like the flags of open, all of
+Posix.IO.FD: the flags of a descriptor itself, of which close-on-exec
+is the one POSIX names. They are words; like the flags of open, all of
 them are the bits of a C int (Posix.FileSys.O).
 
 ## Members

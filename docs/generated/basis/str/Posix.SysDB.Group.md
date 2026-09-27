@@ -10,6 +10,8 @@
 | Tests | 7 checks |
 | Source | [lib/basis/posix\_sysdb.sml](../../../../lib/basis/posix_sysdb.sml) |
 
+Posix.SysDB.Group: an entry of the group database.
+
 ## Members
 
 What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are this structure's own.

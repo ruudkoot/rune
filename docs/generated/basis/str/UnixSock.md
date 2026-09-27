@@ -16,6 +16,9 @@
 structure UnixSock : UNIX_SOCK
 ```
 
+UnixSock: the sockets of the Unix family, whose addresses are paths in the
+file system and which connect processes of one machine.
+
 ## Members
 
 What each means is on [`UNIX_SOCK`](../sig/UNIX_SOCK.md); the types are this structure's own.

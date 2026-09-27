@@ -23,7 +23,7 @@ structure TextIO : IMPERATIVE_IO
 | --- | --- | --- |
 | [`BinIO`](../str/BinIO.md) | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `ImperativeIO` | Imperative streams over a [`STREAM_IO`](../sig/STREAM_IO.md) of a new element type: what [`TEXT_IO`](../sig/TEXT_IO.md) and [`BIN_IO`](../sig/BIN_IO.md) are for characters and bytes. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| [`TextIO`](../str/TextIO.md) | TextIO: the imperative text streams (signature TEXT\_IO). | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO`](../str/TextIO.md) | TextIO: text files and the standard streams, read and written a character, a line or a string at a time: the imperative text streams of TEXT\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams that remember where they are: a cell holding a functional stream,
 which every operation replaces by what it left.
@@ -227,7 +227,7 @@ val input1 : instream -> elem option
 <details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
-- **MLton** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+- **MLton, MLKit** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
 - **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
 
 </details>
@@ -260,10 +260,11 @@ long.
 
 **Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abcde"), Byte.stringToBytes "")) in Byte.bytesToString (inputN (f, 2)) ^ "|" ^ Byte.bytesToString (inputAll f) end = "ab|cde"`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
+- **MLKit** &mdash; another reading of the specification: inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE\_IO puts it; the test takes STREAM\_IO's reading, that Size is about the number of elements returned
 
 </details>
 
@@ -291,11 +292,14 @@ val inputAll : instream -> vector
 
 **Law** `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in setInstream (f, s); v end`
 
-<details><summary>Other implementations (3)</summary>
+**Example** `Byte.bytesToString (inputAll (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"`
+
+<details><summary>Other implementations (4)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **Poly/ML** &mdash; another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+- **MLKit** &mdash; inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 
 </details>
 
@@ -320,6 +324,8 @@ val canInput : instream * int -> int option
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
 **Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)`
+
+**Example** `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")), 1) = SOME 1`
 
 <details><summary>Tests (18)</summary>
 
@@ -444,6 +450,8 @@ val output : outstream * vector -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails or the stream is closed.
 
+**Example** `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, Byte.stringToBytes "hi"); closeOut out; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "hi"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -470,9 +478,11 @@ val output1 : outstream * elem -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails or the stream is closed.
 
+**Example** `let val p = OS.FileSys.tmpName () val out = openOut p in output1 (out, 0wx41); closeOut out; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "A"`
+
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; output1 on a closed stream raises Io with function "output"
+- **MLton, MLKit** &mdash; output1 on a closed stream raises Io with function "output"
 
 </details>
 
@@ -601,7 +611,7 @@ val getOutstream : outstream -> StreamIO.outstream
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 
@@ -621,7 +631,7 @@ val setOutstream : outstream * StreamIO.outstream -> unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 

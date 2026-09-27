@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 136 checks |
+| Tests | 146 checks |
 | Source | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
 
 ## Synopsis
@@ -16,11 +16,13 @@
 structure RealVector :> MONO_VECTOR where type elem = real
 ```
 
+RealVector: immutable vectors of reals.
+
 The monomorphic vectors and arrays of real, their slices and the
 two-dimensional arrays (optional in the specification). The elements do not
-admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them.
-LargeRealVector, Real64Vector and the rest of those families are these
-(mono\_largereal.sml, mono\_real64.sml).
+admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them, and so
+neither does a vector. LargeRealVector, Real64Vector and the rest of those
+families are these (mono\_largereal.sml, mono\_real64.sml).
 
 ## Members
 

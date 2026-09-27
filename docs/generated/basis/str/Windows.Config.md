@@ -10,6 +10,9 @@
 | Tests | 9 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
+Windows.Config: what the machine is: its version, its directories and
+its name, and the user's.
+
 ## Members
 
 What each means is on [`WINDOWS`](../sig/WINDOWS.md); the types are this structure's own.

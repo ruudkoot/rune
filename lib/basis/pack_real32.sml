@@ -48,11 +48,17 @@ struct
   end
 end
 
-(* Implements: PACK_REAL where type real = Real32.real
+(* PackReal32Big: `Real32` reals as the 4 bytes of IEEE 754 binary32, the
+   most significant byte first.
+
+   Implements: PACK_REAL where type real = Real32.real
 
    Status: optional *)
 structure PackReal32Big = RunePackReal32Fn (val isBigEndian = true)
-(* Implements: PACK_REAL where type real = Real32.real
+(* PackReal32Little: `Real32` reals as the 4 bytes of IEEE 754 binary32, the
+   least significant byte first.
+
+   Implements: PACK_REAL where type real = Real32.real
 
    Status: optional *)
 structure PackReal32Little = RunePackReal32Fn (val isBigEndian = false)

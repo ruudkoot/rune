@@ -16,6 +16,9 @@
 structure PackReal32Little : PACK_REAL where type real = Real32.real
 ```
 
+PackReal32Little: [`Real32`](../str/Real32.md) reals as the 4 bytes of IEEE 754 binary32, the
+least significant byte first.
+
 ## Members
 
 What each means is on [`PACK_REAL`](../sig/PACK_REAL.md); the types are this structure's own.

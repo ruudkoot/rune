@@ -16,7 +16,11 @@
 structure Option : OPTION
 ```
 
-Option
+Option: the operations on the top-level type [`option`](../sig/OPTION.md#type-option), of a value that
+may be missing.
+
+[`getOpt`](../sig/OPTION.md#val-getopt), [`isSome`](../sig/OPTION.md#val-issome) and [`valOf`](../sig/OPTION.md#val-valof) are also at the top level, as are the type
+and the exception [`Option`](../sig/OPTION.md#exn-option).
 
 ## Members
 

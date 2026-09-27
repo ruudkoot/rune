@@ -16,6 +16,9 @@
 structure Word16ArraySlice :> MONO_ARRAY_SLICE where type vector = Word16Vector.vector where type vector_slice = Word16VectorSlice.slice where type array = Word16Array.array where type elem = Word16.word
 ```
 
+Word16ArraySlice: stretches of [`Word16Array`](../str/Word16Array.md) arrays, without a copy: an
+update through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

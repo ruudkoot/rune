@@ -15,7 +15,9 @@
 #     Windows does otherwise (docs/building.md);
 #   * WIDTH, XC1-NA and HOST-FLAKY, which describe the suite and not a host;
 #   * the lines for xc1 configurations only: Rune's library on a host;
-#   * the labels @section/..., @load/... and @absent/..., which name no member.
+#   * the labels @section/..., @load/... and @absent/..., which name no member;
+#   * the labels of the checks on the results of the functors PrimIO,
+#     StreamIO and ImperativeIO (io_functors.sml), which name no structure.
 set -eu
 cd "$(dirname "$0")"
 check=0
@@ -69,6 +71,7 @@ BEGIN {
   reason = trim(reason)
   if (category == "WIDTH" || category == "XC1-NA" || category == "HOST-FLAKY") next
   if (label ~ /^@/) next
+  if (label ~ /^(PrimIO|StreamIO|ImperativeIO)\./) next
   h = host(config)
   if (h == "") next
   if (h == "?") { print "gen-annotations.sh: deviations.txt:" NR ": unknown configuration " config > "/dev/stderr"; bad = 1; next }

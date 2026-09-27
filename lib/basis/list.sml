@@ -1,4 +1,8 @@
-(* List
+(* List: the operations on lists, of the top-level type `list`.
+
+   The functions that the top level also has, `null`, `hd`, `tl`, `length`,
+   `rev`, `@`, `app`, `map`, `foldl` and `foldr`, are the same values here,
+   and `Empty` is the top-level exception.
 
    Implements: LIST *)
 structure List =

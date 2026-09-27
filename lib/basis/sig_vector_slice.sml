@@ -17,17 +17,23 @@ sig
 
   (* ---- Elements ---- *)
 
-  (* `length sl` is the number of elements of `sl`. *)
+  (* `length sl` is the number of elements of `sl`.
+
+     Example: `length (slice (Vector.fromList [1, 2, 3, 4], 1, SOME 2)) = 2` *)
   val length : 'a slice -> int
 
   (* `sub (sl, i)` is the element of `sl` at position `i`, counting from the start of the slice.
 
-     Raises: `Subscript` if `i < 0` or `i >= length sl`. *)
+     Raises: `Subscript` if `i < 0` or `i >= length sl`.
+
+     Example: `sub (slice (Vector.fromList [1, 2, 3], 1, NONE), 0) = 2` *)
   val sub : 'a slice * int -> 'a
 
   (* ---- Making a slice ---- *)
 
-  (* `full v` is the whole of `v` as a slice. *)
+  (* `full v` is the whole of `v` as a slice.
+
+     Example: `vector (full (Vector.fromList [1, 2])) = Vector.fromList [1, 2]` *)
   val full : 'a Vector.vector -> 'a slice
 
   (* `slice (v, i, NONE)` is the stretch of `v` from position `i` to its end, and `slice (v, i, SOME n)` the `n` elements from `i`.
@@ -59,18 +65,26 @@ sig
      [1, 2, 3, 4, 5], 1, NONE), 1, SOME 2))) = (2, 2)` *)
   val subslice : 'a slice * int * int option -> 'a slice
 
-  (* `base sl` is the triple of the vector that `sl` is a stretch of, where it starts in that vector, and how long it is. *)
+  (* `base sl` is the triple of the vector that `sl` is a stretch of, where it starts in that vector, and how long it is.
+
+     Example: `base (slice (Vector.fromList [1, 2, 3], 1, SOME 1)) = (Vector.fromList [1, 2, 3], 1, 1)` *)
   val base : 'a slice -> 'a Vector.vector * int * int
 
-  (* `vector sl` is a vector of the elements of `sl`, which is where the copy happens. *)
+  (* `vector sl` is a vector of the elements of `sl`, which is where the copy happens.
+
+     Example: `vector (slice (Vector.fromList [1, 2, 3], 1, NONE)) = Vector.fromList [2, 3]` *)
   val vector : 'a slice -> 'a Vector.vector
 
   (* `concat l` is the vector of the elements of the slices of `l`, one after another.
 
-     Raises: `Size` if the result would be longer than `Vector.maxLen`. *)
+     Raises: `Size` if the result would be longer than `Vector.maxLen`.
+
+     Example: `concat [full (Vector.fromList [1]), full (Vector.fromList [2, 3])] = Vector.fromList [1, 2, 3]` *)
   val concat : 'a slice list -> 'a Vector.vector
 
-  (* `isEmpty sl` is `true` when `sl` has no elements. *)
+  (* `isEmpty sl` is `true` when `sl` has no elements.
+
+     Example: `isEmpty (slice (Vector.fromList [1], 1, NONE)) = true` *)
   val isEmpty : 'a slice -> bool
 
   (* `getItem sl` is `NONE` for an empty slice and `SOME (x, rest)` for the first element and what follows it.
@@ -89,44 +103,70 @@ sig
      Reading: `VectorSlice.appi/index-in-the-slice`. The index is "that of
      the corresponding element in the slice": it starts at 0 whatever the
      slice begins at in its base vector. The same holds for `mapi`,
-     `foldli`, `foldri` and `findi`. *)
+     `foldli`, `foldri` and `findi`.
+
+     Example: `let val s = ref [] in appi (fn (i, _) => s := i :: !s) (slice (Vector.fromList [0, 0, 0], 1, NONE)); !s end = [1, 0]` *)
   val appi : (int * 'a -> unit) -> 'a slice -> unit
 
-  (* `app f sl` applies `f` to every element, from 0 up, for its effect. *)
+  (* `app f sl` applies `f` to every element, from 0 up, for its effect.
+
+     Example: `let val s = ref 0 in app (fn x => s := !s + x) (full (Vector.fromList [1, 2])); !s end = 3` *)
   val app : ('a -> unit) -> 'a slice -> unit
 
-  (* `mapi f sl` is the vector of the results of `f` on the index and the element of each position. *)
+  (* `mapi f sl` is the vector of the results of `f` on the index and the element of each position.
+
+     Example: `mapi (fn (i, x) => i + x) (slice (Vector.fromList [5, 6, 7], 1, NONE)) = Vector.fromList [6, 8]` *)
   val mapi : (int * 'a -> 'b) -> 'a slice -> 'b Vector.vector
 
-  (* `map f sl` is the vector of the results of `f` on each element, in order. *)
+  (* `map f sl` is the vector of the results of `f` on each element, in order.
+
+     Example: `map (fn x => x + 1) (full (Vector.fromList [1, 2])) = Vector.fromList [2, 3]` *)
   val map : ('a -> 'b) -> 'a slice -> 'b Vector.vector
 
-  (* `foldli f init sl` combines the elements from the left, giving `f` the index as well. *)
+  (* `foldli f init sl` combines the elements from the left, giving `f` the index as well.
+
+     Example: `foldli (fn (i, _, acc) => i :: acc) [] (slice (Vector.fromList [9, 9, 9], 1, NONE)) = [1, 0]` *)
   val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
-  (* `foldri f init sl` combines the elements from the right, giving `f` the index as well. *)
+  (* `foldri f init sl` combines the elements from the right, giving `f` the index as well.
+
+     Example: `foldri (fn (i, _, acc) => i :: acc) [] (slice (Vector.fromList [9, 9, 9], 1, NONE)) = [0, 1]` *)
   val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
-  (* `foldl f init sl` combines the elements from the left, as `List.foldl` does. *)
+  (* `foldl f init sl` combines the elements from the left, as `List.foldl` does.
+
+     Example: `foldl (op ::) [] (full (Vector.fromList [1, 2])) = [2, 1]` *)
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
-  (* `foldr f init sl` combines the elements from the right, as `List.foldr` does. *)
+  (* `foldr f init sl` combines the elements from the right, as `List.foldr` does.
+
+     Example: `foldr (op ::) [] (full (Vector.fromList [1, 2])) = [1, 2]` *)
   val foldr : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
   (* ---- Searching ---- *)
 
-  (* `findi p sl` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`. *)
+  (* `findi p sl` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`.
+
+     Example: `findi (fn (_, x) => x > 1) (full (Vector.fromList [1, 2, 3])) = SOME (1, 2)` *)
   val findi : (int * 'a -> bool) -> 'a slice -> (int * 'a) option
 
-  (* `find p sl` is `SOME x` for the first element that satisfies `p`, or `NONE`. *)
+  (* `find p sl` is `SOME x` for the first element that satisfies `p`, or `NONE`.
+
+     Example: `find (fn x => x > 1) (full (Vector.fromList [1, 2, 3])) = SOME 2` *)
   val find : ('a -> bool) -> 'a slice -> 'a option
 
-  (* `exists p sl` is `true` when some element satisfies `p`. *)
+  (* `exists p sl` is `true` when some element satisfies `p`.
+
+     Example: `exists (fn x => x = 2) (full (Vector.fromList [1, 2])) = true` *)
   val exists : ('a -> bool) -> 'a slice -> bool
 
-  (* `all p sl` is `true` when every element satisfies `p`. *)
+  (* `all p sl` is `true` when every element satisfies `p`.
+
+     Example: `all (fn x => x > 1) (full (Vector.fromList [1, 2])) = false` *)
   val all : ('a -> bool) -> 'a slice -> bool
 
-  (* `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`. *)
+  (* `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`.
+
+     Example: `collate Int.compare (full (Vector.fromList [1, 2]), full (Vector.fromList [1, 3])) = LESS` *)
   val collate : ('a * 'a -> order) -> 'a slice * 'a slice -> order
 end

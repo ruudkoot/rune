@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 22 of 22 entries documented |
-| Tests | 285 checks of 22 entries |
+| Tests | 298 checks of 22 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -44,18 +44,18 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 | [`Int64Vector`](../str/Int64Vector.md) | Int64Vector: immutable vectors of 64-bit integers. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 | [`Int8Vector`](../str/Int8Vector.md) | Int8Vector: immutable vectors of 8-bit integers. | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 | [`IntVector`](../str/IntVector.md) | IntVector: immutable vectors of integers of the default `int`. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| [`LargeIntVector`](../str/LargeIntVector.md) | The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeIntVector`](../str/LargeIntVector.md) | LargeIntVector: immutable vectors of integers of any size. | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealVector`](../str/RealVector.md) | LargeReal is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordVector`](../str/WordVector.md) | LargeWord is Word, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Word. | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| [`Real32Vector`](../str/Real32Vector.md) | The monomorphic vectors and arrays of Real32.real, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real32Vector`](../str/Real32Vector.md) | Real32Vector: immutable vectors of binary32 reals. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Vector`](../str/RealVector.md) | Real64 is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| [`RealVector`](../str/RealVector.md) | The monomorphic vectors and arrays of real, their slices and the two-dimensional arrays (optional in the specification). The elements do not admit equality, which MONO\_VECTOR and MONO\_ARRAY do not ask of them. LargeRealVector, Real64Vector and the rest of those families are these (mono\_largereal.sml, mono\_real64.sml). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharVector`](../str/WideCharVector.md) | Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string is a type name: the constants of a type are overloaded at a name. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| [`Word16Vector`](../str/Word16Vector.md) | The monomorphic vectors and arrays of Word16.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| [`Word32Vector`](../str/Word32Vector.md) | The monomorphic vectors and arrays of Word32.word, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| [`Word64Vector`](../str/Word64Vector.md) | The vectors, arrays, slices and two-dimensional arrays of Word64 (optional in the specification). Word64.word is a type of its own, so these are their own structures and not those of Word. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| [`Word8Vector`](../str/Word8Vector.md) |  | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
-| [`WordVector`](../str/WordVector.md) | The monomorphic vectors and arrays of word, their slices and the two-dimensional arrays (optional in the specification). LargeWordVector, Word64Vector and the rest of those families are these (mono\_largeword.sml, mono\_word64.sml). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`RealVector`](../str/RealVector.md) | RealVector: immutable vectors of reals. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharVector`](../str/WideCharVector.md) | WideCharVector: immutable vectors of wide characters, which are the strings of [`WideString`](../str/WideString.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16Vector`](../str/Word16Vector.md) | Word16Vector: immutable vectors of 16-bit words. | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32Vector`](../str/Word32Vector.md) | Word32Vector: immutable vectors of 32-bit words. | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64Vector`](../str/Word64Vector.md) | Word64Vector: immutable vectors of 64-bit words. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8Vector`](../str/Word8Vector.md) | Word8Vector: immutable vectors of bytes, what binary input and output read and write. | [lib/basis/word8vector.sml](../../../../lib/basis/word8vector.sml) |
+| [`WordVector`](../str/WordVector.md) | WordVector: immutable vectors of words. | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 The sequences of one element type: vectors, arrays and their slices, as
 [`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md) and [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md) describe them for any
@@ -78,7 +78,7 @@ length.
 > [`String.string`](../sig/STRING.md#type-string) with [`CharVector.vector`](#type-vector), and [`WideText`](../str/WideText.md) is declared
 > `where type String.string = WideString.string`, so
 > [`WideText.CharVector.vector`](#type-vector) is [`WideString.string`](../sig/STRING.md#type-string), which [`STRING`](../sig/STRING.md) makes
-> an equality type. Any implementation whose [`WideText.CharVector`](../sig/TEXT.md#str-charvector) is the
+> an equality type. Any implementation whose [`WideText.CharVector`](../str/WideCharVector.md) is the
 > top-level [`WideCharVector`](../str/WideCharVector.md) \-- every one that has both -- must therefore
 > give [`WideCharVector.vector`](#type-vector) equality, and the declaration the page gives
 > it cannot. \*\*The whole of the defect is one missing constraint\*\*:
@@ -212,7 +212,7 @@ val fromList : elem list -> vector
 
 **Example** `fromList [#"a", #"b"] = "ab"`
 
-<details><summary>Tests (29)</summary>
+<details><summary>Tests (32)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `is-implode` &middot; `nil-is-the-empty-string` &middot; `explode*`
 
@@ -232,11 +232,17 @@ For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis
 
 For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
 
+For `WordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
+
 For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
 
 For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
 
 For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `specials`
+
+For `RealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
+
+For `RealVector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `specials`
 
 For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
 
@@ -415,6 +421,8 @@ val app : (elem -> unit) -> vector -> unit
 
 **Law** `app f x = appi (fn (_, e) => f e) x`
 
+**Example** `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195`
+
 <details><summary>Tests (5)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -459,7 +467,7 @@ val map : (elem -> elem) -> vector -> vector
 
 **Example** `map Char.toUpper "abc" = "ABC"`
 
-<details><summary>Tests (17)</summary>
+<details><summary>Tests (19)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `toUpper` &middot; `String.map*`
 
@@ -468,6 +476,10 @@ For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not` &middot; `empty` &middot; `order`
 
 For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `RealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `RealVector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
 
 For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
 
@@ -527,7 +539,7 @@ val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 **Example** `foldl (op ::) [] "abc" = [#"c", #"b", #"a"]`
 
-<details><summary>Tests (24)</summary>
+<details><summary>Tests (27)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `reverse`
 
@@ -547,11 +559,17 @@ For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis
 
 For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
 
+For `WordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
 For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
 
 For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
 
 For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `RealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `RealVector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
 
 For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
 
@@ -626,13 +644,17 @@ val find : (elem -> bool) -> vector -> elem option
 
 **Example** `find Char.isDigit "a12" = SOME #"1"`
 
-<details><summary>Tests (15)</summary>
+<details><summary>Tests (17)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `none` &middot; `stops`
 
 For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `nan`
+
+For `RealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `nan`
+
+For `RealVector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `nan`
 
 For `LargeRealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `nan`
 
@@ -700,7 +722,7 @@ val collate : (elem * elem -> order) -> vector * vector -> order
 
 **Example** `collate Char.compare ("ab", "ac") = LESS`
 
-<details><summary>Tests (40)</summary>
+<details><summary>Tests (43)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `strings` &middot; `high-characters` &middot; `String.compare*`
 
@@ -720,11 +742,17 @@ For `LargeIntVector`, in [tests/basis/mono.largeint.sml](../../../../tests/basis
 
 For `WordVector`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word.compare-unsigned`
 
+For `WordVector`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord.compare-unsigned`
+
 For `Word16Vector`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16.compare-unsigned`
 
 For `Word32Vector`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32.compare-unsigned`
 
 For `RealVector`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real.compare`
+
+For `RealVector`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal.compare`
+
+For `RealVector`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64.compare`
 
 For `Int64Vector`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64.compare`
 

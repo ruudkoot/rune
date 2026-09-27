@@ -86,17 +86,24 @@ sig
     (* The type of the array of control characters. *)
     type cc
 
-    (* `cc l` is the array in which each position of `l` holds its character, and every other position `#"\000"`. *)
+    (* `cc l` is the array in which each position of `l` holds its character, and every other position `#"\000"`.
+
+       Example: `V.sub (V.cc [(V.eof, #"\^D")], V.eof) = #"\^D"` *)
     val cc : (int * char) list -> cc
 
     (* `update (c, l)` is a copy of `c` in which each position of `l` holds its character.
 
-       Raises: `Subscript` if a position is outside `[0, nccs)`. *)
+       Raises: `Subscript` if a position is outside `[0, nccs)`.
+
+       Example: `V.sub (V.update (V.cc [], [(V.intr, #"\^C")]), V.intr) =
+       #"\^C"` *)
     val update : cc * (int * char) list -> cc
 
     (* `sub (c, i)` is the character at position `i`.
 
-       Raises: `Subscript` if `i` is outside `[0, nccs)`. *)
+       Raises: `Subscript` if `i` is outside `[0, nccs)`.
+
+       Example: `(V.sub (V.cc [], V.nccs) handle Subscript => #"x") = #"x"` *)
     val sub : cc * int -> char
   end
 
@@ -233,13 +240,17 @@ sig
      `speed_t`, and the named speeds are ordered by their baud rate. *)
   eqtype speed
 
-  (* `compareSpeed (s, t)` orders two speeds, the slower first. *)
+  (* `compareSpeed (s, t)` orders two speeds, the slower first.
+
+     Example: `compareSpeed (b9600, b38400) = LESS` *)
   val compareSpeed : speed * speed -> order
 
   (* `speedToWord s` is the `speed_t` value of `s`. *)
   val speedToWord : speed -> SysWord.word
 
-  (* `wordToSpeed w` is the speed whose `speed_t` value is `w`. *)
+  (* `wordToSpeed w` is the speed whose `speed_t` value is `w`.
+
+     Law: `wordToSpeed (speedToWord s) = s` *)
   val wordToSpeed : SysWord.word -> speed
 
   (* Hang up: zero baud. *)
@@ -303,7 +314,9 @@ sig
                  ospeed : speed}
                 -> termios
 
-  (* `fieldsOf t` is the fields of `t`, the record that `termios` takes. *)
+  (* `fieldsOf t` is the fields of `t`, the record that `termios` takes.
+
+     Law: `fieldsOf (termios r)` has the fields of `r` *)
   val fieldsOf : termios
                  -> {iflag : I.flags,
                      oflag : O.flags,
@@ -313,7 +326,10 @@ sig
                      ispeed : speed,
                      ospeed : speed}
 
-  (* `getiflag t` is the input flags of `t`. *)
+  (* `getiflag t` is the input flags of `t`.
+
+     Law: `getiflag t = #iflag (fieldsOf t)`, and so for the other flags and
+     for `getcc` *)
   val getiflag : termios -> I.flags
 
   (* `getoflag t` is the output flags of `t`. *)
@@ -337,10 +353,18 @@ sig
     (* `getispeed t` is the speed at which `t` receives. *)
     val getispeed : termios -> speed
 
-    (* `setospeed (t, s)` is `t` with `s` as the speed it sends at. *)
+    (* `setospeed (t, s)` is `t` with `s` as the speed it sends at.
+
+       Law: `CF.getospeed (CF.setospeed (t, s)) = s`
+
+       Example: `CF.getospeed (CF.setospeed (termios {iflag = I.flags [], oflag
+       = O.flags [], cflag = C.flags [], lflag = L.flags [], cc = V.cc [],
+       ispeed = b9600, ospeed = b9600}, b38400)) = b38400` *)
     val setospeed : termios * speed -> termios
 
-    (* `setispeed (t, s)` is `t` with `s` as the speed it receives at. *)
+    (* `setispeed (t, s)` is `t` with `s` as the speed it receives at.
+
+       Law: `CF.getispeed (CF.setispeed (t, s)) = s` *)
     val setispeed : termios * speed -> termios
   end
 

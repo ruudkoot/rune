@@ -35,13 +35,23 @@ sig
   (* The type of a condition the system reports: the `syserror` of `OS`. *)
   type syserror = OS.syserror
 
-  (* `toWord e` is the number the system gives `e`, its `errno` value. *)
+  (* `toWord e` is the number the system gives `e`, its `errno` value.
+
+     The numbers are the system's: POSIX fixes the names, not the numbers.
+
+     Example: `toWord noent = 0w2` on Linux and macOS *)
   val toWord : syserror -> SysWord.word
 
-  (* `fromWord w` is the condition whose `errno` value is `w`. *)
+  (* `fromWord w` is the condition whose `errno` value is `w`.
+
+     Law: `fromWord (toWord e) = e` *)
   val fromWord : SysWord.word -> syserror
 
-  (* `errorMsg e` is the text the system gives for `e`, meant for a person to read. *)
+  (* `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+     It is `OS.errorMsg e`, the message of an `OS.SysErr` that carries `e`.
+
+     Example: `errorMsg noent = "No such file or directory"` *)
   val errorMsg : syserror -> string
 
   (* `errorName e` is a short name for `e`, meant for a program.

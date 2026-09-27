@@ -16,6 +16,9 @@
 structure Posix.TTY.C : BIT_FLAGS
 ```
 
+Posix.TTY.C: the flags of the line: character size, parity, stop bits
+and the modem.
+
 ## Members
 
 What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

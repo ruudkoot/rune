@@ -10,4 +10,7 @@ struct
                     fn () => C.== (C.Math.sqrt (C.fromInt 4), C.fromInt 2))
   val () = T.check ("Real32:REAL/toLarge-gives-LargeReal.real",
                     fn () => LargeReal.== (C.toLarge (C.fromInt 3), LargeReal.fromInt 3))
+  (* Real32.Math matches MATH at the type of Real32 *)
+  structure M : SPEC_MATH where type real = Real32.real = Real32.Math
+  val () = T.check ("Real32.Math:MATH/matches", fn () => true)
 end

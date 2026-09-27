@@ -16,6 +16,9 @@
 structure NetServDB : NET_SERV_DB
 ```
 
+NetServDB: the service database of the system, `/etc/services` or
+whatever the machine is set up to use.
+
 ## Members
 
 What each means is on [`NET_SERV_DB`](../sig/NET_SERV_DB.md); the types are this structure's own.

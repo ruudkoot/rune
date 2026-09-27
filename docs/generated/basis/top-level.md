@@ -56,7 +56,7 @@ of that structure's signature.
 | `substring` | [`String.substring`](sig/STRING.md#val-substring) | `substring (s, i, n)` is the `n` characters of `s` from position `i`. |
 | `ord` | [`Char.ord`](sig/CHAR.md#val-ord) | `ord c` is the code of `c`, between 0 and `maxOrd`. |
 | `chr` | [`Char.chr`](sig/CHAR.md#val-chr) | `chr i` is the character whose code is `i`. |
-| `real` | [`Real.fromInt`](sig/REAL.md#val-fromint) | `fromInt i` is `i` as a real, correctly rounded when the type cannot hold it exactly. |
+| `real` | [`Real.fromInt`](sig/REAL.md#val-fromint) | `fromInt i` is `i` as a real, rounded in the current rounding mode when the type cannot hold it exactly. |
 | `floor` | [`Real.floor`](sig/REAL.md#val-floor) | `floor x` is the largest whole number that is not greater than `x`, as an `int`. |
 | `ceil` | [`Real.ceil`](sig/REAL.md#val-ceil) | `ceil x` is the smallest whole number that is not less than `x`, as an `int`. |
 | `round` | [`Real.round`](sig/REAL.md#val-round) | `round x` is `x` rounded to the nearest whole number, ties to even, as an `int`. |

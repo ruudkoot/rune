@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 337 checks of 26 entries |
+| Tests | 340 checks of 26 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -44,18 +44,18 @@ structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vect
 | [`Int64ArraySlice`](../str/Int64ArraySlice.md) | Int64ArraySlice: stretches of [`Int64Array`](../str/Int64Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 | [`Int8ArraySlice`](../str/Int8ArraySlice.md) | Int8ArraySlice: stretches of [`Int8Array`](../str/Int8Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 | [`IntArraySlice`](../str/IntArraySlice.md) | IntArraySlice: stretches of [`IntArray`](../str/IntArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| [`LargeIntArraySlice`](../str/LargeIntArraySlice.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeIntArraySlice`](../str/LargeIntArraySlice.md) | LargeIntArraySlice: stretches of [`LargeIntArray`](../str/LargeIntArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordArraySlice`](../str/WordArraySlice.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| [`Real32ArraySlice`](../str/Real32ArraySlice.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real32ArraySlice`](../str/Real32ArraySlice.md) | Real32ArraySlice: stretches of [`Real32Array`](../str/Real32Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64ArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| [`RealArraySlice`](../str/RealArraySlice.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharArraySlice`](../str/WideCharArraySlice.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| [`Word16ArraySlice`](../str/Word16ArraySlice.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| [`Word32ArraySlice`](../str/Word32ArraySlice.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| [`Word64ArraySlice`](../str/Word64ArraySlice.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| [`Word8ArraySlice`](../str/Word8ArraySlice.md) |  | [lib/basis/word8arrayslice.sml](../../../../lib/basis/word8arrayslice.sml) |
-| [`WordArraySlice`](../str/WordArraySlice.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`RealArraySlice`](../str/RealArraySlice.md) | RealArraySlice: stretches of [`RealArray`](../str/RealArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharArraySlice`](../str/WideCharArraySlice.md) | WideCharArraySlice: stretches of [`WideCharArray`](../str/WideCharArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16ArraySlice`](../str/Word16ArraySlice.md) | Word16ArraySlice: stretches of [`Word16Array`](../str/Word16Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32ArraySlice`](../str/Word32ArraySlice.md) | Word32ArraySlice: stretches of [`Word32Array`](../str/Word32Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64ArraySlice`](../str/Word64ArraySlice.md) | Word64ArraySlice: stretches of [`Word64Array`](../str/Word64Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8ArraySlice`](../str/Word8ArraySlice.md) | Word8ArraySlice: stretches of [`Word8Array`](../str/Word8Array.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/word8arrayslice.sml](../../../../lib/basis/word8arrayslice.sml) |
+| [`WordArraySlice`](../str/WordArraySlice.md) | WordArraySlice: stretches of [`WordArray`](../str/WordArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 A stretch of an array of one element type, without a copy of it.
 
@@ -492,6 +492,8 @@ val app : (elem -> unit) -> slice -> unit
 
 **Law** `app f x = appi (fn (_, e) => f e) x`
 
+**Example** `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (full (CharArray.fromList [#"a", #"b"])); !s end = 195`
+
 <details><summary>Tests (4)</summary>
 
 For `BoolArraySlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -599,7 +601,7 @@ val foldl : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 
 **Example** `foldl (op ::) [] (full (CharArray.fromList [#"a", #"b"])) = [#"b", #"a"]`
 
-<details><summary>Tests (22)</summary>
+<details><summary>Tests (25)</summary>
 
 For `Word8ArraySlice`, in [tests/basis/word8arrayslice.sml](../../../../tests/basis/word8arrayslice.sml): `sum-of-bytes`
 
@@ -617,11 +619,17 @@ For `LargeIntArraySlice`, in [tests/basis/mono.largeint.sml](../../../../tests/b
 
 For `WordArraySlice`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
 
+For `WordArraySlice`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
 For `Word16ArraySlice`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
 
 For `Word32ArraySlice`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
 
 For `RealArraySlice`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `RealArraySlice`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `RealArraySlice`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
 
 For `Int64ArraySlice`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
 

@@ -16,7 +16,9 @@
 structure ListPair : LIST_PAIR
 ```
 
-ListPair
+ListPair: two lists walked side by side, stopping at the end of the
+shorter one or, in the functions whose names end in `Eq`, raising
+[`UnequalLengths`](../sig/LIST_PAIR.md#exn-unequallengths) when the lengths differ.
 
 ## Members
 

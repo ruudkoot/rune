@@ -19,7 +19,7 @@ structure Posix.Process : POSIX_PROCESS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.Process`](../str/Posix.Process.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Process`](../str/Posix.Process.md) | Posix.Process: making, running, waiting for, signalling and ending processes. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Processes: making them, replacing them, waiting for them and ending them.
 
@@ -87,7 +87,7 @@ end
 eqtype signal
 ```
 
-The type of a signal, the one of [`Posix.Signal`](../sig/POSIX.md#str-signal).
+The type of a signal, the one of [`Posix.Signal`](../str/Posix.Signal.md).
 
 ### <a name="type-pid"></a>`pid`
 
@@ -118,6 +118,8 @@ val pidToWord : pid -> SysWord.word
 ```
 
 `pidToWord pid` is the number of `pid`.
+
+**Law** `pidToWord (wordToPid w) = w`
 
 <details><summary>Tests (2)</summary>
 
@@ -187,6 +189,9 @@ val exece : string * string list * string list -> 'a
 ```
 
 `exece (path, args, env)` is [`exec`](#val-exec) with `env` as the new program's environment.
+
+Each string of `env` is written `"name=value"`, and the new program has
+those variables and no others: an empty `env` is an empty environment.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the program cannot be run.
 
@@ -268,6 +273,10 @@ val fromStatus : OS.Process.status -> exit_status
 > [`OS.Process.status`](../sig/OS_PROCESS.md#type-status) is an `int`: the exit code of a process that ended of
 > itself, 256 and the number of the signal that ended it, or 512 and the
 > number of the signal that stopped it.
+
+**Example** `fromStatus OS.Process.success = W_EXITED`
+
+**Example** `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -446,6 +455,8 @@ val alarm : Time.time -> Time.time
 > alarm, as POSIX has it, so it cancels the outstanding one and still
 > reports the time that was left of it.
 
+**Example** `alarm Time.zeroTime = Time.zeroTime` when no alarm was set
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.Process`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `none-outstanding` &middot; `remaining` &middot; `cancelled`
@@ -483,6 +494,8 @@ val sleep : Time.time -> Time.time
 > **Reading** `Posix.Process.sleep/time-left`. The page does not say what the
 > result is; it is POSIX's "time left", which is zero when the wait ran
 > out and the rest when a signal cut it short.
+
+**Example** `sleep Time.zeroTime = Time.zeroTime`
 
 <details><summary>Other implementations (1)</summary>
 

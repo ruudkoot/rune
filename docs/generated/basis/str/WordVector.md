@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 134 checks |
+| Tests | 137 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis
@@ -15,6 +15,8 @@
 ```sml
 structure WordVector :> MONO_VECTOR where type elem = word
 ```
+
+WordVector: immutable vectors of words.
 
 The monomorphic vectors and arrays of word, their slices and the
 two-dimensional arrays (optional in the specification). LargeWordVector,

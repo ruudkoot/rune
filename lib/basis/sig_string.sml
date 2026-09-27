@@ -58,12 +58,18 @@ sig
 
   (* ---- Taking a string apart ---- *)
 
-  (* `size s` is the number of characters of `s`. *)
+  (* `size s` is the number of characters of `s`.
+
+     Example: `size "abc" = 3` *)
   val size : string -> int
 
   (* `sub (s, i)` is the character of `s` at position `i`, counting from 0.
 
-     Raises: `Subscript` if `i < 0` or `i >= size s`. *)
+     Raises: `Subscript` if `i < 0` or `i >= size s`.
+
+     Example: `sub ("abc", 1) = #"b"`
+
+     Example: `(sub ("abc", 3) handle Subscript => #"!") = #"!"` *)
   val sub : string * int -> char
 
   (* `extract (s, i, NONE)` is the characters of `s` from position `i` on, and `extract (s, i, SOME n)` the `n` characters from `i`.
@@ -95,14 +101,18 @@ sig
 
      Raises: `Size` if the result would be longer than `maxSize`.
 
-     Complexity: linear in `size s + size t`; both are copied. *)
+     Complexity: linear in `size s + size t`; both are copied.
+
+     Example: `"ab" ^ "c" = "abc"` *)
   val ^ : string * string -> string
 
   (* `concat l` is the strings of `l` one after another.
 
      Raises: `Size` if the result would be longer than `maxSize`.
 
-     Law: `concat [s, t] = s ^ t`, and `concat [] = ""` *)
+     Law: `concat [s, t] = s ^ t`, and `concat [] = ""`
+
+     Example: `concat ["a", "", "bc"] = "abc"` *)
   val concat : string list -> string
 
   (* `concatWith sep l` is the strings of `l` one after another with `sep` between them.
@@ -115,12 +125,16 @@ sig
      Example: `concatWith ", " ["a", "b", "c"] = "a, b, c"` *)
   val concatWith : string -> string list -> string
 
-  (* `str c` is the string of the one character `c`. *)
+  (* `str c` is the string of the one character `c`.
+
+     Example: `str #"a" = "a"` *)
   val str : char -> string
 
   (* `implode l` is the string of the characters of `l`, in order.
 
-     Raises: `Size` if the result would be longer than `maxSize`. *)
+     Raises: `Size` if the result would be longer than `maxSize`.
+
+     Example: `implode [#"a", #"b"] = "ab"` *)
   val implode : char list -> string
 
   (* `explode s` is the list of the characters of `s`, in order.
@@ -132,7 +146,9 @@ sig
 
   (* ---- Transforming ---- *)
 
-  (* `map f s` is the string of the results of `f` on each character of `s`, from left to right. *)
+  (* `map f s` is the string of the results of `f` on each character of `s`, from left to right.
+
+     Example: `map Char.toUpper "abc" = "ABC"` *)
   val map : (char -> char) -> string -> string
 
   (* `translate f s` applies `f` to each character of `s`, from left to right, and appends the strings it gives.
@@ -175,7 +191,9 @@ sig
 
   (* ---- Searching ---- *)
 
-  (* `isPrefix p s` is `true` when `s` begins with `p`. *)
+  (* `isPrefix p s` is `true` when `s` begins with `p`.
+
+     Example: `isPrefix "ab" "abc" = true` *)
   val isPrefix : string -> string -> bool
 
   (* `isSubstring p s` is `true` when `p` occurs anywhere in `s`.
@@ -188,7 +206,9 @@ sig
      Example: `isSubstring "" "abc" = true` *)
   val isSubstring : string -> string -> bool
 
-  (* `isSuffix p s` is `true` when `s` ends with `p`. *)
+  (* `isSuffix p s` is `true` when `s` ends with `p`.
+
+     Example: `isSuffix "bc" "abc" = true` *)
   val isSuffix : string -> string -> bool
 
   (* ---- Comparing ---- *)
@@ -208,10 +228,14 @@ sig
 
      The answer is that of `cmp` on the first pair of characters at the same
      position that are not `EQUAL`; if there is none, the shorter string is
-     `LESS`. *)
+     `LESS`.
+
+     Example: `collate Char.compare ("ab", "abc") = LESS` *)
   val collate : (char * char -> order) -> string * string -> order
 
-  (* `s < t`, `s <= t`, `s > t` and `s >= t` compare two strings as `compare` does. *)
+  (* `s < t`, `s <= t`, `s > t` and `s >= t` compare two strings as `compare` does.
+
+     Example: `"abc" < "abd" = true` *)
   val < : string * string -> bool
   val <= : string * string -> bool
   val > : string * string -> bool

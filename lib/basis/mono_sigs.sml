@@ -141,7 +141,9 @@ sig
 
   (* `app f x` applies `f` to every element, from 0 up, for its effect.
 
-     Law: `app f x = appi (fn (_, e) => f e) x` *)
+     Law: `app f x = appi (fn (_, e) => f e) x`
+
+     Example: `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195` *)
   val app : (elem -> unit) -> vector -> unit
 
   (* `mapi f v` is the vector of the results of `f` on the index and the element of each position.
@@ -352,7 +354,9 @@ sig
 
   (* `app f x` applies `f` to every element, from 0 up, for its effect.
 
-     Law: `app f x = appi (fn (_, e) => f e) x` *)
+     Law: `app f x = appi (fn (_, e) => f e) x`
+
+     Example: `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195` *)
   val app : (elem -> unit) -> array -> unit
 
   (* `modifyi f x` replaces the element at each position by `f` of the index and that element, in place, from 0 up.
@@ -474,7 +478,9 @@ sig
 
   (* `fromList l` is the sequence of the elements of `l`, in order.
 
-     Raises: `Size` if `l` is longer than `maxLen`. *)
+     Raises: `Size` if `l` is longer than `maxLen`.
+
+     Example: `fromList [WideChar.chr 65, WideChar.chr 0x3BB] = fromList [WideChar.chr 65, WideChar.chr 0x3BB]` *)
   val fromList : elem list -> vector
 
   (* `tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
@@ -482,17 +488,23 @@ sig
      Raises: `Size` if `n < 0` or `n > maxLen`, before `f` is applied. *)
   val tabulate : int * (int -> elem) -> vector
 
-  (* `length x` is the number of elements. *)
+  (* `length x` is the number of elements.
+
+     Example: `length (fromList [WideChar.chr 0x10000]) = 1` *)
   val length : vector -> int
 
   (* `sub (x, i)` is the element at position `i`, counting from 0.
 
-     Raises: `Subscript` if `i` is outside. *)
+     Raises: `Subscript` if `i` is outside.
+
+     Example: `WideChar.ord (sub (fromList [WideChar.chr 65, WideChar.chr 0x3BB], 1)) = 0x3BB` *)
   val sub : vector * int -> elem
 
   (* `update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
 
-     Raises: `Subscript` if `i` is outside `v`. *)
+     Raises: `Subscript` if `i` is outside `v`.
+
+     Example: `update (fromList [WideChar.chr 65], 0, WideChar.chr 66) = fromList [WideChar.chr 66]` *)
   val update : vector * int * elem -> vector
 
   (* `concat l` is the vectors of `l` one after another.
@@ -509,7 +521,9 @@ sig
   (* `mapi f v` is the vector of the results of `f` on the index and the element of each position. *)
   val mapi : (int * elem -> elem) -> vector -> vector
 
-  (* `map f v` is the vector of the results of `f` on each element, in order. *)
+  (* `map f v` is the vector of the results of `f` on each element, in order.
+
+     Example: `map WideChar.toUpper (fromList [WideChar.chr 97]) = fromList [WideChar.chr 65]` *)
   val map : (elem -> elem) -> vector -> vector
 
   (* `foldli f init x` combines the elements from the left, giving `f` the index as well. *)
@@ -536,7 +550,9 @@ sig
   (* `all p x` is `true` when every element satisfies `p`. *)
   val all : (elem -> bool) -> vector -> bool
 
-  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`. *)
+  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+     Example: `collate WideChar.compare (fromList [WideChar.chr 65], fromList [WideChar.chr 66]) = LESS` *)
   val collate : (elem * elem -> order) -> vector * vector -> order
 end
 
@@ -872,7 +888,9 @@ sig
 
   (* `app f x` applies `f` to every element, from 0 up, for its effect.
 
-     Law: `app f x = appi (fn (_, e) => f e) x` *)
+     Law: `app f x = appi (fn (_, e) => f e) x`
+
+     Example: `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (full (CharArray.fromList [#"a", #"b"])); !s end = 195` *)
   val app : (elem -> unit) -> slice -> unit
 
   (* `modifyi f x` replaces the element at each position by `f` of the index and that element, in place.

@@ -16,6 +16,8 @@
 structure Word16VectorSlice :> MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word
 ```
 
+Word16VectorSlice: stretches of [`Word16Vector`](../str/Word16Vector.md) vectors, without a copy.
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

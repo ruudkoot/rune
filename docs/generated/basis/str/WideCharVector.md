@@ -17,6 +17,9 @@ structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char
 structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char
 ```
 
+WideCharVector: immutable vectors of wide characters, which are the
+strings of [`WideString`](../str/WideString.md).
+
 Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string
 is a type name: the constants of a type are overloaded at a name.
 

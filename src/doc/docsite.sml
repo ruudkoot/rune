@@ -138,13 +138,14 @@ struct
          has no page of its own: `Text.Char` is `Char`. *)
       val paged : (string * I.structRecord * I.structRecord * DocClaims.claim list) list =
         let
-          (* `structure Position : INTEGER = Int` is `Int` by another name;
-             `structure Int64 :> INTEGER = Int` is not: the seal makes its
-             types its own, and it has a page of its own *)
+          (* `structure Position : INTEGER = Int` is `Int` by another name,
+             and `structure Math = Real.Math` is `Real.Math`; `structure
+             Int64 :> INTEGER = Int` is not: the seal makes its types its
+             own, and it has a page of its own *)
           fun boundToPublic (r : I.structRecord) =
             case (#rhs r, #ascription r) of
               (_, SOME {opaque = true, ...}) => false
-            | (I.Alias t, _) => isPublic t andalso List.exists (fn I.Struct {name, ...} => name = t | _ => false) modules
+            | (I.Alias t, _) => isPublic t andalso isSome (structAt (modules, dotted t))
             | _ => false
           (* around: the nearest structure that claims a signature, and what it claims *)
           fun walk (prefix, around, r : I.structRecord) =
@@ -174,6 +175,37 @@ struct
         in
           List.concat (List.map (fn I.Struct r => walk ("", NONE, r) | _ => []) modules)
         end
+      (* The structure a name is, following what it is bound to: `Position`
+         is `Int`, and `LargeReal.Math` is `Real.Math`. *)
+      fun boundTo (name : string) : string =
+        let
+          fun try [] = name
+            | try ((n, t) :: rest) =
+                if n = name then boundTo t
+                else if String.isPrefix (n ^ ".") name then boundTo (t ^ String.extract (name, String.size n, NONE))
+                else try rest
+        in
+          try (!bindings)
+        end
+      (* The checks by the structure and member they name, where a check that
+         names a structure by another name, `Math.ln/nan` or
+         `LargeReal.fromLargeInt/...`, is also one of the structure it is *)
+      val tests =
+        StringMap.foldli
+          (fn (scope, ss, m) =>
+             let
+               val (str, member) =
+                 case List.rev (dotted scope) of
+                   member :: rest => (String.concatWith "." (List.rev rest), member)
+                 | [] => (scope, "")
+               val canonical = boundTo str
+             in
+               if canonical = str orelse str = "" then m
+               else
+                 let val key = canonical ^ "." ^ member
+                 in StringMap.insert (m, key, (case StringMap.find (m, key) of SOME l => l @ ss | NONE => ss)) end
+             end)
+          tests tests
       (* The page of a structure, following what it is bound to: the page of
          `Position` is the page of `Int`, since that is what it is. *)
       fun strPageOf (name : string) : string option =

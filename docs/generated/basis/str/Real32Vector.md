@@ -16,6 +16,8 @@
 structure Real32Vector :> MONO_VECTOR where type elem = Real32.real
 ```
 
+Real32Vector: immutable vectors of binary32 reals.
+
 The monomorphic vectors and arrays of Real32.real, their slices and the
 two-dimensional arrays (optional in the specification).
 

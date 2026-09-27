@@ -44,7 +44,10 @@ sig
 
   (* `app f (l, m)` applies `f` to the pairs of elements at the same position, from left to right, for its effect.
 
-     Law: `app f (l, m) = List.app f (zip (l, m))` *)
+     Law: `app f (l, m) = List.app f (zip (l, m))`
+
+     Example: `let val sum = ref 0 in app (fn (a, b) => sum := !sum + a * b)
+     ([1, 2], [3, 4]); !sum end = 11` *)
   val app : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 
   (* `appEq f (l, m)` is `app f (l, m)`, and insists that the lists are as long as each other.
@@ -52,7 +55,10 @@ sig
      `f` is applied to the pairs up to the end of the shorter list before the
      exception is raised.
 
-     Raises: `UnequalLengths` if `l` and `m` have different lengths. *)
+     Raises: `UnequalLengths` if `l` and `m` have different lengths.
+
+     Example: `let val seen = ref 0 in (appEq (fn _ => seen := !seen + 1) ([1,
+     2], [3]) handle UnequalLengths => ()); !seen end = 1` *)
   val appEq : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 
   (* `map f (l, m)` is the list of the results of `f` on the pairs of elements at the same position.
@@ -64,7 +70,12 @@ sig
 
   (* `mapEq f (l, m)` is `map f (l, m)`, and insists that the lists are as long as each other.
 
-     Raises: `UnequalLengths` if `l` and `m` have different lengths. *)
+     `f` is applied to the pairs up to the end of the shorter list before the
+     exception is raised.
+
+     Raises: `UnequalLengths` if `l` and `m` have different lengths.
+
+     Example: `mapEq (op +) ([1, 2], [10, 20]) = [11, 22]` *)
   val mapEq : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
   (* ---- Folding ---- *)
@@ -79,7 +90,12 @@ sig
      Example: `foldl (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11` *)
   val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
-  (* `foldr f init (l, m)` combines the pairs of elements from the right, as `List.foldr` does. *)
+  (* `foldr f init (l, m)` combines the pairs of elements from the right, as `List.foldr` does.
+
+     Law: `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+
+     Example: `foldr (fn (a, b, acc) => (a, b) :: acc) [] ([1, 2], ["a", "b",
+     "c"]) = [(1, "a"), (2, "b")]` *)
   val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
   (* `foldlEq f init (l, m)` is `foldl f init (l, m)`, and insists that the lists are as long as each other.
@@ -87,7 +103,10 @@ sig
      `f` is applied to the pairs up to the end of the shorter list before the
      exception is raised.
 
-     Raises: `UnequalLengths` if `l` and `m` have different lengths. *)
+     Raises: `UnequalLengths` if `l` and `m` have different lengths.
+
+     Example: `(foldlEq (fn (a, b, acc) => a + b + acc) 0 ([1], [2, 3]) handle
+     UnequalLengths => ~1) = ~1` *)
   val foldlEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
   (* `foldrEq f init (l, m)` is `foldr f init (l, m)`, and insists that the lists are as long as each other.
@@ -97,7 +116,10 @@ sig
      Reading: `ListPair.foldrEq/raises-before-applying`. Folding from the
      right needs the last pair first, so the ends of both lists are reached
      before anything is combined: `f` is not applied at all when the lengths
-     differ. *)
+     differ.
+
+     Example: `foldrEq (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) =
+     11` *)
   val foldrEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
   (* ---- Testing the pairs ---- *)
@@ -105,12 +127,20 @@ sig
   (* `all p (l, m)` is `true` when every pair of elements at the same position satisfies `p`.
 
      It stops at the first pair that does not, and at the end of the shorter
-     list, so `all p (l, [])` is `true`. *)
+     list, so `all p (l, [])` is `true`.
+
+     Law: `all p (l, m) = List.all p (zip (l, m))`
+
+     Example: `all (op <) ([1, 2], [2, 3, 0]) = true` *)
   val all : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 
   (* `exists p (l, m)` is `true` when some pair of elements at the same position satisfies `p`.
 
-     It stops at the first pair that does, and at the end of the shorter list. *)
+     It stops at the first pair that does, and at the end of the shorter list.
+
+     Law: `exists p (l, m) = List.exists p (zip (l, m))`
+
+     Example: `exists (op =) ([1, 2], [2, 2]) = true` *)
   val exists : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 
   (* `allEq p (l, m)` is `true` when the lists are as long as each other and every pair satisfies `p`.

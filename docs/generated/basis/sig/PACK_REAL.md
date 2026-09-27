@@ -24,12 +24,12 @@ structure PackRealLittle : PACK_REAL where type real = Real.real  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`PackReal32Big`](../str/PackReal32Big.md) |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| [`PackReal32Little`](../str/PackReal32Little.md) |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| [`PackReal64Big`](../str/PackRealBig.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| [`PackReal64Little`](../str/PackRealLittle.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| [`PackRealBig`](../str/PackRealBig.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| [`PackRealLittle`](../str/PackRealLittle.md) |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal32Big`](../str/PackReal32Big.md) | PackReal32Big: [`Real32`](../str/Real32.md) reals as the 4 bytes of IEEE 754 binary32, the most significant byte first. | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal32Little`](../str/PackReal32Little.md) | PackReal32Little: [`Real32`](../str/Real32.md) reals as the 4 bytes of IEEE 754 binary32, the least significant byte first. | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal64Big`](../str/PackRealBig.md) | PackReal64Big: the same as [`PackRealBig`](../str/PackRealBig.md), [`Real64`](../str/Real.md) being [`Real`](../str/Real.md). | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal64Little`](../str/PackRealLittle.md) | PackReal64Little: the same as [`PackRealLittle`](../str/PackRealLittle.md), [`Real64`](../str/Real.md) being [`Real`](../str/Real.md). | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealBig`](../str/PackRealBig.md) | PackRealBig: reals as the 8 bytes of IEEE 754 binary64, the most significant byte first. | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealLittle`](../str/PackRealLittle.md) | PackRealLittle: reals as the 8 bytes of IEEE 754 binary64, the least significant byte first. | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
 Reading and writing a real number in a vector or an array of bytes, in its
 IEEE 754 encoding and a fixed byte order.
@@ -76,6 +76,8 @@ val bytesPerElem : int
 
 The number of bytes of one real: 8 for binary64, 4 for binary32.
 
+**Example** `PackReal64Big.bytesPerElem = 8`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
@@ -97,6 +99,8 @@ val isBigEndian : bool
 ```
 
 Whether the most significant byte of the encoding comes first.
+
+**Example** `PackReal64Little.isBigEndian = false`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -177,7 +181,14 @@ val subVec : Word8Vector.vector * int -> real
 
 `subVec (v, i)` is the real at position `i` of the byte vector `v`, counting in reals.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
+Its bytes are those from `bytesPerElem * i` up to `bytesPerElem * (i + 1)`.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `v` is shorter than `bytesPerElem * (i + 1)`, a product that is taken without overflowing, so that a huge `i`
+raises [`Subscript`](../sig/GENERAL.md#exn-subscript) as well.
+
+**Example** `Real.== (PackReal64Big.subVec (Word8Vector.concat [PackReal64Big.toBytes 0.5, PackReal64Big.toBytes 1.5], 1), 1.5) = true`
+
+**Example** `Real.== (PackReal64Big.subVec (PackReal64Big.toBytes 1.0, valOf Int.maxInt) handle Subscript => ~1.0, ~1.0) = true`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -203,7 +214,9 @@ val subArr : Word8Array.array * int -> real
 
 `subArr (arr, i)` is the real at position `i` of the byte array `arr`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
+
+**Example** `Real.== (PackReal64Little.subArr (Word8Array.tabulate (8, fn _ => 0w0), 0), 0.0) = true`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -229,7 +242,12 @@ val update : Word8Array.array * int * real -> unit
 
 `update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
+
+**Law** `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN
+comes back as some NaN
+
+**Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`
 
 <details><summary>Other implementations (5)</summary>
 

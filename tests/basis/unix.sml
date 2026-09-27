@@ -192,6 +192,19 @@ struct
   val () = eqS ("Unix.exit/flushes", "flushed", fn () => PosixChild.slurp "unix-exit.txt")
   val () = eqS ("Unix.exit/runs-atExit", "ran", fn () => PosixChild.slurp "unix-atexit.txt")
   val () = T.eq T.int ("Unix.exit/result-has-any-type", 1, fn () => if T.range (1, 1) = 1 then 1 else Unix.exit (w8 1))
+  (* OS.Process.exit of the status of a command: "the implementation should
+     attempt to preserve the meaning of the exit code from the subprocess ...
+     If st does not connote an exit value, exit should act as though called
+     with failure" *)
+  fun exitWith st = PosixChild.waitBounded (PosixChild.fork (fn () => OS.Process.exit (st ())))
+  val () = T.eq (T.option PosixChild.showStatus) ("OS.Process.exit/keeps-the-exit-code-of-a-command",
+                                                  SOME (Posix.Process.W_EXITSTATUS (w8 3)),
+                                                  fn () => exitWith (fn () => OS.Process.system "exit 3"))
+  (* both children in the check, so that one that goes wrong fails the check
+     and not the section *)
+  val () = T.check ("OS.Process.exit/signal-status-is-failure",
+                    fn () => exitWith (fn () => OS.Process.system "kill -TERM $$")
+                             = exitWith (fn () => OS.Process.failure))
   (*>> exit *)
 
   val () = List.app (fn f => OS.FileSys.remove f handle _ => ())

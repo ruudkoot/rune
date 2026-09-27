@@ -16,6 +16,9 @@
 structure WideChar :> CHAR where type char = WideChar.char where type string = WideString.string
 ```
 
+WideChar: the characters of Unicode, each a code point up to 0x10FFFF, and
+their classes and conversions.
+
 > **Reading** `WideChar.isAlpha/ascii-classes`. "In WideChar, the functions
 > toLower, toUpper, isAlpha, ... and, in general, the definition of a letter
 > are locale-dependent": here they are those of ASCII, so a character above

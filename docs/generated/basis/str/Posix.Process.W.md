@@ -16,7 +16,8 @@
 structure Posix.Process.W : BIT_FLAGS
 ```
 
-The flags of waitpid. WNOHANG is not one of them: waitpid\_nh adds it.
+Posix.Process.W: the flags of `waitpid`. WNOHANG is not one of them:
+`waitpid_nh` adds it.
 
 ## Members
 

@@ -16,7 +16,8 @@
 structure String : STRING where type string = string where type char = Char.char
 ```
 
-String: 8-bit byte strings.
+String: strings of 8-bit characters, the type of the top-level [`string`](../sig/STRING.md#type-string)
+and of its literals.
 
 ## Members
 

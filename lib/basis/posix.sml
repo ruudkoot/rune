@@ -6,20 +6,41 @@
    Status: optional *)
 structure Posix =
 struct
-  (* Implements: POSIX_ERROR *)
+  (* Posix.Error: the conditions a failing call reports, with their names
+     and numbers.
+
+     Implements: POSIX_ERROR *)
   structure Error = RunePosixError
-  (* Implements: POSIX_SIGNAL *)
+  (* Posix.Signal: the signals of POSIX and their numbers.
+
+     Implements: POSIX_SIGNAL *)
   structure Signal = RunePosixSignal
-  (* Implements: POSIX_PROCESS *)
+  (* Posix.Process: making, running, waiting for, signalling and ending
+     processes.
+
+     Implements: POSIX_PROCESS *)
   structure Process = RunePosixProcess
-  (* Implements: POSIX_PROC_ENV *)
+  (* Posix.ProcEnv: the identities, groups, environment, terminal and limits
+     of this process.
+
+     Implements: POSIX_PROC_ENV *)
   structure ProcEnv = RunePosixProcEnv
-  (* Implements: POSIX_FILE_SYS *)
+  (* Posix.FileSys: files and directories as POSIX has them: descriptors,
+     opening, permissions, links and what `stat` reports.
+
+     Implements: POSIX_FILE_SYS *)
   structure FileSys = RunePosixFileSys
-  (* Implements: POSIX_IO *)
+  (* Posix.IO: reading, writing and controlling open descriptors: pipes,
+     duplicates, positions, flags and locks.
+
+     Implements: POSIX_IO *)
   structure IO = RunePosixIO
-  (* Implements: POSIX_SYS_DB *)
+  (* Posix.SysDB: the user and group databases of the system.
+
+     Implements: POSIX_SYS_DB *)
   structure SysDB = RunePosixSysDB
-  (* Implements: POSIX_TTY *)
+  (* Posix.TTY: the settings of a terminal, and the operations on it.
+
+     Implements: POSIX_TTY *)
   structure TTY = RunePosixTTY
 end

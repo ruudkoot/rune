@@ -10,7 +10,8 @@
 | Tests | 71 checks |
 | Source | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
-The options of a socket, and its addresses.
+Socket.Ctl: the options of a socket, read and set, and the addresses of
+its two ends.
 
 ## Members
 

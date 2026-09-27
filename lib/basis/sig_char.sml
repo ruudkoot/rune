@@ -45,7 +45,9 @@ sig
 
   (* The character with the largest code, `maxOrd`.
 
-     Law: `ord maxChar = maxOrd` *)
+     Law: `ord maxChar = maxOrd`
+
+     Example: `Char.ord Char.maxChar = 255` *)
   val maxChar : char
 
   (* The largest code of a character.

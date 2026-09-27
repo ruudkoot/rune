@@ -16,6 +16,9 @@
 structure Word8ArraySlice :> MONO_ARRAY_SLICE where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word
 ```
 
+Word8ArraySlice: stretches of [`Word8Array`](../str/Word8Array.md) arrays, without a copy: an
+update through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

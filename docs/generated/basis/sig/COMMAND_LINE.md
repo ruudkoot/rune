@@ -44,6 +44,8 @@ val name : unit -> string
 > **Implementation** `CommandLine.name/system`. What the operating system
 > passed to the program, which need not be a path that leads to it.
 
+**Example** `size (name ()) > 0 = true`
+
 <details><summary>Tests (2)</summary>
 
 For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `nonempty` &middot; `stable`

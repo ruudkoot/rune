@@ -19,7 +19,7 @@ structure Posix.FileSys : POSIX_FILE_SYS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.FileSys`](../str/Posix.FileSys.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.FileSys`](../str/Posix.FileSys.md) | Posix.FileSys: files and directories as POSIX has them: descriptors, opening, permissions, links and what [`stat`](#val-stat) reports. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Files and directories as POSIX has them: opening them, linking and
 removing them, and reading and setting what the system records about them.
@@ -39,7 +39,7 @@ conditions are the ones [`POSIX_ERROR`](../sig/POSIX_ERROR.md) names.
 > **Erratum** `POSIX_FILE_SYS/flexible-types`. The types are kept as the page
 > writes them. What the text says about them is checked in the suite rather
 > than written here: [`uid`](#type-uid), [`gid`](#type-gid) and [`file_desc`](#type-file_desc) are those of
-> [`Posix.ProcEnv`](../sig/POSIX.md#str-procenv), [`dirstream`](#type-dirstream) is [`OS.FileSys.dirstream`](../sig/OS_FILE_SYS.md#type-dirstream), and [`access_mode`](#type-access_mode)
+> [`Posix.ProcEnv`](../str/Posix.ProcEnv.md), [`dirstream`](#type-dirstream) is [`OS.FileSys.dirstream`](../sig/OS_FILE_SYS.md#type-dirstream), and [`access_mode`](#type-access_mode)
 > is [`OS.FileSys.access_mode`](../sig/OS_FILE_SYS.md#type-access_mode).
 
 > **Reading** `Posix.FileSys/empty-path-raises`. An empty path raises
@@ -169,7 +169,7 @@ end
 eqtype uid
 ```
 
-The type of the number that names a user, the one of [`Posix.ProcEnv`](../sig/POSIX.md#str-procenv).
+The type of the number that names a user, the one of [`Posix.ProcEnv`](../str/Posix.ProcEnv.md).
 
 ### <a name="type-gid"></a>`gid`
 
@@ -195,6 +195,8 @@ val fdToWord : file_desc -> SysWord.word
 
 `fdToWord fd` is the number the system knows `fd` by.
 
+**Example** `fdToWord stdout = 0w1`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-wordToFD` &middot; `distinct-descriptors`
@@ -208,6 +210,8 @@ val wordToFD : SysWord.word -> file_desc
 ```
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
+
+**Law** `fdToWord (wordToFD w) = w`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -243,6 +247,10 @@ val iodToFD : OS.IO.iodesc -> file_desc option
 
 `iodToFD iod` is `SOME` of the descriptor that `iod` is, or `NONE` when it is not one.
 
+**Law** `iodToFD (fdToIOD fd) = SOME fd`
+
+**Example** `iodToFD (fdToIOD stdin) = SOME stdin`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-fdToIOD` &middot; `stdout` &middot; `descriptor-of-a-stream`
@@ -255,7 +263,7 @@ For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis
 type dirstream
 ```
 
-The type of an open directory being read, the [`dirstream`](#type-dirstream) of [`OS.FileSys`](../sig/OS.md#str-filesys).
+The type of an open directory being read, the [`dirstream`](#type-dirstream) of [`OS.FileSys`](../str/OS.FileSys.md).
 
 ### <a name="val-opendir"></a>`opendir`
 
@@ -344,6 +352,8 @@ val getcwd : unit -> string
 `getcwd ()` is the current directory, as an absolute path.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if it cannot be found.
+
+**Example** `getcwd () = OS.FileSys.getDir ()`
 
 <details><summary>Tests (2)</summary>
 
@@ -924,6 +934,8 @@ val umask : S.mode -> S.mode
 > **Reading** `Posix.FileSys.umask/not-for-chmod`. The mask applies to files
 > that are created; [`chmod`](#val-chmod) sets what it is given, mask or no mask.
 
+**Example** `let val old = umask (S.flags [S.iwoth]) in umask old = S.flags [S.iwoth] end = true`, which puts the mask back as it was
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): umask returns the previous mask in C's code, untranslated, and the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions
@@ -976,7 +988,7 @@ val mkdir : string * S.mode -> unit
 
 > **Implementation** `Posix.FileSys.mkdir/shares-OS.FileSys`. [`rmdir`](#val-rmdir), [`chdir`](#val-chdir),
 > [`getcwd`](#val-getcwd), [`unlink`](#val-unlink), [`rename`](#val-rename), [`readlink`](#val-readlink), the directory streams and
-> [`access`](#val-access) are the functions of [`OS.FileSys`](../sig/OS.md#str-filesys) under the names of POSIX, and
+> [`access`](#val-access) are the functions of [`OS.FileSys`](../str/OS.FileSys.md) under the names of POSIX, and
 > [`mkdir`](#val-mkdir) differs from [`OS.FileSys.mkDir`](../sig/OS_FILE_SYS.md#val-mkdir) in the mode only.
 
 <details><summary>Other implementations (1)</summary>
@@ -1160,6 +1172,8 @@ val devToWord : dev -> SysWord.word
 
 `devToWord d` is the number of the device `d`.
 
+**Law** `devToWord (wordToDev w) = w`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-wordToDev` &middot; `same-device`
@@ -1195,6 +1209,8 @@ val inoToWord : ino -> SysWord.word
 ```
 
 `inoToWord i` is the number of the file `i`.
+
+**Law** `inoToWord (wordToIno w) = w`
 
 <details><summary>Tests (2)</summary>
 
@@ -1481,6 +1497,10 @@ val stat : string -> ST.stat
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
 
+**Example** `ST.isDir (stat "/") = true`
+
+**Example** `ST.isChr (stat "/dev/null") = true`
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `empty-string` (raises) &middot; `missing` (raises) &middot; `follows-a-link` &middot; `dangling-link` (raises)
@@ -1512,6 +1532,8 @@ val fstat : file_desc -> ST.stat
 `fstat fd` is what the system records about the file that `fd` is open on.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not open.
+
+**Example** `let val fd = openf ("/dev/null", O_RDONLY, O.flags []) in ST.isChr (fstat fd) before Posix.IO.close fd end = true`
 
 <details><summary>Tests (3)</summary>
 
@@ -1547,6 +1569,8 @@ val access : string * access_mode list -> bool
 An empty list asks only whether `p` names something.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the question cannot be answered.
+
+**Example** `access ("/", []) = true`
 
 <details><summary>Tests (5)</summary>
 

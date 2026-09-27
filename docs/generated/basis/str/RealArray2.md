@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 252 checks |
+| Tests | 254 checks |
 | Source | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure RealArray2 :> MONO_ARRAY2 where type vector = RealVector.vector where type elem = real
 ```
+
+RealArray2: two-dimensional arrays of reals, whose rows and columns are
+[`RealVector`](../str/RealVector.md) vectors.
 
 ## Members
 

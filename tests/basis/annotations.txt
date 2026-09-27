@@ -69,6 +69,11 @@ Real.rem/zero-by-zero | MLton | Real.rem (0.0, 0.0) is 0.0, not NaN
 Real.rem/law-sign-and-magnitude | MLton | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
 Real.fmt/*-negzero | MLton | another reading of the specification: SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
 Math.cosh/negInf | MLton | another reading of the specification: Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+Math.log10/powers-of-ten-exact | SML/NJ | another reading of the specification: log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+Math.log10/floor-of-a-thousand | SML/NJ | another reading of the specification: log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+Math.log10/powers-of-ten-exact | MLKit | another reading of the specification: log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+Math.log10/floor-of-a-thousand | MLKit | another reading of the specification: log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+Math.asin/near-*-accurate | SML/NJ | another reading of the specification: asin near 1 and ~1 is off by more than two ulps; the test takes the reading of Rune, a result within two ulps everywhere
 Real.nextAfter/equal-zeros-returns-r* | MLton | another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 Real.nextAfter/equal-zeros-returns-r* | Poly/ML | another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 Real.nextAfter/*Inf-towards-zero | Poly/ML | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
@@ -101,6 +106,9 @@ Math.pow/negzero-base-negative-odd | SML/NJ | Math.pow (~0.0, ~3.0) is posInf, n
 Math.*nh/negzero | SML/NJ | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
 Math.tanh/posInf | SML/NJ | Math.tanh posInf is NaN
 Math.tanh/large | SML/NJ | Math.tanh 1000.0 is NaN
+Real32.Math.*nh/negzero | SML/NJ | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0, and Real32.Math computes with them
+Real32.Math.tanh/posInf | SML/NJ | Math.tanh posInf is NaN, and Real32.Math computes with it
+Real32.Math.tan/negzero | SML/NJ | Math.tan (~0.0) is 0.0, not ~0.0, and Real32.Math computes with it
 Real.rem/*Inf-x | SML/NJ 110.99.9 | rem (±inf, y) is a zero, not NaN
 Real.rem/*zero-y | SML/NJ 110.99.9 | rem (x, ±0.0) is a zero, not NaN
 Real.*/Overflow-*above-maxInt | SML/NJ 110.99.9 (64-bit) | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
@@ -130,7 +138,9 @@ Real.toString/integral-* | MLKit | toString is C's %.12g with ".0" added to an i
 Real.toString/notation-* | MLKit | toString is C's %.12g: it chooses the notation by the exponent, not the shorter one ("10000000000.0", "0.000125")
 Real.toDecimal/negative-nan | MLKit | toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")
 Real.fromDecimal/*-nan | MLKit | fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
-Real.fromDecimal/TO_NEGINF-negative | MLKit | fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO_NEAREST: under TO_NEGINF {sign = true, digits = [1], exp = 0} is ~0.09999999999999999, not ~0.1
+Real.fromDecimal/TO_* | MLKit | fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO_NEAREST: under TO_NEGINF {sign = true, digits = [1], exp = 0} is ~0.09999999999999999, not ~0.1
+Real.toDecimal/TO_* | MLKit | toDecimal produces and checks its digits in the current rounding mode, where the specification asks for TO_NEAREST: under TO_POSINF the digits of 0.1 are 10000000000000001, not 1
+OS.Process.exit/[ks]* | MLKit | the status that OS.Process.system gives is success or failure (~1) and nothing else, so exit ends the child with 255 whatever the command ended with (docs/bugreport/mlkit/Unix.reap/status-lost)
 Math.l*/nan | MLKit | ln and log10 of a NaN are ~inf: ln tests r == 0.0 first, with an == that holds when neither < nor > does
 StringCvt.pad*/width-minInt | SML/NJ | padLeft and padRight raise Overflow for the smallest int (they compute i - | s | ) instead of returning s
 StringCvt.skipWS/wsx-* | SML/NJ | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
@@ -316,11 +326,12 @@ Posix.IO.setfl/[ak]* | SML/NJ | getfl returns no status flags and O_RDONLY whate
 Posix.IO.O.nonblock/setfl | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
 Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
 *IO.[gs]etOutstream/flushes* | MLton | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-*IO.StreamIO.canInput/determined-stream-does-not-block | MLton | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
-*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | MLton | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
-*IO.StreamIO.closeOut/terminated-closes-the-writer | MLton | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+*StreamIO.canInput/determined-stream-does-not-block | MLton | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+*StreamIO.closeIn/truncated-stream-closes-the-reader | MLton | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*StreamIO.closeOut/terminated-closes-the-writer | MLton | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 *IO.StreamIO.filePosIn/Io-truncated | MLton | filePosIn of a truncated stream raises nothing
-*IO.StreamIO.output1/Io-when-the-writer-fails | MLton | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+*StreamIO.output1/Io-when-the-writer-fails | MLton | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+OS.Process.exit/[ks]* | MLton | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
 *IO.[gs]etOutstream/flushes* | SML/NJ 110.99.9 | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 *IO.StreamIO.canInput/* | SML/NJ 110.99.9 | canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
 *IO.StreamIO.getReader/Io-* | SML/NJ 110.99.9 | getReader of a closed or truncated stream raises nothing
@@ -332,29 +343,35 @@ Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a lar
 *IO.setPosOut/* | SML/NJ 110.99.9 | setPosOut neither flushes nor moves the writer: output goes on at the end
 *.StreamIO.filePosIn/Io-closed | MLton | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 *PrimIO.*/readVec-Size-negative | MLton | another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+*PrimIO.*/readVec-Size-negative | MLKit | another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 IEEEReal.scan/huge-exponent | MLton | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IEEEReal.scan/huge-exponent | SML/NJ | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IEEEReal.scan/huge-exponent | Poly/ML | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
+IEEEReal.scan/huge-exponent | MLKit | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IntInf.pow/*one-to-minus-* | SML/NJ | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
+Real.fromLargeInt/TO_NEGINF-negative-rounds-down | SML/NJ | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+Real.fromLargeInt/TO_NEGINF-negative-rounds-down | MLKit | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 *.StreamIO.filePosIn/Io-closed | SML/NJ | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 *IO.input1/passes-an-end-of-stream | SML/NJ 110.99.9 | input1 never moves past an end-of-stream
 TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ 110.99.9 | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 *IO.[gs]etOutstream/flushes* | Poly/ML | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | Poly/ML | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*StreamIO.closeIn/truncated-stream-closes-the-reader | Poly/ML | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 *IO.StreamIO.input/Io-* | Poly/ML | input lets the exception of the reader through instead of raising Io with it as the cause
 *IO.inputAll/up-to-each-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
-*IO.StreamIO.inputAll/is-input-to-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
-*IO.StreamIO.inputN/allAndN-random-* | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
-*IO.StreamIO.inputN/exactly-n-before-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+*StreamIO.inputAll/is-input-to-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+*StreamIO.inputN/allAndN-random-* | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+*StreamIO.inputN/exactly-n-before-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+OS.Process.exit/keeps-the-exit-code-of-a-command | Poly/ML | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+Real32.Math.* | Poly/ML | where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos ~2.0, ln ~1.0, log10 ~1.0, pow (nan, 1.0)
 TextIO.StreamIO.outputSubstr/LINE_BUF | Poly/ML | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
 *IO.inputAll/file-grows-after-end-of-stream | MLKit | inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 *IO.input1/file-grows-after-end-of-stream | MLKit | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
 *IO.output1/Io-closed-stream-function | MLKit | output1 on a closed stream raises Io with function "output"
 *IO.[gs]etOutstream/flushes* | MLKit | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | MLKit | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
-*IO.StreamIO.closeOut/terminated-closes-the-writer | MLKit | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+*StreamIO.closeIn/truncated-stream-closes-the-reader | MLKit | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*StreamIO.closeOut/terminated-closes-the-writer | MLKit | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 *IO.StreamIO.filePosIn/Io-truncated | MLKit | filePosIn of a truncated stream raises nothing
-*IO.StreamIO.output1/Io-when-the-writer-fails | MLKit | output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+*StreamIO.output1/Io-when-the-writer-fails | MLKit | output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 *IO.inputN/more-than-maxSize-of-a-short-file | MLKit | another reading of the specification: inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE_IO puts it; the test takes STREAM_IO's reading, that Size is about the number of elements returned
 Socket.Ctl.setLINGER/negative | MLton | setLINGER takes a negative time without raising Time
 Socket.Ctl.setLINGER/too-large | MLton | setLINGER raises Overflow, not Time, for a time too large for the system

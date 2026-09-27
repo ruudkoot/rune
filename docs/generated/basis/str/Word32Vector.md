@@ -16,6 +16,8 @@
 structure Word32Vector :> MONO_VECTOR where type elem = Word32.word
 ```
 
+Word32Vector: immutable vectors of 32-bit words.
+
 The monomorphic vectors and arrays of Word32.word, their slices and the
 two-dimensional arrays (optional in the specification).
 

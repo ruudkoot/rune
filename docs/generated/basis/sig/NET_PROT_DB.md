@@ -19,7 +19,7 @@ structure NetProtDB : NET_PROT_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`NetProtDB`](../str/NetProtDB.md) |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetProtDB`](../str/NetProtDB.md) | NetProtDB: the protocol database of the system, `/etc/protocols` or whatever the machine is set up to use. | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The protocol database: turning the name of a network protocol into its
 number, and back.
@@ -86,6 +86,9 @@ val protocol : entry -> int
 
 `protocol e` is the number of the protocol.
 
+**Example** `Option.map protocol (getByName "tcp")` is `SOME 6` where
+`/etc/protocols` lists TCP.
+
 <details><summary>Tests (1)</summary>
 
 For `NetProtDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `udp`
@@ -113,6 +116,9 @@ val getByNumber : int -> entry option
 ```
 
 `getByNumber n` is `SOME` of what it records about the protocol numbered `n`, or `NONE`.
+
+**Example** `isSome (getByNumber ~1) = false`, for no protocol has that
+number.
 
 <details><summary>Tests (3)</summary>
 

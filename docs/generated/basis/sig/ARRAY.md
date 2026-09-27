@@ -359,6 +359,8 @@ val app : ('a -> unit) -> 'a array -> unit
 
 **Law** `app f arr = appi (fn (_, x) => f x) arr`
 
+**Example** `let val s = ref 0 in app (fn x => s := !s + x) (fromList [1, 2, 3]); !s end = 6`
+
 <details><summary>Tests (4)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `order` &middot; `empty` &middot; `array-unchanged` &middot; `model-*`

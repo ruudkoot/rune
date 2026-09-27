@@ -48,7 +48,8 @@ struct
         else W_EXITSTATUS (Word8.fromInt s)
       end
 
-    (* The flags of waitpid. WNOHANG is not one of them: waitpid_nh adds it.
+    (* Posix.Process.W: the flags of `waitpid`. WNOHANG is not one of them:
+       `waitpid_nh` adds it.
 
        Implements: BIT_FLAGS *)
     structure W =

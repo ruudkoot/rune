@@ -36,6 +36,8 @@ struct
     fun number s = case Int.fromString s of SOME n => n | NONE => 0
     fun word s = SysWord.fromInt (number s)
   in
+    (* Windows.Key: the rights to ask for when a key of the registry is
+       opened or created. *)
     structure Key =
     struct
       type flags = SysWord.word
@@ -62,6 +64,7 @@ struct
       fun anySet (a, b) = SysWord.andb (a, b) <> 0w0
     end
 
+    (* Windows.Reg: the keys and values of the registry. *)
     structure Reg =
     struct
       datatype hkey = KEY of int
@@ -138,6 +141,8 @@ struct
         in ignore (check (regSet (k, name, kind, data))) end
     end
 
+    (* Windows.Config: what the machine is: its version, its directories and
+       its name, and the user's. *)
     structure Config =
     struct
       (* VER_PLATFORM_* of winnt.h; Windows CE's is 3 *)
@@ -157,6 +162,7 @@ struct
       fun getUserName () = checkString (config 3)
     end
 
+    (* Windows.DDE: conversations with a program by Dynamic Data Exchange. *)
     structure DDE =
     struct
       datatype info = INFO of int
@@ -243,6 +249,7 @@ struct
             val s = waitFor pid
           in status := SOME s; s end
 
+    (* Windows.Status: the codes a process of Windows ends with. *)
     structure Status =
     struct
       type status = SysWord.word

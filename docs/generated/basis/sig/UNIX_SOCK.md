@@ -19,7 +19,7 @@ structure UnixSock : UNIX_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`UnixSock`](../str/UnixSock.md) |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`UnixSock`](../str/UnixSock.md) | UnixSock: the sockets of the Unix family, whose addresses are paths in the file system and which connect processes of one machine. | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Sockets of the Unix family: an address is a path in the file system, and
 the connection never leaves the machine.
@@ -106,6 +106,8 @@ val unixAF : Socket.AF.addr_family
 
 The address family of the Unix sockets, for [`Socket.familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) to give back.
 
+**Example** `Socket.AF.toString unixAF = "UNIX"`
+
 <details><summary>Tests (2)</summary>
 
 For `UnixSock`, in [tests/basis/inetsock\_unix.sml](../../../../tests/basis/inetsock_unix.sml): `named-UNIX` &middot; `fromString-UNIX`
@@ -119,6 +121,8 @@ val toAddr : string -> sock_addr
 ```
 
 `toAddr p` is the address of the socket at the path `p`.
+
+**Example** `Socket.familyOfAddr (toAddr "/tmp/s") = unixAF`
 
 <details><summary>Tests (3)</summary>
 

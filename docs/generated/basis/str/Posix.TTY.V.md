@@ -10,7 +10,8 @@
 | Tests | 22 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
-"Indices for the special control characters"
+Posix.TTY.V: the positions of the control characters, the "indices for
+the special control characters", and the array of them.
 
 ## Members
 

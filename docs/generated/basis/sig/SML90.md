@@ -105,6 +105,11 @@ exception Abs
 
 Raised where `abs` of the least integer would overflow.
 
+> **Implementation** `SML90.Abs/is-Overflow`. As in MLton and Poly/ML, [`Abs`](#exn-abs),
+> [`Quot`](#exn-quot), [`Prod`](#exn-prod), [`Neg`](#exn-neg), [`Sum`](#exn-sum), [`Diff`](#exn-diff), [`Floor`](#exn-floor) and [`Exp`](#exn-exp) are [`Overflow`](../sig/GENERAL.md#exn-overflow),
+> and [`Mod`](#exn-mod) is [`Div`](../sig/GENERAL.md#exn-div): the operations of the Library raise those, and a
+> handler for one of the old names catches them.
+
 <details><summary>Tests (1)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `is-Overflow`
@@ -328,6 +333,8 @@ val sqrt : real -> real
 
 **Raises** [`Sqrt`](#exn-sqrt) if `x` is negative.
 
+**Example** `((sqrt ~1.0; "root") handle Sqrt => "Sqrt") = "Sqrt"`
+
 <details><summary>Tests (3)</summary>
 
 For `SML90`, in [tests/basis/sml90.sml](../../../../tests/basis/sml90.sml): `4` &middot; `zero` &middot; `Sqrt-negative` (raises)
@@ -359,6 +366,8 @@ val ln : real -> real
 `ln x` is the natural logarithm of `x`.
 
 **Raises** [`Ln`](#exn-ln) if `x` is not positive.
+
+**Example** `((ln 0.0; "log") handle Ln => "Ln") = "Ln"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -617,6 +626,8 @@ val input : instream * int -> string
 ```
 
 `input (f, n)` is at most `n` characters read from `f`, and fewer at the end of the stream.
+
+**Law** `input (f, n) = ""` exactly when `end_of_stream f`, for `n > 0`
 
 **Raises** [`Io`](#exn-io) if the stream cannot be read.
 

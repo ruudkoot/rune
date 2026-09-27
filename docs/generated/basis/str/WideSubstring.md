@@ -16,6 +16,9 @@
 structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char
 ```
 
+WideSubstring: pieces of wide strings, taken apart and searched without a
+copy.
+
 ## Members
 
 What each means is on [`SUBSTRING`](../sig/SUBSTRING.md); the types are this structure's own.

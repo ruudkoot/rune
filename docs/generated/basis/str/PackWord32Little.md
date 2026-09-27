@@ -7,7 +7,7 @@
 | Signature | [`PACK_WORD`](../sig/PACK_WORD.md) |
 | Status | optional |
 | Members | 7 |
-| Tests | 26 checks |
+| Tests | 28 checks |
 | Source | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure PackWord32Little : PACK_WORD
 ```
+
+PackWord32Little: words of 32 bits as 4 bytes of [`Word8`](../str/Word8.md) vectors and
+arrays, the least significant byte first.
 
 ## Members
 

@@ -27,15 +27,15 @@ structure Posix.TTY.O : BIT_FLAGS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.FileSys.O`](../str/Posix.FileSys.O.md) | The flags of open and the bits of a mode, as words. "all represents the union of all flags", also those of the system that O does not name (O\_CLOEXEC, and O\_LARGEFILE, which getfl reports): the bits of a C int. fromWord keeps the bits of all, so that "toWord o fromWord" is "fn w =\> SysWord.andb (w, toWord all)". | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
-| [`Posix.FileSys.S`](../str/Posix.FileSys.S.md) |  | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
-| [`Posix.IO.FD`](../str/Posix.IO.FD.md) | The flags of a descriptor, as words; like the flags of open, all of them are the bits of a C int (Posix.FileSys.O). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
-| [`Posix.IO.O`](../str/Posix.IO.O.md) |  | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
-| [`Posix.Process.W`](../str/Posix.Process.W.md) | The flags of waitpid. WNOHANG is not one of them: waitpid\_nh adds it. | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
-| [`Posix.TTY.C`](../str/Posix.TTY.C.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| [`Posix.TTY.I`](../str/Posix.TTY.I.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| [`Posix.TTY.L`](../str/Posix.TTY.L.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
-| [`Posix.TTY.O`](../str/Posix.TTY.O.md) |  | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.FileSys.O`](../str/Posix.FileSys.O.md) | Posix.FileSys.O: the options that `openf` and `createf` take. | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| [`Posix.FileSys.S`](../str/Posix.FileSys.S.md) | Posix.FileSys.S: the permission bits of a file's mode, as a set of flags. | [lib/basis/posix\_filesys.sml](../../../../lib/basis/posix_filesys.sml) |
+| [`Posix.IO.FD`](../str/Posix.IO.FD.md) | Posix.IO.FD: the flags of a descriptor itself, of which close-on-exec is the one POSIX names. They are words; like the flags of open, all of them are the bits of a C int (Posix.FileSys.O). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| [`Posix.IO.O`](../str/Posix.IO.O.md) | Posix.IO.O: the flags of the open file that a descriptor is on, which are those of [`Posix.FileSys.O`](../str/Posix.FileSys.O.md). | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
+| [`Posix.Process.W`](../str/Posix.Process.W.md) | Posix.Process.W: the flags of `waitpid`. WNOHANG is not one of them: `waitpid_nh` adds it. | [lib/basis/posix\_process.sml](../../../../lib/basis/posix_process.sml) |
+| [`Posix.TTY.C`](../str/Posix.TTY.C.md) | Posix.TTY.C: the flags of the line: character size, parity, stop bits and the modem. | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.I`](../str/Posix.TTY.I.md) | Posix.TTY.I: the flags of what the terminal does with its input. | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.L`](../str/Posix.TTY.L.md) | Posix.TTY.L: the local flags: echo, canonical input and signals. | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY.O`](../str/Posix.TTY.O.md) | Posix.TTY.O: the flags of what the terminal does with its output. | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
 A set of flags held as the bits of a word: what every collection of system
 flags in [`POSIX`](../sig/POSIX.md) has in common.
@@ -50,8 +50,9 @@ does not name.
 [`toWord`](#val-toword) and [`fromWord`](#val-fromword) reach the word underneath, for a program that has
 to speak to something that is not SML.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
 - **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
 
 </details>
@@ -83,6 +84,12 @@ The type of a set of flags.
 
 Two are equal when they hold the same flags.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+
+</details>
+
 ### <a name="val-toword"></a>`toWord`
 
 ```sml
@@ -91,9 +98,12 @@ val toWord : flags -> SysWord.word
 
 `toWord fl` is the word whose bits are the flags of `fl`.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `Posix.FileSys.S.toWord Posix.FileSys.S.irwxu = 0wx1C0`
+
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; W.fromWord keeps the bits that are not in W.all
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
 
 </details>
 
@@ -119,10 +129,13 @@ val fromWord : SysWord.word -> flags
 > bits that no flag of this structure has included: such bits are dropped
 > rather than kept or refused.
 
-<details><summary>Other implementations (2)</summary>
+**Example** `let open Posix.FileSys.S in fromWord 0wx100 = irusr end = true`
+
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all)
 - **Poly/ML** &mdash; fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w =\> SysWord.andb (w, toWord all) and fromWord makes flags outside all
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
 
 </details>
 
@@ -148,6 +161,8 @@ Every flag the system uses here.
 > lets those survive a trip through [`fromWord`](#val-fromword) or a call that reads the
 > flags back from the system.
 
+**Example** `let open Posix.FileSys.S in allSet (irwxu, all) end = true`
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `union-of-all`
@@ -165,6 +180,12 @@ val flags : flags list -> flags
 `flags l` is the union of the sets of `l`: a flag is in it when it is in one of them.
 
 **Example** `let open Posix.FileSys.S in toWord (flags [irusr, iwusr]) end = 0wx180`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+
+</details>
 
 <details><summary>Tests (10)</summary>
 
@@ -186,6 +207,14 @@ val intersect : flags list -> flags
 
 The intersection of no sets at all is [`all`](#val-all).
 
+**Example** `let open Posix.FileSys.S in toWord (intersect [irwxu, flags [irusr, irgrp]]) end = 0wx100`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+
+</details>
+
 <details><summary>Tests (9)</summary>
 
 For `Posix.Process.W`, in [tests/basis/posix\_process.sml](../../../../tests/basis/posix_process.sml): `empty-is-all` &middot; `two`
@@ -203,6 +232,12 @@ val clear : flags * flags -> flags
 `clear (fl, gl)` is `gl` without the flags of `fl`.
 
 **Example** `let open Posix.FileSys.S in toWord (clear (irusr, irwxu)) end = 0wxC0`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+
+</details>
 
 <details><summary>Tests (9)</summary>
 
@@ -224,10 +259,11 @@ val allSet : flags * flags -> bool
 
 **Example** `let open Posix.FileSys.S in allSet (irwxu, irusr) end = false`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; W.allSet (fl1, fl2) tests whether fl2 is in fl1: the arguments are swapped
 - **MLton** &mdash; allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
 
 </details>
 
@@ -246,6 +282,14 @@ val anySet : flags * flags -> bool
 ```
 
 `anySet (fl, gl)` is `true` when some flag of `fl` is in `gl`.
+
+**Example** `let open Posix.FileSys.S in anySet (irusr, flags [irusr, iwgrp]) end = true`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+
+</details>
 
 <details><summary>Tests (6)</summary>
 

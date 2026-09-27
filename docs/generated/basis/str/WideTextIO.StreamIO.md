@@ -7,10 +7,12 @@
 | Signatures | none: it matches no signature of the library |
 | Status | required |
 | Members | 47 |
-| Tests | 3 checks |
+| Tests | 114 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
-TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings.
+WideTextIO.StreamIO: the functional streams of wide text under
+[`WideTextIO`](../str/WideTextIO.md), with the operations on lines and substrings of
+TEXT\_STREAM\_IO.
 
 ## Members
 

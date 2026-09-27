@@ -19,7 +19,7 @@ structure VectorSlice : VECTOR_SLICE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`VectorSlice`](../str/VectorSlice.md) | VectorSlice: a vector, a start index and a length. The -i functions pass the index in the slice. | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
+| [`VectorSlice`](../str/VectorSlice.md) | VectorSlice: stretches of vectors, without a copy: a vector, a start index and a length. The functions whose names end in `i` pass the index within the slice. | [lib/basis/vectorslice.sml](../../../../lib/basis/vectorslice.sml) |
 
 A stretch of a vector, without a copy of it: a base vector and a start and
 a length inside it.
@@ -93,6 +93,8 @@ val length : 'a slice -> int
 
 `length sl` is the number of elements of `sl`.
 
+**Example** `length (slice (Vector.fromList [1, 2, 3, 4], 1, SOME 2)) = 2`
+
 <details><summary>Tests (6)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `full` &middot; `middle` &middot; `NONE` &middot; `empty` &middot; `empty-vector` &middot; `model-*`
@@ -109,6 +111,8 @@ val sub : 'a slice * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
 
+**Example** `sub (slice (Vector.fromList [1, 2, 3], 1, NONE), 0) = 2`
+
 <details><summary>Tests (12)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-beyond-the-vector` (raises Subscript) &middot; `Subscript-before-the-vector` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `Subscript-full` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
@@ -124,6 +128,8 @@ val full : 'a Vector.vector -> 'a slice
 ```
 
 `full v` is the whole of `v` as a slice.
+
+**Example** `vector (full (Vector.fromList [1, 2])) = Vector.fromList [1, 2]`
 
 <details><summary>Tests (5)</summary>
 
@@ -198,6 +204,8 @@ val base : 'a slice -> 'a Vector.vector * int * int
 
 `base sl` is the triple of the vector that `sl` is a stretch of, where it starts in that vector, and how long it is.
 
+**Example** `base (slice (Vector.fromList [1, 2, 3], 1, SOME 1)) = (Vector.fromList [1, 2, 3], 1, 1)`
+
 <details><summary>Tests (4)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `middle` &middot; `empty` &middot; `round-trip` &middot; `model-*`
@@ -211,6 +219,8 @@ val vector : 'a slice -> 'a Vector.vector
 ```
 
 `vector sl` is a vector of the elements of `sl`, which is where the copy happens.
+
+**Example** `vector (slice (Vector.fromList [1, 2, 3], 1, NONE)) = Vector.fromList [2, 3]`
 
 <details><summary>Tests (6)</summary>
 
@@ -228,6 +238,8 @@ val concat : 'a slice list -> 'a Vector.vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen).
 
+**Example** `concat [full (Vector.fromList [1]), full (Vector.fromList [2, 3])] = Vector.fromList [1, 2, 3]`
+
 <details><summary>Tests (9)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `nil` &middot; `one` &middot; `empty-slices` &middot; `order` &middot; `same-slice-twice` &middot; `overlapping` &middot; `model-*` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
@@ -241,6 +253,8 @@ val isEmpty : 'a slice -> bool
 ```
 
 `isEmpty sl` is `true` when `sl` has no elements.
+
+**Example** `isEmpty (slice (Vector.fromList [1], 1, NONE)) = true`
 
 <details><summary>Tests (6)</summary>
 
@@ -282,6 +296,8 @@ val appi : (int * 'a -> unit) -> 'a slice -> unit
 > slice begins at in its base vector. The same holds for [`mapi`](#val-mapi),
 > [`foldli`](#val-foldli), [`foldri`](#val-foldri) and [`findi`](#val-findi).
 
+**Example** `let val s = ref [] in appi (fn (i, _) => s := i :: !s) (slice (Vector.fromList [0, 0, 0], 1, NONE)); !s end = [1, 0]`
+
 <details><summary>Tests (4)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `index-in-the-slice` &middot; `full` &middot; `empty` &middot; `model-*`
@@ -295,6 +311,8 @@ val app : ('a -> unit) -> 'a slice -> unit
 ```
 
 `app f sl` applies `f` to every element, from 0 up, for its effect.
+
+**Example** `let val s = ref 0 in app (fn x => s := !s + x) (full (Vector.fromList [1, 2])); !s end = 3`
 
 <details><summary>Tests (3)</summary>
 
@@ -310,6 +328,8 @@ val mapi : (int * 'a -> 'b) -> 'a slice -> 'b Vector.vector
 
 `mapi f sl` is the vector of the results of `f` on the index and the element of each position.
 
+**Example** `mapi (fn (i, x) => i + x) (slice (Vector.fromList [5, 6, 7], 1, NONE)) = Vector.fromList [6, 8]`
+
 <details><summary>Tests (4)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `index-in-the-slice` &middot; `empty` &middot; `order` &middot; `model-*`
@@ -323,6 +343,8 @@ val map : ('a -> 'b) -> 'a slice -> 'b Vector.vector
 ```
 
 `map f sl` is the vector of the results of `f` on each element, in order.
+
+**Example** `map (fn x => x + 1) (full (Vector.fromList [1, 2])) = Vector.fromList [2, 3]`
 
 <details><summary>Tests (7)</summary>
 
@@ -338,6 +360,8 @@ val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldli f init sl` combines the elements from the left, giving `f` the index as well.
 
+**Example** `foldli (fn (i, _, acc) => i :: acc) [] (slice (Vector.fromList [9, 9, 9], 1, NONE)) = [1, 0]`
+
 <details><summary>Tests (4)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
@@ -351,6 +375,8 @@ val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 ```
 
 `foldri f init sl` combines the elements from the right, giving `f` the index as well.
+
+**Example** `foldri (fn (i, _, acc) => i :: acc) [] (slice (Vector.fromList [9, 9, 9], 1, NONE)) = [0, 1]`
 
 <details><summary>Tests (4)</summary>
 
@@ -366,6 +392,8 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldl f init sl` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Example** `foldl (op ::) [] (full (Vector.fromList [1, 2])) = [2, 1]`
+
 <details><summary>Tests (5)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*` &middot; `long`
@@ -379,6 +407,8 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 ```
 
 `foldr f init sl` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Example** `foldr (op ::) [] (full (Vector.fromList [1, 2])) = [1, 2]`
 
 <details><summary>Tests (5)</summary>
 
@@ -396,6 +426,8 @@ val findi : (int * 'a -> bool) -> 'a slice -> (int * 'a) option
 
 `findi p sl` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`.
 
+**Example** `findi (fn (_, x) => x > 1) (full (Vector.fromList [1, 2, 3])) = SOME (1, 2)`
+
 <details><summary>Tests (9)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `not-before-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -409,6 +441,8 @@ val find : ('a -> bool) -> 'a slice -> 'a option
 ```
 
 `find p sl` is `SOME x` for the first element that satisfies `p`, or `NONE`.
+
+**Example** `find (fn x => x > 1) (full (Vector.fromList [1, 2, 3])) = SOME 2`
 
 <details><summary>Tests (7)</summary>
 
@@ -424,6 +458,8 @@ val exists : ('a -> bool) -> 'a slice -> bool
 
 `exists p sl` is `true` when some element satisfies `p`.
 
+**Example** `exists (fn x => x = 2) (full (Vector.fromList [1, 2])) = true`
+
 <details><summary>Tests (7)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `true` &middot; `false` &middot; `not-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -438,6 +474,8 @@ val all : ('a -> bool) -> 'a slice -> bool
 
 `all p sl` is `true` when every element satisfies `p`.
 
+**Example** `all (fn x => x > 1) (full (Vector.fromList [1, 2])) = false`
+
 <details><summary>Tests (7)</summary>
 
 For `VectorSlice`, in [tests/basis/vectorslice.sml](../../../../tests/basis/vectorslice.sml): `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*` &middot; `de-morgan-*`
@@ -451,6 +489,8 @@ val collate : ('a * 'a -> order) -> 'a slice * 'a slice -> order
 ```
 
 `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`.
+
+**Example** `collate Int.compare (full (Vector.fromList [1, 2]), full (Vector.fromList [1, 3])) = LESS`
 
 <details><summary>Tests (15)</summary>
 

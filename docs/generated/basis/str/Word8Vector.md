@@ -16,6 +16,9 @@
 structure Word8Vector : MONO_VECTOR where type elem = Word8.word
 ```
 
+Word8Vector: immutable vectors of bytes, what binary input and output read
+and write.
+
 ## Members
 
 What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this structure's own.

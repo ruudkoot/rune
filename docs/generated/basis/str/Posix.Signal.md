@@ -16,6 +16,8 @@
 structure Posix.Signal : POSIX_SIGNAL
 ```
 
+Posix.Signal: the signals of POSIX and their numbers.
+
 ## Members
 
 What each means is on [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md); the types are this structure's own.

@@ -17,7 +17,9 @@ structure TextIO : TEXT_IO
 structure TextIO : IMPERATIVE_IO
 ```
 
-TextIO: the imperative text streams (signature TEXT\_IO).
+TextIO: text files and the standard streams, read and written a
+character, a line or a string at a time: the imperative text streams of
+TEXT\_IO.
 
 ## Members
 

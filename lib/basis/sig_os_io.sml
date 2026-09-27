@@ -30,11 +30,18 @@ sig
      Posix.FileSys.stdin`.
 
      Pinned by: `OS.IO.hash/TextIO.stdIn-is-Posix-stdin`,
-     `OS.IO.compare/TextIO.stdIn-is-Posix-stdin` *)
+     `OS.IO.compare/TextIO.stdIn-is-Posix-stdin`
+
+     Law: `hash d = hash e` when `d = e` *)
   val hash : iodesc -> word
 
   (* `compare (d, e)` orders descriptors in some total order, which has no
-     meaning beyond that. *)
+     meaning beyond that.
+
+     Law: `compare (d, e) = EQUAL` exactly when `d = e`
+
+     Example: `let val d = Posix.FileSys.fdToIOD Posix.FileSys.stdin in
+     compare (d, d) end = EQUAL` *)
   val compare : iodesc * iodesc -> order
 
   (* What a descriptor is a descriptor of. The known kinds are the values of
@@ -57,7 +64,10 @@ sig
      `tty` exactly when `Posix.ProcEnv.isatty` says so, which is asked first:
      `/dev/null` is a `device`.
 
-     Pinned by: `OS.IO.Kind.*/dev-null` *)
+     Pinned by: `OS.IO.Kind.*/dev-null`
+
+     Example: `kind (Posix.FileSys.fdToIOD (Posix.FileSys.openf ("/dev/null",
+     Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags []))) = Kind.device` *)
   val kind : iodesc -> iodesc_kind
 
   (* The kinds of descriptor that every system knows. *)
@@ -94,10 +104,16 @@ sig
      `NONE` if `d` cannot be polled.
 
      Implementation: `OS.IO.pollDesc/always`. Every descriptor can be polled:
-     the answer is never `NONE`. *)
+     the answer is never `NONE`.
+
+     Example: `isSome (pollDesc (Posix.FileSys.fdToIOD Posix.FileSys.stdin)) =
+     true` *)
   val pollDesc : iodesc -> poll_desc option
 
-  (* `pollToIODesc pd` is the descriptor that `pd` was made from. *)
+  (* `pollToIODesc pd` is the descriptor that `pd` was made from.
+
+     Law: `pollToIODesc (valOf (pollDesc d)) = d`, and `pollToIODesc (pollIn
+     pd) = pollToIODesc pd` *)
   val pollToIODesc : poll_desc -> iodesc
 
   (* Raised by `pollIn`, `pollOut` and `pollPri` for a descriptor that does not
@@ -110,7 +126,9 @@ sig
   (* `pollIn pd` is `pd` with input added to the events to wait for: data to
      read, or the end of the stream.
 
-     Raises: `Poll` if the descriptor does not support input. *)
+     Raises: `Poll` if the descriptor does not support input.
+
+     Law: `pollIn (pollIn pd) = pollIn pd` *)
   val pollIn : poll_desc -> poll_desc
 
   (* `pollOut pd` is `pd` with output added to the events to wait for: room to
@@ -136,11 +154,12 @@ sig
      Raises: `OS.SysErr` if the operating system refuses the request.
 
      Reading: `OS.IO.poll/closed-SysErr`. The specification gives "one of the
-     file
-     descriptors refers to a closed file" as an example of what raises
+     file descriptors refers to a closed file" as an example of what raises
      `OS.SysErr`. The operating system itself reports such a descriptor as
      ready, so every descriptor is looked at before the wait, and a closed one
-     raises `OS.SysErr`. *)
+     raises `OS.SysErr`.
+
+     Example: `null (poll ([], SOME Time.zeroTime)) = true` *)
   val poll : poll_desc list * Time.time option -> poll_info list
 
   (* `isIn info` is `true` when the descriptor has input, or is at its end. *)

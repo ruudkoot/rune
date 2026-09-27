@@ -1,4 +1,7 @@
-(* Implements: MONO_ARRAY_SLICE where type vector = Word8Vector.vector where
+(* Word8ArraySlice: stretches of `Word8Array` arrays, without a copy: an
+   update through a slice changes the array.
+
+   Implements: MONO_ARRAY_SLICE where type vector = Word8Vector.vector where
    type vector_slice = Word8VectorSlice.slice where type array =
    Word8Array.array where type elem = Word8.word *)
 structure Word8ArraySlice :> MONO_ARRAY_SLICE where type vector = Word8Vector.vector where type vector_slice = Word8VectorSlice.slice where type array = Word8Array.array where type elem = Word8.word = RuneMonoArraySliceFn (structure V = Word8Vector structure A = Word8Array structure VS = Word8VectorSlice)

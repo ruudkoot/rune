@@ -199,6 +199,11 @@ struct
           val viaSubstructure =
             if sigName = "" then NONE else memberAt (index, sigPage sigName, bodyOf (index, sigName), head :: rest, x)
         in
+          (* a structure of a page of its own, `Real.Math` or `TextIO.StreamIO`,
+             leads to that page rather than to its line in a signature *)
+          case StringMap.find (#strPages index, String.concatWith "." (head :: rest @ [x])) of
+            SOME page => Target {page = page, anchor = ""}
+          | NONE =>
           case (viaSignature, viaStructure, viaSubstructure) of
             (SOME t, _, _) => Target t
           | (_, SOME t, _) => Target t

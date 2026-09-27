@@ -332,7 +332,7 @@ waits for nothing.
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+- **MLton, MLKit** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 
 </details>
 
@@ -340,7 +340,7 @@ waits for nothing.
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-a-wide-string`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `content` &middot; `readVec-pieces` &middot; `readVec-zero` &middot; `empty` &middot; `readVec-Size-negative` (raises) &middot; `readArr` &middot; `readArr-empty-slice` &middot; `chunkSize-positive` &middot; `avail` &middot; `readVecNB` &middot; `readVec-after-close` (raises) &middot; `readArr-after-close` (raises) &middot; `avail-after-close` (raises) &middot; `close-twice`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`, `WideTextPrimIO`: `content` &middot; `readVec-pieces` &middot; `readVec-zero` &middot; `empty` &middot; `readVec-Size-negative` (raises) &middot; `readArr` &middot; `readArr-empty-slice` &middot; `chunkSize-positive` &middot; `avail` &middot; `readVecNB` &middot; `readVec-after-close` (raises) &middot; `readArr-after-close` (raises) &middot; `avail-after-close` (raises) &middot; `close-twice`
 
 </details>
 
@@ -361,7 +361,7 @@ val nullRd : unit -> reader
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+- **MLton, MLKit** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 
 </details>
 
@@ -369,7 +369,7 @@ val nullRd : unit -> reader
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-nothing`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `always-at-end-of-stream` &middot; `readArr` &middot; `readVec-Size-negative` (raises) &middot; `readVecNB` &middot; `chunkSize-positive` &middot; `readVec-after-close` (raises) &middot; `close-twice` &middot; `independent`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`, `WideTextPrimIO`: `always-at-end-of-stream` &middot; `readArr` &middot; `readVec-Size-negative` (raises) &middot; `readVecNB` &middot; `chunkSize-positive` &middot; `readVec-after-close` (raises) &middot; `close-twice` &middot; `independent`
 
 </details>
 
@@ -391,7 +391,7 @@ val nullWr : unit -> writer
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `takes-everything`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `takes-everything` &middot; `writeVecNB` &middot; `chunkSize-positive` &middot; `writeVec-after-close` (raises) &middot; `close-twice`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`, `WideTextPrimIO`: `takes-everything` &middot; `writeVecNB` &middot; `chunkSize-positive` &middot; `writeVec-after-close` (raises) &middot; `close-twice`
 
 </details>
 
@@ -420,7 +420,7 @@ that are not reads are unchanged.
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `adds-what-the-reader-lacks`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `keeps-what-the-reader-has` &middot; `keeps-the-other-fields` &middot; `readVec-from-readArr` &middot; `readVec-from-block-and-readVecNB` &middot; `readVec-from-block-and-readArrNB` &middot; `readArr-from-readVec` &middot; `readArr-from-block-and-readArrNB` &middot; `readArr-from-block-and-readVecNB` &middot; `readVecNB-from-readArrNB` &middot; `readVecNB-from-canInput-and-readVec` &middot; `readVecNB-from-canInput-and-readArr` &middot; `readArrNB-from-readVecNB` &middot; `readArrNB-from-canInput-and-readVec` &middot; `no-readVecNB-from-readVec-alone` &middot; `no-readVec-from-readVecNB-alone`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`, `WideTextPrimIO`: `keeps-what-the-reader-has` &middot; `keeps-the-other-fields` &middot; `readVec-from-readArr` &middot; `readVec-from-block-and-readVecNB` &middot; `readVec-from-block-and-readArrNB` &middot; `readArr-from-readVec` &middot; `readArr-from-block-and-readArrNB` &middot; `readArr-from-block-and-readVecNB` &middot; `readVecNB-from-readArrNB` &middot; `readVecNB-from-canInput-and-readVec` &middot; `readVecNB-from-canInput-and-readArr` &middot; `readArrNB-from-readVecNB` &middot; `readArrNB-from-canInput-and-readVec` &middot; `no-readVecNB-from-readVec-alone` &middot; `no-readVec-from-readVecNB-alone`
 
 </details>
 
@@ -443,7 +443,7 @@ val augmentWriter : writer -> writer
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `adds-what-the-writer-lacks`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `keeps-what-the-writer-has` &middot; `keeps-the-other-fields` &middot; `writeVec-from-writeArr` &middot; `writeArr-from-writeVec` &middot; `writeVec-from-block-and-writeVecNB` &middot; `writeVec-from-block-and-writeArrNB` &middot; `writeArr-from-block-and-writeVecNB` &middot; `writeVecNB-from-writeArrNB` &middot; `writeVecNB-from-canOutput-and-writeVec` &middot; `writeArrNB-from-writeVecNB` &middot; `writeArrNB-from-canOutput-and-writeArr` &middot; `no-writeVecNB-from-writeVec-alone` &middot; `no-writeVec-from-writeVecNB-alone`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`, `WideTextPrimIO`: `keeps-what-the-writer-has` &middot; `keeps-the-other-fields` &middot; `writeVec-from-writeArr` &middot; `writeArr-from-writeVec` &middot; `writeVec-from-block-and-writeVecNB` &middot; `writeVec-from-block-and-writeArrNB` &middot; `writeArr-from-block-and-writeVecNB` &middot; `writeVecNB-from-writeArrNB` &middot; `writeVecNB-from-canOutput-and-writeVec` &middot; `writeArrNB-from-writeVecNB` &middot; `writeArrNB-from-canOutput-and-writeArr` &middot; `no-writeVecNB-from-writeVec-alone` &middot; `no-writeVec-from-writeVecNB-alone`
 
 </details>
 

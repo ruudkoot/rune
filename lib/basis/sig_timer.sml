@@ -28,7 +28,9 @@ sig
   (* The type of a wall-clock timer, a `Time.time` in the same way. *)
   type real_timer
 
-  (* `startCPUTimer ()` is a timer that counts processor time from now. *)
+  (* `startCPUTimer ()` is a timer that counts processor time from now.
+
+     Example: `Time.>= (#usr (checkCPUTimer (startCPUTimer ())), Time.zeroTime) = true` *)
   val startCPUTimer : unit -> cpu_timer
 
   (* `checkCPUTimes t` is the processor time since `t` was started, split into the collector's share and the rest.
@@ -74,13 +76,17 @@ sig
   (* `startRealTimer ()` is a timer that counts wall-clock time from now. *)
   val startRealTimer : unit -> real_timer
 
-  (* `checkRealTimer t` is the wall-clock time since `t` was started. *)
+  (* `checkRealTimer t` is the wall-clock time since `t` was started.
+
+     Example: `Time.>= (checkRealTimer (startRealTimer ()), Time.zeroTime) = true` *)
   val checkRealTimer : real_timer -> Time.time
 
   (* `totalRealTimer ()` is the wall-clock timer that was started when the program was.
 
      Implementation: `Timer.totalRealTimer/from-initialisation`. It counts
      from the moment the library was initialised, just before the program's
-     own code begins. *)
+     own code begins.
+
+     Example: `Time.>= (checkRealTimer (totalRealTimer ()), Time.zeroTime) = true` *)
   val totalRealTimer : unit -> real_timer
 end

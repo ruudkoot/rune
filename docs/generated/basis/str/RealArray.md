@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 190 checks |
+| Tests | 194 checks |
 | Source | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure RealArray :> MONO_ARRAY where type vector = RealVector.vector where type elem = real
 ```
+
+RealArray: mutable arrays of reals, a type of their own with identity
+equality, whose vectors are those of [`RealVector`](../str/RealVector.md).
 
 ## Members
 

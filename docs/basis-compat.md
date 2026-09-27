@@ -173,6 +173,7 @@ library of the 64-bit one):
 | `UnixSock` | yes | yes | yes | yes | |
 | `WideChar` | yes | yes | | | |
 | `WideCharArray` | yes | yes | | | |
+| `WideCharArray2` | yes | yes | | | |
 | `WideCharVector` | yes | yes | | | |
 | `WideString` | yes | yes | | | |
 | `WideSubstring` | yes | yes | | | |

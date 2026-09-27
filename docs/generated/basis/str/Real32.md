@@ -7,7 +7,7 @@
 | Signature | [`REAL`](../sig/REAL.md) |
 | Status | optional |
 | Members | 64 |
-| Tests | 147 checks |
+| Tests | 150 checks |
 | Source | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
 
 ## Synopsis
@@ -15,6 +15,8 @@
 ```sml
 structure Real32 :> REAL
 ```
+
+Real32: floating-point numbers of IEEE 754 single precision, binary32.
 
 > **Implementation** `Real32.real/binary32-in-a-double`. A [`Real32.real`](../sig/REAL.md#type-real) is
 > kept as a binary64 whose value is one of binary32: an operation computes
@@ -93,7 +95,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 | val | [`trunc`](../sig/REAL.md#val-trunc) | `Real32.real -> int` |
 | val | [`unordered`](../sig/REAL.md#val-unordered) | `Real32.real * Real32.real -> bool` |
 | val | [`~`](../sig/REAL.md#val-op-tilde) | `Real32.real -> Real32.real` |
-| structure | [`Math`](../str/Real32.Math.md) |  |
+| structure | [`Math`](../str/Real32.Math.md) | [`MATH`](../sig/MATH.md) |
 
 <details><summary>Other implementations (6)</summary>
 

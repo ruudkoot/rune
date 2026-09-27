@@ -423,6 +423,8 @@ val localOffset : unit -> Time.time
 > twenty-four hours; the suite accepts the offset in force now, or an hour
 > more, reduced modulo a day, west of UTC.
 
+**Example** `LargeInt.abs (Time.toSeconds (localOffset ())) <= 86400 = true`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ** &mdash; localOffset is east of UTC (110.79), or toTime reads UTC dates as local time (110.99.9), so it disagrees with the offset of fromTimeLocal

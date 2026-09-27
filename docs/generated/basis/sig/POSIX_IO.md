@@ -19,13 +19,13 @@ structure Posix.IO : POSIX_IO  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.IO`](../str/Posix.IO.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.IO`](../str/Posix.IO.md) | Posix.IO: reading, writing and controlling open descriptors: pipes, duplicates, positions, flags and locks. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 File descriptors: reading and writing them, duplicating them, positioning
 them, locking them, and turning them into readers and writers.
 
 A [`file_desc`](#type-file_desc) is the small number the system knows an open file by.
-[`Posix.FileSys`](../sig/POSIX.md#str-filesys) opens files and gives descriptors; this signature is what
+[`Posix.FileSys`](../str/Posix.FileSys.md) opens files and gives descriptors; this signature is what
 a program does with one afterwards.
 
 [`mkBinReader`](#val-mkbinreader) and the three like it bridge to the rest of the library:
@@ -152,7 +152,7 @@ The type of an open file descriptor.
 eqtype pid
 ```
 
-The type of the number that names a process, the one of [`Posix.Process`](../sig/POSIX.md#str-process).
+The type of the number that names a process, the one of [`Posix.Process`](../str/Posix.Process.md).
 
 ### <a name="val-pipe"></a>`pipe`
 
@@ -163,6 +163,8 @@ val pipe : unit -> {infd : file_desc, outfd : file_desc}
 `pipe ()` is a pair of descriptors: what is written to `outfd` can be read from `infd`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if no pipe can be made.
+
+**Example** `let val {infd, outfd} = pipe () in ignore (writeVec (outfd, Word8VectorSlice.full (Byte.stringToBytes "hi"))); Byte.bytesToString (readVec (infd, 2)) end = "hi"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -228,6 +230,8 @@ val close : file_desc -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` was not open.
 
+**Example** `((close (Posix.FileSys.wordToFD 0w999); "closed") handle OS.SysErr _ => "SysErr") = "SysErr"`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `then-read` (raises) &middot; `then-write` (raises) &middot; `other-end-sees-end-of-stream`
@@ -246,6 +250,8 @@ A shorter vector than `n` means only that less was there; the empty
 vector means the end of the file.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`; [`OS.SysErr`](../sig/OS.md#exn-syserr) if the read fails.
+
+**Example** `((readVec (Posix.FileSys.stdin, ~1); "read") handle Size => "Size") = "Size"`
 
 <details><summary>Tests (7)</summary>
 
@@ -572,6 +578,8 @@ val lseek : file_desc * Position.int * whence
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` cannot be positioned -- a pipe, a socket or
 a terminal.
 
+**Example** `let val {infd, ...} = pipe () in (lseek (infd, 0, SEEK_SET); "moved") handle OS.SysErr _ => "SysErr" end = "SysErr"`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.IO`, in [tests/basis/posix\_io.sml](../../../../tests/basis/posix_io.sml): `current-position` &middot; `then-write` &middot; `beyond-the-end`
@@ -676,6 +684,8 @@ val ltype : flock -> lock_type
 ```
 
 `ltype fl` is the kind of lock `fl` describes.
+
+**Law** `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = t`, and likewise for the other fields
 
 <details><summary>Other implementations (1)</summary>
 

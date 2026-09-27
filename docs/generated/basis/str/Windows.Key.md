@@ -10,6 +10,9 @@
 | Tests | 18 checks |
 | Source | [lib/basis/windows.sml](../../../../lib/basis/windows.sml) |
 
+Windows.Key: the rights to ask for when a key of the registry is
+opened or created.
+
 ## Members
 
 What each means is on [`WINDOWS`](../sig/WINDOWS.md) and [`BIT_FLAGS`](../sig/BIT_FLAGS.md); the types are this structure's own.

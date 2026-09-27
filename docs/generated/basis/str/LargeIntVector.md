@@ -16,8 +16,11 @@
 structure LargeIntVector :> MONO_VECTOR where type elem = LargeInt.int
 ```
 
-The monomorphic vectors and arrays of LargeInt.int (IntInf.int), their
-slices and the two-dimensional arrays (optional in the specification).
+LargeIntVector: immutable vectors of integers of any size.
+
+The vectors, arrays, slices and two-dimensional arrays of LargeInt.int, which
+is IntInf.int (optional in the specification). An element is an integer
+without bounds, so these hold what no vector of a fixed-width integer can.
 
 ## Members
 

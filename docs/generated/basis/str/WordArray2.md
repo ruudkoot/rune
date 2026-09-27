@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 252 checks |
+| Tests | 253 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure WordArray2 :> MONO_ARRAY2 where type vector = WordVector.vector where type elem = word
 ```
+
+WordArray2: two-dimensional arrays of words, whose rows and columns are
+[`WordVector`](../str/WordVector.md) vectors.
 
 ## Members
 

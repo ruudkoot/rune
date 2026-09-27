@@ -109,6 +109,12 @@ exception SysErr of string * syserror option
 
 Raised when the system refuses an operation: the message it gave, and the condition when there is one.
 
+When the condition `e` is there, the message is `errorMsg e`: the
+specification asks for exactly that, so a program can show the message
+and still act on the condition.
+
+**Example** `((FileSys.remove "/no/such/file"; "removed") handle SysErr (_, SOME e) => errorName e) = "noent"`
+
 <details><summary>Tests (17)</summary>
 
 For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `carries-message` &middot; `is-raised` (raises) &middot; `is-not-Fail` &middot; `syserror-option-type` &middot; `cause-of-failed-open` &middot; `failed-open-has-syserror` &middot; `carries-syserror`
@@ -124,6 +130,8 @@ val errorMsg : syserror -> string
 ```
 
 `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+**Example** `errorMsg (valOf (syserror "noent")) = "No such file or directory"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -148,7 +156,7 @@ val errorName : syserror -> string
 `errorName e` is a short name for `e`, meant for a program.
 
 > **Implementation** `OS.errorName/posix-names`. The names are those of
-> [`Posix.Error`](../sig/POSIX.md#str-error), lower case and without the `E`: `"noent"` rather than
+> [`Posix.Error`](../str/Posix.Error.md), lower case and without the `E`: `"noent"` rather than
 > `"ENOENT"`. An error that POSIX has no name for is called `error` and
 > its number, `"error9999"`, which [`syserror`](#val-syserror) reads back.
 
@@ -180,6 +188,10 @@ val syserror : string -> syserror option
 > as: one condition gives one error and one name, whichever function met
 > it, and different conditions have different names, so [`syserror`](#val-syserror) and
 > [`errorName`](#val-errorname) invert each other.
+
+**Law** `syserror (errorName e) = SOME e`
+
+**Example** `syserror "no-such-error" = NONE`
 
 <details><summary>Tests (7)</summary>
 

@@ -16,6 +16,8 @@
 structure Word64Vector :> MONO_VECTOR where type elem = Word64.word
 ```
 
+Word64Vector: immutable vectors of 64-bit words.
+
 The vectors, arrays, slices and two-dimensional arrays of Word64 (optional
 in the specification). Word64.word is a type of its own, so these are their own
 structures and not those of Word.

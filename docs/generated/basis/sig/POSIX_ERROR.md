@@ -19,7 +19,7 @@ structure Posix.Error : POSIX_ERROR  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.Error`](../str/Posix.Error.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Error`](../str/Posix.Error.md) | Posix.Error: the conditions a failing call reports, with their names and numbers. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The conditions the system reports when a call fails, and their names.
 
@@ -35,7 +35,7 @@ may give [`exist`](#val-exist) or [`notempty`](#val-notempty), and a system may 
 here covers. [`errorName`](#val-errorname) names those too.
 
 > **Erratum** `POSIX_ERROR.syserror/spec-writes-OS.Process`. The
-> page writes `eqtype syserror = OS.Process.syserror`; [`OS.Process`](../sig/OS.md#str-process) has no
+> page writes `eqtype syserror = OS.Process.syserror`; [`OS.Process`](../str/OS.Process.md) has no
 > such type, the description says it "is identical to the type
 > [`OS.syserror`](../sig/OS.md#val-syserror)", and `eqtype t = ty` is not a specification SML allows. It
 > is written `type syserror = OS.syserror`, which admits equality.
@@ -121,6 +121,10 @@ val toWord : syserror -> SysWord.word
 
 `toWord e` is the number the system gives `e`, its `errno` value.
 
+The numbers are the system's: POSIX fixes the names, not the numbers.
+
+**Example** `toWord noent = 0w2` on Linux and macOS
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `distinct-words` &middot; `nonzero`
@@ -135,6 +139,8 @@ val fromWord : SysWord.word -> syserror
 
 `fromWord w` is the condition whose `errno` value is `w`.
 
+**Law** `fromWord (toWord e) = e`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `no-validation` &middot; `of-toWord`
@@ -148,6 +154,10 @@ val errorMsg : syserror -> string
 ```
 
 `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+It is `OS.errorMsg e`, the message of an [`OS.SysErr`](../sig/OS.md#exn-syserr) that carries `e`.
+
+**Example** `errorMsg noent = "No such file or directory"`
 
 <details><summary>Other implementations (1)</summary>
 

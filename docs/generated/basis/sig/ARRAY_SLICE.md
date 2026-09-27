@@ -395,6 +395,8 @@ val app : ('a -> unit) -> 'a slice -> unit
 
 **Law** `app f sl = appi (f o #2) sl`
 
+**Example** `let val s = ref 0 in app (fn x => s := !s + x) (slice (Array.fromList [1, 2, 3], 1, NONE)); !s end = 5`
+
 <details><summary>Tests (4)</summary>
 
 For `ArraySlice`, in [tests/basis/arrayslice.sml](../../../../tests/basis/arrayslice.sml): `order` &middot; `empty` &middot; `array-unchanged` &middot; `model-*`

@@ -16,6 +16,9 @@
 structure OS.Path : OS_PATH
 ```
 
+OS.Path: paths as text, taken apart into arcs and put together, in the
+syntax of Unix.
+
 ## Members
 
 What each means is on [`OS_PATH`](../sig/OS_PATH.md); the types are this structure's own.

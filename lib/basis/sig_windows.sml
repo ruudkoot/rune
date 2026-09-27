@@ -41,7 +41,9 @@ sig
        Windows add; the others are the `KEY_*` values of Windows.
 
        Pinned by: `Windows.Key.allAccess/union`, `Windows.Key.read/union`,
-       `Windows.Key.write/union` *)
+       `Windows.Key.write/union`
+
+       Example: `Key.allSet (Key.read, Key.allAccess) = true` *)
     val allAccess : flags
 
     (* The right to make a symbolic link; the rest of the structure makes none. *)

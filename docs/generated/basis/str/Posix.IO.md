@@ -16,6 +16,9 @@
 structure Posix.IO : POSIX_IO
 ```
 
+Posix.IO: reading, writing and controlling open descriptors: pipes,
+duplicates, positions, flags and locks.
+
 ## Members
 
 What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this structure's own.

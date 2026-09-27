@@ -16,6 +16,9 @@
 structure Posix.Process : POSIX_PROCESS
 ```
 
+Posix.Process: making, running, waiting for, signalling and ending
+processes.
+
 ## Members
 
 What each means is on [`POSIX_PROCESS`](../sig/POSIX_PROCESS.md); the types are this structure's own.

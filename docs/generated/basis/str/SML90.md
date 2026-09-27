@@ -73,6 +73,13 @@ What each means is on [`SML90`](../sig/SML90.md); the types are this structure's
 > longer among the specification's pages; it is transcribed from MLton's
 > library, which follows it, in the order the page had.
 
+### Abs
+
+> **Implementation** `SML90.Abs/is-Overflow`. As in MLton and Poly/ML, [`Abs`](../sig/SML90.md#exn-abs),
+> [`Quot`](../sig/SML90.md#exn-quot), [`Prod`](../sig/SML90.md#exn-prod), [`Neg`](../sig/SML90.md#exn-neg), [`Sum`](../sig/SML90.md#exn-sum), [`Diff`](../sig/SML90.md#exn-diff), [`Floor`](../sig/SML90.md#exn-floor) and [`Exp`](../sig/SML90.md#exn-exp) are [`Overflow`](../sig/GENERAL.md#exn-overflow),
+> and [`Mod`](../sig/SML90.md#exn-mod) is [`Div`](../sig/GENERAL.md#exn-div): the operations of the Library raise those, and a
+> handler for one of the old names catches them.
+
 ### Interrupt
 
 > **Limitation** `SML90.Interrupt/never-raised`. It is declared and nothing

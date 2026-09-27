@@ -167,7 +167,9 @@ sig
 
      Pinned by: `*IO.StreamIO.output/Io-closed`,
      `*IO.StreamIO.output/Io-terminated`,
-     `*IO.StreamIO.output/Io-terminated-writes-nothing` *)
+     `*IO.StreamIO.output/Io-terminated-writes-nothing`
+
+     Example: `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in output (out, Byte.stringToBytes "hi"); closeOut out; Byte.bytesToString (BinIO.inputAll (BinIO.openIn p)) before OS.FileSys.remove p end = "hi"` *)
   val output : outstream * vector -> unit
 
   (* `output1 (f, x)` writes the single element `x`.
@@ -286,7 +288,9 @@ sig
 
   (* `getBufferMode f` is the mode `f` holds back by.
 
-     Law: `getBufferMode (mkOutstream (wr, mode)) = mode` *)
+     Law: `getBufferMode (mkOutstream (wr, mode)) = mode`
+
+     Example: `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in getBufferMode out before (closeOut out; OS.FileSys.remove p) end = IO.BLOCK_BUF` *)
   val getBufferMode : outstream -> IO.buffer_mode
 
   (* `mkOutstream (wr, mode)` is a stream that writes through `wr`, holding back what `mode` says.

@@ -19,7 +19,7 @@ structure Socket : SOCKET  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Socket`](../str/Socket.md) |  | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
+| [`Socket`](../str/Socket.md) | Socket: sockets of every family: addresses, options, connecting, listening, sending and receiving, and waiting for several at once. | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
 Sockets: connections between processes, on one machine or across a
 network.
@@ -259,6 +259,8 @@ val toString : addr_family -> string
 
 `toString af` is the name of `af`.
 
+**Example** `AF.toString INetSock.inetAF = "INET"`
+
 <details><summary>Tests (2)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inet` &middot; `unix`
@@ -276,6 +278,8 @@ val fromString : string -> addr_family option
 > **Reading** `Socket.AF.fromString/without-the-prefix`. A name is the C
 > constant without its leading `"AF_"`: `"INET"` and `"UNIX"`, so
 > `"AF_INET"` gives `NONE`.
+
+**Law** `AF.fromString (AF.toString af) = SOME af`
 
 <details><summary>Tests (6)</summary>
 
@@ -345,6 +349,8 @@ val toString : sock_type -> string
 
 `toString st` is the name of `st`.
 
+**Example** `SOCK.toString SOCK.stream = "STREAM"`
+
 <details><summary>Tests (2)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `stream` &middot; `dgram`
@@ -358,6 +364,8 @@ val fromString : string -> sock_type option
 ```
 
 `fromString s` is `SOME` of the kind called `s`, or `NONE`.
+
+**Law** `SOCK.fromString (SOCK.toString st) = SOME st`
 
 <details><summary>Tests (5)</summary>
 
@@ -653,6 +661,8 @@ val getTYPE : ('af, 'sock_type) sock -> SOCK.sock_type
 
 `getTYPE sock` is the kind of socket that `sock` is.
 
+**Example** `let val s = INetSock.TCP.socket () in Ctl.getTYPE s = SOCK.stream before close s end = true`
+
 <details><summary>Tests (5)</summary>
 
 For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `tcp` &middot; `udp` &middot; `unix-stream` &middot; `unix-dgram` &middot; `closed`
@@ -777,6 +787,8 @@ val familyOfAddr : 'af sock_addr -> AF.addr_family
 ```
 
 `familyOfAddr a` is the address family that `a` belongs to.
+
+**Example** `familyOfAddr (INetSock.any 0) = INetSock.inetAF`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -944,6 +956,8 @@ val shutdown : ('af, 'mode stream) sock * shutdown_mode -> unit
 > for sending sees the end of its stream, after everything sent before it
 > has arrived.
 
+**Example** `let val (a, b) = UnixSock.Strm.socketPair () in shutdown (a, NO_SENDS); Word8Vector.length (recvVec (b, 10)) end = 0`
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `NO_SENDS-peer-sees-the-end` &middot; `unix-NO_SENDS` &middot; `not-connected` (raises) &middot; `closed` (raises)
@@ -1002,6 +1016,8 @@ A `timeout` of `NONE` waits as long as it must.
 
 > **Implementation** `Socket.select/is-poll`. It is [`OS.IO.poll`](../sig/OS_IO.md#val-poll), so a
 > negative timeout is refused rather than taken to mean "no timeout".
+
+**Example** `null (#rds (select {rds = [], wrs = [], exs = [], timeout = SOME Time.zeroTime})) = true`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1075,6 +1091,8 @@ val sendVec : ('af, active stream) sock * Word8VectorSlice.slice -> int
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected, or the other end has
 gone.
+
+**Example** `let val (a, b) = UnixSock.Strm.socketPair () in ignore (sendVec (a, Word8VectorSlice.full (Byte.stringToBytes "hi"))); Byte.bytesToString (recvVec (b, 2)) end = "hi"`
 
 <details><summary>Tests (6)</summary>
 
@@ -1204,13 +1222,14 @@ val recvVec : ('af, active stream) sock * int -> Word8Vector.vector
 
 The empty vector means that the other end has finished sending.
 
-**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected.
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected; [`Size`](../sig/GENERAL.md#exn-size) if `n` is
+negative or more than [`Word8Vector.maxLen`](../sig/MONO_VECTOR.md#val-maxlen).
 
 > **Reading** `Socket.recvVec/zero-returns-at-once`. "If `n` is 0 the empty
 > vector is returned": it is returned at once, without waiting for
 > anything, where the system's own call would wait.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n` is negative or more than [`Word8Vector.maxLen`](../sig/MONO_VECTOR.md#val-maxlen).
+**Example** `let val (a, _) = UnixSock.Strm.socketPair () in Word8Vector.length (recvVec (a, 0)) end = 0`
 
 <details><summary>Other implementations (1)</summary>
 

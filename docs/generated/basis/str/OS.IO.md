@@ -16,8 +16,9 @@
 structure OS.IO : OS_IO
 ```
 
-A descriptor is the system's own file descriptor, wrapped in a
-constructor that the signature does not name.
+OS.IO: the descriptors of what the system has opened for the program,
+and waiting until they are ready. A descriptor is the system's own file
+descriptor, wrapped in a constructor that the signature does not name.
 
 ## Members
 
@@ -79,8 +80,7 @@ What each means is on [`OS_IO`](../sig/OS_IO.md); the types are this structure's
 ### poll
 
 > **Reading** `OS.IO.poll/closed-SysErr`. The specification gives "one of the
-> file
-> descriptors refers to a closed file" as an example of what raises
+> file descriptors refers to a closed file" as an example of what raises
 > [`OS.SysErr`](../sig/OS.md#exn-syserr). The operating system itself reports such a descriptor as
 > ready, so every descriptor is looked at before the wait, and a closed one
 > raises [`OS.SysErr`](../sig/OS.md#exn-syserr).

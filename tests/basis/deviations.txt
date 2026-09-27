@@ -127,6 +127,11 @@ native:mlton@* | Real.rem/zero-by-zero | HOST-BUG | Real.rem (0.0, 0.0) is 0.0, 
 native:mlton@* | Real.rem/law-sign-and-magnitude | HOST-BUG | Real.rem computes x - n*y in floating point: rem (1.5E12, 3.1E~10) = 2.44140625E~4, larger than y
 native:mlton@* | Real.fmt/*-negzero | SPEC-AMBIGUOUS | SCI, FIX and GEN print ~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "~0.0"
 native:mlton@* | Math.cosh/negInf | SPEC-AMBIGUOUS | Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+native:smlnj*@* | Math.log10/powers-of-ten-exact | SPEC-AMBIGUOUS | log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+native:smlnj*@* | Math.log10/floor-of-a-thousand | SPEC-AMBIGUOUS | log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+native:mlkit@* | Math.log10/powers-of-ten-exact | SPEC-AMBIGUOUS | log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+native:mlkit@* | Math.log10/floor-of-a-thousand | SPEC-AMBIGUOUS | log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+native:smlnj*@* | Math.asin/near-*-accurate | SPEC-AMBIGUOUS | asin near 1 and ~1 is off by more than two ulps; the test takes the reading of Rune, a result within two ulps everywhere
 native:mlton@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 native:polyml@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 native:polyml@* | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
@@ -164,6 +169,9 @@ native:smlnj*@* | Real.fromString/leading-whitespace | HOST-BUG | scan skips onl
 *:smlnj*@* | Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0
 *:smlnj*@* | Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN
 *:smlnj*@* | Math.tanh/large | HOST-BUG | Math.tanh 1000.0 is NaN
+*:smlnj*@* | Real32.Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0, and Real32.Math computes with them
+*:smlnj*@* | Real32.Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN, and Real32.Math computes with it
+*:smlnj*@* | Real32.Math.tan/negzero | HOST-BUG | Math.tan (~0.0) is 0.0, not ~0.0, and Real32.Math computes with it
 *:smlnj*@110.99.9 | Real.*/law-* | HOST-FLAKY | on a loaded machine (32 runs at once) about one run in ten gets a result wrong in the last bits: fromManExp (toManExp x) differs from x for x = ~9.69494874253E272; never seen alone
 *:smlnj@110.99.9 | Math.*/law-* | HOST-FLAKY | as the Real laws: Math.ln/law-product-is-sum failed once in a full matrix run and not since
 native:smlnj*@110.99.9 | Real.rem/*Inf-x | HOST-BUG | rem (±inf, y) is a zero, not NaN
@@ -200,7 +208,9 @@ native:mlkit@* | Real.toString/integral-* | HOST-BUG | toString is C's %.12g wit
 native:mlkit@* | Real.toString/notation-* | HOST-BUG | toString is C's %.12g: it chooses the notation by the exponent, not the shorter one ("10000000000.0", "0.000125")
 native:mlkit@* | Real.toDecimal/negative-nan | HOST-BUG | toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")
 native:mlkit@* | Real.fromDecimal/*-nan | HOST-BUG | fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
-native:mlkit@* | Real.fromDecimal/TO_NEGINF-negative | HOST-BUG | fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO_NEAREST: under TO_NEGINF {sign = true, digits = [1], exp = 0} is ~0.09999999999999999, not ~0.1
+native:mlkit@* | Real.fromDecimal/TO_* | HOST-BUG | fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO_NEAREST: under TO_NEGINF {sign = true, digits = [1], exp = 0} is ~0.09999999999999999, not ~0.1
+native:mlkit@* | Real.toDecimal/TO_* | HOST-BUG | toDecimal produces and checks its digits in the current rounding mode, where the specification asks for TO_NEAREST: under TO_POSINF the digits of 0.1 are 10000000000000001, not 1
+*:mlkit@* | OS.Process.exit/[ks]* | HOST-BUG | the status that OS.Process.system gives is success or failure (~1) and nothing else, so exit ends the child with 255 whatever the command ended with (docs/bugreport/mlkit/Unix.reap/status-lost)
 *:mlkit@* | Math.l*/nan | HOST-BUG | ln and log10 of a NaN are ~inf: ln tests r == 0.0 first, with an == that holds when neither < nor > does
 
 # ---- StringCvt
@@ -406,6 +416,7 @@ xc1:smlnj32@* | Posix.Process.kill/term | WIDTH | the check waits for the child 
 xc1:smlnj32@* | Posix.Process.K_*/* | WIDTH | the check waits for the child with a deadline (C.appears, C.stopped), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.Process.pause/until-* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.Process.exit/[szn]* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
+xc1:smlnj32@* | OS.Process.exit/[ks]* | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.Process.waitpid_nh/ended-child | WIDTH | the check waits for the child with a deadline (C.waitBounded), and Time.now gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.Process.waitpid_nh/no-child | WIDTH | no exception: children of earlier checks are left to wait for, because those checks raised Overflow before they reaped them (a deadline from Time.now, microseconds since 1970 in an int of 31 bits)
 xc1:smlnj32@* | Posix.Process.sleep/* | WIDTH | the check times sleep with Time.now, which gives microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
@@ -526,11 +537,13 @@ xc1:mlkit@* | Posix.IO.mkBinWriter/append-mode | HOST-BUG | O codes the flags of
 # Rune
 # MLton
 native:mlton@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-native:mlton@* | *IO.StreamIO.canInput/determined-stream-does-not-block | HOST-BUG | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
-native:mlton@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
-native:mlton@* | *IO.StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+native:mlton@* | *StreamIO.canInput/determined-stream-does-not-block | HOST-BUG | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
+native:mlton@* | *StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:mlton@* | *StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 native:mlton@* | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
-native:mlton@* | *IO.StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+native:mlton@* | *StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+native:mlton@* | ImperativeIO.input1/passes-an-end-of-stream | HOST-BUG | the input1 of a stream of the functor ImperativeIO does not move past an end-of-stream: after NONE the next input1 gives NONE again, not what follows ("the input stream should be positioned after the end-of-stream")
+native:mlton@* | OS.Process.exit/[ks]* | HOST-BUG | exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
 # SML/NJ
 native:smlnj*@110.99.9 | @load/io_primio* | HOST-BUG | the avail field of TextPrimIO.RD and BinPrimIO.RD has the type unit -> Position.int option, not unit -> int option, so that neither structure matches PRIM_IO
 native:smlnj*@110.99.9 | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
@@ -544,30 +557,38 @@ native:smlnj*@110.99.9 | *IO.StreamIO.output*/Io-terminated* | HOST-BUG | output
 native:smlnj*@110.99.9 | *IO.setPosOut/* | HOST-BUG | setPosOut neither flushes nor moves the writer: output goes on at the end
 native:mlton@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 native:mlton@* | *PrimIO.*/readVec-Size-negative | SPEC-AMBIGUOUS | a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+native:mlkit@* | *PrimIO.*/readVec-Size-negative | SPEC-AMBIGUOUS | a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 native:mlton@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:smlnj*@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:polyml@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
+native:mlkit@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:smlnj*@* | IntInf.pow/*one-to-minus-* | HOST-BUG | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
+native:smlnj*@* | Real.fromLargeInt/TO_NEGINF-negative-rounds-down | HOST-BUG | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+native:mlkit@* | Real.fromLargeInt/TO_NEGINF-negative-rounds-down | HOST-BUG | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 native:smlnj*@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 native:smlnj*@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
 native:smlnj*@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 # Poly/ML
 native:polyml@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-native:polyml@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:polyml@* | *StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 native:polyml@* | *IO.StreamIO.input/Io-* | HOST-BUG | input lets the exception of the reader through instead of raising Io with it as the cause
 native:polyml@* | *IO.inputAll/up-to-each-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
-native:polyml@* | *IO.StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
-native:polyml@* | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
-native:polyml@* | *IO.StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+native:polyml@* | *StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
+native:polyml@* | *StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
+native:polyml@* | *StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
+native:polyml@* | StreamIO.input/Io-* | HOST-BUG | the stream of the functor StreamIO lets the exception of its reader through, instead of raising Io with it as the cause
+native:polyml@* | OS.Process.exit/keeps-the-exit-code-of-a-command | HOST-BUG | a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+native:polyml@* | Real32.Math.* | HOST-BUG | where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos ~2.0, ln ~1.0, log10 ~1.0, pow (nan, 1.0)
 native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
 native:mlkit@* | *IO.inputAll/file-grows-after-end-of-stream | HOST-BUG | inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 native:mlkit@* | *IO.input1/file-grows-after-end-of-stream | HOST-BUG | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
 native:mlkit@* | *IO.output1/Io-closed-stream-function | HOST-BUG | output1 on a closed stream raises Io with function "output"
 native:mlkit@* | *IO.[gs]etOutstream/flushes* | HOST-BUG | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
-native:mlkit@* | *IO.StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
-native:mlkit@* | *IO.StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+native:mlkit@* | *StreamIO.closeIn/truncated-stream-closes-the-reader | HOST-BUG | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+native:mlkit@* | *StreamIO.closeOut/terminated-closes-the-writer | HOST-BUG | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 native:mlkit@* | *IO.StreamIO.filePosIn/Io-truncated | HOST-BUG | filePosIn of a truncated stream raises nothing
-native:mlkit@* | *IO.StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+native:mlkit@* | *StreamIO.output1/Io-when-the-writer-fails | HOST-BUG | output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+native:mlkit@* | ImperativeIO.input1/passes-an-end-of-stream | HOST-BUG | the input1 of a stream of the functor ImperativeIO does not move past an end-of-stream: after NONE the next input1 gives NONE again, not what follows ("the input stream should be positioned after the end-of-stream")
 native:mlkit@* | *IO.inputN/more-than-maxSize-of-a-short-file | SPEC-AMBIGUOUS | inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE_IO puts it; the test takes STREAM_IO's reading, that Size is about the number of elements returned
 native:mlton@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
 native:smlnj*@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)

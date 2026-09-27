@@ -10,6 +10,9 @@
 | Tests | 19 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
+Posix.TTY.TC: the operations on a terminal itself: its settings, its
+queues and its process group.
+
 ## Members
 
 What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

@@ -10,6 +10,8 @@
 | Tests | 5 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
+UnixSock.DGrm: the message sockets of the Unix family.
+
 ## Members
 
 What each means is on [`UNIX_SOCK`](../sig/UNIX_SOCK.md); the types are this structure's own.

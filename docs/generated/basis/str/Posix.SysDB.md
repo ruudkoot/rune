@@ -16,6 +16,8 @@
 structure Posix.SysDB : POSIX_SYS_DB
 ```
 
+Posix.SysDB: the user and group databases of the system.
+
 ## Members
 
 What each means is on [`POSIX_SYS_DB`](../sig/POSIX_SYS_DB.md); the types are this structure's own.

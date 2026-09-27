@@ -16,6 +16,9 @@
 structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVector.vector where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array where type elem = WideChar.char
 ```
 
+WideCharArraySlice: stretches of [`WideCharArray`](../str/WideCharArray.md) arrays, without a copy: an
+update through a slice changes the array.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

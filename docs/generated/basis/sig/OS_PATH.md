@@ -19,7 +19,7 @@ structure OS.Path : OS_PATH
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`OS.Path`](../str/OS.Path.md) |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.Path`](../str/OS.Path.md) | OS.Path: paths as text, taken apart into arcs and put together, in the syntax of Unix. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 Paths as text: taking them apart, putting them together, and nothing else.
 
@@ -90,6 +90,8 @@ Raised when a path cannot be built: an argument is not of the shape the operatio
 absolute, and [`mkRelative`](#val-mkrelative) when `path` is absolute and `relativeTo` is
 not.
 
+**Example** `(mkAbsolute {path = "a", relativeTo = "b"} handle Path => "Path") = "Path"`
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `raise-handle` (raises) &middot; `is-not-InvalidArc`
@@ -121,6 +123,8 @@ val parentArc : string
 
 The arc that names the directory above: `".."`.
 
+**Example** `parentArc = ".."`
+
 <details><summary>Tests (1)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `unix`
@@ -134,6 +138,8 @@ val currentArc : string
 ```
 
 The arc that names the directory itself: `"."`.
+
+**Example** `currentArc = "."`
 
 <details><summary>Tests (1)</summary>
 
@@ -221,6 +227,12 @@ val validVolume : {isAbs : bool, vol : string} -> bool
 
 `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.
 
+On Unix the only volume is the empty one.
+
+**Example** `validVolume {isAbs = true, vol = ""} = true`
+
+**Example** `validVolume {isAbs = true, vol = "C:"} = false`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-validvolume.isabs"></a>`isAbs` | `bool` |  |
@@ -239,6 +251,8 @@ val getVolume : string -> string
 ```
 
 `getVolume p` is the volume of `p`, the empty string on Unix.
+
+**Example** `getVolume "/a/b" = ""`
 
 <details><summary>Tests (1)</summary>
 
@@ -293,6 +307,8 @@ val splitDirFile : string -> {dir : string, file : string}
 
 **Example** `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
+**Law** `joinDirFile (splitDirFile p) = p` for a path `p` that is not empty
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-splitdirfile.dir"></a>`dir` | `string` |  |
@@ -339,6 +355,10 @@ val dir : string -> string
 
 `dir p` is the [`dir`](#val-dir) part of `splitDirFile p`.
 
+**Law** `dir p = #dir (splitDirFile p)`
+
+**Example** `dir "a/b/c" = "a/b"`
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitDirFile-random`
@@ -352,6 +372,8 @@ val file : string -> string
 ```
 
 `file p` is the [`file`](#val-file) part of `splitDirFile p`: the last arc of `p`.
+
+**Example** `file "a/b/c" = "c"`
 
 <details><summary>Tests (2)</summary>
 
@@ -378,6 +400,8 @@ otherwise there is none.
 **Example** `splitBaseExt "a.tar.gz" = {base = "a.tar", ext = SOME "gz"}`
 
 **Example** `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
+
+**Law** `joinBaseExt (splitBaseExt p) = p`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -431,6 +455,8 @@ val base : string -> string
 
 `base p` is the [`base`](#val-base) part of `splitBaseExt p`.
 
+**Example** `base "a.tar.gz" = "a.tar"`
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `row-*` &middot; `is-splitBaseExt-random`
@@ -445,7 +471,8 @@ val ext : string -> string option
 
 `ext p` is the [`ext`](#val-ext) part of `splitBaseExt p`.
 
-**Example** `ext "a.b/c" = NONE` for the extension is that of the last arc.
+**Example** `ext "a.b/c" = NONE`, for the extension is that of the last
+arc.
 
 <details><summary>Tests (2)</summary>
 
@@ -494,6 +521,10 @@ val isCanonical : string -> bool
 ```
 
 `isCanonical p` is `true` when `p` is what [`mkCanonical`](#val-mkcanonical) would give.
+
+**Law** `isCanonical p = (mkCanonical p = p)`
+
+**Example** `isCanonical "a/../b" = false`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -579,6 +610,8 @@ val isAbsolute : string -> bool
 
 `isAbsolute p` is `true` when `p` starts from a root.
 
+**Example** `isAbsolute "/a" = true`
+
 <details><summary>Tests (2)</summary>
 
 For `OS.Path`, in [tests/basis/os.path.sml](../../../../tests/basis/os.path.sml): `*` &middot; `not-isRelative-random`
@@ -592,6 +625,10 @@ val isRelative : string -> bool
 ```
 
 `isRelative p` is `true` when `p` does not start from a root.
+
+**Law** `isRelative p = not (isAbsolute p)`
+
+**Example** `isRelative "a/b" = true`
 
 <details><summary>Tests (1)</summary>
 
@@ -609,6 +646,8 @@ val isRoot : string -> bool
 
 > **Reading** `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
 > is not: the second has an empty arc under the root.
+
+**Example** `isRoot "/" = true`
 
 <details><summary>Tests (1)</summary>
 
@@ -656,6 +695,8 @@ val fromUnixPath : string -> string
 
 **Raises** [`InvalidArc`](#exn-invalidarc) if an arc of `p` cannot be one here.
 
+**Example** `fromUnixPath "a/b" = "a/b"`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; fromUnixPath "" is "/" instead of "" (on a Unix system the path syntax of the host is that of Unix)
@@ -678,6 +719,8 @@ val toUnixPath : string -> string
 `toUnixPath p` is `p` written in Unix syntax, `p` itself on Unix.
 
 **Raises** [`Path`](#exn-path) if `p` has a volume that Unix syntax cannot write.
+
+**Example** `toUnixPath "/a/b" = "/a/b"`
 
 <details><summary>Other implementations (1)</summary>
 

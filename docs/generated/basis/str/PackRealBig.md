@@ -16,6 +16,9 @@
 structure PackRealBig : PACK_REAL where type real = Real.real
 ```
 
+PackRealBig: reals as the 8 bytes of IEEE 754 binary64, the most
+significant byte first.
+
 ## Members
 
 What each means is on [`PACK_REAL`](../sig/PACK_REAL.md); the types are this structure's own.

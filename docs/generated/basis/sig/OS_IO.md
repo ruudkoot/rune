@@ -19,7 +19,7 @@ structure OS.IO : OS_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`OS.IO`](../str/OS.IO.md) | A descriptor is the system's own file descriptor, wrapped in a constructor that the signature does not name. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.IO`](../str/OS.IO.md) | OS.IO: the descriptors of what the system has opened for the program, and waiting until they are ready. A descriptor is the system's own file descriptor, wrapped in a constructor that the signature does not name. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 Descriptors of open files, devices, pipes and sockets, and waiting until
 some of them are ready for input or output.
@@ -28,7 +28,7 @@ An [`iodesc`](#type-iodesc) stands for something the operating system has opened
 program. The readers and writers of [`PRIM_IO`](../sig/PRIM_IO.md) give theirs (`ioDesc`), and a
 socket gives its own ([`Socket.ioDesc`](../sig/SOCKET.md#val-iodesc)). [`poll`](#val-poll) waits for several descriptors
 at once, which is how a program serves more than one connection without
-threads. The structure is [`OS.IO`](../sig/OS.md#str-io).
+threads. The structure is [`OS.IO`](../str/OS.IO.md).
 
 ## Contents
 
@@ -98,6 +98,8 @@ hash table.
 > the descriptor, and two [`iodesc`](#type-iodesc) are equal when the numbers are: the
 > [`iodesc`](#type-iodesc) of the reader under [`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) is `Posix.FileSys.fdToIOD Posix.FileSys.stdin`.
 
+**Law** `hash d = hash e` when `d = e`
+
 <details><summary>Tests (6)</summary>
 
 For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `same-descriptor` &middot; `equal-descriptors` &middot; `not-constant`
@@ -114,6 +116,10 @@ val compare : iodesc * iodesc -> order
 
 `compare (d, e)` orders descriptors in some total order, which has no
 meaning beyond that.
+
+**Law** `compare (d, e) = EQUAL` exactly when `d = e`
+
+**Example** `let val d = Posix.FileSys.fdToIOD Posix.FileSys.stdin in compare (d, d) end = EQUAL`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -159,6 +165,8 @@ descriptor that is closed.
 > the kind of what the link names and never `symlink`. A descriptor is a
 > `tty` exactly when [`Posix.ProcEnv.isatty`](../sig/POSIX_PROC_ENV.md#val-isatty) says so, which is asked first:
 > `/dev/null` is a `device`.
+
+**Example** `kind (Posix.FileSys.fdToIOD (Posix.FileSys.openf ("/dev/null", Posix.FileSys.O_RDONLY, Posix.FileSys.O.flags []))) = Kind.device`
 
 <details><summary>Tests (7)</summary>
 
@@ -322,6 +330,8 @@ val pollDesc : iodesc -> poll_desc option
 > **Implementation** `OS.IO.pollDesc/always`. Every descriptor can be polled:
 > the answer is never `NONE`.
 
+**Example** `isSome (pollDesc (Posix.FileSys.fdToIOD Posix.FileSys.stdin)) = true`
+
 <details><summary>Tests (3)</summary>
 
 For `OS.IO`, in [tests/basis/os.io.sml](../../../../tests/basis/os.io.sml): `file` &middot; `pipe`
@@ -337,6 +347,8 @@ val pollToIODesc : poll_desc -> iodesc
 ```
 
 `pollToIODesc pd` is the descriptor that `pd` was made from.
+
+**Law** `pollToIODesc (valOf (pollDesc d)) = d`, and `pollToIODesc (pollIn pd) = pollToIODesc pd`
 
 <details><summary>Tests (5)</summary>
 
@@ -372,6 +384,8 @@ val pollIn : poll_desc -> poll_desc
 read, or the end of the stream.
 
 **Raises** [`Poll`](#exn-poll) if the descriptor does not support input.
+
+**Law** `pollIn (pollIn pd) = pollIn pd`
 
 <details><summary>Tests (3)</summary>
 
@@ -430,11 +444,12 @@ for as long as it takes, and `SOME Time.zeroTime` does not wait at all.
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the operating system refuses the request.
 
 > **Reading** `OS.IO.poll/closed-SysErr`. The specification gives "one of the
-> file
-> descriptors refers to a closed file" as an example of what raises
+> file descriptors refers to a closed file" as an example of what raises
 > [`OS.SysErr`](../sig/OS.md#exn-syserr). The operating system itself reports such a descriptor as
 > ready, so every descriptor is looked at before the wait, and a closed one
 > raises [`OS.SysErr`](../sig/OS.md#exn-syserr).
+
+**Example** `null (poll ([], SOME Time.zeroTime)) = true`
 
 <details><summary>Other implementations (3)</summary>
 

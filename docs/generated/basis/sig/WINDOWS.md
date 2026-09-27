@@ -36,7 +36,7 @@ and [`exit`](#val-exit) (below).
 
 > **Implementation** `WINDOWS/code-page`. Names, strings of the registry and
 > paths go to Windows through its code page (the `A` functions of Win32),
-> byte for byte; a path given as `/C:/...`, as [`OS.FileSys`](../sig/OS.md#str-filesys) writes the paths
+> byte for byte; a path given as `/C:/...`, as [`OS.FileSys`](../str/OS.FileSys.md) writes the paths
 > of a drive on Windows, is taken as `C:/...`.
 
 ## Contents
@@ -192,6 +192,8 @@ All the rights below: [`queryValue`](#val-key.queryvalue), [`enumerateSubKeys`](
 > [`read`](#val-key.read) and [`write`](#val-key.write) are the unions the page gives, without the
 > standard rights that `KEY_ALL_ACCESS`, `KEY_READ` and `KEY_WRITE` of
 > Windows add; the others are the `KEY_*` values of Windows.
+
+**Example** `Key.allSet (Key.read, Key.allAccess) = true`
 
 <details><summary>Tests (1)</summary>
 

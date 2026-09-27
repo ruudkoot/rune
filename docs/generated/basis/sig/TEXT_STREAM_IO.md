@@ -19,7 +19,7 @@ structure TextIO.StreamIO : TEXT_STREAM_IO where type reader = TextPrimIO.reader
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 The functional streams of [`STREAM_IO`](../sig/STREAM_IO.md) where the elements are characters,
 with the two operations that only text has: reading a line and writing a

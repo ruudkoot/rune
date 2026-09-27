@@ -23,7 +23,7 @@ structure TextIO.StreamIO : STREAM_IO
 | --- | --- | --- |
 | [`BinIO.StreamIO`](../str/BinIO.StreamIO.md) | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `StreamIO` | Functional streams over a [`PRIM_IO`](../sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](STREAM_IO.md) of it. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams as values: reading gives the elements and the stream that is left,
 so a stream can be kept, read twice, and read from again where it was.
@@ -381,6 +381,8 @@ terminated.
 > closed or terminated stream is `ClosedStream`, from the list of [`IO`](../sig/IO.md),
 > and nothing is written.
 
+**Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in output (out, Byte.stringToBytes "hi"); closeOut out; Byte.bytesToString (BinIO.inputAll (BinIO.openIn p)) before OS.FileSys.remove p end = "hi"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
@@ -618,6 +620,8 @@ val getBufferMode : outstream -> IO.buffer_mode
 `getBufferMode f` is the mode `f` holds back by.
 
 **Law** `getBufferMode (mkOutstream (wr, mode)) = mode`
+
+**Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in getBufferMode out before (closeOut out; OS.FileSys.remove p) end = IO.BLOCK_BUF`
 
 <details><summary>Other implementations (1)</summary>
 

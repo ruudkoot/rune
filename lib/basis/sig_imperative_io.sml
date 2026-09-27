@@ -114,14 +114,18 @@ sig
      Pinned by: `*IO.inputAll/file-grows-after-end-of-stream`
 
      Law: `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in
-     setInstream (f, s); v end` *)
+     setInstream (f, s); v end`
+
+     Example: `Byte.bytesToString (inputAll (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"` *)
   val inputAll : instream -> vector
 
   (* `canInput (f, n)` is how many of `n` elements, at most, can be read without waiting, or `NONE`.
 
      Raises: `Size` if `n < 0`.
 
-     Law: `canInput (f, n) = StreamIO.canInput (getInstream f, n)` *)
+     Law: `canInput (f, n) = StreamIO.canInput (getInstream f, n)`
+
+     Example: `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")), 1) = SOME 1` *)
   val canInput : instream * int -> int option
 
   (* `lookahead f` is `SOME` of the next element without removing it, or `NONE` at an end of stream.
@@ -176,12 +180,16 @@ sig
 
   (* `output (f, v)` writes the elements of `v`.
 
-     Raises: `IO.Io` if the writer fails or the stream is closed. *)
+     Raises: `IO.Io` if the writer fails or the stream is closed.
+
+     Example: `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, Byte.stringToBytes "hi"); closeOut out; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "hi"` *)
   val output : outstream * vector -> unit
 
   (* `output1 (f, x)` writes the single element `x`.
 
-     Raises: `IO.Io` if the writer fails or the stream is closed. *)
+     Raises: `IO.Io` if the writer fails or the stream is closed.
+
+     Example: `let val p = OS.FileSys.tmpName () val out = openOut p in output1 (out, 0wx41); closeOut out; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "A"` *)
   val output1 : outstream * elem -> unit
 
   (* `flushOut f` hands what the stream holds to its writer.

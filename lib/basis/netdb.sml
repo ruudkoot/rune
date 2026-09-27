@@ -175,15 +175,24 @@ struct
   end
 end
 
-(* Implements: NET_HOST_DB
+(* NetHostDB: the host database of the system, and the dotted text of IPv4
+   addresses.
+
+   Implements: NET_HOST_DB
 
    Status: optional *)
 structure NetHostDB = RuneNetHostDB
-(* Implements: NET_PROT_DB
+(* NetProtDB: the protocol database of the system, `/etc/protocols` or
+   whatever the machine is set up to use.
+
+   Implements: NET_PROT_DB
 
    Status: optional *)
 structure NetProtDB = RuneNetProtDB
-(* Implements: NET_SERV_DB
+(* NetServDB: the service database of the system, `/etc/services` or
+   whatever the machine is set up to use.
+
+   Implements: NET_SERV_DB
 
    Status: optional *)
 structure NetServDB = RuneNetServDB

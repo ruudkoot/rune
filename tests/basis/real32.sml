@@ -227,6 +227,46 @@ struct
   val () = eq32 ("Real32.Math.pi/binary32", 3.1415927410125732421875, fn () => Real32.Math.pi)
   val () = eq32 ("Real32.Math.exp/zero", 1.0, fn () => Real32.Math.exp (s 0.0))
   val () = eq32 ("Real32.Math.pow/exact", 1024.0, fn () => Real32.Math.pow (s 2.0, s 10.0))
+  (* the special values of MATH at binary32: "if any argument is a NaN, the
+     return value is a NaN" unless a function says otherwise, and the rules of
+     each function; pi/2 is 1.57079637050628662109375 in binary32 *)
+  val rnan = Real.posInf - Real.posInf
+  val halfPi = 1.57079637050628662109375
+  val () = eq32 ("Real32.Math.e/binary32", 2.71828174591064453125, fn () => Real32.Math.e)
+  val () = eq32 ("Real32.Math.sqrt/negzero", ~0.0, fn () => Real32.Math.sqrt (s ~0.0))
+  val () = eq32 ("Real32.Math.sqrt/negative", rnan, fn () => Real32.Math.sqrt (s ~1.0))
+  val () = eq32 ("Real32.Math.sqrt/exact", 2.0, fn () => Real32.Math.sqrt (s 4.0))
+  val () = eq32 ("Real32.Math.sin/zero", 0.0, fn () => Real32.Math.sin (s 0.0))
+  val () = eq32 ("Real32.Math.sin/posInf", rnan, fn () => Real32.Math.sin Real32.posInf)
+  val () = eq32 ("Real32.Math.cos/zero", 1.0, fn () => Real32.Math.cos (s 0.0))
+  val () = eq32 ("Real32.Math.cos/negInf", rnan, fn () => Real32.Math.cos Real32.negInf)
+  val () = eq32 ("Real32.Math.tan/negzero", ~0.0, fn () => Real32.Math.tan (s ~0.0))
+  val () = eq32 ("Real32.Math.tan/nan", rnan, fn () => Real32.Math.tan nan)
+  val () = eq32 ("Real32.Math.asin/one", halfPi, fn () => Real32.Math.asin (s 1.0))
+  val () = eq32 ("Real32.Math.asin/above-one", rnan, fn () => Real32.Math.asin (s 2.0))
+  val () = eq32 ("Real32.Math.acos/one", 0.0, fn () => Real32.Math.acos (s 1.0))
+  val () = eq32 ("Real32.Math.acos/below-minus-one", rnan, fn () => Real32.Math.acos (s ~2.0))
+  val () = eq32 ("Real32.Math.atan/posInf", halfPi, fn () => Real32.Math.atan Real32.posInf)
+  val () = eq32 ("Real32.Math.atan/nan", rnan, fn () => Real32.Math.atan nan)
+  val () = eq32 ("Real32.Math.atan2/negative-x-axis", 3.1415927410125732421875,
+                 fn () => Real32.Math.atan2 (s 0.0, s ~1.0))
+  val () = eq32 ("Real32.Math.atan2/nan", rnan, fn () => Real32.Math.atan2 (nan, s 1.0))
+  val () = eq32 ("Real32.Math.exp/negInf", 0.0, fn () => Real32.Math.exp Real32.negInf)
+  val () = eq32 ("Real32.Math.exp/posInf", Real.posInf, fn () => Real32.Math.exp Real32.posInf)
+  val () = eq32 ("Real32.Math.exp/overflow", Real.posInf, fn () => Real32.Math.exp (s 100.0))
+  val () = eq32 ("Real32.Math.pow/nan-to-zero", 1.0, fn () => Real32.Math.pow (nan, s 0.0))
+  val () = eq32 ("Real32.Math.pow/nan", rnan, fn () => Real32.Math.pow (nan, s 1.0))
+  val () = eq32 ("Real32.Math.ln/zero", Real.negInf, fn () => Real32.Math.ln (s 0.0))
+  val () = eq32 ("Real32.Math.ln/one", 0.0, fn () => Real32.Math.ln (s 1.0))
+  val () = eq32 ("Real32.Math.ln/negative", rnan, fn () => Real32.Math.ln (s ~1.0))
+  val () = eq32 ("Real32.Math.log10/zero", Real.negInf, fn () => Real32.Math.log10 (s 0.0))
+  val () = eq32 ("Real32.Math.log10/posInf", Real.posInf, fn () => Real32.Math.log10 Real32.posInf)
+  val () = eq32 ("Real32.Math.log10/negative", rnan, fn () => Real32.Math.log10 (s ~1.0))
+  val () = eq32 ("Real32.Math.sinh/negzero", ~0.0, fn () => Real32.Math.sinh (s ~0.0))
+  val () = eq32 ("Real32.Math.sinh/negInf", Real.negInf, fn () => Real32.Math.sinh Real32.negInf)
+  val () = eq32 ("Real32.Math.cosh/zero", 1.0, fn () => Real32.Math.cosh (s 0.0))
+  val () = eq32 ("Real32.Math.tanh/posInf", 1.0, fn () => Real32.Math.tanh Real32.posInf)
+  val () = eq32 ("Real32.Math.tanh/negzero", ~0.0, fn () => Real32.Math.tanh (s ~0.0))
   (*>> math *)
 
   (*<< rounding-modes *)
@@ -246,5 +286,16 @@ struct
   val () = eq32 ("Real32.fromDecimal/TO_NEGINF-negative", ~ tenth,
                  fn () => inMode IEEEReal.TO_NEGINF (fn () =>
                    valOf (Real32.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
+  (* "Decimal approximations are to be converted using the
+     IEEEReal.TO_NEAREST rounding mode": 0.1 rounds up to its nearest
+     binary32, so rounding down or towards zero would give another *)
+  val () = eq32 ("Real32.fromDecimal/TO_NEGINF-positive", tenth,
+                 fn () => inMode IEEEReal.TO_NEGINF (fn () =>
+                   valOf (Real32.fromDecimal {class = IEEEReal.NORMAL, sign = false, digits = [1], exp = 0})))
+  val () = eq32 ("Real32.fromDecimal/TO_ZERO-negative", ~ tenth,
+                 fn () => inMode IEEEReal.TO_ZERO (fn () =>
+                   valOf (Real32.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
+  val () = T.check ("Real32.toDecimal/TO_POSINF-shortest",
+                    fn () => #digits (inMode IEEEReal.TO_POSINF (fn () => Real32.toDecimal (s 0.1))) = [1])
   (*>> rounding-modes *)
 end

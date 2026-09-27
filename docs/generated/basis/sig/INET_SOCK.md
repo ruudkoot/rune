@@ -259,6 +259,8 @@ val getNODELAY : 'mode stream_sock -> bool
 
 `getNODELAY sock` is `true` when small writes go out at once rather than being gathered.
 
+**Example** `let val s = TCP.socket () in TCP.getNODELAY s before Socket.close s end = false`
+
 <details><summary>Tests (2)</summary>
 
 For `INetSock`, in [tests/basis/inetsock.sml](../../../../tests/basis/inetsock.sml): `default` &middot; `listener-default`

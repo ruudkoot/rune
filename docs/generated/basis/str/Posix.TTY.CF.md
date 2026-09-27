@@ -10,6 +10,8 @@
 | Tests | 4 checks |
 | Source | [lib/basis/posix\_tty.sml](../../../../lib/basis/posix_tty.sml) |
 
+Posix.TTY.CF: the speeds of a settings record, read and set.
+
 ## Members
 
 What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

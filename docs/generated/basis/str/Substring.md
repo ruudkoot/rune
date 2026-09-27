@@ -16,7 +16,8 @@
 structure Substring : SUBSTRING where type string = string where type char = Char.char
 ```
 
-Substring: a string, a start index and a length.
+Substring: pieces of strings, taken apart and searched without a copy: a
+string, a start index and a length.
 
 ## Members
 

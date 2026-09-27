@@ -17,7 +17,8 @@ structure TextIO.StreamIO : TEXT_STREAM_IO where type reader = TextPrimIO.reader
 structure TextIO.StreamIO : STREAM_IO
 ```
 
-TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings.
+TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the
+operations on lines and substrings of TEXT\_STREAM\_IO.
 
 ## Members
 

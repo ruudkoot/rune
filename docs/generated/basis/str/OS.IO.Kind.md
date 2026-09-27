@@ -10,6 +10,8 @@
 | Tests | 17 checks |
 | Source | [lib/basis/osio.sml](../../../../lib/basis/osio.sml) |
 
+OS.IO.Kind: the seven kinds of descriptor that every system knows.
+
 ## Members
 
 What each means is on [`OS_IO`](../sig/OS_IO.md); the types are this structure's own.

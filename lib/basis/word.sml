@@ -1,6 +1,10 @@
-(* Word: unsigned words: 64 bits on the VM. The size is found by shifting a
-   bit out, so that this file means the same to a system whose word is
-   narrower.
+(* Word: unsigned words of 64 bits, the type of the top-level `word` and of
+   its literals.
+
+   `LargeWord` and `SysWord` are this structure by other names; `Word64` has
+   the same width and operations but a type of its own. The size is found by
+   shifting a bit out, so that this file means the same to a system whose
+   word is narrower.
 
    Implements: WORD *)
 structure Word =
@@ -116,13 +120,18 @@ struct
   (* LargeWord is Word *)
   val toLargeX = toLarge
   val toLargeWord = toLarge
-  val toLargeWordX = toLarge
+  val toLargeWordX = toLargeX
   val fromLargeWord = fromLarge
 end
 
-(* Implements: WORD *)
+(* LargeWord: the widest words, which are `Word`.
+
+   Implements: WORD *)
 structure LargeWord = Word
-(* Implements: WORD
+(* SysWord: the words in which the operating system's flags and modes are
+   counted, which are `Word`.
+
+   Implements: WORD
 
    Status: optional *)
 structure SysWord = Word

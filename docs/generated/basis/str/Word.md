@@ -7,7 +7,7 @@
 | Signature | [`WORD`](../sig/WORD.md) |
 | Status | required |
 | Members | 38 |
-| Tests | 269 checks |
+| Tests | 271 checks |
 | Source | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 
 ## Synopsis
@@ -16,9 +16,13 @@
 structure Word : WORD
 ```
 
-Word: unsigned words: 64 bits on the VM. The size is found by shifting a
-bit out, so that this file means the same to a system whose word is
-narrower.
+Word: unsigned words of 64 bits, the type of the top-level [`word`](../sig/WORD.md#type-word) and of
+its literals.
+
+[`LargeWord`](Word.md) and [`SysWord`](Word.md) are this structure by other names; [`Word64`](../str/Word64.md) has
+the same width and operations but a type of its own. The size is found by
+shifting a bit out, so that this file means the same to a system whose
+word is narrower.
 
 ## Members
 

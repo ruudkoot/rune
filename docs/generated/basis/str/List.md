@@ -7,7 +7,7 @@
 | Signature | [`LIST`](../sig/LIST.md) |
 | Status | required |
 | Members | 27 |
-| Tests | 99 checks |
+| Tests | 101 checks |
 | Source | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
 
 ## Synopsis
@@ -16,7 +16,11 @@
 structure List : LIST
 ```
 
-List
+List: the operations on lists, of the top-level type [`list`](../sig/LIST.md#type-list).
+
+The functions that the top level also has, [`null`](../sig/LIST.md#val-null), [`hd`](../sig/LIST.md#val-hd), [`tl`](../sig/LIST.md#val-tl), [`length`](../sig/LIST.md#val-length),
+[`rev`](../sig/LIST.md#val-rev), [`@`](../sig/LIST.md#val-op-at), [`app`](../sig/LIST.md#val-app), [`map`](../sig/LIST.md#val-map), [`foldl`](../sig/LIST.md#val-foldl) and [`foldr`](../sig/LIST.md#val-foldr), are the same values here,
+and [`Empty`](../sig/LIST.md#exn-empty) is the top-level exception.
 
 ## Members
 

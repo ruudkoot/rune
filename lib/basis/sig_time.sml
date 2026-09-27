@@ -35,7 +35,9 @@ sig
      point for all time values"; the suite takes it to lie in the past, so
      `now ()` is greater.
 
-     Pinned by: `Time.now/after-zeroTime` *)
+     Pinned by: `Time.now/after-zeroTime`
+
+     Example: `toSeconds zeroTime = 0` *)
   val zeroTime : time
 
   (* `fromReal r` is `r` seconds, its fraction truncated towards zero.
@@ -45,16 +47,24 @@ sig
      Example: `toMilliseconds (fromReal 1.5) = 1500` *)
   val fromReal : LargeReal.real -> time
 
-  (* `toReal t` is `t` as a number of seconds, which may lose precision. *)
+  (* `toReal t` is `t` as a number of seconds, which may lose precision.
+
+     Example: `Real.== (toReal (fromMilliseconds 1500), 1.5) = true` *)
   val toReal : time -> LargeReal.real
 
-  (* `toSeconds t` is the whole seconds of `t`, truncated towards zero. *)
+  (* `toSeconds t` is the whole seconds of `t`, truncated towards zero.
+
+     Example: `toSeconds (fromMilliseconds 2010) = 2` *)
   val toSeconds : time -> LargeInt.int
 
-  (* `toMilliseconds t` is the whole milliseconds of `t`, truncated towards zero. *)
+  (* `toMilliseconds t` is the whole milliseconds of `t`, truncated towards zero.
+
+     Example: `toMilliseconds (fromMicroseconds 2010999) = 2010` *)
   val toMilliseconds : time -> LargeInt.int
 
-  (* `toMicroseconds t` is the whole microseconds of `t`, truncated towards zero. *)
+  (* `toMicroseconds t` is the whole microseconds of `t`, truncated towards zero.
+
+     Example: `toMicroseconds (fromMilliseconds 2) = 2000` *)
   val toMicroseconds : time -> LargeInt.int
 
   (* `toNanoseconds t` is the whole nanoseconds of `t`, truncated towards zero.
@@ -63,7 +73,9 @@ sig
      `LargeInt.int` and is exact however large it is; a `LargeInt` of bounded
      precision would raise `Overflow` instead.
 
-     Pinned by: `Time.toNanoseconds/beyond-64-bits`, `Time.toMicroseconds/large` *)
+     Pinned by: `Time.toNanoseconds/beyond-64-bits`, `Time.toMicroseconds/large`
+
+     Example: `toNanoseconds (fromMicroseconds 3) = 3000` *)
   val toNanoseconds : time -> LargeInt.int
 
   (* `fromSeconds n` is `n` seconds.
@@ -74,7 +86,9 @@ sig
      is not fixed; the suite asks only that a value either come out exact or
      raise `Time`, never something else and never a wrong number.
 
-     Pinned by: `Time.from*/huge-*` *)
+     Pinned by: `Time.from*/huge-*`
+
+     Example: `toMilliseconds (fromSeconds 3) = 3000` *)
   val fromSeconds : LargeInt.int -> time
 
   (* `fromMilliseconds n` is `n` milliseconds.
@@ -86,12 +100,16 @@ sig
 
   (* `fromMicroseconds n` is `n` microseconds.
 
-     Raises: `Time` if the time does not fit. *)
+     Raises: `Time` if the time does not fit.
+
+     Example: `toMicroseconds (fromMicroseconds 1234567) = 1234567` *)
   val fromMicroseconds : LargeInt.int -> time
 
   (* `fromNanoseconds n` is `n` nanoseconds, truncated to what a time can hold.
 
-     Raises: `Time` if the time does not fit. *)
+     Raises: `Time` if the time does not fit.
+
+     Example: `toMicroseconds (fromNanoseconds 2999) = 2` *)
   val fromNanoseconds : LargeInt.int -> time
 
   (* `t + u` is the sum of two times.
@@ -114,13 +132,19 @@ sig
      Implementation: `Time.-/exact-until-it-raises`. As for `+`: exact until
      a step raises `Time`.
 
-     Pinned by: `Time.-/Time-when-not-representable*` *)
+     Pinned by: `Time.-/Time-when-not-representable*`
+
+     Example: `toSeconds (fromSeconds 5 - fromSeconds 2) = 3` *)
   val - : time * time -> time
 
-  (* `compare (t, u)` orders two times, the shorter first. *)
+  (* `compare (t, u)` orders two times, the shorter first.
+
+     Example: `compare (fromSeconds 1, fromSeconds 2) = LESS` *)
   val compare : time * time -> order
 
-  (* `t < u` is `true` when `t` is the shorter time. *)
+  (* `t < u` is `true` when `t` is the shorter time.
+
+     Example: `fromSeconds 1 < fromSeconds 2 = true` *)
   val < : time * time -> bool
 
   (* `t <= u` is `true` when `t` is no longer than `u`. *)
@@ -132,7 +156,9 @@ sig
   (* `t >= u` is `true` when `t` is no shorter than `u`. *)
   val >= : time * time -> bool
 
-  (* `now ()` is the time since `zeroTime`, by the clock of the system. *)
+  (* `now ()` is the time since `zeroTime`, by the clock of the system.
+
+     Example: `now () > zeroTime = true` *)
   val now : unit -> time
 
   (* `fmt n t` is `t` in seconds, with `n` digits after the decimal point and none when `n` is 0.
@@ -169,7 +195,9 @@ sig
      written; those of the fraction after the sixth are dropped rather than
      rounded, and a number too large for a time raises `Time`.
 
-     Pinned by: `Time.fmt/40-digits` *)
+     Pinned by: `Time.fmt/40-digits`
+
+     Example: `Option.map (toMilliseconds o #1) (scan Substring.getc (Substring.full "1.5x")) = SOME 1500` *)
   val scan : (char, 'a) StringCvt.reader -> (time, 'a) StringCvt.reader
 
   (* `fromString s` is `SOME` of the time that `s` begins with, after whitespace, or `NONE`.

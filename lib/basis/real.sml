@@ -1,4 +1,8 @@
-(* Real: IEEE double precision.
+(* Real: floating-point numbers of IEEE 754 double precision, the type of
+   the top-level `real` and of its literals.
+
+   `LargeReal` and `Real64` are this structure by other names, and
+   `Real.Math` its elementary functions, which the top level has as `Math`.
 
    Implements: REAL where type real = real *)
 structure Real =
@@ -160,6 +164,17 @@ struct
     val fmtF = _prim "real_fmt_f" : real * int -> string
     val shortest = _prim "real_shortest" : real -> string
     val parse = _prim "real_from_string" : string -> real option
+
+    (* f x in the mode TO_NEAREST: "Decimal approximations are to be
+       converted using the IEEEReal.TO_NEAREST rounding mode", whatever mode
+       is in force *)
+    fun nearest f x =
+      case IEEEReal.getRoundingMode () of
+        IEEEReal.TO_NEAREST => f x
+      | saved =>
+          (IEEEReal.setRoundingMode IEEEReal.TO_NEAREST;
+           (f x before IEEEReal.setRoundingMode saved)
+           handle e => (IEEEReal.setRoundingMode saved; raise e))
     val intToString = _prim "int_to_string" : int -> string
     val charAt = _prim "string_sub" : string * int -> char
 
@@ -229,8 +244,8 @@ struct
       let val c = class r
       in
         case c of
-          IEEEReal.NORMAL => normal (c, r)
-        | IEEEReal.SUBNORMAL => normal (c, r)
+          IEEEReal.NORMAL => nearest normal (c, r)
+        | IEEEReal.SUBNORMAL => nearest normal (c, r)
         | _ => {class = c, sign = signBit r, digits = [], exp = 0}
       end
     and normal (c, r) =
@@ -247,8 +262,7 @@ struct
             | IEEEReal.INF => posInf
             | IEEEReal.NAN => posInf - posInf
             | _ =>
-                (* with its sign, which decides the direction of a rounding mode *)
-                (case parse ((if sign then "-" else "") ^ "0."
+                (case nearest parse ((if sign then "-" else "") ^ "0."
                              ^ implode (map (fn d => chr (Int.+ (48, d))) digits) ^ "0e" ^ intToString' exp) of
                    SOME v => v
                  | NONE => 0.0)
@@ -296,7 +310,10 @@ struct
     fun fromString s = StringCvt.scanString scan s
   end
 
-  (* Implements: MATH *)
+  (* Real.Math: the elementary functions at `real`, from the C library, with
+     `asin`, `acos` and `log10` made from its `atan2` and `ln`.
+
+     Implements: MATH *)
   structure Math =
   struct
     type real = real
@@ -319,20 +336,45 @@ struct
         then posInf - posInf
         else cpow (x, y)
     end
-    fun log10 r = ln r / ln 10.0
-    fun asin r = atan2 (r, sqrt (1.0 - r * r))
-    fun acos r = atan2 (sqrt (1.0 - r * r), r)
+    (* ln r / ln 10 is within two ulps, but can miss an exact power of ten:
+       it would make log10 1000.0 2.9999999999999996, and floor of it 2 *)
+    fun log10 r =
+      let
+        val l = ln r / ln 10.0
+        val n = realRound l
+        (* 10^k by multiplication, exact for k up to 22, and 10^~k as
+           1 / 10^k, the real nearest to it: not pow, which a host may
+           compute inexactly *)
+        fun power k =
+          if Int.< (k, 0) then 1.0 / power (Int.~ k)
+          else if k = 0 then 1.0
+          else 10.0 * power (Int.- (k, 1))
+      in
+        if isFinite l andalso abs (l - n) < 1E~9 andalso abs n <= 22.0 andalso power (trunc n) == r
+        then n else l
+      end
+    (* 1 - r * r would lose the digits of r near 1 and ~1; (1 - r) * (1 + r)
+       keeps them, for 1 - r and 1 + r are exact there *)
+    fun asin r = atan2 (r, sqrt ((1.0 - r) * (1.0 + r)))
+    fun acos r = atan2 (sqrt ((1.0 - r) * (1.0 + r)), r)
     val sinh = _prim "real_sinh" : real -> real
     val cosh = _prim "real_cosh" : real -> real
     val tanh = _prim "real_tanh" : real -> real
   end
 end
 
-(* Implements: MATH where type real = Real.real *)
+(* Math: the elementary functions of the top-level `real`, which are
+   `Real.Math`.
+
+   Implements: MATH where type real = Real.real *)
 structure Math = Real.Math
-(* Implements: REAL *)
+(* LargeReal: the widest real type, which is `Real`.
+
+   Implements: REAL *)
 structure LargeReal = Real
-(* Implements: REAL
+(* Real64: the reals of 64 bits, which are `Real`.
+
+   Implements: REAL
 
    Status: optional *)
 structure Real64 = Real

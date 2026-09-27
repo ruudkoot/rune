@@ -116,6 +116,17 @@ struct
     (* ---- conversion to and from text: the value is a binary64, so fmt is
        Real.fmt but for EXACT, whose digits are the fewest that read back as
        the same binary32 value ---- *)
+    (* f x in the mode TO_NEAREST, as Real.toDecimal and Real.fromDecimal:
+       "Decimal approximations are to be converted using the
+       IEEEReal.TO_NEAREST rounding mode" *)
+    fun nearest f x =
+      case IEEEReal.getRoundingMode () of
+        IEEEReal.TO_NEAREST => f x
+      | saved =>
+          (IEEEReal.setRoundingMode IEEEReal.TO_NEAREST;
+           (f x before IEEEReal.setRoundingMode saved)
+           handle e => (IEEEReal.setRoundingMode saved; raise e))
+
     fun toDecimal r : IEEEReal.decimal_approx =
       let
         val c = class r
@@ -132,8 +143,8 @@ struct
           end
       in
         case c of
-          IEEEReal.NORMAL => digits (Real.abs r)
-        | IEEEReal.SUBNORMAL => digits (Real.abs r)
+          IEEEReal.NORMAL => nearest digits (Real.abs r)
+        | IEEEReal.SUBNORMAL => nearest digits (Real.abs r)
         | _ => {class = c, sign = Real.signBit r, digits = [], exp = 0}
       end
 
@@ -150,8 +161,7 @@ struct
                 | IEEEReal.INF => signed posInf
                 | IEEEReal.NAN => signed (Real.- (posInf, posInf))
                 | _ =>
-                    (* the sign goes to strtof, which rounds with it *)
-                    case parse ((if sign then "-" else "") ^ "0." ^ text digits ^ "0e" ^ exponent exp) of
+                    case nearest parse ((if sign then "-" else "") ^ "0." ^ text digits ^ "0e" ^ exponent exp) of
                       SOME v => v
                     | NONE => signed 0.0)
         end
@@ -193,6 +203,10 @@ struct
     val == = Real.==
     fun != (a, b) = not (Real.== (a, b))
 
+    (* Real32.Math: the elementary functions at binary32, computed in binary64
+       and rounded to binary32.
+
+       Implements: MATH *)
     structure Math =
     struct
       type real = real
@@ -217,7 +231,9 @@ struct
   end
 end
 
-(* Implements: REAL
+(* Real32: floating-point numbers of IEEE 754 single precision, binary32.
+
+   Implements: REAL
 
    Status: optional
 

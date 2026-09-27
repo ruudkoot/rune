@@ -23,19 +23,29 @@ struct
   end
 end
 
-(* Implements: PACK_REAL where type real = Real.real
+(* PackRealBig: reals as the 8 bytes of IEEE 754 binary64, the most
+   significant byte first.
+
+   Implements: PACK_REAL where type real = Real.real
 
    Status: optional *)
 structure PackRealBig = RunePackRealFn (val isBigEndian = true)
-(* Implements: PACK_REAL where type real = Real.real
+(* PackRealLittle: reals as the 8 bytes of IEEE 754 binary64, the least
+   significant byte first.
+
+   Implements: PACK_REAL where type real = Real.real
 
    Status: optional *)
 structure PackRealLittle = RunePackRealFn (val isBigEndian = false)
-(* Implements: PACK_REAL where type real = Real64.real
+(* PackReal64Big: the same as `PackRealBig`, `Real64` being `Real`.
+
+   Implements: PACK_REAL where type real = Real64.real
 
    Status: optional *)
 structure PackReal64Big = PackRealBig
-(* Implements: PACK_REAL where type real = Real64.real
+(* PackReal64Little: the same as `PackRealLittle`, `Real64` being `Real`.
+
+   Implements: PACK_REAL where type real = Real64.real
 
    Status: optional *)
 structure PackReal64Little = PackRealLittle

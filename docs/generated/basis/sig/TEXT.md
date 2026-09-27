@@ -27,8 +27,8 @@ The structures of one kind of text, gathered so that their types can be
 named as one: characters, strings, substrings and the vectors and arrays
 of characters, with the constraints that tie them together.
 
-[`Text`](../str/Text.md) is the text of 8-bit characters, whose [`Text.Char`](#str-char) is [`Char`](#str-char) and
-whose [`Text.String`](#str-string) is [`String`](#str-string); the optional [`WideText`](../str/WideText.md) is the same for
+[`Text`](../str/Text.md) is the text of 8-bit characters, whose [`Text.Char`](../str/Char.md) is [`Char`](#str-char) and
+whose [`Text.String`](../str/String.md) is [`String`](#str-string); the optional [`WideText`](../str/WideText.md) is the same for
 [`WideChar`](../str/WideChar.md). A program that is to work at either kind takes the structure as
 a functor argument and names the types through it.
 

@@ -37,7 +37,8 @@ struct
     structure CF' = RunePosixTTYFlagsFn ()
     structure LF = RunePosixTTYFlagsFn ()
   in
-    (* "Indices for the special control characters" *)
+    (* Posix.TTY.V: the positions of the control characters, the "indices for
+       the special control characters", and the array of them. *)
     structure V =
     struct
       val eof = named "VEOF"
@@ -64,7 +65,9 @@ struct
       fun sub (c : cc, i) = String.sub (c, i)
     end
 
-    (* Implements: BIT_FLAGS *)
+    (* Posix.TTY.I: the flags of what the terminal does with its input.
+
+       Implements: BIT_FLAGS *)
     structure I =
     struct
       open IF
@@ -80,13 +83,18 @@ struct
       val ixon = bits "IXON"
       val parmrk = bits "PARMRK"
     end
-    (* Implements: BIT_FLAGS *)
+    (* Posix.TTY.O: the flags of what the terminal does with its output.
+
+       Implements: BIT_FLAGS *)
     structure O =
     struct
       open OF
       val opost = bits "OPOST"
     end
-    (* Implements: BIT_FLAGS *)
+    (* Posix.TTY.C: the flags of the line: character size, parity, stop bits
+       and the modem.
+
+       Implements: BIT_FLAGS *)
     structure C =
     struct
       open CF'
@@ -102,7 +110,9 @@ struct
       val parenb = bits "PARENB"
       val parodd = bits "PARODD"
     end
-    (* Implements: BIT_FLAGS *)
+    (* Posix.TTY.L: the local flags: echo, canonical input and signals.
+
+       Implements: BIT_FLAGS *)
     structure L =
     struct
       open LF
@@ -150,6 +160,7 @@ struct
     fun getlflag (T r) = #lflag r
     fun getcc (T r) = #cc r
 
+    (* Posix.TTY.CF: the speeds of a settings record, read and set. *)
     structure CF =
     struct
       fun getospeed (T r) = #ospeed r
@@ -160,6 +171,8 @@ struct
         T {iflag = iflag, oflag = oflag, cflag = cflag, lflag = lflag, cc = cc, ispeed = s, ospeed = ospeed}
     end
 
+    (* Posix.TTY.TC: the operations on a terminal itself: its settings, its
+       queues and its process group. *)
     structure TC =
     struct
       type set_action = int

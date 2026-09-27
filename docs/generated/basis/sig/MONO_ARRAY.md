@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 26 of 26 entries documented |
-| Tests | 312 checks of 24 entries |
+| Tests | 318 checks of 24 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -44,18 +44,18 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | [`Int64Array`](../str/Int64Array.md) | Int64Array: mutable arrays of 64-bit integers, a type of their own with identity equality, whose vectors are those of [`Int64Vector`](../str/Int64Vector.md). | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |
 | [`Int8Array`](../str/Int8Array.md) | Int8Array: mutable arrays of 8-bit integers, a type of their own with identity equality, whose vectors are those of [`Int8Vector`](../str/Int8Vector.md). | [lib/basis/mono\_int8.sml](../../../../lib/basis/mono_int8.sml) |
 | [`IntArray`](../str/IntArray.md) | IntArray: mutable arrays of integers of the default `int`, a type of their own with identity equality, whose vectors are those of [`IntVector`](../str/IntVector.md). | [lib/basis/mono\_int.sml](../../../../lib/basis/mono_int.sml) |
-| [`LargeIntArray`](../str/LargeIntArray.md) |  | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+| [`LargeIntArray`](../str/LargeIntArray.md) | LargeIntArray: mutable arrays of integers of any size, a type of their own with identity equality, whose vectors are those of [`LargeIntVector`](../str/LargeIntVector.md). | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
 | [`LargeRealArray`](../str/RealArray.md) |  | [lib/basis/mono\_largereal.sml](../../../../lib/basis/mono_largereal.sml) |
 | [`LargeWordArray`](../str/WordArray.md) |  | [lib/basis/mono\_largeword.sml](../../../../lib/basis/mono_largeword.sml) |
-| [`Real32Array`](../str/Real32Array.md) |  | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
+| [`Real32Array`](../str/Real32Array.md) | Real32Array: mutable arrays of binary32 reals, a type of their own with identity equality, whose vectors are those of [`Real32Vector`](../str/Real32Vector.md). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Array`](../str/RealArray.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
-| [`RealArray`](../str/RealArray.md) |  | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharArray`](../str/WideCharArray.md) |  | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
-| [`Word16Array`](../str/Word16Array.md) |  | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
-| [`Word32Array`](../str/Word32Array.md) |  | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
-| [`Word64Array`](../str/Word64Array.md) |  | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
-| [`Word8Array`](../str/Word8Array.md) |  | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
-| [`WordArray`](../str/WordArray.md) |  | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
+| [`RealArray`](../str/RealArray.md) | RealArray: mutable arrays of reals, a type of their own with identity equality, whose vectors are those of [`RealVector`](../str/RealVector.md). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
+| [`WideCharArray`](../str/WideCharArray.md) | WideCharArray: mutable arrays of wide characters, a type of their own with identity equality, whose vectors are those of [`WideCharVector`](../str/WideCharVector.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`Word16Array`](../str/Word16Array.md) | Word16Array: mutable arrays of 16-bit words, a type of their own with identity equality, whose vectors are those of [`Word16Vector`](../str/Word16Vector.md). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
+| [`Word32Array`](../str/Word32Array.md) | Word32Array: mutable arrays of 32-bit words, a type of their own with identity equality, whose vectors are those of [`Word32Vector`](../str/Word32Vector.md). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
+| [`Word64Array`](../str/Word64Array.md) | Word64Array: mutable arrays of 64-bit words, a type of their own with identity equality, whose vectors are those of [`Word64Vector`](../str/Word64Vector.md). | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
+| [`Word8Array`](../str/Word8Array.md) | Word8Array: mutable arrays of bytes, a type of their own with identity equality, whose vectors are those of [`Word8Vector`](../str/Word8Vector.md): the buffers of binary input and output. | [lib/basis/word8array.sml](../../../../lib/basis/word8array.sml) |
+| [`WordArray`](../str/WordArray.md) | WordArray: mutable arrays of words, a type of their own with identity equality, whose vectors are those of [`WordVector`](../str/WordVector.md). | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 Mutable sequences of one element type.
 
@@ -313,7 +313,7 @@ val vector : array -> vector
 
 **Example** `vector (fromList [#"h", #"i"]) = "hi"`
 
-<details><summary>Tests (29)</summary>
+<details><summary>Tests (32)</summary>
 
 For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8array.sml): `is-Word8Vector.vector`
 
@@ -333,11 +333,17 @@ For `LargeIntArray`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/
 
 For `WordArray`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `extremes`
 
+For `WordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `extremes`
+
 For `Word16Array`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `extremes`
 
 For `Word32Array`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `extremes`
 
 For `RealArray`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `specials`
+
+For `RealArray`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `specials`
+
+For `RealArray`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `specials`
 
 For `Int64Array`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `extremes`
 
@@ -451,6 +457,8 @@ val app : (elem -> unit) -> array -> unit
 
 **Law** `app f x = appi (fn (_, e) => f e) x`
 
+**Example** `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195`
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -491,7 +499,7 @@ val modify : (elem -> elem) -> array -> unit
 
 **Example** `let val a = fromList [#"a", #"b"] in modify Char.toUpper a; vector a end = "AB"`
 
-<details><summary>Tests (28)</summary>
+<details><summary>Tests (31)</summary>
 
 For `Word8Array`, in [tests/basis/word8array.sml](../../../../tests/basis/word8array.sml): `Word8-arithmetic`
 
@@ -511,11 +519,17 @@ For `LargeIntArray`, in [tests/basis/mono.largeint.sml](../../../../tests/basis/
 
 For `WordArray`, in [tests/basis/mono.word.sml](../../../../tests/basis/mono.word.sml): `Word-arithmetic`
 
+For `WordArray`, in [tests/basis/mono.largeword.sml](../../../../tests/basis/mono.largeword.sml): `LargeWord-arithmetic`
+
 For `Word16Array`, in [tests/basis/mono.word16.sml](../../../../tests/basis/mono.word16.sml): `Word16-arithmetic`
 
 For `Word32Array`, in [tests/basis/mono.word32.sml](../../../../tests/basis/mono.word32.sml): `Word32-arithmetic`
 
 For `RealArray`, in [tests/basis/mono.real.sml](../../../../tests/basis/mono.real.sml): `Real-arithmetic`
+
+For `RealArray`, in [tests/basis/mono.largereal.sml](../../../../tests/basis/mono.largereal.sml): `LargeReal-arithmetic`
+
+For `RealArray`, in [tests/basis/mono.real64.sml](../../../../tests/basis/mono.real64.sml): `Real64-arithmetic`
 
 For `Int64Array`, in [tests/basis/mono.int64.sml](../../../../tests/basis/mono.int64.sml): `Int64-arithmetic`
 

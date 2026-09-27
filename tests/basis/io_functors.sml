@@ -1,4 +1,5 @@
 (* requires: IntVector IntVectorSlice IntArray IntArraySlice *)
+(* uses: spec-sigs/PRIM_IO.sml spec-sigs/STREAM_IO.sml spec-sigs/IMPERATIVE_IO.sml fn/io_script.sml fn/prim_io_fn.sml fn/stream_io_fn.sml fn/imperative_io_fn.sml *)
 (* The optional functors PrimIO, StreamIO and ImperativeIO, applied to
    integers: a reader over a vector, streams over it, and imperative streams
    over those, and a writer that collects what it is given. After
@@ -6,7 +7,11 @@
    imperative-io-fn.html; StreamIO takes VectorSlice and ArraySlice as well,
    as MLton's does (the specification's arguments give no way to make the
    vector slices a writer takes). Each application is a section: a host's
-   functors may take other arguments. *)
+   functors may take other arguments. The last section runs the checks that
+   hold for every PRIM_IO, STREAM_IO and IMPERATIVE_IO structure
+   (fn/prim_io_fn.sml, fn/stream_io_fn.sml, fn/imperative_io_fn.sml) on the
+   three results, whose elements stand for the characters of the same
+   code. *)
 structure TestIOFunctors =
 struct
   val eqL = T.eq (T.list T.int)
@@ -119,4 +124,51 @@ struct
                          in I.output (out, IntVector.fromList [1, 6]); I.output1 (out, 1);
                             I.output1 (out, 8); I.closeOut out; got () end)
   (*>> imperativeio *)
+
+  (*<< generic *)
+  fun ofString str = IntVector.fromList (List.map Char.ord (String.explode str))
+  fun toText v = String.implode (List.map Char.chr (ints v))
+  structure GenericPrim = TestPrimIOFn (structure P = P val name = "PrimIO"
+                                        val fromString = ofString val toString = toText
+                                        val sliceVector = IntVectorSlice.vector val vectorSlice = IntVectorSlice.slice
+                                        val newArray = fn str => IntArray.fromList (List.map Char.ord (String.explode str))
+                                        val arrayString = fn a => toText (IntArray.vector a)
+                                        val arraySlice = IntArraySlice.slice val arraySliceLength = IntArraySlice.length
+                                        val arraySliceVector = IntArraySlice.vector
+                                        val copyIntoSlice = fn (w, sl) => let val (a, i, _) = IntArraySlice.base sl
+                                                                          in IntArray.copyVec {src = w, dst = a, di = i} end)
+  (* The readers and writers of P, for fn/io_script.sml. *)
+  structure IntRW : IO_RW =
+  struct
+    type vector = IntVector.vector
+    type vector_slice = IntVectorSlice.slice
+    type reader = P.reader
+    type writer = P.writer
+    val fromString = ofString
+    val toString = toText
+    val sliceVector = IntVectorSlice.vector
+    val fullSlice = IntVectorSlice.full
+    fun mkReader {name, chunkSize, readVec, readVecNB, close} =
+      P.RD {name = name, chunkSize = chunkSize, readVec = SOME readVec, readArr = NONE,
+            readVecNB = readVecNB, readArrNB = NONE, block = NONE, canInput = NONE,
+            avail = fn () => NONE, getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
+            close = close, ioDesc = NONE}
+    fun mkWriter {name, chunkSize, writeVec, close} =
+      P.WR {name = name, chunkSize = chunkSize, writeVec = SOME writeVec,
+            writeArr = SOME (fn sl => writeVec (IntVectorSlice.full (IntArraySlice.vector sl))),
+            writeVecNB = NONE, writeArrNB = NONE, block = NONE, canOutput = NONE,
+            getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
+            close = close, ioDesc = NONE}
+    fun readerName (P.RD {name, ...}) = name
+    fun readerReadVec (P.RD {readVec, ...}) = readVec
+    fun readerClose (P.RD {close, ...}) = close ()
+    fun writerName (P.WR {name, ...}) = name
+    fun writerWriteVec (P.WR {writeVec, ...}) = writeVec
+    fun writerClose (P.WR {close, ...}) = close ()
+  end
+  structure GenericStream = TestStreamIOFn (structure RW = IntRW structure S = S val name = "StreamIO"
+                                            val elemChar = Char.chr val charElem = Char.ord val text = false)
+  structure GenericImperative = TestImperativeIOFn (structure RW = IntRW structure I = I val name = "ImperativeIO"
+                                                    val elemChar = Char.chr val charElem = Char.ord)
+  (*>> generic *)
 end

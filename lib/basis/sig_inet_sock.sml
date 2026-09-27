@@ -96,7 +96,9 @@ sig
        Raises: `OS.SysErr` if no socket can be made. *)
     val socket' : int -> 'mode stream_sock
 
-    (* `getNODELAY sock` is `true` when small writes go out at once rather than being gathered. *)
+    (* `getNODELAY sock` is `true` when small writes go out at once rather than being gathered.
+
+     Example: `let val s = TCP.socket () in TCP.getNODELAY s before Socket.close s end = false` *)
     val getNODELAY : 'mode stream_sock -> bool
 
     (* `setNODELAY (sock, b)` sends small writes at once, or lets them be gathered.

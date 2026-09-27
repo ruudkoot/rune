@@ -16,6 +16,9 @@
 structure Socket : SOCKET
 ```
 
+Socket: sockets of every family: addresses, options, connecting,
+listening, sending and receiving, and waiting for several at once.
+
 ## Members
 
 What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure's own.

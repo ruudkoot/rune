@@ -156,7 +156,9 @@ sig
      twenty-four hours; the suite accepts the offset in force now, or an hour
      more, reduced modulo a day, west of UTC.
 
-     Pinned by: `Date.localOffset/*` *)
+     Pinned by: `Date.localOffset/*`
+
+     Example: `LargeInt.abs (Time.toSeconds (localOffset ())) <= 86400 = true` *)
   val localOffset : unit -> Time.time
 
   (* `fromTimeLocal t` is the moment `t` read in the local zone, with `offset` `NONE`.

@@ -16,6 +16,9 @@
 structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char
 ```
 
+WideCharArray: mutable arrays of wide characters, a type of their own with
+identity equality, whose vectors are those of [`WideCharVector`](../str/WideCharVector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

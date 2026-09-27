@@ -19,7 +19,7 @@ structure Option : OPTION
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Option`](../str/Option.md) | Option | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
+| [`Option`](../str/Option.md) | Option: the operations on the top-level type [`option`](#type-option), of a value that may be missing. | [lib/basis/option.sml](../../../../lib/basis/option.sml) |
 
 Optional values: a value that may be missing, and what a partial function
 returns instead of raising an exception.
@@ -90,6 +90,8 @@ exception Option
 
 Raised by [`valOf`](#val-valof) when there is no value. It is the top-level [`Option`](#exn-option).
 
+**Example** `(valOf NONE handle Option => 0) = 0`
+
 Also in the [top-level environment](../top-level.md): `Option`.
 
 <details><summary>Tests (4)</summary>
@@ -125,6 +127,8 @@ val isSome : 'a option -> bool
 
 `isSome opt` is `true` when `opt` carries a value.
 
+**Example** `isSome (SOME 0) = true`
+
 Also in the [top-level environment](../top-level.md): `isSome`.
 
 <details><summary>Tests (6)</summary>
@@ -142,6 +146,10 @@ val valOf : 'a option -> 'a
 `valOf opt` is the value that `opt` carries.
 
 **Raises** [`Option`](#exn-option) if `opt` is [`NONE`](#con-none).
+
+**Law** `SOME (valOf opt) = opt` when `isSome opt`
+
+**Example** `valOf (SOME 1) = 1`
 
 Also in the [top-level environment](../top-level.md): `valOf`.
 
@@ -191,6 +199,8 @@ val app : ('a -> unit) -> 'a option -> unit
 
 `app f opt` applies `f` to the value that `opt` carries, if there is one,
 for its effect.
+
+**Example** `let val r = ref 0 in app (fn x => r := x) (SOME 5); !r end = 5`
 
 <details><summary>Tests (7)</summary>
 
@@ -266,6 +276,8 @@ val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
 `g a` is [`NONE`](#con-none).
 
 **Law** `composePartial (f, g) a = mapPartial f (g a)`
+
+**Example** `composePartial (Int.fromString, SOME) "42" = SOME 42`
 
 <details><summary>Tests (13)</summary>
 

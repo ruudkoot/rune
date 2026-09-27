@@ -16,6 +16,9 @@
 structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char
 ```
 
+WideCharVectorSlice: stretches of [`WideCharVector`](../str/WideCharVector.md) vectors, without a
+copy, which are the substrings of [`WideSubstring`](../str/WideSubstring.md).
+
 ## Members
 
 What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the types are this structure's own.

@@ -7,7 +7,7 @@
 | Signature | [`REAL`](../sig/REAL.md) |
 | Status | required |
 | Members | 64 |
-| Tests | 885 checks |
+| Tests | 903 checks |
 | Source | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 ## Synopsis
@@ -16,7 +16,11 @@
 structure Real : REAL where type real = real
 ```
 
-Real: IEEE double precision.
+Real: floating-point numbers of IEEE 754 double precision, the type of
+the top-level [`real`](../sig/REAL.md#type-real) and of its literals.
+
+[`LargeReal`](Real.md) and [`Real64`](Real.md) are this structure by other names, and
+[`Real.Math`](../str/Real.Math.md) its elementary functions, which the top level has as [`Math`](../sig/REAL.md#str-math).
 
 ## Members
 
@@ -198,14 +202,18 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 > significand as "1.0 \<= man \* radix \< radix", which for radix 2 means
 > `0.5 <= |man| < 1.0`: the convention of C's `frexp`, and not the one
 > that puts the point after the first digit. For a zero, an infinity or a
-> NaN the significand is `x` itself.
+> NaN the significand is `x` itself; the exponent of a zero is 0, and that
+> of an infinity or a NaN is left open.
 
-<details><summary>Other implementations (40)</summary>
+<details><summary>Other implementations (58)</summary>
 
+- **MLKit** &mdash; the optimiser compiles 0.0 + e and e + 0.0 as e, so 0.0 + \~0.0 is \~0.0, not 0.0 (with --no\_optimiser it is 0.0)
 - **SML/NJ** &mdash; Real.ceil minPos is 0
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
 - **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **MLKit** &mdash; ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
+- **MLKit** &mdash; ceil of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 - **MLton** &mdash; another reading of the specification: SCI, FIX and GEN print \~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "\~0.0"
 - **Poly/ML** &mdash; GEN prints integral values with ".0" ("1.0")
 - **Poly/ML** &mdash; GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
@@ -214,7 +222,13 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
 - **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
 - **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
+- **MLKit** &mdash; fmt (GEN \_) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "\~0.0"), and 9.6 at one digit is "1E1", not "10"
+- **MLKit** &mdash; fmt (GEN \_) is C's %g: it chooses the notation by the exponent, not the shorter one ("0.001", "10000000000.0", "1.235E5"), and adds ".0" to an integral value
+- **MLKit** &mdash; fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
+- **MLKit** &mdash; fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO\_NEAREST: under TO\_NEGINF {sign = true, digits = \[1\], exp = 0} is \~0.09999999999999999, not \~0.1
 - **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
+- **SML/NJ, MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 - **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos
 - **Poly/ML 5.9.2** &mdash; fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
 - **SML/NJ** &mdash; scan skips only space, tab and newline, not the other Char.isSpace characters (\\r, \\v, \\f)
@@ -222,7 +236,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **Poly/ML 5.9.2** &mdash; fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 - **SML/NJ, Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
 - **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015 (under xc1 through the shim's real\_from\_string, which is the host's Real.fromString)
-- **MLton, Poly/ML** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
+- **MLton, Poly/ML, MLKit** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
 - **Poly/ML** &mdash; Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
 - **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
 - **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
@@ -240,8 +254,17 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
 - **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
 - **Poly/ML 5.9.2** &mdash; toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
+- **MLKit** &mdash; toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")
+- **MLKit** &mdash; toDecimal produces and checks its digits in the current rounding mode, where the specification asks for TO\_NEAREST: under TO\_POSINF the digits of 0.1 are 10000000000000001, not 1
+- **MLKit** &mdash; toInt TO\_POSINF is ceil, which gives minInt for 2^62 instead of raising Overflow
+- **MLKit** &mdash; toInt TO\_POSINF and TO\_ZERO are ceil and trunc, which raise Overflow for minInt = \~2^62
+- **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF are exchanged for it: toLargeInt TO\_NEGINF \~2.5 is \~2
+- **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF disagree with floor and ceil on negative reals
 - **Poly/ML** &mdash; toString prints integral values with ".0" ("1.0")
 - **Poly/ML** &mdash; toString does not choose the shorter of the two notations ("10000000000.0", "0.000125")
+- **MLKit** &mdash; toString is C's %.12g with ".0" added to an integral result ("1.0")
+- **MLKit** &mdash; toString is C's %.12g: it chooses the notation by the exponent, not the shorter one ("10000000000.0", "0.000125")
+- **MLKit** &mdash; trunc of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
 </details>
 

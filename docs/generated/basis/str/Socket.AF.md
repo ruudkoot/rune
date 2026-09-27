@@ -10,6 +10,8 @@
 | Tests | 12 checks |
 | Source | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
+Socket.AF: the address families the system knows, and their names.
+
 ## Members
 
 What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure's own.

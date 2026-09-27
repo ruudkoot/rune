@@ -16,6 +16,8 @@
 structure Word16Vector :> MONO_VECTOR where type elem = Word16.word
 ```
 
+Word16Vector: immutable vectors of 16-bit words.
+
 The monomorphic vectors and arrays of Word16.word, their slices and the
 two-dimensional arrays (optional in the specification).
 

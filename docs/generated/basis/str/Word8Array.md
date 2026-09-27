@@ -16,6 +16,10 @@
 structure Word8Array :> MONO_ARRAY where type vector = Word8Vector.vector where type elem = Word8.word
 ```
 
+Word8Array: mutable arrays of bytes, a type of their own with identity
+equality, whose vectors are those of [`Word8Vector`](../str/Word8Vector.md): the buffers of binary
+input and output.
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

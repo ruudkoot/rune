@@ -16,6 +16,9 @@
 structure Word32Array :> MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word
 ```
 
+Word32Array: mutable arrays of 32-bit words, a type of their own with
+identity equality, whose vectors are those of [`Word32Vector`](../str/Word32Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

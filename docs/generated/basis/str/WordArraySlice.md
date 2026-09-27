@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 240 checks |
+| Tests | 241 checks |
 | Source | [lib/basis/mono\_word.sml](../../../../lib/basis/mono_word.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vector where type vector_slice = WordVectorSlice.slice where type array = WordArray.array where type elem = word
 ```
+
+WordArraySlice: stretches of [`WordArray`](../str/WordArray.md) arrays, without a copy: an update
+through a slice changes the array.
 
 ## Members
 

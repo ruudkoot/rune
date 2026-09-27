@@ -48,7 +48,7 @@ answers for IPv4 only.
 > IPv4, and it names no structure for anything else. A program that uses
 > this one does not port. What the specification does allow is the family:
 > AF.list "returns a list of all the available address families", so
-> [`Socket.AF`](../sig/SOCKET.md#str-af) knowing `INET6` is not a departure and this signature is.
+> [`Socket.AF`](../str/Socket.AF.md) knowing `INET6` is not a departure and this signature is.
 
 ## Interface
 

@@ -244,6 +244,8 @@ that satisfy `p`.
 
 **Law** `takel p getc strm = #1 (splitl p getc strm)`
 
+**Example** `takel Char.isDigit Substring.getc (Substring.full "12ab") = "12"`
+
 <details><summary>Tests (10)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `none-satisfy` &middot; `all-satisfy` &middot; `empty-source` &middot; `string-from-the-middle` &middot; `maximal-prefix-only` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `law-*` &middot; `law-is-first-of-splitl-*`
@@ -280,6 +282,8 @@ val skipWS : (char, 'a) reader -> 'a -> 'a
 White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
 
 **Law** `skipWS getc strm = dropl Char.isSpace getc strm`
+
+**Example** `Substring.string (skipWS Substring.getc (Substring.full "  a")) = "a"`
 
 <details><summary>Other implementations (1)</summary>
 

@@ -19,7 +19,7 @@ structure Posix.ProcEnv : POSIX_PROC_ENV  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Posix.ProcEnv`](../str/Posix.ProcEnv.md) |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.ProcEnv`](../str/Posix.ProcEnv.md) | Posix.ProcEnv: the identities, groups, environment, terminal and limits of this process. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The process's own identity: who it is, who owns it, which group and
 session it belongs to, and what its environment holds.
@@ -92,7 +92,7 @@ end
 eqtype pid
 ```
 
-The type of the number that names a process, the one of [`Posix.Process`](../sig/POSIX.md#str-process).
+The type of the number that names a process, the one of [`Posix.Process`](../str/Posix.Process.md).
 
 ### <a name="type-uid"></a>`uid`
 
@@ -116,7 +116,7 @@ The type of the number that names a group.
 eqtype file_desc
 ```
 
-The type of an open file descriptor, the one of [`Posix.FileSys`](../sig/POSIX.md#str-filesys).
+The type of an open file descriptor, the one of [`Posix.FileSys`](../str/Posix.FileSys.md).
 
 ### <a name="val-uidtoword"></a>`uidToWord`
 
@@ -139,6 +139,10 @@ val wordToUid : SysWord.word -> uid
 ```
 
 `wordToUid w` is the user numbered `w`, whether or not there is such a user.
+
+**Law** `uidToWord (wordToUid w) = w`
+
+**Example** `uidToWord (wordToUid 0w0) = 0w0`
 
 <details><summary>Tests (1)</summary>
 
@@ -168,6 +172,8 @@ val wordToGid : SysWord.word -> gid
 
 `wordToGid w` is the group numbered `w`.
 
+**Law** `gidToWord (wordToGid w) = w`
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `no-validation`
@@ -195,6 +201,8 @@ val getppid : unit -> pid
 ```
 
 `getppid ()` is the number of the process that made this one.
+
+**Example** `getppid () <> getpid () = true`
 
 <details><summary>Tests (2)</summary>
 
@@ -377,7 +385,10 @@ For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis
 val setpgid : {pid : pid option, pgid : pid option} -> unit
 ```
 
-`setpgid {pid, pgid}` puts the process `pid` into the process group `pgid`, `NONE` meaning this process.
+`setpgid {pid, pgid}` puts the process `pid` into the process group `pgid`.
+
+A `pid` of `NONE` is this process, and a `pgid` of `NONE` makes the
+process the leader of a group of its own, numbered as the process is.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the move is refused.
 
@@ -404,6 +415,8 @@ The fields are `"sysname"`, `"nodename"`, `"release"`, `"version"` and
 `"machine"`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the system cannot be asked.
+
+**Example** `List.map #1 (uname ()) = ["sysname", "nodename", "release", "version", "machine"]`
 
 <details><summary>Tests (6)</summary>
 
@@ -476,6 +489,10 @@ val getenv : string -> string option
 
 `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
+**Law** `getenv name = OS.Process.getEnv name`
+
+**Example** `getenv "A_VARIABLE_THAT_NOBODY_SETS" = NONE`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `PATH` &middot; `unset` &middot; `shell`
@@ -502,7 +519,12 @@ For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis
 val ctermid : unit -> string
 ```
 
-`ctermid ()` is the path of this process's controlling terminal, or the empty string when it has none.
+`ctermid ()` is a path that names the controlling terminal of this process.
+
+It is C's [`ctermid`](#val-ctermid), which on Linux and macOS is `"/dev/tty"` whether or
+not the process has a terminal: that path names whichever one it has.
+
+**Example** `ctermid () = "/dev/tty"` on Linux and macOS
 
 <details><summary>Tests (1)</summary>
 
@@ -533,6 +555,10 @@ val isatty : file_desc -> bool
 ```
 
 `isatty fd` is `true` when `fd` is open on a terminal.
+
+A descriptor that is not open is no terminal: nothing is raised.
+
+**Example** `isatty (Posix.FileSys.wordToFD 0w999) = false`
 
 <details><summary>Tests (3)</summary>
 

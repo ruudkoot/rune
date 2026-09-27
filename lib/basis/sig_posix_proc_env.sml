@@ -44,19 +44,27 @@ sig
   (* `uidToWord u` is the number of the user `u`. *)
   val uidToWord : uid -> SysWord.word
 
-  (* `wordToUid w` is the user numbered `w`, whether or not there is such a user. *)
+  (* `wordToUid w` is the user numbered `w`, whether or not there is such a user.
+
+     Law: `uidToWord (wordToUid w) = w`
+
+     Example: `uidToWord (wordToUid 0w0) = 0w0` *)
   val wordToUid : SysWord.word -> uid
 
   (* `gidToWord g` is the number of the group `g`. *)
   val gidToWord : gid -> SysWord.word
 
-  (* `wordToGid w` is the group numbered `w`. *)
+  (* `wordToGid w` is the group numbered `w`.
+
+     Law: `gidToWord (wordToGid w) = w` *)
   val wordToGid : SysWord.word -> gid
 
   (* `getpid ()` is the number of this process. *)
   val getpid : unit -> pid
 
-  (* `getppid ()` is the number of the process that made this one. *)
+  (* `getppid ()` is the number of the process that made this one.
+
+     Example: `getppid () <> getpid () = true` *)
   val getppid : unit -> pid
 
   (* `getuid ()` is the user that started this process. *)
@@ -128,7 +136,10 @@ sig
      Pinned by: `Posix.ProcEnv.setsid/*` *)
   val setsid : unit -> pid
 
-  (* `setpgid {pid, pgid}` puts the process `pid` into the process group `pgid`, `NONE` meaning this process.
+  (* `setpgid {pid, pgid}` puts the process `pid` into the process group `pgid`.
+
+     A `pid` of `NONE` is this process, and a `pgid` of `NONE` makes the
+     process the leader of a group of its own, numbered as the process is.
 
      Raises: `OS.SysErr` if the move is refused. *)
   val setpgid : {pid : pid option, pgid : pid option} -> unit
@@ -138,7 +149,10 @@ sig
      The fields are `"sysname"`, `"nodename"`, `"release"`, `"version"` and
      `"machine"`.
 
-     Raises: `OS.SysErr` if the system cannot be asked. *)
+     Raises: `OS.SysErr` if the system cannot be asked.
+
+     Example: `List.map #1 (uname ()) = ["sysname", "nodename", "release",
+     "version", "machine"]` *)
   val uname : unit -> (string * string) list
 
   (* `time ()` is the time now, as `Time.now` gives it. *)
@@ -156,13 +170,22 @@ sig
                   cutime : Time.time,
                   cstime : Time.time}
 
-  (* `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`. *)
+  (* `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
+
+     Law: `getenv name = OS.Process.getEnv name`
+
+     Example: `getenv "A_VARIABLE_THAT_NOBODY_SETS" = NONE` *)
   val getenv : string -> string option
 
   (* `environ ()` is the whole environment, each entry written `"name=value"`. *)
   val environ : unit -> string list
 
-  (* `ctermid ()` is the path of this process's controlling terminal, or the empty string when it has none. *)
+  (* `ctermid ()` is a path that names the controlling terminal of this process.
+
+     It is C's `ctermid`, which on Linux and macOS is `"/dev/tty"` whether or
+     not the process has a terminal: that path names whichever one it has.
+
+     Example: `ctermid () = "/dev/tty"` on Linux and macOS *)
   val ctermid : unit -> string
 
   (* `ttyname fd` is the path of the terminal that `fd` is open on.
@@ -170,7 +193,11 @@ sig
      Raises: `OS.SysErr` if `fd` is not a terminal. *)
   val ttyname : file_desc -> string
 
-  (* `isatty fd` is `true` when `fd` is open on a terminal. *)
+  (* `isatty fd` is `true` when `fd` is open on a terminal.
+
+     A descriptor that is not open is no terminal: nothing is raised.
+
+     Example: `isatty (Posix.FileSys.wordToFD 0w999) = false` *)
   val isatty : file_desc -> bool
 
   (* `sysconf name` is the value the system gives for the limit or option `name`, such as `"CLK_TCK"`.

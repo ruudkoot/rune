@@ -16,6 +16,9 @@
 structure LargeIntArray2 :> MONO_ARRAY2 where type vector = LargeIntVector.vector where type elem = LargeInt.int
 ```
 
+LargeIntArray2: two-dimensional arrays of integers of any size, whose rows
+and columns are [`LargeIntVector`](../str/LargeIntVector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

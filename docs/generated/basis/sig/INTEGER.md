@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 9 |
 | Documentation | 30 of 30 entries documented |
-| Tests | 430 checks of 30 entries |
+| Tests | 433 checks of 30 entries |
 | Source | [lib/basis/int\_sig.sml](../../../../lib/basis/int_sig.sml) |
 
 ## Synopsis
@@ -123,7 +123,9 @@ The type of integers of this structure.
 > [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
 > range where they are written.
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (4)</summary>
+
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `is-IntInf.int`
 
 For `LargeInt`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `is-IntInf.int`
 
@@ -265,9 +267,9 @@ val precision : Int.int option
 
 </details>
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (8)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `NONE`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `NONE` &middot; `is-IntInf.precision`
 
 For `LargeInt`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `is-IntInf.precision`
 
@@ -360,9 +362,9 @@ val + : int * int -> int
 
 </details>
 
-<details><summary>Tests (30)</summary>
+<details><summary>Tests (31)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^63-twice` &middot; `carry-chain` &middot; `as-Int*` &middot; `associative*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `2^63-twice` &middot; `carry-chain` &middot; `as-Int*` &middot; `associative*` &middot; `is-IntInf.+`
 
 For `LargeInt`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `is-IntInf.+`
 

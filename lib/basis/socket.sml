@@ -45,6 +45,7 @@ struct
     type passive = passive'
     type active = active'
 
+    (* Socket.AF: the address families the system knows, and their names. *)
     structure AF =
     struct
       type addr_family = RuneNet.addr_family
@@ -61,6 +62,8 @@ struct
         | fromString _ = NONE
     end
 
+    (* Socket.SOCK: the kinds of socket, a stream or messages, and their
+       names. *)
     structure SOCK =
     struct
       type sock_type = RuneNet.sock_type
@@ -221,7 +224,8 @@ struct
                  (recvVecFromNB' (s, Word8ArraySlice.length sl, flags))
     fun recvArrFromNB (s, sl) = recvArrFromNB' (s, sl, noIn)
 
-    (* The options of a socket, and its addresses. *)
+    (* Socket.Ctl: the options of a socket, read and set, and the addresses of
+       its two ends. *)
     structure Ctl =
     struct
       local
@@ -295,7 +299,10 @@ struct
   end
 end
 
-(* Implements: SOCKET
+(* Socket: sockets of every family: addresses, options, connecting,
+   listening, sending and receiving, and waiting for several at once.
+
+   Implements: SOCKET
 
    Status: optional *)
 structure Socket = RuneSocket

@@ -6,7 +6,7 @@
    ones are `Real32` and `Real64`. A NaN, "not a number", is what an
    operation answers where there is no value to give: it is equal to nothing,
    itself included, so `==` is `false` for it and `compare` raises
-   `Unordered`. Because of that the equality of the language is not available
+   `IEEEReal.Unordered`. Because of that the equality of the language is not available
    at `real`; use `==` where equality is meant and `Real.compare` where an
    order is.
 
@@ -111,10 +111,14 @@ sig
 
   (* ---- Choosing ---- *)
 
-  (* `min (x, y)` is the smaller of the two, or the one that is not a NaN when the other is. *)
+  (* `min (x, y)` is the smaller of the two, or the one that is not a NaN when the other is.
+
+     When both are NaNs the result is a NaN. *)
   val min : real * real -> real
 
-  (* `max (x, y)` is the larger of the two, or the one that is not a NaN when the other is. *)
+  (* `max (x, y)` is the larger of the two, or the one that is not a NaN when the other is.
+
+     When both are NaNs the result is a NaN. *)
   val max : real * real -> real
 
   (* ---- Signs ---- *)
@@ -146,8 +150,7 @@ sig
 
   (* `compare (x, y)` orders two reals.
 
-     Raises: `IEEEReal.Unordered` if either is a NaN, which is the top-level
-     `Unordered`. *)
+     Raises: `IEEEReal.Unordered` if either is a NaN. *)
   val compare : real * real -> order
 
   (* `compareReal (x, y)` orders two reals, and answers `UNORDERED` where a NaN makes the question meaningless.
@@ -211,13 +214,20 @@ sig
      significand as "1.0 <= man * radix < radix", which for radix 2 means
      `0.5 <= |man| < 1.0`: the convention of C's `frexp`, and not the one
      that puts the point after the first digit. For a zero, an infinity or a
-     NaN the significand is `x` itself.
+     NaN the significand is `x` itself; the exponent of a zero is 0, and that
+     of an infinity or a NaN is left open.
 
      Example: `(fn {man, exp} => (toString man, exp)) (toManExp 8.0) = ("0.5",
      4)` *)
   val toManExp : real -> {man : real, exp : int}
 
   (* `fromManExp {man, exp}` is `man * radix^exp`.
+
+     The result can be a zero or an infinity even for a finite `man` that is
+     not zero, where the product underflows or overflows. A zero, an infinity
+     or a NaN as `man` is the result.
+
+     Example: `toString (fromManExp {man = 0.75, exp = 4}) = "12"`
 
      Law: `fromManExp (toManExp x) == x` for a finite `x` *)
   val fromManExp : {man : real, exp : int} -> real
@@ -243,7 +253,12 @@ sig
      Reading: `Real.nextAfter/equal-zeros-returns-r`. "If `r = t` then it
      returns `r`": the two zeros are equal, so `nextAfter (~0.0, 0.0)` is
      `~0.0`. C's `nextafter` returns `t` there, and MLton and Poly/ML follow
-     C. *)
+     C.
+
+     A NaN in either argument gives a NaN, and an infinity `x` is the
+     result, whatever `y` is.
+
+     Example: `== (nextAfter (0.0, 1.0), minPos) = true` *)
   val nextAfter : real * real -> real
 
   (* `checkFloat x` is `x` when it is finite, and raises otherwise.
@@ -258,16 +273,25 @@ sig
 
   (* `realFloor x` is the largest whole number that is not greater than `x`, as a `real`.
 
+     An infinity and a NaN are returned as they are, by `realCeil`,
+     `realTrunc` and `realRound` too.
+
+     Example: `toString (realFloor ~1.5) = "~2"`
+
      Reading: `Real.realFloor/negzero-sign`. The specification is silent
      about the sign of a zero result; IEEE 754 keeps the sign of the operand,
      so `realFloor ~0.5` is `~0.0`. The same holds for `realCeil`,
      `realTrunc` and `realRound`. *)
   val realFloor : real -> real
 
-  (* `realCeil x` is the smallest whole number that is not less than `x`, as a `real`. *)
+  (* `realCeil x` is the smallest whole number that is not less than `x`, as a `real`.
+
+     Example: `toString (realCeil ~1.5) = "~1"` *)
   val realCeil : real -> real
 
-  (* `realTrunc x` is `x` rounded towards zero, as a `real`. *)
+  (* `realTrunc x` is `x` rounded towards zero, as a `real`.
+
+     Example: `toString (realTrunc ~1.5) = "~1"` *)
   val realTrunc : real -> real
 
   (* `realRound x` is `x` rounded to the nearest whole number, as a `real`.
@@ -337,10 +361,16 @@ sig
      a bounded `LargeInt.int`; `Domain` if `x` is a NaN. *)
   val toLargeInt : IEEEReal.rounding_mode -> real -> LargeInt.int
 
-  (* `fromInt i` is `i` as a real, correctly rounded when the type cannot hold it exactly. *)
+  (* `fromInt i` is `i` as a real, rounded in the current rounding mode when the type cannot hold it exactly.
+
+     The top-level `real` is this function.
+
+     Example: `toString (fromInt ~7) = "~7"` *)
   val fromInt : int -> real
 
-  (* `fromLargeInt i` is `i` as a real, correctly rounded.
+  (* `fromLargeInt i` is `i` as a real, rounded once in the current rounding mode when the type cannot hold it exactly.
+
+     A magnitude beyond `maxFinite` gives an infinity of the sign of `i`.
 
      Reading: `Real.fromLargeInt/tie-rounds-to-even-down`. The current
      rounding mode is used; under the default one a value exactly between two
@@ -365,9 +395,14 @@ sig
      writes as many as are needed to read the same number back. An infinity
      is `"inf"` or `"~inf"` and a NaN is `"nan"`.
 
-     Raises: `Size` if the number of digits is negative. The specification
-     says this happens "when `fmt spec` is evaluated", before a real is
-     given, so a partial application already raises.
+     `SCI` and `FIX` write 6 digits after the point where the number is
+     `NONE`, and no point at all for `SOME 0`; `GEN` writes at most 12
+     significant digits where it is `NONE`.
+
+     Raises: `Size` if `SCI` or `FIX` is given a negative number of digits,
+     or `GEN` fewer than 1. The specification says this happens "when
+     `fmt spec` is evaluated", before a real is given, so a partial
+     application already raises.
 
      Reading: `Real.fmt/SCI-negzero`. A negative zero is written with its
      sign, because the formats are described as `[~]?` and `signBit` is set;
@@ -445,19 +480,35 @@ sig
   (* `toDecimal x` is the shortest decimal number that reads back as `x`.
 
      `IEEEReal.toString` turns the result into text, and `fromDecimal` turns
-     it into `x` again.
+     it into `x` again. The conversion rounds to nearest, whatever rounding
+     mode is in force. For a zero, an infinity or a NaN the digits are none
+     and the exponent 0; the sign and the class are those of `x` in every
+     case.
 
      Reading: `Real.toDecimal/shortest-digits`. The digits are the fewest
      that `fromDecimal` reads back as the same real, not the exact expansion,
      which every real has and which is long: `toDecimal 0.1` has the one
      digit 1, where the real nearest to a tenth has 55.
 
-     Example: `#digits (toDecimal 0.1) = [1]` *)
+     Example: `#digits (toDecimal 0.1) = [1]`
+
+     Law: `valOf (fromDecimal (toDecimal x)) == x`, with the same sign bit,
+     for a normal or subnormal `x` *)
   val toDecimal : real -> IEEEReal.decimal_approx
 
-  (* `fromDecimal d` is the real nearest to the decimal number `d`, or `NONE` when `d` is not a number a real can describe.
+  (* `fromDecimal d` is the real nearest to the decimal number `d`, or `NONE` when a digit of `d` is outside 0 to 9.
 
-     The current rounding mode is used. A `d` whose value is too large gives
-     an infinity and one too small a zero. *)
+     The conversion rounds to nearest, whatever rounding mode is in force.
+     The class `ZERO` or `INF` gives a zero or an infinity and `NAN` a NaN,
+     each with the sign of `d`. For `NORMAL` and `SUBNORMAL` the value is
+     that of the digits, the exponent and the sign, whatever class it turns
+     out to have: no digits, or only zeros, give a zero, and a value too
+     large gives an infinity and one too small a zero.
+
+     Example: `Option.map toString (fromDecimal {class = IEEEReal.NORMAL,
+     sign = true, digits = [1, 5], exp = 1}) = SOME "~1.5"`
+
+     Example: `isSome (fromDecimal {class = IEEEReal.NORMAL, sign = false,
+     digits = [10], exp = 0}) = false` *)
   val fromDecimal : IEEEReal.decimal_approx -> real option
 end

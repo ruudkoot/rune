@@ -195,6 +195,7 @@ PrimIO	functor	PRIM_IO		optional	ascribed	lib/basis/io_functors.sml
 Real	structure	REAL	where type real = real	required	claimed	lib/basis/real.sml
 Real.Math	structure	MATH		required	claimed	lib/basis/real.sml
 Real32	structure	REAL		optional	claimed	lib/basis/real32.sml
+Real32.Math	structure	MATH		required	claimed	lib/basis/real32.sml
 Real32Array	structure	MONO_ARRAY	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32Array2	structure	MONO_ARRAY2	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Real32Vector.vector where type vector_slice = Real32VectorSlice.slice where type array = Real32Array.array where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
@@ -234,6 +235,7 @@ Vector	structure	VECTOR		required	claimed	lib/basis/vector.sml
 VectorSlice	structure	VECTOR_SLICE		required	claimed	lib/basis/vectorslice.sml
 WideChar	structure	CHAR	where type char = WideChar.char where type string = WideString.string	optional	claimed	lib/basis/widechar.sml
 WideCharArray	structure	MONO_ARRAY	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
+WideCharArray2	structure	MONO_ARRAY2	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharArraySlice	structure	MONO_ARRAY_SLICE	where type vector = WideCharVector.vector where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharVector	structure	MONO_VECTOR	where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharVector	structure	MONO_VECTOR_EQ	where type elem = RuneWideChar.char	optional	ascribed	lib/basis/widechar.sml

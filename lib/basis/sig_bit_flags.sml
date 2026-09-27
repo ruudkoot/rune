@@ -24,7 +24,9 @@ sig
      Two are equal when they hold the same flags. *)
   eqtype flags
 
-  (* `toWord fl` is the word whose bits are the flags of `fl`. *)
+  (* `toWord fl` is the word whose bits are the flags of `fl`.
+
+     Example: `Posix.FileSys.S.toWord Posix.FileSys.S.irwxu = 0wx1C0` *)
   val toWord : flags -> SysWord.word
 
   (* `fromWord w` is the set of the flags that the bits of `w` name.
@@ -34,7 +36,9 @@ sig
      bits that no flag of this structure has included: such bits are dropped
      rather than kept or refused.
 
-     Pinned by: `*.fromWord/bits-beyond-all` *)
+     Pinned by: `*.fromWord/bits-beyond-all`
+
+     Example: `let open Posix.FileSys.S in fromWord 0wx100 = irusr end = true` *)
   val fromWord : SysWord.word -> flags
 
   (* Every flag the system uses here.
@@ -43,7 +47,9 @@ sig
      bit of the underlying C value, so it may include flags the
      specification does not name (`O_CLOEXEC`, `O_LARGEFILE`); that is what
      lets those survive a trip through `fromWord` or a call that reads the
-     flags back from the system. *)
+     flags back from the system.
+
+     Example: `let open Posix.FileSys.S in allSet (irwxu, all) end = true` *)
   val all : flags
 
   (* `flags l` is the union of the sets of `l`: a flag is in it when it is in one of them.
@@ -54,7 +60,9 @@ sig
 
   (* `intersect l` is the intersection of the sets of `l`: a flag is in it when it is in all of them.
 
-     The intersection of no sets at all is `all`. *)
+     The intersection of no sets at all is `all`.
+
+     Example: `let open Posix.FileSys.S in toWord (intersect [irwxu, flags [irusr, irgrp]]) end = 0wx100` *)
   val intersect : flags list -> flags
 
   (* `clear (fl, gl)` is `gl` without the flags of `fl`.
@@ -70,6 +78,8 @@ sig
      Example: `let open Posix.FileSys.S in allSet (irwxu, irusr) end = false` *)
   val allSet : flags * flags -> bool
 
-  (* `anySet (fl, gl)` is `true` when some flag of `fl` is in `gl`. *)
+  (* `anySet (fl, gl)` is `true` when some flag of `fl` is in `gl`.
+
+     Example: `let open Posix.FileSys.S in anySet (irusr, flags [irusr, iwgrp]) end = true` *)
   val anySet : flags * flags -> bool
 end

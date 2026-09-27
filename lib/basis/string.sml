@@ -1,4 +1,5 @@
-(* String: 8-bit byte strings.
+(* String: strings of 8-bit characters, the type of the top-level `string`
+   and of its literals.
 
    Implements: STRING where type string = string where type char = Char.char *)
 structure String =

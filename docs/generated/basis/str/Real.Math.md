@@ -7,7 +7,7 @@
 | Signature | [`MATH`](../sig/MATH.md) |
 | Status | required |
 | Members | 18 |
-| Tests | 0 checks |
+| Tests | 262 checks |
 | Source | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure Real.Math : MATH
 ```
+
+Real.Math: the elementary functions at [`real`](../sig/MATH.md#type-real), from the C library, with
+[`asin`](../sig/MATH.md#val-asin), [`acos`](../sig/MATH.md#val-acos) and [`log10`](../sig/MATH.md#val-log10) made from its [`atan2`](../sig/MATH.md#val-atan2) and [`ln`](../sig/MATH.md#val-ln).
 
 ## Members
 

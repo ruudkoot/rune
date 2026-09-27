@@ -16,6 +16,9 @@
 structure Posix.FileSys.S : BIT_FLAGS
 ```
 
+Posix.FileSys.S: the permission bits of a file's mode, as a set of
+flags.
+
 ## Members
 
 What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types are this structure's own.

@@ -232,243 +232,244 @@ reading one reads both.
 | [`IntVector`](../generated/basis/str/IntVector.md) | done | done | done | done | done | done |
 | [`IntVectorSlice`](../generated/basis/str/IntVectorSlice.md) | done | done | done | done | done | done |
 | [`LargeInt`](../generated/basis/str/IntInf.md) | done | done | done | done | done | done |
-| [`LargeIntArray`](../generated/basis/str/LargeIntArray.md) |  |  |  |  |  |  |
-| [`LargeIntArray2`](../generated/basis/str/LargeIntArray2.md) |  |  |  |  |  |  |
-| [`LargeIntArraySlice`](../generated/basis/str/LargeIntArraySlice.md) |  |  |  |  |  |  |
-| [`LargeIntVector`](../generated/basis/str/LargeIntVector.md) |  |  |  |  |  |  |
-| [`LargeIntVectorSlice`](../generated/basis/str/LargeIntVectorSlice.md) |  |  |  |  |  |  |
-| [`LargeReal`](../generated/basis/str/Real.md) |  |  |  |  |  |  |
-| [`LargeReal.Math`](../generated/basis/str/Real.Math.md) |  |  |  |  |  |  |
-| [`LargeRealArray`](../generated/basis/str/RealArray.md) |  |  |  |  |  |  |
-| [`LargeRealArray2`](../generated/basis/str/RealArray2.md) |  |  |  |  |  |  |
-| [`LargeRealArraySlice`](../generated/basis/str/RealArraySlice.md) |  |  |  |  |  |  |
-| [`LargeRealVector`](../generated/basis/str/RealVector.md) |  |  |  |  |  |  |
-| [`LargeRealVectorSlice`](../generated/basis/str/RealVectorSlice.md) |  |  |  |  |  |  |
-| [`LargeWord`](../generated/basis/str/Word.md) |  |  |  |  |  |  |
-| [`LargeWordArray`](../generated/basis/str/WordArray.md) |  |  |  |  |  |  |
-| [`LargeWordArray2`](../generated/basis/str/WordArray2.md) |  |  |  |  |  |  |
-| [`LargeWordArraySlice`](../generated/basis/str/WordArraySlice.md) |  |  |  |  |  |  |
-| [`LargeWordVector`](../generated/basis/str/WordVector.md) |  |  |  |  |  |  |
-| [`LargeWordVectorSlice`](../generated/basis/str/WordVectorSlice.md) |  |  |  |  |  |  |
-| [`List`](../generated/basis/str/List.md) |  |  |  |  |  |  |
-| [`ListPair`](../generated/basis/str/ListPair.md) |  |  |  |  |  |  |
-| [`Math`](../generated/basis/str/Math.md) |  |  |  |  |  |  |
-| [`NetHostDB`](../generated/basis/str/NetHostDB.md) |  |  |  |  |  |  |
-| [`NetProtDB`](../generated/basis/str/NetProtDB.md) |  |  |  |  |  |  |
-| [`NetServDB`](../generated/basis/str/NetServDB.md) |  |  |  |  |  |  |
-| [`OS`](../generated/basis/str/OS.md) |  |  |  |  |  |  |
-| [`OS.FileSys`](../generated/basis/str/OS.FileSys.md) |  |  |  |  |  |  |
-| [`OS.IO`](../generated/basis/str/OS.IO.md) |  |  |  |  |  |  |
-| [`OS.IO.Kind`](../generated/basis/str/OS.IO.Kind.md) |  |  |  |  |  |  |
-| [`OS.Path`](../generated/basis/str/OS.Path.md) |  |  |  |  |  |  |
-| [`OS.Process`](../generated/basis/str/OS.Process.md) |  |  |  |  |  |  |
-| [`Option`](../generated/basis/str/Option.md) |  |  |  |  |  |  |
-| [`PackReal32Big`](../generated/basis/str/PackReal32Big.md) |  |  |  |  |  |  |
-| [`PackReal32Little`](../generated/basis/str/PackReal32Little.md) |  |  |  |  |  |  |
-| [`PackReal64Big`](../generated/basis/str/PackRealBig.md) |  |  |  |  |  |  |
-| [`PackReal64Little`](../generated/basis/str/PackRealLittle.md) |  |  |  |  |  |  |
-| [`PackRealBig`](../generated/basis/str/PackRealBig.md) |  |  |  |  |  |  |
-| [`PackRealLittle`](../generated/basis/str/PackRealLittle.md) |  |  |  |  |  |  |
-| [`PackWord16Big`](../generated/basis/str/PackWord16Big.md) |  |  |  |  |  |  |
-| [`PackWord16Little`](../generated/basis/str/PackWord16Little.md) |  |  |  |  |  |  |
-| [`PackWord32Big`](../generated/basis/str/PackWord32Big.md) |  |  |  |  |  |  |
-| [`PackWord32Little`](../generated/basis/str/PackWord32Little.md) |  |  |  |  |  |  |
-| [`PackWord64Big`](../generated/basis/str/PackWord64Big.md) |  |  |  |  |  |  |
-| [`PackWord64Little`](../generated/basis/str/PackWord64Little.md) |  |  |  |  |  |  |
+| [`LargeIntArray`](../generated/basis/str/LargeIntArray.md) | done | done | done | done | done | done |
+| [`LargeIntArray2`](../generated/basis/str/LargeIntArray2.md) | done | done | done | done | done | done |
+| [`LargeIntArraySlice`](../generated/basis/str/LargeIntArraySlice.md) | done | done | done | done | done | done |
+| [`LargeIntVector`](../generated/basis/str/LargeIntVector.md) | done | done | done | done | done | done |
+| [`LargeIntVectorSlice`](../generated/basis/str/LargeIntVectorSlice.md) | done | done | done | done | done | done |
+| [`LargeReal`](../generated/basis/str/Real.md) | done | done | done | done | done | done |
+| [`LargeReal.Math`](../generated/basis/str/Real.Math.md) | done | done | done | done | done | done |
+| [`LargeRealArray`](../generated/basis/str/RealArray.md) | done | done | done | done | done | done |
+| [`LargeRealArray2`](../generated/basis/str/RealArray2.md) | done | done | done | done | done | done |
+| [`LargeRealArraySlice`](../generated/basis/str/RealArraySlice.md) | done | done | done | done | done | done |
+| [`LargeRealVector`](../generated/basis/str/RealVector.md) | done | done | done | done | done | done |
+| [`LargeRealVectorSlice`](../generated/basis/str/RealVectorSlice.md) | done | done | done | done | done | done |
+| [`LargeWord`](../generated/basis/str/Word.md) | done | done | done | done | done | done |
+| [`LargeWordArray`](../generated/basis/str/WordArray.md) | done | done | done | done | done | done |
+| [`LargeWordArray2`](../generated/basis/str/WordArray2.md) | done | done | done | done | done | done |
+| [`LargeWordArraySlice`](../generated/basis/str/WordArraySlice.md) | done | done | done | done | done | done |
+| [`LargeWordVector`](../generated/basis/str/WordVector.md) | done | done | done | done | done | done |
+| [`LargeWordVectorSlice`](../generated/basis/str/WordVectorSlice.md) | done | done | done | done | done | done |
+| [`List`](../generated/basis/str/List.md) | done | done | done | done | done | done |
+| [`ListPair`](../generated/basis/str/ListPair.md) | done | done | done | done | done | done |
+| [`Math`](../generated/basis/str/Real.Math.md) | done | done | done | done | done | done |
+| [`NetHostDB`](../generated/basis/str/NetHostDB.md) | done | done | done | done | done | done |
+| [`NetProtDB`](../generated/basis/str/NetProtDB.md) | done | done | done | done | done | done |
+| [`NetServDB`](../generated/basis/str/NetServDB.md) | done | done | done | done | done | done |
+| [`OS`](../generated/basis/str/OS.md) | done | done | done | done | done | done |
+| [`OS.FileSys`](../generated/basis/str/OS.FileSys.md) | done | done | done | done | done | done |
+| [`OS.IO`](../generated/basis/str/OS.IO.md) | done | done | done | done | done | done |
+| [`OS.IO.Kind`](../generated/basis/str/OS.IO.Kind.md) | done | done | done | done | done | done |
+| [`OS.Path`](../generated/basis/str/OS.Path.md) | done | done | done | done | done | done |
+| [`OS.Process`](../generated/basis/str/OS.Process.md) | done | done | done | done | done | done |
+| [`Option`](../generated/basis/str/Option.md) | done | done | done | done | done | done |
+| [`PackReal32Big`](../generated/basis/str/PackReal32Big.md) | done | done | done | done | done | done |
+| [`PackReal32Little`](../generated/basis/str/PackReal32Little.md) | done | done | done | done | done | done |
+| [`PackReal64Big`](../generated/basis/str/PackRealBig.md) | done | done | done | done | done | done |
+| [`PackReal64Little`](../generated/basis/str/PackRealLittle.md) | done | done | done | done | done | done |
+| [`PackRealBig`](../generated/basis/str/PackRealBig.md) | done | done | done | done | done | done |
+| [`PackRealLittle`](../generated/basis/str/PackRealLittle.md) | done | done | done | done | done | done |
+| [`PackWord16Big`](../generated/basis/str/PackWord16Big.md) | done | done | done | done | done | done |
+| [`PackWord16Little`](../generated/basis/str/PackWord16Little.md) | done | done | done | done | done | done |
+| [`PackWord32Big`](../generated/basis/str/PackWord32Big.md) | done | done | done | done | done | done |
+| [`PackWord32Little`](../generated/basis/str/PackWord32Little.md) | done | done | done | done | done | done |
+| [`PackWord64Big`](../generated/basis/str/PackWord64Big.md) | done | done | done | done | done | done |
+| [`PackWord64Little`](../generated/basis/str/PackWord64Little.md) | done | done | done | done | done | done |
 | [`Position`](../generated/basis/str/Int.md) | done | done | done | done | done | done |
-| [`Posix`](../generated/basis/str/Posix.md) |  |  |  |  |  |  |
-| [`Posix.Error`](../generated/basis/str/Posix.Error.md) |  |  |  |  |  |  |
-| [`Posix.FileSys`](../generated/basis/str/Posix.FileSys.md) |  |  |  |  |  |  |
-| [`Posix.FileSys.O`](../generated/basis/str/Posix.FileSys.O.md) |  |  |  |  |  |  |
-| [`Posix.FileSys.S`](../generated/basis/str/Posix.FileSys.S.md) |  |  |  |  |  |  |
-| [`Posix.FileSys.ST`](../generated/basis/str/Posix.FileSys.ST.md) |  |  |  |  |  |  |
-| [`Posix.IO`](../generated/basis/str/Posix.IO.md) |  |  |  |  |  |  |
-| [`Posix.IO.FD`](../generated/basis/str/Posix.IO.FD.md) |  |  |  |  |  |  |
-| [`Posix.IO.FLock`](../generated/basis/str/Posix.IO.FLock.md) |  |  |  |  |  |  |
-| [`Posix.IO.O`](../generated/basis/str/Posix.IO.O.md) |  |  |  |  |  |  |
-| [`Posix.ProcEnv`](../generated/basis/str/Posix.ProcEnv.md) |  |  |  |  |  |  |
-| [`Posix.Process`](../generated/basis/str/Posix.Process.md) |  |  |  |  |  |  |
-| [`Posix.Process.W`](../generated/basis/str/Posix.Process.W.md) |  |  |  |  |  |  |
-| [`Posix.Signal`](../generated/basis/str/Posix.Signal.md) |  |  |  |  |  |  |
-| [`Posix.SysDB`](../generated/basis/str/Posix.SysDB.md) |  |  |  |  |  |  |
-| [`Posix.SysDB.Group`](../generated/basis/str/Posix.SysDB.Group.md) |  |  |  |  |  |  |
-| [`Posix.SysDB.Passwd`](../generated/basis/str/Posix.SysDB.Passwd.md) |  |  |  |  |  |  |
-| [`Posix.TTY`](../generated/basis/str/Posix.TTY.md) |  |  |  |  |  |  |
-| [`Posix.TTY.C`](../generated/basis/str/Posix.TTY.C.md) |  |  |  |  |  |  |
-| [`Posix.TTY.CF`](../generated/basis/str/Posix.TTY.CF.md) |  |  |  |  |  |  |
-| [`Posix.TTY.I`](../generated/basis/str/Posix.TTY.I.md) |  |  |  |  |  |  |
-| [`Posix.TTY.L`](../generated/basis/str/Posix.TTY.L.md) |  |  |  |  |  |  |
-| [`Posix.TTY.O`](../generated/basis/str/Posix.TTY.O.md) |  |  |  |  |  |  |
-| [`Posix.TTY.TC`](../generated/basis/str/Posix.TTY.TC.md) |  |  |  |  |  |  |
-| [`Posix.TTY.V`](../generated/basis/str/Posix.TTY.V.md) |  |  |  |  |  |  |
-| [`Real`](../generated/basis/str/Real.md) |  |  |  |  |  |  |
-| [`Real.Math`](../generated/basis/str/Real.Math.md) |  |  |  |  |  |  |
-| [`Real32`](../generated/basis/str/Real32.md) |  |  |  |  |  |  |
-| [`Real32.Math`](../generated/basis/str/Real32.Math.md) |  |  |  |  |  |  |
-| [`Real32Array`](../generated/basis/str/Real32Array.md) |  |  |  |  |  |  |
-| [`Real32Array2`](../generated/basis/str/Real32Array2.md) |  |  |  |  |  |  |
-| [`Real32ArraySlice`](../generated/basis/str/Real32ArraySlice.md) |  |  |  |  |  |  |
-| [`Real32Vector`](../generated/basis/str/Real32Vector.md) |  |  |  |  |  |  |
-| [`Real32VectorSlice`](../generated/basis/str/Real32VectorSlice.md) |  |  |  |  |  |  |
-| [`Real64`](../generated/basis/str/Real.md) |  |  |  |  |  |  |
-| [`Real64.Math`](../generated/basis/str/Real.Math.md) |  |  |  |  |  |  |
-| [`Real64Array`](../generated/basis/str/RealArray.md) |  |  |  |  |  |  |
-| [`Real64Array2`](../generated/basis/str/RealArray2.md) |  |  |  |  |  |  |
-| [`Real64ArraySlice`](../generated/basis/str/RealArraySlice.md) |  |  |  |  |  |  |
-| [`Real64Vector`](../generated/basis/str/RealVector.md) |  |  |  |  |  |  |
-| [`Real64VectorSlice`](../generated/basis/str/RealVectorSlice.md) |  |  |  |  |  |  |
-| [`RealArray`](../generated/basis/str/RealArray.md) |  |  |  |  |  |  |
-| [`RealArray2`](../generated/basis/str/RealArray2.md) |  |  |  |  |  |  |
-| [`RealArraySlice`](../generated/basis/str/RealArraySlice.md) |  |  |  |  |  |  |
-| [`RealVector`](../generated/basis/str/RealVector.md) |  |  |  |  |  |  |
-| [`RealVectorSlice`](../generated/basis/str/RealVectorSlice.md) |  |  |  |  |  |  |
-| [`Runtime`](../generated/basis/str/Runtime.md) |  |  |  |  |  |  |
-| [`SML90`](../generated/basis/str/SML90.md) |  |  |  |  |  |  |
-| [`Socket`](../generated/basis/str/Socket.md) |  |  |  |  |  |  |
-| [`Socket.AF`](../generated/basis/str/Socket.AF.md) |  |  |  |  |  |  |
-| [`Socket.Ctl`](../generated/basis/str/Socket.Ctl.md) |  |  |  |  |  |  |
-| [`Socket.SOCK`](../generated/basis/str/Socket.SOCK.md) |  |  |  |  |  |  |
-| [`String`](../generated/basis/str/String.md) |  |  |  |  |  |  |
-| [`StringCvt`](../generated/basis/str/StringCvt.md) |  |  |  |  |  |  |
-| [`Substring`](../generated/basis/str/Substring.md) |  |  |  |  |  |  |
-| [`SysWord`](../generated/basis/str/Word.md) |  |  |  |  |  |  |
-| [`Text`](../generated/basis/str/Text.md) |  |  |  |  |  |  |
-| [`TextIO`](../generated/basis/str/TextIO.md) |  |  |  |  |  |  |
-| [`TextIO.StreamIO`](../generated/basis/str/TextIO.StreamIO.md) |  |  |  |  |  |  |
-| [`TextPrimIO`](../generated/basis/str/TextPrimIO.md) |  |  |  |  |  |  |
-| [`Time`](../generated/basis/str/Time.md) |  |  |  |  |  |  |
-| [`Timer`](../generated/basis/str/Timer.md) |  |  |  |  |  |  |
-| [`Unix`](../generated/basis/str/Unix.md) |  |  |  |  |  |  |
-| [`UnixSock`](../generated/basis/str/UnixSock.md) |  |  |  |  |  |  |
-| [`UnixSock.DGrm`](../generated/basis/str/UnixSock.DGrm.md) |  |  |  |  |  |  |
-| [`UnixSock.Strm`](../generated/basis/str/UnixSock.Strm.md) |  |  |  |  |  |  |
-| [`Vector`](../generated/basis/str/Vector.md) |  |  |  |  |  |  |
-| [`VectorSlice`](../generated/basis/str/VectorSlice.md) |  |  |  |  |  |  |
-| [`WideChar`](../generated/basis/str/WideChar.md) |  |  |  |  |  |  |
-| [`WideCharArray`](../generated/basis/str/WideCharArray.md) |  |  |  |  |  |  |
-| [`WideCharArraySlice`](../generated/basis/str/WideCharArraySlice.md) |  |  |  |  |  |  |
-| [`WideCharVector`](../generated/basis/str/WideCharVector.md) |  |  |  |  |  |  |
-| [`WideCharVectorSlice`](../generated/basis/str/WideCharVectorSlice.md) |  |  |  |  |  |  |
-| [`WideString`](../generated/basis/str/WideString.md) |  |  |  |  |  |  |
-| [`WideSubstring`](../generated/basis/str/WideSubstring.md) |  |  |  |  |  |  |
-| [`WideText`](../generated/basis/str/WideText.md) |  |  |  |  |  |  |
-| [`WideTextIO`](../generated/basis/str/WideTextIO.md) |  |  |  |  |  |  |
-| [`WideTextIO.StreamIO`](../generated/basis/str/WideTextIO.StreamIO.md) |  |  |  |  |  |  |
-| [`WideTextPrimIO`](../generated/basis/str/WideTextPrimIO.md) |  |  |  |  |  |  |
-| [`Windows`](../generated/basis/str/Windows.md) |  |  |  |  |  |  |
-| [`Windows.Config`](../generated/basis/str/Windows.Config.md) |  |  |  |  |  |  |
-| [`Windows.DDE`](../generated/basis/str/Windows.DDE.md) |  |  |  |  |  |  |
-| [`Windows.Key`](../generated/basis/str/Windows.Key.md) |  |  |  |  |  |  |
-| [`Windows.Reg`](../generated/basis/str/Windows.Reg.md) |  |  |  |  |  |  |
-| [`Windows.Status`](../generated/basis/str/Windows.Status.md) |  |  |  |  |  |  |
-| [`Word`](../generated/basis/str/Word.md) |  |  |  |  |  |  |
-| [`Word16`](../generated/basis/str/Word16.md) |  |  |  |  |  |  |
-| [`Word16Array`](../generated/basis/str/Word16Array.md) |  |  |  |  |  |  |
-| [`Word16Array2`](../generated/basis/str/Word16Array2.md) |  |  |  |  |  |  |
-| [`Word16ArraySlice`](../generated/basis/str/Word16ArraySlice.md) |  |  |  |  |  |  |
-| [`Word16Vector`](../generated/basis/str/Word16Vector.md) |  |  |  |  |  |  |
-| [`Word16VectorSlice`](../generated/basis/str/Word16VectorSlice.md) |  |  |  |  |  |  |
-| [`Word32`](../generated/basis/str/Word32.md) |  |  |  |  |  |  |
-| [`Word32Array`](../generated/basis/str/Word32Array.md) |  |  |  |  |  |  |
-| [`Word32Array2`](../generated/basis/str/Word32Array2.md) |  |  |  |  |  |  |
-| [`Word32ArraySlice`](../generated/basis/str/Word32ArraySlice.md) |  |  |  |  |  |  |
-| [`Word32Vector`](../generated/basis/str/Word32Vector.md) |  |  |  |  |  |  |
-| [`Word32VectorSlice`](../generated/basis/str/Word32VectorSlice.md) |  |  |  |  |  |  |
-| [`Word64`](../generated/basis/str/Word64.md) |  |  |  |  |  |  |
-| [`Word64Array`](../generated/basis/str/Word64Array.md) |  |  |  |  |  |  |
-| [`Word64Array2`](../generated/basis/str/Word64Array2.md) |  |  |  |  |  |  |
-| [`Word64ArraySlice`](../generated/basis/str/Word64ArraySlice.md) |  |  |  |  |  |  |
-| [`Word64Vector`](../generated/basis/str/Word64Vector.md) |  |  |  |  |  |  |
-| [`Word64VectorSlice`](../generated/basis/str/Word64VectorSlice.md) |  |  |  |  |  |  |
-| [`Word8`](../generated/basis/str/Word8.md) |  |  |  |  |  |  |
-| [`Word8Array`](../generated/basis/str/Word8Array.md) |  |  |  |  |  |  |
-| [`Word8Array2`](../generated/basis/str/Word8Array2.md) |  |  |  |  |  |  |
-| [`Word8ArraySlice`](../generated/basis/str/Word8ArraySlice.md) |  |  |  |  |  |  |
-| [`Word8Vector`](../generated/basis/str/Word8Vector.md) |  |  |  |  |  |  |
-| [`Word8VectorSlice`](../generated/basis/str/Word8VectorSlice.md) |  |  |  |  |  |  |
-| [`WordArray`](../generated/basis/str/WordArray.md) |  |  |  |  |  |  |
-| [`WordArray2`](../generated/basis/str/WordArray2.md) |  |  |  |  |  |  |
-| [`WordArraySlice`](../generated/basis/str/WordArraySlice.md) |  |  |  |  |  |  |
-| [`WordVector`](../generated/basis/str/WordVector.md) |  |  |  |  |  |  |
-| [`WordVectorSlice`](../generated/basis/str/WordVectorSlice.md) |  |  |  |  |  |  |
+| [`Posix`](../generated/basis/str/Posix.md) | done | done | done | done | done | done |
+| [`Posix.Error`](../generated/basis/str/Posix.Error.md) | done | done | done | done | done | done |
+| [`Posix.FileSys`](../generated/basis/str/Posix.FileSys.md) | done | done | done | done | done | done |
+| [`Posix.FileSys.O`](../generated/basis/str/Posix.FileSys.O.md) | done | done | done | done | done | done |
+| [`Posix.FileSys.S`](../generated/basis/str/Posix.FileSys.S.md) | done | done | done | done | done | done |
+| [`Posix.FileSys.ST`](../generated/basis/str/Posix.FileSys.ST.md) | done | done | done | done | done | done |
+| [`Posix.IO`](../generated/basis/str/Posix.IO.md) | done | done | done | done | done | done |
+| [`Posix.IO.FD`](../generated/basis/str/Posix.IO.FD.md) | done | done | done | done | done | done |
+| [`Posix.IO.FLock`](../generated/basis/str/Posix.IO.FLock.md) | done | done | done | done | done | done |
+| [`Posix.IO.O`](../generated/basis/str/Posix.IO.O.md) | done | done | done | done | done | done |
+| [`Posix.ProcEnv`](../generated/basis/str/Posix.ProcEnv.md) | done | done | done | done | done | done |
+| [`Posix.Process`](../generated/basis/str/Posix.Process.md) | done | done | done | done | done | done |
+| [`Posix.Process.W`](../generated/basis/str/Posix.Process.W.md) | done | done | done | done | done | done |
+| [`Posix.Signal`](../generated/basis/str/Posix.Signal.md) | done | done | done | done | done | done |
+| [`Posix.SysDB`](../generated/basis/str/Posix.SysDB.md) | done | done | done | done | done | done |
+| [`Posix.SysDB.Group`](../generated/basis/str/Posix.SysDB.Group.md) | done | done | done | done | done | done |
+| [`Posix.SysDB.Passwd`](../generated/basis/str/Posix.SysDB.Passwd.md) | done | done | done | done | done | done |
+| [`Posix.TTY`](../generated/basis/str/Posix.TTY.md) | done | done | done | done | done | done |
+| [`Posix.TTY.C`](../generated/basis/str/Posix.TTY.C.md) | done | done | done | done | done | done |
+| [`Posix.TTY.CF`](../generated/basis/str/Posix.TTY.CF.md) | done | done | done | done | done | done |
+| [`Posix.TTY.I`](../generated/basis/str/Posix.TTY.I.md) | done | done | done | done | done | done |
+| [`Posix.TTY.L`](../generated/basis/str/Posix.TTY.L.md) | done | done | done | done | done | done |
+| [`Posix.TTY.O`](../generated/basis/str/Posix.TTY.O.md) | done | done | done | done | done | done |
+| [`Posix.TTY.TC`](../generated/basis/str/Posix.TTY.TC.md) | done | done | done | done | done | done |
+| [`Posix.TTY.V`](../generated/basis/str/Posix.TTY.V.md) | done | done | done | done | done | done |
+| [`Real`](../generated/basis/str/Real.md) | done | done | done | done | done | done |
+| [`Real.Math`](../generated/basis/str/Real.Math.md) | done | done | done | done | done | done |
+| [`Real32`](../generated/basis/str/Real32.md) | done | done | done | done | done | done |
+| [`Real32.Math`](../generated/basis/str/Real32.Math.md) | done | done | done | done | done | done |
+| [`Real32Array`](../generated/basis/str/Real32Array.md) | done | done | done | done | done | done |
+| [`Real32Array2`](../generated/basis/str/Real32Array2.md) | done | done | done | done | done | done |
+| [`Real32ArraySlice`](../generated/basis/str/Real32ArraySlice.md) | done | done | done | done | done | done |
+| [`Real32Vector`](../generated/basis/str/Real32Vector.md) | done | done | done | done | done | done |
+| [`Real32VectorSlice`](../generated/basis/str/Real32VectorSlice.md) | done | done | done | done | done | done |
+| [`Real64`](../generated/basis/str/Real.md) | done | done | done | done | done | done |
+| [`Real64.Math`](../generated/basis/str/Real.Math.md) | done | done | done | done | done | done |
+| [`Real64Array`](../generated/basis/str/RealArray.md) | done | done | done | done | done | done |
+| [`Real64Array2`](../generated/basis/str/RealArray2.md) | done | done | done | done | done | done |
+| [`Real64ArraySlice`](../generated/basis/str/RealArraySlice.md) | done | done | done | done | done | done |
+| [`Real64Vector`](../generated/basis/str/RealVector.md) | done | done | done | done | done | done |
+| [`Real64VectorSlice`](../generated/basis/str/RealVectorSlice.md) | done | done | done | done | done | done |
+| [`RealArray`](../generated/basis/str/RealArray.md) | done | done | done | done | done | done |
+| [`RealArray2`](../generated/basis/str/RealArray2.md) | done | done | done | done | done | done |
+| [`RealArraySlice`](../generated/basis/str/RealArraySlice.md) | done | done | done | done | done | done |
+| [`RealVector`](../generated/basis/str/RealVector.md) | done | done | done | done | done | done |
+| [`RealVectorSlice`](../generated/basis/str/RealVectorSlice.md) | done | done | done | done | done | done |
+| [`Runtime`](../generated/basis/str/Runtime.md) | done | done | done | done | done | done |
+| [`SML90`](../generated/basis/str/SML90.md) | done | done | done | done | done | done |
+| [`Socket`](../generated/basis/str/Socket.md) | done | done | done | done | done | done |
+| [`Socket.AF`](../generated/basis/str/Socket.AF.md) | done | done | done | done | done | done |
+| [`Socket.Ctl`](../generated/basis/str/Socket.Ctl.md) | done | done | done | done | done | done |
+| [`Socket.SOCK`](../generated/basis/str/Socket.SOCK.md) | done | done | done | done | done | done |
+| [`String`](../generated/basis/str/String.md) | done | done | done | done | done | done |
+| [`StringCvt`](../generated/basis/str/StringCvt.md) | done | done | done | done | done | done |
+| [`Substring`](../generated/basis/str/Substring.md) | done | done | done | done | done | done |
+| [`SysWord`](../generated/basis/str/Word.md) | done | done | done | done | done | done |
+| [`Text`](../generated/basis/str/Text.md) | done | done | done | done | done | done |
+| [`TextIO`](../generated/basis/str/TextIO.md) | done | done | done | done | done | done |
+| [`TextIO.StreamIO`](../generated/basis/str/TextIO.StreamIO.md) | done | done | done | done | done | done |
+| [`TextPrimIO`](../generated/basis/str/TextPrimIO.md) | done | done | done | done | done | done |
+| [`Time`](../generated/basis/str/Time.md) | done | done | done | done | done | done |
+| [`Timer`](../generated/basis/str/Timer.md) | done | done | done | done | done | done |
+| [`Unix`](../generated/basis/str/Unix.md) | done | done | done | done | done | done |
+| [`UnixSock`](../generated/basis/str/UnixSock.md) | done | done | done | done | done | done |
+| [`UnixSock.DGrm`](../generated/basis/str/UnixSock.DGrm.md) | done | done | done | done | done | done |
+| [`UnixSock.Strm`](../generated/basis/str/UnixSock.Strm.md) | done | done | done | done | done | done |
+| [`Vector`](../generated/basis/str/Vector.md) | done | done | done | done | done | done |
+| [`VectorSlice`](../generated/basis/str/VectorSlice.md) | done | done | done | done | done | done |
+| [`WideChar`](../generated/basis/str/WideChar.md) | done | done | done | done | done | done |
+| [`WideCharArray`](../generated/basis/str/WideCharArray.md) | done | done | done | done | done | done |
+| [`WideCharArray2`](../generated/basis/str/WideCharArray2.md) | done | done | done | done | done | done |
+| [`WideCharArraySlice`](../generated/basis/str/WideCharArraySlice.md) | done | done | done | done | done | done |
+| [`WideCharVector`](../generated/basis/str/WideCharVector.md) | done | done | done | done | done | done |
+| [`WideCharVectorSlice`](../generated/basis/str/WideCharVectorSlice.md) | done | done | done | done | done | done |
+| [`WideString`](../generated/basis/str/WideString.md) | done | done | done | done | done | done |
+| [`WideSubstring`](../generated/basis/str/WideSubstring.md) | done | done | done | done | done | done |
+| [`WideText`](../generated/basis/str/WideText.md) | done | done | done | done | done | done |
+| [`WideTextIO`](../generated/basis/str/WideTextIO.md) | done | done | done | done | done | done |
+| [`WideTextIO.StreamIO`](../generated/basis/str/WideTextIO.StreamIO.md) | done | done | done | done | done | done |
+| [`WideTextPrimIO`](../generated/basis/str/WideTextPrimIO.md) | done | done | done | done | done | done |
+| [`Windows`](../generated/basis/str/Windows.md) | done | done | done | done | done | done |
+| [`Windows.Config`](../generated/basis/str/Windows.Config.md) | done | done | done | done | done | done |
+| [`Windows.DDE`](../generated/basis/str/Windows.DDE.md) | done | done | done | done | done | done |
+| [`Windows.Key`](../generated/basis/str/Windows.Key.md) | done | done | done | done | done | done |
+| [`Windows.Reg`](../generated/basis/str/Windows.Reg.md) | done | done | done | done | done | done |
+| [`Windows.Status`](../generated/basis/str/Windows.Status.md) | done | done | done | done | done | done |
+| [`Word`](../generated/basis/str/Word.md) | done | done | done | done | done | done |
+| [`Word16`](../generated/basis/str/Word16.md) | done | done | done | done | done | done |
+| [`Word16Array`](../generated/basis/str/Word16Array.md) | done | done | done | done | done | done |
+| [`Word16Array2`](../generated/basis/str/Word16Array2.md) | done | done | done | done | done | done |
+| [`Word16ArraySlice`](../generated/basis/str/Word16ArraySlice.md) | done | done | done | done | done | done |
+| [`Word16Vector`](../generated/basis/str/Word16Vector.md) | done | done | done | done | done | done |
+| [`Word16VectorSlice`](../generated/basis/str/Word16VectorSlice.md) | done | done | done | done | done | done |
+| [`Word32`](../generated/basis/str/Word32.md) | done | done | done | done | done | done |
+| [`Word32Array`](../generated/basis/str/Word32Array.md) | done | done | done | done | done | done |
+| [`Word32Array2`](../generated/basis/str/Word32Array2.md) | done | done | done | done | done | done |
+| [`Word32ArraySlice`](../generated/basis/str/Word32ArraySlice.md) | done | done | done | done | done | done |
+| [`Word32Vector`](../generated/basis/str/Word32Vector.md) | done | done | done | done | done | done |
+| [`Word32VectorSlice`](../generated/basis/str/Word32VectorSlice.md) | done | done | done | done | done | done |
+| [`Word64`](../generated/basis/str/Word64.md) | done | done | done | done | done | done |
+| [`Word64Array`](../generated/basis/str/Word64Array.md) | done | done | done | done | done | done |
+| [`Word64Array2`](../generated/basis/str/Word64Array2.md) | done | done | done | done | done | done |
+| [`Word64ArraySlice`](../generated/basis/str/Word64ArraySlice.md) | done | done | done | done | done | done |
+| [`Word64Vector`](../generated/basis/str/Word64Vector.md) | done | done | done | done | done | done |
+| [`Word64VectorSlice`](../generated/basis/str/Word64VectorSlice.md) | done | done | done | done | done | done |
+| [`Word8`](../generated/basis/str/Word8.md) | done | done | done | done | done | done |
+| [`Word8Array`](../generated/basis/str/Word8Array.md) | done | done | done | done | done | done |
+| [`Word8Array2`](../generated/basis/str/Word8Array2.md) | done | done | done | done | done | done |
+| [`Word8ArraySlice`](../generated/basis/str/Word8ArraySlice.md) | done | done | done | done | done | done |
+| [`Word8Vector`](../generated/basis/str/Word8Vector.md) | done | done | done | done | done | done |
+| [`Word8VectorSlice`](../generated/basis/str/Word8VectorSlice.md) | done | done | done | done | done | done |
+| [`WordArray`](../generated/basis/str/WordArray.md) | done | done | done | done | done | done |
+| [`WordArray2`](../generated/basis/str/WordArray2.md) | done | done | done | done | done | done |
+| [`WordArraySlice`](../generated/basis/str/WordArraySlice.md) | done | done | done | done | done | done |
+| [`WordVector`](../generated/basis/str/WordVector.md) | done | done | done | done | done | done |
+| [`WordVectorSlice`](../generated/basis/str/WordVectorSlice.md) | done | done | done | done | done | done |
 
 ### Signatures
 
 | Module | Documented | Generated docs | Basis spec docs | Examples | Laws | Tests |
 | --- | --- | --- | --- | --- | --- | --- |
-| [`ARRAY`](../generated/basis/sig/ARRAY.md) |  |  |  |  |  |  |
-| [`ARRAY2`](../generated/basis/sig/ARRAY2.md) |  |  |  |  |  |  |
-| [`ARRAY_SLICE`](../generated/basis/sig/ARRAY_SLICE.md) |  |  |  |  |  |  |
-| [`BIN_IO`](../generated/basis/sig/BIN_IO.md) |  |  |  |  |  |  |
-| [`BIT_FLAGS`](../generated/basis/sig/BIT_FLAGS.md) |  |  |  |  |  |  |
-| [`BOOL`](../generated/basis/sig/BOOL.md) |  |  |  |  |  |  |
-| [`BYTE`](../generated/basis/sig/BYTE.md) |  |  |  |  |  |  |
-| [`CHAR`](../generated/basis/sig/CHAR.md) |  |  |  |  |  |  |
-| [`COMMAND_LINE`](../generated/basis/sig/COMMAND_LINE.md) |  |  |  |  |  |  |
-| [`DATE`](../generated/basis/sig/DATE.md) |  |  |  |  |  |  |
-| [`GENERAL`](../generated/basis/sig/GENERAL.md) |  |  |  |  |  |  |
-| [`GENERIC_SOCK`](../generated/basis/sig/GENERIC_SOCK.md) |  |  |  |  |  |  |
-| [`IEEE_REAL`](../generated/basis/sig/IEEE_REAL.md) |  |  |  |  |  |  |
-| [`IMPERATIVE_IO`](../generated/basis/sig/IMPERATIVE_IO.md) |  |  |  |  |  |  |
-| [`INET6_SOCK`](../generated/basis/sig/INET6_SOCK.md) |  |  |  |  |  |  |
-| [`INET_SOCK`](../generated/basis/sig/INET_SOCK.md) |  |  |  |  |  |  |
-| [`INTEGER`](../generated/basis/sig/INTEGER.md) |  |  |  |  |  |  |
-| [`INT_INF`](../generated/basis/sig/INT_INF.md) |  |  |  |  |  |  |
-| [`IO`](../generated/basis/sig/IO.md) |  |  |  |  |  |  |
-| [`LIST`](../generated/basis/sig/LIST.md) |  |  |  |  |  |  |
-| [`LIST_PAIR`](../generated/basis/sig/LIST_PAIR.md) |  |  |  |  |  |  |
-| [`MATH`](../generated/basis/sig/MATH.md) |  |  |  |  |  |  |
-| [`MONO_ARRAY`](../generated/basis/sig/MONO_ARRAY.md) |  |  |  |  |  |  |
-| [`MONO_ARRAY2`](../generated/basis/sig/MONO_ARRAY2.md) |  |  |  |  |  |  |
-| [`MONO_ARRAY_SLICE`](../generated/basis/sig/MONO_ARRAY_SLICE.md) |  |  |  |  |  |  |
-| [`MONO_VECTOR`](../generated/basis/sig/MONO_VECTOR.md) |  |  |  |  |  |  |
-| [`MONO_VECTOR_EQ`](../generated/basis/sig/MONO_VECTOR_EQ.md) |  |  |  |  |  |  |
-| [`MONO_VECTOR_SLICE`](../generated/basis/sig/MONO_VECTOR_SLICE.md) |  |  |  |  |  |  |
-| [`NET_HOST_DB`](../generated/basis/sig/NET_HOST_DB.md) |  |  |  |  |  |  |
-| [`NET_PROT_DB`](../generated/basis/sig/NET_PROT_DB.md) |  |  |  |  |  |  |
-| [`NET_SERV_DB`](../generated/basis/sig/NET_SERV_DB.md) |  |  |  |  |  |  |
-| [`OPTION`](../generated/basis/sig/OPTION.md) |  |  |  |  |  |  |
-| [`OS`](../generated/basis/sig/OS.md) |  |  |  |  |  |  |
-| [`OS_FILE_SYS`](../generated/basis/sig/OS_FILE_SYS.md) |  |  |  |  |  |  |
-| [`OS_IO`](../generated/basis/sig/OS_IO.md) |  |  |  |  |  |  |
-| [`OS_PATH`](../generated/basis/sig/OS_PATH.md) |  |  |  |  |  |  |
-| [`OS_PROCESS`](../generated/basis/sig/OS_PROCESS.md) |  |  |  |  |  |  |
-| [`PACK_REAL`](../generated/basis/sig/PACK_REAL.md) |  |  |  |  |  |  |
-| [`PACK_WORD`](../generated/basis/sig/PACK_WORD.md) |  |  |  |  |  |  |
-| [`POSIX`](../generated/basis/sig/POSIX.md) |  |  |  |  |  |  |
-| [`POSIX_ERROR`](../generated/basis/sig/POSIX_ERROR.md) |  |  |  |  |  |  |
-| [`POSIX_FILE_SYS`](../generated/basis/sig/POSIX_FILE_SYS.md) |  |  |  |  |  |  |
-| [`POSIX_IO`](../generated/basis/sig/POSIX_IO.md) |  |  |  |  |  |  |
-| [`POSIX_PROCESS`](../generated/basis/sig/POSIX_PROCESS.md) |  |  |  |  |  |  |
-| [`POSIX_PROC_ENV`](../generated/basis/sig/POSIX_PROC_ENV.md) |  |  |  |  |  |  |
-| [`POSIX_SIGNAL`](../generated/basis/sig/POSIX_SIGNAL.md) |  |  |  |  |  |  |
-| [`POSIX_SYS_DB`](../generated/basis/sig/POSIX_SYS_DB.md) |  |  |  |  |  |  |
-| [`POSIX_TTY`](../generated/basis/sig/POSIX_TTY.md) |  |  |  |  |  |  |
-| [`PRIM_IO`](../generated/basis/sig/PRIM_IO.md) |  |  |  |  |  |  |
-| [`REAL`](../generated/basis/sig/REAL.md) |  |  |  |  |  |  |
-| [`RUNTIME`](../generated/basis/sig/RUNTIME.md) |  |  |  |  |  |  |
-| [`SML90`](../generated/basis/sig/SML90.md) |  |  |  |  |  |  |
-| [`SOCKET`](../generated/basis/sig/SOCKET.md) |  |  |  |  |  |  |
-| [`STREAM_IO`](../generated/basis/sig/STREAM_IO.md) |  |  |  |  |  |  |
-| [`STRING`](../generated/basis/sig/STRING.md) |  |  |  |  |  |  |
-| [`STRING_CVT`](../generated/basis/sig/STRING_CVT.md) |  |  |  |  |  |  |
-| [`SUBSTRING`](../generated/basis/sig/SUBSTRING.md) |  |  |  |  |  |  |
-| [`TEXT`](../generated/basis/sig/TEXT.md) |  |  |  |  |  |  |
-| [`TEXT_IO`](../generated/basis/sig/TEXT_IO.md) |  |  |  |  |  |  |
-| [`TEXT_STREAM_IO`](../generated/basis/sig/TEXT_STREAM_IO.md) |  |  |  |  |  |  |
-| [`TIME`](../generated/basis/sig/TIME.md) |  |  |  |  |  |  |
-| [`TIMER`](../generated/basis/sig/TIMER.md) |  |  |  |  |  |  |
-| [`UNIX`](../generated/basis/sig/UNIX.md) |  |  |  |  |  |  |
-| [`UNIX_SOCK`](../generated/basis/sig/UNIX_SOCK.md) |  |  |  |  |  |  |
-| [`VECTOR`](../generated/basis/sig/VECTOR.md) |  |  |  |  |  |  |
-| [`VECTOR_SLICE`](../generated/basis/sig/VECTOR_SLICE.md) |  |  |  |  |  |  |
-| [`WINDOWS`](../generated/basis/sig/WINDOWS.md) |  |  |  |  |  |  |
-| [`WORD`](../generated/basis/sig/WORD.md) |  |  |  |  |  |  |
+| [`ARRAY`](../generated/basis/sig/ARRAY.md) | done | done | done | done | done | done |
+| [`ARRAY2`](../generated/basis/sig/ARRAY2.md) | done | done | done | done | done | done |
+| [`ARRAY_SLICE`](../generated/basis/sig/ARRAY_SLICE.md) | done | done | done | done | done | done |
+| [`BIN_IO`](../generated/basis/sig/BIN_IO.md) | done | done | done | done | done | done |
+| [`BIT_FLAGS`](../generated/basis/sig/BIT_FLAGS.md) | done | done | done | done | done | done |
+| [`BOOL`](../generated/basis/sig/BOOL.md) | done | done | done | done | done | done |
+| [`BYTE`](../generated/basis/sig/BYTE.md) | done | done | done | done | done | done |
+| [`CHAR`](../generated/basis/sig/CHAR.md) | done | done | done | done | done | done |
+| [`COMMAND_LINE`](../generated/basis/sig/COMMAND_LINE.md) | done | done | done | done | done | done |
+| [`DATE`](../generated/basis/sig/DATE.md) | done | done | done | done | done | done |
+| [`GENERAL`](../generated/basis/sig/GENERAL.md) | done | done | done | done | done | done |
+| [`GENERIC_SOCK`](../generated/basis/sig/GENERIC_SOCK.md) | done | done | done | done | done | done |
+| [`IEEE_REAL`](../generated/basis/sig/IEEE_REAL.md) | done | done | done | done | done | done |
+| [`IMPERATIVE_IO`](../generated/basis/sig/IMPERATIVE_IO.md) | done | done | done | done | done | done |
+| [`INET6_SOCK`](../generated/basis/sig/INET6_SOCK.md) | done | done | done | done | done | done |
+| [`INET_SOCK`](../generated/basis/sig/INET_SOCK.md) | done | done | done | done | done | done |
+| [`INTEGER`](../generated/basis/sig/INTEGER.md) | done | done | done | done | done | done |
+| [`INT_INF`](../generated/basis/sig/INT_INF.md) | done | done | done | done | done | done |
+| [`IO`](../generated/basis/sig/IO.md) | done | done | done | done | done | done |
+| [`LIST`](../generated/basis/sig/LIST.md) | done | done | done | done | done | done |
+| [`LIST_PAIR`](../generated/basis/sig/LIST_PAIR.md) | done | done | done | done | done | done |
+| [`MATH`](../generated/basis/sig/MATH.md) | done | done | done | done | done | done |
+| [`MONO_ARRAY`](../generated/basis/sig/MONO_ARRAY.md) | done | done | done | done | done | done |
+| [`MONO_ARRAY2`](../generated/basis/sig/MONO_ARRAY2.md) | done | done | done | done | done | done |
+| [`MONO_ARRAY_SLICE`](../generated/basis/sig/MONO_ARRAY_SLICE.md) | done | done | done | done | done | done |
+| [`MONO_VECTOR`](../generated/basis/sig/MONO_VECTOR.md) | done | done | done | done | done | done |
+| [`MONO_VECTOR_EQ`](../generated/basis/sig/MONO_VECTOR_EQ.md) | done | done | done | done | done | done |
+| [`MONO_VECTOR_SLICE`](../generated/basis/sig/MONO_VECTOR_SLICE.md) | done | done | done | done | done | done |
+| [`NET_HOST_DB`](../generated/basis/sig/NET_HOST_DB.md) | done | done | done | done | done | done |
+| [`NET_PROT_DB`](../generated/basis/sig/NET_PROT_DB.md) | done | done | done | done | done | done |
+| [`NET_SERV_DB`](../generated/basis/sig/NET_SERV_DB.md) | done | done | done | done | done | done |
+| [`OPTION`](../generated/basis/sig/OPTION.md) | done | done | done | done | done | done |
+| [`OS`](../generated/basis/sig/OS.md) | done | done | done | done | done | done |
+| [`OS_FILE_SYS`](../generated/basis/sig/OS_FILE_SYS.md) | done | done | done | done | done | done |
+| [`OS_IO`](../generated/basis/sig/OS_IO.md) | done | done | done | done | done | done |
+| [`OS_PATH`](../generated/basis/sig/OS_PATH.md) | done | done | done | done | done | done |
+| [`OS_PROCESS`](../generated/basis/sig/OS_PROCESS.md) | done | done | done | done | done | done |
+| [`PACK_REAL`](../generated/basis/sig/PACK_REAL.md) | done | done | done | done | done | done |
+| [`PACK_WORD`](../generated/basis/sig/PACK_WORD.md) | done | done | done | done | done | done |
+| [`POSIX`](../generated/basis/sig/POSIX.md) | done | done | done | done | done | done |
+| [`POSIX_ERROR`](../generated/basis/sig/POSIX_ERROR.md) | done | done | done | done | done | done |
+| [`POSIX_FILE_SYS`](../generated/basis/sig/POSIX_FILE_SYS.md) | done | done | done | done | done | done |
+| [`POSIX_IO`](../generated/basis/sig/POSIX_IO.md) | done | done | done | done | done | done |
+| [`POSIX_PROCESS`](../generated/basis/sig/POSIX_PROCESS.md) | done | done | done | done | done | done |
+| [`POSIX_PROC_ENV`](../generated/basis/sig/POSIX_PROC_ENV.md) | done | done | done | done | done | done |
+| [`POSIX_SIGNAL`](../generated/basis/sig/POSIX_SIGNAL.md) | done | done | done | done | done | done |
+| [`POSIX_SYS_DB`](../generated/basis/sig/POSIX_SYS_DB.md) | done | done | done | done | done | done |
+| [`POSIX_TTY`](../generated/basis/sig/POSIX_TTY.md) | done | done | done | done | done | done |
+| [`PRIM_IO`](../generated/basis/sig/PRIM_IO.md) | done | done | done | done | done | done |
+| [`REAL`](../generated/basis/sig/REAL.md) | done | done | done | done | done | done |
+| [`RUNTIME`](../generated/basis/sig/RUNTIME.md) | done | done | done | done | done | done |
+| [`SML90`](../generated/basis/sig/SML90.md) | done | done | done | done | done | done |
+| [`SOCKET`](../generated/basis/sig/SOCKET.md) | done | done | done | done | done | done |
+| [`STREAM_IO`](../generated/basis/sig/STREAM_IO.md) | done | done | done | done | done | done |
+| [`STRING`](../generated/basis/sig/STRING.md) | done | done | done | done | done | done |
+| [`STRING_CVT`](../generated/basis/sig/STRING_CVT.md) | done | done | done | done | done | done |
+| [`SUBSTRING`](../generated/basis/sig/SUBSTRING.md) | done | done | done | done | done | done |
+| [`TEXT`](../generated/basis/sig/TEXT.md) | done | done | done | done | done | done |
+| [`TEXT_IO`](../generated/basis/sig/TEXT_IO.md) | done | done | done | done | done | done |
+| [`TEXT_STREAM_IO`](../generated/basis/sig/TEXT_STREAM_IO.md) | done | done | done | done | done | done |
+| [`TIME`](../generated/basis/sig/TIME.md) | done | done | done | done | done | done |
+| [`TIMER`](../generated/basis/sig/TIMER.md) | done | done | done | done | done | done |
+| [`UNIX`](../generated/basis/sig/UNIX.md) | done | done | done | done | done | done |
+| [`UNIX_SOCK`](../generated/basis/sig/UNIX_SOCK.md) | done | done | done | done | done | done |
+| [`VECTOR`](../generated/basis/sig/VECTOR.md) | done | done | done | done | done | done |
+| [`VECTOR_SLICE`](../generated/basis/sig/VECTOR_SLICE.md) | done | done | done | done | done | done |
+| [`WINDOWS`](../generated/basis/sig/WINDOWS.md) | done | done | done | done | done | done |
+| [`WORD`](../generated/basis/sig/WORD.md) | done | done | done | done | done | done |
 
 ### Functors
 
 | Module | Documented | Generated docs | Basis spec docs | Examples | Laws | Tests |
 | --- | --- | --- | --- | --- | --- | --- |
-| [`ImperativeIO`](../generated/basis/fun/ImperativeIO.md) |  |  |  |  |  |  |
-| [`PrimIO`](../generated/basis/fun/PrimIO.md) |  |  |  |  |  |  |
-| [`StreamIO`](../generated/basis/fun/StreamIO.md) |  |  |  |  |  |  |
+| [`ImperativeIO`](../generated/basis/fun/ImperativeIO.md) | done | done | done | done | done | done |
+| [`PrimIO`](../generated/basis/fun/PrimIO.md) | done | done | done | done | done | done |
+| [`StreamIO`](../generated/basis/fun/StreamIO.md) | done | done | done | done | done | done |

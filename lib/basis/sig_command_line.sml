@@ -10,7 +10,9 @@ sig
      Implementation: `CommandLine.name/system`. What the operating system
      passed to the program, which need not be a path that leads to it.
 
-     Pinned by: `CommandLine.name/nonempty`, `CommandLine.name/stable` *)
+     Pinned by: `CommandLine.name/nonempty`, `CommandLine.name/stable`
+
+     Example: `size (name ()) > 0 = true` *)
   val name : unit -> string
 
   (* `arguments ()` is the list of the arguments that follow the name, in order.

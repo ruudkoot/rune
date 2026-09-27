@@ -16,6 +16,10 @@
 structure Runtime : RUNTIME
 ```
 
+Runtime: the VM's view of the running program -- its counters, its call
+stack, the identity of objects, and saving and restoring the whole of it.
+It is Rune's own and not of the specification.
+
 ## Members
 
 What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structure's own.

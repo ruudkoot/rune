@@ -19,7 +19,7 @@ structure Runtime : RUNTIME  (* extension *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`Runtime`](../str/Runtime.md) |  | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
+| [`Runtime`](../str/Runtime.md) | Runtime: the VM's view of the running program -- its counters, its call stack, the identity of objects, and saving and restoring the whole of it. It is Rune's own and not of the specification. | [lib/basis/runtime.sml](../../../../lib/basis/runtime.sml) |
 
 What a program can ask about the machine it is running on: how much work it
 has done, and how much memory that took.
@@ -112,6 +112,8 @@ Reading them is itself work, so two calls with nothing between them do
 not report the same `instructions`. Nothing between them allocates,
 though, so the other five agree.
 
+**Example** `#live (stats ()) <= #heapSize (stats ()) = true`
+
 <details><summary>Tests (8)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `instructions-grow` &middot; `bytes-count-a-list-cell` &middot; `objects-count-a-list-cell` &middot; `bytes-count-the-smallest-object` &middot; `objects-count-the-smallest-object` &middot; `live-is-within-the-semispace` &middot; `bytes-cover-what-is-in-use` &middot; `collections-and-objects-are-not-negative`
@@ -162,6 +164,8 @@ Nothing an SML program can see changes. Equality on a `ref` or an
 moment, so this says when the cost of collecting is paid and never what
 the program means.
 
+**Example** `(collect (); #collections (stats ()) >= 1) = true`
+
 <details><summary>Tests (3)</summary>
 
 For `Runtime`, in [tests/basis/runtime.sml](../../../../tests/basis/runtime.sml): `makes-one-collection` &middot; `drops-what-is-unreachable` &middot; `identity-survives-it`
@@ -201,6 +205,8 @@ stands, beginning with the function that called [`trace`](#val-trace).
 A tail call does not appear. It replaces the frame it is made from --
 that is what makes a tail-recursive loop run in constant space -- so the
 function it was made from is not on the stack to be reported.
+
+**Example** `null (trace ()) = false`
 
 <details><summary>Tests (4)</summary>
 
@@ -344,6 +350,8 @@ The compiler and the VM are built from one string, so `rune --version`
 says the same. It is not the version of the bytecode, which the VM
 checks when it loads a program and which changes only when the file
 format does.
+
+**Example** `size version > 0 = true`
 
 <details><summary>Tests (1)</summary>
 

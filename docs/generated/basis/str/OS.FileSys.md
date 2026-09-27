@@ -16,6 +16,9 @@
 structure OS.FileSys : OS_FILE_SYS
 ```
 
+OS.FileSys: directories and the files in them: reading a directory, the
+attributes of a file, and changing them.
+
 ## Members
 
 What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this structure's own.

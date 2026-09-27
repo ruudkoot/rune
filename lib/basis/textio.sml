@@ -1,4 +1,6 @@
-(* TextIO: the imperative text streams (signature TEXT_IO).
+(* TextIO: text files and the standard streams, read and written a
+   character, a line or a string at a time: the imperative text streams of
+   TEXT_IO.
 
    Implements: TEXT_IO
 
@@ -11,7 +13,8 @@ struct
                       val advance = SOME RuneTextPos.advance
                       val isNewline = fn c => c = #"\n")
   in
-    (* TEXT_STREAM_IO: STREAM_IO and the operations on lines and substrings.
+    (* TextIO.StreamIO: the functional text streams under `TextIO`, with the
+       operations on lines and substrings of TEXT_STREAM_IO.
 
        Implements: TEXT_STREAM_IO where type reader = TextPrimIO.reader where
        type writer = TextPrimIO.writer where type pos = TextPrimIO.pos

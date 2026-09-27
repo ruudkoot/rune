@@ -27,7 +27,7 @@ each way.
 [`execute`](#val-execute) starts a program and gives a [`proc`](#type-proc), from which the streams are
 taken: what the child writes is read through [`textInstreamOf`](#val-textinstreamof), and what it
 is to read is written through [`textOutstreamOf`](#val-textoutstreamof). [`reap`](#val-reap) waits for it and
-is its status. This is [`Posix.Process`](../sig/POSIX.md#str-process)'s fork, exec and waitpid put
+is its status. This is [`Posix.Process`](../str/Posix.Process.md)'s fork, exec and waitpid put
 together, with the pipes made and the descriptors handed over; the
 system starts the program itself, without a fork, which Windows does
 not have.
@@ -85,7 +85,7 @@ through, the second the stream its input is written through.
 type signal
 ```
 
-The type of a signal, the one of [`Posix.Signal`](../sig/POSIX.md#str-signal).
+The type of a signal, the one of [`Posix.Signal`](../str/Posix.Signal.md).
 
 ### <a name="type-exit_status"></a>`exit_status`
 
@@ -97,7 +97,7 @@ datatype exit_status
   | W_STOPPED of signal
 ```
 
-How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) of [`Posix.Process`](../sig/POSIX.md#str-process).
+How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) of [`Posix.Process`](../str/Posix.Process.md).
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
@@ -121,6 +121,8 @@ val fromStatus : OS.Process.status -> exit_status
 ```
 
 `fromStatus st` is what the status `st` says about how the process ended.
+
+**Example** `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -181,6 +183,8 @@ val execute : string * string list -> ('a, 'b) proc
 
 > **Reading** `Unix.execute/current-directory`. The page does not say which
 > directory the child runs in; it is this process's current one.
+
+**Example** `let val p = execute ("/bin/echo", ["hi"]) in TextIO.inputAll (textInstreamOf p) before ignore (reap p) end = "hi\n"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -279,6 +283,8 @@ val reap : ('a, 'b) proc -> OS.Process.status
 > [`Posix.Process.W.untraced`](../sig/POSIX_PROCESS.md#val-w.untraced) is not asked for.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the wait fails.
+
+**Example** `fromStatus (reap (execute ("/bin/sh", ["-c", "exit 4"]))) = W_EXITSTATUS 0w4`
 
 <details><summary>Other implementations (2)</summary>
 

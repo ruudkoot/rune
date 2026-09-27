@@ -7,7 +7,7 @@
 | Signature | [`OS_PROCESS`](../sig/OS_PROCESS.md) |
 | Status | required |
 | Members | 10 |
-| Tests | 37 checks |
+| Tests | 39 checks |
 | Source | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure OS.Process : OS_PROCESS
 ```
+
+OS.Process: the status a program ends with, running a command, the
+environment, and ending the program.
 
 ## Members
 
@@ -50,6 +53,11 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 > writers a program supplied; output to a file is held by the VM, which
 > flushes every file itself.
 
+> **Implementation** `OS.Process.exit/status-of-a-command`. The status of a
+> command that [`system`](../sig/OS_PROCESS.md#val-system) ran keeps its exit code, and one of a command that
+> a signal ended, which no exit code can express, ends the program as
+> [`failure`](../sig/OS_PROCESS.md#val-failure) does, as the specification's implementation note asks.
+
 ### getEnv
 
 > **Reading** `OS.Process.getEnv/the-whole-name`. The whole name must match:
@@ -75,6 +83,14 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 > redirection, sequencing and variables work; it runs in the current
 > directory, and [`system`](../sig/OS_PROCESS.md#val-system) returns only once the command is done. What the
 > process has buffered is neither lost nor written twice by running one.
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLKit** &mdash; the status that OS.Process.system gives is success or failure (\~1) and nothing else, so exit ends the child with 255 whatever the command ended with (docs/bugreport/mlkit/Unix.reap/status-lost)
+- **MLton** &mdash; exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
+- **Poly/ML** &mdash; a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+
+</details>
 
 ---
 

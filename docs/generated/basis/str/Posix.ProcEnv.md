@@ -16,6 +16,9 @@
 structure Posix.ProcEnv : POSIX_PROC_ENV
 ```
 
+Posix.ProcEnv: the identities, groups, environment, terminal and limits
+of this process.
+
 ## Members
 
 What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types are this structure's own.

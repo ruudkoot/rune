@@ -34,10 +34,20 @@ sig
   (* The type of a condition the system reports. *)
   eqtype syserror
 
-  (* Raised when the system refuses an operation: the message it gave, and the condition when there is one. *)
+  (* Raised when the system refuses an operation: the message it gave, and the condition when there is one.
+
+     When the condition `e` is there, the message is `errorMsg e`: the
+     specification asks for exactly that, so a program can show the message
+     and still act on the condition.
+
+     Example: `((FileSys.remove "/no/such/file"; "removed") handle SysErr (_,
+     SOME e) => errorName e) = "noent"` *)
   exception SysErr of string * syserror option
 
-  (* `errorMsg e` is the text the system gives for `e`, meant for a person to read. *)
+  (* `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+     Example: `errorMsg (valOf (syserror "noent")) = "No such file or
+     directory"` *)
   val errorMsg : syserror -> string
 
   (* `errorName e` is a short name for `e`, meant for a program.
@@ -59,6 +69,10 @@ sig
      it, and different conditions have different names, so `syserror` and
      `errorName` invert each other.
 
-     Pinned by: `OS.syserror/same-condition`, `OS.errorName/different-errors` *)
+     Pinned by: `OS.syserror/same-condition`, `OS.errorName/different-errors`
+
+     Law: `syserror (errorName e) = SOME e`
+
+     Example: `syserror "no-such-error" = NONE` *)
   val syserror : string -> syserror option
 end

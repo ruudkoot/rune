@@ -84,6 +84,8 @@ val startCPUTimer : unit -> cpu_timer
 
 `startCPUTimer ()` is a timer that counts processor time from now.
 
+**Example** `Time.>= (#usr (checkCPUTimer (startCPUTimer ())), Time.zeroTime) = true`
+
 <details><summary>Tests (3)</summary>
 
 For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `starts` &middot; `starts-near-zero` &middot; `later-timer-reads-less`
@@ -200,6 +202,8 @@ val checkRealTimer : real_timer -> Time.time
 
 `checkRealTimer t` is the wall-clock time since `t` was started.
 
+**Example** `Time.>= (checkRealTimer (startRealTimer ()), Time.zeroTime) = true`
+
 <details><summary>Tests (4)</summary>
 
 For `Timer`, in [tests/basis/timer.sml](../../../../tests/basis/timer.sml): `non-negative` &middot; `does-not-go-back` &middot; `measures-real-time` &middot; `at-most-the-time-around`
@@ -217,6 +221,8 @@ val totalRealTimer : unit -> real_timer
 > **Implementation** `Timer.totalRealTimer/from-initialisation`. It counts
 > from the moment the library was initialised, just before the program's
 > own code begins.
+
+**Example** `Time.>= (checkRealTimer (totalRealTimer ()), Time.zeroTime) = true`
 
 <details><summary>Tests (3)</summary>
 

@@ -16,6 +16,8 @@
 structure Posix.TTY.L : BIT_FLAGS
 ```
 
+Posix.TTY.L: the local flags: echo, canonical input and signals.
+
 ## Members
 
 What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

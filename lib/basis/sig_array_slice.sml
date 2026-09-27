@@ -152,7 +152,9 @@ sig
 
   (* `app f sl` applies `f` to every element, from 0 up, for its effect.
 
-     Law: `app f sl = appi (f o #2) sl` *)
+     Law: `app f sl = appi (f o #2) sl`
+
+     Example: `let val s = ref 0 in app (fn x => s := !s + x) (slice (Array.fromList [1, 2, 3], 1, NONE)); !s end = 5` *)
   val app : ('a -> unit) -> 'a slice -> unit
 
   (* `modifyi f sl` replaces the element at each position by `f` of the index and that element, in place.

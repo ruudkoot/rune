@@ -39,16 +39,24 @@ sig
   (* The type of an open file descriptor. *)
   eqtype file_desc
 
-  (* `fdToWord fd` is the number the system knows `fd` by. *)
+  (* `fdToWord fd` is the number the system knows `fd` by.
+
+     Example: `fdToWord stdout = 0w1` *)
   val fdToWord : file_desc -> SysWord.word
 
-  (* `wordToFD w` is the descriptor numbered `w`, whether or not it is open. *)
+  (* `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
+
+     Law: `fdToWord (wordToFD w) = w` *)
   val wordToFD : SysWord.word -> file_desc
 
   (* `fdToIOD fd` is `fd` as the `OS.IO.iodesc` that `OS.IO.poll` takes. *)
   val fdToIOD : file_desc -> OS.IO.iodesc
 
-  (* `iodToFD iod` is `SOME` of the descriptor that `iod` is, or `NONE` when it is not one. *)
+  (* `iodToFD iod` is `SOME` of the descriptor that `iod` is, or `NONE` when it is not one.
+
+     Law: `iodToFD (fdToIOD fd) = SOME fd`
+
+     Example: `iodToFD (fdToIOD stdin) = SOME stdin` *)
   val iodToFD : OS.IO.iodesc -> file_desc option
 
   (* The type of an open directory being read, the `dirstream` of `OS.FileSys`. *)
@@ -79,7 +87,9 @@ sig
 
   (* `getcwd ()` is the current directory, as an absolute path.
 
-     Raises: `OS.SysErr` if it cannot be found. *)
+     Raises: `OS.SysErr` if it cannot be found.
+
+     Example: `getcwd () = OS.FileSys.getDir ()` *)
   val getcwd : unit -> string
 
   (* The descriptor the program reads its input from.
@@ -226,7 +236,10 @@ sig
      Reading: `Posix.FileSys.umask/not-for-chmod`. The mask applies to files
      that are created; `chmod` sets what it is given, mask or no mask.
 
-     Pinned by: `Posix.FileSys.chmod/not-masked` *)
+     Pinned by: `Posix.FileSys.chmod/not-masked`
+
+     Example: `let val old = umask (S.flags [S.iwoth]) in umask old = S.flags
+     [S.iwoth] end = true`, which puts the mask back as it was *)
   val umask : S.mode -> S.mode
 
   (* `link {old, new}` makes `new` another name for the file `old`.
@@ -284,7 +297,9 @@ sig
   (* `wordToDev w` is the device numbered `w`. *)
   val wordToDev : SysWord.word -> dev
 
-  (* `devToWord d` is the number of the device `d`. *)
+  (* `devToWord d` is the number of the device `d`.
+
+     Law: `devToWord (wordToDev w) = w` *)
   val devToWord : dev -> SysWord.word
 
   (* The type of the number that names a file within its device. *)
@@ -293,7 +308,9 @@ sig
   (* `wordToIno w` is the file numbered `w`. *)
   val wordToIno : SysWord.word -> ino
 
-  (* `inoToWord i` is the number of the file `i`. *)
+  (* `inoToWord i` is the number of the file `i`.
+
+     Law: `inoToWord (wordToIno w) = w` *)
   val inoToWord : ino -> SysWord.word
 
   (* What the system records about a file, and the functions that read it. *)
@@ -371,7 +388,11 @@ sig
 
   (* `stat p` is what the system records about the file `p`, following symbolic links.
 
-     Raises: `OS.SysErr` if `p` names nothing. *)
+     Raises: `OS.SysErr` if `p` names nothing.
+
+     Example: `ST.isDir (stat "/") = true`
+
+     Example: `ST.isChr (stat "/dev/null") = true` *)
   val stat : string -> ST.stat
 
   (* `lstat p` is what the system records about `p` itself, without following a symbolic link.
@@ -381,7 +402,10 @@ sig
 
   (* `fstat fd` is what the system records about the file that `fd` is open on.
 
-     Raises: `OS.SysErr` if `fd` is not open. *)
+     Raises: `OS.SysErr` if `fd` is not open.
+
+     Example: `let val fd = openf ("/dev/null", O_RDONLY, O.flags []) in
+     ST.isChr (fstat fd) before Posix.IO.close fd end = true` *)
   val fstat : file_desc -> ST.stat
 
   (* What one may want to do with a file, for `access` to ask about. *)
@@ -394,7 +418,9 @@ sig
 
      An empty list asks only whether `p` names something.
 
-     Raises: `OS.SysErr` if the question cannot be answered. *)
+     Raises: `OS.SysErr` if the question cannot be answered.
+
+     Example: `access ("/", []) = true` *)
   val access : string * access_mode list -> bool
 
   (* `chmod (p, perms)` sets the permission bits of `p` to `perms`.

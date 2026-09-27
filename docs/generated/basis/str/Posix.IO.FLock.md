@@ -10,6 +10,8 @@
 | Tests | 6 checks |
 | Source | [lib/basis/posix\_io.sml](../../../../lib/basis/posix_io.sml) |
 
+Posix.IO.FLock: the description of a lock on a stretch of a file.
+
 ## Members
 
 What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this structure's own.

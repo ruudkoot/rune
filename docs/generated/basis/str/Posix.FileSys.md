@@ -16,6 +16,9 @@
 structure Posix.FileSys : POSIX_FILE_SYS
 ```
 
+Posix.FileSys: files and directories as POSIX has them: descriptors,
+opening, permissions, links and what [`stat`](../sig/POSIX_FILE_SYS.md#val-stat) reports.
+
 ## Members
 
 What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types are this structure's own.
@@ -100,7 +103,7 @@ What each means is on [`POSIX_FILE_SYS`](../sig/POSIX_FILE_SYS.md); the types ar
 
 > **Implementation** `Posix.FileSys.mkdir/shares-OS.FileSys`. [`rmdir`](../sig/POSIX_FILE_SYS.md#val-rmdir), [`chdir`](../sig/POSIX_FILE_SYS.md#val-chdir),
 > [`getcwd`](../sig/POSIX_FILE_SYS.md#val-getcwd), [`unlink`](../sig/POSIX_FILE_SYS.md#val-unlink), [`rename`](../sig/POSIX_FILE_SYS.md#val-rename), [`readlink`](../sig/POSIX_FILE_SYS.md#val-readlink), the directory streams and
-> [`access`](../sig/POSIX_FILE_SYS.md#val-access) are the functions of [`OS.FileSys`](../sig/OS.md#str-filesys) under the names of POSIX, and
+> [`access`](../sig/POSIX_FILE_SYS.md#val-access) are the functions of [`OS.FileSys`](../str/OS.FileSys.md) under the names of POSIX, and
 > [`mkdir`](../sig/POSIX_FILE_SYS.md#val-mkdir) differs from [`OS.FileSys.mkDir`](../sig/OS_FILE_SYS.md#val-mkdir) in the mode only.
 
 ### pathconf

@@ -1,4 +1,5 @@
-(* Time: a length of time, held as microseconds.
+(* Time: lengths of time and points in it, to the microsecond, which is how
+   a time is held.
 
    Implements: TIME *)
 structure Time :>

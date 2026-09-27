@@ -16,6 +16,8 @@
 structure Posix.TTY : POSIX_TTY
 ```
 
+Posix.TTY: the settings of a terminal, and the operations on it.
+
 ## Members
 
 What each means is on [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

@@ -24,7 +24,9 @@ sig
     = NONE         (* no value *)
     | SOME of 'a   (* the value it carries *)
 
-  (* Raised by `valOf` when there is no value. It is the top-level `Option`. *)
+  (* Raised by `valOf` when there is no value. It is the top-level `Option`.
+
+     Example: `(valOf NONE handle Option => 0) = 0` *)
   exception Option
 
   (* `getOpt (opt, a)` is the value that `opt` carries, or the default `a` if
@@ -33,12 +35,18 @@ sig
      Example: `getOpt (NONE, 0) = 0` *)
   val getOpt : 'a option * 'a -> 'a
 
-  (* `isSome opt` is `true` when `opt` carries a value. *)
+  (* `isSome opt` is `true` when `opt` carries a value.
+
+     Example: `isSome (SOME 0) = true` *)
   val isSome : 'a option -> bool
 
   (* `valOf opt` is the value that `opt` carries.
 
-     Raises: `Option` if `opt` is `NONE`. *)
+     Raises: `Option` if `opt` is `NONE`.
+
+     Law: `SOME (valOf opt) = opt` when `isSome opt`
+
+     Example: `valOf (SOME 1) = 1` *)
   val valOf : 'a option -> 'a
 
   (* `filter p a` is `SOME a` when `a` satisfies `p`, and `NONE` otherwise.
@@ -53,7 +61,9 @@ sig
   val join : 'a option option -> 'a option
 
   (* `app f opt` applies `f` to the value that `opt` carries, if there is one,
-     for its effect. *)
+     for its effect.
+
+     Example: `let val r = ref 0 in app (fn x => r := x) (SOME 5); !r end = 5` *)
   val app : ('a -> unit) -> 'a option -> unit
 
   (* `map f opt` is `SOME (f v)` when `opt` is `SOME v`, and `NONE` when it is
@@ -84,6 +94,8 @@ sig
   (* `composePartial (f, g) a` is `f v` when `g a` is `SOME v`, and `NONE` when
      `g a` is `NONE`.
 
-     Law: `composePartial (f, g) a = mapPartial f (g a)` *)
+     Law: `composePartial (f, g) a = mapPartial f (g a)`
+
+     Example: `composePartial (Int.fromString, SOME) "42" = SOME 42` *)
   val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
 end

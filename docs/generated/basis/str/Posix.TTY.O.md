@@ -16,6 +16,8 @@
 structure Posix.TTY.O : BIT_FLAGS
 ```
 
+Posix.TTY.O: the flags of what the terminal does with its output.
+
 ## Members
 
 What each means is on [`BIT_FLAGS`](../sig/BIT_FLAGS.md) and [`POSIX_TTY`](../sig/POSIX_TTY.md); the types are this structure's own.

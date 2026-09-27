@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 7 |
 | Documentation | 38 of 38 entries documented |
-| Tests | 288 checks of 38 entries |
+| Tests | 290 checks of 38 entries |
 | Source | [lib/basis/word\_sig.sml](../../../../lib/basis/word_sig.sml) |
 
 ## Synopsis
@@ -25,9 +25,9 @@ structure Word8 : WORD
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`LargeWord`](../str/Word.md) |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| [`SysWord`](../str/Word.md) |  | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
-| [`Word`](../str/Word.md) | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`LargeWord`](../str/Word.md) | LargeWord: the widest words, which are [`Word`](../str/Word.md). | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`SysWord`](../str/Word.md) | SysWord: the words in which the operating system's flags and modes are counted, which are [`Word`](../str/Word.md). | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
+| [`Word`](../str/Word.md) | Word: unsigned words of 64 bits, the type of the top-level [`word`](#type-word) and of its literals. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | [`Word16`](../str/Word16.md) | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
 | [`Word32`](../str/Word32.md) | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
 | [`Word64`](../str/Word64.md) | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
@@ -146,7 +146,9 @@ val wordSize : int
 
 **Example** `Word8.wordSize = 8` and `Word.wordSize = 64`
 
-<details><summary>Tests (11)</summary>
+<details><summary>Tests (13)</summary>
+
+For `Word`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
 
 For `LargeWord`, in [tests/basis/word\_large.sml](../../../../tests/basis/word_large.sml): `at-most-LargeInt.precision` &middot; `at-least-Word.wordSize`
 
@@ -174,6 +176,10 @@ val toLarge : word -> LargeWord.word
 
 `toLarge w` is `w` as a word of [`LargeWord`](../str/Word.md), with zeros in the bits above [`wordSize`](#val-wordsize).
 
+**Law** `fromLarge (toLarge w) = w`
+
+**Example** `Word8.toLarge 0wxFF = 0wxFF`
+
 <details><summary>Tests (5)</summary>
 
 In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
@@ -190,6 +196,9 @@ val toLargeX : word -> LargeWord.word
 
 **Law** `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
 
+**Example** `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF`, in Rune, whose
+[`LargeWord`](../str/Word.md) has 64 bits
+
 <details><summary>Tests (6)</summary>
 
 In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `100` &middot; `all-ones` &middot; `top-bit` &middot; `below-top-bit` &middot; `model*`
@@ -202,7 +211,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLargeWord : word -> LargeWord.word
 ```
 
-`toLargeWord w` is another name for [`toLarge`](#val-tolarge).
+`toLargeWord w` is another name for [`toLarge`](#val-tolarge), which the specification deprecates.
 
 <details><summary>Tests (2)</summary>
 
@@ -216,7 +225,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val toLargeWordX : word -> LargeWord.word
 ```
 
-`toLargeWordX w` is another name for [`toLargeX`](#val-tolargex).
+`toLargeWordX w` is another name for [`toLargeX`](#val-tolargex), which the specification deprecates.
 
 <details><summary>Tests (2)</summary>
 
@@ -234,6 +243,8 @@ val fromLarge : LargeWord.word -> word
 
 What does not fit is dropped: nothing is raised.
 
+**Example** `Word8.fromLarge 0wx1FF = 0wxFF`
+
 <details><summary>Tests (10)</summary>
 
 In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `low-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `high-ones` &middot; `model*` &middot; `toLarge*` &middot; `toLargeX*`
@@ -246,7 +257,7 @@ In [tests/basis/fn/word\_large\_fn.sml](../../../../tests/basis/fn/word_large_fn
 val fromLargeWord : LargeWord.word -> word
 ```
 
-`fromLargeWord w` is another name for [`fromLarge`](#val-fromlarge).
+`fromLargeWord w` is another name for [`fromLarge`](#val-fromlarge), which the specification deprecates.
 
 <details><summary>Tests (2)</summary>
 
@@ -267,6 +278,8 @@ val toLargeInt : word -> LargeInt.int
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is no [`LargeInt.int`](../sig/INTEGER.md#type-int), which cannot
 happen where [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
+**Example** `Word8.toLargeInt 0wxFF = 255`
+
 <details><summary>Tests (5)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `all-ones` &middot; `top-bit` &middot; `model*`
@@ -280,6 +293,10 @@ val toLargeIntX : word -> LargeInt.int
 ```
 
 `toLargeIntX w` is the number that `w` stands for read as a signed one, between `~(2^(wordSize-1))` and `2^(wordSize-1) - 1`.
+
+It never raises: [`LargeInt`](../str/IntInf.md) is at least as wide as every word.
+
+**Example** `Word8.toLargeIntX 0wxFF = ~1`
 
 <details><summary>Tests (6)</summary>
 
@@ -299,6 +316,8 @@ A negative `i` is taken in two's complement, and what does not fit is
 dropped.
 
 **Law** `fromLargeInt (toLargeIntX w) = w`
+
+**Example** `Word8.fromLargeInt ~1 = 0wxFF`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -322,6 +341,10 @@ val toInt : word -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if that number is outside the range of [`Int.int`](../sig/INTEGER.md#type-int),
 which a word as wide as an `int` can reach.
+
+**Example** `Word8.toInt 0wxFF = 255`
+
+**Example** `(toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -414,6 +437,8 @@ val orb : word * word -> word
 ```
 
 `orb (a, b)` is the bitwise "or".
+
+**Example** `orb (0wxF0, 0wx0F) = 0wxFF`
 
 <details><summary>Tests (5)</summary>
 
@@ -550,6 +575,8 @@ val + : word * word -> word
 
 `a + b` is the sum, taken modulo `2^wordSize`.
 
+**Example** `Word8.+ (0wxFF, 0w1) = 0w0`
+
 <details><summary>Tests (14)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*` &middot; `toplevel-wraps`
@@ -590,6 +617,8 @@ val * : word * word -> word
 
 `a * b` is the product, taken modulo `2^wordSize`.
 
+**Example** `Word8.* (0wx10, 0wx10) = 0w0`
+
 <details><summary>Tests (9)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*`
@@ -604,9 +633,13 @@ In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applie
 val div : word * word -> word
 ```
 
-`a div b` is the quotient of two unsigned numbers.
+`a div b` is the quotient of two unsigned numbers, rounded down.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `b` is zero.
+
+**Example** `0w7 div 0w2 = 0w3`
+
+**Example** `(0w1 div 0w0 handle Div => 0w9) = 0w9`
 
 <details><summary>Tests (15)</summary>
 
@@ -628,6 +661,8 @@ val mod : word * word -> word
 
 **Law** `(a div b) * b + (a mod b) = a`
 
+**Example** `0w7 mod 0w2 = 0w1`
+
 <details><summary>Tests (13)</summary>
 
 For `Word`, in [tests/basis/word.sml](../../../../tests/basis/word.sml): `toplevel*` &middot; `toplevel-Div` (raises Div)
@@ -645,6 +680,8 @@ val compare : word * word -> order
 ```
 
 `compare (a, b)` orders two words as unsigned numbers.
+
+**Example** `Word8.compare (0wxFF, 0w1) = GREATER`
 
 <details><summary>Tests (3)</summary>
 
@@ -686,6 +723,8 @@ val ~ : word -> word
 
 **Law** `~w = notb w + 0w1`, and `~0w0 = 0w0`
 
+**Example** `Word8.~ 0w1 = 0wxFF`
+
 <details><summary>Tests (8)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `one` &middot; `all-ones` &middot; `top-bit` &middot; `five` &middot; `fromInt-negative` &middot; `model*` &middot; `notb-plus-one*`
@@ -700,6 +739,8 @@ val min : word * word -> word
 
 `min (a, b)` is the smaller of the two, as unsigned numbers.
 
+**Example** `Word8.min (0wx80, 0w1) = 0w1`
+
 <details><summary>Tests (2)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `*` &middot; `model*`
@@ -713,6 +754,8 @@ val max : word * word -> word
 ```
 
 `max (a, b)` is the larger of the two, as unsigned numbers.
+
+**Example** `Word8.max (0wx80, 0w1) = 0wx80`
 
 <details><summary>Tests (2)</summary>
 
@@ -729,6 +772,8 @@ val fmt : StringCvt.radix -> word -> string
 ```
 
 `fmt radix w` is the text of `w` in the given base, without a prefix and without a sign.
+
+The hexadecimal digits above 9 are the capitals `A` to `F`.
 
 > **Erratum** `WORD/fmt-Ow`. The specification writes the hexadecimal prefix
 > of the samples as `Ow` with the letter O; it is `0w` with the digit
@@ -782,6 +827,8 @@ bits.
 > **Reading** `Word.scan/DEC-bare-prefix-0w`. A prefix that no digit follows
 > is not a prefix, but its leading `0` is a digit: `"0wxg"` scans as 0 and
 > leaves `"wxg"`.
+
+**Example** `Option.map #1 (scan StringCvt.BIN Substring.getc (Substring.full "0w101")) = SOME 0w5`
 
 <details><summary>Other implementations (2)</summary>
 

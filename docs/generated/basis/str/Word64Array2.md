@@ -16,6 +16,9 @@
 structure Word64Array2 :> MONO_ARRAY2 where type vector = Word64Vector.vector where type elem = Word64.word
 ```
 
+Word64Array2: two-dimensional arrays of 64-bit words, whose rows and
+columns are [`Word64Vector`](../str/Word64Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

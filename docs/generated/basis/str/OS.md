@@ -46,7 +46,7 @@ What each means is on [`OS`](../sig/OS.md); the types are this structure's own.
 ### errorName
 
 > **Implementation** `OS.errorName/posix-names`. The names are those of
-> [`Posix.Error`](../sig/POSIX.md#str-error), lower case and without the `E`: `"noent"` rather than
+> [`Posix.Error`](../str/Posix.Error.md), lower case and without the `E`: `"noent"` rather than
 > `"ENOENT"`. An error that POSIX has no name for is called `error` and
 > its number, `"error9999"`, which [`syserror`](../sig/OS.md#val-syserror) reads back.
 

@@ -1,3 +1,7 @@
-(* Implements: MONO_ARRAY where type vector = Word8Vector.vector where type
+(* Word8Array: mutable arrays of bytes, a type of their own with identity
+   equality, whose vectors are those of `Word8Vector`: the buffers of binary
+   input and output.
+
+   Implements: MONO_ARRAY where type vector = Word8Vector.vector where type
    elem = Word8.word *)
 structure Word8Array :> MONO_ARRAY where type vector = Word8Vector.vector where type elem = Word8.word = RuneMonoArrayFn (structure V = Word8Vector)

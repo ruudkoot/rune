@@ -264,7 +264,7 @@ so that nothing is rounded.
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("3.x" leaves "x")
-- **MLton, SML/NJ, Poly/ML** &mdash; another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
+- **MLton, SML/NJ, Poly/ML, MLKit** &mdash; another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 
 </details>
 

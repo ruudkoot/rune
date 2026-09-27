@@ -25,7 +25,10 @@ sig
 
   (* `openDir p` opens the directory `p` for reading.
 
-     Raises: `OS.SysErr` if `p` is no directory, or may not be read. *)
+     Raises: `OS.SysErr` if `p` is no directory, or may not be read.
+
+     Example: `let val d = openDir "/" in isSome (readDir d) before closeDir d
+     end = true` *)
   val openDir : string -> dirstream
 
   (* `readDir d` is `SOME` of the next name in `d`, or `NONE` when there are no more.
@@ -47,7 +50,9 @@ sig
      Raises: `OS.SysErr` if the directory cannot be read again. *)
   val rewindDir : dirstream -> unit
 
-  (* `closeDir d` closes `d`; closing twice is allowed. *)
+  (* `closeDir d` closes `d`; closing twice is allowed.
+
+     Reading or rewinding `d` afterwards raises `OS.SysErr`. *)
   val closeDir : dirstream -> unit
 
   (* `chDir p` makes `p` the current directory of the process.
@@ -57,7 +62,9 @@ sig
 
   (* `getDir ()` is the current directory, as an absolute canonical path.
 
-     Raises: `OS.SysErr` if it cannot be found. *)
+     Raises: `OS.SysErr` if it cannot be found.
+
+     Example: `OS.Path.isAbsolute (getDir ()) = true` *)
   val getDir : unit -> string
 
   (* `mkDir p` makes a directory `p`.
@@ -84,7 +91,9 @@ sig
 
   (* `isLink p` is `true` when `p` itself is a symbolic link, without following it.
 
-     Raises: `OS.SysErr` if `p` names nothing. *)
+     Raises: `OS.SysErr` if `p` names nothing.
+
+     Example: `isLink "." = false` *)
   val isLink : string -> bool
 
   (* `readLink p` is the path that the symbolic link `p` holds, as it is written there.
@@ -96,6 +105,8 @@ sig
 
      Raises: `OS.SysErr` if `p` names nothing, or a link leads nowhere or in a
      circle.
+
+     The empty path is taken as `"."`.
 
      Example: `fullPath "." = getDir ()` *)
   val fullPath : string -> string
@@ -139,6 +150,8 @@ sig
 
   (* `rename {old, new}` renames `old` to `new`, replacing what `new` named.
 
+     When the two name the same file nothing happens.
+
      Raises: `OS.SysErr` if `old` names nothing, or the rename is refused. *)
   val rename : {old : string, new : string} -> unit
 
@@ -155,6 +168,8 @@ sig
      Raises: `OS.SysErr` if the question cannot be answered -- not when the
      answer is no.
 
+     Example: `access ("/no/such/file", []) = false`
+
      Implementation: `OS.FileSys.access/depends-on-the-process`. Whether a
      file counts as executable is the system's affair, and a privileged
      process may read and write whatever the permission bits say, so the
@@ -163,10 +178,15 @@ sig
      Pinned by: `OS.FileSys.A_EXEC/*`, `OS.FileSys.A_WRITE/read-only` *)
   val access : string * access_mode list -> bool
 
-  (* `tmpName ()` is the path of a file that does not exist yet, for temporary use.
+  (* `tmpName ()` makes a new, empty file with a name no other file has, and is its absolute path.
 
-     The file is not created, so two processes can still race for the
-     name. *)
+     The file may be read and written by the process that made it and by no
+     other user, so it is safe to use as a temporary file: no other program
+     can take the name first.
+
+     Raises: `OS.SysErr` if no such file can be made.
+
+     Example: `let val p = tmpName () in fileSize p before remove p end = 0` *)
   val tmpName : unit -> string
 
   (* The type that tells one file from another, whatever path leads to it. *)
@@ -174,7 +194,9 @@ sig
 
   (* `fileId p` is the identity of what `p` names: two paths to one file give the same `file_id`.
 
-     Raises: `OS.SysErr` if `p` names nothing. *)
+     Raises: `OS.SysErr` if `p` names nothing.
+
+     Example: `fileId "." = fileId (getDir ())` *)
   val fileId : string -> file_id
 
   (* `hash id` is a word for `id`, spread well enough to index a table with.
@@ -188,6 +210,8 @@ sig
      Pinned by: `OS.FileSys.hash/same-object`, `OS.FileSys.hash/spread` *)
   val hash : file_id -> word
 
-  (* `compare (a, b)` orders two file identities, so that they can be kept in a map. *)
+  (* `compare (a, b)` orders two file identities, so that they can be kept in a map.
+
+     Law: `compare (a, b) = EQUAL` exactly when `a = b` *)
   val compare : file_id * file_id -> order
 end

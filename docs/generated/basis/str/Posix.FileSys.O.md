@@ -16,6 +16,8 @@
 structure Posix.FileSys.O : BIT_FLAGS
 ```
 
+Posix.FileSys.O: the options that `openf` and `createf` take.
+
 The flags of open and the bits of a mode, as words. "all represents
 the union of all flags", also those of the system that O does not
 name (O\_CLOEXEC, and O\_LARGEFILE, which getfl reports): the bits of a

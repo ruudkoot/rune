@@ -16,6 +16,9 @@
 structure WideString :> STRING where type string = WideCharVector.vector where type char = WideChar.char
 ```
 
+WideString: strings of wide characters, and their conversions to and from
+the text of SML and C.
+
 > **Reading** `WideString.scan/reads-wide-characters`. As the signature of the
 > specification writes it, [`scan`](../sig/STRING.md#val-scan) reads a stream of the structure's own
 > characters, where MLton's reads 8-bit ones; [`toString`](../sig/STRING.md#val-tostring), [`fromString`](../sig/STRING.md#val-fromstring),

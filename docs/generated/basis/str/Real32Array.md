@@ -16,6 +16,9 @@
 structure Real32Array :> MONO_ARRAY where type vector = Real32Vector.vector where type elem = Real32.real
 ```
 
+Real32Array: mutable arrays of binary32 reals, a type of their own with
+identity equality, whose vectors are those of [`Real32Vector`](../str/Real32Vector.md).
+
 ## Members
 
 What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this structure's own.

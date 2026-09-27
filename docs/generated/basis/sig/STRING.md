@@ -20,8 +20,8 @@ structure WideString :> STRING where type string = WideCharVector.vector where t
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`String`](../str/String.md) | String: 8-bit byte strings. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
-| [`WideString`](../str/WideString.md) |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
+| [`String`](../str/String.md) | String: strings of 8-bit characters, the type of the top-level [`string`](#type-string) and of its literals. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
+| [`WideString`](../str/WideString.md) | WideString: strings of wide characters, and their conversions to and from the text of SML and C. | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 Strings: immutable sequences of characters, with the operations that take
 them apart, put them together, compare them and write them as the text of
@@ -157,6 +157,8 @@ val size : string -> int
 
 `size s` is the number of characters of `s`.
 
+**Example** `size "abc" = 3`
+
 Also in the [top-level environment](../top-level.md): `size`.
 
 <details><summary>Tests (9)</summary>
@@ -176,6 +178,10 @@ val sub : string * int -> char
 `sub (s, i)` is the character of `s` at position `i`, counting from 0.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= size s`.
+
+**Example** `sub ("abc", 1) = #"b"`
+
+**Example** `(sub ("abc", 3) handle Subscript => #"!") = #"!"`
 
 <details><summary>Tests (15)</summary>
 
@@ -250,6 +256,8 @@ It is infix with precedence 6.
 
 **Complexity** linear in `size s + size t`; both are copied.
 
+**Example** `"ab" ^ "c" = "abc"`
+
 Also in the [top-level environment](../top-level.md): `^`.
 
 <details><summary>Tests (9)</summary>
@@ -271,6 +279,8 @@ val concat : string list -> string
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
 
 **Law** `concat [s, t] = s ^ t`, and `concat [] = ""`
+
+**Example** `concat ["a", "", "bc"] = "abc"`
 
 Also in the [top-level environment](../top-level.md): `concat`.
 
@@ -313,6 +323,8 @@ val str : char -> string
 
 `str c` is the string of the one character `c`.
 
+**Example** `str #"a" = "a"`
+
 Also in the [top-level environment](../top-level.md): `str`.
 
 <details><summary>Tests (4)</summary>
@@ -332,6 +344,8 @@ val implode : char list -> string
 `implode l` is the string of the characters of `l`, in order.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
+
+**Example** `implode [#"a", #"b"] = "ab"`
 
 Also in the [top-level environment](../top-level.md): `implode`.
 
@@ -374,6 +388,8 @@ val map : (char -> char) -> string -> string
 ```
 
 `map f s` is the string of the results of `f` on each character of `s`, from left to right.
+
+**Example** `map Char.toUpper "abc" = "ABC"`
 
 <details><summary>Tests (7)</summary>
 
@@ -474,6 +490,8 @@ val isPrefix : string -> string -> bool
 
 `isPrefix p s` is `true` when `s` begins with `p`.
 
+**Example** `isPrefix "ab" "abc" = true`
+
 <details><summary>Tests (12)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `basic` &middot; `not` &middot; `empty` &middot; `empty-empty` &middot; `itself` &middot; `longer` &middot; `of-empty` &middot; `differs-at-end` &middot; `law-*`
@@ -519,6 +537,8 @@ val isSuffix : string -> string -> bool
 ```
 
 `isSuffix p s` is `true` when `s` ends with `p`.
+
+**Example** `isSuffix "bc" "abc" = true`
 
 <details><summary>Tests (11)</summary>
 
@@ -566,6 +586,8 @@ The answer is that of `cmp` on the first pair of characters at the same
 position that are not `EQUAL`; if there is none, the shorter string is
 `LESS`.
 
+**Example** `collate Char.compare ("ab", "abc") = LESS`
+
 <details><summary>Tests (11)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `Char.compare` &middot; `reversed-order` &middot; `reversed-order-prefix` &middot; `reversed-order-longer` &middot; `caseless-equal` &middot; `caseless-less` &middot; `empty-empty` &middot; `always-equal-length-decides` &middot; `law-*` &middot; `law-bytes-*`
@@ -584,6 +606,8 @@ val >= : string * string -> bool
 ```
 
 `s < t`, `s <= t`, `s > t` and `s >= t` compare two strings as [`compare`](#val-compare) does.
+
+**Example** `"abc" < "abd" = true`
 
 <details><summary>Tests (13)</summary>
 

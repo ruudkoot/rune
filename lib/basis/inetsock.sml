@@ -76,6 +76,7 @@ struct
       | a => RuneSocket.ADDR a
     fun fromAddr (RuneSocket.ADDR a : sock_addr) = unixPath a
 
+    (* UnixSock.Strm: the stream sockets of the Unix family. *)
     structure Strm =
     struct
       fun 'mode socket () : 'mode stream_sock = RuneSocket.socket (unixAF, RuneSocket.SOCK.stream)
@@ -83,6 +84,7 @@ struct
         RuneSocket.socketPair (unixAF, RuneSocket.SOCK.stream)
     end
 
+    (* UnixSock.DGrm: the message sockets of the Unix family. *)
     structure DGrm =
     struct
       fun socket () : dgram_sock = RuneSocket.socket (unixAF, RuneSocket.SOCK.dgram)
@@ -106,7 +108,10 @@ end
 
    Status: optional *)
 structure INetSock = RuneINetSock
-(* Implements: UNIX_SOCK
+(* UnixSock: the sockets of the Unix family, whose addresses are paths in the
+   file system and which connect processes of one machine.
+
+   Implements: UNIX_SOCK
 
    Status: optional *)
 structure UnixSock = RuneUnixSock

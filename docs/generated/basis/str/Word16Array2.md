@@ -16,6 +16,9 @@
 structure Word16Array2 :> MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word
 ```
 
+Word16Array2: two-dimensional arrays of 16-bit words, whose rows and
+columns are [`Word16Vector`](../str/Word16Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

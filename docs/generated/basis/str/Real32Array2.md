@@ -16,6 +16,9 @@
 structure Real32Array2 :> MONO_ARRAY2 where type vector = Real32Vector.vector where type elem = Real32.real
 ```
 
+Real32Array2: two-dimensional arrays of binary32 reals, whose rows and
+columns are [`Real32Vector`](../str/Real32Vector.md) vectors.
+
 ## Members
 
 What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.

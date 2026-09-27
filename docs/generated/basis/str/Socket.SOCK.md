@@ -10,6 +10,9 @@
 | Tests | 13 checks |
 | Source | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
+Socket.SOCK: the kinds of socket, a stream or messages, and their
+names.
+
 ## Members
 
 What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure's own.
