@@ -17,10 +17,12 @@ sig
      the signal that ended it, which `Posix.Process.fromStatus` decodes. *)
   type status
 
-  (* The status of a program that did what it was meant to do. *)
+  (* The status of a program that did what it was meant to do; there is only one. *)
   val success : status
 
-  (* A status of a program that did not. *)
+  (* A status of a program that did not; there are others.
+
+     Example: `isSuccess failure = false` *)
   val failure : status
 
   (* `isSuccess st` is `true` when `st` is a status of a program that succeeded.
@@ -36,6 +38,9 @@ sig
 
   (* `system cmd` runs `cmd` and is the status it ended with.
 
+     A command that the shell cannot find ends with the shell's status 127,
+     which is no success.
+
      Raises: `OS.SysErr` if the command could not be run at all.
 
      Reading: `OS.Process.system/a-real-shell`. A shell runs the command, so
@@ -45,8 +50,9 @@ sig
 
      Pinned by: `OS.Process.system/*`
 
-     A command that the shell cannot find gives a status that is no success,
-     the 127 of the shell; the suite assumes that of every system's shell. *)
+     Example: `isSuccess (system "true") = true`
+
+     Example: `isSuccess (system "exit 3") = false` *)
   val system : string -> status
 
   (* `atExit f` asks for `f` to be run when the program ends.
@@ -63,7 +69,15 @@ sig
      Reading: `OS.Process.exit/what-is-flushed`. "Flushes and closes all I/O
      streams" reaches the streams the library still holds output for, over
      writers a program supplied; output to a file is held by the VM, which
-     flushes every file itself. *)
+     flushes every file itself.
+
+     Implementation: `OS.Process.exit/status-of-a-command`. The status of a
+     command that `system` ran keeps its exit code, and one of a command that
+     a signal ended, which no exit code can express, ends the program as
+     `failure` does, as the specification's implementation note asks.
+
+     Pinned by: `OS.Process.exit/keeps-the-exit-code-of-a-command`,
+     `OS.Process.exit/signal-status-is-failure` *)
   val exit : status -> 'a
 
   (* `terminate st` ends the program with the status `st` at once.
@@ -83,6 +97,10 @@ sig
      Example: `getEnv "A_VARIABLE_THAT_NOBODY_SETS" = NONE` *)
   val getEnv : string -> string option
 
-  (* `sleep t` waits for the time `t`, and returns at once when `t` is not positive. *)
+  (* `sleep t` waits for the time `t`, and returns at once when `t` is not positive.
+
+     Nothing is raised, whatever `t` is.
+
+     Example: `(sleep (Time.fromReal ~1.0); "returned") = "returned"` *)
   val sleep : Time.time -> unit
 end

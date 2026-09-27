@@ -15,7 +15,9 @@
 #     Windows does otherwise (docs/building.md);
 #   * WIDTH, XC1-NA and HOST-FLAKY, which describe the suite and not a host;
 #   * the lines for xc1 configurations only: Rune's library on a host;
-#   * the labels @section/..., @load/... and @absent/..., which name no member.
+#   * the labels @section/..., @load/... and @absent/..., which name no member;
+#   * the labels of the checks on the results of the functors PrimIO,
+#     StreamIO and ImperativeIO (io_functors.sml), which name no structure.
 set -eu
 cd "$(dirname "$0")"
 check=0
@@ -44,7 +46,8 @@ function host(config,   kind, rest, name, version, at, h, bits) {
   else if (name == "smlnj*") h = "SML/NJ"
   else if (name == "smlnj") { h = "SML/NJ"; bits = " (64-bit)" }
   else if (name == "smlnj32") { h = "SML/NJ"; bits = " (32-bit)" }
-  else if (name == "*") h = "MLton, SML/NJ, Poly/ML"
+  else if (name == "mlkit") h = "MLKit"
+  else if (name == "*") h = "MLton, SML/NJ, Poly/ML, MLKit"
   else return "?"
   if (version != "*") h = h " " version
   return h bits
@@ -56,7 +59,7 @@ BEGIN {
   print "# `runedoc --annotations` (docs/doc-comments.md):"
   print "#   label-glob | whom it is about | text"
   print "@title Other implementations"
-  print "@intro what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole."
+  print "@intro what the test suite of the library finds MLton, SML/NJ, Poly/ML and MLKit to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole."
 }
 /^[ \t]*#/ || /^[ \t]*$/ { next }
 {
@@ -68,6 +71,7 @@ BEGIN {
   reason = trim(reason)
   if (category == "WIDTH" || category == "XC1-NA" || category == "HOST-FLAKY") next
   if (label ~ /^@/) next
+  if (label ~ /^(PrimIO|StreamIO|ImperativeIO)\./) next
   h = host(config)
   if (h == "") next
   if (h == "?") { print "gen-annotations.sh: deviations.txt:" NR ": unknown configuration " config > "/dev/stderr"; bad = 1; next }

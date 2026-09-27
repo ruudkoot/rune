@@ -20,8 +20,8 @@ structure WideString :> STRING where type string = WideCharVector.vector where t
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `String` | String: 8-bit byte strings. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
-| `WideString` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
+| [`String`](../str/String.md) | String: strings of 8-bit characters, the type of the top-level [`string`](#type-string) and of its literals. | [lib/basis/string.sml](../../../../lib/basis/string.sml) |
+| [`WideString`](../str/WideString.md) | WideString: strings of wide characters, and their conversions to and from the text of SML and C. | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 Strings: immutable sequences of characters, with the operations that take
 them apart, put them together, compare them and write them as the text of
@@ -34,15 +34,15 @@ every operation that makes one does copy, so building a long string by
 repeated [`^`](#val-op-caret) costs time quadratic in the result: collect the pieces in a
 list and [`concat`](#val-concat) them once.
 
-The signature is that of [`String`](STRING.md), whose characters are of type [`char`](#type-char), and
-of the optional [`WideString`](STRING.md), which is why it specifies a type [`char`](#type-char) of
+The signature is that of [`String`](../str/String.md), whose characters are of type [`char`](#type-char), and
+of the optional [`WideString`](../str/WideString.md), which is why it specifies a type [`char`](#type-char) of
 its own. The strings of the library are compared by their characters'
 codes, and that order is what [`<`](#val-op-lt), [`compare`](#val-compare) and [`Substring.compare`](../sig/SUBSTRING.md#val-compare) use.
 
 > **Erratum** `STRING/string-types`. The specification writes the types of
 > [`toString`](#val-tostring), [`scan`](#val-scan), [`fromString`](#val-fromstring), [`toCString`](#val-tocstring) and [`fromCString`](#val-fromcstring) with
 > [`String.string`](#type-string), because the text of an escape is always of 8-bit
-> characters, also for [`WideString`](STRING.md). They are kept as written.
+> characters, also for [`WideString`](../str/WideString.md). They are kept as written.
 
 ## Contents
 
@@ -60,64 +60,36 @@ codes, and that order is what [`<`](#val-op-lt), [`compare`](#val-compare) and [
 <pre>
 signature STRING =
 sig
-
   eqtype <a href="#type-string">string</a>
-
   eqtype <a href="#type-char">char</a>
-
   val <a href="#val-maxsize">maxSize</a> : int
-
   val <a href="#val-size">size</a> : string -&gt; int
-
   val <a href="#val-sub">sub</a> : string * int -&gt; char
-
   val <a href="#val-extract">extract</a> : string * int * int option -&gt; string
-
   val <a href="#val-substring">substring</a> : string * int * int -&gt; string
-
   val <a href="#val-op-caret">^</a> : string * string -&gt; string
-
   val <a href="#val-concat">concat</a> : string list -&gt; string
-
   val <a href="#val-concatwith">concatWith</a> : string -&gt; string list -&gt; string
-
   val <a href="#val-str">str</a> : char -&gt; string
-
   val <a href="#val-implode">implode</a> : char list -&gt; string
-
   val <a href="#val-explode">explode</a> : string -&gt; char list
-
   val <a href="#val-map">map</a> : (char -&gt; char) -&gt; string -&gt; string
-
   val <a href="#val-translate">translate</a> : (char -&gt; string) -&gt; string -&gt; string
-
   val <a href="#val-tokens">tokens</a> : (char -&gt; bool) -&gt; string -&gt; string list
-
   val <a href="#val-fields">fields</a> : (char -&gt; bool) -&gt; string -&gt; string list
-
   val <a href="#val-isprefix">isPrefix</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-issubstring">isSubstring</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-issuffix">isSuffix</a> : string -&gt; string -&gt; bool
-
   val <a href="#val-compare">compare</a> : string * string -&gt; order
-
   val <a href="#val-collate">collate</a> : (char * char -&gt; order) -&gt; string * string -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : string * string -&gt; bool
   val <a href="#val-op-lt-eq">&lt;=</a> : string * string -&gt; bool
   val <a href="#val-op-gt">&gt;</a> : string * string -&gt; bool
   val <a href="#val-op-gt-eq">&gt;=</a> : string * string -&gt; bool
-
   val <a href="#val-tostring">toString</a> : string -&gt; String.string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (string, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : String.string -&gt; string option
-
   val <a href="#val-tocstring">toCString</a> : string -&gt; String.string
-
   val <a href="#val-fromcstring">fromCString</a> : String.string -&gt; string option
 end
 </pre>
@@ -147,7 +119,7 @@ The type of strings of these characters.
 eqtype char
 ```
 
-The type of the characters of such a string: [`Char.char`](../sig/CHAR.md#type-char) for [`String`](STRING.md).
+The type of the characters of such a string: [`Char.char`](../sig/CHAR.md#type-char) for [`String`](../str/String.md).
 
 ### <a name="val-maxsize"></a>`maxSize`
 
@@ -185,6 +157,8 @@ val size : string -> int
 
 `size s` is the number of characters of `s`.
 
+**Example** `size "abc" = 3`
+
 Also in the [top-level environment](../top-level.md): `size`.
 
 <details><summary>Tests (9)</summary>
@@ -204,6 +178,10 @@ val sub : string * int -> char
 `sub (s, i)` is the character of `s` at position `i`, counting from 0.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= size s`.
+
+**Example** `sub ("abc", 1) = #"b"`
+
+**Example** `(sub ("abc", 3) handle Subscript => #"!") = #"!"`
 
 <details><summary>Tests (15)</summary>
 
@@ -278,6 +256,8 @@ It is infix with precedence 6.
 
 **Complexity** linear in `size s + size t`; both are copied.
 
+**Example** `"ab" ^ "c" = "abc"`
+
 Also in the [top-level environment](../top-level.md): `^`.
 
 <details><summary>Tests (9)</summary>
@@ -299,6 +279,8 @@ val concat : string list -> string
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
 
 **Law** `concat [s, t] = s ^ t`, and `concat [] = ""`
+
+**Example** `concat ["a", "", "bc"] = "abc"`
 
 Also in the [top-level environment](../top-level.md): `concat`.
 
@@ -341,6 +323,8 @@ val str : char -> string
 
 `str c` is the string of the one character `c`.
 
+**Example** `str #"a" = "a"`
+
 Also in the [top-level environment](../top-level.md): `str`.
 
 <details><summary>Tests (4)</summary>
@@ -360,6 +344,8 @@ val implode : char list -> string
 `implode l` is the string of the characters of `l`, in order.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
+
+**Example** `implode [#"a", #"b"] = "ab"`
 
 Also in the [top-level environment](../top-level.md): `implode`.
 
@@ -402,6 +388,8 @@ val map : (char -> char) -> string -> string
 ```
 
 `map f s` is the string of the results of `f` on each character of `s`, from left to right.
+
+**Example** `map Char.toUpper "abc" = "ABC"`
 
 <details><summary>Tests (7)</summary>
 
@@ -453,6 +441,16 @@ nothing behind, so this is how a line is split into words.
 
 **Law** `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
 
+> **Reading** `String.tokens/order`. The specification says the tokens are
+> "derived from s from left to right", and not how often `p` is asked:
+> `p` is applied once to each character, from left to right.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `page-example` &middot; `empty-string` &middot; `no-delimiter` &middot; `one-delimiter-only` &middot; `delimiters-only` &middot; `trailing-delimiter` &middot; `leading-delimiter` &middot; `whitespace` &middot; `several-delimiters` &middot; `every-character-delimits` &middot; `nothing-delimits` &middot; `order` &middot; `law-*`
@@ -491,6 +489,8 @@ val isPrefix : string -> string -> bool
 ```
 
 `isPrefix p s` is `true` when `s` begins with `p`.
+
+**Example** `isPrefix "ab" "abc" = true`
 
 <details><summary>Tests (12)</summary>
 
@@ -538,6 +538,8 @@ val isSuffix : string -> string -> bool
 
 `isSuffix p s` is `true` when `s` ends with `p`.
 
+**Example** `isSuffix "bc" "abc" = true`
+
 <details><summary>Tests (11)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `basic` &middot; `not` &middot; `empty` &middot; `empty-empty` &middot; `itself` &middot; `longer` &middot; `of-empty` &middot; `differs-at-start` &middot; `law-*`
@@ -584,6 +586,8 @@ The answer is that of `cmp` on the first pair of characters at the same
 position that are not `EQUAL`; if there is none, the shorter string is
 `LESS`.
 
+**Example** `collate Char.compare ("ab", "abc") = LESS`
+
 <details><summary>Tests (11)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `Char.compare` &middot; `reversed-order` &middot; `reversed-order-prefix` &middot; `reversed-order-longer` &middot; `caseless-equal` &middot; `caseless-less` &middot; `empty-empty` &middot; `always-equal-length-decides` &middot; `law-*` &middot; `law-bytes-*`
@@ -602,6 +606,8 @@ val >= : string * string -> bool
 ```
 
 `s < t`, `s <= t`, `s > t` and `s >= t` compare two strings as [`compare`](#val-compare) does.
+
+**Example** `"abc" < "abd" = true`
 
 <details><summary>Tests (13)</summary>
 

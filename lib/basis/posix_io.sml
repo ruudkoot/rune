@@ -55,6 +55,7 @@ struct
 
     (* Locks on segments of a file: fcntl with a struct flock. *)
     datatype lock_type = F_RDLCK | F_WRLCK | F_UNLCK
+    (* Posix.IO.FLock: the description of a lock on a stretch of a file. *)
     structure FLock =
     struct
       datatype flock = FLock of {ltype : lock_type, whence : whence, start : int, len : int, pid : pid option}
@@ -85,7 +86,8 @@ struct
       fun setlkw (fd, fl) = lock ("F_SETLKW", fd, fl)
     end
 
-    (* The flags of a descriptor, as words; like the flags of open, all of
+    (* Posix.IO.FD: the flags of a descriptor itself, of which close-on-exec
+       is the one POSIX names. They are words; like the flags of open, all of
        them are the bits of a C int (Posix.FileSys.O).
 
        Implements: BIT_FLAGS *)
@@ -103,7 +105,10 @@ struct
       fun clear (a, b) = Word.andb (Word.notb a, b)
     end
 
-    (* Implements: BIT_FLAGS *)
+    (* Posix.IO.O: the flags of the open file that a descriptor is on, which
+       are those of `Posix.FileSys.O`.
+
+       Implements: BIT_FLAGS *)
     structure O = RunePosixFileSys.O
     datatype open_mode = datatype RunePosixFileSys.open_mode
 

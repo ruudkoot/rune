@@ -542,9 +542,34 @@ struct
   (*>> scan-rounding-mode *)
 
   (*<< decimal-rounding-mode *)
-  (* here the nearest is also the result of rounding down *)
+  (* "Decimal approximations are to be converted using the
+     IEEEReal.TO_NEAREST rounding mode", whatever mode is in force. For ~0.1
+     under TO_NEGINF the nearest is also the result of rounding down; for the
+     others it is not, and a conversion in the current mode gives below *)
+  val tenth = {class = IEEEReal.NORMAL, sign = false, digits = [1], exp = 0}
   val () = T.eqReal ("Real.fromDecimal/TO_NEGINF-negative", ~0.1,
                      fn () => inMode IEEEReal.TO_NEGINF (fn () =>
                        valOf (Real.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
+  val () = T.eqReal ("Real.fromDecimal/TO_NEGINF-positive", 0.1,
+                     fn () => inMode IEEEReal.TO_NEGINF (fn () => valOf (Real.fromDecimal tenth)))
+  val () = T.eqReal ("Real.fromDecimal/TO_ZERO-positive", 0.1,
+                     fn () => inMode IEEEReal.TO_ZERO (fn () => valOf (Real.fromDecimal tenth)))
+  val () = T.eqReal ("Real.fromDecimal/TO_POSINF-negative", ~0.1,
+                     fn () => inMode IEEEReal.TO_POSINF (fn () =>
+                       valOf (Real.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
+  (* "toDecimal should produce only as many digits as are necessary for
+     fromDecimal to convert back to the same number" *)
+  val () = T.check ("Real.toDecimal/TO_POSINF-shortest",
+                    fn () => #digits (inMode IEEEReal.TO_POSINF (fn () => Real.toDecimal 0.1)) = [1])
+  val () = T.check ("Real.toDecimal/TO_NEGINF-shortest",
+                    fn () => #digits (inMode IEEEReal.TO_NEGINF (fn () => Real.toDecimal (Real.~ 0.1))) = [1])
+  val () = T.check ("Real.toDecimal/TO_ZERO-round-trip",
+                    fn () => inMode IEEEReal.TO_ZERO (fn () =>
+                               Real.== (valOf (Real.fromDecimal (Real.toDecimal (1.0 / 3.0))), 1.0 / 3.0)))
+  (* the mode that was in force is in force again *)
+  val () = T.check ("Real.fromDecimal/keeps-the-rounding-mode",
+                    fn () => inMode IEEEReal.TO_ZERO (fn () =>
+                               (ignore (Real.fromDecimal tenth); ignore (Real.toDecimal 0.1);
+                                IEEEReal.getRoundingMode () = IEEEReal.TO_ZERO)))
   (*>> decimal-rounding-mode *)
 end

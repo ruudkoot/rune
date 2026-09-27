@@ -85,22 +85,37 @@ sig
               second : int,
               offset : Time.time option} -> date
 
-  (* `year d` is the year of `d`, as a number and not counted from 1900. *)
+  (* `year d` is the year of `d`, as a number and not counted from 1900.
+
+     Law: `year (date r) = #year r` when the fields of `r` are in range, and
+     the same for `month`, `day`, `hour`, `minute` and `second`
+
+     Example: `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995` *)
   val year : date -> int
 
-  (* `month d` is the month of `d`. *)
+  (* `month d` is the month of `d`.
+
+     Example: `month (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = Mar` *)
   val month : date -> month
 
-  (* `day d` is the day of the month of `d`, from 1. *)
+  (* `day d` is the day of the month of `d`, from 1.
+
+     Example: `day (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 8` *)
   val day : date -> int
 
-  (* `hour d` is the hour of `d`, from 0 to 23. *)
+  (* `hour d` is the hour of `d`, from 0 to 23.
+
+     Example: `hour (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 19` *)
   val hour : date -> int
 
-  (* `minute d` is the minute of `d`, from 0 to 59. *)
+  (* `minute d` is the minute of `d`, from 0 to 59.
+
+     Example: `minute (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 6` *)
   val minute : date -> int
 
-  (* `second d` is the second of `d`, from 0 to 59, or up to 61 for a leap second. *)
+  (* `second d` is the second of `d`, from 0 to 59, or up to 61 for a leap second.
+
+     Example: `second (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 45` *)
   val second : date -> int
 
   (* `weekDay d` is the day of the week of `d`.
@@ -115,7 +130,9 @@ sig
      minute = 0, second = 0, offset = SOME Time.zeroTime}) = 66` *)
   val yearDay : date -> int
 
-  (* `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC. *)
+  (* `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC.
+
+     Example: `offset (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME Time.zeroTime` *)
   val offset : date -> Time.time option
 
   (* `isDst d` is `SOME true` when `d` is in daylight saving time, `SOME false` when it is not, `NONE` when that is unknown.
@@ -127,7 +144,9 @@ sig
      Pinned by: `Date.isDst/UTC-is-not-daylight-saving`
 
      The suite assumes that no zone has daylight saving time both in January
-     and in July. *)
+     and in July.
+
+     Example: `isDst (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME false` *)
   val isDst : date -> bool option
 
   (* `localOffset ()` is how far the local zone is west of UTC, now.
@@ -137,7 +156,9 @@ sig
      twenty-four hours; the suite accepts the offset in force now, or an hour
      more, reduced modulo a day, west of UTC.
 
-     Pinned by: `Date.localOffset/*` *)
+     Pinned by: `Date.localOffset/*`
+
+     Example: `LargeInt.abs (Time.toSeconds (localOffset ())) <= 86400 = true` *)
   val localOffset : unit -> Time.time
 
   (* `fromTimeLocal t` is the moment `t` read in the local zone, with `offset` `NONE`.
@@ -150,7 +171,9 @@ sig
      Pinned by: `Date.fromTimeLocal/*`
 
      The suite's moments are noon UTC on 15 January and 15 July 2001, away from
-     the changes of every zone, and the time at which it runs. *)
+     the changes of every zone, and the time at which it runs.
+
+     Example: `offset (fromTimeLocal Time.zeroTime) = NONE` *)
   val fromTimeLocal : Time.time -> date
 
   (* `fromTimeUniv t` is the moment `t` read in UTC.
@@ -162,7 +185,13 @@ sig
      Pinned by: `Date.fromTimeUniv/fraction-of-a-second*`
 
      The suite assumes that the clock of the machine shows a year from 2020 to
-     2199. *)
+     2199.
+
+     Law: `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for a
+     time `t` at or after the epoch
+
+     Example: `toString (fromTimeUniv (Time.fromSeconds 86400)) = "Fri Jan 02
+     00:00:00 1970"` *)
   val fromTimeUniv : Time.time -> date
 
   (* `toTime d` is the moment that `d` names.
@@ -184,7 +213,12 @@ sig
      do not compare equal, and one written later in its own zone is the
      greater.
 
-     Pinned by: `Date.compare/ignores-the-offset*` *)
+     Pinned by: `Date.compare/ignores-the-offset*`
+
+     Example: `compare (date {year = 2000, month = Dec, day = 31, hour = 0,
+     minute = 0, second = 0, offset = SOME Time.zeroTime}, date {year = 2001,
+     month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME
+     Time.zeroTime}) = LESS` *)
   val compare : date * date -> order
 
   (* `fmt s d` is `d` written out by the directives of `s`, as C's `strftime` writes them.
@@ -212,6 +246,8 @@ sig
 
      Raises: `Date` if `d` is not a valid date.
 
+     Law: `toString d = fmt "%a %b %d %H:%M:%S %Y" d`
+
      Example: `toString (date {year = 1995, month = Mar, day = 8, hour = 19,
      minute = 6, second = 45, offset = SOME Time.zeroTime}) =
      "Wed Mar 08 19:06:45 1995"` *)
@@ -223,7 +259,10 @@ sig
      checks nothing beyond it: the weekday is taken as written rather than
      worked out, and the date it gives is a local one (`offset` and `isDst`
      both `NONE`). So `scan` can give a date that `fmt` and `toString` then
-     refuse. *)
+     refuse.
+
+     Example: `Option.map (toString o #1) (scan Substring.getc (Substring.full
+     " Wed Mar 08 19:06:45 1995")) = SOME "Wed Mar 08 19:06:45 1995"` *)
   val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 
   (* `fromString s` is `SOME` of the date that `s` begins with, after whitespace, or `NONE`.

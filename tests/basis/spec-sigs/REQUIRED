@@ -1,0 +1,47 @@
+# The structures the specification requires, one per line, transcribed from
+# the list of https://smlfamily.github.io/Basis/overview.html. Every other
+# structure of the specification is optional. tests/basis/check-claims.sh
+# compares the statuses of claims.tsv with this list.
+Array
+ArraySlice
+BinIO
+BinPrimIO
+Bool
+Byte
+Char
+CharArray
+CharArraySlice
+CharVector
+CharVectorSlice
+CommandLine
+Date
+General
+IEEEReal
+Int
+IO
+LargeInt
+LargeReal
+LargeWord
+List
+ListPair
+Math
+OS
+Option
+Position
+Real
+String
+StringCvt
+Substring
+Text
+TextIO
+TextPrimIO
+Time
+Timer
+Vector
+VectorSlice
+Word
+Word8
+Word8Array
+Word8ArraySlice
+Word8Vector
+Word8VectorSlice

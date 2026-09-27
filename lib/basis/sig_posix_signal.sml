@@ -35,6 +35,8 @@ sig
 
   (* `fromWord w` is the signal numbered `w`, which need not be one named here.
 
+     Law: `fromWord (toWord s) = s`
+
      Example: `fromWord 0w15 = term` *)
   val fromWord : SysWord.word -> signal
 

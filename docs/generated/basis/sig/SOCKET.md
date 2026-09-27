@@ -19,7 +19,7 @@ structure Socket : SOCKET  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Socket` |  | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
+| [`Socket`](../str/Socket.md) | Socket: sockets of every family: addresses, options, connecting, listening, sending and receiving, and waiting for several at once. | [lib/basis/socket.sml](../../../../lib/basis/socket.sml) |
 
 Sockets: connections between processes, on one machine or across a
 network.
@@ -51,7 +51,7 @@ instead. [`Ctl`](#str-ctl) reads and sets the options of a socket.
 > no address family: "AF.list returns a list of all the available address
 > families", so the set is the system's. `INET6` is among them here, and
 > [`INET6_SOCK`](../sig/INET6_SOCK.md), which is Rune's own, has the sockets and addresses of it;
-> [`NetHostDB`](../sig/NET_HOST_DB.md) stays the IPv4 database the specification defines
+> [`NetHostDB`](../str/NetHostDB.md) stays the IPv4 database the specification defines
 
 > **Implementation** `Socket.sock/is-a-descriptor`. A socket is the system's
 > descriptor and a [`sock_addr`](#type-sock_addr) the bytes of a `sockaddr`; the type variables
@@ -66,196 +66,107 @@ instead. [`Ctl`](#str-ctl) reads and sets the options of a socket.
 signature SOCKET =
 sig
   type ('af, 'sock_type) <a href="#type-sock">sock</a>
-
   type 'af <a href="#type-sock_addr">sock_addr</a>
-
   type <a href="#type-dgram">dgram</a>
-
   type 'mode <a href="#type-stream">stream</a>
-
   type <a href="#type-passive">passive</a>
-
   type <a href="#type-active">active</a>
-
   structure <a href="#str-af">AF</a> :
   sig
     type <a href="#type-af.addr_family">addr_family</a> = NetHostDB.addr_family
-
     val <a href="#val-af.list">list</a> : unit -&gt; (string * addr_family) list
-
     val <a href="#val-af.tostring">toString</a> : addr_family -&gt; string
-
     val <a href="#val-af.fromstring">fromString</a> : string -&gt; addr_family option
   end
-
   structure <a href="#str-sock">SOCK</a> :
   sig
     eqtype <a href="#type-sock.sock_type">sock_type</a>
-
     val <a href="#val-sock.stream">stream</a> : sock_type
-
     val <a href="#val-sock.dgram">dgram</a> : sock_type
-
     val <a href="#val-sock.list">list</a> : unit -&gt; (string * sock_type) list
-
     val <a href="#val-sock.tostring">toString</a> : sock_type -&gt; string
-
     val <a href="#val-sock.fromstring">fromString</a> : string -&gt; sock_type option
   end
-
   structure <a href="#str-ctl">Ctl</a> :
   sig
     val <a href="#val-ctl.getdebug">getDEBUG</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setdebug">setDEBUG</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getreuseaddr">getREUSEADDR</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setreuseaddr">setREUSEADDR</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getkeepalive">getKEEPALIVE</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setkeepalive">setKEEPALIVE</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getdontroute">getDONTROUTE</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setdontroute">setDONTROUTE</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getlinger">getLINGER</a> : ('af, 'sock_type) sock -&gt; Time.time option
-
     val <a href="#val-ctl.setlinger">setLINGER</a> : ('af, 'sock_type) sock * Time.time option -&gt; unit
-
     val <a href="#val-ctl.getbroadcast">getBROADCAST</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setbroadcast">setBROADCAST</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getoobinline">getOOBINLINE</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.setoobinline">setOOBINLINE</a> : ('af, 'sock_type) sock * bool -&gt; unit
-
     val <a href="#val-ctl.getsndbuf">getSNDBUF</a> : ('af, 'sock_type) sock -&gt; int
-
     val <a href="#val-ctl.setsndbuf">setSNDBUF</a> : ('af, 'sock_type) sock * int -&gt; unit
-
     val <a href="#val-ctl.getrcvbuf">getRCVBUF</a> : ('af, 'sock_type) sock -&gt; int
-
     val <a href="#val-ctl.setrcvbuf">setRCVBUF</a> : ('af, 'sock_type) sock * int -&gt; unit
-
     val <a href="#val-ctl.gettype">getTYPE</a> : ('af, 'sock_type) sock -&gt; SOCK.sock_type
-
     val <a href="#val-ctl.geterror">getERROR</a> : ('af, 'sock_type) sock -&gt; bool
-
     val <a href="#val-ctl.getpeername">getPeerName</a> : ('af, 'sock_type) sock -&gt; 'af sock_addr
-
     val <a href="#val-ctl.getsockname">getSockName</a> : ('af, 'sock_type) sock -&gt; 'af sock_addr
-
     val <a href="#val-ctl.getnread">getNREAD</a> : ('af, 'sock_type) sock -&gt; int
-
     val <a href="#val-ctl.getatmark">getATMARK</a> : ('af, active stream) sock -&gt; bool
   end
-
   val <a href="#val-sameaddr">sameAddr</a> : 'af sock_addr * 'af sock_addr -&gt; bool
-
   val <a href="#val-familyofaddr">familyOfAddr</a> : 'af sock_addr -&gt; AF.addr_family
-
   val <a href="#val-bind">bind</a> : ('af, 'sock_type) sock * 'af sock_addr -&gt; unit
-
   val <a href="#val-listen">listen</a> : ('af, passive stream) sock * int -&gt; unit
-
   val <a href="#val-accept">accept</a> : ('af, passive stream) sock -&gt; ('af, active stream) sock * 'af sock_addr
-
   val <a href="#val-acceptnb">acceptNB</a> : ('af, passive stream) sock -&gt; (('af, active stream) sock * 'af sock_addr) option
-
   val <a href="#val-connect">connect</a> : ('af, 'sock_type) sock * 'af sock_addr -&gt; unit
-
   val <a href="#val-connectnb">connectNB</a> : ('af, 'sock_type) sock * 'af sock_addr -&gt; bool
-
   val <a href="#val-close">close</a> : ('af, 'sock_type) sock -&gt; unit
-
   datatype <a href="#type-shutdown_mode">shutdown_mode</a>
     = <a href="#con-no_recvs">NO_RECVS</a>
     | <a href="#con-no_sends">NO_SENDS</a>
     | <a href="#con-no_recvs_or_sends">NO_RECVS_OR_SENDS</a>
-
   val <a href="#val-shutdown">shutdown</a> : ('af, 'mode stream) sock * shutdown_mode -&gt; unit
-
   type <a href="#type-sock_desc">sock_desc</a>
-
   val <a href="#val-sockdesc">sockDesc</a> : ('af, 'sock_type) sock -&gt; sock_desc
-
   val <a href="#val-samedesc">sameDesc</a> : sock_desc * sock_desc -&gt; bool
-
   val <a href="#val-select">select</a> : {<a href="#fld-select.rds">rds</a> : sock_desc list, <a href="#fld-select.wrs">wrs</a> : sock_desc list, <a href="#fld-select.exs">exs</a> : sock_desc list, <a href="#fld-select.timeout">timeout</a> : Time.time option}
                -&gt; {rds : sock_desc list, wrs : sock_desc list, exs : sock_desc list}
-
   val <a href="#val-iodesc">ioDesc</a> : ('af, 'sock_type) sock -&gt; OS.IO.iodesc
-
   type <a href="#type-out_flags">out_flags</a> = {<a href="#fld-out_flags.don-primet_route">don't_route</a> : bool, <a href="#fld-out_flags.oob">oob</a> : bool}
-
   type <a href="#type-in_flags">in_flags</a> = {<a href="#fld-in_flags.peek">peek</a> : bool, <a href="#fld-in_flags.oob">oob</a> : bool}
-
   val <a href="#val-sendvec">sendVec</a> : ('af, active stream) sock * Word8VectorSlice.slice -&gt; int
-
   val <a href="#val-sendarr">sendArr</a> : ('af, active stream) sock * Word8ArraySlice.slice -&gt; int
-
   val <a href="#val-sendvec-prime">sendVec'</a> : ('af, active stream) sock * Word8VectorSlice.slice * out_flags -&gt; int
-
   val <a href="#val-sendarr-prime">sendArr'</a> : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -&gt; int
-
   val <a href="#val-sendvecnb">sendVecNB</a> : ('af, active stream) sock * Word8VectorSlice.slice -&gt; int option
-
   val <a href="#val-sendvecnb-prime">sendVecNB'</a> : ('af, active stream) sock * Word8VectorSlice.slice * out_flags -&gt; int option
-
   val <a href="#val-sendarrnb">sendArrNB</a> : ('af, active stream) sock * Word8ArraySlice.slice -&gt; int option
-
   val <a href="#val-sendarrnb-prime">sendArrNB'</a> : ('af, active stream) sock * Word8ArraySlice.slice * out_flags -&gt; int option
-
   val <a href="#val-recvvec">recvVec</a> : ('af, active stream) sock * int -&gt; Word8Vector.vector
-
   val <a href="#val-recvvec-prime">recvVec'</a> : ('af, active stream) sock * int * in_flags -&gt; Word8Vector.vector
-
   val <a href="#val-recvarr">recvArr</a> : ('af, active stream) sock * Word8ArraySlice.slice -&gt; int
-
   val <a href="#val-recvarr-prime">recvArr'</a> : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -&gt; int
-
   val <a href="#val-recvvecnb">recvVecNB</a> : ('af, active stream) sock * int -&gt; Word8Vector.vector option
-
   val <a href="#val-recvvecnb-prime">recvVecNB'</a> : ('af, active stream) sock * int * in_flags -&gt; Word8Vector.vector option
-
   val <a href="#val-recvarrnb">recvArrNB</a> : ('af, active stream) sock * Word8ArraySlice.slice -&gt; int option
-
   val <a href="#val-recvarrnb-prime">recvArrNB'</a> : ('af, active stream) sock * Word8ArraySlice.slice * in_flags -&gt; int option
-
   val <a href="#val-sendvecto">sendVecTo</a> : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice -&gt; unit
-
   val <a href="#val-sendarrto">sendArrTo</a> : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice -&gt; unit
-
   val <a href="#val-sendvecto-prime">sendVecTo'</a> : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * out_flags -&gt; unit
-
   val <a href="#val-sendarrto-prime">sendArrTo'</a> : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out_flags -&gt; unit
-
   val <a href="#val-sendvectonb">sendVecToNB</a> : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice -&gt; bool
-
   val <a href="#val-sendvectonb-prime">sendVecToNB'</a> : ('af, dgram) sock * 'af sock_addr * Word8VectorSlice.slice * out_flags -&gt; bool
-
   val <a href="#val-sendarrtonb">sendArrToNB</a> : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice -&gt; bool
-
   val <a href="#val-sendarrtonb-prime">sendArrToNB'</a> : ('af, dgram) sock * 'af sock_addr * Word8ArraySlice.slice * out_flags -&gt; bool
-
   val <a href="#val-recvvecfrom">recvVecFrom</a> : ('af, dgram) sock * int -&gt; Word8Vector.vector * 'af sock_addr
-
   val <a href="#val-recvvecfrom-prime">recvVecFrom'</a> : ('af, dgram) sock * int * in_flags -&gt; Word8Vector.vector * 'af sock_addr
-
   val <a href="#val-recvarrfrom">recvArrFrom</a> : ('af, dgram) sock * Word8ArraySlice.slice -&gt; int * 'af sock_addr
-
   val <a href="#val-recvarrfrom-prime">recvArrFrom'</a> : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -&gt; int * 'af sock_addr
-
   val <a href="#val-recvvecfromnb">recvVecFromNB</a> : ('af, dgram) sock * int -&gt; (Word8Vector.vector * 'af sock_addr) option
-
   val <a href="#val-recvvecfromnb-prime">recvVecFromNB'</a> : ('af, dgram) sock * int * in_flags -&gt; (Word8Vector.vector * 'af sock_addr) option
-
   val <a href="#val-recvarrfromnb">recvArrFromNB</a> : ('af, dgram) sock * Word8ArraySlice.slice -&gt; (int * 'af sock_addr) option
-
   val <a href="#val-recvarrfromnb-prime">recvArrFromNB'</a> : ('af, dgram) sock * Word8ArraySlice.slice * in_flags -&gt; (int * 'af sock_addr) option
 end
 </pre>
@@ -318,7 +229,7 @@ The address families the system knows.
 type addr_family = NetHostDB.addr_family
 ```
 
-The type of an address family, the one of [`NetHostDB`](../sig/NET_HOST_DB.md).
+The type of an address family, the one of [`NetHostDB`](../str/NetHostDB.md).
 
 #### <a name="val-af.list"></a>`list`
 
@@ -348,6 +259,8 @@ val toString : addr_family -> string
 
 `toString af` is the name of `af`.
 
+**Example** `AF.toString INetSock.inetAF = "INET"`
+
 <details><summary>Tests (2)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `inet` &middot; `unix`
@@ -365,6 +278,8 @@ val fromString : string -> addr_family option
 > **Reading** `Socket.AF.fromString/without-the-prefix`. A name is the C
 > constant without its leading `"AF_"`: `"INET"` and `"UNIX"`, so
 > `"AF_INET"` gives `NONE`.
+
+**Law** `AF.fromString (AF.toString af) = SOME af`
 
 <details><summary>Tests (6)</summary>
 
@@ -434,6 +349,8 @@ val toString : sock_type -> string
 
 `toString st` is the name of `st`.
 
+**Example** `SOCK.toString SOCK.stream = "STREAM"`
+
 <details><summary>Tests (2)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `stream` &middot; `dgram`
@@ -447,6 +364,8 @@ val fromString : string -> sock_type option
 ```
 
 `fromString s` is `SOME` of the kind called `s`, or `NONE`.
+
+**Law** `SOCK.fromString (SOCK.toString st) = SOME st`
 
 <details><summary>Tests (5)</summary>
 
@@ -600,7 +519,7 @@ val setLINGER : ('af, 'sock_type) sock * Time.time option -> unit
 
 `setLINGER (sock, SOME t)` makes closing wait up to `t`; `NONE` makes it not wait.
 
-**Raises** [`Time`](../sig/TIME.md) if `t` is negative or is 2^31 seconds or more, which
+**Raises** [`Time`](../str/Time.md) if `t` is negative or is 2^31 seconds or more, which
 the system's `int` cannot hold.
 
 <details><summary>Other implementations (4)</summary>
@@ -742,6 +661,8 @@ val getTYPE : ('af, 'sock_type) sock -> SOCK.sock_type
 
 `getTYPE sock` is the kind of socket that `sock` is.
 
+**Example** `let val s = INetSock.TCP.socket () in Ctl.getTYPE s = SOCK.stream before close s end = true`
+
 <details><summary>Tests (5)</summary>
 
 For `Socket`, in [tests/basis/socket\_ctl.sml](../../../../tests/basis/socket_ctl.sml): `tcp` &middot; `udp` &middot; `unix-stream` &middot; `unix-dgram` &middot; `closed`
@@ -866,6 +787,8 @@ val familyOfAddr : 'af sock_addr -> AF.addr_family
 ```
 
 `familyOfAddr a` is the address family that `a` belongs to.
+
+**Example** `familyOfAddr (INetSock.any 0) = INetSock.inetAF`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -1033,6 +956,8 @@ val shutdown : ('af, 'mode stream) sock * shutdown_mode -> unit
 > for sending sees the end of its stream, after everything sent before it
 > has arrived.
 
+**Example** `let val (a, b) = UnixSock.Strm.socketPair () in shutdown (a, NO_SENDS); Word8Vector.length (recvVec (b, 10)) end = 0`
+
 <details><summary>Tests (4)</summary>
 
 For `Socket`, in [tests/basis/socket.sml](../../../../tests/basis/socket.sml): `NO_SENDS-peer-sees-the-end` &middot; `unix-NO_SENDS` &middot; `not-connected` (raises) &middot; `closed` (raises)
@@ -1091,6 +1016,8 @@ A `timeout` of `NONE` waits as long as it must.
 
 > **Implementation** `Socket.select/is-poll`. It is [`OS.IO.poll`](../sig/OS_IO.md#val-poll), so a
 > negative timeout is refused rather than taken to mean "no timeout".
+
+**Example** `null (#rds (select {rds = [], wrs = [], exs = [], timeout = SOME Time.zeroTime})) = true`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1164,6 +1091,8 @@ val sendVec : ('af, active stream) sock * Word8VectorSlice.slice -> int
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected, or the other end has
 gone.
+
+**Example** `let val (a, b) = UnixSock.Strm.socketPair () in ignore (sendVec (a, Word8VectorSlice.full (Byte.stringToBytes "hi"))); Byte.bytesToString (recvVec (b, 2)) end = "hi"`
 
 <details><summary>Tests (6)</summary>
 
@@ -1293,13 +1222,14 @@ val recvVec : ('af, active stream) sock * int -> Word8Vector.vector
 
 The empty vector means that the other end has finished sending.
 
-**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected.
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the socket is not connected; [`Size`](../sig/GENERAL.md#exn-size) if `n` is
+negative or more than [`Word8Vector.maxLen`](../sig/MONO_VECTOR.md#val-maxlen).
 
 > **Reading** `Socket.recvVec/zero-returns-at-once`. "If `n` is 0 the empty
 > vector is returned": it is returned at once, without waiting for
 > anything, where the system's own call would wait.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n` is negative or more than [`Word8Vector.maxLen`](../sig/MONO_VECTOR.md#val-maxlen).
+**Example** `let val (a, _) = UnixSock.Strm.socketPair () in Word8Vector.length (recvVec (a, 0)) end = 0`
 
 <details><summary>Other implementations (1)</summary>
 

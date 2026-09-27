@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 100 checks of 10 entries |
+| Tests | 104 checks of 10 entries |
 | Source | [lib/basis/sig\_int\_inf.sml](../../../../lib/basis/sig_int_inf.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure IntInf : INT_INF  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `IntInf` | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
+| [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 
 Integers of arbitrary precision: everything [`INTEGER`](../sig/INTEGER.md) has, and the
 operations that make sense only, or mostly, without a bound.
@@ -32,7 +32,7 @@ infinitely many leading ones and `notb i` is `~(i + 1)`.
 
 > **Implementation** `IntInf.int/limbs`. A sign and a list of digits in base
 > 2^30, written in SML on top of the 64-bit [`int`](../sig/INTEGER.md#type-int); equal numbers are equal
-> values, so `=` compares them. [`LargeInt`](../sig/INTEGER.md) is [`IntInf`](INT_INF.md).
+> values, so `=` compares them. [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md).
 
 > **Implementation** `INT_INF/constants`. An integer constant may have the type
 > [`IntInf.int`](../sig/INTEGER.md#type-int), and then be of any size, and the overloaded operators work
@@ -51,25 +51,15 @@ infinitely many leading ones and `notb i` is `~(i + 1)`.
 signature INT_INF =
 sig
   include INTEGER
-
   val <a href="#val-divmod">divMod</a> : int * int -&gt; int * int
-
   val <a href="#val-quotrem">quotRem</a> : int * int -&gt; int * int
-
   val <a href="#val-pow">pow</a> : int * Int.int -&gt; int
-
   val <a href="#val-log2">log2</a> : int -&gt; Int.int
-
   val <a href="#val-orb">orb</a> : int * int -&gt; int
-
   val <a href="#val-xorb">xorb</a> : int * int -&gt; int
-
   val <a href="#val-andb">andb</a> : int * int -&gt; int
-
   val <a href="#val-notb">notb</a> : int -&gt; int
-
   val <a href="#val-op-lt-lt">&lt;&lt;</a> : int * Word.word -&gt; int
-
   val <a href="#val-op-tilde-gt-gt">~&gt;&gt;</a> : int * Word.word -&gt; int
 end
 </pre>
@@ -125,6 +115,8 @@ the sign of `j`.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
+**Law** `divMod (i, j) = (i div j, i mod j)`
+
 **Example** `divMod (~7, 2) = (~4, 1)`
 
 <details><summary>Tests (12)</summary>
@@ -147,6 +139,8 @@ The quotient is rounded towards zero and the remainder has the sign of
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
+**Law** `quotRem (i, j) = (quot (i, j), rem (i, j))`
+
 **Example** `quotRem (~7, 2) = (~3, ~1)`
 
 <details><summary>Tests (12)</summary>
@@ -166,21 +160,28 @@ val pow : int * Int.int -> int
 `pow (i, j)` is `i` to the power `j`.
 
 For a negative `j` the result is what is left of `1 / i^~j` as an integer:
-1 or \~1 when `i` is 1 or \~1, and 0 for every other `i` but 0.
+1 when `i` is 1; for `i` of \~1, \~1 when `j` is odd and 1 when it is even;
+and 0 for every other `i` but 0.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `i` is zero and `j` is negative.
 
+**Law** `pow (i, j + k) = pow (i, j) * pow (i, k)` for `j` and `k` not
+negative
+
 **Example** `pow (2, 100) = 1267650600228229401496703205376`
 
-<details><summary>Other implementations (1)</summary>
+**Example** `pow (~1, ~3) = ~1`
+
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; IntInf.pow (i, j) is 0 for \| i \| = 1 and j \< 0
+- **SML/NJ** &mdash; pow (1, j) and pow (\~1, j) for a negative j are 0, where the page has "\|i\| = 1: i^j"
 
 </details>
 
-<details><summary>Tests (18)</summary>
+<details><summary>Tests (22)</summary>
 
-For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `Div-zero-to-minus-one` (raises Div) &middot; `Div-zero-to-minus-five` (raises Div) &middot; `2-to-64` &middot; `2-to-100` &middot; `2-to-200` &middot; `~2-to-201` &middot; `~2-to-200` &middot; `10-to-30` &middot; `2^64-squared` &middot; `2^100-to-one` &middot; `2^100-to-zero` &middot; `2^100-to-minus-one` &middot; `~2^100-to-minus-two` &middot; `as-Int*` &middot; `cube*` &middot; `sum-of-exponents*` &middot; `of-product*`
+For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `Div-zero-to-minus-one` (raises Div) &middot; `Div-zero-to-minus-five` (raises Div) &middot; `minus-one-to-minus-three` &middot; `minus-one-to-minus-two` &middot; `one-to-minus-five` &middot; `two-to-minus-one` &middot; `2-to-64` &middot; `2-to-100` &middot; `2-to-200` &middot; `~2-to-201` &middot; `~2-to-200` &middot; `10-to-30` &middot; `2^64-squared` &middot; `2^100-to-one` &middot; `2^100-to-zero` &middot; `2^100-to-minus-one` &middot; `~2^100-to-minus-two` &middot; `as-Int*` &middot; `cube*` &middot; `sum-of-exponents*` &middot; `of-product*`
 
 </details>
 
@@ -194,6 +195,8 @@ val log2 : int -> Int.int
 highest bit of `i`.
 
 **Raises** [`Domain`](../sig/GENERAL.md#exn-domain) if `i <= 0`.
+
+**Law** `pow (2, log2 i) <= i andalso i < pow (2, log2 i + 1)` for `i > 0`
 
 **Example** `log2 (pow (2, 100)) = 100`
 
@@ -213,6 +216,8 @@ val orb : int * int -> int
 
 `orb (i, j)` is the bitwise "or" of `i` and `j`.
 
+**Example** `orb (12, 3) = 15`
+
 <details><summary>Tests (7)</summary>
 
 For `IntInf`, in [tests/basis/intinf.sml](../../../../tests/basis/intinf.sml): `*` &middot; `2^200-or-2^100` &middot; `~2^200-or-2^100` &middot; `~2^200-or-2^200-1` &middot; `model*` &middot; `de-morgan*` &middot; `andb-plus-orb*`
@@ -226,6 +231,10 @@ val xorb : int * int -> int
 ```
 
 `xorb (i, j)` is the bitwise exclusive "or" of `i` and `j`.
+
+**Law** `xorb (i, i) = 0`
+
+**Example** `xorb (12, 10) = 6`
 
 <details><summary>Tests (7)</summary>
 
@@ -241,8 +250,9 @@ val andb : int * int -> int
 
 `andb (i, j)` is the bitwise "and" of `i` and `j`.
 
-**Example** `andb (~1, 255) = 255` for a negative number has ones without end
-to the left.
+A negative number has ones without end to the left:
+
+**Example** `andb (~1, 255) = 255`
 
 <details><summary>Tests (7)</summary>
 
@@ -276,6 +286,8 @@ val << : int * Word.word -> int
 
 `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
 
+**Law** `<< (i, n) = i * pow (2, Word.toInt n)`
+
 **Example** `<< (1, 0w100) = pow (2, 100)`
 
 <details><summary>Tests (8)</summary>
@@ -291,6 +303,8 @@ val ~>> : int * Word.word -> int
 ```
 
 `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.
+
+**Law** `~>> (i, n) = i div pow (2, Word.toInt n)`
 
 **Example** `~>> (~5, 0w1) = ~3`
 

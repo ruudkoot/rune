@@ -22,7 +22,10 @@ sig
   (* `aliases e` is the other names it goes by. *)
   val aliases : entry -> string list
 
-  (* `port e` is the port the service is reached at. *)
+  (* `port e` is the port the service is reached at.
+
+     Example: `Option.map port (getByName ("http", SOME "tcp"))` is `SOME 80`
+     where `/etc/services` lists HTTP. *)
   val port : entry -> int
 
   (* `protocol e` is the name of the protocol it is reached over. *)
@@ -31,9 +34,13 @@ sig
   (* `getByName (name, proto)` is `SOME` of what the database records about the service `name`, or `NONE`.
 
      `proto` narrows the search to one protocol; `NONE` takes the first
-     entry for `name`. *)
+     entry for `name`.
+
+     Example: `isSome (getByName ("no-such-service", NONE)) = false` *)
   val getByName : string * string option -> entry option
 
-  (* `getByPort (port, proto)` is `SOME` of what it records about the service at `port`, or `NONE`. *)
+  (* `getByPort (port, proto)` is `SOME` of what it records about the service at `port`, or `NONE`.
+
+     `proto` narrows the search to one protocol as for `getByName`. *)
   val getByPort : int * string option -> entry option
 end

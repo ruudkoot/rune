@@ -5,13 +5,13 @@
 #   scripts/cloud-cache.sh save      pack the installed hosts and push them
 #   scripts/cloud-cache.sh restore   unpack them where none is installed
 # The hosts are built for one machine and one place: SML/NJ and Poly/ML
-# keep the directory they were installed in, and MLton's binary and every
-# runtime link against the system's C library. So a cache carries a key --
-# the versions, the architecture, the release of the system, the C library
-# and the directory -- and is restored only where the key is the same;
-# elsewhere `make hosts` builds, as without a cache. What restore unpacks
-# is checked against the SHA-256 that save recorded, and make doctor checks
-# that each host runs.
+# keep the directory they were installed in, and the binaries of MLton and
+# MLKit and every runtime link against the system's C library. So a cache
+# carries a key -- the versions, the architecture, the release of the
+# system, the C library and the directory -- and is restored only where the
+# key is the same; elsewhere `make hosts` builds, as without a cache. What
+# restore unpacks is checked against the SHA-256 that save recorded, and
+# make doctor checks that each host runs.
 # Exit status of restore: 0 when it restored something, 1 when it did not
 # (nothing missing, no cache, another key, a bad checksum), which is never
 # a failure of the caller: `make hosts` then does the work.
@@ -20,13 +20,13 @@ cd "$(dirname "$0")/.."
 prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 branch=${CLOUD_CACHE_BRANCH:-cloud-cache}
 # the versions scripts/fetch-hosts.sh installs
-eval "$(grep -E '^(MLTON|SMLNJ|POLYML)_VERSION=' scripts/fetch-hosts.sh)"
-hosts="mlton:$MLTON_VERSION smlnj:$SMLNJ_VERSION smlnj32:$SMLNJ_VERSION polyml:$POLYML_VERSION"
+eval "$(grep -E '^(MLTON|SMLNJ|POLYML|MLKIT)_VERSION=' scripts/fetch-hosts.sh)"
+hosts="mlton:$MLTON_VERSION smlnj:$SMLNJ_VERSION smlnj32:$SMLNJ_VERSION polyml:$POLYML_VERSION mlkit:$MLKIT_VERSION"
 
 key() {
   . /etc/os-release 2> /dev/null || true
-  printf 'mlton-%s smlnj-%s polyml-%s %s %s-%s glibc-%s %s\n' "$MLTON_VERSION" "$SMLNJ_VERSION" \
-    "$POLYML_VERSION" "$(uname -m)" "${ID:-unknown}" "${VERSION_ID:-unknown}" \
+  printf 'mlton-%s smlnj-%s polyml-%s mlkit-%s %s %s-%s glibc-%s %s\n' "$MLTON_VERSION" "$SMLNJ_VERSION" \
+    "$POLYML_VERSION" "$MLKIT_VERSION" "$(uname -m)" "${ID:-unknown}" "${VERSION_ID:-unknown}" \
     "$(getconf GNU_LIBC_VERSION 2> /dev/null | awk '{ print $2 }')" "$prefix"
 }
 say() { echo "cloud-cache: $*"; }

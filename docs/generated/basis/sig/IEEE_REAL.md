@@ -4,22 +4,22 @@
 
 |  |  |
 | --- | --- |
-| Status | optional |
+| Status | required |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 50 checks of 6 entries |
+| Tests | 49 checks of 6 entries |
 | Source | [lib/basis/sig\_ieee\_real.sml](../../../../lib/basis/sig_ieee_real.sml) |
 
 ## Synopsis
 
 ```sml
 signature IEEE_REAL
-structure IEEEReal : IEEE_REAL  (* optional *)
+structure IEEEReal : IEEE_REAL
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `IEEEReal` | IEEEReal: the types of IEEE arithmetic that do not depend on a precision. | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
+| [`IEEEReal`](../str/IEEEReal.md) | IEEEReal: the types of IEEE arithmetic that do not depend on a precision, the rounding mode of the floating-point unit, and reals written out in decimal digits. | [lib/basis/ieeereal.sml](../../../../lib/basis/ieeereal.sml) |
 
 The parts of IEEE 754 arithmetic that are not about one real number: the
 rounding mode, the classes a number can belong to, and an exact decimal
@@ -36,35 +36,26 @@ text without losing anything.
 signature IEEE_REAL =
 sig
   exception <a href="#exn-unordered">Unordered</a>
-
   datatype <a href="#type-real_order">real_order</a> = <a href="#con-less">LESS</a> | <a href="#con-equal">EQUAL</a> | <a href="#con-greater">GREATER</a> | <a href="#con-unordered">UNORDERED</a>
-
   datatype <a href="#type-float_class">float_class</a>
     = <a href="#con-nan">NAN</a>
     | <a href="#con-inf">INF</a>
     | <a href="#con-zero">ZERO</a>
     | <a href="#con-normal">NORMAL</a>
     | <a href="#con-subnormal">SUBNORMAL</a>
-
   datatype <a href="#type-rounding_mode">rounding_mode</a>
     = <a href="#con-to_nearest">TO_NEAREST</a>
     | <a href="#con-to_neginf">TO_NEGINF</a>
     | <a href="#con-to_posinf">TO_POSINF</a>
     | <a href="#con-to_zero">TO_ZERO</a>
-
   val <a href="#val-setroundingmode">setRoundingMode</a> : rounding_mode -&gt; unit
-
   val <a href="#val-getroundingmode">getRoundingMode</a> : unit -&gt; rounding_mode
-
   type <a href="#type-decimal_approx">decimal_approx</a> = {<a href="#fld-decimal_approx.class">class</a> : float_class,
                          <a href="#fld-decimal_approx.sign">sign</a> : bool,
                          <a href="#fld-decimal_approx.digits">digits</a> : int list,
                          <a href="#fld-decimal_approx.exp">exp</a> : int}
-
   val <a href="#val-tostring">toString</a> : decimal_approx -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (decimal_approx, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; decimal_approx option
 end
 </pre>
@@ -76,13 +67,16 @@ exception Unordered
 ```
 
 Raised by [`Real.compare`](../sig/REAL.md#val-compare) when one of its arguments is a NaN, which no
-order relates to anything. It is the top-level [`Unordered`](#exn-unordered).
+order relates to anything.
 
-Also in the [top-level environment](../top-level.md): `Unordered`.
+It is not in the top-level environment, whose exceptions the
+specification lists: a program names it [`IEEEReal.Unordered`](#exn-unordered).
 
-<details><summary>Tests (3)</summary>
+**Example** `((Real.compare (0.0 / 0.0, 1.0); "ordered") handle Unordered => "Unordered") = "Unordered"`
 
-For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `raised-by-Real.compare` (raises) &middot; `same-as-toplevel` (raises) &middot; `toplevel-handled-by-IEEEReal` (raises)
+<details><summary>Tests (1)</summary>
+
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `raised-by-Real.compare` (raises)
 
 </details>
 
@@ -163,6 +157,8 @@ operation until it is set again.
 > **Implementation** `IEEEReal.setRoundingMode/fesetround`. The mode of the C
 > library, set with `fesetround`.
 
+**Law** `(setRoundingMode m; getRoundingMode ()) = m`
+
 **Example** `(setRoundingMode TO_NEAREST; getRoundingMode ()) = TO_NEAREST`
 
 <details><summary>Tests (4)</summary>
@@ -178,6 +174,8 @@ val getRoundingMode : unit -> rounding_mode
 ```
 
 `getRoundingMode ()` is the rounding mode in force.
+
+**Example** `(setRoundingMode TO_ZERO; getRoundingMode () before setRoundingMode TO_NEAREST) = TO_ZERO`
 
 <details><summary>Tests (2)</summary>
 
@@ -223,6 +221,8 @@ is zero.
 
 **Example** `toString {class = NORMAL, sign = false, digits = [1, 5], exp = 1} = "0.15E1"`
 
+**Example** `toString {class = INF, sign = true, digits = [], exp = 0} = "~inf"`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9** &mdash; toString of a NaN with the sign set is "nan", not "\~nan"
@@ -247,24 +247,30 @@ val scan : (char, 'a) StringCvt.reader -> (decimal_approx, 'a) StringCvt.reader
 It skips initial white space and then takes an optional sign (`~`, `-`
 or `+`) and either digits with an optional point and an optional
 exponent (`1.5`, `.5`, `15E~1`), or one of the words `inf`, `infinity`
-and `nan` in any mixture of upper and lower case. Every digit that is
-there is kept, however many.
+and `nan` in any mixture of upper and lower case. Zeros at the start of
+the whole part and at the end of the fraction are dropped, as the
+specification says; every other digit is kept, however many there are,
+so that nothing is rounded.
 
 > **Reading** `IEEEReal.scan/huge-exponent`. A huge exponent does not raise
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): once what has been read of it exceeds 10^8 the digits that
 > follow are not counted, so the exponent that is recorded is large and
 > of the right sign, but not the one that was written. The number it
-> describes is beyond every real anyway.
+> describes is beyond every real anyway. MLton, SML/NJ and Poly/ML read
+> such a number as an infinity or a zero instead.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `Option.map (toString o #1) (scan Substring.getc (Substring.full "007.2500")) = SOME "0.725E1"`
+
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("3.x" leaves "x")
+- **MLton, SML/NJ, Poly/ML, MLKit** &mdash; another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 
 </details>
 
-<details><summary>Tests (8)</summary>
+<details><summary>Tests (9)</summary>
 
-For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `rest` &middot; `incomplete-exponent` &middot; `incomplete-exponent-sign` &middot; `point-without-fraction` &middot; `second-point` &middot; `inf-then-letters` &middot; `whitespace` &middot; `NONE`
+For `IEEEReal`, in [tests/basis/ieeereal.sml](../../../../tests/basis/ieeereal.sml): `rest` &middot; `incomplete-exponent` &middot; `incomplete-exponent-sign` &middot; `point-without-fraction` &middot; `second-point` &middot; `inf-then-letters` &middot; `whitespace` &middot; `NONE` &middot; `huge-exponent`
 
 </details>
 
@@ -279,6 +285,8 @@ val fromString : string -> decimal_approx option
 **Law** `fromString s = StringCvt.scanString scan s`
 
 **Example** `Option.map toString (fromString "~0.0012e3") = SOME "~0.12E1"`
+
+**Example** `Option.map toString (fromString "100.50") = SOME "0.1005E3"`
 
 <details><summary>Tests (18)</summary>
 

@@ -16,6 +16,7 @@ src/elab/overload.sml
 src/frontend/ast.sml
 src/frontend/fixity.sml
 src/frontend/parser.sml
+src/elab/unifyexn.sml
 src/elab/unify.sml
 src/elab/env.sml
 src/elab/sigmatch.sml

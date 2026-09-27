@@ -44,16 +44,24 @@ sig
   (* `addrType e` is the address family of the host's addresses. *)
   val addrType : entry -> addr_family
 
-  (* `addr e` is the first of the host's addresses. *)
+  (* `addr e` is the host's main address, the first of `addrs e`.
+
+     Law: `addr e = hd (addrs e)`
+
+     Example: `Option.map (toString o addr) (getByName "localhost")` is `SOME
+     "127.0.0.1"` on a machine whose `/etc/hosts` has the usual line for it. *)
   val addr : entry -> in_addr
 
-  (* `addrs e` is every address the host has. *)
+  (* `addrs e` is every address the host has, never none. *)
   val addrs : entry -> in_addr list
 
   (* `getByName name` is `SOME` of what the database records about the host `name`, or `NONE`. *)
   val getByName : string -> entry option
 
-  (* `getByAddr a` is `SOME` of what the database records about the host at `a`, or `NONE`. *)
+  (* `getByAddr a` is `SOME` of what the database records about the host at `a`, or `NONE`.
+
+     Example: `Option.map name (getByAddr (valOf (fromString "127.0.0.1")))` is
+     `SOME "localhost"` on most machines. *)
   val getByAddr : in_addr -> entry option
 
   (* `getHostName ()` is the name of this machine.
@@ -64,10 +72,12 @@ sig
      Pinned by: `NetHostDB.getHostName/uname` *)
   val getHostName : unit -> string
 
-  (* `toString a` is `a` in the dotted form, four decimal numbers separated by points. *)
+  (* `toString a` is `a` in the dotted form, four decimal numbers separated by points.
+
+     Example: `Option.map toString (fromString "10.0.0.1") = SOME "10.0.0.1"` *)
   val toString : in_addr -> string
 
-  (* `scan getc src` reads an address and is it and what is left.
+  (* `scan getc src` reads an address from `src`, after skipping initial white space: `SOME (a, rest)`, or `NONE` when no address is there.
 
      Reading: `NetHostDB.scan/inet_aton-forms`. One number, two, three or
      four may be written, as the C library's `inet_aton` allows: a single

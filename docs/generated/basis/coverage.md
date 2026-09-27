@@ -76,23 +76,37 @@ documented when a comment describes it, alone or together with the entry before 
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
 | **all** | 1658 | 1658 | 100% | 1127 | 1127 |
 
+## Members a signature describes
+
+Every structure has a page of its own, which shows its members with the types it gives them and
+sends the reader to the signature that says what each means. A member that no signature describes
+is one a program can name and nothing explains: it is a name beyond the signature, which
+[structures.md](structures.md) lists, or the structure matches no signature of the library.
+
+197 structures have a page, with 4303 members, of which 4219 (98%) are described by a signature.
+
+| Structure | Members | Described |  |
+| --- | --- | --- | --- |
+| [`WideTextIO`](str/WideTextIO.md) | 37 | 0 | 0% |
+| [`WideTextIO.StreamIO`](str/WideTextIO.StreamIO.md) | 47 | 0 | 0% |
+
 ## Examples that are run
 
 An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the
-test suite: 252 of them, in [`ARRAY`](sig/ARRAY.md) (4), [`ARRAY2`](sig/ARRAY2.md) (5), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (4), [`BOOL`](sig/BOOL.md) (2), [`BYTE`](sig/BYTE.md) (4), [`CHAR`](sig/CHAR.md) (15), [`DATE`](sig/DATE.md) (7), [`GENERAL`](sig/GENERAL.md) (5), [`IEEE_REAL`](sig/IEEE_REAL.md) (3), [`INET6_SOCK`](sig/INET6_SOCK.md) (2), [`INET_SOCK`](sig/INET_SOCK.md) (1), [`INTEGER`](sig/INTEGER.md) (15), [`INT_INF`](sig/INT_INF.md) (8), [`LIST`](sig/LIST.md) (14), [`LIST_PAIR`](sig/LIST_PAIR.md) (6), [`MATH`](sig/MATH.md) (6), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (2), [`OPTION`](sig/OPTION.md) (6), [`OS`](sig/OS.md) (1), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (2), [`OS_PATH`](sig/OS_PATH.md) (22), [`OS_PROCESS`](sig/OS_PROCESS.md) (2), [`PACK_REAL`](sig/PACK_REAL.md) (2), [`PACK_WORD`](sig/PACK_WORD.md) (5), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (2), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`REAL`](sig/REAL.md) (26), [`RUNTIME`](sig/RUNTIME.md) (1), [`SML90`](sig/SML90.md) (4), [`STREAM_IO`](sig/STREAM_IO.md) (1), [`STRING`](sig/STRING.md) (15), [`STRING_CVT`](sig/STRING_CVT.md) (5), [`SUBSTRING`](sig/SUBSTRING.md) (9), [`TEXT_IO`](sig/TEXT_IO.md) (4), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (8), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (1), [`VECTOR`](sig/VECTOR.md) (8), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (4), [`WORD`](sig/WORD.md) (16).
+test suite: 789 of them, in [`ARRAY`](sig/ARRAY.md) (23), [`ARRAY2`](sig/ARRAY2.md) (18), [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) (25), [`BIN_IO`](sig/BIN_IO.md) (2), [`BIT_FLAGS`](sig/BIT_FLAGS.md) (9), [`BOOL`](sig/BOOL.md) (4), [`BYTE`](sig/BYTE.md) (7), [`CHAR`](sig/CHAR.md) (34), [`COMMAND_LINE`](sig/COMMAND_LINE.md) (1), [`DATE`](sig/DATE.md) (20), [`GENERAL`](sig/GENERAL.md) (8), [`IEEE_REAL`](sig/IEEE_REAL.md) (8), [`IMPERATIVE_IO`](sig/IMPERATIVE_IO.md) (11), [`INET6_SOCK`](sig/INET6_SOCK.md) (6), [`INET_SOCK`](sig/INET_SOCK.md) (5), [`INTEGER`](sig/INTEGER.md) (29), [`INT_INF`](sig/INT_INF.md) (11), [`IO`](sig/IO.md) (1), [`LIST`](sig/LIST.md) (26), [`LIST_PAIR`](sig/LIST_PAIR.md) (14), [`MATH`](sig/MATH.md) (17), [`MONO_ARRAY`](sig/MONO_ARRAY.md) (23), [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) (17), [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) (25), [`MONO_VECTOR`](sig/MONO_VECTOR.md) (20), [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) (6), [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) (22), [`NET_HOST_DB`](sig/NET_HOST_DB.md) (3), [`NET_PROT_DB`](sig/NET_PROT_DB.md) (1), [`NET_SERV_DB`](sig/NET_SERV_DB.md) (1), [`OPTION`](sig/OPTION.md) (11), [`OS`](sig/OS.md) (4), [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) (8), [`OS_IO`](sig/OS_IO.md) (4), [`OS_PATH`](sig/OS_PATH.md) (37), [`OS_PROCESS`](sig/OS_PROCESS.md) (6), [`PACK_REAL`](sig/PACK_REAL.md) (8), [`PACK_WORD`](sig/PACK_WORD.md) (8), [`POSIX_ERROR`](sig/POSIX_ERROR.md) (4), [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) (8), [`POSIX_IO`](sig/POSIX_IO.md) (4), [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) (4), [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) (6), [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) (2), [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) (3), [`POSIX_TTY`](sig/POSIX_TTY.md) (5), [`PRIM_IO`](sig/PRIM_IO.md) (7), [`REAL`](sig/REAL.md) (34), [`RUNTIME`](sig/RUNTIME.md) (5), [`SML90`](sig/SML90.md) (6), [`SOCKET`](sig/SOCKET.md) (8), [`STREAM_IO`](sig/STREAM_IO.md) (16), [`STRING`](sig/STRING.md) (27), [`STRING_CVT`](sig/STRING_CVT.md) (7), [`SUBSTRING`](sig/SUBSTRING.md) (36), [`TEXT_IO`](sig/TEXT_IO.md) (13), [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) (1), [`TIME`](sig/TIME.md) (22), [`TIMER`](sig/TIMER.md) (3), [`UNIX`](sig/UNIX.md) (3), [`UNIX_SOCK`](sig/UNIX_SOCK.md) (3), [`VECTOR`](sig/VECTOR.md) (19), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) (24), [`WINDOWS`](sig/WINDOWS.md) (1), [`WORD`](sig/WORD.md) (35).
 
 ## Notes that no check pins
 
 A deviation or a limitation that the test suite does not show. A reading or an erratum need not
 be pinned: many are about the text and not about behaviour.
 
-- `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
-- `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 - `INET6_SOCK/not-in-the-specification` (Deviation), INET6_SOCK
-- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
-- `SML90/is-history` (Limitation), SML90
-- `SML90.Interrupt/never-raised` (Limitation), SML90
+- `MONO_VECTOR_EQ/not-in-the-specification` (Deviation), MONO_VECTOR_EQ
 - `Posix.Process.fork/read-ahead-of-a-pipe` (Limitation), POSIX_PROCESS
+- `RUNTIME/not-in-the-specification` (Deviation), RUNTIME
+- `SML90.Interrupt/never-raised` (Limitation), SML90
+- `SML90/is-history` (Limitation), SML90
+- `StreamIO/takes-the-slice-structures` (Deviation), in `StreamIO`
 
 ---
 

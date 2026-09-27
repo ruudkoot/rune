@@ -19,7 +19,7 @@ structure NetHostDB : NET_HOST_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `NetHostDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetHostDB`](../str/NetHostDB.md) | NetHostDB: the host database of the system, and the dotted text of IPv4 addresses. | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The host database: turning a host name into an address, and back.
 
@@ -37,7 +37,7 @@ dotted form of an address.
 
 > **Implementation** `NetHostDB.in_addr/abstract`. The specification leaves
 > [`in_addr`](#type-in_addr) and [`addr_family`](#type-addr_family) abstract, and so are they here: [`toString`](#val-tostring) and
-> [`fromString`](#val-fromstring) are the way in and out of an address, and [`Socket.AF`](../sig/SOCKET.md#str-af) names
+> [`fromString`](#val-fromstring) are the way in and out of an address, and [`Socket.AF`](../str/Socket.AF.md) names
 > the families.
 
 ## Interface
@@ -46,31 +46,18 @@ dotted form of an address.
 signature NET_HOST_DB =
 sig
   eqtype <a href="#type-in_addr">in_addr</a>
-
   eqtype <a href="#type-addr_family">addr_family</a>
-
   type <a href="#type-entry">entry</a>
-
   val <a href="#val-name">name</a> : entry -&gt; string
-
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
-
   val <a href="#val-addrtype">addrType</a> : entry -&gt; addr_family
-
   val <a href="#val-addr">addr</a> : entry -&gt; in_addr
-
   val <a href="#val-addrs">addrs</a> : entry -&gt; in_addr list
-
   val <a href="#val-getbyname">getByName</a> : string -&gt; entry option
-
   val <a href="#val-getbyaddr">getByAddr</a> : in_addr -&gt; entry option
-
   val <a href="#val-gethostname">getHostName</a> : unit -&gt; string
-
   val <a href="#val-tostring">toString</a> : in_addr -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (in_addr, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; in_addr option
 end
 </pre>
@@ -91,7 +78,7 @@ Two are equal when they are the same address.
 eqtype addr_family
 ```
 
-The type of an address family, the one of [`Socket.AF`](../sig/SOCKET.md#str-af).
+The type of an address family, the one of [`Socket.AF`](../str/Socket.AF.md).
 
 ### <a name="type-entry"></a>`entry`
 
@@ -149,7 +136,11 @@ For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val addr : entry -> in_addr
 ```
 
-`addr e` is the first of the host's addresses.
+`addr e` is the host's main address, the first of `addrs e`.
+
+**Law** `addr e = hd (addrs e)`
+
+**Example** `Option.map (toString o addr) (getByName "localhost")` is `SOME "127.0.0.1"` on a machine whose `/etc/hosts` has the usual line for it.
 
 <details><summary>Tests (1)</summary>
 
@@ -163,7 +154,7 @@ For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val addrs : entry -> in_addr list
 ```
 
-`addrs e` is every address the host has.
+`addrs e` is every address the host has, never none.
 
 <details><summary>Tests (1)</summary>
 
@@ -192,6 +183,9 @@ val getByAddr : in_addr -> entry option
 ```
 
 `getByAddr a` is `SOME` of what the database records about the host at `a`, or `NONE`.
+
+**Example** `Option.map name (getByAddr (valOf (fromString "127.0.0.1")))` is
+`SOME "localhost"` on most machines.
 
 <details><summary>Tests (1)</summary>
 
@@ -224,6 +218,8 @@ val toString : in_addr -> string
 
 `toString a` is `a` in the dotted form, four decimal numbers separated by points.
 
+**Example** `Option.map toString (fromString "10.0.0.1") = SOME "10.0.0.1"`
+
 <details><summary>Tests (2)</summary>
 
 For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): `dotted` &middot; `round-trip`
@@ -236,7 +232,7 @@ For `NetHostDB`, in [tests/basis/netdb.sml](../../../../tests/basis/netdb.sml): 
 val scan : (char, 'a) StringCvt.reader -> (in_addr, 'a) StringCvt.reader
 ```
 
-`scan getc src` reads an address and is it and what is left.
+`scan getc src` reads an address from `src`, after skipping initial white space: `SOME (a, rest)`, or `NONE` when no address is there.
 
 > **Reading** `NetHostDB.scan/inet_aton-forms`. One number, two, three or
 > four may be written, as the C library's `inet_aton` allows: a single

@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 20 of 20 entries documented |
-| Tests | 271 checks of 18 entries |
+| Tests | 245 checks of 17 entries |
 | Source | [lib/basis/sig\_array2.sml](../../../../lib/basis/sig_array2.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Array2 :> ARRAY2  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Array2` |  | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
+| [`Array2`](../str/Array2.md) |  | [lib/basis/array2.sml](../../../../lib/basis/array2.sml) |
 
 Two-dimensional arrays: mutable rectangles of elements, indexed by a row
 and a column.
@@ -54,7 +54,7 @@ the elements are visited in, and so what an effect sees.
 
 Why the sentence is taken to be a slip rather than a requirement: [`ARRAY`](../sig/ARRAY.md)
 carries it too and has no defect there, because the top level pins `'a array` to [`Array.array`](../sig/ARRAY.md#val-array), so that type \*is\* the built-in and the seal
-settles nothing. [`Array2`](ARRAY2.md) is optional and has no such anchor -- no system
+settles nothing. [`Array2`](../str/Array2.md) is optional and has no such anchor -- no system
 has a top-level `'a array2` \-- so its seal bites. The paragraph it sits in
 opens "As with 1-dimensional arrays", which is how adapted text reads;
 [`VECTOR`](../sig/VECTOR.md) writes `eqtype 'a vector` and says nothing of the kind, so the
@@ -78,49 +78,30 @@ they hold, and are built on the implementation under the seal.
 signature ARRAY2 =
 sig
   eqtype 'a <a href="#type-array">array</a>
-
   type 'a <a href="#type-region">region</a> = {<a href="#fld-region.base">base</a> : 'a array,
                     <a href="#fld-region.row">row</a> : int,
                     <a href="#fld-region.col">col</a> : int,
                     <a href="#fld-region.nrows">nrows</a> : int option,
                     <a href="#fld-region.ncols">ncols</a> : int option}
-
   datatype <a href="#type-traversal">traversal</a>
     = <a href="#con-rowmajor">RowMajor</a>
     | <a href="#con-colmajor">ColMajor</a>
-
   val <a href="#val-array">array</a> : int * int * 'a -&gt; 'a array
-
   val <a href="#val-fromlist">fromList</a> : 'a list list -&gt; 'a array
-
   val <a href="#val-tabulate">tabulate</a> : traversal -&gt; int * int * (int * int -&gt; 'a) -&gt; 'a array
-
   val <a href="#val-sub">sub</a> : 'a array * int * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a array * int * int * 'a -&gt; unit
-
   val <a href="#val-dimensions">dimensions</a> : 'a array -&gt; int * int
-
   val <a href="#val-ncols">nCols</a> : 'a array -&gt; int
-
   val <a href="#val-nrows">nRows</a> : 'a array -&gt; int
-
   val <a href="#val-row">row</a> : 'a array * int -&gt; 'a Vector.vector
-
   val <a href="#val-column">column</a> : 'a array * int -&gt; 'a Vector.vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a region, <a href="#fld-copy.dst">dst</a> : 'a array, <a href="#fld-copy.dst_row">dst_row</a> : int, <a href="#fld-copy.dst_col">dst_col</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : traversal -&gt; (int * int * 'a -&gt; unit) -&gt; 'a region -&gt; unit
-
   val <a href="#val-app">app</a> : traversal -&gt; ('a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-foldi">foldi</a> : traversal -&gt; (int * int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a region -&gt; 'b
-
   val <a href="#val-fold">fold</a> : traversal -&gt; ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-modifyi">modifyi</a> : traversal -&gt; (int * int * 'a -&gt; 'a) -&gt; 'a region -&gt; unit
-
   val <a href="#val-modify">modify</a> : traversal -&gt; ('a -&gt; 'a) -&gt; 'a array -&gt; unit
 end
 </pre>
@@ -141,12 +122,6 @@ Two are equal when they are the same array, as for [`Array.array`](../sig/ARRAY.
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
 - **Poly/ML** &mdash; array (0, \~1, x) does not raise Size
 - **Poly/ML** &mdash; two arrays without rows are equal
-
-</details>
-
-<details><summary>Tests (26)</summary>
-
-For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `basic` &middot; `one` &middot; `dimensions` &middot; `no-rows` &middot; `no-columns` &middot; `no-rows-no-columns` &middot; `no-columns-rows` &middot; `Size-negative-rows` (raises Size) &middot; `Size-negative-columns` (raises Size) &middot; `Size-negative-both` (raises Size) &middot; `Size-negative-rows-no-columns` (raises Size) &middot; `Size-negative-columns-no-rows` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `same-array-equal` &middot; `updated-still-equal` &middot; `*` &middot; `Size-too-large` (raises Size) &middot; `Size-too-large-rows` (raises Size) &middot; `Size-too-large-columns` (raises Size)
 
 </details>
 
@@ -214,6 +189,10 @@ val array : int * int * 'a -> 'a array
 > fixed: an array is too large when the number of its elements is no
 > `int`, or when it exceeds what an array can hold.
 
+**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+
+**Example** `dimensions (array (2, 3, 0)) = (2, 3)`
+
 <details><summary>Other implementations (4)</summary>
 
 - **SML/NJ** &mdash; Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
@@ -237,7 +216,11 @@ val fromList : 'a list list -> 'a array
 
 `fromList rows` is a new array of the lists of `rows`, one row each.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length, or if the array
+would be too large.
+
+**Law** `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
+every row `i` and column `j` of the array
 
 **Example** `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0), dimensions a) end = (3, (2, 2))`
 
@@ -265,13 +248,22 @@ val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 
 `f` is applied in the order that `trv` gives.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0` or the array would be too large,
-before `f` is applied at all.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0` or the array would be too large.
+
+> **Reading** `Array2.tabulate/Size-before-f`. The specification does not say
+> whether the dimensions are checked before `f` is applied. They are: an
+> array that is too large, or has a negative dimension, raises [`Size`](../sig/GENERAL.md#exn-size)
+> without applying `f` at all.
 
 > **Reading** `Array2.tabulate/traversal-order`. "Initialized in traversal
 > order" is read as: `f (0, 0)` is applied first whichever traversal is
 > asked for, and its result fills the array before the rest is
 > computed.
+
+**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
+`0 <= j < c`, when `f` has no effects
+
+**Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -298,6 +290,8 @@ val sub : 'a array * int * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
+**Example** `sub (fromList [[1, 2], [3, 4]], 0, 1) = 2`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
@@ -320,6 +314,11 @@ val update : 'a array * int * int * 'a -> unit
 `update (arr, i, j, x)` puts `x` in row `i` and column `j` of `arr`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
+
+**Law** `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
+column `j` of `arr`
+
+**Example** `let val a = array (2, 2, 0) in update (a, 1, 0, 7); row (a, 1) end = Vector.fromList [7, 0]`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -344,6 +343,8 @@ val dimensions : 'a array -> int * int
 
 `dimensions arr` is the pair of the number of rows and the number of columns.
 
+**Example** `dimensions (fromList [[1, 2, 3]]) = (1, 3)`
+
 <details><summary>Tests (3)</summary>
 
 For `Array2`, in [tests/basis/array2.sml](../../../../tests/basis/array2.sml): `rows-then-columns` &middot; `one-row` &middot; `*`
@@ -357,6 +358,10 @@ val nCols : 'a array -> int
 ```
 
 `nCols arr` is the number of columns.
+
+**Law** `nCols arr = #2 (dimensions arr)`
+
+**Example** `nCols (fromList [[1, 2, 3]]) = 3`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -378,6 +383,10 @@ val nRows : 'a array -> int
 ```
 
 `nRows arr` is the number of rows.
+
+**Law** `nRows arr = #1 (dimensions arr)`
+
+**Example** `nRows (fromList [[1, 2, 3]]) = 1`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -401,6 +410,9 @@ val row : 'a array * int -> 'a Vector.vector
 `row (arr, i)` is a vector of the elements of row `i`, left to right.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is no row of `arr`.
+
+**Law** `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))`
+for every row `i` of `arr`
 
 **Example** `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]`
 
@@ -427,6 +439,9 @@ val column : 'a array * int -> 'a Vector.vector
 `column (arr, j)` is a vector of the elements of column `j`, top to bottom.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
+
+**Law** `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))`
+for every column `j` of `arr`
 
 **Example** `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]`
 
@@ -463,6 +478,8 @@ fit into `dst` at that corner.
 > region is copied to must be inside `dst` even when the region is empty,
 > so a corner outside `dst` raises although nothing would be copied.
 
+**Example** `let val a = fromList [[1, 2], [3, 4]] in copy {src = {base = a, row = 0, col = 0, nrows = SOME 1, ncols = NONE}, dst = a, dst_row = 1, dst_col = 0}; row (a, 1) end = Vector.fromList [1, 2]`
+
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-copy.src"></a>`src` | `'a region` |  |
@@ -470,13 +487,15 @@ fit into `dst` at that corner.
 | <a name="fld-copy.dst_row"></a>`dst_row` | `int` |  |
 | <a name="fld-copy.dst_col"></a>`dst_col` | `int` |  |
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (7)</summary>
 
 - **MLton** &mdash; copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; copy, of Array2 and of the MONO\_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
+- **MLKit** &mdash; copy checks the destination region against the dimensions of the source's base array instead of those of dst, and writes dst with the source's number of columns as its row length: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), the elements in the wrong places when the two arrays have different numbers of columns, and Overflow when dst\_row + nrows or dst\_col + ncols overflows
 
 </details>
 
@@ -502,12 +521,15 @@ val appi : traversal -> (int * int * 'a -> unit) -> 'a region -> unit
 > nRows" allows a region to begin at the edge of the array: such a region
 > and one of no rows or no columns are valid, and traverse nothing.
 
-<details><summary>Other implementations (4)</summary>
+**Example** `let val r = ref [] in appi ColMajor (fn (i, j, _) => r := (i, j) :: !r) {base = array (2, 2, 0), row = 0, col = 0, nrows = NONE, ncols = NONE}; !r end = [(1, 1), (0, 1), (1, 0), (0, 0)]`
+
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 
@@ -524,6 +546,10 @@ val app : traversal -> ('a -> unit) -> 'a array -> unit
 ```
 
 `app trv f arr` applies `f` to every element of `arr`, in the order `trv` gives, for its effect.
+
+**Law** `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+
+**Example** `let val r = ref [] in app ColMajor (fn x => r := x :: !r) (fromList [[1, 2], [3, 4]]); !r end = [4, 2, 3, 1]`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -546,14 +572,20 @@ val foldi : traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b
 
 `foldi trv f init reg` combines the elements of the region, giving `f` the row and the column as well.
 
+The elements are combined in the order `trv` gives, the first with
+`init`.
+
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
-<details><summary>Other implementations (4)</summary>
+**Example** `foldi RowMajor (fn (i, j, x, acc) => (i, j, x) :: acc) [] {base = fromList [[1, 2], [3, 4]], row = 1, col = 0, nrows = NONE, ncols = NONE} = [(1, 1, 4), (1, 0, 3)]`
+
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 
@@ -570,6 +602,8 @@ val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
 `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
+
+**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
 
 **Example** `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2, 1]`
 
@@ -596,14 +630,19 @@ val modifyi : traversal -> (int * int * 'a -> 'a) -> 'a region -> unit
 
 `modifyi trv f reg` replaces each element of the region by `f` of its row, its column and that element.
 
+The array is changed in place, in the order `trv` gives.
+
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
-<details><summary>Other implementations (4)</summary>
+**Example** `let val a = fromList [[1, 2], [3, 4]] in modifyi RowMajor (fn (i, _, x) => x + 10 * i) {base = a, row = 0, col = 1, nrows = NONE, ncols = NONE}; column (a, 1) end = Vector.fromList [2, 14]`
+
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 
@@ -620,6 +659,10 @@ val modify : traversal -> ('a -> 'a) -> 'a array -> unit
 ```
 
 `modify trv f arr` replaces every element of `arr` by `f` of it, in the order `trv` gives.
+
+**Law** `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+
+**Example** `let val a = fromList [[1, 2], [3, 4]] in modify RowMajor (fn x => x * x) a; row (a, 1) end = Vector.fromList [9, 16]`
 
 <details><summary>Other implementations (2)</summary>
 

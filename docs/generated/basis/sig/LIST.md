@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 27 of 27 entries documented |
-| Tests | 99 checks of 27 entries |
+| Tests | 101 checks of 27 entries |
 | Source | [lib/basis/sig\_list.sml](../../../../lib/basis/sig_list.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure List : LIST
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `List` | List | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
+| [`List`](../str/List.md) | List: the operations on lists, of the top-level type [`list`](#type-list). | [lib/basis/list.sml](../../../../lib/basis/list.sml) |
 
 Polymorphic, immutable, singly linked lists.
 
@@ -50,59 +50,32 @@ also in the top-level environment.
 <pre>
 signature LIST =
 sig
-
   datatype <a href="#type-list">list</a> = datatype list
-
   exception <a href="#exn-empty">Empty</a>
-
   val <a href="#val-null">null</a> : 'a list -&gt; bool
-
   val <a href="#val-length">length</a> : 'a list -&gt; int
-
   val <a href="#val-op-at">@</a> : 'a list * 'a list -&gt; 'a list
-
   val <a href="#val-hd">hd</a> : 'a list -&gt; 'a
-
   val <a href="#val-tl">tl</a> : 'a list -&gt; 'a list
-
   val <a href="#val-last">last</a> : 'a list -&gt; 'a
-
   val <a href="#val-getitem">getItem</a> : 'a list -&gt; ('a * 'a list) option
-
   val <a href="#val-nth">nth</a> : 'a list * int -&gt; 'a
-
   val <a href="#val-take">take</a> : 'a list * int -&gt; 'a list
-
   val <a href="#val-drop">drop</a> : 'a list * int -&gt; 'a list
-
   val <a href="#val-rev">rev</a> : 'a list -&gt; 'a list
-
   val <a href="#val-concat">concat</a> : 'a list list -&gt; 'a list
-
   val <a href="#val-revappend">revAppend</a> : 'a list * 'a list -&gt; 'a list
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a list -&gt; unit
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a list -&gt; 'b list
-
   val <a href="#val-mappartial">mapPartial</a> : ('a -&gt; 'b option) -&gt; 'a list -&gt; 'b list
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a option
-
   val <a href="#val-filter">filter</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a list
-
   val <a href="#val-partition">partition</a> : ('a -&gt; bool) -&gt; 'a list -&gt; 'a list * 'a list
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a list -&gt; 'b
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a list -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a list -&gt; bool
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a list
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a list * 'a list -&gt; order
 end
 </pre>
@@ -163,6 +136,10 @@ val null : 'a list -> bool
 
 Unlike `l = []` it does not need an equality type.
 
+**Law** `null l = (length l = 0)`
+
+**Example** `null [] = true`
+
 Also in the [top-level environment](../top-level.md): `null`.
 
 <details><summary>Tests (2)</summary>
@@ -180,6 +157,8 @@ val length : 'a list -> int
 `length l` is the number of elements of `l`.
 
 **Law** `length (l @ m) = length l + length m`
+
+**Example** `length [1, 2, 3] = 3`
 
 **Complexity** linear in the length; constant stack.
 
@@ -201,6 +180,8 @@ val @ : 'a list * 'a list -> 'a list
 
 It is infix and right associative with precedence 5, the same as `::`, so
 `1 :: [2] @ [3]` needs no parentheses.
+
+**Example** `[1, 2] @ [3] = [1, 2, 3]`
 
 **Complexity** linear in `length l`; `m` is shared, not copied. Appending to
 the right in a loop is therefore quadratic: cons onto the front and
@@ -224,6 +205,12 @@ val hd : 'a list -> 'a
 
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
 
+**Law** `hd l :: tl l = l` for a non-empty `l`
+
+**Example** `hd [1, 2, 3] = 1`
+
+**Example** `(hd [] handle Empty => 0) = 0`
+
 Also in the [top-level environment](../top-level.md): `hd`.
 
 <details><summary>Tests (2)</summary>
@@ -241,6 +228,8 @@ val tl : 'a list -> 'a list
 `tl l` is `l` without its first element.
 
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
+
+**Example** `tl [1, 2, 3] = [2, 3]`
 
 Also in the [top-level environment](../top-level.md): `tl`.
 
@@ -282,8 +271,7 @@ otherwise.
 It has the shape of a [`StringCvt.reader`](../sig/STRING_CVT.md#type-reader), so a list can be the stream
 that a `scan` function reads from.
 
-**Example** `Int.scan StringCvt.DEC List.getItem (explode "42 rest")` is
-`SOME (42, [#" ", #"r", #"e", #"s", #"t"])`.
+**Example** `Int.scan StringCvt.DEC List.getItem (explode "42 rest") = SOME (42, explode " rest")`
 
 <details><summary>Tests (2)</summary>
 
@@ -363,6 +351,8 @@ val rev : 'a list -> 'a list
 
 **Law** `rev (rev l) = l`
 
+**Example** `rev [1, 2, 3] = [3, 2, 1]`
+
 Also in the [top-level environment](../top-level.md): `rev`.
 
 <details><summary>Tests (4)</summary>
@@ -422,11 +412,15 @@ val app : ('a -> unit) -> 'a list -> unit
 `app f l` applies `f` to every element of `l`, from left to right, for its
 effect.
 
+**Law** `app f l = foldl (fn (x, ()) => f x) () l`
+
+**Example** `let val sum = ref 0 in app (fn x => sum := !sum + x) [1, 2, 3]; !sum end = 6`
+
 Also in the [top-level environment](../top-level.md): `app`.
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (3)</summary>
 
-For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `order`
+For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `order` &middot; `nil` &middot; `long`
 
 </details>
 
@@ -440,6 +434,8 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 `l`, from left to right.
 
 **Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects
+
+**Example** `map (fn x => x * 2) [1, 2, 3] = [2, 4, 6]`
 
 Also in the [top-level environment](../top-level.md): `map`.
 
@@ -502,6 +498,10 @@ val filter : ('a -> bool) -> 'a list -> 'a list
 original order.
 
 `p` is applied to every element, from left to right.
+
+**Law** `filter p l = #1 (partition p l)`
+
+**Example** `filter (fn x => x mod 2 = 1) [1, 2, 3] = [1, 3]`
 
 <details><summary>Tests (3)</summary>
 
@@ -594,6 +594,8 @@ the first one that does.
 
 **Law** `exists p l = not (all (not o p) l)`
 
+**Example** `exists (fn x => x > 2) [1, 2, 3] = true`
+
 <details><summary>Tests (5)</summary>
 
 For `List`, in [tests/basis/list.sml](../../../../tests/basis/list.sml): `true` &middot; `false` &middot; `nil` &middot; `stops` &middot; `de-morgan-*`
@@ -611,8 +613,8 @@ the first one that does not.
 
 `all p []` is `true`.
 
-**Example** `all (fn x => x > 0) [] = true` there is no element to fail the
-test.
+**Example** `all (fn x => x > 0) [] = true`, for there is no element to fail
+the test.
 
 <details><summary>Tests (4)</summary>
 

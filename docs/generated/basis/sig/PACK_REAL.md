@@ -24,18 +24,18 @@ structure PackRealLittle : PACK_REAL where type real = Real.real  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `PackReal32Big` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| `PackReal32Little` |  | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
-| `PackReal64Big` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackReal64Little` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackRealBig` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
-| `PackRealLittle` |  | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal32Big`](../str/PackReal32Big.md) | PackReal32Big: [`Real32`](../str/Real32.md) reals as the 4 bytes of IEEE 754 binary32, the most significant byte first. | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal32Little`](../str/PackReal32Little.md) | PackReal32Little: [`Real32`](../str/Real32.md) reals as the 4 bytes of IEEE 754 binary32, the least significant byte first. | [lib/basis/pack\_real32.sml](../../../../lib/basis/pack_real32.sml) |
+| [`PackReal64Big`](../str/PackRealBig.md) | PackReal64Big: the same as [`PackRealBig`](../str/PackRealBig.md), [`Real64`](../str/Real.md) being [`Real`](../str/Real.md). | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackReal64Little`](../str/PackRealLittle.md) | PackReal64Little: the same as [`PackRealLittle`](../str/PackRealLittle.md), [`Real64`](../str/Real.md) being [`Real`](../str/Real.md). | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealBig`](../str/PackRealBig.md) | PackRealBig: reals as the 8 bytes of IEEE 754 binary64, the most significant byte first. | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
+| [`PackRealLittle`](../str/PackRealLittle.md) | PackRealLittle: reals as the 8 bytes of IEEE 754 binary64, the least significant byte first. | [lib/basis/pack\_real.sml](../../../../lib/basis/pack_real.sml) |
 
 Reading and writing a real number in a vector or an array of bytes, in its
 IEEE 754 encoding and a fixed byte order.
 
-[`PackRealBig`](PACK_REAL.md) writes the most significant byte of the encoding first and
-[`PackRealLittle`](PACK_REAL.md) the least, so a program can read or write a binary file
+[`PackRealBig`](../str/PackRealBig.md) writes the most significant byte of the encoding first and
+[`PackRealLittle`](../str/PackRealLittle.md) the least, so a program can read or write a binary file
 whose layout is given, whatever the byte order of the machine. The bytes
 are the encoding itself: the sign, the exponent and the significand as
 IEEE 754 lays them out.
@@ -50,19 +50,12 @@ IEEE 754 lays them out.
 signature PACK_REAL =
 sig
   type <a href="#type-real">real</a>
-
   val <a href="#val-bytesperelem">bytesPerElem</a> : int
-
   val <a href="#val-isbigendian">isBigEndian</a> : bool
-
   val <a href="#val-tobytes">toBytes</a> : real -&gt; Word8Vector.vector
-
   val <a href="#val-frombytes">fromBytes</a> : Word8Vector.vector -&gt; real
-
   val <a href="#val-subvec">subVec</a> : Word8Vector.vector * int -&gt; real
-
   val <a href="#val-subarr">subArr</a> : Word8Array.array * int -&gt; real
-
   val <a href="#val-update">update</a> : Word8Array.array * int * real -&gt; unit
 end
 </pre>
@@ -82,6 +75,8 @@ val bytesPerElem : int
 ```
 
 The number of bytes of one real: 8 for binary64, 4 for binary32.
+
+**Example** `PackReal64Big.bytesPerElem = 8`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -104,6 +99,8 @@ val isBigEndian : bool
 ```
 
 Whether the most significant byte of the encoding comes first.
+
+**Example** `PackReal64Little.isBigEndian = false`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -160,8 +157,10 @@ NaN
 
 **Example** `Real.== (PackReal64Little.fromBytes (PackReal64Little.toBytes 2.5), 2.5) = true`
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (3)</summary>
 
+- **MLKit** &mdash; PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
+- **MLKit** &mdash; fromBytes does not check the length: of a vector shorter than 8 bytes it reads 8 bytes, past the end of the vector, instead of raising Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 
 </details>
@@ -182,10 +181,18 @@ val subVec : Word8Vector.vector * int -> real
 
 `subVec (v, i)` is the real at position `i` of the byte vector `v`, counting in reals.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
+Its bytes are those from `bytesPerElem * i` up to `bytesPerElem * (i + 1)`.
 
-<details><summary>Other implementations (2)</summary>
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `v` is shorter than `bytesPerElem * (i + 1)`, a product that is taken without overflowing, so that a huge `i`
+raises [`Subscript`](../sig/GENERAL.md#exn-subscript) as well.
 
+**Example** `Real.== (PackReal64Big.subVec (Word8Vector.concat [PackReal64Big.toBytes 0.5, PackReal64Big.toBytes 1.5], 1), 1.5) = true`
+
+**Example** `Real.== (PackReal64Big.subVec (PackReal64Big.toBytes 1.0, valOf Int.maxInt) handle Subscript => ~1.0, ~1.0) = true`
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
 
@@ -207,10 +214,13 @@ val subArr : Word8Array.array * int -> real
 
 `subArr (arr, i)` is the real at position `i` of the byte array `arr`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
 
-<details><summary>Other implementations (2)</summary>
+**Example** `Real.== (PackReal64Little.subArr (Word8Array.tabulate (8, fn _ => 0w0), 0), 0.0) = true`
 
+<details><summary>Other implementations (3)</summary>
+
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
 
@@ -232,11 +242,17 @@ val update : Word8Array.array * int * real -> unit
 
 `update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
 
-<details><summary>Other implementations (4)</summary>
+**Law** `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN
+comes back as some NaN
+
+**Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`
+
+<details><summary>Other implementations (5)</summary>
 
 - **Poly/ML** &mdash; update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr \< bytesPerElem \* (i + 1)")
+- **MLKit** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* i or bytesPerElem \* (i + 1) overflows), not Subscript
 - **SML/NJ (32-bit)** &mdash; update writes nothing into the array
 - **SML/NJ 110.99.9** &mdash; PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 - **Poly/ML 5.9.2** &mdash; subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript

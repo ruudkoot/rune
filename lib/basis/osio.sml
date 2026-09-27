@@ -12,6 +12,7 @@ struct
   in
     (* The kinds the specification names, and any other. *)
     datatype iodesc_kind = Kind of string
+    (* OS.IO.Kind: the seven kinds of descriptor that every system knows. *)
     structure Kind =
     struct
       val file = Kind "file"

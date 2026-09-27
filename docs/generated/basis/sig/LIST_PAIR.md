@@ -19,7 +19,7 @@ structure ListPair : LIST_PAIR
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `ListPair` | ListPair | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
+| [`ListPair`](../str/ListPair.md) | ListPair: two lists walked side by side, stopping at the end of the shorter one or, in the functions whose names end in `Eq`, raising [`UnequalLengths`](#exn-unequallengths) when the lengths differ. | [lib/basis/listpair.sml](../../../../lib/basis/listpair.sml) |
 
 Two lists walked side by side: pairing, and the traversals that take a
 function of an element of each.
@@ -42,33 +42,19 @@ not, so that a program can say which it means.
 signature LIST_PAIR =
 sig
   exception <a href="#exn-unequallengths">UnequalLengths</a>
-
   val <a href="#val-zip">zip</a> : 'a list * 'b list -&gt; ('a * 'b) list
-
   val <a href="#val-zipeq">zipEq</a> : 'a list * 'b list -&gt; ('a * 'b) list
-
   val <a href="#val-unzip">unzip</a> : ('a * 'b) list -&gt; 'a list * 'b list
-
   val <a href="#val-app">app</a> : ('a * 'b -&gt; unit) -&gt; 'a list * 'b list -&gt; unit
-
   val <a href="#val-appeq">appEq</a> : ('a * 'b -&gt; unit) -&gt; 'a list * 'b list -&gt; unit
-
   val <a href="#val-map">map</a> : ('a * 'b -&gt; 'c) -&gt; 'a list * 'b list -&gt; 'c list
-
   val <a href="#val-mapeq">mapEq</a> : ('a * 'b -&gt; 'c) -&gt; 'a list * 'b list -&gt; 'c list
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldleq">foldlEq</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-foldreq">foldrEq</a> : ('a * 'b * 'c -&gt; 'c) -&gt; 'c -&gt; 'a list * 'b list -&gt; 'c
-
   val <a href="#val-all">all</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
-
   val <a href="#val-exists">exists</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
-
   val <a href="#val-alleq">allEq</a> : ('a * 'b -&gt; bool) -&gt; 'a list * 'b list -&gt; bool
 end
 </pre>
@@ -157,6 +143,8 @@ val app : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 
 **Law** `app f (l, m) = List.app f (zip (l, m))`
 
+**Example** `let val sum = ref 0 in app (fn (a, b) => sum := !sum + a * b) ([1, 2], [3, 4]); !sum end = 11`
+
 <details><summary>Tests (7)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `order` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-right` &middot; `model-*` &middot; `long`
@@ -175,6 +163,8 @@ val appEq : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 exception is raised.
 
 **Raises** [`UnequalLengths`](#exn-unequallengths) if `l` and `m` have different lengths.
+
+**Example** `let val seen = ref 0 in (appEq (fn _ => seen := !seen + 1) ([1, 2], [3]) handle UnequalLengths => ()); !seen end = 1`
 
 <details><summary>Tests (8)</summary>
 
@@ -208,7 +198,12 @@ val mapEq : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
 `mapEq f (l, m)` is `map f (l, m)`, and insists that the lists are as long as each other.
 
+`f` is applied to the pairs up to the end of the shorter list before the
+exception is raised.
+
 **Raises** [`UnequalLengths`](#exn-unequallengths) if `l` and `m` have different lengths.
+
+**Example** `mapEq (op +) ([1, 2], [10, 20]) = [11, 22]`
 
 <details><summary>Tests (9)</summary>
 
@@ -247,6 +242,10 @@ val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
 `foldr f init (l, m)` combines the pairs of elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
+**Law** `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+
+**Example** `foldr (fn (a, b, acc) => (a, b) :: acc) [] ([1, 2], ["a", "b", "c"]) = [(1, "a"), (2, "b")]`
+
 <details><summary>Tests (10)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-in-order` &middot; `nonassociative` &middot; `nil-nil` &middot; `left-longer` &middot; `right-longer` &middot; `nil-left` &middot; `order` &middot; `order-left-longer` &middot; `model-*` &middot; `long`
@@ -265,6 +264,8 @@ val foldlEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 exception is raised.
 
 **Raises** [`UnequalLengths`](#exn-unequallengths) if `l` and `m` have different lengths.
+
+**Example** `(foldlEq (fn (a, b, acc) => a + b + acc) 0 ([1], [2, 3]) handle UnequalLengths => ~1) = ~1`
 
 <details><summary>Tests (10)</summary>
 
@@ -287,6 +288,8 @@ val foldrEq : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 > before anything is combined: `f` is not applied at all when the lengths
 > differ.
 
+**Example** `foldrEq (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11`
+
 <details><summary>Tests (10)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `conses-in-order` &middot; `nonassociative` &middot; `nil-nil` &middot; `order` &middot; `UnequalLengths-left-longer` (raises) &middot; `UnequalLengths-right-longer` (raises) &middot; `UnequalLengths-nil-right` (raises) &middot; `raises-before-applying` &middot; `model-*` &middot; `long`
@@ -306,6 +309,10 @@ val all : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 It stops at the first pair that does not, and at the end of the shorter
 list, so `all p (l, [])` is `true`.
 
+**Law** `all p (l, m) = List.all p (zip (l, m))`
+
+**Example** `all (op <) ([1, 2], [2, 3, 0]) = true`
+
 <details><summary>Tests (9)</summary>
 
 For `ListPair`, in [tests/basis/listpair.sml](../../../../tests/basis/listpair.sml): `true` &middot; `false` &middot; `nil-nil` &middot; `nil-right` &middot; `excess-ignored` &middot; `stops` &middot; `order` &middot; `model-*` &middot; `long`
@@ -321,6 +328,10 @@ val exists : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 `exists p (l, m)` is `true` when some pair of elements at the same position satisfies `p`.
 
 It stops at the first pair that does, and at the end of the shorter list.
+
+**Law** `exists p (l, m) = List.exists p (zip (l, m))`
+
+**Example** `exists (op =) ([1, 2], [2, 2]) = true`
 
 <details><summary>Tests (10)</summary>
 

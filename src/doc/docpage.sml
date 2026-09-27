@@ -30,6 +30,8 @@ struct
               annotations : string * (string -> (string * string) list),
               (* the notes of a structure's body, and of the functor it applies, by member *)
               notesOf : string -> (string * I.doc) list,
+              (* the page that describes a structure of that name, if any *)
+              strPageOf : string -> string option,
               links : (string * string * Source.span) list ref,
               anchors : (string * string * Source.span) list ref}
 
@@ -37,6 +39,12 @@ struct
     (#links env := (page, anchor, span) :: !(#links env);
      if page = from andalso anchor = "" then List.last (String.fields (fn c => c = #"/") page)
      else (if page = from then "" else #root env ^ page) ^ (if anchor = "" then "" else "#" ^ anchor))
+
+  (* A structure's name, as a link to its page when it has one. *)
+  fun strLink (env : env, from : string, name : string) : string =
+    case #strPageOf env name of
+      SOME page => "[" ^ DocMarkdown.code name ^ "](" ^ href (env, from, {page = page, anchor = ""}, Source.noSpan) ^ ")"
+    | NONE => DocMarkdown.code name
 
   (* A path without `dir/..` in it. *)
   fun normalise (path : string) : string =
@@ -84,14 +92,19 @@ struct
     | _ => []
 
   (* ---- the blocks of a comment ---- *)
-  fun blocks (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
-             (doc : I.doc) : string =
+  (* strict: a reference that leads nowhere is an error. It is, for what a
+     signature of the ratchet says; it is not for a structure's own comment,
+     which may name the library's internals -- `RuneIODesc.FD` is real and is
+     documented nowhere. *)
+  fun blocksWith (strict : bool)
+                 (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
+                 (doc : I.doc) : string =
     let
       fun link c =
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
-            ((if #ratchet env sigName then DocDiag.error else DocDiag.warn)
+            ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
                (span, "`" ^ c ^ "` names nothing that is documented"); NONE)
         | _ => NONE
       val inl = M.inlines link
@@ -154,6 +167,9 @@ struct
   (* ---- the checks of an entry ---- *)
   (* The sites that check the member at path.name of signature sigName: those
      labelled with a structure that implements it. *)
+  val blocks = blocksWith true
+  val blocksLoose = blocksWith false
+
   fun sitesOf (env : env, sigName : string, member : string) : (string * DocTests.site) list =
     List.concat
       (List.map (fn c : DocClaims.claim =>
@@ -161,6 +177,25 @@ struct
                    else List.map (fn s => (#name c, s))
                                  (Option.getOpt (StringMap.find (#tests env, #name c ^ "." ^ member), [])))
                 (#claims env))
+
+  (* The checks of an entry. A label names a member by its name alone,
+     `Array.array/Size-negative`, so where a signature has a type and a value
+     of one name -- `ARRAY` has both an `array` -- the checks are the value's,
+     which is what they call; counted under both, they would count twice. *)
+  fun sitesOfEntry (env : env, sigName : string, e : I.entryRecord) : (string * DocTests.site) list =
+    case sitesOf (env, sigName, String.concatWith "." (#path e @ [#name e])) of
+      [] => []
+    | sites =>
+        let
+          (* only a type with checks needs to know whether a value shares its name *)
+          val isType = case #kind e of I.Type => true | I.Eqtype => true | I.Datatype => true | _ => false
+          val valueToo =
+            isType andalso List.exists (fn e' : I.entryRecord => #kind e' = I.Val andalso #name e' = #name e
+                                                                 andalso #path e' = #path e)
+                                       (entriesOf (R.bodyOf (#index env, sigName)))
+        in
+          if valueToo then [] else sites
+        end
 
   fun distinct (xs : string list) : string list =
     List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
@@ -315,8 +350,7 @@ struct
                                                      List.map (fn n => String.concatWith "." (structure' :: #path g @ [n]))
                                                               (#name g :: List.map #name (#cons g)))
                                                   group))
-      ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord =>
-                                                  sitesOf (env, sigName, String.concatWith "." (#path g @ [#name g]))) group))
+      ^ testsBlock (env, List.concat (List.map (fn g : I.entryRecord => sitesOfEntry (env, sigName, g)) group))
       ^ inner
     end
 
@@ -368,9 +402,26 @@ struct
     end
 
   (* ---- the interface ---- *)
+  (* A gap between two declarations keeps the blank line the source puts
+     there, and the comments the source had between them are gone, so the
+     block reads as a column of declarations with a blank line between every
+     two. Tighten it: a run of newlines becomes one, and the indentation of
+     the next token, which is the last line of the gap, stays. *)
+  fun tighten (text : string) : string =
+    if not (CharVector.exists (fn c => c = #"\n") text) then text
+    else
+      case String.fields (fn c => c = #"\n") text of
+        [] => text
+      | first :: rest =>
+          let
+            fun keep [] = []
+              | keep [last] = [last]
+              | keep (l :: more) = if CharVector.all Char.isSpace l then keep more else l :: keep more
+          in String.concatWith "\n" (first :: keep rest) end
+
   fun interface (env : env, page : string, pieces : I.piece list, span : Source.span) : string =
     "<pre>\n"
-    ^ String.concat (List.map (fn (text, NONE) => M.escapeHtml text
+    ^ String.concat (List.map (fn (text, NONE) => M.escapeHtml (tighten text)
                                 | (text, SOME b) =>
                                     "<a href=\"" ^ href (env, page, {page = page, anchor = DocAnchor.anchor b}, span) ^ "\">"
                                     ^ M.escapeHtml text ^ "</a>") pieces)
@@ -384,6 +435,131 @@ struct
   fun headingAnchor (title : string) : string =
     String.translate (fn c => if Char.isAlphaNum c then String.str (Char.toLower c)
                               else if c = #" " orelse c = #"-" then "-" else "") title
+
+  (* ---- a structure's page ---- *)
+  (* A signature says what a member means; a structure says what it is here.
+     So this page shows every member with the type elaboration gives it --
+     `Word8Vector.sub` is `vector * int -> word` where `MONO_VECTOR` can only
+     write `vector * int -> elem` -- and links each to its description on the
+     signature's page. Nothing the signature says is repeated here. *)
+  fun structurePage (env : env, library : string)
+                    ({name, file, span, doc, notes, mine, within, describedBy, members, area, status, anchorOf}
+                       : {name : string, file : string, span : Source.span, doc : I.doc,
+                          notes : (string * I.doc) list, mine : DocClaims.claim list,
+                          (* the structure around this one whose signature specifies it, and that signature *)
+                          within : (string * string) option,
+                          (* the signatures whose pages describe the members *)
+                          describedBy : string list,
+                          members : (string * DocElab.member) list option,
+                          area : string option, status : string,
+                          (* where a signature describes a member of this kind and name *)
+                          anchorOf : string * string -> (string * string) option}) : string =
+    let
+      val page = R.strPage name
+      val sigNames = List.map (fn c : DocClaims.claim => #signat c) mine
+      val first = case describedBy of sg :: _ => sg | [] => ""
+      (* the structure's own prose: what the claim paragraphs say is in the
+         table above, and the area in the line above that *)
+      val overview =
+        List.filter (fn T.Reserved {keyword, ...} =>
+                          not (keyword = "See also" orelse keyword = "Implements"
+                               orelse keyword = "Status" orelse keyword = "Area")
+                      | _ => true) doc
+      val seeAlso = reserved (doc, "See also")
+      fun link c =
+        case R.resolve (#index env, first, [], []) c of
+          R.Target t => SOME (href (env, page, t, span))
+        | _ => NONE
+      fun sigLink sg = "[" ^ M.code sg ^ "](" ^ href (env, page, {page = R.sigPage sg, anchor = ""}, span) ^ ")"
+      (* a member links to where a signature describes it, when one does *)
+      fun linked (kind : string, m : string) =
+        case anchorOf (kind, m) of
+          SOME t => "[" ^ M.code m ^ "](" ^ href (env, page, {page = #1 t, anchor = #2 t}, span) ^ ")"
+        | NONE => M.code m
+      fun row (m, DocElab.MVal ty) = SOME ["val", linked ("val", m), M.code ty]
+        | row (m, DocElab.MExn NONE) = SOME ["exception", linked ("exn", m), ""]
+        | row (m, DocElab.MExn (SOME ty)) = SOME ["exception", linked ("exn", m), M.code ("of " ^ ty)]
+        | row (m, DocElab.MType {defn = SOME d, ...}) = SOME ["type", linked ("type", m), M.code d]
+        | row (m, DocElab.MType {defn = NONE, ...}) = SOME ["type", linked ("type", m), "*a type of its own*"]
+        | row (m, DocElab.MData {cons, ...}) =
+            SOME ["datatype", linked ("type", m), String.concatWith " &#124; " (List.map M.code cons)]
+        (* a substructure has a page of its own, and says which signature it implements *)
+        | row (m, DocElab.MStr) =
+            let
+              val full = name ^ "." ^ m
+              val its = List.filter (fn c : DocClaims.claim => #name c = full) (#claims env)
+            in
+              SOME ["structure",
+                    (case #strPageOf env full of
+                       SOME p => "[" ^ M.code m ^ "](" ^ href (env, page, {page = p, anchor = ""}, span) ^ ")"
+                     | NONE => linked ("str", m)),
+                    String.concatWith ", " (List.map (fn c => sigLink (#signat c)) its)]
+            end
+        (* a constructor belongs to the datatype's row *)
+        | row (_, DocElab.MCon _) = NONE
+      val rows = case members of SOME ms => List.mapPartial row ms | NONE => []
+      (* the checks of the suite that name this structure, member by member:
+         two members may each have a case of one name, `Array.sub/basic` and
+         `Array.update/basic`, and those are two checks *)
+      val checks =
+        case members of
+          NONE => 0
+        | SOME ms =>
+            List.foldl (fn (m, n) =>
+                          n + countSites (List.map (fn s => (name, s))
+                                                   (Option.getOpt (StringMap.find (#tests env, name ^ "." ^ m), []))))
+                       0 (distinct (List.map #1 ms))
+      val annotated =
+        annotationsBlock (env, first,
+                          fn structure' =>
+                             if structure' <> name then []
+                             else List.map (fn sg => name ^ ":" ^ sg) sigNames
+                                  @ (case members of
+                                       SOME ms => List.map (fn (m, _) => name ^ "." ^ m) ms
+                                     | NONE => []))
+    in
+      "# structure " ^ name ^ "\n\n"
+      ^ "[" ^ M.escape library ^ "](" ^ #root env ^ "README.md)"
+      ^ (case area of SOME a => " &rsaquo; " ^ M.escape a | NONE => "")
+      ^ " &rsaquo; [Structures](" ^ #root env ^ "structures.md) &rsaquo; **" ^ name ^ "**\n\n"
+      ^ M.table (["", ""],
+                 [[(if List.length sigNames = 1 then "Signature" else "Signatures"),
+                   (case (sigNames, within) of
+                      ([], SOME (outer, sg)) =>
+                        "none: " ^ sigLink sg ^ " specifies it inside " ^ strLink (env, page, outer)
+                    | ([], NONE) => "none: it matches no signature of the library"
+                    | _ => String.concatWith ", " (List.map sigLink sigNames))],
+                  ["Status", M.escape status],
+                  ["Members", if List.null rows then "known only by elaborating the library"
+                              else Int.toString (List.length rows)],
+                  ["Tests", if StringMap.isEmpty (#tests env) then "not listed"
+                            else Int.toString checks ^ " checks"],
+                  ["Source", sourceLink (env, #root env, file)]])
+      ^ (if List.null mine then ""
+         else "## Synopsis\n\n"
+              ^ M.fenced ("sml", String.concatWith "\n"
+                                   (List.map (fn c : DocClaims.claim =>
+                                                "structure " ^ name ^ (if #opaque c then " :> " else " : ") ^ #signat c
+                                                ^ (if #realisations c = "" then "" else " " ^ #realisations c))
+                                             mine)))
+      ^ blocksLoose (env, page, first, [], [], span) overview
+      ^ (if List.null rows then ""
+         else "## Members\n\n"
+              ^ (case describedBy of
+                   [] => "The types are this structure's own."
+                 | sgs => "What each means is on " ^ String.concatWith " and " (List.map sigLink sgs)
+                          ^ "; the types are this structure's own.")
+              ^ "\n\n" ^ M.table (["", "Member", "Is"], rows))
+      ^ (if List.null notes then ""
+         else "## Notes\n\n"
+              ^ String.concat (List.map (fn (m, d) =>
+                                           "### " ^ M.escape m ^ "\n\n" ^ blocksLoose (env, page, first, [], [], span) d)
+                                        notes))
+      ^ annotated
+      ^ (if List.null seeAlso then ""
+         else "## See also\n\n" ^ String.concatWith " &middot; " (List.map (M.inlines link) seeAlso) ^ "\n\n")
+      ^ "---\n\n<sub>Generated by runedoc from " ^ M.escape (normalise file) ^ "; do not edit.</sub>\n"
+    end
 
   (* ---- the page ---- *)
   fun signaturePage (env : env, library : string)
@@ -419,7 +595,7 @@ struct
                   ["Documentation", Int.toString documented ^ " of " ^ Int.toString (List.length es) ^ " entries documented"],
                   ["Tests",
                    let
-                     val perEntry = List.map (fn e : I.entryRecord => sitesOf (env, name, String.concatWith "." (#path e @ [#name e]))) es
+                     val perEntry = List.map (fn e : I.entryRecord => sitesOfEntry (env, name, e)) es
                      val checked = List.length (List.filter (fn l => not (List.null l)) perEntry)
                    in
                      if StringMap.isEmpty (#tests env) then "not listed"
@@ -439,7 +615,7 @@ struct
       ^ (if List.null mine then ""
          else M.table (["Implementation", "", "Source"],
                        List.map (fn c : DocClaims.claim =>
-                                   [M.code (#name c), M.cell link (#summary c),
+                                   [strLink (env, page, #name c), M.cell link (#summary c),
                                     sourceLink (env, #root env, #file c)])
                                 mine))
       ^ blocks (env, page, name, [], [], span) overview

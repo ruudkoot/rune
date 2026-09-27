@@ -97,7 +97,11 @@ struct
   end
 end
 
-(* Implements: RUNTIME
+(* Runtime: the VM's view of the running program -- its counters, its call
+   stack, the identity of objects, and saving and restoring the whole of it.
+   It is Rune's own and not of the specification.
+
+   Implements: RUNTIME
 
    Status: extension *)
 structure Runtime = RuneRuntime

@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 39 of 39 entries documented |
-| Tests | 574 checks of 38 entries |
+| Tests | 535 checks of 36 entries |
 | Source | [lib/basis/sig\_substring.sml](../../../../lib/basis/sig_substring.sml) |
 
 ## Synopsis
@@ -20,8 +20,8 @@ structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Substring` | Substring: a string, a start index and a length. | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
-| `WideSubstring` |  | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
+| [`Substring`](../str/Substring.md) | Substring: pieces of strings, taken apart and searched without a copy: a string, a start index and a length. | [lib/basis/substring.sml](../../../../lib/basis/substring.sml) |
+| [`WideSubstring`](../str/WideSubstring.md) | WideSubstring: pieces of wide strings, taken apart and searched without a copy. | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 A stretch of a string, without a copy of it: a base string and a start and
 a length inside it.
@@ -33,8 +33,8 @@ whole of `s`, `string ss` copies the stretch out. The functions that split
 come in pairs, one for each end: `l` takes from the left and `r` from the
 right.
 
-The signature is that of [`Substring`](SUBSTRING.md), over [`String`](../sig/STRING.md), and of the optional
-[`WideSubstring`](SUBSTRING.md).
+The signature is that of [`Substring`](../str/Substring.md), over [`String`](../str/String.md), and of the optional
+[`WideSubstring`](../str/WideSubstring.md).
 
 > **Erratum** `SUBSTRING/span-exception`. The specification does not say in the
 > signature that [`span`](#val-span) raises an exception, although its description does;
@@ -58,83 +58,44 @@ The signature is that of [`Substring`](SUBSTRING.md), over [`String`](../sig/STR
 <pre>
 signature SUBSTRING =
 sig
-
   type <a href="#type-substring">substring</a>
-
   eqtype <a href="#type-char">char</a>
-
   eqtype <a href="#type-string">string</a>
-
   val <a href="#val-sub">sub</a> : substring * int -&gt; char
-
   val <a href="#val-size">size</a> : substring -&gt; int
-
   val <a href="#val-base">base</a> : substring -&gt; string * int * int
-
   val <a href="#val-extract">extract</a> : string * int * int option -&gt; substring
-
   val <a href="#val-substring">substring</a> : string * int * int -&gt; substring
-
   val <a href="#val-full">full</a> : string -&gt; substring
-
   val <a href="#val-string">string</a> : substring -&gt; string
-
   val <a href="#val-isempty">isEmpty</a> : substring -&gt; bool
-
   val <a href="#val-getc">getc</a> : substring -&gt; (char * substring) option
-
   val <a href="#val-first">first</a> : substring -&gt; char option
-
   val <a href="#val-triml">triml</a> : int -&gt; substring -&gt; substring
-
   val <a href="#val-trimr">trimr</a> : int -&gt; substring -&gt; substring
-
   val <a href="#val-slice">slice</a> : substring * int * int option -&gt; substring
-
   val <a href="#val-concat">concat</a> : substring list -&gt; string
-
   val <a href="#val-concatwith">concatWith</a> : string -&gt; substring list -&gt; string
-
   val <a href="#val-explode">explode</a> : substring -&gt; char list
-
   val <a href="#val-isprefix">isPrefix</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-issubstring">isSubstring</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-issuffix">isSuffix</a> : string -&gt; substring -&gt; bool
-
   val <a href="#val-compare">compare</a> : substring * substring -&gt; order
-
   val <a href="#val-collate">collate</a> : (char * char -&gt; order) -&gt; substring * substring -&gt; order
-
   val <a href="#val-splitl">splitl</a> : (char -&gt; bool) -&gt; substring -&gt; substring * substring
-
   val <a href="#val-splitr">splitr</a> : (char -&gt; bool) -&gt; substring -&gt; substring * substring
-
   val <a href="#val-splitat">splitAt</a> : substring * int -&gt; substring * substring
-
   val <a href="#val-dropl">dropl</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-dropr">dropr</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-takel">takel</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-taker">taker</a> : (char -&gt; bool) -&gt; substring -&gt; substring
-
   val <a href="#val-position">position</a> : string -&gt; substring -&gt; substring * substring
-
   val <a href="#val-span">span</a> : substring * substring -&gt; substring
-
   val <a href="#val-translate">translate</a> : (char -&gt; string) -&gt; substring -&gt; string
-
   val <a href="#val-tokens">tokens</a> : (char -&gt; bool) -&gt; substring -&gt; substring list
-
   val <a href="#val-fields">fields</a> : (char -&gt; bool) -&gt; substring -&gt; substring list
-
   val <a href="#val-app">app</a> : (char -&gt; unit) -&gt; substring -&gt; unit
-
   val <a href="#val-foldl">foldl</a> : (char * 'a -&gt; 'a) -&gt; 'a -&gt; substring -&gt; 'a
-
   val <a href="#val-foldr">foldr</a> : (char * 'a -&gt; 'a) -&gt; 'a -&gt; substring -&gt; 'a
 end
 </pre>
@@ -159,21 +120,13 @@ The type of substrings: a base string, a start in it and a length.
 
 </details>
 
-<details><summary>Tests (30)</summary>
-
-For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `whole` &middot; `to-the-end` &middot; `zero-at-start` &middot; `zero-inside` &middot; `zero-at-size` &middot; `empty-string` &middot; `string-middle` &middot; `string-zero` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-end-beyond-size` (raises Subscript) &middot; `Subscript-start-beyond-size` (raises Subscript) &middot; `Subscript-negative-start` (raises Subscript) &middot; `Subscript-negative-start-zero-size` (raises Subscript) &middot; `Subscript-negative-size` (raises Subscript) &middot; `Subscript-negative-size-at-size` (raises Subscript) &middot; `Subscript-negative-size-end-inside` (raises Subscript) &middot; `Subscript-both-negative` (raises Subscript) &middot; `Subscript-empty-string-size` (raises Subscript) &middot; `Subscript-empty-string-start` (raises Subscript) &middot; `Subscript-on-every-invalid-argument` &middot; `Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `Subscript-not-Overflow-start-zero-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-start` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-size` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-both` (raises Subscript) &middot; `Subscript-not-Overflow-smallest-and-largest` (raises Subscript)
-
-For `WideSubstring`, in [tests/basis/widesubstring.sml](../../../../tests/basis/widesubstring.sml): `middle`
-
-</details>
-
 ### <a name="type-char"></a>`char`
 
 ```sml
 eqtype char
 ```
 
-The type of the characters: [`Char.char`](../sig/CHAR.md#type-char) for [`Substring`](SUBSTRING.md).
+The type of the characters: [`Char.char`](../sig/CHAR.md#type-char) for [`Substring`](../str/Substring.md).
 
 ### <a name="type-string"></a>`string`
 
@@ -182,14 +135,6 @@ eqtype string
 ```
 
 The type of the strings these are substrings of.
-
-<details><summary>Tests (9)</summary>
-
-For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `empty` &middot; `whole` &middot; `last-character` &middot; `String.substring-of-base` &middot; `characters-0-and-255` &middot; `long` &middot; `law-*`
-
-For `WideSubstring`, in [tests/basis/widesubstring.sml](../../../../tests/basis/widesubstring.sml): `gives-the-characters`
-
-</details>
 
 ## Taking a substring apart
 
@@ -202,6 +147,8 @@ val sub : substring * int -> char
 `sub (ss, i)` is the character of `ss` at position `i`, counting from the start of the substring.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= size ss`.
+
+**Example** `sub (full "abc", 1) = #"b"`
 
 <details><summary>Tests (18)</summary>
 
@@ -218,6 +165,8 @@ val size : substring -> int
 ```
 
 `size ss` is the number of characters of `ss`.
+
+**Example** `size (extract ("abcde", 1, SOME 3)) = 3`
 
 <details><summary>Tests (10)</summary>
 
@@ -263,6 +212,8 @@ given and `i + n > String.size s`.
 > **Implementation** `Substring.extract/no-overflow`. The bounds are tested
 > so that they cannot overflow: an `i` and an `n` whose sum is no `int`
 > raise [`Subscript`](../sig/GENERAL.md#exn-subscript), not [`Overflow`](../sig/GENERAL.md#exn-overflow).
+
+**Example** `string (extract ("abcde", 1, SOME 3)) = "bcd"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -315,6 +266,8 @@ val full : string -> substring
 
 `full s` is the whole of `s` as a substring.
 
+**Example** `string (full "abc") = "abc"`
+
 <details><summary>Tests (7)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `basic` &middot; `empty-string` &middot; `one-character` &middot; `string` &middot; `all-256-characters` &middot; `law-*`
@@ -335,6 +288,8 @@ This is where the copy happens.
 
 **Law** `string (full s) = s`
 
+**Example** `string (substring ("abcde", 1, 2)) = "bc"`
+
 <details><summary>Tests (9)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `middle` &middot; `empty` &middot; `whole` &middot; `last-character` &middot; `String.substring-of-base` &middot; `characters-0-and-255` &middot; `long` &middot; `law-*`
@@ -352,6 +307,8 @@ val isEmpty : substring -> bool
 `isEmpty ss` is `true` when `ss` has no characters.
 
 **Law** `isEmpty ss = (size ss = 0)`
+
+**Example** `isEmpty (full "") = true`
 
 <details><summary>Tests (9)</summary>
 
@@ -449,6 +406,8 @@ val trimr : int -> substring -> substring
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `k < 0`, when `trimr k` is evaluated.
 
+**Example** `string (trimr 2 (full "abcde")) = "abc"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton, SML/NJ** &mdash; triml k and trimr k with k \< 0 raise Subscript only when applied to a substring
@@ -477,6 +436,8 @@ is a substring of the same base.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, if `i > size ss`, or if `n` is given and
 `i + n > size ss`.
 
+**Example** `string (slice (full "abcde", 1, SOME 2)) = "bc"`
+
 <details><summary>Tests (36)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `SOME-inside` &middot; `SOME-whole` &middot; `SOME-to-the-end` &middot; `SOME-zero-at-start` &middot; `SOME-zero-at-size` &middot; `SOME-of-empty` &middot; `NONE-whole` &middot; `NONE-inside` &middot; `NONE-at-size` &middot; `NONE-of-empty` &middot; `SOME-string` &middot; `NONE-string` &middot; `of-a-slice` &middot; `SOME-Subscript-end-beyond-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-start-beyond-size` (raises Subscript) &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-negative-size-end-inside` (raises Subscript) &middot; `SOME-Subscript-of-empty` (raises Subscript) &middot; `NONE-Subscript-beyond-size` (raises Subscript) &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-of-empty` (raises Subscript) &middot; `SOME-every-argument` &middot; `NONE-every-argument` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-smallest-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-smallest` (raises Subscript) &middot; `law-SOME-*` &middot; `law-NONE-*` &middot; `law-Subscript-*` (raises Subscript)
@@ -497,6 +458,8 @@ val concat : substring list -> string
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`String.maxSize`](../sig/STRING.md#val-maxsize).
 
+**Example** `concat [full "ab", full "c"] = "abc"`
+
 <details><summary>Tests (12)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `nil` &middot; `one` &middot; `several-strings` &middot; `with-empty-substrings` &middot; `only-empty-substrings` &middot; `overlapping` &middot; `many` &middot; `Size` (raises Size) &middot; `long` &middot; `law-*`
@@ -515,6 +478,8 @@ val concatWith : string -> substring list -> string
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`String.maxSize`](../sig/STRING.md#val-maxsize).
 
+**Example** `concatWith "," [full "a", full "b"] = "a,b"`
+
 <details><summary>Tests (12)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `nil` &middot; `one` &middot; `two` &middot; `several-strings` &middot; `empty-separator` &middot; `empty-substrings-are-separated` &middot; `empty-substring-first-and-last` &middot; `one-empty` &middot; `Size` (raises Size) &middot; `Size-by-the-separators` (raises Size) &middot; `law-*`
@@ -530,6 +495,8 @@ val explode : substring -> char list
 ```
 
 `explode ss` is the list of the characters of `ss`, in order.
+
+**Example** `explode (full "ab") = [#"a", #"b"]`
 
 <details><summary>Tests (8)</summary>
 
@@ -549,6 +516,8 @@ val isPrefix : string -> substring -> bool
 
 `isPrefix s ss` is `true` when `ss` begins with the string `s`.
 
+**Example** `isPrefix "ab" (full "abc") = true`
+
 <details><summary>Tests (14)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `true` &middot; `one-character` &middot; `whole` &middot; `empty-string` &middot; `empty-of-empty` &middot; `nonempty-of-empty` &middot; `goes-on-in-the-underlying-string` &middot; `prefix-of-the-underlying-string` &middot; `starts-before` &middot; `inside-only` &middot; `differs-at-the-end` &middot; `law-*`
@@ -564,6 +533,8 @@ val isSubstring : string -> substring -> bool
 ```
 
 `isSubstring s ss` is `true` when `s` occurs anywhere in `ss`.
+
+**Example** `isSubstring "bc" (full "abcd") = true`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -586,6 +557,8 @@ val isSuffix : string -> substring -> bool
 ```
 
 `isSuffix s ss` is `true` when `ss` ends with the string `s`.
+
+**Example** `isSuffix "cd" (full "abcd") = true`
 
 <details><summary>Tests (15)</summary>
 
@@ -610,6 +583,8 @@ hold.
 
 **Law** `compare (ss, tt) = String.compare (string ss, string tt)`
 
+**Example** `compare (full "ab", full "abc") = LESS`
+
 <details><summary>Tests (19)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `less` &middot; `greater` &middot; `equal` &middot; `prefix-is-less` &middot; `longer-is-greater` &middot; `first-difference-decides` &middot; `empty-empty` &middot; `empty-less` &middot; `upper-before-lower` &middot; `character-255-last` &middot; `equal-in-different-strings` &middot; `equal-at-different-places` &middot; `same-start-different-size` &middot; `what-follows-does-not-count` &middot; `long` &middot; `law-*` &middot; `law-same-string-*` &middot; `law-antisymmetric-*`
@@ -625,6 +600,8 @@ val collate : (char * char -> order) -> substring * substring -> order
 ```
 
 `collate cmp (ss, tt)` compares two substrings lexicographically with `cmp` for the characters.
+
+**Example** `collate Char.compare (full "b", full "a") = GREATER`
 
 <details><summary>Tests (13)</summary>
 
@@ -664,6 +641,8 @@ val splitr : (char -> bool) -> substring -> substring * substring
 
 `splitr p ss` is the pair of what comes before the longest suffix whose characters satisfy `p`, and that suffix.
 
+**Example** `(fn (a, b) => (string a, string b)) (splitr Char.isDigit (full "ab12")) = ("ab", "12")`
+
 <details><summary>Tests (14)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `page-example-strings` &middot; `all-satisfy` &middot; `none-satisfies` &middot; `empty` &middot; `last-fails` &middot; `first-fails` &middot; `stops-at-the-start-of-the-substring` &middot; `first-failing-of-several` &middot; `order` &middot; `order-all-satisfy` &middot; `long` &middot; `law-*`
@@ -681,6 +660,8 @@ val splitAt : substring * int -> substring * substring
 `splitAt (ss, i)` is the pair of the first `i` characters of `ss` and the rest.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > size ss`.
+
+**Example** `(fn (a, b) => (string a, string b)) (splitAt (full "abcd", 1)) = ("a", "bcd")`
 
 <details><summary>Tests (15)</summary>
 
@@ -716,6 +697,8 @@ val dropr : (char -> bool) -> substring -> substring
 
 `dropr p ss` is `ss` without the characters at its end that satisfy `p`.
 
+**Example** `string (dropr Char.isSpace (full "ab  ")) = "ab"`
+
 <details><summary>Tests (9)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `all-satisfy` &middot; `none-satisfies` &middot; `empty` &middot; `within-the-substring` &middot; `whitespace` &middot; `order` &middot; `law-*`
@@ -732,6 +715,8 @@ val takel : (char -> bool) -> substring -> substring
 
 `takel p ss` is the longest prefix of `ss` whose characters satisfy `p`.
 
+**Example** `string (takel Char.isAlpha (full "ab1c")) = "ab"`
+
 <details><summary>Tests (9)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `all-satisfy` &middot; `none-satisfies` &middot; `empty` &middot; `within-the-substring` &middot; `digits` &middot; `order` &middot; `law-*`
@@ -747,6 +732,8 @@ val taker : (char -> bool) -> substring -> substring
 ```
 
 `taker p ss` is the longest suffix of `ss` whose characters satisfy `p`.
+
+**Example** `string (taker Char.isDigit (full "ab12")) = "12"`
 
 <details><summary>Tests (9)</summary>
 
@@ -804,6 +791,8 @@ ends before `ss` starts.
 > **Reading** `Substring.span/equal-strings-built-separately`. "Unless `s <> s'`" is read as a comparison of the base strings by value: two equal
 > strings that were built separately count as one base.
 
+**Example** `let val s = full "abcd" in string (span (slice (s, 0, SOME 1), slice (s, 2, SOME 1))) end = "abc"`
+
 <details><summary>Tests (31)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `apart` &middot; `adjacent` &middot; `overlapping` &middot; `same` &middot; `whole` &middot; `empty-and-empty-same-place` &middot; `empty-to-empty` &middot; `second-inside-first` &middot; `first-ends-to-the-right` &middot; `second-begins-to-the-left` &middot; `second-ends-at-start-of-first` &middot; `empty-second-at-start-of-first` &middot; `Span-second-ends-before-first` (raises Span) &middot; `Span-second-ends-one-before-first` (raises Span) &middot; `Span-empty-ones-in-the-wrong-order` (raises Span) &middot; `Span-whole-string-ends` (raises Span) &middot; `Span-different-strings` (raises Span) &middot; `Span-different-strings-same-substrings` (raises Span) &middot; `Span-string-and-its-prefix` (raises Span) &middot; `Span-empty-string-and-another` (raises Span) &middot; `Span-is-General.Span` (raises) &middot; `equal-strings-built-separately` &middot; `page-example` &middot; `page-example-string` &middot; `law-*` (raises Span) &middot; `law-*` &middot; `law-restores-splitl-*` &middot; `law-restores-splitr-*` &middot; `law-restores-splitAt-*` &middot; `law-first-to-last-field-*`
@@ -821,6 +810,8 @@ val translate : (char -> string) -> substring -> string
 ```
 
 `translate f ss` applies `f` to each character of `ss`, from left to right, and appends the strings it gives.
+
+**Example** `translate (fn c => if c = #"a" then "A" else String.str c) (full "abc") = "Abc"`
 
 <details><summary>Tests (9)</summary>
 
@@ -845,6 +836,16 @@ same base string, so nothing is copied.
 
 **Example** `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
 
+> **Reading** `Substring.tokens/order`. The specification says the tokens
+> are derived "from left to right", and not how often `p` is asked: `p`
+> is applied once to each character, from left to right.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
+
+</details>
+
 <details><summary>Tests (16)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `page-example-strings` &middot; `empty` &middot; `empty-string` &middot; `no-delimiter` &middot; `delimiters-only` &middot; `trailing-delimiter` &middot; `inside-a-string` &middot; `inside-a-string-with-delimiters` &middot; `every-character-delimits` &middot; `whitespace` &middot; `order` &middot; `long` &middot; `law-*` &middot; `law-other-delimiters-*`
@@ -864,6 +865,8 @@ val fields : (char -> bool) -> substring -> substring list
 Every delimiter ends a field, so `n` delimiters give `n + 1` fields,
 empty ones included.
 
+**Example** `List.map string (fields (fn c => c = #",") (full "a,,b")) = ["a", "", "b"]`
+
 <details><summary>Tests (17)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `page-example-strings` &middot; `empty` &middot; `empty-string` &middot; `no-delimiter` &middot; `delimiters-only` &middot; `trailing-delimiter` &middot; `inside-a-string` &middot; `inside-a-string-with-delimiters` &middot; `every-character-delimits` &middot; `commas` &middot; `order` &middot; `long` &middot; `law-*` &middot; `law-other-delimiters-*` &middot; `law-concatWith-restores-*`
@@ -882,6 +885,8 @@ val app : (char -> unit) -> substring -> unit
 
 `app f ss` applies `f` to every character of `ss`, from left to right, for its effect.
 
+**Example** `let val n = ref 0 in app (fn _ => n := !n + 1) (full "abc"); !n end = 3`
+
 <details><summary>Tests (7)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `order` &middot; `empty` &middot; `whole` &middot; `returns-unit` &middot; `long` &middot; `law-*`
@@ -898,6 +903,8 @@ val foldl : (char * 'a -> 'a) -> 'a -> substring -> 'a
 
 `foldl f init ss` combines the characters of `ss` from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Example** `foldl (op ::) [] (full "ab") = [#"b", #"a"]`
+
 <details><summary>Tests (9)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `conses-reversed` &middot; `appends` &middot; `nonassociative` &middot; `empty` &middot; `counts` &middot; `order` &middot; `long` &middot; `law-*`
@@ -913,6 +920,8 @@ val foldr : (char * 'a -> 'a) -> 'a -> substring -> 'a
 ```
 
 `foldr f init ss` combines the characters of `ss` from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Example** `foldr (op ::) [] (full "ab") = [#"a", #"b"]`
 
 <details><summary>Tests (9)</summary>
 

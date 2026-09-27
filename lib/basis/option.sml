@@ -1,4 +1,8 @@
-(* Option
+(* Option: the operations on the top-level type `option`, of a value that
+   may be missing.
+
+   `getOpt`, `isSome` and `valOf` are also at the top level, as are the type
+   and the exception `Option`.
 
    Implements: OPTION *)
 structure Option =

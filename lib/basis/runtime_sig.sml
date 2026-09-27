@@ -53,7 +53,9 @@ sig
 
      Reading them is itself work, so two calls with nothing between them do
      not report the same `instructions`. Nothing between them allocates,
-     though, so the other five agree. *)
+     though, so the other five agree.
+
+     Example: `#live (stats ()) <= #heapSize (stats ()) = true` *)
   val stats : unit -> stats
 
   (* `profile f` is what `f ()` returned, and what it cost: the difference
@@ -81,7 +83,9 @@ sig
      Nothing an SML program can see changes. Equality on a `ref` or an
      `array` is the identity the collector maintains, not an address of the
      moment, so this says when the cost of collecting is paid and never what
-     the program means. *)
+     the program means.
+
+     Example: `(collect (); #collections (stats ()) >= 1) = true` *)
   val collect : unit -> unit
 
   (* One function on the call stack, and where in the source it has got to.
@@ -98,7 +102,9 @@ sig
 
      A tail call does not appear. It replaces the frame it is made from --
      that is what makes a tail-recursive loop run in constant space -- so the
-     function it was made from is not on the stack to be reported. *)
+     function it was made from is not on the stack to be reported.
+
+     Example: `null (trace ()) = false` *)
   val trace : unit -> frame list
 
   (* `printTrace out` writes the frames of `trace ()` to `out`, one to a
@@ -176,6 +182,8 @@ sig
      The compiler and the VM are built from one string, so `rune --version`
      says the same. It is not the version of the bytecode, which the VM
      checks when it loads a program and which changes only when the file
-     format does. *)
+     format does.
+
+     Example: `size version > 0 = true` *)
   val version : string
 end

@@ -11,8 +11,8 @@
    (`ARRAY2/sealed-and-equal-at-any-element`); MLton and SML/NJ read it the
    same way, Poly/ML does not. `RuneArray2` is the implementation under the
    seal, which `RuneMonoArray2Fn` builds the monomorphic two-dimensional
-   arrays on: their `array` is monomorphic, so it admits equality however it
-   is made, which is what `MONO_ARRAY2` asks for.
+   arrays on: the type of such an array is monomorphic, so it admits equality
+   however it is made, which is what `MONO_ARRAY2` asks for.
 
    Pinned by: `Array2.array/same-array-equal`, `Array2:ARRAY2/eqtype` *)
 structure RuneArray2 =

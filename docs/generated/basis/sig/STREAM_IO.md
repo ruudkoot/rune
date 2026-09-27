@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 3 |
 | Documentation | 29 of 29 entries documented |
-| Tests | 147 checks of 21 entries |
+| Tests | 148 checks of 21 entries |
 | Source | [lib/basis/streamio\_sig.sml](../../../../lib/basis/streamio_sig.sml) |
 
 ## Synopsis
@@ -21,9 +21,9 @@ structure TextIO.StreamIO : STREAM_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinIO.StreamIO` | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| [`BinIO.StreamIO`](../str/BinIO.StreamIO.md) | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `StreamIO` | Functional streams over a [`PRIM_IO`](../sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](STREAM_IO.md) of it. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
-| `TextIO.StreamIO` | TEXT\_STREAM\_IO: STREAM\_IO and the operations on lines and substrings. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 Streams as values: reading gives the elements and the stream that is left,
 so a stream can be kept, read twice, and read from again where it was.
@@ -62,61 +62,33 @@ Whatever a reader or a writer raises is caught and raised again as the
 signature STREAM_IO =
 sig
   type <a href="#type-elem">elem</a>
-
   type <a href="#type-vector">vector</a>
-
   type <a href="#type-instream">instream</a>
-
   type <a href="#type-outstream">outstream</a>
-
   type <a href="#type-out_pos">out_pos</a>
-
   type <a href="#type-reader">reader</a>
-
   type <a href="#type-writer">writer</a>
-
   type <a href="#type-pos">pos</a>
-
   val <a href="#val-input">input</a> : instream -&gt; vector * instream
-
   val <a href="#val-input1">input1</a> : instream -&gt; (elem * instream) option
-
   val <a href="#val-inputn">inputN</a> : instream * int -&gt; vector * instream
-
   val <a href="#val-inputall">inputAll</a> : instream -&gt; vector * instream
-
   val <a href="#val-caninput">canInput</a> : instream * int -&gt; int option
-
   val <a href="#val-closein">closeIn</a> : instream -&gt; unit
-
   val <a href="#val-endofstream">endOfStream</a> : instream -&gt; bool
-
   val <a href="#val-output">output</a> : outstream * vector -&gt; unit
-
   val <a href="#val-output1">output1</a> : outstream * elem -&gt; unit
-
   val <a href="#val-flushout">flushOut</a> : outstream -&gt; unit
-
   val <a href="#val-closeout">closeOut</a> : outstream -&gt; unit
-
   val <a href="#val-mkinstream">mkInstream</a> : reader * vector -&gt; instream
-
   val <a href="#val-getreader">getReader</a> : instream -&gt; reader * vector
-
   val <a href="#val-fileposin">filePosIn</a> : instream -&gt; pos
-
   val <a href="#val-setbuffermode">setBufferMode</a> : outstream * IO.buffer_mode -&gt; unit
-
   val <a href="#val-getbuffermode">getBufferMode</a> : outstream -&gt; IO.buffer_mode
-
   val <a href="#val-mkoutstream">mkOutstream</a> : writer * IO.buffer_mode -&gt; outstream
-
   val <a href="#val-getwriter">getWriter</a> : outstream -&gt; writer * IO.buffer_mode
-
   val <a href="#val-getposout">getPosOut</a> : outstream -&gt; out_pos
-
   val <a href="#val-setposout">setPosOut</a> : out_pos -&gt; outstream
-
   val <a href="#val-fileposout">filePosOut</a> : out_pos -&gt; pos
 end
 </pre>
@@ -212,6 +184,10 @@ waits.
 > what the fields hold: the exception the reader raised is the `cause` and
 > the reader's own name is the `name`.
 
+**Law** `#1 (input f) = #1 (input f)`: a stream in hand does not change
+
+**Example** `Byte.bytesToString (#1 (input (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; input lets the exception of the reader through instead of raising Io with it as the cause
@@ -234,8 +210,13 @@ val input1 : instream -> (elem * instream) option
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
-**Example** `let val s = TextIO.getInstream (TextIO.openString "abc") in (Option.map #1 (TextIO.StreamIO.input1 s), Option.map #1 (TextIO.StreamIO.input1 s)) end = (SOME #"a", SOME #"a")` for a stream is
-a value, and reading from it gives another.
+**Law** `isSome (input1 f) = not (endOfStream f)` when the reader does not
+fail
+
+A stream is a value, and reading from it gives another, so reading the
+same stream twice gives the same element:
+
+**Example** `let val s = TextIO.getInstream (TextIO.openString "abc") in (Option.map #1 (TextIO.StreamIO.input1 s), Option.map #1 (TextIO.StreamIO.input1 s)) end = (SOME #"a", SOME #"a")`
 
 <details><summary>Tests (6)</summary>
 
@@ -261,6 +242,8 @@ longer than the greatest length of a vector.
 > the one [`inputAll`](#val-inputall) would give: immediately past that end of stream.
 > Exactly `n` elements that end at one leave the stream before it.
 
+**Example** `let val (v, f) = inputN (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes ""), 2) in (Byte.bytesToString v, Byte.bytesToString (#1 (inputAll f))) end = ("ab", "c")`
+
 <details><summary>Other implementations (5)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -284,6 +267,8 @@ val inputAll : instream -> vector * instream
 ```
 
 `inputAll f` is everything up to the next end of stream, and the stream past it.
+
+**Example** `Byte.bytesToString (#1 (inputAll (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")))) = "abc"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -315,6 +300,8 @@ val canInput : instream * int -> int option
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
+**Example** `canInput (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes ""), 2) = SOME 2`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
@@ -340,9 +327,11 @@ Closing a truncated or an already closed stream is allowed and does
 nothing more. A closed stream reads as if it ended where what had
 already been read ends.
 
+**Example** `let val f = mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "") in closeIn f; Byte.bytesToString (#1 (inputAll f)) end = ""`
+
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, Poly/ML** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+- **MLton, Poly/ML, MLKit** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 
 </details>
 
@@ -367,6 +356,8 @@ val endOfStream : instream -> bool
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails while it is asked for more.
 
+**Example** `let val f = mkInstream (BinPrimIO.openVector (Byte.stringToBytes "a"), Byte.stringToBytes "") in (endOfStream f, endOfStream (#2 (inputAll f))) end = (false, true)`
+
 <details><summary>Tests (6)</summary>
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `is-input-empty` &middot; `end-of-stream-then-more` &middot; `elements-available` &middot; `empty-stream` &middot; `removes-nothing` &middot; `closed-stream`
@@ -390,6 +381,8 @@ terminated.
 > closed or terminated stream is `ClosedStream`, from the list of [`IO`](../sig/IO.md),
 > and nothing is written.
 
+**Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in output (out, Byte.stringToBytes "hi"); closeOut out; Byte.bytesToString (BinIO.inputAll (BinIO.openIn p)) before OS.FileSys.remove p end = "hi"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
@@ -412,10 +405,11 @@ val output1 : outstream * elem -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) as [`output`](#val-output) does.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 - **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+- **MLKit** &mdash; output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 
 </details>
 
@@ -466,9 +460,11 @@ val closeOut : outstream -> unit
 > again. What it held is gone all the same: the buffer is emptied before
 > the writer is asked, as [`flushOut`](#val-flushout) does it.
 
+**Example** `(let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in closeOut f; output1 (f, 0w0); "written" end handle IO.Io {cause = IO.ClosedStream, ...} => "closed") = "closed"`
+
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+- **MLton, MLKit** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
 
 </details>
 
@@ -494,6 +490,8 @@ val mkInstream : reader * vector -> instream
 the reader is augmented, so the stream uses whatever reads can be built
 from it.
 
+**Example** `Byte.bytesToString (#1 (inputAll (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "bc"), Byte.stringToBytes "a")))) = "abc"`
+
 <details><summary>Tests (6)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-reader`
@@ -511,13 +509,16 @@ val getReader : instream -> reader * vector
 `getReader f` is the reader of `f` and what was read ahead but not consumed, and truncates `f`.
 
 The reader is the one that was given to [`mkInstream`](#val-mkinstream), not the augmented
-one.
+one. The vector is, as the specification defines it, what `(closeIn f; #1 (inputAll f))` would give in its place: what was read ahead and not
+consumed.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if `f` is closed or already truncated.
 
 > **Reading** `StreamIO.getReader/Io-cause-is-ClosedStream`. A truncated
 > stream is one that has given its reader away; the cause is
 > `ClosedStream` for it as for a closed one.
+
+**Example** `(case input1 (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")) of SOME (_, g) => Byte.bytesToString (#2 (getReader g)) | NONE => "") = "bc"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -546,23 +547,33 @@ val filePosIn : instream -> pos
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the stream has no positions, or if it has been
 truncated or closed.
 
+> **Reading** `StreamIO.filePosIn/Io-closed`. The specification raises `Io`
+> for a truncated stream and says nothing of a closed one. A closed one
+> raises too, with the cause `ClosedStream`: closing closed the reader that
+> may have to be asked where it is, and the stream is done with, as a
+> truncated one is. MLton and SML/NJ give a position instead; Poly/ML
+> raises.
+
 > **Reading** `StreamIO.filePosIn/what-is-unsupported`. "Does not support the
 > operation" means that the reader has no `getPos`, and the cause of the
 > [`IO.Io`](../sig/IO.md#exn-io) is then `RandomAccessNotSupported`, from the list of [`IO`](../sig/IO.md). A reader
 > that has `getPos` may still fail to tell where it is (a pipe), and the
 > chunks read then carry no position, which raises as well.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `(case input1 (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) of SOME (_, g) => filePosIn g | NONE => ~1) = 1`
 
-- **MLton, SML/NJ 110.99.9** &mdash; filePosIn of a truncated stream raises nothing
+<details><summary>Other implementations (2)</summary>
+
+- **MLton, SML/NJ 110.99.9, MLKit** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, SML/NJ** &mdash; another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 
 </details>
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `setPos-then-readVec` &middot; `Io-truncated` (raises)
 
-For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offsets` &middot; `reader-not-at-the-start` &middot; `setPos-then-readVec` &middot; `Io-truncated` (raises) &middot; `file-offsets`
+For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offsets` &middot; `reader-not-at-the-start` &middot; `setPos-then-readVec` &middot; `Io-truncated` (raises) &middot; `Io-closed` (raises) &middot; `file-offsets`
 
 In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `Io-without-positions` (raises) &middot; `Io-cause`
 
@@ -578,10 +589,18 @@ val setBufferMode : outstream * IO.buffer_mode -> unit
 
 `setBufferMode (f, mode)` makes `f` hold back what `mode` says.
 
-Changing to `NO_BUF` flushes what is held; changing between `LINE_BUF`
-and `BLOCK_BUF` does not.
+Changing to `NO_BUF` flushes what is held.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if that flush fails.
+
+> **Reading** `StreamIO.setBufferMode/no-flush-between-buffers`. The
+> specification says that `NO_BUF` flushes and nothing of the other
+> changes. Changing between `LINE_BUF` and `BLOCK_BUF` does not flush:
+> what is held stays until the new mode lets it go.
+
+**Law** `(setBufferMode (f, mode); getBufferMode f) = mode`
+
+**Example** `let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in setBufferMode (f, IO.BLOCK_BUF); getBufferMode f end = IO.BLOCK_BUF`
 
 <details><summary>Tests (8)</summary>
 
@@ -600,6 +619,10 @@ val getBufferMode : outstream -> IO.buffer_mode
 ```
 
 `getBufferMode f` is the mode `f` holds back by.
+
+**Law** `getBufferMode (mkOutstream (wr, mode)) = mode`
+
+**Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in getBufferMode out before (closeOut out; OS.FileSys.remove p) end = IO.BLOCK_BUF`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -630,6 +653,8 @@ val mkOutstream : writer * IO.buffer_mode -> outstream
 > one augments it, and [`getWriter`](#val-getwriter) still gives back the writer that was
 > passed in.
 
+**Example** `getBufferMode (mkOutstream (BinPrimIO.nullWr (), IO.LINE_BUF)) = IO.LINE_BUF`
+
 <details><summary>Tests (3)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-writer`
@@ -651,6 +676,10 @@ val getWriter : outstream -> writer * IO.buffer_mode
 > **Reading** `StreamIO.getWriter/terminated-is-not-closed`. A stream that is
 > already terminated gives its writer and its mode again without flushing;
 > only a closed one raises.
+
+**Law** `#2 (getWriter (mkOutstream (wr, mode))) = mode`
+
+**Example** `#2 (getWriter (mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF))) = IO.NO_BUF`
 
 <details><summary>Other implementations (1)</summary>
 

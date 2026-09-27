@@ -28,7 +28,7 @@ Its result implements [`PRIM_IO`](../sig/PRIM_IO.md).
 Readers and writers of a new element type: the [`PRIM_IO`](../sig/PRIM_IO.md) of it, built from
 the vectors, arrays and slices of that type.
 
-[`TextPrimIO`](../sig/PRIM_IO.md) and [`BinPrimIO`](../sig/PRIM_IO.md) are what this functor would give for `char`
+[`TextPrimIO`](../str/TextPrimIO.md) and [`BinPrimIO`](../str/BinPrimIO.md) are what this functor would give for `char`
 and [`Word8.word`](../sig/WORD.md#type-word); it is here for a program that wants the stack over
 elements of its own. `someElem` is a value of the type, which the reader
 needs to make an array to read into, and `pos` and `compare` say what a

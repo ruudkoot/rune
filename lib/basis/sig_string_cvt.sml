@@ -101,7 +101,9 @@ sig
   (* `takel p getc strm` is the string of the characters at the front of `strm`
      that satisfy `p`.
 
-     Law: `takel p getc strm = #1 (splitl p getc strm)` *)
+     Law: `takel p getc strm = #1 (splitl p getc strm)`
+
+     Example: `takel Char.isDigit Substring.getc (Substring.full "12ab") = "12"` *)
   val takel : (char -> bool) -> (char, 'a) reader -> 'a -> string
 
   (* `dropl p getc strm` is `strm` without the characters at its front that
@@ -116,7 +118,9 @@ sig
 
      White space is what `Char.isSpace` accepts.
 
-     Law: `skipWS getc strm = dropl Char.isSpace getc strm` *)
+     Law: `skipWS getc strm = dropl Char.isSpace getc strm`
+
+     Example: `Substring.string (skipWS Substring.getc (Substring.full "  a")) = "a"` *)
   val skipWS : (char, 'a) reader -> 'a -> 'a
 
   (* ---- Scanning a string ---- *)

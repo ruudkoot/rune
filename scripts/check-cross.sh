@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verify that the MLton, SML/NJ (64- and 32-bit), Poly/ML and (when built)
+# Verify that the MLton, SML/NJ (64- and 32-bit), Poly/ML, MLKit and (when built)
 # self-hosted builds of the compiler produce byte-identical bytecode for every test program, the
 # examples, the programs of the Basis Library suite, the compiler itself,
 # runedoc and runeopt, that the builds of runedoc (scripts/check-doc-cross.sh)
@@ -22,7 +22,7 @@ done
 cd "$(dirname "$0")/.."
 out=tests/out/cross
 mkdir -p "$out"
-builds="mlton smlnj smlnj32 polyml"
+builds="mlton smlnj smlnj32 polyml mlkit"
 [ -x bin/rune-boot ] && builds="$builds boot"
 
 # check NAME SOURCE... : compile the sources with every build and compare;

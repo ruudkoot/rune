@@ -11,7 +11,7 @@ COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
 DATE	signature			required	declared	lib/basis/sig_date.sml
 GENERAL	signature			required	declared	lib/basis/sig_general.sml
 GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
-IEEE_REAL	signature			optional	declared	lib/basis/sig_ieee_real.sml
+IEEE_REAL	signature			required	declared	lib/basis/sig_ieee_real.sml
 IMPERATIVE_IO	signature			required	declared	lib/basis/sig_imperative_io.sml
 INET6_SOCK	signature			extension	declared	lib/basis/inet6sock_sig.sml
 INET_SOCK	signature			optional	declared	lib/basis/sig_inet_sock.sml
@@ -92,7 +92,7 @@ Date	structure	DATE		required	claimed	lib/basis/date.sml
 FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
-IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
+IEEEReal	structure	IEEE_REAL		required	claimed	lib/basis/ieeereal.sml
 INet6Sock	structure	INET6_SOCK		extension	claimed	lib/basis/inet6sock.sml
 INetSock	structure	INET_SOCK		optional	claimed	lib/basis/inetsock.sml
 IO	structure	IO		required	claimed	lib/basis/io.sml
@@ -195,6 +195,7 @@ PrimIO	functor	PRIM_IO		optional	ascribed	lib/basis/io_functors.sml
 Real	structure	REAL	where type real = real	required	claimed	lib/basis/real.sml
 Real.Math	structure	MATH		required	claimed	lib/basis/real.sml
 Real32	structure	REAL		optional	claimed	lib/basis/real32.sml
+Real32.Math	structure	MATH		required	claimed	lib/basis/real32.sml
 Real32Array	structure	MONO_ARRAY	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32Array2	structure	MONO_ARRAY2	where type vector = Real32Vector.vector where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
 Real32ArraySlice	structure	MONO_ARRAY_SLICE	where type vector = Real32Vector.vector where type vector_slice = Real32VectorSlice.slice where type array = Real32Array.array where type elem = Real32.real	optional	claimed	lib/basis/mono_real32.sml
@@ -234,6 +235,7 @@ Vector	structure	VECTOR		required	claimed	lib/basis/vector.sml
 VectorSlice	structure	VECTOR_SLICE		required	claimed	lib/basis/vectorslice.sml
 WideChar	structure	CHAR	where type char = WideChar.char where type string = WideString.string	optional	claimed	lib/basis/widechar.sml
 WideCharArray	structure	MONO_ARRAY	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
+WideCharArray2	structure	MONO_ARRAY2	where type vector = WideCharVector.vector where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharArraySlice	structure	MONO_ARRAY_SLICE	where type vector = WideCharVector.vector where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharVector	structure	MONO_VECTOR	where type elem = WideChar.char	optional	claimed	lib/basis/widechar.sml
 WideCharVector	structure	MONO_VECTOR_EQ	where type elem = RuneWideChar.char	optional	ascribed	lib/basis/widechar.sml

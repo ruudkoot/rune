@@ -4,8 +4,9 @@
 #   scripts/doctor.sh [--quiet] [--scope SCOPE]...
 # Scopes (default: all):
 #   vm      C99 compiler for bin/runevm
-#   mlton smlnj smlnj32 polyml   the SML system behind bin/rune-<scope>: the
-#           release that scripts/fetch-hosts.sh installed (`make hosts`)
+#   mlton smlnj smlnj32 polyml mlkit   the SML system behind
+#           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
+#           installed (`make hosts`)
 #   check   the test runners (tests/run-tests.sh, scripts/check-*.sh)
 #   asan    make vm-asan
 #   sys     POSIX headers of the VM's system layer (vm/sys_posix.c)
@@ -21,7 +22,7 @@
 #   portability  a 32-bit x86 compiler and a big-endian 64-bit PowerPC one,
 #           with qemu to run the latter (make portability,
 #           make test-portability); not part of all either
-#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml
+#   build = vm mlton      hosts = mlton smlnj smlnj32 polyml mlkit
 #   all = everything but windows
 # Tools every target needs (sh, make, awk, ...) are checked with any scope.
 # Exit status: 0 when everything required by the scopes is present, else 1.
@@ -40,10 +41,10 @@ done
 expanded=""
 for s in $scopes; do
   case "$s" in
-    all) expanded="$expanded vm mlton smlnj smlnj32 polyml check asan sys matrix perf native" ;;
+    all) expanded="$expanded vm mlton smlnj smlnj32 polyml mlkit check asan sys matrix perf native" ;;
     build) expanded="$expanded vm mlton" ;;
-    hosts) expanded="$expanded mlton smlnj smlnj32 polyml" ;;
-    vm|mlton|smlnj|smlnj32|polyml|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
+    hosts) expanded="$expanded mlton smlnj smlnj32 polyml mlkit" ;;
+    vm|mlton|smlnj|smlnj32|polyml|mlkit|check|asan|sys|matrix|perf|native|windows|portability) expanded="$expanded $s" ;;
     *) echo "doctor: unknown scope '$s'" >&2; exit 2 ;;
   esac
 done
@@ -63,6 +64,8 @@ SMLNJ=${SMLNJ:-$hosts/smlnj/bin/sml}
 SMLNJ32=${SMLNJ32:-$hosts/smlnj32/bin/sml}
 POLYC=${POLYC:-$hosts/polyml/bin/polyc}
 POLY=${POLY:-$(dirname "$POLYC")/poly}
+MLKIT=${MLKIT:-$hosts/mlkit/bin/mlkit}
+MLKIT_LIB=${MLKIT_LIB:-$(dirname "$(dirname "$MLKIT")")/lib/mlkit}
 WINCC=${WINCC:-x86_64-w64-mingw32-gcc}
 WINCC32=${WINCC32:-i686-w64-mingw32-gcc}
 
@@ -275,6 +278,18 @@ if in_scope polyml; then
   fi
 fi
 
+# MLKit finds its library through SML_LIB (not ~/.mlkit), and writes its
+# object files into MLB/ beside the sources, here in $tmp.
+if in_scope mlkit; then
+  section "MLKit (bin/rune-mlkit)"
+  if [ ! -x "$MLKIT" ]; then bad mlkit "not installed: $MLKIT" hosts
+  elif (cd "$tmp" && printf '$(SML_LIB)/basis/basis.mlb\nhello.sml\n' > hello.mlb &&
+        SML_LIB=$MLKIT_LIB "$MLKIT" -o hello-mlkit hello.mlb > mlkit.log 2>&1 && ./hello-mlkit > /dev/null); then
+    ok mlkit "$("$MLKIT" --version 2>&1 | head -1 | cut -d' ' -f1-2) ($MLKIT)"
+  else bad mlkit "cannot compile a program: $(grep -m1 -i error "$tmp/mlkit.log" || head -1 "$tmp/mlkit.log")" hosts
+  fi
+fi
+
 # ---------------------------------------------------------------- check
 if in_scope check; then
   section "test runners"
@@ -339,7 +354,7 @@ if in_scope matrix; then
   if [ -n "$free" ] && [ "$free" -ge 3 ]; then ok disk "$free GB free under $prefix"
   else warn disk "less than 3 GB free under $prefix (${free:-?} GB)"
   fi
-  for h in mlton smlnj smlnj32 polyml; do
+  for h in mlton smlnj smlnj32 polyml mlkit; do
     if [ -d "$prefix/$h" ]; then ok "$h" "installed under $prefix/$h"
     else note "$h" "not installed under $prefix/$h (run: make hosts)"
     fi

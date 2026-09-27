@@ -9,13 +9,17 @@
 
    Area: Numbers
 
-   Status: optional
-
    See also: `REAL`, `MATH`, `STRING_CVT` *)
 signature IEEE_REAL =
 sig
   (* Raised by `Real.compare` when one of its arguments is a NaN, which no
-     order relates to anything. It is the top-level `Unordered`. *)
+     order relates to anything.
+
+     It is not in the top-level environment, whose exceptions the
+     specification lists: a program names it `IEEEReal.Unordered`.
+
+     Example: `((Real.compare (0.0 / 0.0, 1.0); "ordered") handle Unordered =>
+     "Unordered") = "Unordered"` *)
   exception Unordered
 
   (* How two reals compare, with a fourth answer for the pairs that no order relates.
@@ -52,10 +56,15 @@ sig
      Implementation: `IEEEReal.setRoundingMode/fesetround`. The mode of the C
      library, set with `fesetround`.
 
+     Law: `(setRoundingMode m; getRoundingMode ()) = m`
+
      Example: `(setRoundingMode TO_NEAREST; getRoundingMode ()) = TO_NEAREST` *)
   val setRoundingMode : rounding_mode -> unit
 
-  (* `getRoundingMode ()` is the rounding mode in force. *)
+  (* `getRoundingMode ()` is the rounding mode in force.
+
+     Example: `(setRoundingMode TO_ZERO; getRoundingMode () before
+     setRoundingMode TO_NEAREST) = TO_ZERO` *)
   val getRoundingMode : unit -> rounding_mode
 
   (* A real written out in decimal: the sign, the digits and the exponent.
@@ -75,7 +84,10 @@ sig
      is zero.
 
      Example: `toString {class = NORMAL, sign = false, digits = [1, 5], exp =
-     1} = "0.15E1"` *)
+     1} = "0.15E1"`
+
+     Example: `toString {class = INF, sign = true, digits = [], exp = 0} =
+     "~inf"` *)
   val toString : decimal_approx -> string
 
   (* `scan getc strm` reads a decimal number, an infinity or a NaN from `strm`.
@@ -83,20 +95,30 @@ sig
      It skips initial white space and then takes an optional sign (`~`, `-`
      or `+`) and either digits with an optional point and an optional
      exponent (`1.5`, `.5`, `15E~1`), or one of the words `inf`, `infinity`
-     and `nan` in any mixture of upper and lower case. Every digit that is
-     there is kept, however many.
+     and `nan` in any mixture of upper and lower case. Zeros at the start of
+     the whole part and at the end of the fraction are dropped, as the
+     specification says; every other digit is kept, however many there are,
+     so that nothing is rounded.
 
      Reading: `IEEEReal.scan/huge-exponent`. A huge exponent does not raise
      `Overflow`: once what has been read of it exceeds 10^8 the digits that
      follow are not counted, so the exponent that is recorded is large and
      of the right sign, but not the one that was written. The number it
-     describes is beyond every real anyway. *)
+     describes is beyond every real anyway. MLton, SML/NJ and Poly/ML read
+     such a number as an infinity or a zero instead.
+
+     Pinned by: `IEEEReal.scan/huge-exponent`
+
+     Example: `Option.map (toString o #1) (scan Substring.getc (Substring.full
+     "007.2500")) = SOME "0.725E1"` *)
   val scan : (char, 'a) StringCvt.reader -> (decimal_approx, 'a) StringCvt.reader
 
   (* `fromString s` is the decimal number that the text `s` begins with, or `NONE`.
 
      Law: `fromString s = StringCvt.scanString scan s`
 
-     Example: `Option.map toString (fromString "~0.0012e3") = SOME "~0.12E1"` *)
+     Example: `Option.map toString (fromString "~0.0012e3") = SOME "~0.12E1"`
+
+     Example: `Option.map toString (fromString "100.50") = SOME "0.1005E3"` *)
   val fromString : string -> decimal_approx option
 end

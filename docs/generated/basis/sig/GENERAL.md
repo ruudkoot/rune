@@ -19,13 +19,13 @@ structure General : GENERAL
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `General` | General: the exceptions and combinators of the initial basis as a structure. | [lib/basis/general.sml](../../../../lib/basis/general.sml) |
+| [`General`](../str/General.md) | General: the exceptions and combinators of the initial basis as a structure. | [lib/basis/general.sml](../../../../lib/basis/general.sml) |
 
 The types, exceptions and values of the top-level environment that belong
 to no other structure.
 
-Everything [`General`](GENERAL.md) specifies is also available without a structure in
-front, and [`General`](GENERAL.md) is the one structure whose members the language itself
+Everything [`General`](../str/General.md) specifies is also available without a structure in
+front, and [`General`](../str/General.md) is the one structure whose members the language itself
 uses: `raise Bind` is what a `val` binding does when its pattern does not
 match, [`Div`](#exn-div) is what division by zero raises. The exceptions here are those
 the specification calls the standard ones; an implementation may raise them
@@ -44,45 +44,25 @@ from anywhere its description says it may.
 <pre>
 signature GENERAL =
 sig
-
   eqtype <a href="#type-unit">unit</a>
-
   type <a href="#type-exn">exn</a> = exn
-
   exception <a href="#exn-bind">Bind</a>
-
   exception <a href="#exn-match">Match</a>
-
   exception <a href="#exn-chr">Chr</a>
-
   exception <a href="#exn-div">Div</a>
-
   exception <a href="#exn-domain">Domain</a>
-
   exception <a href="#exn-fail">Fail</a> of string
-
   exception <a href="#exn-overflow">Overflow</a>
-
   exception <a href="#exn-size">Size</a>
-
   exception <a href="#exn-span">Span</a>
-
   exception <a href="#exn-subscript">Subscript</a>
-
   val <a href="#val-exnname">exnName</a> : exn -&gt; string
-
   val <a href="#val-exnmessage">exnMessage</a> : exn -&gt; string
-
   datatype <a href="#type-order">order</a> = <a href="#con-less">LESS</a> | <a href="#con-equal">EQUAL</a> | <a href="#con-greater">GREATER</a>
-
   val <a href="#val-op-bang">!</a> : 'a ref -&gt; 'a
-
   val <a href="#val-op-colon-eq">:=</a> : 'a ref * 'a -&gt; unit
-
   val <a href="#val-o">o</a> : ('b -&gt; 'c) * ('a -&gt; 'b) -&gt; 'a -&gt; 'c
-
   val <a href="#val-before">before</a> : 'a * unit -&gt; 'a
-
   val <a href="#val-ignore">ignore</a> : 'a -&gt; unit
 end
 </pre>
@@ -336,7 +316,9 @@ val exnName : exn -> string
 `exnName ex` is the name of the constructor of `ex`, without a structure
 in front and without its argument.
 
-**Example** `exnName (Fail "why") = "Fail"`, and `exnName Subscript = "Subscript"`.
+**Example** `exnName (Fail "why") = "Fail"`
+
+**Example** `exnName Subscript = "Subscript"`
 
 > **Reading** `General.exnName/alias-either-name`. For an exception declared
 > to be another one (`exception E2 = E1`) either name is an answer: the two
@@ -371,6 +353,8 @@ reports an exception it cannot handle.
 
 > **Implementation** `General.exnMessage/format`. `"Fail: "` and the argument
 > for a [`Fail`](#exn-fail), and `exnName ex` for everything else.
+
+**Law** `String.isSubstring (exnName ex) (exnMessage ex) = true`
 
 **Example** `exnMessage (Fail "why") = "Fail: why"`
 
@@ -424,6 +408,8 @@ val ! : 'a ref -> 'a
 
 `!r` is the value that the reference `r` holds.
 
+**Example** `let val r = ref 3 in !r end = 3`
+
 Also in the [top-level environment](../top-level.md): `!`.
 
 <details><summary>Tests (6)</summary>
@@ -442,6 +428,10 @@ val := : 'a ref * 'a -> unit
 
 It is infix with precedence 3.
 
+**Law** `(r := v; !r) = v`
+
+**Example** `let val r = ref 3 in r := 4; !r end = 4`
+
 Also in the [top-level environment](../top-level.md): `:=`.
 
 <details><summary>Tests (13)</summary>
@@ -459,6 +449,9 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 `(f o g) x` is `f (g x)`: the composition of two functions.
 
 It is infix with precedence 3.
+
+**Law** `f o (g o h) = (f o g) o h`: composition is associative, as
+functions and not as values that `=` could compare
 
 **Example** `(Int.toString o (fn x => x + 1)) 1 = "2"`
 
@@ -503,6 +496,11 @@ val ignore : 'a -> unit
 
 A statement whose value is not [`unit`](#type-unit) is a warning in some compilers and
 a mistake in most programs; [`ignore`](#val-ignore) says that this one is meant.
+
+The argument is evaluated, effects and exceptions included, before it is
+thrown away.
+
+**Example** `let val r = ref 0 in ignore (r := 1; 5); !r end = 1`
 
 Also in the [top-level environment](../top-level.md): `ignore`.
 

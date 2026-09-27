@@ -57,7 +57,11 @@ sig
      Pinned by: `BinPrimIO.compare/*` `TextPrimIO.compare/*` *)
   eqtype pos
 
-  (* `compare (p, q)` orders two positions: earlier in the stream is less. *)
+  (* `compare (p, q)` orders two positions: earlier in the stream is less.
+
+     Law: `(compare (p, q) = EQUAL) = (p = q)`
+
+     Example: `compare (0, 1) = LESS` *)
   val compare : pos * pos -> order
 
   (* A source of elements: its name, how much it likes to be read at a time, and the operations it has.
@@ -71,6 +75,13 @@ sig
      `setPos`, `endPos` and `verifyPos` are the positions; `close` releases
      the source; `ioDesc` is the descriptor the operating system knows it by,
      for `OS.IO.poll`.
+
+     Reading: `PrimIO.reader/Size-for-a-negative-count`. The specification
+     recommends that a read of a negative number of elements raise `Size`,
+     and does not require it. The readers of this library raise it; MLton's
+     do not, and a reader a program makes need not.
+
+     Pinned by: `*PrimIO.*/readVec-Size-negative`
 
      Reading: `PRIM_IO.reader/after-close`. Once `close` has been called,
      every function of the reader but `close` and `getPos` raises `IO.Io`
@@ -136,7 +147,13 @@ sig
   (* `openVector v` is a reader that delivers the elements of `v` and is then at the end of its stream.
 
      The data are there already, so the reader has every read operation and
-     waits for nothing; its `name` is `"<vector>"`.
+     waits for nothing.
+
+     Example: `(case openVector (Byte.stringToBytes "abc") of RD {readVec =
+     SOME read, ...} => Byte.bytesToString (read 2) | _ => "") = "ab"`
+
+     Example: `(case openVector (Byte.stringToBytes "") of RD {name, ...} =>
+     name) = "<vector>"`
 
      Reading: `PrimIO.openVector/readVecNB-is-there`. Nothing has to be
      waited for, so `readVecNB` is present and always `SOME`, with `SOME` of
@@ -152,7 +169,10 @@ sig
      nothing, it has no positions, and once closed it behaves as any other
      closed reader.
 
-     Pinned by: `*PrimIO.nullRd/*` *)
+     Pinned by: `*PrimIO.nullRd/*`
+
+     Example: `(case nullRd () of RD {readVec = SOME read, ...} =>
+     Word8Vector.length (read 10) | _ => ~1) = 0` *)
   val nullRd : unit -> reader
 
   (* `nullWr ()` is a writer that accepts everything and keeps nothing.
@@ -161,7 +181,10 @@ sig
      reports that it wrote all it was given, and once closed it behaves as
      any other closed writer.
 
-     Pinned by: `*PrimIO.nullWr/*` *)
+     Pinned by: `*PrimIO.nullWr/*`
+
+     Example: `(case nullWr () of WR {writeVec = SOME write, ...} => write
+     (Word8VectorSlice.full (Byte.stringToBytes "abc")) | _ => ~1) = 3` *)
   val nullWr : unit -> writer
 
   (* `augmentReader rd` is `rd` with the read operations that can be built from the ones it has.
@@ -177,7 +200,14 @@ sig
      `canInput` or an `NB` operation to build it from, and no blocking read
      without `block` or a blocking operation.
 
-     Pinned by: `*PrimIO.augmentReader/*` *)
+     Pinned by: `*PrimIO.augmentReader/*`
+
+     Example: `(case augmentReader (RD {name = "one", chunkSize = 1, readVec =
+     SOME (fn _ => Byte.stringToBytes "x"), readArr = NONE, readVecNB = NONE,
+     readArrNB = NONE, block = NONE, canInput = NONE, avail = fn () => NONE,
+     getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE, close =
+     fn () => (), ioDesc = NONE}) of RD {readArr, readVecNB, ...} => (isSome
+     readArr, isSome readVecNB)) = (true, false)` *)
   val augmentReader : reader -> reader
 
   (* `augmentWriter wr` is `wr` with the write operations that can be built from the ones it has.
@@ -187,6 +217,13 @@ sig
      the writer has is kept as it is, and what cannot be reached stays
      `NONE`.
 
-     Pinned by: `*PrimIO.augmentWriter/*` *)
+     Pinned by: `*PrimIO.augmentWriter/*`
+
+     Example: `(case augmentWriter (WR {name = "one", chunkSize = 1, writeVec =
+     SOME Word8VectorSlice.length, writeArr = NONE, writeVecNB = NONE,
+     writeArrNB = NONE, block = NONE, canOutput = NONE, getPos = NONE, setPos
+     = NONE, endPos = NONE, verifyPos = NONE, close = fn () => (), ioDesc =
+     NONE}) of WR {writeArr, writeVecNB, ...} => (isSome writeArr, isSome
+     writeVecNB)) = (true, false)` *)
   val augmentWriter : writer -> writer
 end

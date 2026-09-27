@@ -1,4 +1,6 @@
-(* ListPair
+(* ListPair: two lists walked side by side, stopping at the end of the
+   shorter one or, in the functions whose names end in `Eq`, raising
+   `UnequalLengths` when the lengths differ.
 
    Implements: LIST_PAIR *)
 structure ListPair =

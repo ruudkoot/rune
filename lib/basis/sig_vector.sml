@@ -51,7 +51,9 @@ sig
 
   (* ---- Elements ---- *)
 
-  (* `length v` is the number of elements of `v`. *)
+  (* `length v` is the number of elements of `v`.
+
+     Example: `length (fromList [1, 2, 3]) = 3` *)
   val length : 'a vector -> int
 
   (* `sub (v, i)` is the element of `v` at position `i`, counting from 0.
@@ -81,10 +83,14 @@ sig
 
   (* ---- Traversing ---- *)
 
-  (* `appi f v` applies `f` to the index and the element of each position of `v`, from 0 up, for its effect. *)
+  (* `appi f v` applies `f` to the index and the element of each position of `v`, from 0 up, for its effect.
+
+     Example: `let val s = ref 0 in appi (fn (i, x) => s := !s + i * x) (fromList [1, 2, 3]); !s end = 8` *)
   val appi : (int * 'a -> unit) -> 'a vector -> unit
 
-  (* `app f v` applies `f` to every element of `v`, from 0 up, for its effect. *)
+  (* `app f v` applies `f` to every element of `v`, from 0 up, for its effect.
+
+     Example: `let val s = ref 0 in app (fn x => s := !s + x) (fromList [1, 2, 3]); !s end = 6` *)
   val app : ('a -> unit) -> 'a vector -> unit
 
   (* `mapi f v` is the vector of the results of `f` on the index and the element of each position.
@@ -93,19 +99,29 @@ sig
      21]` *)
   val mapi : (int * 'a -> 'b) -> 'a vector -> 'b vector
 
-  (* `map f v` is the vector of the results of `f` on each element, in order. *)
+  (* `map f v` is the vector of the results of `f` on each element, in order.
+
+     Example: `map (fn x => x * 2) (fromList [1, 2]) = fromList [2, 4]` *)
   val map : ('a -> 'b) -> 'a vector -> 'b vector
 
-  (* `foldli f init v` combines the elements from the left, giving `f` the index as well. *)
+  (* `foldli f init v` combines the elements from the left, giving `f` the index as well.
+
+     Example: `foldli (fn (i, x, acc) => i + x + acc) 0 (fromList [10, 20]) = 31` *)
   val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
-  (* `foldri f init v` combines the elements from the right, giving `f` the index as well. *)
+  (* `foldri f init v` combines the elements from the right, giving `f` the index as well.
+
+     Example: `foldri (fn (i, x, acc) => (i, x) :: acc) [] (fromList [7, 8]) = [(0, 7), (1, 8)]` *)
   val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
-  (* `foldl f init v` combines the elements from the left, as `List.foldl` does. *)
+  (* `foldl f init v` combines the elements from the left, as `List.foldl` does.
+
+     Example: `foldl (op ::) [] (fromList [1, 2, 3]) = [3, 2, 1]` *)
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
-  (* `foldr f init v` combines the elements from the right, as `List.foldr` does. *)
+  (* `foldr f init v` combines the elements from the right, as `List.foldr` does.
+
+     Example: `foldr (op ::) [] (fromList [1, 2, 3]) = [1, 2, 3]` *)
   val foldr : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
   (* ---- Searching ---- *)
@@ -117,13 +133,19 @@ sig
      Example: `findi (fn (_, x) => x > 1) (fromList [1, 2, 3]) = SOME (1, 2)` *)
   val findi : (int * 'a -> bool) -> 'a vector -> (int * 'a) option
 
-  (* `find p v` is `SOME x` for the first element that satisfies `p`, or `NONE`. *)
+  (* `find p v` is `SOME x` for the first element that satisfies `p`, or `NONE`.
+
+     Example: `find (fn x => x > 1) (fromList [1, 2, 3]) = SOME 2` *)
   val find : ('a -> bool) -> 'a vector -> 'a option
 
-  (* `exists p v` is `true` when some element satisfies `p`; it stops at the first that does. *)
+  (* `exists p v` is `true` when some element satisfies `p`; it stops at the first that does.
+
+     Example: `exists (fn x => x > 2) (fromList [1, 2, 3]) = true` *)
   val exists : ('a -> bool) -> 'a vector -> bool
 
-  (* `all p v` is `true` when every element satisfies `p`; it stops at the first that does not. *)
+  (* `all p v` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+     Example: `all (fn x => x > 0) (fromList [1, 2, 3]) = true` *)
   val all : ('a -> bool) -> 'a vector -> bool
 
   (* `collate cmp (v, w)` compares two vectors lexicographically with `cmp` for the elements.

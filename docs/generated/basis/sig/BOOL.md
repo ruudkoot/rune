@@ -19,14 +19,13 @@ structure Bool : BOOL
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Bool` | Bool | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
+| [`Bool`](../str/Bool.md) | Bool: the truth values, their negation, and their conversion to and from text. Its type is the top-level [`bool`](#type-bool). | [lib/basis/bool.sml](../../../../lib/basis/bool.sml) |
 
 Booleans: negation, and conversion to and from text.
 
 The conditional `if`, and `andalso` and `orelse`, which evaluate their
-second
-operand only when they must, are part of the language; [`not`](#val-not) is also in the
-top-level environment.
+second operand only when they must, are part of the language; [`not`](#val-not) is
+also in the top-level environment.
 
 ## Interface
 
@@ -34,13 +33,9 @@ top-level environment.
 signature BOOL =
 sig
   datatype <a href="#type-bool">bool</a> = datatype bool
-
   val <a href="#val-not">not</a> : bool -&gt; bool
-
   val <a href="#val-tostring">toString</a> : bool -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (bool, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; bool option
 end
 </pre>
@@ -74,6 +69,10 @@ val not : bool -> bool
 
 `not b` is the negation of `b`.
 
+**Law** `not (not b) = b`
+
+**Example** `not true = false`
+
 Also in the [top-level environment](../top-level.md): `not`.
 
 <details><summary>Tests (6)</summary>
@@ -89,6 +88,8 @@ val toString : bool -> string
 ```
 
 `toString b` is `"true"` or `"false"`.
+
+**Law** `fromString (toString b) = SOME b`
 
 **Example** `toString false = "false"`
 
@@ -117,6 +118,8 @@ and leaves `"r"`.
 > **Reading** `Bool.scan/wsx-*`. "Initial whitespace" is what [`Char.isSpace`](../sig/CHAR.md#val-isspace)
 > accepts, as for [`StringCvt.skipWS`](../sig/STRING_CVT.md#val-skipws): the space, and the characters `\t`,
 > `\n`, `\v`, `\f` and `\r`.
+
+**Example** `Option.map (fn (b, rest) => (b, Substring.string rest)) (scan Substring.getc (Substring.full " truer")) = SOME (true, "r")`
 
 <details><summary>Other implementations (5)</summary>
 
@@ -150,8 +153,10 @@ it, or `NONE`.
 > 95 and 127) are not white space: a string that begins with one of them
 > gives `NONE`.
 
-**Example** `fromString " TRUE" = SOME true` for the case does not matter and
-blanks are skipped.
+The case of the letters does not matter, and blanks before the word are
+skipped:
+
+**Example** `fromString " TRUE" = SOME true`
 
 <details><summary>Other implementations (5)</summary>
 

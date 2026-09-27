@@ -19,7 +19,7 @@ structure Time :> TIME
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Time` | Time: a length of time, held as microseconds. | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
+| [`Time`](../str/Time.md) | Time: lengths of time and points in it, to the microsecond, which is how a time is held. | [lib/basis/time.sml](../../../../lib/basis/time.sml) |
 
 A length of time, and a point in time counted from a fixed reference.
 
@@ -45,53 +45,29 @@ rather than [`Overflow`](../sig/GENERAL.md#exn-overflow).
 signature TIME =
 sig
   eqtype <a href="#type-time">time</a>
-
   exception <a href="#exn-time">Time</a>
-
   val <a href="#val-zerotime">zeroTime</a> : time
-
   val <a href="#val-fromreal">fromReal</a> : LargeReal.real -&gt; time
-
   val <a href="#val-toreal">toReal</a> : time -&gt; LargeReal.real
-
   val <a href="#val-toseconds">toSeconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tomilliseconds">toMilliseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tomicroseconds">toMicroseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-tonanoseconds">toNanoseconds</a> : time -&gt; LargeInt.int
-
   val <a href="#val-fromseconds">fromSeconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-frommilliseconds">fromMilliseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-frommicroseconds">fromMicroseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-fromnanoseconds">fromNanoseconds</a> : LargeInt.int -&gt; time
-
   val <a href="#val-op-plus">+</a> : time * time -&gt; time
-
   val <a href="#val-op-minus">-</a> : time * time -&gt; time
-
   val <a href="#val-compare">compare</a> : time * time -&gt; order
-
   val <a href="#val-op-lt">&lt;</a> : time * time -&gt; bool
-
   val <a href="#val-op-lt-eq">&lt;=</a> : time * time -&gt; bool
-
   val <a href="#val-op-gt">&gt;</a> : time * time -&gt; bool
-
   val <a href="#val-op-gt-eq">&gt;=</a> : time * time -&gt; bool
-
   val <a href="#val-now">now</a> : unit -&gt; time
-
   val <a href="#val-fmt">fmt</a> : int -&gt; time -&gt; string
-
   val <a href="#val-tostring">toString</a> : time -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (time, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; time option
 end
 </pre>
@@ -138,6 +114,8 @@ The zero of the arithmetic, and the reference point that [`now`](#val-now) count
 > point for all time values"; the suite takes it to lie in the past, so
 > `now ()` is greater.
 
+**Example** `toSeconds zeroTime = 0`
+
 <details><summary>Tests (4)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `is-fromReal-0.0` &middot; `is-zero-seconds` &middot; `toNanoseconds` &middot; `identity-of-+`
@@ -177,6 +155,8 @@ val toReal : time -> LargeReal.real
 
 `toReal t` is `t` as a number of seconds, which may lose precision.
 
+**Example** `Real.== (toReal (fromMilliseconds 1500), 1.5) = true`
+
 <details><summary>Tests (8)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `milliseconds` &middot; `negative` &middot; `zeroTime` &middot; `whole-seconds` &middot; `microsecond` &middot; `binary-fractions-exactly` &middot; `random-approximately` &middot; `fromReal-round-trip-within-a-microsecond`
@@ -190,6 +170,8 @@ val toSeconds : time -> LargeInt.int
 ```
 
 `toSeconds t` is the whole seconds of `t`, truncated towards zero.
+
+**Example** `toSeconds (fromMilliseconds 2010) = 2`
 
 <details><summary>Other implementations (3)</summary>
 
@@ -213,6 +195,8 @@ val toMilliseconds : time -> LargeInt.int
 
 `toMilliseconds t` is the whole milliseconds of `t`, truncated towards zero.
 
+**Example** `toMilliseconds (fromMicroseconds 2010999) = 2010`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; toMilliseconds rounds a negative time towards minus infinity (\~1500 us gives \~2), not "towards 0"
@@ -233,6 +217,8 @@ val toMicroseconds : time -> LargeInt.int
 
 `toMicroseconds t` is the whole microseconds of `t`, truncated towards zero.
 
+**Example** `toMicroseconds (fromMilliseconds 2) = 2000`
+
 <details><summary>Tests (4)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `spec-example-2.01` &middot; `negative` &middot; `exact` &middot; `large`
@@ -248,8 +234,10 @@ val toNanoseconds : time -> LargeInt.int
 `toNanoseconds t` is the whole nanoseconds of `t`, truncated towards zero.
 
 > **Implementation** `Time.toNanoseconds/beyond-64-bits`. The result is a
-> [`LargeInt.int`](../sig/INTEGER.md#type-int) and is exact however large it is; a [`LargeInt`](../sig/INTEGER.md) of bounded
+> [`LargeInt.int`](../sig/INTEGER.md#type-int) and is exact however large it is; a [`LargeInt`](../str/IntInf.md) of bounded
 > precision would raise [`Overflow`](../sig/GENERAL.md#exn-overflow) instead.
+
+**Example** `toNanoseconds (fromMicroseconds 3) = 3000`
 
 <details><summary>Tests (4)</summary>
 
@@ -270,6 +258,8 @@ val fromSeconds : LargeInt.int -> time
 > **Implementation** `Time.fromSeconds/range-is-open`. Where the range ends
 > is not fixed; the suite asks only that a value either come out exact or
 > raise [`Time`](#exn-time), never something else and never a wrong number.
+
+**Example** `toMilliseconds (fromSeconds 3) = 3000`
 
 <details><summary>Tests (6)</summary>
 
@@ -305,6 +295,8 @@ val fromMicroseconds : LargeInt.int -> time
 
 **Raises** [`Time`](#exn-time) if the time does not fit.
 
+**Example** `toMicroseconds (fromMicroseconds 1234567) = 1234567`
+
 <details><summary>Tests (4)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `basic` &middot; `negative` &middot; `toMicroseconds-inverts` &middot; `huge-exact-or-Time`
@@ -320,6 +312,8 @@ val fromNanoseconds : LargeInt.int -> time
 `fromNanoseconds n` is `n` nanoseconds, truncated to what a time can hold.
 
 **Raises** [`Time`](#exn-time) if the time does not fit.
+
+**Example** `toMicroseconds (fromNanoseconds 2999) = 2`
 
 <details><summary>Tests (6)</summary>
 
@@ -343,6 +337,12 @@ val + : time * time -> time
 
 **Example** `fromSeconds 1 + fromMilliseconds 500 = fromMilliseconds 1500`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
+
+</details>
+
 <details><summary>Tests (8)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `basic` &middot; `negative` &middot; `microseconds` &middot; `commutative` &middot; `adds-microseconds` &middot; `associative` &middot; `Time-when-not-representable` &middot; `Time-when-not-representable-negative`
@@ -362,6 +362,14 @@ val - : time * time -> time
 > **Implementation** `Time.-/exact-until-it-raises`. As for [`+`](#val-op-plus): exact until
 > a step raises [`Time`](#exn-time).
 
+**Example** `toSeconds (fromSeconds 5 - fromSeconds 2) = 3`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
+
+</details>
+
 <details><summary>Tests (7)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `basic` &middot; `negative-interval` &middot; `self-is-zeroTime` &middot; `inverts-+` &middot; `subtracts-microseconds` &middot; `Time-when-not-representable` &middot; `Time-when-not-representable-positive`
@@ -376,6 +384,8 @@ val compare : time * time -> order
 
 `compare (t, u)` orders two times, the shorter first.
 
+**Example** `compare (fromSeconds 1, fromSeconds 2) = LESS`
+
 <details><summary>Tests (6)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `less` &middot; `equal` &middot; `greater` &middot; `negative` &middot; `negative-and-zero` &middot; `agrees-with-microseconds`
@@ -389,6 +399,8 @@ val < : time * time -> bool
 ```
 
 `t < u` is `true` when `t` is the shorter time.
+
+**Example** `fromSeconds 1 < fromSeconds 2 = true`
 
 <details><summary>Tests (4)</summary>
 
@@ -445,6 +457,8 @@ val now : unit -> time
 ```
 
 `now ()` is the time since [`zeroTime`](#val-zerotime), by the clock of the system.
+
+**Example** `now () > zeroTime = true`
 
 <details><summary>Tests (3)</summary>
 
@@ -519,6 +533,8 @@ and digits, or a point and digits alone.
 > written; those of the fraction after the sixth are dropped rather than
 > rounded, and a number too large for a time raises [`Time`](#exn-time).
 
+**Example** `Option.map (toMilliseconds o #1) (scan Substring.getc (Substring.full "1.5x")) = SOME 1500`
+
 <details><summary>Tests (10)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `rest` &middot; `rest-after-whole` &middot; `rest-after-fraction` &middot; `skips-whitespace` &middot; `rest-after-sign` &middot; `NONE` &middot; `NONE-point` &middot; `list-reader` &middot; `list-reader-NONE` &middot; `huge-exact-or-Time`
@@ -539,9 +555,14 @@ val fromString : string -> time option
 
 **Example** `fromString " ~.25x" = SOME (fromMilliseconds ~250)`
 
-<details><summary>Other implementations (1)</summary>
+> **Reading** `Time.fromString/nanoseconds-lost-or-kept`. As [`scan`](#val-scan) reads
+> it, the digits of the fraction after the sixth are dropped rather than
+> rounded: `"0.000000999"` is no microsecond.
+
+<details><summary>Other implementations (2)</summary>
 
 - **MLton, SML/NJ** &mdash; fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+- **MLKit** &mdash; another reading of the specification: fromString rounds a fraction beyond the microsecond to the nearest microsecond (0.000000999 is 1 microsecond); the test takes the reading of MLton, SML/NJ and Poly/ML, that a fraction below the resolution is dropped or kept, as fromReal's "fractions of a microsecond may be lost"
 
 </details>
 

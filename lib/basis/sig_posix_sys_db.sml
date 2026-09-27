@@ -69,7 +69,12 @@ sig
 
   (* `getgrgid g` is what the system knows about the group numbered `g`.
 
-     Raises: `OS.SysErr` if there is no such group. *)
+     Raises: `OS.SysErr` if there is no such group.
+
+     Law: `Group.gid (getgrgid g) = g`
+
+     Example: `let val g = Posix.ProcEnv.wordToGid 0w0 in Group.gid (getgrgid g)
+     = g end = true` *)
   val getgrgid : gid -> Group.group
 
   (* `getgrnam name` is what the system knows about the group called `name`.
@@ -87,13 +92,19 @@ sig
      `OS.SysErr` for it all the same, since the alternative would be to
      return something that names nobody.
 
-     Pinned by: `Posix.SysDB.getpwnam/unknown*` *)
+     Pinned by: `Posix.SysDB.getpwnam/unknown*`
+
+     Law: `Passwd.uid (getpwuid u) = u`
+
+     Example: `Passwd.name (getpwuid (Posix.ProcEnv.wordToUid 0w0)) = "root"` *)
   val getpwuid : uid -> Passwd.passwd
 
   (* `getpwnam name` is what the system knows about the user called `name`.
 
      Raises: `OS.SysErr` if there is no such user, and at once for an empty
      name, which the primitive would otherwise take for a lookup by
-     number. *)
+     number.
+
+     Example: `Passwd.uid (getpwnam "root") = Posix.ProcEnv.wordToUid 0w0` *)
   val getpwnam : string -> Passwd.passwd
 end

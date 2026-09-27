@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 9 of 9 entries documented |
-| Tests | 45 checks of 5 entries |
+| Tests | 38 checks of 4 entries |
 | Source | [lib/basis/sig\_os.sml](../../../../lib/basis/sig_os.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure OS : OS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS` | OS: the errors of the system, the file system, paths, the process and the I/O descriptors. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS`](../str/OS.md) | OS: the errors of the system, the file system, paths, the process and the I/O descriptors. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The operating system: its errors, its file system, its paths, its
 processes and its I/O descriptors, gathered into one structure.
@@ -42,21 +42,13 @@ programs.
 signature OS =
 sig
   structure <a href="#str-filesys">FileSys</a> : OS_FILE_SYS
-
   structure <a href="#str-io">IO</a> : OS_IO
-
   structure <a href="#str-path">Path</a> : OS_PATH
-
   structure <a href="#str-process">Process</a> : OS_PROCESS
-
   eqtype <a href="#type-syserror">syserror</a>
-
   exception <a href="#exn-syserr">SysErr</a> of string * syserror option
-
   val <a href="#val-errormsg">errorMsg</a> : syserror -&gt; string
-
   val <a href="#val-errorname">errorName</a> : syserror -&gt; string
-
   val <a href="#val-syserror">syserror</a> : string -&gt; syserror option
 end
 </pre>
@@ -109,14 +101,6 @@ eqtype syserror
 
 The type of a condition the system reports.
 
-<details><summary>Tests (7)</summary>
-
-For `OS`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `inverts-errorName-notdir` &middot; `unknown-name` &middot; `empty-name`
-
-For `OS`, in [tests/basis/os.process\_os.sml](../../../../tests/basis/os.process_os.sml): `errorName-*` &middot; `same-condition` &middot; `not-a-name` &middot; `Posix-errors`
-
-</details>
-
 ### <a name="exn-syserr"></a>`SysErr`
 
 ```sml
@@ -124,6 +108,12 @@ exception SysErr of string * syserror option
 ```
 
 Raised when the system refuses an operation: the message it gave, and the condition when there is one.
+
+When the condition `e` is there, the message is `errorMsg e`: the
+specification asks for exactly that, so a program can show the message
+and still act on the condition.
+
+**Example** `((FileSys.remove "/no/such/file"; "removed") handle SysErr (_, SOME e) => errorName e) = "noent"`
 
 <details><summary>Tests (17)</summary>
 
@@ -140,6 +130,14 @@ val errorMsg : syserror -> string
 ```
 
 `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+**Example** `errorMsg (valOf (syserror "noent")) = "No such file or directory"`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on \`f': No such file or directory"
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -158,7 +156,7 @@ val errorName : syserror -> string
 `errorName e` is a short name for `e`, meant for a program.
 
 > **Implementation** `OS.errorName/posix-names`. The names are those of
-> [`Posix.Error`](../sig/POSIX.md#str-error), lower case and without the `E`: `"noent"` rather than
+> [`Posix.Error`](../str/Posix.Error.md), lower case and without the `E`: `"noent"` rather than
 > `"ENOENT"`. An error that POSIX has no name for is called `error` and
 > its number, `"error9999"`, which [`syserror`](#val-syserror) reads back.
 
@@ -190,6 +188,10 @@ val syserror : string -> syserror option
 > as: one condition gives one error and one name, whichever function met
 > it, and different conditions have different names, so [`syserror`](#val-syserror) and
 > [`errorName`](#val-errorname) invert each other.
+
+**Law** `syserror (errorName e) = SOME e`
+
+**Example** `syserror "no-such-error" = NONE`
 
 <details><summary>Tests (7)</summary>
 

@@ -17,7 +17,10 @@ struct
   fun chr i = if Int.< (i, 0) orelse Int.> (i, maxOrd) then raise Chr else i
 end
 
-(* Sealed with a vector of its own (MONO_VECTOR_EQ), so that WideString.string
+(* WideCharVector: immutable vectors of wide characters, which are the
+   strings of `WideString`.
+
+   Sealed with a vector of its own (MONO_VECTOR_EQ), so that WideString.string
    is a type name: the constants of a type are overloaded at a name.
 
    Implements: MONO_VECTOR where type elem = WideChar.char
@@ -25,19 +28,28 @@ end
    Status: optional *)
 structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
   RuneMonoVectorFn (type elem = RuneWideChar.char)
-(* Implements: MONO_VECTOR_SLICE where type vector = WideCharVector.vector
+(* WideCharVectorSlice: stretches of `WideCharVector` vectors, without a
+   copy, which are the substrings of `WideSubstring`.
+
+   Implements: MONO_VECTOR_SLICE where type vector = WideCharVector.vector
    where type elem = WideChar.char
 
    Status: optional *)
 structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector
   where type elem = RuneWideChar.char = RuneMonoVectorSliceFn (structure V = WideCharVector)
-(* Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
+(* WideCharArray: mutable arrays of wide characters, a type of their own with
+   identity equality, whose vectors are those of `WideCharVector`.
+
+   Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
    elem = WideChar.char
 
    Status: optional *)
 structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector
   where type elem = RuneWideChar.char = RuneMonoArrayFn (structure V = WideCharVector)
-(* Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
+(* WideCharArraySlice: stretches of `WideCharArray` arrays, without a copy: an
+   update through a slice changes the array.
+
+   Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
    where type vector_slice = WideCharVectorSlice.slice where type array =
    WideCharArray.array where type elem = WideChar.char
 
@@ -46,6 +58,16 @@ structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVec
   where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array
   where type elem = RuneWideChar.char =
   RuneMonoArraySliceFn (structure V = WideCharVector structure A = WideCharArray structure VS = WideCharVectorSlice)
+(* WideCharArray2: two-dimensional arrays of wide characters, whose rows and
+   columns are `WideCharVector` vectors.
+
+   Implements: MONO_ARRAY2 where type vector = WideCharVector.vector where
+   type elem = WideChar.char
+
+   Status: optional *)
+structure WideCharArray2 :> MONO_ARRAY2 where type vector = WideCharVector.vector
+  where type elem = RuneWideChar.char =
+  RuneMonoArray2Fn (structure V = WideCharVector)
 
 structure RuneWideCharImpl =
 struct
@@ -156,7 +178,10 @@ struct
   end
 end
 
-(* Implements: CHAR where type char = WideChar.char where type string =
+(* WideChar: the characters of Unicode, each a code point up to 0x10FFFF, and
+   their classes and conversions.
+
+   Implements: CHAR where type char = WideChar.char where type string =
    WideString.string
 
    Status: optional

@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 24 of 24 entries documented |
-| Tests | 232 checks of 23 entries |
+| Tests | 205 checks of 21 entries |
 | Source | [lib/basis/sig\_date.sml](../../../../lib/basis/sig_date.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Date : DATE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Date` | Date: a moment as a person writes it down. | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
+| [`Date`](../str/Date.md) | Date: a moment as a person writes it down. | [lib/basis/date.sml](../../../../lib/basis/date.sml) |
 
 A moment as a person writes it down: a year, a month, a day and a time of
 day, in some time zone.
@@ -50,7 +50,6 @@ February.
 signature DATE =
 sig
   datatype <a href="#type-weekday">weekday</a> = <a href="#con-mon">Mon</a> | <a href="#con-tue">Tue</a> | <a href="#con-wed">Wed</a> | <a href="#con-thu">Thu</a> | <a href="#con-fri">Fri</a> | <a href="#con-sat">Sat</a> | <a href="#con-sun">Sun</a>
-
   datatype <a href="#type-month">month</a>
     = <a href="#con-jan">Jan</a>
     | <a href="#con-feb">Feb</a>
@@ -64,11 +63,8 @@ sig
     | <a href="#con-oct">Oct</a>
     | <a href="#con-nov">Nov</a>
     | <a href="#con-dec">Dec</a>
-
   type <a href="#type-date">date</a>
-
   exception <a href="#exn-date">Date</a>
-
   val <a href="#val-date">date</a> : {<a href="#fld-date.year">year</a> : int,
               <a href="#fld-date.month">month</a> : month,
               <a href="#fld-date.day">day</a> : int,
@@ -76,43 +72,24 @@ sig
               <a href="#fld-date.minute">minute</a> : int,
               <a href="#fld-date.second">second</a> : int,
               <a href="#fld-date.offset">offset</a> : Time.time option} -&gt; date
-
   val <a href="#val-year">year</a> : date -&gt; int
-
   val <a href="#val-month">month</a> : date -&gt; month
-
   val <a href="#val-day">day</a> : date -&gt; int
-
   val <a href="#val-hour">hour</a> : date -&gt; int
-
   val <a href="#val-minute">minute</a> : date -&gt; int
-
   val <a href="#val-second">second</a> : date -&gt; int
-
   val <a href="#val-weekday">weekDay</a> : date -&gt; weekday
-
   val <a href="#val-yearday">yearDay</a> : date -&gt; int
-
   val <a href="#val-offset">offset</a> : date -&gt; Time.time option
-
   val <a href="#val-isdst">isDst</a> : date -&gt; bool option
-
   val <a href="#val-localoffset">localOffset</a> : unit -&gt; Time.time
-
   val <a href="#val-fromtimelocal">fromTimeLocal</a> : Time.time -&gt; date
-
   val <a href="#val-fromtimeuniv">fromTimeUniv</a> : Time.time -&gt; date
-
   val <a href="#val-totime">toTime</a> : date -&gt; Time.time
-
   val <a href="#val-compare">compare</a> : date * date -&gt; order
-
   val <a href="#val-fmt">fmt</a> : string -&gt; date -&gt; string
-
   val <a href="#val-tostring">toString</a> : date -&gt; string
-
   val <a href="#val-scan">scan</a> : (char, 'a) StringCvt.reader -&gt; (date, 'a) StringCvt.reader
-
   val <a href="#val-fromstring">fromString</a> : string -&gt; date option
 end
 </pre>
@@ -170,12 +147,6 @@ The months of the year.
 | <a name="con-nov"></a>`Nov` |  |  |
 | <a name="con-dec"></a>`Dec` |  |  |
 
-<details><summary>Tests (1)</summary>
-
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
-
-</details>
-
 ### <a name="type-date"></a>`date`
 
 ```sml
@@ -188,12 +159,6 @@ The type of a calendar reading.
 
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
 - **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date
-
-</details>
-
-<details><summary>Tests (26)</summary>
-
-For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `canonical-is-kept` &middot; `spec-example-negative-seconds` &middot; `second-60` &middot; `minutes-to-hours` &middot; `hour-24` &middot; `negative-hour` &middot; `days-to-months` &middot; `day-0` &middot; `negative-day` &middot; `months-to-years` &middot; `seconds-carry-to-the-year` &middot; `seconds-borrow-from-the-year` &middot; `a-year-of-seconds` &middot; `366-days-of-2000` &middot; `leap-2000` &middot; `leap-2004` &middot; `not-leap-2001` &middot; `not-leap-1900` &middot; `not-leap-2100` &middot; `weekDay-of-normalised` &middot; `yearDay-of-normalised` &middot; `is-canonical` &middot; `Date-or-a-year-far-away` &middot; `calendar-1900-2199` &middot; `offset-of-the-local-zone` &middot; `local-normalises`
 
 </details>
 
@@ -277,6 +242,11 @@ val year : date -> int
 
 `year d` is the year of `d`, as a number and not counted from 1900.
 
+**Law** `year (date r) = #year r` when the fields of `r` are in range, and
+the same for [`month`](#val-month), [`day`](#val-day), [`hour`](#val-hour), [`minute`](#val-minute) and [`second`](#val-second)
+
+**Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`
+
 <details><summary>Tests (2)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `base-0`
@@ -290,6 +260,8 @@ val month : date -> month
 ```
 
 `month d` is the month of `d`.
+
+**Example** `month (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = Mar`
 
 <details><summary>Tests (1)</summary>
 
@@ -305,6 +277,8 @@ val day : date -> int
 
 `day d` is the day of the month of `d`, from 1.
 
+**Example** `day (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 8`
+
 <details><summary>Tests (1)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
@@ -318,6 +292,8 @@ val hour : date -> int
 ```
 
 `hour d` is the hour of `d`, from 0 to 23.
+
+**Example** `hour (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 19`
 
 <details><summary>Tests (1)</summary>
 
@@ -333,6 +309,8 @@ val minute : date -> int
 
 `minute d` is the minute of `d`, from 0 to 59.
 
+**Example** `minute (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 6`
+
 <details><summary>Tests (1)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
@@ -346,6 +324,8 @@ val second : date -> int
 ```
 
 `second d` is the second of `d`, from 0 to 59, or up to 61 for a leap second.
+
+**Example** `second (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 45`
 
 <details><summary>Tests (1)</summary>
 
@@ -393,10 +373,14 @@ val offset : date -> Time.time option
 
 `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC.
 
-<details><summary>Other implementations (2)</summary>
+**Example** `offset (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME Time.zeroTime`
+
+<details><summary>Other implementations (4)</summary>
 
 - **MLton** &mdash; offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
 - **SML/NJ** &mdash; date does not add the whole days of an offset of 24 hours or more to the hours ("sgn(t)(24\*d) is added to the hours")
+- **MLKit** &mdash; offset reports the time west of UTC modulo a day, never negative: 5:30 east gives 18:30 west (66600 s)
+- **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, and offset reports it modulo a day (82800 s)
 
 </details>
 
@@ -420,6 +404,8 @@ val isDst : date -> bool option
 The suite assumes that no zone has daylight saving time both in January
 and in July.
 
+**Example** `isDst (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME false`
+
 <details><summary>Tests (2)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `UTC-is-not-daylight-saving` &middot; `not-both-January-and-July`
@@ -438,6 +424,8 @@ val localOffset : unit -> Time.time
 > not say whether daylight saving time counts, and takes offsets modulo
 > twenty-four hours; the suite accepts the offset in force now, or an hour
 > more, reduced modulo a day, west of UTC.
+
+**Example** `LargeInt.abs (Time.toSeconds (localOffset ())) <= 86400 = true`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -467,6 +455,8 @@ val fromTimeLocal : Time.time -> date
 The suite's moments are noon UTC on 15 January and 15 July 2001, away from
 the changes of every zone, and the time at which it runs.
 
+**Example** `offset (fromTimeLocal Time.zeroTime) = NONE`
+
 <details><summary>Tests (5)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-NONE` &middot; `toTime-inverts` &middot; `differs-from-UTC-by-less-than-a-day` &middot; `differs-from-UTC-by-whole-minutes` &middot; `same-weekDay-and-yearDay-as-the-fields`
@@ -488,10 +478,16 @@ val fromTimeUniv : Time.time -> date
 The suite assumes that the clock of the machine shows a year from 2020 to
 2199\.
 
-<details><summary>Other implementations (2)</summary>
+**Law** `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for a
+time `t` at or after the epoch
+
+**Example** `toString (fromTimeUniv (Time.fromSeconds 86400)) = "Fri Jan 02 00:00:00 1970"`
+
+<details><summary>Other implementations (3)</summary>
 
 - **MLton, SML/NJ (32-bit), SML/NJ** &mdash; toTime of a date before 1970 raises Date
 - **SML/NJ 110.99.9** &mdash; fromTimeUniv is off by twice the local offset, the wrong way: 23:59:59 UTC comes back as 4:59:59 the next day in summer time (2:30 west) and 6:59:59 in winter (3:30 west)
+- **MLKit** &mdash; toTime of a date before 1970 raises Date, and fromTimeUniv truncates a negative time towards zero instead of flooring it to its second
 
 </details>
 
@@ -517,7 +513,7 @@ val toTime : date -> Time.time
 
 **Example** `Time.toSeconds (toTime (date {year = 1970, month = Jan, day = 2, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime})) = 86400`
 
-<details><summary>Other implementations (11)</summary>
+<details><summary>Other implementations (14)</summary>
 
 - **MLton** &mdash; date with an offset of more than a day east moves the date a day the wrong way
 - **MLton, SML/NJ (32-bit)** &mdash; date of year 10^8 raises Overflow, not Date
@@ -529,7 +525,10 @@ val toTime : date -> Time.time
 - **SML/NJ 110.99.9 (64-bit)** &mdash; toTime of a date of year 10^8 gives a time of the year 2092 instead of raising Date
 - **SML/NJ (32-bit)** &mdash; toTime of a date after 2038 raises Date (32-bit time; "support date values ranging from around 1900 to 2200")
 - **SML/NJ 110.99.9** &mdash; toTime ignores the offset of a date (12:00 at 5 hours west is 12:00 UTC)
-- **Poly/ML** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+- **Poly/ML, MLKit** &mdash; toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+- **MLKit** &mdash; date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
+- **MLKit** &mdash; toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
+- **MLKit** &mdash; toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
 
 </details>
 
@@ -551,6 +550,8 @@ val compare : date * date -> order
 > they are written: two dates that name the same moment in different zones
 > do not compare equal, and one written later in its own zone is the
 > greater.
+
+**Example** `compare (date {year = 2000, month = Dec, day = 31, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}, date {year = 2001, month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = LESS`
 
 <details><summary>Tests (11)</summary>
 
@@ -580,13 +581,14 @@ val fmt : string -> date -> string
 > zone for a local date, `UTC` for a date at the offset zero and nothing for
 > one at any other offset. A `%` that ends the format is written as it is.
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (6)</summary>
 
 - **SML/NJ** &mdash; fmt "%%Y" gives "1995": after %% the Y is taken as a directive, not the character Y
 - **SML/NJ (32-bit)** &mdash; fmt "%Z" raises Date for a UTC date
 - **Poly/ML** &mdash; fmt "" raises Date instead of giving ""
 - **MLton, SML/NJ 110.99.9 (64-bit)** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 - **Poly/ML** &mdash; fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+- **MLKit** &mdash; fmt "%Z" of a UTC date gives the name of the local time zone ("NST") or garbage: the runtime's sml\_strftime leaves tm\_zone unset, and strftime reads it (for a local date it may crash)
 
 </details>
 
@@ -605,6 +607,8 @@ val toString : date -> string
 `toString d` is `d` in the 24 characters of `"Wed Mar 08 19:06:45 1995"`, which is `fmt "%a %b %d %H:%M:%S %Y" d`.
 
 **Raises** [`Date`](#exn-date) if `d` is not a valid date.
+
+**Law** `toString d = fmt "%a %b %d %H:%M:%S %Y" d`
 
 **Example** `toString (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = "Wed Mar 08 19:06:45 1995"`
 
@@ -628,10 +632,12 @@ val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 > both `NONE`). So [`scan`](#val-scan) can give a date that [`fmt`](#val-fmt) and [`toString`](#val-tostring) then
 > refuse.
 
+**Example** `Option.map (toString o #1) (scan Substring.getc (Substring.full " Wed Mar 08 19:06:45 1995")) = SOME "Wed Mar 08 19:06:45 1995"`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; scan and fromString do not skip initial whitespace ("after ignoring possible initial whitespace")
-- **SML/NJ** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
+- **SML/NJ, MLKit** &mdash; scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
 
 </details>
 

@@ -19,7 +19,7 @@ structure CommandLine : COMMAND_LINE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `CommandLine` | CommandLine | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
+| [`CommandLine`](../str/CommandLine.md) | CommandLine: the name the program was run under and the arguments it was given, as the operating system passed them to the VM. | [lib/basis/commandline.sml](../../../../lib/basis/commandline.sml) |
 
 The name of the program and the arguments it was given.
 
@@ -29,7 +29,6 @@ The name of the program and the arguments it was given.
 signature COMMAND_LINE =
 sig
   val <a href="#val-name">name</a> : unit -&gt; string
-
   val <a href="#val-arguments">arguments</a> : unit -&gt; string list
 end
 </pre>
@@ -45,6 +44,8 @@ val name : unit -> string
 > **Implementation** `CommandLine.name/system`. What the operating system
 > passed to the program, which need not be a path that leads to it.
 
+**Example** `size (name ()) > 0 = true`
+
 <details><summary>Tests (2)</summary>
 
 For `CommandLine`, in [tests/basis/commandline.sml](../../../../tests/basis/commandline.sml): `nonempty` &middot; `stable`
@@ -59,13 +60,13 @@ val arguments : unit -> string list
 
 `arguments ()` is the list of the arguments that follow the name, in order.
 
+The name is not among them: a command of `n` words, the name included,
+gives `n - 1` arguments.
+
 > **Reading** `CommandLine.arguments/none-under-the-runner`. Which arguments
 > a program sees is "operating system and implementation-specific": what
 > the system passes after the name, with nothing taken away, and the empty
 > list when it passes none.
-
-**Law** `List.length (arguments ()) + 1` is the number of words the command
-was given, name included.
 
 <details><summary>Other implementations (1)</summary>
 

@@ -7,6 +7,8 @@
 #   - what the suite matches, the library claims;
 #   - a signature of the library's own says `Status: extension`, and one the
 #     specification has does not;
+#   - a structure says it is required exactly when the specification's list
+#     (spec-sigs/REQUIRED) names it;
 #   - what the library claims in a comment, the suite matches, unless the
 #     signature is the library's own and spec-sigs does not transcribe it
 #     (an ascription
@@ -68,6 +70,23 @@ awk -F '\t' 'NR > 1 && $2 == "signature" { sig[$1] = $7 }
 while IFS="$(printf '\t')" read -r sig src; do
   echo "check-claims: nothing implements $sig ($src): a signature the library needs for itself is named RUNE_... and stays out of the documentation"
   echo x >> "$tmp/status-bad"
+done
+
+# A structure of the specification is required or optional, and the
+# specification says which: spec-sigs/REQUIRED transcribes its list. IEEEReal
+# called itself optional until this was checked.
+grep -v '^#' tests/basis/spec-sigs/REQUIRED | sort -u > "$tmp/required"
+awk -F '\t' 'NR > 1 && $2 == "structure" && $1 !~ /\./ { print $1 "\t" $5 "\t" $7 }' "$claims" |
+while IFS="$(printf '\t')" read -r str st src; do
+  if grep -q -x "$str" "$tmp/required"; then
+    [ "$st" = required ] ||
+      { echo "check-claims: $str is required by the specification (spec-sigs/REQUIRED), and $src says \`Status: $st\`"
+        echo x >> "$tmp/status-bad"; }
+  else
+    [ "$st" = required ] &&
+      { echo "check-claims: $str says it is required ($src), and the specification's list (spec-sigs/REQUIRED) does not name it"
+        echo x >> "$tmp/status-bad"; }
+  fi
 done
 
 [ -f "$tmp/status-bad" ] && status=1

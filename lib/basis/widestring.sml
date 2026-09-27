@@ -140,7 +140,10 @@ struct
   end
 end
 
-(* Implements: STRING where type string = WideCharVector.vector where type
+(* WideString: strings of wide characters, and their conversions to and from
+   the text of SML and C.
+
+   Implements: STRING where type string = WideCharVector.vector where type
    char = WideChar.char
 
    Status: optional
@@ -266,7 +269,10 @@ struct
   val foldr = VS.foldr
 end
 
-(* Implements: SUBSTRING where type substring = WideCharVectorSlice.slice where
+(* WideSubstring: pieces of wide strings, taken apart and searched without a
+   copy.
+
+   Implements: SUBSTRING where type substring = WideCharVectorSlice.slice where
    type string = WideCharVector.vector where type char = WideChar.char
 
    Status: optional *)

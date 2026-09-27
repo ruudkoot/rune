@@ -36,7 +36,11 @@ sig
 
   (* `pipe ()` is a pair of descriptors: what is written to `outfd` can be read from `infd`.
 
-     Raises: `OS.SysErr` if no pipe can be made. *)
+     Raises: `OS.SysErr` if no pipe can be made.
+
+     Example: `let val {infd, outfd} = pipe () in ignore (writeVec (outfd,
+     Word8VectorSlice.full (Byte.stringToBytes "hi"))); Byte.bytesToString
+     (readVec (infd, 2)) end = "hi"` *)
   val pipe : unit -> {infd : file_desc, outfd : file_desc}
 
   (* `dup fd` is a new descriptor on the same open file as `fd`.
@@ -59,7 +63,10 @@ sig
 
   (* `close fd` closes `fd`.
 
-     Raises: `OS.SysErr` if `fd` was not open. *)
+     Raises: `OS.SysErr` if `fd` was not open.
+
+     Example: `((close (Posix.FileSys.wordToFD 0w999); "closed") handle
+     OS.SysErr _ => "SysErr") = "SysErr"` *)
   val close : file_desc -> unit
 
   (* `readVec (fd, n)` reads at most `n` bytes from `fd` and is what it read.
@@ -67,7 +74,10 @@ sig
      A shorter vector than `n` means only that less was there; the empty
      vector means the end of the file.
 
-     Raises: `Size` if `n < 0`; `OS.SysErr` if the read fails. *)
+     Raises: `Size` if `n < 0`; `OS.SysErr` if the read fails.
+
+     Example: `((readVec (Posix.FileSys.stdin, ~1); "read") handle Size =>
+     "Size") = "Size"` *)
   val readVec : file_desc * int -> Word8Vector.vector
 
   (* `readArr (fd, sl)` reads into the stretch `sl` and is the number of bytes read, 0 at the end of the file.
@@ -155,7 +165,10 @@ sig
   (* `lseek (fd, n, whence)` moves `fd` to `n` bytes from the place `whence` names, and is where it now is.
 
      Raises: `OS.SysErr` if `fd` cannot be positioned -- a pipe, a socket or
-     a terminal. *)
+     a terminal.
+
+     Example: `let val {infd, ...} = pipe () in (lseek (infd, 0, SEEK_SET);
+     "moved") handle OS.SysErr _ => "SysErr" end = "SysErr"` *)
   val lseek : file_desc * Position.int * whence
               -> Position.int
 
@@ -191,7 +204,10 @@ sig
                   pid : pid option
                 } -> flock
 
-    (* `ltype fl` is the kind of lock `fl` describes. *)
+    (* `ltype fl` is the kind of lock `fl` describes.
+
+       Law: `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p})
+       = t`, and likewise for the other fields *)
     val ltype : flock -> lock_type
 
     (* `whence fl` is what `start fl` is counted from. *)

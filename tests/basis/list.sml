@@ -72,6 +72,8 @@ struct
   (* ---- app, map, mapPartial: applied from left to right ---- *)
   val () = eqL ("List.app/order", [1, 2, 3],
                 fn () => let val (f, seen) = trace (fn _ => ()) in List.app f [1, 2, 3]; seen () end)
+  val () = eqL ("List.app/nil", [],
+                fn () => let val (f, seen) = trace (fn _ => ()) in List.app f ([] : int list); seen () end)
   val () = eqL ("List.map/basic", [2, 4, 6], fn () => List.map (fn x => 2 * x) [1, 2, 3])
   val () = eqL ("List.map/nil", [], fn () => List.map (fn x => 2 * x) [])
   val () = eqL ("List.map/order", [1, 2, 3],
@@ -167,6 +169,7 @@ struct
   val () = eqI ("List.foldl/long", 199999, fn () => List.foldl Int.max 0 big)
   val () = eqI ("List.foldr/long", 199999, fn () => List.foldr Int.max 0 big)
   val () = eqI ("List.map/long", 200000, fn () => List.length (List.map (fn x => x + 1) big))
+  val () = eqI ("List.app/long", 200000, fn () => let val n = ref 0 in List.app (fn _ => n := !n + 1) big; !n end)
   val () = eqI ("List.@/long", 400000, fn () => List.length (big @ big))
   val () = eqI ("List.rev/long", 199999, fn () => List.hd (List.rev big))
   val () = eqI ("List.filter/long", 100000, fn () => List.length (List.filter (fn x => x mod 2 = 0) big))

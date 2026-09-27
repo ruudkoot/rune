@@ -143,6 +143,21 @@ struct
   val () = eqR ("Math.acos/posInf", nan, fn () => Math.acos posInf)
   val () = eqR ("Math.acos/negInf", nan, fn () => Math.acos negInf)
   val () = eqR ("Math.acos/nan", nan, fn () => Math.acos nan)
+  (* near 1 and ~1 the results are accurate to the last digits: the
+     references are the arc sines and cosines of the reals nearest to the
+     numerals, to 50 digits, rounded *)
+  fun withinUlps (n, got, expected) =
+    Real.abs (got - expected) <= real n * (Real.nextAfter (expected, posInf) - expected)
+  val () = T.check ("Math.acos/near-one-accurate",
+                    fn () => withinUlps (2, Math.acos 0.99999999, 0.00014142135671046477)
+                             andalso withinUlps (2, Math.acos 0.999999, 0.0014142136802445852))
+  val () = T.check ("Math.acos/near-minus-one-accurate",
+                    fn () => withinUlps (2, Math.acos (~0.9999999), 3.141145439990684))
+  val () = T.check ("Math.asin/near-one-accurate",
+                    fn () => withinUlps (2, Math.asin 0.99999999, 1.5706549054381862)
+                             andalso withinUlps (2, Math.asin 0.999999, 1.5693821131146521))
+  val () = T.check ("Math.asin/near-minus-one-accurate",
+                    fn () => withinUlps (2, Math.asin (~0.9999999), ~1.5703491131957876))
   (* "Its result is guaranteed to be in the closed interval [-pi/2,pi/2]" and
      "[0,pi]"; the inverses of sin and cos. The bounds allow for the rounding
      of pi. *)
@@ -366,6 +381,13 @@ struct
   val () = eqR ("Math.log10/negzero", negInf, fn () => Math.log10 (~0.0))
   val () = eqR ("Math.log10/posInf", posInf, fn () => Math.log10 posInf)
   val () = eqR ("Math.log10/nan", nan, fn () => Math.log10 nan)
+  (* an exact power of ten has an exact logarithm, which a real holds: 10^k
+     is a real exactly for k up to 22 *)
+  val () = T.check ("Math.log10/powers-of-ten-exact",
+                    fn () => let
+                               fun go (k, p) = k > 22 orelse (Real.== (Math.log10 p, real k) andalso go (k + 1, p * 10.0))
+                             in go (0, 1.0) end)
+  val () = T.eq T.int ("Math.log10/floor-of-a-thousand", 3, fn () => Real.floor (Math.log10 1000.0))
   val () = law ("Math.ln/law-product-is-sum", 200, 1, 1000000,
                 fn x => close (Math.ln (x * 3.0), Math.ln x + Math.ln 3.0) andalso close (Math.exp (Math.ln x), x))
   val () = law ("Math.log10/law-is-ln-over-ln-ten", 200, 1, 1000000,

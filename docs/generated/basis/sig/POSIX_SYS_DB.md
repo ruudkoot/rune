@@ -19,7 +19,7 @@ structure Posix.SysDB : POSIX_SYS_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.SysDB` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.SysDB`](../str/Posix.SysDB.md) | Posix.SysDB: the user and group databases of the system. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The password and group databases: turning a user or group name into a
 number, and back.
@@ -37,47 +37,38 @@ whatever the system's name service offers. They do not change anything.
 > holds on Linux and the BSDs, and compares the other fields with what
 > `getent` prints.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid\_r (and the IDs of getpw\*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
+
+</details>
+
 ## Interface
 
 <pre>
 signature POSIX_SYS_DB =
 sig
   eqtype <a href="#type-uid">uid</a>
-
   eqtype <a href="#type-gid">gid</a>
-
   structure <a href="#str-passwd">Passwd</a> :
   sig
     type <a href="#type-passwd.passwd">passwd</a>
-
     val <a href="#val-passwd.name">name</a> : passwd -&gt; string
-
     val <a href="#val-passwd.uid">uid</a> : passwd -&gt; uid
-
     val <a href="#val-passwd.gid">gid</a> : passwd -&gt; gid
-
     val <a href="#val-passwd.home">home</a> : passwd -&gt; string
-
     val <a href="#val-passwd.shell">shell</a> : passwd -&gt; string
   end
-
   structure <a href="#str-group">Group</a> :
   sig
     type <a href="#type-group.group">group</a>
-
     val <a href="#val-group.name">name</a> : group -&gt; string
-
     val <a href="#val-group.gid">gid</a> : group -&gt; gid
-
     val <a href="#val-group.members">members</a> : group -&gt; string list
   end
-
   val <a href="#val-getgrgid">getgrgid</a> : gid -&gt; Group.group
-
   val <a href="#val-getgrnam">getgrnam</a> : string -&gt; Group.group
-
   val <a href="#val-getpwuid">getpwuid</a> : uid -&gt; Passwd.passwd
-
   val <a href="#val-getpwnam">getpwnam</a> : string -&gt; Passwd.passwd
 end
 </pre>
@@ -88,7 +79,7 @@ end
 eqtype uid
 ```
 
-The type of the number that names a user, the one of [`Posix.ProcEnv`](../sig/POSIX.md#str-procenv).
+The type of the number that names a user, the one of [`Posix.ProcEnv`](../str/Posix.ProcEnv.md).
 
 ### <a name="type-gid"></a>`gid`
 
@@ -244,6 +235,10 @@ val getgrgid : gid -> Group.group
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if there is no such group.
 
+**Law** `Group.gid (getgrgid g) = g`
+
+**Example** `let val g = Posix.ProcEnv.wordToGid 0w0 in Group.gid (getgrgid g) = g end = true`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-group` &middot; `unknown` (raises)
@@ -282,6 +277,10 @@ val getpwuid : uid -> Passwd.passwd
 > [`OS.SysErr`](../sig/OS.md#exn-syserr) for it all the same, since the alternative would be to
 > return something that names nobody.
 
+**Law** `Passwd.uid (getpwuid u) = u`
+
+**Example** `Passwd.name (getpwuid (Posix.ProcEnv.wordToUid 0w0)) = "root"`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.SysDB`, in [tests/basis/posix\_sysdb.sml](../../../../tests/basis/posix_sysdb.sml): `root` &middot; `current-user` &middot; `unknown` (raises)
@@ -299,6 +298,8 @@ val getpwnam : string -> Passwd.passwd
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if there is no such user, and at once for an empty
 name, which the primitive would otherwise take for a lookup by
 number.
+
+**Example** `Passwd.uid (getpwnam "root") = Posix.ProcEnv.wordToUid 0w0`
 
 <details><summary>Tests (4)</summary>
 

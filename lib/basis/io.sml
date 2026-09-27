@@ -1,4 +1,6 @@
-(* IO: the exceptions and the buffering modes shared by the I/O structures.
+(* IO: the exceptions and the buffering modes shared by the I/O structures:
+   `Io`, which every operation of them raises, the four exceptions that are
+   its causes, and `buffer_mode`.
 
    Implements: IO *)
 structure IO =

@@ -46,26 +46,35 @@ sig
 
   (* ---- Conversions between word structures ---- *)
 
-  (* `toLarge w` is `w` as a word of `LargeWord`, with zeros in the bits above `wordSize`. *)
+  (* `toLarge w` is `w` as a word of `LargeWord`, with zeros in the bits above `wordSize`.
+
+     Law: `fromLarge (toLarge w) = w`
+
+     Example: `Word8.toLarge 0wxFF = 0wxFF` *)
   val toLarge : word -> LargeWord.word
 
   (* `toLargeX w` is `w` as a word of `LargeWord`, with the top bit of `w` copied into the bits above it.
 
-     Law: `toLargeX w = toLarge w` when `w < 2^(wordSize-1)` *)
+     Law: `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
+
+     Example: `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF`, in Rune, whose
+     `LargeWord` has 64 bits *)
   val toLargeX : word -> LargeWord.word
 
-  (* `toLargeWord w` is another name for `toLarge`. *)
+  (* `toLargeWord w` is another name for `toLarge`, which the specification deprecates. *)
   val toLargeWord : word -> LargeWord.word
 
-  (* `toLargeWordX w` is another name for `toLargeX`. *)
+  (* `toLargeWordX w` is another name for `toLargeX`, which the specification deprecates. *)
   val toLargeWordX : word -> LargeWord.word
 
   (* `fromLarge w` is the word of this structure with the low `wordSize` bits of `w`.
 
-     What does not fit is dropped: nothing is raised. *)
+     What does not fit is dropped: nothing is raised.
+
+     Example: `Word8.fromLarge 0wx1FF = 0wxFF` *)
   val fromLarge : LargeWord.word -> word
 
-  (* `fromLargeWord w` is another name for `fromLarge`. *)
+  (* `fromLargeWord w` is another name for `fromLarge`, which the specification deprecates. *)
   val fromLargeWord : LargeWord.word -> word
 
   (* ---- Conversions to and from integers ---- *)
@@ -73,10 +82,16 @@ sig
   (* `toLargeInt w` is the number that `w` stands for, between 0 and `2^wordSize - 1`.
 
      Raises: `Overflow` if that number is no `LargeInt.int`, which cannot
-     happen where `LargeInt` is `IntInf`. *)
+     happen where `LargeInt` is `IntInf`.
+
+     Example: `Word8.toLargeInt 0wxFF = 255` *)
   val toLargeInt : word -> LargeInt.int
 
-  (* `toLargeIntX w` is the number that `w` stands for read as a signed one, between `~(2^(wordSize-1))` and `2^(wordSize-1) - 1`. *)
+  (* `toLargeIntX w` is the number that `w` stands for read as a signed one, between `~(2^(wordSize-1))` and `2^(wordSize-1) - 1`.
+
+     It never raises: `LargeInt` is at least as wide as every word.
+
+     Example: `Word8.toLargeIntX 0wxFF = ~1` *)
   val toLargeIntX : word -> LargeInt.int
 
   (* `fromLargeInt i` is the word with the low `wordSize` bits of `i`.
@@ -84,13 +99,19 @@ sig
      A negative `i` is taken in two's complement, and what does not fit is
      dropped.
 
-     Law: `fromLargeInt (toLargeIntX w) = w` *)
+     Law: `fromLargeInt (toLargeIntX w) = w`
+
+     Example: `Word8.fromLargeInt ~1 = 0wxFF` *)
   val fromLargeInt : LargeInt.int -> word
 
   (* `toInt w` is the number that `w` stands for as an `Int.int`.
 
      Raises: `Overflow` if that number is outside the range of `Int.int`,
-     which a word as wide as an `int` can reach. *)
+     which a word as wide as an `int` can reach.
+
+     Example: `Word8.toInt 0wxFF = 255`
+
+     Example: `(toInt 0wxFFFFFFFFFFFFFFFF handle Overflow => ~1) = ~1` *)
   val toInt : word -> int
 
   (* `toIntX w` is the number that `w` stands for read as a signed one, as an `Int.int`.
@@ -114,7 +135,9 @@ sig
      Example: `andb (0wxF0, 0wx3C) = 0wx30` *)
   val andb : word * word -> word
 
-  (* `orb (a, b)` is the bitwise "or". *)
+  (* `orb (a, b)` is the bitwise "or".
+
+     Example: `orb (0wxF0, 0wx0F) = 0wxFF` *)
   val orb : word * word -> word
 
   (* `xorb (a, b)` is the bitwise exclusive "or".
@@ -161,7 +184,9 @@ sig
 
   (* ---- Arithmetic ---- *)
 
-  (* `a + b` is the sum, taken modulo `2^wordSize`. *)
+  (* `a + b` is the sum, taken modulo `2^wordSize`.
+
+     Example: `Word8.+ (0wxFF, 0w1) = 0w0` *)
   val + : word * word -> word
 
   (* `a - b` is the difference, taken modulo `2^wordSize`: it wraps round for `a < b`.
@@ -169,24 +194,34 @@ sig
      Example: `Word.- (0w0, 0w1) = 0wxFFFFFFFFFFFFFFFF` *)
   val - : word * word -> word
 
-  (* `a * b` is the product, taken modulo `2^wordSize`. *)
+  (* `a * b` is the product, taken modulo `2^wordSize`.
+
+     Example: `Word8.* (0wx10, 0wx10) = 0w0` *)
   val * : word * word -> word
 
-  (* `a div b` is the quotient of two unsigned numbers.
+  (* `a div b` is the quotient of two unsigned numbers, rounded down.
 
-     Raises: `Div` if `b` is zero. *)
+     Raises: `Div` if `b` is zero.
+
+     Example: `0w7 div 0w2 = 0w3`
+
+     Example: `(0w1 div 0w0 handle Div => 0w9) = 0w9` *)
   val div : word * word -> word
 
   (* `a mod b` is what `div` leaves over.
 
      Raises: `Div` if `b` is zero.
 
-     Law: `(a div b) * b + (a mod b) = a` *)
+     Law: `(a div b) * b + (a mod b) = a`
+
+     Example: `0w7 mod 0w2 = 0w1` *)
   val mod : word * word -> word
 
   (* ---- Comparing ---- *)
 
-  (* `compare (a, b)` orders two words as unsigned numbers. *)
+  (* `compare (a, b)` orders two words as unsigned numbers.
+
+     Example: `Word8.compare (0wxFF, 0w1) = GREATER` *)
   val compare : word * word -> order
 
   (* `a < b`, `a <= b`, `a > b` and `a >= b` compare two words as unsigned numbers.
@@ -200,18 +235,26 @@ sig
 
   (* `~w` is the negation modulo `2^wordSize`: the two's complement of `w`.
 
-     Law: `~w = notb w + 0w1`, and `~0w0 = 0w0` *)
+     Law: `~w = notb w + 0w1`, and `~0w0 = 0w0`
+
+     Example: `Word8.~ 0w1 = 0wxFF` *)
   val ~ : word -> word
 
-  (* `min (a, b)` is the smaller of the two, as unsigned numbers. *)
+  (* `min (a, b)` is the smaller of the two, as unsigned numbers.
+
+     Example: `Word8.min (0wx80, 0w1) = 0w1` *)
   val min : word * word -> word
 
-  (* `max (a, b)` is the larger of the two, as unsigned numbers. *)
+  (* `max (a, b)` is the larger of the two, as unsigned numbers.
+
+     Example: `Word8.max (0wx80, 0w1) = 0wx80` *)
   val max : word * word -> word
 
   (* ---- Text ---- *)
 
   (* `fmt radix w` is the text of `w` in the given base, without a prefix and without a sign.
+
+     The hexadecimal digits above 9 are the capitals `A` to `F`.
 
      Erratum: `WORD/fmt-Ow`. The specification writes the hexadecimal prefix
      of the samples as `Ow` with the letter O; it is `0w` with the digit
@@ -240,7 +283,10 @@ sig
 
      Reading: `Word.scan/DEC-bare-prefix-0w`. A prefix that no digit follows
      is not a prefix, but its leading `0` is a digit: `"0wxg"` scans as 0 and
-     leaves `"wxg"`. *)
+     leaves `"wxg"`.
+
+     Example: `Option.map #1 (scan StringCvt.BIN Substring.getc (Substring.full
+     "0w101")) = SOME 0w5` *)
   val scan : StringCvt.radix -> (char, 'a) StringCvt.reader -> (word, 'a) StringCvt.reader
 
   (* `fromString s` is the word that the text `s` begins with in base 16, or `NONE`.

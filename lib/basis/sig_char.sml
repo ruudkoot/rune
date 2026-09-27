@@ -38,10 +38,16 @@ sig
   (* The type of strings of these characters: `String.string` for `Char`. *)
   eqtype string
 
-  (* The character with the smallest code, 0. *)
+  (* The character with the smallest code, 0.
+
+     Example: `ord minChar = 0` *)
   val minChar : char
 
-  (* The character with the largest code, `maxOrd`. *)
+  (* The character with the largest code, `maxOrd`.
+
+     Law: `ord maxChar = maxOrd`
+
+     Example: `Char.ord Char.maxChar = 255` *)
   val maxChar : char
 
   (* The largest code of a character.
@@ -49,12 +55,16 @@ sig
      Implementation: `Char.maxOrd/value`. 255 for `Char`, and 1114111, the
      last code point of Unicode, for `WideChar`.
 
-     Pinned by: `WideChar:CHAR/maxOrd-is-Unicode` *)
+     Pinned by: `WideChar:CHAR/maxOrd-is-Unicode`
+
+     Example: `maxOrd = 255` *)
   val maxOrd : int
 
   (* ---- Codes and order ---- *)
 
   (* `ord c` is the code of `c`, between 0 and `maxOrd`.
+
+     Law: `chr (ord c) = c`
 
      Example: `ord #"A" = 65` *)
   val ord : char -> int
@@ -63,6 +73,8 @@ sig
 
      Raises: `Chr` if `i < 0` or `i > maxOrd`.
 
+     Law: `ord (chr i) = i` for `0 <= i <= maxOrd`
+
      Example: `chr 97 = #"a"` *)
   val chr : int -> char
 
@@ -70,12 +82,16 @@ sig
 
      Raises: `Chr` if `c` is `maxChar`.
 
+     Law: `pred (succ c) = c` for `c <> maxChar`
+
      Example: `succ #"a" = #"b"` *)
   val succ : char -> char
 
   (* `pred c` is the character before `c`, the one with the code `ord c - 1`.
 
-     Raises: `Chr` if `c` is `minChar`. *)
+     Raises: `Chr` if `c` is `minChar`.
+
+     Example: `pred #"b" = #"a"` *)
   val pred : char -> char
 
   (* `compare (c, d)` orders two characters by their codes.
@@ -84,11 +100,19 @@ sig
      before 128 and 255 after 0: a character is not a signed byte.
 
      Pinned by: `Char.compare/127-128`, `Char.compare/255-0`,
-     `Char.compare/all-pairs` *)
+     `Char.compare/all-pairs`
+
+     Law: `compare (c, d) = Int.compare (ord c, ord d)`
+
+     Example: `compare (#"a", #"b") = LESS` *)
   val compare : char * char -> order
 
   (* `c < d`, `c <= d`, `c > d` and `c >= d` compare the codes of two
-     characters. *)
+     characters.
+
+     Law: `(c < d) = (ord c < ord d)`, and the same for the others
+
+     Example: `Char.< (#"Z", #"a") = true` *)
   val < : char * char -> bool
   val <= : char * char -> bool
   val > : char * char -> bool
@@ -104,7 +128,11 @@ sig
      Example: `contains "abc" #"b" = true` *)
   val contains : string -> char -> bool
 
-  (* `notContains s c` is `true` when `c` does not occur in `s`. *)
+  (* `notContains s c` is `true` when `c` does not occur in `s`.
+
+     Law: `notContains s c = not (contains s c)`
+
+     Example: `notContains "abc" #"d" = true` *)
   val notContains : string -> char -> bool
 
   (* ---- Classes and case ---- *)
@@ -117,11 +145,16 @@ sig
      letters of ASCII only.
 
      Pinned by: `Char.is*/latin1`, `Char.toLower/all`, `Char.toUpper/a-grave`
-     *)
+
+     Example: `isAscii (chr 128) = false` *)
   val isAscii : char -> bool
 
   (* `toLower c` is the lower case letter for an upper case letter `c`, and `c`
-     otherwise. *)
+     otherwise.
+
+     Law: `toLower (toUpper c) = toLower c`
+
+     Example: `toLower #"Q" = #"q"` *)
   val toLower : char -> char
 
   (* `toUpper c` is the upper case letter for a lower case letter `c`, and `c`
@@ -134,44 +167,77 @@ sig
 
   (* `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`.
 
+     Law: `isAlpha c = (isUpper c orelse isLower c)`, as the specification
+     defines it
+
      Example: `isAlpha #"_" = false` *)
   val isAlpha : char -> bool
 
-  (* `isAlphaNum c` is `true` for a letter or a decimal digit. *)
+  (* `isAlphaNum c` is `true` for a letter or a decimal digit.
+
+     Law: `isAlphaNum c = (isAlpha c orelse isDigit c)`, as the specification
+     defines it
+
+     Example: `isAlphaNum #"7" = true` *)
   val isAlphaNum : char -> bool
 
-  (* `isCntrl c` is `true` for a control character: a code below 32, or 127. *)
+  (* `isCntrl c` is `true` for a control character: a code below 32, or 127.
+
+     Example: `isCntrl #"\n" = true` *)
   val isCntrl : char -> bool
 
-  (* `isDigit c` is `true` for a decimal digit, `0` to `9`. *)
+  (* `isDigit c` is `true` for a decimal digit, `0` to `9`.
+
+     Example: `isDigit #"a" = false` *)
   val isDigit : char -> bool
 
   (* `isGraph c` is `true` for a character that leaves a mark when printed:
-     codes 33 to 126. *)
+     codes 33 to 126.
+
+     Example: `isGraph #" " = false` *)
   val isGraph : char -> bool
 
   (* `isHexDigit c` is `true` for a hexadecimal digit: `0` to `9`, `a` to `f`
-     and `A` to `F`. *)
+     and `A` to `F`.
+
+     Example: `isHexDigit #"F" = true` *)
   val isHexDigit : char -> bool
 
-  (* `isLower c` is `true` for a lower case letter, `a` to `z`. *)
+  (* `isLower c` is `true` for a lower case letter, `a` to `z`.
+
+     Example: `isLower #"a" = true` *)
   val isLower : char -> bool
 
   (* `isPrint c` is `true` for a printable character, the space included: codes
-     32 to 126. *)
+     32 to 126.
+
+     Law: `isPrint c = (isGraph c orelse c = #" ")`, as the specification
+     defines it
+
+     Example: `isPrint #" " = true` *)
   val isPrint : char -> bool
 
   (* `isSpace c` is `true` for white space: the space and the characters `\t`,
-     `\n`, `\v`, `\f` and `\r`. *)
+     `\n`, `\v`, `\f` and `\r`.
+
+     Law: `isSpace c = ((#"\t" <= c andalso c <= #"\r") orelse c = #" ")`, as
+     the specification defines it
+
+     Example: `isSpace #"\t" = true` *)
   val isSpace : char -> bool
 
   (* `isPunct c` is `true` for a graphical character that is neither a letter
      nor a digit.
 
+     Law: `isPunct c = (isGraph c andalso not (isAlphaNum c))`, as the
+     specification defines it
+
      Example: `isPunct #"_" = true` *)
   val isPunct : char -> bool
 
-  (* `isUpper c` is `true` for an upper case letter, `A` to `Z`. *)
+  (* `isUpper c` is `true` for an upper case letter, `A` to `Z`.
+
+     Example: `isUpper #"a" = false` *)
   val isUpper : char -> bool
 
   (* ---- The text of character constants ---- *)
@@ -185,7 +251,11 @@ sig
      are written `\^@` to `\^_`, and codes from 127 up as a backslash and three
      decimal digits.
 
-     Example: `toString #"\n" = "\\n"` and `toString #"\255" = "\\255"` *)
+     Law: `fromString (toString c) = SOME c`
+
+     Example: `toString #"\n" = "\\n"`
+
+     Example: `toString #"\255" = "\\255"` *)
   val toString : char -> String.string
 
   (* `scan getc strm` reads one character from `strm` in the notation of SML
@@ -201,7 +271,10 @@ sig
      Reading: `Char.scan/formatting`. A formatting sequence, a backslash, white
      space and another backslash, stands for nothing. Such sequences are
      passed over before the character, and after it as well, so that what is
-     left of the stream never begins with one. *)
+     left of the stream never begins with one.
+
+     Example: `Option.map (fn (c, rest) => (c, Substring.string rest)) (scan
+     Substring.getc (Substring.full "\\tab")) = SOME (#"\t", "ab")` *)
   val scan : (Char.char, 'a) StringCvt.reader -> (char, 'a) StringCvt.reader
 
   (* `fromString s` is the character that the text `s` begins with, read as
@@ -227,7 +300,9 @@ sig
 
      Example: `fromString "\\n" = SOME #"\n"`
 
-     Example: `fromString "\"" = NONE`, where `fromString "\\\"" = SOME #"\""`. *)
+     Example: `fromString "\"" = NONE`
+
+     Example: `fromString "\\\"" = SOME #"\""` *)
   val fromString : String.string -> char option
 
   (* `toCString c` is the text that stands for `c` inside a C string constant.
@@ -237,6 +312,8 @@ sig
      The control characters with a name in C are `\a`, `\b`, `\t`, `\n`, `\v`,
      `\f` and `\r`; every other character is a backslash and three octal
      digits.
+
+     Law: `fromCString (toCString c) = SOME c`
 
      Example: `toCString #"\000" = "\\000"` *)
   val toCString : char -> String.string

@@ -5,9 +5,9 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 4 |
+| Implementations | 5 |
 | Documentation | 18 of 18 entries documented |
-| Tests | 256 checks of 17 entries |
+| Tests | 562 checks of 17 entries |
 | Source | [lib/basis/sig\_math.sml](../../../../lib/basis/sig_math.sml) |
 
 ## Synopsis
@@ -17,24 +17,27 @@ signature MATH
 structure LargeReal.Math : MATH
 structure Math : MATH where type real = Real.real
 structure Real.Math : MATH
+structure Real32.Math : MATH
 structure Real64.Math : MATH
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `LargeReal.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
-| `Real64.Math` |  | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`LargeReal.Math`](../str/Real.Math.md) | Real.Math: the elementary functions at [`real`](#type-real), from the C library, with [`asin`](#val-asin), [`acos`](#val-acos) and [`log10`](#val-log10) made from its [`atan2`](#val-atan2) and [`ln`](#val-ln). | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Math`](../str/Real.Math.md) | Math: the elementary functions of the top-level [`real`](#type-real), which are [`Real.Math`](../str/Real.Math.md). | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real.Math`](../str/Real.Math.md) | Real.Math: the elementary functions at [`real`](#type-real), from the C library, with [`asin`](#val-asin), [`acos`](#val-acos) and [`log10`](#val-log10) made from its [`atan2`](#val-atan2) and [`ln`](#val-ln). | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
+| [`Real32.Math`](../str/Real32.Math.md) | Real32.Math: the elementary functions at binary32, computed in binary64 and rounded to binary32. | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
+| [`Real64.Math`](../str/Real.Math.md) | Real.Math: the elementary functions at [`real`](#type-real), from the C library, with [`asin`](#val-asin), [`acos`](#val-acos) and [`log10`](#val-log10) made from its [`atan2`](#val-atan2) and [`ln`](#val-ln). | [lib/basis/real.sml](../../../../lib/basis/real.sml) |
 
 The elementary functions of a real type: roots, the trigonometric and
 hyperbolic functions, exponentials and logarithms.
 
 A structure of this signature belongs to a [`REAL`](../sig/REAL.md) structure and computes
-with its type, so [`Math`](MATH.md) is [`Real.Math`](../sig/REAL.md#str-math). Angles are in radians. None of
+with its type, so [`Math`](../str/Real.Math.md) is [`Real.Math`](../str/Real.Math.md). Angles are in radians. None of
 these functions raises: where the mathematical function has no value the
 answer is a NaN, and where it grows without bound it is an infinity, as
-IEEE 754 prescribes.
+IEEE 754 prescribes. A NaN as an argument gives a NaN, except where a
+function says otherwise (`pow (x, 0.0)` is 1 for every `x`).
 
 The results are not exact. The specification asks only that they be
 "accurate", and a program that compares them should allow for the rounding
@@ -47,39 +50,22 @@ usually wrong.
 signature MATH =
 sig
   type <a href="#type-real">real</a>
-
   val <a href="#val-pi">pi</a> : real
-
   val <a href="#val-e">e</a> : real
-
   val <a href="#val-sqrt">sqrt</a> : real -&gt; real
-
   val <a href="#val-sin">sin</a> : real -&gt; real
-
   val <a href="#val-cos">cos</a> : real -&gt; real
-
   val <a href="#val-tan">tan</a> : real -&gt; real
-
   val <a href="#val-asin">asin</a> : real -&gt; real
-
   val <a href="#val-acos">acos</a> : real -&gt; real
-
   val <a href="#val-atan">atan</a> : real -&gt; real
-
   val <a href="#val-atan2">atan2</a> : real * real -&gt; real
-
   val <a href="#val-exp">exp</a> : real -&gt; real
-
   val <a href="#val-pow">pow</a> : real * real -&gt; real
-
   val <a href="#val-ln">ln</a> : real -&gt; real
-
   val <a href="#val-log10">log10</a> : real -&gt; real
-
   val <a href="#val-sinh">sinh</a> : real -&gt; real
-
   val <a href="#val-cosh">cosh</a> : real -&gt; real
-
   val <a href="#val-tanh">tanh</a> : real -&gt; real
 end
 </pre>
@@ -90,7 +76,7 @@ end
 type real
 ```
 
-The type of the reals these functions compute with: [`Real.real`](../sig/REAL.md#type-real) for [`Real.Math`](../sig/REAL.md#str-math).
+The type of the reals these functions compute with: [`Real.real`](../sig/REAL.md#type-real) for [`Real.Math`](../str/Real.Math.md).
 
 ### <a name="val-pi"></a>`pi`
 
@@ -105,9 +91,19 @@ The ratio of a circle's circumference to its diameter, as near as the type can s
 
 **Example** `Real.fmt (StringCvt.FIX (SOME 4)) pi = "3.1416"`
 
-<details><summary>Tests (4)</summary>
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (9)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `value` &middot; `nearest-double` &middot; `digits` &middot; `same-as-Real.Math`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `value` &middot; `nearest-double` &middot; `digits` &middot; `same-as-Real.Math`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `binary32`
 
 </details>
 
@@ -119,9 +115,21 @@ val e : real
 
 The base of the natural logarithm, as near as the type can say.
 
-<details><summary>Tests (3)</summary>
+**Example** `Real.fmt (StringCvt.FIX (SOME 4)) e = "2.7183"`
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (7)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `value` &middot; `nearest-double` &middot; `digits`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `value` &middot; `nearest-double` &middot; `digits`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `binary32`
 
 </details>
 
@@ -141,9 +149,19 @@ It is a NaN for a negative `x`, and `~0.0` for `~0.0`.
 
 **Example** `Real.isNan (sqrt ~1.0) = true`
 
-<details><summary>Tests (15)</summary>
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (34)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `four` &middot; `quarter` &middot; `one` &middot; `two` &middot; `large` &middot; `zero` &middot; `negzero` &middot; `negative` &middot; `small-negative` &middot; `negInf` &middot; `posInf` &middot; `nan` &middot; `law-exact-squares` &middot; `law-squares-back` &middot; `same-as-Real.Math`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `four` &middot; `quarter` &middot; `one` &middot; `two` &middot; `large` &middot; `zero` &middot; `negzero` &middot; `negative` &middot; `small-negative` &middot; `negInf` &middot; `posInf` &middot; `nan` &middot; `law-exact-squares` &middot; `law-squares-back` &middot; `same-as-Real.Math`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `two` &middot; `negzero` &middot; `negative` &middot; `exact`
 
 </details>
 
@@ -157,9 +175,21 @@ val sin : real -> real
 
 It is a NaN for an infinite `x`.
 
-<details><summary>Tests (12)</summary>
+**Example** `Real.signBit (sin ~0.0) = true`
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (26)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-six` &middot; `pi-over-two` &middot; `pi` &middot; `negative` &middot; `three-half-pi` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-pythagoras` &middot; `law-odd`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-six` &middot; `pi-over-two` &middot; `pi` &middot; `negative` &middot; `three-half-pi` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-pythagoras` &middot; `law-odd`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero` &middot; `posInf`
 
 </details>
 
@@ -173,9 +203,21 @@ val cos : real -> real
 
 It is a NaN for an infinite `x`.
 
-<details><summary>Tests (11)</summary>
+**Example** `Real.== (cos 0.0, 1.0) = true`
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (24)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-three` &middot; `pi-over-two` &middot; `pi` &middot; `negative` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-even` &middot; `law-bounded`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-three` &middot; `pi-over-two` &middot; `pi` &middot; `negative` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-even` &middot; `law-bounded`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero` &middot; `negInf`
 
 </details>
 
@@ -194,9 +236,20 @@ It is a NaN for an infinite `x`.
 > of pi/2, so the function is finite everywhere, and what is asked of it
 > is only that its magnitude near the singularity be large.
 
-<details><summary>Tests (10)</summary>
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; Math.tan (\~0.0) is 0.0, not \~0.0, and Real32.Math computes with it
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (22)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-four` &middot; `negative` &middot; `pi` &middot; `near-singularity` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-is-sin-over-cos`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `pi-over-four` &middot; `negative` &middot; `pi` &middot; `near-singularity` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-is-sin-over-cos`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `negzero` &middot; `nan`
 
 </details>
 
@@ -210,12 +263,28 @@ val asin : real -> real
 
 It is a NaN for an `x` outside `[~1, 1]`.
 
-The bounds of the results of [`asin`](#val-asin) and [`acos`](#val-acos) are checked with 1E\~15 to
-spare, for [`pi`](#val-pi) is rounded.
+> **Reading** `Math.asin/accurate-near-one`. The specification asks for no
+> particular accuracy, only "roughly the same semantics" as C. Rune's
+> [`asin`](#val-asin) and [`acos`](#val-acos) are within an ulp or two of the true value everywhere,
+> near 1 and \~1 too, where a computation through `1 - x * x` loses most of
+> the digits; SML/NJ's [`asin`](#val-asin) is off by more there.
 
-<details><summary>Tests (12)</summary>
+**Example** `Real.isNan (asin 2.0) = true`
 
-For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `half` &middot; `one` &middot; `minus-one` &middot; `negative` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-range-and-inverse`
+<details><summary>Other implementations (2)</summary>
+
+- **SML/NJ** &mdash; another reading of the specification: asin near 1 and \~1 is off by more than two ulps; the test takes the reading of Rune, a result within two ulps everywhere
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (30)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `half` &middot; `one` &middot; `minus-one` &middot; `negative` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `near-one-accurate` &middot; `near-minus-one-accurate` &middot; `law-range-and-inverse`
+
+For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `half` &middot; `one` &middot; `minus-one` &middot; `negative` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `near-one-accurate` &middot; `near-minus-one-accurate` &middot; `law-range-and-inverse`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `one` &middot; `above-one`
 
 </details>
 
@@ -229,9 +298,21 @@ val acos : real -> real
 
 It is a NaN for an `x` outside `[~1, 1]`.
 
-<details><summary>Tests (13)</summary>
+**Example** `Real.== (acos 1.0, 0.0) = true`
 
-For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `half` &middot; `zero` &middot; `negative` &middot; `minus-one` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-range-and-inverse` &middot; `law-complements-asin`
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (32)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `half` &middot; `zero` &middot; `negative` &middot; `minus-one` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `near-one-accurate` &middot; `near-minus-one-accurate` &middot; `law-range-and-inverse` &middot; `law-complements-asin`
+
+For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `half` &middot; `zero` &middot; `negative` &middot; `minus-one` &middot; `above-one` &middot; `just-above-one` &middot; `below-minus-one` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `near-one-accurate` &middot; `near-minus-one-accurate` &middot; `law-range-and-inverse` &middot; `law-complements-asin`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `one` &middot; `below-minus-one`
 
 </details>
 
@@ -245,9 +326,21 @@ val atan : real -> real
 
 At an infinity it is `~pi/2` or `pi/2`.
 
-<details><summary>Tests (9)</summary>
+**Example** `Real.== (atan Real.negInf, ~ (pi / 2.0)) = true`
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (20)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `minus-one` &middot; `sqrt-three` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-range-and-inverse`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `minus-one` &middot; `sqrt-three` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `law-range-and-inverse`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `posInf` &middot; `nan`
 
 </details>
 
@@ -261,22 +354,30 @@ val atan2 : real * real -> real
 
 Unlike `atan (y / x)` it knows which quadrant the point is in, because
 it has the signs of both coordinates; the sign of a zero counts, so that
-the answer is continuous as the point crosses an axis.
+the answer is continuous as the point crosses an axis. The special cases
+follow the table of the specification: on the y axis the angle is
+`pi/2` or `~pi/2`, `atan2 (0.0, ~0.0)` is [`pi`](#val-pi), and two infinities give
+an odd multiple of `pi/4`.
 
 **Law** `atan2 (y, x) = atan (y / x)` for `x > 0`
 
 **Example** `Real.== (atan2 (0.0, ~1.0), pi) = true`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; Math.atan2 ignores the sign of a zero: atan2 (\~0.0, 1.0) = 0.0, atan2 (0.0, \~0.0) = 0.0
 - **SML/NJ** &mdash; Math.atan2 of two infinities is NaN
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
 
-<details><summary>Tests (34)</summary>
+<details><summary>Tests (70)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `first-quadrant` &middot; `second-quadrant` &middot; `third-quadrant` &middot; `fourth-quadrant` &middot; `ratio` &middot; `zero-y-positive-x` &middot; `negzero-y-positive-x` &middot; `zero-y-zero-x` &middot; `negzero-y-zero-x` &middot; `zero-y-negative-x` &middot; `negzero-y-negative-x` &middot; `zero-y-negzero-x` &middot; `negzero-y-negzero-x` &middot; `positive-y-zero-x` &middot; `positive-y-negzero-x` &middot; `negative-y-zero-x` &middot; `negative-y-negzero-x` &middot; `positive-y-posInf-x` &middot; `negative-y-posInf-x` &middot; `positive-y-negInf-x` &middot; `negative-y-negInf-x` &middot; `posInf-y-finite-x` &middot; `posInf-y-negative-x` &middot; `posInf-y-zero-x` &middot; `negInf-y-finite-x` &middot; `negInf-y-negative-x` &middot; `posInf-y-posInf-x` &middot; `negInf-y-posInf-x` &middot; `posInf-y-negInf-x` &middot; `negInf-y-negInf-x` &middot; `nan-y` &middot; `nan-x` &middot; `nan-both` &middot; `law-quadrant`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `first-quadrant` &middot; `second-quadrant` &middot; `third-quadrant` &middot; `fourth-quadrant` &middot; `ratio` &middot; `zero-y-positive-x` &middot; `negzero-y-positive-x` &middot; `zero-y-zero-x` &middot; `negzero-y-zero-x` &middot; `zero-y-negative-x` &middot; `negzero-y-negative-x` &middot; `zero-y-negzero-x` &middot; `negzero-y-negzero-x` &middot; `positive-y-zero-x` &middot; `positive-y-negzero-x` &middot; `negative-y-zero-x` &middot; `negative-y-negzero-x` &middot; `positive-y-posInf-x` &middot; `negative-y-posInf-x` &middot; `positive-y-negInf-x` &middot; `negative-y-negInf-x` &middot; `posInf-y-finite-x` &middot; `posInf-y-negative-x` &middot; `posInf-y-zero-x` &middot; `negInf-y-finite-x` &middot; `negInf-y-negative-x` &middot; `posInf-y-posInf-x` &middot; `negInf-y-posInf-x` &middot; `posInf-y-negInf-x` &middot; `negInf-y-negInf-x` &middot; `nan-y` &middot; `nan-x` &middot; `nan-both` &middot; `law-quadrant`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `negative-x-axis` &middot; `nan`
 
 </details>
 
@@ -291,9 +392,21 @@ val exp : real -> real
 It is 0 at negative infinity and an infinity at positive infinity, and
 it overflows to an infinity for a large enough finite `x`.
 
-<details><summary>Tests (12)</summary>
+**Example** `Real.== (exp 0.0, 1.0) = true`
+
+<details><summary>Other implementations (1)</summary>
+
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (28)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `two` &middot; `minus-one` &middot; `large` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `underflow` &middot; `law-sum-is-product` &middot; `law-positive-and-inverse-of-ln`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `zero` &middot; `one` &middot; `two` &middot; `minus-one` &middot; `large` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `underflow` &middot; `law-sum-is-product` &middot; `law-positive-and-inverse-of-ln`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero` &middot; `negInf` &middot; `posInf` &middot; `overflow`
 
 </details>
 
@@ -317,16 +430,21 @@ determined.
 
 **Example** `Real.toString (pow (0.0, 0.0)) = "1"`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **Poly/ML** &mdash; Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
 - **SML/NJ** &mdash; Math.pow (\~0.0, \~3.0) is posInf, not negInf
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
 
-<details><summary>Tests (66)</summary>
+<details><summary>Tests (135)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `integer-power` &middot; `square-root` &middot; `negative-exponent` &middot; `fractional` &middot; `negative-base-odd` &middot; `negative-base-even` &middot; `negative-base-negative-odd` &middot; `one-base` &middot; `zero-exponent` &middot; `zero-exponent-negative-base` &middot; `zero-exponent-zero-base` &middot; `zero-exponent-posInf-base` &middot; `zero-exponent-negInf-base` &middot; `zero-exponent-nan-base` &middot; `negzero-exponent` &middot; `negzero-exponent-nan-base` &middot; `large-base-posInf` &middot; `large-negative-base-posInf` &middot; `posInf-base-posInf` &middot; `negInf-base-posInf` &middot; `small-base-posInf` &middot; `small-negative-base-posInf` &middot; `zero-base-posInf` &middot; `negzero-base-posInf` &middot; `large-base-negInf` &middot; `large-negative-base-negInf` &middot; `negInf-base-negInf` &middot; `small-base-negInf` &middot; `small-negative-base-negInf` &middot; `zero-base-negInf` &middot; `negzero-base-negInf` &middot; `posInf-base-positive` &middot; `posInf-base-small-positive` &middot; `posInf-base-negative` &middot; `posInf-base-small-negative` &middot; `negInf-base-positive-odd` &middot; `negInf-base-positive-even` &middot; `negInf-base-positive-fraction` &middot; `negInf-base-negative-odd` &middot; `negInf-base-negative-even` &middot; `negInf-base-negative-fraction` &middot; `nan-exponent` &middot; `nan-exponent-zero-base` &middot; `nan-exponent-posInf-base` &middot; `nan-both` &middot; `nan-base` &middot; `nan-base-posInf` &middot; `one-base-nan-exponent` &middot; `one-base-posInf` &middot; `one-base-negInf` &middot; `minus-one-base-posInf` &middot; `minus-one-base-negInf` &middot; `negative-base-fraction` &middot; `negative-base-negative-fraction` &middot; `zero-base-negative-odd` &middot; `negzero-base-negative-odd` &middot; `zero-base-negative-even` &middot; `negzero-base-negative-even` &middot; `negzero-base-negative-fraction` &middot; `zero-base-positive-odd` &middot; `negzero-base-positive-odd` &middot; `zero-base-positive-even` &middot; `negzero-base-positive-even` &middot; `negzero-base-positive-fraction` &middot; `law-exponent-one-and-two` &middot; `law-is-exp-of-ln`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `integer-power` &middot; `square-root` &middot; `negative-exponent` &middot; `fractional` &middot; `negative-base-odd` &middot; `negative-base-even` &middot; `negative-base-negative-odd` &middot; `one-base` &middot; `zero-exponent` &middot; `zero-exponent-negative-base` &middot; `zero-exponent-zero-base` &middot; `zero-exponent-posInf-base` &middot; `zero-exponent-negInf-base` &middot; `zero-exponent-nan-base` &middot; `negzero-exponent` &middot; `negzero-exponent-nan-base` &middot; `large-base-posInf` &middot; `large-negative-base-posInf` &middot; `posInf-base-posInf` &middot; `negInf-base-posInf` &middot; `small-base-posInf` &middot; `small-negative-base-posInf` &middot; `zero-base-posInf` &middot; `negzero-base-posInf` &middot; `large-base-negInf` &middot; `large-negative-base-negInf` &middot; `negInf-base-negInf` &middot; `small-base-negInf` &middot; `small-negative-base-negInf` &middot; `zero-base-negInf` &middot; `negzero-base-negInf` &middot; `posInf-base-positive` &middot; `posInf-base-small-positive` &middot; `posInf-base-negative` &middot; `posInf-base-small-negative` &middot; `negInf-base-positive-odd` &middot; `negInf-base-positive-even` &middot; `negInf-base-positive-fraction` &middot; `negInf-base-negative-odd` &middot; `negInf-base-negative-even` &middot; `negInf-base-negative-fraction` &middot; `nan-exponent` &middot; `nan-exponent-zero-base` &middot; `nan-exponent-posInf-base` &middot; `nan-both` &middot; `nan-base` &middot; `nan-base-posInf` &middot; `one-base-nan-exponent` &middot; `one-base-posInf` &middot; `one-base-negInf` &middot; `minus-one-base-posInf` &middot; `minus-one-base-negInf` &middot; `negative-base-fraction` &middot; `negative-base-negative-fraction` &middot; `zero-base-negative-odd` &middot; `negzero-base-negative-odd` &middot; `zero-base-negative-even` &middot; `negzero-base-negative-even` &middot; `negzero-base-negative-fraction` &middot; `zero-base-positive-odd` &middot; `negzero-base-positive-odd` &middot; `zero-base-positive-even` &middot; `negzero-base-positive-even` &middot; `negzero-base-positive-fraction` &middot; `law-exponent-one-and-two` &middot; `law-is-exp-of-ln`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `exact` &middot; `nan-to-zero` &middot; `nan`
 
 </details>
 
@@ -338,13 +456,25 @@ val ln : real -> real
 
 `ln x` is the natural logarithm of `x`.
 
-It is negative infinity at zero and a NaN for a negative `x`.
+It is negative infinity at zero, a NaN for a negative `x`, and positive
+infinity at positive infinity.
 
 **Example** `Real.toString (ln 0.0) = "~inf"`
 
-<details><summary>Tests (13)</summary>
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; ln and log10 of a NaN are \~inf: ln tests r == 0.0 first, with an == that holds when neither \< nor \> does
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (29)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `e` &middot; `two` &middot; `ten` &middot; `half` &middot; `minPos` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `law-product-is-sum`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `e` &middot; `two` &middot; `ten` &middot; `half` &middot; `minPos` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `law-product-is-sum`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero` &middot; `one` &middot; `negative`
 
 </details>
 
@@ -356,11 +486,32 @@ val log10 : real -> real
 
 `log10 x` is the logarithm of `x` to base 10.
 
-It is negative infinity at zero and a NaN for a negative `x`.
+It is negative infinity at zero, a NaN for a negative `x`, and positive
+infinity at positive infinity.
 
-<details><summary>Tests (13)</summary>
+> **Reading** `Math.log10/powers-of-ten-exact`. The specification asks for no
+> particular accuracy, only "roughly the same semantics" as C's [`log10`](#val-log10).
+> Rune gives the exact logarithm where a real holds it, at the powers of
+> ten up to 10^22, as C does, so that `floor (log10 1000.0)` is 3. SML/NJ
+> and MLKit compute `ln x / ln 10`, which misses some of them by an ulp.
 
-For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `ten` &middot; `thousand` &middot; `hundredth` &middot; `two` &middot; `large` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `law-is-ln-over-ln-ten`
+**Example** `Real.== (log10 1000.0, 3.0) = true`
+
+<details><summary>Other implementations (3)</summary>
+
+- **SML/NJ, MLKit** &mdash; another reading of the specification: log10 is ln x / ln 10, which misses some powers of ten by an ulp (log10 1000.0 is 2.9999999999999996); the test takes the reading of Rune, the exact logarithm where a real holds it
+- **MLKit** &mdash; ln and log10 of a NaN are \~inf: ln tests r == 0.0 first, with an == that holds when neither \< nor \> does
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
+
+</details>
+
+<details><summary>Tests (33)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `ten` &middot; `thousand` &middot; `hundredth` &middot; `two` &middot; `large` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `powers-of-ten-exact` &middot; `floor-of-a-thousand` &middot; `law-is-ln-over-ln-ten`
+
+For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `ten` &middot; `thousand` &middot; `hundredth` &middot; `two` &middot; `large` &middot; `negative` &middot; `negInf` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `nan` &middot; `powers-of-ten-exact` &middot; `floor-of-a-thousand` &middot; `law-is-ln-over-ln-ten`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero` &middot; `posInf` &middot; `negative`
 
 </details>
 
@@ -372,17 +523,26 @@ val sinh : real -> real
 
 `sinh x` is the hyperbolic sine of `x`, `(e^x - e^~x) / 2`.
 
-It overflows to an infinity of the sign of `x` for a large enough `x`.
+It keeps the sign of a zero, and overflows to an infinity of the sign of
+`x` for a large enough `x`.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `Real.signBit (sinh ~0.0) = true`
+
+<details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
+- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0, and Real32.Math computes with them
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (22)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `negative-overflow` &middot; `law-definition`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `negative-overflow` &middot; `law-definition`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `negzero` &middot; `negInf`
 
 </details>
 
@@ -399,15 +559,22 @@ val cosh : real -> real
 > "cosh +-infinity = +-infinity", which cannot be meant, and MLton follows
 > it to the letter.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `Real.== (cosh 0.0, 1.0) = true`
+
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; another reading of the specification: Math.cosh negInf is negInf, following "cosh +-infinity = +-infinity" to the letter; the test follows the definition (e^x + e^-x)/2, posInf
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (19)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `law-definition`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `overflow` &middot; `law-definition`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `zero`
 
 </details>
 
@@ -423,17 +590,26 @@ It is `~1.0` and `1.0` at the infinities, and for a large enough finite
 `x` it is those values too, although [`sinh`](#val-sinh) and [`cosh`](#val-cosh) both overflow
 there.
 
-<details><summary>Other implementations (3)</summary>
+**Example** `Real.== (tanh 1000.0, 1.0) = true`
+
+<details><summary>Other implementations (6)</summary>
 
 - **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0
 - **SML/NJ** &mdash; Math.tanh posInf is NaN
 - **SML/NJ** &mdash; Math.tanh 1000.0 is NaN
+- **SML/NJ** &mdash; Math.sinh (\~0.0) and Math.tanh (\~0.0) are 0.0, not \~0.0, and Real32.Math computes with them
+- **SML/NJ** &mdash; Math.tanh posInf is NaN, and Real32.Math computes with it
+- **Poly/ML** &mdash; where the result of a function of Real32.Math is a NaN it gives 0.0: asin 2.0, acos \~2.0, ln \~1.0, log10 \~1.0, pow (nan, 1.0)
 
 </details>
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (22)</summary>
+
+For `Real.Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `large` &middot; `large-negative` &middot; `law-definition`
 
 For `Math`, in [tests/basis/math.sml](../../../../tests/basis/math.sml): `one` &middot; `negative` &middot; `zero` &middot; `negzero` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `large` &middot; `large-negative` &middot; `law-definition`
+
+For `Real32.Math`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `posInf` &middot; `negzero`
 
 </details>
 

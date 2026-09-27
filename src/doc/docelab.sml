@@ -115,6 +115,22 @@ struct
              then SOME c else NONE
          | _ => NONE)
 
+  (* What the structure at a path has, as elaboration knows it: every name
+     with its kind and its type, and the type is the structure's own and not
+     the signature's variable -- `Word8Vector.sub` is `vector * int -> word`
+     where `MONO_VECTOR` can only say `vector * int -> elem`. This is what a
+     structure's page shows and a signature's page cannot.
+
+     A type the structure names has no other name here (`MType` with no
+     definition); one that stands for another shows what it stands for. *)
+  datatype member =
+      MVal of string                              (* the type *)
+    | MCon of {ty : string, datatypeOf : string}  (* a constructor, and of what *)
+    | MExn of string option                       (* what it carries, if anything *)
+    | MType of {arity : int, defn : string option}  (* NONE: a type of its own *)
+    | MData of {arity : int, cons : string list}
+    | MStr
+
   (* Every type of the top level and of the structures that `public` lets
      through, with their substructures: its name as a program writes it, the
      stamp of the type name it stands for, and its arity. Types with one
@@ -130,6 +146,249 @@ struct
     in
       walk ("", env)
     end
+
+  (* Of two paths to one type, the one to show: the shorter, and of two equally
+     short the earlier, so that a page does not depend on the order of a walk. *)
+  fun better (a : string, b : string) : bool =
+    let
+      fun parts s = List.length (String.fields (fn c => c = #".") s)
+    in
+      parts a < parts b
+      orelse (parts a = parts b
+              andalso (String.size a < String.size b orelse (String.size a = String.size b andalso a < b)))
+    end
+
+  fun best ((stamp, name), m : string IntMap.map) : string IntMap.map =
+    case IntMap.find (m, stamp) of
+      SOME n => if better (name, n) then IntMap.insert (m, stamp, name) else m
+    | NONE => IntMap.insert (m, stamp, name)
+
+  (* The types a structure names, as against those it borrows: `Word8.word` is
+     a name of the type, where `Word8Vector.elem` and `BinIO.elem` are names of
+     a use of it, so only the first is a name to show it under. *)
+  fun namedTypes (into : string -> bool) (prefix : string, e : Env.env) : (int * string * bool) list =
+    case e of
+      Env.Env {tys, strs, ...} =>
+        List.mapPartial (fn (name, Env.TyStr {fcn, ...}) =>
+                           case tyconOf fcn of
+                             SOME c => if #name c = name
+                                       then SOME (#stamp c, prefix ^ name,
+                                                  case fcn of Types.TName _ => true | _ => false)
+                                       else NONE
+                           | NONE => NONE)
+                        (StringMap.listItemsi tys)
+        @ List.concat (List.map (fn (name, sub) =>
+                                   if into name then namedTypes into (prefix ^ name ^ ".", sub) else [])
+                                (StringMap.listItemsi strs))
+
+  (* Of the names of one type, the one that declares it: where the type is a
+     type name and not an abbreviation of one. The byte vector is
+     `Word8Vector.vector`, which declares it, and not `BinIO.vector`, which is
+     shorter and only says which vector `BinIO` reads; a type that nothing
+     public declares -- `BinIO.instream`, made in a structure the seal hides --
+     has the shortest of its names. *)
+  fun owner ((stamp, name, declared), m : (string * bool) IntMap.map) : (string * bool) IntMap.map =
+    case IntMap.find (m, stamp) of
+      SOME (n, d) =>
+        if (declared andalso not d) orelse (declared = d andalso better (name, n))
+        then IntMap.insert (m, stamp, (name, declared)) else m
+    | NONE => IntMap.insert (m, stamp, (name, declared))
+
+  (* Every type of the library by the stamp of the type name it stands for,
+     under the shortest path that names it: `word`, not `Word.word`, and
+     `Word8.word`, which has no shorter name. Built once, since it walks the
+     whole library. *)
+  val allNames : string IntMap.map option ref = ref NONE
+
+  fun namesByStamp ({env, ...} : library, public : string -> bool) : string IntMap.map =
+    case !allNames of
+      SOME m => m
+    | NONE =>
+        let val m = IntMap.map #1 (List.foldl owner IntMap.empty (namedTypes public ("", env)))
+        in allNames := SOME m; m end
+
+  fun membersOf (lib : library, public : string -> bool) (path : string list) : (string * member) list option =
+    case Env.findStr (#env lib, path) of
+      NONE => NONE
+    | SOME (structure' as Env.Env {vals, tys, strs}) =>
+        let
+          (* What a type is called on this page: a type that this structure
+             names is that name, a type that a structure below it names is the
+             path down to it, and any other type is the shortest path that
+             reaches it in the library. So `Word8Vector.sub` is
+             `vector * int -> Word8.word`: `vector` because the structure names
+             it, `Word8.word` because `elem` is not a name of the type but of
+             this structure's use of it, and a reader of `word` would think of
+             `Word.word`. *)
+          val here = List.foldl (fn ((stamp, name, _), m) => best ((stamp, name), m)) IntMap.empty
+                                (namedTypes (fn _ => true) ("", structure'))
+          val self = String.concatWith "." path ^ "."
+          (* a type this structure owns has its name here; any other, the name
+             of the structure that declares it *)
+          fun ownedHere (c : Types.tycon) =
+            case IntMap.find (namesByStamp (lib, public), #stamp c) of
+              SOME n => String.isPrefix self n
+            | NONE => true
+          (* the name another type is shown under everywhere: `int` is the top
+             level's, so `Int64`'s own `int` must be shown as `Int64.int`, or
+             `toInt : int -> int` would read as the identity *)
+          val takenNames =
+            IntMap.foldli (fn (stamp, name, m) => StringMap.insert (m, name, stamp))
+                          StringMap.empty (namesByStamp (lib, public))
+          fun nameOf (c : Types.tycon) =
+            if ownedHere c then
+              case IntMap.find (here, #stamp c) of
+                SOME n =>
+                  (case StringMap.find (takenNames, n) of
+                     SOME other => if other <> #stamp c then SOME (String.concatWith "." path ^ "." ^ n) else SOME n
+                   | NONE => SOME n)
+              | NONE => NONE
+            else IntMap.find (namesByStamp (lib, public), #stamp c)
+          (* Elaboration expands an abbreviation, so a type the source writes
+             `'a region` reaches here as the record it stands for. The
+             abbreviations of this structure and of the structures below it
+             that are not merely another name for a type constructor are
+             folded back: a part of a type that is an instance of one is shown
+             under its name, as the signature shows it. Only these: the
+             library's `StringCvt.reader` would match every function that
+             returns an option of a pair, `input1` among them. *)
+          val abbreviations =
+            let
+              fun walk (prefix, Env.Env {tys, strs, ...}) =
+                List.mapPartial (fn (name, Env.TyStr {fcn = fcn as Types.TAbbrev (ids, body), ...}) =>
+                                      if isSome (tyconOf fcn) then NONE
+                                      else SOME (ids, body, Types.freshTycon (prefix ^ name, List.length ids, false))
+                                  | _ => NONE)
+                                (StringMap.listItemsi tys)
+                @ List.concat (List.map (fn (name, sub) => walk (prefix ^ name ^ ".", sub)) (StringMap.listItemsi strs))
+              (* the shortest name first, as for the names of types *)
+              fun sortBy [] = []
+                | sortBy (x :: xs) =
+                    let fun name (_, _, c : Types.tycon) = #name c
+                    in sortBy (List.filter (fn y => better (name y, name x)) xs) @ [x]
+                       @ sortBy (List.filter (fn y => not (better (name y, name x))) xs)
+                    end
+            in
+              sortBy (walk ("", structure'))
+            end
+          (* the parameters of an abbreviation that make its body the type *)
+          fun instance (ids : int list, pat : Types.ty, t : Types.ty) : Types.ty list option =
+            let
+              fun same (a, b) =
+                case (Types.prune a, Types.prune b) of
+                  (Types.TVar r, Types.TVar r') => r = r'
+                | (Types.TCon (c, xs), Types.TCon (c', ys)) =>
+                    #stamp c = #stamp c' andalso List.length xs = List.length ys andalso ListPair.all same (xs, ys)
+                | (Types.TRecord fs, Types.TRecord gs) =>
+                    List.length fs = List.length gs
+                    andalso ListPair.all (fn ((l, x), (l', y)) => l = l' andalso same (x, y)) (fs, gs)
+                | (Types.TArrow (a, b), Types.TArrow (a', b')) => same (a, a') andalso same (b, b')
+                | _ => false
+              fun go (pat, t, binds) =
+                case (Types.prune pat, Types.prune t) of
+                  (Types.TVar (ref (Types.Unbound {id, ...})), _) =>
+                    if not (List.exists (fn i => i = id) ids) then NONE
+                    else
+                      (case List.find (fn (i, _) => i = id) binds of
+                         SOME (_, bound) => if same (bound, t) then SOME binds else NONE
+                       | NONE => SOME ((id, t) :: binds))
+                | (Types.TCon (c, ps), Types.TCon (c', ts)) =>
+                    if #stamp c = #stamp c' andalso List.length ps = List.length ts then all (ps, ts, binds) else NONE
+                | (Types.TRecord fs, Types.TRecord gs) =>
+                    if List.length fs = List.length gs andalso ListPair.all (fn ((l, _), (l', _)) => l = l') (fs, gs)
+                    then all (List.map #2 fs, List.map #2 gs, binds) else NONE
+                | (Types.TArrow (a, b), Types.TArrow (a', b')) => all ([a, b], [a', b'], binds)
+                | _ => NONE
+              and all ([], [], binds) = SOME binds
+                | all (p :: ps, x :: xs, binds) = (case go (p, x, binds) of SOME b => all (ps, xs, b) | NONE => NONE)
+                | all _ = NONE
+            in
+              case go (pat, t, []) of
+                SOME binds => SOME (List.map (fn i => case List.find (fn (i', _) => i' = i) binds of
+                                                         SOME (_, x) => x
+                                                       | NONE => Types.TRecord [])
+                                             ids)
+              | NONE => NONE
+            end
+          fun fold (t : Types.ty) : Types.ty =
+            let
+              fun first [] = NONE
+                | first ((ids, body, c) :: rest) =
+                    (case instance (ids, body, t) of
+                       SOME args => SOME (Types.TCon (c, List.map fold args))
+                     | NONE => first rest)
+            in
+              case first abbreviations of
+                SOME t' => t'
+              | NONE => inside t
+            end
+          and inside (t : Types.ty) : Types.ty =
+            case Types.prune t of
+              Types.TCon (c, args) => Types.TCon (c, List.map fold args)
+            | Types.TRecord fs => Types.TRecord (List.map (fn (l, x) => (l, fold x)) fs)
+            | Types.TArrow (a, b) => Types.TArrow (fold a, fold b)
+            | other => other
+          (* a printer for each member, so that the variables of every type
+             begin at `'a` as the signature writes them; the names of the type
+             constructors come from nameOf and need no state *)
+          fun print' t = Types.toStringNamed (nameOf, Types.newPrinter ()) t
+          fun show t = print' (fold t)
+          (* What a type is here: a type the structure names has no other name
+             (NONE), whether a signature made it abstract or the structure
+             declared it; one that stands for another shows what it stands for,
+             applied to its parameters, as `Word8Vector.elem` is `Word8.word`
+             and `Array.array` is `'a array`, the type of the top level. *)
+          fun defnOf (member : string, fcn : Types.tyfcn) : string option =
+            case (fcn, tyconOf fcn) of
+              (Types.TName _, _) => NONE
+            | (_, SOME c) =>
+                (* `Array.array` is the top level's, which is also written
+                   `array`: only a type this structure owns is its own *)
+                if ownedHere c andalso nameOf c = SOME member then NONE
+                else
+                  let
+                    fun param k = Types.freshTvar (0, Types.KRigid ("'" ^ String.str (Char.chr (Char.ord #"a" + k))), false)
+                  in
+                    SOME (print' (inside (Types.applyFcn (fcn, List.tabulate (Types.fcnArity fcn, param)))))
+                  end
+            | (Types.TAbbrev _, NONE) =>
+                let
+                  fun param k = Types.freshTvar (0, Types.KRigid ("'" ^ String.str (Char.chr (Char.ord #"a" + k))), false)
+                in
+                  SOME (print' (inside (Types.applyFcn (fcn, List.tabulate (Types.fcnArity fcn, param)))))
+                end
+          (* the constructors a datatype of this structure declares, so that a
+             constructor is not listed twice *)
+          val consOf =
+            List.foldl (fn ((name, Env.TyStr {cons, ...}), m) =>
+                          List.foldl (fn ((c, _), m) => StringMap.insert (m, c, name)) m cons)
+                       StringMap.empty (StringMap.listItemsi tys)
+          val tyMembers =
+            List.map (fn (name, Env.TyStr {fcn, cons}) =>
+                        (name,
+                         if List.null cons
+                         then MType {arity = Types.fcnArity fcn, defn = defnOf (name, fcn)}
+                         else MData {arity = Types.fcnArity fcn, cons = List.map #1 cons}))
+                     (StringMap.listItemsi tys)
+          val valMembers =
+            List.map (fn (name, v) =>
+                        (name,
+                         case v of
+                           Env.Val {scheme, ...} => MVal (show scheme)
+                         | Env.Prim {scheme, ...} => MVal (show scheme)
+                         | Env.ConAsVal {scheme, ...} => MVal (show scheme)
+                         | Env.ExnAsVal {ty, ...} => MVal (show ty)
+                         | Env.Con {scheme, ...} =>
+                             (case StringMap.find (consOf, name) of
+                                SOME d => MCon {ty = show scheme, datatypeOf = d}
+                              | NONE => MVal (show scheme))
+                         | Env.Exn {ty, ...} =>
+                             MExn (case Types.prune ty of Types.TArrow (a, _) => SOME (show a) | _ => NONE)))
+                     (StringMap.listItemsi vals)
+          val strMembers = List.map (fn (name, _) => (name, MStr)) (StringMap.listItemsi strs)
+        in
+          SOME (tyMembers @ valMembers @ strMembers)
+        end
 
   (* What a signature expression, a signature's name with its `where type`s,
      says of the type at a path in it: that it is some type that only the

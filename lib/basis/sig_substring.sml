@@ -39,10 +39,14 @@ sig
 
   (* `sub (ss, i)` is the character of `ss` at position `i`, counting from the start of the substring.
 
-     Raises: `Subscript` if `i < 0` or `i >= size ss`. *)
+     Raises: `Subscript` if `i < 0` or `i >= size ss`.
+
+     Example: `sub (full "abc", 1) = #"b"` *)
   val sub : substring * int -> char
 
-  (* `size ss` is the number of characters of `ss`. *)
+  (* `size ss` is the number of characters of `ss`.
+
+     Example: `size (extract ("abcde", 1, SOME 3)) = 3` *)
   val size : substring -> int
 
   (* `base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.
@@ -61,7 +65,9 @@ sig
 
      Implementation: `Substring.extract/no-overflow`. The bounds are tested
      so that they cannot overflow: an `i` and an `n` whose sum is no `int`
-     raise `Subscript`, not `Overflow`. *)
+     raise `Subscript`, not `Overflow`.
+
+     Example: `string (extract ("abcde", 1, SOME 3)) = "bcd"` *)
   val extract : string * int * int option -> substring
 
   (* `substring (s, i, n)` is the `n` characters of `s` from position `i`.
@@ -73,19 +79,25 @@ sig
      Example: `string (substring ("hello", 1, 3)) = "ell"` *)
   val substring : string * int * int -> substring
 
-  (* `full s` is the whole of `s` as a substring. *)
+  (* `full s` is the whole of `s` as a substring.
+
+     Example: `string (full "abc") = "abc"` *)
   val full : string -> substring
 
   (* `string ss` is the characters of `ss` as a string of their own.
 
      This is where the copy happens.
 
-     Law: `string (full s) = s` *)
+     Law: `string (full s) = s`
+
+     Example: `string (substring ("abcde", 1, 2)) = "bc"` *)
   val string : substring -> string
 
   (* `isEmpty ss` is `true` when `ss` has no characters.
 
-     Law: `isEmpty ss = (size ss = 0)` *)
+     Law: `isEmpty ss = (size ss = 0)`
+
+     Example: `isEmpty (full "") = true` *)
   val isEmpty : substring -> bool
 
   (* `getc ss` is `NONE` for the empty substring and `SOME (c, rest)` for the first character and what follows it.
@@ -126,7 +138,9 @@ sig
 
   (* `trimr k ss` is `ss` without its last `k` characters, or empty when it has at most `k`.
 
-     Raises: `Subscript` if `k < 0`, when `trimr k` is evaluated. *)
+     Raises: `Subscript` if `k < 0`, when `trimr k` is evaluated.
+
+     Example: `string (trimr 2 (full "abcde")) = "abc"` *)
   val trimr : int -> substring -> substring
 
   (* `slice (ss, i, NONE)` is the stretch of `ss` from position `i` on, and `slice (ss, i, SOME n)` the `n` characters from `i`.
@@ -135,33 +149,47 @@ sig
      is a substring of the same base.
 
      Raises: `Subscript` if `i < 0`, if `i > size ss`, or if `n` is given and
-     `i + n > size ss`. *)
+     `i + n > size ss`.
+
+     Example: `string (slice (full "abcde", 1, SOME 2)) = "bc"` *)
   val slice : substring * int * int option -> substring
 
   (* ---- Putting substrings together ---- *)
 
   (* `concat l` is the string of the substrings of `l`, one after another.
 
-     Raises: `Size` if the result would be longer than `String.maxSize`. *)
+     Raises: `Size` if the result would be longer than `String.maxSize`.
+
+     Example: `concat [full "ab", full "c"] = "abc"` *)
   val concat : substring list -> string
 
   (* `concatWith sep l` is the string of the substrings of `l` with `sep` between them.
 
-     Raises: `Size` if the result would be longer than `String.maxSize`. *)
+     Raises: `Size` if the result would be longer than `String.maxSize`.
+
+     Example: `concatWith "," [full "a", full "b"] = "a,b"` *)
   val concatWith : string -> substring list -> string
 
-  (* `explode ss` is the list of the characters of `ss`, in order. *)
+  (* `explode ss` is the list of the characters of `ss`, in order.
+
+     Example: `explode (full "ab") = [#"a", #"b"]` *)
   val explode : substring -> char list
 
   (* ---- Searching ---- *)
 
-  (* `isPrefix s ss` is `true` when `ss` begins with the string `s`. *)
+  (* `isPrefix s ss` is `true` when `ss` begins with the string `s`.
+
+     Example: `isPrefix "ab" (full "abc") = true` *)
   val isPrefix : string -> substring -> bool
 
-  (* `isSubstring s ss` is `true` when `s` occurs anywhere in `ss`. *)
+  (* `isSubstring s ss` is `true` when `s` occurs anywhere in `ss`.
+
+     Example: `isSubstring "bc" (full "abcd") = true` *)
   val isSubstring : string -> substring -> bool
 
-  (* `isSuffix s ss` is `true` when `ss` ends with the string `s`. *)
+  (* `isSuffix s ss` is `true` when `ss` ends with the string `s`.
+
+     Example: `isSuffix "cd" (full "abcd") = true` *)
   val isSuffix : string -> substring -> bool
 
   (* ---- Comparing ---- *)
@@ -171,10 +199,14 @@ sig
      What they are substrings of does not matter: only the characters they
      hold.
 
-     Law: `compare (ss, tt) = String.compare (string ss, string tt)` *)
+     Law: `compare (ss, tt) = String.compare (string ss, string tt)`
+
+     Example: `compare (full "ab", full "abc") = LESS` *)
   val compare : substring * substring -> order
 
-  (* `collate cmp (ss, tt)` compares two substrings lexicographically with `cmp` for the characters. *)
+  (* `collate cmp (ss, tt)` compares two substrings lexicographically with `cmp` for the characters.
+
+     Example: `collate Char.compare (full "b", full "a") = GREATER` *)
   val collate : (char * char -> order) -> substring * substring -> order
 
   (* ---- Splitting ---- *)
@@ -187,12 +219,16 @@ sig
      "ab12")) = ("ab", "12")` *)
   val splitl : (char -> bool) -> substring -> substring * substring
 
-  (* `splitr p ss` is the pair of what comes before the longest suffix whose characters satisfy `p`, and that suffix. *)
+  (* `splitr p ss` is the pair of what comes before the longest suffix whose characters satisfy `p`, and that suffix.
+
+     Example: `(fn (a, b) => (string a, string b)) (splitr Char.isDigit (full "ab12")) = ("ab", "12")` *)
   val splitr : (char -> bool) -> substring -> substring * substring
 
   (* `splitAt (ss, i)` is the pair of the first `i` characters of `ss` and the rest.
 
-     Raises: `Subscript` if `i < 0` or `i > size ss`. *)
+     Raises: `Subscript` if `i < 0` or `i > size ss`.
+
+     Example: `(fn (a, b) => (string a, string b)) (splitAt (full "abcd", 1)) = ("a", "bcd")` *)
   val splitAt : substring * int -> substring * substring
 
   (* `dropl p ss` is `ss` without the characters at its front that satisfy `p`.
@@ -200,13 +236,19 @@ sig
      Example: `string (dropl Char.isSpace (full "  a b")) = "a b"` *)
   val dropl : (char -> bool) -> substring -> substring
 
-  (* `dropr p ss` is `ss` without the characters at its end that satisfy `p`. *)
+  (* `dropr p ss` is `ss` without the characters at its end that satisfy `p`.
+
+     Example: `string (dropr Char.isSpace (full "ab  ")) = "ab"` *)
   val dropr : (char -> bool) -> substring -> substring
 
-  (* `takel p ss` is the longest prefix of `ss` whose characters satisfy `p`. *)
+  (* `takel p ss` is the longest prefix of `ss` whose characters satisfy `p`.
+
+     Example: `string (takel Char.isAlpha (full "ab1c")) = "ab"` *)
   val takel : (char -> bool) -> substring -> substring
 
-  (* `taker p ss` is the longest suffix of `ss` whose characters satisfy `p`. *)
+  (* `taker p ss` is the longest suffix of `ss` whose characters satisfy `p`.
+
+     Example: `string (taker Char.isDigit (full "ab12")) = "12"` *)
   val taker : (char -> bool) -> substring -> substring
 
   (* `position s ss` is the pair of what comes before the first occurrence of `s` in `ss`, and the rest from that occurrence on.
@@ -239,12 +281,16 @@ sig
 
      Reading: `Substring.span/equal-strings-built-separately`. "Unless `s <>
      s'`" is read as a comparison of the base strings by value: two equal
-     strings that were built separately count as one base. *)
+     strings that were built separately count as one base.
+
+     Example: `let val s = full "abcd" in string (span (slice (s, 0, SOME 1), slice (s, 2, SOME 1))) end = "abc"` *)
   val span : substring * substring -> substring
 
   (* ---- Transforming ---- *)
 
-  (* `translate f ss` applies `f` to each character of `ss`, from left to right, and appends the strings it gives. *)
+  (* `translate f ss` applies `f` to each character of `ss`, from left to right, and appends the strings it gives.
+
+     Example: `translate (fn c => if c = #"a" then "A" else String.str c) (full "abc") = "Abc"` *)
   val translate : (char -> string) -> substring -> string
 
   (* `tokens p ss` is the non-empty pieces of `ss` between the characters that satisfy `p`.
@@ -254,23 +300,37 @@ sig
 
      Law: `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
 
-     Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]` *)
+     Example: `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
+
+     Reading: `Substring.tokens/order`. The specification says the tokens
+     are derived "from left to right", and not how often `p` is asked: `p`
+     is applied once to each character, from left to right.
+
+     Pinned by: `Substring.tokens/order` *)
   val tokens : (char -> bool) -> substring -> substring list
 
   (* `fields p ss` is the pieces of `ss` that the characters satisfying `p` separate.
 
      Every delimiter ends a field, so `n` delimiters give `n + 1` fields,
-     empty ones included. *)
+     empty ones included.
+
+     Example: `List.map string (fields (fn c => c = #",") (full "a,,b")) = ["a", "", "b"]` *)
   val fields : (char -> bool) -> substring -> substring list
 
   (* ---- Traversing ---- *)
 
-  (* `app f ss` applies `f` to every character of `ss`, from left to right, for its effect. *)
+  (* `app f ss` applies `f` to every character of `ss`, from left to right, for its effect.
+
+     Example: `let val n = ref 0 in app (fn _ => n := !n + 1) (full "abc"); !n end = 3` *)
   val app : (char -> unit) -> substring -> unit
 
-  (* `foldl f init ss` combines the characters of `ss` from the left, as `List.foldl` does. *)
+  (* `foldl f init ss` combines the characters of `ss` from the left, as `List.foldl` does.
+
+     Example: `foldl (op ::) [] (full "ab") = [#"b", #"a"]` *)
   val foldl : (char * 'a -> 'a) -> 'a -> substring -> 'a
 
-  (* `foldr f init ss` combines the characters of `ss` from the right, as `List.foldr` does. *)
+  (* `foldr f init ss` combines the characters of `ss` from the right, as `List.foldr` does.
+
+     Example: `foldr (op ::) [] (full "ab") = [#"a", #"b"]` *)
   val foldr : (char * 'a -> 'a) -> 'a -> substring -> 'a
 end

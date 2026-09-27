@@ -19,7 +19,7 @@ structure Vector : VECTOR
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Vector` | Vector: immutable arrays with structural equality. | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
+| [`Vector`](../str/Vector.md) | Vector: immutable arrays with structural equality. | [lib/basis/vector.sml](../../../../lib/basis/vector.sml) |
 
 Vectors: immutable sequences of a fixed length, of any element type.
 
@@ -51,45 +51,25 @@ order they visit: both pass the index.
 signature VECTOR =
 sig
   type 'a <a href="#type-vector">vector</a> = 'a vector
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-fromlist">fromList</a> : 'a list -&gt; 'a vector
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a vector
-
   val <a href="#val-length">length</a> : 'a vector -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a vector * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a vector * int * 'a -&gt; 'a vector
-
   val <a href="#val-concat">concat</a> : 'a vector list -&gt; 'a vector
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a vector -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a vector -&gt; unit
-
   val <a href="#val-mapi">mapi</a> : (int * 'a -&gt; 'b) -&gt; 'a vector -&gt; 'b vector
-
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a vector -&gt; 'b vector
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a vector -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a vector -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a vector -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a vector * 'a vector -&gt; order
 end
 </pre>
@@ -178,6 +158,8 @@ val length : 'a vector -> int
 
 `length v` is the number of elements of `v`.
 
+**Example** `length (fromList [1, 2, 3]) = 3`
+
 <details><summary>Tests (5)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `empty` &middot; `five` &middot; `tabulate` &middot; `model-*` &middot; `long`
@@ -258,6 +240,8 @@ val appi : (int * 'a -> unit) -> 'a vector -> unit
 
 `appi f v` applies `f` to the index and the element of each position of `v`, from 0 up, for its effect.
 
+**Example** `let val s = ref 0 in appi (fn (i, x) => s := !s + i * x) (fromList [1, 2, 3]); !s end = 8`
+
 <details><summary>Tests (3)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `order` &middot; `empty` &middot; `model-*`
@@ -271,6 +255,8 @@ val app : ('a -> unit) -> 'a vector -> unit
 ```
 
 `app f v` applies `f` to every element of `v`, from 0 up, for its effect.
+
+**Example** `let val s = ref 0 in app (fn x => s := !s + x) (fromList [1, 2, 3]); !s end = 6`
 
 <details><summary>Tests (3)</summary>
 
@@ -302,6 +288,8 @@ val map : ('a -> 'b) -> 'a vector -> 'b vector
 
 `map f v` is the vector of the results of `f` on each element, in order.
 
+**Example** `map (fn x => x * 2) (fromList [1, 2]) = fromList [2, 4]`
+
 <details><summary>Tests (7)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `basic` &middot; `empty` &middot; `order` &middot; `other-type` &middot; `argument-unchanged` &middot; `model-*` &middot; `long`
@@ -315,6 +303,8 @@ val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 ```
 
 `foldli f init v` combines the elements from the left, giving `f` the index as well.
+
+**Example** `foldli (fn (i, x, acc) => i + x + acc) 0 (fromList [10, 20]) = 31`
 
 <details><summary>Tests (4)</summary>
 
@@ -330,6 +320,8 @@ val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
 `foldri f init v` combines the elements from the right, giving `f` the index as well.
 
+**Example** `foldri (fn (i, x, acc) => (i, x) :: acc) [] (fromList [7, 8]) = [(0, 7), (1, 8)]`
+
 <details><summary>Tests (4)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `conses-in-order` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
@@ -344,6 +336,8 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 
 `foldl f init v` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Example** `foldl (op ::) [] (fromList [1, 2, 3]) = [3, 2, 1]`
+
 <details><summary>Tests (5)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*` &middot; `long`
@@ -357,6 +351,8 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a vector -> 'b
 ```
 
 `foldr f init v` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Example** `foldr (op ::) [] (fromList [1, 2, 3]) = [1, 2, 3]`
 
 <details><summary>Tests (6)</summary>
 
@@ -392,6 +388,8 @@ val find : ('a -> bool) -> 'a vector -> 'a option
 
 `find p v` is `SOME x` for the first element that satisfies `p`, or `NONE`.
 
+**Example** `find (fn x => x > 1) (fromList [1, 2, 3]) = SOME 2`
+
 <details><summary>Tests (7)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model-*` &middot; `long`
@@ -406,6 +404,8 @@ val exists : ('a -> bool) -> 'a vector -> bool
 
 `exists p v` is `true` when some element satisfies `p`; it stops at the first that does.
 
+**Example** `exists (fn x => x > 2) (fromList [1, 2, 3]) = true`
+
 <details><summary>Tests (6)</summary>
 
 For `Vector`, in [tests/basis/vector.sml](../../../../tests/basis/vector.sml): `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -419,6 +419,8 @@ val all : ('a -> bool) -> 'a vector -> bool
 ```
 
 `all p v` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+**Example** `all (fn x => x > 0) (fromList [1, 2, 3]) = true`
 
 <details><summary>Tests (8)</summary>
 

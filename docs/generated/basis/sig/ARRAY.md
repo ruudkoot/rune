@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 25 of 25 entries documented |
-| Tests | 235 checks of 25 entries |
+| Tests | 202 checks of 23 entries |
 | Source | [lib/basis/sig\_array.sml](../../../../lib/basis/sig_array.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Array : ARRAY
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Array` | Array: mutable arrays with identity equality. | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
+| [`Array`](../str/Array.md) | Array: mutable arrays with identity equality. | [lib/basis/array.sml](../../../../lib/basis/array.sml) |
 
 Arrays: mutable sequences of a fixed length, of any element type.
 
@@ -49,53 +49,29 @@ copying it, and [`ARRAY2`](../sig/ARRAY2.md) is the two-dimensional version.
 signature ARRAY =
 sig
   type 'a <a href="#type-array">array</a> = 'a array
-
   type 'a <a href="#type-vector">vector</a> = 'a Vector.vector
-
   val <a href="#val-maxlen">maxLen</a> : int
-
   val <a href="#val-array">array</a> : int * 'a -&gt; 'a array
-
   val <a href="#val-fromlist">fromList</a> : 'a list -&gt; 'a array
-
   val <a href="#val-tabulate">tabulate</a> : int * (int -&gt; 'a) -&gt; 'a array
-
   val <a href="#val-length">length</a> : 'a array -&gt; int
-
   val <a href="#val-sub">sub</a> : 'a array * int -&gt; 'a
-
   val <a href="#val-update">update</a> : 'a array * int * 'a -&gt; unit
-
   val <a href="#val-vector">vector</a> : 'a array -&gt; 'a vector
-
   val <a href="#val-copy">copy</a> : {<a href="#fld-copy.src">src</a> : 'a array, <a href="#fld-copy.dst">dst</a> : 'a array, <a href="#fld-copy.di">di</a> : int} -&gt; unit
-
   val <a href="#val-copyvec">copyVec</a> : {<a href="#fld-copyvec.src">src</a> : 'a vector, <a href="#fld-copyvec.dst">dst</a> : 'a array, <a href="#fld-copyvec.di">di</a> : int} -&gt; unit
-
   val <a href="#val-appi">appi</a> : (int * 'a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-app">app</a> : ('a -&gt; unit) -&gt; 'a array -&gt; unit
-
   val <a href="#val-modifyi">modifyi</a> : (int * 'a -&gt; 'a) -&gt; 'a array -&gt; unit
-
   val <a href="#val-modify">modify</a> : ('a -&gt; 'a) -&gt; 'a array -&gt; unit
-
   val <a href="#val-foldli">foldli</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldri">foldri</a> : (int * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldl">foldl</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-foldr">foldr</a> : ('a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a array -&gt; 'b
-
   val <a href="#val-findi">findi</a> : (int * 'a -&gt; bool) -&gt; 'a array -&gt; (int * 'a) option
-
   val <a href="#val-find">find</a> : ('a -&gt; bool) -&gt; 'a array -&gt; 'a option
-
   val <a href="#val-exists">exists</a> : ('a -&gt; bool) -&gt; 'a array -&gt; bool
-
   val <a href="#val-all">all</a> : ('a -&gt; bool) -&gt; 'a array -&gt; bool
-
   val <a href="#val-collate">collate</a> : ('a * 'a -&gt; order) -&gt; 'a array * 'a array -&gt; order
 end
 </pre>
@@ -111,12 +87,6 @@ The type of arrays, the one of the top-level environment.
 Two arrays are equal when they are the same array: equality is identity,
 not a comparison of the elements.
 
-<details><summary>Tests (23)</summary>
-
-For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `in-a-list` &middot; `is-toplevel` &middot; `model-*` &middot; `identity-*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
-
-</details>
-
 ### <a name="type-vector"></a>`vector`
 
 ```sml
@@ -124,12 +94,6 @@ type 'a vector = 'a Vector.vector
 ```
 
 The type of the vectors that [`vector`](#val-vector) and [`copyVec`](#val-copyvec) work with.
-
-<details><summary>Tests (10)</summary>
-
-For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `empty` &middot; `equals-tabulate` &middot; `after-update` &middot; `is-a-snapshot` &middot; `is-Vector.vector` &middot; `structural-equality` &middot; `model-*` &middot; `fromList-*` &middot; `long`
-
-</details>
 
 ### <a name="val-maxlen"></a>`maxLen`
 
@@ -141,6 +105,8 @@ The greatest length an array may have.
 
 > **Implementation** `Array.maxLen/value`. 100000000, the same as
 > [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen).
+
+**Example** `maxLen = 100000000`
 
 <details><summary>Tests (1)</summary>
 
@@ -160,6 +126,10 @@ val array : int * 'a -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
+**Law** `sub (array (n, x), i) = x` for `0 <= i < n`
+
+**Example** `vector (array (3, #"x")) = Vector.fromList [#"x", #"x", #"x"]`
+
 <details><summary>Tests (23)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `every-element-is-init` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `of-reals-same` &middot; `of-reals-not-equal` &middot; `of-functions-same` &middot; `in-a-list` &middot; `is-toplevel` &middot; `model-*` &middot; `identity-*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
@@ -175,6 +145,10 @@ val fromList : 'a list -> 'a array
 `fromList l` is a new array of the elements of `l`, in order.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
+
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+
+**Example** `sub (fromList [10, 20, 30], 1) = 20`
 
 <details><summary>Tests (9)</summary>
 
@@ -192,7 +166,17 @@ val tabulate : int * (int -> 'a) -> 'a array
 
 `f` is applied in order of increasing index.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied at all.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
+
+> **Reading** `Array.tabulate/Size-before-f`. The specification does not say
+> whether the length is checked before `f` is applied. It is: a length out
+> of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all, so no effect of `f`
+> happens for an array that is never made.
+
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
+effects
+
+**Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -216,6 +200,10 @@ val length : 'a array -> int
 
 `length arr` is the number of elements of `arr`.
 
+**Law** `length (fromList l) = List.length l`
+
+**Example** `length (fromList [1, 2, 3]) = 3`
+
 <details><summary>Tests (5)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `empty` &middot; `five` &middot; `tabulate` &middot; `model-*` &middot; `long`
@@ -232,6 +220,8 @@ val sub : 'a array * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
 
+**Example** `sub (fromList [#"a", #"b"], 1) = #"b"`
+
 <details><summary>Tests (9)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first` &middot; `middle` &middot; `last` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model-*` &middot; `model-*` (raises Subscript) &middot; `long`
@@ -247,6 +237,8 @@ val update : 'a array * int * 'a -> unit
 `update (arr, i, x)` puts `x` at position `i` of `arr`.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
+
+**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
 
 **Example** `let val a = array (3, 0) in update (a, 1, 5); foldr (op ::) [] a end = [0, 5, 0]`
 
@@ -266,6 +258,10 @@ val vector : 'a array -> 'a vector
 
 It is a copy: a later [`update`](#val-update) of `arr` does not touch it.
 
+**Law** `vector arr = Vector.tabulate (length arr, fn i => sub (arr, i))`
+
+**Example** `vector (fromList [1, 2]) = Vector.fromList [1, 2]`
+
 <details><summary>Tests (10)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `empty` &middot; `equals-tabulate` &middot; `after-update` &middot; `is-a-snapshot` &middot; `is-Vector.vector` &middot; `structural-equality` &middot; `model-*` &middot; `fromList-*` &middot; `long`
@@ -282,11 +278,16 @@ val copy : {src : 'a array, dst : 'a array, di : int} -> unit
 
 `copy {src, dst, di}` copies the elements of `src` into `dst`, starting at position `di`.
 
-`src` and `dst` may be the same array and the stretches may overlap:
-every element arrives as it was before the copy began.
+`src` and `dst` may be the same array, and then `di` must be 0: an array
+cannot hold itself at any other position, so any other `di` raises
+[`Subscript`](../sig/GENERAL.md#exn-subscript), and at 0 the copy changes nothing. Two stretches of one array
+that overlap are what [`ArraySlice.copy`](../sig/ARRAY_SLICE.md#val-copy) is for.
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
+
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
+for `0 <= i < length src`, when `src` and `dst` are not the same array
 
 **Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`
 
@@ -313,6 +314,9 @@ val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + Vector.length src > length dst`,
 and then nothing has been copied.
 
+**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)`
+for `0 <= i < Vector.length v`
+
 **Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`
 
 | Field | Type | Description |
@@ -337,6 +341,8 @@ val appi : (int * 'a -> unit) -> 'a array -> unit
 
 `appi f arr` applies `f` to the index and the element of each position, from 0 up, for its effect.
 
+**Example** `let val r = ref [] in appi (fn (i, x) => r := (i, x) :: !r) (fromList ["a", "b"]); !r end = [(1, "b"), (0, "a")]`
+
 <details><summary>Tests (3)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `order` &middot; `empty` &middot; `model-*`
@@ -350,6 +356,10 @@ val app : ('a -> unit) -> 'a array -> unit
 ```
 
 `app f arr` applies `f` to every element, from 0 up, for its effect.
+
+**Law** `app f arr = appi (fn (_, x) => f x) arr`
+
+**Example** `let val s = ref 0 in app (fn x => s := !s + x) (fromList [1, 2, 3]); !s end = 6`
 
 <details><summary>Tests (4)</summary>
 
@@ -367,6 +377,8 @@ val modifyi : (int * 'a -> 'a) -> 'a array -> unit
 
 The array is changed in place, from 0 up.
 
+**Example** `let val a = fromList [10, 20, 30] in modifyi (fn (i, x) => x + i) a; vector a end = Vector.fromList [10, 21, 32]`
+
 <details><summary>Tests (6)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `basic` &middot; `index-and-element` &middot; `empty` &middot; `order` &middot; `model-*` &middot; `long`
@@ -380,6 +392,8 @@ val modify : ('a -> 'a) -> 'a array -> unit
 ```
 
 `modify f arr` replaces every element by `f` of it, in place, from 0 up.
+
+**Law** `modify f arr = modifyi (fn (_, x) => f x) arr`
 
 **Example** `let val a = fromList [1, 2, 3] in modify (fn x => x * 2) a; vector a end = Vector.fromList [2, 4, 6]`
 
@@ -397,6 +411,8 @@ val foldli : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldli f init arr` combines the elements from the left, giving `f` the index as well.
 
+**Example** `foldli (fn (i, x, acc) => (i, x) :: acc) [] (fromList ["a", "b"]) = [(1, "b"), (0, "a")]`
+
 <details><summary>Tests (4)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `model-*`
@@ -410,6 +426,8 @@ val foldri : (int * 'a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
 `foldri f init arr` combines the elements from the right, giving `f` the index as well.
+
+**Example** `foldri (fn (i, x, acc) => (i, x) :: acc) [] (fromList ["a", "b"]) = [(0, "a"), (1, "b")]`
 
 <details><summary>Tests (4)</summary>
 
@@ -425,6 +443,10 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldl f init arr` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Law** `foldl f init arr = foldli (fn (_, x, acc) => f (x, acc)) init arr`
+
+**Example** `foldl (op ::) [] (fromList [1, 2, 3]) = [3, 2, 1]`
+
 <details><summary>Tests (6)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty` &middot; `array-unchanged` &middot; `model-*` &middot; `long`
@@ -438,6 +460,10 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 ```
 
 `foldr f init arr` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Law** `foldr f init arr = foldri (fn (_, x, acc) => f (x, acc)) init arr`
+
+**Example** `foldr (op ::) [] (fromList [1, 2, 3]) = [1, 2, 3]`
 
 <details><summary>Tests (6)</summary>
 
@@ -455,6 +481,11 @@ val findi : (int * 'a -> bool) -> 'a array -> (int * 'a) option
 
 `findi p arr` is `SOME (i, x)` for the first position whose index and element satisfy `p`, or `NONE`.
 
+`p` is applied from 0 up, and not after the first position that
+satisfies it.
+
+**Example** `findi (fn (i, x) => i > 0 andalso x = 0) (fromList [0, 5, 0]) = SOME (2, 0)`
+
 <details><summary>Tests (8)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -468,6 +499,10 @@ val find : ('a -> bool) -> 'a array -> 'a option
 ```
 
 `find p arr` is `SOME x` for the first element that satisfies `p`, or `NONE`.
+
+**Law** `find p arr = Option.map #2 (findi (fn (_, x) => p x) arr)`
+
+**Example** `find (fn x => x > 1) (fromList [1, 2, 3]) = SOME 2`
 
 <details><summary>Tests (7)</summary>
 
@@ -483,6 +518,10 @@ val exists : ('a -> bool) -> 'a array -> bool
 
 `exists p arr` is `true` when some element satisfies `p`; it stops at the first that does.
 
+**Law** `exists p arr = isSome (find p arr)`
+
+**Example** `exists (fn x => x > 2) (fromList [1, 2, 3]) = true`
+
 <details><summary>Tests (6)</summary>
 
 For `Array`, in [tests/basis/array.sml](../../../../tests/basis/array.sml): `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model-*`
@@ -496,6 +535,10 @@ val all : ('a -> bool) -> 'a array -> bool
 ```
 
 `all p arr` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+**Law** `all p arr = not (exists (not o p) arr)`
+
+**Example** `all (fn x => x > 0) (fromList [1, 2, 3]) = true`
 
 <details><summary>Tests (8)</summary>
 
@@ -513,6 +556,10 @@ val collate : ('a * 'a -> order) -> 'a array * 'a array -> order
 
 This compares what the arrays hold, where `=` compares which array it
 is.
+
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+
+**Example** `collate Int.compare (fromList [1, 2], fromList [1, 3]) = LESS`
 
 <details><summary>Tests (14)</summary>
 

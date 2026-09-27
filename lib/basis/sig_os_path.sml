@@ -32,7 +32,10 @@ sig
 
      `mkAbsolute` and `mkRelative` raise it when `relativeTo` is not
      absolute, and `mkRelative` when `path` is absolute and `relativeTo` is
-     not. *)
+     not.
+
+     Example: `(mkAbsolute {path = "a", relativeTo = "b"} handle Path =>
+     "Path") = "Path"` *)
   exception Path
 
   (* Raised when an arc holds something no arc may hold.
@@ -41,10 +44,14 @@ sig
      invalid exactly when it contains a `/`. *)
   exception InvalidArc
 
-  (* The arc that names the directory above: `".."`. *)
+  (* The arc that names the directory above: `".."`.
+
+     Example: `parentArc = ".."` *)
   val parentArc : string
 
-  (* The arc that names the directory itself: `"."`. *)
+  (* The arc that names the directory itself: `"."`.
+
+     Example: `currentArc = "."` *)
   val currentArc : string
 
   (* `fromString p` is `p` taken apart into whether it is absolute, its volume, and its arcs.
@@ -77,10 +84,18 @@ sig
      Example: `toString {isAbs = false, vol = "", arcs = ["a", "b"]} = "a/b"` *)
   val toString : {isAbs : bool, vol : string, arcs : string list} -> string
 
-  (* `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have. *)
+  (* `validVolume {isAbs, vol}` is `true` when `vol` is a volume a path of that kind may have.
+
+     On Unix the only volume is the empty one.
+
+     Example: `validVolume {isAbs = true, vol = ""} = true`
+
+     Example: `validVolume {isAbs = true, vol = "C:"} = false` *)
   val validVolume : {isAbs : bool, vol : string} -> bool
 
-  (* `getVolume p` is the volume of `p`, the empty string on Unix. *)
+  (* `getVolume p` is the volume of `p`, the empty string on Unix.
+
+     Example: `getVolume "/a/b" = ""` *)
   val getVolume : string -> string
 
   (* `getParent p` is the path of the directory that holds what `p` names.
@@ -104,7 +119,9 @@ sig
 
      Example: `splitDirFile "a/b/c" = {dir = "a/b", file = "c"}`
 
-     Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}` *)
+     Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
+
+     Law: `joinDirFile (splitDirFile p) = p` for a path `p` that is not empty *)
   val splitDirFile : string -> {dir : string, file : string}
 
   (* `joinDirFile {dir, file}` is the path of `file` inside `dir`.
@@ -120,10 +137,16 @@ sig
      Example: `joinDirFile {dir = "a", file = "b"} = "a/b"` *)
   val joinDirFile : {dir : string, file : string} -> string
 
-  (* `dir p` is the `dir` part of `splitDirFile p`. *)
+  (* `dir p` is the `dir` part of `splitDirFile p`.
+
+     Law: `dir p = #dir (splitDirFile p)`
+
+     Example: `dir "a/b/c" = "a/b"` *)
   val dir : string -> string
 
-  (* `file p` is the `file` part of `splitDirFile p`: the last arc of `p`. *)
+  (* `file p` is the `file` part of `splitDirFile p`: the last arc of `p`.
+
+     Example: `file "a/b/c" = "c"` *)
   val file : string -> string
 
   (* `splitBaseExt p` is `p` split into what comes before the extension and the extension.
@@ -138,7 +161,9 @@ sig
 
      Example: `splitBaseExt "a.tar.gz" = {base = "a.tar", ext = SOME "gz"}`
 
-     Example: `splitBaseExt ".profile" = {base = ".profile", ext = NONE}` *)
+     Example: `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
+
+     Law: `joinBaseExt (splitBaseExt p) = p` *)
   val splitBaseExt : string -> {base : string, ext : string option}
 
   (* `joinBaseExt {base, ext}` is `base` with `ext` appended after a `.`, or `base` alone when `ext` is `NONE`.
@@ -146,12 +171,15 @@ sig
      Example: `joinBaseExt {base = "a", ext = SOME ""} = "a"` *)
   val joinBaseExt : {base : string, ext : string option} -> string
 
-  (* `base p` is the `base` part of `splitBaseExt p`. *)
+  (* `base p` is the `base` part of `splitBaseExt p`.
+
+     Example: `base "a.tar.gz" = "a.tar"` *)
   val base : string -> string
 
   (* `ext p` is the `ext` part of `splitBaseExt p`.
 
-     Example: `ext "a.b/c" = NONE` for the extension is that of the last arc. *)
+     Example: `ext "a.b/c" = NONE`, for the extension is that of the last
+     arc. *)
   val ext : string -> string option
 
   (* `mkCanonical p` is `p` with the current arcs dropped, the parent arcs cancelled where they can be, and the separators made single.
@@ -172,7 +200,11 @@ sig
      Example: `mkCanonical "/.." = "/"` *)
   val mkCanonical : string -> string
 
-  (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give. *)
+  (* `isCanonical p` is `true` when `p` is what `mkCanonical` would give.
+
+     Law: `isCanonical p = (mkCanonical p = p)`
+
+     Example: `isCanonical "a/../b" = false` *)
   val isCanonical : string -> bool
 
   (* `mkAbsolute {path, relativeTo}` is `path` read as lying under `relativeTo`, canonicalised.
@@ -205,16 +237,24 @@ sig
      canonical comes back canonical *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
-  (* `isAbsolute p` is `true` when `p` starts from a root. *)
+  (* `isAbsolute p` is `true` when `p` starts from a root.
+
+     Example: `isAbsolute "/a" = true` *)
   val isAbsolute : string -> bool
 
-  (* `isRelative p` is `true` when `p` does not start from a root. *)
+  (* `isRelative p` is `true` when `p` does not start from a root.
+
+     Law: `isRelative p = not (isAbsolute p)`
+
+     Example: `isRelative "a/b" = true` *)
   val isRelative : string -> bool
 
   (* `isRoot p` is `true` when `p` is a canonical absolute path with no arcs below the root.
 
      Reading: `OS.Path.isRoot/double-separator`. `"/"` is a root and `"//"`
-     is not: the second has an empty arc under the root. *)
+     is not: the second has an empty arc under the root.
+
+     Example: `isRoot "/" = true` *)
   val isRoot : string -> bool
 
   (* `concat (p, q)` is `q` read as lying under `p`.
@@ -232,11 +272,15 @@ sig
 
   (* `fromUnixPath p` is the path that `p` names on this system, `p` itself on Unix.
 
-     Raises: `InvalidArc` if an arc of `p` cannot be one here. *)
+     Raises: `InvalidArc` if an arc of `p` cannot be one here.
+
+     Example: `fromUnixPath "a/b" = "a/b"` *)
   val fromUnixPath : string -> string
 
   (* `toUnixPath p` is `p` written in Unix syntax, `p` itself on Unix.
 
-     Raises: `Path` if `p` has a volume that Unix syntax cannot write. *)
+     Raises: `Path` if `p` has a volume that Unix syntax cannot write.
+
+     Example: `toUnixPath "/a/b" = "/a/b"` *)
   val toUnixPath : string -> string
 end

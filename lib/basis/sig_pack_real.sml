@@ -21,10 +21,14 @@ sig
   (* The type of the reals this structure packs: `Real.real` for `PackReal`, `Real32.real` for `PackReal32`. *)
   type real
 
-  (* The number of bytes of one real: 8 for binary64, 4 for binary32. *)
+  (* The number of bytes of one real: 8 for binary64, 4 for binary32.
+
+     Example: `PackReal64Big.bytesPerElem = 8` *)
   val bytesPerElem : int
 
-  (* Whether the most significant byte of the encoding comes first. *)
+  (* Whether the most significant byte of the encoding comes first.
+
+     Example: `PackReal64Little.isBigEndian = false` *)
   val isBigEndian : bool
 
   (* `toBytes r` is the encoding of `r` as a vector of `bytesPerElem` bytes.
@@ -47,16 +51,37 @@ sig
 
   (* `subVec (v, i)` is the real at position `i` of the byte vector `v`, counting in reals.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `v`. *)
+     Its bytes are those from `bytesPerElem * i` up to `bytesPerElem * (i + 1)`.
+
+     Raises: `Subscript` if `i < 0` or `v` is shorter than `bytesPerElem * (i
+     + 1)`, a product that is taken without overflowing, so that a huge `i`
+     raises `Subscript` as well.
+
+     Example: `Real.== (PackReal64Big.subVec (Word8Vector.concat
+     [PackReal64Big.toBytes 0.5, PackReal64Big.toBytes 1.5], 1), 1.5) = true`
+
+     Example: `Real.== (PackReal64Big.subVec (PackReal64Big.toBytes 1.0, valOf
+     Int.maxInt) handle Subscript => ~1.0, ~1.0) = true` *)
   val subVec : Word8Vector.vector * int -> real
 
   (* `subArr (arr, i)` is the real at position `i` of the byte array `arr`.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`. *)
+     Raises: `Subscript` if `i < 0` or `arr` is shorter than `bytesPerElem *
+     (i + 1)`.
+
+     Example: `Real.== (PackReal64Little.subArr (Word8Array.tabulate (8, fn _ =>
+     0w0), 0), 0.0) = true` *)
   val subArr : Word8Array.array * int -> real
 
   (* `update (arr, i, r)` writes the encoding of `r` at position `i` of `arr`.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`. *)
+     Raises: `Subscript` if `i < 0` or `arr` is shorter than `bytesPerElem *
+     (i + 1)`.
+
+     Law: `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN
+     comes back as some NaN
+
+     Example: `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update
+     (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F` *)
   val update : Word8Array.array * int * real -> unit
 end

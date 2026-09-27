@@ -593,4 +593,21 @@ struct
            fn () => Char.isPunct (Char.chr i));
       eqC ("Char.toUpper/toLower-" ^ n, Char.toUpper (Char.chr i), fn () => Char.toUpper (Char.toLower (Char.toUpper (Char.chr i))))
     end)
+
+  (* The definitions the page gives the classes, over every character *)
+  fun forEveryChar p = List.all (fn i => p (Char.chr i)) (List.tabulate (256, fn i => i))
+  val () = eqB ("Char.isAlpha/is-isUpper-orelse-isLower", true,
+                fn () => forEveryChar (fn c => Char.isAlpha c = (Char.isUpper c orelse Char.isLower c)))
+  val () = eqB ("Char.isAlphaNum/is-isAlpha-orelse-isDigit", true,
+                fn () => forEveryChar (fn c => Char.isAlphaNum c = (Char.isAlpha c orelse Char.isDigit c)))
+  val () = eqB ("Char.isPrint/is-isGraph-orelse-space", true,
+                fn () => forEveryChar (fn c => Char.isPrint c = (Char.isGraph c orelse c = #" ")))
+  val () = eqB ("Char.isSpace/is-tab-to-return-orelse-space", true,
+                fn () => forEveryChar (fn c => Char.isSpace c = ((#"\t" <= c andalso c <= #"\r") orelse c = #" ")))
+  (* toString and toCString give the text of a constant, which fromString and
+     fromCString read back: every character survives the round trip *)
+  val () = eqB ("Char.fromString/of-toString-all", true,
+                fn () => forEveryChar (fn c => Char.fromString (Char.toString c) = SOME c))
+  val () = eqB ("Char.fromCString/of-toCString-all", true,
+                fn () => forEveryChar (fn c => Char.fromCString (Char.toCString c) = SOME c))
 end

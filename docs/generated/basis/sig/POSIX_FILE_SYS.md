@@ -19,7 +19,7 @@ structure Posix.FileSys : POSIX_FILE_SYS  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.FileSys` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.FileSys`](../str/Posix.FileSys.md) | Posix.FileSys: files and directories as POSIX has them: descriptors, opening, permissions, links and what [`stat`](#val-stat) reports. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 Files and directories as POSIX has them: opening them, linking and
 removing them, and reading and setting what the system records about them.
@@ -39,7 +39,7 @@ conditions are the ones [`POSIX_ERROR`](../sig/POSIX_ERROR.md) names.
 > **Erratum** `POSIX_FILE_SYS/flexible-types`. The types are kept as the page
 > writes them. What the text says about them is checked in the suite rather
 > than written here: [`uid`](#type-uid), [`gid`](#type-gid) and [`file_desc`](#type-file_desc) are those of
-> [`Posix.ProcEnv`](../sig/POSIX.md#str-procenv), [`dirstream`](#type-dirstream) is [`OS.FileSys.dirstream`](../sig/OS_FILE_SYS.md#type-dirstream), and [`access_mode`](#type-access_mode)
+> [`Posix.ProcEnv`](../str/Posix.ProcEnv.md), [`dirstream`](#type-dirstream) is [`OS.FileSys.dirstream`](../sig/OS_FILE_SYS.md#type-dirstream), and [`access_mode`](#type-access_mode)
 > is [`OS.FileSys.access_mode`](../sig/OS_FILE_SYS.md#type-access_mode).
 
 > **Reading** `Posix.FileSys/empty-path-raises`. An empty path raises
@@ -52,202 +52,113 @@ conditions are the ones [`POSIX_ERROR`](../sig/POSIX_ERROR.md) names.
 signature POSIX_FILE_SYS =
 sig
   eqtype <a href="#type-uid">uid</a>
-
   eqtype <a href="#type-gid">gid</a>
-
   eqtype <a href="#type-file_desc">file_desc</a>
-
   val <a href="#val-fdtoword">fdToWord</a> : file_desc -&gt; SysWord.word
-
   val <a href="#val-wordtofd">wordToFD</a> : SysWord.word -&gt; file_desc
-
   val <a href="#val-fdtoiod">fdToIOD</a> : file_desc -&gt; OS.IO.iodesc
-
   val <a href="#val-iodtofd">iodToFD</a> : OS.IO.iodesc -&gt; file_desc option
-
   type <a href="#type-dirstream">dirstream</a>
-
   val <a href="#val-opendir">opendir</a> : string -&gt; dirstream
-
   val <a href="#val-readdir">readdir</a> : dirstream -&gt; string option
-
   val <a href="#val-rewinddir">rewinddir</a> : dirstream -&gt; unit
-
   val <a href="#val-closedir">closedir</a> : dirstream -&gt; unit
-
   val <a href="#val-chdir">chdir</a> : string -&gt; unit
-
   val <a href="#val-getcwd">getcwd</a> : unit -&gt; string
-
   val <a href="#val-stdin">stdin</a> : file_desc
-
   val <a href="#val-stdout">stdout</a> : file_desc
-
   val <a href="#val-stderr">stderr</a> : file_desc
-
   structure <a href="#str-s">S</a> :
   sig
     eqtype <a href="#type-s.mode">mode</a>
-
     include BIT_FLAGS
       where type flags = mode
-
     val <a href="#val-s.irwxu">irwxu</a> : mode
-
     val <a href="#val-s.irusr">irusr</a> : mode
-
     val <a href="#val-s.iwusr">iwusr</a> : mode
-
     val <a href="#val-s.ixusr">ixusr</a> : mode
-
     val <a href="#val-s.irwxg">irwxg</a> : mode
-
     val <a href="#val-s.irgrp">irgrp</a> : mode
-
     val <a href="#val-s.iwgrp">iwgrp</a> : mode
-
     val <a href="#val-s.ixgrp">ixgrp</a> : mode
-
     val <a href="#val-s.irwxo">irwxo</a> : mode
-
     val <a href="#val-s.iroth">iroth</a> : mode
-
     val <a href="#val-s.iwoth">iwoth</a> : mode
-
     val <a href="#val-s.ixoth">ixoth</a> : mode
-
     val <a href="#val-s.isuid">isuid</a> : mode
-
     val <a href="#val-s.isgid">isgid</a> : mode
   end
-
   structure <a href="#str-o">O</a> :
   sig
     include BIT_FLAGS
-
     val <a href="#val-o.append">append</a> : flags
-
     val <a href="#val-o.excl">excl</a> : flags
-
     val <a href="#val-o.noctty">noctty</a> : flags
-
     val <a href="#val-o.nonblock">nonblock</a> : flags
-
     val <a href="#val-o.sync">sync</a> : flags
-
     val <a href="#val-o.trunc">trunc</a> : flags
   end
-
   datatype <a href="#type-open_mode">open_mode</a>
     = <a href="#con-o_rdonly">O_RDONLY</a>
     | <a href="#con-o_wronly">O_WRONLY</a>
     | <a href="#con-o_rdwr">O_RDWR</a>
-
   val <a href="#val-openf">openf</a> : string * open_mode * O.flags -&gt; file_desc
-
   val <a href="#val-createf">createf</a> : string * open_mode * O.flags * S.mode
                 -&gt; file_desc
-
   val <a href="#val-creat">creat</a> : string * S.mode -&gt; file_desc
-
   val <a href="#val-umask">umask</a> : S.mode -&gt; S.mode
-
   val <a href="#val-link">link</a> : {<a href="#fld-link.old">old</a> : string, <a href="#fld-link.new">new</a> : string} -&gt; unit
-
   val <a href="#val-mkdir">mkdir</a> : string * S.mode -&gt; unit
-
   val <a href="#val-mkfifo">mkfifo</a> : string * S.mode -&gt; unit
-
   val <a href="#val-unlink">unlink</a> : string -&gt; unit
-
   val <a href="#val-rmdir">rmdir</a> : string -&gt; unit
-
   val <a href="#val-rename">rename</a> : {<a href="#fld-rename.old">old</a> : string, <a href="#fld-rename.new">new</a> : string} -&gt; unit
-
   val <a href="#val-symlink">symlink</a> : {<a href="#fld-symlink.old">old</a> : string, <a href="#fld-symlink.new">new</a> : string} -&gt; unit
-
   val <a href="#val-readlink">readlink</a> : string -&gt; string
-
   eqtype <a href="#type-dev">dev</a>
-
   val <a href="#val-wordtodev">wordToDev</a> : SysWord.word -&gt; dev
-
   val <a href="#val-devtoword">devToWord</a> : dev -&gt; SysWord.word
-
   eqtype <a href="#type-ino">ino</a>
-
   val <a href="#val-wordtoino">wordToIno</a> : SysWord.word -&gt; ino
-
   val <a href="#val-inotoword">inoToWord</a> : ino -&gt; SysWord.word
-
   structure <a href="#str-st">ST</a> :
   sig
     type <a href="#type-st.stat">stat</a>
-
     val <a href="#val-st.isdir">isDir</a> : stat -&gt; bool
-
     val <a href="#val-st.ischr">isChr</a> : stat -&gt; bool
-
     val <a href="#val-st.isblk">isBlk</a> : stat -&gt; bool
-
     val <a href="#val-st.isreg">isReg</a> : stat -&gt; bool
-
     val <a href="#val-st.isfifo">isFIFO</a> : stat -&gt; bool
-
     val <a href="#val-st.islink">isLink</a> : stat -&gt; bool
-
     val <a href="#val-st.issock">isSock</a> : stat -&gt; bool
-
     val <a href="#val-st.mode">mode</a> : stat -&gt; S.mode
-
     val <a href="#val-st.ino">ino</a> : stat -&gt; ino
-
     val <a href="#val-st.dev">dev</a> : stat -&gt; dev
-
     val <a href="#val-st.nlink">nlink</a> : stat -&gt; int
-
     val <a href="#val-st.uid">uid</a> : stat -&gt; uid
-
     val <a href="#val-st.gid">gid</a> : stat -&gt; gid
-
     val <a href="#val-st.size">size</a> : stat -&gt; Position.int
-
     val <a href="#val-st.atime">atime</a> : stat -&gt; Time.time
-
     val <a href="#val-st.mtime">mtime</a> : stat -&gt; Time.time
-
     val <a href="#val-st.ctime">ctime</a> : stat -&gt; Time.time
   end
-
   val <a href="#val-stat">stat</a> : string -&gt; ST.stat
-
   val <a href="#val-lstat">lstat</a> : string -&gt; ST.stat
-
   val <a href="#val-fstat">fstat</a> : file_desc -&gt; ST.stat
-
   datatype <a href="#type-access_mode">access_mode</a>
     = <a href="#con-a_read">A_READ</a>
     | <a href="#con-a_write">A_WRITE</a>
     | <a href="#con-a_exec">A_EXEC</a>
-
   val <a href="#val-access">access</a> : string * access_mode list -&gt; bool
-
   val <a href="#val-chmod">chmod</a> : string * S.mode -&gt; unit
-
   val <a href="#val-fchmod">fchmod</a> : file_desc * S.mode -&gt; unit
-
   val <a href="#val-chown">chown</a> : string * uid * gid -&gt; unit
-
   val <a href="#val-fchown">fchown</a> : file_desc * uid * gid -&gt; unit
-
   val <a href="#val-utime">utime</a> : string
               * {<a href="#fld-utime.actime">actime</a> : Time.time, <a href="#fld-utime.modtime">modtime</a> : Time.time} option
               -&gt; unit
-
   val <a href="#val-ftruncate">ftruncate</a> : file_desc * Position.int -&gt; unit
-
   val <a href="#val-pathconf">pathconf</a> : string * string -&gt; SysWord.word option
-
   val <a href="#val-fpathconf">fpathconf</a> : file_desc * string -&gt; SysWord.word option
 end
 </pre>
@@ -258,7 +169,7 @@ end
 eqtype uid
 ```
 
-The type of the number that names a user, the one of [`Posix.ProcEnv`](../sig/POSIX.md#str-procenv).
+The type of the number that names a user, the one of [`Posix.ProcEnv`](../str/Posix.ProcEnv.md).
 
 ### <a name="type-gid"></a>`gid`
 
@@ -284,6 +195,8 @@ val fdToWord : file_desc -> SysWord.word
 
 `fdToWord fd` is the number the system knows `fd` by.
 
+**Example** `fdToWord stdout = 0w1`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-wordToFD` &middot; `distinct-descriptors`
@@ -297,6 +210,8 @@ val wordToFD : SysWord.word -> file_desc
 ```
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
+
+**Law** `fdToWord (wordToFD w) = w`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -332,6 +247,10 @@ val iodToFD : OS.IO.iodesc -> file_desc option
 
 `iodToFD iod` is `SOME` of the descriptor that `iod` is, or `NONE` when it is not one.
 
+**Law** `iodToFD (fdToIOD fd) = SOME fd`
+
+**Example** `iodToFD (fdToIOD stdin) = SOME stdin`
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `inverts-fdToIOD` &middot; `stdout` &middot; `descriptor-of-a-stream`
@@ -344,7 +263,7 @@ For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis
 type dirstream
 ```
 
-The type of an open directory being read, the [`dirstream`](#type-dirstream) of [`OS.FileSys`](../sig/OS.md#str-filesys).
+The type of an open directory being read, the [`dirstream`](#type-dirstream) of [`OS.FileSys`](../str/OS.FileSys.md).
 
 ### <a name="val-opendir"></a>`opendir`
 
@@ -433,6 +352,8 @@ val getcwd : unit -> string
 `getcwd ()` is the current directory, as an absolute path.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if it cannot be found.
+
+**Example** `getcwd () = OS.FileSys.getDir ()`
 
 <details><summary>Tests (2)</summary>
 
@@ -532,6 +453,13 @@ Read, write and run, for the owner: [`irusr`](#val-s.irusr), [`iwusr`](#val-s.iw
 > [`isuid`](#val-s.isuid) 04000 and [`isgid`](#val-s.isgid) 02000, and [`all`](../sig/BIT_FLAGS.md#val-all) is 07777, every bit that
 > [`chmod`](#val-chmod) sets, the sticky bit included.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-irusr-iwusr-ixusr` &middot; `chmod`
@@ -545,6 +473,12 @@ val irusr : mode
 ```
 
 The owner may read.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -560,6 +494,12 @@ val iwusr : mode
 
 The owner may write.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
@@ -573,6 +513,12 @@ val ixusr : mode
 ```
 
 The owner may run it, or enter it when it is a directory.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -588,6 +534,13 @@ val irwxg : mode
 
 Read, write and run, for the group.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-irgrp-iwgrp-ixgrp` &middot; `chmod`
@@ -601,6 +554,12 @@ val irgrp : mode
 ```
 
 The group may read.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -616,6 +575,12 @@ val iwgrp : mode
 
 The group may write.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
@@ -629,6 +594,12 @@ val ixgrp : mode
 ```
 
 The group may run it.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -644,6 +615,13 @@ val irwxo : mode
 
 Read, write and run, for everyone else.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `is-iroth-iwoth-ixoth` &middot; `chmod`
@@ -657,6 +635,12 @@ val iroth : mode
 ```
 
 Everyone may read.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -672,6 +656,12 @@ val iwoth : mode
 
 Everyone may write.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
@@ -686,6 +676,12 @@ val ixoth : mode
 
 Everyone may run it.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `chmod`
@@ -699,6 +695,12 @@ val isuid : mode
 ```
 
 Run the program as its owner rather than as whoever started it.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -717,6 +719,12 @@ Run the program with the file's group.
 > **Implementation** `Posix.FileSys.S.isgid/may-not-stick`. The owner may
 > always set [`isuid`](#val-s.isuid); [`isgid`](#val-s.isgid) is only bound to stay set when the file's
 > group is one of the process's own groups.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (1)</summary>
 
@@ -880,6 +888,13 @@ val createf : string * open_mode * O.flags * S.mode
 > that is there already is opened as it stands: neither its contents nor
 > its permissions are touched, unless [`O.trunc`](#val-o.trunc) is given.
 
+<details><summary>Other implementations (2)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+- **MLKit** &mdash; chmod, with which the check sets the mode of the file first, ignores the mode and sets 01001 (---------t): the runtime passes it the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `mode-less-umask` &middot; `mode-with-empty-umask` &middot; `open-mode` &middot; `existing-file` &middot; `existing-mode-kept` &middot; `with-trunc`
@@ -895,6 +910,12 @@ val creat : string * S.mode -> file_desc
 `creat (p, perms)` is `createf (p, O_WRONLY, O.flags [O.trunc], perms)`.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` cannot be opened or made.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -912,6 +933,14 @@ val umask : S.mode -> S.mode
 
 > **Reading** `Posix.FileSys.umask/not-for-chmod`. The mask applies to files
 > that are created; [`chmod`](#val-chmod) sets what it is given, mask or no mask.
+
+**Example** `let val old = umask (S.flags [S.iwoth]) in umask old = S.flags [S.iwoth] end = true`, which puts the mask back as it was
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): umask returns the previous mask in C's code, untranslated, and the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions
+
+</details>
 
 <details><summary>Tests (3)</summary>
 
@@ -935,6 +964,12 @@ the two are on different file systems.
 | <a name="fld-link.old"></a>`old` | `string` |  |
 | <a name="fld-link.new"></a>`new` | `string` |  |
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; link never raises OS.SysErr: the library calls C's link, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+
+</details>
+
 <details><summary>Tests (6)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `same-contents` &middot; `shared-file` &middot; `same-inode` &middot; `link-count` &middot; `directory` (raises) &middot; `missing-file` (raises)
@@ -953,8 +988,14 @@ val mkdir : string * S.mode -> unit
 
 > **Implementation** `Posix.FileSys.mkdir/shares-OS.FileSys`. [`rmdir`](#val-rmdir), [`chdir`](#val-chdir),
 > [`getcwd`](#val-getcwd), [`unlink`](#val-unlink), [`rename`](#val-rename), [`readlink`](#val-readlink), the directory streams and
-> [`access`](#val-access) are the functions of [`OS.FileSys`](../sig/OS.md#str-filesys) under the names of POSIX, and
+> [`access`](#val-access) are the functions of [`OS.FileSys`](../str/OS.FileSys.md) under the names of POSIX, and
 > [`mkdir`](#val-mkdir) differs from [`OS.FileSys.mkDir`](../sig/OS_FILE_SYS.md#val-mkdir) in the mode only.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -972,6 +1013,12 @@ val mkfifo : string * S.mode -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` is there already, or cannot be made.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+
+</details>
+
 <details><summary>Tests (3)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_dir.sml](../../../../tests/basis/posix_filesys_dir.sml): `makes-a-fifo` &middot; `mode-less-umask` &middot; `existing` (raises)
@@ -987,6 +1034,12 @@ val unlink : string -> unit
 `unlink p` removes the name `p`; the file goes when its last name does.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing, or may not be removed.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; symlink and unlink never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+
+</details>
 
 <details><summary>Tests (5)</summary>
 
@@ -1004,6 +1057,12 @@ val rmdir : string -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` is not an empty directory, or may not be
 removed.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; rename and rmdir never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1025,6 +1084,12 @@ val rename : {old : string, new : string} -> unit
 | --- | --- | --- |
 | <a name="fld-rename.old"></a>`old` | `string` |  |
 | <a name="fld-rename.new"></a>`new` | `string` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; rename and rmdir never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1048,6 +1113,12 @@ val symlink : {old : string, new : string} -> unit
 | --- | --- | --- |
 | <a name="fld-symlink.old"></a>`old` | `string` |  |
 | <a name="fld-symlink.new"></a>`new` | `string` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; symlink and unlink never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -1101,6 +1172,8 @@ val devToWord : dev -> SysWord.word
 
 `devToWord d` is the number of the device `d`.
 
+**Law** `devToWord (wordToDev w) = w`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `inverts-wordToDev` &middot; `same-device`
@@ -1136,6 +1209,8 @@ val inoToWord : ino -> SysWord.word
 ```
 
 `inoToWord i` is the number of the file `i`.
+
+**Law** `inoToWord (wordToIno w) = w`
 
 <details><summary>Tests (2)</summary>
 
@@ -1422,6 +1497,10 @@ val stat : string -> ST.stat
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
 
+**Example** `ST.isDir (stat "/") = true`
+
+**Example** `ST.isChr (stat "/dev/null") = true`
+
 <details><summary>Tests (4)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys\_stat.sml](../../../../tests/basis/posix_filesys_stat.sml): `empty-string` (raises) &middot; `missing` (raises) &middot; `follows-a-link` &middot; `dangling-link` (raises)
@@ -1453,6 +1532,8 @@ val fstat : file_desc -> ST.stat
 `fstat fd` is what the system records about the file that `fd` is open on.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not open.
+
+**Example** `let val fd = openf ("/dev/null", O_RDONLY, O.flags []) in ST.isChr (fstat fd) before Posix.IO.close fd end = true`
 
 <details><summary>Tests (3)</summary>
 
@@ -1489,6 +1570,8 @@ An empty list asks only whether `p` names something.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the question cannot be answered.
 
+**Example** `access ("/", []) = true`
+
 <details><summary>Tests (5)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `exists` &middot; `missing` &middot; `missing-read` &middot; `every-mode-of-the-list` &middot; `directory`
@@ -1506,6 +1589,12 @@ val chmod : string * S.mode -> unit
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing, or the process does not own
 it.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
+
 <details><summary>Tests (5)</summary>
 
 For `Posix.FileSys`, in [tests/basis/posix\_filesys.sml](../../../../tests/basis/posix_filesys.sml): `sets-mode` &middot; `not-masked` &middot; `no-permissions` &middot; `missing-file` (raises) &middot; `empty-path` (raises)
@@ -1522,6 +1611,12 @@ val fchmod : file_desc * S.mode -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `fd` is not open, or the process does not own the
 file.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O\_WRONLY \| O\_TRUNC
+
+</details>
 
 <details><summary>Tests (2)</summary>
 
@@ -1582,6 +1677,12 @@ set.
 | --- | --- | --- |
 | <a name="fld-utime.actime"></a>`actime` | `Time.time` |  |
 | <a name="fld-utime.modtime"></a>`modtime` | `Time.time` |  |
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+
+</details>
 
 <details><summary>Tests (6)</summary>
 

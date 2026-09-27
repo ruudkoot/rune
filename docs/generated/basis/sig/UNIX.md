@@ -19,7 +19,7 @@ structure Unix : UNIX where type exit_status = Posix.Process.exit_status where t
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Unix` | Unix: running a program and talking to it through pipes. | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
+| [`Unix`](../str/Unix.md) | Unix: running a program and talking to it through pipes. | [lib/basis/unix.sml](../../../../lib/basis/unix.sml) |
 
 Running another program and talking to it: a child process with a pipe
 each way.
@@ -27,7 +27,7 @@ each way.
 [`execute`](#val-execute) starts a program and gives a [`proc`](#type-proc), from which the streams are
 taken: what the child writes is read through [`textInstreamOf`](#val-textinstreamof), and what it
 is to read is written through [`textOutstreamOf`](#val-textoutstreamof). [`reap`](#val-reap) waits for it and
-is its status. This is [`Posix.Process`](../sig/POSIX.md#str-process)'s fork, exec and waitpid put
+is its status. This is [`Posix.Process`](../str/Posix.Process.md)'s fork, exec and waitpid put
 together, with the pipes made and the descriptors handed over; the
 system starts the program itself, without a fork, which Windows does
 not have.
@@ -48,35 +48,22 @@ restriction being what it is.
 signature UNIX =
 sig
   type ('a, 'b) <a href="#type-proc">proc</a>
-
   type <a href="#type-signal">signal</a>
-
   datatype <a href="#type-exit_status">exit_status</a>
     = <a href="#con-w_exited">W_EXITED</a>
     | <a href="#con-w_exitstatus">W_EXITSTATUS</a> of Word8.word
     | <a href="#con-w_signaled">W_SIGNALED</a> of signal
     | <a href="#con-w_stopped">W_STOPPED</a> of signal
-
   val <a href="#val-fromstatus">fromStatus</a> : OS.Process.status -&gt; exit_status
-
   val <a href="#val-executeinenv">executeInEnv</a> : string * string list * string list -&gt; ('a, 'b) proc
-
   val <a href="#val-execute">execute</a> : string * string list -&gt; ('a, 'b) proc
-
   val <a href="#val-textinstreamof">textInstreamOf</a> : (TextIO.instream, 'a) proc -&gt; TextIO.instream
-
   val <a href="#val-bininstreamof">binInstreamOf</a> : (BinIO.instream, 'a) proc -&gt; BinIO.instream
-
   val <a href="#val-textoutstreamof">textOutstreamOf</a> : ('a, TextIO.outstream) proc -&gt; TextIO.outstream
-
   val <a href="#val-binoutstreamof">binOutstreamOf</a> : ('a, BinIO.outstream) proc -&gt; BinIO.outstream
-
   val <a href="#val-streamsof">streamsOf</a> : (TextIO.instream, TextIO.outstream) proc -&gt; TextIO.instream * TextIO.outstream
-
   val <a href="#val-reap">reap</a> : ('a, 'b) proc -&gt; OS.Process.status
-
   val <a href="#val-kill">kill</a> : ('a, 'b) proc * signal -&gt; unit
-
   val <a href="#val-exit">exit</a> : Word8.word -&gt; 'a
 end
 </pre>
@@ -98,7 +85,7 @@ through, the second the stream its input is written through.
 type signal
 ```
 
-The type of a signal, the one of [`Posix.Signal`](../sig/POSIX.md#str-signal).
+The type of a signal, the one of [`Posix.Signal`](../str/Posix.Signal.md).
 
 ### <a name="type-exit_status"></a>`exit_status`
 
@@ -110,7 +97,7 @@ datatype exit_status
   | W_STOPPED of signal
 ```
 
-How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) of [`Posix.Process`](../sig/POSIX.md#str-process).
+How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) of [`Posix.Process`](../str/Posix.Process.md).
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
@@ -119,9 +106,10 @@ How a process ended, or why it stopped; the [`exit_status`](#type-exit_status) o
 | <a name="con-w_signaled"></a>`W_SIGNALED` | `signal` | a signal ended it |
 | <a name="con-w_stopped"></a>`W_STOPPED` | `signal` | a signal stopped it; it has not ended |
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 5 is W\_SIGNALED)
 
 </details>
@@ -134,9 +122,12 @@ val fromStatus : OS.Process.status -> exit_status
 
 `fromStatus st` is what the status `st` says about how the process ended.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3`
+
+<details><summary>Other implementations (2)</summary>
 
 - **MLton, Poly/ML** &mdash; fromStatus OS.Process.failure is W\_SIGNALED, not W\_EXITSTATUS of a non-zero value
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -166,9 +157,11 @@ runs another program, so a later child does not hold them open.
 > knows at once that it cannot be run, this raises [`OS.SysErr`](../sig/OS.md#exn-syserr), which
 > the page allows as well.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+- **MLKit** &mdash; exece (and so Unix.executeInEnv) with the environment \[\] passes on the environment of the process: the runtime installs the list only when it is not empty
+- **MLKit** &mdash; a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
 
 </details>
 
@@ -191,9 +184,12 @@ val execute : string * string list -> ('a, 'b) proc
 > **Reading** `Unix.execute/current-directory`. The page does not say which
 > directory the child runs in; it is this process's current one.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `let val p = execute ("/bin/echo", ["hi"]) in TextIO.inputAll (textInstreamOf p) before ignore (reap p) end = "hi\n"`
+
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; a child that cannot execute the command exits with 1 (after reporting an uncaught SysErr), not 126
+- **MLKit** &mdash; a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
 
 </details>
 
@@ -288,9 +284,12 @@ val reap : ('a, 'b) proc -> OS.Process.status
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the wait fails.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `fromStatus (reap (execute ("/bin/sh", ["-c", "exit 4"]))) = W_EXITSTATUS 0w4`
+
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (exit 3 is W\_SIGNALED; a process that term ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that did not succeed is W\_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -310,9 +309,10 @@ val kill : ('a, 'b) proc * signal -> unit
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the signal may not be sent.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; Unix.fromStatus misreads the statuses that reap returns (a process that term or kill ended is W\_SIGNALED of signal 1)
+- **MLKit** &mdash; the status of a process that a signal ended is W\_EXITSTATUS 0w255, not W\_SIGNALED: reap reduces every failure to OS.Process.failure (an int, \~1), which fromStatus maps to W\_EXITSTATUS 0wxFF
 
 </details>
 
@@ -334,11 +334,12 @@ val exit : Word8.word -> 'a
 > and then leaves through the VM's exit, which flushes every file; that is
 > taken to satisfy "flushes and closes all I/O streams".
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **SML/NJ** &mdash; Unix.exit does not flush the output streams that are open
 - **Poly/ML 5.9.2** &mdash; a forked child that calls Unix.exit never ends
 - **SML/NJ** &mdash; Unix.exit does not run the actions of OS.Process.atExit
+- **MLKit** &mdash; Unix.exit is Posix.Process.exit: it neither runs the actions of OS.Process.atExit nor flushes the output streams
 
 </details>
 

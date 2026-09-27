@@ -25,7 +25,9 @@ sig
      Example: `PackWord32Big.bytesPerElem = 4` *)
   val bytesPerElem : int
 
-  (* Whether the most significant byte comes first. *)
+  (* Whether the most significant byte comes first.
+
+     Example: `PackWord32Little.isBigEndian = false` *)
   val isBigEndian : bool
 
   (* `subVec (v, i)` is the word at position `i` of the byte vector `v`, with zeros in the bits above it.
@@ -41,12 +43,14 @@ sig
      0wx102`
 
      Example: `PackWord16Little.subVec (Word8Vector.fromList [0w1, 0w2, 0w3,
-     0w4], 1) = 0wx403` for the index counts elements of two bytes, not bytes. *)
+     0w4], 1) = 0wx403`, for the index counts elements of two bytes, not
+     bytes. *)
   val subVec : Word8Vector.vector * int -> LargeWord.word
 
   (* `subVecX (v, i)` is the word at position `i` of `v`, with its top bit copied into the bits above it.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `v`.
+     Raises: `Subscript` if `i < 0` or if the bytes of element `i` are not
+     all in `v`.
 
      Example: `PackWord16Big.subVecX (Word8Vector.fromList [0wxFF, 0wxFE], 0) =
      0wxFFFFFFFFFFFFFFFE` *)
@@ -54,19 +58,31 @@ sig
 
   (* `subArr (arr, i)` is the word at position `i` of the byte array `arr`, with zeros above it.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`. *)
+     Raises: `Subscript` if `i < 0` or if the bytes of element `i` are not
+     all in `arr`.
+
+     Example: `PackWord32Big.subArr (Word8Array.fromList [0w0, 0w0, 0w1,
+     0w0], 0) = 0wx100` *)
   val subArr : Word8Array.array * int -> LargeWord.word
 
   (* `subArrX (arr, i)` is the word at position `i` of `arr`, with its top bit copied into the bits above it.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`. *)
+     Raises: `Subscript` if `i < 0` or if the bytes of element `i` are not
+     all in `arr`.
+
+     Example: `PackWord32Little.subArrX (Word8Array.fromList [0wxFF, 0wxFF,
+     0wxFF, 0wxFF], 0) = 0wxFFFFFFFFFFFFFFFF` *)
   val subArrX : Word8Array.array * int -> LargeWord.word
 
   (* `update (arr, i, w)` writes the low `bytesPerElem` bytes of `w` at position `i` of `arr`.
 
      What does not fit in that many bytes is dropped.
 
-     Raises: `Subscript` if the bytes of element `i` are not all in `arr`.
+     Raises: `Subscript` if `i < 0` or if the bytes of element `i` are not
+     all in `arr`.
+
+     Law: `(update (arr, i, w); subArr (arr, i))` is `w` with the bits above
+     `8 * bytesPerElem` cleared
 
      Example: `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update
      (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12,

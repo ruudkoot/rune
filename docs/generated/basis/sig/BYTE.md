@@ -19,18 +19,19 @@ structure Byte : BYTE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Byte` | Byte: between bytes and characters. A Word8Vector.vector is a string, so the conversions of whole vectors cost nothing. | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
+| [`Byte`](../str/Byte.md) | Byte: between bytes and characters. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a string underneath, so the conversions of whole vectors cost nothing. | [lib/basis/byte.sml](../../../../lib/basis/byte.sml) |
 
 Between bytes and characters: the same eight bits read as a [`Word8.word`](../sig/WORD.md#type-word)
 and as a `char`.
 
 The conversions are of the codes, not of any encoding: the byte 200 is the
 character whose code is 200, whatever a locale would make of it. Text that
-comes in as bytes (from [`BinIO`](../sig/BIN_IO.md), a socket, [`Word8Array`](../sig/MONO_ARRAY.md)) becomes a string
+comes in as bytes (from [`BinIO`](../str/BinIO.md), a socket, [`Word8Array`](../str/Word8Array.md)) becomes a string
 here, and the other way round.
 
-> **Implementation** `Byte/free`. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a `string` in this
-> library, so [`bytesToString`](#val-bytestostring) and [`stringToBytes`](#val-stringtobytes) copy nothing.
+> **Implementation** `Byte/free`. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a `string`
+> underneath in this library, although the type is abstract to a program,
+> so [`bytesToString`](#val-bytestostring) and [`stringToBytes`](#val-stringtobytes) copy nothing.
 
 ## Interface
 
@@ -38,17 +39,11 @@ here, and the other way round.
 signature BYTE =
 sig
   val <a href="#val-bytetochar">byteToChar</a> : Word8.word -&gt; char
-
   val <a href="#val-chartobyte">charToByte</a> : char -&gt; Word8.word
-
   val <a href="#val-bytestostring">bytesToString</a> : Word8Vector.vector -&gt; string
-
   val <a href="#val-stringtobytes">stringToBytes</a> : string -&gt; Word8Vector.vector
-
   val <a href="#val-unpackstringvec">unpackStringVec</a> : Word8VectorSlice.slice -&gt; string
-
   val <a href="#val-unpackstring">unpackString</a> : Word8ArraySlice.slice -&gt; string
-
   val <a href="#val-packstring">packString</a> : Word8Array.array * int * substring -&gt; unit
 end
 </pre>
@@ -101,6 +96,8 @@ val bytesToString : Word8Vector.vector -> string
 
 `bytesToString v` is the string of the characters whose codes are the bytes of `v`, in order.
 
+**Law** `stringToBytes (bytesToString v) = v`
+
 **Example** `bytesToString (stringToBytes "hi") = "hi"`
 
 <details><summary>Tests (7)</summary>
@@ -119,6 +116,8 @@ val stringToBytes : string -> Word8Vector.vector
 
 **Law** `bytesToString (stringToBytes s) = s`
 
+**Example** `Word8Vector.foldr (op ::) [] (stringToBytes "AB") = [0w65, 0w66]`
+
 <details><summary>Tests (8)</summary>
 
 For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `basic` &middot; `empty` &middot; `one` &middot; `no-translation` &middot; `every-character` &middot; `length` &middot; `random-elementwise-*` &middot; `random-inverts-bytesToString-*`
@@ -132,6 +131,8 @@ val unpackStringVec : Word8VectorSlice.slice -> string
 ```
 
 `unpackStringVec sl` is the string of the bytes of the vector slice `sl`.
+
+**Law** `unpackStringVec sl = bytesToString (Word8VectorSlice.vector sl)`
 
 **Example** `unpackStringVec (Word8VectorSlice.slice (stringToBytes "hello", 1, SOME 3)) = "ell"`
 
@@ -154,6 +155,10 @@ val unpackString : Word8ArraySlice.slice -> string
 > holds what the slice had at that moment and is not touched by a later
 > update.
 
+**Law** `unpackString sl = bytesToString (Word8ArraySlice.vector sl)`
+
+**Example** `unpackString (Word8ArraySlice.slice (Word8Array.fromList [0w104, 0w105, 0w33], 0, SOME 2)) = "hi"`
+
 <details><summary>Tests (9)</summary>
 
 For `Byte`, in [tests/basis/byte.sml](../../../../tests/basis/byte.sml): `full` &middot; `middle` &middot; `to-the-end` &middot; `empty-slice` &middot; `empty-slice-at-the-end` &middot; `empty-array` &middot; `no-translation` &middot; `sees-the-current-contents` &middot; `random-*`
@@ -170,6 +175,10 @@ val packString : Word8Array.array * int * substring -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the characters would not fit, that
 is if `i + Substring.size ss > Word8Array.length arr`.
+
+**Law** `(packString (arr, i, ss); unpackString (Word8ArraySlice.slice (arr, i, SOME (Substring.size ss)))) = Substring.string ss` when it fits
+
+**Example** `let val a = Word8Array.array (4, 0w46) in packString (a, 1, Substring.full "ab"); unpackString (Word8ArraySlice.full a) end = ".ab."`
 
 <details><summary>Other implementations (1)</summary>
 

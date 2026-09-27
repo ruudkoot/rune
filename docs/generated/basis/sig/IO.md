@@ -19,7 +19,7 @@ structure IO : IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `IO` | IO: the exceptions and the buffering modes shared by the I/O structures. | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
+| [`IO`](../str/IO.md) | IO: the exceptions and the buffering modes shared by the I/O structures: [`Io`](#exn-io), which every operation of them raises, the four exceptions that are its causes, and [`buffer_mode`](#type-buffer_mode). | [lib/basis/io.sml](../../../../lib/basis/io.sml) |
 
 What the whole of the I/O stack shares: the exception it raises and the
 ways a stream may hold output back.
@@ -45,15 +45,10 @@ wants one that is missing it raises [`Io`](#exn-io) with the matching cause:
 signature IO =
 sig
   exception <a href="#exn-io">Io</a> of {<a href="#fld-io.name">name</a> : string, <a href="#fld-io.function">function</a> : string, <a href="#fld-io.cause">cause</a> : exn}
-
   exception <a href="#exn-blockingnotsupported">BlockingNotSupported</a>
-
   exception <a href="#exn-nonblockingnotsupported">NonblockingNotSupported</a>
-
   exception <a href="#exn-randomaccessnotsupported">RandomAccessNotSupported</a>
-
   exception <a href="#exn-closedstream">ClosedStream</a>
-
   datatype <a href="#type-buffer_mode">buffer_mode</a>
     = <a href="#con-no_buf">NO_BUF</a>
     | <a href="#con-line_buf">LINE_BUF</a>
@@ -77,6 +72,8 @@ it.
 > raising the exception" is taken unqualified: `"openIn"`, not
 > `"TextIO.openIn"`, as MLton and SML/NJ take it. Poly/ML writes the
 > qualified name.
+
+**Example** `((TextIO.openIn "no such file"; "") handle Io {function, ...} => function) = "openIn"`
 
 | Field | Type | Description |
 | --- | --- | --- |

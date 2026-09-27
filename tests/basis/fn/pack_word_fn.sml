@@ -70,9 +70,11 @@ struct
   val () = T.raises (lab "subVec/Subscript-partial-element", isSubscript,
                      fn () => P.subVec (Word8Vector.tabulate (bytes - 1, fn _ => Word8.fromInt 1), 0))
   val () = T.raises (lab "subVecX/Subscript-past-the-end", isSubscript, fn () => P.subVecX (vec small, 3))
+  val () = T.raises (lab "subVecX/Subscript-negative", isSubscript, fn () => P.subVecX (vec small, ~1))
   val () = T.raises (lab "subArr/Subscript-negative", isSubscript, fn () => P.subArr (arr small, ~1))
   val () = T.raises (lab "subArr/Subscript-past-the-end", isSubscript, fn () => P.subArr (arr small, 3))
   val () = T.raises (lab "subArrX/Subscript-past-the-end", isSubscript, fn () => P.subArrX (arr small, 3))
+  val () = T.raises (lab "subArrX/Subscript-negative", isSubscript, fn () => P.subArrX (arr small, ~1))
 
   (* "stores the bytesPerElem low-order bytes of the word w into the bytes
      bytesPerElem*i through bytesPerElem*(i+1)-1" *)

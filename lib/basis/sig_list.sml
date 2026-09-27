@@ -39,12 +39,18 @@ sig
 
   (* `null l` is `true` exactly when `l` is empty.
 
-     Unlike `l = []` it does not need an equality type. *)
+     Unlike `l = []` it does not need an equality type.
+
+     Law: `null l = (length l = 0)`
+
+     Example: `null [] = true` *)
   val null : 'a list -> bool
 
   (* `length l` is the number of elements of `l`.
 
      Law: `length (l @ m) = length l + length m`
+
+     Example: `length [1, 2, 3] = 3`
 
      Complexity: linear in the length; constant stack. *)
   val length : 'a list -> int
@@ -54,6 +60,8 @@ sig
      It is infix and right associative with precedence 5, the same as `::`, so
      `1 :: [2] @ [3]` needs no parentheses.
 
+     Example: `[1, 2] @ [3] = [1, 2, 3]`
+
      Complexity: linear in `length l`; `m` is shared, not copied. Appending to
      the right in a loop is therefore quadratic: cons onto the front and
      reverse at the end, or use `revAppend`. *)
@@ -61,12 +69,20 @@ sig
 
   (* `hd l` is the first element of `l`.
 
-     Raises: `Empty` if `l` is empty. *)
+     Raises: `Empty` if `l` is empty.
+
+     Law: `hd l :: tl l = l` for a non-empty `l`
+
+     Example: `hd [1, 2, 3] = 1`
+
+     Example: `(hd [] handle Empty => 0) = 0` *)
   val hd : 'a list -> 'a
 
   (* `tl l` is `l` without its first element.
 
-     Raises: `Empty` if `l` is empty. *)
+     Raises: `Empty` if `l` is empty.
+
+     Example: `tl [1, 2, 3] = [2, 3]` *)
   val tl : 'a list -> 'a list
 
   (* `last l` is the final element of `l`.
@@ -84,8 +100,8 @@ sig
      It has the shape of a `StringCvt.reader`, so a list can be the stream
      that a `scan` function reads from.
 
-     Example: `Int.scan StringCvt.DEC List.getItem (explode "42 rest")` is
-     `SOME (42, [#" ", #"r", #"e", #"s", #"t"])`. *)
+     Example: `Int.scan StringCvt.DEC List.getItem (explode "42 rest") = SOME
+     (42, explode " rest")` *)
   val getItem : 'a list -> ('a * 'a list) option
 
   (* `nth (l, i)` is the element of `l` at position `i`, counting from 0.
@@ -120,7 +136,9 @@ sig
 
   (* `rev l` is the list of the elements of `l` in the opposite order.
 
-     Law: `rev (rev l) = l` *)
+     Law: `rev (rev l) = l`
+
+     Example: `rev [1, 2, 3] = [3, 2, 1]` *)
   val rev : 'a list -> 'a list
 
   (* `concat ls` appends all the lists of `ls`, in order.
@@ -144,13 +162,20 @@ sig
   (* ---- Transforming ---- *)
 
   (* `app f l` applies `f` to every element of `l`, from left to right, for its
-     effect. *)
+     effect.
+
+     Law: `app f l = foldl (fn (x, ()) => f x) () l`
+
+     Example: `let val sum = ref 0 in app (fn x => sum := !sum + x) [1, 2, 3];
+     !sum end = 6` *)
   val app : ('a -> unit) -> 'a list -> unit
 
   (* `map f l` is the list of the results of applying `f` to each element of
      `l`, from left to right.
 
-     Law: `map f (map g l) = map (f o g) l` when `f` and `g` have no effects *)
+     Law: `map f (map g l) = map (f o g) l` when `f` and `g` have no effects
+
+     Example: `map (fn x => x * 2) [1, 2, 3] = [2, 4, 6]` *)
   val map : ('a -> 'b) -> 'a list -> 'b list
 
   (* `mapPartial f l` applies `f` to each element of `l` and keeps the `v` of
@@ -178,7 +203,11 @@ sig
   (* `filter p l` is the list of the elements of `l` that satisfy `p`, in their
      original order.
 
-     `p` is applied to every element, from left to right. *)
+     `p` is applied to every element, from left to right.
+
+     Law: `filter p l = #1 (partition p l)`
+
+     Example: `filter (fn x => x mod 2 = 1) [1, 2, 3] = [1, 3]` *)
   val filter : ('a -> bool) -> 'a list -> 'a list
 
   (* `partition p l` is the pair of the elements of `l` that satisfy `p` and of
@@ -223,7 +252,9 @@ sig
 
      `exists p []` is `false`.
 
-     Law: `exists p l = not (all (not o p) l)` *)
+     Law: `exists p l = not (all (not o p) l)`
+
+     Example: `exists (fn x => x > 2) [1, 2, 3] = true` *)
   val exists : ('a -> bool) -> 'a list -> bool
 
   (* `all p l` is `true` when every element of `l` satisfies `p`; it stops at
@@ -231,8 +262,8 @@ sig
 
      `all p []` is `true`.
 
-     Example: `all (fn x => x > 0) [] = true` there is no element to fail the
-     test. *)
+     Example: `all (fn x => x > 0) [] = true`, for there is no element to fail
+     the test. *)
   val all : ('a -> bool) -> 'a list -> bool
 
   (* ---- Making and comparing ---- *)

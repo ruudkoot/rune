@@ -1,5 +1,6 @@
-(* VectorSlice: a vector, a start index and a length. The -i functions pass
-   the index in the slice.
+(* VectorSlice: stretches of vectors, without a copy: a vector, a start index
+   and a length. The functions whose names end in `i` pass the index within
+   the slice.
 
    Implements: VECTOR_SLICE *)
 structure VectorSlice =

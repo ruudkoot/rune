@@ -82,23 +82,26 @@ struct
                | NONE => NONE)
           | NONE => NONE
         end
-      (* the groups before and after a "::", if there is one *)
+      (* the groups before a "::" and the text after it, or all the groups and
+         NONE when there is no "::"; a "::" that ends the text leaves SOME [],
+         which is not the same as no "::" at all *)
       fun parts cs =
         let
           fun go (cs, acc) =
             case quad cs of
-              SOME two => SOME (List.rev acc @ two, [])
+              SOME two => SOME (List.rev acc @ two, NONE)
             | NONE =>
                 case group cs of
                   NONE => NONE
                 | SOME (n, rest) =>
                     (case rest of
-                       [] => SOME (List.rev (n :: acc), [])
-                     | #":" :: #":" :: more => SOME (List.rev (n :: acc), more)
+                       [] => SOME (List.rev (n :: acc), NONE)
+                     | #":" :: #":" :: more => SOME (List.rev (n :: acc), SOME more)
                      | #":" :: more => go (more, n :: acc)
                      | _ => NONE)
         in go (cs, []) end
-      fun after cs = case parts cs of SOME (front, []) => SOME front | _ => NONE
+      (* the groups after the "::", which may not have another *)
+      fun after cs = case parts cs of SOME (back, NONE) => SOME back | _ => NONE
       (* glibc writes the dotted tail for a mapped or a compatible address *)
       fun dotted (base, len, g : int list) =
         base = 0 andalso (len = 6
@@ -141,11 +144,7 @@ struct
           (* the groups before the "::", if the text begins with one *)
           fun split (#":" :: #":" :: rest) = SOME ([], SOME rest)
             | split (#":" :: _) = NONE
-            | split cs =
-                case parts cs of
-                  NONE => NONE
-                | SOME (front, []) => SOME (front, NONE)
-                | SOME (front, rest) => SOME (front, SOME rest)
+            | split cs = parts cs
           fun joined (front, NONE) = whole front
             | joined (front, SOME rest) =
                 case (if rest = [] then SOME [] else after rest) of
@@ -175,12 +174,16 @@ struct
         [host, port] => (host, number port)
       | _ => raise RuneError.lastError ()
 
+    (* The datagram sockets of IPv6, which carry messages that may be lost or
+       arrive out of order. *)
     structure UDP =
     struct
       fun socket () : dgram_sock = RuneSocket.socket (inet6AF, RuneSocket.SOCK.dgram)
       fun socket' protocol : dgram_sock = RuneSocket.socket' (inet6AF, RuneSocket.SOCK.dgram, protocol)
     end
 
+    (* The stream sockets of IPv6, which carry a connection's bytes in order,
+       and the one option of TCP itself, `TCP_NODELAY`. *)
     structure TCP =
     struct
       fun 'mode socket () : 'mode stream_sock = RuneSocket.socket (inet6AF, RuneSocket.SOCK.stream)
@@ -194,7 +197,11 @@ struct
   end
 end
 
-(* Implements: INET6_SOCK
+(* INet6Sock: the sockets and addresses of IPv6, Rune's own and not part of
+   the specification. The text of an address is written and read here, in
+   SML, and the sockets are the system's.
+
+   Implements: INET6_SOCK
 
    Status: extension *)
 structure INet6Sock = RuneINet6Sock

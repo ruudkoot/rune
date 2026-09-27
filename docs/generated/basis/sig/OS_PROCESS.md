@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 1 |
 | Documentation | 10 of 10 entries documented |
-| Tests | 37 checks of 10 entries |
+| Tests | 39 checks of 10 entries |
 | Source | [lib/basis/sig\_os\_process.sml](../../../../lib/basis/sig_os_process.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure OS.Process : OS_PROCESS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.Process` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.Process`](../str/OS.Process.md) | OS.Process: the status a program ends with, running a command, the environment, and ending the program. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The process itself: its environment, the commands it runs, and how it
 ends.
@@ -34,23 +34,14 @@ run, the streams are flushed, and only then does the process stop.
 signature OS_PROCESS =
 sig
   type <a href="#type-status">status</a>
-
   val <a href="#val-success">success</a> : status
-
   val <a href="#val-failure">failure</a> : status
-
   val <a href="#val-issuccess">isSuccess</a> : status -&gt; bool
-
   val <a href="#val-system">system</a> : string -&gt; status
-
   val <a href="#val-atexit">atExit</a> : (unit -&gt; unit) -&gt; unit
-
   val <a href="#val-exit">exit</a> : status -&gt; 'a
-
   val <a href="#val-terminate">terminate</a> : status -&gt; 'a
-
   val <a href="#val-getenv">getEnv</a> : string -&gt; string option
-
   val <a href="#val-sleep">sleep</a> : Time.time -&gt; unit
 end
 </pre>
@@ -79,7 +70,7 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val success : status
 ```
 
-The status of a program that did what it was meant to do.
+The status of a program that did what it was meant to do; there is only one.
 
 <details><summary>Tests (1)</summary>
 
@@ -93,7 +84,9 @@ For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.pro
 val failure : status
 ```
 
-A status of a program that did not.
+A status of a program that did not; there are others.
+
+**Example** `isSuccess failure = false`
 
 <details><summary>Tests (1)</summary>
 
@@ -129,6 +122,9 @@ val system : string -> status
 
 `system cmd` runs `cmd` and is the status it ended with.
 
+A command that the shell cannot find ends with the shell's status 127,
+which is no success.
+
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the command could not be run at all.
 
 > **Reading** `OS.Process.system/a-real-shell`. A shell runs the command, so
@@ -136,8 +132,9 @@ val system : string -> status
 > directory, and [`system`](#val-system) returns only once the command is done. What the
 > process has buffered is neither lost nor written twice by running one.
 
-A command that the shell cannot find gives a status that is no success,
-the 127 of the shell; the suite assumes that of every system's shell.
+**Example** `isSuccess (system "true") = true`
+
+**Example** `isSuccess (system "exit 3") = false`
 
 <details><summary>Tests (15)</summary>
 
@@ -178,9 +175,24 @@ val exit : status -> 'a
 > writers a program supplied; output to a file is held by the VM, which
 > flushes every file itself.
 
-<details><summary>Tests (2)</summary>
+> **Implementation** `OS.Process.exit/status-of-a-command`. The status of a
+> command that [`system`](#val-system) ran keeps its exit code, and one of a command that
+> a signal ended, which no exit code can express, ends the program as
+> [`failure`](#val-failure) does, as the specification's implementation note asks.
+
+<details><summary>Other implementations (3)</summary>
+
+- **MLKit** &mdash; the status that OS.Process.system gives is success or failure (\~1) and nothing else, so exit ends the child with 255 whatever the command ended with (docs/bugreport/mlkit/Unix.reap/status-lost)
+- **MLton** &mdash; exit of the status of a command raises (the exit code must be below 256), where the specification's implementation note asks that the command's exit code be passed on, and failure for a command that a signal ended
+- **Poly/ML** &mdash; a child that calls exit with the status of a command has not ended after 5 seconds, when the check kills it
+
+</details>
+
+<details><summary>Tests (4)</summary>
 
 For `OS.Process`, in [tests/basis/os.process.sml](../../../../tests/basis/os.process.sml): `result-has-any-type` &middot; `result-has-any-type-string`
+
+For `OS.Process`, in [tests/basis/unix.sml](../../../../tests/basis/unix.sml): `keeps-the-exit-code-of-a-command` &middot; `signal-status-is-failure`
 
 </details>
 
@@ -228,6 +240,10 @@ val sleep : Time.time -> unit
 ```
 
 `sleep t` waits for the time `t`, and returns at once when `t` is not positive.
+
+Nothing is raised, whatever `t` is.
+
+**Example** `(sleep (Time.fromReal ~1.0); "returned") = "returned"`
 
 <details><summary>Tests (3)</summary>
 

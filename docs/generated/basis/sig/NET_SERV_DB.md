@@ -19,7 +19,7 @@ structure NetServDB : NET_SERV_DB  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `NetServDB` |  | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
+| [`NetServDB`](../str/NetServDB.md) | NetServDB: the service database of the system, `/etc/services` or whatever the machine is set up to use. | [lib/basis/netdb.sml](../../../../lib/basis/netdb.sml) |
 
 The service database: turning the name of a network service into its port,
 and back.
@@ -35,17 +35,11 @@ whichever entry comes first.
 signature NET_SERV_DB =
 sig
   type <a href="#type-entry">entry</a>
-
   val <a href="#val-name">name</a> : entry -&gt; string
-
   val <a href="#val-aliases">aliases</a> : entry -&gt; string list
-
   val <a href="#val-port">port</a> : entry -&gt; int
-
   val <a href="#val-protocol">protocol</a> : entry -&gt; string
-
   val <a href="#val-getbyname">getByName</a> : string * string option -&gt; entry option
-
   val <a href="#val-getbyport">getByPort</a> : int * string option -&gt; entry option
 end
 </pre>
@@ -100,6 +94,9 @@ val port : entry -> int
 
 `port e` is the port the service is reached at.
 
+**Example** `Option.map port (getByName ("http", SOME "tcp"))` is `SOME 80`
+where `/etc/services` lists HTTP.
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; the port of an entry is not converted from network byte order (22 comes out as 1441792)
@@ -137,6 +134,8 @@ val getByName : string * string option -> entry option
 `proto` narrows the search to one protocol; `NONE` takes the first
 entry for `name`.
 
+**Example** `isSome (getByName ("no-such-service", NONE)) = false`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; the port of an entry is not converted from network byte order (80 comes out as 5242880)
@@ -156,6 +155,8 @@ val getByPort : int * string option -> entry option
 ```
 
 `getByPort (port, proto)` is `SOME` of what it records about the service at `port`, or `NONE`.
+
+`proto` narrows the search to one protocol as for [`getByName`](#val-getbyname).
 
 <details><summary>Other implementations (2)</summary>
 

@@ -139,6 +139,12 @@ struct
   (* j < 0 and i = 0: "Raise Div" *)
   val () = T.raises ("IntInf.pow/Div-zero-to-minus-one", T.isDiv, fn () => I.pow (zero, ~1))
   val () = T.raises ("IntInf.pow/Div-zero-to-minus-five", T.isDiv, fn () => I.pow (zero, ~5))
+  (* a negative power: "|i| = 1: i^j", so ~1 alternates with the parity of
+     j, and 0 for every other i but 0 *)
+  val () = eqK ("IntInf.pow/minus-one-to-minus-three", ~1, fn () => I.pow (i ~1, ~3))
+  val () = eqK ("IntInf.pow/minus-one-to-minus-two", 1, fn () => I.pow (i ~1, ~2))
+  val () = eqK ("IntInf.pow/one-to-minus-five", 1, fn () => I.pow (one, ~5))
+  val () = eqK ("IntInf.pow/two-to-minus-one", 0, fn () => I.pow (two, ~1))
   val () = eqT ("IntInf.pow/2-to-64", text2p64, fn () => I.pow (two, 64))
   val () = eqT ("IntInf.pow/2-to-100", text2p100, fn () => I.pow (two, 100))
   val () = eqT ("IntInf.pow/2-to-200", NumStr.pow2String 10 200, fn () => I.pow (two, 200))

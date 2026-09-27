@@ -914,6 +914,38 @@ struct
                         andalso Real.toInt IEEEReal.TO_NEAREST x = Real.round x)
   (*>> rounding-modes *)
 
+  (*<< fromint-rounding-mode *)
+  (* "If i cannot be exactly represented as a real value, then the current
+     rounding mode is used to determine the resulting value": 2^53 + 1 lies
+     halfway between the reals 2^53 and 2^53 + 2 *)
+  fun inMode mode f =
+    let val saved = IEEEReal.getRoundingMode ()
+    in IEEEReal.setRoundingMode mode; (f () before IEEEReal.setRoundingMode saved)
+       handle e => (IEEEReal.setRoundingMode saved; raise e)
+    end
+  (* 2^53, with the operations of INTEGER, which has no pow *)
+  val p53 = let fun go (0, p) = p | go (n, p) = go (n - 1, LargeInt.* (p, LargeInt.fromInt 2))
+            in go (53, LargeInt.fromInt 1) end
+  val odd = LargeInt.+ (p53, LargeInt.fromInt 1)
+  val () = eqR ("Real.fromLargeInt/TO_POSINF-rounds-up", pow2 53 + 2.0,
+                fn () => inMode IEEEReal.TO_POSINF (fn () => Real.fromLargeInt odd))
+  val () = eqR ("Real.fromLargeInt/TO_NEGINF-rounds-down", pow2 53,
+                fn () => inMode IEEEReal.TO_NEGINF (fn () => Real.fromLargeInt odd))
+  val () = eqR ("Real.fromLargeInt/TO_NEGINF-negative-rounds-down", ~ (pow2 53 + 2.0),
+                fn () => inMode IEEEReal.TO_NEGINF (fn () => Real.fromLargeInt (LargeInt.~ odd)))
+  val () = eqR ("Real.fromLargeInt/TO_ZERO-negative", ~ (pow2 53),
+                fn () => inMode IEEEReal.TO_ZERO (fn () => Real.fromLargeInt (LargeInt.~ odd)))
+  (* the same for fromInt, where an int holds 2^53 + 1 *)
+  val wide = case Int.precision of SOME p => p >= 55 | NONE => true
+  val () = T.check ("Real.fromInt/TO_POSINF-rounds-up",
+                    fn () => not wide orelse
+                             Real.== (inMode IEEEReal.TO_POSINF (fn () => Real.fromInt (Int.fromLarge odd)), pow2 53 + 2.0))
+  val () = T.check ("Real.fromInt/TO_NEGINF-negative-rounds-down",
+                    fn () => not wide orelse
+                             Real.== (inMode IEEEReal.TO_NEGINF (fn () => Real.fromInt (Int.fromLarge (LargeInt.~ odd))),
+                                      ~ (pow2 53 + 2.0)))
+  (*>> fromint-rounding-mode *)
+
   (*<< tolargeint *)
   (* The expected values need an unbounded LargeInt (all four systems have
      one); with a bounded LargeInt the checks pass vacuously. *)

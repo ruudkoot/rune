@@ -2,21 +2,22 @@
 
 Rune consists of the compiler `rune` (written in portable Standard ML) and the
 virtual machine `runevm` (C17, and C99 with a switch). The compiler builds unchanged with **MLton**,
-**SML/NJ** (for 64 and for 32 bits) and **Poly/ML**; all these builds produce
-byte-identical bytecode (`make check-cross` verifies this).
+**SML/NJ** (for 64 and for 32 bits), **Poly/ML** and **MLKit**; all these
+builds produce byte-identical bytecode (`make check-cross` verifies this).
 
 The compiler Rune ships is the one it compiled itself: **`bin/rune`** is
 `bin/rune.rbc` running on `runevm`. The host builds `bin/rune-mlton`,
-`bin/rune-smlnj`, `bin/rune-smlnj32` and `bin/rune-polyml` have two jobs — to
+`bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml` and `bin/rune-mlkit` have two jobs — to
 bootstrap that one, and to check it (`make check-cross`, `make test-all`). Everything that runs,
 tests or measures the compiler goes through `bin/rune`.
 
 The compiler knows no library location of its own: it takes the basis library
 from `--lib DIR` (which it reads from `DIR/basis`) and refuses to compile
-without it. Each of the four `bin/rune*` is therefore a small wrapper script
+without it. Each of the `bin/rune*` is therefore a small wrapper script
 that passes `--lib` for the tree it sits in, and the payload of a host build
 lives next to it as `bin/rune-mlton.bin`, `bin/rune-polyml.bin`,
-`bin/rune-smlnj.heap.amd64-linux` or `bin/rune-smlnj32.heap.x86-linux`. Because the wrapper puts `--lib` first, a
+`bin/rune-mlkit.bin`, `bin/rune-smlnj.heap.amd64-linux` or
+`bin/rune-smlnj32.heap.x86-linux`. Because the wrapper puts `--lib` first, a
 `--lib` of yours comes later on the command line and wins. Nothing absolute is
 baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
@@ -27,24 +28,30 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 * The SML systems that build the compiler, which `make hosts`
   (`scripts/fetch-hosts.sh`) installs under `${RUNE_HOSTS:-~/.local/rune-hosts}`:
   MLton 20241230 (the binary release), SML/NJ 110.99.9 built for 64 bits and
-  for 32 bits, and Poly/ML 5.9.2 (built from source). An SML system the
-  machine has on its `PATH` is never used, and none of these builds starts
-  from one: MLton is a binary, SML/NJ builds its C runtime and loads its
-  compiler from the boot files of the same release, and Poly/ML bootstraps
-  from its own portable image and rebuilds its compiler with the result.
-  `make hosts` runs the builds with `mlton`, `sml`, `poly` and `polyc`
-  replaced by commands that fail, so an accidental dependency on the
-  machine's SML shows. It needs `curl` or `wget`, `tar`, `xz`, a C and a
+  for 32 bits, Poly/ML 5.9.2 (built from source) and MLKit 4.7.23 (the
+  binary release, whose SHA-256 is checked, on Linux x86-64; elsewhere built
+  from the release's tag with the MLton just installed, which needs more
+  memory than a machine of 16 GB has, so that this way is untested). An SML system the machine has on its `PATH` is never used,
+  and none of these builds starts from one: MLton and MLKit are binaries,
+  SML/NJ builds its C runtime and loads its compiler from the boot files of
+  the same release, and Poly/ML bootstraps from its own portable image and
+  rebuilds its compiler with the result. `make hosts` runs the builds with
+  `mlton`, `sml`, `poly`, `polyc` and `mlkit` replaced by commands that
+  fail, so an accidental dependency on the machine's SML shows. MLKit finds
+  its Basis Library only through `SML_LIB`, which every command that runs
+  it sets (`MLKIT_LIB`, default `lib/mlkit` of the installed MLKit), and it
+  keeps what it compiles in `MLB/` directories beside the sources, which
+  `make clean` removes. It needs `curl` or `wget`, `tar`, `xz`, a C and a
   C++ compiler, GMP (`libgmp-dev`) and a C compiler that builds 32-bit
   programs (`gcc-multilib`); about 400 MB and a few minutes, no root
   access. `make` needs MLton (`BOOTHOST` names the host build that
   bootstraps `bin/rune`, default `mlton`); `make test-all`,
-  `make check-cross`, the matrix targets and `make check` need all four.
+  `make check-cross`, the matrix targets and `make check` need all five.
 
 `make doctor` checks all of this (and the tools of the test, sanitizer, host
 matrix and profiling targets), by running the tools rather than just looking
-for them: it compiles a C program, and a program with MLton and with
-`polyc`. For everything that is missing it prints the install command of the
+for them: it compiles a C program, and a program with MLton, with
+`polyc` and with MLKit. For everything that is missing it prints the install command of the
 system's package manager (`apt`, `dnf`, `pacman` or `brew`) and exits with
 status 1; optional tools only produce warnings.
 
@@ -52,24 +59,25 @@ The build and test targets run the same check for the tools they need, once,
 before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 `build/.doctor-<scope>` records success, so the check is repeated after
 `make clean` or when the script changes). `make DOCTOR=no ...` skips it, and
-`CC`, `MLTON`, `SMLNJ`, `SMLNJ32`, `POLY` and `POLYC` name the tools to check.
+`CC`, `MLTON`, `SMLNJ`, `SMLNJ32`, `POLY`, `POLYC`, `MLKIT` and `MLKIT_LIB`
+name the tools to check.
 
 ## Targets
 
 | Command | Result |
 |---|---|
-| `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit) and Poly/ML 5.9.2 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
+| `make hosts` | install MLton 20241230, SML/NJ 110.99.9 (64- and 32-bit), Poly/ML 5.9.2 and MLKit 4.7.23 under `${RUNE_HOSTS:-~/.local/rune-hosts}`; needed once, before anything else |
 | `make` | `bin/rune` (the self-hosted compiler), `bin/runevm`, `bin/runedoc` and `bin/runeopt` |
-| `make mlton` / `make smlnj` / `make smlnj32` / `make polyml` | `bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml`; none of them is `bin/rune` |
-| `make host-builds` | all four host builds, of the compiler, of `runedoc` and of `runeopt` |
-| `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
-| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32` and `-polyml`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
+| `make mlton` / `make smlnj` / `make smlnj32` / `make polyml` / `make mlkit` | `bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`, `bin/rune-polyml`, `bin/rune-mlkit`; none of them is `bin/rune` |
+| `make host-builds` | all five host builds, of the compiler, of `runedoc` and of `runeopt` |
+| `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32`, `-polyml` and `-mlkit` |
+| `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32`, `-polyml` and `-mlkit`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
 | `make vm` | `bin/runevm`, and `bin/runevm-new`, `vm/new`'s loop for the register bytecode |
 | `make vm-asan` | `bin/runevm-asan` and `bin/runevm-new-asan` with AddressSanitizer/UBSan; `make test-new-asan` runs `tests/lang` on the latter |
 | `make test-new-jit` | `vm/new` with every function compiled (`--jit=all`): `tests/lang` and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (`scripts/check-jit.sh`), `runevm-new --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `vm/new` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
-| `make test-all` | run the suite with each of the four host builds |
+| `make test-all` | run the suite with each of the five host builds |
 | `make isa` | write the tables of the instruction set and the primitives again from their descriptions in `src/isa`, with `runeisa` built by MLton: `vm/opcodes.def`, `vm/prims.def`, `vm/opcodes.h`, `vm/prims_table.h`, `src/backend/opcodes.sml`, `src/backend/prims.sml`; they are committed |
 | `make check-isa` | fail when one of those files is not what `src/isa` gives, with `runeisa` built by MLton and by the self-hosted compiler; part of `make check` |
 | `make test-ir` | the tests of the intermediate representations (`tests/ir`, [ir.md](ir.md)): the dumps of small programs compiled with the lint of every pass on |
@@ -293,8 +301,8 @@ where it runs (`man runeopt`).
   stages the whole tree under another root for packaging.
 * `make install HOST=mlton` installs the MLton host build instead of the
   bytecode compiler: `$PREFIX/bin/rune-mlton` with its payload in
-  `$PREFIX/lib/rune`, and `rune` as a symlink to it. `HOST=polyml` and
-  `HOST=smlnj` work the same way (`smlnj` installs the heap image, which runs
+  `$PREFIX/lib/rune`, and `rune` as a symlink to it. `HOST=polyml`,
+  `HOST=mlkit` and `HOST=smlnj` work the same way (`smlnj` installs the heap image, which runs
   with the SML/NJ that `make hosts` installed). `runevm` is installed either way, since it runs
   what the compiler produces.
 * `make uninstall` (with the same `PREFIX`, `DESTDIR` and `HOST`) removes it.
@@ -306,17 +314,20 @@ where it runs (`man runeopt`).
 
 * `sources.txt` is the single ordered list of compiler source files.
   `scripts/gen-build-files.sh` generates `build/rune.mlb` (MLton),
-  `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script)
-  and `build/config.sml` (the version) from it.
+  `build/rune.cm` (SML/NJ), `build/polyml-build.sml` (Poly/ML `use` script),
+  `build/rune-mlkit.mlb` (MLKit: MLton's, without its annotations and with
+  its own entry point) and `build/config.sml` (the version) from it.
   **Add new source files to `sources.txt` only.**
 * `sources-doc.txt` is the same for `runedoc`: the compiler's utilities,
   frontend and elaborator in the order of `sources.txt`, then `src/doc`. The
-  script makes `build/runedoc.mlb`, `build/runedoc.cm` and
-  `build/runedoc-polyml-build.sml` from it; the entry points are
+  script makes `build/runedoc.mlb`, `build/runedoc.cm`,
+  `build/runedoc-polyml-build.sml` and `build/runedoc-mlkit.mlb` from it;
+  the entry points are
   `src/main/runedoc-*-main.sml`. A file that both lists name is compiled into
   both programs, so the rules below hold for `src/doc` as well. The SML/NJ
   builds run one after another, because CM keeps its results for all of them
-  in the same `.cm` directories.
+  in the same `.cm` directories, and so do the MLKit builds, for their `MLB`
+  directories.
 * `sources-opt.txt` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
   `src/opt` too.
@@ -332,11 +343,14 @@ where it runs (`man runeopt`).
   `RUNE_PRIM_LIST` X-macro, so adding a primitive means: add it at the end of
   `src/isa/prims.sml`, run `make isa`, implement `p_<name>` in `vm/prims.c`,
   document it in `docs/bytecode.md`.
-* Entry points: `src/main/mlton-main.sml`, `src/main/polyml-main.sml` and
-  `src/main/rune-main.sml` (the self-hosted build) call `Main.main`; SML/NJ's
-  `ml-build` exports `Main.main` directly. Each of the four `bin/rune*` files
-  is a generated shell wrapper that passes `--lib` and execs the payload next
-  to it (`rune.rbc` on `runevm`, `rune-mlton.bin`, `rune-polyml.bin`, or the
+* Entry points: `src/main/mlton-main.sml`, `src/main/polyml-main.sml`,
+  `src/main/mlkit-main.sml` and `src/main/rune-main.sml` (the self-hosted
+  build) call `Main.main`; SML/NJ's `ml-build` exports `Main.main` directly.
+  MLKit's `OS.Process.failure` is `~1`, an exit status of 255, so its entry
+  points end a failure with `Posix.Process.exit 0w1`, the status of the
+  other builds. Each of the `bin/rune*` files is a generated shell wrapper
+  that passes `--lib` and execs the payload next to it (`rune.rbc` on
+  `runevm`, `rune-mlton.bin`, `rune-polyml.bin`, `rune-mlkit.bin`, or the
   heap image with the `sml` of `make hosts`).
 
 ## Bootstrapping
@@ -348,12 +362,12 @@ the result is the compiler you get:
    `src/main/rune-main.sml` with `bin/rune-$(BOOTHOST)` into `bin/rune.rbc`
    (stage 1), writes `bin/rune-boot`, a wrapper that runs
    `runevm --heap-size $(RUNE_HEAP) bin/rune.rbc`, and points `bin/rune` at
-   it. `make` does this too. `BOOTHOST` is `mlton`, `smlnj`, `smlnj32` or
-   `polyml`; they all emit the same bytecode, so it only decides which host
+   it. `make` does this too. `BOOTHOST` is `mlton`, `smlnj`, `smlnj32`,
+   `polyml` or `mlkit`; they all emit the same bytecode, so it only decides which host
    build compiles stage 1.
 2. `bin/rune` takes the same options as the host builds, so `make test` runs
    the whole suite with it and `make check-cross` compares its bytecode with
-   the four host builds on every test program, the examples, and the
+   the five host builds on every test program, the examples, and the
    compiler sources themselves. `check-cross` knows it as the build `boot`,
    hence the name `bin/rune-boot`.
 3. `make bootstrap` compiles the compiler with `bin/rune` into
@@ -383,8 +397,9 @@ rules so that one source tree builds everywhere and emits identical output:
    outside `src/main/`.
 2. Every file contains only top-level `structure`, `signature` and `functor`
    declarations (required by SML/NJ's CM).
-3. Never depend on the width of `Int`: it is 31-bit on the 32-bit SML/NJ and
-   63-bit on the 64-bit one, 32-bit on MLton and arbitrary on Poly/ML. Source literals are kept as
+3. Never depend on the width of `Int`: it is 31-bit on the 32-bit SML/NJ,
+   63-bit on the 64-bit one and on MLKit, 32-bit on MLton and arbitrary on
+   Poly/ML. Source literals are kept as
    `IntInf.int`; bytecode immediates are limited to ±2^30; 64-bit values are
    serialized from `IntInf` with `quot`/`rem` (with explicit `IntInf`
    operations, see rule 6).

@@ -4,8 +4,8 @@ Self-checking tests of the [SML Basis Library](https://smlfamily.github.io/Basis
 written in portable Standard ML '97 so that the same files run
 
 * on Rune (`make test-basis`, part of `make check`),
-* against the Basis Library of MLton, SML/NJ and Poly/ML ("native"
-  configurations), which checks the *tests*: an expectation that three
+* against the Basis Library of MLton, SML/NJ, Poly/ML and MLKit ("native"
+  configurations), which checks the *tests*: an expectation that four
   independent implementations reject is probably a misreading of the
   specification, and
 * against Rune's Basis Library compiled by those systems ("xc1"
@@ -13,7 +13,7 @@ written in portable Standard ML '97 so that the same files run
   accidents of Rune.
 
 An `xc1` test used to compile the whole of lib/basis before its own code,
-which was most of what a run cost. Three things now keep that down, and a
+which was most of what a run cost. Four things now keep that down, and a
 filtered run of four tests went from 1 m 18 s to 5 s on SML/NJ, 1 m 40 s to
 5 s on its 32-bit build, 16 s to 4 s on Poly/ML and 51 s to 10 s on MLton:
 
@@ -25,6 +25,11 @@ filtered run of four tests went from 1 m 18 s to 5 s on SML/NJ, 1 m 40 s to
   test of `List` compiles 49 files of the 241 rather than all of them. A
   program that then fails to compile is tried once more with the library
   whole, so a wrong subset costs time and never a wrong result.
+* MLKit compiles each file of a program apart and keeps what it compiled in
+  `MLB/` beside the file. The library of `xc1:mlkit` is compiled once, where
+  gen-host-basis.sh wrote it, before any test (3 m 20 s), and a test then
+  compiles only its own files, which it copies into its own directory so
+  that the tests that run at once share nothing they write.
 * A test that does not load whole is cut down by halving its sections, and
   each try compiles the library again. What the halving finds depends only on
   the library, the tools and the test, so it is kept in
@@ -37,7 +42,8 @@ off, which is how the numbers above were measured.
 
 The hosts are the releases `make hosts` installs (scripts/fetch-hosts.sh):
 MLton, SML/NJ built for 64 and for 32 bits (its 31-bit `int` and `word` have
-found many portability bugs), and Poly/ML, never the machine's own.
+found many portability bugs), Poly/ML and MLKit (63-bit `int` and `word`),
+never the machine's own.
 `make matrix` runs every configuration, `make matrix-quick` Rune and the
 `xc1` ones, `make test-windows` Rune on the two VMs of Windows
 (`--configs windows`), and `sh tests/basis/run-matrix.sh --configs all [FILTER]` runs
@@ -151,7 +157,8 @@ native:smlnj@110.99.9 | Real.fmt/* | HOST-BUG | prints ~0.0 as 0.0
 Categories: `RUNE-DEV` (Rune departs from the specification, or does not
 implement the member yet), `HOST-BUG` (the host departs from it), `HOST-ABSENT`
 (the host lacks the member), `HOST-FLAKY` (the host fails the check only
-sometimes), `SPEC-AMBIGUOUS` (the specification allows both behaviours; the
+sometimes, or only on some machines: for an ordinary user and not for
+root), `SPEC-AMBIGUOUS` (the specification allows both behaviours; the
 reason states the reading the test takes), `WIDTH` (follows from the
 precision of a type), `XC1-NA` (not meaningful for Rune's library on a host).
 A line that stops matching a failure is an error, so fixed deviations must be

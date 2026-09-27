@@ -58,29 +58,39 @@ sig
 
   (* `input f` is the characters that are there without waiting, and moves `f` past them.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Example: `input (openString "abc") = "abc"` *)
   val input : instream -> vector
 
   (* `input1 f` is `SOME` of the next character, or `NONE` at an end of stream.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Example: `input1 (openString "ab") = SOME #"a"` *)
   val input1 : instream -> elem option
 
   (* `inputN (f, n)` is `n` characters, or all there are before the next end of stream.
 
      Raises: `Size` if `n < 0`, or if the string to be returned would be
-     longer than `String.maxSize`. *)
+     longer than `String.maxSize`.
+
+     Example: `inputN (openString "abcd", 2) = "ab"` *)
   val inputN : instream * int -> vector
 
   (* `inputAll f` is everything up to the next end of stream.
 
      Raises: `IO.Io` if the reader fails; `Size` if the result would be longer
-     than `String.maxSize`. *)
+     than `String.maxSize`.
+
+     Example: `inputAll (openString "ab\ncd") = "ab\ncd"` *)
   val inputAll : instream -> vector
 
   (* `canInput (f, n)` is how many of `n` characters, at most, can be read without waiting, or `NONE`.
 
-     Raises: `Size` if `n < 0`. *)
+     Raises: `Size` if `n < 0`.
+
+     Example: `canInput (openString "ab", 1) = SOME 1` *)
   val canInput : instream * int -> int option
 
   (* `lookahead f` is `SOME` of the next character without removing it, or `NONE` at an end of stream.
@@ -93,12 +103,16 @@ sig
 
   (* `closeIn f` closes the stream and the file underneath.
 
-     Raises: `IO.Io` if the file cannot be closed. *)
+     Raises: `IO.Io` if the file cannot be closed.
+
+     Example: `let val f = openString "ab" in closeIn f; input f end = ""` *)
   val closeIn : instream -> unit
 
   (* `endOfStream f` is `true` when nothing is left before the next end of stream.
 
-     Raises: `IO.Io` if the reader fails. *)
+     Raises: `IO.Io` if the reader fails.
+
+     Example: `endOfStream (openString "") = true` *)
   val endOfStream : instream -> bool
 
   (* `output (f, s)` writes the characters of `s`.
@@ -112,7 +126,9 @@ sig
      of them.
 
      Pinned by: `TextIO.output/every-character`,
-     `TextIO.output1/every-character`, `TextIO.inputAll/every-character` *)
+     `TextIO.output1/every-character`, `TextIO.inputAll/every-character`
+
+     Example: `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, "hi"); closeOut out; inputAll (openIn p) before OS.FileSys.remove p end = "hi"` *)
   val output : outstream * vector -> unit
 
   (* `output1 (f, c)` writes the single character `c`.
@@ -137,7 +153,9 @@ sig
   (* `mkInstream s` is an imperative stream holding the functional stream `s`. *)
   val mkInstream : StreamIO.instream -> instream
 
-  (* `getInstream f` is the functional stream that `f` is at. *)
+  (* `getInstream f` is the functional stream that `f` is at.
+
+     Example: `Option.map #1 (StreamIO.input1 (getInstream (openString "ab"))) = SOME #"a"` *)
   val getInstream : instream -> StreamIO.instream
 
   (* `setInstream (f, s)` makes `f` continue at `s`. *)

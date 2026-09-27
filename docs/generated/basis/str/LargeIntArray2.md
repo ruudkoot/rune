@@ -1,0 +1,67 @@
+# structure LargeIntArray2
+
+[The Standard ML Basis Library](../README.md) &rsaquo; Sequences &rsaquo; [Structures](../structures.md) &rsaquo; **LargeIntArray2**
+
+|  |  |
+| --- | --- |
+| Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
+| Status | optional |
+| Members | 22 |
+| Tests | 252 checks |
+| Source | [lib/basis/mono\_largeint.sml](../../../../lib/basis/mono_largeint.sml) |
+
+## Synopsis
+
+```sml
+structure LargeIntArray2 :> MONO_ARRAY2 where type vector = LargeIntVector.vector where type elem = LargeInt.int
+```
+
+LargeIntArray2: two-dimensional arrays of integers of any size, whose rows
+and columns are [`LargeIntVector`](../str/LargeIntVector.md) vectors.
+
+## Members
+
+What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this structure's own.
+
+|  | Member | Is |
+| --- | --- | --- |
+| type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
+| type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `IntInf.int` |
+| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : LargeIntArray2.array, col : int, ncols : int option, nrows : int option, row : int}` |
+| datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
+| type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `LargeIntVector.vector` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (IntInf.int -> unit) -> LargeIntArray2.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * IntInf.int -> unit) -> region -> unit` |
+| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * IntInf.int -> LargeIntArray2.array` |
+| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `LargeIntArray2.array * int -> LargeIntVector.vector` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : LargeIntArray2.array, dst_col : int, dst_row : int, src : region} -> unit` |
+| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `LargeIntArray2.array -> int * int` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (IntInf.int * 'a -> 'a) -> 'a -> LargeIntArray2.array -> 'a` |
+| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * IntInf.int * 'a -> 'a) -> 'a -> region -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `IntInf.int list list -> LargeIntArray2.array` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (IntInf.int -> IntInf.int) -> LargeIntArray2.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * IntInf.int -> IntInf.int) -> region -> unit` |
+| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `LargeIntArray2.array -> int` |
+| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `LargeIntArray2.array -> int` |
+| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `LargeIntArray2.array * int -> LargeIntVector.vector` |
+| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `LargeIntArray2.array * int * int -> IntInf.int` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> IntInf.int) -> LargeIntArray2.array` |
+| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `LargeIntArray2.array * int * int * IntInf.int -> unit` |
+
+<details><summary>Other implementations (9)</summary>
+
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+- **Poly/ML** &mdash; as Array2.array: array (0, \~1, x) does not raise Size
+- **Poly/ML** &mdash; as in Array2: two arrays without rows are equal
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi of the MONO\_ARRAY2 structures raise Overflow instead of Subscript when row + nrows or col + ncols overflows
+- **MLKit** &mdash; copy, of Array2 and of the MONO\_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
+- **MLton** &mdash; as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
+- **MLKit** &mdash; copy of the MONO\_ARRAY2 structures checks the destination region against the dimensions of the source's base array instead of those of dst: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), and Overflow when dst\_row + nrows or dst\_col + ncols overflows
+
+</details>
+
+---
+
+<sub>Generated by runedoc from lib/basis/mono\_largeint.sml; do not edit.</sub>

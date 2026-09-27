@@ -33,11 +33,15 @@ sig
      values.
 
      Pinned by: `BinIO.output/read-back-as-text`,
-     `BinIO.inputAll/written-as-text` *)
+     `BinIO.inputAll/written-as-text`
+
+     Example: `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, Byte.stringToBytes "ab"); closeOut out; Word8Vector.length (inputAll (openIn p)) before OS.FileSys.remove p end = 2` *)
   val openOut : string -> outstream
 
   (* `openAppend name` is a stream writing at the end of the file `name`, which it creates if it is not there.
 
-     Raises: `IO.Io` if the file cannot be opened. *)
+     Raises: `IO.Io` if the file cannot be opened.
+
+     Example: `let val p = OS.FileSys.tmpName () val a = openAppend p in output (a, Byte.stringToBytes "ab"); closeOut a; let val b = openAppend p in output (b, Byte.stringToBytes "c"); closeOut b end; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "abc"` *)
   val openAppend : string -> outstream
 end

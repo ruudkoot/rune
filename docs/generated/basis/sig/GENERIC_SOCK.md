@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 4 of 4 entries documented |
-| Tests | 12 checks of 4 entries |
+| Tests | 13 checks of 4 entries |
 | Source | [lib/basis/sig\_generic\_sock.sml](../../../../lib/basis/sig_generic_sock.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure GenericSock : GENERIC_SOCK  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `GenericSock` |  | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
+| [`GenericSock`](../str/GenericSock.md) | GenericSock: sockets of a family chosen when the program runs, the internet one or the Unix one, through the system's [`socket`](#val-socket) and `socketpair`. | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 Making a socket of any family the system has, when the family is not known
 until the program runs.
@@ -38,12 +38,9 @@ be. That is the price of choosing the family at run time.
 signature GENERIC_SOCK =
 sig
   val <a href="#val-socket">socket</a> : Socket.AF.addr_family * Socket.SOCK.sock_type -&gt; ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socketpair">socketPair</a> : Socket.AF.addr_family * Socket.SOCK.sock_type
                    -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socket-prime">socket'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int -&gt; ('af, 'sock_type) Socket.sock
-
   val <a href="#val-socketpair-prime">socketPair'</a> : Socket.AF.addr_family * Socket.SOCK.sock_type * int
                     -&gt; ('af, 'sock_type) Socket.sock * ('af, 'sock_type) Socket.sock
 end
@@ -77,9 +74,9 @@ val socketPair : Socket.AF.addr_family * Socket.SOCK.sock_type
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the family does not allow it, as the internet
 family does not.
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
-For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream` &middot; `unix-dgram`
+For `GenericSock`, in [tests/basis/inetsock\_generic.sml](../../../../tests/basis/inetsock_generic.sml): `unix-stream` &middot; `unix-dgram` &middot; `SysErr-inet` (raises)
 
 </details>
 

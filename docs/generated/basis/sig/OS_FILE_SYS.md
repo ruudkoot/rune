@@ -19,7 +19,7 @@ structure OS.FileSys : OS_FILE_SYS
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `OS.FileSys` |  | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
+| [`OS.FileSys`](../str/OS.FileSys.md) | OS.FileSys: directories and the files in them: reading a directory, the attributes of a file, and changing them. | [lib/basis/os.sml](../../../../lib/basis/os.sml) |
 
 The file system: reading directories, moving about in them, and asking
 what a file is and when it changed.
@@ -44,58 +44,33 @@ A directory is read as a stream: [`openDir`](#val-opendir), then [`readDir`](#va
 signature OS_FILE_SYS =
 sig
   type <a href="#type-dirstream">dirstream</a>
-
   val <a href="#val-opendir">openDir</a> : string -&gt; dirstream
-
   val <a href="#val-readdir">readDir</a> : dirstream -&gt; string option
-
   val <a href="#val-rewinddir">rewindDir</a> : dirstream -&gt; unit
-
   val <a href="#val-closedir">closeDir</a> : dirstream -&gt; unit
-
   val <a href="#val-chdir">chDir</a> : string -&gt; unit
-
   val <a href="#val-getdir">getDir</a> : unit -&gt; string
-
   val <a href="#val-mkdir">mkDir</a> : string -&gt; unit
-
   val <a href="#val-rmdir">rmDir</a> : string -&gt; unit
-
   val <a href="#val-isdir">isDir</a> : string -&gt; bool
-
   val <a href="#val-islink">isLink</a> : string -&gt; bool
-
   val <a href="#val-readlink">readLink</a> : string -&gt; string
-
   val <a href="#val-fullpath">fullPath</a> : string -&gt; string
-
   val <a href="#val-realpath">realPath</a> : string -&gt; string
-
   val <a href="#val-modtime">modTime</a> : string -&gt; Time.time
-
   val <a href="#val-filesize">fileSize</a> : string -&gt; Position.int
-
   val <a href="#val-settime">setTime</a> : string * Time.time option -&gt; unit
-
   val <a href="#val-remove">remove</a> : string -&gt; unit
-
   val <a href="#val-rename">rename</a> : {<a href="#fld-rename.old">old</a> : string, <a href="#fld-rename.new">new</a> : string} -&gt; unit
-
   datatype <a href="#type-access_mode">access_mode</a>
     = <a href="#con-a_read">A_READ</a>
     | <a href="#con-a_write">A_WRITE</a>
     | <a href="#con-a_exec">A_EXEC</a>
-
   val <a href="#val-access">access</a> : string * access_mode list -&gt; bool
-
   val <a href="#val-tmpname">tmpName</a> : unit -&gt; string
-
   eqtype <a href="#type-file_id">file_id</a>
-
   val <a href="#val-fileid">fileId</a> : string -&gt; file_id
-
   val <a href="#val-hash">hash</a> : file_id -&gt; word
-
   val <a href="#val-compare">compare</a> : file_id * file_id -&gt; order
 end
 </pre>
@@ -117,6 +92,8 @@ val openDir : string -> dirstream
 `openDir p` opens the directory `p` for reading.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` is no directory, or may not be read.
+
+**Example** `let val d = openDir "/" in isSome (readDir d) before closeDir d end = true`
 
 <details><summary>Tests (6)</summary>
 
@@ -171,6 +148,8 @@ val closeDir : dirstream -> unit
 
 `closeDir d` closes `d`; closing twice is allowed.
 
+Reading or rewinding `d` afterwards raises [`OS.SysErr`](../sig/OS.md#exn-syserr).
+
 <details><summary>Tests (4)</summary>
 
 For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `then-readDir-SysErr` (raises) &middot; `then-rewindDir-SysErr` (raises) &middot; `at-the-end-then-readDir-SysErr` (raises) &middot; `twice`
@@ -202,6 +181,8 @@ val getDir : unit -> string
 `getDir ()` is the current directory, as an absolute canonical path.
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if it cannot be found.
+
+**Example** `OS.Path.isAbsolute (getDir ()) = true`
 
 <details><summary>Tests (4)</summary>
 
@@ -274,6 +255,8 @@ val isLink : string -> bool
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
 
+**Example** `isLink "." = false`
+
 <details><summary>Tests (9)</summary>
 
 For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.filesys.sml): `file` &middot; `directory` &middot; `missing-SysErr` (raises) &middot; `empty-SysErr` (raises) &middot; `symbolic-link` &middot; `to-a-directory` &middot; `dangling` &middot; `link-as-directory-component` &middot; `loop`
@@ -306,6 +289,8 @@ val fullPath : string -> string
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing, or a link leads nowhere or in a
 circle.
+
+The empty path is taken as `"."`.
 
 **Example** `fullPath "." = getDir ()`
 
@@ -413,6 +398,8 @@ val rename : {old : string, new : string} -> unit
 
 `rename {old, new}` renames `old` to `new`, replacing what `new` named.
 
+When the two name the same file nothing happens.
+
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `old` names nothing, or the rename is refused.
 
 | Field | Type | Description |
@@ -456,6 +443,8 @@ An empty list asks only whether `p` names something.
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if the question cannot be answered -- not when the
 answer is no.
 
+**Example** `access ("/no/such/file", []) = false`
+
 > **Implementation** `OS.FileSys.access/depends-on-the-process`. Whether a
 > file counts as executable is the system's affair, and a privileged
 > process may read and write whatever the permission bits say, so the
@@ -473,10 +462,15 @@ For `OS.FileSys`, in [tests/basis/os.filesys.sml](../../../../tests/basis/os.fil
 val tmpName : unit -> string
 ```
 
-`tmpName ()` is the path of a file that does not exist yet, for temporary use.
+`tmpName ()` makes a new, empty file with a name no other file has, and is its absolute path.
 
-The file is not created, so two processes can still race for the
-name.
+The file may be read and written by the process that made it and by no
+other user, so it is safe to use as a temporary file: no other program
+can take the name first.
+
+**Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if no such file can be made.
+
+**Example** `let val p = tmpName () in fileSize p before remove p end = 0`
 
 <details><summary>Tests (8)</summary>
 
@@ -501,6 +495,8 @@ val fileId : string -> file_id
 `fileId p` is the identity of what `p` names: two paths to one file give the same [`file_id`](#type-file_id).
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if `p` names nothing.
+
+**Example** `fileId "." = fileId (getDir ())`
 
 <details><summary>Tests (10)</summary>
 
@@ -535,6 +531,8 @@ val compare : file_id * file_id -> order
 ```
 
 `compare (a, b)` orders two file identities, so that they can be kept in a map.
+
+**Law** `compare (a, b) = EQUAL` exactly when `a = b`
 
 <details><summary>Tests (4)</summary>
 

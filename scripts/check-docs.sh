@@ -111,7 +111,7 @@ done
 
 # 8. every primitive has a definition for the hosts. tests/basis/host/rune-prim.sml
 # is ascribed to a signature generated from vm/prims.def, so a primitive with no
-# definition there stops the four xc1 configurations of the Basis Library suite
+# definition there stops the five xc1 configurations of the Basis Library suite
 # compiling -- which make check does not run, and make matrix-quick finds ten
 # minutes later. poly_eq, imm_eq and ptr_eq are the three gen-host-basis.sh
 # leaves out.

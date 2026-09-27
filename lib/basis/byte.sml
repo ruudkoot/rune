@@ -1,5 +1,5 @@
-(* Byte: between bytes and characters. A Word8Vector.vector is a string, so
-   the conversions of whole vectors cost nothing.
+(* Byte: between bytes and characters. A `Word8Vector.vector` is a string
+   underneath, so the conversions of whole vectors cost nothing.
 
    Implements: BYTE *)
 structure Byte =

@@ -19,7 +19,7 @@ structure BinIO : BIN_IO
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `BinIO` | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
+| [`BinIO`](../str/BinIO.md) | BinIO: the imperative binary streams (signature BIN\_IO). | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 Binary files: the imperative streams of bytes, with the ways of opening a
 file.
@@ -39,11 +39,8 @@ sig
     where type StreamIO.reader = BinPrimIO.reader
     where type StreamIO.writer = BinPrimIO.writer
     where type StreamIO.pos = BinPrimIO.pos
-
   val <a href="#val-openin">openIn</a> : string -&gt; instream
-
   val <a href="#val-openout">openOut</a> : string -&gt; outstream
-
   val <a href="#val-openappend">openAppend</a> : string -&gt; outstream
 end
 </pre>
@@ -121,6 +118,8 @@ val openOut : string -> outstream
 > way round: on POSIX nothing is translated between the two, for all 256
 > values.
 
+**Example** `let val p = OS.FileSys.tmpName () val out = openOut p in output (out, Byte.stringToBytes "ab"); closeOut out; Word8Vector.length (inputAll (openIn p)) before OS.FileSys.remove p end = 2`
+
 <details><summary>Other implementations (1)</summary>
 
 - **Poly/ML** &mdash; another reading of the specification: reports the qualified name ("TextIO.openIn"); the test takes the unqualified name, as MLton and SML/NJ do
@@ -142,6 +141,8 @@ val openAppend : string -> outstream
 `openAppend name` is a stream writing at the end of the file `name`, which it creates if it is not there.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the file cannot be opened.
+
+**Example** `let val p = OS.FileSys.tmpName () val a = openAppend p in output (a, Byte.stringToBytes "ab"); closeOut a; let val b = openAppend p in output (b, Byte.stringToBytes "c"); closeOut b end; Byte.bytesToString (inputAll (openIn p)) before OS.FileSys.remove p end = "abc"`
 
 <details><summary>Other implementations (1)</summary>
 

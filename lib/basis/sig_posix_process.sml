@@ -32,7 +32,9 @@ sig
   (* `wordToPid w` is the process whose number is `w`. *)
   val wordToPid : SysWord.word -> pid
 
-  (* `pidToWord pid` is the number of `pid`. *)
+  (* `pidToWord pid` is the number of `pid`.
+
+     Law: `pidToWord (wordToPid w) = w` *)
   val pidToWord : pid -> SysWord.word
 
   (* `fork ()` splits the process in two, and is `NONE` in the child and `SOME` of the child's number in the parent.
@@ -72,6 +74,9 @@ sig
 
   (* `exece (path, args, env)` is `exec` with `env` as the new program's environment.
 
+     Each string of `env` is written `"name=value"`, and the new program has
+     those variables and no others: an empty `env` is an empty environment.
+
      Raises: `OS.SysErr` if the program cannot be run. *)
   val exece : string * string list * string list -> 'a
 
@@ -101,7 +106,11 @@ sig
      itself, 256 and the number of the signal that ended it, or 512 and the
      number of the signal that stopped it.
 
-     Pinned by: `Posix.Process.fromStatus/system-*` *)
+     Pinned by: `Posix.Process.fromStatus/system-*`
+
+     Example: `fromStatus OS.Process.success = W_EXITED`
+
+     Example: `fromStatus (OS.Process.system "exit 3") = W_EXITSTATUS 0w3` *)
   val fromStatus : OS.Process.status -> exit_status
 
   (* The flags that say what `waitpid` is to wait for. *)
@@ -162,7 +171,9 @@ sig
      alarm, as POSIX has it, so it cancels the outstanding one and still
      reports the time that was left of it.
 
-     Pinned by: `Posix.Process.alarm/*` *)
+     Pinned by: `Posix.Process.alarm/*`
+
+     Example: `alarm Time.zeroTime = Time.zeroTime` when no alarm was set *)
   val alarm : Time.time -> Time.time
 
   (* `pause ()` waits until a signal arrives. *)
@@ -174,6 +185,8 @@ sig
      result is; it is POSIX's "time left", which is zero when the wait ran
      out and the rest when a signal cut it short.
 
-     Pinned by: `Posix.Process.sleep/*` *)
+     Pinned by: `Posix.Process.sleep/*`
+
+     Example: `sleep Time.zeroTime = Time.zeroTime` *)
   val sleep : Time.time -> Time.time
 end

@@ -16,6 +16,7 @@ struct
           if RuneError.toInt n = 0 then RuneError.SysErr ("no such " ^ what, NONE) else e
       | e => e
   in
+    (* Posix.SysDB.Passwd: an entry of the user database. *)
     structure Passwd =
     struct
       type passwd = {name : string, uid : uid, gid : gid, home : string, shell : string}
@@ -26,6 +27,7 @@ struct
       fun shell (p : passwd) = #shell p
     end
 
+    (* Posix.SysDB.Group: an entry of the group database. *)
     structure Group =
     struct
       type group = {name : string, gid : gid, members : string list}

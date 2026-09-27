@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 6 |
 | Documentation | 7 of 7 entries documented |
-| Tests | 26 checks of 7 entries |
+| Tests | 28 checks of 7 entries |
 | Source | [lib/basis/sig\_pack\_word.sml](../../../../lib/basis/sig_pack_word.sml) |
 
 ## Synopsis
@@ -24,19 +24,19 @@ structure PackWord64Little : PACK_WORD  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `PackWord16Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord16Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord32Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord32Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord64Big` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
-| `PackWord64Little` |  | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord16Big`](../str/PackWord16Big.md) | PackWord16Big: words of 16 bits as 2 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the most significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord16Little`](../str/PackWord16Little.md) | PackWord16Little: words of 16 bits as 2 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the least significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord32Big`](../str/PackWord32Big.md) | PackWord32Big: words of 32 bits as 4 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the most significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord32Little`](../str/PackWord32Little.md) | PackWord32Little: words of 32 bits as 4 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the least significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord64Big`](../str/PackWord64Big.md) | PackWord64Big: words of 64 bits as 8 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the most significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
+| [`PackWord64Little`](../str/PackWord64Little.md) | PackWord64Little: words of 64 bits as 8 bytes of [`Word8`](../str/Word8.md) vectors and arrays, the least significant byte first. | [lib/basis/pack\_word.sml](../../../../lib/basis/pack_word.sml) |
 
 Reading and writing a word in a vector or an array of bytes, in a fixed
 byte order.
 
 A structure of this signature packs words of [`bytesPerElem`](#val-bytesperelem) bytes: the
-name says how many bits and which end comes first, so [`PackWord32Big`](PACK_WORD.md) puts
-the most significant byte first and [`PackWord32Little`](PACK_WORD.md) the least. This is
+name says how many bits and which end comes first, so [`PackWord32Big`](../str/PackWord32Big.md) puts
+the most significant byte first and [`PackWord32Little`](../str/PackWord32Little.md) the least. This is
 what a program uses to read a binary file or a protocol whose layout is
 given in bytes, whatever the byte order of the machine it runs on.
 
@@ -52,17 +52,11 @@ the bytes from `bytesPerElem * i` on.
 signature PACK_WORD =
 sig
   val <a href="#val-bytesperelem">bytesPerElem</a> : int
-
   val <a href="#val-isbigendian">isBigEndian</a> : bool
-
   val <a href="#val-subvec">subVec</a> : Word8Vector.vector * int -&gt; LargeWord.word
-
   val <a href="#val-subvecx">subVecX</a> : Word8Vector.vector * int -&gt; LargeWord.word
-
   val <a href="#val-subarr">subArr</a> : Word8Array.array * int -&gt; LargeWord.word
-
   val <a href="#val-subarrx">subArrX</a> : Word8Array.array * int -&gt; LargeWord.word
-
   val <a href="#val-update">update</a> : Word8Array.array * int * LargeWord.word -&gt; unit
 end
 </pre>
@@ -91,6 +85,8 @@ val isBigEndian : bool
 
 Whether the most significant byte comes first.
 
+**Example** `PackWord32Little.isBigEndian = false`
+
 <details><summary>Tests (1)</summary>
 
 In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `value`
@@ -114,7 +110,8 @@ all in `v`.
 
 **Example** `PackWord16Big.subVec (Word8Vector.fromList [0w1, 0w2], 0) = 0wx102`
 
-**Example** `PackWord16Little.subVec (Word8Vector.fromList [0w1, 0w2, 0w3, 0w4], 1) = 0wx403` for the index counts elements of two bytes, not bytes.
+**Example** `PackWord16Little.subVec (Word8Vector.fromList [0w1, 0w2, 0w3, 0w4], 1) = 0wx403`, for the index counts elements of two bytes, not
+bytes.
 
 <details><summary>Other implementations (1)</summary>
 
@@ -136,19 +133,21 @@ val subVecX : Word8Vector.vector * int -> LargeWord.word
 
 `subVecX (v, i)` is the word at position `i` of `v`, with its top bit copied into the bits above it.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `v`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the bytes of element `i` are not
+all in `v`.
 
 **Example** `PackWord16Big.subVecX (Word8Vector.fromList [0wxFF, 0wxFE], 0) = 0wxFFFFFFFFFFFFFFFE`
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **MLKit** &mdash; subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 
 </details>
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-negative` (raises) &middot; `Subscript-maxInt` (raises)
 
 </details>
 
@@ -160,7 +159,10 @@ val subArr : Word8Array.array * int -> LargeWord.word
 
 `subArr (arr, i)` is the word at position `i` of the byte array `arr`, with zeros above it.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the bytes of element `i` are not
+all in `arr`.
+
+**Example** `PackWord32Big.subArr (Word8Array.fromList [0w0, 0w0, 0w1, 0w0], 0) = 0wx100`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -182,17 +184,21 @@ val subArrX : Word8Array.array * int -> LargeWord.word
 
 `subArrX (arr, i)` is the word at position `i` of `arr`, with its top bit copied into the bits above it.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the bytes of element `i` are not
+all in `arr`.
 
-<details><summary>Other implementations (1)</summary>
+**Example** `PackWord32Little.subArrX (Word8Array.fromList [0wxFF, 0wxFF, 0wxFF, 0wxFF], 0) = 0wxFFFFFFFFFFFFFFFF`
+
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **MLKit** &mdash; subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 
 </details>
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-maxInt` (raises)
+In [tests/basis/fn/pack\_word\_fn.sml](../../../../tests/basis/fn/pack_word_fn.sml), applied to `PackWord16Big`, `PackWord16Little`, `PackWord32Big`, `PackWord32Little`, `PackWord64Big`, `PackWord64Little`: `sign-extended-*` &middot; `non-negative-*` &middot; `Subscript-past-the-end` (raises) &middot; `Subscript-negative` (raises) &middot; `Subscript-maxInt` (raises)
 
 </details>
 
@@ -206,7 +212,11 @@ val update : Word8Array.array * int * LargeWord.word -> unit
 
 What does not fit in that many bytes is dropped.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or if the bytes of element `i` are not
+all in `arr`.
+
+**Law** `(update (arr, i, w); subArr (arr, i))` is `w` with the bits above
+`8 * bytesPerElem` cleared
 
 **Example** `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12, 0wx34]`
 

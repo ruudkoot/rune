@@ -33,7 +33,9 @@ struct
     val stdout : file_desc = 1
     val stderr : file_desc = 2
 
-    (* The flags of open and the bits of a mode, as words. "all represents
+    (* Posix.FileSys.O: the options that `openf` and `createf` take.
+
+       The flags of open and the bits of a mode, as words. "all represents
        the union of all flags", also those of the system that O does not
        name (O_CLOEXEC, and O_LARGEFILE, which getfl reports): the bits of a
        C int. fromWord keeps the bits of all, so that "toWord o fromWord" is
@@ -59,7 +61,10 @@ struct
       fun clear (a, b) = Word.andb (Word.notb a, b)
     end
 
-    (* Implements: BIT_FLAGS *)
+    (* Posix.FileSys.S: the permission bits of a file's mode, as a set of
+       flags.
+
+       Implements: BIT_FLAGS *)
     structure S =
     struct
       type mode = word
@@ -135,7 +140,8 @@ struct
     fun wordToIno w : ino = Word.toInt w
     fun inoToWord (i : ino) = Word.fromInt i
 
-    (* What stat reports. The kind is posix_stat's: 0 regular file, 1
+    (* Posix.FileSys.ST: what `stat` reports about a file, and the functions
+       that read it. The kind is posix_stat's: 0 regular file, 1
        directory, 2 symbolic link, 4 FIFO, 5 socket, 6 character device, 7
        block device, and 3 anything else (vm/sys_posix.c, kind_of). *)
     structure ST =

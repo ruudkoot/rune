@@ -7,7 +7,7 @@
 | Status | optional |
 | Implementations | 1 |
 | Documentation | 49 of 49 entries documented |
-| Tests | 81 checks of 49 entries |
+| Tests | 77 checks of 48 entries |
 | Source | [lib/basis/sig\_posix\_error.sml](../../../../lib/basis/sig_posix_error.sml) |
 
 ## Synopsis
@@ -19,7 +19,7 @@ structure Posix.Error : POSIX_ERROR  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| `Posix.Error` |  | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
+| [`Posix.Error`](../str/Posix.Error.md) | Posix.Error: the conditions a failing call reports, with their names and numbers. | [lib/basis/posix.sml](../../../../lib/basis/posix.sml) |
 
 The conditions the system reports when a call fails, and their names.
 
@@ -35,7 +35,7 @@ may give [`exist`](#val-exist) or [`notempty`](#val-notempty), and a system may 
 here covers. [`errorName`](#val-errorname) names those too.
 
 > **Erratum** `POSIX_ERROR.syserror/spec-writes-OS.Process`. The
-> page writes `eqtype syserror = OS.Process.syserror`; [`OS.Process`](../sig/OS.md#str-process) has no
+> page writes `eqtype syserror = OS.Process.syserror`; [`OS.Process`](../str/OS.Process.md) has no
 > such type, the description says it "is identical to the type
 > [`OS.syserror`](../sig/OS.md#val-syserror)", and `eqtype t = ty` is not a specification SML allows. It
 > is written `type syserror = OS.syserror`, which admits equality.
@@ -54,101 +54,53 @@ here covers. [`errorName`](#val-errorname) names those too.
 signature POSIX_ERROR =
 sig
   type <a href="#type-syserror">syserror</a> = OS.syserror
-
   val <a href="#val-toword">toWord</a> : syserror -&gt; SysWord.word
-
   val <a href="#val-fromword">fromWord</a> : SysWord.word -&gt; syserror
-
   val <a href="#val-errormsg">errorMsg</a> : syserror -&gt; string
-
   val <a href="#val-errorname">errorName</a> : syserror -&gt; string
-
   val <a href="#val-syserror">syserror</a> : string -&gt; syserror option
-
   val <a href="#val-acces">acces</a> : syserror
-
   val <a href="#val-again">again</a> : syserror
-
   val <a href="#val-badf">badf</a> : syserror
-
   val <a href="#val-badmsg">badmsg</a> : syserror
-
   val <a href="#val-busy">busy</a> : syserror
-
   val <a href="#val-canceled">canceled</a> : syserror
-
   val <a href="#val-child">child</a> : syserror
-
   val <a href="#val-deadlk">deadlk</a> : syserror
-
   val <a href="#val-dom">dom</a> : syserror
-
   val <a href="#val-exist">exist</a> : syserror
-
   val <a href="#val-fault">fault</a> : syserror
-
   val <a href="#val-fbig">fbig</a> : syserror
-
   val <a href="#val-inprogress">inprogress</a> : syserror
-
   val <a href="#val-intr">intr</a> : syserror
-
   val <a href="#val-inval">inval</a> : syserror
-
   val <a href="#val-io">io</a> : syserror
-
   val <a href="#val-isdir">isdir</a> : syserror
-
   val <a href="#val-loop">loop</a> : syserror
-
   val <a href="#val-mfile">mfile</a> : syserror
-
   val <a href="#val-mlink">mlink</a> : syserror
-
   val <a href="#val-msgsize">msgsize</a> : syserror
-
   val <a href="#val-nametoolong">nametoolong</a> : syserror
-
   val <a href="#val-nfile">nfile</a> : syserror
-
   val <a href="#val-nodev">nodev</a> : syserror
-
   val <a href="#val-noent">noent</a> : syserror
-
   val <a href="#val-noexec">noexec</a> : syserror
-
   val <a href="#val-nolck">nolck</a> : syserror
-
   val <a href="#val-nomem">nomem</a> : syserror
-
   val <a href="#val-nospc">nospc</a> : syserror
-
   val <a href="#val-nosys">nosys</a> : syserror
-
   val <a href="#val-notdir">notdir</a> : syserror
-
   val <a href="#val-notempty">notempty</a> : syserror
-
   val <a href="#val-notsup">notsup</a> : syserror
-
   val <a href="#val-notty">notty</a> : syserror
-
   val <a href="#val-nxio">nxio</a> : syserror
-
   val <a href="#val-perm">perm</a> : syserror
-
   val <a href="#val-pipe">pipe</a> : syserror
-
   val <a href="#val-range">range</a> : syserror
-
   val <a href="#val-rofs">rofs</a> : syserror
-
   val <a href="#val-spipe">spipe</a> : syserror
-
   val <a href="#val-srch">srch</a> : syserror
-
   val <a href="#val-toobig">toobig</a> : syserror
-
   val <a href="#val-xdev">xdev</a> : syserror
 end
 </pre>
@@ -161,12 +113,6 @@ type syserror = OS.syserror
 
 The type of a condition the system reports: the [`syserror`](#val-syserror) of [`OS`](../sig/OS.md).
 
-<details><summary>Tests (4)</summary>
-
-For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `inverts-errorName-all` &middot; `unknown-name` &middot; `empty-name` &middot; `is-OS.syserror`
-
-</details>
-
 ### <a name="val-toword"></a>`toWord`
 
 ```sml
@@ -174,6 +120,10 @@ val toWord : syserror -> SysWord.word
 ```
 
 `toWord e` is the number the system gives `e`, its `errno` value.
+
+The numbers are the system's: POSIX fixes the names, not the numbers.
+
+**Example** `toWord noent = 0w2` on Linux and macOS
 
 <details><summary>Tests (2)</summary>
 
@@ -189,6 +139,8 @@ val fromWord : SysWord.word -> syserror
 
 `fromWord w` is the condition whose `errno` value is `w`.
 
+**Law** `fromWord (toWord e) = e`
+
 <details><summary>Tests (2)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `no-validation` &middot; `of-toWord`
@@ -202,6 +154,16 @@ val errorMsg : syserror -> string
 ```
 
 `errorMsg e` is the text the system gives for `e`, meant for a person to read.
+
+It is `OS.errorMsg e`, the message of an [`OS.SysErr`](../sig/OS.md#exn-syserr) that carries `e`.
+
+**Example** `errorMsg noent = "No such file or directory"`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on \`f': No such file or directory"
+
+</details>
 
 <details><summary>Tests (4)</summary>
 
@@ -276,6 +238,12 @@ val again : syserror
 
 Nothing is ready; try again.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -290,9 +258,10 @@ val badf : syserror
 
 The file descriptor is not open, or not open the right way.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; Posix.IO.close of a descriptor that is already closed raises no exception
+- **MLKit** &mdash; Posix.IO.close never raises OS.SysErr: the library calls C's close, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
 
 </details>
 
@@ -719,6 +688,12 @@ val notsup : syserror
 
 The operation is not supported here.
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
+
+</details>
+
 <details><summary>Tests (1)</summary>
 
 For `Posix.Error`, in [tests/basis/posix\_error.sml](../../../../tests/basis/posix_error.sml): `*`
@@ -733,9 +708,10 @@ val notty : syserror
 
 The descriptor is not a terminal.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
+- **MLKit** &mdash; compiler bug: the X64 backend compares the pointer of \_\_is\_null with the address of a boxed 0, so the library never sees that a C function returned NULL: ttyname of a descriptor that is not a terminal returns NULL as its string instead of raising OS.SysErr
 
 </details>
 
@@ -827,9 +803,10 @@ val spipe : syserror
 
 The descriptor cannot be positioned: it is a pipe, a socket or a terminal.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9** &mdash; Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
+- **MLKit** &mdash; lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml\_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
 
 </details>
 

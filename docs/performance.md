@@ -20,8 +20,9 @@ being done about it, is in [plans/performance.md](plans/performance.md)
 | `native:HOST` | the program on the host's own Basis Library, compiled by the host |
 | `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)) |
 
-The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits) and Poly/ML
-5.9.2 (`make hosts`).
+The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), Poly/ML
+5.9.2 and MLKit 4.7.23 (`make hosts`). MLKit came later, and its numbers were
+taken on another machine: they are in a section of their own, *MLKit*.
 
 ## Running programs
 
@@ -114,6 +115,51 @@ directory on the Windows side (`tests/windows-dir.sh`).
   the bootstrap and by `runedoc` -- are the budgets of `make perf-check`
   (`tests/perf/*.budget`).
 
+## MLKit
+
+MLKit 4.7.23 joined the hosts after the tables above were made. Its numbers
+were taken on 2026-09-27 at `2e7d313`, on a virtual machine of 4 CPUs (Intel
+Emerald Rapids, `cloud/ENVIRONMENT.md`), idle but for the one program
+timed, with Rune, MLton and Poly/ML measured again beside it so that they
+can be compared. `make perf PERF_CONFIGS=rune,native:mlton,native:polyml,native:mlkit,xc1:mlton,xc1:mlkit`,
+milliseconds of one run, in parentheses divided by the baseline of the
+configuration as above:
+
+| Program | rune | native:mlton | native:polyml | native:mlkit | xc1:mlton | xc1:mlkit |
+|---|---:|---:|---:|---:|---:|---:|
+| array_sieve | 5.60 (2.5) | 0.35 (2.1) | 0.39 (1.9) | 0.53 (0.6) | 0.34 (2.0) | 0.51 (0.5) |
+| fib | 3.66 (1.7) | 0.29 (1.7) | 0.34 (1.6) | 1.65 (1.7) | 0.30 (1.7) | 1.68 (1.8) |
+| intinf_fact | 33.29 (15.1) | 0.02 (0.1) | 0.06 (0.3) | 1.58 (1.7) | n/a | n/a |
+| list_ops | 3.84 (1.7) | 1.21 (7.1) | 1.25 (6.0) | 1.04 (1.1) | 0.49 (2.8) | 1.48 (1.6) |
+| real_nbody | 1.93 (0.9) | 0.49 (2.9) | 0.87 (4.1) | 0.71 (0.8) | 0.53 (3.1) | 0.67 (0.7) |
+| string_ops | 8.92 (4.1) | 1.07 (6.3) | 1.27 (6.0) | 2.34 (2.5) | 1.29 (7.5) | 3.78 (4.0) |
+| tak | 1.32 (0.6) | 0.10 (0.6) | 0.13 (0.6) | 0.54 (0.6) | 0.10 (0.6) | 0.52 (0.6) |
+| word_bits | 2.69 (1.2) | 0.09 (0.5) | 0.13 (0.6) | 0.25 (0.3) | 0.08 (0.5) | 0.20 (0.2) |
+
+`intinf_fact` is n/a in the `xc1` configurations for the reason above.
+
+* MLKit is slow at calls and relatively quick in its Basis Library: its
+  baseline, fib and tak, is 5 to 6 times MLton's, while the programs that
+  are mostly the library take from 0.9 (`list_ops`) to 2.8 (`word_bits`)
+  times as long as MLton's, so that their ratios to the baseline are the
+  lowest of the table.
+* Rune's library compiled by MLKit (`xc1:mlkit`) is about as fast as
+  MLKit's own on arrays, reals and words, and takes 1.4 and 1.6 times as
+  long on `list_ops` and `string_ops`.
+
+Compiling, as in *Compiling* above:
+
+| Build | `hello` | the compiler |
+|---|---:|---:|
+| MLton | 5.4 ms | 0.66 s |
+| Poly/ML | 6.8 ms | 0.68 s |
+| MLKit | 7.6 ms | 1.15 s |
+| `runevm` (`bin/rune`, what is shipped) | 18.6 ms | 3.47 s |
+
+MLKit itself takes 70 s to build the compiler from nothing (MLton: 24 s),
+and less when some of its object files, which it keeps in `MLB/` beside the
+sources, still hold.
+
 ## Since the middle end
 
 The tables this page replaces were taken on 2026-09-20 (`rune`) and
@@ -141,7 +187,7 @@ in native code; it is 5.0 and 2.8 now.
 make                              # bin/rune, bin/runevm
 make host-builds runeopt bin/runevm-opt bin/rune-new bin/runevm-new
 make windows portability          # the VMs of rune:windows*, rune:linux32, rune:ppc64
-make hosts                        # MLton, SML/NJ and Poly/ML, once
+make hosts                        # MLton, SML/NJ, Poly/ML and MLKit, once
 make perf PERF_CONFIGS=rune,rune:opt,rune:new,rune:windows,rune:windows32,rune:linux32,rune:ppc64,hosts,xc1
                                   # the table, in tests/out/perf/wall.md
 ```

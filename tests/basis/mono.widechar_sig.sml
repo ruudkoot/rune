@@ -1,5 +1,5 @@
 (* requires: WideCharVector WideCharArray WideChar *)
-(* uses: spec-sigs/MONO_VECTOR.sml spec-sigs/MONO_ARRAY.sml spec-sigs/MONO_VECTOR_SLICE.sml spec-sigs/MONO_ARRAY_SLICE.sml *)
+(* uses: spec-sigs/MONO_VECTOR.sml spec-sigs/MONO_ARRAY.sml spec-sigs/MONO_VECTOR_SLICE.sml spec-sigs/MONO_ARRAY_SLICE.sml spec-sigs/MONO_ARRAY2.sml *)
 (* WideCharVector, WideCharArray, WideCharVectorSlice and WideCharArraySlice
    match their signatures, with the constraints of the specification:
      structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char
@@ -11,8 +11,9 @@
        where type vector = WideCharVector.vector
        where type vector_slice = WideCharVectorSlice.slice
        where type array = WideCharArray.array where type elem = WideChar.char
-   and each can be implemented opaquely. The specification has no
-   WideCharArray2. *)
+     structure WideCharArray2 :> MONO_ARRAY2
+       where type vector = WideCharVector.vector where type elem = WideChar.char
+   and each can be implemented opaquely. *)
 structure TestMonoWideCharSig =
 struct
   fun x n = WideChar.chr (65 + n)
@@ -73,4 +74,24 @@ struct
                     fn () => eq (ASO.sub (ASO.slice (WideCharArray.tabulate (5, x), 2, NONE), 1), x 3))
   (*>> slices *)
 
+  (*<< array2 *)
+  structure A2 : SPEC_MONO_ARRAY2 = WideCharArray2
+  structure A2E : SPEC_MONO_ARRAY2 where type vector = WideCharVector.vector where type elem = WideChar.char = WideCharArray2
+  structure A2O :> SPEC_MONO_ARRAY2 where type vector = WideCharVector.vector where type elem = WideChar.char = WideCharArray2
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/matches", fn () => true)
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/elem-is-WideChar.char", fn () => eq (A2E.sub (A2E.array (1, 1, x 7), 0, 0) : WideChar.char, x 7))
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/vector-is-WideCharVector.vector", fn () => WideCharVector.length (A2E.row (A2E.array (2, 3, x 0), 1)) = 3)
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/array-is-WideCharArray2.array",
+                    fn () => WideCharArray2.nRows (A2.array (2, 3, x 0) : WideCharArray2.array) = 2
+                             andalso A2.nCols (WideCharArray2.array (2, 3, x 0) : A2.array) = 3)
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/region-is-WideCharArray2.region",
+                    fn () => let val a = WideCharArray2.array (2, 3, x 0)
+                             in A2.foldi A2.RowMajor (fn (_, _, _, n) => n + 1) 0
+                                  ({base = a, row = 1, col = 0, nrows = NONE, ncols = NONE} : WideCharArray2.region) = 3 end)
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/traversal-is-Array2.traversal",
+                    fn () => (A2.RowMajor : Array2.traversal) = Array2.RowMajor andalso WideCharArray2.ColMajor = (Array2.ColMajor : A2.traversal))
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/eqtype", fn () => let val a = A2.array (1, 1, x 0) in a = a end)
+  val () = T.check ("WideCharArray2:MONO_ARRAY2/opaque-array",
+                    fn () => let val a = A2O.tabulate A2O.ColMajor (2, 2, fn (i, j) => x (2 * i + j)) in eq (A2O.sub (a, 1, 0), x 2) andalso a = a end)
+  (*>> array2 *)
 end

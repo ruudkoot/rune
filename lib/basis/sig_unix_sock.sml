@@ -31,10 +31,14 @@ sig
   (* The type of an address of this family: a path. *)
   type sock_addr = unix Socket.sock_addr
 
-  (* The address family of the Unix sockets, for `Socket.familyOfAddr` to give back. *)
+  (* The address family of the Unix sockets, for `Socket.familyOfAddr` to give back.
+
+     Example: `Socket.AF.toString unixAF = "UNIX"` *)
   val unixAF : Socket.AF.addr_family
 
-  (* `toAddr p` is the address of the socket at the path `p`. *)
+  (* `toAddr p` is the address of the socket at the path `p`.
+
+     Example: `Socket.familyOfAddr (toAddr "/tmp/s") = unixAF` *)
   val toAddr : string -> sock_addr
 
   (* `fromAddr a` is the path that `a` names.

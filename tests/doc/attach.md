@@ -31,9 +31,7 @@ A second paragraph belongs to it as well.
 <pre>
 signature ATTACH =
 sig
-
   type <a href="#type-t">t</a>
-
   datatype <a href="#type-colour">colour</a> =
       <a href="#con-red">Red</a>
     | <a href="#con-green">Green</a> of int
@@ -41,28 +39,19 @@ sig
                <a href="#fld-blue.alpha">alpha</a> : real,
                <a href="#fld-blue.name">name</a> : string}
     | <a href="#con-black">Black</a>
-
   exception <a href="#exn-failed">Failed</a> of {<a href="#fld-failed.why">why</a> : string, <a href="#fld-failed.code">code</a> : int}
-
   val <a href="#val-first">first</a> : t
   val <a href="#val-second">second</a> : t
-
   val <a href="#val-third">third</a> : t
   and <a href="#val-fourth">fourth</a> : t
   and <a href="#val-fifth">fifth</a> : t
-
   val <a href="#val-record">record</a> : {<a href="#fld-record.x">x</a> : int,
                 <a href="#fld-record.y">y</a> : int} -&gt; t
-
   structure <a href="#str-inner">Inner</a> :
   sig
-
     val <a href="#val-inner.deep">deep</a> : t
-
   end
-
   include ORD
-
 end
 </pre>
 
