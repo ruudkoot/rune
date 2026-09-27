@@ -179,6 +179,10 @@ struct
   val () = eqSL (lab "openVector/readVec-zero", ["", "abc"],
                  fn () => let val rd = vecReader "abc" val a = readVec (rd, 0) in [a, readVec (rd, 10)] end)
   val () = eqS (lab "openVector/empty", "", fn () => readVec (vecReader "", 5))
+  (* The page recommends that a read of a negative number raise Size; the
+     readers of the library do. *)
+  val () = T.raises (lab "openVector/readVec-Size-negative", fn Size => true | _ => false,
+                     fn () => readVec (vecReader "abc", ~1))
   val () = eqSL (lab "openVector/readArr", ["3:?abc?", "2:de???", "0:?????"],
                  fn () => let val rd = vecReader "abcde"
                               val a = readArr (rd, "?????", 1, 3)
@@ -228,6 +232,8 @@ struct
   val () = eqSL (lab "nullRd/always-at-end-of-stream", ["", "", ""],
                  fn () => let val rd = P.augmentReader (P.nullRd ()) in [readVec (rd, 5), readVec (rd, 1), readVec (rd, 100)] end)
   val () = eqS (lab "nullRd/readArr", "0:???", fn () => readArr (P.augmentReader (P.nullRd ()), "???", 0, 3))
+  val () = T.raises (lab "nullRd/readVec-Size-negative", fn Size => true | _ => false,
+                     fn () => readVec (P.augmentReader (P.nullRd ()), ~1))
   val () = eqS (lab "nullRd/readVecNB", "SOME ", fn () => readVecNB (P.augmentReader (P.nullRd ()), 4))
   val () = eqB (lab "nullRd/chunkSize-positive", true, fn () => chunkSizeRd (P.nullRd ()) >= 1)
   val () = T.raises (lab "nullRd/readVec-after-close", isClosedIo,

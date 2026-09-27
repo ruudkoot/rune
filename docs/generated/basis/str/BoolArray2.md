@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 41 checks |
+| Tests | 71 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure BoolArray2 :> MONO_ARRAY2 where type vector = BoolVector.vector where type elem = bool
 ```
+
+BoolArray2: two-dimensional arrays of booleans, whose rows and columns
+are [`BoolVector`](../str/BoolVector.md) vectors.
 
 ## Members
 
@@ -45,10 +48,13 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 | val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> bool) -> array` |
 | val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `array * int * int * bool -> unit` |
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
 - **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript on array (0, c, x), fromList \[\] and tabulate tr (0, c, f)
+- **Poly/ML** &mdash; as in Array2: the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
+- **Poly/ML** &mdash; as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLton** &mdash; as Array2.copy: copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 
 </details>
 

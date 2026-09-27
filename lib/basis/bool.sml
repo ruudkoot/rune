@@ -1,4 +1,5 @@
-(* Bool
+(* Bool: the truth values, their negation, and their conversion to and from
+   text. Its type is the top-level `bool`.
 
    Implements: BOOL *)
 structure Bool =

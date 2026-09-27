@@ -426,6 +426,7 @@ native:smlnj*@110.99.9 | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | input
 native:smlnj*@110.99.9 | *IO.StreamIO.output*/Io-terminated* | HOST-BUG | output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 native:smlnj*@110.99.9 | *IO.setPosOut/* | HOST-BUG | setPosOut neither flushes nor moves the writer: output goes on at the end
 native:mlton@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
+native:mlton@* | *PrimIO.*/readVec-Size-negative | SPEC-AMBIGUOUS | a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 native:smlnj*@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 native:smlnj*@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
 native:smlnj*@110.99.9 | TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | HOST-BUG | openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")

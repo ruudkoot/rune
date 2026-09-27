@@ -173,10 +173,10 @@ reading one reads both.
 | [`ArraySlice`](../generated/basis/str/ArraySlice.md) | done | done | done | done | done | done |
 | [`BinIO`](../generated/basis/str/BinIO.md) | done | done | done | done | done | done |
 | [`BinIO.StreamIO`](../generated/basis/str/BinIO.StreamIO.md) | done | done | done | done | done | done |
-| [`BinPrimIO`](../generated/basis/str/BinPrimIO.md) |  |  |  |  |  |  |
-| [`Bool`](../generated/basis/str/Bool.md) |  |  |  |  |  |  |
-| [`BoolArray`](../generated/basis/str/BoolArray.md) |  |  |  |  |  |  |
-| [`BoolArray2`](../generated/basis/str/BoolArray2.md) |  |  |  |  |  |  |
+| [`BinPrimIO`](../generated/basis/str/BinPrimIO.md) | done | done | done | done | done | done |
+| [`Bool`](../generated/basis/str/Bool.md) | done | done | done | done | done | done |
+| [`BoolArray`](../generated/basis/str/BoolArray.md) | done | done | done | done | done | done |
+| [`BoolArray2`](../generated/basis/str/BoolArray2.md) | done | done | done | done | done | done |
 | [`BoolArraySlice`](../generated/basis/str/BoolArraySlice.md) |  |  |  |  |  |  |
 | [`BoolVector`](../generated/basis/str/BoolVector.md) |  |  |  |  |  |  |
 | [`BoolVectorSlice`](../generated/basis/str/BoolVectorSlice.md) |  |  |  |  |  |  |

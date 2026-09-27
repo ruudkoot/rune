@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 26 of 26 entries documented |
-| Tests | 309 checks of 24 entries |
+| Tests | 312 checks of 24 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -37,7 +37,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`BoolArray`](../str/BoolArray.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`BoolArray`](../str/BoolArray.md) | BoolArray: mutable arrays of booleans, a type of their own with identity equality, whose vectors are those of [`BoolVector`](../str/BoolVector.md). | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharArray`](../str/CharArray.md) |  | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
 | [`Int16Array`](../str/Int16Array.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32Array`](../str/Int32Array.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
@@ -118,7 +118,7 @@ Two are equal when they are the same array, whatever they hold.
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Array`](../str/Word8Array.md), `char` for [`CharArray`](../str/CharArray.md).
 
 <details><summary>Tests (2)</summary>
 
@@ -147,6 +147,8 @@ The greatest length such an array may have.
 > **Implementation** `MONO_ARRAY.maxLen/value`. [`Array.maxLen`](../sig/ARRAY.md#val-maxlen), 100,000,000,
 > for every instance, those of characters and of bytes too.
 
+**Example** `maxLen = 100000000`
+
 <details><summary>Tests (2)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-arrays`
@@ -165,13 +167,17 @@ val array : int * elem -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
+**Law** `sub (array (n, x), i) = x` for `0 <= i < n`
+
+**Example** `vector (array (3, #"x")) = "xxx"`
+
 <details><summary>Tests (24)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `string-of-init`
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `same-elements-not-equal`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `model*` &middot; `identity*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `length` &middot; `Size-negative` (raises Size) &middot; `elements-are-separate` &middot; `same-array-is-equal` &middot; `alias-is-equal` &middot; `equal-after-update` &middot; `same-elements-not-equal` &middot; `unequal` &middot; `zero-length-same` &middot; `zero-length-not-equal` &middot; `model*` &middot; `identity*` &middot; `long` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -181,9 +187,13 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val fromList : elem list -> array
 ```
 
-`fromList l` is the sequence of the elements of `l`, in order.
+`fromList l` is a new array of the elements of `l`, in order.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
+
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+
+**Example** `sub (fromList [#"a", #"b"], 1) = #"b"`
 
 <details><summary>Tests (11)</summary>
 
@@ -199,9 +209,19 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val tabulate : int * (int -> elem) -> array
 ```
 
-`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
+`tabulate (n, f)` is a new array of `f 0`, ..., `f (n - 1)`, applied in order.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
+
+> **Reading** `MONO_ARRAY.tabulate/Size-before-f`. The specification does not
+> say whether the length is checked before `f` is applied. It is, as for
+> [`Array.tabulate`](../sig/ARRAY.md#val-tabulate): a length out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying
+> `f` at all.
+
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
+effects
+
+**Example** `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"`
 
 <details><summary>Tests (16)</summary>
 
@@ -211,7 +231,7 @@ For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararra
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f`
 
-In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `BoolArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `same-elements-not-equal` &middot; `zero-length-not-equal` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -222,6 +242,10 @@ val length : array -> int
 ```
 
 `length x` is the number of elements.
+
+**Law** `length (fromList l) = List.length l`
+
+**Example** `length (fromList [#"a", #"b"]) = 2`
 
 <details><summary>Tests (7)</summary>
 
@@ -239,7 +263,9 @@ val sub : array * int -> elem
 
 `sub (x, i)` is the element at position `i`, counting from 0.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length x`.
+
+**Example** `sub (fromList [#"a", #"b"], 0) = #"a"`
 
 <details><summary>Tests (13)</summary>
 
@@ -259,7 +285,11 @@ val update : array * int * elem -> unit
 
 `update (arr, i, x)` puts `x` at position `i` of `arr`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `arr`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
+
+**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
+
+**Example** `let val a = array (3, #"-") in update (a, 1, #"x"); vector a end = "-x-"`
 
 <details><summary>Tests (18)</summary>
 
@@ -280,6 +310,8 @@ val vector : array -> vector
 ```
 
 `vector arr` is an immutable vector of the elements of `arr`, which is a copy.
+
+**Example** `vector (fromList [#"h", #"i"]) = "hi"`
 
 <details><summary>Tests (29)</summary>
 
@@ -331,11 +363,18 @@ val copy : {src : array, dst : array, di : int} -> unit
 
 `copy {src, dst, di}` copies `src` into `dst` from position `di` on.
 
-The two may be one array and may overlap: every element arrives as it
-was before the copy began.
+`src` and `dst` may be the same array, and then `di` must be 0: an array
+cannot hold itself at any other position, so any other `di` raises
+[`Subscript`](../sig/GENERAL.md#exn-subscript), and at 0 the copy changes nothing. Two stretches of one array
+that overlap are what [`MONO_ARRAY_SLICE.copy`](../sig/MONO_ARRAY_SLICE.md#val-copy) is for.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if it does not fit, and then nothing has been
-copied.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
+then nothing has been copied.
+
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
+for `0 <= i < length src`, when `src` and `dst` are not the same array
+
+**Example** `let val b = array (4, #".") in copy {src = fromList [#"a", #"b", #"c"], dst = b, di = 1}; vector b end = ".abc"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -343,11 +382,11 @@ copied.
 | <a name="fld-copy.dst"></a>`dst` | `array` |  |
 | <a name="fld-copy.di"></a>`di` | `int` |  |
 
-<details><summary>Tests (28)</summary>
+<details><summary>Tests (29)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `string`
 
-For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `middle` &middot; `to-the-end` &middot; `empty-at-length` &middot; `onto-itself` &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-changes-nothing`
+For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `middle` &middot; `to-the-end` &middot; `empty-at-length` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-changes-nothing`
 
 In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `start` &middot; `middle` &middot; `end` &middot; `whole` &middot; `src-unchanged` &middot; `empty-src` &middot; `empty-src-at-length` &middot; `empty-to-empty` &middot; `copies-elements-not-the-array` &middot; `Subscript-too-far` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-src-longer` (raises Subscript) &middot; `Subscript-to-empty` (raises Subscript) &middot; `Subscript-empty-src-beyond` (raises Subscript) &middot; `Subscript-empty-src-negative` (raises Subscript) &middot; `Subscript-changes-nothing` &middot; `onto-itself` &middot; `Subscript-onto-itself-shifted` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long`
 
@@ -361,8 +400,10 @@ val copyVec : {src : vector, dst : array, di : int} -> unit
 
 `copyVec {src, dst, di}` copies the vector `src` into `dst` from position `di` on.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if it does not fit, and then nothing has been
-copied.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di` plus the length of `src` is more
+than `length dst`, and then nothing has been copied.
+
+**Example** `let val a = array (4, #".") in copyVec {src = "ab", dst = a, di = 2}; vector a end = "..ab"`
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -390,6 +431,8 @@ val appi : (int * elem -> unit) -> array -> unit
 
 `appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
 
+**Example** `let val r = ref [] in appi (fn (i, c) => r := (i, c) :: !r) (fromList [#"a", #"b"]); !r end = [(1, #"b"), (0, #"a")]`
+
 <details><summary>Tests (4)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -406,6 +449,8 @@ val app : (elem -> unit) -> array -> unit
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
 
+**Law** `app f x = appi (fn (_, e) => f e) x`
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -420,7 +465,9 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val modifyi : (int * elem -> elem) -> array -> unit
 ```
 
-`modifyi f x` replaces the element at each position by `f` of the index and that element, in place.
+`modifyi f x` replaces the element at each position by `f` of the index and that element, in place, from 0 up.
+
+**Example** `let val a = fromList [#"a", #"b", #"c"] in modifyi (fn (i, c) => if i = 1 then Char.toUpper c else c) a; vector a end = "aBc"`
 
 <details><summary>Tests (9)</summary>
 
@@ -439,6 +486,10 @@ val modify : (elem -> elem) -> array -> unit
 ```
 
 `modify f x` replaces every element by `f` of it, in place, from 0 up.
+
+**Law** `modify f x = modifyi (fn (_, e) => f e) x`
+
+**Example** `let val a = fromList [#"a", #"b"] in modify Char.toUpper a; vector a end = "AB"`
 
 <details><summary>Tests (28)</summary>
 
@@ -490,6 +541,8 @@ val foldli : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `foldli f init x` combines the elements from the left, giving `f` the index as well.
 
+**Example** `foldli (fn (i, c, acc) => (i, c) :: acc) [] (fromList [#"a", #"b"]) = [(1, #"b"), (0, #"a")]`
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
@@ -506,6 +559,8 @@ val foldri : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `foldri f init x` combines the elements from the right, giving `f` the index as well.
 
+**Example** `foldri (fn (i, c, acc) => (i, c) :: acc) [] (fromList [#"a", #"b"]) = [(0, #"a"), (1, #"b")]`
+
 <details><summary>Tests (5)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
@@ -521,6 +576,10 @@ val foldl : (elem * 'b -> 'b) -> 'b -> array -> 'b
 ```
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
+
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldl (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"c", #"b", #"a"]`
 
 <details><summary>Tests (8)</summary>
 
@@ -540,6 +599,10 @@ val foldr : (elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldr (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"a", #"b", #"c"]`
+
 <details><summary>Tests (7)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `implode`
@@ -558,6 +621,11 @@ val findi : (int * elem -> bool) -> array -> (int * elem) option
 
 `findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
 
+`p` is applied from 0 up, and not after the first position that
+satisfies it.
+
+**Example** `findi (fn (i, c) => i > 0 andalso c = #"a") (fromList [#"a", #"b", #"a"]) = SOME (2, #"a")`
+
 <details><summary>Tests (11)</summary>
 
 For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first-true` &middot; `none` &middot; `stops`
@@ -574,11 +642,15 @@ val find : (elem -> bool) -> array -> elem option
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
-<details><summary>Tests (9)</summary>
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+
+**Example** `find Char.isDigit (fromList [#"a", #"1", #"2"]) = SOME #"1"`
+
+<details><summary>Tests (10)</summary>
 
 For `CharArray`, in [tests/basis/chararray.sml](../../../../tests/basis/chararray.sml): `digit`
 
-For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `false` &middot; `none`
+For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `false` &middot; `none` &middot; `stops`
 
 In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `first-match` &middot; `last-element` &middot; `none` &middot; `empty` &middot; `stops` &middot; `model*`
 
@@ -590,7 +662,11 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val exists : (elem -> bool) -> array -> bool
 ```
 
-`exists p x` is `true` when some element satisfies `p`.
+`exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
+
+**Law** `exists p x = isSome (find p x)`
+
+**Example** `exists Char.isDigit (fromList [#"a", #"b"]) = false`
 
 <details><summary>Tests (9)</summary>
 
@@ -606,11 +682,15 @@ In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn
 val all : (elem -> bool) -> array -> bool
 ```
 
-`all p x` is `true` when every element satisfies `p`.
+`all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-<details><summary>Tests (11)</summary>
+**Law** `all p x = not (exists (not o p) x)`
 
-For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `empty`
+**Example** `all Char.isLower (fromList [#"a", #"b"]) = true`
+
+<details><summary>Tests (12)</summary>
+
+For `BoolArray`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `false` &middot; `empty` &middot; `stops`
 
 In [tests/basis/fn/mono\_array\_fn.sml](../../../../tests/basis/fn/mono_array_fn.sml), applied to `Word8Array`, `CharArray`, `IntArray`, `Int8Array`, `Int16Array`, `Int32Array`, `LargeIntArray`, `WordArray`, `Word16Array`, `Word32Array`, `RealArray`, `Int64Array`, `LargeWordArray`, `Word64Array`, `LargeRealArray`, `Real64Array`, `Real32Array`, `WideCharArray`: `true` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*` &middot; `long`
 
@@ -623,6 +703,13 @@ val collate : (elem * elem -> order) -> array * array -> order
 ```
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+This compares what the arrays hold, where `=` compares which array it
+is.
+
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+
+**Example** `collate Char.compare (fromList [#"a", #"b"], fromList [#"a", #"c"]) = LESS`
 
 <details><summary>Tests (21)</summary>
 

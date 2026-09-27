@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 4 |
 | Documentation | 14 of 14 entries documented |
-| Tests | 64 checks of 6 entries |
+| Tests | 66 checks of 6 entries |
 | Source | [lib/basis/primio\_sig.sml](../../../../lib/basis/primio_sig.sml) |
 
 ## Synopsis
@@ -168,6 +168,10 @@ val compare : pos * pos -> order
 
 `compare (p, q)` orders two positions: earlier in the stream is less.
 
+**Law** `(compare (p, q) = EQUAL) = (p = q)`
+
+**Example** `compare (0, 1) = LESS`
+
 <details><summary>Other implementations (1)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
@@ -216,6 +220,11 @@ there without waiting, or `NONE` when that cannot be told. `getPos`,
 `setPos`, `endPos` and `verifyPos` are the positions; `close` releases
 the source; `ioDesc` is the descriptor the operating system knows it by,
 for [`OS.IO.poll`](../sig/OS_IO.md#val-poll).
+
+> **Reading** `PrimIO.reader/Size-for-a-negative-count`. The specification
+> recommends that a read of a negative number of elements raise [`Size`](../sig/GENERAL.md#exn-size),
+> and does not require it. The readers of this library raise it; MLton's
+> do not, and a reader a program makes need not.
 
 > **Reading** `PRIM_IO.reader/after-close`. Once `close` has been called,
 > every function of the reader but `close` and `getPos` raises [`IO.Io`](../sig/IO.md#exn-io)
@@ -311,17 +320,27 @@ val openVector : vector -> reader
 `openVector v` is a reader that delivers the elements of `v` and is then at the end of its stream.
 
 The data are there already, so the reader has every read operation and
-waits for nothing; its `name` is `"<vector>"`.
+waits for nothing.
+
+**Example** `(case openVector (Byte.stringToBytes "abc") of RD {readVec = SOME read, ...} => Byte.bytesToString (read 2) | _ => "") = "ab"`
+
+**Example** `(case openVector (Byte.stringToBytes "") of RD {name, ...} => name) = "<vector>"`
 
 > **Reading** `PrimIO.openVector/readVecNB-is-there`. Nothing has to be
 > waited for, so `readVecNB` is present and always `SOME`, with `SOME` of
 > the empty vector once the vector is spent.
 
-<details><summary>Tests (14)</summary>
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+
+</details>
+
+<details><summary>Tests (15)</summary>
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-a-wide-string`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `content` &middot; `readVec-pieces` &middot; `readVec-zero` &middot; `empty` &middot; `readArr` &middot; `readArr-empty-slice` &middot; `chunkSize-positive` &middot; `avail` &middot; `readVecNB` &middot; `readVec-after-close` (raises) &middot; `readArr-after-close` (raises) &middot; `avail-after-close` (raises) &middot; `close-twice`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `content` &middot; `readVec-pieces` &middot; `readVec-zero` &middot; `empty` &middot; `readVec-Size-negative` (raises) &middot; `readArr` &middot; `readArr-empty-slice` &middot; `chunkSize-positive` &middot; `avail` &middot; `readVecNB` &middot; `readVec-after-close` (raises) &middot; `readArr-after-close` (raises) &middot; `avail-after-close` (raises) &middot; `close-twice`
 
 </details>
 
@@ -338,11 +357,19 @@ val nullRd : unit -> reader
 > nothing, it has no positions, and once closed it behaves as any other
 > closed reader.
 
-<details><summary>Tests (8)</summary>
+**Example** `(case nullRd () of RD {readVec = SOME read, ...} => Word8Vector.length (read 10) | _ => ~1) = 0`
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+
+</details>
+
+<details><summary>Tests (9)</summary>
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `reads-nothing`
 
-In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `always-at-end-of-stream` &middot; `readArr` &middot; `readVecNB` &middot; `chunkSize-positive` &middot; `readVec-after-close` (raises) &middot; `close-twice` &middot; `independent`
+In [tests/basis/fn/prim\_io\_fn.sml](../../../../tests/basis/fn/prim_io_fn.sml), applied to `TextPrimIO`, `BinPrimIO`: `always-at-end-of-stream` &middot; `readArr` &middot; `readVec-Size-negative` (raises) &middot; `readVecNB` &middot; `chunkSize-positive` &middot; `readVec-after-close` (raises) &middot; `close-twice` &middot; `independent`
 
 </details>
 
@@ -357,6 +384,8 @@ val nullWr : unit -> writer
 > **Reading** `PrimIO.nullWr/is-a-sink`. It "serves as a sink": every write
 > reports that it wrote all it was given, and once closed it behaves as
 > any other closed writer.
+
+**Example** `(case nullWr () of WR {writeVec = SOME write, ...} => write (Word8VectorSlice.full (Byte.stringToBytes "abc")) | _ => ~1) = 3`
 
 <details><summary>Tests (6)</summary>
 
@@ -385,6 +414,8 @@ that are not reads are unchanged.
 > `canInput` or an `NB` operation to build it from, and no blocking read
 > without `block` or a blocking operation.
 
+**Example** `(case augmentReader (RD {name = "one", chunkSize = 1, readVec = SOME (fn _ => Byte.stringToBytes "x"), readArr = NONE, readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE, avail = fn () => NONE, getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE, close = fn () => (), ioDesc = NONE}) of RD {readArr, readVecNB, ...} => (isSome readArr, isSome readVecNB)) = (true, false)`
+
 <details><summary>Tests (16)</summary>
 
 For `WideTextPrimIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `adds-what-the-reader-lacks`
@@ -405,6 +436,8 @@ val augmentWriter : writer -> writer
 > as for a reader, turned around: every row of it is built, an operation
 > the writer has is kept as it is, and what cannot be reached stays
 > `NONE`.
+
+**Example** `(case augmentWriter (WR {name = "one", chunkSize = 1, writeVec = SOME Word8VectorSlice.length, writeArr = NONE, writeVecNB = NONE, writeArrNB = NONE, block = NONE, canOutput = NONE, getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE, close = fn () => (), ioDesc = NONE}) of WR {writeArr, writeVecNB, ...} => (isSome writeArr, isSome writeVecNB)) = (true, false)`
 
 <details><summary>Tests (14)</summary>
 

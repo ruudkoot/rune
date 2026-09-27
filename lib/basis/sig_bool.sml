@@ -1,9 +1,8 @@
 (* Booleans: negation, and conversion to and from text.
 
    The conditional `if`, and `andalso` and `orelse`, which evaluate their
-   second
-   operand only when they must, are part of the language; `not` is also in the
-   top-level environment.
+   second operand only when they must, are part of the language; `not` is
+   also in the top-level environment.
 
    Area: Text and characters
 
@@ -19,10 +18,16 @@ sig
      datatype instead; the meaning is the same. *)
   datatype bool = datatype bool
 
-  (* `not b` is the negation of `b`. *)
+  (* `not b` is the negation of `b`.
+
+     Law: `not (not b) = b`
+
+     Example: `not true = false` *)
   val not : bool -> bool
 
   (* `toString b` is `"true"` or `"false"`.
+
+     Law: `fromString (toString b) = SOME b`
 
      Example: `toString false = "false"` *)
   val toString : bool -> string
@@ -39,7 +44,10 @@ sig
 
      Reading: `Bool.scan/wsx-*`. "Initial whitespace" is what `Char.isSpace`
      accepts, as for `StringCvt.skipWS`: the space, and the characters `\t`,
-     `\n`, `\v`, `\f` and `\r`. *)
+     `\n`, `\v`, `\f` and `\r`.
+
+     Example: `Option.map (fn (b, rest) => (b, Substring.string rest)) (scan
+     Substring.getc (Substring.full " truer")) = SOME (true, "r")` *)
   val scan : (char, 'a) StringCvt.reader -> (bool, 'a) StringCvt.reader
 
   (* `fromString s` is the boolean that `s` begins with, read as `scan` reads
@@ -52,7 +60,9 @@ sig
      95 and 127) are not white space: a string that begins with one of them
      gives `NONE`.
 
-     Example: `fromString " TRUE" = SOME true` for the case does not matter and
-     blanks are skipped. *)
+     The case of the letters does not matter, and blanks before the word are
+     skipped:
+
+     Example: `fromString " TRUE" = SOME true` *)
   val fromString : string -> bool option
 end

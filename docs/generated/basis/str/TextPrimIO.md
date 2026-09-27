@@ -7,7 +7,7 @@
 | Signature | [`PRIM_IO`](../sig/PRIM_IO.md) |
 | Status | required |
 | Members | 14 |
-| Tests | 56 checks |
+| Tests | 58 checks |
 | Source | [lib/basis/textprimio.sml](../../../../lib/basis/textprimio.sml) |
 
 ## Synopsis
@@ -38,6 +38,12 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
 | val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `string -> reader` |
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
+
+</details>
 
 ---
 

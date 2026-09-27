@@ -7,7 +7,7 @@
 | Signature | [`PRIM_IO`](../sig/PRIM_IO.md) |
 | Status | required |
 | Members | 14 |
-| Tests | 59 checks |
+| Tests | 61 checks |
 | Source | [lib/basis/binprimio.sml](../../../../lib/basis/binprimio.sml) |
 
 ## Synopsis
@@ -39,9 +39,10 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
 | val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `Word8Vector.vector -> reader` |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
+- **MLton** &mdash; another reading of the specification: a read of a negative number raises no Size (nullRd) or another exception (openVector); the page only recommends Size, and the test takes it, as Rune and Poly/ML do
 
 </details>
 

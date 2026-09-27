@@ -154,7 +154,7 @@ sig
      Two are equal when they are the same array, whatever they hold. *)
   eqtype array
 
-  (* The type of the elements: `Word8.word` for `Word8Vector`, `char` for `CharVector`. *)
+  (* The type of the elements: `Word8.word` for `Word8Array`, `char` for `CharArray`. *)
   type elem
 
   (* The type of these vectors. *)
@@ -165,92 +165,193 @@ sig
      Implementation: `MONO_ARRAY.maxLen/value`. `Array.maxLen`, 100,000,000,
      for every instance, those of characters and of bytes too.
 
-     Pinned by: `*Array.maxLen/covers-created-arrays` *)
+     Pinned by: `*Array.maxLen/covers-created-arrays`
+
+     Example: `maxLen = 100000000` *)
   val maxLen : int
 
   (* `array (n, x)` is a new array of `n` elements, each of them `x`.
 
-     Raises: `Size` if `n < 0` or `n > maxLen`. *)
+     Raises: `Size` if `n < 0` or `n > maxLen`.
+
+     Law: `sub (array (n, x), i) = x` for `0 <= i < n`
+
+     Example: `vector (array (3, #"x")) = "xxx"` *)
   val array : int * elem -> array
 
-  (* `fromList l` is the sequence of the elements of `l`, in order.
+  (* `fromList l` is a new array of the elements of `l`, in order.
 
-     Raises: `Size` if `l` is longer than `maxLen`. *)
+     Raises: `Size` if `l` is longer than `maxLen`.
+
+     Law: `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+
+     Example: `sub (fromList [#"a", #"b"], 1) = #"b"` *)
   val fromList : elem list -> array
 
-  (* `tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
+  (* `tabulate (n, f)` is a new array of `f 0`, ..., `f (n - 1)`, applied in order.
 
-     Raises: `Size` if `n < 0` or `n > maxLen`, before `f` is applied. *)
+     Raises: `Size` if `n < 0` or `n > maxLen`.
+
+     Reading: `MONO_ARRAY.tabulate/Size-before-f`. The specification does not
+     say whether the length is checked before `f` is applied. It is, as for
+     `Array.tabulate`: a length out of range raises `Size` without applying
+     `f` at all.
+
+     Pinned by: `*Array.tabulate/Size-before-f`
+
+     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
+     effects
+
+     Example: `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"` *)
   val tabulate : int * (int -> elem) -> array
 
-  (* `length x` is the number of elements. *)
+  (* `length x` is the number of elements.
+
+     Law: `length (fromList l) = List.length l`
+
+     Example: `length (fromList [#"a", #"b"]) = 2` *)
   val length : array -> int
 
   (* `sub (x, i)` is the element at position `i`, counting from 0.
 
-     Raises: `Subscript` if `i` is outside. *)
+     Raises: `Subscript` if `i < 0` or `i >= length x`.
+
+     Example: `sub (fromList [#"a", #"b"], 0) = #"a"` *)
   val sub : array * int -> elem
 
   (* `update (arr, i, x)` puts `x` at position `i` of `arr`.
 
-     Raises: `Subscript` if `i` is outside `arr`. *)
+     Raises: `Subscript` if `i < 0` or `i >= length arr`.
+
+     Law: `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
+
+     Example: `let val a = array (3, #"-") in update (a, 1, #"x"); vector a end
+     = "-x-"` *)
   val update : array * int * elem -> unit
 
-  (* `vector arr` is an immutable vector of the elements of `arr`, which is a copy. *)
+  (* `vector arr` is an immutable vector of the elements of `arr`, which is a copy.
+
+     Example: `vector (fromList [#"h", #"i"]) = "hi"` *)
   val vector : array -> vector
 
   (* `copy {src, dst, di}` copies `src` into `dst` from position `di` on.
 
-     The two may be one array and may overlap: every element arrives as it
-     was before the copy began.
+     `src` and `dst` may be the same array, and then `di` must be 0: an array
+     cannot hold itself at any other position, so any other `di` raises
+     `Subscript`, and at 0 the copy changes nothing. Two stretches of one array
+     that overlap are what `MONO_ARRAY_SLICE.copy` is for.
 
-     Raises: `Subscript` if it does not fit, and then nothing has been
-     copied. *)
+     Raises: `Subscript` if `di < 0` or `di + length src > length dst`, and
+     then nothing has been copied.
+
+     Law: `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
+     for `0 <= i < length src`, when `src` and `dst` are not the same array
+
+     Example: `let val b = array (4, #".") in copy {src = fromList [#"a", #"b",
+     #"c"], dst = b, di = 1}; vector b end = ".abc"` *)
   val copy : {src : array, dst : array, di : int} -> unit
 
   (* `copyVec {src, dst, di}` copies the vector `src` into `dst` from position `di` on.
 
-     Raises: `Subscript` if it does not fit, and then nothing has been
-     copied. *)
+     Raises: `Subscript` if `di < 0` or `di` plus the length of `src` is more
+     than `length dst`, and then nothing has been copied.
+
+     Example: `let val a = array (4, #".") in copyVec {src = "ab", dst = a, di =
+     2}; vector a end = "..ab"` *)
   val copyVec : {src : vector, dst : array, di : int} -> unit
 
-  (* `appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect. *)
+  (* `appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
+
+     Example: `let val r = ref [] in appi (fn (i, c) => r := (i, c) :: !r)
+     (fromList [#"a", #"b"]); !r end = [(1, #"b"), (0, #"a")]` *)
   val appi : (int * elem -> unit) -> array -> unit
 
-  (* `app f x` applies `f` to every element, from 0 up, for its effect. *)
+  (* `app f x` applies `f` to every element, from 0 up, for its effect.
+
+     Law: `app f x = appi (fn (_, e) => f e) x` *)
   val app : (elem -> unit) -> array -> unit
 
-  (* `modifyi f x` replaces the element at each position by `f` of the index and that element, in place. *)
+  (* `modifyi f x` replaces the element at each position by `f` of the index and that element, in place, from 0 up.
+
+     Example: `let val a = fromList [#"a", #"b", #"c"] in modifyi (fn (i, c) =>
+     if i = 1 then Char.toUpper c else c) a; vector a end = "aBc"` *)
   val modifyi : (int * elem -> elem) -> array -> unit
 
-  (* `modify f x` replaces every element by `f` of it, in place, from 0 up. *)
+  (* `modify f x` replaces every element by `f` of it, in place, from 0 up.
+
+     Law: `modify f x = modifyi (fn (_, e) => f e) x`
+
+     Example: `let val a = fromList [#"a", #"b"] in modify Char.toUpper a;
+     vector a end = "AB"` *)
   val modify : (elem -> elem) -> array -> unit
 
-  (* `foldli f init x` combines the elements from the left, giving `f` the index as well. *)
+  (* `foldli f init x` combines the elements from the left, giving `f` the index as well.
+
+     Example: `foldli (fn (i, c, acc) => (i, c) :: acc) [] (fromList [#"a",
+     #"b"]) = [(1, #"b"), (0, #"a")]` *)
   val foldli : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
-  (* `foldri f init x` combines the elements from the right, giving `f` the index as well. *)
+  (* `foldri f init x` combines the elements from the right, giving `f` the index as well.
+
+     Example: `foldri (fn (i, c, acc) => (i, c) :: acc) [] (fromList [#"a",
+     #"b"]) = [(0, #"a"), (1, #"b")]` *)
   val foldri : (int * elem * 'b -> 'b) -> 'b -> array -> 'b
 
-  (* `foldl f init x` combines the elements from the left, as `List.foldl` does. *)
+  (* `foldl f init x` combines the elements from the left, as `List.foldl` does.
+
+     Law: `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+
+     Example: `foldl (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"c", #"b",
+     #"a"]` *)
   val foldl : (elem * 'b -> 'b) -> 'b -> array -> 'b
 
-  (* `foldr f init x` combines the elements from the right, as `List.foldr` does. *)
+  (* `foldr f init x` combines the elements from the right, as `List.foldr` does.
+
+     Law: `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+
+     Example: `foldr (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"a", #"b",
+     #"c"]` *)
   val foldr : (elem * 'b -> 'b) -> 'b -> array -> 'b
 
-  (* `findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`. *)
+  (* `findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
+
+     `p` is applied from 0 up, and not after the first position that
+     satisfies it.
+
+     Example: `findi (fn (i, c) => i > 0 andalso c = #"a") (fromList [#"a",
+     #"b", #"a"]) = SOME (2, #"a")` *)
   val findi : (int * elem -> bool) -> array -> (int * elem) option
 
-  (* `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`. *)
+  (* `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
+
+     Law: `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+
+     Example: `find Char.isDigit (fromList [#"a", #"1", #"2"]) = SOME #"1"` *)
   val find : (elem -> bool) -> array -> elem option
 
-  (* `exists p x` is `true` when some element satisfies `p`. *)
+  (* `exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
+
+     Law: `exists p x = isSome (find p x)`
+
+     Example: `exists Char.isDigit (fromList [#"a", #"b"]) = false` *)
   val exists : (elem -> bool) -> array -> bool
 
-  (* `all p x` is `true` when every element satisfies `p`. *)
+  (* `all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+     Law: `all p x = not (exists (not o p) x)`
+
+     Example: `all Char.isLower (fromList [#"a", #"b"]) = true` *)
   val all : (elem -> bool) -> array -> bool
 
-  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`. *)
+  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+     This compares what the arrays hold, where `=` compares which array it
+     is.
+
+     Law: `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+
+     Example: `collate Char.compare (fromList [#"a", #"b"], fromList [#"a",
+     #"c"]) = LESS` *)
   val collate : (elem * elem -> order) -> array * array -> order
 end
 

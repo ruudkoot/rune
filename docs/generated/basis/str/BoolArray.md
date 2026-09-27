@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY`](../sig/MONO_ARRAY.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 62 checks |
+| Tests | 67 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure BoolArray :> MONO_ARRAY where type vector = BoolVector.vector where type elem = bool
 ```
+
+BoolArray: mutable arrays of booleans, a type of their own with identity
+equality, whose vectors are those of [`BoolVector`](../str/BoolVector.md).
 
 ## Members
 

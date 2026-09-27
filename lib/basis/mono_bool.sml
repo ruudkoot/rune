@@ -12,7 +12,10 @@ structure BoolVector :> MONO_VECTOR where type elem = bool = RuneMonoVectorFn (t
 
    Status: optional *)
 structure BoolVectorSlice :> MONO_VECTOR_SLICE where type vector = BoolVector.vector where type elem = bool = RuneMonoVectorSliceFn (structure V = BoolVector)
-(* Implements: MONO_ARRAY where type vector = BoolVector.vector where type
+(* BoolArray: mutable arrays of booleans, a type of their own with identity
+   equality, whose vectors are those of `BoolVector`.
+
+   Implements: MONO_ARRAY where type vector = BoolVector.vector where type
    elem = bool
 
    Status: optional *)
@@ -23,7 +26,10 @@ structure BoolArray :> MONO_ARRAY where type vector = BoolVector.vector where ty
 
    Status: optional *)
 structure BoolArraySlice :> MONO_ARRAY_SLICE where type vector = BoolVector.vector where type vector_slice = BoolVectorSlice.slice where type array = BoolArray.array where type elem = bool = RuneMonoArraySliceFn (structure V = BoolVector structure A = BoolArray structure VS = BoolVectorSlice)
-(* Implements: MONO_ARRAY2 where type vector = BoolVector.vector where type
+(* BoolArray2: two-dimensional arrays of booleans, whose rows and columns
+   are `BoolVector` vectors.
+
+   Implements: MONO_ARRAY2 where type vector = BoolVector.vector where type
    elem = bool
 
    Status: optional *)

@@ -16,7 +16,8 @@
 structure Bool : BOOL
 ```
 
-Bool
+Bool: the truth values, their negation, and their conversion to and from
+text. Its type is the top-level [`bool`](../sig/BOOL.md#type-bool).
 
 ## Members
 
