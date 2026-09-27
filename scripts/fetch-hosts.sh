@@ -21,8 +21,11 @@
 #    clone of the release's tag where the archive cannot be downloaded).
 #  * MLKit: the binary release from github.com/melsman/mlkit on Linux x86-64
 #    (built by MLKit itself, needing no GMP), checked against its SHA-256;
-#    elsewhere built from a clone of the release's tag with the MLton above.
-#    Its library is found through SML_LIB, which the Makefile and the Basis
+#    elsewhere, or with MLKIT_FROM_SOURCE=1, built from a clone of the
+#    release's tag with the MLton above. That takes more memory than a
+#    machine of 16 GB has: there MLton was killed at 14 GB, and ran out with
+#    its heap held to 11 GB (2026-09-27), so this way is untested. Its
+#    library is found through SML_LIB, which the Makefile and the Basis
 #    matrix set: nothing is written to ~/.mlkit.
 # No build here starts from an SML compiler of the machine, so none needs a
 # second stage to shed one: MLton and MLKit come as binaries (MLKit from
@@ -151,9 +154,10 @@ install_polyml() {
   activate polyml "$v"
 }
 
-# MLKit: the binary release where there is one, else its tag built with the
-# MLton of the prefix, which then has to be there first (below).
-mlkit_binary() { [ "$(uname -s)-$(uname -m)" = Linux-x86_64 ]; }
+# MLKit: the binary release where there is one, else (or with
+# MLKIT_FROM_SOURCE=1) its tag built with the MLton of the prefix, which then
+# has to be there first (below).
+mlkit_binary() { [ "${MLKIT_FROM_SOURCE:-0}" != 1 ] && [ "$(uname -s)-$(uname -m)" = Linux-x86_64 ]; }
 install_mlkit() {
   v=$MLKIT_VERSION
   if installed mlkit "$v"; then echo "mlkit $v is already installed"; return; fi

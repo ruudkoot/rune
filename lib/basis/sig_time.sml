@@ -178,6 +178,12 @@ sig
 
      Raises: `Time` if the number does not fit.
 
-     Example: `fromString " ~.25x" = SOME (fromMilliseconds ~250)` *)
+     Example: `fromString " ~.25x" = SOME (fromMilliseconds ~250)`
+
+     Reading: `Time.fromString/nanoseconds-lost-or-kept`. As `scan` reads
+     it, the digits of the fraction after the sixth are dropped rather than
+     rounded: `"0.000000999"` is no microsecond.
+
+     Pinned by: `Time.fromString/nanoseconds-lost-or-kept` *)
   val fromString : string -> time option
 end

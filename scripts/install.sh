@@ -59,9 +59,11 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 # ------------------------------------------------------------------ uninstall
 if [ "$uninstall" = 1 ]; then
   rm -f "$bindir/rune" "$bindir/runevm" \
-        "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml" \
+        "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml" "$bindir/rune-mlkit" \
         "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj" "$bindir/runedoc-polyml" \
-        "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj" "$bindir/runeopt-polyml"
+        "$bindir/runedoc-mlkit" \
+        "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj" "$bindir/runeopt-polyml" \
+        "$bindir/runeopt-mlkit"
   rm -rf "$libdir"
   rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"

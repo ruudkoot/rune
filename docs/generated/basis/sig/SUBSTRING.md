@@ -845,6 +845,16 @@ same base string, so nothing is copied.
 
 **Example** `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
 
+> **Reading** `Substring.tokens/order`. The specification says the tokens
+> are derived "from left to right", and not how often `p` is asked: `p`
+> is applied once to each character, from left to right.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
+
+</details>
+
 <details><summary>Tests (16)</summary>
 
 For `Substring`, in [tests/basis/substring.sml](../../../../tests/basis/substring.sml): `page-example` &middot; `page-example-strings` &middot; `empty` &middot; `empty-string` &middot; `no-delimiter` &middot; `delimiters-only` &middot; `trailing-delimiter` &middot; `inside-a-string` &middot; `inside-a-string-with-delimiters` &middot; `every-character-delimits` &middot; `whitespace` &middot; `order` &middot; `long` &middot; `law-*` &middot; `law-other-delimiters-*`

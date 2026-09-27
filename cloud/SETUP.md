@@ -160,9 +160,10 @@ The host SML systems take 162 s to build on a fresh machine (`make hosts`
 builds the five at once; one after another they took about 275 s: MLton 1,
 SML/NJ 49 and 53, Poly/ML 157, MLKit 15, whose binary release is 73 MB to
 fetch). The branch `cloud-cache` holds them
-prebuilt, 66 MB in `cloud/cache/`, and the hook restores them from it in
-about 7 s where they are missing (`scripts/cloud-cache.sh restore`): a
-hook without the hosts took 16 s in all. The cache carries a key of the
+prebuilt, 114 MB in `cloud/cache/` (66 MB before MLKit), and the hook
+restores them from it in about 12 s where they are missing
+(`scripts/cloud-cache.sh restore`): a hook without the hosts took 16 s in
+all before MLKit joined them. The cache carries a key of the
 host versions, the architecture, the release of Ubuntu, the version of
 glibc and the directory `~/.local/rune-hosts`, since SML/NJ and Poly/ML
 keep the directory they were installed in; it is used only where the key

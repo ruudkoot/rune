@@ -44,7 +44,8 @@ function host(config,   kind, rest, name, version, at, h, bits) {
   else if (name == "smlnj*") h = "SML/NJ"
   else if (name == "smlnj") { h = "SML/NJ"; bits = " (64-bit)" }
   else if (name == "smlnj32") { h = "SML/NJ"; bits = " (32-bit)" }
-  else if (name == "*") h = "MLton, SML/NJ, Poly/ML"
+  else if (name == "mlkit") h = "MLKit"
+  else if (name == "*") h = "MLton, SML/NJ, Poly/ML, MLKit"
   else return "?"
   if (version != "*") h = h " " version
   return h bits
@@ -56,7 +57,7 @@ BEGIN {
   print "# `runedoc --annotations` (docs/doc-comments.md):"
   print "#   label-glob | whom it is about | text"
   print "@title Other implementations"
-  print "@intro what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole."
+  print "@intro what the test suite of the library finds MLton, SML/NJ, Poly/ML and MLKit to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole."
 }
 /^[ \t]*#/ || /^[ \t]*$/ { next }
 {

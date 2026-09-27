@@ -453,6 +453,16 @@ nothing behind, so this is how a line is split into words.
 
 **Law** `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
 
+> **Reading** `String.tokens/order`. The specification says the tokens are
+> "derived from s from left to right", and not how often `p` is asked:
+> `p` is applied once to each character, from left to right.
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 For `String`, in [tests/basis/string.sml](../../../../tests/basis/string.sml): `page-example` &middot; `empty-string` &middot; `no-delimiter` &middot; `one-delimiter-only` &middot; `delimiters-only` &middot; `trailing-delimiter` &middot; `leading-delimiter` &middot; `whitespace` &middot; `several-delimiters` &middot; `every-character-delimits` &middot; `nothing-delimits` &middot; `order` &middot; `law-*`

@@ -30,8 +30,8 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
   MLton 20241230 (the binary release), SML/NJ 110.99.9 built for 64 bits and
   for 32 bits, Poly/ML 5.9.2 (built from source) and MLKit 4.7.23 (the
   binary release, whose SHA-256 is checked, on Linux x86-64; elsewhere built
-  from the release's tag with the MLton just installed, which takes several
-  GB of memory). An SML system the machine has on its `PATH` is never used,
+  from the release's tag with the MLton just installed, which needs more
+  memory than a machine of 16 GB has, so that this way is untested). An SML system the machine has on its `PATH` is never used,
   and none of these builds starts from one: MLton and MLKit are binaries,
   SML/NJ builds its C runtime and loads its compiler from the boot files of
   the same release, and Poly/ML bootstraps from its own portable image and

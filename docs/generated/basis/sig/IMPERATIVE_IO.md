@@ -239,7 +239,7 @@ val input1 : instream -> elem option
 <details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
-- **MLton** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+- **MLton, MLKit** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
 - **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
 
 </details>
@@ -270,10 +270,11 @@ long.
 > number of elements to be returned exceeds the greatest length of a
 > vector, as [`STREAM_IO`](../sig/STREAM_IO.md) puts it, not when `n` does.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
+- **MLKit** &mdash; another reading of the specification: inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE\_IO puts it; the test takes STREAM\_IO's reading, that Size is about the number of elements returned
 
 </details>
 
@@ -299,11 +300,12 @@ val inputAll : instream -> vector
 > real for a file: a read after one delivers what was appended since, so a
 > second [`inputAll`](#val-inputall) need not be empty.
 
-<details><summary>Other implementations (3)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **Poly/ML** &mdash; another reading of the specification: inputAll after an end-of-stream does not read what the file has gained; the test takes the reading of MLton and SML/NJ
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
+- **MLKit** &mdash; inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
 
 </details>
 
@@ -468,7 +470,7 @@ val output1 : outstream * elem -> unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton** &mdash; output1 on a closed stream raises Io with function "output"
+- **MLton, MLKit** &mdash; output1 on a closed stream raises Io with function "output"
 
 </details>
 
@@ -592,7 +594,7 @@ val getOutstream : outstream -> StreamIO.outstream
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 
@@ -612,7 +614,7 @@ val setOutstream : outstream * StreamIO.outstream -> unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 

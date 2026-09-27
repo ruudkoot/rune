@@ -343,6 +343,12 @@ val + : time * time -> time
 
 **Example** `fromSeconds 1 + fromMilliseconds 500 = fromMilliseconds 1500`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
+
+</details>
+
 <details><summary>Tests (8)</summary>
 
 For `Time`, in [tests/basis/time.sml](../../../../tests/basis/time.sml): `basic` &middot; `negative` &middot; `microseconds` &middot; `commutative` &middot; `adds-microseconds` &middot; `associative` &middot; `Time-when-not-representable` &middot; `Time-when-not-representable-negative`
@@ -361,6 +367,12 @@ val - : time * time -> time
 
 > **Implementation** `Time.-/exact-until-it-raises`. As for [`+`](#val-op-plus): exact until
 > a step raises [`Time`](#exn-time).
+
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
+
+</details>
 
 <details><summary>Tests (7)</summary>
 
@@ -539,9 +551,14 @@ val fromString : string -> time option
 
 **Example** `fromString " ~.25x" = SOME (fromMilliseconds ~250)`
 
-<details><summary>Other implementations (1)</summary>
+> **Reading** `Time.fromString/nanoseconds-lost-or-kept`. As [`scan`](#val-scan) reads
+> it, the digits of the fraction after the sixth are dropped rather than
+> rounded: `"0.000000999"` is no microsecond.
+
+<details><summary>Other implementations (2)</summary>
 
 - **MLton, SML/NJ** &mdash; fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+- **MLKit** &mdash; another reading of the specification: fromString rounds a fraction beyond the microsecond to the nearest microsecond (0.000000999 is 1 microsecond); the test takes the reading of MLton, SML/NJ and Poly/ML, that a fraction below the resolution is dropped or kept, as fromReal's "fractions of a microsecond may be lost"
 
 </details>
 

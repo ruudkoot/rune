@@ -4,7 +4,7 @@
 # `runedoc --annotations` (docs/doc-comments.md):
 #   label-glob | whom it is about | text
 @title Other implementations
-@intro what the test suite of the library finds MLton, SML/NJ and Poly/ML to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
+@intro what the test suite of the library finds MLton, SML/NJ, Poly/ML and MLKit to do differently, under the members whose checks show it. A remark that names a version is known of that version only; docs/basis-compat.md has the versions that were compared and the comparison as a whole.
 General.exnMessage/contains-exnName-* | SML/NJ | exnMessage of Bind, Match, Div, Domain, Overflow, Size and Subscript is a phrase ("divide by zero", "subscript out of bounds", ...) that does not contain exnName ex
 General.*/as-value | SML/NJ | compiler bug: `case General.Fail "v" of Fail s => s | _ => ...` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 Bool.*/case-* | MLton | Bool.scan and fromString are case-sensitive
@@ -16,13 +16,18 @@ Bool.*/mixed-* | SML/NJ | Bool.scan and fromString are case-sensitive and skip s
 *Vector.update/[Sm]* | SML/NJ | Vector.update, Word8Vector.update and CharVector.update return the vector unchanged instead of raising Subscript when the index is out of range
 Array.tabulate/Size-before-f | SML/NJ | Array.tabulate (n, f) with n < 0 applies f to 0 before raising Size
 Char.fromString/unescaped-double-quote | Poly/ML | another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
-*.fromCString/unescaped-double-quote* | MLton, SML/NJ, Poly/ML | converts an unescaped double quote, which the specification says fromCString does not accept
-Char.fromCString/hex-huge-does-not-fit | MLton, SML/NJ, Poly/ML | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
+*.fromCString/unescaped-double-quote* | MLton | converts an unescaped double quote, which the specification says fromCString does not accept
+*.fromCString/unescaped-double-quote* | SML/NJ | converts an unescaped double quote, which the specification says fromCString does not accept
+*.fromCString/unescaped-double-quote* | Poly/ML | converts an unescaped double quote, which the specification says fromCString does not accept
+Char.fromCString/hex-huge-does-not-fit | MLton | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
+Char.fromCString/hex-huge-does-not-fit | SML/NJ | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
+Char.fromCString/hex-huge-does-not-fit | Poly/ML | Overflow instead of NONE for a \x escape whose value exceeds Int.maxInt
 Char.scan/trailing-format-after-*escape | MLton | scan leaves an escaped formatting sequence in the stream after an escape sequence (not after a plain character)
 Char.scan/trailing-format* | SML/NJ | scan leaves an escaped formatting sequence that follows the character in the stream
 Char.scan/trailing-format* | Poly/ML | scan leaves an escaped formatting sequence that follows the character in the stream
 Char.fromCString/illegal-u | MLton | fromCString accepts the SML escape \uxxxx
 *.fromCString/control* | SML/NJ | fromCString does not accept \^c
+Char.fromString/unescaped-double-quote | MLKit | another reading of the specification: converts an unescaped double quote; the test takes the reading of MLton, SML/NJ and Rune (NONE)
 String.fromString/unescaped-double-quote* | MLton | another reading of the specification: stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
 String.fromCString/NONE-* | MLton | SOME "" instead of NONE when no character can be converted
 String.isSubstring/empty-empty | SML/NJ | isSubstring "" "" is false
@@ -30,6 +35,7 @@ String.isSubstring/law-39 | SML/NJ | isSubstring "" "" is false (the law draws t
 String.*/format-then-* | SML/NJ | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
 String.fromString/sample-6 | SML/NJ | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
 String.fromCString/stops-at-* | SML/NJ | fromCString returns NONE unless the whole string converts
+*[Ss]tring.tokens/order | MLKit | another reading of the specification: tokens applies the predicate twice to the first character of each token and to the delimiter that ends a token; the specification says only that the tokens are "derived from s from left to right", and the test takes the reading of MLton, SML/NJ and Poly/ML (once to each character, from left to right)
 *.scan/DEC-whitespace-[avfr]* | SML/NJ | scan does not skip vertical tab, form feed and carriage return
 *.fromString/whitespace-[avfr]* | SML/NJ | IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
 IntInf.fmt/*HEX* | SML/NJ | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
@@ -37,8 +43,15 @@ IntInf.pow/*1-to-~* | SML/NJ | IntInf.pow (i, j) is 0 for | i | = 1 and j < 0
 IntInf.~>>/* | Poly/ML 5.9.2 | IntInf.~>> of a negative number that does not fit a machine word rounds towards zero, not down (~2^100 ~>> 0w101 is 0, not ~1); 5.7.1 rounds down
 IntInf.scan/BIN-* | SML/NJ 110.99.9 | IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
 IntInf.scan/OCT-* | SML/NJ 110.99.9 | IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+IntInf.fromString/whitespace-[avfr]* | MLKit | scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
+IntInf.scan/DEC-whitespace-[avfr]* | MLKit | scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
+IntInf.fromString/stops-at-[mpt][ilu]* | MLKit | a sign after the digits is read as the sign of a further group of digits: "1~2" is 98 and "1+2" is 102, not 1 (IntInf.sml reads every group of digits with NumScan.scanInt, which takes a sign)
+IntInf.scan/DEC-stops-at-second-sign | MLKit | a sign after the digits is read as the sign of a further group of digits: "1~2" is SOME (98, ""), not SOME (1, "~2")
 Word.scan/HEX-0w-is-no-prefix | Poly/ML | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
 Word.fromString/0w-is-no-prefix | Poly/ML | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+Word*.fromLargeInt/minus-* | MLKit | fromLargeInt raises Overflow for a number below ~2^63 instead of taking its low-order wordSize bits: IntInfRep.toWord64 converts a negative number through a checked int64 (a positive one wraps modulo 2^64)
+Word*.scan/HEX-0w-is-no-prefix | MLKit | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+Word*.fromString/0w-is-no-prefix | MLKit | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 *IO.output1/Io-closed-stream-function | MLton | output1 on a closed stream raises Io with function "output"
 *IO.*/*-and-inputAll | MLton | after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 *IO.input1/file-grows-after-end-of-stream | MLton | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
@@ -101,6 +114,24 @@ Real.fromManExp/wide-exp-subnormal-to-large | Poly/ML 5.9.2 | fromManExp {man = 
 Real.fromString/exact-round-above-half | Poly/ML 5.9.2 | fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 Real.fromString/TO_* | SML/NJ | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
 Real.fromString/TO_* | Poly/ML 5.9.2 | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
+Real.+/zero-plus-negzero | MLKit | the optimiser compiles 0.0 + e and e + 0.0 as e, so 0.0 + ~0.0 is ~0.0, not 0.0 (with --no_optimiser it is 0.0)
+Real.nextAfter/equal-zeros-returns-r* | MLKit | another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
+Real.ceil/Overflow-above-maxInt | MLKit | ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
+Real.toInt/Overflow-TO_POSINF-above-maxInt | MLKit | toInt TO_POSINF is ceil, which gives minInt for 2^62 instead of raising Overflow
+Real.ceil/minInt* | MLKit | ceil of minInt = ~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
+Real.trunc/minInt* | MLKit | trunc of minInt = ~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
+Real.toInt/TO_[PZ]*-minInt | MLKit | toInt TO_POSINF and TO_ZERO are ceil and trunc, which raise Overflow for minInt = ~2^62
+Real.toLargeInt/TO_*INF-negative | MLKit | toLargeInt rounds the magnitude of a negative real in the mode given, so that TO_NEGINF and TO_POSINF are exchanged for it: toLargeInt TO_NEGINF ~2.5 is ~2
+Real.toLargeInt/law-agrees-with-toInt | MLKit | toLargeInt rounds the magnitude of a negative real in the mode given, so that TO_NEGINF and TO_POSINF disagree with floor and ceil on negative reals
+Real.fromLargeInt/sticky-bit | MLKit | fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
+Real.fmt/GEN-integral-* | MLKit | fmt (GEN _) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "~0.0"), and 9.6 at one digit is "1E1", not "10"
+Real.fmt/GEN-notation-* | MLKit | fmt (GEN _) is C's %g: it chooses the notation by the exponent, not the shorter one ("0.001", "10000000000.0", "1.235E5"), and adds ".0" to an integral value
+Real.toString/integral-* | MLKit | toString is C's %.12g with ".0" added to an integral result ("1.0")
+Real.toString/notation-* | MLKit | toString is C's %.12g: it chooses the notation by the exponent, not the shorter one ("10000000000.0", "0.000125")
+Real.toDecimal/negative-nan | MLKit | toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")
+Real.fromDecimal/*-nan | MLKit | fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
+Real.fromDecimal/TO_NEGINF-negative | MLKit | fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO_NEAREST: under TO_NEGINF {sign = true, digits = [1], exp = 0} is ~0.09999999999999999, not ~0.1
+Math.l*/nan | MLKit | ln and log10 of a NaN are ~inf: ln tests r == 0.0 first, with an == that holds when neither < nor > does
 StringCvt.pad*/width-minInt | SML/NJ | padLeft and padRight raise Overflow for the smallest int (they compute i - | s | ) instead of returning s
 StringCvt.skipWS/wsx-* | SML/NJ | skipWS skips space, tab and newline only, not carriage return, vertical tab and formfeed
 Substring.trim[lr]/Subscript-when-k-is-given | MLton | triml k and trimr k with k < 0 raise Subscript only when applied to a substring
@@ -117,6 +148,7 @@ Word8.~>>/*-by-all-ones | Poly/ML | Word8.~>> by a shift of all ones does not gi
 *ArraySlice.copy/Subscript-not-Overflow | Poly/ML | copy with di = Int.maxInt raises Overflow instead of Subscript
 *ArraySlice.copy*/Subscript-not-Overflow-sum | Poly/ML | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows
 *Slice.*slice/SOME-Subscript-not-Overflow-sum-* | Poly/ML | slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+*ArraySlice.copy*/Subscript-not-Overflow* | MLKit | copy and copyVec raise Overflow instead of Subscript when di + |src| overflows: they check di + |src| > |dst| (TableSlice.sml, ByteSlice.sml, wordtable-functors.sml)
 Array2.copy/overlap-[lr]* | MLton | copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 Array2.*/no-[rc]* | SML/NJ | Array2.array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0)
 Array2.row/Subscript-no-rows | SML/NJ | row (a, 0) of an array without rows is an empty vector instead of Subscript
@@ -128,6 +160,9 @@ Array2.*/no-rows* | Poly/ML | an array without rows has no number of columns: di
 Array2.*/*model-empty-* | Poly/ML | an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 Array2.array/Size-negative-columns-no-rows | Poly/ML | array (0, ~1, x) does not raise Size
 Array2.*/zero-length-not-equal | Poly/ML | two arrays without rows are equal
+Array2.*i/Subscript-* | MLKit | appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
+*Array2.copy/Subscript-*src-* | MLKit | copy, of Array2 and of the MONO_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
+Array2.copy/[!o]* | MLKit | copy checks the destination region against the dimensions of the source's base array instead of those of dst, and writes dst with the source's number of columns as its row length: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), the elements in the wrong places when the two arrays have different numbers of columns, and Overflow when dst_row + nrows or dst_col + ncols overflows
 OS.Path.splitBaseExt/*empty-arc | MLton | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
 OS.Path.joinBaseExt/inverts-splitBaseExt-random | MLton | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
 OS.Path.splitBaseExt/*empty-arc | SML/NJ | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
@@ -143,6 +178,9 @@ OS.Path.fromString/inverts-toString-random | Poly/ML | toString {isAbs = false, 
 OS.Path.getParent/a_. | Poly/ML | getParent "a/." is "a", not "a/.." ("If the last arc is the current arc, then it is replaced with the parent arc")
 OS.Path.fromUnixPath/_* | Poly/ML | fromUnixPath of an absolute path doubles the root: "/a/../b/" gives "//a/../b/" (on a Unix system the path syntax of the host is that of Unix)
 OS.Path.toUnixPath/_ | Poly/ML | toUnixPath "/" is "" instead of "/"
+OS.Path.splitBaseExt/*empty-arc | MLKit | the base that splitBaseExt returns leaves out empty arcs: splitBaseExt "a//c.d" is {base = "a/c", ext = SOME "d"}, not "a//c" ("everything to the left of the extension except the final "."")
+OS.Path.joinBaseExt/inverts-splitBaseExt-random | MLKit | joinBaseExt o splitBaseExt is not the identity on a path with an empty arc, which splitBaseExt drops from the base ("a//c.d" gives base "a/c")
+OS.Path.concat/a-and-empty | MLKit | concat (p, "") adds an empty arc to p: concat ("a", "") is "a/", not "a" ("the path consisting of path followed by t", the empty path having no arcs)
 OS.IO.poll/closed-SysErr | MLton | poll of a descriptor that has been closed returns [] instead of raising OS.SysErr
 OS.IO.Kind.*/dev-null | MLton | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
 OS.IO.Kind.*/dev-null | SML/NJ | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
@@ -150,8 +188,15 @@ OS.IO.Kind.tty/standard-descriptors | MLton | kind gives tty for every character
 OS.IO.Kind.tty/standard-descriptors | SML/NJ | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
 OS.IO.poll/*order* | Poly/ML | poll returns the poll_info values in the reverse order of the argument list ("The returned list respects the order of the argument list")
 OS.IO.compare/TextIO.stdIn-equals-Posix-stdin | Poly/ML 5.9.2 | the descriptor of TextIO.stdIn and Posix.FileSys.fdToIOD Posix.FileSys.stdin compare EQUAL but are not = (the equality of the eqtype iodesc is that of the object that holds the descriptor)
+OS.IO.poll/closed-SysErr | MLKit | poll of a descriptor that has been closed returns a poll_info with no condition instead of raising OS.SysErr: the runtime ignores POLLNVAL
+OS.IO.Kind.*/dev-null | MLKit | kind gives tty for every character device: /dev/null, which is no terminal ("tty: A terminal console"), is not device
+OS.IO.Kind.tty/standard-descriptors | MLKit | kind gives tty for every character device: standard input, /dev/null where the runner runs the test, is no terminal (Posix.ProcEnv.isatty is false)
 OS.errorName/is-Posix.Error.errorName | Poly/ML | OS.errorName gives the C name ("ENOENT") and Posix.Error.errorName the POSIX one ("noent") of the same syserror (the types are identical), where each is to be "a unique name used for the syserror value"; OS.syserror "noent" is NONE
-Time.fromReal/nan | MLton, SML/NJ, Poly/ML | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+*.errorMsg/*of-SysErr* | MLKit | the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on `f': No such file or directory"
+OS.errorMsg/* | MLKit | the string of SysErr (s, SOME e) is not errorMsg e ("then we have errorMsg e = s"): it names the operation and the file first, "remove failed on `f': No such file or directory"
+Time.fromReal/nan | MLton | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+Time.fromReal/nan | SML/NJ | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
+Time.fromReal/nan | Poly/ML | fromReal of a NaN raises Domain, not Time ("It raises Time when the result is not representable")
 Time.*Inf | SML/NJ | fromReal of an infinite real raises Overflow, not Time
 Time.*Inf | Poly/ML | fromReal of an infinite real raises Overflow, not Time
 Time.toSeconds/*negative* | Poly/ML | toSeconds rounds a negative time towards minus infinity (~2.01 s gives ~3), not "towards 0"
@@ -163,6 +208,8 @@ Time.fmt/fixed-point-semantics | Poly/ML | fmt goes through a real: fmt 6 of 123
 Time.fmt/fixed-point-semantics | MLton | fmt is Real.fmt of toReal: fmt 6 of 12345678901.234567 s gives 12345678901.234568 ("Time values are required to have fixed-point semantics")
 Time.fromString/trailing-point | MLton | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
 Time.fromString/trailing-point | SML/NJ | fromString "1." is NONE, although its prefix "1" denotes a time ("SOME(t) where t is the time value denoted by a prefix of s")
+Time.[+-]/Time-when-not-representable* | MLKit | toSeconds raises Overflow for a time of 2^31 seconds or more, which + and - make without raising Time: IntInf.fromInt and IntInf.toInt go through Int32, so that the conversions of Time hold 32 bits of seconds
+Time.fromString/nanoseconds-lost-or-kept | MLKit | another reading of the specification: fromString rounds a fraction beyond the microsecond to the nearest microsecond (0.000000999 is 1 microsecond); the test takes the reading of MLton, SML/NJ and Poly/ML, that a fraction below the resolution is dropped or kept, as fromReal's "fractions of a microsecond may be lost"
 Date.offset/* | MLton | offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
 Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | MLton | date with an offset of more than a day east moves the date a day the wrong way
 Date.date/Date-or-a-year-far-away | MLton | date of year 10^8 raises Overflow, not Date
@@ -198,6 +245,15 @@ Date.fmt/empty | Poly/ML | fmt "" raises Date instead of giving ""
 Date.fmt/%Z-UTC | MLton | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 Date.fmt/%Z-UTC | SML/NJ 110.99.9 (64-bit) | fmt "%Z" of a UTC date gives the name of the local time zone ("NST"), not that of UTC
 Date.fmt/%Z-UTC | Poly/ML | fmt "%Z" raises Date for a UTC date (an empty result of strftime)
+Date.offset/east | MLKit | offset reports the time west of UTC modulo a day, never negative: 5:30 east gives 18:30 west (66600 s)
+Date.offset/modulo-24-hours-negative | MLKit | date keeps an offset of more than a day east whole while it moves the date back a day, and offset reports it modulo a day (82800 s)
+Date.toTime/offset-modulo-24-hours-negative-is-the-same-time | MLKit | date keeps an offset of more than a day east whole while it moves the date back a day, so that the date is a day earlier than the time given
+Date.toTime/*19[06][09]* | MLKit | toTime of a date before 1970 raises Date ("support date values ranging from around 1900 to 2200"), and of one after 2038-01-19 03:14:07 UTC raises Time
+Date.fromTimeUniv/*19[06][09]* | MLKit | toTime of a date before 1970 raises Date, and fromTimeUniv truncates a negative time towards zero instead of flooring it to its second
+Date.toTime/century-to-2100-beyond-2038 | MLKit | toTime of a date after 2038-01-19 03:14:07 UTC raises Time: IntInf.toInt goes through Int32, so that Time.fromReal raises Time for 2^31 seconds or more
+Date.toTime/Date-or-a-year-far-away | MLKit | toTime of a date of year 10^8 raises Time, not Date ("It raises Date if the date date cannot be represented as a Time.time value")
+Date.fmt/%Z-UTC | MLKit | fmt "%Z" of a UTC date gives the name of the local time zone ("NST") or garbage: the runtime's sml_strftime leaves tm_zone unset, and strftime reads it (for a local date it may crash)
+Date.scan/24-characters | MLKit | scan reads a year of five digits (19956), not the 24-character date ("scan a 24-character date")
 Posix.Error.notty/ttyname-of-dev-null | SML/NJ | ttyname of a descriptor that is not a terminal raises SysErr with NONE, not SOME notty
 Posix.Error.badf/close-twice | Poly/ML | Posix.IO.close of a descriptor that is already closed raises no exception
 Posix.Error.spipe/lseek-on-pipe | SML/NJ 110.99.9 | Posix.IO.lseek on a pipe raises another exception than SysErr (spipe); outside the suite the runtime stops with "bogus overflow fault"
@@ -226,12 +282,35 @@ Unix.exit/flushes | SML/NJ | Unix.exit does not flush the output streams that ar
 Unix.exit/status | Poly/ML 5.9.2 | a forked child that calls Unix.exit never ends
 Posix.Process.fromStatus/system-killed | SML/NJ | OS.Process.system returns failure (W_EXITSTATUS 1) for a command that a signal ended
 Unix.exit/runs-atExit | SML/NJ | Unix.exit does not run the actions of OS.Process.atExit
+Posix.Error.notty/ttyname-of-dev-null | MLKit | compiler bug: the X64 backend compares the pointer of __is_null with the address of a boxed 0, so the library never sees that a C function returned NULL: ttyname of a descriptor that is not a terminal returns NULL as its string instead of raising OS.SysErr
+Posix.SysDB:POSIX_SYS_DB/[ug]id-is-ProcEnv.[ug]id | MLKit | getpwuid, getpwnam, getgrgid and getgrnam raise Overflow for an entry that exists: the runtime returns the result of getpwuid_r (and the IDs of getpw*) untagged, so the result 0 is not the ML 0 and the library builds a SysErr for it
+Posix.Error.badf/close-twice | MLKit | Posix.IO.close never raises OS.SysErr: the library calls C's close, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+Posix.Error.spipe/lseek-on-pipe | MLKit | lseek of a pipe returns 2147483647 instead of raising OS.SysErr: the runtime's sml_lseek takes and returns C ints, so -1 comes back as 2^31-1 (and an offset of 2^30 or more is cut to 32 bits)
+Posix.Error.again/errorName | MLKit | errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
+Posix.Error.notsup/errorName | MLKit | errorName again is "wouldblock" and errorName notsup is "opnotsupp" ("errorName badmsg = "badmsg""): the runtime's table from numbers to names has both names of EAGAIN = EWOULDBLOCK and ENOTSUP = EOPNOTSUPP, and its binary search finds the other one
+Posix.Process.sleep/* | MLKit | sleep raises Time after it has slept: the runtime returns the time left from the rem of nanosleep, which nanosleep writes only when a signal interrupts it (and in nanoseconds where microseconds are expected)
+*exec*/empty-environment | MLKit | exece (and so Unix.executeInEnv) with the environment [] passes on the environment of the process: the runtime installs the list only when it is not empty
+*.fromStatus/s[iy]* | MLKit | the status of a process that did not succeed is W_EXITSTATUS 0w255 whatever its exit status or signal: OS.Process.system and Unix.reap reduce every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
+Unix.reap/[st]* | MLKit | the status of a process that did not succeed is W_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
+Unix.kill/* | MLKit | the status of a process that a signal ended is W_EXITSTATUS 0w255, not W_SIGNALED: reap reduces every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
+Unix.W_S*/reap* | MLKit | the status of a process that did not succeed is W_EXITSTATUS 0w255 whatever its exit status or signal: reap reduces every failure to OS.Process.failure (an int, ~1), which fromStatus maps to W_EXITSTATUS 0wxFF
+Unix.execute*/no-such-program | MLKit | a child that cannot execute the command does not exit with 126: the SysErr of exece propagates out of Unix.execute in the child, which goes on running the caller's program
+Unix.exit/[fr]* | MLKit | Unix.exit is Posix.Process.exit: it neither runs the actions of OS.Process.atExit nor flushes the output streams
 Posix.*.allSet/* | MLton | allSet (fl1, fl2) tests whether fl2 is included in fl1, the other way round from "returns true if all of the flags in fl1 are also in fl2"
 Posix.*.fromWord/random-words-beyond-all | MLton | all of FileSys.O, IO.FD, IO.O and Process.W has every bit of the 64-bit SysWord.word, but fromWord keeps only the 32 of a C int, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all)
 Posix.*.fromWord/*-all | Poly/ML | fromWord keeps every bit of its argument, also those not in all, so that toWord o fromWord is not fn w => SysWord.andb (w, toWord all) and fromWord makes flags outside all
 Posix.FileSys.ST.mode/* | MLton | ST.mode includes the bits of the file type of st_mode (S_IFREG, S_IFDIR, S_IFIFO) besides the protection mode
 Posix.FileSys.wordToFD/inverts-fdToWord | Poly/ML | wordToFD makes a new file_desc that is not equal (=) to the file_desc with the same number: equality of file_desc is that of the object
 Posix.FileSys.stdin/wordToFD-0 | Poly/ML 5.9.2 | wordToFD 0w0 is not equal (=) to stdin: equality of file_desc is that of the object
+Posix.FileSys.link/[dm]* | MLKit | link never raises OS.SysErr: the library calls C's link, which returns an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+Posix.FileSys.[su]*link/[em]* | MLKit | symlink and unlink never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+Posix.FileSys.rename/missing | MLKit | rename and rmdir never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+Posix.FileSys.rmdir/* | MLKit | rename and rmdir never raise OS.SysErr: the library calls the C functions, which return an int, by auto-conversion, which reads the result as a long, so -1 comes back as 4294967295
+Posix.FileSys.S.*/[iv]* | MLKit | S codes the modes its own way (irwxu = 0wx1, irusr = 0wx2, ..., isgid = 0wx2000, translated by the runtime): irwxu is not irusr + iwusr + ixusr, and toWord gives none of the values of the C binding
+Posix.FileSys.umask/* | MLKit | S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): umask returns the previous mask in C's code, untranslated, and the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions
+Posix.FileSys.*/m[ao]* | MLKit | S codes the modes its own way (irwxu = 0wx1, ..., translated by the runtime): the checks read the permissions of a file through S.irwxu, S.irwxg and S.irwxo, which stand for bits of their own, not for their three permissions, and umask returns the previous mask in C's code, untranslated
+Posix.FileSys.*chmod* | MLKit | chmod and fchmod ignore the mode and set 01001 (---------t): the runtime passes them the flags it made for open, O_WRONLY | O_TRUNC
+Posix.FileSys.createf/existing-mode-kept | MLKit | chmod, with which the check sets the mode of the file first, ignores the mode and sets 01001 (---------t): the runtime passes it the flags it made for open, O_WRONLY | O_TRUNC
 Posix.IO.*getfl* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor
 Posix.IO.setfl/[ak]* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
 Posix.IO.O.nonblock/setfl | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
@@ -261,6 +340,15 @@ TextIO.StreamIO.getBufferMode/openAppend-is-BLOCK_BUF | SML/NJ 110.99.9 | openAp
 *IO.StreamIO.inputN/allAndN-random-* | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 *IO.StreamIO.inputN/exactly-n-before-end-of-stream | Poly/ML | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
 TextIO.StreamIO.outputSubstr/LINE_BUF | Poly/ML | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+*IO.inputAll/file-grows-after-end-of-stream | MLKit | inputAll on a stream that openIn made leaves it at the end-of-stream where it stops, not "immediately past" it: after the file has grown, the next inputAll returns the empty vector and only the one after it the new elements
+*IO.input1/file-grows-after-end-of-stream | MLKit | the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
+*IO.output1/Io-closed-stream-function | MLKit | output1 on a closed stream raises Io with function "output"
+*IO.[gs]etOutstream/flushes* | MLKit | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+*IO.StreamIO.closeIn/truncated-stream-closes-the-reader | MLKit | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
+*IO.StreamIO.closeOut/terminated-closes-the-writer | MLKit | closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
+*IO.StreamIO.filePosIn/Io-truncated | MLKit | filePosIn of a truncated stream raises nothing
+*IO.StreamIO.output1/Io-when-the-writer-fails | MLKit | output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
+*IO.inputN/more-than-maxSize-of-a-short-file | MLKit | another reading of the specification: inputN raises Size when n is greater than the greatest length of a vector, as IMPERATIVE_IO puts it; the test takes STREAM_IO's reading, that Size is about the number of elements returned
 Socket.Ctl.setLINGER/negative | MLton | setLINGER takes a negative time without raising Time
 Socket.Ctl.setLINGER/too-large | MLton | setLINGER raises Overflow, not Time, for a time too large for the system
 Socket.Ctl.getNREAD/* | MLton | getNREAD answers ~1 whatever there is to read
@@ -325,10 +413,16 @@ Bool*:MONO_*/vector-is-BoolVector.vector | MLton 20241230 | BoolVector.length (B
 ?*Array2.*/*model-empty-* | Poly/ML | as in Array2: an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
 ?*Array2.array/Size-negative-columns-no-rows | Poly/ML | as Array2.array: array (0, ~1, x) does not raise Size
 ?*Array2.*/zero-length-not-equal | Poly/ML | as in Array2: two arrays without rows are equal
+?*Array2.*i/Subscript-not-Overflow-sum-n* | MLKit | appi, foldi and modifyi of the MONO_ARRAY2 structures raise Overflow instead of Subscript when row + nrows or col + ncols overflows
+?*Array2.copy/[!o]* | MLKit | copy of the MONO_ARRAY2 structures checks the destination region against the dimensions of the source's base array instead of those of dst: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), and Overflow when dst_row + nrows or dst_col + ncols overflows
 PackReal64*.update/element-1 | SML/NJ (32-bit) | update writes nothing into the array
 PackReal*.update/Subscript-past-the-end | Poly/ML | update of an element that runs past the end of the array raises nothing ("Subscript if Word8Array.length arr < bytesPerElem * (i + 1)")
 PackReal64*.* | SML/NJ 110.99.9 | PackReal64Big and PackReal64Little are swapped: Big packs the least significant byte first, Little the most significant
 PackWord*.*/Subscript-maxInt | Poly/ML | subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem * (i + 1) overflows), not Subscript
+PackWord32*.sub[VA]*X/sign-extended-* | MLKit | subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
+PackReal*Big.fromBytes/longer-uses-the-first | MLKit | PackRealBig.fromBytes reverses the whole vector and reads the first 8 bytes of that: of a longer vector it reads the last 8 bytes
+PackReal[BL6]*.fromBytes/Subscript-short | MLKit | fromBytes does not check the length: of a vector shorter than 8 bytes it reads 8 bytes, past the end of the vector, instead of raising Subscript
+PackReal[BL6]*.*/Subscript-maxInt | MLKit | subVec, subArr and update raise Overflow for an index near the largest int (bytesPerElem * i or bytesPerElem * (i + 1) overflows), not Subscript
 SML90.arctan/zero | SML/NJ | Math.atan 0.0 is ~0.0
 SML90.ord/Ord-empty | SML/NJ | ord "" raises Subscript, not Ord
 SML90.lookahead/* | SML/NJ | lookahead raises Io at the end of the stream instead of returning ""

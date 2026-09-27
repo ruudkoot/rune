@@ -470,13 +470,15 @@ fit into `dst` at that corner.
 | <a name="fld-copy.dst_row"></a>`dst_row` | `int` |  |
 | <a name="fld-copy.dst_col"></a>`dst_col` | `int` |  |
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (7)</summary>
 
 - **MLton** &mdash; copy within one array to the left or the right in the same rows copies elements that it has already overwritten
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; copy, of Array2 and of the MONO\_ARRAY2 structures, accepts a source region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and then raises Size, and raises Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
+- **MLKit** &mdash; copy checks the destination region against the dimensions of the source's base array instead of those of dst, and writes dst with the source's number of columns as its row length: Subscript for a valid destination, none for an invalid one (the elements are written past the end of dst), the elements in the wrong places when the two arrays have different numbers of columns, and Overflow when dst\_row + nrows or dst\_col + ncols overflows
 
 </details>
 
@@ -502,12 +504,13 @@ val appi : traversal -> (int * int * 'a -> unit) -> 'a region -> unit
 > nRows" allows a region to begin at the edge of the array: such a region
 > and one of no rows or no columns are valid, and traverse nothing.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 
@@ -548,12 +551,13 @@ val foldi : traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 
@@ -598,12 +602,13 @@ val modifyi : traversal -> (int * int * 'a -> 'a) -> 'a region -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `reg` is not a valid region.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
 - **SML/NJ** &mdash; a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 - **SML/NJ** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row and dst\_col)
 - **Poly/ML** &mdash; the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst\_row + nrows)
 - **Poly/ML** &mdash; an array without rows has no number of columns: dimensions, nCols, the traversals and copy raise Subscript, and column (a, j) does not
+- **MLKit** &mdash; appi, foldi and modifyi accept a region whose row is beyond nRows with nrows = NONE or whose nrows is negative (and the same for columns), and traverse nothing, and raise Overflow when row + nrows or col + ncols overflows, instead of raising Subscript
 
 </details>
 

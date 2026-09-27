@@ -156,7 +156,13 @@ sig
 
      Example: `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-     Law: `tokens p s = List.filter (fn t => size t > 0) (fields p s)` *)
+     Law: `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
+
+     Reading: `String.tokens/order`. The specification says the tokens are
+     "derived from s from left to right", and not how often `p` is asked:
+     `p` is applied once to each character, from left to right.
+
+     Pinned by: `String.tokens/order` *)
   val tokens : (char -> bool) -> string -> string list
 
   (* `fields p s` is the pieces of `s` that the characters satisfying `p` separate.

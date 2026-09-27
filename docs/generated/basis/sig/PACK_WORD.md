@@ -140,9 +140,10 @@ val subVecX : Word8Vector.vector * int -> LargeWord.word
 
 **Example** `PackWord16Big.subVecX (Word8Vector.fromList [0wxFF, 0wxFE], 0) = 0wxFFFFFFFFFFFFFFFE`
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **MLKit** &mdash; subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 
 </details>
 
@@ -184,9 +185,10 @@ val subArrX : Word8Array.array * int -> LargeWord.word
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the bytes of element `i` are not all in `arr`.
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **Poly/ML** &mdash; subVec, subVecX, subArr, subArrX and update raise Overflow for an index near the largest int (bytesPerElem \* (i + 1) overflows), not Subscript
+- **MLKit** &mdash; subVecX and subArrX do not extend the sign: the code, from SML/NJ, assumes a LargeWord of 32 bits ("no sign extension is required"), but MLKit's has 64
 
 </details>
 

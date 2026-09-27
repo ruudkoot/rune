@@ -11,6 +11,9 @@
 #   hide.sml        rebinds the top-level values of the Basis Library to a
 #                   value of no use, so that a test cannot pass with the
 #                   host's `exnName` where lib/basis does not define one
+#   rune-prim.sml   a copy of tests/basis/host/rune-prim.sml, beside the
+#                   rest, for a host that writes what it compiles next to
+#                   each source (MLKit)
 #   prelude         the files to load first: RUNE_PRIM.sml, rune-prim.sml, hide.sml
 #   files           "FILE<TAB>STRUCTURES": the files of lib/basis/MANIFEST in
 #                   load order with the structures each one declares
@@ -65,7 +68,8 @@ END { print "end" }
   done
 } > "$out/hide.sml"
 
-printf '%s\n' "$out/RUNE_PRIM.sml" "$here/rune-prim.sml" "$out/hide.sml" > "$out/prelude"
+cp "$here/rune-prim.sml" "$out/rune-prim.sml"
+printf '%s\n' "$out/RUNE_PRIM.sml" "$out/rune-prim.sml" "$out/hide.sml" > "$out/prelude"
 
 : > "$out/files"
 grep -v -E '^[[:space:]]*(#|$)' lib/basis/MANIFEST | while IFS='|' read -r f _ host _; do

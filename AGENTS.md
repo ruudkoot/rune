@@ -58,7 +58,7 @@ keep these invariants:
   the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
   on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
-  Poly/ML); `make matrix` adds the suite on each host's own library.
+  Poly/ML, MLKit); `make matrix` adds the suite on each host's own library.
 * **Instruction set / primitives** change only through their descriptions,
   `src/isa/stack.sml` and `src/isa/prims.sml` (then `make isa`, which writes
   the generated files and `vm/opcodes.def` and `vm/prims.def`; `make

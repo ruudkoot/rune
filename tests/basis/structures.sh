@@ -3,10 +3,11 @@
 # table for docs/basis-compat.md.
 #   tests/basis/structures.sh
 # Every structure of the specification, required and optional, is probed
-# with `structure Probe = NAME` on Rune (bin/rune) and on the MLton, SML/NJ
-# and Poly/ML that `make hosts` installed under
-# ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (override: MLTON=, SMLNJ=, POLY=;
-# the 32-bit SML/NJ has the library of the 64-bit one). A system has a
+# with `structure Probe = NAME` on Rune (bin/rune) and on the MLton, SML/NJ,
+# Poly/ML and MLKit that `make hosts` installed under
+# ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (override: MLTON=, SMLNJ=, POLY=,
+# MLKIT= and MLKIT_LIB=; the 32-bit SML/NJ has the library of the 64-bit
+# one). A system has a
 # structure when that declaration compiles in its default environment.
 set -u
 cd "$(dirname "$0")/../.."
@@ -70,6 +71,24 @@ probe_mlton() {
     echo "$1 $n $r"
   done
 }
+# MLKit, which finds its library through $(SML_LIB), takes seconds a probe
+# and writes what it compiles beside the source: each probe in a directory of
+# its own, as many at once as there are CPUs. (A probe ends with status 0:
+# xargs stops at one that ends with 255, as MLKit does when it rejects one.)
+probe_mlkit() {
+  for n in $names; do
+    d=$work/$1/$(echo "$n" | tr . _)
+    mkdir -p "$d"
+    cp "$work/$(echo "$n" | tr . _).sml" "$d/probe.sml"
+    printf '$(SML_LIB)/basis/basis.mlb\nprobe.sml\n' > "$d/probe.mlb"
+    echo "$d"
+  done | SML_LIB=$3 xargs -P "$(sh scripts/ncpus.sh)" -I '{}' \
+           sh -c 'cd "$1" && "$2" --no_messages -c probe.mlb > /dev/null 2>&1 && touch yes; exit 0' sh '{}' "$2"
+  for n in $names; do
+    if [ -f "$work/$1/$(echo "$n" | tr . _)/yes" ]; then r=yes; else r=no; fi
+    echo "$1 $n $r"
+  done
+}
 # SML/NJ and Poly/ML: one session that uses every probe and survives failures.
 probe_session() {
   d=$work/$1.driver.sml
@@ -86,11 +105,14 @@ systems="rune"
 mlton=${MLTON:-$hosts/mlton/bin/mlton}
 smlnj=${SMLNJ:-$hosts/smlnj/bin/sml}
 poly=${POLY:-$hosts/polyml/bin/poly}
+mlkit=${MLKIT:-$hosts/mlkit/bin/mlkit}
+mlkit_lib=${MLKIT_LIB:-$(dirname "$(dirname "$mlkit")")/lib/mlkit}
 {
   probe_rune rune
   system=mlton; probe_mlton "$system" "$mlton"
   system=smlnj; probe_session "$system" "$smlnj"
   system=polyml; probe_session "$system" "$poly" -q --use
+  system=mlkit; probe_mlkit "$system" "$mlkit" "$mlkit_lib"
 } > "$work/results"
 
 version() {
@@ -99,6 +121,7 @@ version() {
     mlton) echo "MLton $("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9.]*\).*/\1/p')" ;;
     smlnj) echo "SML/NJ $("$smlnj" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9.]*\).*/\1/p')" ;;
     polyml) echo "Poly/ML $("$poly" -v 2> /dev/null | sed -n '1s/^Poly\/ML \([0-9.]*\).*/\1/p')" ;;
+    mlkit) echo "MLKit $("$mlkit" --version 2> /dev/null | sed -n '1s/^MLKit v\([0-9.]*\).*/\1/p')" ;;
   esac
 }
 

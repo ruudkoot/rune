@@ -335,6 +335,12 @@ dropped.
 
 **Law** `fromLargeInt (toLargeIntX w) = w`
 
+<details><summary>Other implementations (1)</summary>
+
+- **MLKit** &mdash; fromLargeInt raises Overflow for a number below \~2^63 instead of taking its low-order wordSize bits: IntInfRep.toWord64 converts a negative number through a checked int64 (a positive one wraps modulo 2^64)
+
+</details>
+
 <details><summary>Tests (15)</summary>
 
 In [tests/basis/fn/word\_fn.sml](../../../../tests/basis/fn/word_fn.sml), applied to `Word`, `Word8`, `Word16`, `Word32`, `Word64`: `zero` &middot; `200` &middot; `minus-one` &middot; `minus-three` &middot; `all-ones` &middot; `two-to-the-wordSize` &middot; `two-to-the-wordSize-plus-five` &middot; `minus-two-to-the-wordSize-minus-three` &middot; `two-to-twice-the-wordSize-plus-seven` &middot; `minus-two-to-twice-the-wordSize-minus-one` &middot; `minus-top-bit` &middot; `model*` &middot; `plus-multiple*` &middot; `minus-multiple*` &middot; `signed*`
@@ -815,7 +821,7 @@ bits.
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
-- **Poly/ML** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
+- **Poly/ML, MLKit** &mdash; 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
 
 </details>
 
@@ -844,7 +850,7 @@ val fromString : string -> word option
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
-- **Poly/ML** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
+- **Poly/ML, MLKit** &mdash; reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 
 </details>
 
