@@ -16,8 +16,8 @@
 structure Byte : BYTE
 ```
 
-Byte: between bytes and characters. A Word8Vector.vector is a string, so
-the conversions of whole vectors cost nothing.
+Byte: between bytes and characters. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a string
+underneath, so the conversions of whole vectors cost nothing.
 
 ## Members
 
@@ -37,8 +37,9 @@ What each means is on [`BYTE`](../sig/BYTE.md); the types are this structure's o
 
 ### 
 
-> **Implementation** `Byte/free`. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a `string` in this
-> library, so [`bytesToString`](../sig/BYTE.md#val-bytestostring) and [`stringToBytes`](../sig/BYTE.md#val-stringtobytes) copy nothing.
+> **Implementation** `Byte/free`. A [`Word8Vector.vector`](../sig/MONO_VECTOR.md#type-vector) is a `string`
+> underneath in this library, although the type is abstract to a program,
+> so [`bytesToString`](../sig/BYTE.md#val-bytestostring) and [`stringToBytes`](../sig/BYTE.md#val-stringtobytes) copy nothing.
 
 ### byteToChar
 

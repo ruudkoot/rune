@@ -177,10 +177,10 @@ reading one reads both.
 | [`Bool`](../generated/basis/str/Bool.md) | done | done | done | done | done | done |
 | [`BoolArray`](../generated/basis/str/BoolArray.md) | done | done | done | done | done | done |
 | [`BoolArray2`](../generated/basis/str/BoolArray2.md) | done | done | done | done | done | done |
-| [`BoolArraySlice`](../generated/basis/str/BoolArraySlice.md) |  |  |  |  |  |  |
-| [`BoolVector`](../generated/basis/str/BoolVector.md) |  |  |  |  |  |  |
-| [`BoolVectorSlice`](../generated/basis/str/BoolVectorSlice.md) |  |  |  |  |  |  |
-| [`Byte`](../generated/basis/str/Byte.md) |  |  |  |  |  |  |
+| [`BoolArraySlice`](../generated/basis/str/BoolArraySlice.md) | done | done | done | done | done | done |
+| [`BoolVector`](../generated/basis/str/BoolVector.md) | done | done | done | done | done | done |
+| [`BoolVectorSlice`](../generated/basis/str/BoolVectorSlice.md) | done | done | done | done | done | done |
+| [`Byte`](../generated/basis/str/Byte.md) | done | done | done | done | done | done |
 | [`Char`](../generated/basis/str/Char.md) |  |  |  |  |  |  |
 | [`CharArray`](../generated/basis/str/CharArray.md) |  |  |  |  |  |  |
 | [`CharArray2`](../generated/basis/str/CharArray2.md) |  |  |  |  |  |  |

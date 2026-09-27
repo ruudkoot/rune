@@ -1,13 +1,19 @@
-(* The monomorphic vectors and arrays of booleans and their slices, and the
-   two-dimensional arrays (all optional in the specification), in one file:
-   a program that names one of them loads the five. The vector is a
-   polymorphic vector (RuneMonoVectorFn), the array a polymorphic array.
+(* BoolVector: immutable vectors of booleans.
+
+   The family of booleans -- `BoolVector`, `BoolVectorSlice`, `BoolArray`,
+   `BoolArraySlice` and `BoolArray2`, all optional in the specification -- is
+   in one file: a program that names one of them loads the five. The vector
+   is a polymorphic vector underneath, the array a polymorphic array, and
+   both are sealed, so that neither is a `bool vector` or a `bool array` for
+   a program.
 
    Implements: MONO_VECTOR where type elem = bool
 
    Status: optional *)
 structure BoolVector :> MONO_VECTOR where type elem = bool = RuneMonoVectorFn (type elem = bool)
-(* Implements: MONO_VECTOR_SLICE where type vector = BoolVector.vector where
+(* BoolVectorSlice: stretches of `BoolVector` vectors, without a copy.
+
+   Implements: MONO_VECTOR_SLICE where type vector = BoolVector.vector where
    type elem = bool
 
    Status: optional *)
@@ -20,7 +26,10 @@ structure BoolVectorSlice :> MONO_VECTOR_SLICE where type vector = BoolVector.ve
 
    Status: optional *)
 structure BoolArray :> MONO_ARRAY where type vector = BoolVector.vector where type elem = bool = RuneMonoArrayFn (structure V = BoolVector)
-(* Implements: MONO_ARRAY_SLICE where type vector = BoolVector.vector where
+(* BoolArraySlice: stretches of `BoolArray` arrays, without a copy: an update
+   through a slice changes the array.
+
+   Implements: MONO_ARRAY_SLICE where type vector = BoolVector.vector where
    type vector_slice = BoolVectorSlice.slice where type array =
    BoolArray.array where type elem = bool
 

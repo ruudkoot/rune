@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 19 |
 | Documentation | 26 of 26 entries documented |
-| Tests | 267 checks of 24 entries |
+| Tests | 275 checks of 24 entries |
 | Source | [lib/basis/mono\_sigs.sml](../../../../lib/basis/mono_sigs.sml) |
 
 ## Synopsis
@@ -37,7 +37,7 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`BoolVectorSlice`](../str/BoolVectorSlice.md) |  | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`BoolVectorSlice`](../str/BoolVectorSlice.md) | BoolVectorSlice: stretches of [`BoolVector`](../str/BoolVector.md) vectors, without a copy. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharVectorSlice`](../str/CharVectorSlice.md) | CharVectorSlice: its slice is the substring of Substring, so it is written on Substring rather than being an instance of RuneMonoVectorSliceFn. The \-i functions pass the index in the slice. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
 | [`Int16VectorSlice`](../str/Int16VectorSlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32VectorSlice`](../str/Int32VectorSlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
@@ -109,7 +109,7 @@ end
 type elem
 ```
 
-The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8Vector`](../str/Word8Vector.md), `char` for [`CharVector`](../str/CharVector.md).
+The type of the elements: [`Word8.word`](../sig/WORD.md#type-word) for [`Word8VectorSlice`](../str/Word8VectorSlice.md), `char` for [`CharVectorSlice`](../str/CharVectorSlice.md).
 
 <details><summary>Tests (1)</summary>
 
@@ -147,6 +147,10 @@ val length : slice -> int
 
 `length x` is the number of elements.
 
+**Law** `length (slice (v, i, SOME n)) = n` when the slice exists
+
+**Example** `length (slice ("abc", 1, NONE)) = 2`
+
 <details><summary>Tests (8)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `of-a-substring`
@@ -165,7 +169,9 @@ val sub : slice * int -> elem
 
 `sub (x, i)` is the element at position `i`, counting from 0.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length x`.
+
+**Example** `sub (slice ("abc", 1, NONE), 0) = #"b"`
 
 <details><summary>Tests (16)</summary>
 
@@ -175,7 +181,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `each` &middot; `Subscript-length` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `last` &middot; `Subscript-length-within-the-vector` (raises Subscript) &middot; `Subscript-negative-within-the-vector` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `last` &middot; `Subscript-length-within-the-vector` (raises Subscript) &middot; `Subscript-negative-within-the-vector` (raises Subscript) &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-empty` (raises Subscript) &middot; `model*` &middot; `model*` (raises Subscript) &middot; `long` &middot; `Subscript-not-Overflow` (raises Subscript) &middot; `Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -185,13 +191,17 @@ In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_
 val full : vector -> slice
 ```
 
-`full v` is the whole of `v` as a slice.
+`full v` is the whole of `v` as a slice: `slice (v, 0, NONE)`.
 
-<details><summary>Tests (9)</summary>
+**Law** `vector (full v) = v` for a vector type that admits equality
+
+**Example** `vector (full "hi") = "hi"`
+
+<details><summary>Tests (10)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `string-constant` &middot; `is-Substring.full`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty`
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `empty` &middot; `is-slice-0-NONE`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `base` &middot; `empty-vector` &middot; `empty-vector-base` &middot; `model*`
 
@@ -205,7 +215,10 @@ val slice : vector * int * int option -> slice
 
 `slice (v, i, sz)` is the stretch of `v` from `i`, of `sz` elements or to the end.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `v`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i` is more than the length of `v`, or,
+with `SOME n`, if `n < 0` or `i + n` is more than the length of `v`.
+
+**Example** `vector (slice ("abcd", 1, SOME 2)) = "bc"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -221,7 +234,7 @@ For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `SOME` &middot; `NONE` &middot; `NONE-at-length` &middot; `SOME-zero` &middot; `Subscript-NONE-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript) &middot; `Subscript-negative-size` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-vector` &middot; `of-empty-vector-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-last` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-one` &middot; `SOME-zero` &middot; `SOME-zero-at-length` &middot; `SOME-middle-base` &middot; `SOME-zero-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-too-long` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty-vector` &middot; `of-empty-vector-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -235,7 +248,13 @@ val subslice : slice * int * int option -> slice
 
 The bounds are those of `sl`, not of what it is a slice of.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if the positions are outside `sl`.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
+`n < 0` or `i + n > length sl`.
+
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for
+`0 <= k < length sl - i`
+
+**Example** `vector (subslice (slice ("abcd", 1, NONE), 1, SOME 1)) = "c"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -249,7 +268,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `NONE` &middot; `SOME` &middot; `at-length` &middot; `Subscript-beyond` (raises Subscript) &middot; `Subscript-too-long` (raises Subscript) &middot; `Subscript-negative` (raises Subscript)
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `of-subslice-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-within-the-vector` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty` &middot; `of-empty-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `NONE-from-zero` &middot; `NONE-middle` &middot; `NONE-at-length` &middot; `NONE-middle-base` &middot; `NONE-at-length-base` &middot; `NONE-Subscript-negative` (raises Subscript) &middot; `NONE-Subscript-beyond` (raises Subscript) &middot; `SOME-middle` &middot; `SOME-all` &middot; `SOME-zero` &middot; `SOME-middle-base` &middot; `of-subslice-base` &middot; `SOME-Subscript-negative-start` (raises Subscript) &middot; `SOME-Subscript-negative-size` (raises Subscript) &middot; `SOME-Subscript-within-the-vector` (raises Subscript) &middot; `SOME-Subscript-beyond` (raises Subscript) &middot; `of-empty` &middot; `of-empty-Subscript` (raises Subscript) &middot; `every-argument` &middot; `model*` &middot; `model*` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-size` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-start` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-sum-both` (raises Subscript) &middot; `SOME-Subscript-not-Overflow-least-size` (raises Subscript) &middot; `NONE-Subscript-not-Overflow` (raises Subscript) &middot; `NONE-Subscript-not-Overflow-least` (raises Subscript)
 
 </details>
 
@@ -260,6 +279,8 @@ val base : slice -> vector * int * int
 ```
 
 `base sl` is the vector `sl` is a stretch of, where it starts and how long it is.
+
+**Example** `base (slice ("abcd", 1, SOME 2)) = ("abcd", 1, 2)`
 
 <details><summary>Tests (9)</summary>
 
@@ -277,7 +298,9 @@ In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_
 val vector : slice -> vector
 ```
 
-`vector sl` is a vector of the elements of `sl`, which is where the copy happens.
+`vector sl` is a vector of the elements of `sl`, which is a copy of them.
+
+**Example** `vector (slice ("abc", 1, NONE)) = "bc"`
 
 <details><summary>Tests (13)</summary>
 
@@ -299,7 +322,12 @@ val concat : slice list -> vector
 
 `concat l` is the vector of the elements of the slices of `l`, one after another.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than `maxLen`.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than a vector can be: the
+`maxLen` of the vector structure.
+
+**Law** `length (full (concat l)) = List.foldl (fn (sl, n) => length sl + n) 0 l`
+
+**Example** `concat [slice ("abc", 1, NONE), full "d"] = "bcd"`
 
 <details><summary>Tests (12)</summary>
 
@@ -307,7 +335,7 @@ For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/ba
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil`
 
-In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `model*` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `BoolVectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `model*` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -318,6 +346,10 @@ val isEmpty : slice -> bool
 ```
 
 `isEmpty sl` is `true` when `sl` has no elements.
+
+**Law** `isEmpty sl = (length sl = 0)`
+
+**Example** `isEmpty (slice ("a", 1, NONE)) = true`
 
 <details><summary>Tests (9)</summary>
 
@@ -337,13 +369,16 @@ val getItem : slice -> (elem * slice) option
 
 `getItem sl` is `NONE` when `sl` is empty, and `SOME (x, rest)` otherwise.
 
-It has the shape of a [`StringCvt.reader`](../sig/STRING_CVT.md#type-reader).
+It has the shape of a [`StringCvt.reader`](../sig/STRING_CVT.md#type-reader). `rest` is a slice of the same
+vector, so it is had for nothing.
 
-<details><summary>Tests (11)</summary>
+**Example** `(case getItem (full "ab") of SOME (c, rest) => (c, vector rest) | NONE => (#" ", "")) = (#"a", "b")`
+
+<details><summary>Tests (12)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `is-Substring.getc`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first` &middot; `empty`
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `first` &middot; `rest-of-the-same-vector` &middot; `empty`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first` &middot; `rest` &middot; `rest-base` &middot; `last-rest-is-empty` &middot; `empty` &middot; `every-item` &middot; `model*` &middot; `long`
 
@@ -356,6 +391,10 @@ val appi : (int * elem -> unit) -> slice -> unit
 ```
 
 `appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
+
+The index is that of the element in the slice, counted from 0.
+
+**Example** `let val r = ref [] in appi (fn (i, c) => r := (i, c) :: !r) (slice ("abc", 1, NONE)); !r end = [(1, #"c"), (0, #"b")]`
 
 <details><summary>Tests (4)</summary>
 
@@ -373,6 +412,8 @@ val app : (elem -> unit) -> slice -> unit
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
 
+**Law** `app f x = appi (fn (_, e) => f e) x`
+
 <details><summary>Tests (4)</summary>
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `order`
@@ -389,11 +430,16 @@ val mapi : (int * elem -> elem) -> slice -> vector
 
 `mapi f sl` is the vector of the results of `f` on the index and the element of each position.
 
-<details><summary>Tests (7)</summary>
+The index is that of the element in the slice, and `f` is applied from
+0 up.
+
+**Example** `mapi (fn (i, c) => if i = 0 then Char.toUpper c else c) (slice ("abc", 1, NONE)) = "Bc"`
+
+<details><summary>Tests (8)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `string-index`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices`
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-indices` &middot; `order`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `index-in-the-slice` &middot; `empty` &middot; `order` &middot; `model*`
 
@@ -407,13 +453,17 @@ val map : (elem -> elem) -> slice -> vector
 
 `map f sl` is the vector of the results of `f` on each element, in order.
 
-<details><summary>Tests (9)</summary>
+**Law** `map f sl = mapi (fn (_, e) => f e) sl`
+
+**Example** `map Char.toUpper (slice ("abc", 1, NONE)) = "BC"`
+
+<details><summary>Tests (10)</summary>
 
 For `CharVectorSlice`, in [tests/basis/charvectorslice.sml](../../../../tests/basis/charvectorslice.sml): `toUpper`
 
 For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/basis/word8vectorslice.sml): `Word8-arithmetic`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not`
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `not` &middot; `order`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `basic` &middot; `empty` &middot; `order` &middot; `argument-unchanged` &middot; `model*` &middot; `long`
 
@@ -426,6 +476,10 @@ val foldli : (int * elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
 
 `foldli f init x` combines the elements from the left, giving `f` the index as well.
+
+The index is that of the element in the slice, counted from 0.
+
+**Example** `foldli (fn (i, c, acc) => (i, c) :: acc) [] (slice ("abc", 1, NONE)) = [(1, #"c"), (0, #"b")]`
 
 <details><summary>Tests (5)</summary>
 
@@ -442,6 +496,10 @@ val foldr : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 ```
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
+
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldr (op ::) [] (full "ab") = [#"a", #"b"]`
 
 <details><summary>Tests (7)</summary>
 
@@ -461,6 +519,10 @@ val foldl : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldl (op ::) [] (full "ab") = [#"b", #"a"]`
+
 <details><summary>Tests (7)</summary>
 
 For `Word8VectorSlice`, in [tests/basis/word8vectorslice.sml](../../../../tests/basis/word8vectorslice.sml): `sum-of-bytes`
@@ -479,6 +541,10 @@ val foldri : (int * elem * 'b -> 'b) -> 'b -> slice -> 'b
 
 `foldri f init x` combines the elements from the right, giving `f` the index as well.
 
+The index is that of the element in the slice, counted from 0.
+
+**Example** `foldri (fn (i, c, acc) => (i, c) :: acc) [] (slice ("abc", 1, NONE)) = [(0, #"b"), (1, #"c")]`
+
 <details><summary>Tests (5)</summary>
 
 For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `nonassociative`
@@ -495,9 +561,14 @@ val findi : (int * elem -> bool) -> slice -> (int * elem) option
 
 `findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
 
-<details><summary>Tests (10)</summary>
+The index is that of the element in the slice; `p` is applied from 0 up,
+and not after the first position that satisfies it.
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-index` &middot; `none`
+**Example** `findi (fn (_, c) => c = #"a") (slice ("aba", 1, NONE)) = SOME (1, #"a")`
+
+<details><summary>Tests (11)</summary>
+
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `slice-index` &middot; `none` &middot; `stops`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `by-index` &middot; `index-zero` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
@@ -511,9 +582,13 @@ val find : (elem -> bool) -> slice -> elem option
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
-<details><summary>Tests (8)</summary>
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `true` &middot; `none-in-the-slice`
+**Example** `find Char.isDigit (full "a1") = SOME #"1"`
+
+<details><summary>Tests (9)</summary>
+
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `true` &middot; `none-in-the-slice`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `first-match` &middot; `last-element` &middot; `none-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `model*`
 
@@ -525,11 +600,17 @@ In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_
 val exists : (elem -> bool) -> slice -> bool
 ```
 
-`exists p x` is `true` when some element satisfies `p`.
+`exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
 
-<details><summary>Tests (8)</summary>
+Only the elements of the slice are looked at, not the rest of its vector.
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `only-the-slice` &middot; `true`
+**Law** `exists p x = isSome (find p x)`
+
+**Example** `exists (fn c => c = #"a") (slice ("ab", 1, NONE)) = false`
+
+<details><summary>Tests (9)</summary>
+
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `only-the-slice` &middot; `true`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true` &middot; `false-outside-the-slice` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*`
 
@@ -541,11 +622,15 @@ In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_
 val all : (elem -> bool) -> slice -> bool
 ```
 
-`all p x` is `true` when every element satisfies `p`.
+`all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-<details><summary>Tests (9)</summary>
+**Law** `all p x = not (exists (not o p) x)`
 
-For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `only-the-slice` &middot; `false`
+**Example** `all Char.isLower (slice ("Ab", 1, NONE)) = true`
+
+<details><summary>Tests (10)</summary>
+
+For `BoolVectorSlice`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `stops` &middot; `only-the-slice` &middot; `false`
 
 In [tests/basis/fn/mono\_vector\_slice\_fn.sml](../../../../tests/basis/fn/mono_vector_slice_fn.sml), applied to `CharVectorSlice`, `Word8VectorSlice`, `IntVectorSlice`, `Int8VectorSlice`, `Int16VectorSlice`, `Int32VectorSlice`, `LargeIntVectorSlice`, `WordVectorSlice`, `Word16VectorSlice`, `Word32VectorSlice`, `RealVectorSlice`, `Int64VectorSlice`, `LargeWordVectorSlice`, `Word64VectorSlice`, `LargeRealVectorSlice`, `Real64VectorSlice`, `Real32VectorSlice`, `WideCharVectorSlice`: `true-but-not-outside-the-slice` &middot; `false` &middot; `empty` &middot; `stops` &middot; `order` &middot; `model*` &middot; `de-morgan*`
 
@@ -558,6 +643,10 @@ val collate : (elem * elem -> order) -> slice * slice -> order
 ```
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+
+**Example** `collate Char.compare (slice ("abc", 1, NONE), full "b") = GREATER`
 
 <details><summary>Tests (20)</summary>
 

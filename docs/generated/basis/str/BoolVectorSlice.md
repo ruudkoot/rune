@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md) |
 | Status | optional |
 | Members | 26 |
-| Tests | 50 checks |
+| Tests | 74 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -15,6 +15,8 @@
 ```sml
 structure BoolVectorSlice :> MONO_VECTOR_SLICE where type vector = BoolVector.vector where type elem = bool
 ```
+
+BoolVectorSlice: stretches of [`BoolVector`](../str/BoolVector.md) vectors, without a copy.
 
 ## Members
 
@@ -49,9 +51,10 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 | val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> BoolVector.vector` |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (2)</summary>
 
 - **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
 
 </details>
 

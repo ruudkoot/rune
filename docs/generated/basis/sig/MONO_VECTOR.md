@@ -37,7 +37,7 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`BoolVector`](../str/BoolVector.md) | The monomorphic vectors and arrays of booleans and their slices, and the two-dimensional arrays (all optional in the specification), in one file: a program that names one of them loads the five. The vector is a polymorphic vector (RuneMonoVectorFn), the array a polymorphic array. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
+| [`BoolVector`](../str/BoolVector.md) | BoolVector: immutable vectors of booleans. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 | [`CharVector`](../str/CharVector.md) | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
 | [`Int16Vector`](../str/Int16Vector.md) | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32Vector`](../str/Int32Vector.md) | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
@@ -188,6 +188,8 @@ The greatest length such a vector may have.
 > [`Vector.maxLen`](../sig/VECTOR.md#val-maxlen) for the families built on the polymorphic vectors, and
 > [`String.maxSize`](../sig/STRING.md#val-maxsize) for those whose vector is a string.
 
+**Example** `maxLen = String.maxSize`
+
 <details><summary>Tests (2)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `covers-created-vectors`
@@ -202,9 +204,13 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val fromList : elem list -> vector
 ```
 
-`fromList l` is the sequence of the elements of `l`, in order.
+`fromList l` is a vector of the elements of `l`, in order.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
+
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+
+**Example** `fromList [#"a", #"b"] = "ab"`
 
 <details><summary>Tests (29)</summary>
 
@@ -254,9 +260,18 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val tabulate : int * (int -> elem) -> vector
 ```
 
-`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
+`tabulate (n, f)` is a vector of `f 0`, ..., `f (n - 1)`, applied in order.
 
-**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`, before `f` is applied.
+**Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
+
+> **Reading** `MONO_VECTOR.tabulate/Size-before-f`. The specification does not
+> say whether the length is checked before `f` is applied. It is: a length
+> out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all.
+
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
+effects
+
+**Example** `tabulate (3, fn i => Char.chr (97 + i)) = "abc"`
 
 <details><summary>Tests (15)</summary>
 
@@ -266,7 +281,7 @@ For `Word8Vector`, in [tests/basis/word8vector.sml](../../../../tests/basis/word
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `zero` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f`
 
-In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `BoolVector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `zero` &middot; `one` &middot; `order` &middot; `Size-negative` (raises Size) &middot; `Size-before-f` &middot; `model*` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -277,6 +292,10 @@ val length : vector -> int
 ```
 
 `length x` is the number of elements.
+
+**Law** `length (fromList l) = List.length l`
+
+**Example** `length "abc" = 3`
 
 <details><summary>Tests (10)</summary>
 
@@ -296,7 +315,9 @@ val sub : vector * int -> elem
 
 `sub (x, i)` is the element at position `i`, counting from 0.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside.
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length x`.
+
+**Example** `sub ("abc", 1) = #"b"`
 
 <details><summary>Tests (16)</summary>
 
@@ -318,7 +339,13 @@ val update : vector * int * elem -> vector
 
 `update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
 
-**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is outside `v`.
+`v` itself is not changed.
+
+**Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length v`.
+
+**Law** `sub (update (v, i, x), i) = x`, and `sub (update (v, i, x), j) = sub (v, j)` for every other position `j`
+
+**Example** `update ("abc", 1, #"x") = "axc"`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -346,13 +373,17 @@ val concat : vector list -> vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxLen`](#val-maxlen).
 
+**Law** `length (concat l) = List.foldl (fn (v, n) => length v + n) 0 l`
+
+**Example** `concat ["ab", "", "c"] = "abc"`
+
 <details><summary>Tests (15)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `strings` &middot; `String.concat*`
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `basic` &middot; `nil` &middot; `empties`
 
-In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `order` &middot; `model*` &middot; `long` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
+In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_fn.sml), applied to `CharVector`, `Word8Vector`, `BoolVector`, `IntVector`, `Int8Vector`, `Int16Vector`, `Int32Vector`, `LargeIntVector`, `WordVector`, `Word16Vector`, `Word32Vector`, `RealVector`, `Int64Vector`, `LargeWordVector`, `Word64Vector`, `LargeRealVector`, `Real64Vector`, `Real32Vector`, `WideCharVector`: `basic` &middot; `nil` &middot; `one` &middot; `empties` &middot; `same-twice` &middot; `order` &middot; `model*` &middot; `long` &middot; `many` &middot; `Size-above-maxLen` (raises Size)
 
 </details>
 
@@ -363,6 +394,8 @@ val appi : (int * elem -> unit) -> vector -> unit
 ```
 
 `appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.
+
+**Example** `let val r = ref [] in appi (fn (i, c) => r := (i, c) :: !r) "ab"; !r end = [(1, #"b"), (0, #"a")]`
 
 <details><summary>Tests (5)</summary>
 
@@ -379,6 +412,8 @@ val app : (elem -> unit) -> vector -> unit
 ```
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
+
+**Law** `app f x = appi (fn (_, e) => f e) x`
 
 <details><summary>Tests (5)</summary>
 
@@ -398,6 +433,10 @@ val mapi : (int * elem -> elem) -> vector -> vector
 
 `mapi f v` is the vector of the results of `f` on the index and the element of each position.
 
+`f` is applied from 0 up.
+
+**Example** `mapi (fn (i, c) => if i = 0 then Char.toUpper c else c) "abc" = "Abc"`
+
 <details><summary>Tests (9)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `index`
@@ -415,6 +454,10 @@ val map : (elem -> elem) -> vector -> vector
 ```
 
 `map f v` is the vector of the results of `f` on each element, in order.
+
+**Law** `map f v = mapi (fn (_, e) => f e) v`
+
+**Example** `map Char.toUpper "abc" = "ABC"`
 
 <details><summary>Tests (17)</summary>
 
@@ -444,6 +487,8 @@ val foldli : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 `foldli f init x` combines the elements from the left, giving `f` the index as well.
 
+**Example** `foldli (fn (i, c, acc) => (i, c) :: acc) [] "ab" = [(1, #"b"), (0, #"a")]`
+
 <details><summary>Tests (7)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-reversed` &middot; `nonassociative` &middot; `empty`
@@ -460,6 +505,8 @@ val foldri : (int * elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 `foldri f init x` combines the elements from the right, giving `f` the index as well.
 
+**Example** `foldri (fn (i, c, acc) => (i, c) :: acc) [] "ab" = [(0, #"a"), (1, #"b")]`
+
 <details><summary>Tests (6)</summary>
 
 For `BoolVector`, in [tests/basis/mono.bool.sml](../../../../tests/basis/mono.bool.sml): `conses-in-order` &middot; `nonassociative`
@@ -475,6 +522,10 @@ val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 ```
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
+
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldl (op ::) [] "abc" = [#"c", #"b", #"a"]`
 
 <details><summary>Tests (24)</summary>
 
@@ -526,6 +577,10 @@ val foldr : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+
+**Example** `foldr (op ::) [] "abc" = [#"a", #"b", #"c"]`
+
 <details><summary>Tests (8)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `implode`
@@ -544,6 +599,11 @@ val findi : (int * elem -> bool) -> vector -> (int * elem) option
 
 `findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.
 
+`p` is applied from 0 up, and not after the first position that
+satisfies it.
+
+**Example** `findi (fn (i, c) => i > 0 andalso c = #"a") "aba" = SOME (2, #"a")`
+
 <details><summary>Tests (14)</summary>
 
 For `CharVector`, in [tests/basis/charvector.sml](../../../../tests/basis/charvector.sml): `string`
@@ -561,6 +621,10 @@ val find : (elem -> bool) -> vector -> elem option
 ```
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
+
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+
+**Example** `find Char.isDigit "a12" = SOME #"1"`
 
 <details><summary>Tests (15)</summary>
 
@@ -586,7 +650,11 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val exists : (elem -> bool) -> vector -> bool
 ```
 
-`exists p x` is `true` when some element satisfies `p`.
+`exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
+
+**Law** `exists p x = isSome (find p x)`
+
+**Example** `exists Char.isDigit "ab" = false`
 
 <details><summary>Tests (11)</summary>
 
@@ -604,7 +672,11 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 val all : (elem -> bool) -> vector -> bool
 ```
 
-`all p x` is `true` when every element satisfies `p`.
+`all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
+
+**Law** `all p x = not (exists (not o p) x)`
+
+**Example** `all Char.isLower "ab" = true`
 
 <details><summary>Tests (13)</summary>
 
@@ -623,6 +695,10 @@ val collate : (elem * elem -> order) -> vector * vector -> order
 ```
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
+
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+
+**Example** `collate Char.compare ("ab", "ac") = LESS`
 
 <details><summary>Tests (40)</summary>
 

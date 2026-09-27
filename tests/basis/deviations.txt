@@ -530,7 +530,7 @@ xc1:smlnj@110.99.9 | Int64*precision* | WIDTH | Int64 of lib/basis is Int, whose
 xc1:smlnj@110.99.9 | Word64.wordSize/64 | WIDTH | Word64 of lib/basis is Word, whose size is that of the host's word, 63 bits
 
 # ---- the monomorphic vectors and arrays of other elements
-native:polyml@* | @section/mono.bool*/slices | HOST-ABSENT | Poly/ML has BoolVector, BoolArray and BoolArray2 but not BoolVectorSlice and BoolArraySlice
+native:polyml@* | @section/mono.bool*/slices* | HOST-ABSENT | Poly/ML has BoolVector, BoolArray and BoolArray2 but not BoolVectorSlice and BoolArraySlice
 native:smlnj*@* | @section/mono.real*/array2* | HOST-ABSENT | SML/NJ has the vectors, arrays and slices of Real and Real64 but not RealArray2 and Real64Array2
 native:smlnj*@* | @section/signatures/mono-array2 | HOST-ABSENT | SML/NJ has no structure that matches MONO_ARRAY2 (no Word8Array2)
 native:mlton@20241230 | Bool*:MONO_*/vector-is-BoolVector.vector | HOST-BUG | BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program

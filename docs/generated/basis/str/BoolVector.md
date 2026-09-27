@@ -7,7 +7,7 @@
 | Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
-| Tests | 66 checks |
+| Tests | 68 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -16,10 +16,14 @@
 structure BoolVector :> MONO_VECTOR where type elem = bool
 ```
 
-The monomorphic vectors and arrays of booleans and their slices, and the
-two-dimensional arrays (all optional in the specification), in one file:
-a program that names one of them loads the five. The vector is a
-polymorphic vector (RuneMonoVectorFn), the array a polymorphic array.
+BoolVector: immutable vectors of booleans.
+
+The family of booleans -- [`BoolVector`](BoolVector.md), [`BoolVectorSlice`](../str/BoolVectorSlice.md), [`BoolArray`](../str/BoolArray.md),
+[`BoolArraySlice`](../str/BoolArraySlice.md) and [`BoolArray2`](../str/BoolArray2.md), all optional in the specification -- is
+in one file: a program that names one of them loads the five. The vector
+is a polymorphic vector underneath, the array a polymorphic array, and
+both are sealed, so that neither is a `bool vector` or a `bool array` for
+a program.
 
 ## Members
 

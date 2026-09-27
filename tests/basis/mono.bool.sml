@@ -1,5 +1,5 @@
 (* requires: BoolVector BoolArray List String *)
-(* uses: spec-sigs/MONO_VECTOR.sml spec-sigs/MONO_ARRAY.sml spec-sigs/MONO_ARRAY2.sml fn/mono_array_fn.sml fn/mono_array2_fn.sml *)
+(* uses: spec-sigs/MONO_VECTOR.sml spec-sigs/MONO_ARRAY.sml spec-sigs/MONO_VECTOR_SLICE.sml spec-sigs/MONO_ARRAY_SLICE.sml spec-sigs/MONO_ARRAY2.sml fn/mono_vector_fn.sml fn/mono_array_fn.sml fn/mono_vector_slice_fn.sml fn/mono_array_slice_fn.sml fn/mono_array2_fn.sml *)
 (* BoolVector, BoolArray, BoolVectorSlice, BoolArraySlice and BoolArray2
    (optional in the specification: MONO_VECTOR, MONO_ARRAY, MONO_VECTOR_SLICE,
    MONO_ARRAY_SLICE and MONO_ARRAY2 "where type elem = bool"). Expected values
@@ -209,6 +209,7 @@ struct
   val () = eqB ("BoolArray.array/same-elements-not-equal", false, fn () => arr "tf" = arr "tf")
 
   (*<< size *)
+  structure VectorSize = TestMonoVectorSizeFn (structure V = BoolVector val name = "BoolVector" val elem = false)
   structure ArraySize = TestMonoArraySizeFn (structure A = BoolArray val name = "BoolArray" val elem = false)
   (*>> size *)
 
@@ -230,6 +231,10 @@ struct
   val () = T.raises ("BoolVectorSlice.sub/Subscript-negative", T.isSubscript, fn () => VS.sub (mid (), !minusOne))
   val () = eqVS ("BoolVectorSlice.full/basic", "tft", fn () => VS.full (vec "tft"))
   val () = eqVS ("BoolVectorSlice.full/empty", "", fn () => VS.full (vec ""))
+  (* "full vec is equivalent to slice (vec, 0, NONE)" *)
+  val () = eqB ("BoolVectorSlice.full/is-slice-0-NONE", true,
+                fn () => let val v = v6 () val (_, i, n) = VS.base (VS.full v) val (_, j, m) = VS.base (VS.slice (v, 0, NONE))
+                         in i = j andalso n = m end)
   val () = eqVS ("BoolVectorSlice.slice/SOME", "fft", fn () => mid ())
   val () = eqVS ("BoolVectorSlice.slice/NONE", "fftf", fn () => VS.slice (v6 (), 2, NONE))
   val () = eqVS ("BoolVectorSlice.slice/NONE-at-length", "", fn () => VS.slice (v6 (), 6, NONE))
@@ -256,12 +261,20 @@ struct
   val () = eqB ("BoolVectorSlice.isEmpty/true", true, fn () => VS.isEmpty (VS.slice (v6 (), 6, NONE)))
   val () = T.eq (T.option (T.pair (T.bool, T.string))) ("BoolVectorSlice.getItem/first", SOME (false, "ft"),
                  fn () => Option.map (fn (b, rest) => (b, showVS rest)) (VS.getItem (mid ())))
+  val () = eqB ("BoolVectorSlice.getItem/rest-of-the-same-vector", true,
+                fn () => case VS.getItem (mid ()) of
+                           SOME (_, rest) => let val (_, i, n) = VS.base rest in (i, n) = (3, 2) end
+                         | NONE => false)
   val () = eqB ("BoolVectorSlice.getItem/empty", true, fn () => not (isSome (VS.getItem (VS.full (vec "")))))
   val () = eqIB ("BoolVectorSlice.appi/slice-indices", [(0, false), (1, false), (2, true)], fn () => seenBy VS.appi (fn _ => ()) (mid ()))
   val () = eqBools ("BoolVectorSlice.app/order", [false, false, true], fn () => seenBy VS.app (fn _ => ()) (mid ()))
   (* (i = 1) <> b over f f t: f t t *)
   val () = eqV ("BoolVectorSlice.mapi/slice-indices", "ftt", fn () => VS.mapi (fn (i, b) => (i = 1) <> b) (mid ()))
   val () = eqV ("BoolVectorSlice.map/not", "ttf", fn () => VS.map not (mid ()))
+  val () = eqIB ("BoolVectorSlice.mapi/order", [(0, false), (1, false), (2, true)],
+                 fn () => seenBy (fn f => ignore o VS.mapi f) #2 (mid ()))
+  val () = eqBools ("BoolVectorSlice.map/order", [false, false, true],
+                    fn () => seenBy (fn f => ignore o VS.map f) (fn b => b) (mid ()))
   (* digitI over f f t: foldli 0, 0, 0*2+3 = 3; foldri 0+3 = 3, 6, 12 *)
   val () = eqI ("BoolVectorSlice.foldli/nonassociative", 3, fn () => VS.foldli digitI 0 (mid ()))
   val () = eqI ("BoolVectorSlice.foldri/nonassociative", 12, fn () => VS.foldri digitI 0 (mid ()))
@@ -270,6 +283,14 @@ struct
   val () = eqI ("BoolVectorSlice.foldr/nonassociative", 4, fn () => VS.foldr digit 0 (mid ()))
   val () = eqIBO ("BoolVectorSlice.findi/slice-index", SOME (2, true), fn () => VS.findi #2 (mid ()))
   val () = eqIBO ("BoolVectorSlice.findi/none", NONE, fn () => VS.findi (fn (i, _) => i > 2) (mid ()))
+  val () = eqIB ("BoolVectorSlice.findi/stops", [(0, false), (1, false), (2, true)],
+                 fn () => seenBy (fn f => ignore o VS.findi f) #2 (VS.slice (v6 (), 2, NONE)))
+  val () = eqBools ("BoolVectorSlice.find/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o VS.find f) (fn b => b) (VS.slice (v6 (), 2, NONE)))
+  val () = eqBools ("BoolVectorSlice.exists/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o VS.exists f) (fn b => b) (VS.slice (v6 (), 2, NONE)))
+  val () = eqBools ("BoolVectorSlice.all/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o VS.all f) not (VS.slice (v6 (), 2, NONE)))
   val () = eqBO ("BoolVectorSlice.find/true", SOME true, fn () => VS.find (fn b => b) (mid ()))
   val () = eqBO ("BoolVectorSlice.find/none-in-the-slice", NONE, fn () => VS.find (fn b => b) (VS.slice (v6 (), 2, SOME 2)))
   val () = eqB ("BoolVectorSlice.exists/only-the-slice", false, fn () => VS.exists (fn b => b) (VS.slice (v6 (), 2, SOME 2)))
@@ -294,6 +315,9 @@ struct
   val () = T.raises ("BoolArraySlice.update/Subscript-length", T.isSubscript, fn () => AS.update (amid (a6 ()), 3, true))
   val () = T.raises ("BoolArraySlice.update/Subscript-negative", T.isSubscript, fn () => AS.update (amid (a6 ()), !minusOne, true))
   val () = eqAS ("BoolArraySlice.full/basic", "tft", fn () => AS.full (arr "tft"))
+  (* "full arr is equivalent to slice (arr, 0, NONE)" *)
+  val () = eqB ("BoolArraySlice.full/is-slice-0-NONE", true,
+                fn () => let val a = a6 () in AS.base (AS.full a) = AS.base (AS.slice (a, 0, NONE)) end)
   val () = eqAS ("BoolArraySlice.slice/SOME", "fft", fn () => amid (a6 ()))
   val () = eqAS ("BoolArraySlice.slice/NONE", "fftf", fn () => AS.slice (a6 (), 2, NONE))
   val () = eqAS ("BoolArraySlice.slice/NONE-at-length", "", fn () => AS.slice (a6 (), 6, NONE))
@@ -317,6 +341,8 @@ struct
   val () = eqA ("BoolArraySlice.copy/overlap-left", "tffttf", fn () => let val a = a6 () in AS.copy {src = amid a, dst = a, di = 1}; a end)
   val () = T.raises ("BoolArraySlice.copy/Subscript-too-long", T.isSubscript, fn () => AS.copy {src = amid (a6 ()), dst = arr "fffff", di = 3})
   val () = T.raises ("BoolArraySlice.copy/Subscript-negative", T.isSubscript, fn () => AS.copy {src = amid (a6 ()), dst = arr "fffff", di = ~1})
+  val () = eqA ("BoolArraySlice.copy/Subscript-changes-nothing", "fffff",
+                fn () => let val d = arr "fffff" in (AS.copy {src = amid (a6 ()), dst = d, di = 3} handle Subscript => ()); d end)
   val () = eqA ("BoolArraySlice.copyVec/basic", "fttf", fn () => let val d = arr "ffff" in AS.copyVec {src = VS.slice (vec "ftt", 1, NONE), dst = d, di = 1}; d end)
   val () = T.raises ("BoolArraySlice.copyVec/Subscript-too-long", T.isSubscript,
                      fn () => AS.copyVec {src = VS.full (vec "tt"), dst = arr "fff", di = 2})
@@ -327,6 +353,12 @@ struct
   val () = T.eq (T.option (T.pair (T.bool, T.string))) ("BoolArraySlice.getItem/first", SOME (false, "ft"),
                  fn () => Option.map (fn (b, rest) => (b, showAS rest)) (AS.getItem (amid (a6 ()))))
   val () = eqB ("BoolArraySlice.getItem/empty", true, fn () => not (isSome (AS.getItem (AS.slice (a6 (), 6, NONE)))))
+  val () = eqB ("BoolArraySlice.getItem/rest-of-the-same-array", true,
+                fn () => let val a = a6 ()
+                         in case AS.getItem (amid a) of
+                              SOME (_, rest) => AS.base rest = (a, 3, 2)
+                            | NONE => false
+                         end)
   val () = eqIB ("BoolArraySlice.appi/slice-indices", [(0, false), (1, false), (2, true)], fn () => seenBy AS.appi (fn _ => ()) (amid (a6 ())))
   val () = eqBools ("BoolArraySlice.app/order", [false, false, true], fn () => seenBy AS.app (fn _ => ()) (amid (a6 ())))
   (* (i = 1) <> b over f f t: f t t, in the base t t [f t t] t f *)
@@ -337,12 +369,26 @@ struct
   val () = eqI ("BoolArraySlice.foldl/nonassociative", 1, fn () => AS.foldl digit 0 (amid (a6 ())))
   val () = eqI ("BoolArraySlice.foldr/nonassociative", 4, fn () => AS.foldr digit 0 (amid (a6 ())))
   val () = eqIBO ("BoolArraySlice.findi/slice-index", SOME (2, true), fn () => AS.findi #2 (amid (a6 ())))
+  val () = eqIB ("BoolArraySlice.findi/stops", [(0, false), (1, false), (2, true)],
+                 fn () => seenBy (fn f => ignore o AS.findi f) #2 (AS.slice (a6 (), 2, NONE)))
+  val () = eqBools ("BoolArraySlice.find/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o AS.find f) (fn b => b) (AS.slice (a6 (), 2, NONE)))
+  val () = eqBools ("BoolArraySlice.exists/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o AS.exists f) (fn b => b) (AS.slice (a6 (), 2, NONE)))
+  val () = eqBools ("BoolArraySlice.all/stops", [false, false, true],
+                    fn () => seenBy (fn f => ignore o AS.all f) not (AS.slice (a6 (), 2, NONE)))
   val () = eqBO ("BoolArraySlice.find/none-in-the-slice", NONE, fn () => AS.find (fn b => b) (AS.slice (a6 (), 2, SOME 2)))
   val () = eqB ("BoolArraySlice.exists/true", true, fn () => AS.exists (fn b => b) (amid (a6 ())))
   val () = eqB ("BoolArraySlice.all/only-the-slice", true, fn () => AS.all not (AS.slice (a6 (), 2, SOME 2)))
   val () = eqOrd ("BoolArraySlice.collate/equal", EQUAL, fn () => AS.collate cmp (amid (a6 ()), AS.full (arr "fft")))
   val () = eqOrd ("BoolArraySlice.collate/greater", GREATER, fn () => AS.collate cmp (AS.slice (a6 (), 0, SOME 2), amid (a6 ())))
   (*>> slices *)
+
+  (*<< slices-size *)
+  structure VectorSliceSize = TestMonoVectorSliceSizeFn (structure S = BoolVectorSlice structure V = BoolVector val name = "BoolVectorSlice" val elem = false)
+  structure VectorSliceOverflow = TestMonoVectorSliceOverflowFn (structure S = BoolVectorSlice structure V = BoolVector val name = "BoolVectorSlice" val elem = false)
+  structure ArraySliceOverflow = TestMonoArraySliceOverflowFn (structure S = BoolArraySlice structure A = BoolArray val name = "BoolArraySlice" val elem = false)
+  (*>> slices-size *)
 
   (*<< array2 *)
   (* ---- BoolArray2: rows and columns are BoolVector.vector values; appi,

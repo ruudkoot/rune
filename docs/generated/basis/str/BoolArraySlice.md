@@ -7,7 +7,7 @@
 | Signature | [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md) |
 | Status | optional |
 | Members | 30 |
-| Tests | 47 checks |
+| Tests | 73 checks |
 | Source | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
 
 ## Synopsis
@@ -15,6 +15,9 @@
 ```sml
 structure BoolArraySlice :> MONO_ARRAY_SLICE where type vector = BoolVector.vector where type vector_slice = BoolVectorSlice.slice where type array = BoolArray.array where type elem = bool
 ```
+
+BoolArraySlice: stretches of [`BoolArray`](../str/BoolArray.md) arrays, without a copy: an update
+through a slice changes the array.
 
 ## Members
 
@@ -53,9 +56,11 @@ What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the type
 | val | [`update`](../sig/MONO_ARRAY_SLICE.md#val-update) | `slice * int * bool -> unit` |
 | val | [`vector`](../sig/MONO_ARRAY_SLICE.md#val-vector) | `slice -> BoolVector.vector` |
 
-<details><summary>Other implementations (1)</summary>
+<details><summary>Other implementations (3)</summary>
 
 - **MLton 20241230** &mdash; BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program
+- **Poly/ML** &mdash; slice and subslice (x, i, SOME j) raise Overflow instead of Subscript when i + j overflows
+- **Poly/ML** &mdash; copy with di = Int.maxInt raises Overflow instead of Subscript
 
 </details>
 
