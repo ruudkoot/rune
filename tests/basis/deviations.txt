@@ -186,6 +186,9 @@ native:polyml@* | Substring.extract/NONE-Subscript-not-Overflow-smallest | HOST-
 native:smlnj*@110.99.9 | IEEEReal.toString/negative-nan | HOST-BUG | toString of a NaN with the sign set is "nan", not "~nan"
 native:smlnj*@110.99.9 | IEEEReal.scan/point-without-fraction | HOST-BUG | scan consumes a decimal point that no digit follows ("3.x" leaves "x")
 native:polyml@5.9.2 | IEEEReal.toString/is-fmt-EXACT | HOST-BUG | follows from Real.fmt StringCvt.EXACT 0.0, which is "0.0E1"
+native:mlton@* | @section/ieeereal/toplevel-unordered | HOST-ABSENT | no top-level Unordered: the top-level environment of the specification has none; the section pins Rune's, which is IEEEReal.Unordered
+native:smlnj*@* | @section/ieeereal/toplevel-unordered | HOST-ABSENT | no top-level Unordered: the top-level environment of the specification has none; the section pins Rune's, which is IEEEReal.Unordered
+native:polyml@* | @section/ieeereal/toplevel-unordered | HOST-ABSENT | no top-level Unordered: the top-level environment of the specification has none; the section pins Rune's, which is IEEEReal.Unordered
 
 # ---- Word8
 xc1:mlton@* | @section/word8/constants | XC1-NA | word constants and overloaded operators at the Word8 of lib/basis: a host's overloading is closed
@@ -436,6 +439,9 @@ native:polyml@* | *IO.StreamIO.inputAll/is-input-to-end-of-stream | HOST-BUG | i
 native:polyml@* | *IO.StreamIO.inputN/allAndN-random-* | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 native:polyml@* | *IO.StreamIO.inputN/exactly-n-before-end-of-stream | HOST-BUG | inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
 native:polyml@* | TextIO.StreamIO.outputSubstr/LINE_BUF | HOST-BUG | outputSubstr does not flush a line-buffered stream at a newline, which output does ("equivalent to: output (strm, Substring.string ss)")
+native:mlton@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
+native:smlnj*@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
+native:polyml@* | @section/textio/instream-equality | HOST-ABSENT | TextIO.instream admits no equality, as the specification's `type instream` allows; the section pins Rune's, which is a deviation that Rune documents (IMPERATIVE_IO.instream/admits-equality)
 
 # ---- Socket, INetSock, UnixSock, GenericSock (net group)
 native:mlton@* | Socket.Ctl.setLINGER/negative | HOST-BUG | setLINGER takes a negative time without raising Time
@@ -479,6 +485,8 @@ xc1:* | Socket.[a-z]* | XC1-NA | tests/basis/host/rune-prim.sml fails every sock
 xc1:* | INetSock.[TUaft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no TCP or UDP socket, and no address (socket_inet_addr)
 xc1:* | UnixSock.[DSft]* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no Unix-domain socket or pair, and no address (socket_unix_addr)
 xc1:* | GenericSock.* | XC1-NA | tests/basis/host/rune-prim.sml fails every socket primitive with ENOSYS: no socket or pair of any family
+native:polyml@* | @load/inet6sock | HOST-ABSENT | Poly/ML has an INet6Sock of its own, without fromString, the type inet6 and the other members of INET6_SOCK, a signature of Rune's that the specification does not have
+native:polyml@* | @load/inet6sock_sig | HOST-ABSENT | Poly/ML has an INet6Sock of its own, without fromString, the type inet6 and the other members of INET6_SOCK, a signature of Rune's that the specification does not have
 
 # ---- NetHostDB, NetProtDB, NetServDB (net group)
 native:mlton@* | NetHostDB.fromString/initial-whitespace | HOST-BUG | fromString and scan do not skip initial whitespace
@@ -575,6 +583,7 @@ native:smlnj32@* | @load/intn_int32 | HOST-BUG | Int32.div (minInt, ~1) kills th
 native:smlnj32@* | @load/intn_word32 | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of Word32
 native:smlnj32@* | @load/intn_word64 | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of Word64
 native:smlnj32@* | @load/word_large | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of LargeWord
+native:smlnj32@* | @load/word8 | HOST-BUG | the compiler fails with "Compiler bug: Num64Cnv: test64To" on the conversions of LargeWord, which fn/word_large_fn.sml checks for Word8 too
 native:smlnj32@* | Int64.* | HOST-BUG | Int64 is emulated with two words and comes out wrong throughout: Int64.+ (~2, ~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
 native:smlnj32@* | PackWord*.update/* | HOST-BUG | update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
 *:smlnj32@* | Real.fromString/minus-exponent | HOST-BUG | fromString "1.5e~2" is not the real nearest 0.015 (under xc1 through the shim's real_from_string, which is the host's Real.fromString)

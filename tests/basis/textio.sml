@@ -234,11 +234,14 @@ struct
   val () = eqS ("TextIO.openIn/Io-cause", "SysErr", fn () => ioCause (fn () => TextIO.closeIn (TextIO.openIn "missing.txt")))
   (* the type is abstract in the specification; in Rune it is a datatype
      holding a ref, so two streams compare equal exactly when they are one
-     (IMPERATIVE_IO.instream/admits-equality) *)
+     (IMPERATIVE_IO.instream/admits-equality). A section of its own: a
+     library that keeps the type abstract rejects the `=`. *)
+  (*<< instream-equality *)
   val () = eqB ("TextIO.instream/equal-when-the-same-stream", true,
                 fn () => let val a = TextIO.openString "x"
                              val b = TextIO.openString "x"
                          in a = a andalso a <> b end)
+  (*>> instream-equality *)
   val () = eqB ("TextIO.openIn/does-not-create-the-file", true,
                 fn () => (ignore (ioOf (fn () => TextIO.closeIn (TextIO.openIn "missing.txt")));
                           isSome (ioOf (fn () => TextIO.closeIn (TextIO.openIn "missing.txt")))))
