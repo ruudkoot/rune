@@ -71,7 +71,7 @@ ifeq ($(MAKELEVEL),0)
 MAKEFLAGS += -j$(JOBS)
 endif
 CC      ?= cc
-CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -pedantic
+CFLAGS  ?= -std=c17 -O2 -Wall -Wextra -pedantic
 ROOT    := $(CURDIR)
 
 # The compiler and VM the test targets run. Override to test another build:
@@ -124,7 +124,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -330,23 +330,41 @@ bin/runevm: vm/main.c vm/interp.c build/librune.a $(VM_HDRS) | build/.doctor-vm
 # vm/new's first loop (docs/plans/middle-end.md, M5): the register bytecode,
 # on the runtime of runevm. Its own instruction set's part (vm/new/isa_regs.c)
 # is linked before build/librune.a, whose vm/isa_stack.c it takes the place of.
-NEW_HDRS := vm/new/regvm.h
-bin/runevm-new: vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a $(VM_HDRS) $(NEW_HDRS) | build/.doctor-vm
+NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.h vm/new/reg_loop.h vm/new/fastprim.h vm/new/jit.h vm/new/jit/x64.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
+# RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
+# interpreter alone, which refuses --jit.
+RUNE_JIT ?= 1
+JIT_SRCS := vm/new/jit.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
+JIT_HDRS := vm/new/jit.h vm/new/jit/x64.h vm/new/jit/asm.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
+NEW_LOOP := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS)
+bin/runevm-new: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -Ivm -o $@ vm/main.c vm/new/interp.c vm/new/isa_regs.c build/librune.a -lm
+	$(CC) $(CFLAGS) -DRUNE_JIT=$(RUNE_JIT) -Ivm -Ivm/new -o $@ $(NEW_LOOP) build/librune.a -lm
 
 vm-asan: bin/runevm-asan bin/runevm-new-asan
 
+# The language suite on vm/new built with the sanitizers (not part of make
+# check; run for every change to vm/new, as the ASan runevm is for the VM).
+test-new-asan: bin/runevm-new-asan bin/rune-new $(RUNE)
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan
+	RUNEVM_JIT=all sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan --out tests/out/new-asan-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-asan-opt
+	chmod +x bin/runevm-new-asan-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-opt --out tests/out/new-asan-opt
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new-asan" --jit=all --jit-tier=2 --deopt-stress=1 "$$@"\n' > bin/runevm-new-asan-deopt
+	chmod +x bin/runevm-new-asan-deopt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-asan-deopt --out tests/out/new-asan-deopt
+
 bin/runevm-asan: $(VM_SRCS) $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -o $@ $(VM_SRCS) -lm
 
 # vm/new with the sanitizers: its loop, its instruction set's part, and the
 # runtime but for the stack bytecode's part
-NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
+NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
 bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 	@mkdir -p bin
-	$(CC) -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -o $@ $(NEW_SRCS) -lm
+	$(CC) -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -371,9 +389,12 @@ bin/runevm-new-asan: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-asan
 # does not and why, and docs/runtime.md what a program can count on.
 WINCC       ?= x86_64-w64-mingw32-gcc
 WINCC32     ?= i686-w64-mingw32-gcc
-WINCFLAGS   ?= -std=c99 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
+WINCFLAGS   ?= -std=c17 -O2 -Wall -Wextra -D__USE_MINGW_ANSI_STDIO=1
 WINCFLAGS32 ?= -msse2 -mfpmath=sse -Wl,--large-address-aware
 WIN_SRCS    := vm/main.c vm/interp.c $(RT_SRCS) vm/sys_win.c
+# vm/new for Windows: its loop and its instruction set's part in place of
+# the stack bytecode's (vm/isa_stack.c), as bin/runevm-new-asan is built
+WIN_NEW_SRCS := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_win.c
 WIN_LIBS    := -lws2_32 -ladvapi32 -lshell32 -luser32
 
 # windows_dlls CC: refuse $@ when it imports a DLL whose name starts with lib
@@ -384,7 +405,7 @@ define windows_dlls
 	done
 endef
 
-windows: bin/runevm.exe bin/runevm32.exe
+windows: bin/runevm.exe bin/runevm32.exe bin/runevm-new.exe bin/runevm-new32.exe
 
 bin/runevm.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 	@mkdir -p bin
@@ -396,9 +417,29 @@ bin/runevm32.exe: $(VM_SRCS) $(VM_HDRS) vm/sys_win.c | build/.doctor-windows
 	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_SRCS) -Ivm $(WIN_LIBS)
 	$(call windows_dlls,$(WINCC32))
 
-test-windows: bin/runevm.exe bin/runevm32.exe $(RUNE)
+bin/runevm-new.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+	@mkdir -p bin
+	$(WINCC) $(WINCFLAGS) -o $@ $(WIN_NEW_SRCS) -Ivm -Ivm/new $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC))
+
+bin/runevm-new32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) | build/.doctor-windows
+	@mkdir -p bin
+	$(WINCC32) $(WINCFLAGS) $(WINCFLAGS32) -o $@ $(WIN_NEW_SRCS) -Ivm -Ivm/new $(WIN_LIBS)
+	$(call windows_dlls,$(WINCC32))
+
+# The suites on the Windows VMs of both bytecodes: the stack one compiled
+# by bin/rune, the register one by bin/rune-new, each on its two VMs
+# (tests/run-windows.sh), then the Basis Library suite on all four.
+# The vm/new VMs run with every function given to the JIT (RUNEVM_JIT,
+# which WSLENV passes to a program of Windows), so that the JIT's Windows
+# convention is what the suites test there.
+test-windows: windows $(RUNE) bin/rune-new
 	sh tests/run-windows.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm.exe --vm bin/runevm32.exe
-	RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
+	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new.exe --vm bin/runevm-new32.exe
+	WSLENV=RUNEVM_JIT:RUNEVM_JIT_TIER:$$WSLENV RUNEVM_JIT=all RUNEVM_JIT_TIER=2 sh tests/run-windows.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new.exe
+	WSLENV=RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE)) sh tests/basis/run-matrix.sh -j $(JOBS) --configs windows
 
 # ------------------------------------------------------------- portability
 # The VM on machines this one is not: a 32-bit x86, where a pointer is four
@@ -428,9 +469,20 @@ PPCROOT    ?= /usr/powerpc64-linux-gnu
 PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,$(PPCROOT)/lib/ld64.so.1 -Wl,-rpath,$(PPCROOT)/lib
 QEMUPPC    ?= qemu-ppc64
+# aarch64 (docs/plans/jit.md, M12): the second target of vm/new's JIT,
+# built with the same cross toolchain pattern (libc6-dev-arm64-cross,
+# libgcc-13-dev-arm64-cross, binutils-aarch64-linux-gnu) and run by
+# qemu-aarch64, with the JIT on
+A64CC      ?= clang
+A64ROOT    ?= /usr/aarch64-linux-gnu
+A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A64ROOT)/include \
+              -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
+QEMUA64    ?= qemu-aarch64
+JIT_SRCS_A64 := vm/new/jit.c vm/new/jit/a64.c vm/new/jit/asm_a64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
+NEW_SRCS_A64 := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS_A64) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
-portability: bin/runevm32 bin/runevm-ppc64
+portability: bin/runevm32 bin/runevm-ppc64 bin/runevm-new32 bin/runevm-new-ppc64 bin/runevm-new-aarch64
 
 bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
@@ -447,12 +499,39 @@ bin/runevm-ppc64: bin/runevm-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
 	chmod +x $@
 
+# vm/new for the same two machines, from the sources bin/runevm-new-asan is
+# built from (its instruction set's part in place of the stack bytecode's)
+bin/runevm-new32: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PORTCC32) $(CFLAGS) $(PORTFLAGS32) -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
+
+bin/runevm-new-ppc64.bin: $(NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(PPCCC) $(CFLAGS) $(PPCFLAGS) -Ivm -Ivm/new -o $@ $(NEW_SRCS) -lm
+
+bin/runevm-new-ppc64: bin/runevm-new-ppc64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
+	chmod +x $@
+
+# the register VM for aarch64, its JIT included (M12): the encoder a64.c
+# and the portable assembler's aarch64 side in place of x64.c's
+bin/runevm-new-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) vm/new/jit/a64.h vm/new/jit/asm.h Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(A64CC) $(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1 -Ivm -Ivm/new -o $@ $(NEW_SRCS_A64) -lm
+
+bin/runevm-new-aarch64: bin/runevm-new-aarch64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
+	chmod +x $@
+
 # The PowerPC VM runs under an emulator and is about ten times slower, so the
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm
+test-portability: portability $(RUNE) vm bin/rune-new
 	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm32 --vm bin/runevm-ppc64
+	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
+	  --vm bin/runevm-new32 --vm bin/runevm-new-ppc64 --vm bin/runevm-new-aarch64
+	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-new-aarch64
 	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 
@@ -545,8 +624,14 @@ test-stress: $(RUNE) vm bin/rune-new | build/.doctor-check
 	chmod +x bin/runevm-stress
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-stress
 	chmod +x bin/runevm-new-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-jit-stress
+	chmod +x bin/runevm-new-jit-stress
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 --gc-stress "$${RUNE_GC_STRESS:-1}" "$$@"\n' > bin/runevm-new-opt-stress
+	chmod +x bin/runevm-new-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm-stress
 	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-stress --out tests/out/new-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit-stress --out tests/out/new-jit-stress
+	RUNE_GC_STRESS=$(GC_STRESS) sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt-stress --out tests/out/new-opt-stress
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 \
 	  RUNE=$(abspath $(RUNE)) RUNEVM="$(ROOT)/bin/runevm-stress" \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune
@@ -593,7 +678,7 @@ test-native-stress: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm 
 	RUNE_GC_STRESS=$(GC_STRESS_BASIS) RUNE_MATRIX_TIMEOUT=900 RUNE=$(abspath $(RUNE)) \
 	  RUNEVM_OPT="$(ROOT)/bin/runevm-opt-stress" sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:opt
 
-ASAN_CFLAGS := -std=c99 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
 
 build/asan/librune.a: $(RT_SRCS) vm/sys_$(SYS).c vm/native.c build/rune-offsets.s $(VM_HDRS) | build/.doctor-asan
 	@mkdir -p build/asan/obj
@@ -654,6 +739,42 @@ test-new: bin/rune-new bin/runevm-new $(RUNE) vm
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
 	sh scripts/check-new.sh -j $(JOBS)
 	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW=$(abspath bin/runevm-new) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:new
+
+# The suites through vm/new with every function given to the JIT
+# (--jit=all; docs/plans/jit.md, M3, M4): tests/lang on a wrapper that
+# passes the option; every program of tests/lang and tests/perf, and the
+# primitives on their edge cases, printing and counting the same
+# interpreted and compiled (scripts/check-jit.sh); the Basis Library suite
+# as rune:jit; the executable memory of the system layer (--jit-check);
+# and a recursion 200,000 deep under a machine stack of 1 MB, which holds
+# the driver to never nesting, compiled at load and while tiering up and
+# invalidating (M6).
+test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all "$$@"\n' > bin/runevm-new-jit
+	chmod +x bin/runevm-new-jit
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
+	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm-new" --jit=all --jit-tier=2 "$$@"\n' > bin/runevm-new-opt
+	chmod +x bin/runevm-new-opt
+	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
+	sh scripts/check-jit.sh -j $(JOBS)
+	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" vm/new/jit/emit.c vm/new/jit/masm.c vm/new/jit/masm.h vm/new/jit/compile.c vm/new/jit/compile.h vm/new/jit.c \
+	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over vm/new/jit/asm.h alone (M12)"; false; }
+	@echo "check-asm: the emitters name no encoder"
+	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
+	bin/runevm-new --jit-check
+	@mkdir -p build/new
+	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_$(SYS).c
+	build/new/x64_test
+	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/a64_test tests/new/a64_test.c vm/new/jit/a64.c
+	build/new/a64_test
+	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/sys_$(SYS).c
+	build/new/masm_test
+	@mkdir -p tests/out/new-jit
+	bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
+	(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
+	  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
+	(ulimit -s 1024 && bin/runevm-new --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec-tiered.out) && \
+	  cmp tests/out/new-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: nor while tiering up and invalidating"
 
 bin/rune-boot: bin/rune.rbc Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --heap-size $(RUNE_HEAP) "$$d/rune.rbc" --lib "$$d/../lib" "$$@"\n' > $@
@@ -721,6 +842,7 @@ check:
 	@$(MAKE) --no-print-directory test-ir check-levels
 	@$(MAKE) --no-print-directory test-native
 	@$(MAKE) --no-print-directory test-new
+	@$(MAKE) --no-print-directory test-new-jit
 	@$(MAKE) --no-print-directory perf-check
 	@$(MAKE) --no-print-directory check-positions
 	@$(MAKE) --no-print-directory check-cross check-docs check-isa

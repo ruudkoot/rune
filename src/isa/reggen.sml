@@ -1,7 +1,7 @@
 (* What runeisa writes from the description of the register bytecode
-   (src/isa/regs.sml): the tables and the cases of vm/new's loop, and the
-   opcodes of the compiler's register target. As with the stack bytecode,
-   every file is committed. *)
+   (src/isa/regs.sml): the tables, the cases and the labels of vm/new's
+   loop, and the opcodes of the compiler's register target. As with the
+   stack bytecode, every file is committed. *)
 structure RegGen =
 struct
   open Isa RegIsa
@@ -107,20 +107,163 @@ struct
                           end) is
             @ ["};",
                "",
+               "/* Where control goes after each, whether it may raise, and what it does",
+               "   to the handlers (src/isa/isa.sml), for the JIT's runs and its check",
+               "   of a function (vm/new/jit/compile.c); the enum is vm/opcodes.h's. */",
+               "static const unsigned char rop_flow[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          "  FLOW_" ^ (case #flow i of
+                                        Next => "NEXT" | Branch => "BRANCH" | Jump => "JUMP" | Call => "CALL"
+                                      | TailCall => "TAILCALL" | Return => "RETURN" | Raise => "RAISE"
+                                      | Halt => "HALT" | Switch => "SWITCH") ^ ",") is
+            @ ["};",
+               "static const unsigned char rop_raises[] = {"]
+            @ List.map (fn (_, i : rinstruction) => "  " ^ (if #raises i then "1" else "0") ^ ",") is
+            @ ["};",
+               "/* 0 keeps the handlers, 1 installs one, 2 removes one */",
+               "static const unsigned char rop_handlers[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          "  " ^ (case #handlers i of Keeps => "0" | Installs => "1" | Removes => "2") ^ ",") is
+            @ ["};",
+               "/* the operand that is the register the instruction writes (named d",
+               "   in src/isa/regs.sml), or -1: every other register operand, and a",
+               "   list's, is read (the JIT's unit-fill elision, docs/plans/jit.md M7) */",
+               "static const signed char rop_dest[] = {"]
+            @ List.map (fn (_, i : rinstruction) =>
+                          let
+                            fun find (_, []) = "-1"
+                              | find (k, (name, _) :: rest) = if name = "d" then Int.toString k else find (k + 1, rest)
+                          in
+                            "  " ^ find (0, #operands i) ^ ","
+                          end) is
+            @ ["};",
+               "",
                "#endif"])}
     end
 
+  (* ---- the emitters of the JIT (vm/new/jit/emit.c): the prototypes, so
+     that an instruction without one does not build, and the cases that
+     read each instruction's operands and call it ---- *)
+
+  (* the parameters of an instruction's emitter: the context, the pc, the
+     fixed operands, and a list's registers and length *)
+  fun emitParams (i : rinstruction) =
+    let
+      val nf = List.length (fixed i)
+      val letters = ["a", "b", "c", "d"]
+    in
+      ["Jit *j", "uint32_t pc"]
+      @ List.tabulate (nf, fn k => "int32_t " ^ List.nth (letters, k))
+      @ (case list i of SOME _ => ["const uint8_t *L", "uint32_t n"] | NONE => [])
+    end
+
+  fun jitEmitH (instrs : rinstruction list) : file =
+    {path = "vm/new/jit_emit.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The emitters of tier 1 (vm/new/jit/emit.c), one per instruction of",
+           "   src/isa/regs.sml: an instruction without one does not build. */",
+           "#ifndef RUNE_JIT_EMIT_H",
+           "#define RUNE_JIT_EMIT_H",
+           "",
+           "typedef struct Jit Jit;",
+           ""]
+          @ List.map (fn (i : rinstruction) => "void emit_" ^ #name i ^ "(" ^ commaList (emitParams i) ^ ");") instrs
+          @ ["", "#endif"])}
+
+  fun jitCases (instrs : rinstruction list) : file =
+    {path = "vm/new/jit_cases.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The cases of the JIT's walk over a function (vm/new/jit/compile.c):",
+           "   each instruction's operands read as the loop reads them, and its",
+           "   emitter called. */"]
+          @ List.concat
+              (List.map (fn (i : rinstruction) =>
+                           let
+                             val nf = List.length (fixed i)
+                             val letters = ["a", "b", "c", "d"]
+                             val reads =
+                               List.tabulate (nf, fn k =>
+                                 "int32_t " ^ List.nth (letters, k) ^ " = read_i32(code + pc + " ^ Int.toString (1 + 4 * k) ^ ");")
+                             val len = Int.toString (1 + 4 * nf)
+                             val listReads =
+                               case list i of
+                                 SOME (_, Registers k) =>
+                                   ["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                    "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"]
+                               | SOME (_, PrimArgs k) =>
+                                   ["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                    "uint32_t n = prim_arity[" ^ List.nth (letters, k) ^ "];"]
+                               | _ => []
+                             val args =
+                               ["j", "pc"] @ List.tabulate (nf, fn k => List.nth (letters, k))
+                               @ (case list i of SOME _ => ["L", "n"] | NONE => [])
+                           in
+                             ["case ROP_" ^ #name i ^ ": {"]
+                             @ IsaGen.indent 4 (reads @ listReads @ ["emit_" ^ #name i ^ "(" ^ commaList args ^ ");", "break;"])
+                             @ ["}"]
+                           end)
+                        instrs))}
+
+  (* Each case of the loop (vm/new/interp.c) reads its own operands -- the
+     fixed ones, and for a list where it begins and how long it is -- moves
+     the pc past the instruction and counts it, then does its body and goes
+     on to the next (NEXT). CASE and NEXT are the loop's: labels and a
+     computed goto, or the cases of a switch. *)
   fun regCases (instrs : rinstruction list) : file =
     {path = "vm/new/reg_cases.h",
      text =
        lines
          (["/* " ^ generated,
-           "   The cases of vm/new's loop, each the body of its instruction in",
-           "   src/isa/regs.sml. */"]
+           "   The cases of vm/new's loop (vm/new/interp.c), each the body of its",
+           "   instruction in src/isa/regs.sml, in the loop's words. */"]
           @ List.concat
               (List.map (fn (i : rinstruction) =>
-                           ["case ROP_" ^ #name i ^ ": {"] @ IsaGen.indent 4 (#body i) @ ["    break;", "}"])
+                           let
+                             val nf = List.length (fixed i)
+                             val letters = ["a", "b", "c", "d"]
+                             val reads =
+                               List.tabulate (nf, fn k =>
+                                 "int32_t " ^ List.nth (letters, k) ^ " = read_i32(code + pc + " ^ Int.toString (1 + 4 * k) ^ ");")
+                             val len = Int.toString (1 + 4 * nf)
+                             val (listReads, advance) =
+                               case list i of
+                                 SOME (_, Registers k) =>
+                                   (["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                     "uint32_t n = (uint32_t)" ^ List.nth (letters, k) ^ ";"],
+                                    "pc += " ^ len ^ " + 4 * n;")
+                               | SOME (_, PrimArgs k) =>
+                                   (["const uint8_t *L = code + pc + " ^ len ^ ";",
+                                     "uint32_t n = prim_arity[" ^ List.nth (letters, k) ^ "];"],
+                                    "pc += " ^ len ^ " + 4 * n;")
+                               | _ => ([], "pc += " ^ len ^ ";")
+                             val traced =
+                               commaList (List.tabulate (3, fn k => if k < nf then List.nth (letters, k) else "0"))
+                           in
+                             ["CASE(" ^ #name i ^ ") {"]
+                             @ IsaGen.indent 4 (reads @ listReads
+                                                @ ["TRACE(ROP_" ^ #name i ^ ", " ^ traced ^ ");",
+                                                   advance,
+                                                   "count++;"]
+                                                @ #body i
+                                                @ ["NEXT;"])
+                             @ ["}"]
+                           end)
                         instrs))}
+
+  (* The labels of the cases, in the order of the opcodes, for the computed
+     goto of the loop. *)
+  fun regLabels (instrs : rinstruction list) : file =
+    {path = "vm/new/reg_labels.h",
+     text =
+       lines
+         (["/* " ^ generated,
+           "   The labels of the cases of vm/new/reg_cases.h by opcode, for the",
+           "   dispatch of vm/new/interp.c by computed goto. */"]
+          @ List.map (fn (i : rinstruction) => "&&L_" ^ #name i ^ ",") instrs)}
 
   (* ---- the .def file the scripts and the check of the documentation read,
      one line per instruction ---- *)
@@ -171,6 +314,7 @@ struct
       val () = RegIsa.check instrs
       val fp = fingerprint (instrs, prims)
     in
-      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regcodesSml (instrs, fp)]
+      [regsDef (instrs, fp), regopsH (instrs, fp), regCases instrs, regLabels instrs, jitEmitH instrs, jitCases instrs,
+       regcodesSml (instrs, fp)]
     end
 end

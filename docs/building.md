@@ -1,7 +1,7 @@
 # Building Rune
 
 Rune consists of the compiler `rune` (written in portable Standard ML) and the
-virtual machine `runevm` (C99). The compiler builds unchanged with **MLton**,
+virtual machine `runevm` (C17, and C99 with a switch). The compiler builds unchanged with **MLton**,
 **SML/NJ** (for 64 and for 32 bits) and **Poly/ML**; all these builds produce
 byte-identical bytecode (`make check-cross` verifies this).
 
@@ -23,7 +23,7 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
 ## Prerequisites
 
-* A C99 compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C99 compiler has.
+* A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `vm/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
   (`scripts/fetch-hosts.sh`) installs under `${RUNE_HOSTS:-~/.local/rune-hosts}`:
   MLton 20241230 (the binary release), SML/NJ 110.99.9 built for 64 bits and
@@ -43,7 +43,7 @@ baked into `bin/rune.rbc`, so it does not depend on where the checkout is.
 
 `make doctor` checks all of this (and the tools of the test, sanitizer, host
 matrix and profiling targets), by running the tools rather than just looking
-for them: it compiles a C99 program, and a program with MLton and with
+for them: it compiles a C program, and a program with MLton and with
 `polyc`. For everything that is missing it prints the install command of the
 system's package manager (`apt`, `dnf`, `pacman` or `brew`) and exits with
 status 1; optional tools only produce warnings.
@@ -64,8 +64,9 @@ before they first run (`scripts/doctor.sh --quiet --scope <scope>`; a stamp
 | `make host-builds` | all four host builds, of the compiler, of `runedoc` and of `runeopt` |
 | `make runedoc` | `bin/runedoc`, the documentation generator ([docs/plans/docgen.md](plans/docgen.md)) compiled by `bin/rune`: `bin/runedoc.rbc` and the wrapper `bin/runedoc-boot`. `make runedoc-host-builds` makes `bin/runedoc-mlton`, `-smlnj`, `-smlnj32` and `-polyml` |
 | `make runeopt` | `bin/runeopt`, the native code generator ([docs/native.md](native.md)) compiled by `bin/rune`: `bin/runeopt.rbc` and the wrapper `bin/runeopt-boot`. `make runeopt-host-builds` makes `bin/runeopt-mlton`, `-smlnj`, `-smlnj32` and `-polyml`. `runeopt prog.rbc -o prog` makes an executable of a program; `scripts/opt.sh prog.sml` does both steps |
-| `make vm` | `bin/runevm` |
-| `make vm-asan` | `bin/runevm-asan` with AddressSanitizer/UBSan |
+| `make vm` | `bin/runevm`, and `bin/runevm-new`, `vm/new`'s loop for the register bytecode |
+| `make vm-asan` | `bin/runevm-asan` and `bin/runevm-new-asan` with AddressSanitizer/UBSan; `make test-new-asan` runs `tests/lang` on the latter |
+| `make test-new-jit` | `vm/new` with every function compiled (`--jit=all`): `tests/lang` and the Basis Library suite (`rune:jit`), every program of `tests/lang` and `tests/perf`, `tests/opt/prims.sml` and the compiler compiling itself printing and counting the same interpreted, compiled, with every other function compiled (`--jit-only=odd`, so that calls, returns and raises cross between the tiers both ways) and under `--jit-stress` (tiered up at the lowest thresholds and invalidated every fifth call) and every instruction occurring in them (`scripts/check-jit.sh`), `runevm-new --jit-check`, and a recursion 200,000 deep under a machine stack of 1 MB, which holds the driver to never nesting ([plans/jit.md](plans/jit.md), M3-M5); part of `make check`. `make RUNE_JIT=0` builds `vm/new` without the JIT. `RUNEVM_JIT=MODE` in the environment is the mode where no `--jit=` is given |
 | `make boot` | `bin/rune.rbc` (the compiler compiled by `bin/rune-$(BOOTHOST)`), the `bin/rune-boot` wrapper that runs it on `runevm`, and `bin/rune` → `rune-boot` |
 | `make test` | run `tests/run-tests.sh` with `bin/rune`, and `tests/vm/run-vm-tests.sh`: bytecode files and options the VM must refuse with a message |
 | `make test-all` | run the suite with each of the four host builds |
@@ -112,9 +113,12 @@ host build that compiles stage 1 of the bootstrap.
 
 ## Windows
 
-`make windows` builds the VM for Windows with mingw-w64 twice: for 64 bits,
-`bin/runevm.exe`, and for 32 bits, `bin/runevm32.exe`. `make test-windows`
-runs the language suite and `tests/vm` on both (`tests/run-windows.sh`).
+`make windows` builds the VMs for Windows with mingw-w64, for 64 bits,
+`bin/runevm.exe` and `bin/runevm-new.exe`, and for 32 bits,
+`bin/runevm32.exe` and `bin/runevm-new32.exe`. `make test-windows` runs the
+language suite and `tests/vm` on all four (`tests/run-windows.sh`, once with
+the stack bytecode of `bin/rune` and once with the register bytecode of
+`bin/rune-new`), then the Basis Library suite on each.
 Neither is part of any other target: `make check` never compiles
 `vm/sys_win.c`, and nothing else in the tree depends on it. The toolchains
 have to be installed (`x86_64-w64-mingw32-gcc` and `i686-w64-mingw32-gcc`,
@@ -187,23 +191,31 @@ continuous integration.
 
 ## Another machine's VM
 
-`make check` builds the VM for this machine alone, so it says nothing about a
+`make check` builds the VMs for this machine alone, so it says nothing about a
 machine of another width or another order of bytes. `make portability` builds
-two more, both Linux, so that only the VM differs:
+them for two more, both Linux, so that only the VM differs:
 
 | | |
 |---|---|
-| `bin/runevm32` | a 32-bit x86, where a pointer is four bytes and the System V ABI aligns an `int64_t` to four |
-| `bin/runevm-ppc64` | a 64-bit PowerPC, big-endian; a wrapper that runs `bin/runevm-ppc64.bin` under `qemu-ppc64`, as `bin/rune-mlton` wraps its payload |
+| `bin/runevm32`, `bin/runevm-new32` | a 32-bit x86, where a pointer is four bytes and the System V ABI aligns an `int64_t` to four |
+| `bin/runevm-ppc64`, `bin/runevm-new-ppc64` | a 64-bit PowerPC, big-endian; a wrapper that runs `bin/runevm-ppc64.bin` (`bin/runevm-new-ppc64.bin`) under `qemu-ppc64`, as `bin/rune-mlton` wraps its payload |
+| `bin/runevm-new-aarch64` | a 64-bit ARM, the register VM with its JIT (plans/jit.md M12, the second target of the code it makes); a wrapper that runs `bin/runevm-new-aarch64.bin` under `qemu-aarch64` |
 
-The PowerPC one is built with clang, which cross-compiles without a gcc for
-the target, using the linker and the headers of a sysroot (`PPCROOT`, by
-default `/usr/powerpc64-linux-gnu`). `make doctor --scope portability` says
-what is missing and what to install.
+The PowerPC and the ARM ones are built with clang, which cross-compiles
+without a gcc for the target, using the linker and the headers of a sysroot
+(`PPCROOT`, by default `/usr/powerpc64-linux-gnu`; `A64ROOT`,
+`/usr/aarch64-linux-gnu`: the packages `libc6-dev-arm64-cross`,
+`libgcc-13-dev-arm64-cross` and `binutils-aarch64-linux-gnu`). `make doctor
+--scope portability` says what is missing and what to install.
 
-`make test-portability` runs `tests/lang` and `tests/vm` on each, and the Basis
-Library suite as the configurations `rune:linux32` and `rune:ppc64`. Then two
-things no single VM can show:
+`make test-portability` runs `tests/lang` and `tests/vm` on each, once with
+the stack bytecode on `bin/runevm32` and `bin/runevm-ppc64` and once with
+the register bytecode on `bin/runevm-new32`, `bin/runevm-new-ppc64` and
+`bin/runevm-new-aarch64`, and the Basis Library suite as the configurations
+`rune:linux32`, `rune:ppc64`, `rune:linux32-new`, `rune:ppc64-new` and
+`rune:aarch64-new`; and the JIT's oracle (`scripts/check-jit.sh`) on the
+ARM VM, every mode of its JIT against its interpreter. Then two things no
+single VM can show:
 
 * the counts of `runevm --count` must agree **to the byte** on every VM and on
   this one. They are the instructions executed and the bytes and objects
@@ -213,7 +225,7 @@ things no single VM can show:
   one and each of the others reads it. The program prints its answer before
   saving and again once restored, so the two are compared with each other.
 
-The PowerPC VM is linked with an rpath as well as `-L`, so that it loads both
+The PowerPC and ARM VMs are linked with an rpath as well as `-L`, so that they load both
 when the wrapper starts it and when the kernel does. That second way is what a
 fork by a second VM needs: it starts the child by exec of the VM's own binary,
 and qemu-user does not emulate a program it is handed by exec -- the kernel has
@@ -222,8 +234,11 @@ to know what a PowerPC binary is, which means qemu registered under
 it ships `ConditionVirtualization=!wsl` for `systemd-binfmt.service` to keep
 its own `WSLInterop` registration, which `make test-windows` needs; register
 qemu beside that one rather than by starting the service, which flushes every
-registration first (`tests/portability-skip.txt` has the command). Without it,
-`rt.fork_image` is the one program to leave out.
+registration first (`tests/portability-skip.txt` has the command). Without it
+`tests/run-portability.sh` refuses to start, naming the command, since the
+child would never start and the parent would wait for it for ever; `make
+doctor` checks the registration too. It does not survive a restart of WSL
+unless the boot command in `/etc/wsl.conf` redoes it.
 
 It found two bugs when it was written. A `Value` was 12 bytes on a 32-bit
 Linux, where the ABI aligns an `int64_t` to four and every other target

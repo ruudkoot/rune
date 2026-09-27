@@ -37,13 +37,38 @@ names       nnames × { len u32, bytes }      # of the functions inlined, each o
 ninlined    u32
 frames_len  u32
 frames      frames_len bytes                 # ninlined frames; see below
+nmeta       u32                              # 0, or nfuncs: the representations; see below
+meta        nmeta × { arity u32, nregs u32, reps nregs × u8,
+                      nblocks u32, blocks nblocks × { pc u32, nparams u32, params nparams × u32 },
+                      nloops u32, loops nloops × u32 }
 ```
 
-The version is `4`, and it changes when the layout does (`rbcVersion` in
+The version is `5`, and it changes when the layout does (`rbcVersion` in
 `src/isa/stack.sml`). A file of version `1`, which has no debug section,
-`2`, which has no fingerprint, or `3`, whose line table knows nothing of
-inlined functions, is refused like any other version the VM does not
-know.
+`2`, which has no fingerprint, `3`, whose line table knows nothing of
+inlined functions, or `4`, which has no representations section, is
+refused like any other version the VM does not know.
+
+**The representations** say, per function, what the compiler knows of it
+beside its code, for a target that keeps values out of their tagged slots
+(the JIT's tier 2, [plans/jit.md](plans/jit.md), M8): its arity; what each
+of its registers holds, as a number -- `0` anything, `1` an int, `2` a
+word, `3` a real, `4` a char, `5` a nullary constructor (a bool, an
+order), `6` a value in the heap (a tuple, a string, an array, a ref, a
+closure, an exception, a datatype of non-nullary constructors only), `7`
+either a nullary constructor or a value in the heap (a list), `8` unit --
+a register being shared only among values of one representation
+(`src/backend/regs.sml`); its blocks, each by the `pc` it begins at and
+the registers of its parameters, so that the SSA form the compiler had
+can be had again; and the `pc`s of its loop heads. The register bytecode
+carries the section (`nmeta` is `nfuncs`); the stack bytecode none
+(`nmeta` is `0`), and a hand-made file of either may say `0`. The loader
+holds the section to the code: a block or a loop begins at an instruction
+of its function, and where an instruction says what it writes -- `INT`,
+`CONST`, `UNIT`, `CON0`, `CONTAG`, the allocating ones, a `PRIM` whose
+result its description types (`prim_result` in `vm/prims_table.h`) --
+the register's representation agrees, or the file is refused ("the
+representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
@@ -211,8 +236,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 
 ## The register bytecode (vm/new)
 
-`vm/new`'s first loop (`bin/runevm-new`, `vm/new/interp.c`) runs a second
-instruction set, of registers (`src/isa/regs.sml`; decision D4 of
+`vm/new`'s loop (`bin/runevm-new`, `vm/new/interp.c`; `vm/new/ARCHITECTURE.md`
+is the VM as built) runs a second instruction set, of 41 registers
+instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune --target=registers` makes
 it, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
 register instruction set's fingerprint (`vm/new/regs.def`), so that each VM
@@ -222,7 +248,11 @@ refuses the other's file and image.
   argument (registers 0 to `n-1` the arguments of a known call), the others
   start as `unit`, and `nlocals` of the function table
   is their number. The collector sees every one, as it sees the locals of the
-  stack bytecode, since the stack pointer stays above them.
+  stack bytecode, since the stack pointer stays above them. Above them a
+  frame pushes only the arguments of a primitive, a call's result and the
+  exception a raise leaves: the loader works out how deep that goes
+  (`maxstack`: the widest primitive, or 1), a call makes room for it, and
+  the loop's pushes do not check.
 * **Operands** are `i32`, as in the stack bytecode; an instruction that takes
   a list of registers (`TUPLE`, `CLOSURE`, `PRIM`) has them last, as many as
   its count says or as its primitive's arity.
@@ -230,9 +260,54 @@ refuses the other's file and image.
   the instruction after the call takes it into a register (`RESULT`); a
   handler's code begins with `CATCH`, which takes the exception a raise left
   there. `vm/new` shares `runevm`'s runtime this way (`build/librune.a`).
+  The loop's `RET` writes the value into the register of the `RESULT` the
+  caller goes on at and passes over that `RESULT`, so `--count` counts one
+  instruction fewer for each call than the code has; a program resumed from
+  an image at a `RESULT` takes its value from the stack as before.
+* **Primitives** done in the loop: the common case of the primitives
+  `runeopt` does in line (`runeopt --inlined`; [native.md](native.md)) is
+  done from the registers, with nothing pushed (`vm/new/fastprim.h`), and
+  the primitive itself is called for the rest -- an overflow, a divisor of
+  zero, an index out of bounds. The result is the primitive's either way,
+  which `scripts/check-new.sh` holds `tests/opt/prims.sml` to on both VMs.
 * **A primitive that saves or restores an image** (`rt_save`, `rt_restore`,
   `posix_fork`) is `PRIMPUSH` and `RESULT`, so that a program resumed from
   an image finds its result where `RESULT` takes it.
+* **The JIT** (`docs/plans/jit.md`; `vm/new/ARCHITECTURE.md`, The driver
+  and Tier 1): `--jit=off|baseline|opt|all` says which functions get
+  native code (`RUNEVM_JIT=MODE` in the environment where no `--jit=` is
+  given, which `runevm` ignores, since the compiler runs on it), `--jit-stats`
+  prints at exit what the JIT did, and `--jit-check` runs a few bytes of
+  code from executable memory and exits. `runevm` refuses all three
+  options: the JIT is `vm/new`'s. Compiled code counts, allocates
+  and prints what the loop does: `scripts/check-jit.sh` holds it to that.
+  `--trace` runs every instruction interpreted, whatever `--jit=` says.
+  `--jit-only=LO-HI`, `odd` or `even` gives code to those functions alone:
+  for finding one whose code is wrong by halving, and for the third run
+  of `check-jit.sh`, in which calls, returns and raises cross between the
+  tiers both ways. Under `--jit=opt`, the default since M10 (M6 to M9:
+  `--jit=baseline`, tier 1 by the same counters), a function is
+  compiled at its Nth call, or when its work -- the iterations of its
+  loops and the calls it makes -- reaches N (`--jit-calls=N`,
+  `--jit-work=N`; the defaults are the sweep's, plans/jit.md M6), and the interpreter goes on in a function's code
+  wherever a run of instructions begins -- a loop's head, the instruction
+  after a call, a handler -- the frame being the same; `--jit-stress=N`
+  invalidates the callee's code at every Nth call into it, for testing
+  that frames return to the interpreter from code that is gone.
+  `--deopt-stress=N` makes compiled code leave for the interpreter at
+  every Nth instruction boundary (plans/jit.md M11; ARCHITECTURE.md,
+  Deoptimisation), a test that the frame is exact everywhere, which the
+  oracle runs at N = 1. `--jit-perf-map` writes `/tmp/perf-PID.map`, so that `perf record`
+  names compiled functions (`jit1:NAME`, `jit2:NAME` by tier). Under
+  `--jit=opt` a function is compiled by the same counters at tier 2
+  (plans/jit.md M9; ARCHITECTURE.md, Tier 2), whose code keeps ints,
+  words, chars, nullary constructors and reals of the function's
+  registers in machine registers and writes them back to their slots at
+  every safepoint; `--jit-tier=N` (1 or 2) fixes the tier under any
+  mode, so `--jit=all --jit-tier=2` compiles every function at tier 2,
+  the fifth run of `check-jit.sh` (`RUNEVM_JIT_TIER=N` in the environment
+  where no `--jit-tier=` is given, as `RUNEVM_JIT` for the mode: the
+  Windows suite runs `tests/lang` at tier 2 so).
 
 | Opcode | Operands | Effect |
 |---|---|---|
@@ -247,7 +322,7 @@ refuses the other's file and image.
 | `CALLK f n a...` / `TAILCALLK f n a...` | function, count, registers | Call function `f` with the registers `a...` as its registers 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`). |
 | `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
 | `RET s` | register | Return `s` to the caller. |
-| `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise. |
+| `PRIM p d a...` | primitive, register, registers | `d :=` primitive `p` of the registers `a...`, or raise; the common case of some in the loop. |
 | `PRIMPUSH p a...` | primitive, registers | Primitive `p` of `a...`, its result left for `RESULT`. |
 | `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
 | `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |
@@ -307,6 +382,10 @@ raised as noted.
   plans/middle-end.md), so a wrong tag would otherwise go unseen; the test
   suites run so (`tests/run-tests.sh`, `make check-levels`);
 * `runevm --heap-size N file.rbc` sets the initial semispace size in bytes;
+* `runevm --stack-size N file.rbc` sets the most bytes the stack (its
+  values, frames or handlers) may grow to, 1 GiB by default: a recursion
+  without end ends with `stack overflow` and status 2, not with the
+  machine's memory gone (`tests/lang/rt.stack_limit`);
 * `runevm --heap-fill P file.rbc` grows the heap after a collection until at
   most P percent of it is in use (1 to 100, 50 by default);
 * `runevm --emulate-fork file.rbc` makes `posix_fork` what it is on Windows,

@@ -505,7 +505,9 @@ struct
          @ List.map (fn f => le32 (String.size f) ^ f) files
          @ [le32 (List.length lines), le32 (String.size tableText), tableText, le32 (List.length ns)]
          @ List.map (fn n => le32 (String.size n) ^ n) ns
-         @ [le32 (List.length inlines), le32 (String.size framesText), framesText])
+         @ [le32 (List.length inlines), le32 (String.size framesText), framesText]
+         (* no representations section: that is the register bytecode's (docs/bytecode.md) *)
+         @ [le32 0])
     end
 
   (* line_at: the entry that covers pc, the last that begins at or before it. *)

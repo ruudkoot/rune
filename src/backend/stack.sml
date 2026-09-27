@@ -370,7 +370,7 @@ struct
       val () = Vector.appi block blocks
       val () = if !pendingTrees = 0 then () else bug "a tree never used"
     in
-      {id = #id f, nlocals = !nslots, code = List.rev (!code), name = #name f}
+      {id = #id f, nlocals = !nslots, code = List.rev (!code), name = #name f, meta = NONE}
     end
 
   fun program (p : L.program) : C.program =

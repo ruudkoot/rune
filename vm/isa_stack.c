@@ -6,7 +6,7 @@
 #include "vm.h"
 
 const uint32_t isa_fingerprint = ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 5 isa " ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 6 isa " ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -180,6 +180,9 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     }
     for (uint32_t i = 0; i < p->nfuncs; i++)
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
+    /* the representations section is the register bytecode's (vm/new) */
+    for (uint32_t i = 0; i < p->nfuncs; i++)
+        if (p->funcs[i].has_meta) { free(starts); fail(err, errlen, "a representations section in stack bytecode"); return NULL; }
     if (!stack_heights(p, err, errlen)) { free(starts); return NULL; }
     return starts;
 }

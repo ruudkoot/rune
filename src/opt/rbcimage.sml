@@ -17,7 +17,7 @@ struct
   fun fail msg = raise Bad msg
 
   (* IMAGE_MAGIC of vm/image.c, with the fingerprint of the instruction set *)
-  val magic = "runevm image 5 isa " ^ Opcodes.fingerprintHex ^ "\000"
+  val magic = "runevm image 6 isa " ^ Opcodes.fingerprintHex ^ "\000"
   val big = Rbc.big
 
   type reader = {data : string, pos : int ref}
@@ -165,6 +165,19 @@ struct
             let val name = str r val file = u32 r val line = u32 r val col = u32 r val parent = u32 r
             in inlines (n - 1, (name, file, line, col, parent) :: acc) end
       val ins = inlines (ninlines, [])
+      (* the representations section (docs/bytecode.md), which the stack
+         bytecode has none of and runeopt reads none of: passed over *)
+      val nmeta = u32 r
+      fun skipN (0, f) = () | skipN (n, f) = (f (); skipN (n - 1, f))
+      val () = skipN (nmeta, fn () =>
+                 let
+                   val _ = u32 r
+                   val nregs = u32 r
+                   val _ = take (r, nregs)
+                   val nblocks = u32 r
+                   val () = skipN (nblocks, fn () => let val _ = u32 r val nparams = u32 r in skipN (nparams, fn () => ignore (u32 r)) end)
+                   val nloops = u32 r
+                 in skipN (nloops, fn () => ignore (u32 r)) end)
     in
       Rbc.write {consts = cs, nglobals = nglobals, funcs = fs, code = code, files = fls, lines = ls, inlines = ins}
     end

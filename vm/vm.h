@@ -25,7 +25,39 @@ typedef struct Obj Obj;
    a different size (make test-portability). A narrower Value on 32-bit
    machines would save 0.46% of the heap and cost more than that: the reasons
    are written down under "8-byte values" in docs/plans/performance.md,
-   which is also where the padding of the payload is weighed. */
+   which is also where the padding of the payload is weighed.
+
+   The tag and its padding are also one 64-bit word, the header (hdr), so
+   that a value made by mk_int and the others is two words in two registers
+   and is stored in two stores. Built a byte at a time it goes through
+   memory, and the 16-byte load that copies it then waits tens of cycles for
+   the byte store to retire (docs/plans/jit.md, M2). That takes an unnamed
+   member, which C11 has: a compiler without it gets the byte alone and the
+   same layout. */
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && defined(__BYTE_ORDER__)
+#define RUNE_VALUE_HDR 1
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define VALUE_HDR(t) ((uint64_t)(t) << 56)   /* the tag is the first byte, whichever end that is */
+#else
+#define VALUE_HDR(t) ((uint64_t)(t))
+#endif
+typedef struct Value {
+    union {
+        struct {
+            uint8_t tag;
+            uint8_t pad[7];
+        };
+        uint64_t hdr;
+    };
+    union {
+        int64_t i;   /* T_INT, T_CHAR, T_CON0 (constructor tag) */
+        uint64_t w;  /* T_WORD */
+        double d;    /* T_REAL */
+        Obj *p;      /* T_PTR */
+    } u;
+} Value;
+#else
+#define RUNE_VALUE_HDR 0
 typedef struct Value {
     uint8_t tag;
     uint8_t pad[7];
@@ -36,6 +68,7 @@ typedef struct Value {
         Obj *p;      /* T_PTR */
     } u;
 } Value;
+#endif
 
 enum ObjKind {
     K_TUPLE = 1,  /* len fields; also vectors */
@@ -60,16 +93,31 @@ struct Obj {
 #define OBJ_FIELDS(o) ((Value *)((char *)(o) + sizeof(Obj)))
 #define OBJ_BYTES(o) ((char *)(o) + sizeof(Obj))
 
-static inline Value mk_unit(void) { Value v; v.tag = T_UNIT; v.u.i = 0; return v; }
-static inline Value mk_int(int64_t i) { Value v; v.tag = T_INT; v.u.i = i; return v; }
-static inline Value mk_word(uint64_t w) { Value v; v.tag = T_WORD; v.u.w = w; return v; }
-static inline Value mk_real(double d) { Value v; v.tag = T_REAL; v.u.d = d; return v; }
-static inline Value mk_char(int64_t c) { Value v; v.tag = T_CHAR; v.u.i = c; return v; }
-static inline Value mk_con0(int64_t t) { Value v; v.tag = T_CON0; v.u.i = t; return v; }
-static inline Value mk_ptr(Obj *p) { Value v; v.tag = T_PTR; v.u.p = p; return v; }
+#if RUNE_VALUE_HDR
+#define RUNE_MK(t, field, x) Value v; v.hdr = VALUE_HDR(t); v.u.field = (x); return v
+#else
+#define RUNE_MK(t, field, x) Value v; v.tag = (t); v.u.field = (x); return v
+#endif
+static inline Value mk_unit(void) { RUNE_MK(T_UNIT, i, 0); }
+static inline Value mk_int(int64_t i) { RUNE_MK(T_INT, i, i); }
+static inline Value mk_word(uint64_t w) { RUNE_MK(T_WORD, w, w); }
+static inline Value mk_real(double d) { RUNE_MK(T_REAL, d, d); }
+static inline Value mk_char(int64_t c) { RUNE_MK(T_CHAR, i, c); }
+static inline Value mk_con0(int64_t t) { RUNE_MK(T_CON0, i, t); }
+static inline Value mk_ptr(Obj *p) { RUNE_MK(T_PTR, p, p); }
+#undef RUNE_MK
 static inline Value mk_bool(int b) { return mk_con0(b ? 1 : 0); }
 
 /* ---------------------------------------------------------------- program */
+
+/* A block of a function, as the compiler laid it out: where it begins and
+   the registers of its parameters (the representations section,
+   docs/bytecode.md). */
+typedef struct MetaBlock {
+    uint32_t pc;
+    uint32_t nparams;
+    uint32_t *params;
+} MetaBlock;
 
 typedef struct Function {
     uint32_t code_offset;
@@ -77,7 +125,22 @@ typedef struct Function {
     uint32_t maxstack;   /* how deep its operand stack goes: the loader works it out (vm/isa_stack.c) */
     uint32_t nlocals;
     char *name;
+    /* The representations section of the register bytecode (docs/bytecode.md;
+       docs/plans/jit.md, M8): what the compiler says of the function beside
+       its code, for the JIT's tier 2. has_meta is 0 where the file says
+       nothing (the stack bytecode, a hand-made file). */
+    int has_meta;
+    uint32_t arity;
+    uint8_t *reps;       /* nlocals of them: what each register holds (REP_*) */
+    uint32_t nblocks;
+    MetaBlock *blocks;
+    uint32_t nloops;
+    uint32_t *loops;     /* the pcs of the loop heads */
 } Function;
+
+/* What a register holds, as the compiler says (Low.rep; the numbers are the
+   file's) */
+enum Rep { REP_ANY = 0, REP_INT, REP_WORD, REP_REAL, REP_CHAR, REP_CON0, REP_PTR, REP_CON, REP_UNIT, REP__COUNT };
 
 /* Where an instruction came from: the file, line and column the compiler
    recorded for the instructions from `pc` up to the next entry's, and the
@@ -121,6 +184,8 @@ typedef struct Program {
     uint32_t ninlines;
     Inlined *inlines;
 } Program;
+/* the representations section freed with the program (vm/loader.c) */
+void program_free_meta(Program *p);
 
 /* ---------------------------------------------------------------- machine */
 
@@ -132,13 +197,40 @@ typedef struct Frame {
     /* In a program runeopt made (vm/native.c), the native code at ret_pc.
        An image does not carry it: it is an address of one process. */
     const void *native_ret;
+    /* In vm/new, the register of the caller's RESULT, which the return
+       writes into, or UINT32_MAX where the caller takes the value from the
+       stack (docs/plans/jit.md, M7). Not in an image: made again from the
+       code at ret_pc when one is read (vm/new/interp.c, make_room). */
+    uint32_t result;
 } Frame;
 
 typedef struct Handler {
     uint32_t pc;
     size_t sp;
     size_t fp;
+    /* In vm/new, the native code of the handler where the frame that
+       installed it runs compiled (vm/new/jit.h); NULL for the interpreter.
+       An image does not carry it. */
+    const void *native;
 } Handler;
+
+/* The --jit options of vm/new (vm/new/jit.h, docs/plans/jit.md): the mode;
+   --jit-stats; --jit-only=SPEC, which functions alone get code; the
+   thresholds of --jit=baseline, in calls of a function and in its work,
+   the iterations of its loops and the calls it makes (0: the defaults);
+   --jit-stress=N, every Nth call into compiled code invalidating it
+   instead. */
+typedef struct JitOptions {
+    int mode;
+    int stats;
+    int perf_map;            /* --jit-perf-map: /tmp/perf-PID.map, for perf record (M7) */
+    int profile;             /* --jit-profile: the profiles of tier 1's code, shown by --jit-stats (M8) */
+    const char *only;
+    uint32_t calls, work;
+    uint32_t stress;
+    uint32_t tier;           /* --jit-tier=N: the tier functions are compiled at (0: the mode's; M9) */
+    uint32_t deopt_stress;   /* --deopt-stress=N: code leaves for the interpreter at every Nth instruction boundary (M11) */
+} JitOptions;
 
 #define NUM_BUILTIN_EXNS 8
 
@@ -147,6 +239,7 @@ typedef struct VM {
 
     Value *stack;
     size_t sp, stack_cap;
+    size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
 
     Frame *frames;
     size_t fp, frames_cap;   /* fp = index of current frame; frames_cap capacity */
@@ -183,6 +276,7 @@ typedef struct VM {
     int emulate_fork;        /* --emulate-fork: fork as Windows must, by a second VM (vm/image.c) */
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     int native;              /* a program runeopt made, whose code is not bytecode (vm/native.c) */
+    JitOptions jit;          /* the --jit options, vm/new's (vm/new/jit.h); all 0 in runevm */
 
     int argc;
     char **argv;             /* arguments after the bytecode file */
@@ -248,6 +342,8 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
     vm->frames[idx].closure = closure;
     vm->frames[idx].ret_pc = ret_pc;
     vm->frames[idx].base = base;
+    vm->frames[idx].native_ret = NULL;   /* native code sets its own (vm/native.c, vm/new) */
+    vm->frames[idx].result = UINT32_MAX; /* vm/new's loop and code set it */
     vm->fp = idx;
     vm->frames_active = 1;
 }
@@ -267,6 +363,15 @@ void vm_destroy(VM *vm);                     /* and the VM */
 /* interp.c */
 int vm_run(VM *vm);                          /* vm_start, then the loop */
 int vm_loop(VM *vm);                         /* the dispatch loop alone, from vm->pc */
+/* The options of the JIT (--jit=MODE, --jit-stats, --jit-check), which
+   vm/new takes and runevm refuses: 1 when the option is taken, 0 when it is
+   not one. vm_jit_check runs --jit-check and gives the exit status. */
+int vm_jit_arg(const char *arg, JitOptions *jit, int *check);
+int vm_jit_check(void);
+/* RUNEVM_JIT in the environment, the mode where no --jit= is given: taken
+   by vm/new, ignored by runevm (the compiler runs on it); 0 for a mode
+   that is none. */
+int vm_jit_env(const char *mode, int *out);
 
 /* In a program runeopt made (vm/native.c), whether a world read from an
    image runs the program it carries; NULL in runevm, which runs any. */

@@ -48,15 +48,18 @@ function f0 <toplevel> (v1, 0 captured)
     v30 = setglobal g5 v29
     v31 = ()
     return v31
+  reps v8:con v9:int v10:int v11:int v13:ptr v14:ptr v15:con0 v16:int v20:int v21:con0 v22:int v23:ptr v24:int v25:ptr v27:int
 function f1 adder (v1, 0 captured)
   b0:
     v2 = closure f2 v1
     return v2
+  reps v1:int
 function f2 fn (v1, 1 captured)
   b0:
     v2 = env 0
     v3 = prim int_add v1 v2
     return v3
+  reps v1:int v3:int
 function f3 count (v1, 0 captured)
   b0:
     goto b1 v1
@@ -75,6 +78,7 @@ function f3 count (v1, 0 captured)
     v10 = prim int_add v4 v9
     v11 = tuple v8 v10
     goto b1 v11
+  reps v1:ptr v2:ptr v3:int v4:int v5:int v6:con0 v7:int v8:int v9:int v10:int
 function f4 first (v1, 0 captured)
   b0:
     iftag v1 0 b2 b3
@@ -95,3 +99,4 @@ function f4 first (v1, 0 captured)
     v5 = ()
     v6 = mkexn v4 v5
     raise v6
+  reps v1:con v2:int v3:int v4:ptr v5:unit v6:ptr

@@ -19,7 +19,14 @@ struct
     | Pos of int * int * int * int        (* file, line, column of what follows, and the inlined
                                              frames it is in (inlineIdx) *)
 
-  type func = {id : int, nlocals : int, code : item list, name : string}
+  (* What the register target says of a function beside its code
+     (docs/bytecode.md, The representations; docs/plans/jit.md, M8): its
+     arity, what each of its registers holds (Low.repCode, nlocals of
+     them), its blocks -- each by its label and the registers of its
+     parameters -- and the labels of its loop heads. The stack target says
+     nothing (NONE). *)
+  type meta = {arity : int, reps : int list, blocks : (int * int list) list, loops : int list}
+  type func = {id : int, nlocals : int, code : item list, name : string, meta : meta option}
 
   (* nlabels: the labels of the program are numbered from 0 up to it. *)
   type program = {consts : const list, nglobals : int, funcs : func list, files : string list,

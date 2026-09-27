@@ -164,7 +164,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | 4.9, 4.4 equality | ty.eqtype |
 | 4.11 further restrictions | ty.exhaustive, ty.record.flex |
 | Chapter 5 static semantics for Modules | mod.ascription, mod.ascription.opaque, mod.wheretype, mod.sharing, mod.sharing.structure, mod.functor.generative |
-| Chapter 6 dynamic semantics for the Core | rt.tailcall, rt.deeprec, rt.exn.uncaught, rt.overflow, rt.div, rt.equality, rt.closure, exp.app (evaluation order), dec.exception (generativity) |
+| Chapter 6 dynamic semantics for the Core | rt.tailcall, rt.deeprec, rt.stack, rt.exn.uncaught, rt.overflow, rt.div, rt.equality, rt.closure, exp.app (evaluation order), dec.exception (generativity) |
 | Chapter 7 dynamic semantics for Modules | mod.functor.generative, mod.ascription (hidden components) |
 | Chapter 8 programs, rules 87–89 | dec.toplevelexp, ty.infer.valuerestriction |
 | Appendix A derived forms | exp.tuple, exp.record.select, exp.case, exp.if, exp.boolops, exp.seq, exp.let, exp.while, exp.list, pat.tuple, pat.list, dec.fun, dec.datatype.withtype, dec.abstype, dec.toplevelexp, mod.ascription, mod.functor, mod.functor.result, mod.spec, mod.include, mod.sharing.structure, mod.wheretype |
@@ -177,6 +177,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 |---|---|---|---|
 | rt.tailcall | Proper tail calls (constant stack for tail recursion) | Supported | Not in the body of a `handle`. |
 | rt.deeprec | Deep non-tail recursion (the VM stack grows on demand) | Supported | |
+| rt.stack | A recursion without end stops at the stack's limit (`runevm --stack-size N`, 1 GiB by default) with `stack overflow` and status 2, not with the machine's memory | Supported | |
 | rt.gc | Garbage collection (copying collector, heap grows as needed) | Supported | `runevm --heap-size N` sets the initial semispace. |
 | rt.trace | A stack trace: the frames as data (`Runtime.trace`), written by `Runtime.printTrace`, and printed by the VM under an uncaught exception and a fatal error | Supported | Each frame is the name the compiler recorded for the function, qualified by the structures it is in, and the position it is stopped at, from the line table of the `.rbc` (`docs/bytecode.md`). A tail call replaces the frame it is made from, so it leaves none to report. A function the optimiser inlined is still a frame of its own, as its call would have been (`docs/ir.md`, *Positions*). |
 | rt.save | `Runtime.save` writes the running program to a file, and `runevm --restore FILE` carries it on in another process | Supported | The image is the format of `vm/image.c`, which no machine can call its own: one written by the 64-bit VM is restored by `bin/runevm32.exe`. `Posix.Process.fork` where the system has none writes the same format to a second VM (`--emulate-fork` takes that path on Linux). |

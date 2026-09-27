@@ -5,7 +5,7 @@
 #include "regvm.h"
 
 const uint32_t isa_fingerprint = REG_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 5 isa " REG_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 6 isa " REG_ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -35,8 +35,13 @@ static int operand_ok(const Program *p, uint32_t fi, int kind, int32_t v) {
 
 /* Where every instruction of a program begins, or NULL and a message: the
    opcodes, the operands by their kinds (a register below the frame's
-   number, every register of a list among them), the jump targets and the
-   function entries. A .rbc and an image are untrusted input alike. */
+   number, every register of a list among them), the jump targets, which
+   stay in their function, and the function entries. A .rbc and an image
+   are untrusted input alike. On the way it works out how deep each
+   function's stack goes above its registers (Function.maxstack): the
+   arguments of a primitive, or the one value a call returns and a raise
+   leaves for CATCH. The loop's pushes do not check (vm/new/interp.c),
+   which this is what makes safe. */
 uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     for (uint32_t i = 0; i < p->nfuncs; i++) {
         if (p->funcs[i].code_offset >= p->code_len) { fail(err, errlen, "function offset out of range"); return NULL; }
@@ -47,6 +52,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     }
     uint8_t *starts = calloc(p->code_len + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
+    for (uint32_t i = 0; i < p->nfuncs; i++) p->funcs[i].maxstack = 1;
     uint32_t fi = 0;
     uint32_t pc = 0;
     while (pc < p->code_len) {
@@ -68,18 +74,20 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         for (uint32_t i = 0; i < n && !bad; i++)
             bad = !operand_ok(p, fi, RK_REGISTER, read_i32(at + 1 + 4 * (rop_nfixed[op] + i)));
         if (bad) { free(starts); snprintf(err, errlen, "bad register for %s at %u", rop_names[op], pc); return NULL; }
+        if ((op == ROP_PRIM || op == ROP_PRIMPUSH) && n > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n;
         starts[pc] = 1;
         pc += len;
     }
-    /* jump targets and function entries must be instruction boundaries; a
-       SWITCH's table is JUMPs of its own function, which the code goes on
-       after */
+    /* jump targets and function entries must be instruction boundaries,
+       and a jump stays in its function; a SWITCH's table is JUMPs of its
+       own function, which the code goes on after */
     pc = 0;
     fi = 0;
     while (pc < p->code_len) {
         while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
         const uint8_t *at = p->code + pc;
         uint8_t op = at[0];
+        uint32_t from = p->funcs[fi].code_offset, to = p->funcs[fi].code_end;
         if (op == ROP_SWITCH) {
             uint32_t n = (uint32_t)read_i32(at + 5);
             uint64_t table = (uint64_t)pc + rop_length(at);
@@ -94,17 +102,68 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL) {
                 int32_t t = read_i32(at + 1 + 4 * k);
-                if (t < 0 || (uint32_t)t >= p->code_len || !starts[t]) {
+                if (t < 0 || (uint32_t)t < from || (uint32_t)t >= to || !starts[t]) {
                     free(starts); snprintf(err, errlen, "bad jump target at %u", pc); return NULL;
                 }
             }
         pc += rop_length(at);
     }
-    for (uint32_t i = 0; i < p->nfuncs; i++) {
+    for (uint32_t i = 0; i < p->nfuncs; i++)
         if (!starts[p->funcs[i].code_offset]) { free(starts); fail(err, errlen, "function entry is not an instruction"); return NULL; }
-        /* the registers are the frame; what is pushed beyond them, a
-           primitive's arguments and a call's result, is pushed with a check */
-        p->funcs[i].maxstack = 0;
+    /* the representations section, where the file has one: its blocks
+       and loop heads begin at instructions of their functions, and each
+       register's representation agrees with what the code writes into it,
+       where the instruction says (docs/bytecode.md, The representations) */
+    for (uint32_t fi = 0; fi < p->nfuncs; fi++) {
+        const Function *fn = &p->funcs[fi];
+        if (!fn->has_meta) continue;
+        for (uint32_t b = 0; b < fn->nblocks; b++)
+            if (fn->blocks[b].pc < fn->code_offset || fn->blocks[b].pc >= fn->code_end || !starts[fn->blocks[b].pc]) {
+                free(starts); snprintf(err, errlen, "a block of %s begins at %u, which is no instruction of it", fn->name, fn->blocks[b].pc); return NULL;
+            }
+        for (uint32_t k = 0; k < fn->nloops; k++)
+            if (fn->loops[k] < fn->code_offset || fn->loops[k] >= fn->code_end || !starts[fn->loops[k]]) {
+                free(starts); snprintf(err, errlen, "a loop of %s begins at %u, which is no instruction of it", fn->name, fn->loops[k]); return NULL;
+            }
+        for (uint32_t at = fn->code_offset; at < fn->code_end; ) {
+            uint8_t op = p->code[at];
+            uint32_t l = rop_length(p->code + at);
+            int made = -1;   /* what the instruction writes, where it says */
+            switch (op) {
+            case ROP_INT: case ROP_CONTAG: made = REP_INT; break;
+            case ROP_UNIT: made = REP_UNIT; break;
+            case ROP_CON0: made = REP_CON0; break;
+            case ROP_TUPLE: case ROP_CLOSURE: case ROP_NEWEXN: case ROP_BUILTINEXN: case ROP_MKEXN:
+            case ROP_SELF: case ROP_EXNCON: case ROP_CON: case ROP_CONN: made = REP_PTR; break;
+            case ROP_CONST: {
+                int32_t c = read_i32(p->code + at + 5);
+                if (c >= 0 && (uint32_t)c < p->nconsts)
+                    made = p->consts[c].tag == T_INT ? REP_INT : p->consts[c].tag == T_WORD ? REP_WORD
+                         : p->consts[c].tag == T_REAL ? REP_REAL : p->consts[c].tag == T_CHAR ? REP_CHAR
+                         : p->consts[c].tag == T_PTR ? REP_PTR : -1;
+                break;
+            }
+            case ROP_PRIM: {
+                int32_t prim = read_i32(p->code + at + 1);
+                if (prim >= 0 && prim < PRIM__COUNT && prim_result[prim] != REP_ANY) made = prim_result[prim];
+                break;
+            }
+            default: break;
+            }
+            if (made >= 0 && rop_dest[op] >= 0) {
+                int32_t d = read_i32(p->code + at + 1 + 4 * rop_dest[op]);
+                int have = d >= 0 && (uint32_t)d < fn->nlocals ? fn->reps[d] : REP_ANY;
+                int ok = have == REP_ANY || have == made
+                      || (have == REP_CON && (made == REP_CON0 || made == REP_PTR));
+                if (!ok) {
+                    free(starts);
+                    snprintf(err, errlen, "the representation of register %d of %s disagrees with the code at %u", d, fn->name, at);
+                    return NULL;
+                }
+            }
+            if (op == ROP_SWITCH) at += l + 5 * (uint32_t)read_i32(p->code + at + 5);
+            else at += l;
+        }
     }
     return starts;
 }

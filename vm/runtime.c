@@ -54,10 +54,21 @@ void vm_fatal(VM *vm, const char *fmt, ...) {
     exit(2);
 }
 
+/* A stack that would exceed --stack-size: a recursion without end, most
+   likely, which is stopped here rather than at the machine's memory. A VM
+   made without vm_init (one an image is read into) has the default. */
+#define STACK_LIMIT_DEFAULT ((size_t)1 << 30)   /* 1 GiB: 67 million values, or 26 million frames */
+static size_t stack_limit(const VM *vm) { return vm->stack_limit ? vm->stack_limit : STACK_LIMIT_DEFAULT; }
+static void stack_overflow(VM *vm) {
+    fprintf(stderr, "runevm: stack overflow: the stack would exceed %zu bytes (--stack-size N raises the limit)\n", stack_limit(vm));
+    exit(2);
+}
+
 void vm_grow_stack(VM *vm, size_t need) {
     size_t ncap = vm->stack_cap ? vm->stack_cap : 1024;
     while (ncap < need) ncap *= 2;
     if (ncap == vm->stack_cap) return;
+    if (ncap > stack_limit(vm) / sizeof(Value)) stack_overflow(vm);
     Value *ns = realloc(vm->stack, ncap * sizeof(Value));
     if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
     vm->stack = ns;
@@ -66,6 +77,7 @@ void vm_grow_stack(VM *vm, size_t need) {
 
 void vm_grow_frames(VM *vm) {
     size_t ncap = vm->frames_cap ? vm->frames_cap * 2 : 256;
+    if (ncap > stack_limit(vm) / sizeof(Frame)) stack_overflow(vm);
     Frame *nf = realloc(vm->frames, ncap * sizeof(Frame));
     if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
     vm->frames = nf;
@@ -75,6 +87,7 @@ void vm_grow_frames(VM *vm) {
 void vm_push_handler(VM *vm, uint32_t pc) {
     if (vm->hp >= vm->handlers_cap) {
         size_t ncap = vm->handlers_cap ? vm->handlers_cap * 2 : 64;
+        if (ncap > stack_limit(vm) / sizeof(Handler)) stack_overflow(vm);
         Handler *nh = realloc(vm->handlers, ncap * sizeof(Handler));
         if (!nh) { fprintf(stderr, "runevm: out of memory (handlers)\n"); exit(2); }
         vm->handlers = nh;
@@ -83,6 +96,7 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->handlers[vm->hp].pc = pc;
     vm->handlers[vm->hp].sp = vm->sp;
     vm->handlers[vm->hp].fp = vm->fp;
+    vm->handlers[vm->hp].native = NULL;
     vm->hp++;
 }
 
@@ -225,11 +239,13 @@ void vm_init(VM *vm, size_t heap) {
     vm->files[0] = stdin; vm->files[1] = stdout; vm->files[2] = stderr;
     vm->file_modes[1] = vm->file_modes[2] = 1;
     vm->nfiles = 3;
+    if (!vm->stack_limit) vm->stack_limit = STACK_LIMIT_DEFAULT;
     heap_init(vm, heap);
 }
 
 /* Also for a VM that an image was read into only in part (vm_resume). */
 void vm_release(VM *vm) {
+    program_free_meta(&vm->prog);
     for (uint32_t i = 0; vm->prog.funcs && i < vm->prog.nfuncs; i++) free(vm->prog.funcs[i].name);
     free(vm->prog.funcs);
     free(vm->prog.consts);

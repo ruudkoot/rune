@@ -596,7 +596,8 @@ xc1:* | INet6Sock:INET6_SOCK/sock_addr-is-Socket.sock_addr | XC1-NA | INet6Sock.
 # What Windows cannot do as POSIX does, and the checks that ask sh or start
 # another program of POSIX, which Windows has not: every line says which
 # after `stays:`, and the two VMs fail the same checks.
-rune:ppc64 | Posix.ProcEnv.uname/machine | EMULATED | qemu answers `uname` with the machine it emulates, ppc64, and the `uname -m` this check compares it with runs as a program of the real machine, which is not emulated: the two disagree because the VM is, and there is nothing of Rune in it
+rune:ppc64* | Posix.ProcEnv.uname/machine | EMULATED | qemu answers `uname` with the machine it emulates, ppc64, and the `uname -m` this check compares it with runs as a program of the real machine, which is not emulated: the two disagree because the VM is, and there is nothing of Rune in it
+rune:aarch64* | Posix.ProcEnv.uname/machine | EMULATED | qemu answers `uname` with the machine it emulates, aarch64, and the `uname -m` this check compares it with runs as a program of the real machine, which is not emulated: the two disagree because the VM is, and there is nothing of Rune in it
 rune:windows* | Socket.Ctl.getTYPE/unix-dgram | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.recvVecFrom/unix | WINDOWS | stays: Windows has no datagram sockets in the Unix domain
 rune:windows* | Socket.send*ToNB*/full | WINDOWS | stays: the check fills the queue of a datagram socket in the Unix domain, which Windows does not have
@@ -632,8 +633,10 @@ rune:windows* | Posix.Process.K_GROUP/* | WINDOWS | stays: Windows has no proces
 rune:windows* | Posix.Process.K_SAME_GROUP/* | WINDOWS | stays: Windows has no process groups, and cannot stop a process
 rune:windows* | Posix.Process.waitpid/no-child | WINDOWS | stays: a child of the W_GROUP checks before it is still there, which waiting for its group would have reaped
 rune:windows* | Posix.Process.W_STOPPED/* | WINDOWS | stays: Windows cannot stop a process
-rune:windows* | Posix.Process.W.untraced/* | WINDOWS | stays: Windows cannot stop a process
+rune:windows* | Posix.Process.W.untraced/waitpid-without-it | HOST-FLAKY | Windows cannot stop the child, which runs on to its end; the check's answer is then whether the child is gone within 300 ms: gone under the interpreter, not yet under the JIT, whose second VM compiles the program before it runs (rune:windows-new passes it)
 rune:windows* | Posix.Process.* | WINDOWS | stays: the child the test forks runs /bin/sh or /usr/bin/env, which Windows does not have
 rune:windows* | Posix.Signal.*/kill-l | WINDOWS | stays: the test asks sh (kill -l)
 rune:windows* | Posix.Signal.* | WINDOWS | stays: the test signals a /bin/sh that a child made by fork runs, and Windows has no /bin/sh
 rune:windows* | Unix.* | WINDOWS | stays: the programs the test starts (/bin/sh, /bin/cat, /bin/echo, /usr/bin/env) are POSIX's; basis.unix_pipes starts cmd.exe on Windows
+rune:*new* | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | vm/new keeps every register a root until it is written again (vm/new/ARCHITECTURE.md, conservative in liveness): the register that held the list is dead but not yet reused, since a register is shared only among values of one representation (plans/jit.md, M8); roots precise by liveness are tier 2's (M9)
+rune:jit | Runtime.collect/drops-what-is-unreachable | RUNE-DEV | the same, with every function compiled

@@ -385,8 +385,12 @@ leaves implicit is explicit.
 * **Calls:** a known call is of a function of the program, with as many
   arguments as it has parameters; a closure is only of a function of one.
 
-Low is untyped: the types become representations after closure
-conversion, which Low will carry when a target needs them (M11).
+Low carries no types, but what each variable holds, as a representation
+(`Low.rep`, from Mid's types in `Lower.repOfTy`; plans/jit.md, M8): an
+int, a word, a real, a char, a nullary constructor, a value in the heap,
+either, unit, or anything (a polymorphic variable, or one nothing is said
+of). The dump lists them after a function's header (`reps v3:int ...`),
+the variables of representation anything left out.
 
 ### The stack target
 
@@ -419,8 +423,14 @@ middle end may ask of it):
 ([bytecode.md](bytecode.md), The register bytecode; decision D4):
 
 * **Registers:** every variable has one, shared by linear scan as the
-  stack target shares locals; the parameters are registers 0 to n-1. One more, the
-  scratch, takes what nothing reads and breaks a cycle of moves.
+  stack target shares locals -- but only among variables of one
+  representation, so that a register holds one kind of value throughout
+  (M8); the parameters are registers 0 to n-1. One more, the scratch,
+  takes what nothing reads and breaks a cycle of moves, and holds
+  anything. What each register holds, the blocks with their parameters'
+  registers and the loop heads go into the file's representations
+  section ([bytecode.md](bytecode.md), The representations), which the
+  VM holds to the code.
 * **Calls and primitives:** a call is `CALL`, or `CALLK` with its
   arguments' registers, then `RESULT`; a primitive
   `PRIM` into its register, but one that saves or restores an image

@@ -116,12 +116,86 @@ keep these invariants:
   calls) is written against the VM. A push does not check: the loader works
   out each function's deepest stack (`vm/isa_stack.c`), so an instruction's
   `pops`/`pushes` must say what it does.
-* **vm/new** (`vm/new/`, `bin/runevm-new`) runs the register bytecode
-  (`src/isa/regs.sml`, `rune --target=registers`) on the runtime of
-  `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c` and
-  vm/new's `vm/new/isa_regs.c`. `make test-new`, part of `make check`, holds it
-  to what `runevm` prints and allocates; a change to the register
-  instruction set is `make isa` and a test, as for the stack one.
+* **vm/new** (`vm/new/`, `bin/runevm-new`; `vm/new/ARCHITECTURE.md` is the
+  VM as built, and every change to `vm/new` keeps it so) runs the register
+  bytecode (`src/isa/regs.sml`, `rune --target=registers`) on the runtime
+  of `runevm`, whose part that is the stack bytecode's is `vm/isa_stack.c`
+  and vm/new's `vm/new/isa_regs.c`. Its loop keeps its state in its own
+  variables as the stack VM's does: a body of `src/isa/regs.sml` is written
+  in the loop's words (`R`, `PUSH`, `POP`, `ENTER`, `ROOM`, `FATAL`,
+  `EXPECT`, and `SYNC()` before anything that reads the VM's stack pointer,
+  pc or count, with `RELOAD()` after what may change them or move the
+  stack); a push does not check, since the checker works out each
+  function's deepest stack (`vm/new/isa_regs.c`). A primitive done in the
+  loop (`vm/new/fastprim.h`) gives the primitive's result or declines, and
+  changes with its C in `vm/prims.c`; `scripts/check-new.sh` holds
+  `tests/opt/prims.sml` to the same output on both VMs. `make test-new`,
+  part of `make check`, holds vm/new to what `runevm` prints and allocates;
+  a change to the register instruction set is `make isa` and a test, as
+  for the stack one; a change to `vm/new` also runs `make test-new-asan`
+  and `make test-stress`, and the Windows and portability rules below,
+  whose VMs it is built for too. `vm_loop` is a driver and no engine calls
+  another (`vm/new/jit.h`): the interpreter hands the VM back, exact,
+  where a frame's code is native (`HANDOVER`, `RETURN_NATIVE`, `RAISED`),
+  native code hands it back where a frame is interpreted, and a helper
+  native code calls never runs bytecode nor compiles any; `make
+  test-new-jit`, part of `make check`, holds the driver to never nesting.
+  `runevm-new` tiers up to tier 2 by default (`--jit=opt`, M10; M6 to
+  M9 `--jit=baseline`), so every suite runs that way; the oracle runs
+  the other modes. **The JIT**
+  (`vm/new/jit/`, `vm/new/ARCHITECTURE.md`, Tier 1): an instruction of the
+  register set has, beside its body, an emitter in `vm/new/jit/emit.c`
+  (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
+  without it) that does what the body does in the same frame, written
+  over the macro-assembler (`vm/new/jit/masm.h`) and the portable
+  assembler (`vm/new/jit/asm.h`, M12) -- never an encoder: `make
+  test-new-jit` checks that no `x64_` or `a64_` name occurs in the
+  emitters, the macro-assembler or the compiler, and an operation a
+  target lacks is added to `asm.h` with both implementations and a
+  line in ARCHITECTURE.md's *The targets*. The macro-assembler's rules
+  the emitter keeps:
+  the VM exact (`ms_sync`) before any call into C and reloaded
+  (`ms_reload`) after -- unless the C is a helper declared as touching
+  nothing of the VM (`compile.h`) -- no heap pointer in a machine register
+  across one, every store into an object through `ms_store_field`, a
+  field of the VM by `offsetof`, never a number, and the size of a
+  `Frame` computed, never written as a shift (`ms_frame`). A primitive
+  done in line (`prim_inline`) gives exactly what `fastprim.h`'s
+  `prim_fast` gives and goes to its slow path wherever that would answer
+  0. What the loop does to `--count`, the code
+  does too: `scripts/check-jit.sh` (in `make test-new-jit`) holds every
+  program, and the compiler compiling itself, to the same output and
+  counts interpreted, compiled, with every other function compiled
+  (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
+  occurring in them. A primitive done in line by the loop and by the
+  code changes with its C in `vm/prims.c`. A native address lives in a
+  frame's `native_ret`, a handler's `native` and the driver's `jit->at`
+  and nowhere else, so that invalidating a function's code is a walk
+  over the frames and handlers (`jit_invalidate`). **The homes** (tier 2,
+  ARCHITECTURE.md): an emitter reads and writes a register through the
+  macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
+  `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
+  scratch, or sets a call's arguments, writes the homes back first
+  (`ms_writeback`) and loads them again after (`ms_reload`,
+  `ms_reload_homes`, `ms_call_lean`); a place code is entered from
+  outside is a landing (`jit_landing`), never a label. Tier 2 trusts
+  the representations section for the shape of a value (`ms_trusts`):
+  an emitter that tests a tag, a kind or a length asks it first, and
+  the loop and tier 1 keep every test, so the oracle's interpreted run
+  is what a wrong program is held to. A function's code fills its own
+  registers with unit at its entry; a caller fills only for a callee
+  without an arity in the section, and for the interpreter. An
+  instruction's effects are complete at its end, and the code may
+  leave for the interpreter at any boundary (`ms_exit`,
+  `--deopt-stress`): an emitter that keeps anything outside the frame
+  across a boundary -- other than a comparison's flags for the branch
+  fused onto it -- breaks that. Tier 2 is run by `check-jit.sh` on
+  every program (`--jit=all --jit-tier=2`, every other function, and
+  leaving after every instruction). **The representations
+  section** (`docs/bytecode.md`): a new instruction that writes a register
+  of a known representation says so in the register checker's lint
+  (`vm/new/isa_regs.c`), and the compiler's `Lower.repOfRhs` says the same
+  of the operation.
 * Compile-error behaviour is covered by `tests/errors/` (first error line must
   contain the `.expected` text). Warnings are covered by a `.cwarn` file next
   to a `tests/lang/` test (the compiler's stderr, compared exactly); a test
@@ -168,9 +242,10 @@ keep these invariants:
   pull request is not ready until it passes there too.
 * `make check` never compiles `vm/sys_win.c`, so a green `make check` says
   nothing about Windows. A change to the VM core, to `vm/sys.h` or to the
-  system layers is done only once `make windows` builds both VMs and
-  `make test-windows` passes on both (`tests/lang`, `tests/vm` and the Basis
-  Library suite; about 8 minutes). It needs the mingw-w64 toolchains and a
+  system layers is done only once `make windows` builds all four VMs and
+  `make test-windows` passes on them (`tests/lang`, `tests/vm` and the Basis
+  Library suite, for the stack bytecode and the register one; about 15
+  minutes). It needs the mingw-w64 toolchains and a
   Windows to run the `.exe`s, which is what `make doctor` reports.
 * `make check` also builds the VM for one machine only, so it says nothing
   about a machine of another width or another byte order. `make portability`
@@ -212,7 +287,9 @@ keep these invariants:
 * SML: one main `structure` (or `functor`) per file, no top-level `open`, 2-space indentation,
   `Error.error (span, msg)` for user errors and `Error.bug` for invariant
   violations. Error messages start lowercase and name the construct.
-* C: C99, no platform-specific code, every primitive validates argument tags
+* C: C17 (`-std=c17`), with anything beyond C99 behind a test of
+  `__STDC_VERSION__` so that `-std=c99` still builds the VMs (`vm/vm.h`'s
+  `Value` shows how); no platform-specific code, every primitive validates argument tags
   (`vm_fatal` on bytecode type errors), heap pointers never live in C locals
   across an allocation (see the GC discipline in `docs/architecture.md`).
 * Commit messages: imperative, one line summary.

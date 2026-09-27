@@ -458,6 +458,34 @@ EOF
   else
     bad "${qemu%% *}" "cannot run a powerpc64 program here" qemuppc
   fi
+  # the aarch64 VM, the second target of vm/new's JIT (docs/plans/jit.md,
+  # M12): the same pattern, clang with the arm64 cross packages, under
+  # qemu-aarch64
+  a64root=${A64ROOT:-/usr/aarch64-linux-gnu}
+  if [ ! -f "$a64root/lib/libc.so.6" ]; then
+    bad "$a64root" "no libc for aarch64 there (A64ROOT names it)" "libc6-dev-arm64-cross libgcc-13-dev-arm64-cross"
+  elif "${A64CC:-clang}" -std=c99 --target=aarch64-linux-gnu -B"$a64root/bin" -L"$a64root/lib" \
+        -I"$a64root/include" -Wl,-dynamic-linker,"$a64root/lib/ld-linux-aarch64.so.1" \
+        -o "$tmp/porta64" "$tmp/port.c" > "$tmp/porta64.log" 2>&1; then
+    ok "${A64CC:-clang}" "compiles for aarch64"
+  else
+    bad "${A64CC:-clang}" "cannot compile for aarch64: $(head -1 "$tmp/porta64.log")" binutils-aarch64-linux-gnu
+  fi
+  qemua64=${QEMUA64:-qemu-aarch64}
+  if ! command -v "${qemua64%% *}" > /dev/null 2>&1; then
+    bad "${qemua64%% *}" "not found on PATH: make test-portability runs the aarch64 VM with it" qemu-user
+  elif [ -x "$tmp/porta64" ] && [ "$("${qemua64%% *}" -L "$a64root" "$tmp/porta64" 2> /dev/null)" = "8 1" ]; then   # little-endian
+    ok "${qemua64%% *}" "runs an aarch64 program"
+  else
+    bad "${qemua64%% *}" "cannot run an aarch64 program here" qemu-user
+  fi
+  # a fork by the PowerPC VM starts the child by exec of its own binary,
+  # which needs qemu registered with the kernel (tests/portability-skip.txt)
+  if [ -e /proc/sys/fs/binfmt_misc/qemu-ppc64 ]; then
+    ok binfmt "qemu-ppc64 is registered under /proc/sys/fs/binfmt_misc"
+  else
+    bad binfmt "qemu-ppc64 is not registered under /proc/sys/fs/binfmt_misc: a fork by the PowerPC VM would hang; sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register'"
+  fi
 fi
 
 # ---------------------------------------------------------------- summary
