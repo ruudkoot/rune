@@ -1,0 +1,52 @@
+--- a/basis/inttables.sml
++++ b/basis/inttables.sml
+@@ -128,19 +128,39 @@
+   structure Int64ArraySlice : MONO_ARRAY_SLICE = T.AS
+   (** SigDoc *)
+   structure Int64Array2 : MONO_ARRAY2 = T.A2
+-  (** SigDoc *)
+-  structure LargeIntVector : MONO_VECTOR = Word64Vector
+-  (** SigDoc *)
+-  structure LargeIntVectorSlice : MONO_VECTOR_SLICE = Word64VectorSlice
+-  (** SigDoc *)
+-  structure LargeIntArray : MONO_ARRAY = Word64Array
+-  (** SigDoc *)
+-  structure LargeIntArraySlice : MONO_ARRAY_SLICE = Word64ArraySlice
+-  (** SigDoc *)
+-  structure LargeIntArray2 : MONO_ARRAY2 = Word64Array2
+ end
+ 
+ (*---------------------------------------------*)
++(*    LargeInt Vectors, Arrays, and Slices     *)
++(*---------------------------------------------*)
++
++(* LargeInt.int is IntInf.int (intinf), a boxed type: the polymorphic
++   structures at that type. *)
++
++(** SigDoc *)
++structure LargeIntVector : MONO_VECTOR =
++  struct open Vector type elem = intinf type vector = elem Vector.vector end
++(** SigDoc *)
++structure LargeIntVectorSlice : MONO_VECTOR_SLICE =
++  struct open VectorSlice type elem = intinf type vector = elem Vector.vector
++         type slice = elem VectorSlice.slice end
++(** SigDoc *)
++structure LargeIntArray : MONO_ARRAY =
++  struct open Array type elem = intinf type vector = elem Vector.vector
++         type array = elem Array.array end
++(** SigDoc *)
++structure LargeIntArraySlice : MONO_ARRAY_SLICE =
++  struct open ArraySlice type elem = intinf type vector = elem Vector.vector
++         type array = elem Array.array type slice = elem ArraySlice.slice
++         type vector_slice = elem VectorSlice.slice end
++(** SigDoc *)
++structure LargeIntArray2 : MONO_ARRAY2 =
++  struct open Array2 type elem = intinf type vector = elem Vector.vector
++         type array = elem Array2.array
++         type region = {base : array, row : int, col : int,
++                        nrows : int option, ncols : int option} end
++
++(*---------------------------------------------*)
+ (*       Int Vectors, Arrays, and Slices       *)
+ (*---------------------------------------------*)
+ 
