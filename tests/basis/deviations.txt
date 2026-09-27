@@ -10,8 +10,9 @@
 #   RUNE-DEV        Rune departs from the specification or lacks the member
 #   HOST-BUG        the host departs from the specification
 #   HOST-ABSENT     the host lacks the member
-#   HOST-FLAKY      the host fails the check only sometimes; such a line is
-#                   not required to match
+#   HOST-FLAKY      the host fails the check only sometimes, or only on some
+#                   machines (as an ordinary user and not as root); such a
+#                   line is not required to match
 #   SPEC-AMBIGUOUS  the specification allows both behaviours; the reason names
 #                   the reading the test takes
 #   WIDTH           follows from the precision of a type
@@ -532,6 +533,22 @@ xc1:mlkit@* | Posix.IO.F_RDLCK/* | XC1-NA | tests/basis/host/rune-prim.sml fails
 xc1:mlkit@* | Posix.IO.O* | HOST-BUG | O codes the flags of open its own way (append = 0wx1, the C binding's O_WRONLY, excl = 0wx2, ...), and the shim's posix_const takes them from O.toWord as the numbers of O_APPEND and the others
 xc1:mlkit@* | Posix.IO.setfl/* | HOST-BUG | O codes the flags of open its own way (append = 0wx1, the C binding's O_WRONLY, excl = 0wx2, ...), and the shim's posix_const takes them from O.toWord as the numbers of O_APPEND and the others
 xc1:mlkit@* | Posix.IO.mkBinWriter/append-mode | HOST-BUG | O codes the flags of open its own way (append = 0wx1, the C binding's O_WRONLY, ...), and the shim's posix_const takes them from O.toWord as the numbers of O_APPEND and the others: a writer made with appendMode does not append
+xc1:mlkit@* | OS.FileSys.A_*/* | HOST-FLAKY | Rune's library makes its files and directories through MLKit's Posix.FileSys, which codes modes its own way (S.fromWord does not read the numbers of C) and whose chmod sets every mode to 1001, so the owner may not read, write or enter what the check makes; root, whom permission bits do not stop, passes the check (docs/bugreport/mlkit/Posix.FileSys.S/mode-encoding, Posix.FileSys.chmod/open-flags-as-mode)
+xc1:mlkit@* | OS.FileSys.rmDir/everything | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.A_*/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.access/every-mode-of-the-list | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.chdir/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.closedir/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.creat/writes | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.fchown/to-current-owner | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.fstat/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.ftruncate/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.opendir/positioned-at-first-entry | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.readdir/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.rename/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.rewinddir/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.FileSys.symlink/* | HOST-FLAKY | as OS.FileSys.A_*: the modes of MLKit's Posix.FileSys make what the check makes unusable to an ordinary user, and root passes the check
+xc1:mlkit@* | Posix.Process.execp/with-slash | HOST-FLAKY | the check makes its script executable with chmod, which on MLKit sets every mode to 1001, so its owner may not run it and the child's exec fails; root, for whom one execute bit is enough, passes the check (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode)
 
 # ---- PRIM_IO, STREAM_IO, IMPERATIVE_IO, TEXT_IO, BIN_IO (io group)
 # Rune
