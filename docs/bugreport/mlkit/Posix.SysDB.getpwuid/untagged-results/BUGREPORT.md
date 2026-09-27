@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.SysDB.getpwuid`, `getpwnam`, `getgrgid` and `getgrnam` raise `Overflow` for an entry that exists
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime returns its numbers untagged, so an entry that exists raises `Overflow`.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

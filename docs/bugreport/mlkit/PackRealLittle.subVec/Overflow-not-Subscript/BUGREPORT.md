@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `PackReal*.subVec`, `subArr` and `update` raise `Overflow` instead of `Subscript` for an index near `Int.maxInt`
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton and Poly/ML raise `Subscript`; SML/NJ has no `PackRealLittle`.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

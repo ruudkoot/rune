@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.IO.lseek` of a pipe returns 2147483647 instead of raising `OS.SysErr`, and an offset of 2^30 or more goes wrong
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime's `sml_lseek` takes and returns C `int`s where the ML side passes 64-bit integers.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

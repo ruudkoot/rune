@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `TextIO.StreamIO.closeOut` of a terminated stream does not close the writer
 
+**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** MLton also leaves the writer open; SML/NJ and Poly/ML close it.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

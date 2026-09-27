@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Real.+` with a zero operand is compiled away, so `0.0 + ~0.0` is `~0.0`
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The optimiser removes an addition of `0.0`, which IEEE 754 arithmetic does not allow.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Int32.mod (minInt, ~1)` and `Int64.mod (minInt, ~1)` kill the program with SIGFPE
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The program is killed by SIGFPE.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

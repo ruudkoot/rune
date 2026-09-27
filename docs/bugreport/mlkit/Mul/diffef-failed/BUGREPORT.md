@@ -1,5 +1,7 @@
 # MLKit 4.7.23: "Impossible: Mul: diffef failed" on an exception raised by a function passed to itself
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The compiler stops with `Impossible: Mul: diffef failed` on a valid program.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit. No release has a fix: 4.7.21, 4.7.22 and

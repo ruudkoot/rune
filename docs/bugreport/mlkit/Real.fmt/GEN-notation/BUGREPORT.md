@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Real.fmt (GEN _)` and `Real.toString` are C's `%g` with `".0"` added, not the GEN format
 
+**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** Poly/ML also writes `"1.0"` and chooses the notation by the exponent, and SML/NJ also writes `"0.001"` where `"1E~3"` is shorter; MLton meets it.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Real.toDecimal` of a NaN always has `sign = false`
 
+**Class 4 of 4: the specification can be read more than one way here:** the introduction of the `REAL` page says that the Library ignores the sign of a NaN, while `signBit` and `toDecimal` speak of it. MLton, SML/NJ and Poly/ML report the sign.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

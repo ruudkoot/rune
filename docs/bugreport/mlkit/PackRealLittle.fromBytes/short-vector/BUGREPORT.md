@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `PackRealLittle.fromBytes` and `PackRealBig.fromBytes` read past the end of a short vector instead of raising `Subscript`
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** `fromBytes` reads memory past the end of the vector.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

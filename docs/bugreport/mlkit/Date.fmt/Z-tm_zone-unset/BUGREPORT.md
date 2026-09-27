@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Date.fmt "%Z"` names the local zone for a UTC date, and crashes for a local one: `sml_strftime` leaves `tm_zone` unset
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime's `sml_strftime` leaves `tm_zone` unset, so `%Z` names the wrong zone or crashes the program.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

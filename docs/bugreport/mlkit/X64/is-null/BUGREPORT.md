@@ -1,5 +1,7 @@
 # MLKit 4.7.23: the X64 backend's `__is_null` never finds a NULL pointer, so `Posix.ProcEnv.ttyname` returns NULL as a string
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The code generator's `__is_null` never finds a NULL pointer.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

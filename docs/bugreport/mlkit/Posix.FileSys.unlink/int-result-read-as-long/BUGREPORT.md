@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.FileSys.unlink`, `rmdir`, `rename`, `link`, `symlink` and `Posix.IO.close` do not raise `OS.SysErr` when they fail
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The C functions' `int` result is read as a `long`, so a failure goes unseen.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

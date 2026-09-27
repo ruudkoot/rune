@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.Process.sleep` raises `Time` after it has slept
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime returns an uninitialised remainder, so `sleep` raises `Time` after it has slept.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

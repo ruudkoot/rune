@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Unix.exit` neither runs the actions of `OS.Process.atExit` nor flushes the output streams
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton and Poly/ML run the actions and flush the streams.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `PackWord32Big.subVecX` and `subArrX` do not extend the sign (nor those of `PackWord32Little`)
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton, SML/NJ and Poly/ML extend the sign.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

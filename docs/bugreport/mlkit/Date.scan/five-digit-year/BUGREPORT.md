@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Date.scan` reads a year of any number of digits, not a 24-character date
 
+**Class 4 of 4: the specification can be read more than one way here:** it asks for "a 24-character date" in the format "precisely as produced by toString", and `toString` writes 25 characters for a year of five digits. MLton and Poly/ML read 24 characters, as this report does; SML/NJ reads the year as MLKit does.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Real.fromDecimal` of a NaN class gives a NaN of the opposite sign
 
+**Class 4 of 4: the specification can be read more than one way here:** the introduction of the `REAL` page says that the Library ignores the sign of a NaN, while `signBit` and `fromDecimal` speak of it. MLton, SML/NJ and Poly/ML give the NaN the sign asked for.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.FileSys.chmod` and `fchmod` set every file to mode 1001
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The runtime is handed the flags of `open` where the mode belongs, so every file gets the mode 1001.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

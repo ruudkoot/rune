@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `LargeIntVector`, `LargeIntArray`, ... hold `Word64.word`, not `LargeInt.int`
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton's `LargeIntVector` holds `IntInf.int`; SML/NJ and Poly/ML have none.
+
 ## Status: not reported upstream
 
 It has not been reported upstream from here, and a search of the issues of

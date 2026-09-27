@@ -1,5 +1,7 @@
 # MLKit 4.7.23: the X64 backend pushes a word constant that does not fit in a 32-bit immediate
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The code generator emits an instruction that the assembler rejects, for a valid program.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

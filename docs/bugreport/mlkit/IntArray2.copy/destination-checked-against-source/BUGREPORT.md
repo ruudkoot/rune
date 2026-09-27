@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `copy` of `IntArray2`, `RealArray2`, ... checks the destination against the source array
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton and Poly/ML copy into the right places; SML/NJ has no `IntArray2`.
+
 ## Status: not reported upstream
 
 It has not been reported upstream from here, and a search of the issues of

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `TextIO.inputAll` stops before the end-of-stream it reaches, not past it
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton and SML/NJ go past the end-of-stream; Poly/ML goes wrong in another way.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

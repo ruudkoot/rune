@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Date.offset` reports zones east of UTC as west, and `Date.date` gets offsets beyond 12 hours wrong
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** Poly/ML gives the offsets and times asked for; MLton and SML/NJ get these dates wrong in other ways.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

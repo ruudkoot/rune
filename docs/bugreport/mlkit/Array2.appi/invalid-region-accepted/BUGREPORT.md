@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Array2.appi`, `foldi`, `modifyi` and `copy` accept invalid regions
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton, SML/NJ and Poly/ML raise `Subscript` for these regions.
+
 ## Status: not reported upstream
 
 It has not been reported upstream from here, and a search of the issues of

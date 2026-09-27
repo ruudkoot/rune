@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.ProcEnv.time ()` is always 1000000000 seconds after the Epoch
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The library adds up the wrong fields of what the runtime returns, so the time is always 10^9 seconds.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Unix.reap` and `OS.Process.system` lose the exit status: `fromStatus` gives `W_EXITSTATUS 0w255` for every failure
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** SML/NJ and Poly/ML give `W_EXITSTATUS 0w3` and `W_SIGNALED`; MLton gets the status wrong in another way.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

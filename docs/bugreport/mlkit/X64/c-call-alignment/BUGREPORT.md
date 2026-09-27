@@ -1,5 +1,7 @@
 # MLKit 4.7.23: the X64 backend calls a C function with the stack misaligned when one argument goes on the stack, and `Posix.SysDB.getgrnam` crashes
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The code generator calls C with the stack misaligned, and `getgrnam` crashes.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

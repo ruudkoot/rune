@@ -1,5 +1,7 @@
 # MLKit 4.7.23: a literal of 2^30 or more that nothing constrains gets `int32`, or crashes the compiler
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The elaborator gives an unconstrained literal the wrong default type, or stops with `Impossible`; SML/NJ and Poly/ML compile all three programs.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit. MLKit's `master` at `c49fbea`

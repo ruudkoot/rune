@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `PackRealBig.fromBytes` of a vector longer than 8 bytes reads its last 8 bytes
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton and Poly/ML read the first 8 bytes; SML/NJ has no `PackRealBig`.
+
 ## Status
 
 Not reported upstream from here. MLKit `master` at `c49fbea` (2026-09-25)

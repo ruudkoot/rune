@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `TextIO.StreamIO.filePosIn` of a truncated stream raises nothing
 
+**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** MLton raises nothing either, and SML/NJ raises only once the stream is closed.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

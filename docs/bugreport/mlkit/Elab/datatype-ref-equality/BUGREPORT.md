@@ -1,5 +1,7 @@
 # MLKit 4.7.23: a datatype that holds `t ref` does not admit equality when `t` does not
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** The elaborator rejects a program that the Definition accepts; MLton, SML/NJ and Poly/ML compile it.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit. MLKit's `master` at `c49fbea`

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.FileSys.S` codes modes its own way: `S.irwxu` is not `irusr`+`iwusr`+`ixusr`, and `umask` returns the previous mask in another code
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** MLton, SML/NJ and Poly/ML use the values of the C binding.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

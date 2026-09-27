@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `TextIO.input1` that returns `NONE` leaves the stream before the end-of-stream
 
+**Class 3 of 4: the specification is explicit, but at least one of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does the same.** MLton does the same on a file; Poly/ML meets it, and SML/NJ never moves past the end-of-stream.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

@@ -1,5 +1,7 @@
 # MLKit 4.7.23: the string of `OS.SysErr (s, SOME e)` is not `OS.errorMsg e`
 
+**Class 2 of 4: the specification is explicit, and none of the other implementations tested (MLton 20241230, SML/NJ 110.99.9 and Poly/ML 5.9.2) does this.** In MLton, SML/NJ and Poly/ML the string is `errorMsg e`.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`

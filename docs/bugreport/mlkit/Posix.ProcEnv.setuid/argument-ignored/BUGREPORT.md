@@ -1,5 +1,7 @@
 # MLKit 4.7.23: `Posix.ProcEnv.setuid` ignores its argument and sets the user ID to whatever is in a register
 
+**Class 1 of 4: a fault of the compiler or the runtime, which no reading of a specification bears on.** C's `setuid` is called without its argument and takes whatever a register holds.
+
 ## Status: not reported upstream
 
 This has not been sent to MLKit from here. MLKit's `master` at `c49fbea`
