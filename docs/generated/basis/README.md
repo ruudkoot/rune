@@ -115,7 +115,7 @@ the system answer on Windows only.
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`IEEE_REAL`](sig/IEEE_REAL.md) | The parts of IEEE 754 arithmetic that are not about one real number: the rounding mode, the classes a number can belong to, and an exact decimal form to convert through. | optional | 10 of 10 |
+| [`IEEE_REAL`](sig/IEEE_REAL.md) | The parts of IEEE 754 arithmetic that are not about one real number: the rounding mode, the classes a number can belong to, and an exact decimal form to convert through. | required | 10 of 10 |
 | [`INTEGER`](sig/INTEGER.md) | Integers of a fixed precision, with arithmetic that raises [`Overflow`](sig/GENERAL.md#exn-overflow) rather than wrapping round. | required | 30 of 30 |
 | [`INT_INF`](sig/INT_INF.md) | Integers of arbitrary precision: everything [`INTEGER`](sig/INTEGER.md) has, and the operations that make sense only, or mostly, without a bound. | optional | 10 of 10 |
 | [`MATH`](sig/MATH.md) | The elementary functions of a real type: roots, the trigonometric and hyperbolic functions, exponentials and logarithms. | required | 18 of 18 |

@@ -81,5 +81,9 @@ struct
                 fn () => pair (fn () => GenericSock.socketPair' (unix, stream, 0)) strmPair)
   val () = eqS ("GenericSock.socketPair'/unix-dgram-0", "DGRAM DGRAM true",
                 fn () => pair (fn () => GenericSock.socketPair' (unix, dgram, 0)) dgrmPair)
+  (* the internet family has no unnamed pairs of connected sockets, and the
+     system says so: "raises SysErr ... if the operation is not supported" *)
+  val () = T.raises ("GenericSock.socketPair/SysErr-inet", fn OS.SysErr _ => true | _ => false,
+                     fn () => ignore (GenericSock.socketPair (inet, stream) : (INetSock.inet, Socket.active Socket.stream) Socket.sock * (INetSock.inet, Socket.active Socket.stream) Socket.sock))
   (*>> socketPair *)
 end

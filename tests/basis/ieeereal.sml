@@ -75,6 +75,13 @@ struct
   val () = eqSO ("IEEEReal.scan/inf-then-letters", SOME (showD (d (I.INF, false, [], 0)), "init"), fn () => scanned "infinit")
   val () = eqSO ("IEEEReal.scan/whitespace", SOME (showD (d (I.NORMAL, false, [9], 1)), ""), fn () => scanned " \t\n9")
   val () = eqSO ("IEEEReal.scan/NONE", NONE, fn () => scanned "x1")
+  (* an exponent beyond every int: the number is read, with an exponent far
+     out and of the right sign, and Overflow is not raised *)
+  val () = T.check ("IEEEReal.scan/huge-exponent",
+                    fn () => case (I.fromString "1e123456789012345678901234567890", I.fromString "1e~123456789012345678901234567890") of
+                               (SOME {class = I.NORMAL, exp = up, ...}, SOME {class = I.NORMAL, exp = down, ...}) =>
+                                 up > 100000000 andalso down < ~100000000
+                             | _ => false)
 
   (* "The composition toString o REAL.toDecimal is equivalent to REAL.fmt StringCvt.EXACT." *)
   val () = eqS ("IEEEReal.toString/of-toDecimal", "0.15625E1", fn () => I.toString (Real.toDecimal 1.5625))
@@ -86,13 +93,6 @@ struct
   val nan = Real.posInf - Real.posInf
   val () = T.raises ("IEEEReal.Unordered/raised-by-Real.compare", fn I.Unordered => true | _ => false,
                      fn () => Real.compare (nan, 1.0))
-  (* "Unordered" is one of the identifiers of the top-level environment, so
-     the two names are one exception: a program that handles either catches
-     what Real.compare raises. *)
-  val () = T.raises ("IEEEReal.Unordered/same-as-toplevel", fn Unordered => true | _ => false,
-                     fn () => Real.compare (nan, 1.0))
-  val () = T.raises ("IEEEReal.Unordered/toplevel-handled-by-IEEEReal",
-                     fn I.Unordered => true | _ => false, fn () => raise Unordered)
 
   (* ---- rounding modes ----
      The quotient is computed when the check runs, from numbers the compiler

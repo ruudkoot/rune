@@ -35,7 +35,7 @@ conversions to and from integers and text.
 ones are [`Real32`](../str/Real32.md) and [`Real64`](../str/Real.md). A NaN, "not a number", is what an
 operation answers where there is no value to give: it is equal to nothing,
 itself included, so [`==`](#val-op-eq-eq) is `false` for it and [`compare`](#val-compare) raises
-[`Unordered`](../sig/IEEE_REAL.md#exn-unordered). Because of that the equality of the language is not available
+`Unordered`. Because of that the equality of the language is not available
 at [`real`](#type-real); use [`==`](#val-op-eq-eq) where equality is meant and [`Real.compare`](#val-compare) where an
 order is.
 
@@ -581,7 +581,7 @@ val compare : real * real -> order
 `compare (x, y)` orders two reals.
 
 **Raises** [`IEEEReal.Unordered`](../sig/IEEE_REAL.md#exn-unordered) if either is a NaN, which is the top-level
-[`Unordered`](../sig/IEEE_REAL.md#exn-unordered).
+`Unordered`.
 
 <details><summary>Tests (17)</summary>
 

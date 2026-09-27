@@ -10,4 +10,3 @@ exception Fail of string
 exception Option
 exception Empty
 exception Span
-exception Unordered

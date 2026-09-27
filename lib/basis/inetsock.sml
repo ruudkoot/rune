@@ -103,7 +103,11 @@ structure INetSock = RuneINetSock
 
    Status: optional *)
 structure UnixSock = RuneUnixSock
-(* Implements: GENERIC_SOCK
+(* GenericSock: sockets of a family chosen when the program runs, the
+   internet one or the Unix one, through the system's `socket` and
+   `socketpair`.
+
+   Implements: GENERIC_SOCK
 
    Status: optional *)
 structure GenericSock = RuneGenericSock

@@ -316,7 +316,9 @@ val exnName : exn -> string
 `exnName ex` is the name of the constructor of `ex`, without a structure
 in front and without its argument.
 
-**Example** `exnName (Fail "why") = "Fail"`, and `exnName Subscript = "Subscript"`.
+**Example** `exnName (Fail "why") = "Fail"`
+
+**Example** `exnName Subscript = "Subscript"`
 
 > **Reading** `General.exnName/alias-either-name`. For an exception declared
 > to be another one (`exception E2 = E1`) either name is an answer: the two
@@ -351,6 +353,8 @@ reports an exception it cannot handle.
 
 > **Implementation** `General.exnMessage/format`. `"Fail: "` and the argument
 > for a [`Fail`](#exn-fail), and `exnName ex` for everything else.
+
+**Law** `String.isSubstring (exnName ex) (exnMessage ex) = true`
 
 **Example** `exnMessage (Fail "why") = "Fail: why"`
 
@@ -404,6 +408,8 @@ val ! : 'a ref -> 'a
 
 `!r` is the value that the reference `r` holds.
 
+**Example** `let val r = ref 3 in !r end = 3`
+
 Also in the [top-level environment](../top-level.md): `!`.
 
 <details><summary>Tests (6)</summary>
@@ -422,6 +428,10 @@ val := : 'a ref * 'a -> unit
 
 It is infix with precedence 3.
 
+**Law** `(r := v; !r) = v`
+
+**Example** `let val r = ref 3 in r := 4; !r end = 4`
+
 Also in the [top-level environment](../top-level.md): `:=`.
 
 <details><summary>Tests (13)</summary>
@@ -439,6 +449,9 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 `(f o g) x` is `f (g x)`: the composition of two functions.
 
 It is infix with precedence 3.
+
+**Law** `f o (g o h) = (f o g) o h`: composition is associative, as
+functions and not as values that `=` could compare
 
 **Example** `(Int.toString o (fn x => x + 1)) 1 = "2"`
 
@@ -483,6 +496,11 @@ val ignore : 'a -> unit
 
 A statement whose value is not [`unit`](#type-unit) is a warning in some compilers and
 a mistake in most programs; [`ignore`](#val-ignore) says that this one is meant.
+
+The argument is evaluated, effects and exceptions included, before it is
+thrown away.
+
+**Example** `let val r = ref 0 in ignore (r := 1; 5); !r end = 1`
 
 Also in the [top-level environment](../top-level.md): `ignore`.
 

@@ -7,7 +7,7 @@
 | Signature | [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md) |
 | Status | optional |
 | Members | 4 |
-| Tests | 12 checks |
+| Tests | 13 checks |
 | Source | [lib/basis/inetsock.sml](../../../../lib/basis/inetsock.sml) |
 
 ## Synopsis
@@ -15,6 +15,10 @@
 ```sml
 structure GenericSock : GENERIC_SOCK
 ```
+
+GenericSock: sockets of a family chosen when the program runs, the
+internet one or the Unix one, through the system's [`socket`](../sig/GENERIC_SOCK.md#val-socket) and
+`socketpair`.
 
 ## Members
 

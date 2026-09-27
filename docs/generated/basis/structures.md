@@ -39,7 +39,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`FixedInt`](str/Int64.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int64.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`General`](str/General.md) | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | [`GenericSock`](str/GenericSock.md) | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
-| [`IEEEReal`](str/IEEEReal.md) | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | optional |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
+| [`IEEEReal`](str/IEEEReal.md) | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | required |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
 | [`INet6Sock`](str/INet6Sock.md) | : [`INET6_SOCK`](sig/INET6_SOCK.md) |  | extension | is `RuneINet6Sock` | [lib/basis/inet6sock.sml](../../../lib/basis/inet6sock.sml) |
 | [`INet6Sock.TCP`](str/INet6Sock.TCP.md) | *in* [`INET6_SOCK`](sig/INET6_SOCK.md) |  | extension |  | [lib/basis/inet6sock.sml](../../../lib/basis/inet6sock.sml) |
 | [`INet6Sock.UDP`](str/INet6Sock.UDP.md) | *in* [`INET6_SOCK`](sig/INET6_SOCK.md) |  | extension |  | [lib/basis/inet6sock.sml](../../../lib/basis/inet6sock.sml) |

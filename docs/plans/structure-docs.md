@@ -190,9 +190,9 @@ reading one reads both.
 | [`CommandLine`](../generated/basis/str/CommandLine.md) | done | done | done | n/a | n/a | done |
 | [`Date`](../generated/basis/str/Date.md) | done | done | done | done | done | done |
 | [`FixedInt`](../generated/basis/str/Int64.md) | done | done | done | done | done | done |
-| [`General`](../generated/basis/str/General.md) |  |  |  |  |  |  |
-| [`GenericSock`](../generated/basis/str/GenericSock.md) |  |  |  |  |  |  |
-| [`IEEEReal`](../generated/basis/str/IEEEReal.md) |  |  |  |  |  |  |
+| [`General`](../generated/basis/str/General.md) | done | done | done | done | done | done |
+| [`GenericSock`](../generated/basis/str/GenericSock.md) | done | done | done | n/a | n/a | done |
+| [`IEEEReal`](../generated/basis/str/IEEEReal.md) | done | done | done | done | done | done |
 | [`INet6Sock`](../generated/basis/str/INet6Sock.md) |  |  |  |  |  |  |
 | [`INet6Sock.TCP`](../generated/basis/str/INet6Sock.TCP.md) |  |  |  |  |  |  |
 | [`INet6Sock.UDP`](../generated/basis/str/INet6Sock.UDP.md) |  |  |  |  |  |  |

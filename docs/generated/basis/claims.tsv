@@ -11,7 +11,7 @@ COMMAND_LINE	signature			required	declared	lib/basis/sig_command_line.sml
 DATE	signature			required	declared	lib/basis/sig_date.sml
 GENERAL	signature			required	declared	lib/basis/sig_general.sml
 GENERIC_SOCK	signature			optional	declared	lib/basis/sig_generic_sock.sml
-IEEE_REAL	signature			optional	declared	lib/basis/sig_ieee_real.sml
+IEEE_REAL	signature			required	declared	lib/basis/sig_ieee_real.sml
 IMPERATIVE_IO	signature			required	declared	lib/basis/sig_imperative_io.sml
 INET6_SOCK	signature			extension	declared	lib/basis/inet6sock_sig.sml
 INET_SOCK	signature			optional	declared	lib/basis/sig_inet_sock.sml
@@ -92,7 +92,7 @@ Date	structure	DATE		required	claimed	lib/basis/date.sml
 FixedInt	structure	INTEGER	where type int = Int64.int	optional	claimed	lib/basis/int64.sml
 General	structure	GENERAL		required	claimed	lib/basis/general.sml
 GenericSock	structure	GENERIC_SOCK		optional	claimed	lib/basis/inetsock.sml
-IEEEReal	structure	IEEE_REAL		optional	claimed	lib/basis/ieeereal.sml
+IEEEReal	structure	IEEE_REAL		required	claimed	lib/basis/ieeereal.sml
 INet6Sock	structure	INET6_SOCK		extension	claimed	lib/basis/inet6sock.sml
 INetSock	structure	INET_SOCK		optional	claimed	lib/basis/inetsock.sml
 IO	structure	IO		required	claimed	lib/basis/io.sml
