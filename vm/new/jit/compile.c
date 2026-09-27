@@ -8,11 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__x86_64__) || defined(_M_X64)
-#define JIT_TARGET 1
-#else
-#define JIT_TARGET 0
-#endif
 #if defined(_WIN32)
 #define JIT_WIN 1
 #else
@@ -297,8 +292,8 @@ typedef struct Scan {
     uint8_t *phantom;   /* 1 at a RESULT after a call: the callee's RET does it, and it is passed over (M5) */
 } Scan;
 
-X64Label *jit_label(Jit *j, uint32_t pc) { return &j->labels[pc - j->from]; }
-X64Label *jit_landing(Jit *j, uint32_t pc) { return j->landings ? &j->landings[pc - j->from] : &j->labels[pc - j->from]; }
+AsmLabel *jit_label(Jit *j, uint32_t pc) { return &j->labels[pc - j->from]; }
+AsmLabel *jit_landing(Jit *j, uint32_t pc) { return j->landings ? &j->landings[pc - j->from] : &j->labels[pc - j->from]; }
 
 #if JIT_TARGET
 /* ---- tier 2: what is live where, and the homes (M9) ---- */
@@ -440,7 +435,7 @@ static int choose_homes(Jit *j) {
         pc += l;
     }
     free(last);
-    static const int gprs[3] = { RBX, RSI, RDI };
+    static const int gprs[3] = { R_H0, R_H1, R_H2 };
     int ngpr = 0, nxmm = 0;
     for (;;) {
         uint32_t best = UINT32_MAX;
@@ -454,7 +449,7 @@ static int choose_homes(Jit *j) {
         }
         if (best == UINT32_MAX) break;
         int rep = fn->reps[best];
-        if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(XMM2 + nxmm++); homes[best].tag = T_REAL; }
+        if (rep == REP_REAL) { homes[best].kind = HOME_XMM; homes[best].reg = (uint8_t)(F_H0 + nxmm++); homes[best].tag = T_REAL; }
         else {
             homes[best].kind = HOME_GPR; homes[best].reg = (uint8_t)gprs[ngpr++];
             homes[best].tag = (uint8_t)(rep == REP_INT ? T_INT : rep == REP_WORD ? T_WORD : rep == REP_CHAR ? T_CHAR : T_CON0);
@@ -471,14 +466,14 @@ static void land(Jit *j, uint32_t pc) {
 }
 #endif
 
-X64Label *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg) {
+AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg) {
     Slow *s = ms_slow(&j->m, SLOW_FATAL, j->next);
     if (!s) return NULL;
     s->a = what; s->b = a; s->c = b; s->d = rcx_arg;
     return &s->here;
 }
 
-X64Label *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L) {
+AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L) {
     Slow *s = ms_slow(&j->m, SLOW_ALLOC, j->next);
     if (!s) return NULL;
     s->a = kind; s->b = contag; s->n = n; s->c = fill; s->d = d; s->e = a; s->g = b; s->L = L;
@@ -490,38 +485,38 @@ void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int3
     (void)kind;
     switch (fill) {
     case FILL_LIST:
-        for (uint32_t i = 0; i < n; i++) ms_store_field(m, RAX, i, read_i32(L + 4 * i));
+        for (uint32_t i = 0; i < n; i++) ms_store_field(m, R_S0, i, read_i32(L + 4 * i));
         break;
     case FILL_ONE:
-        ms_store_field(m, RAX, 0, a);
+        ms_store_field(m, R_S0, 0, a);
         break;
     case FILL_CLOSURE:
         /* field 0 is the function's index, then the n - 1 it captures */
-        x64_mov_mi(&m->a, RAX, (int32_t)sizeof(Obj), T_INT);
-        x64_mov_mi(&m->a, RAX, (int32_t)sizeof(Obj) + 8, a);
-        for (uint32_t i = 0; i + 1 < n; i++) ms_store_field(m, RAX, i + 1, read_i32(L + 4 * i));
+        as_st64i(&m->a, R_S0, (int32_t)sizeof(Obj), T_INT);
+        as_st64i(&m->a, R_S0, (int32_t)sizeof(Obj) + 8, a);
+        for (uint32_t i = 0; i + 1 < n; i++) ms_store_field(m, R_S0, i + 1, read_i32(L + 4 * i));
         break;
     case FILL_NEWEXN:
         /* field 0 is the constant a, the name */
-        x64_mov_rm(&m->a, RCX, VMR, (int32_t)offsetof(VM, prog.consts));
-        x64_movups_xm(&m->a, XMM0, RCX, 16 * a);
-        x64_movups_mx(&m->a, RAX, (int32_t)sizeof(Obj), XMM0);
+        as_ld64(&m->a, R_S1, VMR, (int32_t)offsetof(VM, prog.consts));
+        as_ld128(&m->a, F_S0, R_S1, 16 * a);
+        as_st128(&m->a, R_S0, (int32_t)sizeof(Obj), F_S0);
         break;
     case FILL_MKEXN: {
         /* the constructor in a, which must be one, and the payload in b: the
            test after the allocation, as the interpreter's */
-        X64Label *bad = jit_fatal(j, FATAL_MKEXN, 0, 0, 0);
-        x64_cmp8_mi(&m->a, BASER, 16 * a, T_PTR);
-        x64_jcc(&m->a, CC_NE, bad);
-        x64_mov_rm(&m->a, RCX, BASER, 16 * a + 8);
-        x64_cmp8_mi(&m->a, RCX, (int32_t)offsetof(Obj, kind), K_EXNCON);
-        x64_jcc(&m->a, CC_NE, bad);
-        ms_store_field(m, RAX, 0, a);
-        ms_store_field(m, RAX, 1, b);
+        AsmLabel *bad = jit_fatal(j, FATAL_MKEXN, 0, 0, 0);
+        as_cmp8_mi(&m->a, BASER, 16 * a, T_PTR);
+        as_jcc(&m->a, CC_NE, bad);
+        as_ld64(&m->a, R_S1, BASER, 16 * a + 8);
+        as_cmp8_mi(&m->a, R_S1, (int32_t)offsetof(Obj, kind), K_EXNCON);
+        as_jcc(&m->a, CC_NE, bad);
+        ms_store_field(m, R_S0, 0, a);
+        ms_store_field(m, R_S0, 1, b);
         break;
     }
     }
-    ms_set_reg(m, d, T_PTR, RAX);
+    ms_set_reg(m, d, T_PTR, R_S0);
 }
 
 void jit_unsupported(Jit *j) { j->unsupported = 1; }
@@ -534,18 +529,18 @@ static void emit_slow(Masm *m, Slow *sp) {
     m->cur_pc = s.cur;
     if (s.kind == SLOW_FATAL) {
         /* rcx, a value the message wants, before anything uses it */
-        if (s.d) x64_mov_rr(&m->a, ms_arg(m, 2), RCX);
+        if (s.d) as_mov_rr(&m->a, ms_arg(m, 2), R_S1);
         ms_sync(m, s.pc, 0);
-        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        if (!s.d) x64_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        x64_mov_ri(&m->a, ms_arg(m, 3), s.c);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        if (!s.d) as_mov_ri(&m->a, ms_arg(m, 2), s.b);
+        as_mov_ri(&m->a, ms_arg(m, 3), s.c);
         ms_call(m, (MsHelper)jit_h_fatal);
-        x64_int3(&m->a);   /* it never returns */
+        as_trap(&m->a);   /* it never returns */
     } else if (s.kind == SLOW_ALLOC) {
         ms_sync(m, s.pc, 0);
-        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        x64_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        x64_mov_ri(&m->a, ms_arg(m, 3), (int64_t)s.n);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        as_mov_ri(&m->a, ms_arg(m, 2), s.b);
+        as_mov_ri(&m->a, ms_arg(m, 3), (int64_t)s.n);
         ms_call(m, (MsHelper)jit_h_alloc);
         ms_reload(m);
         m->nfields = s.n;   /* the helper made an object of s.n fields, in rax */
@@ -553,67 +548,67 @@ static void emit_slow(Masm *m, Slow *sp) {
         j->next = s.pc;
         jit_fill(j, s.a, s.c, s.n, s.d, s.e, s.g, s.L);
         j->next = saved_next;
-        x64_jmp(&m->a, &s.back);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_GROW) {
         /* room for n values above the frame's base: the stack grown, and
            the code's view of it taken again */
         ms_sync(m, s.pc, 0);
-        x64_lea(&m->a, ms_arg(m, 1), BASEI, -1, 1, (int32_t)s.n);
+        as_lea(&m->a, ms_arg(m, 1), BASEI, -1, 1, (int32_t)s.n);
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
-        x64_jmp(&m->a, &s.back);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_GROW_RAX) {
         /* the need in rax; then the instruction (at s.d) over again, since
            the call clobbered what it had found */
-        x64_mov_rr(&m->a, R11, RAX);   /* kept across the sync, which uses rax and writes the homes back (an argument's register may be one) */
+        as_mov_rr(&m->a, R_S6, R_S0);   /* kept across the sync, which uses rax and writes the homes back (an argument's register may be one) */
         ms_sync(m, s.pc, 0);
-        x64_mov_rr(&m->a, ms_arg(m, 1), R11);
+        as_mov_rr(&m->a, ms_arg(m, 1), R_S6);
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
-        x64_jmp(&m->a, &s.back);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_TAKEN) {
         /* the way taken of a branch counted (--jit-profile), then on to
            its target */
-        x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)((const char *)s.L + offsetof(Site, n0)));
-        x64_add_mi(&m->a, R11, 0, 1);
-        x64_jmp(&m->a, jit_label(j, (uint32_t)s.a));
+        as_mov_ri(&m->a, R_S6, (int64_t)(intptr_t)((const char *)s.L + offsetof(Site, n0)));
+        as_add_mi(&m->a, R_S6, 0, 1);
+        as_jmp(&m->a, jit_label(j, (uint32_t)s.a));
     } else if (s.kind == SLOW_FRAMES) {
         ms_sync(m, s.pc, 0);
         ms_call(m, (MsHelper)jit_h_grow_frames);
         ms_reload(m);
-        x64_jmp(&m->a, &s.back);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_DEOPT) {
         /* --deopt-stress: the Nth boundary reached (r11 is the counter's
            address): the count begun again, the exit counted, and out
            to the interpreter at s.pc, s.n instructions of the run left */
-        x64_mov_mi(&m->a, R11, 0, 0);
-        x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)&j->jit->deopts);
-        x64_add_mi(&m->a, R11, 0, 1);
+        as_st64i(&m->a, R_S6, 0, 0);
+        as_mov_ri(&m->a, R_S6, (int64_t)(intptr_t)&j->jit->deopts);
+        as_add_mi(&m->a, R_S6, 0, 1);
         ms_exit(m, s.pc, s.n);
     } else if (s.kind == SLOW_PRIM) {
         /* a primitive done in line, in a case that is the helper's (M7):
            back where the code went on, or, after a raise, the VM handed
            back with what the driver is to do */
         ms_sync(m, s.pc, 0);
-        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        x64_mov_ri(&m->a, ms_arg(m, 2), s.b);
-        x64_mov_ri(&m->a, ms_arg(m, 3), (int64_t)(intptr_t)s.L);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        as_mov_ri(&m->a, ms_arg(m, 2), s.b);
+        as_mov_ri(&m->a, ms_arg(m, 3), (int64_t)(intptr_t)s.L);
         ms_call(m, (MsHelper)jit_h_prim);
         ms_reload(m);
-        x64_test_rr(&m->a, RAX, RAX);
-        X64Label hand; x64_label_init(&hand);
-        x64_jcc(&m->a, CC_NE, &hand);
+        as_test_rr(&m->a, R_S0, R_S0);
+        AsmLabel hand; as_label_init(&hand);
+        as_jcc(&m->a, CC_NE, &hand);
         /* a comparison's bool back into the flags, as the fast path leaves
            it, for the branch fused onto it (s.c) */
-        if (s.c) x64_cmp_mi(&m->a, BASER, 16 * s.b + 8, 0);
-        x64_jmp(&m->a, &s.back);
-        x64_bind(&m->a, &hand);
-        x64_label_free(&hand);
+        if (s.c) as_cmp_mi(&m->a, BASER, 16 * s.b + 8, 0);
+        as_jmp(&m->a, &s.back);
+        as_bind(&m->a, &hand);
+        as_label_free(&hand);
         ms_handback_rax(m);
     } else {
         /* SLOW_RET: the frame of the top level returns through the helper */
         ms_sync(m, s.pc, 0);
-        x64_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
         ms_call(m, (MsHelper)jit_h_ret);
         ms_handback_rax(m);
     }
@@ -680,7 +675,7 @@ static int emit_function(Jit *j, Scan *sc) {
         uint32_t at = pc - j->from;
         if (!sc->start[at]) { pc++; continue; }
         if (sc->phantom[at]) { pc += rop_length(code + pc); in_run = 0; continue; }
-        if (sc->target[at]) { x64_bind(&m->a, &j->labels[at]); in_run = 0; }
+        if (sc->target[at]) { as_bind(&m->a, &j->labels[at]); in_run = 0; }
         if (!in_run) {
             /* the run's length: to the next end, or the next target */
             uint32_t k = 0, q = pc;
@@ -721,10 +716,10 @@ static int emit_function(Jit *j, Scan *sc) {
             Slow *s = ms_slow(m, SLOW_DEOPT, j->next);
             if (s) {
                 s->n = run_left;
-                x64_mov_ri(&m->a, R11, (int64_t)(intptr_t)&j->jit->deopt_count);
-                x64_add_mi(&m->a, R11, 0, 1);
-                x64_cmp_mi(&m->a, R11, 0, (int32_t)j->jit->deopt_stress);
-                x64_jcc(&m->a, CC_AE, &s->here);
+                as_mov_ri(&m->a, R_S6, (int64_t)(intptr_t)&j->jit->deopt_count);
+                as_add_mi(&m->a, R_S6, 0, 1);
+                as_cmp_mi(&m->a, R_S6, 0, (int32_t)j->jit->deopt_stress);
+                as_jcc(&m->a, CC_AE, &s->here);
             }
         }
         if (op == ROP_SWITCH) {
@@ -743,19 +738,19 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     size_t cap = (size_t)64 << 20;
     uint8_t *mem = sys_code_alloc(cap);
     if (!mem) return 0;
-    X64 a; x64_init(&a);
+    Asm a; as_init(&a);
     size_t enter_at = 0;
     ms_emit_enter(&a, JIT_WIN);
     size_t leave_at = a.n;
     ms_emit_leave(&a, JIT_WIN);
-    if (a.failed) { x64_free(&a); return 0; }
+    if (a.failed) { as_free(&a); return 0; }
     memcpy(mem, a.buf, a.n);
     jit->code_mem = mem;
     jit->code_cap = cap;
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
-    x64_free(&a);
+    as_free(&a);
     if (!sys_code_protect(mem, cap, 1)) return 0;
     return 1;
 #else
@@ -782,10 +777,10 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     j.m.a.base = (uintptr_t)(jit->code_mem + jit->code_used);
     j.from = fn->code_offset; j.to = fn->code_end;
     uint32_t len = j.to - j.from;
-    j.labels = malloc(((size_t)len + 1) * sizeof(X64Label));
+    j.labels = malloc(((size_t)len + 1) * sizeof(AsmLabel));
     Scan sc = { NULL, NULL, NULL, NULL };
     int ok = j.labels != NULL;
-    if (ok) for (uint32_t i = 0; i <= len; i++) x64_label_init(&j.labels[i]);
+    if (ok) for (uint32_t i = 0; i <= len; i++) as_label_init(&j.labels[i]);
     ok = ok && scan(&j, &sc);
     if (ok && vm->jit.profile && j.sites_cap) {
         j.sites = calloc(j.sites_cap, sizeof(Site));
@@ -794,14 +789,14 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     /* the entry: unit into the registers not written before anything
        could see them (jit_fill_from), from the arity up, where the
        section gives the arity -- else the callers do it (M10) */
-    x64_label_init(&j.entry);
-    x64_bind(&j.m.a, &j.entry);
+    as_label_init(&j.entry);
+    as_bind(&j.m.a, &j.entry);
     if (ok && fn->has_meta) {
         uint32_t from = jit_fill_from(vm, jit, f);
         if (from < fn->arity) from = fn->arity;
         if (fn->nlocals > from) {
-            x64_xorpd(&j.m.a, XMM1, XMM1);
-            for (uint32_t i = from; i < fn->nlocals; i++) x64_movups_mx(&j.m.a, BASER, (int32_t)(16 * i), XMM1);
+            as_fzero(&j.m.a, F_S1);
+            for (uint32_t i = from; i < fn->nlocals; i++) as_st128(&j.m.a, BASER, (int32_t)(16 * i), F_S1);
         }
     }
     /* tier 2: the representations trusted for the shapes of values (M10),
@@ -811,15 +806,15 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
         if (!fn->has_meta) j.tier = 1;
         else j.m.reps = fn->reps;
         if (fn->has_meta && liveness(&j, &sc) && choose_homes(&j)) {
-            j.landings = malloc(((size_t)len + 1) * sizeof(X64Label));
+            j.landings = malloc(((size_t)len + 1) * sizeof(AsmLabel));
             if (!j.landings) ok = 0;
             else {
-                for (uint32_t i = 0; i <= len; i++) x64_label_init(&j.landings[i]);
+                for (uint32_t i = 0; i <= len; i++) as_label_init(&j.landings[i]);
                 j.m.homes = j.homes;
                 j.m.live = j.live_in;
                 j.m.from = j.from;
                 /* the entry: the parameters' homes loaded */
-                x64_bind(&j.m.a, &j.landings[0]);
+                as_bind(&j.m.a, &j.landings[0]);
                 land(&j, j.from);
             }
         } else { free(j.live_in); j.live_in = NULL; }
@@ -834,15 +829,15 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     if (ok && j.landings) {
         for (uint32_t i = 1; i < len; i++)
             if (sc.target[i] && j.labels[i].at >= 0) {
-                x64_bind(&j.m.a, &j.landings[i]);
+                as_bind(&j.m.a, &j.landings[i]);
                 j.m.cur_pc = j.from + i;
                 land(&j, j.from + i);
-                x64_jmp(&j.m.a, &j.labels[i]);
+                as_jmp(&j.m.a, &j.labels[i]);
             }
         ok = !j.m.a.failed;
     }
     if (ok) {
-        for (uint32_t i = 0; i <= len && ok; i++) if (j.labels[i].nrefs) ok = 0;   /* a jump to nowhere */
+        for (uint32_t i = 0; i <= len && ok; i++) if (as_dangling(&j.labels[i])) ok = 0;   /* a jump to nowhere */
     }
     if (ok) {
         size_t size = (j.m.a.n + 15) & ~(size_t)15;
@@ -873,7 +868,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 if (co->osr_pcs && co->osr_offs)
                     for (uint32_t i = 0; i < len; i++)
                         if (sc.target[i] && j.labels[i].at >= 0) {
-                            X64Label *l = j.landings ? &j.landings[i] : &j.labels[i];
+                            AsmLabel *l = j.landings ? &j.landings[i] : &j.labels[i];
                             co->osr_pcs[co->nosr] = j.from + i; co->osr_offs[co->nosr] = (uint32_t)l->at; co->nosr++;
                         }
                 free(co->sites);
@@ -887,9 +882,9 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             }
         }
     }
-    if (j.labels) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.labels[i]); free(j.labels); }
-    if (j.landings) { for (uint32_t i = 0; i <= len; i++) x64_label_free(&j.landings[i]); free(j.landings); }
-    x64_label_free(&j.entry);
+    if (j.labels) { for (uint32_t i = 0; i <= len; i++) as_label_free(&j.labels[i]); free(j.labels); }
+    if (j.landings) { for (uint32_t i = 0; i <= len; i++) as_label_free(&j.landings[i]); free(j.landings); }
+    as_label_free(&j.entry);
     free(j.live_in); free(j.homes);
     free(j.sites);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);

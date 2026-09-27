@@ -334,8 +334,8 @@ NEW_HDRS := vm/new/regvm.h vm/new/regops.h vm/new/reg_cases.h vm/new/reg_labels.
 # RUNE_JIT=0 builds it without the JIT (docs/plans/jit.md): the
 # interpreter alone, which refuses --jit.
 RUNE_JIT ?= 1
-JIT_SRCS := vm/new/jit.c vm/new/jit/x64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
-JIT_HDRS := vm/new/jit.h vm/new/jit/x64.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
+JIT_SRCS := vm/new/jit.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
+JIT_HDRS := vm/new/jit.h vm/new/jit/x64.h vm/new/jit/asm.h vm/new/jit/masm.h vm/new/jit/compile.h vm/new/jit_emit.h vm/new/jit_cases.h
 NEW_LOOP := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS)
 bin/runevm-new: $(NEW_LOOP) build/librune.a $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) | build/.doctor-vm
 	@mkdir -p bin
@@ -469,9 +469,20 @@ PPCROOT    ?= /usr/powerpc64-linux-gnu
 PPCFLAGS   ?= --target=powerpc64-linux-gnu -B$(PPCROOT)/bin -L$(PPCROOT)/lib -I$(PPCROOT)/include \
               -Wl,-dynamic-linker,$(PPCROOT)/lib/ld64.so.1 -Wl,-rpath,$(PPCROOT)/lib
 QEMUPPC    ?= qemu-ppc64
+# aarch64 (docs/plans/jit.md, M12): the second target of vm/new's JIT,
+# built with the same cross toolchain pattern (libc6-dev-arm64-cross,
+# libgcc-13-dev-arm64-cross, binutils-aarch64-linux-gnu) and run by
+# qemu-aarch64, with the JIT on
+A64CC      ?= clang
+A64ROOT    ?= /usr/aarch64-linux-gnu
+A64FLAGS   ?= --target=aarch64-linux-gnu -B$(A64ROOT)/bin -L$(A64ROOT)/lib -I$(A64ROOT)/include \
+              -Wl,-dynamic-linker,$(A64ROOT)/lib/ld-linux-aarch64.so.1 -Wl,-rpath,$(A64ROOT)/lib
+QEMUA64    ?= qemu-aarch64
+JIT_SRCS_A64 := vm/new/jit.c vm/new/jit/a64.c vm/new/jit/asm_a64.c vm/new/jit/masm.c vm/new/jit/compile.c vm/new/jit/emit.c
+NEW_SRCS_A64 := vm/main.c vm/new/interp.c vm/new/isa_regs.c $(JIT_SRCS_A64) $(filter-out vm/isa_stack.c,$(RT_SRCS)) vm/sys_$(SYS).c
 PORT_TIMEOUT ?= 900
 
-portability: bin/runevm32 bin/runevm-ppc64 bin/runevm-new32 bin/runevm-new-ppc64
+portability: bin/runevm32 bin/runevm-ppc64 bin/runevm-new32 bin/runevm-new-ppc64 bin/runevm-new-aarch64
 
 bin/runevm32: $(VM_SRCS) $(VM_HDRS) Makefile | build/.doctor-portability
 	@mkdir -p bin
@@ -502,6 +513,16 @@ bin/runevm-new-ppc64: bin/runevm-new-ppc64.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-ppc64.bin" "$$@"\n' '$(QEMUPPC) -L $(PPCROOT)' > $@
 	chmod +x $@
 
+# the register VM for aarch64, its JIT included (M12): the encoder a64.c
+# and the portable assembler's aarch64 side in place of x64.c's
+bin/runevm-new-aarch64.bin: $(NEW_SRCS_A64) $(VM_HDRS) $(NEW_HDRS) $(JIT_HDRS) vm/new/jit/a64.h vm/new/jit/asm.h Makefile | build/.doctor-portability
+	@mkdir -p bin
+	$(A64CC) $(CFLAGS) $(A64FLAGS) -DRUNE_JIT=1 -Ivm -Ivm/new -o $@ $(NEW_SRCS_A64) -lm
+
+bin/runevm-new-aarch64: bin/runevm-new-aarch64.bin Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec %s "$$d/runevm-new-aarch64.bin" "$$@"\n' '$(QEMUA64) -L $(A64ROOT)' > $@
+	chmod +x $@
+
 # The PowerPC VM runs under an emulator and is about ten times slower, so the
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
@@ -509,7 +530,8 @@ bin/runevm-new-ppc64: bin/runevm-new-ppc64.bin Makefile
 test-portability: portability $(RUNE) vm bin/rune-new
 	sh tests/run-portability.sh -j $(JOBS) --rune $(RUNE) --vm bin/runevm32 --vm bin/runevm-ppc64
 	sh tests/run-portability.sh -j $(JOBS) --rune bin/rune-new --native bin/runevm-new --def vm/new/regs.def \
-	  --vm bin/runevm-new32 --vm bin/runevm-new-ppc64
+	  --vm bin/runevm-new32 --vm bin/runevm-new-ppc64 --vm bin/runevm-new-aarch64
+	sh scripts/check-jit.sh -j $(JOBS) --vm bin/runevm-new-aarch64
 	RUNE=$(abspath $(RUNE)) RUNE_MATRIX_TIMEOUT=$(PORT_TIMEOUT) \
 	  sh tests/basis/run-matrix.sh -j $(JOBS) --configs portability
 
@@ -735,12 +757,17 @@ test-new-jit: bin/rune-new bin/runevm-new $(RUNE)
 	chmod +x bin/runevm-new-opt
 	sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
 	sh scripts/check-jit.sh -j $(JOBS)
+	@! grep -n "\bx64_\|\ba64_\|\bX64\|\bA64" vm/new/jit/emit.c vm/new/jit/masm.c vm/new/jit/masm.h vm/new/jit/compile.c vm/new/jit/compile.h vm/new/jit.c \
+	  || { echo "check-asm: the emitters, the macro-assembler and the compiler name an encoder: they are written over vm/new/jit/asm.h alone (M12)"; false; }
+	@echo "check-asm: the emitters name no encoder"
 	RUNE_NEW=$(abspath bin/rune-new) RUNEVM_NEW_JIT=$(abspath bin/runevm-new-opt) sh tests/basis/run-matrix.sh -j $(JOBS) --configs rune:jit
 	bin/runevm-new --jit-check
 	@mkdir -p build/new
 	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_$(SYS).c
 	build/new/x64_test
-	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/sys_$(SYS).c
+	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/a64_test tests/new/a64_test.c vm/new/jit/a64.c
+	build/new/a64_test
+	$(CC) $(CFLAGS) -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/sys_$(SYS).c
 	build/new/masm_test
 	@mkdir -p tests/out/new-jit
 	bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc

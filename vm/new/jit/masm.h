@@ -24,18 +24,18 @@
 #ifndef RUNE_JIT_MASM_H
 #define RUNE_JIT_MASM_H
 
-#include "x64.h"
+#include "asm.h"
 #include "vm.h"
 #include "jit.h"
 
-enum { VMR = R12, STACKR = R13, BASEI = RBP, BASER = R14, COUNTR = R15 };
+enum { VMR = R_VM, STACKR = R_STACK, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
 enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_FRAMES, SLOW_RET, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT };
 typedef struct Slow {
-    X64Label here;
-    X64Label back;
+    AsmLabel here;
+    AsmLabel back;
     int kind;
     uint32_t pc;          /* the pc after the instruction, for SYNC */
     uint32_t cur;         /* the instruction's own pc: what is live at its entry is written back (tier 2) */
@@ -61,7 +61,7 @@ typedef struct Home {
 } Home;
 
 typedef struct Masm {
-    X64 a;
+    Asm a;
     int win;              /* the Windows convention for calls into C */
     uint32_t nlocals;     /* the function's registers */
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
@@ -111,9 +111,9 @@ void ms_load_tag(Masm *m, int r, int32_t s);                       /* r := the t
 void ms_load_payload(Masm *m, int r, int32_t s);                   /* r := the payload of R(s) */
 void ms_load_value(Masm *m, int32_t d, int base, int32_t disp);    /* R(d) := the Value at [base + disp] */
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s);   /* [base + disp] := R(s) */
-void ms_check_tag(Masm *m, int32_t s, int tag, X64Label *unless);  /* to unless where R(s) has another tag */
-void ms_load_obj(Masm *m, int r, int32_t s, int kind, X64Label *unless);   /* r := the object R(s) points to, of that kind */
-void ms_load_tag_of_con(Masm *m, int r, int32_t s, X64Label *unless);      /* r := the tag of the constructor value in R(s) */
+void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless);  /* to unless where R(s) has another tag */
+void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* r := the object R(s) points to, of that kind */
+void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless);      /* r := the tag of the constructor value in R(s) */
 /* the ones the emitters of M5 to M7 wrote against the slots directly,
    through here from M9, so that a register's home may be elsewhere */
 void ms_value_to(Masm *m, int base, int32_t disp, int32_t s);      /* [base + disp] := R(s), as a Value (16 bytes) */
@@ -155,7 +155,7 @@ void ms_handback_rax(Masm *m);                                     /* with the a
 
 /* the heap: rax := an object of n fields, or to slow where it would not
    fit or --gc-stress asks; the header written, the counts kept */
-void ms_alloc(Masm *m, int kind, int contag, uint32_t n, X64Label *slow);
+void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s): where a barrier goes */
 
 /* slow paths */
@@ -164,7 +164,7 @@ void ms_emit_slow_paths(Masm *m, void (*emit)(Masm *m, Slow *s));
 
 /* the stubs, into their own buffers: enter(VM *vm, const void *at) and
    leave, which returns what rax says */
-void ms_emit_enter(X64 *a, int win);
-void ms_emit_leave(X64 *a, int win);
+void ms_emit_enter(Asm *a, int win);
+void ms_emit_leave(Asm *a, int win);
 
 #endif

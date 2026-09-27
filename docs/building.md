@@ -199,18 +199,23 @@ them for two more, both Linux, so that only the VM differs:
 |---|---|
 | `bin/runevm32`, `bin/runevm-new32` | a 32-bit x86, where a pointer is four bytes and the System V ABI aligns an `int64_t` to four |
 | `bin/runevm-ppc64`, `bin/runevm-new-ppc64` | a 64-bit PowerPC, big-endian; a wrapper that runs `bin/runevm-ppc64.bin` (`bin/runevm-new-ppc64.bin`) under `qemu-ppc64`, as `bin/rune-mlton` wraps its payload |
+| `bin/runevm-new-aarch64` | a 64-bit ARM, the register VM with its JIT (plans/jit.md M12, the second target of the code it makes); a wrapper that runs `bin/runevm-new-aarch64.bin` under `qemu-aarch64` |
 
-The PowerPC one is built with clang, which cross-compiles without a gcc for
-the target, using the linker and the headers of a sysroot (`PPCROOT`, by
-default `/usr/powerpc64-linux-gnu`). `make doctor --scope portability` says
-what is missing and what to install.
+The PowerPC and the ARM ones are built with clang, which cross-compiles
+without a gcc for the target, using the linker and the headers of a sysroot
+(`PPCROOT`, by default `/usr/powerpc64-linux-gnu`; `A64ROOT`,
+`/usr/aarch64-linux-gnu`: the packages `libc6-dev-arm64-cross`,
+`libgcc-13-dev-arm64-cross` and `binutils-aarch64-linux-gnu`). `make doctor
+--scope portability` says what is missing and what to install.
 
 `make test-portability` runs `tests/lang` and `tests/vm` on each, once with
 the stack bytecode on `bin/runevm32` and `bin/runevm-ppc64` and once with
-the register bytecode on `bin/runevm-new32` and `bin/runevm-new-ppc64`, and
-the Basis Library suite as the configurations `rune:linux32`, `rune:ppc64`,
-`rune:linux32-new` and `rune:ppc64-new`. Then two things no single VM can
-show:
+the register bytecode on `bin/runevm-new32`, `bin/runevm-new-ppc64` and
+`bin/runevm-new-aarch64`, and the Basis Library suite as the configurations
+`rune:linux32`, `rune:ppc64`, `rune:linux32-new`, `rune:ppc64-new` and
+`rune:aarch64-new`; and the JIT's oracle (`scripts/check-jit.sh`) on the
+ARM VM, every mode of its JIT against its interpreter. Then two things no
+single VM can show:
 
 * the counts of `runevm --count` must agree **to the byte** on every VM and on
   this one. They are the instructions executed and the bytes and objects
@@ -220,7 +225,7 @@ show:
   one and each of the others reads it. The program prints its answer before
   saving and again once restored, so the two are compared with each other.
 
-The PowerPC VM is linked with an rpath as well as `-L`, so that it loads both
+The PowerPC and ARM VMs are linked with an rpath as well as `-L`, so that they load both
 when the wrapper starts it and when the kernel does. That second way is what a
 fork by a second VM needs: it starts the child by exec of the VM's own binary,
 and qemu-user does not emulate a program it is handed by exec -- the kernel has

@@ -19,7 +19,7 @@ typedef struct Jit {
     JitProgram *jit;
     uint32_t f;             /* the function */
     uint32_t next;          /* the pc after the instruction being emitted */
-    X64Label *labels;       /* one per byte of the function's code, bound where an instruction that is a target begins */
+    AsmLabel *labels;       /* one per byte of the function's code, bound where an instruction that is a target begins */
     uint32_t from, to;      /* the function's code */
     int unsupported;        /* an instruction tier 1 does not compile was met */
     /* a fused compare and branch (M7): the register whose bool the flags
@@ -37,11 +37,11 @@ typedef struct Jit {
        code is entered from outside -- a call returning, a raise, the
        interpreter mid-way, the entry itself -- which load the homes live
        there and go on to the instruction's label */
-    X64Label entry;         /* the code's start: the fill of the registers with unit (M10), then the entry's landing */
+    AsmLabel entry;         /* the code's start: the fill of the registers with unit (M10), then the entry's landing */
     int tier;
     Home *homes;
     uint64_t *live_in;
-    X64Label *landings;
+    AsmLabel *landings;
 } Jit;
 
 /* what native code says on a fatal error: the message of the interpreter */
@@ -53,22 +53,22 @@ enum JitFatal {
 };
 
 /* the label of the instruction at pc, for a jump */
-X64Label *jit_label(Jit *j, uint32_t pc);
+AsmLabel *jit_label(Jit *j, uint32_t pc);
 /* a fatal error at the instruction being emitted, out of line: the label to
    jump to; where the message wants a value found at run time, the code
    leaves it in rcx and says so with rcx_arg */
-X64Label *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg);
+AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg);
 /* an allocation's slow path: the object of n fields made by the helper,
    then filled and stored by fill, as the fast path did */
 enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN };
-X64Label *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
+AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* fill the object in rax as fill says, then R(d) := it */
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* an instruction tier 1 does not compile: the function stays interpreted */
 void jit_unsupported(Jit *j);
 /* where the code is entered from outside at pc (tier 2: a landing that
    loads the homes; tier 1: the instruction's label) */
-X64Label *jit_landing(Jit *j, uint32_t pc);
+AsmLabel *jit_landing(Jit *j, uint32_t pc);
 /* a site of the profile for the instruction at pc, or NULL without --jit-profile (M8) */
 Site *jit_site(Jit *j, int kind, uint32_t pc);
 

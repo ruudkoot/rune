@@ -68,6 +68,12 @@ for vm in $vms; do
         echo "  register it with: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-ppc64.conf > /proc/sys/fs/binfmt_misc/register'" >&2
         exit 2
       fi ;;
+    *aarch64*)
+      if [ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]; then
+        echo "run-portability: qemu-aarch64 is not registered under /proc/sys/fs/binfmt_misc, so a fork by $vm would hang" >&2
+        echo "  register it with: sudo sh -c 'cat /usr/lib/binfmt.d/qemu-aarch64.conf > /proc/sys/fs/binfmt_misc/register'" >&2
+        exit 2
+      fi ;;
   esac
 done
 status=0

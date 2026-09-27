@@ -39,7 +39,7 @@ What it rests on:
 | M9 | Tier 2: the registers given homes | done |
 | M10 | Tier 2: the optimisations | done |
 | M11 | Deoptimisation, OSR exit and invalidation | done |
-| M12 | aarch64 | |
+| M12 | aarch64 | done |
 
 The owner decided D1 to D14 on 2026-09-25 (*Decisions*); what starts
 first is theirs too. M1 to
@@ -2451,6 +2451,55 @@ Nothing here changes what `--count` counts (D5).
   qemu-user with an aarch64 sysroot, as PowerPC is (`make doctor`'s
   scope); `ARCHITECTURE.md` says what a target must provide.
 * **Done when:** the suites pass under qemu at every tier.
+* **Done** (2026-09-27; `vm/new/jit/asm.h`, `asm_x64.c`, `asm_a64.c`,
+  `a64.{h,c}`, `tests/new/a64_test.c`, about 800 lines; the emitters,
+  the macro-assembler and the compiler rewritten over the portable
+  assembler; the Makefile, `scripts/doctor.sh`,
+  `tests/run-portability.sh`, `tests/basis/run-matrix.sh`;
+  ARCHITECTURE.md's *The targets*, building.md, AGENTS.md). The re-plan
+  after M7 had this right: the work was the layer, not the encoder.
+  * **The portable assembler** (`asm.h`): the registers under portable
+    names (the five the code keeps, three general and fourteen floating
+    homes, seven scratch and two floating), the conditions, and about
+    seventy operations with x86-64's meanings where the machines
+    differ -- which instructions set the flags, a multiply with its
+    overflow jump as one operation, a divide with the quotient and the
+    remainder where `idiv` leaves them, the shift's count in one
+    register, the conditions for reals that are false on a NaN, the
+    push that keeps the stack aligned -- and the target's conventions
+    (the stubs, the arguments and the call into C). The 400 uses of the
+    encoder in the emitters, the macro-assembler and the compiler
+    became its operations by a script, with a dozen spots done by hand:
+    the set-condition pairs, the multiply, the divides, the equality of
+    reals, two places that read the flags of an `xor`, and the stubs.
+    `make test-new-jit` holds those files to naming no encoder.
+  * **The aarch64 encoder** (`a64.c`, 90 instructions, each checked
+    against `llvm-mc`), and the aarch64 side of the assembler over it:
+    `x19` to `x23` for what the code keeps, `x24` to `x26` and `v8` to
+    `v21` for the homes, an offset or an immediate the instruction
+    cannot hold put in `x16` or `x17` first, `adr` for a label's
+    address, `smulh` for the overflow of a multiply, `sdiv` and `msub`
+    for a divide, `ldr q` for a value, `cset` for a condition, and the
+    AAPCS64 stubs saving `x19` to `x30` and `v8` to `v15`.
+  * **Built and run**: `bin/runevm-new-aarch64`, clang with the arm64
+    cross packages (the owner installed `libc6-dev-arm64-cross`,
+    `libgcc-13-dev-arm64-cross` and `binutils-aarch64-linux-gnu`;
+    `make doctor --scope portability` checks them and `qemu-aarch64`),
+    run by `qemu-aarch64` with the sysroot, registered with the kernel
+    for a fork. `make portability` builds it and `make test-portability`
+    runs `tests/lang`, the Basis suite (`rune:aarch64-new`, the JIT's
+    default mode) and the JIT's oracle on it.
+  * **What the first run found:** the emitters read a comparison of
+    reals with the unsigned conditions, x86-64's idiom after `ucomisd`,
+    which on aarch64 answer true for an unordered pair (`tests/opt/prims`
+    said so at once); the portable conditions `CC_FA`, `CC_FAE` and
+    `CC_FE` replaced them. Nothing else: with that, the oracle's 162
+    programs print and count the same under every mode on the aarch64
+    VM as on its interpreter, and the compiler compiling itself under
+    qemu at every mode makes the bytecode the interpreter makes.
+  * **Not measured:** speed under qemu says nothing about the machine.
+    The x86-64 code is byte-for-byte what M11 made (the assembler's
+    x86-64 side is the encoder's calls), so its numbers stand.
 
 ### Why this order
 

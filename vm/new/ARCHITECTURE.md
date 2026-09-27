@@ -455,6 +455,59 @@ output and counts. `--jit-stats` counts the exits (`left mid-way`).
 Speculation without a fallback, which would need a deoptimisation with
 a reason, was not built: M10 found no site where it would pay.
 
+## The targets: what a machine must provide (M12)
+
+The emitters, the macro-assembler and the compiler are written over the
+*portable assembler* (`vm/new/jit/asm.h`) alone -- `make test-new-jit`
+holds them to naming no encoder -- and a target is one implementation
+of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
+`asm_a64.c` over `a64.c` (each encoder tested against the bytes
+`llvm-mc` gives, `tests/new/x64_test.c` and `a64_test.c`). What the
+implementation gives:
+
+* **The registers**, under the portable names: the five the code keeps
+  (`R_VM`, `R_STACK`, `R_BASEI`, `R_BASER`, `R_COUNT`), the three
+  general homes (`R_H0` to `R_H2`) and fourteen floating ones (`F_H0`
+  on), seven scratch registers (`R_S0`, the return value of a call into
+  C, to `R_S6`) and two floating (`F_S0`, `F_S1`); x86-64 maps them as
+  before (`r12` to `r15` and `rbp`; `rbx`, `rsi`, `rdi`; `xmm2` on;
+  `rax`, `rcx`, `rdx`, `r8` to `r11`; `xmm0`, `xmm1`), aarch64 to
+  `x19` to `x23`; `x24` to `x26`; `v8` to `v21`; `x0`, `x9` to `x14`;
+  `v0`, `v1`, with `x16` the encoder's own and `x17` the assembler's.
+* **The operations**, with x86-64's meanings where the machines differ:
+  `add`, `sub`, `cmp`, `test` and `neg` set the flags a `jcc` or `setcc`
+  reads, and nothing else promises to (an emitter that wants the sign
+  of an `xor` tests it); a multiply that may overflow is one operation
+  with its jump (`as_mul_jo`: `imul` and `jo`, or `mul`, `smulh` and a
+  compare); a divide gives the quotient in `R_S0` and the remainder in
+  `R_S2` (`cqo` and `idiv`, or `sdiv` and `msub`); a shift by a
+  register takes the count in `R_S1`; a comparison of reals is read
+  by `CC_FA`, `CC_FAE` and `CC_FE`, which are false on a NaN on every
+  target (`ja` and `jae` after `ucomisd`, and `setcc` with the parity
+  bit for equality; `gt`, `ge` and `eq` after `fcmp`); a memory operand
+  is `[base + disp]`, or with an index for `lea` and the 16-byte moves,
+  and the aarch64 side puts an offset or an immediate the instruction
+  cannot hold in its own register first; a push moves the stack by 16
+  on both, so it stays aligned; a table of 32-bit offsets is jumped
+  through the same way (`as_ld32sx`).
+* **The conventions**: the enter stub's saving of what C keeps and its
+  taking of the VM and the address to go to (`as_stub_enter`), the
+  leave stub (`as_stub_leave`), the register of the i-th argument of
+  a call into C (`as_arg`) and the call (`as_call_c`: through `rax`
+  with the Windows shadow space, or `blr x16`). On aarch64 the homes
+  are callee-saved registers, so a call into C keeps them; the code
+  writes them back and loads them again all the same, since the
+  macro-assembler does not know.
+* **The system**: executable memory and the instruction-cache flush
+  (`sys_code_flush`, `__builtin___clear_cache`, which x86-64 needs not).
+
+`bin/runevm-new-aarch64` is the register VM built for aarch64 with its
+JIT (`make portability`, clang with the arm64 cross packages, run by
+`qemu-aarch64`); `make test-portability` runs `tests/lang`, the Basis
+suite and the JIT's oracle on it, so every mode of the JIT is held to
+the interpreter's output and counts on the second target as on the
+first.
+
 ## Calls into C: the transition, and the FFI's
 
 Native code calls into C in one way, wherever it does (`masm.c`, `ms_sync`,

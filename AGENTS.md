@@ -147,7 +147,13 @@ keep these invariants:
   register set has, beside its body, an emitter in `vm/new/jit/emit.c`
   (its prototype is generated into `vm/new/jit_emit.h`, so the build fails
   without it) that does what the body does in the same frame, written
-  over the macro-assembler (`vm/new/jit/masm.h`), whose rules it keeps:
+  over the macro-assembler (`vm/new/jit/masm.h`) and the portable
+  assembler (`vm/new/jit/asm.h`, M12) -- never an encoder: `make
+  test-new-jit` checks that no `x64_` or `a64_` name occurs in the
+  emitters, the macro-assembler or the compiler, and an operation a
+  target lacks is added to `asm.h` with both implementations and a
+  line in ARCHITECTURE.md's *The targets*. The macro-assembler's rules
+  the emitter keeps:
   the VM exact (`ms_sync`) before any call into C and reloaded
   (`ms_reload`) after -- unless the C is a helper declared as touching
   nothing of the VM (`compile.h`) -- no heap pointer in a machine register
