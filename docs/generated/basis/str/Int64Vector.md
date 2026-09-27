@@ -28,26 +28,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Int64.int` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Int64.int -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Int64.int -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Int64.int -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Int64.int * Int64.int -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Int64.int -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int64.int -> bool) -> vector -> Int64.int option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int64.int -> bool) -> vector -> (int * Int64.int) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int64.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int64.int list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int64.int -> Int64.int) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Int64.int -> Int64.int) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Int64.int -> bool) -> Int64Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Int64.int -> unit) -> Int64Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Int64.int -> unit) -> Int64Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Int64.int * Int64.int -> order) -> Int64Vector.vector * Int64Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Int64Vector.vector list -> Int64Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Int64.int -> bool) -> Int64Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int64.int -> bool) -> Int64Vector.vector -> Int64.int option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int64.int -> bool) -> Int64Vector.vector -> (int * Int64.int) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int64.int * 'a -> 'a) -> 'a -> Int64Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int64.int * 'a -> 'a) -> 'a -> Int64Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int64.int * 'a -> 'a) -> 'a -> Int64Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int64.int * 'a -> 'a) -> 'a -> Int64Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int64.int list -> Int64Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Int64Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int64.int -> Int64.int) -> Int64Vector.vector -> Int64Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Int64.int -> Int64.int) -> Int64Vector.vector -> Int64Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Int64.int` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Int64.int) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Int64.int -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Int64Vector.vector * int -> Int64.int` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Int64.int) -> Int64Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Int64Vector.vector * int * Int64.int -> Int64Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

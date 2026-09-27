@@ -16,47 +16,63 @@
 structure WideChar :> CHAR where type char = WideChar.char where type string = WideString.string
 ```
 
+> **Reading** `WideChar.isAlpha/ascii-classes`. "In WideChar, the functions
+> toLower, toUpper, isAlpha, ... and, in general, the definition of a letter
+> are locale-dependent": here they are those of ASCII, so a character above
+> 127 is in no class and is its own upper and lower case. MLton reads it so
+> too.
+
+> **Implementation** `WideChar.toString/escapes-above-255`. [`toString`](../sig/CHAR.md#val-tostring) and
+> [`toCString`](../sig/CHAR.md#val-tocstring) write a character above 255 as `\uXXXX`, or `\UXXXXXXXX` above
+> 0xFFFF, as MLton writes them, and [`fromString`](../sig/CHAR.md#val-fromstring) and [`fromCString`](../sig/CHAR.md#val-fromcstring) read those
+> escapes. [`fromString`](../sig/CHAR.md#val-fromstring) also reads `\ddd` of exactly three decimal digits,
+> and [`fromCString`](../sig/CHAR.md#val-fromcstring) the escapes of C, whose digits are octal; an octal or a
+> `\x` escape of C names a character up to 255 only, so that
+> `fromCString "\\x1F600"` is `NONE`. The text they take and
+> give is of [`char`](../sig/CHAR.md#type-char), the 8-bit one, as the signature writes it, and [`scan`](../sig/CHAR.md#val-scan)
+> reads from a stream of [`char`](../sig/CHAR.md#type-char) and yields a wide character.
+
 ## Members
 
 What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/CHAR.md#type-char) | *a type of its own* |
+| type | [`char`](../sig/CHAR.md#type-char) | `WideChar.char` |
 | type | [`string`](../sig/CHAR.md#type-string) | `WideCharVector.vector` |
-| val | [`<`](../sig/CHAR.md#val-op-lt) | `char * char -> bool` |
-| val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `char * char -> bool` |
-| val | [`>`](../sig/CHAR.md#val-op-gt) | `char * char -> bool` |
-| val | [`>=`](../sig/CHAR.md#val-op-gt-eq) | `char * char -> bool` |
-| val | [`chr`](../sig/CHAR.md#val-chr) | `int -> char` |
-| val | [`compare`](../sig/CHAR.md#val-compare) | `char * char -> order` |
-| val | [`contains`](../sig/CHAR.md#val-contains) | `WideCharVector.vector -> char -> bool` |
-| val | [`fromCString`](../sig/CHAR.md#val-fromcstring) | `string -> char option` |
-| val | [`fromString`](../sig/CHAR.md#val-fromstring) | `string -> char option` |
-| val | [`isAlpha`](../sig/CHAR.md#val-isalpha) | `char -> bool` |
-| val | [`isAlphaNum`](../sig/CHAR.md#val-isalphanum) | `char -> bool` |
-| val | [`isAscii`](../sig/CHAR.md#val-isascii) | `char -> bool` |
-| val | [`isCntrl`](../sig/CHAR.md#val-iscntrl) | `char -> bool` |
-| val | [`isDigit`](../sig/CHAR.md#val-isdigit) | `char -> bool` |
-| val | [`isGraph`](../sig/CHAR.md#val-isgraph) | `char -> bool` |
-| val | [`isHexDigit`](../sig/CHAR.md#val-ishexdigit) | `char -> bool` |
-| val | [`isLower`](../sig/CHAR.md#val-islower) | `char -> bool` |
-| val | [`isPrint`](../sig/CHAR.md#val-isprint) | `char -> bool` |
-| val | [`isPunct`](../sig/CHAR.md#val-ispunct) | `char -> bool` |
-| val | [`isSpace`](../sig/CHAR.md#val-isspace) | `char -> bool` |
-| val | [`isUpper`](../sig/CHAR.md#val-isupper) | `char -> bool` |
-| val | [`maxChar`](../sig/CHAR.md#val-maxchar) | `char` |
+| val | [`<`](../sig/CHAR.md#val-op-lt) | `WideChar.char * WideChar.char -> bool` |
+| val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `WideChar.char * WideChar.char -> bool` |
+| val | [`>`](../sig/CHAR.md#val-op-gt) | `WideChar.char * WideChar.char -> bool` |
+| val | [`>=`](../sig/CHAR.md#val-op-gt-eq) | `WideChar.char * WideChar.char -> bool` |
+| val | [`chr`](../sig/CHAR.md#val-chr) | `int -> WideChar.char` |
+| val | [`compare`](../sig/CHAR.md#val-compare) | `WideChar.char * WideChar.char -> order` |
+| val | [`contains`](../sig/CHAR.md#val-contains) | `WideCharVector.vector -> WideChar.char -> bool` |
+| val | [`fromCString`](../sig/CHAR.md#val-fromcstring) | `string -> WideChar.char option` |
+| val | [`fromString`](../sig/CHAR.md#val-fromstring) | `string -> WideChar.char option` |
+| val | [`isAlpha`](../sig/CHAR.md#val-isalpha) | `WideChar.char -> bool` |
+| val | [`isAlphaNum`](../sig/CHAR.md#val-isalphanum) | `WideChar.char -> bool` |
+| val | [`isAscii`](../sig/CHAR.md#val-isascii) | `WideChar.char -> bool` |
+| val | [`isCntrl`](../sig/CHAR.md#val-iscntrl) | `WideChar.char -> bool` |
+| val | [`isDigit`](../sig/CHAR.md#val-isdigit) | `WideChar.char -> bool` |
+| val | [`isGraph`](../sig/CHAR.md#val-isgraph) | `WideChar.char -> bool` |
+| val | [`isHexDigit`](../sig/CHAR.md#val-ishexdigit) | `WideChar.char -> bool` |
+| val | [`isLower`](../sig/CHAR.md#val-islower) | `WideChar.char -> bool` |
+| val | [`isPrint`](../sig/CHAR.md#val-isprint) | `WideChar.char -> bool` |
+| val | [`isPunct`](../sig/CHAR.md#val-ispunct) | `WideChar.char -> bool` |
+| val | [`isSpace`](../sig/CHAR.md#val-isspace) | `WideChar.char -> bool` |
+| val | [`isUpper`](../sig/CHAR.md#val-isupper) | `WideChar.char -> bool` |
+| val | [`maxChar`](../sig/CHAR.md#val-maxchar) | `WideChar.char` |
 | val | [`maxOrd`](../sig/CHAR.md#val-maxord) | `int` |
-| val | [`minChar`](../sig/CHAR.md#val-minchar) | `char` |
-| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideCharVector.vector -> char -> bool` |
-| val | [`ord`](../sig/CHAR.md#val-ord) | `char -> int` |
-| val | [`pred`](../sig/CHAR.md#val-pred) | `char -> char` |
-| val | [`scan`](../sig/CHAR.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (char * 'a) option` |
-| val | [`succ`](../sig/CHAR.md#val-succ) | `char -> char` |
-| val | [`toCString`](../sig/CHAR.md#val-tocstring) | `char -> string` |
-| val | [`toLower`](../sig/CHAR.md#val-tolower) | `char -> char` |
-| val | [`toString`](../sig/CHAR.md#val-tostring) | `char -> string` |
-| val | [`toUpper`](../sig/CHAR.md#val-toupper) | `char -> char` |
+| val | [`minChar`](../sig/CHAR.md#val-minchar) | `WideChar.char` |
+| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideCharVector.vector -> WideChar.char -> bool` |
+| val | [`ord`](../sig/CHAR.md#val-ord) | `WideChar.char -> int` |
+| val | [`pred`](../sig/CHAR.md#val-pred) | `WideChar.char -> WideChar.char` |
+| val | [`scan`](../sig/CHAR.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (WideChar.char * 'a) option` |
+| val | [`succ`](../sig/CHAR.md#val-succ) | `WideChar.char -> WideChar.char` |
+| val | [`toCString`](../sig/CHAR.md#val-tocstring) | `WideChar.char -> string` |
+| val | [`toLower`](../sig/CHAR.md#val-tolower) | `WideChar.char -> WideChar.char` |
+| val | [`toString`](../sig/CHAR.md#val-tostring) | `WideChar.char -> string` |
+| val | [`toUpper`](../sig/CHAR.md#val-toupper) | `WideChar.char -> WideChar.char` |
 
 ---
 

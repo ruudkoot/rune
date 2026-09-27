@@ -33,26 +33,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `bool` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(bool -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(bool -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * bool -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(bool * bool -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(bool -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(bool -> bool) -> vector -> bool option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * bool -> bool) -> vector -> (int * bool) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(bool * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * bool * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(bool * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * bool * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `bool list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(bool -> bool) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * bool -> bool) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(bool -> bool) -> BoolVector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(bool -> unit) -> BoolVector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * bool -> unit) -> BoolVector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(bool * bool -> order) -> BoolVector.vector * BoolVector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `BoolVector.vector list -> BoolVector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(bool -> bool) -> BoolVector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(bool -> bool) -> BoolVector.vector -> bool option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * bool -> bool) -> BoolVector.vector -> (int * bool) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(bool * 'a -> 'a) -> 'a -> BoolVector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * bool * 'a -> 'a) -> 'a -> BoolVector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(bool * 'a -> 'a) -> 'a -> BoolVector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * bool * 'a -> 'a) -> 'a -> BoolVector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `bool list -> BoolVector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `BoolVector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(bool -> bool) -> BoolVector.vector -> BoolVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * bool -> bool) -> BoolVector.vector -> BoolVector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> bool` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> bool) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * bool -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `BoolVector.vector * int -> bool` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> bool) -> BoolVector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `BoolVector.vector * int * bool -> BoolVector.vector` |
 
 <details><summary>Other implementations (2)</summary>
 

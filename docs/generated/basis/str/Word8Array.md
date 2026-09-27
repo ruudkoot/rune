@@ -25,29 +25,29 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Word8.word` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Word8Vector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Word8.word -> bool) -> array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Word8.word -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Word8.word -> unit) -> array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Word8.word -> array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Word8.word * Word8.word -> order) -> array * array -> order` |
-| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : Word8Vector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Word8.word -> bool) -> array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Word8.word -> bool) -> array -> Word8.word option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Word8.word -> bool) -> array -> (int * Word8.word) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Word8.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word8.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word8.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word8.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Word8.word list -> array` |
-| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Word8.word -> bool) -> Word8Array.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Word8.word -> unit) -> Word8Array.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Word8.word -> unit) -> Word8Array.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Word8.word -> Word8Array.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Word8.word * Word8.word -> order) -> Word8Array.array * Word8Array.array -> order` |
+| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : Word8Array.array, src : Word8Array.array} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : Word8Array.array, src : Word8Vector.vector} -> unit` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Word8.word -> bool) -> Word8Array.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Word8.word -> bool) -> Word8Array.array -> Word8.word option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Word8.word -> bool) -> Word8Array.array -> (int * Word8.word) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Word8.word * 'a -> 'a) -> 'a -> Word8Array.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word8.word * 'a -> 'a) -> 'a -> Word8Array.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word8.word * 'a -> 'a) -> 'a -> Word8Array.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word8.word * 'a -> 'a) -> 'a -> Word8Array.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Word8.word list -> Word8Array.array` |
+| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `Word8Array.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Word8.word -> Word8.word) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Word8.word -> Word8.word) -> array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> Word8.word` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Word8.word) -> array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * Word8.word -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> Word8Vector.vector` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Word8.word -> Word8.word) -> Word8Array.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Word8.word -> Word8.word) -> Word8Array.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `Word8Array.array * int -> Word8.word` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Word8.word) -> Word8Array.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `Word8Array.array * int * Word8.word -> unit` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `Word8Array.array -> Word8Vector.vector` |
 
 ## Notes
 

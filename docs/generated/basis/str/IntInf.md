@@ -34,45 +34,45 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`int`](../sig/INTEGER.md#type-int) | *a type of its own* |
-| val | [`*`](../sig/INTEGER.md#val-op-star) | `int * int -> int` |
-| val | [`+`](../sig/INTEGER.md#val-op-plus) | `int * int -> int` |
-| val | [`-`](../sig/INTEGER.md#val-op-minus) | `int * int -> int` |
-| val | [`<`](../sig/INTEGER.md#val-op-lt) | `int * int -> bool` |
-| val | [`<<`](../sig/INT_INF.md#val-op-lt-lt) | `int * word -> int` |
-| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `int * int -> bool` |
-| val | [`>`](../sig/INTEGER.md#val-op-gt) | `int * int -> bool` |
-| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `int * int -> bool` |
-| val | [`abs`](../sig/INTEGER.md#val-abs) | `int -> int` |
-| val | [`andb`](../sig/INT_INF.md#val-andb) | `int * int -> int` |
-| val | [`compare`](../sig/INTEGER.md#val-compare) | `int * int -> order` |
-| val | [`div`](../sig/INTEGER.md#val-div) | `int * int -> int` |
-| val | [`divMod`](../sig/INT_INF.md#val-divmod) | `int * int -> int * int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> int -> string` |
-| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> int` |
-| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `int -> int` |
-| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> int option` |
-| val | [`log2`](../sig/INT_INF.md#val-log2) | `int -> int` |
-| val | [`max`](../sig/INTEGER.md#val-max) | `int * int -> int` |
-| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `int option` |
-| val | [`min`](../sig/INTEGER.md#val-min) | `int * int -> int` |
-| val | [`minInt`](../sig/INTEGER.md#val-minint) | `int option` |
-| val | [`mod`](../sig/INTEGER.md#val-mod) | `int * int -> int` |
-| val | [`notb`](../sig/INT_INF.md#val-notb) | `int -> int` |
-| val | [`orb`](../sig/INT_INF.md#val-orb) | `int * int -> int` |
-| val | [`pow`](../sig/INT_INF.md#val-pow) | `int * int -> int` |
+| val | [`*`](../sig/INTEGER.md#val-op-star) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`+`](../sig/INTEGER.md#val-op-plus) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`-`](../sig/INTEGER.md#val-op-minus) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`<`](../sig/INTEGER.md#val-op-lt) | `IntInf.int * IntInf.int -> bool` |
+| val | [`<<`](../sig/INT_INF.md#val-op-lt-lt) | `IntInf.int * word -> IntInf.int` |
+| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `IntInf.int * IntInf.int -> bool` |
+| val | [`>`](../sig/INTEGER.md#val-op-gt) | `IntInf.int * IntInf.int -> bool` |
+| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `IntInf.int * IntInf.int -> bool` |
+| val | [`abs`](../sig/INTEGER.md#val-abs) | `IntInf.int -> IntInf.int` |
+| val | [`andb`](../sig/INT_INF.md#val-andb) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`compare`](../sig/INTEGER.md#val-compare) | `IntInf.int * IntInf.int -> order` |
+| val | [`div`](../sig/INTEGER.md#val-div) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`divMod`](../sig/INT_INF.md#val-divmod) | `IntInf.int * IntInf.int -> IntInf.int * IntInf.int` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> IntInf.int -> string` |
+| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> IntInf.int` |
+| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> IntInf.int` |
+| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> IntInf.int option` |
+| val | [`log2`](../sig/INT_INF.md#val-log2) | `IntInf.int -> int` |
+| val | [`max`](../sig/INTEGER.md#val-max) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `IntInf.int option` |
+| val | [`min`](../sig/INTEGER.md#val-min) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`minInt`](../sig/INTEGER.md#val-minint) | `IntInf.int option` |
+| val | [`mod`](../sig/INTEGER.md#val-mod) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`notb`](../sig/INT_INF.md#val-notb) | `IntInf.int -> IntInf.int` |
+| val | [`orb`](../sig/INT_INF.md#val-orb) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`pow`](../sig/INT_INF.md#val-pow) | `IntInf.int * int -> IntInf.int` |
 | val | [`precision`](../sig/INTEGER.md#val-precision) | `int option` |
-| val | [`quot`](../sig/INTEGER.md#val-quot) | `int * int -> int` |
-| val | [`quotRem`](../sig/INT_INF.md#val-quotrem) | `int * int -> int * int` |
-| val | [`rem`](../sig/INTEGER.md#val-rem) | `int * int -> int` |
-| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `int * int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (int * 'a) option` |
-| val | [`sign`](../sig/INTEGER.md#val-sign) | `int -> int` |
-| val | [`toInt`](../sig/INTEGER.md#val-toint) | `int -> int` |
-| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `int -> int` |
-| val | [`toString`](../sig/INTEGER.md#val-tostring) | `int -> string` |
-| val | [`xorb`](../sig/INT_INF.md#val-xorb) | `int * int -> int` |
-| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `int -> int` |
-| val | [`~>>`](../sig/INT_INF.md#val-op-tilde-gt-gt) | `int * word -> int` |
+| val | [`quot`](../sig/INTEGER.md#val-quot) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`quotRem`](../sig/INT_INF.md#val-quotrem) | `IntInf.int * IntInf.int -> IntInf.int * IntInf.int` |
+| val | [`rem`](../sig/INTEGER.md#val-rem) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `IntInf.int * IntInf.int -> bool` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (IntInf.int * 'a) option` |
+| val | [`sign`](../sig/INTEGER.md#val-sign) | `IntInf.int -> int` |
+| val | [`toInt`](../sig/INTEGER.md#val-toint) | `IntInf.int -> int` |
+| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `IntInf.int -> IntInf.int` |
+| val | [`toString`](../sig/INTEGER.md#val-tostring) | `IntInf.int -> string` |
+| val | [`xorb`](../sig/INT_INF.md#val-xorb) | `IntInf.int * IntInf.int -> IntInf.int` |
+| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `IntInf.int -> IntInf.int` |
+| val | [`~>>`](../sig/INT_INF.md#val-op-tilde-gt-gt) | `IntInf.int * word -> IntInf.int` |
 
 ## Notes
 

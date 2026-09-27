@@ -28,26 +28,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md) and [`MONO_VECTOR_E
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `WideChar.char` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(WideChar.char -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(WideChar.char -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * WideChar.char -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(WideChar.char * WideChar.char -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(WideChar.char -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(WideChar.char -> bool) -> vector -> WideChar.char option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * WideChar.char -> bool) -> vector -> (int * WideChar.char) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * WideChar.char * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `WideChar.char list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(WideChar.char -> WideChar.char) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * WideChar.char -> WideChar.char) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(WideChar.char -> bool) -> WideCharVector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(WideChar.char -> unit) -> WideCharVector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * WideChar.char -> unit) -> WideCharVector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(WideChar.char * WideChar.char -> order) -> WideCharVector.vector * WideCharVector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `WideCharVector.vector list -> WideCharVector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(WideChar.char -> bool) -> WideCharVector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(WideChar.char -> bool) -> WideCharVector.vector -> WideChar.char option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * WideChar.char -> bool) -> WideCharVector.vector -> (int * WideChar.char) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(WideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * WideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(WideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * WideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `WideChar.char list -> WideCharVector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `WideCharVector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(WideChar.char -> WideChar.char) -> WideCharVector.vector -> WideCharVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * WideChar.char -> WideChar.char) -> WideCharVector.vector -> WideCharVector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> WideChar.char` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> WideChar.char) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * WideChar.char -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `WideCharVector.vector * int -> WideChar.char` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> WideChar.char) -> WideCharVector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `WideCharVector.vector * int * WideChar.char -> WideCharVector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

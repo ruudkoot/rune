@@ -24,26 +24,26 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `Int16.int` |
-| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
+| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : Int16Array2.array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `Int16Vector.vector` |
-| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (Int16.int -> unit) -> array -> unit` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (Int16.int -> unit) -> Int16Array2.array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * Int16.int -> unit) -> region -> unit` |
-| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * Int16.int -> array` |
-| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> Int16Vector.vector` |
-| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
-| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
-| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (Int16.int * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * Int16.int -> Int16Array2.array` |
+| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `Int16Array2.array * int -> Int16Vector.vector` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : Int16Array2.array, dst_col : int, dst_row : int, src : region} -> unit` |
+| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `Int16Array2.array -> int * int` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (Int16.int * 'a -> 'a) -> 'a -> Int16Array2.array -> 'a` |
 | val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * Int16.int * 'a -> 'a) -> 'a -> region -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `Int16.int list list -> array` |
-| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (Int16.int -> Int16.int) -> array -> unit` |
+| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `Int16.int list list -> Int16Array2.array` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (Int16.int -> Int16.int) -> Int16Array2.array -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * Int16.int -> Int16.int) -> region -> unit` |
-| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
-| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
-| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> Int16Vector.vector` |
-| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `array * int * int -> Int16.int` |
-| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> Int16.int) -> array` |
-| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `array * int * int * Int16.int -> unit` |
+| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `Int16Array2.array -> int` |
+| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `Int16Array2.array -> int` |
+| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `Int16Array2.array * int -> Int16Vector.vector` |
+| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `Int16Array2.array * int * int -> Int16.int` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> Int16.int) -> Int16Array2.array` |
+| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `Int16Array2.array * int * int * Int16.int -> unit` |
 
 <details><summary>Other implementations (6)</summary>
 

@@ -38,7 +38,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`BoolArray`](../str/BoolArray.md) | BoolArray: mutable arrays of booleans, a type of their own with identity equality, whose vectors are those of [`BoolVector`](../str/BoolVector.md). | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| [`CharArray`](../str/CharArray.md) |  | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
+| [`CharArray`](../str/CharArray.md) | CharArray: mutable arrays of characters, a type of their own with identity equality. Their vectors are strings: [`vector`](#val-vector) gives a `string`, and [`copyVec`](#val-copyvec) copies one in. | [lib/basis/chararray.sml](../../../../lib/basis/chararray.sml) |
 | [`Int16Array`](../str/Int16Array.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32Array`](../str/Int32Array.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
 | [`Int64Array`](../str/Int64Array.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |

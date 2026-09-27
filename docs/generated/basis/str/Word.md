@@ -76,7 +76,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 ### word
 
 > **Implementation** `Word.word/64-bits`. [`Word.word`](../sig/WORD.md#type-word) is the top-level
-> [`word`](../sig/WORD.md#type-word), of 64 bits, and so are [`LargeWord`](Word.md), [`SysWord`](Word.md) and [`Word64`](Word.md);
+> [`word`](../sig/WORD.md#type-word), of 64 bits, and so are [`LargeWord`](Word.md), [`SysWord`](Word.md) and [`Word64`](../str/Word64.md);
 > [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of the machine whose
 > upper bits are zero.
 

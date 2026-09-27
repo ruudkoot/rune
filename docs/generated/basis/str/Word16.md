@@ -25,43 +25,43 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`word`](../sig/WORD.md#type-word) | *a type of its own* |
-| val | [`*`](../sig/WORD.md#val-op-star) | `word * word -> word` |
-| val | [`+`](../sig/WORD.md#val-op-plus) | `word * word -> word` |
-| val | [`-`](../sig/WORD.md#val-op-minus) | `word * word -> word` |
-| val | [`<`](../sig/WORD.md#val-op-lt) | `word * word -> bool` |
-| val | [`<<`](../sig/WORD.md#val-op-lt-lt) | `word * word -> word` |
-| val | [`<=`](../sig/WORD.md#val-op-lt-eq) | `word * word -> bool` |
-| val | [`>`](../sig/WORD.md#val-op-gt) | `word * word -> bool` |
-| val | [`>=`](../sig/WORD.md#val-op-gt-eq) | `word * word -> bool` |
-| val | [`>>`](../sig/WORD.md#val-op-gt-gt) | `word * word -> word` |
-| val | [`andb`](../sig/WORD.md#val-andb) | `word * word -> word` |
-| val | [`compare`](../sig/WORD.md#val-compare) | `word * word -> order` |
-| val | [`div`](../sig/WORD.md#val-div) | `word * word -> word` |
-| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> word -> string` |
-| val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> word` |
-| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word -> word` |
-| val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> word` |
-| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word -> word` |
-| val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> word option` |
-| val | [`max`](../sig/WORD.md#val-max) | `word * word -> word` |
-| val | [`min`](../sig/WORD.md#val-min) | `word * word -> word` |
-| val | [`mod`](../sig/WORD.md#val-mod) | `word * word -> word` |
-| val | [`notb`](../sig/WORD.md#val-notb) | `word -> word` |
-| val | [`orb`](../sig/WORD.md#val-orb) | `word * word -> word` |
-| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word * 'a) option` |
-| val | [`toInt`](../sig/WORD.md#val-toint) | `word -> int` |
-| val | [`toIntX`](../sig/WORD.md#val-tointx) | `word -> int` |
-| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> word` |
-| val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `word -> IntInf.int` |
-| val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `word -> IntInf.int` |
-| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `word -> word` |
-| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `word -> word` |
-| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `word -> word` |
-| val | [`toString`](../sig/WORD.md#val-tostring) | `word -> string` |
+| val | [`*`](../sig/WORD.md#val-op-star) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`+`](../sig/WORD.md#val-op-plus) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`-`](../sig/WORD.md#val-op-minus) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`<`](../sig/WORD.md#val-op-lt) | `Word16.word * Word16.word -> bool` |
+| val | [`<<`](../sig/WORD.md#val-op-lt-lt) | `Word16.word * word -> Word16.word` |
+| val | [`<=`](../sig/WORD.md#val-op-lt-eq) | `Word16.word * Word16.word -> bool` |
+| val | [`>`](../sig/WORD.md#val-op-gt) | `Word16.word * Word16.word -> bool` |
+| val | [`>=`](../sig/WORD.md#val-op-gt-eq) | `Word16.word * Word16.word -> bool` |
+| val | [`>>`](../sig/WORD.md#val-op-gt-gt) | `Word16.word * word -> Word16.word` |
+| val | [`andb`](../sig/WORD.md#val-andb) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`compare`](../sig/WORD.md#val-compare) | `Word16.word * Word16.word -> order` |
+| val | [`div`](../sig/WORD.md#val-div) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> Word16.word -> string` |
+| val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> Word16.word` |
+| val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `word -> Word16.word` |
+| val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> Word16.word` |
+| val | [`fromLargeWord`](../sig/WORD.md#val-fromlargeword) | `word -> Word16.word` |
+| val | [`fromString`](../sig/WORD.md#val-fromstring) | `string -> Word16.word option` |
+| val | [`max`](../sig/WORD.md#val-max) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`min`](../sig/WORD.md#val-min) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`mod`](../sig/WORD.md#val-mod) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`notb`](../sig/WORD.md#val-notb) | `Word16.word -> Word16.word` |
+| val | [`orb`](../sig/WORD.md#val-orb) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word16.word * 'a) option` |
+| val | [`toInt`](../sig/WORD.md#val-toint) | `Word16.word -> int` |
+| val | [`toIntX`](../sig/WORD.md#val-tointx) | `Word16.word -> int` |
+| val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word16.word -> word` |
+| val | [`toLargeInt`](../sig/WORD.md#val-tolargeint) | `Word16.word -> IntInf.int` |
+| val | [`toLargeIntX`](../sig/WORD.md#val-tolargeintx) | `Word16.word -> IntInf.int` |
+| val | [`toLargeWord`](../sig/WORD.md#val-tolargeword) | `Word16.word -> word` |
+| val | [`toLargeWordX`](../sig/WORD.md#val-tolargewordx) | `Word16.word -> word` |
+| val | [`toLargeX`](../sig/WORD.md#val-tolargex) | `Word16.word -> word` |
+| val | [`toString`](../sig/WORD.md#val-tostring) | `Word16.word -> string` |
 | val | [`wordSize`](../sig/WORD.md#val-wordsize) | `int` |
-| val | [`xorb`](../sig/WORD.md#val-xorb) | `word * word -> word` |
-| val | [`~`](../sig/WORD.md#val-op-tilde) | `word -> word` |
-| val | [`~>>`](../sig/WORD.md#val-op-tilde-gt-gt) | `word * word -> word` |
+| val | [`xorb`](../sig/WORD.md#val-xorb) | `Word16.word * Word16.word -> Word16.word` |
+| val | [`~`](../sig/WORD.md#val-op-tilde) | `Word16.word -> Word16.word` |
+| val | [`~>>`](../sig/WORD.md#val-op-tilde-gt-gt) | `Word16.word * word -> Word16.word` |
 
 <details><summary>Other implementations (6)</summary>
 

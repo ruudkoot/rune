@@ -38,7 +38,7 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`BoolVector`](../str/BoolVector.md) | BoolVector: immutable vectors of booleans. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| [`CharVector`](../str/CharVector.md) | CharVector: CharVector.vector is string. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
+| [`CharVector`](../str/CharVector.md) | CharVector: the strings, seen as vectors of characters. [`CharVector.vector`](#type-vector) is `string`, as the specification requires, so the functions of [`String`](../str/String.md) and of this structure apply to the same values: [`CharVector.map`](#val-map) is a [`String.map`](../sig/STRING.md#val-map) by another name. | [lib/basis/charvector.sml](../../../../lib/basis/charvector.sml) |
 | [`Int16Vector`](../str/Int16Vector.md) | The monomorphic vectors and arrays of Int16.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32Vector`](../str/Int32Vector.md) | The monomorphic vectors and arrays of Int32.int, their slices and the two-dimensional arrays (optional in the specification). | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
 | [`Int64Vector`](../str/Int64Vector.md) | The vectors, arrays, slices and two-dimensional arrays of Int64 (optional in the specification). Int64.int is a type of its own, so these are their own structures and not those of Int. | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |

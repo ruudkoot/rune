@@ -16,6 +16,9 @@
 structure CharArraySlice :> MONO_ARRAY_SLICE where type vector = CharVector.vector where type vector_slice = CharVectorSlice.slice where type array = CharArray.array where type elem = char
 ```
 
+CharArraySlice: stretches of [`CharArray`](../str/CharArray.md) arrays, without a copy: an update
+through a slice changes the array. Its vector slices are substrings.
+
 ## Members
 
 What each means is on [`MONO_ARRAY_SLICE`](../sig/MONO_ARRAY_SLICE.md); the types are this structure's own.

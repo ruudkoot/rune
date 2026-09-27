@@ -35,25 +35,25 @@ What each means is on [`ARRAY2`](../sig/ARRAY2.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`array`](../sig/ARRAY2.md#type-array) | *a type of its own* |
-| type | [`region`](../sig/ARRAY2.md#type-region) | `{base : 'a array, col : int, ncols : int option, nrows : int option, row : int}` |
+| type | [`region`](../sig/ARRAY2.md#type-region) | `{base : 'a Array2.array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
-| val | [`app`](../sig/ARRAY2.md#val-app) | `traversal -> ('a -> unit) -> 'a array -> unit` |
+| val | [`app`](../sig/ARRAY2.md#val-app) | `traversal -> ('a -> unit) -> 'a Array2.array -> unit` |
 | val | [`appi`](../sig/ARRAY2.md#val-appi) | `traversal -> (int * int * 'a -> unit) -> 'a region -> unit` |
-| val | [`array`](../sig/ARRAY2.md#val-array) | `int * int * 'a -> 'a array` |
-| val | [`column`](../sig/ARRAY2.md#val-column) | `'a array * int -> 'a vector` |
-| val | [`copy`](../sig/ARRAY2.md#val-copy) | `{dst : 'a array, dst_col : int, dst_row : int, src : 'a region} -> unit` |
-| val | [`dimensions`](../sig/ARRAY2.md#val-dimensions) | `'a array -> int * int` |
-| val | [`fold`](../sig/ARRAY2.md#val-fold) | `traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b` |
+| val | [`array`](../sig/ARRAY2.md#val-array) | `int * int * 'a -> 'a Array2.array` |
+| val | [`column`](../sig/ARRAY2.md#val-column) | `'a Array2.array * int -> 'a vector` |
+| val | [`copy`](../sig/ARRAY2.md#val-copy) | `{dst : 'a Array2.array, dst_col : int, dst_row : int, src : 'a region} -> unit` |
+| val | [`dimensions`](../sig/ARRAY2.md#val-dimensions) | `'a Array2.array -> int * int` |
+| val | [`fold`](../sig/ARRAY2.md#val-fold) | `traversal -> ('a * 'b -> 'b) -> 'b -> 'a Array2.array -> 'b` |
 | val | [`foldi`](../sig/ARRAY2.md#val-foldi) | `traversal -> (int * int * 'a * 'b -> 'b) -> 'b -> 'a region -> 'b` |
-| val | [`fromList`](../sig/ARRAY2.md#val-fromlist) | `'a list list -> 'a array` |
-| val | [`modify`](../sig/ARRAY2.md#val-modify) | `traversal -> ('a -> 'a) -> 'a array -> unit` |
+| val | [`fromList`](../sig/ARRAY2.md#val-fromlist) | `'a list list -> 'a Array2.array` |
+| val | [`modify`](../sig/ARRAY2.md#val-modify) | `traversal -> ('a -> 'a) -> 'a Array2.array -> unit` |
 | val | [`modifyi`](../sig/ARRAY2.md#val-modifyi) | `traversal -> (int * int * 'a -> 'a) -> 'a region -> unit` |
-| val | [`nCols`](../sig/ARRAY2.md#val-ncols) | `'a array -> int` |
-| val | [`nRows`](../sig/ARRAY2.md#val-nrows) | `'a array -> int` |
-| val | [`row`](../sig/ARRAY2.md#val-row) | `'a array * int -> 'a vector` |
-| val | [`sub`](../sig/ARRAY2.md#val-sub) | `'a array * int * int -> 'a` |
-| val | [`tabulate`](../sig/ARRAY2.md#val-tabulate) | `traversal -> int * int * (int * int -> 'a) -> 'a array` |
-| val | [`update`](../sig/ARRAY2.md#val-update) | `'a array * int * int * 'a -> unit` |
+| val | [`nCols`](../sig/ARRAY2.md#val-ncols) | `'a Array2.array -> int` |
+| val | [`nRows`](../sig/ARRAY2.md#val-nrows) | `'a Array2.array -> int` |
+| val | [`row`](../sig/ARRAY2.md#val-row) | `'a Array2.array * int -> 'a vector` |
+| val | [`sub`](../sig/ARRAY2.md#val-sub) | `'a Array2.array * int * int -> 'a` |
+| val | [`tabulate`](../sig/ARRAY2.md#val-tabulate) | `traversal -> int * int * (int * int -> 'a) -> 'a Array2.array` |
+| val | [`update`](../sig/ARRAY2.md#val-update) | `'a Array2.array * int * int * 'a -> unit` |
 
 ## Notes
 

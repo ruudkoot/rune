@@ -38,7 +38,7 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`BoolVectorSlice`](../str/BoolVectorSlice.md) | BoolVectorSlice: stretches of [`BoolVector`](../str/BoolVector.md) vectors, without a copy. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| [`CharVectorSlice`](../str/CharVectorSlice.md) | CharVectorSlice: its slice is the substring of Substring, so it is written on Substring rather than being an instance of RuneMonoVectorSliceFn. The \-i functions pass the index in the slice. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
+| [`CharVectorSlice`](../str/CharVectorSlice.md) | CharVectorSlice: the substrings, seen as slices of vectors of characters. Its [`slice`](#val-slice) is [`Substring.substring`](../sig/SUBSTRING.md#val-substring), as the specification requires, so a slice made here is a substring there and the other way round. | [lib/basis/charvectorslice.sml](../../../../lib/basis/charvectorslice.sml) |
 | [`Int16VectorSlice`](../str/Int16VectorSlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32VectorSlice`](../str/Int32VectorSlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
 | [`Int64VectorSlice`](../str/Int64VectorSlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |

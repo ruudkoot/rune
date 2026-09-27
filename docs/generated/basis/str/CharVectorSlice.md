@@ -16,9 +16,12 @@
 structure CharVectorSlice : MONO_VECTOR_SLICE where type slice = Substring.substring where type vector = String.string where type elem = char
 ```
 
-CharVectorSlice: its slice is the substring of Substring, so it is written
-on Substring rather than being an instance of RuneMonoVectorSliceFn. The
-\-i functions pass the index in the slice.
+CharVectorSlice: the substrings, seen as slices of vectors of characters.
+Its [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) is [`Substring.substring`](../sig/SUBSTRING.md#val-substring), as the specification requires, so a
+slice made here is a substring there and the other way round.
+
+The structure is written on [`Substring`](../str/Substring.md) rather than made by the functor
+of the other families; the -i functions pass the index in the slice.
 
 ## Members
 

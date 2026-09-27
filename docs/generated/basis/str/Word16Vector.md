@@ -27,26 +27,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Word16.word` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word16.word -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word16.word -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word16.word -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word16.word * Word16.word -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word16.word -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word16.word -> bool) -> vector -> Word16.word option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word16.word -> bool) -> vector -> (int * Word16.word) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word16.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word16.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word16.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word16.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word16.word list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word16.word -> Word16.word) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word16.word -> Word16.word) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word16.word -> bool) -> Word16Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word16.word -> unit) -> Word16Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word16.word -> unit) -> Word16Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word16.word * Word16.word -> order) -> Word16Vector.vector * Word16Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Word16Vector.vector list -> Word16Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word16.word -> bool) -> Word16Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word16.word -> bool) -> Word16Vector.vector -> Word16.word option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word16.word -> bool) -> Word16Vector.vector -> (int * Word16.word) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word16.word * 'a -> 'a) -> 'a -> Word16Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word16.word * 'a -> 'a) -> 'a -> Word16Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word16.word * 'a -> 'a) -> 'a -> Word16Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word16.word * 'a -> 'a) -> 'a -> Word16Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word16.word list -> Word16Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Word16Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word16.word -> Word16.word) -> Word16Vector.vector -> Word16Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word16.word -> Word16.word) -> Word16Vector.vector -> Word16Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Word16.word` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word16.word) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Word16.word -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Word16Vector.vector * int -> Word16.word` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word16.word) -> Word16Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Word16Vector.vector * int * Word16.word -> Word16Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

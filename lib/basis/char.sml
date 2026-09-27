@@ -156,7 +156,9 @@ struct
           in implode [#"\\", o' (n div 64), o' (n div 8 mod 8), o' (n mod 8)] end
 end
 
-(* Char: 8-bit characters.
+(* Char: the characters of 8 bits, codes 0 to 255, which are the elements of
+   `string`. Its type is the top-level `char`, and its classes are those of
+   ASCII.
 
    Implements: CHAR where type char = char where type string = String.string *)
 structure Char =

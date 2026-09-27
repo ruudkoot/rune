@@ -16,8 +16,6 @@
 structure NetHostDB : NET_HOST_DB
 ```
 
-NetHostDB, NetProtDB and NetServDB: the databases of the network.
-
 ## Members
 
 What each means is on [`NET_HOST_DB`](../sig/NET_HOST_DB.md); the types are this structure's own.

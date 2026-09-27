@@ -16,10 +16,6 @@
 structure INet6Sock : INET6_SOCK
 ```
 
-INet6Sock: the sockets of the Internet protocol version 6 (Rune's own, not
-of the specification). An address is the bytes of a `sockaddr_in6`, which
-only this structure takes apart.
-
 ## Members
 
 What each means is on [`INET6_SOCK`](../sig/INET6_SOCK.md); the types are this structure's own.

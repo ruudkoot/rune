@@ -27,26 +27,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Int32.int` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Int32.int -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Int32.int -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Int32.int -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Int32.int * Int32.int -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Int32.int -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int32.int -> bool) -> vector -> Int32.int option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int32.int -> bool) -> vector -> (int * Int32.int) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int32.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int32.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int32.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int32.int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int32.int list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int32.int -> Int32.int) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Int32.int -> Int32.int) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Int32.int -> bool) -> Int32Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Int32.int -> unit) -> Int32Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Int32.int -> unit) -> Int32Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Int32.int * Int32.int -> order) -> Int32Vector.vector * Int32Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Int32Vector.vector list -> Int32Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Int32.int -> bool) -> Int32Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Int32.int -> bool) -> Int32Vector.vector -> Int32.int option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Int32.int -> bool) -> Int32Vector.vector -> (int * Int32.int) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Int32.int * 'a -> 'a) -> 'a -> Int32Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Int32.int * 'a -> 'a) -> 'a -> Int32Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Int32.int * 'a -> 'a) -> 'a -> Int32Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Int32.int * 'a -> 'a) -> 'a -> Int32Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Int32.int list -> Int32Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Int32Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Int32.int -> Int32.int) -> Int32Vector.vector -> Int32Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Int32.int -> Int32.int) -> Int32Vector.vector -> Int32Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Int32.int` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Int32.int) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Int32.int -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Int32Vector.vector * int -> Int32.int` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Int32.int) -> Int32Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Int32Vector.vector * int * Int32.int -> Int32Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

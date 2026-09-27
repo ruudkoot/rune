@@ -25,29 +25,29 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Int8.int` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Int8Vector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Int8.int -> bool) -> array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Int8.int -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Int8.int -> unit) -> array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Int8.int -> array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Int8.int * Int8.int -> order) -> array * array -> order` |
-| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : Int8Vector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Int8.int -> bool) -> array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Int8.int -> bool) -> array -> Int8.int option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Int8.int -> bool) -> array -> (int * Int8.int) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Int8.int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Int8.int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Int8.int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Int8.int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Int8.int list -> array` |
-| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Int8.int -> bool) -> Int8Array.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Int8.int -> unit) -> Int8Array.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Int8.int -> unit) -> Int8Array.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Int8.int -> Int8Array.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Int8.int * Int8.int -> order) -> Int8Array.array * Int8Array.array -> order` |
+| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : Int8Array.array, src : Int8Array.array} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : Int8Array.array, src : Int8Vector.vector} -> unit` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Int8.int -> bool) -> Int8Array.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Int8.int -> bool) -> Int8Array.array -> Int8.int option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Int8.int -> bool) -> Int8Array.array -> (int * Int8.int) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Int8.int * 'a -> 'a) -> 'a -> Int8Array.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Int8.int * 'a -> 'a) -> 'a -> Int8Array.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Int8.int * 'a -> 'a) -> 'a -> Int8Array.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Int8.int * 'a -> 'a) -> 'a -> Int8Array.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Int8.int list -> Int8Array.array` |
+| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `Int8Array.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Int8.int -> Int8.int) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Int8.int -> Int8.int) -> array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> Int8.int` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Int8.int) -> array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * Int8.int -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> Int8Vector.vector` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Int8.int -> Int8.int) -> Int8Array.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Int8.int -> Int8.int) -> Int8Array.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `Int8Array.array * int -> Int8.int` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Int8.int) -> Int8Array.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `Int8Array.array * int * Int8.int -> unit` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `Int8Array.array -> Int8Vector.vector` |
 
 ---
 

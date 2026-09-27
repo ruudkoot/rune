@@ -62,11 +62,14 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 ### int
 
-> **Implementation** `Int.int/64-bits`. [`Int.int`](../sig/INTEGER.md#type-int) is the top-level [`int`](../sig/INTEGER.md#type-int), of
-> 64 bits, and so are [`Int64`](Int.md), [`FixedInt`](Int.md) and [`Position`](Int.md); [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md)
-> and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md),
-> which has no width. Constants of each are checked against its range
-> where they are written.
+> **Implementation** `Int.int/64-bits`. [`Int.int`](../sig/INTEGER.md#type-int) is the top-level [`int`](../sig/INTEGER.md#type-int),
+> whose width is the VM's: 64 bits on this one, so that [`Int.precision`](../sig/INTEGER.md#val-precision) is
+> `SOME 64`. [`Position`](Int.md) is [`Int`](Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits as
+> well, but sealed away from [`Int.int`](../sig/INTEGER.md#type-int), so that no program can take the one
+> for the other and the VM stays free to choose the width of [`Int`](Int.md); [`Int8`](../str/Int8.md),
+> [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is
+> [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
+> range where they are written.
 
 ### mod
 

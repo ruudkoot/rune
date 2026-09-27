@@ -16,7 +16,10 @@
 structure CharVector : MONO_VECTOR where type vector = String.string where type elem = char
 ```
 
-CharVector: CharVector.vector is string.
+CharVector: the strings, seen as vectors of characters. [`CharVector.vector`](../sig/MONO_VECTOR.md#type-vector)
+is `string`, as the specification requires, so the functions of [`String`](../str/String.md)
+and of this structure apply to the same values: [`CharVector.map`](../sig/MONO_VECTOR.md#val-map) is a
+[`String.map`](../sig/STRING.md#val-map) by another name.
 
 ## Members
 

@@ -30,7 +30,7 @@ structure Word8 : WORD
 | [`Word`](../str/Word.md) | Word: unsigned words: 64 bits on the VM. The size is found by shifting a bit out, so that this file means the same to a system whose word is narrower. | [lib/basis/word.sml](../../../../lib/basis/word.sml) |
 | [`Word16`](../str/Word16.md) | Word16: words of 16 bits. | [lib/basis/word16.sml](../../../../lib/basis/word16.sml) |
 | [`Word32`](../str/Word32.md) | Word32: words of 32 bits. | [lib/basis/word32.sml](../../../../lib/basis/word32.sml) |
-| [`Word64`](../str/Word.md) | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
+| [`Word64`](../str/Word64.md) | Word64: the 64-bit words. | [lib/basis/word64.sml](../../../../lib/basis/word64.sml) |
 | [`Word8`](../str/Word8.md) | Word8: words of 8 bits, the element type of the byte-oriented structures. | [lib/basis/word8.sml](../../../../lib/basis/word8.sml) |
 
 Words: integers of a fixed number of bits, without a sign, whose
@@ -48,7 +48,7 @@ top bit is the sign, as in two's complement. The functions with an `X` in
 their name are those that sign-extend; the others fill with zeros.
 
 The structures differ in their width: [`Word`](../str/Word.md) is the default one and
-[`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word.md) are the sized ones; [`LargeWord`](../str/Word.md)
+[`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md), [`Word32`](../str/Word32.md) and [`Word64`](../str/Word64.md) are the sized ones; [`LargeWord`](../str/Word.md)
 is the widest, and [`SysWord`](../str/Word.md) is what the operating system's flags are
 counted in.
 
@@ -119,7 +119,7 @@ eqtype word
 The type of words of this structure.
 
 > **Implementation** `Word.word/64-bits`. [`Word.word`](#type-word) is the top-level
-> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](../str/Word.md), [`SysWord`](../str/Word.md) and [`Word64`](../str/Word.md);
+> [`word`](#type-word), of 64 bits, and so are [`LargeWord`](../str/Word.md), [`SysWord`](../str/Word.md) and [`Word64`](../str/Word64.md);
 > [`Word8`](../str/Word8.md), [`Word16`](../str/Word16.md) and [`Word32`](../str/Word32.md) are kept in a word of the machine whose
 > upper bits are zero.
 

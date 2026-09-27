@@ -16,11 +16,6 @@
 structure Runtime : RUNTIME
 ```
 
-Runtime: what the VM counts, for the program it is running (Rune's own, not
-of the specification). Each counter is a primitive that reads a field of
-the VM and allocates nothing, so the six are read without disturbing five
-of them.
-
 ## Members
 
 What each means is on [`RUNTIME`](../sig/RUNTIME.md); the types are this structure's own.

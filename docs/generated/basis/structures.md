@@ -36,7 +36,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`CharVectorSlice`](str/CharVectorSlice.md) | : [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type slice = Substring.substring where type vector = String.string where type elem = char` | required |  | [lib/basis/charvectorslice.sml](../../../lib/basis/charvectorslice.sml) |
 | [`CommandLine`](str/CommandLine.md) | : [`COMMAND_LINE`](sig/COMMAND_LINE.md) |  | required |  | [lib/basis/commandline.sml](../../../lib/basis/commandline.sml) |
 | [`Date`](str/Date.md) | : [`DATE`](sig/DATE.md) |  | required |  | [lib/basis/date.sml](../../../lib/basis/date.sml) |
-| [`FixedInt`](str/Int.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
+| [`FixedInt`](str/Int64.md) | : [`INTEGER`](sig/INTEGER.md) | `where type int = Int64.int` | optional | is [`Int64`](str/Int64.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`General`](str/General.md) | : [`GENERAL`](sig/GENERAL.md) |  | required |  | [lib/basis/general.sml](../../../lib/basis/general.sml) |
 | [`GenericSock`](str/GenericSock.md) | : [`GENERIC_SOCK`](sig/GENERIC_SOCK.md) |  | optional | is `RuneGenericSock` | [lib/basis/inetsock.sml](../../../lib/basis/inetsock.sml) |
 | [`IEEEReal`](str/IEEEReal.md) | : [`IEEE_REAL`](sig/IEEE_REAL.md) |  | optional |  | [lib/basis/ieeereal.sml](../../../lib/basis/ieeereal.sml) |
@@ -60,7 +60,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`Int32ArraySlice`](str/Int32ArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Int32Vector.vector where type vector_slice = Int32VectorSlice.slice where type array = Int32Array.array where type elem = Int32.int` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_int32.sml](../../../lib/basis/mono_int32.sml) |
 | [`Int32Vector`](str/Int32Vector.md) | :> [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = Int32.int` | optional | an application of `RuneMonoVectorFn` | [lib/basis/mono\_int32.sml](../../../lib/basis/mono_int32.sml) |
 | [`Int32VectorSlice`](str/Int32VectorSlice.md) | :> [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = Int32Vector.vector where type elem = Int32.int` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_int32.sml](../../../lib/basis/mono_int32.sml) |
-| [`Int64`](str/Int.md) | :> [`INTEGER`](sig/INTEGER.md) |  | optional | is [`Int`](str/Int.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
+| [`Int64`](str/Int64.md) | :> [`INTEGER`](sig/INTEGER.md) |  | optional | is [`Int`](str/Int.md) | [lib/basis/int64.sml](../../../lib/basis/int64.sml) |
 | [`Int64Array`](str/Int64Array.md) | :> [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = Int64Vector.vector where type elem = Int64.int` | optional | an application of `RuneMonoArrayFn` | [lib/basis/mono\_int64.sml](../../../lib/basis/mono_int64.sml) |
 | [`Int64Array2`](str/Int64Array2.md) | :> [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = Int64Vector.vector where type elem = Int64.int` | optional | an application of `RuneMonoArray2Fn` | [lib/basis/mono\_int64.sml](../../../lib/basis/mono_int64.sml) |
 | [`Int64ArraySlice`](str/Int64ArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Int64Vector.vector where type vector_slice = Int64VectorSlice.slice where type array = Int64Array.array where type elem = Int64.int` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_int64.sml](../../../lib/basis/mono_int64.sml) |
@@ -105,10 +105,10 @@ signature names and no others, unless the structure is listed at the end of this
 | [`NetProtDB`](str/NetProtDB.md) | : [`NET_PROT_DB`](sig/NET_PROT_DB.md) |  | optional | is `RuneNetProtDB` | [lib/basis/netdb.sml](../../../lib/basis/netdb.sml) |
 | [`NetServDB`](str/NetServDB.md) | : [`NET_SERV_DB`](sig/NET_SERV_DB.md) |  | optional | is `RuneNetServDB` | [lib/basis/netdb.sml](../../../lib/basis/netdb.sml) |
 | [`OS`](str/OS.md) | : [`OS`](sig/OS.md) |  | required |  | [lib/basis/os.sml](../../../lib/basis/os.sml) |
-| [`OS.FileSys`](str/OS.FileSys.md) | : [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) |  | required | is `RuneFileSys` | [lib/basis/osfilesys.sml](../../../lib/basis/osfilesys.sml) |
-| [`OS.IO`](str/OS.IO.md) | : [`OS_IO`](sig/OS_IO.md) |  | required | is `RuneIODesc` | [lib/basis/osio.sml](../../../lib/basis/osio.sml) |
+| [`OS.FileSys`](str/OS.FileSys.md) | : [`OS_FILE_SYS`](sig/OS_FILE_SYS.md) |  | required | is `RuneFileSys` | [lib/basis/os.sml](../../../lib/basis/os.sml) |
+| [`OS.IO`](str/OS.IO.md) | : [`OS_IO`](sig/OS_IO.md) |  | required | is `RuneIODesc` | [lib/basis/os.sml](../../../lib/basis/os.sml) |
 | [`OS.IO.Kind`](str/OS.IO.Kind.md) | *in* [`OS_IO`](sig/OS_IO.md) |  | required |  | [lib/basis/osio.sml](../../../lib/basis/osio.sml) |
-| [`OS.Path`](str/OS.Path.md) | : [`OS_PATH`](sig/OS_PATH.md) |  | required | is `RunePath` | [lib/basis/ospath.sml](../../../lib/basis/ospath.sml) |
+| [`OS.Path`](str/OS.Path.md) | : [`OS_PATH`](sig/OS_PATH.md) |  | required | is `RunePath` | [lib/basis/os.sml](../../../lib/basis/os.sml) |
 | [`OS.Process`](str/OS.Process.md) | : [`OS_PROCESS`](sig/OS_PROCESS.md) |  | required |  | [lib/basis/os.sml](../../../lib/basis/os.sml) |
 | [`Option`](str/Option.md) | : [`OPTION`](sig/OPTION.md) |  | required |  | [lib/basis/option.sml](../../../lib/basis/option.sml) |
 | [`PackReal32Big`](str/PackReal32Big.md) | : [`PACK_REAL`](sig/PACK_REAL.md) | `where type real = Real32.real` | optional | an application of `RunePackReal32Fn` | [lib/basis/pack\_real32.sml](../../../lib/basis/pack_real32.sml) |
@@ -125,23 +125,23 @@ signature names and no others, unless the structure is listed at the end of this
 | [`PackWord64Little`](str/PackWord64Little.md) | : [`PACK_WORD`](sig/PACK_WORD.md) |  | optional | an application of `RunePackWordFn` | [lib/basis/pack\_word.sml](../../../lib/basis/pack_word.sml) |
 | [`Position`](str/Int.md) | : [`INTEGER`](sig/INTEGER.md) |  | required | is [`Int`](str/Int.md) | [lib/basis/position.sml](../../../lib/basis/position.sml) |
 | [`Posix`](str/Posix.md) | : [`POSIX`](sig/POSIX.md) | `where type FileSys.dirstream = OS.FileSys.dirstream where type FileSys.access_mode = OS.FileSys.access_mode` | optional |  | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
-| [`Posix.Error`](str/Posix.Error.md) | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix\_error.sml](../../../lib/basis/posix_error.sml) |
-| [`Posix.FileSys`](str/Posix.FileSys.md) | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
+| [`Posix.Error`](str/Posix.Error.md) | : [`POSIX_ERROR`](sig/POSIX_ERROR.md) |  | optional | is `RunePosixError` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| [`Posix.FileSys`](str/Posix.FileSys.md) | : [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional | is `RunePosixFileSys` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.FileSys.O`](str/Posix.FileSys.O.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
 | [`Posix.FileSys.S`](str/Posix.FileSys.S.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
 | [`Posix.FileSys.ST`](str/Posix.FileSys.ST.md) | *in* [`POSIX_FILE_SYS`](sig/POSIX_FILE_SYS.md) |  | optional |  | [lib/basis/posix\_filesys.sml](../../../lib/basis/posix_filesys.sml) |
-| [`Posix.IO`](str/Posix.IO.md) | : [`POSIX_IO`](sig/POSIX_IO.md) |  | optional | is `RunePosixIO` | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
+| [`Posix.IO`](str/Posix.IO.md) | : [`POSIX_IO`](sig/POSIX_IO.md) |  | optional | is `RunePosixIO` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.IO.FD`](str/Posix.IO.FD.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
 | [`Posix.IO.FLock`](str/Posix.IO.FLock.md) | *in* [`POSIX_IO`](sig/POSIX_IO.md) |  | optional |  | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
 | [`Posix.IO.O`](str/Posix.IO.O.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional | is `RunePosixFileSys.O` | [lib/basis/posix\_io.sml](../../../lib/basis/posix_io.sml) |
-| [`Posix.ProcEnv`](str/Posix.ProcEnv.md) | : [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) |  | optional | is `RunePosixProcEnv` | [lib/basis/posix\_procenv.sml](../../../lib/basis/posix_procenv.sml) |
-| [`Posix.Process`](str/Posix.Process.md) | : [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) |  | optional | is `RunePosixProcess` | [lib/basis/posix\_process.sml](../../../lib/basis/posix_process.sml) |
+| [`Posix.ProcEnv`](str/Posix.ProcEnv.md) | : [`POSIX_PROC_ENV`](sig/POSIX_PROC_ENV.md) |  | optional | is `RunePosixProcEnv` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| [`Posix.Process`](str/Posix.Process.md) | : [`POSIX_PROCESS`](sig/POSIX_PROCESS.md) |  | optional | is `RunePosixProcess` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.Process.W`](str/Posix.Process.W.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_process.sml](../../../lib/basis/posix_process.sml) |
-| [`Posix.Signal`](str/Posix.Signal.md) | : [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) |  | optional | is `RunePosixSignal` | [lib/basis/posix\_signal.sml](../../../lib/basis/posix_signal.sml) |
-| [`Posix.SysDB`](str/Posix.SysDB.md) | : [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | optional | is `RunePosixSysDB` | [lib/basis/posix\_sysdb.sml](../../../lib/basis/posix_sysdb.sml) |
+| [`Posix.Signal`](str/Posix.Signal.md) | : [`POSIX_SIGNAL`](sig/POSIX_SIGNAL.md) |  | optional | is `RunePosixSignal` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
+| [`Posix.SysDB`](str/Posix.SysDB.md) | : [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | optional | is `RunePosixSysDB` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.SysDB.Group`](str/Posix.SysDB.Group.md) | *in* [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | optional |  | [lib/basis/posix\_sysdb.sml](../../../lib/basis/posix_sysdb.sml) |
 | [`Posix.SysDB.Passwd`](str/Posix.SysDB.Passwd.md) | *in* [`POSIX_SYS_DB`](sig/POSIX_SYS_DB.md) |  | optional |  | [lib/basis/posix\_sysdb.sml](../../../lib/basis/posix_sysdb.sml) |
-| [`Posix.TTY`](str/Posix.TTY.md) | : [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional | is `RunePosixTTY` | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
+| [`Posix.TTY`](str/Posix.TTY.md) | : [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional | is `RunePosixTTY` | [lib/basis/posix.sml](../../../lib/basis/posix.sml) |
 | [`Posix.TTY.C`](str/Posix.TTY.C.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
 | [`Posix.TTY.CF`](str/Posix.TTY.CF.md) | *in* [`POSIX_TTY`](sig/POSIX_TTY.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
 | [`Posix.TTY.I`](str/Posix.TTY.I.md) | : [`BIT_FLAGS`](sig/BIT_FLAGS.md) |  | optional |  | [lib/basis/posix\_tty.sml](../../../lib/basis/posix_tty.sml) |
@@ -225,7 +225,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`Word32ArraySlice`](str/Word32ArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Word32Vector.vector where type vector_slice = Word32VectorSlice.slice where type array = Word32Array.array where type elem = Word32.word` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_word32.sml](../../../lib/basis/mono_word32.sml) |
 | [`Word32Vector`](str/Word32Vector.md) | :> [`MONO_VECTOR`](sig/MONO_VECTOR.md) | `where type elem = Word32.word` | optional | an application of `RuneMonoVectorFn` | [lib/basis/mono\_word32.sml](../../../lib/basis/mono_word32.sml) |
 | [`Word32VectorSlice`](str/Word32VectorSlice.md) | :> [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | `where type vector = Word32Vector.vector where type elem = Word32.word` | optional | an application of `RuneMonoVectorSliceFn` | [lib/basis/mono\_word32.sml](../../../lib/basis/mono_word32.sml) |
-| [`Word64`](str/Word.md) | :> [`WORD`](sig/WORD.md) |  | optional | is [`Word`](str/Word.md) | [lib/basis/word64.sml](../../../lib/basis/word64.sml) |
+| [`Word64`](str/Word64.md) | :> [`WORD`](sig/WORD.md) |  | optional | is [`Word`](str/Word.md) | [lib/basis/word64.sml](../../../lib/basis/word64.sml) |
 | [`Word64Array`](str/Word64Array.md) | :> [`MONO_ARRAY`](sig/MONO_ARRAY.md) | `where type vector = Word64Vector.vector where type elem = Word64.word` | optional | an application of `RuneMonoArrayFn` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |
 | [`Word64Array2`](str/Word64Array2.md) | :> [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | `where type vector = Word64Vector.vector where type elem = Word64.word` | optional | an application of `RuneMonoArray2Fn` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |
 | [`Word64ArraySlice`](str/Word64ArraySlice.md) | :> [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | `where type vector = Word64Vector.vector where type vector_slice = Word64VectorSlice.slice where type array = Word64Array.array where type elem = Word64.word` | optional | an application of `RuneMonoArraySliceFn` | [lib/basis/mono\_word64.sml](../../../lib/basis/mono_word64.sml) |

@@ -38,7 +38,7 @@ structure WordArraySlice :> MONO_ARRAY_SLICE where type vector = WordVector.vect
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`BoolArraySlice`](../str/BoolArraySlice.md) | BoolArraySlice: stretches of [`BoolArray`](../str/BoolArray.md) arrays, without a copy: an update through a slice changes the array. | [lib/basis/mono\_bool.sml](../../../../lib/basis/mono_bool.sml) |
-| [`CharArraySlice`](../str/CharArraySlice.md) |  | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
+| [`CharArraySlice`](../str/CharArraySlice.md) | CharArraySlice: stretches of [`CharArray`](../str/CharArray.md) arrays, without a copy: an update through a slice changes the array. Its vector slices are substrings. | [lib/basis/chararrayslice.sml](../../../../lib/basis/chararrayslice.sml) |
 | [`Int16ArraySlice`](../str/Int16ArraySlice.md) |  | [lib/basis/mono\_int16.sml](../../../../lib/basis/mono_int16.sml) |
 | [`Int32ArraySlice`](../str/Int32ArraySlice.md) |  | [lib/basis/mono\_int32.sml](../../../../lib/basis/mono_int32.sml) |
 | [`Int64ArraySlice`](../str/Int64ArraySlice.md) |  | [lib/basis/mono\_int64.sml](../../../../lib/basis/mono_int64.sml) |

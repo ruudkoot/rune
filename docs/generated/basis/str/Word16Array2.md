@@ -24,26 +24,26 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `Word16.word` |
-| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
+| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : Word16Array2.array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `Word16Vector.vector` |
-| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (Word16.word -> unit) -> array -> unit` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (Word16.word -> unit) -> Word16Array2.array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * Word16.word -> unit) -> region -> unit` |
-| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * Word16.word -> array` |
-| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> Word16Vector.vector` |
-| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
-| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
-| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (Word16.word * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * Word16.word -> Word16Array2.array` |
+| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `Word16Array2.array * int -> Word16Vector.vector` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : Word16Array2.array, dst_col : int, dst_row : int, src : region} -> unit` |
+| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `Word16Array2.array -> int * int` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (Word16.word * 'a -> 'a) -> 'a -> Word16Array2.array -> 'a` |
 | val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * Word16.word * 'a -> 'a) -> 'a -> region -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `Word16.word list list -> array` |
-| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (Word16.word -> Word16.word) -> array -> unit` |
+| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `Word16.word list list -> Word16Array2.array` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (Word16.word -> Word16.word) -> Word16Array2.array -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * Word16.word -> Word16.word) -> region -> unit` |
-| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
-| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
-| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> Word16Vector.vector` |
-| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `array * int * int -> Word16.word` |
-| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> Word16.word) -> array` |
-| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `array * int * int * Word16.word -> unit` |
+| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `Word16Array2.array -> int` |
+| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `Word16Array2.array -> int` |
+| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `Word16Array2.array * int -> Word16Vector.vector` |
+| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `Word16Array2.array * int * int -> Word16.word` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> Word16.word) -> Word16Array2.array` |
+| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `Word16Array2.array * int * int * Word16.word -> unit` |
 
 <details><summary>Other implementations (6)</summary>
 

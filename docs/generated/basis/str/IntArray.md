@@ -25,29 +25,29 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `int` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `IntVector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(int -> bool) -> array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(int -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * int -> unit) -> array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * int -> array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(int * int -> order) -> array * array -> order` |
-| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : IntVector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(int -> bool) -> array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(int -> bool) -> array -> int option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * int -> bool) -> array -> (int * int) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * int * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `int list -> array` |
-| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(int -> bool) -> IntArray.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(int -> unit) -> IntArray.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * int -> unit) -> IntArray.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * int -> IntArray.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(int * int -> order) -> IntArray.array * IntArray.array -> order` |
+| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : IntArray.array, src : IntArray.array} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : IntArray.array, src : IntVector.vector} -> unit` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(int -> bool) -> IntArray.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(int -> bool) -> IntArray.array -> int option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * int -> bool) -> IntArray.array -> (int * int) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(int * 'a -> 'a) -> 'a -> IntArray.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * int * 'a -> 'a) -> 'a -> IntArray.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(int * 'a -> 'a) -> 'a -> IntArray.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * int * 'a -> 'a) -> 'a -> IntArray.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `int list -> IntArray.array` |
+| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `IntArray.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(int -> int) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * int -> int) -> array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> int` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> int) -> array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * int -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> IntVector.vector` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(int -> int) -> IntArray.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * int -> int) -> IntArray.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `IntArray.array * int -> int` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> int) -> IntArray.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `IntArray.array * int * int -> unit` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `IntArray.array -> IntVector.vector` |
 
 ---
 

@@ -242,6 +242,11 @@ val year : date -> int
 
 `year d` is the year of `d`, as a number and not counted from 1900.
 
+**Law** `year (date r) = #year r` when the fields of `r` are in range, and
+the same for [`month`](#val-month), [`day`](#val-day), [`hour`](#val-hour), [`minute`](#val-minute) and [`second`](#val-second)
+
+**Example** `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995`
+
 <details><summary>Tests (2)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example` &middot; `base-0`
@@ -255,6 +260,8 @@ val month : date -> month
 ```
 
 `month d` is the month of `d`.
+
+**Example** `month (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = Mar`
 
 <details><summary>Tests (1)</summary>
 
@@ -270,6 +277,8 @@ val day : date -> int
 
 `day d` is the day of the month of `d`, from 1.
 
+**Example** `day (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 8`
+
 <details><summary>Tests (1)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
@@ -283,6 +292,8 @@ val hour : date -> int
 ```
 
 `hour d` is the hour of `d`, from 0 to 23.
+
+**Example** `hour (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 19`
 
 <details><summary>Tests (1)</summary>
 
@@ -298,6 +309,8 @@ val minute : date -> int
 
 `minute d` is the minute of `d`, from 0 to 59.
 
+**Example** `minute (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 6`
+
 <details><summary>Tests (1)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `example`
@@ -311,6 +324,8 @@ val second : date -> int
 ```
 
 `second d` is the second of `d`, from 0 to 59, or up to 61 for a leap second.
+
+**Example** `second (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 45`
 
 <details><summary>Tests (1)</summary>
 
@@ -358,6 +373,8 @@ val offset : date -> Time.time option
 
 `offset d` is the zone of `d`: `NONE` for the local one, `SOME t` for `t` west of UTC.
 
+**Example** `offset (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME Time.zeroTime`
+
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; offset reports the time east of UTC modulo a day (an offset of 5 hours west gives 19 hours, 5:30 east gives 5:30), not "the amount of time west of UTC"
@@ -384,6 +401,8 @@ val isDst : date -> bool option
 
 The suite assumes that no zone has daylight saving time both in January
 and in July.
+
+**Example** `isDst (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = SOME false`
 
 <details><summary>Tests (2)</summary>
 
@@ -432,6 +451,8 @@ val fromTimeLocal : Time.time -> date
 The suite's moments are noon UTC on 15 January and 15 July 2001, away from
 the changes of every zone, and the time at which it runs.
 
+**Example** `offset (fromTimeLocal Time.zeroTime) = NONE`
+
 <details><summary>Tests (5)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `offset-is-NONE` &middot; `toTime-inverts` &middot; `differs-from-UTC-by-less-than-a-day` &middot; `differs-from-UTC-by-whole-minutes` &middot; `same-weekDay-and-yearDay-as-the-fields`
@@ -452,6 +473,11 @@ val fromTimeUniv : Time.time -> date
 
 The suite assumes that the clock of the machine shows a year from 2020 to
 2199\.
+
+**Law** `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for a
+time `t` at or after the epoch
+
+**Example** `toString (fromTimeUniv (Time.fromSeconds 86400)) = "Fri Jan 02 00:00:00 1970"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -517,6 +543,8 @@ val compare : date * date -> order
 > do not compare equal, and one written later in its own zone is the
 > greater.
 
+**Example** `compare (date {year = 2000, month = Dec, day = 31, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}, date {year = 2001, month = Jan, day = 1, hour = 0, minute = 0, second = 0, offset = SOME Time.zeroTime}) = LESS`
+
 <details><summary>Tests (11)</summary>
 
 For `Date`, in [tests/basis/date.sml](../../../../tests/basis/date.sml): `equal` &middot; `year` &middot; `month` &middot; `day` &middot; `hour` &middot; `minute` &middot; `second` &middot; `ignores-the-offset` &middot; `ignores-the-offset-not-the-time` &middot; `local-and-UTC` &middot; `agrees-with-toTime-for-UTC`
@@ -571,6 +599,8 @@ val toString : date -> string
 
 **Raises** [`Date`](#exn-date) if `d` is not a valid date.
 
+**Law** `toString d = fmt "%a %b %d %H:%M:%S %Y" d`
+
 **Example** `toString (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = "Wed Mar 08 19:06:45 1995"`
 
 <details><summary>Tests (9)</summary>
@@ -592,6 +622,8 @@ val scan : (char, 'a) StringCvt.reader -> (date, 'a) StringCvt.reader
 > worked out, and the date it gives is a local one ([`offset`](#val-offset) and [`isDst`](#val-isdst)
 > both `NONE`). So [`scan`](#val-scan) can give a date that [`fmt`](#val-fmt) and [`toString`](#val-tostring) then
 > refuse.
+
+**Example** `Option.map (toString o #1) (scan Substring.getc (Substring.full " Wed Mar 08 19:06:45 1995")) = SOME "Wed Mar 08 19:06:45 1995"`
 
 <details><summary>Other implementations (2)</summary>
 

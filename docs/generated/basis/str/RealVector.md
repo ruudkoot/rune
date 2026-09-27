@@ -30,26 +30,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `real` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(real -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(real -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * real -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(real * real -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(real -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(real -> bool) -> vector -> real option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * real -> bool) -> vector -> (int * real) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `real list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(real -> real) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * real -> real) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(real -> bool) -> RealVector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(real -> unit) -> RealVector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * real -> unit) -> RealVector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(real * real -> order) -> RealVector.vector * RealVector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `RealVector.vector list -> RealVector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(real -> bool) -> RealVector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(real -> bool) -> RealVector.vector -> real option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * real -> bool) -> RealVector.vector -> (int * real) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(real * 'a -> 'a) -> 'a -> RealVector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * real * 'a -> 'a) -> 'a -> RealVector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(real * 'a -> 'a) -> 'a -> RealVector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * real * 'a -> 'a) -> 'a -> RealVector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `real list -> RealVector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `RealVector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(real -> real) -> RealVector.vector -> RealVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * real -> real) -> RealVector.vector -> RealVector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> real` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> real) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * real -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `RealVector.vector * int -> real` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> real) -> RealVector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `RealVector.vector * int * real -> RealVector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

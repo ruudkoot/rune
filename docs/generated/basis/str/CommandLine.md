@@ -16,7 +16,8 @@
 structure CommandLine : COMMAND_LINE
 ```
 
-CommandLine
+CommandLine: the name the program was run under and the arguments it was
+given, as the operating system passed them to the VM.
 
 ## Members
 

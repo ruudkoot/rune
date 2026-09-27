@@ -25,35 +25,35 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`int`](../sig/INTEGER.md#type-int) | *a type of its own* |
-| val | [`*`](../sig/INTEGER.md#val-op-star) | `int * int -> int` |
-| val | [`+`](../sig/INTEGER.md#val-op-plus) | `int * int -> int` |
-| val | [`-`](../sig/INTEGER.md#val-op-minus) | `int * int -> int` |
-| val | [`<`](../sig/INTEGER.md#val-op-lt) | `int * int -> bool` |
-| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `int * int -> bool` |
-| val | [`>`](../sig/INTEGER.md#val-op-gt) | `int * int -> bool` |
-| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `int * int -> bool` |
-| val | [`abs`](../sig/INTEGER.md#val-abs) | `int -> int` |
-| val | [`compare`](../sig/INTEGER.md#val-compare) | `int * int -> order` |
-| val | [`div`](../sig/INTEGER.md#val-div) | `int * int -> int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> int -> string` |
-| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> int` |
-| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> int` |
-| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> int option` |
-| val | [`max`](../sig/INTEGER.md#val-max) | `int * int -> int` |
-| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `int option` |
-| val | [`min`](../sig/INTEGER.md#val-min) | `int * int -> int` |
-| val | [`minInt`](../sig/INTEGER.md#val-minint) | `int option` |
-| val | [`mod`](../sig/INTEGER.md#val-mod) | `int * int -> int` |
+| val | [`*`](../sig/INTEGER.md#val-op-star) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`+`](../sig/INTEGER.md#val-op-plus) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`-`](../sig/INTEGER.md#val-op-minus) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`<`](../sig/INTEGER.md#val-op-lt) | `Int8.int * Int8.int -> bool` |
+| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `Int8.int * Int8.int -> bool` |
+| val | [`>`](../sig/INTEGER.md#val-op-gt) | `Int8.int * Int8.int -> bool` |
+| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `Int8.int * Int8.int -> bool` |
+| val | [`abs`](../sig/INTEGER.md#val-abs) | `Int8.int -> Int8.int` |
+| val | [`compare`](../sig/INTEGER.md#val-compare) | `Int8.int * Int8.int -> order` |
+| val | [`div`](../sig/INTEGER.md#val-div) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> Int8.int -> string` |
+| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> Int8.int` |
+| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> Int8.int` |
+| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> Int8.int option` |
+| val | [`max`](../sig/INTEGER.md#val-max) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `Int8.int option` |
+| val | [`min`](../sig/INTEGER.md#val-min) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`minInt`](../sig/INTEGER.md#val-minint) | `Int8.int option` |
+| val | [`mod`](../sig/INTEGER.md#val-mod) | `Int8.int * Int8.int -> Int8.int` |
 | val | [`precision`](../sig/INTEGER.md#val-precision) | `int option` |
-| val | [`quot`](../sig/INTEGER.md#val-quot) | `int * int -> int` |
-| val | [`rem`](../sig/INTEGER.md#val-rem) | `int * int -> int` |
-| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `int * int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (int * 'a) option` |
-| val | [`sign`](../sig/INTEGER.md#val-sign) | `int -> int` |
-| val | [`toInt`](../sig/INTEGER.md#val-toint) | `int -> int` |
-| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `int -> IntInf.int` |
-| val | [`toString`](../sig/INTEGER.md#val-tostring) | `int -> string` |
-| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `int -> int` |
+| val | [`quot`](../sig/INTEGER.md#val-quot) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`rem`](../sig/INTEGER.md#val-rem) | `Int8.int * Int8.int -> Int8.int` |
+| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `Int8.int * Int8.int -> bool` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Int8.int * 'a) option` |
+| val | [`sign`](../sig/INTEGER.md#val-sign) | `Int8.int -> int` |
+| val | [`toInt`](../sig/INTEGER.md#val-toint) | `Int8.int -> int` |
+| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `Int8.int -> IntInf.int` |
+| val | [`toString`](../sig/INTEGER.md#val-tostring) | `Int8.int -> string` |
+| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `Int8.int -> Int8.int` |
 
 <details><summary>Other implementations (4)</summary>
 

@@ -229,8 +229,20 @@ struct
             case IntMap.find (namesByStamp (lib, public), #stamp c) of
               SOME n => String.isPrefix self n
             | NONE => true
+          (* the name another type is shown under everywhere: `int` is the top
+             level's, so `Int64`'s own `int` must be shown as `Int64.int`, or
+             `toInt : int -> int` would read as the identity *)
+          val takenNames =
+            IntMap.foldli (fn (stamp, name, m) => StringMap.insert (m, name, stamp))
+                          StringMap.empty (namesByStamp (lib, public))
           fun nameOf (c : Types.tycon) =
-            if ownedHere c then IntMap.find (here, #stamp c)
+            if ownedHere c then
+              case IntMap.find (here, #stamp c) of
+                SOME n =>
+                  (case StringMap.find (takenNames, n) of
+                     SOME other => if other <> #stamp c then SOME (String.concatWith "." path ^ "." ^ n) else SOME n
+                   | NONE => SOME n)
+              | NONE => NONE
             else IntMap.find (namesByStamp (lib, public), #stamp c)
           (* Elaboration expands an abbreviation, so a type the source writes
              `'a region` reaches here as the record it stands for. The

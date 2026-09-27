@@ -24,26 +24,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Word8.word` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word8.word -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word8.word -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word8.word -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word8.word * Word8.word -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word8.word -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word8.word -> bool) -> vector -> Word8.word option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word8.word -> bool) -> vector -> (int * Word8.word) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word8.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word8.word list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word8.word -> Word8.word) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word8.word -> Word8.word) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word8.word -> bool) -> Word8Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word8.word -> unit) -> Word8Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word8.word -> unit) -> Word8Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word8.word * Word8.word -> order) -> Word8Vector.vector * Word8Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Word8Vector.vector list -> Word8Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word8.word -> bool) -> Word8Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word8.word -> bool) -> Word8Vector.vector -> Word8.word option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word8.word -> bool) -> Word8Vector.vector -> (int * Word8.word) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word8.word * 'a -> 'a) -> 'a -> Word8Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word8.word * 'a -> 'a) -> 'a -> Word8Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word8.word * 'a -> 'a) -> 'a -> Word8Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word8.word * 'a -> 'a) -> 'a -> Word8Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word8.word list -> Word8Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Word8Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word8.word -> Word8.word) -> Word8Vector.vector -> Word8Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word8.word -> Word8.word) -> Word8Vector.vector -> Word8Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Word8.word` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word8.word) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Word8.word -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Word8Vector.vector * int -> Word8.word` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word8.word) -> Word8Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Word8Vector.vector * int * Word8.word -> Word8Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

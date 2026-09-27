@@ -25,29 +25,29 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `real` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `RealVector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(real -> bool) -> array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(real -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * real -> unit) -> array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * real -> array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(real * real -> order) -> array * array -> order` |
-| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : RealVector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(real -> bool) -> array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(real -> bool) -> array -> real option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * real -> bool) -> array -> (int * real) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(real * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * real * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(real * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * real * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `real list -> array` |
-| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(real -> bool) -> RealArray.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(real -> unit) -> RealArray.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * real -> unit) -> RealArray.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * real -> RealArray.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(real * real -> order) -> RealArray.array * RealArray.array -> order` |
+| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : RealArray.array, src : RealArray.array} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : RealArray.array, src : RealVector.vector} -> unit` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(real -> bool) -> RealArray.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(real -> bool) -> RealArray.array -> real option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * real -> bool) -> RealArray.array -> (int * real) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(real * 'a -> 'a) -> 'a -> RealArray.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * real * 'a -> 'a) -> 'a -> RealArray.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(real * 'a -> 'a) -> 'a -> RealArray.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * real * 'a -> 'a) -> 'a -> RealArray.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `real list -> RealArray.array` |
+| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `RealArray.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(real -> real) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * real -> real) -> array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> real` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> real) -> array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * real -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> RealVector.vector` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(real -> real) -> RealArray.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * real -> real) -> RealArray.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `RealArray.array * int -> real` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> real) -> RealArray.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `RealArray.array * int * real -> unit` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `RealArray.array -> RealVector.vector` |
 
 ---
 

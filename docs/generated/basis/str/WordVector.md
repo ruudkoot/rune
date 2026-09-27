@@ -29,26 +29,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `word` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(word -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(word -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * word -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(word * word -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(word -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(word -> bool) -> vector -> word option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * word -> bool) -> vector -> (int * word) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `word list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(word -> word) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * word -> word) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(word -> bool) -> WordVector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(word -> unit) -> WordVector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * word -> unit) -> WordVector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(word * word -> order) -> WordVector.vector * WordVector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `WordVector.vector list -> WordVector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(word -> bool) -> WordVector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(word -> bool) -> WordVector.vector -> word option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * word -> bool) -> WordVector.vector -> (int * word) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(word * 'a -> 'a) -> 'a -> WordVector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * word * 'a -> 'a) -> 'a -> WordVector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(word * 'a -> 'a) -> 'a -> WordVector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * word * 'a -> 'a) -> 'a -> WordVector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `word list -> WordVector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `WordVector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(word -> word) -> WordVector.vector -> WordVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * word -> word) -> WordVector.vector -> WordVector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> word` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> word) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * word -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `WordVector.vector * int -> word` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> word) -> WordVector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `WordVector.vector * int * word -> WordVector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

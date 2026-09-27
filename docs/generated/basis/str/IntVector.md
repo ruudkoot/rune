@@ -28,26 +28,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `int` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(int -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(int -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * int -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(int * int -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(int -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(int -> bool) -> vector -> int option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * int -> bool) -> vector -> (int * int) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * int * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `int list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(int -> int) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * int -> int) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(int -> bool) -> IntVector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(int -> unit) -> IntVector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * int -> unit) -> IntVector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(int * int -> order) -> IntVector.vector * IntVector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `IntVector.vector list -> IntVector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(int -> bool) -> IntVector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(int -> bool) -> IntVector.vector -> int option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * int -> bool) -> IntVector.vector -> (int * int) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(int * 'a -> 'a) -> 'a -> IntVector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * int * 'a -> 'a) -> 'a -> IntVector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(int * 'a -> 'a) -> 'a -> IntVector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * int * 'a -> 'a) -> 'a -> IntVector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `int list -> IntVector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `IntVector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(int -> int) -> IntVector.vector -> IntVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * int -> int) -> IntVector.vector -> IntVector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> int` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> int) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * int -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `IntVector.vector * int -> int` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> int) -> IntVector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `IntVector.vector * int * int -> IntVector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

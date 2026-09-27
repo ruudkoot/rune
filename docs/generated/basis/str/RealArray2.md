@@ -24,26 +24,26 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `real` |
-| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : array, col : int, ncols : int option, nrows : int option, row : int}` |
+| type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : RealArray2.array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `RealVector.vector` |
-| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (real -> unit) -> array -> unit` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (real -> unit) -> RealArray2.array -> unit` |
 | val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * real -> unit) -> region -> unit` |
-| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * real -> array` |
-| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `array * int -> RealVector.vector` |
-| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : array, dst_col : int, dst_row : int, src : region} -> unit` |
-| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `array -> int * int` |
-| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (real * 'a -> 'a) -> 'a -> array -> 'a` |
+| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * real -> RealArray2.array` |
+| val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `RealArray2.array * int -> RealVector.vector` |
+| val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : RealArray2.array, dst_col : int, dst_row : int, src : region} -> unit` |
+| val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `RealArray2.array -> int * int` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (real * 'a -> 'a) -> 'a -> RealArray2.array -> 'a` |
 | val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * real * 'a -> 'a) -> 'a -> region -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `real list list -> array` |
-| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (real -> real) -> array -> unit` |
+| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `real list list -> RealArray2.array` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (real -> real) -> RealArray2.array -> unit` |
 | val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * real -> real) -> region -> unit` |
-| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `array -> int` |
-| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `array -> int` |
-| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `array * int -> RealVector.vector` |
-| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `array * int * int -> real` |
-| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> real) -> array` |
-| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `array * int * int * real -> unit` |
+| val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `RealArray2.array -> int` |
+| val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `RealArray2.array -> int` |
+| val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `RealArray2.array * int -> RealVector.vector` |
+| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `RealArray2.array * int * int -> real` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> real) -> RealArray2.array` |
+| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `RealArray2.array * int * int * real -> unit` |
 
 <details><summary>Other implementations (6)</summary>
 

@@ -27,26 +27,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Word32.word` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word32.word -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word32.word -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word32.word -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word32.word * Word32.word -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word32.word -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word32.word -> bool) -> vector -> Word32.word option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word32.word -> bool) -> vector -> (int * Word32.word) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word32.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word32.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word32.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word32.word * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word32.word list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word32.word -> Word32.word) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word32.word -> Word32.word) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Word32.word -> bool) -> Word32Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Word32.word -> unit) -> Word32Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Word32.word -> unit) -> Word32Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Word32.word * Word32.word -> order) -> Word32Vector.vector * Word32Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Word32Vector.vector list -> Word32Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Word32.word -> bool) -> Word32Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Word32.word -> bool) -> Word32Vector.vector -> Word32.word option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Word32.word -> bool) -> Word32Vector.vector -> (int * Word32.word) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Word32.word * 'a -> 'a) -> 'a -> Word32Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Word32.word * 'a -> 'a) -> 'a -> Word32Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Word32.word * 'a -> 'a) -> 'a -> Word32Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Word32.word * 'a -> 'a) -> 'a -> Word32Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Word32.word list -> Word32Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Word32Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Word32.word -> Word32.word) -> Word32Vector.vector -> Word32Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Word32.word -> Word32.word) -> Word32Vector.vector -> Word32Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Word32.word` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word32.word) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Word32.word -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Word32Vector.vector * int -> Word32.word` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Word32.word) -> Word32Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Word32Vector.vector * int * Word32.word -> Word32Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

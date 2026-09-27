@@ -27,11 +27,11 @@ structure Position : INTEGER
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`FixedInt`](../str/Int.md) | The largest fixed-precision integer: [`Int`](../str/Int.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| [`FixedInt`](../str/Int64.md) | The largest fixed-precision integer: [`Int`](../str/Int.md) is of no fixed precision here, so it is the 64-bit one. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | [`Int`](../str/Int.md) | Int: fixed precision integers with Overflow checking: 64 bits on the VM. The bounds are found with the arithmetic itself (2n + 1 until it overflows), so that this file means the same to a system whose int is narrower; see tests/basis/README.md on the xc1 configurations. | [lib/basis/int.sml](../../../../lib/basis/int.sml) |
 | [`Int16`](../str/Int16.md) | Int16: integers of 16 bits. | [lib/basis/int16.sml](../../../../lib/basis/int16.sml) |
 | [`Int32`](../str/Int32.md) | Int32: integers of 32 bits. | [lib/basis/int32.sml](../../../../lib/basis/int32.sml) |
-| [`Int64`](../str/Int.md) | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
+| [`Int64`](../str/Int64.md) | Int64: the 64-bit integers, and FixedInt, the largest of the fixed-precision ones, which is the same structure. | [lib/basis/int64.sml](../../../../lib/basis/int64.sml) |
 | [`Int8`](../str/Int8.md) | Int8: integers of 8 bits. | [lib/basis/int8.sml](../../../../lib/basis/int8.sml) |
 | [`IntInf`](../str/IntInf.md) | IntInf: arbitrary precision integers implemented in SML on top of the 64-bit int. A value is a sign and a little-endian list of base-2^30 limbs without high zero limbs; zero is never negative. The representation is therefore canonical and structural equality is value equality. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
 | [`LargeInt`](../str/IntInf.md) | The largest integers are the arbitrary precision ones: "If an implementation provides the IntInf structure, then LargeInt must be the same structure as IntInf (viewed through a thinning INTEGER signature)", which is why the seal file shows a program only what INTEGER names, as MLton, SML/NJ and Poly/ML do. | [lib/basis/intinf.sml](../../../../lib/basis/intinf.sml) |
@@ -41,7 +41,7 @@ Integers of a fixed precision, with arithmetic that raises [`Overflow`](../sig/G
 rather than wrapping round.
 
 The structures that implement this signature differ only in how many bits
-they keep: [`Int`](../str/Int.md) is the default one, [`Int8`](../str/Int8.md) to [`Int64`](../str/Int.md) are the sized ones,
+they keep: [`Int`](../str/Int.md) is the default one, [`Int8`](../str/Int8.md) to [`Int64`](../str/Int64.md) are the sized ones,
 [`LargeInt`](../str/IntInf.md) is the largest there is, and [`Position`](../str/Int.md) is what a file position
 is measured in. [`IntInf`](../str/IntInf.md) implements it too, through [`INT_INF`](../sig/INT_INF.md), and has no
 bounds at all: there [`precision`](#val-precision), [`minInt`](#val-minint) and [`maxInt`](#val-maxint) are `NONE` and
@@ -114,11 +114,14 @@ eqtype int
 
 The type of integers of this structure.
 
-> **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int), of
-> 64 bits, and so are [`Int64`](../str/Int.md), [`FixedInt`](../str/Int.md) and [`Position`](../str/Int.md); [`Int8`](../str/Int8.md), [`Int16`](../str/Int16.md)
-> and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is [`IntInf`](../str/IntInf.md),
-> which has no width. Constants of each are checked against its range
-> where they are written.
+> **Implementation** `Int.int/64-bits`. [`Int.int`](#type-int) is the top-level [`int`](#type-int),
+> whose width is the VM's: 64 bits on this one, so that [`Int.precision`](#val-precision) is
+> `SOME 64`. [`Position`](../str/Int.md) is [`Int`](../str/Int.md). [`Int64`](../str/Int64.md) and [`FixedInt`](../str/Int64.md) are of 64 bits as
+> well, but sealed away from [`Int.int`](#type-int), so that no program can take the one
+> for the other and the VM stays free to choose the width of [`Int`](../str/Int.md); [`Int8`](../str/Int8.md),
+> [`Int16`](../str/Int16.md) and [`Int32`](../str/Int32.md) keep a value of their own width, and [`LargeInt`](../str/IntInf.md) is
+> [`IntInf`](../str/IntInf.md), which has no width. Constants of each are checked against its
+> range where they are written.
 
 <details><summary>Tests (3)</summary>
 
@@ -137,6 +140,10 @@ val toLarge : int -> LargeInt.int
 ```
 
 `toLarge i` is `i` as an integer of [`LargeInt`](../str/IntInf.md), which loses nothing.
+
+**Law** `fromLarge (toLarge i) = i`
+
+**Example** `toLarge 5 = 5`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -162,6 +169,10 @@ val fromLarge : LargeInt.int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
 
+**Law** `toLarge (fromLarge i) = i` when `i` is in the range
+
+**Example** `fromLarge (IntInf.pow (2, 10)) = 1024`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -185,6 +196,10 @@ val toInt : int -> Int.int
 `toInt i` is `i` as an integer of the default structure [`Int`](../str/Int.md).
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of [`Int.int`](#type-int).
+
+**Law** `fromInt (toInt i) = i` when `i` is in the range of [`Int.int`](#type-int)
+
+**Example** `toInt 7 = 7`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -212,6 +227,8 @@ val fromInt : Int.int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
 
+**Example** `((Int8.fromInt 200; "fits") handle Overflow => "Overflow") = "Overflow"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -238,7 +255,9 @@ val precision : Int.int option
 
 [`precision`](#val-precision) is the number of bits of an integer of this structure, sign included, or `NONE` when there is no bound.
 
-**Example** `Int.precision = SOME 64` and `IntInf.precision = NONE`.
+**Example** `precision = SOME 64`
+
+**Example** `IntInf.precision = NONE`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -266,7 +285,10 @@ val minInt : int option
 
 [`minInt`](#val-minint) is the smallest integer of this structure, or `NONE` when there is none.
 
-**Law** `minInt = SOME (~(2 ^ (p - 1)))` where `precision = SOME p`
+**Law** `minInt = SOME (fromLarge (~ (IntInf.pow (2, p - 1))))` where
+`precision = SOME p`
+
+**Example** `minInt = SOME ~9223372036854775808`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -290,8 +312,11 @@ val maxInt : int option
 
 [`maxInt`](#val-maxint) is the largest integer of this structure, or `NONE` when there is none.
 
-**Law** `maxInt = SOME (2 ^ (p - 1) - 1)` where `precision = SOME p`. The
-range is not symmetric: `~minInt` overflows and `abs minInt` does too.
+The range is not symmetric: `~minInt` overflows and `abs minInt` does
+too.
+
+**Law** `maxInt = SOME (fromLarge (IntInf.pow (2, p - 1) - 1))` where
+`precision = SOME p`
 
 **Example** `Int.maxInt = SOME 9223372036854775807`
 
@@ -327,6 +352,8 @@ val + : int * int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range of this structure.
 
+**Example** `((valOf maxInt + 1; "fits") handle Overflow => "Overflow") = "Overflow"`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -361,6 +388,10 @@ val - : int * int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
 
+**Law** `i - j = i + ~j` when `~j` is in the range
+
+**Example** `3 - 5 = ~2`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -386,6 +417,8 @@ val * : int * int -> int
 `i * j` is the product.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
+
+**Example** `~3 * 4 = ~12`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -414,7 +447,9 @@ val div : int * int -> int
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero; [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the
 range, which happens for `minInt div ~1`.
 
-**Example** `~7 div 2 = ~4`, where `~7 quot 2` is `~3`.
+It rounds down, where [`quot`](#val-quot) rounds towards zero: `quot (~7, 2)` is `~3`.
+
+**Example** `~7 div 2 = ~4`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -447,7 +482,10 @@ val mod : int * int -> int
 > **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
 > although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
 
-**Example** `~7 mod 2 = 1` where `rem (~7, 2)` is `~1`.
+Its sign is the divisor's, where that of [`rem`](#val-rem) is the dividend's:
+`rem (~7, 2)` is `~1`.
+
+**Example** `~7 mod 2 = 1`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -476,7 +514,9 @@ val quot : int * int -> int
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero; [`Overflow`](../sig/GENERAL.md#exn-overflow) for `quot (minInt, ~1)`.
 
-**Example** `quot (~7, 2) = ~3`, where `~7 div 2` is `~4`.
+It rounds towards zero, where [`div`](#val-div) rounds down: `~7 div 2` is `~4`.
+
+**Example** `quot (~7, 2) = ~3`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -507,7 +547,10 @@ val rem : int * int -> int
 > **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
 
-**Example** `rem (~7, 2) = ~1` where `~7 mod 2` is `1`.
+Its sign is the dividend's, where that of [`mod`](#val-mod) is the divisor's:
+`~7 mod 2` is `1`.
+
+**Example** `rem (~7, 2) = ~1`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -534,6 +577,10 @@ val compare : int * int -> order
 
 `compare (i, j)` orders two integers.
 
+**Law** `(compare (i, j) = EQUAL) = (i = j)`
+
+**Example** `compare (~1, 1) = LESS`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -558,6 +605,10 @@ val >= : int * int -> bool
 ```
 
 `i < j`, `i <= j`, `i > j` and `i >= j` compare two integers.
+
+**Law** `(i < j) = (compare (i, j) = LESS)`, and the same for the others
+
+**Example** `~3 < 2 = true`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -584,6 +635,10 @@ val ~ : int -> int
 `~i` is the negation of `i`.
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `~minInt`, which is not in the range.
+
+**Law** `~ (~ i) = i` when `~i` is in the range
+
+**Example** `~ (~5) = 5`
 
 <details><summary>Other implementations (1)</summary>
 
@@ -617,6 +672,10 @@ val abs : int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `abs minInt`.
 
+**Law** `abs i = (if i < 0 then ~i else i)`
+
+**Example** `abs ~5 = 5`
+
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
@@ -642,6 +701,10 @@ val min : int * int -> int
 
 `min (i, j)` is the smaller of the two.
 
+**Law** `min (i, j) = (if i < j then i else j)`
+
+**Example** `min (3, ~2) = ~2`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -664,6 +727,10 @@ val max : int * int -> int
 
 `max (i, j)` is the larger of the two.
 
+**Law** `max (i, j) = (if i < j then j else i)`
+
+**Example** `max (3, ~2) = 3`
+
 <details><summary>Other implementations (1)</summary>
 
 - **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
@@ -685,6 +752,8 @@ val sign : int -> Int.int
 ```
 
 `sign i` is \~1, 0 or 1, as `i` is negative, zero or positive.
+
+**Law** `fromInt (sign i) * abs i = i` when `abs i` is in the range
 
 **Example** `sign ~3 = ~1`
 
@@ -745,7 +814,9 @@ val fmt : StringCvt.radix -> int -> string
 There is no prefix: a hexadecimal number is written with the digits `A`
 to `F` and nothing before them.
 
-**Example** `fmt StringCvt.HEX 255 = "FF"` and `fmt StringCvt.BIN ~5 = "~101"`
+**Example** `fmt StringCvt.HEX 255 = "FF"`
+
+**Example** `fmt StringCvt.BIN ~5 = "~101"`
 
 <details><summary>Other implementations (2)</summary>
 
@@ -841,7 +912,10 @@ val fromString : string -> int option
 
 **Example** `fromString " +12x" = SOME 12`
 
-**Example** `fromString "0x1F" = SOME 0` for it reads decimal digits only.
+It reads decimal digits only, so a prefix of base 16 stops it after the
+`0`:
+
+**Example** `fromString "0x1F" = SOME 0`
 
 <details><summary>Other implementations (3)</summary>
 

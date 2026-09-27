@@ -16,10 +16,6 @@
 structure Socket : SOCKET
 ```
 
-Socket: the sockets themselves. A socket is a handle of the system; an
-address is the bytes the system keeps it in, which only the structure of
-its family takes apart.
-
 ## Members
 
 What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure's own.

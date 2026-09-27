@@ -16,9 +16,20 @@
 structure WideString :> STRING where type string = WideCharVector.vector where type char = WideChar.char
 ```
 
-WideString and WideSubstring (optional in the specification): the strings
-of WideChar, which are the vectors of WideCharVector, and their substrings,
-which are the slices of WideCharVectorSlice.
+> **Reading** `WideString.scan/reads-wide-characters`. As the signature of the
+> specification writes it, [`scan`](../sig/STRING.md#val-scan) reads a stream of the structure's own
+> characters, where MLton's reads 8-bit ones; [`toString`](../sig/STRING.md#val-tostring), [`fromString`](../sig/STRING.md#val-fromstring),
+> [`toCString`](../sig/STRING.md#val-tocstring) and [`fromCString`](../sig/STRING.md#val-fromcstring) take and give text of [`char`](../sig/STRING.md#type-char), the 8-bit one,
+> in which a character above 255 appears as the escape `\uXXXX` or
+> `\UXXXXXXXX` (widechar.sml).
+
+> **Reading** `WideString.scan/unescaped-double-quote`. In the stream of wide
+> characters an escape is written with the characters of ASCII, and a
+> character that needs none stands for itself, those above 255 too. A
+> double quote that no backslash precedes converts to itself, as it does
+> for [`String.scan`](../sig/STRING.md#val-scan) and for [`WideString.fromString`](../sig/STRING.md#val-fromstring) on its text of [`char`](../sig/STRING.md#type-char):
+> what ends a scan is the end of the stream, a character that does not
+> print and a bad escape, and a double quote is none of these.
 
 ## Members
 

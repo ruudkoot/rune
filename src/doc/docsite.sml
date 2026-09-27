@@ -42,7 +42,13 @@ struct
     case #rhs r of
       I.Alias target =>
         (case List.find (fn I.Struct {name, ...} => name = target | _ => false) tops of
-           SOME (I.Struct r') => r'
+           SOME (I.Struct r') =>
+             (* what the binding says of itself comes first: `Int64 :> INTEGER =
+                Int` has a comment of its own, `Posix.FileSys` has none *)
+             if List.null (#doc r) then r'
+             else {name = #name r', file = #file r, span = #span r, doc = #doc r,
+                   ascription = #ascription r', rhs = #rhs r', subs = #subs r',
+                   members = #members r', notes = #notes r', twins = #twins r'}
          | _ => r)
     | _ => r
 
@@ -132,9 +138,13 @@ struct
          has no page of its own: `Text.Char` is `Char`. *)
       val paged : (string * I.structRecord * I.structRecord * DocClaims.claim list) list =
         let
+          (* `structure Position : INTEGER = Int` is `Int` by another name;
+             `structure Int64 :> INTEGER = Int` is not: the seal makes its
+             types its own, and it has a page of its own *)
           fun boundToPublic (r : I.structRecord) =
-            case #rhs r of
-              I.Alias t => isPublic t andalso List.exists (fn I.Struct {name, ...} => name = t | _ => false) modules
+            case (#rhs r, #ascription r) of
+              (_, SOME {opaque = true, ...}) => false
+            | (I.Alias t, _) => isPublic t andalso List.exists (fn I.Struct {name, ...} => name = t | _ => false) modules
             | _ => false
           (* around: the nearest structure that claims a signature, and what it claims *)
           fun walk (prefix, around, r : I.structRecord) =

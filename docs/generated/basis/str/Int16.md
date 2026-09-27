@@ -25,35 +25,35 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`int`](../sig/INTEGER.md#type-int) | *a type of its own* |
-| val | [`*`](../sig/INTEGER.md#val-op-star) | `int * int -> int` |
-| val | [`+`](../sig/INTEGER.md#val-op-plus) | `int * int -> int` |
-| val | [`-`](../sig/INTEGER.md#val-op-minus) | `int * int -> int` |
-| val | [`<`](../sig/INTEGER.md#val-op-lt) | `int * int -> bool` |
-| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `int * int -> bool` |
-| val | [`>`](../sig/INTEGER.md#val-op-gt) | `int * int -> bool` |
-| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `int * int -> bool` |
-| val | [`abs`](../sig/INTEGER.md#val-abs) | `int -> int` |
-| val | [`compare`](../sig/INTEGER.md#val-compare) | `int * int -> order` |
-| val | [`div`](../sig/INTEGER.md#val-div) | `int * int -> int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> int -> string` |
-| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> int` |
-| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> int` |
-| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> int option` |
-| val | [`max`](../sig/INTEGER.md#val-max) | `int * int -> int` |
-| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `int option` |
-| val | [`min`](../sig/INTEGER.md#val-min) | `int * int -> int` |
-| val | [`minInt`](../sig/INTEGER.md#val-minint) | `int option` |
-| val | [`mod`](../sig/INTEGER.md#val-mod) | `int * int -> int` |
+| val | [`*`](../sig/INTEGER.md#val-op-star) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`+`](../sig/INTEGER.md#val-op-plus) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`-`](../sig/INTEGER.md#val-op-minus) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`<`](../sig/INTEGER.md#val-op-lt) | `Int16.int * Int16.int -> bool` |
+| val | [`<=`](../sig/INTEGER.md#val-op-lt-eq) | `Int16.int * Int16.int -> bool` |
+| val | [`>`](../sig/INTEGER.md#val-op-gt) | `Int16.int * Int16.int -> bool` |
+| val | [`>=`](../sig/INTEGER.md#val-op-gt-eq) | `Int16.int * Int16.int -> bool` |
+| val | [`abs`](../sig/INTEGER.md#val-abs) | `Int16.int -> Int16.int` |
+| val | [`compare`](../sig/INTEGER.md#val-compare) | `Int16.int * Int16.int -> order` |
+| val | [`div`](../sig/INTEGER.md#val-div) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> Int16.int -> string` |
+| val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> Int16.int` |
+| val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> Int16.int` |
+| val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> Int16.int option` |
+| val | [`max`](../sig/INTEGER.md#val-max) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`maxInt`](../sig/INTEGER.md#val-maxint) | `Int16.int option` |
+| val | [`min`](../sig/INTEGER.md#val-min) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`minInt`](../sig/INTEGER.md#val-minint) | `Int16.int option` |
+| val | [`mod`](../sig/INTEGER.md#val-mod) | `Int16.int * Int16.int -> Int16.int` |
 | val | [`precision`](../sig/INTEGER.md#val-precision) | `int option` |
-| val | [`quot`](../sig/INTEGER.md#val-quot) | `int * int -> int` |
-| val | [`rem`](../sig/INTEGER.md#val-rem) | `int * int -> int` |
-| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `int * int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (int * 'a) option` |
-| val | [`sign`](../sig/INTEGER.md#val-sign) | `int -> int` |
-| val | [`toInt`](../sig/INTEGER.md#val-toint) | `int -> int` |
-| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `int -> IntInf.int` |
-| val | [`toString`](../sig/INTEGER.md#val-tostring) | `int -> string` |
-| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `int -> int` |
+| val | [`quot`](../sig/INTEGER.md#val-quot) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`rem`](../sig/INTEGER.md#val-rem) | `Int16.int * Int16.int -> Int16.int` |
+| val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `Int16.int * Int16.int -> bool` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Int16.int * 'a) option` |
+| val | [`sign`](../sig/INTEGER.md#val-sign) | `Int16.int -> int` |
+| val | [`toInt`](../sig/INTEGER.md#val-toint) | `Int16.int -> int` |
+| val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `Int16.int -> IntInf.int` |
+| val | [`toString`](../sig/INTEGER.md#val-tostring) | `Int16.int -> string` |
+| val | [`~`](../sig/INTEGER.md#val-op-tilde) | `Int16.int -> Int16.int` |
 
 <details><summary>Other implementations (4)</summary>
 

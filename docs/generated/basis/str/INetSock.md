@@ -16,8 +16,6 @@
 structure INetSock : INET_SOCK
 ```
 
-INetSock, UnixSock and GenericSock: the families of sockets.
-
 ## Members
 
 What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this structure's own.

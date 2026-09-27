@@ -27,26 +27,26 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `Real32.real` |
 | type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Real32.real -> bool) -> vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Real32.real -> unit) -> vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Real32.real -> unit) -> vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Real32.real * Real32.real -> order) -> vector * vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `vector list -> vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Real32.real -> bool) -> vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Real32.real -> bool) -> vector -> Real32.real option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Real32.real -> bool) -> vector -> (int * Real32.real) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Real32.real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Real32.real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Real32.real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Real32.real * 'a -> 'a) -> 'a -> vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Real32.real list -> vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Real32.real -> Real32.real) -> vector -> vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Real32.real -> Real32.real) -> vector -> vector` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(Real32.real -> bool) -> Real32Vector.vector -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(Real32.real -> unit) -> Real32Vector.vector -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * Real32.real -> unit) -> Real32Vector.vector -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(Real32.real * Real32.real -> order) -> Real32Vector.vector * Real32Vector.vector -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `Real32Vector.vector list -> Real32Vector.vector` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(Real32.real -> bool) -> Real32Vector.vector -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(Real32.real -> bool) -> Real32Vector.vector -> Real32.real option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * Real32.real -> bool) -> Real32Vector.vector -> (int * Real32.real) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(Real32.real * 'a -> 'a) -> 'a -> Real32Vector.vector -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * Real32.real * 'a -> 'a) -> 'a -> Real32Vector.vector -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(Real32.real * 'a -> 'a) -> 'a -> Real32Vector.vector -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * Real32.real * 'a -> 'a) -> 'a -> Real32Vector.vector -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `Real32.real list -> Real32Vector.vector` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `Real32Vector.vector -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(Real32.real -> Real32.real) -> Real32Vector.vector -> Real32Vector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * Real32.real -> Real32.real) -> Real32Vector.vector -> Real32Vector.vector` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `vector * int -> Real32.real` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Real32.real) -> vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `vector * int * Real32.real -> vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `Real32Vector.vector * int -> Real32.real` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> Real32.real) -> Real32Vector.vector` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `Real32Vector.vector * int * Real32.real -> Real32Vector.vector` |
 
 <details><summary>Other implementations (1)</summary>
 

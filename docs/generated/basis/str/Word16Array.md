@@ -25,29 +25,29 @@ What each means is on [`MONO_ARRAY`](../sig/MONO_ARRAY.md); the types are this s
 | type | [`array`](../sig/MONO_ARRAY.md#type-array) | *a type of its own* |
 | type | [`elem`](../sig/MONO_ARRAY.md#type-elem) | `Word16.word` |
 | type | [`vector`](../sig/MONO_ARRAY.md#type-vector) | `Word16Vector.vector` |
-| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Word16.word -> bool) -> array -> bool` |
-| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Word16.word -> unit) -> array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Word16.word -> unit) -> array -> unit` |
-| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Word16.word -> array` |
-| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Word16.word * Word16.word -> order) -> array * array -> order` |
-| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : array, src : array} -> unit` |
-| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : array, src : Word16Vector.vector} -> unit` |
-| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Word16.word -> bool) -> array -> bool` |
-| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Word16.word -> bool) -> array -> Word16.word option` |
-| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Word16.word -> bool) -> array -> (int * Word16.word) option` |
-| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Word16.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word16.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word16.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word16.word * 'a -> 'a) -> 'a -> array -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Word16.word list -> array` |
-| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `array -> int` |
+| val | [`all`](../sig/MONO_ARRAY.md#val-all) | `(Word16.word -> bool) -> Word16Array.array -> bool` |
+| val | [`app`](../sig/MONO_ARRAY.md#val-app) | `(Word16.word -> unit) -> Word16Array.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY.md#val-appi) | `(int * Word16.word -> unit) -> Word16Array.array -> unit` |
+| val | [`array`](../sig/MONO_ARRAY.md#val-array) | `int * Word16.word -> Word16Array.array` |
+| val | [`collate`](../sig/MONO_ARRAY.md#val-collate) | `(Word16.word * Word16.word -> order) -> Word16Array.array * Word16Array.array -> order` |
+| val | [`copy`](../sig/MONO_ARRAY.md#val-copy) | `{di : int, dst : Word16Array.array, src : Word16Array.array} -> unit` |
+| val | [`copyVec`](../sig/MONO_ARRAY.md#val-copyvec) | `{di : int, dst : Word16Array.array, src : Word16Vector.vector} -> unit` |
+| val | [`exists`](../sig/MONO_ARRAY.md#val-exists) | `(Word16.word -> bool) -> Word16Array.array -> bool` |
+| val | [`find`](../sig/MONO_ARRAY.md#val-find) | `(Word16.word -> bool) -> Word16Array.array -> Word16.word option` |
+| val | [`findi`](../sig/MONO_ARRAY.md#val-findi) | `(int * Word16.word -> bool) -> Word16Array.array -> (int * Word16.word) option` |
+| val | [`foldl`](../sig/MONO_ARRAY.md#val-foldl) | `(Word16.word * 'a -> 'a) -> 'a -> Word16Array.array -> 'a` |
+| val | [`foldli`](../sig/MONO_ARRAY.md#val-foldli) | `(int * Word16.word * 'a -> 'a) -> 'a -> Word16Array.array -> 'a` |
+| val | [`foldr`](../sig/MONO_ARRAY.md#val-foldr) | `(Word16.word * 'a -> 'a) -> 'a -> Word16Array.array -> 'a` |
+| val | [`foldri`](../sig/MONO_ARRAY.md#val-foldri) | `(int * Word16.word * 'a -> 'a) -> 'a -> Word16Array.array -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY.md#val-fromlist) | `Word16.word list -> Word16Array.array` |
+| val | [`length`](../sig/MONO_ARRAY.md#val-length) | `Word16Array.array -> int` |
 | val | [`maxLen`](../sig/MONO_ARRAY.md#val-maxlen) | `int` |
-| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Word16.word -> Word16.word) -> array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Word16.word -> Word16.word) -> array -> unit` |
-| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `array * int -> Word16.word` |
-| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Word16.word) -> array` |
-| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `array * int * Word16.word -> unit` |
-| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `array -> Word16Vector.vector` |
+| val | [`modify`](../sig/MONO_ARRAY.md#val-modify) | `(Word16.word -> Word16.word) -> Word16Array.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY.md#val-modifyi) | `(int * Word16.word -> Word16.word) -> Word16Array.array -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY.md#val-sub) | `Word16Array.array * int -> Word16.word` |
+| val | [`tabulate`](../sig/MONO_ARRAY.md#val-tabulate) | `int * (int -> Word16.word) -> Word16Array.array` |
+| val | [`update`](../sig/MONO_ARRAY.md#val-update) | `Word16Array.array * int * Word16.word -> unit` |
+| val | [`vector`](../sig/MONO_ARRAY.md#val-vector) | `Word16Array.array -> Word16Vector.vector` |
 
 ---
 

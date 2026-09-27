@@ -7,7 +7,7 @@
 | Signature | [`CHAR`](../sig/CHAR.md) |
 | Status | required |
 | Members | 35 |
-| Tests | 400 checks |
+| Tests | 406 checks |
 | Source | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
 
 ## Synopsis
@@ -16,7 +16,9 @@
 structure Char : CHAR where type char = char where type string = String.string
 ```
 
-Char: 8-bit characters.
+Char: the characters of 8 bits, codes 0 to 255, which are the elements of
+[`string`](../sig/CHAR.md#type-string). Its type is the top-level [`char`](../sig/CHAR.md#type-char), and its classes are those of
+ASCII.
 
 ## Members
 

@@ -181,15 +181,15 @@ reading one reads both.
 | [`BoolVector`](../generated/basis/str/BoolVector.md) | done | done | done | done | done | done |
 | [`BoolVectorSlice`](../generated/basis/str/BoolVectorSlice.md) | done | done | done | done | done | done |
 | [`Byte`](../generated/basis/str/Byte.md) | done | done | done | done | done | done |
-| [`Char`](../generated/basis/str/Char.md) |  |  |  |  |  |  |
-| [`CharArray`](../generated/basis/str/CharArray.md) |  |  |  |  |  |  |
-| [`CharArray2`](../generated/basis/str/CharArray2.md) |  |  |  |  |  |  |
-| [`CharArraySlice`](../generated/basis/str/CharArraySlice.md) |  |  |  |  |  |  |
-| [`CharVector`](../generated/basis/str/CharVector.md) |  |  |  |  |  |  |
-| [`CharVectorSlice`](../generated/basis/str/CharVectorSlice.md) |  |  |  |  |  |  |
-| [`CommandLine`](../generated/basis/str/CommandLine.md) |  |  |  |  |  |  |
-| [`Date`](../generated/basis/str/Date.md) |  |  |  |  |  |  |
-| [`FixedInt`](../generated/basis/str/Int.md) |  |  |  |  |  |  |
+| [`Char`](../generated/basis/str/Char.md) | done | done | done | done | done | done |
+| [`CharArray`](../generated/basis/str/CharArray.md) | done | done | done | done | done | done |
+| [`CharArray2`](../generated/basis/str/CharArray2.md) | done | done | done | done | done | done |
+| [`CharArraySlice`](../generated/basis/str/CharArraySlice.md) | done | done | done | done | done | done |
+| [`CharVector`](../generated/basis/str/CharVector.md) | done | done | done | done | done | done |
+| [`CharVectorSlice`](../generated/basis/str/CharVectorSlice.md) | done | done | done | done | done | done |
+| [`CommandLine`](../generated/basis/str/CommandLine.md) | done | done | done | n/a | n/a | done |
+| [`Date`](../generated/basis/str/Date.md) | done | done | done | done | done | done |
+| [`FixedInt`](../generated/basis/str/Int64.md) | done | done | done | done | done | done |
 | [`General`](../generated/basis/str/General.md) |  |  |  |  |  |  |
 | [`GenericSock`](../generated/basis/str/GenericSock.md) |  |  |  |  |  |  |
 | [`IEEEReal`](../generated/basis/str/IEEEReal.md) |  |  |  |  |  |  |
@@ -200,7 +200,7 @@ reading one reads both.
 | [`INetSock.TCP`](../generated/basis/str/INetSock.TCP.md) |  |  |  |  |  |  |
 | [`INetSock.UDP`](../generated/basis/str/INetSock.UDP.md) |  |  |  |  |  |  |
 | [`IO`](../generated/basis/str/IO.md) |  |  |  |  |  |  |
-| [`Int`](../generated/basis/str/Int.md) |  |  |  |  |  |  |
+| [`Int`](../generated/basis/str/Int.md) | done | done | done | done | done | done |
 | [`Int16`](../generated/basis/str/Int16.md) |  |  |  |  |  |  |
 | [`Int16Array`](../generated/basis/str/Int16Array.md) |  |  |  |  |  |  |
 | [`Int16Array2`](../generated/basis/str/Int16Array2.md) |  |  |  |  |  |  |
@@ -213,7 +213,7 @@ reading one reads both.
 | [`Int32ArraySlice`](../generated/basis/str/Int32ArraySlice.md) |  |  |  |  |  |  |
 | [`Int32Vector`](../generated/basis/str/Int32Vector.md) |  |  |  |  |  |  |
 | [`Int32VectorSlice`](../generated/basis/str/Int32VectorSlice.md) |  |  |  |  |  |  |
-| [`Int64`](../generated/basis/str/Int.md) |  |  |  |  |  |  |
+| [`Int64`](../generated/basis/str/Int64.md) | done | done | done | done | done | done |
 | [`Int64Array`](../generated/basis/str/Int64Array.md) |  |  |  |  |  |  |
 | [`Int64Array2`](../generated/basis/str/Int64Array2.md) |  |  |  |  |  |  |
 | [`Int64ArraySlice`](../generated/basis/str/Int64ArraySlice.md) |  |  |  |  |  |  |
@@ -275,7 +275,7 @@ reading one reads both.
 | [`PackWord32Little`](../generated/basis/str/PackWord32Little.md) |  |  |  |  |  |  |
 | [`PackWord64Big`](../generated/basis/str/PackWord64Big.md) |  |  |  |  |  |  |
 | [`PackWord64Little`](../generated/basis/str/PackWord64Little.md) |  |  |  |  |  |  |
-| [`Position`](../generated/basis/str/Int.md) |  |  |  |  |  |  |
+| [`Position`](../generated/basis/str/Int.md) | done | done | done | done | done | done |
 | [`Posix`](../generated/basis/str/Posix.md) |  |  |  |  |  |  |
 | [`Posix.Error`](../generated/basis/str/Posix.Error.md) |  |  |  |  |  |  |
 | [`Posix.FileSys`](../generated/basis/str/Posix.FileSys.md) |  |  |  |  |  |  |
@@ -374,7 +374,7 @@ reading one reads both.
 | [`Word32ArraySlice`](../generated/basis/str/Word32ArraySlice.md) |  |  |  |  |  |  |
 | [`Word32Vector`](../generated/basis/str/Word32Vector.md) |  |  |  |  |  |  |
 | [`Word32VectorSlice`](../generated/basis/str/Word32VectorSlice.md) |  |  |  |  |  |  |
-| [`Word64`](../generated/basis/str/Word.md) |  |  |  |  |  |  |
+| [`Word64`](../generated/basis/str/Word64.md) |  |  |  |  |  |  |
 | [`Word64Array`](../generated/basis/str/Word64Array.md) |  |  |  |  |  |  |
 | [`Word64Array2`](../generated/basis/str/Word64Array2.md) |  |  |  |  |  |  |
 | [`Word64ArraySlice`](../generated/basis/str/Word64ArraySlice.md) |  |  |  |  |  |  |
