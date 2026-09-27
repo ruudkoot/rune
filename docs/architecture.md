@@ -153,7 +153,8 @@ the payload beside it. The bytecode therefore contains no path, and
 
 | File | Contents |
 |---|---|
-| `vm/vm.h` | `Value`, `Obj`, `VM` and the shared API. |
+| `vm/vm.h` | `VM` and the shared API; the enumerations of tags and kinds. |
+| `vm/value.h` | The layout: `Value`, `Obj`, and every operation on them -- tag tests, `mk_*`, the payloads, the header, fields, sizes, forwarding. The one place in C that knows it; `vm/new/jit/masm.c` is the same in machine code (docs/plans/heap-layout.md, M3). |
 | `vm/loader.c` | Reads and validates `.rbc` (see `docs/bytecode.md`), from a file or from memory; disassembler. |
 | `vm/runtime.c` | What a VM does besides dispatching: stacks, frames, handlers, exception raising and the trace of a failure, structural equality, `vm_start` (how a program begins) and `vm_exit` (how a run ends). |
 | `vm/interp.c` | The dispatch loop: `vm_run` is `vm_start`, then `vm_loop`. Its cases are the bodies of `src/isa/stack.sml`, which `runeisa` writes into `vm/interp_cases.h`, and into `vm/ops.h` those that `vm/native.c` shares. |

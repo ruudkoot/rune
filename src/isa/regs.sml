@@ -81,7 +81,7 @@ struct
   val callee =
     ["Value arg = R(b);",
      "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
-     "int64_t fidx = OBJ_FIELDS(c)[0].u.i;",
+     "int64_t fidx = val_imm(obj_field(c, 0));",
      "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
   val enter =
@@ -112,8 +112,8 @@ struct
         "vm->global_set[a] = 1;"],
      rinst ("ENV", [("d", reg), ("e", K EnvSlot)], Next, "Register d := slot e of the current closure's environment.")
        ["Obj *c = fr->closure;",
-        "if (!c || (uint32_t)b + 1 >= c->len) FATAL(\"environment slot %d out of range\", b);",
-        "R(a) = OBJ_FIELDS(c)[b + 1];"],
+        "if (!c || (uint32_t)b + 1 >= obj_len(c)) FATAL(\"environment slot %d out of range\", b);",
+        "R(a) = obj_field(c, b + 1);"],
      rinst ("SELF", [("d", reg)], Next, "Register d := the closure running.")
        ["if (!fr->closure) FATAL(\"SELF outside a closure\");",
         "R(a) = mk_ptr(fr->closure);"],
@@ -189,41 +189,41 @@ struct
        ["if (n == 0) { R(a) = mk_unit(); NEXT; }",
         "SYNC();",
         "Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, n);",
-        "Value *f = OBJ_FIELDS(t);",
+        "Value *f = obj_fields(t);",
         "for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));",
         "R(a) = mk_ptr(t);"],
      rinst ("CLOSURE", [("d", reg), ("f", K Function), ("n", K Count), ("env", Registers 2)], Next,
             "Register d := a closure of function f capturing the n registers of env.")
        ["SYNC();",
         "Obj *cl = vm_alloc_fields(vm, K_CLOSURE, 0, n + 1);",
-        "Value *f = OBJ_FIELDS(cl);",
+        "Value *f = obj_fields(cl);",
         "f[0] = mk_int(b);",
         "for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));",
         "R(a) = mk_ptr(cl);"],
      rinst ("SELECT", [("d", reg), ("i", K Field), ("s", reg)], Next, "Register d := field i of the tuple in register s.")
        ["Obj *t = EXPECT(R(c), K_TUPLE, \"tuple\");",
-        "if ((uint32_t)b >= t->len) FATAL(\"tuple index %d out of range\", b);",
-        "R(a) = OBJ_FIELDS(t)[b];"],
+        "if ((uint32_t)b >= obj_len(t)) FATAL(\"tuple index %d out of range\", b);",
+        "R(a) = obj_field(t, b);"],
      rinst ("CON", [("d", reg), ("t", K Tag), ("s", reg)], Next, "Register d := constructor t applied to register s.")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, 1);",
-        "OBJ_FIELDS(o)[0] = R(c);",
+        "obj_fill_field(o, 0, R(c));",
         "R(a) = mk_ptr(o);"],
      rinst ("DECON", [("d", reg), ("s", reg), ("t", K Tag)], Next,
             "Register d := the argument of the constructor value, of tag t, in register s; --checked stops where the tag is another.")
        ["Obj *o = EXPECT(R(b), K_CON, \"constructor with argument\");",
-        "if (vm->checked && o->contag != c) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)o->contag, (int)c);",
-        "R(a) = OBJ_FIELDS(o)[0];"],
+        "if (vm->checked && obj_contag(o) != c) FATAL(\"DECON of a constructor of tag %d where %d is wanted\", (int)obj_contag(o), (int)c);",
+        "R(a) = obj_field(o, 0);"],
      rinst ("CONTAG", [("d", reg), ("s", reg)], Next, "Register d := the tag of the constructor value in register s, as an int.")
        ["Value v = R(b);",
-        "if (v.tag == T_CON0) R(a) = mk_int(v.u.i);",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) R(a) = mk_int(v.u.p->contag);",
+        "if (val_is(v, T_CON0)) R(a) = mk_int(val_imm(v));",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) R(a) = mk_int(obj_contag(val_ptr(v)));",
         "else FATAL(\"CONTAG on non-constructor\");"],
      rinst ("NEWEXN", [("d", reg), ("k", K StringConstant)], Next,
             "Register d := a fresh exception constructor named by string constant k.")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_EXNCON, 0, 1);",
-        "OBJ_FIELDS(o)[0] = p->consts[b];",
+        "obj_fill_field(o, 0, p->consts[b]);",
         "R(a) = mk_ptr(o);"],
      rinst ("BUILTINEXN", [("d", reg), ("i", K BuiltinExn)], Next,
             "Register d := built-in exception constructor i (see docs/bytecode.md).")
@@ -233,22 +233,22 @@ struct
        ["SYNC();",
         "Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);",
         "Value con = R(b);",
-        "if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) FATAL(\"MKEXN on non-constructor\");",
-        "OBJ_FIELDS(e)[0] = con;",
-        "OBJ_FIELDS(e)[1] = R(c);",
+        "if (!val_is(con, T_PTR) || obj_kind(val_ptr(con)) != K_EXNCON) FATAL(\"MKEXN on non-constructor\");",
+        "obj_fill_field(e, 0, con);",
+        "obj_fill_field(e, 1, R(c));",
         "R(a) = mk_ptr(e);"],
      rinst ("EXNCON", [("d", reg), ("s", reg)], Next, "Register d := the constructor of the exception in register s.")
        ["Obj *e = EXPECT(R(b), K_EXN, \"exception\");",
-        "R(a) = OBJ_FIELDS(e)[0];"],
+        "R(a) = obj_field(e, 0);"],
      rinst ("EXNARG", [("d", reg), ("s", reg)], Next, "Register d := the payload of the exception in register s.")
        ["Obj *e = EXPECT(R(b), K_EXN, \"exception\");",
-        "R(a) = OBJ_FIELDS(e)[1];"],
+        "R(a) = obj_field(e, 1);"],
      rinst ("SETENV", [("c", reg), ("e", K EnvSlot), ("v", reg)], Next,
             "Slot e of the environment of the closure in register c := register v.")
        ["Obj *o = EXPECT(R(a), K_CLOSURE, \"closure\");",
-        "if ((uint32_t)b + 1 >= o->len) FATAL(\"environment slot %d out of range\", b);",
+        "if ((uint32_t)b + 1 >= obj_len(o)) FATAL(\"environment slot %d out of range\", b);",
         "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));",
-        "OBJ_FIELDS(o)[b + 1] = R(c);"],
+        "obj_set_field(o, b + 1, R(c));"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
        ["/* a jump back is a loop's: counted, and where the function has",
         "   code, gone on in it (M6) */",
@@ -256,18 +256,18 @@ struct
         "pc = (uint32_t)a;"],
      rinst ("JUMPIF", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds true.")
        ["Value v = R(a);",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIF on non-bool\");",
-        "if (v.u.i != 0) pc = (uint32_t)b;"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIF on non-bool\");",
+        "if (val_imm(v) != 0) pc = (uint32_t)b;"],
      rinst ("JUMPIFNOT", [("s", reg), ("o", K Label)], Branch, "Jump to o if register s holds false.")
        ["Value v = R(a);",
-        "if (v.tag != T_CON0) FATAL(\"JUMPIFNOT on non-bool\");",
-        "if (v.u.i == 0) pc = (uint32_t)b;"],
+        "if (!val_is(v, T_CON0)) FATAL(\"JUMPIFNOT on non-bool\");",
+        "if (val_imm(v) == 0) pc = (uint32_t)b;"],
      rinst ("JUMPIFNOTTAG", [("s", reg), ("o", K Label), ("t", K Tag)], Branch,
             "Jump to o unless the constructor value in register s has tag t.")
        ["Value v = R(a);",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"JUMPIFNOTTAG on non-constructor\");",
         "if (tag != c) pc = (uint32_t)b;"],
      rhandlers Installs
@@ -284,7 +284,7 @@ struct
      rraising
        (rinst ("RAISE", [("s", reg)], Raise, "Raise the exception in register s.")
           ["Value v = R(a);",
-           "if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL(\"RAISE of non-exception\");",
+           "if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) FATAL(\"RAISE of non-exception\");",
            "SYNC();",
            "vm_raise(vm, v);",
            "RELOAD();",
@@ -327,8 +327,8 @@ struct
         "   5 bytes, its target after its opcode */",
         "Value v = R(a);",
         "int64_t tag = 0;",
-        "if (v.tag == T_CON0) tag = v.u.i;",
-        "else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;",
+        "if (val_is(v, T_CON0)) tag = val_imm(v);",
+        "else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));",
         "else FATAL(\"SWITCH on non-constructor\");",
         "if (tag >= 0 && tag < b) pc = (uint32_t)read_i32(code + pc + 5 * (uint32_t)tag + 1);",
         "else pc += 5 * (uint32_t)b;"],
@@ -336,15 +336,15 @@ struct
             "Register d := constructor t made of the n registers of fields: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11).")
        ["SYNC();",
         "Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, n);",
-        "Value *f = OBJ_FIELDS(o);",
+        "Value *f = obj_fields(o);",
         "for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));",
         "R(a) = mk_ptr(o);"],
      rinst ("FIELD", [("d", reg), ("s", reg), ("t", K Tag), ("i", K Field)], Next,
             "Register d := field i of the constructor value that CONN made, of tag t, in register s; --checked stops where the tag is another.")
        ["Obj *o = EXPECT(R(b), K_CON, \"constructor with fields\");",
-        "if (vm->checked && o->contag != c) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)o->contag, (int)c);",
-        "if ((uint32_t)d >= o->len) FATAL(\"constructor field %d out of range\", d);",
-        "R(a) = OBJ_FIELDS(o)[d];"]]
+        "if (vm->checked && obj_contag(o) != c) FATAL(\"FIELD of a constructor of tag %d where %d is wanted\", (int)obj_contag(o), (int)c);",
+        "if ((uint32_t)d >= obj_len(o)) FATAL(\"constructor field %d out of range\", d);",
+        "R(a) = obj_field(o, d);"]]
 
   (* ---- questions about the description ---- *)
 

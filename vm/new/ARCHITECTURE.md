@@ -32,7 +32,7 @@ stale) and committed, so that the VM builds with a C compiler alone.
 ## Values, objects and the heap
 
 As `runevm`'s ([docs/runtime.md](../../docs/runtime.md)): a `Value` is 16
-bytes, a tag byte and a payload of 8 (`vm/vm.h`), with the tag and its
+bytes, a tag byte and a payload of 8 (`vm/value.h`), with the tag and its
 padding also one 64-bit word, the header, so that a value is made in two
 registers and stored in two stores (a byte store read back as 16 bytes
 stalls); objects have an 8-byte header and a payload in multiples of 16;

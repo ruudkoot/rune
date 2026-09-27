@@ -216,14 +216,14 @@ static inline unsigned clz64(uint64_t x) { return x ? (unsigned)__builtin_clzll(
 /* docs/census.md's bits: INT/CHAR/CON0 the two's-complement bits (1..64), WORD
    64 - clz (0..64), REAL 0 where value-encodable else 7, others 0 */
 static inline unsigned bits_of(Value v) {
-    switch (v.tag) {
+    switch (val_tag(v)) {
     case T_INT: case T_CHAR: case T_CON0: {
-        uint64_t x = (uint64_t)(v.u.i ^ (v.u.i >> 63));
+        uint64_t x = (uint64_t)(val_imm(v) ^ (val_imm(v) >> 63));
         return x ? 65 - clz64(x) : 1;
     }
-    case T_WORD: return 64 - clz64(v.u.w);
+    case T_WORD: return 64 - clz64(val_word(v));
     case T_REAL: {
-        uint64_t b; memcpy(&b, &v.u.d, 8);
+        uint64_t b = val_bits(v);
         unsigned e = (unsigned)((b >> 52) & 0x7ff);
         return (e >= 0x3ff - 0x1ff && e < 0x3ff + 0x200) ? 0 : 7;
     }
@@ -235,7 +235,7 @@ static inline unsigned bc_of(uint8_t tag, unsigned b) {
     if (tag == T_UNIT || tag == T_PTR) return 0;
     return b <= 8 ? 0 : b <= 31 ? 1 : b <= 48 ? 2 : b <= 51 ? 3 : b <= 62 ? 4 : b <= 63 ? 5 : 6;
 }
-static inline int is_zero_real(Value v) { return v.tag == T_REAL && v.u.d == 0.0; }
+static inline int is_zero_real(Value v) { return val_is(v, T_REAL) && val_real(v) == 0.0; }
 static inline unsigned rep_idx(int rep) { return rep >= 0 && rep < REP__COUNT ? (unsigned)rep : NREP - 1; }
 static inline unsigned age_class(uint64_t age) {
     return age < (256u << 10) ? 0 : age < (1u << 20) ? 1 : age < (4u << 20) ? 2 : age < (32u << 20) ? 3 : 4;
@@ -309,11 +309,11 @@ void census_alloc(VM *vm, Obj *o, size_t size) {
     uint8_t site_kind; uint32_t site, func;
     if (census_runtime || census_site == UINT32_MAX) { site_kind = 2; site = UINT32_MAX; func = UINT32_MAX; }
     else { site_kind = census_prim >= 0 ? 1 : 0; site = census_site; func = census_func; }
-    size_t l0 = l0_obj_size(o->kind, o->len);
-    if (l0 != size - 8) { fprintf(stderr, "runevm-census: size %zu of kind %u len %u is not l0 %zu + 8\n", size, o->kind, o->len, l0); exit(2); }
+    size_t l0 = l0_obj_size(obj_kind(o), obj_len(o));
+    if (l0 != size - 8) { fprintf(stderr, "runevm-census: size %zu of kind %u len %u is not l0 %zu + 8\n", size, obj_kind(o), obj_len(o), l0); exit(2); }
     if (!summary) {
         unsigned char rec[16];
-        put_u8(rec, o->kind); put_u8(rec + 1, site_kind); put_u16(rec + 2, o->contag); put_u32(rec + 4, o->len);
+        put_u8(rec, obj_kind(o)); put_u8(rec + 1, site_kind); put_u16(rec + 2, obj_contag(o)); put_u32(rec + 4, obj_len(o));
         put_u32(rec + 8, site); put_u32(rec + 12, func);
         out_put(&out_alloc, rec, 16);
         if ((census_clock >> 3) > UINT32_MAX) { fprintf(stderr, "runevm-census: the trace passes 32 GB: birth8 overflows (use --census-summary)\n"); exit(2); }
@@ -322,16 +322,16 @@ void census_alloc(VM *vm, Obj *o, size_t size) {
         homog[id] = 0;
     }
     census_clock += l0;
-    kind_objs[o->kind]++; kind_bytes[o->kind] += l0;
-    HEnt *e = htab_get(&shapes, ((uint64_t)o->kind << 48) | ((uint64_t)o->contag << 32) | o->len);
+    kind_objs[obj_kind(o)]++; kind_bytes[obj_kind(o)] += l0;
+    HEnt *e = htab_get(&shapes, ((uint64_t)obj_kind(o) << 48) | ((uint64_t)obj_contag(o) << 32) | obj_len(o));
     e->objects++; e->bytes += l0;
-    e = htab_get(&sites, ((uint64_t)site << 8) | ((uint64_t)o->kind) | ((uint64_t)site_kind << 4));
-    e->objects++; e->bytes += l0; e->sum += o->len; e->aux = func;
+    e = htab_get(&sites, ((uint64_t)site << 8) | ((uint64_t)obj_kind(o)) | ((uint64_t)site_kind << 4));
+    e->objects++; e->bytes += l0; e->sum += obj_len(o); e->aux = func;
     if (func_objs) {
         uint64_t fi = func == UINT32_MAX ? func_objs_cap - 1 : (func < func_objs_cap - 1 ? func : func_objs_cap - 1);
         func_objs[fi]++; func_bytes[fi] += l0;
     }
-    if (!summary && (o->kind == K_ARRAY || (o->kind == K_TUPLE && site_kind == 1))) arr_push(id, o->kind, site_kind, o->len);
+    if (!summary && (obj_kind(o) == K_ARRAY || (obj_kind(o) == K_TUPLE && site_kind == 1))) arr_push(id, obj_kind(o), site_kind, obj_len(o));
     census_pending = o;
     pend_site = site; pend_func = func; pend_site_kind = site_kind;
 }
@@ -391,8 +391,8 @@ void census_flush(void) {
     Obj *o = census_pending;
     census_pending = NULL;
     if (!o || !census_on) return;
-    uint32_t len = o->len;
-    uint8_t kind = o->kind;
+    uint32_t len = obj_len(o);
+    uint8_t kind = obj_kind(o);
     size_t l0 = l0_obj_size(kind, len);
     static uint8_t *reps; static size_t reps_cap;
     static Cell *cells;
@@ -401,7 +401,7 @@ void census_flush(void) {
     if (kind != K_STRING && len) {
         if (len > reps_cap) { reps_cap = len * 2; reps = realloc(reps, reps_cap); cells = realloc(cells, reps_cap * sizeof(Cell)); if (!reps || !cells) die("out of memory"); }
         source_reps(o, reps, len);
-        Value *f = OBJ_FIELDS(o);
+        Value *f = obj_fields(o);
         unsigned char *fb = NULL;
         if (write_fields) {
             if (out_fields.n + (size_t)len * 2 > out_fields.cap) out_drain(&out_fields);
@@ -409,17 +409,17 @@ void census_flush(void) {
             if (!fb) die("out of memory");
         }
         for (uint32_t i = 0; i < len; i++) {
-            uint8_t tag = f[i].tag <= T_PTR ? f[i].tag : T_UNIT;
+            uint8_t tag = val_tag(f[i]) <= T_PTR ? val_tag(f[i]) : T_UNIT;
             unsigned b = bits_of(f[i]);
             uint8_t bc = (uint8_t)bc_of(tag, b);
-            uint8_t pk = (tag == T_PTR && f[i].u.p) ? f[i].u.p->kind : 0;
+            uint8_t pk = (tag == T_PTR && val_ptr(f[i])) ? obj_kind(val_ptr(f[i])) : 0;
             if (pk > K_EXNCON) pk = 0;
             uint8_t rep = reps[i];
             uint8_t poly = (rep == REP_ANY || rep == 15);
             if (fb) { fb[2 * i] = (uint8_t)(tag | (pk << 3)); fb[2 * i + 1] = (uint8_t)(bc | ((rep & 15) << 3)); }
             field_total++; field_tag[tag]++; field_bc[tag][bc]++; field_rep[tag][rep_idx(rep == 15 ? NREP - 1 : rep)]++;
             if (tag == T_PTR) field_ptr_kind[pk]++;
-            if (tag == T_REAL) { field_real++; if (bc == 0) field_real_enc++; if (f[i].u.d == 0.0) field_real_zero++; }
+            if (tag == T_REAL) { field_real++; if (bc == 0) field_real_enc++; if (val_real(f[i]) == 0.0) field_real_zero++; }
             if (i == 0) { elem_tag = tag; elem_bc = bc; }
             else { if (tag != elem_tag) homogeneous = 0; if (bc > elem_bc) elem_bc = bc; }
             if (poly) any_poly = 1;
@@ -520,11 +520,11 @@ void census_gc_end(VM *vm) {
 /* ---------------------------------------------------------------- stores */
 
 void census_store(Obj *o, uint32_t field, Value v, int site, int rep) {
-    if (!o || field >= o->len) return;
-    Value old = OBJ_FIELDS(o)[field];
+    if (!o || field >= obj_len(o)) return;
+    Value old = obj_field(o, field);
     uint64_t src = OBJ_ID(o);
-    uint64_t dst = (v.tag == T_PTR && v.u.p) ? OBJ_ID(v.u.p) : 0;
-    uint8_t tag = v.tag <= T_PTR ? v.tag : T_UNIT;
+    uint64_t dst = (val_is(v, T_PTR) && val_ptr(v)) ? OBJ_ID(val_ptr(v)) : 0;
+    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
     if (field > 0xffff) store_field_clamped++;
     if (!summary) {
         unsigned char rec[16];
@@ -533,23 +533,23 @@ void census_store(Obj *o, uint32_t field, Value v, int site, int rep) {
         put_u32(rec + 8, (uint32_t)dst);
         put_u16(rec + 12, field > 0xffff ? 0xffff : (uint16_t)field);
         put_u8(rec + 14, (uint8_t)site);
-        put_u8(rec + 15, (uint8_t)((old.tag == T_PTR ? 1 : 0) | (tag << 1) | ((rep & 15) << 4)));
+        put_u8(rec + 15, (uint8_t)((val_is(old, T_PTR) ? 1 : 0) | (tag << 1) | ((rep & 15) << 4)));
         out_put(&out_stores, rec, 16);
     }
     store_total++;
-    if (old.tag == T_PTR) store_ptr_old++;
+    if (val_is(old, T_PTR)) store_ptr_old++;
     /* the ages: exact from birth8 in the full mode, from the birth samples in summary mode */
     unsigned cs = summary ? age_class(est_age(OBJ_SAMPLE(o))) : src < ids_cap ? age_class(census_clock - ((uint64_t)birth8[src] << 3)) : NAGE - 1;
     unsigned cd = NAGE;
     if (dst) {
         store_ptr_new++;
-        if (summary) cd = age_class(est_age(OBJ_SAMPLE(v.u.p)));
+        if (summary) cd = age_class(est_age(OBJ_SAMPLE(val_ptr(v))));
         else if (dst < ids_cap) cd = age_class(census_clock - ((uint64_t)birth8[dst] << 3));
         if (dst > src) store_old_young++;     /* ids are in allocation order: the value is the younger */
     }
     if (site >= 0 && site < 3) store_hist[site][tag][cs][cd]++;
-    if (tag == T_REAL) { store_real++; if (bits_of(v) == 0) store_real_enc++; if (v.u.d == 0.0) store_real_zero++; }
-    if (!summary && o->kind == K_ARRAY && src < ids_cap) {
+    if (tag == T_REAL) { store_real++; if (bits_of(v) == 0) store_real_enc++; if (val_real(v) == 0.0) store_real_zero++; }
+    if (!summary && obj_kind(o) == K_ARRAY && src < ids_cap) {
         uint8_t h = homog[src];
         if (!(h & 0x80)) {
             uint8_t bc = (uint8_t)bc_of(tag, bits_of(v));
@@ -563,25 +563,25 @@ void census_store_fast(Obj *o, uint32_t i, Value v, int32_t reg) {
     if (!census_on) return;
     int rep = CENSUS_REP(&the_vm->prog, census_func, reg);
     if (census_func >= the_vm->prog.nfuncs) rep = 15;
-    census_store(o, i, v, o->kind == K_REF ? 1 : 2, rep);
+    census_store(o, i, v, obj_kind(o) == K_REF ? 1 : 2, rep);
 }
 
 /* ---------------------------------------------------------------- results and calls */
 
 void census_prim_result(int prim, Value v) {
     if (prim < 0 || prim >= PRIM__COUNT) return;
-    uint8_t tag = v.tag <= T_PTR ? v.tag : T_UNIT;
+    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
     unsigned b = bits_of(v);
     prim_hist[prim][tag][b]++;
-    if (tag == T_REAL) { prim_real++; if (b == 0) prim_real_enc++; if (v.u.d == 0.0) prim_real_zero++; }
+    if (tag == T_REAL) { prim_real++; if (b == 0) prim_real_enc++; if (val_real(v) == 0.0) prim_real_zero++; }
 }
 
 void census_call(int op, Value v, int rep) {
     if (op < 0 || op >= NOP) return;
-    uint8_t tag = v.tag <= T_PTR ? v.tag : T_UNIT;
+    uint8_t tag = val_tag(v) <= T_PTR ? val_tag(v) : T_UNIT;
     unsigned b = bits_of(v);
     call_hist[op][tag][b][rep_idx(rep == 15 ? NREP - 1 : rep)]++;
-    if (tag == T_REAL) { call_real++; if (b == 0) call_real_enc++; if (v.u.d == 0.0) call_real_zero++; }
+    if (tag == T_REAL) { call_real++; if (b == 0) call_real_enc++; if (val_real(v) == 0.0) call_real_zero++; }
 }
 
 /* ---------------------------------------------------------------- the fork's child */

@@ -113,6 +113,7 @@ void ms_load_value(Masm *m, int32_t d, int base, int32_t disp);    /* R(d) := th
 void ms_store_value(Masm *m, int base, int32_t disp, int32_t s);   /* [base + disp] := R(s) */
 void ms_check_tag(Masm *m, int32_t s, int tag, AsmLabel *unless);  /* to unless where R(s) has another tag */
 void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* r := the object R(s) points to, of that kind */
+void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless);   /* the same, tested whatever the section says: a program's own error to report */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless);      /* r := the tag of the constructor value in R(s) */
 /* the ones the emitters of M5 to M7 wrote against the slots directly,
    through here from M9, so that a register's home may be elsewhere */
@@ -157,6 +158,24 @@ void ms_handback_rax(Masm *m);                                     /* with the a
    fit or --gc-stress asks; the header written, the counts kept */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s): where a barrier goes */
+void ms_load_field(Masm *m, int32_t d, int obj, uint32_t i);        /* R(d) := field i of the object in obj (a program's object: its length tested by the caller) */
+void ms_load_len(Masm *m, int r, int obj);                          /* r := the length of the object in obj (fields, or bytes of a string) */
+void ms_check_len(Masm *m, int obj, uint32_t n, AsmLabel *unless);  /* to unless where the object in obj has not exactly n fields */
+void ms_load_contag(Masm *m, int r, int obj);                       /* r := the constructor tag of the object in obj */
+void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless);   /* to unless where the object in obj has not more than n fields (an index n is out) */
+void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload);   /* field i of the object in obj := the immediate value */
+void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i);    /* r := the payload of field i of the object in obj */
+void ms_element(Masm *m, int obj, int index);                       /* obj := the address of element index of the object in obj (a vector or an array), index clobbered */
+void ms_string_byte(Masm *m, int r, int obj, int index);            /* r := byte index of the string in obj; obj clobbered */
+/* arrays of values outside the heap's objects: the constants, the globals,
+   a frame's registers at an address */
+void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i);         /* R(d) := the i-th value at base */
+void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s);        /* the i-th value at base := R(s) */
+void ms_slot_addr(Masm *m, int r, int32_t s);                       /* r := the address of R(s) */
+void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to);  /* the values from..to-1 at base := unit */
+void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k);   /* field i of the object in obj := the k-th value at base */
+void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k);
+void ms_scale_index(Masm *m, int r);                               /* r := r * the size of a value: a count of values or registers as bytes */   /* the slot of R(d) := the k-th value at base, the slot itself whatever home d has (a callee's registers) */
 
 /* slow paths */
 Slow *ms_slow(Masm *m, int kind, uint32_t pc);

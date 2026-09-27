@@ -18,7 +18,7 @@ static int operand_ok(const Program *p, uint32_t fi, int kind, int32_t v) {
     switch ((enum RegOperandKind)kind) {
     case RK_REGISTER: return v >= 0 && (uint32_t)v < p->funcs[fi].nlocals;
     case RK_CONSTANT: return v >= 0 && (uint32_t)v < p->nconsts;
-    case RK_STRING_CONSTANT: return v >= 0 && (uint32_t)v < p->nconsts && p->consts[v].tag == T_PTR;
+    case RK_STRING_CONSTANT: return v >= 0 && (uint32_t)v < p->nconsts && val_is(p->consts[v], T_PTR);
     case RK_IMMEDIATE: return 1;
     case RK_TAG: return v >= 0 && v <= 65535;
     case RK_ENV_SLOT: return v >= 0;
@@ -138,9 +138,9 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             case ROP_CONST: {
                 int32_t c = read_i32(p->code + at + 5);
                 if (c >= 0 && (uint32_t)c < p->nconsts)
-                    made = p->consts[c].tag == T_INT ? REP_INT : p->consts[c].tag == T_WORD ? REP_WORD
-                         : p->consts[c].tag == T_REAL ? REP_REAL : p->consts[c].tag == T_CHAR ? REP_CHAR
-                         : p->consts[c].tag == T_PTR ? REP_PTR : -1;
+                    made = val_is(p->consts[c], T_INT) ? REP_INT : val_is(p->consts[c], T_WORD) ? REP_WORD
+                         : val_is(p->consts[c], T_REAL) ? REP_REAL : val_is(p->consts[c], T_CHAR) ? REP_CHAR
+                         : val_is(p->consts[c], T_PTR) ? REP_PTR : -1;
                 break;
             }
             case ROP_PRIM: {
@@ -172,12 +172,12 @@ void disassemble(const Program *p, FILE *out) {
     for (uint32_t i = 0; i < p->nconsts; i++) {
         Value c = p->consts[i];
         fprintf(out, "const %u = ", i);
-        switch (c.tag) {
-        case T_INT: fprintf(out, "%lld\n", (long long)c.u.i); break;
-        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)c.u.w); break;
-        case T_REAL: fprintf(out, "%g\n", c.u.d); break;
-        case T_CHAR: fprintf(out, "#%lld\n", (long long)c.u.i); break;
-        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)c.u.p->len, OBJ_BYTES(c.u.p)); break;
+        switch (val_tag(c)) {
+        case T_INT: fprintf(out, "%lld\n", (long long)val_imm(c)); break;
+        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)val_word(c)); break;
+        case T_REAL: fprintf(out, "%g\n", val_real(c)); break;
+        case T_CHAR: fprintf(out, "#%lld\n", (long long)val_imm(c)); break;
+        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)obj_len(val_ptr(c)), obj_bytes(val_ptr(c))); break;
         default: fprintf(out, "?\n");
         }
     }

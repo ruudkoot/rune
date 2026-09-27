@@ -11,7 +11,7 @@ static inline void op_TUPLE(VM *vm, int32_t a, int32_t b) {
     if (a == 0) { vm_push(vm, mk_unit()); return; }
     if ((size_t)a > vm->sp) vm_fatal(vm, "stack underflow");
     Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)a);
-    Value *f = OBJ_FIELDS(t);
+    Value *f = obj_fields(t);
     for (int32_t i = 0; i < a; i++) f[i] = vm->stack[vm->sp - (size_t)a + (size_t)i];
     vm->sp -= (size_t)a;
     vm_push(vm, mk_ptr(t));
@@ -21,7 +21,7 @@ static inline void op_CON(VM *vm, int32_t a, int32_t b) {
     Program *p = &vm->prog;
     (void)p; (void)a; (void)b;
     Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, 1);
-    OBJ_FIELDS(c)[0] = *vm_top(vm, 0);
+    obj_fill_field(c, 0, *vm_top(vm, 0));
     *vm_top(vm, 0) = mk_ptr(c);
 }
 
@@ -30,7 +30,7 @@ static inline void op_CLOSURE(VM *vm, int32_t a, int32_t b) {
     (void)p; (void)a; (void)b;
     if ((size_t)b > vm->sp) vm_fatal(vm, "stack underflow");
     Obj *c = vm_alloc_fields(vm, K_CLOSURE, 0, (uint32_t)b + 1);
-    Value *f = OBJ_FIELDS(c);
+    Value *f = obj_fields(c);
     f[0] = mk_int(a);
     for (int32_t i = 0; i < b; i++) f[i + 1] = vm->stack[vm->sp - (size_t)b + (size_t)i];
     vm->sp -= (size_t)b;
@@ -43,15 +43,15 @@ static inline void op_SETENV(VM *vm, int32_t a, int32_t b) {
     Value v = vm_pop(vm);
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure");
-    if ((uint32_t)a + 1 >= c->len) vm_fatal(vm, "environment slot %d out of range", a);
-    OBJ_FIELDS(c)[a + 1] = v;
+    if ((uint32_t)a + 1 >= obj_len(c)) vm_fatal(vm, "environment slot %d out of range", a);
+    obj_set_field(c, a + 1, v);
 }
 
 static inline void op_NEWEXN(VM *vm, int32_t a, int32_t b) {
     Program *p = &vm->prog;
     (void)p; (void)a; (void)b;
     Obj *c = vm_alloc_fields(vm, K_EXNCON, 0, 1);
-    OBJ_FIELDS(c)[0] = p->consts[a];
+    obj_fill_field(c, 0, p->consts[a]);
     vm_push(vm, mk_ptr(c));
 }
 
@@ -61,9 +61,9 @@ static inline void op_MKEXN(VM *vm, int32_t a, int32_t b) {
     if (vm->sp < 2) vm_fatal(vm, "stack underflow");
     Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
     Value con = vm->stack[vm->sp - 2];
-    if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) vm_fatal(vm, "MKEXN on non-constructor");
-    OBJ_FIELDS(e)[0] = con;
-    OBJ_FIELDS(e)[1] = vm->stack[vm->sp - 1];
+    if (!val_is(con, T_PTR) || obj_kind(val_ptr(con)) != K_EXNCON) vm_fatal(vm, "MKEXN on non-constructor");
+    obj_fill_field(e, 0, con);
+    obj_fill_field(e, 1, vm->stack[vm->sp - 1]);
     vm->sp -= 2;
     vm_push(vm, mk_ptr(e));
 }
@@ -73,7 +73,7 @@ static inline void op_CONN(VM *vm, int32_t a, int32_t b) {
     (void)p; (void)a; (void)b;
     if ((size_t)b > vm->sp) vm_fatal(vm, "stack underflow");
     Obj *c = vm_alloc_fields(vm, K_CON, (uint16_t)a, (uint32_t)b);
-    Value *f = OBJ_FIELDS(c);
+    Value *f = obj_fields(c);
     for (int32_t i = 0; i < b; i++) f[i] = vm->stack[vm->sp - (size_t)b + (size_t)i];
     vm->sp -= (size_t)b;
     vm_push(vm, mk_ptr(c));

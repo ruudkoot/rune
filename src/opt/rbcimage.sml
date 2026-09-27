@@ -61,7 +61,12 @@ struct
   val kString = 4                         (* K_STRING of vm/vm.h *)
   val tInt = 1 val tWord = 2 val tReal = 3 val tChar = 4 val tPtr = 6
 
-  fun payloadSize bytes = let val s = (bytes + 15) div 16 * 16 in if s < 16 then 16 else s end
+  (* the heap's rounding of a payload, from the layout the JIT has (X64Layout,
+     generated from vm/value.h's numbers: M3 of docs/plans/heap-layout.md) *)
+  fun payloadSize bytes =
+    let val a = X64Layout.payloadAlign
+        val s = (bytes + a - 1) div a * a
+    in if s < X64Layout.payloadMin then X64Layout.payloadMin else s end
 
   (* The heap: the strings, by their offset from its start. *)
   fun heap (r, used) : string IntMap.map =
@@ -73,12 +78,12 @@ struct
             val kind = u8 r
             val _ = u16 r
             val len = u32 r
-            val () = if len > big div 16 then fail "an object of the image is too large" else ()
+            val () = if len > big div X64Layout.valueSize then fail "an object of the image is too large" else ()
             val (acc, payload) =
               if kind = kString then (IntMap.insert (acc, at, take (r, len)), len)
-              else (ignore (take (r, 9 * len)); (acc, 16 * len))
+              else (ignore (take (r, 9 * len)); (acc, X64Layout.valueSize * len))
           in
-            go (at + 8 + payloadSize payload, acc)
+            go (at + X64Layout.headerSize + payloadSize payload, acc)
           end
     in
       go (0, IntMap.empty)

@@ -59,9 +59,18 @@ enum AsmCond {
     CC_FA = 16, CC_FAE = 17, CC_FE = 18   /* after as_fcmp: above, above or equal, equal; false on a NaN */
 };
 #else
+#ifdef RUNE_ASM_TEXT
+/* the text backend (asm_text.h): x86-64's names and conditions, the code
+   as lines of assembler for runeopt's templates */
+#include "x64.h"
+#include "asm_text.h"
+typedef AsmText Asm;
+typedef AsmTextLabel AsmLabel;
+#else
 #include "x64.h"
 typedef X64 Asm;
 typedef X64Label AsmLabel;
+#endif
 enum AsmReg {
     R_VM = R12, R_STACK = R13, R_BASEI = RBP, R_BASER = R14, R_COUNT = R15,
     R_H0 = RBX, R_H1 = RSI, R_H2 = RDI,

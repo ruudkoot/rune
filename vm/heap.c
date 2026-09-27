@@ -22,15 +22,7 @@
 #define ADD_STOCK(vm, size) ((void)0)
 #endif
 
-static size_t payload_size(size_t bytes) {
-    size_t s = (bytes + 15) & ~(size_t)15;
-    return s < 16 ? 16 : s;
-}
-
-size_t obj_size(const Obj *o) {
-    size_t payload = (o->kind == K_STRING) ? o->len : (size_t)o->len * sizeof(Value);
-    return sizeof(Obj) + payload_size(payload);
-}
+size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 
 void heap_init(VM *vm, size_t semispace_bytes) {
     if (vm->heap_limit && semispace_bytes > vm->heap_limit) semispace_bytes = vm->heap_limit;
@@ -55,7 +47,7 @@ void heap_init(VM *vm, size_t semispace_bytes) {
 }
 
 Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payload_bytes) {
-    size_t size = sizeof(Obj) + payload_size(payload_bytes);
+    size_t size = obj_alloc_size(payload_bytes);
     CENSUS_FLUSH();
     if (STOCK(size) > vm->heap_size - USED_STOCK(vm) ||
         (vm->gc_stress && vm->objects_allocated % vm->gc_stress == 0) ||
@@ -67,17 +59,14 @@ Obj *vm_alloc(VM *vm, uint8_t kind, uint16_t contag, uint32_t len, size_t payloa
     ADD_STOCK(vm, size);
     vm->bytes_allocated += STOCK(size);
     vm->objects_allocated++;
-    o->kind = kind;
-    o->pad = 0;
-    o->contag = contag;
-    o->len = len;
+    obj_init(o, kind, contag, len);
     CENSUS_ALLOC(vm, o, size);
     return o;
 }
 
 Obj *vm_alloc_fields(VM *vm, uint8_t kind, uint16_t contag, uint32_t nfields) {
-    Obj *o = vm_alloc(vm, kind, contag, nfields, (size_t)nfields * sizeof(Value));
-    Value *f = OBJ_FIELDS(o);
+    Obj *o = vm_alloc(vm, kind, contag, nfields, obj_payload_bytes(kind, nfields));
+    Value *f = obj_fields(o);
     for (uint32_t i = 0; i < nfields; i++) f[i] = mk_unit();
     return o;
 }
@@ -88,7 +77,7 @@ Obj *vm_alloc_string(VM *vm, uint32_t len) {
 
 Obj *vm_string_from(VM *vm, const char *s, uint32_t len) {
     Obj *o = vm_alloc_string(vm, len);
-    if (len) memcpy(OBJ_BYTES(o), s, len);
+    if (len) memcpy(obj_bytes(o), s, len);
     return o;
 }
 
@@ -101,16 +90,16 @@ static size_t to_used_stock;
 #endif
 
 static Obj *copy_obj(Obj *o) {
-    if (o->kind == K_FORWARD) return *(Obj **)OBJ_BYTES(o);
+    if (obj_forwarded(o)) return obj_forwarding(o);
     size_t size = obj_size(o);
     Obj *n = (Obj *)(to_space + to_used);
     /* Most objects have one to three fields: a copy of a size the compiler
        knows is a few moves, where one of any size is a call of memcpy, which
        was 4.5% of the time of the compiler compiling itself natively. */
     switch (size) {
-    case sizeof(Obj) + 16: memcpy(n, o, sizeof(Obj) + 16); break;
-    case sizeof(Obj) + 32: memcpy(n, o, sizeof(Obj) + 32); break;
-    case sizeof(Obj) + 48: memcpy(n, o, sizeof(Obj) + 48); break;
+    case OBJ_SIZE_FIELDS(1): memcpy(n, o, OBJ_SIZE_FIELDS(1)); break;
+    case OBJ_SIZE_FIELDS(2): memcpy(n, o, OBJ_SIZE_FIELDS(2)); break;
+    case OBJ_SIZE_FIELDS(3): memcpy(n, o, OBJ_SIZE_FIELDS(3)); break;
     default: memcpy(n, o, size); break;
     }
     to_used += size;
@@ -118,13 +107,12 @@ static Obj *copy_obj(Obj *o) {
     to_used_stock += STOCK(size);
 #endif
     CENSUS_SURVIVE(n, size);
-    o->kind = K_FORWARD;
-    *(Obj **)OBJ_BYTES(o) = n;
+    obj_forward(o, n);
     return n;
 }
 
 static void copy_value(Value *v) {
-    if (v->tag == T_PTR && v->u.p) v->u.p = copy_obj(v->u.p);
+    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(copy_obj(val_ptr(*v)));
 }
 
 /* The heap is two semispaces, both kept: the one collected from is the next
@@ -160,9 +148,9 @@ static void collect_into(VM *vm, size_t new_size) {
     while (scan < to_used) {
         Obj *o = (Obj *)(to_space + scan);
         size_t size = obj_size(o);
-        if (o->kind != K_STRING) {
-            Value *f = OBJ_FIELDS(o);
-            for (uint32_t i = 0; i < o->len; i++) copy_value(&f[i]);
+        if (obj_kind(o) != K_STRING) {
+            Value *f = obj_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) copy_value(&f[i]);
         }
         scan += size;
     }
@@ -248,7 +236,7 @@ static Obj *relocate_obj(VM *vm, Obj *o) {
 }
 
 static void relocate_value(VM *vm, Value *v) {
-    if (v->tag == T_PTR && v->u.p) v->u.p = relocate_obj(vm, v->u.p);
+    if (val_is(*v, T_PTR) && val_ptr(*v)) *v = mk_ptr(relocate_obj(vm, val_ptr(*v)));
 }
 
 int heap_relocate(VM *vm, uintptr_t old_base) {
@@ -257,12 +245,12 @@ int heap_relocate(VM *vm, uintptr_t old_base) {
     size_t scan = 0;
     while (reloc_ok && scan < vm->heap_used) {
         Obj *o = (Obj *)(vm->heap_from + scan);
-        if (vm->heap_used - scan < sizeof(Obj) || o->kind < K_TUPLE || o->kind > K_EXNCON) return 0;
+        if (vm->heap_used - scan < OBJ_HEADER_SIZE || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (o->kind != K_STRING) {
-            Value *f = OBJ_FIELDS(o);
-            for (uint32_t i = 0; i < o->len; i++) relocate_value(vm, &f[i]);
+        if (obj_kind(o) != K_STRING) {
+            Value *f = obj_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) relocate_value(vm, &f[i]);
         }
         scan += size;
     }

@@ -7,7 +7,21 @@
 
 #define OFF(field) ((int32_t)offsetof(VM, field))
 #define SLOT(k) slot(m, k)
-#define PAYLOAD(k) (slot(m, k) + 8)
+#define PAYLOAD(k) (slot(m, k) + PAYLOAD_OFF)
+
+/* The layout as the code here writes it (vm/value.h has it in C): a Value
+   of 16 bytes, its tag first and its payload at 8, and an object's header
+   of kind, contag and len before its fields. A change of layout is a
+   change to value.h and to the operations here, and these say so at
+   compile time. */
+#define VALUE_SIZE ((int32_t)sizeof(Value))
+#define VALUE_SHIFT 4
+#define PAYLOAD_OFF ((int32_t)offsetof(Value, u))
+#define FIELD_OFF(i) ((int32_t)(sizeof(Obj) + sizeof(Value) * (i)))
+_Static_assert(sizeof(Value) == 16, "masm.c writes 16-byte values");
+_Static_assert((1 << VALUE_SHIFT) == sizeof(Value), "masm.c scales an index by 16");
+_Static_assert(offsetof(Value, tag) == 0 && offsetof(Value, u) == 8, "masm.c tests the tag at 0 and reads the payload at 8");
+_Static_assert(offsetof(Obj, kind) == 0 && offsetof(Obj, contag) == 2 && offsetof(Obj, len) == 4, "masm.c reads the header as kind, contag, len");
 
 /* an emitter's mistake (masm.h) */
 static void bug(const char *what, long long k, long long of) {
@@ -17,7 +31,7 @@ static void bug(const char *what, long long k, long long of) {
 /* where register k of the frame is, from r14 */
 static int32_t slot(const Masm *m, int32_t k) {
     if (k < 0 || (uint32_t)k >= m->nslots) bug("a register the frame does not have", k, m->nslots);
-    return 16 * k;
+    return VALUE_SIZE * k;
 }
 
 void ms_init(Masm *m, uint32_t nlocals, uint32_t maxstack, int win, const void *leave) {
@@ -197,6 +211,12 @@ void ms_load_obj(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
     as_cmp8_mi(&m->a, r, (int32_t)offsetof(Obj, kind), kind);
     as_jcc(&m->a, CC_NE, unless);
 }
+void ms_load_obj_tested(Masm *m, int r, int32_t s, int kind, AsmLabel *unless) {
+    const uint8_t *reps = m->reps;
+    m->reps = NULL;
+    ms_load_obj(m, r, s, kind, unless);
+    m->reps = reps;
+}
 /* a nullary constructor's tag is its payload; one with an argument's is in
    the object's header */
 void ms_load_tag_of_con(Masm *m, int r, int32_t s, AsmLabel *unless) {
@@ -241,7 +261,7 @@ void ms_reload(Masm *m) {
     ms_frame(m, R_S1);
     as_ld64(&m->a, BASEI, R_S1, (int32_t)offsetof(Frame, base));
     as_mov_rr(&m->a, BASER, BASEI);
-    as_shl_ri(&m->a, BASER, 4);
+    as_shl_ri(&m->a, BASER, VALUE_SHIFT);
     as_add_rr(&m->a, BASER, STACKR);
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
@@ -284,7 +304,7 @@ void ms_handback_rax(Masm *m) {
 
 /* ---- the heap ---- */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
-    uint32_t size = (uint32_t)sizeof(Obj) + 16 * (n ? n : 1);
+    uint32_t size = (uint32_t)obj_size_of(kind, n);
     as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
     as_jcc(&m->a, CC_NE, slow);
     as_ld64(&m->a, R_S0, VMR, OFF(heap_used));
@@ -302,7 +322,50 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
 }
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
-    ms_store_value(m, obj, (int32_t)(sizeof(Obj) + 16 * i), s);
+    ms_store_value(m, obj, FIELD_OFF(i), s);
+}
+void ms_load_field(Masm *m, int32_t d, int obj, uint32_t i) {
+    ms_load_value(m, d, obj, FIELD_OFF(i));
+}
+void ms_load_len(Masm *m, int r, int obj) { as_ld32(&m->a, r, obj, (int32_t)offsetof(Obj, len)); }
+void ms_check_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
+    as_cmp32_mi(&m->a, obj, (int32_t)offsetof(Obj, len), (int32_t)n);
+    as_jcc(&m->a, CC_NE, unless);
+}
+void ms_load_contag(Masm *m, int r, int obj) { as_ld16(&m->a, r, obj, (int32_t)offsetof(Obj, contag)); }
+void ms_need_len(Masm *m, int obj, uint32_t n, AsmLabel *unless) {
+    as_cmp32_mi(&m->a, obj, (int32_t)offsetof(Obj, len), (int32_t)n);
+    as_jcc(&m->a, CC_BE, unless);
+}
+void ms_store_field_imm(Masm *m, int obj, uint32_t i, int tag, int32_t payload) {
+    as_st64i(&m->a, obj, FIELD_OFF(i), tag);
+    as_st64i(&m->a, obj, FIELD_OFF(i) + PAYLOAD_OFF, payload);
+}
+void ms_load_field_payload(Masm *m, int r, int obj, uint32_t i) { as_ld64(&m->a, r, obj, FIELD_OFF(i) + PAYLOAD_OFF); }
+void ms_element(Masm *m, int obj, int index) {
+    ms_scale_index(m, index);
+    as_add_rr(&m->a, obj, index);
+}
+void ms_string_byte(Masm *m, int r, int obj, int index) {
+    as_add_rr(&m->a, obj, index);
+    as_ld8(&m->a, r, obj, (int32_t)sizeof(Obj));
+}
+void ms_load_nth(Masm *m, int32_t d, int base, uint32_t i) { ms_load_value(m, d, base, (int32_t)(VALUE_SIZE * i)); }
+void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s) { ms_store_value(m, base, (int32_t)(VALUE_SIZE * i), s); }
+void ms_slot_addr(Masm *m, int r, int32_t s) { as_lea(&m->a, r, BASER, -1, 1, SLOT(s)); }
+void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to) {
+    if (to <= from) return;
+    as_fzero(&m->a, F_S1);   /* unit: tag 0, payload 0 */
+    for (uint32_t i = from; i < to; i++) as_st128(&m->a, base, (int32_t)(VALUE_SIZE * i), F_S1);
+}
+void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k) {
+    as_ld128(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));
+    as_st128(&m->a, obj, FIELD_OFF(i), F_S0);
+}
+void ms_scale_index(Masm *m, int r) { as_shl_ri(&m->a, r, VALUE_SHIFT); }
+void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k) {
+    as_ld128(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));
+    as_st128(&m->a, BASER, SLOT(d), F_S0);
 }
 
 /* ---- slow paths ---- */

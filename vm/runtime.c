@@ -111,8 +111,8 @@ void vm_push_handler(VM *vm, uint32_t pc) {
    is made of its fields (src/backend/rep.sml; middle-end M11). */
 void vm_cons(VM *vm) {
     Obj *cell = vm_alloc_fields(vm, K_CON, 1, 2);
-    OBJ_FIELDS(cell)[0] = vm->stack[vm->sp - 1];
-    OBJ_FIELDS(cell)[1] = vm->stack[vm->sp - 2];
+    obj_fill_field(cell, 0, vm->stack[vm->sp - 1]);
+    obj_fill_field(cell, 1, vm->stack[vm->sp - 2]);
     vm->sp -= 2;
     vm_push(vm, mk_ptr(cell));
 }
@@ -130,35 +130,35 @@ int values_equal(VM *vm, Value a, Value b) {
             vm_limit(vm, "equality work limit exceeded");
         }
         steps++;
-        if (a.tag != b.tag) break;
-        switch (a.tag) {
+        if (val_tag(a) != val_tag(b)) break;
+        switch (val_tag(a)) {
         case T_UNIT: goto matched;
         case T_INT: case T_CHAR: case T_CON0:
-            if (a.u.i != b.u.i) goto done;
+            if (val_imm(a) != val_imm(b)) goto done;
             goto matched;
         case T_WORD:
-            if (a.u.w != b.u.w) goto done;
+            if (val_word(a) != val_word(b)) goto done;
             goto matched;
         case T_REAL:
-            if (a.u.d != b.u.d) goto done;
+            if (val_real(a) != val_real(b)) goto done;
             goto matched;
         case T_PTR: {
-            Obj *x = a.u.p, *y = b.u.p;
+            Obj *x = val_ptr(a), *y = val_ptr(b);
             if (x == y) goto matched;
-            if (x->kind != y->kind) goto done;
-            switch (x->kind) {
+            if (obj_kind(x) != obj_kind(y)) goto done;
+            switch (obj_kind(x)) {
             case K_STRING:
-                if (x->len != y->len || memcmp(OBJ_BYTES(x), OBJ_BYTES(y), x->len) != 0) goto done;
+                if (obj_len(x) != obj_len(y) || memcmp(obj_bytes(x), obj_bytes(y), obj_len(x)) != 0) goto done;
                 goto matched;
             case K_REF: case K_ARRAY: case K_CLOSURE: case K_EXNCON:
                 goto done;
             case K_CON:
-                if (x->contag != y->contag) goto done;
+                if (obj_contag(x) != obj_contag(y)) goto done;
                 /* fall through */
             case K_TUPLE: case K_EXN:
-                if (x->len != y->len) goto done;
-                if (x->len == 0) goto matched;
-                if (x->len > 1) {
+                if (obj_len(x) != obj_len(y)) goto done;
+                if (obj_len(x) == 0) goto matched;
+                if (obj_len(x) > 1) {
                     if (count == 65536) {
                         if (pending != local) free(pending);
                         vm_limit(vm, "equality exceeds 65536 pending comparisons");
@@ -177,8 +177,8 @@ int values_equal(VM *vm, Value a, Value b) {
                     }
                     pending[count++] = (Pending){ x, y, 1 };
                 }
-                a = OBJ_FIELDS(x)[0];
-                b = OBJ_FIELDS(y)[0];
+                a = obj_field(x, 0);
+                b = obj_field(y, 0);
                 continue;
             default: goto done;
             }
@@ -188,10 +188,10 @@ int values_equal(VM *vm, Value a, Value b) {
 matched:
         if (count == 0) { equal = 1; break; }
         Pending *p = &pending[count - 1];
-        a = OBJ_FIELDS(p->x)[p->next];
-        b = OBJ_FIELDS(p->y)[p->next];
+        a = obj_field(p->x, p->next);
+        b = obj_field(p->y, p->next);
         p->next++;
-        if (p->next == p->x->len) count--;
+        if (p->next == obj_len(p->x)) count--;
     }
 done:
     if (pending != local) free(pending);
@@ -200,14 +200,14 @@ done:
 
 /* --- exceptions --- */
 static void print_exn_payload(FILE *out, Value v) {
-    switch (v.tag) {
+    switch (val_tag(v)) {
     case T_UNIT: break;
-    case T_INT: fprintf(out, " %lld", (long long)v.u.i); break;
-    case T_WORD: fprintf(out, " 0wx%llX", (unsigned long long)v.u.w); break;
-    case T_REAL: fprintf(out, " %g", v.u.d); break;
-    case T_CHAR: fprintf(out, " #\"%c\"", (int)v.u.i); break;
+    case T_INT: fprintf(out, " %lld", (long long)val_imm(v)); break;
+    case T_WORD: fprintf(out, " 0wx%llX", (unsigned long long)val_word(v)); break;
+    case T_REAL: fprintf(out, " %g", val_real(v)); break;
+    case T_CHAR: fprintf(out, " #\"%c\"", (int)val_imm(v)); break;
     case T_PTR:
-        if (v.u.p->kind == K_STRING) fprintf(out, " \"%.*s\"", (int)v.u.p->len, OBJ_BYTES(v.u.p));
+        if (obj_kind(val_ptr(v)) == K_STRING) fprintf(out, " \"%.*s\"", (int)obj_len(val_ptr(v)), obj_bytes(val_ptr(v)));
         else fprintf(out, " <value>");
         break;
     default: fprintf(out, " <value>");
@@ -218,14 +218,14 @@ int vm_raise(VM *vm, Value exn) {
     if (vm->hp == 0) {
         fflush(stdout);
         fprintf(stderr, "runevm: uncaught exception ");
-        if (exn.tag == T_PTR && exn.u.p->kind == K_EXN) {
-            Value con = OBJ_FIELDS(exn.u.p)[0];
-            if (con.tag == T_PTR && con.u.p->kind == K_EXNCON) {
-                Value name = OBJ_FIELDS(con.u.p)[0];
-                if (name.tag == T_PTR && name.u.p->kind == K_STRING)
-                    fprintf(stderr, "%.*s", (int)name.u.p->len, OBJ_BYTES(name.u.p));
+        if (val_is(exn, T_PTR) && obj_kind(val_ptr(exn)) == K_EXN) {
+            Value con = obj_field(val_ptr(exn), 0);
+            if (val_is(con, T_PTR) && obj_kind(val_ptr(con)) == K_EXNCON) {
+                Value name = obj_field(val_ptr(con), 0);
+                if (val_is(name, T_PTR) && obj_kind(val_ptr(name)) == K_STRING)
+                    fprintf(stderr, "%.*s", (int)obj_len(val_ptr(name)), obj_bytes(val_ptr(name)));
             }
-            print_exn_payload(stderr, OBJ_FIELDS(exn.u.p)[1]);
+            print_exn_payload(stderr, obj_field(val_ptr(exn), 1));
         } else {
             fprintf(stderr, "<invalid exception value>");
         }
@@ -244,8 +244,8 @@ int vm_raise(VM *vm, Value exn) {
 int vm_raise_builtin(VM *vm, int k) {
     CENSUS_RUNTIME_BEGIN();
     Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
-    OBJ_FIELDS(e)[0] = mk_ptr(vm->builtin_exns[k]);
-    OBJ_FIELDS(e)[1] = mk_unit();
+    obj_fill_field(e, 0, mk_ptr(vm->builtin_exns[k]));
+    obj_fill_field(e, 1, mk_unit());
     CENSUS_RUNTIME_END();
     return vm_raise(vm, mk_ptr(e));
 }
@@ -263,7 +263,7 @@ void vm_start(VM *vm) {
         Obj *name = vm_string_from(vm, builtin_names[i], (uint32_t)strlen(builtin_names[i]));
         vm_push(vm, mk_ptr(name));
         Obj *con = vm_alloc_fields(vm, K_EXNCON, 0, 1);
-        OBJ_FIELDS(con)[0] = vm_pop(vm);
+        obj_fill_field(con, 0, vm_pop(vm));
         vm->builtin_exns[i] = con;
     }
 

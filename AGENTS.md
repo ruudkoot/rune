@@ -82,18 +82,23 @@ keep these invariants:
   instruction does changes all of them, and a new one goes into
   `tests/opt/every-opcode.rasm`, which runs every instruction. The `.rbc` format is read by `src/opt/rbc.sml` as well, with
   the loader's messages. A field of the VM that the code touches is named in
-  `vm/native_offsets.c`, never written as a number. `make test-native` runs
-  the suites as native code and wants `--count` to agree with `runevm`. The
-  primitives whose common case the code does itself (`runeopt --inlined`,
-  `fastPrim` in `src/opt/x64.sml`) change with their C code in
-  `vm/prims.c`: `tests/opt/prims.sml` runs each on its edge cases, natively
-  and on `runevm`, and must use every one of them. The templates also copy
-  the push and pop of a frame (`vm_push_frame`, `native_call`, `native_ret`)
-  and the fast path of `vm_alloc` (when it collects, `--gc-stress`, the
-  header, the counts): a change to either changes the templates too. An
-  instruction in the list `reads` of `x64.sml` must never write its top
-  operand in place, since a LOCAL may have left it in its local
-  (`docs/native.md`).
+  the table of `vm/native_offsets.h`, never written as a number. Whatever
+  the templates do to a value or an object -- a tag test, a field, a
+  header, an allocation -- they do through `src/opt/x64_layout.sml`, which
+  is generated from the JIT's macro-assembler (`vm/new/jit/masm.c`, run
+  against the text backend of its assembler by `bin/runeopt-templates`):
+  never write a layout fact into `x64.sml`; after a change to `masm.c` run
+  `make templates`, since `check-templates` (in `make test-native`) refuses
+  a stale file. `make test-native` runs the suites as native code and wants
+  `--count` to agree with `runevm`. The primitives whose common case the
+  code does itself (`runeopt --inlined`, `fastPrim` in `src/opt/x64.sml`)
+  change with their C code in `vm/prims.c`: `tests/opt/prims.sml` runs
+  each on its edge cases, natively and on `runevm`, and must use every one
+  of them. The templates also copy the push and pop of a frame
+  (`vm_push_frame`, `native_call`, `native_ret`): a change to it changes
+  them too. An instruction in the list `reads` of `x64.sml` must never
+  write its top operand in place, since a LOCAL may have left it in its
+  local (`docs/native.md`).
 * **A pass of the compiler** (docs/ir.md) runs through `Pass.stage`, with the
   printer and the size of what it makes and the lint of its representation;
   a pass that rewrites asks `Pass.spend` before each rewrite, and one that
@@ -256,7 +261,15 @@ keep these invariants:
   `--count` agree to the byte on every VM, and carries an image of
   `Runtime.save` between them in every direction. A change to the layout of a
   value, to the heap, to the bytecode format or to `vm/image.c` is not done
-  until it passes. It needs a 32-bit libc, clang, a powerpc64 sysroot and
+  until it passes. The layout itself lives in two places and nowhere else:
+  `vm/value.h` (how a value is represented and an object laid out: every
+  tag test, construction, unboxing, header read and write, field access,
+  size and forwarding is a function there, and the rest of `vm/` is
+  written over those names) and `vm/new/jit/masm.c` (the same operations
+  as machine code, its numbers asserted against `value.h` at compile
+  time), from which runeopt's templates are generated. A new `.tag`,
+  `->kind`, `->len` or `OBJ_FIELDS` outside `value.h` is a mistake, and
+  so is an offset or a size in an emitter (heap-layout M3). It needs a 32-bit libc, clang, a powerpc64 sysroot and
   qemu, which `make doctor --scope portability` reports. Two bugs it found
   when it was written: a `Value` of 12 bytes where the 32-bit System V ABI
   aligns an `int64_t` to four, and `realpath` undeclared under an older

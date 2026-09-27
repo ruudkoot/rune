@@ -63,8 +63,8 @@ CASE(ENV) {
     pc += 5;
     count++;
     Obj *c = FRAME->closure;
-    if (!c || (uint32_t)a + 1 >= c->len) FATAL("environment slot %d out of range", a);
-    PUSH(OBJ_FIELDS(c)[a + 1]);
+    if (!c || (uint32_t)a + 1 >= obj_len(c)) FATAL("environment slot %d out of range", a);
+    PUSH(obj_field(c, a + 1));
     NEXT;
 }
 CASE(SELF) {
@@ -117,8 +117,8 @@ CASE(SELECT) {
     count++;
     Value v = POP();
     Obj *t = EXPECT(v, K_TUPLE, "tuple");
-    if ((uint32_t)a >= t->len) FATAL("tuple index %d out of range", a);
-    PUSH(OBJ_FIELDS(t)[a]);
+    if ((uint32_t)a >= obj_len(t)) FATAL("tuple index %d out of range", a);
+    PUSH(obj_field(t, a));
     NEXT;
 }
 CASE(CON) {
@@ -140,8 +140,8 @@ CASE(DECON) {
     Obj *c = EXPECT(v, K_CON, "constructor with argument");
     /* the tag is not tested but --checked (decision D14): a match that
        names every constructor of a datatype leaves the last untested */
-    if (vm->checked && c->contag != a) FATAL("DECON of a constructor of tag %d where %d is wanted", (int)c->contag, (int)a);
-    PUSH(OBJ_FIELDS(c)[0]);
+    if (vm->checked && obj_contag(c) != a) FATAL("DECON of a constructor of tag %d where %d is wanted", (int)obj_contag(c), (int)a);
+    PUSH(obj_field(c, 0));
     NEXT;
 }
 CASE(CONTAG) {
@@ -149,8 +149,8 @@ CASE(CONTAG) {
     pc += 1;
     count++;
     Value v = POP();
-    if (v.tag == T_CON0) PUSH(mk_int(v.u.i));
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) PUSH(mk_int(v.u.p->contag));
+    if (val_is(v, T_CON0)) PUSH(mk_int(val_imm(v)));
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) PUSH(mk_int(obj_contag(val_ptr(v))));
     else FATAL("CONTAG on non-constructor");
     NEXT;
 }
@@ -182,7 +182,7 @@ CASE(CALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = (size_t)(sp - vm->stack);
@@ -202,7 +202,7 @@ CASE(TAILCALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = FRAME->base;
@@ -244,8 +244,8 @@ CASE(JUMPIFNOT) {
     pc += 5;
     count++;
     Value v = POP();
-    if (v.tag != T_CON0) FATAL("JUMPIFNOT on non-bool");
-    if (v.u.i == 0) JUMP_TO(a);
+    if (!val_is(v, T_CON0)) FATAL("JUMPIFNOT on non-bool");
+    if (val_imm(v) == 0) JUMP_TO(a);
     NEXT;
 }
 CASE(JUMPIF) {
@@ -254,8 +254,8 @@ CASE(JUMPIF) {
     pc += 5;
     count++;
     Value v = POP();
-    if (v.tag != T_CON0) FATAL("JUMPIF on non-bool");
-    if (v.u.i != 0) JUMP_TO(a);
+    if (!val_is(v, T_CON0)) FATAL("JUMPIF on non-bool");
+    if (val_imm(v) != 0) JUMP_TO(a);
     NEXT;
 }
 CASE(PUSHHANDLER) {
@@ -280,7 +280,7 @@ CASE(RAISE) {
     pc += 1;
     count++;
     Value v = POP();
-    if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL("RAISE of non-exception");
+    if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) FATAL("RAISE of non-exception");
     SYNC();
     vm_raise(vm, v);
     RELOAD();
@@ -319,7 +319,7 @@ CASE(EXNCON) {
     count++;
     Value v = POP();
     Obj *e = EXPECT(v, K_EXN, "exception");
-    PUSH(OBJ_FIELDS(e)[0]);
+    PUSH(obj_field(e, 0));
     NEXT;
 }
 CASE(EXNARG) {
@@ -328,7 +328,7 @@ CASE(EXNARG) {
     count++;
     Value v = POP();
     Obj *e = EXPECT(v, K_EXN, "exception");
-    PUSH(OBJ_FIELDS(e)[1]);
+    PUSH(obj_field(e, 1));
     NEXT;
 }
 CASE(PRIM) {
@@ -354,8 +354,8 @@ CASE(JUMPIFNOTTAG) {
        against a constructor, in one */
     Value v = POP();
     int64_t tag = 0;
-    if (v.tag == T_CON0) tag = v.u.i;
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+    if (val_is(v, T_CON0)) tag = val_imm(v);
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));
     else FATAL("JUMPIFNOTTAG on non-constructor");
     if (tag != b) JUMP_TO(a);
     NEXT;
@@ -393,8 +393,8 @@ CASE(SWITCH) {
        5 bytes, its target after its opcode */
     Value v = POP();
     int64_t tag = 0;
-    if (v.tag == T_CON0) tag = v.u.i;
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+    if (val_is(v, T_CON0)) tag = val_imm(v);
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));
     else FATAL("SWITCH on non-constructor");
     if (tag >= 0 && tag < a) JUMP_TO(read_i32(code + PC + 5 * (uint32_t)tag + 1));
     else JUMP_TO(PC + 5 * (uint32_t)a);
@@ -439,8 +439,8 @@ CASE(FIELD) {
     Value v = POP();
     Obj *c = EXPECT(v, K_CON, "constructor with fields");
     /* the tag is not tested but --checked, as DECON's (decision D14) */
-    if (vm->checked && c->contag != a) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)c->contag, (int)a);
-    if ((uint32_t)b >= c->len) FATAL("constructor field %d out of range", b);
-    PUSH(OBJ_FIELDS(c)[b]);
+    if (vm->checked && obj_contag(c) != a) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)obj_contag(c), (int)a);
+    if ((uint32_t)b >= obj_len(c)) FATAL("constructor field %d out of range", b);
+    PUSH(obj_field(c, b));
     NEXT;
 }

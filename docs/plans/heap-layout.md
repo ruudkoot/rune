@@ -39,7 +39,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | Measure in the tree | done 2026-09-27, `7a67008` |
 | M2 | The simulator and the harness in the tree | done 2026-09-27 |
-| M3 | The layout behind an interface | |
+| M3 | The layout behind an interface | done 2026-09-27 |
 | M4 | Prototypes at full scale; the gate | |
 | M5 | The chosen layout, complete | |
 | M6 | Roots and maps | |
@@ -280,7 +280,19 @@ layout, or an `mk_` constructor.
 | tests | `tests/basis/runtime.sml:40-53` (40 and 24), `tests/new/masm_test.c:70-73`, every `.budget`, the count equality of `run-portability.sh:94-103`, `run-windows.sh:184-193`, `check-new.sh`, `check-jit.sh`, `run-counts.sh` | |
 | docs | runtime.md, bytecode.md, architecture.md, building.md, native.md, `vm/new/ARCHITECTURE.md`, `man/runevm.1`, the generated `RUNTIME.md`; `examples/runtime/stats.sml:23-25` still says a list cell is two objects | |
 
-The counts were taken at `228b7b7`. Jit M11 and M12 have since made
+M3 (2026-09-27) counted again, by the same rule, after the rewrite:
+`vm/value.h` 40 lines (the definitions and every operation),
+`vm/new/jit/masm.c` 25 (the same operations as machine code, its
+numbers asserted against `value.h`), `src/opt/x64_layout.sml` 41
+(generated from `masm.c`), `vm/native_offsets.h` 5 (the table of names).
+Elsewhere: `prims.c` 0, `runtime.c` 0, the two loops' descriptions 1
+each (the store hook by name), `fastprim.h` 0, `emit.c` 0, `compile.c`
+0, `x64.sml` 3 (runeopt's frame-slot addressing form, its own
+convention), `rbcimage.sml` 0 (its rounding and sizes from
+`X64Layout`), and in `heap.c`, `image.c`, `loader.c` and `runtime.c`
+the size of a `Value` as a C type for the arrays of them, 9 in all.
+
+The counts above were taken at `228b7b7`. Jit M11 and M12 have since made
 `emit.c` 1,054 lines, `masm.c` 348 and `compile.c` 897, and moved the
 machine encoders into `asm_x64.c` and `asm_a64.c` (152 and 155 lines),
 which name no layout fact; the layout lines are where they were. Two
@@ -2805,6 +2817,20 @@ about 2,000 and are planned again at the gate.
   are in two files.
 * **Touches:** jit M11 (the same files; coordinate by landing M3 first
   or after, not during).
+* **Done (2026-09-27):** as described, in one commit. The generator is
+  a text backend of the JIT's portable assembler (`vm/new/jit/asm_text.c`)
+  and `bin/runeopt-templates` (`templates.c`), which runs each of
+  `masm.c`'s operations against it with markers for its parameters,
+  fits the numbers that move with a parameter as linear expressions and
+  writes `src/opt/x64_layout.sml`; `x64.sml` is written over those
+  templates as `emit.c` is over `masm.c`, and `rbcimage.sml` takes its
+  rounding and sizes from the same constants. `vm/value.h` holds the
+  layout; `masm.c` asserts its numbers against it; `emit.c` and
+  `compile.c` name no offset. One bug on the way: a tail call's argument
+  moves written through a register's home instead of its slot, which the
+  JIT oracle caught on the bootstrap at tier 2. The recount is under
+  *Who depends on the layout*. `make check`, `test-portability` and
+  `test-windows` green; every count unchanged.
 
 ### M4. Prototypes at full scale, and the gate (XL, about 2,500)
 

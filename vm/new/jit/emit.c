@@ -23,7 +23,7 @@ void emit_INT(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_set(M, a
 void emit_CONST(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
     as_ld64(A, R_S0, VMR, OFF(prog.consts));
-    ms_load_value(M, a, R_S0, 16 * b);
+    ms_load_nth(M, a, R_S0, (uint32_t)b);
 }
 void emit_UNIT(Jit *j, uint32_t pc, int32_t a) { (void)pc; ms_set(M, a, T_UNIT, 0); }
 void emit_CON0(Jit *j, uint32_t pc, int32_t a, int32_t b) { (void)pc; ms_set(M, a, T_CON0, b); }
@@ -33,12 +33,12 @@ void emit_GLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_cmp8_mi(A, R_S0, b, 0);
     as_jcc(A, CC_E, jit_fatal(j, FATAL_GLOBAL_UNSET, b, 0, 0));
     as_ld64(A, R_S0, VMR, OFF(globals));
-    ms_load_value(M, a, R_S0, 16 * b);
+    ms_load_nth(M, a, R_S0, (uint32_t)b);
 }
 void emit_SETGLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
     as_ld64(A, R_S0, VMR, OFF(globals));
-    ms_store_value(M, R_S0, 16 * a, b);
+    ms_store_nth(M, R_S0, (uint32_t)a, b);
     as_ld64(A, R_S0, VMR, OFF(global_set));
     as_st8i(A, R_S0, a, 1);
 }
@@ -52,9 +52,8 @@ static void closure(Jit *j, int what) {
 void emit_ENV(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
     closure(j, FATAL_ENV_RANGE);
-    as_cmp32_mi(A, R_S0, (int32_t)offsetof(Obj, len), b + 1);
-    as_jcc(A, CC_BE, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj) + 16 * (b + 1));
+    ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
+    ms_load_field(M, a, R_S0, (uint32_t)b + 1);
 }
 void emit_SELF(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
@@ -103,19 +102,19 @@ static void set_real(Jit *j, int32_t d) { ms_set_real(M, d, F_S0); }
 static void index_of(Jit *j, int32_t y, AsmLabel *slow) {
     ms_check_tag(M, y, T_INT, slow);
     ms_load_payload(M, R_S1, y);
-    as_ld32(A, R_S3, R_S0, (int32_t)offsetof(Obj, len));
+    ms_load_len(M, R_S3, R_S0);
     as_cmp_rr(A, R_S1, R_S3);
     as_jcc(A, CC_AE, slow);   /* unsigned: a negative index is out too */
 }
 /* the length of the object of kind k in x, as an int, into d */
 static void length_of(Jit *j, int32_t d, int32_t x, int k, AsmLabel *slow) {
     ms_load_obj(M, R_S0, x, k, slow);
-    as_ld32(A, R_S1, R_S0, (int32_t)offsetof(Obj, len));
+    ms_load_len(M, R_S1, R_S0);
     ms_set_reg(M, d, T_INT, R_S1);
 }
 /* rax := the address of element rcx of the object in rax (16 bytes each) */
 static void element(Jit *j) {
-    as_shl_ri(A, R_S1, 4);
+    ms_scale_index(M, R_S1);
     as_add_rr(A, R_S0, R_S1);
 }
 /* int_div and int_mod after cqo; idiv: the quotient in rax, the
@@ -169,8 +168,8 @@ static void equal(Jit *j, int32_t d, int32_t x, int32_t y, int poly, AsmLabel *s
         as_jmp(A, &done);
         as_bind(A, &heap);
         ms_sync(M, j->next, 0);
-        as_lea(A, ms_arg(M, 1), BASER, -1, 1, 16 * x);
-        as_lea(A, ms_arg(M, 2), BASER, -1, 1, 16 * y);
+        ms_slot_addr(M, ms_arg(M, 1), x);
+        ms_slot_addr(M, ms_arg(M, 2), y);
         ms_call(M, (MsHelper)jit_h_values_equal);
         ms_reload(M);
         ms_set_reg(M, d, T_CON0, R_S0);
@@ -354,11 +353,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_string_sub:
         ms_load_obj(M, R_S0, x, K_STRING, slow);
         index_of(j, y, slow);
-        as_add_rr(A, R_S0, R_S1);
-        as_ld8(A, R_S1, R_S0, (int32_t)sizeof(Obj));
+        ms_string_byte(M, R_S1, R_S0, R_S1);
         ms_set_reg(M, d, T_CHAR, R_S1);
         break;
-    case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_value(M, d, R_S0, (int32_t)sizeof(Obj)); break;
+    case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
     case PRIM_ref_set:
         ms_load_obj(M, R_S0, x, K_REF, slow);
         ms_store_field(M, R_S0, 0, y);
@@ -369,13 +367,13 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
         element(j);
-        ms_load_value(M, d, R_S0, (int32_t)sizeof(Obj));
+        ms_load_field(M, d, R_S0, 0);
         break;
     case PRIM_array_update:
         ms_load_obj(M, R_S0, x, K_ARRAY, slow);
         index_of(j, y, slow);
         element(j);
-        ms_store_value(M, R_S0, (int32_t)sizeof(Obj), z);   /* where a barrier goes, for an element */
+        ms_store_field(M, R_S0, 0, z);   /* where a barrier goes, for an element */
         ms_set(M, d, T_UNIT, 0);
         break;
     case PRIM_vector_length: length_of(j, d, x, K_TUPLE, slow); break;
@@ -383,7 +381,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_load_obj(M, R_S0, x, K_TUPLE, slow);
         index_of(j, y, slow);
         element(j);
-        ms_load_value(M, d, R_S0, (int32_t)sizeof(Obj));
+        ms_load_field(M, d, R_S0, 0);
         break;
     }
     as_bind(A, &M->slow[which].back);
@@ -416,7 +414,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
         as_mov_ri(A, R_S0, (int64_t)(intptr_t)&j->jit->prim_calls[a]);
         as_add_mi(A, R_S0, 0, 1);
     }
-    for (uint32_t i = 0; i < n; i++) ms_value_to(M, BASER, (int32_t)(16 * (j->m.nlocals + i)), read_i32(L + 4 * i));
+    for (uint32_t i = 0; i < n; i++) ms_copy(M, (int32_t)(j->m.nlocals + i), read_i32(L + 4 * i));
     ms_sync(M, j->next, (int)n);
     ms_call(M, (MsHelper)prim_table[a]);
     ms_reload(M);
@@ -424,7 +422,7 @@ void emit_PRIM(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint
     as_jcc(A, CC_E, &raised);
     as_test_rr(A, R_S0, R_S0);
     as_jcc(A, CC_NE, jit_fatal(j, FATAL_NEW_WORLD, 0, 0, 0));
-    ms_value_from(M, b, BASER, (int32_t)(16 * j->m.nlocals));
+    ms_copy(M, b, (int32_t)j->m.nlocals);
     as_jmp(A, &done);
     as_bind(A, &raised);
     as_ld64(A, R_S1, VMR, OFF(hp));
@@ -466,10 +464,9 @@ void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, R_S0, c, K_TUPLE, jit_fatal(j, FATAL_EXPECT_TUPLE, 0, 0, 0));
     if (!ms_trusts(M, c, K_TUPLE)) {   /* the tuple has the field, by its type (tier 2, M10) */
-        as_cmp32_mi(A, R_S0, (int32_t)offsetof(Obj, len), b);
-        as_jcc(A, CC_BE, jit_fatal(j, FATAL_TUPLE_INDEX, b, 0, 0));
+        ms_need_len(M, R_S0, (uint32_t)b, jit_fatal(j, FATAL_TUPLE_INDEX, b, 0, 0));
     }
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj) + 16 * b);
+    ms_load_field(M, a, R_S0, (uint32_t)b);
 }
 void emit_CON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
@@ -480,7 +477,7 @@ static void checked_tag(Jit *j, int32_t t, int what) {
     AsmLabel skip; as_label_init(&skip);
     as_cmp32_mi(A, VMR, OFF(checked), 0);
     as_jcc(A, CC_E, &skip);
-    as_ld16(A, R_S1, R_S0, (int32_t)offsetof(Obj, contag));
+    ms_load_contag(M, R_S1, R_S0);
     as_cmp_ri(A, R_S1, t);
     /* the message names the tag found, which is in rcx */
     as_jcc(A, CC_NE, jit_fatal(j, what, 0, t, 1));
@@ -491,7 +488,7 @@ void emit_DECON(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, R_S0, b, K_CON, jit_fatal(j, FATAL_EXPECT_CON, 0, 0, 0));
     checked_tag(j, c, FATAL_DECON_TAG);
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj));
+    ms_load_field(M, a, R_S0, 0);
 }
 void emit_CONTAG(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
@@ -514,18 +511,17 @@ void emit_MKEXN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
 void emit_EXNCON(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
     ms_load_obj(M, R_S0, b, K_EXN, jit_fatal(j, FATAL_EXPECT_EXN, 0, 0, 0));
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj));
+    ms_load_field(M, a, R_S0, 0);
 }
 void emit_EXNARG(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     (void)pc;
     ms_load_obj(M, R_S0, b, K_EXN, jit_fatal(j, FATAL_EXPECT_EXN, 0, 0, 0));
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj) + 16);
+    ms_load_field(M, a, R_S0, 1);
 }
 void emit_SETENV(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, R_S0, a, K_CLOSURE, jit_fatal(j, FATAL_EXPECT_CLOSURE, 0, 0, 0));
-    as_cmp32_mi(A, R_S0, (int32_t)offsetof(Obj, len), b + 1);
-    as_jcc(A, CC_BE, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
+    ms_need_len(M, R_S0, (uint32_t)b + 1, jit_fatal(j, FATAL_ENV_RANGE, b, 0, 0));
     ms_store_field(M, R_S0, (uint32_t)b + 1, c);
 }
 /* --jit-profile (M8): the count at s's field; add clobbers the flags, so
@@ -608,10 +604,9 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
     ms_load_obj(M, R_S0, b, K_CON, jit_fatal(j, FATAL_EXPECT_CON_FIELDS, 0, 0, 0));
     checked_tag(j, c, FATAL_FIELD_TAG);
     if (!ms_trusts(M, b, K_CON)) {   /* the constructor has the field, by its type (tier 2, M10) */
-        as_cmp32_mi(A, R_S0, (int32_t)offsetof(Obj, len), d);
-        as_jcc(A, CC_BE, jit_fatal(j, FATAL_FIELD_INDEX, d, 0, 0));
+        ms_need_len(M, R_S0, (uint32_t)d, jit_fatal(j, FATAL_FIELD_INDEX, d, 0, 0));
     }
-    ms_load_value(M, a, R_S0, (int32_t)sizeof(Obj) + 16 * d);
+    ms_load_field(M, a, R_S0, (uint32_t)d);
 }
 /* ---- calls, returns, handlers, PRIMPUSH (M5) ---- */
 
@@ -706,14 +701,12 @@ static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, AsmLabel *after) {
    section gives its arity, so a caller does it for a callee without one,
    and for the interpreter) */
 static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals) {
-    if (nlocals <= fill_from) return;
-    as_fzero(A, F_S1);   /* unit: tag 0, payload 0 */
-    for (uint32_t i = fill_from; i < nlocals; i++) as_st128(A, base_reg, (int32_t)(16 * i), F_S1);
+    ms_fill_units(M, base_reg, fill_from, nlocals);
 }
 /* the registers of a callee at r9: its n arguments from the list, the
    rest unit where the callee's code will not do it */
 static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, const Function *fn) {
-    for (uint32_t i = 0; i < n; i++) ms_value_to(M, R_S4, (int32_t)(16 * i), read_i32(L + 4 * i));
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S4, i, read_i32(L + 4 * i));
     if (!fn->has_meta) {
         uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
         fill_unit(j, R_S4, fill_from < n ? n : fill_from, fn->nlocals);
@@ -727,7 +720,7 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     ms_writeback(M, pc);   /* the homes to their slots: the callee has the registers, and after loads them again (M9) */
     room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
     frame_room(j);
-    as_lea(A, R_S4, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
+    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
     make_registers(j, n, L, (uint32_t)a, fn);
     as_lea(A, R_S2, BASEI, -1, 1, (int32_t)j->m.nlocals);
     push_frame(j, (uint32_t)a, (int32_t)j->next, after);
@@ -742,12 +735,9 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
     if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
     room(j, need);
     /* the arguments above the frame first, since they are its registers */
-    as_lea(A, R_S4, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
-    for (uint32_t i = 0; i < n; i++) ms_value_to(M, R_S4, (int32_t)(16 * i), read_i32(L + 4 * i));
-    for (uint32_t i = 0; i < n; i++) {
-        as_ld128(A, F_S0, R_S4, (int32_t)(16 * i));
-        as_st128(A, BASER, (int32_t)(16 * i), F_S0);
-    }
+    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S4, i, read_i32(L + 4 * i));
+    for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, R_S4, i);   /* the slots: the callee's registers, not this function's homes */
     if (!fn->has_meta) {
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
         fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
@@ -789,7 +779,7 @@ static void called(Jit *j, uint32_t pc) {
 static void closure_function(Jit *j, int32_t a, int obj) {
     const Program *p = &j->vm->prog;
     ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
-    as_ld64(A, R_S6, obj, (int32_t)sizeof(Obj) + 8);   /* field 0: the index */
+    ms_load_field_payload(M, R_S6, obj, 0);   /* field 0: the index */
     as_cmp_ri(A, R_S6, (int32_t)p->nfuncs);
     as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
     as_mul_ri(A, R_S1, R_S6, (int32_t)sizeof(Function));
@@ -834,10 +824,10 @@ static void fill_unit_dynamic(Jit *j) {
     as_mov_ri(A, R_S0, 1);
     as_bind(A, &ok);
     as_label_free(&ok);
-    as_shl_ri(A, R_S0, 4);
+    ms_scale_index(M, R_S0);
     as_add_rr(A, R_S0, R_S4);                    /* the first to fill */
     as_mov_rr(A, R_H2, R_S3);                    /* (rdx holds the frame's base) */
-    as_shl_ri(A, R_H2, 4);
+    ms_scale_index(M, R_H2);
     as_add_rr(A, R_H2, R_S4);                    /* past the last */
     as_bind(A, &loop);
     as_cmp_rr(A, R_S0, R_H2);
@@ -897,7 +887,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     room_dynamic(j, grow, R_S2);
     /* the callee's registers above the frame */
     as_ld32(A, R_S3, R_S1, (int32_t)offsetof(Function, nlocals));
-    as_lea(A, R_S4, BASER, -1, 1, (int32_t)(16 * j->m.nlocals));
+    ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
     make_registers_dynamic(j, b);
     /* the frame: function r11, closure r10, base rdx, returning to after */
     as_ld64(A, R_S0, VMR, OFF(fp));
@@ -939,7 +929,7 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
    left on the stack, above the registers */
 void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    ms_value_from(M, a, BASER, (int32_t)(16 * j->m.nlocals));
+    ms_copy(M, a, (int32_t)j->m.nlocals);
 }
 /* RET: the value into the register of the caller's RESULT, then on into
    the caller's code where it has some, else the VM made exact and handed
@@ -971,13 +961,13 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     as_sub_ri(A, R_S1, FRAME_SIZE);      /* the caller's frame: its registers are the code's now */
     as_ld64(A, BASEI, R_S1, FR(base));
     as_mov_rr(A, BASER, BASEI);
-    as_shl_ri(A, BASER, 4);
+    ms_scale_index(M, BASER);
     as_add_rr(A, BASER, STACKR);
     as_test_rr(A, R_S4, R_S4);
     as_jcc(A, CC_E, &interp);
     /* into the caller's code, which has a RESULT (its phantom): the value
        into its register, and on past it */
-    as_shl_ri(A, R_S3, 4);
+    ms_scale_index(M, R_S3);
     if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
     else as_st128x(A, BASER, R_S3, F_S0);
     as_jmp_r(A, R_S4);
@@ -987,14 +977,14 @@ void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     as_ld32(A, R_S0, R_S1, FRAME_SIZE + FR(ret_pc));
     as_cmp_ri(A, R_S3, -1);
     as_jcc(A, CC_E, &no_result);
-    as_shl_ri(A, R_S3, 4);
+    ms_scale_index(M, R_S3);
     if (h) { as_lea(A, R_S6, BASER, R_S3, 1, 0); ms_value_to(M, R_S6, 0, a); }
     else as_st128x(A, BASER, R_S3, F_S0);
     as_add_ri(A, R_S0, 5);
     as_jmp(A, &go);
     as_bind(A, &no_result);
     as_mov_rr(A, R_S2, R_S5);
-    as_shl_ri(A, R_S2, 4);
+    ms_scale_index(M, R_S2);
     if (h) { as_lea(A, R_S6, STACKR, R_S2, 1, 0); ms_value_to(M, R_S6, 0, a); }
     else as_st128x(A, STACKR, R_S2, F_S0);
     as_add_ri(A, R_S5, 1);
@@ -1035,7 +1025,7 @@ void emit_POPHANDLER(Jit *j, uint32_t pc) {
 }
 void emit_CATCH(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    ms_value_from(M, a, BASER, (int32_t)(16 * j->m.nlocals));
+    ms_copy(M, a, (int32_t)j->m.nlocals);
 }
 void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;

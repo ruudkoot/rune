@@ -56,7 +56,7 @@ static const void *enter(VM *vm, uint32_t f, Value arg) {
 }
 
 static uint32_t callee(VM *vm, Obj *c) {
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= vm->prog.nfuncs) vm_fatal(vm, "bad function index");
     return (uint32_t)fidx;
 }
@@ -135,7 +135,7 @@ const void *native_handler(VM *vm) {
 
 const void *native_raise(VM *vm) {
     Value v = vm_pop(vm);
-    if (v.tag != T_PTR || v.u.p->kind != K_EXN) vm_fatal(vm, "RAISE of non-exception");
+    if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) vm_fatal(vm, "RAISE of non-exception");
     vm_raise(vm, v);
     return native_handler(vm);
 }
@@ -177,11 +177,11 @@ static int same_program(const VM *world) {
             && a->funcs[i].nlocals == b->funcs[i].nlocals && strcmp(a->funcs[i].name, b->funcs[i].name) == 0;
     for (uint32_t i = 0; same && i < a->nconsts; i++) {
         Value x = a->consts[i], y = b->consts[i];
-        if (x.tag != y.tag) same = 0;
-        else if (x.tag == T_PTR)
-            same = x.u.p->kind == K_STRING && y.u.p->kind == K_STRING && x.u.p->len == y.u.p->len
-                && memcmp(OBJ_BYTES(x.u.p), OBJ_BYTES(y.u.p), x.u.p->len) == 0;
-        else same = x.u.w == y.u.w;
+        if (val_tag(x) != val_tag(y)) same = 0;
+        else if (val_is(x, T_PTR))
+            same = obj_kind(val_ptr(x)) == K_STRING && obj_kind(val_ptr(y)) == K_STRING && obj_len(val_ptr(x)) == obj_len(val_ptr(y))
+                && memcmp(obj_bytes(val_ptr(x)), obj_bytes(val_ptr(y)), obj_len(val_ptr(x))) == 0;
+        else same = val_word(x) == val_word(y);
     }
     vm_destroy(mine);
     return same;

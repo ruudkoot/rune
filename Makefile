@@ -136,7 +136,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan vm-census test-census heapsim check-heapsim check-layouts mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan vm-census test-census heapsim check-heapsim check-layouts templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -388,7 +388,7 @@ build/librune.a: $(RT_OBJS) build/librune/native.o build/rune-offsets.s
 	$(AR) rcs $@ $(RT_OBJS) build/librune/native.o
 	rm -rf tests/out/opt-cache
 
-build/rune-offsets.s: vm/native_offsets.c $(VM_HDRS) | build/.doctor-vm
+build/rune-offsets.s: vm/native_offsets.c vm/native_offsets.h $(VM_HDRS) | build/.doctor-vm
 	@mkdir -p build/librune
 	$(CC) $(CFLAGS) -o build/librune/native-offsets vm/native_offsets.c
 	build/librune/native-offsets > $@
@@ -473,6 +473,22 @@ check-heapsim: heapsim bin/runevm-census bin/runevm-new bin/rune-new bin/rune.rb
 check-layouts:
 	$(MAKE) --no-print-directory -C tests/layouts CC=$(CC)
 	sh tests/layouts/check.sh $(notdir $(CC))
+
+# runeopt's templates for the layout of values and objects, generated from
+# the JIT's macro-assembler run against the text backend of its assembler
+# (vm/new/jit/templates.c, asm_text.c; docs/plans/heap-layout.md D11, M3):
+# `make templates` remakes src/opt/x64_layout.sml after a change to masm.c;
+# check-templates (part of test-native) refuses a stale file.
+TEMPLATES_SRCS := vm/new/jit/templates.c vm/new/jit/masm.c vm/new/jit/asm_text.c
+bin/runeopt-templates: $(TEMPLATES_SRCS) vm/new/jit/masm.h vm/new/jit/asm.h vm/new/jit/asm_text.h vm/native_offsets.h $(VM_HDRS) | build/.doctor-vm
+	@mkdir -p bin
+	$(CC) $(CFLAGS) -DRUNE_ASM_TEXT -DRUNE_JIT=1 -Ivm -Ivm/new -o $@ $(TEMPLATES_SRCS)
+templates: bin/runeopt-templates
+	bin/runeopt-templates > src/opt/x64_layout.sml
+check-templates: bin/runeopt-templates
+	@bin/runeopt-templates > build/x64_layout.sml.new && \
+	if cmp -s build/x64_layout.sml.new src/opt/x64_layout.sml; then echo "check-templates: src/opt/x64_layout.sml is what masm.c gives"; \
+	else echo "check-templates: src/opt/x64_layout.sml is not what vm/new/jit/masm.c gives; run make templates"; exit 1; fi
 
 # ---------------------------------------------------------- Windows (apart)
 # `make windows` builds the VM for Windows with mingw-w64, for 64 bits
@@ -794,6 +810,7 @@ bin/runevm-opt: scripts/runevm-opt.sh
 
 ifeq ($(NATIVE_HOST),yes)
 test-native: bin/runevm-opt bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune.stack.rbc | build/.doctor-native
+	@$(MAKE) --no-print-directory check-templates
 	python3 tests/vm/run-limits.py --rune $(RUNE_STACK) --vm bin/runevm-opt
 	sh tests/run-tests.sh -j $(JOBS) --rune $(RUNE_STACK) --vm bin/runevm-opt --skip tests/opt-skip.txt
 	sh tests/opt/run-counts.sh -j $(JOBS) $$(for t in tests/lang/*.sml; do echo tests/out/$$(basename $$t .sml).rbc; done)

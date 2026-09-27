@@ -46,11 +46,11 @@
 /* The object v points to, which must be of that kind; the program stops
    with "expected <what>" where it is not, the VM told where it is. */
 static inline Obj *expect_obj(VM *vm, Value v, int kind, const char *what, Value *sp, uint32_t pc, uint64_t count) {
-    if (v.tag != T_PTR || v.u.p->kind != kind) {
+    if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != kind) {
         SYNC();
         vm_fatal(vm, "expected %s", what);
     }
-    return v.u.p;
+    return val_ptr(v);
 }
 
 #define LOOP_NAME loop_fast

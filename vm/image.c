@@ -118,12 +118,12 @@ static void put_obj(Stream *s, const Obj *o, const VM *vm) {
 }
 
 static void put_value(Stream *s, Value v, const VM *vm) {
-    uint64_t w = v.tag == T_PTR
-               ? (v.u.p ? (uint64_t)((const char *)v.u.p - vm->heap_from) : OFF_NONE)
-               : v.u.w;
+    uint64_t w = val_is(v, T_PTR)
+               ? (val_ptr(v) ? (uint64_t)((const char *)val_ptr(v) - vm->heap_from) : OFF_NONE)
+               : val_word(v);
     uint8_t *b = room(s, 9);
     if (!b) return;
-    b[0] = v.tag;
+    b[0] = val_tag(v);
     for (int i = 0; i < 8; i++) b[i + 1] = (uint8_t)(w >> (8 * i));
 }
 
@@ -139,14 +139,14 @@ static void put_heap(Stream *s, VM *vm) {
     size_t scan = 0;
     while (s->ok && scan < vm->heap_used) {
         Obj *o = (Obj *)(vm->heap_from + scan);
-        put_u8(s, o->kind);
-        put_u16(s, o->contag);
-        put_u32(s, o->len);
-        if (o->kind == K_STRING) {
-            put(s, OBJ_BYTES(o), o->len);
+        put_u8(s, obj_kind(o));
+        put_u16(s, obj_contag(o));
+        put_u32(s, obj_len(o));
+        if (obj_kind(o) == K_STRING) {
+            put(s, obj_bytes(o), obj_len(o));
         } else {
-            Value *f = OBJ_FIELDS(o);
-            for (uint32_t i = 0; i < o->len; i++) put_value(s, f[i], vm);
+            Value *f = obj_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
         }
         scan += obj_size(o);
     }
@@ -390,19 +390,18 @@ static Obj *get_obj(Stream *s) {
 }
 
 static Value get_value(Stream *s) {
-    Value v;
     const uint8_t *b = have(s, 9);
     uint64_t w = 0;
+    int tag;
     if (b) {
-        v.tag = b[0];
+        tag = b[0];
         for (int i = 8; i >= 1; i--) w = (w << 8) | b[i];
     } else {
-        v.tag = get_u8(s);
+        tag = get_u8(s);
         w = get_u64(s);
     }
-    if (v.tag == T_PTR) v.u.p = w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1);
-    else v.u.w = w;
-    return v;
+    if (tag == T_PTR) return mk_ptr(w == OFF_NONE ? NULL : (Obj *)(uintptr_t)(w + 1));
+    return mk_tagged(tag, w);
 }
 
 /* The heap, rebuilt at the offsets it was written from, so that the
@@ -410,20 +409,20 @@ static Value get_value(Stream *s) {
 static int get_heap(Stream *s, VM *vm) {
     size_t scan = 0;
     while (scan < vm->heap_used) {
-        if (vm->heap_used - scan < sizeof(Obj)) return 0;
+        if (vm->heap_used - scan < OBJ_HEADER_SIZE) return 0;
         Obj *o = (Obj *)(vm->heap_from + scan);
-        o->kind = get_u8(s);
-        o->pad = 0;
-        o->contag = get_u16(s);
-        o->len = get_u32(s);
-        if (!s->ok || o->kind < K_TUPLE || o->kind > K_EXNCON) return 0;
+        int kind = get_u8(s);
+        uint16_t contag = get_u16(s);
+        uint32_t len = get_u32(s);
+        obj_init(o, kind, contag, len);
+        if (!s->ok || obj_kind(o) < K_TUPLE || obj_kind(o) > K_EXNCON) return 0;
         size_t size = obj_size(o);
         if (size > vm->heap_used - scan) return 0;
-        if (o->kind == K_STRING) {
-            get(s, OBJ_BYTES(o), o->len);
+        if (obj_kind(o) == K_STRING) {
+            get(s, obj_bytes(o), obj_len(o));
         } else {
-            Value *f = OBJ_FIELDS(o);
-            for (uint32_t i = 0; i < o->len; i++) f[i] = get_value(s);
+            Value *f = obj_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) f[i] = get_value(s);
         }
         scan += size;
     }

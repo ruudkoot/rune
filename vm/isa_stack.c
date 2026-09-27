@@ -131,7 +131,7 @@ uint8_t *validate_program(Program *p, char *err, size_t errlen) {
             int32_t v = k == 0 ? a : b;
             switch ((enum OperandKind)op_kinds[op][k]) {
             case OPND_CONSTANT: bad = v < 0 || (uint32_t)v >= p->nconsts; break;
-            case OPND_STRING_CONSTANT: bad = v < 0 || (uint32_t)v >= p->nconsts || p->consts[v].tag != T_PTR; break;
+            case OPND_STRING_CONSTANT: bad = v < 0 || (uint32_t)v >= p->nconsts || !val_is(p->consts[v], T_PTR); break;
             case OPND_IMMEDIATE: break;
             case OPND_TAG: bad = v < 0 || v > 65535; break;
             case OPND_LOCAL: bad = v < 0 || (uint32_t)v >= p->funcs[fi].nlocals; break;
@@ -191,12 +191,12 @@ void disassemble(const Program *p, FILE *out) {
     for (uint32_t i = 0; i < p->nconsts; i++) {
         Value c = p->consts[i];
         fprintf(out, "const %u = ", i);
-        switch (c.tag) {
-        case T_INT: fprintf(out, "%lld\n", (long long)c.u.i); break;
-        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)c.u.w); break;
-        case T_REAL: fprintf(out, "%g\n", c.u.d); break;
-        case T_CHAR: fprintf(out, "#%lld\n", (long long)c.u.i); break;
-        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)c.u.p->len, OBJ_BYTES(c.u.p)); break;
+        switch (val_tag(c)) {
+        case T_INT: fprintf(out, "%lld\n", (long long)val_imm(c)); break;
+        case T_WORD: fprintf(out, "0wx%llX\n", (unsigned long long)val_word(c)); break;
+        case T_REAL: fprintf(out, "%g\n", val_real(c)); break;
+        case T_CHAR: fprintf(out, "#%lld\n", (long long)val_imm(c)); break;
+        case T_PTR: fprintf(out, "\"%.*s\"\n", (int)obj_len(val_ptr(c)), obj_bytes(val_ptr(c))); break;
         default: fprintf(out, "?\n");
         }
     }

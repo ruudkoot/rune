@@ -207,7 +207,7 @@ const void *jit_h_call(VM *vm, int32_t a, int32_t b, const void *after) {
     Value arg = vm->stack[fr->base + (size_t)b];
     Value cv = vm->stack[fr->base + (size_t)a];
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = vm->sp;
@@ -228,7 +228,7 @@ const void *jit_h_tailcall(VM *vm, int32_t a, int32_t b) {
     Value arg = vm->stack[fr->base + (size_t)b];
     Value cv = vm->stack[fr->base + (size_t)a];
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = fr->base;
@@ -261,11 +261,11 @@ const void *jit_h_raise(VM *vm, int32_t s) {
    takes up at its RESULT */
 int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b) {
     (void)vm;
-    uint32_t n = a->len < b->len ? a->len : b->len;
-    int c = n ? memcmp(OBJ_BYTES(a), OBJ_BYTES(b), n) : 0;
+    uint32_t n = obj_len(a) < obj_len(b) ? obj_len(a) : obj_len(b);
+    int c = n ? memcmp(obj_bytes_c(a), obj_bytes_c(b), n) : 0;
     if (c != 0) return c < 0 ? 0 : 2;
-    if (a->len == b->len) return 1;
-    return a->len < b->len ? 0 : 2;
+    if (obj_len(a) == obj_len(b)) return 1;
+    return obj_len(a) < obj_len(b) ? 0 : 2;
 }
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return values_equal(vm, *x, *y); }
 
@@ -492,25 +492,21 @@ void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int3
         break;
     case FILL_CLOSURE:
         /* field 0 is the function's index, then the n - 1 it captures */
-        as_st64i(&m->a, R_S0, (int32_t)sizeof(Obj), T_INT);
-        as_st64i(&m->a, R_S0, (int32_t)sizeof(Obj) + 8, a);
+        ms_store_field_imm(m, R_S0, 0, T_INT, a);
         for (uint32_t i = 0; i + 1 < n; i++) ms_store_field(m, R_S0, i + 1, read_i32(L + 4 * i));
         break;
     case FILL_NEWEXN:
         /* field 0 is the constant a, the name */
         as_ld64(&m->a, R_S1, VMR, (int32_t)offsetof(VM, prog.consts));
-        as_ld128(&m->a, F_S0, R_S1, 16 * a);
-        as_st128(&m->a, R_S0, (int32_t)sizeof(Obj), F_S0);
+        ms_field_from_nth(m, R_S0, 0, R_S1, (uint32_t)a);
         break;
     case FILL_MKEXN: {
         /* the constructor in a, which must be one, and the payload in b: the
            test after the allocation, as the interpreter's */
         AsmLabel *bad = jit_fatal(j, FATAL_MKEXN, 0, 0, 0);
-        as_cmp8_mi(&m->a, BASER, 16 * a, T_PTR);
-        as_jcc(&m->a, CC_NE, bad);
-        as_ld64(&m->a, R_S1, BASER, 16 * a + 8);
-        as_cmp8_mi(&m->a, R_S1, (int32_t)offsetof(Obj, kind), K_EXNCON);
-        as_jcc(&m->a, CC_NE, bad);
+        uint32_t nfields = m->nfields;
+        ms_load_obj_tested(m, R_S1, a, K_EXNCON, bad);
+        m->nfields = nfields;   /* the fresh object in rax is still the one being filled */
         ms_store_field(m, R_S0, 0, a);
         ms_store_field(m, R_S0, 1, b);
         break;
@@ -600,7 +596,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         as_jcc(&m->a, CC_NE, &hand);
         /* a comparison's bool back into the flags, as the fast path leaves
            it, for the branch fused onto it (s.c) */
-        if (s.c) as_cmp_mi(&m->a, BASER, 16 * s.b + 8, 0);
+        if (s.c) ms_test_false(m, s.b);
         as_jmp(&m->a, &s.back);
         as_bind(&m->a, &hand);
         as_label_free(&hand);
@@ -794,10 +790,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     if (ok && fn->has_meta) {
         uint32_t from = jit_fill_from(vm, jit, f);
         if (from < fn->arity) from = fn->arity;
-        if (fn->nlocals > from) {
-            as_fzero(&j.m.a, F_S1);
-            for (uint32_t i = from; i < fn->nlocals; i++) as_st128(&j.m.a, BASER, (int32_t)(16 * i), F_S1);
-        }
+        ms_fill_units(&j.m, BASER, from, fn->nlocals);
     }
     /* tier 2: the representations trusted for the shapes of values (M10),
        and the homes, where the function has registers a machine register

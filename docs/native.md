@@ -332,18 +332,30 @@ Its limits:
   `vm/native.c` if it calls into C (for a shared body, `op_<NAME>` of the
   generated `vm/ops.h`), its prose in [bytecode.md](bytecode.md), and a use
   in `every-opcode.rasm`.
-* **A field of the VM** that the code touches is named in
-  `vm/native_offsets.c`, never written as a number.
+* **A field of the VM** that the code touches is named in the table of
+  `vm/native_offsets.h`, never written as a number.
+* **The layout of a value or an object** -- a tag test, a field, a
+  header, an allocation -- is `src/opt/x64_layout.sml`, generated from the
+  JIT's macro-assembler: `bin/runeopt-templates` (`vm/new/jit/templates.c`)
+  runs each operation of `vm/new/jit/masm.c` against the text backend of
+  the JIT's assembler (`asm_text.c`), which prints it as the assembler
+  lines runeopt writes, with the operation's parameters as holes, and
+  `x64.sml` is written over those templates as the JIT's emitters are
+  over the macro-assembler. So the three engines have one layout, in
+  `masm.c` and the runtime; `make templates` after a change there, and
+  `make check-templates` refuses a stale file (heap-layout D11, M3).
 * **A primitive done inline** changes with its C code, and `prims.sml` has
   its edge cases.
 * **Frames:** the templates of CALL, TAILCALL, CALLK, TAILCALLK, RET and
   the entry for calls do what `vm_push_frame`, `native_call`,
   `native_callk` and `native_ret` do. A change to
   `Frame` or to how a frame is pushed changes them too.
-* **Allocation:** five templates copy the fast path of `vm_alloc`: when it
-  collects, `--gc-stress`, the size, the header, the counts. A change to the
-  allocator, a generational collector for one, changes them too. So do the
-  inline `:=` and `Array.update`, for a write barrier.
+* **Allocation:** the five allocating templates are the macro-assembler's
+  `ms_alloc` (the fast path of `vm_alloc`: when it collects, `--gc-stress`,
+  the size, the header, the counts), through `X64Layout.alloc`. A change to
+  the allocator, a generational collector for one, changes `ms_alloc`, and
+  the templates follow with `make templates`; so does a write barrier, in
+  `ms_store_field`.
 * **`reads`:** an instruction in it never writes its top operand in place.
 * **Resuming:** every place a frame returns to must be in `rune_resume`.
 

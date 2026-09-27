@@ -80,8 +80,8 @@ CASE(ENV) {
     pc += 9;
     count++;
     Obj *c = fr->closure;
-    if (!c || (uint32_t)b + 1 >= c->len) FATAL("environment slot %d out of range", b);
-    R(a) = OBJ_FIELDS(c)[b + 1];
+    if (!c || (uint32_t)b + 1 >= obj_len(c)) FATAL("environment slot %d out of range", b);
+    R(a) = obj_field(c, b + 1);
     NEXT;
 }
 CASE(SELF) {
@@ -102,7 +102,7 @@ CASE(CALL) {
     CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = (size_t)(sp - vm->stack);
@@ -133,7 +133,7 @@ CASE(TAILCALL) {
     CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
-    int64_t fidx = OBJ_FIELDS(c)[0].u.i;
+    int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = fr->base;
@@ -226,7 +226,7 @@ CASE(TUPLE) {
     if (n == 0) { R(a) = mk_unit(); NEXT; }
     SYNC();
     Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, n);
-    Value *f = OBJ_FIELDS(t);
+    Value *f = obj_fields(t);
     for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));
     R(a) = mk_ptr(t);
     NEXT;
@@ -243,7 +243,7 @@ CASE(CLOSURE) {
     count++;
     SYNC();
     Obj *cl = vm_alloc_fields(vm, K_CLOSURE, 0, n + 1);
-    Value *f = OBJ_FIELDS(cl);
+    Value *f = obj_fields(cl);
     f[0] = mk_int(b);
     for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));
     R(a) = mk_ptr(cl);
@@ -257,8 +257,8 @@ CASE(SELECT) {
     pc += 13;
     count++;
     Obj *t = EXPECT(R(c), K_TUPLE, "tuple");
-    if ((uint32_t)b >= t->len) FATAL("tuple index %d out of range", b);
-    R(a) = OBJ_FIELDS(t)[b];
+    if ((uint32_t)b >= obj_len(t)) FATAL("tuple index %d out of range", b);
+    R(a) = obj_field(t, b);
     NEXT;
 }
 CASE(CON) {
@@ -271,7 +271,7 @@ CASE(CON) {
     count++;
     SYNC();
     Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, 1);
-    OBJ_FIELDS(o)[0] = R(c);
+    obj_fill_field(o, 0, R(c));
     R(a) = mk_ptr(o);
     NEXT;
 }
@@ -283,8 +283,8 @@ CASE(DECON) {
     pc += 13;
     count++;
     Obj *o = EXPECT(R(b), K_CON, "constructor with argument");
-    if (vm->checked && o->contag != c) FATAL("DECON of a constructor of tag %d where %d is wanted", (int)o->contag, (int)c);
-    R(a) = OBJ_FIELDS(o)[0];
+    if (vm->checked && obj_contag(o) != c) FATAL("DECON of a constructor of tag %d where %d is wanted", (int)obj_contag(o), (int)c);
+    R(a) = obj_field(o, 0);
     NEXT;
 }
 CASE(CONTAG) {
@@ -294,8 +294,8 @@ CASE(CONTAG) {
     pc += 9;
     count++;
     Value v = R(b);
-    if (v.tag == T_CON0) R(a) = mk_int(v.u.i);
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) R(a) = mk_int(v.u.p->contag);
+    if (val_is(v, T_CON0)) R(a) = mk_int(val_imm(v));
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) R(a) = mk_int(obj_contag(val_ptr(v)));
     else FATAL("CONTAG on non-constructor");
     NEXT;
 }
@@ -308,7 +308,7 @@ CASE(NEWEXN) {
     count++;
     SYNC();
     Obj *o = vm_alloc_fields(vm, K_EXNCON, 0, 1);
-    OBJ_FIELDS(o)[0] = p->consts[b];
+    obj_fill_field(o, 0, p->consts[b]);
     R(a) = mk_ptr(o);
     NEXT;
 }
@@ -332,9 +332,9 @@ CASE(MKEXN) {
     SYNC();
     Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
     Value con = R(b);
-    if (con.tag != T_PTR || con.u.p->kind != K_EXNCON) FATAL("MKEXN on non-constructor");
-    OBJ_FIELDS(e)[0] = con;
-    OBJ_FIELDS(e)[1] = R(c);
+    if (!val_is(con, T_PTR) || obj_kind(val_ptr(con)) != K_EXNCON) FATAL("MKEXN on non-constructor");
+    obj_fill_field(e, 0, con);
+    obj_fill_field(e, 1, R(c));
     R(a) = mk_ptr(e);
     NEXT;
 }
@@ -345,7 +345,7 @@ CASE(EXNCON) {
     pc += 9;
     count++;
     Obj *e = EXPECT(R(b), K_EXN, "exception");
-    R(a) = OBJ_FIELDS(e)[0];
+    R(a) = obj_field(e, 0);
     NEXT;
 }
 CASE(EXNARG) {
@@ -355,7 +355,7 @@ CASE(EXNARG) {
     pc += 9;
     count++;
     Obj *e = EXPECT(R(b), K_EXN, "exception");
-    R(a) = OBJ_FIELDS(e)[1];
+    R(a) = obj_field(e, 1);
     NEXT;
 }
 CASE(SETENV) {
@@ -366,9 +366,9 @@ CASE(SETENV) {
     pc += 13;
     count++;
     Obj *o = EXPECT(R(a), K_CLOSURE, "closure");
-    if ((uint32_t)b + 1 >= o->len) FATAL("environment slot %d out of range", b);
+    if ((uint32_t)b + 1 >= obj_len(o)) FATAL("environment slot %d out of range", b);
     CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));
-    OBJ_FIELDS(o)[b + 1] = R(c);
+    obj_set_field(o, b + 1, R(c));
     NEXT;
 }
 CASE(JUMP) {
@@ -389,8 +389,8 @@ CASE(JUMPIF) {
     pc += 9;
     count++;
     Value v = R(a);
-    if (v.tag != T_CON0) FATAL("JUMPIF on non-bool");
-    if (v.u.i != 0) pc = (uint32_t)b;
+    if (!val_is(v, T_CON0)) FATAL("JUMPIF on non-bool");
+    if (val_imm(v) != 0) pc = (uint32_t)b;
     NEXT;
 }
 CASE(JUMPIFNOT) {
@@ -400,8 +400,8 @@ CASE(JUMPIFNOT) {
     pc += 9;
     count++;
     Value v = R(a);
-    if (v.tag != T_CON0) FATAL("JUMPIFNOT on non-bool");
-    if (v.u.i == 0) pc = (uint32_t)b;
+    if (!val_is(v, T_CON0)) FATAL("JUMPIFNOT on non-bool");
+    if (val_imm(v) == 0) pc = (uint32_t)b;
     NEXT;
 }
 CASE(JUMPIFNOTTAG) {
@@ -413,8 +413,8 @@ CASE(JUMPIFNOTTAG) {
     count++;
     Value v = R(a);
     int64_t tag = 0;
-    if (v.tag == T_CON0) tag = v.u.i;
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+    if (val_is(v, T_CON0)) tag = val_imm(v);
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));
     else FATAL("JUMPIFNOTTAG on non-constructor");
     if (tag != c) pc = (uint32_t)b;
     NEXT;
@@ -450,7 +450,7 @@ CASE(RAISE) {
     pc += 5;
     count++;
     Value v = R(a);
-    if (v.tag != T_PTR || v.u.p->kind != K_EXN) FATAL("RAISE of non-exception");
+    if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_EXN) FATAL("RAISE of non-exception");
     SYNC();
     vm_raise(vm, v);
     RELOAD();
@@ -515,8 +515,8 @@ CASE(SWITCH) {
        5 bytes, its target after its opcode */
     Value v = R(a);
     int64_t tag = 0;
-    if (v.tag == T_CON0) tag = v.u.i;
-    else if (v.tag == T_PTR && v.u.p->kind == K_CON) tag = v.u.p->contag;
+    if (val_is(v, T_CON0)) tag = val_imm(v);
+    else if (val_is(v, T_PTR) && obj_kind(val_ptr(v)) == K_CON) tag = obj_contag(val_ptr(v));
     else FATAL("SWITCH on non-constructor");
     if (tag >= 0 && tag < b) pc = (uint32_t)read_i32(code + pc + 5 * (uint32_t)tag + 1);
     else pc += 5 * (uint32_t)b;
@@ -534,7 +534,7 @@ CASE(CONN) {
     count++;
     SYNC();
     Obj *o = vm_alloc_fields(vm, K_CON, (uint16_t)b, n);
-    Value *f = OBJ_FIELDS(o);
+    Value *f = obj_fields(o);
     for (uint32_t i = 0; i < n; i++) f[i] = R(LIST(i));
     R(a) = mk_ptr(o);
     NEXT;
@@ -548,8 +548,8 @@ CASE(FIELD) {
     pc += 17;
     count++;
     Obj *o = EXPECT(R(b), K_CON, "constructor with fields");
-    if (vm->checked && o->contag != c) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)o->contag, (int)c);
-    if ((uint32_t)d >= o->len) FATAL("constructor field %d out of range", d);
-    R(a) = OBJ_FIELDS(o)[d];
+    if (vm->checked && obj_contag(o) != c) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)obj_contag(o), (int)c);
+    if ((uint32_t)d >= obj_len(o)) FATAL("constructor field %d out of range", d);
+    R(a) = obj_field(o, d);
     NEXT;
 }
