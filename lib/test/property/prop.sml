@@ -10,7 +10,7 @@ struct
   type result = {verdict : verdict, shown : string list, labels : string list,
                  covers : (string * real * bool) list}
 
-  type prop = S.source * Word64.word -> result
+  type prop = S.source * S.position -> result
 
   fun run (p : prop) (s, a) = p (s, a)
 
@@ -38,7 +38,14 @@ struct
 
   datatype 'a outcome = Value of 'a | Raised of string * string
 
-  fun outcome (f : unit -> 'a) : 'a outcome = Value (f ()) handle e => Raised (exnName e, exnMessage e)
+  (* the outcome of a side, and the calls it made of effect-observing functions *)
+  fun outcome (s : S.source) (f : unit -> 'a) : 'a outcome * string list =
+    let
+      val _ = S.takeEffects s
+      val v = Value (f ()) handle e => Raised (exnName e, exnMessage e)
+    in
+      (v, S.takeEffects s)
+    end
 
   fun compare (b : 'b Arb.arb) (l : 'b outcome, r : 'b outcome) : verdict =
     case (l, r) of
@@ -50,8 +57,17 @@ struct
     | (Raised (n, msg), Value y) => Fail {class = "left raised " ^ n, message = msg ^ "; right " ^ #show b y}
     | (Value x, Raised (m, msg)) => Fail {class = "right raised " ^ m, message = "left " ^ #show b x ^ "; " ^ msg}
 
+  (* the verdict on two outcomes with their effects *)
+  fun judge (b : 'b Arb.arb) ((l, le) : 'b outcome * string list, (r, re) : 'b outcome * string list) : verdict =
+    case compare b (l, r) of
+      Pass =>
+        if le = re then Pass
+        else Fail {class = "effects differ",
+                   message = "left calls " ^ String.concatWith ", " le ^ "; right calls " ^ String.concatWith ", " re}
+    | v => v
+
   fun equal (b : 'b Arb.arb) (l : unit -> 'b, r : unit -> 'b) : prop =
-    fn _ => plain (compare b (outcome l, outcome r))
+    fn (s, _) => plain (judge b (outcome s l, outcome s r))
 
   fun law (a : 'a Arb.arb, b : 'b Arb.arb) (l : 'a -> 'b, r : 'a -> 'b) : prop =
     fn (s, addr) =>
@@ -61,7 +77,7 @@ struct
          val xl = Gen.draw (#gen a) (s, here)
          val xr = Gen.draw (#gen a) (s, here)
        in
-         {verdict = compare b (outcome (fn () => l xl), outcome (fn () => r xr)),
+         {verdict = judge b (outcome s (fn () => l xl), outcome s (fn () => r xr)),
           shown = [#show a xl], labels = [], covers = []}
        end)
       handle Gen.Discarded => plain Discard

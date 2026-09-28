@@ -4,6 +4,7 @@
 
 - `GaveUp` (con): [CHECK](../sig/CHECK.md#con-gaveup)
 - `gen` (type): [GEN](../sig/GEN.md#type-gen)
+- `Generated` (exn): [GEN](../sig/GEN.md#exn-generated)
 
 ---
 

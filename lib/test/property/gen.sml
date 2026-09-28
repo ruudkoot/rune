@@ -11,11 +11,11 @@ structure Gen :> GEN =
 struct
   structure S = PropertySource
 
-  type 'a gen = S.source * Word64.word -> 'a
+  type 'a gen = S.source * S.position -> 'a
 
   fun draw (g : 'a gen) (s, a) = g (s, a)
 
-  fun sample (g : 'a gen) (seed : Word64.word) (size : int) : 'a = g (S.new (seed, size, []), S.root)
+  fun sample (g : 'a gen) (seed : Word64.word) (size : int) : 'a = g (S.new (seed, size, [], []), S.root)
 
   (* ---- combinators ---- *)
 
@@ -28,13 +28,7 @@ struct
   fun bind (g : 'a gen) (f : 'a -> 'b gen) : 'b gen =
     fn (s, a) => let val x = g (s, S.child (a, 1)) in f x (s, S.child (a, 2)) end
   fun sized (f : int -> 'a gen) : 'a gen = fn (s, a) => f (S.size s) (s, a)
-  fun resize (n : int) (g : 'a gen) : 'a gen =
-    fn (s : S.source, a) =>
-      let
-        val s' = {seed = #seed s, size = n, set = #set s, trail = #trail s}
-      in
-        g (s', a)
-      end
+  fun resize (n : int) (g : 'a gen) : 'a gen = fn (s, a) => g (S.resized (s, n), a)
   fun fix (f : 'a gen -> 'a gen) : 'a gen = let fun g x = f g x in g end
 
   (* ---- words and choices ---- *)
@@ -220,13 +214,8 @@ struct
 
   (* ---- reals: the stored word is the bits, 0 the simplest (0.0) ---- *)
 
-  fun bitsOf (x : real) : Word64.word =
-    Word8Vector.foldr (fn (b, w) => Word64.orb (Word64.<< (w, 0w8), Word64.fromLarge (Word8.toLarge b))) 0w0
-                      (PackRealLittle.toBytes x)
-
-  fun realOf (w : Word64.word) : real =
-    PackRealLittle.fromBytes
-      (Word8Vector.tabulate (8, fn i => Word8.fromLarge (Word64.toLarge (Word64.>> (w, Word.fromInt (8 * i))))))
+  val bitsOf = S.bitsOf
+  val realOf = S.realOf
 
   val specials : real vector =
     Vector.fromList [0.0, ~0.0, Real.posInf, Real.negInf, 0.0 / 0.0, Real.minPos,
@@ -286,6 +275,7 @@ struct
         val n = lengthOf (s, S.child (a, 0))
         val marks = S.child (a, 1)
         val parts = S.child (a, 2)
+        val () = S.sequence (s, {length = #address (S.child (a, 0)), parts = #path parts, marks = SOME (#path marks)})
         fun elements i =
           if i >= n then []
           else if S.read (s, S.child (marks, i), S.MarkNode, fn _ => 0w1) = 0w0 then elements (i + 1)
@@ -299,6 +289,7 @@ struct
       let
         val len = n (s, S.child (a, 0))
         val parts = S.child (a, 2)
+        val () = S.sequence (s, {length = #address (S.child (a, 0)), parts = #path parts, marks = NONE})
       in
         List.tabulate (Int.max (len, 0), fn i => g (s, S.child (parts, i)))
       end
@@ -311,4 +302,43 @@ struct
 
   fun function (co : 'a -> Word64.word, g : 'b gen) : ('a -> 'b) gen =
     fn (s, a) => fn x => g (s, S.childAt (a, co x))
+
+  exception Generated
+
+  (* A function of one of the first `classes` of D5 (docs/plans/quickcheck.md):
+     0 pure, 1 raising Generated at some arguments, 2 observing its effects,
+     chosen by a node, the pure one the simplest. Every call is logged for the
+     report, and an effect-observing one's for the comparison of outcomes. *)
+  fun functionIn (classes : int) (co : 'a -> Word64.word, showArg : 'a -> string, showRes : 'b -> string,
+                                  g : 'b gen) : ('a -> 'b) gen =
+    fn (s, a) =>
+      let
+        val class = if classes <= 1 then 0 else choice classes (s, S.child (a, 0))
+        val results = S.child (a, 1)
+        val raising = S.child (a, 2)
+      in
+        fn x =>
+          let
+            val w = co x
+            (* 0 is a raise, so that the simplest raising function raises
+               everywhere *)
+            val raises =
+              class = 1 andalso
+              S.read (s, S.childAt (raising, w), S.ChoiceNode, fn r => if uniformBelow 0w4 r = 0w0 then 0w0 else 0w1) = 0w0
+          in
+            if raises then (S.call (s, a, showArg x ^ " => raise Generated"); raise Generated)
+            else
+              let
+                val y = g (s, S.childAt (results, w))
+                val text = showArg x ^ " => " ^ showRes y
+              in
+                S.call (s, a, text);
+                if class = 2 then S.effect (s, text) else ();
+                y
+              end
+          end
+      end
+
+  fun functionOf args = functionIn 3 args
+  fun pureOf args = functionIn 1 args
 end

@@ -21,7 +21,9 @@
 #   - lib/random gives the known answers of tests/lib/random/reference.c and
 #     keeps its promises (tests/lib/random/props.sml);
 #   - lib/test/property's core holds (tests/lib/property/core.sml) and draws
-#     what fingerprint.expected says;
+#     what fingerprint.expected says, and its shrinker reaches the known
+#     minima of the shrinking challenge and of planted bugs
+#     (tests/lib/property/shrink.sml);
 #   - the examples of both libraries' documentation hold.
 # Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
@@ -160,7 +162,7 @@ fi
 
 # lib/test/property (docs/plans/quickcheck.md, M4 on): its core, the
 # fingerprint of what a seed draws (the same on every compiler), its
-# MANIFEST and the examples of its documentation
+# shrinker, its MANIFEST and the examples of its documentation
 if "$rune" --library test/property tests/lib/property/core.sml -o "$out/property-core.rbc" > "$out/property-core.cerr" 2>&1 &&
    "$runevm" "$out/property-core.rbc" > "$out/property-core.out" 2>&1 &&
    ! grep -q "^FAIL" "$out/property-core.out" &&
@@ -168,6 +170,13 @@ if "$rune" --library test/property tests/lib/property/core.sml -o "$out/property
   ok
 else
   bad "property: the core (see $out/property-core.cerr, $out/property-core.out)"
+fi
+if "$rune" --library test/property tests/lib/property/shrink.sml -o "$out/property-shrink.rbc" > "$out/property-shrink.cerr" 2>&1 &&
+   "$runevm" "$out/property-shrink.rbc" > "$out/property-shrink.out" 2>&1 &&
+   grep -q "^PASS" "$out/property-shrink.out" && ! grep -q "^FAIL" "$out/property-shrink.out"; then
+  ok
+else
+  bad "property: shrinking (see $out/property-shrink.cerr, $out/property-shrink.out)"
 fi
 if "$rune" --library test/property --basis-check > "$out/property-check.txt" 2>&1; then
   ok

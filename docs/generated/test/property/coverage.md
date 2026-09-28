@@ -6,13 +6,13 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`ARB`](sig/ARB.md) | 18 | 18 | 100% | 8 | 8 |
+| [`ARB`](sig/ARB.md) | 19 | 19 | 100% | 9 | 9 |
 | [`CHECK`](sig/CHECK.md) | 8 | 8 | 100% | 5 | 5 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
-| [`GEN`](sig/GEN.md) | 33 | 33 | 100% | 22 | 22 |
+| [`GEN`](sig/GEN.md) | 36 | 36 | 100% | 24 | 24 |
 | [`PROP`](sig/PROP.md) | 13 | 13 | 100% | 10 | 10 |
 | [`SHOW`](sig/SHOW.md) | 16 | 16 | 100% | 6 | 6 |
-| **all** | 102 | 102 | 100% | 55 | 55 |
+| **all** | 106 | 106 | 100% | 58 | 58 |
 
 ## Members a signature describes
 
@@ -21,11 +21,11 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 113 members, of which 102 (90%) are described by a signature.
+7 structures have a page, with 132 members, of which 106 (80%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
-| [`PropertySource`](str/PropertySource.md) | 11 | 0 | 0% |
+| [`PropertySource`](str/PropertySource.md) | 26 | 0 | 0% |
 
 ## Examples that are run
 

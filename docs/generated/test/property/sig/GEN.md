@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 33 of 33 entries documented |
+| Documentation | 36 of 36 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/gen\_sig.sml](../../../../../lib/test/property/gen_sig.sml) |
 
@@ -38,7 +38,7 @@ signature GEN =
 sig
   type 'a <a href="#type-gen">gen</a>
   val <a href="#val-sample">sample</a> : 'a gen -&gt; Word64.word -&gt; int -&gt; 'a
-  val <a href="#val-draw">draw</a> : 'a gen -&gt; PropertySource.source * Word64.word -&gt; 'a
+  val <a href="#val-draw">draw</a> : 'a gen -&gt; PropertySource.source * PropertySource.position -&gt; 'a
   val <a href="#val-return">return</a> : 'a -&gt; 'a gen
   val <a href="#val-map">map</a> : ('a -&gt; 'b) -&gt; 'a gen -&gt; 'b gen
   val <a href="#val-map2">map2</a> : ('a * 'b -&gt; 'c) -&gt; 'a gen * 'b gen -&gt; 'c gen
@@ -69,6 +69,9 @@ sig
   val <a href="#val-vector">vector</a> : 'a gen -&gt; 'a vector gen
   val <a href="#val-array">array</a> : 'a gen -&gt; 'a array gen
   val <a href="#val-function">function</a> : ('a -&gt; Word64.word) * 'b gen -&gt; ('a -&gt; 'b) gen
+  val <a href="#val-functionof">functionOf</a> : ('a -&gt; Word64.word) * ('a -&gt; string) * ('b -&gt; string) * 'b gen -&gt; ('a -&gt; 'b) gen
+  val <a href="#val-pureof">pureOf</a> : ('a -&gt; Word64.word) * ('a -&gt; string) * ('b -&gt; string) * 'b gen -&gt; ('a -&gt; 'b) gen
+  exception <a href="#exn-generated">Generated</a>
 end
 </pre>
 
@@ -94,7 +97,7 @@ at `size`: the same value every time.
 ### <a name="val-draw"></a>`draw`
 
 ```sml
-val draw : 'a gen -> PropertySource.source * Word64.word -> 'a
+val draw : 'a gen -> PropertySource.source * PropertySource.position -> 'a
 ```
 
 `draw g (source, address)` is the value of `g` read at `address` of
@@ -393,6 +396,39 @@ val function : ('a -> Word64.word) * 'b gen -> ('a -> 'b) gen
 The result comes from the part of the tree that the observation `co x`
 names, so that the function gives the same result for arguments that
 `co` does not tell apart.
+
+### <a name="val-functionof"></a>`functionOf`
+
+```sml
+val functionOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen
+```
+
+`functionOf (co, showArg, showRes, g)` draws a function of any of the three kinds of D5.
+
+A node chooses the kind: pure, as [`function`](#val-function) draws (the simplest);
+raising [`Generated`](#exn-generated) at a quarter of the arguments; or observing its
+effects, whose calls a law compares on its two sides. Every call is
+logged, and the report shows the calls of a counterexample's function
+as a table. The shrinker makes a function a constant of its kind where
+it can: a pure one gives the simplest value everywhere, and a raising
+one raises everywhere.
+
+### <a name="val-pureof"></a>`pureOf`
+
+```sml
+val pureOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen
+```
+
+`pureOf (co, showArg, showRes, g)` draws a pure function, as [`function`](#val-function)
+does, whose calls the report shows.
+
+### <a name="exn-generated"></a>`Generated`
+
+```sml
+exception Generated
+```
+
+[`Generated`](#exn-generated) is what a raising function of [`functionOf`](#val-functionof) raises.
 
 ---
 

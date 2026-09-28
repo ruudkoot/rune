@@ -28,17 +28,24 @@ The seed of a run is a hash of the property's name unless a seed is
 given, so that a run is the same on every machine, and a failure is
 reported with a token that runs its case again.
 
+A failing case is shrunk before it is reported. The shrinker changes the
+words the case read: it deletes, joins and swaps the elements of lists,
+makes generated functions constants, and lowers words towards 0, the
+simplest. It keeps a change only when the case still fails with the same
+class and has become simpler (fewer words read, or smaller ones), so that
+a [`Div`](../../../basis/sig/GENERAL.md#exn-div) never turns into an [`Overflow`](../../../basis/sig/GENERAL.md#exn-overflow) and the shrinking ends.
+
 ## Interface
 
 <pre>
 signature CHECK =
 sig
-  type <a href="#type-config">config</a> = {<a href="#fld-config.seed">seed</a> : Word64.word option, <a href="#fld-config.tests">tests</a> : int, <a href="#fld-config.maxsize">maxSize</a> : int, <a href="#fld-config.maxdiscards">maxDiscards</a> : int}
+  type <a href="#type-config">config</a> = {<a href="#fld-config.seed">seed</a> : Word64.word option, <a href="#fld-config.tests">tests</a> : int, <a href="#fld-config.maxsize">maxSize</a> : int, <a href="#fld-config.maxdiscards">maxDiscards</a> : int, <a href="#fld-config.maxshrinks">maxShrinks</a> : int}
   val <a href="#val-default">default</a> : config
   datatype <a href="#type-result">result</a> =
       <a href="#con-passed">Passed</a> of {<a href="#fld-passed.tests">tests</a> : int, <a href="#fld-passed.discarded">discarded</a> : int, <a href="#fld-passed.labels">labels</a> : (string * int) list, <a href="#fld-passed.short">short</a> : (string * real * real) list}
     | <a href="#con-failed">Failed</a> of {<a href="#fld-failed.test">test</a> : int, <a href="#fld-failed.size">size</a> : int, <a href="#fld-failed.class">class</a> : string, <a href="#fld-failed.message">message</a> : string, <a href="#fld-failed.counterexample">counterexample</a> : string list,
-                 <a href="#fld-failed.replay">replay</a> : string}
+                 <a href="#fld-failed.calls">calls</a> : string list list, <a href="#fld-failed.shrinks">shrinks</a> : int, <a href="#fld-failed.replay">replay</a> : string}
     | <a href="#con-gaveup">GaveUp</a> of {<a href="#fld-gaveup.tests">tests</a> : int, <a href="#fld-gaveup.discarded">discarded</a> : int}
   val <a href="#val-check">check</a> : config -&gt; string -&gt; Prop.prop -&gt; result
   val <a href="#val-replay">replay</a> : string -&gt; Prop.prop -&gt; Prop.result option
@@ -51,15 +58,15 @@ end
 ### <a name="type-config"></a>`config`
 
 ```sml
-type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int}
+type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int}
 ```
 
 How a property is run.
 
 `seed` is the seed of the run (`NONE`: a hash of the name), `tests` the
-number of cases that must pass, `maxSize` the largest size, and
+number of cases that must pass, `maxSize` the largest size,
 `maxDiscards` the number of discarded cases after which the run gives
-up.
+up, and `maxShrinks` the number of runs the shrinker may make.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -67,6 +74,7 @@ up.
 | <a name="fld-config.tests"></a>`tests` | `int` |  |
 | <a name="fld-config.maxsize"></a>`maxSize` | `int` |  |
 | <a name="fld-config.maxdiscards"></a>`maxDiscards` | `int` |  |
+| <a name="fld-config.maxshrinks"></a>`maxShrinks` | `int` |  |
 
 ### <a name="val-default"></a>`default`
 
@@ -75,7 +83,7 @@ val default : config
 ```
 
 100 cases, sizes up to 100, a seed from the name, giving up after 1000
-discarded cases.
+discarded cases, shrinking in at most 5000 runs.
 
 ### <a name="type-result"></a>`result`
 
@@ -83,11 +91,16 @@ discarded cases.
 datatype result =
     Passed of {tests : int, discarded : int, labels : (string * int) list, short : (string * real * real) list}
   | Failed of {test : int, size : int, class : string, message : string, counterexample : string list,
-               replay : string}
+               calls : string list list, shrinks : int, replay : string}
   | GaveUp of {tests : int, discarded : int}
 ```
 
-What a run found. [`Failed`](#con-failed)'s [`replay`](#val-replay) is the token of its case.
+What a run found.
+
+[`Failed`](#con-failed) has the shrunk case: `counterexample` is what it drew, as
+shown, and `calls` the calls of each of its generated functions, with
+`shrinks` the runs that the shrinking took. [`replay`](#val-replay) is the token of the
+case as it was drawn.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
@@ -96,12 +109,14 @@ What a run found. [`Failed`](#con-failed)'s [`replay`](#val-replay) is the token
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.discarded"></a>`discarded` | `int` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.labels"></a>`labels` | `(string * int) list` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.short"></a>`short` | `(string * real * real) list` |  |
-| <a name="con-failed"></a>`Failed` | `{test : int, size : int, class : string, message : string, counterexample : string list, replay : string}` |  |
+| <a name="con-failed"></a>`Failed` | `{test : int, size : int, class : string, message : string, counterexample : string list, calls : string list list, shrinks : int, replay : string}` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.test"></a>`test` | `int` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.size"></a>`size` | `int` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.class"></a>`class` | `string` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.message"></a>`message` | `string` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.counterexample"></a>`counterexample` | `string list` |  |
+| &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.calls"></a>`calls` | `string list list` |  |
+| &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.shrinks"></a>`shrinks` | `int` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-failed.replay"></a>`replay` | `string` |  |
 | <a name="con-gaveup"></a>`GaveUp` | `{tests : int, discarded : int}` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-gaveup.tests"></a>`tests` | `int` |  |
@@ -121,9 +136,10 @@ val check : config -> string -> Prop.prop -> result
 val replay : string -> Prop.prop -> Prop.result option
 ```
 
-`replay token p` runs the case of a [`Failed`](#con-failed) result's [`replay`](#val-replay) token
-again: its verdict and what it drew, or `NONE` when the token is not
-one.
+`replay token p` runs the case of a [`Failed`](#con-failed) result's [`replay`](#val-replay) token again, shrunk as the run shrank it.
+
+It is the case's verdict and what it drew, or `NONE` when the token is
+not one.
 
 ### <a name="val-report"></a>`report`
 

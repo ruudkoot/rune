@@ -10,6 +10,7 @@
 - `forAllGen` (val): [PROP](../sig/PROP.md#val-forallgen)
 - `frequency` (val): [GEN](../sig/GEN.md#val-frequency)
 - `function` (val): [ARB](../sig/ARB.md#val-function), [GEN](../sig/GEN.md#val-function)
+- `functionOf` (val): [GEN](../sig/GEN.md#val-functionof)
 
 ---
 

@@ -31,7 +31,7 @@ What it rests on:
 | M2 | Libraries: `rune --library` | done 2026-09-28 |
 | M3 | `lib/random` | done 2026-09-28 |
 | M4 | The property core | done 2026-09-28 |
-| M5 | Shrinking and functions | |
+| M5 | Shrinking and functions | done 2026-09-28 |
 | M6 | The Basis's instances, and the generators frozen | |
 | M7 | Laws elaborated | |
 | M8 | Laws run | |
@@ -943,6 +943,7 @@ end
     - delete an element of a drawn-length list and shift its siblings;
     - redistribute between two numbers.
   - A candidate is kept only if it fails with the same failure class: `false`, or a named exception (D6). So a Div never slides into an Overflow, and each class found is reported.
+  - M5 added three passes and a rule (*M5*, Done): join two lists that are elements of one list, swap neighbouring elements, and make a generated function a constant. A change is kept only if the case also gets simpler.
 - **Replay.** The replay token encodes the seed, the size and the overrides, and `RUNE_PROPERTY_REPLAY` runs that one case again.
 - **Exhaustive mode.** When an arbitrary is finite and the product of the domains is below `exhaustiveBelow`, `check` enumerates instead of sampling. At Int8 × Int8 that is 65,536 cases (E3).
 
@@ -1375,6 +1376,51 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - **The self-test.** The shrinking challenge's problems, and planted bugs with known minimal counterexamples, as tests that must reach the minimum or a stated bound on its size.
 * **Why now:** a counterexample nobody can read is half a result. The prototype showed which passes the sample tree needs (E6).
 * **Done when:** the challenge's `reverse`, `distinct` and `length list` shrink to their minima for seeds 1 to 10. `large union list` and `nested lists` reach theirs too, or, if moving elements between lists is still out of reach, end with the minimum's elements spread over more lists, the gap recorded here. And `make check` passes.
+* **Done** (2026-09-28):
+  - **The shrinker** (`Check.shrink`) works in sweeps.
+    - A pass is a list of sites, each with the changes it may make, tried in order. A change that is taken is tried again at the same site, and a site with none moves the sweep on.
+    - The passes are swept in turn until a round changes nothing, or `maxShrinks` runs (5,000 by default) are spent.
+    - The first version restarted every pass after each change taken, and `large union list` took up to 4,137 runs; the sweeps take at most 584.
+  - **The passes**, in their order:
+    - **Delete** an element of a list and move the ones after it down (`list` and `listOf` alike, so `length list` loses any element).
+    - **Make a function a constant.** This zeroes the function's subtree, so that every node below it that the shrinker has not set reads 0. That makes the function pure and gives the simplest value everywhere. A second change zeroes only its results and raises, which keeps its kind. A raise is the word 0, so the simplest raising function raises everywhere.
+    - **Join** two lists that are elements of one list: the second's elements are appended to the first, and the second is deleted. `large union list` and `nested lists` need this move.
+    - **Lower** each node's word by its kind's candidates, as before.
+    - **Lower equal words together**, now only among nodes of one kind (the planted sort's `[~1, ~1]` of E6).
+    - **Redistribute** between two integers.
+    - **Swap** neighbouring elements. This puts `[~1, 0]` in the order `[0, ~1]`.
+  - **The rule that ends it.** A change is kept only if the case still fails in the same class and is *simpler*: it reads fewer nodes, or as many with words smaller where they first differ (shortlex, as Hypothesis orders its choice sequences).
+    - Without it, deleting the one element of `length list` drew the element anew, as `1000`, and the shrinker went round until the runs were spent.
+    - Making a function a constant is kept if the case is no less simple, as the function's words may already be 0. The zeroed paths only grow, so it too ends.
+  - **Functions.**
+    - `PropertySource` records each call with the function's position. The report prints a counterexample's calls as `fn 0 => false` lines, after shrinking.
+    - Classes B and C of D5 are in `Arb.function`, class A alone in `Arb.pureFunction`.
+    - A law compares the effect logs of its two sides after their outcomes (D6).
+  - **Tests: `tests/lib/property/shrink.sml`,** every problem over seeds 1 to 10:
+
+    | Problem | Minimum | Reached | Runs |
+    |---|---|---|---|
+    | reverse | `[0, ~1]` | 10 of 10 | 19–26 |
+    | distinct | `[0, ~1, 1]` | 10 of 10 | 39–203 |
+    | length list | `[900]` | 10 of 10 | 56–156 |
+    | large union list | `[[0, ~1, 1, ~2, 2]]` | 10 of 10 | 115–584 |
+    | nested lists | `[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]` | 10 of 10 | 99–101 |
+    | planted `all` (skips the last element) | `p` a constant `false`, `[0]` | 10 of 10 | 7–8 |
+    | planted sort (drops equal elements) | `[0, 0]` | 10 of 10 | 19–23 |
+    | planted `map` (calls `f` from the right) | an effect-observing `f`, `[0, ~1]` | 10 of 10 | 33–39 |
+
+    - Five checks of functions: a raising function is drawn and shrinks to `(fn, 0)`; its exception is an outcome; effects are compared; a pure function has none; the calls are reported.
+    - The whole file runs in about 1.3 seconds on runevm.
+    - `tests/lib/run-hosts.sh` runs it on the other compilers as `property.shrink`.
+  - **The gap E6 left for `all`** was closed by constants, not by copying a function's results to the new argument as E6 proposed. Once `p` is a constant, `x` shrinks freely.
+  - **Portable** (the gap M4 left).
+    - A real node's bits are computed with `Real.toManExp`, `Real.fromManExp` and `Real.toLargeInt` instead of an optional `PackReal` structure. `core.sml` checks known encodings and 20,000 round trips.
+    - The fingerprint now hashes the observations of the values (`Co`), not their printing. It is `6022504E33410D82` on Rune, MLton, Poly/ML and MLKit.
+    - `make test-lib-hosts`: 16 pass, 4 explained, none failed. SML/NJ's `Real.fromManExp` is 0.0 at the least normal exponent and below, so there subnormal reals decode as 0.0 and the fingerprint differs. The Basis suite already records that as `Real.fromManExp/minPos`, and it is a `HOST-BUG` line here. The library is written on `lib/random`, so SML/NJ's 32-bit build fails it by M3's host bug.
+  - **Still open: the named law's local minima (E3).** At `Int8`, with the documented cases discarded, 100 seeds shrink to 19 different pairs.
+    - The simplest, `(1, ~128)`, is reached in 20 of them; `(65, ~64)` in 17 and `(~66, 65)` in 15.
+    - Lowering either number alone loses the `Overflow`, and redistribution keeps the sum of the two words, which is not what these pairs have in common.
+    - Every one is a correct counterexample, which is what the hunt needs (*Risks*). A better pass for such pairs is left for when a law needs it.
 
 ### M6. The Basis's instances, and the generators frozen (L, about 1,500)
 

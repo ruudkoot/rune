@@ -38,7 +38,7 @@ sig
   datatype <a href="#type-verdict">verdict</a> = <a href="#con-pass">Pass</a> | <a href="#con-fail">Fail</a> of {<a href="#fld-fail.class">class</a> : string, <a href="#fld-fail.message">message</a> : string} | <a href="#con-discard">Discard</a>
   type <a href="#type-result">result</a> = {<a href="#fld-result.verdict">verdict</a> : verdict, <a href="#fld-result.shown">shown</a> : string list, <a href="#fld-result.labels">labels</a> : string list,
                  <a href="#fld-result.covers">covers</a> : (string * real * bool) list}
-  val <a href="#val-run">run</a> : prop -&gt; PropertySource.source * Word64.word -&gt; result
+  val <a href="#val-run">run</a> : prop -&gt; PropertySource.source * PropertySource.position -&gt; result
   val <a href="#val-holds">holds</a> : bool -&gt; prop
   val <a href="#val-forall">forAll</a> : 'a Arb.arb -&gt; ('a -&gt; prop) -&gt; prop
   val <a href="#val-forallgen">forAllGen</a> : 'a Gen.gen * ('a -&gt; string) -&gt; ('a -&gt; prop) -&gt; prop
@@ -95,7 +95,7 @@ first), and its labels, with the coverages it asks for.
 ### <a name="val-run"></a>`run`
 
 ```sml
-val run : prop -> PropertySource.source * Word64.word -> result
+val run : prop -> PropertySource.source * PropertySource.position -> result
 ```
 
 `run p (source, address)` runs `p` on the case of `source`: what the
@@ -133,8 +133,11 @@ val forAllGen : 'a Gen.gen * ('a -> string) -> ('a -> prop) -> prop
 val equal : 'a Arb.arb -> (unit -> 'a) * (unit -> 'a) -> prop
 ```
 
-`equal a (l, r)` passes when `l ()` and `r ()` have the same outcome:
-values equal by `a`, or the same exception.
+`equal a (l, r)` passes when `l ()` and `r ()` have the same outcome.
+
+The same outcome is values equal by `a`, or the same exception, and the
+same calls of the effect-observing functions drawn for the case, in the
+same order.
 
 ### <a name="val-law"></a>`law`
 

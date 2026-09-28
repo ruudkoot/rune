@@ -6,10 +6,10 @@
 
 | Signature |  | Status | Documented |
 | --- | --- | --- | --- |
-| [`ARB`](sig/ARB.md) | Arbitraries: the generator, the printer, the observer and the equality of a type, as one record -- what QuickCheck finds by a type class and a program here passes by name (docs/plans/quickcheck.md, D4). | required | 18 of 18 |
+| [`ARB`](sig/ARB.md) | Arbitraries: the generator, the printer, the observer and the equality of a type, as one record -- what QuickCheck finds by a type class and a program here passes by name (docs/plans/quickcheck.md, D4). | required | 19 of 19 |
 | [`CHECK`](sig/CHECK.md) | Running properties: many cases, each from its own seed at a size that grows over the run, and a report. | required | 8 of 8 |
 | [`CO`](sig/CO.md) | Observers: what a generated function sees of its argument (QuickCheck's CoArbitrary, reduced to a hash). Two arguments with the same observation get the same result from a generated function. | required | 14 of 14 |
-| [`GEN`](sig/GEN.md) | Generators: values drawn from the source of a case of a property. | required | 33 of 33 |
+| [`GEN`](sig/GEN.md) | Generators: values drawn from the source of a case of a property. | required | 36 of 36 |
 | [`PROP`](sig/PROP.md) | Properties: what must hold for every value a generator draws. | required | 13 of 13 |
 | [`SHOW`](sig/SHOW.md) | Printers: how a value of a counterexample is shown, as Standard ML that reads back where the type has a literal syntax. | required | 16 of 16 |
 

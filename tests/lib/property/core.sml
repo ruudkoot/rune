@@ -44,6 +44,24 @@ val () = check ("real/every-family", fn () =>
   andalso List.exists (fn x => Real.isFinite x andalso Real.abs x > 1.0E100) reals
   andalso List.exists (fn x => Real.== (x * 2.0, Real.realRound (x * 2.0)) andalso Real.abs x <= 50.0
                                 andalso not (Real.== (x, Real.realRound x))) reals)
+(* the encoding of reals as their bits, which the library computes itself *)
+val () = check ("real/bits", fn () =>
+  List.all (fn (x, w) => PropertySource.bitsOf x = w andalso PropertySource.bitsOf (PropertySource.realOf w) = w)
+           [(1.0, 0wx3FF0000000000000), (~2.5, 0wxC004000000000000), (0.0, 0w0), (~0.0, 0wx8000000000000000),
+            (Real.minPos, 0w1), (Real.minNormalPos, 0wx10000000000000), (Real.maxFinite, 0wx7FEFFFFFFFFFFFFF),
+            (Real.posInf, 0wx7FF0000000000000), (Real.negInf, 0wxFFF0000000000000), (0.1, 0wx3FB999999999999A)])
+val () = check ("real/bits-round-trip", fn () =>
+  let
+    (* 20000 words, with every exponent from 0 to 0x7FE among them *)
+    fun ok w = let val w = if Word64.andb (w, 0wx7FF0000000000000) = 0wx7FF0000000000000 then Word64.andb (w, 0wx800FFFFFFFFFFFFF) else w
+               in PropertySource.bitsOf (PropertySource.realOf w) = w end
+    fun go (0, _) = true
+      | go (k, g) =
+          let
+            val (w, g) = Random.word64 g
+            val w = Word64.orb (Word64.andb (w, 0wx800FFFFFFFFFFFFF), Word64.<< (Word64.fromInt (k mod 0x7FF), 0w52))
+          in ok w andalso go (k - 1, g) end
+  in go (20000, Random.fromSeed 0w5) end)
 val () = check ("option/some-and-none", fn () =>
   let val os = samples (Gen.option Gen.int, 400, 10) in count isSome os > 200 andalso count (not o isSome) os > 50 end)
 val () = check ("oneOf/every-alternative", fn () =>
@@ -61,8 +79,13 @@ val big = Gen.triple (Gen.list (Gen.pair (Gen.intRange (~1000000, 1000000), Gen.
 val showBig = Show.triple (Show.list (Show.pair (Show.int, Show.string)), Show.real, Show.option (Show.vector Show.word64))
 val () = check ("sample/same-seed-same-value", fn () =>
   showBig (Gen.sample big 0w42 30) = showBig (Gen.sample big 0w42 30))
+(* the fingerprint hashes what the observers make of the values, and not
+   how they are printed: Real.fmt prints differently on other compilers
+   (tests/basis/deviations.txt) *)
+val coBig = Co.triple (Co.list (Co.pair (Co.int, Co.string)), Co.real,
+                       Co.option (fn v => Co.list Co.word64 (Vector.foldr (op ::) [] v)))
 val fingerprint =
-  List.foldl (fn (k, h) => Random.hash (Word64.xorb (h, Random.hashString (showBig (Gen.sample big (Word64.fromInt k) (k mod 40))))))
+  List.foldl (fn (k, h) => Random.hash (Word64.xorb (h, coBig (Gen.sample big (Word64.fromInt k) (k mod 40)))))
              0w0 (List.tabulate (200, fn k => k))
 val () = print ("fingerprint " ^ StringCvt.padLeft #"0" 16 (Word64.fmt StringCvt.HEX fingerprint) ^ "\n")
 
@@ -70,11 +93,11 @@ val () = print ("fingerprint " ^ StringCvt.padLeft #"0" 16 (Word64.fmt StringCvt
 val () = check ("tree/parts-are-independent", fn () =>
   let
     val g = Gen.pair (Gen.list Gen.int, Gen.list Gen.int)
-    val s = PropertySource.new (0w7, 30, [])
+    val s = PropertySource.new (0w7, 30, [], [])
     val (a, b) = Gen.draw g (s, PropertySource.root)
     (* the first node read is the length of the first list: set it to 0 *)
     val first = hd (PropertySource.nodes s)
-    val s' = PropertySource.new (0w7, 30, [{address = #address first, word = 0w0, kind = #kind first}])
+    val s' = PropertySource.new (0w7, 30, [{address = #address first, path = #path first, word = 0w0, kind = #kind first}], [])
     val (a', b') = Gen.draw g (s', PropertySource.root)
   in
     List.null a' andalso b' = b andalso not (List.null a)
@@ -92,7 +115,7 @@ val () = check ("check/planted-list-bug", fn () =>
   failed' (Check.check Check.default "bad rev" (Prop.forAll (Arb.list Arb.int) (fn l => Prop.holds (badRev l = myRev l)))))
 val () = check ("check/planted-function-bug", fn () =>
   failed' (Check.check Check.default "bad all"
-             (Prop.forAll (Arb.pair (Arb.function (Co.int, Arb.bool), Arb.list Arb.int))
+             (Prop.forAll (Arb.pair (Arb.pureFunction (Arb.int, Arb.bool), Arb.list Arb.int))
                           (fn (p, l) => Prop.holds (badAll p l = List.all p l)))))
 val () = check ("check/an-exception-fails", fn () =>
   case Check.check Check.default "div" (Prop.forAll Arb.int (fn i => Prop.holds (100 div i >= ~100))) of

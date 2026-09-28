@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`GEN`](../sig/GEN.md) |
 | Status | required |
-| Members | 33 |
+| Members | 36 |
 | Tests | not listed |
 | Source | [lib/test/property/gen.sml](../../../../../lib/test/property/gen.sml) |
 
@@ -24,16 +24,18 @@ What each means is on [`GEN`](../sig/GEN.md); the types are this structure's own
 | --- | --- | --- |
 | type | [`gen`](../sig/GEN.md#type-gen) | *a type of its own* |
 | exception | [`Discarded`](../sig/GEN.md#exn-discarded) |  |
+| exception | [`Generated`](../sig/GEN.md#exn-generated) |  |
 | val | [`array`](../sig/GEN.md#val-array) | `'a gen -> 'a array gen` |
 | val | [`bind`](../sig/GEN.md#val-bind) | `'a gen -> ('a -> 'b gen) -> 'b gen` |
 | val | [`bool`](../sig/GEN.md#val-bool) | `bool gen` |
 | val | [`char`](../sig/GEN.md#val-char) | `char gen` |
-| val | [`draw`](../sig/GEN.md#val-draw) | `'a gen -> {seed : Word64.word, set : {address : Word64.word, kind : PropertySource.kind, word : Word64.word} list, size : int, trail : {address : Word64.word, kind : PropertySource.kind, word : Word64.word} list ref} * Word64.word -> 'a` |
+| val | [`draw`](../sig/GEN.md#val-draw) | `'a gen -> {calls : ({address : Word64.word, path : Word64.word list} * string) list ref, effects : string list ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> 'a` |
 | val | [`elements`](../sig/GEN.md#val-elements) | `'a vector -> 'a gen` |
 | val | [`filter`](../sig/GEN.md#val-filter) | `('a -> bool) -> 'a gen -> 'a gen` |
 | val | [`fix`](../sig/GEN.md#val-fix) | `('a gen -> 'a gen) -> 'a gen` |
 | val | [`frequency`](../sig/GEN.md#val-frequency) | `(int * 'a gen) list -> 'a gen` |
 | val | [`function`](../sig/GEN.md#val-function) | `('a -> Word64.word) * 'b gen -> ('a -> 'b) gen` |
+| val | [`functionOf`](../sig/GEN.md#val-functionof) | `('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen` |
 | val | [`int`](../sig/GEN.md#val-int) | `int gen` |
 | val | [`intRange`](../sig/GEN.md#val-intrange) | `int * int -> int gen` |
 | val | [`list`](../sig/GEN.md#val-list) | `'a gen -> 'a list gen` |
@@ -44,6 +46,7 @@ What each means is on [`GEN`](../sig/GEN.md); the types are this structure's own
 | val | [`option`](../sig/GEN.md#val-option) | `'a gen -> 'a option gen` |
 | val | [`order`](../sig/GEN.md#val-order) | `order gen` |
 | val | [`pair`](../sig/GEN.md#val-pair) | `'a gen * 'b gen -> ('a * 'b) gen` |
+| val | [`pureOf`](../sig/GEN.md#val-pureof) | `('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen` |
 | val | [`real`](../sig/GEN.md#val-real) | `real gen` |
 | val | [`resize`](../sig/GEN.md#val-resize) | `int -> 'a gen -> 'a gen` |
 | val | [`return`](../sig/GEN.md#val-return) | `'a -> 'a gen` |

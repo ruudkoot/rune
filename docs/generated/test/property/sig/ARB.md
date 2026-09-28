@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 18 of 18 entries documented |
+| Documentation | 19 of 19 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/arb\_sig.sml](../../../../../lib/test/property/arb_sig.sml) |
 
@@ -48,7 +48,8 @@ sig
   val <a href="#val-array">array</a> : 'a arb -&gt; 'a array arb
   val <a href="#val-pair">pair</a> : 'a arb * 'b arb -&gt; ('a * 'b) arb
   val <a href="#val-triple">triple</a> : 'a arb * 'b arb * 'c arb -&gt; ('a * 'b * 'c) arb
-  val <a href="#val-function">function</a> : ('a -&gt; Word64.word) * 'b arb -&gt; ('a -&gt; 'b) arb
+  val <a href="#val-function">function</a> : 'a arb * 'b arb -&gt; ('a -&gt; 'b) arb
+  val <a href="#val-purefunction">pureFunction</a> : 'a arb * 'b arb -&gt; ('a -&gt; 'b) arb
 end
 </pre>
 
@@ -206,13 +207,25 @@ val triple : 'a arb * 'b arb * 'c arb -> ('a * 'b * 'c) arb
 ### <a name="val-function"></a>`function`
 
 ```sml
-val function : ('a -> Word64.word) * 'b arb -> ('a -> 'b) arb
+val function : 'a arb * 'b arb -> ('a -> 'b) arb
 ```
 
-`function (co, b)` is the arbitrary of functions from what `co` observes to `b`.
+`function (a, b)` is the arbitrary of functions from `a` to `b`, of every kind of D5.
 
-They are pure and total (docs/plans/quickcheck.md, D5, class A). A
-function has no equality and is shown as `fn`.
+A function is pure, raises [`Gen.Generated`](../sig/GEN.md#exn-generated) at some arguments, or
+observes its effects, which a law compares (docs/plans/quickcheck.md,
+D5 C). A function has no equality and is shown as `fn`; the report
+lists the calls of a counterexample's functions.
+
+### <a name="val-purefunction"></a>`pureFunction`
+
+```sml
+val pureFunction : 'a arb * 'b arb -> ('a -> 'b) arb
+```
+
+`pureFunction (a, b)` is the arbitrary of pure, total functions from `a` to `b`.
+
+It is for a law that says its function has no effects (D5, class A).
 
 ---
 

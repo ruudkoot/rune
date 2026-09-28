@@ -23,7 +23,7 @@ sig
   (* `draw g (source, address)` is the value of `g` read at `address` of
      `source`: what the other structures of the library run a generator
      with. *)
-  val draw : 'a gen -> PropertySource.source * Word64.word -> 'a
+  val draw : 'a gen -> PropertySource.source * PropertySource.position -> 'a
 
   (* `return x` always draws `x`.
 
@@ -167,4 +167,22 @@ sig
      names, so that the function gives the same result for arguments that
      `co` does not tell apart. *)
   val function : ('a -> Word64.word) * 'b gen -> ('a -> 'b) gen
+
+  (* `functionOf (co, showArg, showRes, g)` draws a function of any of the three kinds of D5.
+
+     A node chooses the kind: pure, as `function` draws (the simplest);
+     raising `Generated` at a quarter of the arguments; or observing its
+     effects, whose calls a law compares on its two sides. Every call is
+     logged, and the report shows the calls of a counterexample's function
+     as a table. The shrinker makes a function a constant of its kind where
+     it can: a pure one gives the simplest value everywhere, and a raising
+     one raises everywhere. *)
+  val functionOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen
+
+  (* `pureOf (co, showArg, showRes, g)` draws a pure function, as `function`
+     does, whose calls the report shows. *)
+  val pureOf : ('a -> Word64.word) * ('a -> string) * ('b -> string) * 'b gen -> ('a -> 'b) gen
+
+  (* `Generated` is what a raising function of `functionOf` raises. *)
+  exception Generated
 end

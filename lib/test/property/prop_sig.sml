@@ -22,7 +22,7 @@ sig
 
   (* `run p (source, address)` runs `p` on the case of `source`: what the
      runner does. *)
-  val run : prop -> PropertySource.source * Word64.word -> result
+  val run : prop -> PropertySource.source * PropertySource.position -> result
 
   (* `holds b` passes when `b` is `true`. *)
   val holds : bool -> prop
@@ -35,8 +35,11 @@ sig
   (* `forAllGen (g, show) f` is `forAll` with a generator and a printer. *)
   val forAllGen : 'a Gen.gen * ('a -> string) -> ('a -> prop) -> prop
 
-  (* `equal a (l, r)` passes when `l ()` and `r ()` have the same outcome:
-     values equal by `a`, or the same exception. *)
+  (* `equal a (l, r)` passes when `l ()` and `r ()` have the same outcome.
+
+     The same outcome is values equal by `a`, or the same exception, and the
+     same calls of the effect-observing functions drawn for the case, in the
+     same order. *)
   val equal : 'a Arb.arb -> (unit -> 'a) * (unit -> 'a) -> prop
 
   (* `law (a, b) (l, r)` is the property that `l x` and `r x` have the same outcome.

@@ -4,16 +4,16 @@
 # library: random
 #
 #   file | always or demand | host | provides | requires
-source.sml    | demand | yes | PropertySource | List Random Word64
+source.sml    | demand | yes | PropertySource | IEEEReal List Random Real Word64
 gen_sig.sml   | demand | yes | GEN            | PropertySource Word64
-gen.sml       | demand | yes | Gen            | Array Char GEN Int IntInf List PackRealLittle PropertySource Random Real String Vector Word Word64 Word8 Word8Vector
+gen.sml       | demand | yes | Gen            | Array Char GEN Int IntInf List PropertySource Random Real String Vector Word Word64
 co_sig.sml    | demand | yes | CO             | Word64
-co.sml        | demand | yes | Co             | CO Char List PackRealLittle Random Word Word64 Word8 Word8Vector
+co.sml        | demand | yes | Co             | CO Char List PropertySource Random Word Word64
 show_sig.sml  | demand | yes | SHOW           | Word64
 show.sml      | demand | yes | Show           | Array Bool Char CharVector Int List Real SHOW String StringCvt Vector Word Word64
 arb_sig.sml   | demand | yes | ARB            | Gen Word64
 arb.sml       | demand | yes | Arb            | ARB Array Co Gen ListPair Real Show Vector Word64
-prop_sig.sml  | demand | yes | PROP           | Arb Gen PropertySource Word64
-prop.sml      | demand | yes | Prop           | Arb Gen PROP PropertySource Word64
+prop_sig.sml  | demand | yes | PROP           | Arb Gen PropertySource
+prop.sml      | demand | yes | Prop           | Arb Gen PROP PropertySource String
 check_sig.sml | demand | yes | CHECK          | Prop Word64
-check.sml     | demand | yes | Check          | CHECK Int List OS Prop PropertySource Random Real String StringCvt Word64
+check.sml     | demand | yes | Check          | CHECK Int List OS Option Prop PropertySource Random Real String StringCvt Word Word64

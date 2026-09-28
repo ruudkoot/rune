@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`ARB`](../sig/ARB.md) |
 | Status | required |
-| Members | 18 |
+| Members | 19 |
 | Tests | not listed |
 | Source | [lib/test/property/arb.sml](../../../../../lib/test/property/arb.sml) |
 
@@ -27,12 +27,13 @@ What each means is on [`ARB`](../sig/ARB.md); the types are this structure's own
 | val | [`bool`](../sig/ARB.md#val-bool) | `bool arb` |
 | val | [`char`](../sig/ARB.md#val-char) | `char arb` |
 | val | [`equal`](../sig/ARB.md#val-equal) | `'a arb -> 'a * 'a -> bool` |
-| val | [`function`](../sig/ARB.md#val-function) | `('a -> Word64.word) * 'b arb -> ('a -> 'b) arb` |
+| val | [`function`](../sig/ARB.md#val-function) | `'a arb * 'b arb -> ('a -> 'b) arb` |
 | val | [`int`](../sig/ARB.md#val-int) | `int arb` |
 | val | [`list`](../sig/ARB.md#val-list) | `'a arb -> 'a list arb` |
 | val | [`option`](../sig/ARB.md#val-option) | `'a arb -> 'a option arb` |
 | val | [`order`](../sig/ARB.md#val-order) | `order arb` |
 | val | [`pair`](../sig/ARB.md#val-pair) | `'a arb * 'b arb -> ('a * 'b) arb` |
+| val | [`pureFunction`](../sig/ARB.md#val-purefunction) | `'a arb * 'b arb -> ('a -> 'b) arb` |
 | val | [`real`](../sig/ARB.md#val-real) | `real arb` |
 | val | [`string`](../sig/ARB.md#val-string) | `string arb` |
 | val | [`triple`](../sig/ARB.md#val-triple) | `'a arb * 'b arb * 'c arb -> ('a * 'b * 'c) arb` |

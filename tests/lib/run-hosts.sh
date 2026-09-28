@@ -35,7 +35,8 @@ random="lib/random/random_sig.sml lib/random/random.sml"
 property=$(sed -n 's/^\([a-z_]*\.sml\) *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
 tests="random.kat|$random|tests/lib/random/kat.sml|kat
 random.props|$random|tests/lib/random/props.sml|props
-property.core|$random $property|tests/lib/property/core.sml|core"
+property.core|$random $property|tests/lib/property/core.sml|core
+property.shrink|$random $property|tests/lib/property/shrink.sml|props"
 
 passed=0
 explained=0

@@ -7,6 +7,8 @@
 - `Passed` (con): [CHECK](../sig/CHECK.md#con-passed)
 - `passed` (val): [CHECK](../sig/CHECK.md#val-passed)
 - `prop` (type): [PROP](../sig/PROP.md#type-prop)
+- `pureFunction` (val): [ARB](../sig/ARB.md#val-purefunction)
+- `pureOf` (val): [GEN](../sig/GEN.md#val-pureof)
 
 ---
 

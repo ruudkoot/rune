@@ -5,34 +5,47 @@
    given, so that a run is the same on every machine, and a failure is
    reported with a token that runs its case again.
 
+   A failing case is shrunk before it is reported. The shrinker changes the
+   words the case read: it deletes, joins and swaps the elements of lists,
+   makes generated functions constants, and lowers words towards 0, the
+   simplest. It keeps a change only when the case still fails with the same
+   class and has become simpler (fewer words read, or smaller ones), so that
+   a `Div` never turns into an `Overflow` and the shrinking ends.
+
    Area: Property testing *)
 signature CHECK =
 sig
   (* How a property is run.
 
      `seed` is the seed of the run (`NONE`: a hash of the name), `tests` the
-     number of cases that must pass, `maxSize` the largest size, and
+     number of cases that must pass, `maxSize` the largest size,
      `maxDiscards` the number of discarded cases after which the run gives
-     up. *)
-  type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int}
+     up, and `maxShrinks` the number of runs the shrinker may make. *)
+  type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int}
 
   (* 100 cases, sizes up to 100, a seed from the name, giving up after 1000
-     discarded cases. *)
+     discarded cases, shrinking in at most 5000 runs. *)
   val default : config
 
-  (* What a run found. `Failed`'s `replay` is the token of its case. *)
+  (* What a run found.
+
+     `Failed` has the shrunk case: `counterexample` is what it drew, as
+     shown, and `calls` the calls of each of its generated functions, with
+     `shrinks` the runs that the shrinking took. `replay` is the token of the
+     case as it was drawn. *)
   datatype result =
       Passed of {tests : int, discarded : int, labels : (string * int) list, short : (string * real * real) list}
     | Failed of {test : int, size : int, class : string, message : string, counterexample : string list,
-                 replay : string}
+                 calls : string list list, shrinks : int, replay : string}
     | GaveUp of {tests : int, discarded : int}
 
   (* `check c name p` runs `p` as `c` says. *)
   val check : config -> string -> Prop.prop -> result
 
-  (* `replay token p` runs the case of a `Failed` result's `replay` token
-     again: its verdict and what it drew, or `NONE` when the token is not
-     one. *)
+  (* `replay token p` runs the case of a `Failed` result's `replay` token again, shrunk as the run shrank it.
+
+     It is the case's verdict and what it drew, or `NONE` when the token is
+     not one. *)
   val replay : string -> Prop.prop -> Prop.result option
 
   (* `report name r` is the report of a run: a first line `PASS name` or

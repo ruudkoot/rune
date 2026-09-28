@@ -48,6 +48,9 @@ struct
      co = Co.triple (#co a, #co b, #co c),
      eq = SOME (fn ((x, y, z), (x', y', z')) => equal a (x, x') andalso equal b (y, y') andalso equal c (z, z'))}
 
-  fun function (co : 'a -> Word64.word, b : 'b arb) : ('a -> 'b) arb =
-    {gen = Gen.function (co, #gen b), show = fn _ => "fn", co = fn _ => 0w0, eq = NONE}
+  fun function (a : 'a arb, b : 'b arb) : ('a -> 'b) arb =
+    {gen = Gen.functionOf (#co a, #show a, #show b, #gen b), show = fn _ => "fn", co = fn _ => 0w0, eq = NONE}
+
+  fun pureFunction (a : 'a arb, b : 'b arb) : ('a -> 'b) arb =
+    {gen = Gen.pureOf (#co a, #show a, #show b, #gen b), show = fn _ => "fn", co = fn _ => 0w0, eq = NONE}
 end

@@ -15,9 +15,7 @@ struct
   val unit : unit co = fn () => 0w0
   val order : order co = fn LESS => 0w0 | EQUAL => 0w1 | GREATER => 0w2
   val string : string co = Random.hashString
-  val real : real co =
-    fn x => Word8Vector.foldr (fn (b, w) => Word64.orb (Word64.<< (w, 0w8), Word64.fromLarge (Word8.toLarge b))) 0w0
-                              (PackRealLittle.toBytes x)
+  val real : real co = PropertySource.bitsOf
   fun option (c : 'a co) : 'a option co = fn NONE => 0w0 | SOME x => mix (0w1, c x)
   fun list (c : 'a co) : 'a list co = fn l => List.foldl (fn (x, h) => mix (h, c x)) (Word64.fromInt (List.length l)) l
   fun pair (c : 'a co, d : 'b co) : ('a * 'b) co = fn (x, y) => mix (mix (0w2, c x), d y)

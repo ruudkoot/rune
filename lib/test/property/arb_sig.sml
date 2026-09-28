@@ -64,9 +64,16 @@ sig
   (* `triple (a, b, c)` is the arbitrary of triples. *)
   val triple : 'a arb * 'b arb * 'c arb -> ('a * 'b * 'c) arb
 
-  (* `function (co, b)` is the arbitrary of functions from what `co` observes to `b`.
+  (* `function (a, b)` is the arbitrary of functions from `a` to `b`, of every kind of D5.
 
-     They are pure and total (docs/plans/quickcheck.md, D5, class A). A
-     function has no equality and is shown as `fn`. *)
-  val function : ('a -> Word64.word) * 'b arb -> ('a -> 'b) arb
+     A function is pure, raises `Gen.Generated` at some arguments, or
+     observes its effects, which a law compares (docs/plans/quickcheck.md,
+     D5 C). A function has no equality and is shown as `fn`; the report
+     lists the calls of a counterexample's functions. *)
+  val function : 'a arb * 'b arb -> ('a -> 'b) arb
+
+  (* `pureFunction (a, b)` is the arbitrary of pure, total functions from `a` to `b`.
+
+     It is for a law that says its function has no effects (D5, class A). *)
+  val pureFunction : 'a arb * 'b arb -> ('a -> 'b) arb
 end

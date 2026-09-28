@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 21 requirements between the 13 files become 12 arrows.
+library and not a wall of lines: the 22 requirements between the 13 files become 13 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -25,7 +25,7 @@ one need a file of the other.
 flowchart LR
   a0["Not in an area<br>(1)"]
   a1["Property testing<br>(12)"]
-  a1 -- 1 --> a0
+  a1 -- 2 --> a0
 ```
 
 ## Not in an area
@@ -64,7 +64,7 @@ flowchart TD
   n12 --> n11
 ```
 
-It also needs Not in an area (1).
+It also needs Not in an area (2).
 
 ---
 
