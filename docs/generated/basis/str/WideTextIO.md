@@ -36,7 +36,7 @@ The types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | `elem` | `WideChar.char` |
+| type | `elem` | `RuneWideChar.char` |
 | datatype | `instream` | `InStream` |
 | datatype | `outstream` | `OutStream` |
 | type | `vector` | `WideCharVector.vector` |
@@ -49,11 +49,11 @@ The types are this structure's own.
 | val | `getOutstream` | `outstream -> StreamIO.outstream` |
 | val | `getPosOut` | `outstream -> StreamIO.out_pos` |
 | val | `input` | `instream -> WideCharVector.vector` |
-| val | `input1` | `instream -> WideChar.char option` |
+| val | `input1` | `instream -> RuneWideChar.char option` |
 | val | `inputAll` | `instream -> WideCharVector.vector` |
 | val | `inputLine` | `instream -> WideCharVector.vector option` |
 | val | `inputN` | `instream * int -> WideCharVector.vector` |
-| val | `lookahead` | `instream -> WideChar.char option` |
+| val | `lookahead` | `instream -> RuneWideChar.char option` |
 | val | `mkInstream` | `StreamIO.instream -> instream` |
 | val | `mkOutstream` | `StreamIO.outstream -> outstream` |
 | val | `openAppend` | `string -> outstream` |
@@ -61,10 +61,10 @@ The types are this structure's own.
 | val | `openOut` | `string -> outstream` |
 | val | `openString` | `WideCharVector.vector -> instream` |
 | val | `output` | `outstream * WideCharVector.vector -> unit` |
-| val | `output1` | `outstream * WideChar.char -> unit` |
+| val | `output1` | `outstream * RuneWideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
 | val | `print` | `WideCharVector.vector -> unit` |
-| val | `scanStream` | `((StreamIO.instream -> (WideChar.char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
+| val | `scanStream` | `((StreamIO.instream -> (RuneWideChar.char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
 | val | `setInstream` | `instream * StreamIO.instream -> unit` |
 | val | `setOutstream` | `outstream * StreamIO.outstream -> unit` |
 | val | `setPosOut` | `outstream * StreamIO.out_pos -> unit` |

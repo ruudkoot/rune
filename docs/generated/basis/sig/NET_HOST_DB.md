@@ -138,7 +138,7 @@ val addr : entry -> in_addr
 
 `addr e` is the host's main address, the first of `addrs e`.
 
-**Law** `addr e = hd (addrs e)`
+**Law** `addr e = hd (addrs e)` (for every `e : NetHostDB.entry`)
 
 On a machine whose `/etc/hosts` has the usual line for it, `Option.map (toString o addr) (getByName "localhost")` is `SOME "127.0.0.1"`.
 
@@ -260,7 +260,7 @@ val fromString : string -> in_addr option
 
 `fromString s` is `SOME` of the address that `s` begins with, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 **Example** `Option.map toString (fromString "127.1") = SOME "127.0.0.1"`
 

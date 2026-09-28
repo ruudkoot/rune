@@ -172,7 +172,7 @@ sig
 
      Example: `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-     Law: `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
+     Law: `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`
 
      Reading: `String.tokens/order`. The specification says the tokens are
      "derived from s from left to right", and not how often `p` is asked:

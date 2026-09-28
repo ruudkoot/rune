@@ -354,7 +354,7 @@ reports an exception it cannot handle.
 > **Implementation** `General.exnMessage/format`. `"Fail: "` and the argument
 > for a [`Fail`](#exn-fail), and `exnName ex` for everything else.
 
-**Law** `String.isSubstring (exnName ex) (exnMessage ex) = true`
+**Law** `String.isSubstring (exnName ex) (exnMessage ex) = true` (for every `ex : exn`)
 
 **Example** `exnMessage (Fail "why") = "Fail: why"`
 
@@ -428,7 +428,7 @@ val := : 'a ref * 'a -> unit
 
 It is infix with precedence 3.
 
-**Law** `(r := v; !r) = v`
+**Law** `(r := v; !r) = v` (for every `r : 'a ref`, `v : 'a`)
 
 **Example** `let val r = ref 3 in r := 4; !r end = 4`
 
@@ -450,8 +450,8 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 
 It is infix with precedence 3.
 
-**Law** `f o (g o h) = (f o g) o h`: composition is associative, as
-functions and not as values that `=` could compare
+**Law** `(f o (g o h)) x = ((f o g) o h) x`: composition is associative, as
+functions and not as values that `=` could compare (for every `f : 'a -> 'b`, `g : 'c -> 'a`, `h : 'd -> 'c`, `x : 'd`)
 
 **Example** `(Int.toString o (fn x => x + 1)) 1 = "2"`
 
@@ -474,7 +474,7 @@ val before : 'a * unit -> 'a
 It is infix with precedence 0, the loosest there is, so that
 `x before print "done"` needs no parentheses.
 
-**Law** `e before e' = (fn (a, ()) => a) (e, e')`
+**Law** `(e before e') = (fn (a, ()) => a) (e, e')` (for every `e : 'a`, `e' : unit`)
 
 **Example** `(1 before ()) = 1`
 

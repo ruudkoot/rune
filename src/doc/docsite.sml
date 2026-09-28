@@ -1435,7 +1435,36 @@ struct
              List.app (fn s : I.signatureRecord =>
                          List.app (fn e => DocElab.checkExample lib (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
                                   (DocExamples.ofSignature s))
-                      sigs)
+                      sigs;
+             (* the laws, under the structure the examples are read in, with
+                their variables and the types those have (quickcheck M7) *)
+             List.app (fn s : I.signatureRecord =>
+                         List.app (fn l : DocLaws.law =>
+                                     let
+                                       val opens = case exampleStructure (#name s) of
+                                                     SOME st => DocLaws.opens (st, #path l)
+                                                   | NONE => ""
+                                     in
+                                       case DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l) of
+                                         DocElab.NotSml msg =>
+                                           DocDiag.error (#span l, "the law `" ^ #code l ^ "` is no Standard ML: " ^ msg)
+                                       | DocElab.Quantified vars =>
+                                           (DocLaws.elaborated := !DocLaws.elaborated @ [(l, vars)];
+                                            if isSome (!DocElab.instanceStructures) then
+                                              List.app (fn {name, ty, instance = NONE} =>
+                                                             DocDiag.error (#span l, "the law `" ^ #code l ^ "` has a variable `"
+                                                                                     ^ name ^ " : " ^ ty
+                                                                                     ^ "` that lib/test/property has no arbitrary of")
+                                                         | _ => ())
+                                                       vars
+                                            else ())
+                                     end)
+                                  (DocLaws.ofSignature s))
+                      sigs;
+             DocPage.lawVariables :=
+               (fn (signat, code) =>
+                  Option.map #2 (List.find (fn (l : DocLaws.law, _) => #signat l = signat andalso #code l = code)
+                                           (!DocLaws.elaborated))))
         | NONE => ()
       val functors = List.mapPartial (fn I.Functor f => if isPublic (#name f) then SOME f else NONE | _ => NONE) modules
       val sigPages = List.map (fn s : I.signatureRecord => (R.sigPage (#name s), P.signaturePage (env "../", title) s)) sigs

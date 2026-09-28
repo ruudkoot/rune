@@ -554,7 +554,7 @@ val sameSign : real * real -> bool
 
 `sameSign (x, y)` is `true` when `x` and `y` have the same sign bit.
 
-**Law** `sameSign (x, y) = (signBit x = signBit y)`
+**Law** `sameSign (x, y) = (signBit x = signBit y)` (for every `x : real`, `y : real`)
 
 <details><summary>Tests (10)</summary>
 
@@ -689,7 +689,7 @@ val ?= : real * real -> bool
 
 `?= (x, y)` is `true` when `x` and `y` are equal or either is a NaN: "unordered or equal".
 
-**Law** `?= (x, y) = (unordered (x, y) orelse == (x, y))`
+**Law** `?= (x, y) = (unordered (x, y) orelse == (x, y))` (for every `x : real`, `y : real`)
 
 <details><summary>Tests (10)</summary>
 
@@ -829,7 +829,7 @@ or a NaN as `man` is the result.
 
 **Example** `toString (fromManExp {man = 0.75, exp = 4}) = "12"`
 
-**Law** `fromManExp (toManExp x) == x` for a finite `x`
+**Law** `== (fromManExp (toManExp x), x)` for `isFinite x` (for every `x : real`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -862,7 +862,7 @@ val split : real -> {whole : real, frac : real}
 The whole part is `x` rounded towards zero. For an infinity the
 fractional part is a zero, and for a NaN both are NaNs.
 
-**Law** `#whole (split x) + #frac (split x) == x`
+**Law** `== (#whole (split x) + #frac (split x), x)` (for every `x : real`)
 
 **Example** `(fn {whole, frac} => (toString whole, toString frac)) (split ~1.5) = ("~1", "~0.5")`
 
@@ -887,7 +887,7 @@ val realMod : real -> real
 
 `realMod x` is the fractional part of `x`, with its sign.
 
-**Law** `realMod x = #frac (split x)`
+**Law** `realMod x = #frac (split x)` (for every `x : real`)
 
 <details><summary>Other implementations (1)</summary>
 
@@ -1448,7 +1448,7 @@ val toString : real -> string
 
 `toString x` is the text of `x` in the general notation with the default number of digits.
 
-**Law** `toString x = fmt (StringCvt.GEN NONE) x`
+**Law** `toString x = fmt (StringCvt.GEN NONE) x` (for every `x : real`)
 
 **Example** `toString 1.0 = "1"`
 
@@ -1524,7 +1524,7 @@ val fromString : string -> real option
 
 `fromString s` is the real that the text `s` begins with, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 > **Reading** `Real.fromString/TO_NEGINF-negative`. The numeral is rounded in
 > the rounding mode that is in force, as in MLton and in C's `strtod`;
@@ -1575,8 +1575,7 @@ case.
 
 **Example** `#digits (toDecimal 0.1) = [1]`
 
-**Law** `valOf (fromDecimal (toDecimal x)) == x`, with the same sign bit,
-for a normal or subnormal `x`
+**Law** `== (valOf (fromDecimal (toDecimal x)), x) andalso signBit (valOf (fromDecimal (toDecimal x))) = signBit x` for `isNormal x orelse class x = IEEEReal.SUBNORMAL` (for every `x : real`)
 
 <details><summary>Other implementations (4)</summary>
 

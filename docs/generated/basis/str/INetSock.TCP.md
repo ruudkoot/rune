@@ -19,10 +19,10 @@ What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`getNODELAY`](../sig/INET_SOCK.md#val-tcp.getnodelay) | `(inet', 'a stream') Socket.sock -> bool` |
-| val | [`setNODELAY`](../sig/INET_SOCK.md#val-tcp.setnodelay) | `(inet', 'a stream') Socket.sock * bool -> unit` |
-| val | [`socket`](../sig/INET_SOCK.md#val-tcp.socket) | `unit -> (inet', 'a stream') Socket.sock` |
-| val | [`socket'`](../sig/INET_SOCK.md#val-tcp.socket-prime) | `int -> (inet', 'a stream') Socket.sock` |
+| val | [`getNODELAY`](../sig/INET_SOCK.md#val-tcp.getnodelay) | `(inet', 'a stream') RuneSocket.sock -> bool` |
+| val | [`setNODELAY`](../sig/INET_SOCK.md#val-tcp.setnodelay) | `(inet', 'a stream') RuneSocket.sock * bool -> unit` |
+| val | [`socket`](../sig/INET_SOCK.md#val-tcp.socket) | `unit -> (inet', 'a stream') RuneSocket.sock` |
+| val | [`socket'`](../sig/INET_SOCK.md#val-tcp.socket-prime) | `int -> (inet', 'a stream') RuneSocket.sock` |
 
 ---
 

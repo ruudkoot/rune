@@ -685,7 +685,7 @@ val ltype : flock -> lock_type
 
 `ltype fl` is the kind of lock `fl` describes.
 
-**Law** `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = t`, and likewise for the other fields
+**Law** `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = t`, and `whence (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = w`, and `start (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = s`, and `len (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = n`, and `pid (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = p` (for every `t : Posix.IO.lock_type`, `w : Posix.IO.whence`, `s : int`, `n : int`, `p : Posix.Process.pid option`)
 
 <details><summary>Other implementations (1)</summary>
 

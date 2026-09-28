@@ -479,4 +479,269 @@ struct
       Error.warnings := []
     end
     handle Error.CompileError (_, msg) => DocDiag.error (span, "the example `" ^ what ^ "` is not one that can be run: " ^ msg)
+
+  (* ---- laws (docs/plans/quickcheck.md, D7 and M7) ---- *)
+
+  (* The two sides of a law that is an equation at its top, as the law's
+     text before and after its `=`; NONE for any other law. *)
+  fun sides (fixity : Fixity.env) (code : string) : (string * string) option =
+    let
+      val prefix = "val it = "
+      val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<law>", prefix ^ code)), fixity)
+      val n = String.size prefix
+      fun balanced (t : string) =
+        let
+          fun go (i, depth) =
+            if i >= String.size t then depth = 0
+            else case String.sub (t, i) of
+                   #"(" => go (i + 1, depth + 1) | #"[" => go (i + 1, depth + 1) | #"{" => go (i + 1, depth + 1)
+                 | #")" => depth > 0 andalso go (i + 1, depth - 1) | #"]" => depth > 0 andalso go (i + 1, depth - 1)
+                 | #"}" => depth > 0 andalso go (i + 1, depth - 1)
+                 | _ => go (i + 1, depth)
+        in go (0, 0) end
+      fun trim t = Substring.string (Substring.dropr Char.isSpace (Substring.dropl Char.isSpace (Substring.full t)))
+    in
+      case prog of
+        [Ast.DVal (_, [(_, Ast.EApp (Ast.EVar (([], "="), _, {start, ...}), Ast.ETuple ([_, _], _), _))], _)] =>
+          let
+            val l = trim (String.substring (code, 0, start - n))
+            val r = trim (String.extract (code, start - n + 1, NONE))
+          in
+            if String.sub (code, start - n) = #"=" andalso balanced l andalso balanced r then SOME (l, r) else NONE
+          end
+      | _ => NONE
+    end
+    handle _ => NONE
+
+  (* What elaborating a law found: its variables with their types, as the
+     documentation writes them, or why it is no Standard ML. *)
+  type variable = {name : string, ty : string, instance : string option}
+  datatype law = Quantified of variable list | NotSml of string
+
+  (* The structures of lib/test/property that are arbitraries (`XArb`, read
+     from its MANIFEST), where that library is there: an instance is then
+     resolved for every variable of a law, and a variable with none is an
+     error at its comment. NONE: the library is not there, and nothing is
+     resolved. *)
+  val instanceStructures : string list option ref = ref NONE
+
+  (* every name of every type of the library, by the stamp of its type name *)
+  val allTypeNames : string list IntMap.map option ref = ref NONE
+  fun namesOf' (lib : library) (stamp : int) : string list =
+    let
+      val m = case !allTypeNames of
+                SOME m => m
+              | NONE =>
+                  let val m = List.foldl (fn ((name, st, _), m) =>
+                                            IntMap.insert (m, st, name :: (case IntMap.find (m, st) of SOME l => l | NONE => [])))
+                                         IntMap.empty (typeNames (lib, fn _ => true))
+                  in allTypeNames := SOME m; m end
+    in
+      case IntMap.find (m, stamp) of SOME l => List.rev l | NONE => []
+    end
+
+  (* The arbitraries of the types of the Basis Library whose name alone does
+     not say it (`X.t` is `XArb.arb` otherwise), by name and arity, as an
+     expression with its arguments' in order. *)
+  val instanceTable : (string * string) list =
+    [("int", "IntArb.arb"), ("word", "WordArb.arb"), ("real", "RealArb.arb"), ("char", "CharArb.arb"),
+     ("string", "StringArb.arb"), ("bool", "Arb.bool"), ("order", "Arb.order"), ("exn", "Arb.exn"),
+     ("list", "Arb.list"), ("option", "Arb.option"), ("ref", "Arb.reference"), ("vector", "Arb.vector"),
+     ("array", "Arb.array"), ("VectorSlice.slice", "Arb.vectorSlice"), ("ArraySlice.slice", "Arb.arraySlice"),
+     ("Array2.array", "Arb.array2"),
+     ("Date.date", "DateArb.arb"), ("Date.month", "DateArb.month"), ("Date.weekday", "DateArb.weekday"),
+     ("Time.time", "TimeArb.arb"), ("IEEEReal.rounding_mode", "IEEERealArb.roundingMode"),
+     ("IEEEReal.float_class", "IEEERealArb.floatClass"), ("IO.buffer_mode", "BasisDataArb.bufferMode"),
+     ("StringCvt.radix", "BasisDataArb.radix"), ("Array2.traversal", "BasisDataArb.traversal"),
+     ("BinIO.instream", "SystemArb.binInstream"), ("BinIO.StreamIO.instream", "SystemArb.binStreamInstream"),
+     ("BinIO.StreamIO.writer", "SystemArb.binWriter"), ("BinIO.StreamIO.outstream", "SystemArb.binOutstream"),
+     ("OS.IO.iodesc", "SystemArb.iodesc"), ("OS.IO.poll_desc", "SystemArb.pollDesc"),
+     ("OS.FileSys.file_id", "SystemArb.fileId"), ("OS.syserror", "SystemArb.syserror"),
+     ("Posix.FileSys.file_desc", "SystemArb.fileDesc"), ("Posix.Process.pid", "SystemArb.pid"),
+     ("Posix.Signal.signal", "SystemArb.signal"), ("Posix.ProcEnv.uid", "SystemArb.uid"),
+     ("Posix.ProcEnv.gid", "SystemArb.gid"), ("Posix.TTY.speed", "SystemArb.speed"),
+     ("Posix.TTY.termios", "SystemArb.termios"), ("Posix.IO.whence", "SystemArb.whence"),
+     ("Posix.IO.lock_type", "SystemArb.lockType"), ("Socket.AF.addr_family", "SystemArb.addrFamily"),
+     ("Socket.SOCK.sock_type", "SystemArb.sockType"), ("NetHostDB.in_addr", "SystemArb.inAddr"),
+     ("NetHostDB.entry", "SystemArb.hostEntry"), ("SML90.instream", "SML90Arb.instream"),
+     ("INet6Sock.in6_addr", "INet6SockArb.inAddr"), ("Random.gen", "RandomArb.arb")]
+
+  (* The arbitrary of a type, as an expression: a type variable at `int`
+     (D8), a function type by `Arb.function` (`Arb.pureFunction` for a
+     variable that has no effects), tuples by `Arb.pair` and `Arb.triple`, a
+     reader of characters by `BasisDataArb.reader`, the records of `Date.date`
+     and `Posix.TTY.termios` fields by their arbitraries, and every other type
+     by the table or as `XArb.arb` for a type `X.t`. NONE: it has none. *)
+  (* The type that `XArb.arb` is the arbitrary of, by the name of `X`: its
+     own type, and not another it names (`Word8Array.vector` is a vector). *)
+  fun mainType (x : string) : string =
+    let fun ends suffix = String.isSuffix suffix x
+    in
+      if ends "Slice" then "slice"
+      else if ends "Array2" orelse ends "Array" then "array"
+      else if ends "Vector" then "vector"
+      else if ends "Substring" then "substring"
+      else if ends "String" then "string"
+      else if ends "Char" then "char"
+      else if String.isPrefix "Real" x orelse String.isPrefix "LargeReal" x then "real"
+      else if String.isPrefix "Word" x orelse String.isPrefix "LargeWord" x orelse String.isPrefix "SysWord" x then "word"
+      else "int"
+    end
+
+  fun instanceOf (lib : library) (pure : bool) (ty : Types.ty) : string option =
+    let
+      val known = case !instanceStructures of SOME l => l | NONE => []
+      fun all xs = if List.all isSome xs then SOME (List.map valOf xs) else NONE
+      fun apply (f, []) = f
+        | apply (f, args) = f ^ " (" ^ String.concatWith ", " args ^ ")"
+      (* the name the pages print first, then the others *)
+      fun names (c : Types.tycon) =
+        case IntMap.find (namesByStamp (lib, fn _ => true), #stamp c) of
+          SOME best => best :: List.filter (fn n => n <> best) (namesOf' lib (#stamp c))
+        | NONE => namesOf' lib (#stamp c)
+      fun named (c : Types.tycon, n) = List.exists (fn m => m = n) (names c)
+      fun isVar t = case Types.prune t of Types.TVar _ => true | _ => false
+      fun labels (fs : (string * Types.ty) list) = List.map #1 fs
+      fun inst t =
+        case Types.prune t of
+          Types.TVar _ => SOME "IntArb.arb"
+        | Types.TArrow (a, b) =>
+            (* a reader of characters over a stream of a type variable *)
+            (case (Types.prune a, Types.prune b) of
+               (Types.TVar _, Types.TCon (opt, [pr])) =>
+                 (case Types.prune pr of
+                    Types.TRecord [("1", ch), ("2", st)] =>
+                      (case Types.prune ch of
+                         Types.TCon (c, []) =>
+                           if named (opt, "option") andalso named (c, "char") andalso isVar st
+                           then SOME "BasisDataArb.reader" else function (a, b)
+                       | _ => function (a, b))
+                  | _ => function (a, b))
+             | _ => function (a, b))
+        | Types.TRecord [] => SOME "Arb.unit"
+        | Types.TRecord fs =>
+            if labels fs = ["1", "2"] then Option.map (fn xs => apply ("Arb.pair", xs)) (all (List.map (inst o #2) fs))
+            else if labels fs = ["1", "2", "3"] then Option.map (fn xs => apply ("Arb.triple", xs)) (all (List.map (inst o #2) fs))
+            else if labels fs = ["day", "hour", "minute", "month", "offset", "second", "year"] then SOME "DateArb.fields"
+            else if labels fs = ["cc", "cflag", "iflag", "ispeed", "lflag", "oflag", "ospeed"] then SOME "SystemArb.termiosFields"
+            else if labels fs = ["class", "digits", "exp", "sign"] then SOME "IEEERealArb.decimalApprox"
+            else NONE
+        | Types.TCon (c, args) =>
+            let
+              val ns = names c
+              fun sock () =
+                (* ('af, 'mode Socket.stream) Socket.sock of an address family *)
+                case args of
+                  [af, _] =>
+                    (case Types.prune af of
+                       Types.TCon (a, []) =>
+                         if named (a, "INetSock.inet") then SOME "SystemArb.inetStreamSock ()"
+                         else if named (a, "INet6Sock.inet6") then SOME "INet6SockArb.streamSock ()"
+                         else NONE
+                     | _ => NONE)
+                | _ => NONE
+            in
+              if List.exists (fn n => n = "Socket.sock") ns then sock ()
+              else
+                case List.find (fn (n, _) => List.exists (fn m => m = n) ns) instanceTable of
+                  SOME (_, e) => Option.map (fn xs => apply (e, xs)) (all (List.map inst args))
+                | NONE =>
+                    if not (List.null args) then NONE
+                    else
+                      List.foldl (fn (n, SOME e) => SOME e
+                                   | (n, NONE) =>
+                                       case String.fields (fn ch => ch = #".") n of
+                                         [x, t] => if List.exists (fn k => k = x ^ "Arb") known andalso t = mainType x
+                                                   then SOME (x ^ "Arb.arb") else NONE
+                                       | _ => NONE)
+                                 NONE ns
+            end
+      and function (a, b) =
+        Option.map (fn (x, y) => (if pure then "Arb.pureFunction (" else "Arb.function (") ^ x ^ ", " ^ y ^ ")")
+                   (case (inst a, inst b) of (SOME x, SOME y) => SOME (x, y) | _ => NONE)
+    in
+      inst ty
+    end
+
+  (* The expression a law and its conditions are elaborated as, under the
+     structure's names: an equation's two sides as a list, so that they have
+     one type and need not have equality; any other law as a `bool`. *)
+  fun lawExpression (fixity : Fixity.env) (opens : string, code : string, conditions : string list) : string =
+    let
+      val claim = case sides fixity code of
+                    SOME (l, r) => "[" ^ l ^ ", " ^ r ^ "]"
+                  | NONE => "(" ^ code ^ ") : bool"
+    in
+      (if opens = "" then "(" else "let open " ^ opens ^ " in (")
+      ^ claim ^ ", [" ^ String.concatWith ", " conditions ^ "] : bool list)" ^ (if opens = "" then "" else " end")
+    end
+
+  (* The variables of a law: the names it leaves unbound, found one at a time
+     by elaborating `fn (x1, ..., xk) => ...` until nothing is unbound, and
+     their types. A name the structure or the top level binds is not a
+     variable: a misspelt member shows as a variable on the page. *)
+  fun elabLaw (lib as {env, fixity} : library) (opens : string, code : string, conditions : string list, pure : string list)
+      : law =
+    case elabLaw' lib (opens, code, [], pure) of
+      NotSml msg => NotSml msg
+    | Quantified vars =>
+        if List.null conditions then Quantified vars
+        else
+          case elabLaw' lib (opens, code, conditions, pure) of
+            NotSml msg =>
+              NotSml ("a condition of it (" ^ String.concatWith ", " (List.map (fn c => "`" ^ c ^ "`") conditions)
+                      ^ ") is not a bool: " ^ msg)
+          | q => q
+
+  and elabLaw' (lib as {env, fixity} : library) (opens : string, code : string, conditions : string list, pure : string list)
+      : law =
+    let
+      val expression = lawExpression fixity (opens, code, conditions)
+      val unbound = "unbound variable or constructor: "
+      fun attempt vars =
+        if List.length vars > 16 then NotSml "it has more than 16 variables"
+        else
+          let
+            (* what an attempt that failed left pending is not this one's *)
+            val () = (Elaborate.pendingFlex := []; Elaborate.pendingChecks := [];
+                      Elaborate.pendingOverloads := []; Elaborate.pendingLiterals := [])
+            val source = "val it = fn (" ^ String.concatWith ", " vars ^ ") => " ^ expression
+            val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<law>", source)), fixity)
+            val envRef = ref env
+            val () = Elaborate.elabTop (envRef, prog)
+            val () = Elaborate.finish ()
+            val () = Error.warnings := []
+            val names = namesByStamp (lib, fn _ => true)
+            fun nameOf (c : Types.tycon) = IntMap.find (names, #stamp c)
+            val printer = Types.newPrinter ()
+            fun show t = Types.toStringNamed (nameOf, printer) t
+            val types =
+              case Env.findVal (!envRef, ([], "it")) of
+                SOME (Env.Val {scheme, ...}) =>
+                  (case Types.prune scheme of
+                     Types.TArrow (dom, _) =>
+                       (case (vars, Types.prune dom) of
+                          ([], _) => []
+                        | ([_], t) => [t]
+                        | (_, Types.TRecord fs) => List.map #2 fs
+                        | (_, t) => [t])
+                   | _ => [])
+              | _ => []
+          in
+            Quantified (ListPair.map (fn (v, t) => {name = v, ty = show t,
+                                                     instance = instanceOf lib (List.exists (fn f => f = v) pure) t})
+                                     (vars, types))
+          end
+          handle Error.CompileError (_, msg) =>
+            if String.isPrefix unbound msg then
+              let val name = String.extract (msg, String.size unbound, NONE)
+              in
+                if CharVector.exists (fn c => c = #".") name orelse List.exists (fn v => v = name) vars
+                then NotSml msg
+                else attempt (vars @ [name])
+              end
+            else NotSml msg
+    in
+      attempt []
+    end
 end

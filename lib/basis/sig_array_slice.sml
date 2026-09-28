@@ -27,8 +27,8 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length sl`.
 
-     Law: `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for
-     `0 <= k < Array.length arr - i`
+     Law: `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k
+     andalso k < Array.length arr - i`
 
      Example: `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2` *)
   val sub : 'a slice * int -> 'a
@@ -37,7 +37,8 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length sl`.
 
-     Law: `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i < length sl`
+     Law: `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i andalso i < length
+     sl`
 
      Example: `let val a = Array.fromList [1, 2, 3] in update (slice (a, 1,
      NONE), 0, 9); Array.vector a end = Vector.fromList [1, 9, 3]` *)
@@ -57,7 +58,8 @@ sig
      Raises: `Subscript` if `i < 0` or `i > Array.length arr`, or, with `SOME
      n`, if `n < 0` or `i + n > Array.length arr`.
 
-     Law: `base (slice (arr, i, SOME n)) = (arr, i, n)` when the slice exists
+     Law: `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice
+     (arr, i, SOME n)); true)`
 
      Example: `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) =
      Vector.fromList [2, 3]`
@@ -78,8 +80,8 @@ sig
      Raises: `Subscript` if `i < 0` or `i > length sl`, or, with `SOME n`, if
      `n < 0` or `i + n > length sl`.
 
-     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for
-     `0 <= k < length sl - i`
+     Law: `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k
+     andalso k < length sl - i`
 
      Example: `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE),
      1, SOME 1)) = Vector.fromList [3]` *)
@@ -243,7 +245,8 @@ sig
 
   (* `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`.
 
-     Law: `collate cmp (sl, tl) = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] tl)`
+     Law: `collate cmp (sl, sl') = List.collate cmp (foldr (op ::) [] sl, foldr
+     (op ::) [] sl')`
 
      Example: `collate Int.compare (slice (Array.fromList [1, 2, 3], 1, NONE),
      full (Array.fromList [2])) = GREATER` *)

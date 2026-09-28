@@ -73,7 +73,7 @@ sig
 
      Raises: `Chr` if `i < 0` or `i > maxOrd`.
 
-     Law: `ord (chr i) = i` for `0 <= i <= maxOrd`
+     Law: `ord (chr i) = i` for `Int.<= (0, i) andalso Int.<= (i, maxOrd)`
 
      Example: `chr 97 = #"a"` *)
   val chr : int -> char
@@ -110,7 +110,9 @@ sig
   (* `c < d`, `c <= d`, `c > d` and `c >= d` compare the codes of two
      characters.
 
-     Law: `(c < d) = (ord c < ord d)`, and the same for the others
+     Law: `(c < d) = Int.< (ord c, ord d)`, and `(c <= d) = Int.<= (ord c, ord
+     d)`, and `(c > d) = Int.> (ord c, ord d)`, and `(c >= d) = Int.>= (ord c,
+     ord d)`
 
      Example: `Char.< (#"Z", #"a") = true` *)
   val < : char * char -> bool

@@ -27,15 +27,15 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | --- | --- | --- |
 | type | [`array`](../sig/PRIM_IO.md#type-array) | `WideCharArray.array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `WideCharArraySlice.slice` |
-| type | [`elem`](../sig/PRIM_IO.md#type-elem) | `WideChar.char` |
-| type | [`pos`](../sig/PRIM_IO.md#type-pos) | *a type of its own* |
+| type | [`elem`](../sig/PRIM_IO.md#type-elem) | `RuneWideChar.char` |
+| type | [`pos`](../sig/PRIM_IO.md#type-pos) | `RuneWideTextPos.pos` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
 | type | [`vector`](../sig/PRIM_IO.md#type-vector) | `WideCharVector.vector` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `WideCharVectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
 | val | [`augmentWriter`](../sig/PRIM_IO.md#val-augmentwriter) | `writer -> writer` |
-| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `pos * pos -> order` |
+| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `RuneWideTextPos.pos * RuneWideTextPos.pos -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
 | val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `WideCharVector.vector -> reader` |

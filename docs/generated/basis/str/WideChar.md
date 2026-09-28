@@ -41,41 +41,41 @@ What each means is on [`CHAR`](../sig/CHAR.md); the types are this structure's o
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`char`](../sig/CHAR.md#type-char) | `WideChar.char` |
+| type | [`char`](../sig/CHAR.md#type-char) | `RuneWideChar.char` |
 | type | [`string`](../sig/CHAR.md#type-string) | `WideCharVector.vector` |
-| val | [`<`](../sig/CHAR.md#val-op-lt) | `WideChar.char * WideChar.char -> bool` |
-| val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `WideChar.char * WideChar.char -> bool` |
-| val | [`>`](../sig/CHAR.md#val-op-gt) | `WideChar.char * WideChar.char -> bool` |
-| val | [`>=`](../sig/CHAR.md#val-op-gt-eq) | `WideChar.char * WideChar.char -> bool` |
-| val | [`chr`](../sig/CHAR.md#val-chr) | `int -> WideChar.char` |
-| val | [`compare`](../sig/CHAR.md#val-compare) | `WideChar.char * WideChar.char -> order` |
-| val | [`contains`](../sig/CHAR.md#val-contains) | `WideCharVector.vector -> WideChar.char -> bool` |
-| val | [`fromCString`](../sig/CHAR.md#val-fromcstring) | `string -> WideChar.char option` |
-| val | [`fromString`](../sig/CHAR.md#val-fromstring) | `string -> WideChar.char option` |
-| val | [`isAlpha`](../sig/CHAR.md#val-isalpha) | `WideChar.char -> bool` |
-| val | [`isAlphaNum`](../sig/CHAR.md#val-isalphanum) | `WideChar.char -> bool` |
-| val | [`isAscii`](../sig/CHAR.md#val-isascii) | `WideChar.char -> bool` |
-| val | [`isCntrl`](../sig/CHAR.md#val-iscntrl) | `WideChar.char -> bool` |
-| val | [`isDigit`](../sig/CHAR.md#val-isdigit) | `WideChar.char -> bool` |
-| val | [`isGraph`](../sig/CHAR.md#val-isgraph) | `WideChar.char -> bool` |
-| val | [`isHexDigit`](../sig/CHAR.md#val-ishexdigit) | `WideChar.char -> bool` |
-| val | [`isLower`](../sig/CHAR.md#val-islower) | `WideChar.char -> bool` |
-| val | [`isPrint`](../sig/CHAR.md#val-isprint) | `WideChar.char -> bool` |
-| val | [`isPunct`](../sig/CHAR.md#val-ispunct) | `WideChar.char -> bool` |
-| val | [`isSpace`](../sig/CHAR.md#val-isspace) | `WideChar.char -> bool` |
-| val | [`isUpper`](../sig/CHAR.md#val-isupper) | `WideChar.char -> bool` |
-| val | [`maxChar`](../sig/CHAR.md#val-maxchar) | `WideChar.char` |
+| val | [`<`](../sig/CHAR.md#val-op-lt) | `RuneWideChar.char * RuneWideChar.char -> bool` |
+| val | [`<=`](../sig/CHAR.md#val-op-lt-eq) | `RuneWideChar.char * RuneWideChar.char -> bool` |
+| val | [`>`](../sig/CHAR.md#val-op-gt) | `RuneWideChar.char * RuneWideChar.char -> bool` |
+| val | [`>=`](../sig/CHAR.md#val-op-gt-eq) | `RuneWideChar.char * RuneWideChar.char -> bool` |
+| val | [`chr`](../sig/CHAR.md#val-chr) | `int -> RuneWideChar.char` |
+| val | [`compare`](../sig/CHAR.md#val-compare) | `RuneWideChar.char * RuneWideChar.char -> order` |
+| val | [`contains`](../sig/CHAR.md#val-contains) | `WideCharVector.vector -> RuneWideChar.char -> bool` |
+| val | [`fromCString`](../sig/CHAR.md#val-fromcstring) | `string -> RuneWideChar.char option` |
+| val | [`fromString`](../sig/CHAR.md#val-fromstring) | `string -> RuneWideChar.char option` |
+| val | [`isAlpha`](../sig/CHAR.md#val-isalpha) | `RuneWideChar.char -> bool` |
+| val | [`isAlphaNum`](../sig/CHAR.md#val-isalphanum) | `RuneWideChar.char -> bool` |
+| val | [`isAscii`](../sig/CHAR.md#val-isascii) | `RuneWideChar.char -> bool` |
+| val | [`isCntrl`](../sig/CHAR.md#val-iscntrl) | `RuneWideChar.char -> bool` |
+| val | [`isDigit`](../sig/CHAR.md#val-isdigit) | `RuneWideChar.char -> bool` |
+| val | [`isGraph`](../sig/CHAR.md#val-isgraph) | `RuneWideChar.char -> bool` |
+| val | [`isHexDigit`](../sig/CHAR.md#val-ishexdigit) | `RuneWideChar.char -> bool` |
+| val | [`isLower`](../sig/CHAR.md#val-islower) | `RuneWideChar.char -> bool` |
+| val | [`isPrint`](../sig/CHAR.md#val-isprint) | `RuneWideChar.char -> bool` |
+| val | [`isPunct`](../sig/CHAR.md#val-ispunct) | `RuneWideChar.char -> bool` |
+| val | [`isSpace`](../sig/CHAR.md#val-isspace) | `RuneWideChar.char -> bool` |
+| val | [`isUpper`](../sig/CHAR.md#val-isupper) | `RuneWideChar.char -> bool` |
+| val | [`maxChar`](../sig/CHAR.md#val-maxchar) | `RuneWideChar.char` |
 | val | [`maxOrd`](../sig/CHAR.md#val-maxord) | `int` |
-| val | [`minChar`](../sig/CHAR.md#val-minchar) | `WideChar.char` |
-| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideCharVector.vector -> WideChar.char -> bool` |
-| val | [`ord`](../sig/CHAR.md#val-ord) | `WideChar.char -> int` |
-| val | [`pred`](../sig/CHAR.md#val-pred) | `WideChar.char -> WideChar.char` |
-| val | [`scan`](../sig/CHAR.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (WideChar.char * 'a) option` |
-| val | [`succ`](../sig/CHAR.md#val-succ) | `WideChar.char -> WideChar.char` |
-| val | [`toCString`](../sig/CHAR.md#val-tocstring) | `WideChar.char -> string` |
-| val | [`toLower`](../sig/CHAR.md#val-tolower) | `WideChar.char -> WideChar.char` |
-| val | [`toString`](../sig/CHAR.md#val-tostring) | `WideChar.char -> string` |
-| val | [`toUpper`](../sig/CHAR.md#val-toupper) | `WideChar.char -> WideChar.char` |
+| val | [`minChar`](../sig/CHAR.md#val-minchar) | `RuneWideChar.char` |
+| val | [`notContains`](../sig/CHAR.md#val-notcontains) | `WideCharVector.vector -> RuneWideChar.char -> bool` |
+| val | [`ord`](../sig/CHAR.md#val-ord) | `RuneWideChar.char -> int` |
+| val | [`pred`](../sig/CHAR.md#val-pred) | `RuneWideChar.char -> RuneWideChar.char` |
+| val | [`scan`](../sig/CHAR.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (RuneWideChar.char * 'a) option` |
+| val | [`succ`](../sig/CHAR.md#val-succ) | `RuneWideChar.char -> RuneWideChar.char` |
+| val | [`toCString`](../sig/CHAR.md#val-tocstring) | `RuneWideChar.char -> string` |
+| val | [`toLower`](../sig/CHAR.md#val-tolower) | `RuneWideChar.char -> RuneWideChar.char` |
+| val | [`toString`](../sig/CHAR.md#val-tostring) | `RuneWideChar.char -> string` |
+| val | [`toUpper`](../sig/CHAR.md#val-toupper) | `RuneWideChar.char -> RuneWideChar.char` |
 
 ---
 

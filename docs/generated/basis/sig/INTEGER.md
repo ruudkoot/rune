@@ -143,7 +143,7 @@ val toLarge : int -> LargeInt.int
 
 `toLarge i` is `i` as an integer of [`LargeInt`](../str/IntInf.md), which loses nothing.
 
-**Law** `fromLarge (toLarge i) = i`
+**Law** `fromLarge (toLarge i) = i` (for every `i : int`)
 
 **Example** `toLarge 5 = 5`
 
@@ -171,7 +171,7 @@ val fromLarge : LargeInt.int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of this structure.
 
-**Law** `toLarge (fromLarge i) = i` when `i` is in the range
+**Law** `toLarge (fromLarge i) = i` when `(case minInt of NONE => true | SOME m => LargeInt.<= (toLarge m, i)) andalso (case maxInt of NONE => true | SOME m => LargeInt.<= (i, toLarge m))` (for every `i : IntInf.int`)
 
 **Example** `fromLarge (IntInf.pow (2, 10)) = 1024`
 
@@ -199,7 +199,7 @@ val toInt : int -> Int.int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if `i` is outside the range of [`Int.int`](#type-int).
 
-**Law** `fromInt (toInt i) = i` when `i` is in the range of [`Int.int`](#type-int)
+**Law** `fromInt (toInt i) = i` when `(case Int.minInt of NONE => true | SOME m => LargeInt.<= (Int.toLarge m, toLarge i)) andalso (case Int.maxInt of NONE => true | SOME m => LargeInt.<= (toLarge i, Int.toLarge m))` (for every `i : int`)
 
 **Example** `toInt 7 = 7`
 
@@ -287,8 +287,7 @@ val minInt : int option
 
 [`minInt`](#val-minint) is the smallest integer of this structure, or `NONE` when there is none.
 
-**Law** `minInt = SOME (fromLarge (~ (IntInf.pow (2, p - 1))))` where
-`precision = SOME p`
+**Law** `case precision of SOME p => minInt = SOME (fromLarge (IntInf.~ (IntInf.pow (2, Int.- (p, 1))))) | NONE => true`
 
 **Example** `minInt = SOME ~9223372036854775808`
 
@@ -317,8 +316,7 @@ val maxInt : int option
 The range is not symmetric: `~minInt` overflows and `abs minInt` does
 too.
 
-**Law** `maxInt = SOME (fromLarge (IntInf.pow (2, p - 1) - 1))` where
-`precision = SOME p`
+**Law** `case precision of SOME p => maxInt = SOME (fromLarge (IntInf.- (IntInf.pow (2, Int.- (p, 1)), 1))) | NONE => true`
 
 **Example** `Int.maxInt = SOME 9223372036854775807`
 
@@ -390,7 +388,7 @@ val - : int * int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the result is outside the range.
 
-**Law** `i - j = i + ~j` when `~j` is in the range
+**Law** `i - j = i + ~j` when `minInt <> SOME j` (for every `i : int`, `j : int`)
 
 **Example** `3 - 5 = ~2`
 
@@ -479,7 +477,7 @@ val mod : int * int -> int
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `(i div j) * j + (i mod j) = i`
+**Law** `(i div j) * j + (i mod j) = i` (for every `i : int`, `j : int`)
 
 > **Reading** `Int.mod/minInt-by-minus-one`. [`mod`](#val-mod) never raises [`Overflow`](../sig/GENERAL.md#exn-overflow),
 > although [`div`](#val-div) does at the same arguments: `minInt mod ~1` is 0.
@@ -544,7 +542,7 @@ val rem : int * int -> int
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `quot (i, j) * j + rem (i, j) = i`
+**Law** `quot (i, j) * j + rem (i, j) = i` (for every `i : int`, `j : int`)
 
 > **Reading** `Int.rem/minInt-by-minus-one`. As [`mod`](#val-mod), it never raises
 > [`Overflow`](../sig/GENERAL.md#exn-overflow): `rem (minInt, ~1)` is 0.
@@ -579,7 +577,7 @@ val compare : int * int -> order
 
 `compare (i, j)` orders two integers.
 
-**Law** `(compare (i, j) = EQUAL) = (i = j)`
+**Law** `(compare (i, j) = EQUAL) = (i = j)` (for every `i : int`, `j : int`)
 
 **Example** `compare (~1, 1) = LESS`
 
@@ -608,7 +606,7 @@ val >= : int * int -> bool
 
 `i < j`, `i <= j`, `i > j` and `i >= j` compare two integers.
 
-**Law** `(i < j) = (compare (i, j) = LESS)`, and the same for the others
+**Law** `(i < j) = (compare (i, j) = LESS)`, and `(i <= j) = (compare (i, j) <> GREATER)`, and `(i > j) = (compare (i, j) = GREATER)`, and `(i >= j) = (compare (i, j) <> LESS)` (for every `i : int`, `j : int`)
 
 **Example** `~3 < 2 = true`
 
@@ -638,7 +636,7 @@ val ~ : int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `~minInt`, which is not in the range.
 
-**Law** `~ (~ i) = i` when `~i` is in the range
+**Law** `~ (~ i) = i` when `minInt <> SOME i` (for every `i : int`)
 
 **Example** `~ (~5) = 5`
 
@@ -674,7 +672,7 @@ val abs : int -> int
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) for `abs minInt`.
 
-**Law** `abs i = (if i < 0 then ~i else i)`
+**Law** `abs i = (if i < 0 then ~i else i)` (for every `i : int`)
 
 **Example** `abs ~5 = 5`
 
@@ -703,7 +701,7 @@ val min : int * int -> int
 
 `min (i, j)` is the smaller of the two.
 
-**Law** `min (i, j) = (if i < j then i else j)`
+**Law** `min (i, j) = (if i < j then i else j)` (for every `i : int`, `j : int`)
 
 **Example** `min (3, ~2) = ~2`
 
@@ -729,7 +727,7 @@ val max : int * int -> int
 
 `max (i, j)` is the larger of the two.
 
-**Law** `max (i, j) = (if i < j then j else i)`
+**Law** `max (i, j) = (if i < j then j else i)` (for every `i : int`, `j : int`)
 
 **Example** `max (3, ~2) = 3`
 
@@ -755,7 +753,7 @@ val sign : int -> Int.int
 
 `sign i` is \~1, 0 or 1, as `i` is negative, zero or positive.
 
-**Law** `fromInt (sign i) * abs i = i` when `abs i` is in the range
+**Law** `fromInt (sign i) * abs i = i` when `minInt <> SOME i` (for every `i : int`)
 
 **Example** `sign ~3 = ~1`
 
@@ -784,7 +782,7 @@ val sameSign : int * int -> bool
 > **Reading** `Int.sameSign/zero-pos`. It is "equivalent to `sign i = sign j`", so zero has the same sign as zero only, and not as a positive
 > number.
 
-**Law** `sameSign (i, j) = (sign i = sign j)`
+**Law** `sameSign (i, j) = (sign i = sign j)` (for every `i : int`, `j : int`)
 
 **Example** `sameSign (0, 1) = false`
 
@@ -841,7 +839,7 @@ val toString : int -> string
 
 `toString i` is the text of `i` in base 10.
 
-**Law** `toString i = fmt StringCvt.DEC i`
+**Law** `toString i = fmt StringCvt.DEC i` (for every `i : int`)
 
 **Example** `toString ~5 = "~5"`
 
@@ -912,7 +910,7 @@ val fromString : string -> int option
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number outside the range.
 
-**Law** `fromString s = StringCvt.scanString (scan StringCvt.DEC) s`
+**Law** `fromString s = StringCvt.scanString (scan StringCvt.DEC) s` (for every `s : string`)
 
 **Example** `fromString " +12x" = SOME 12`
 

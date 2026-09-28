@@ -25,55 +25,55 @@ What each means is on [`POSIX_ERROR`](../sig/POSIX_ERROR.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/POSIX_ERROR.md#type-syserror) | `OS.syserror` |
-| val | [`acces`](../sig/POSIX_ERROR.md#val-acces) | `OS.syserror` |
-| val | [`again`](../sig/POSIX_ERROR.md#val-again) | `OS.syserror` |
-| val | [`badf`](../sig/POSIX_ERROR.md#val-badf) | `OS.syserror` |
-| val | [`badmsg`](../sig/POSIX_ERROR.md#val-badmsg) | `OS.syserror` |
-| val | [`busy`](../sig/POSIX_ERROR.md#val-busy) | `OS.syserror` |
-| val | [`canceled`](../sig/POSIX_ERROR.md#val-canceled) | `OS.syserror` |
-| val | [`child`](../sig/POSIX_ERROR.md#val-child) | `OS.syserror` |
-| val | [`deadlk`](../sig/POSIX_ERROR.md#val-deadlk) | `OS.syserror` |
-| val | [`dom`](../sig/POSIX_ERROR.md#val-dom) | `OS.syserror` |
-| val | [`errorMsg`](../sig/POSIX_ERROR.md#val-errormsg) | `OS.syserror -> string` |
-| val | [`errorName`](../sig/POSIX_ERROR.md#val-errorname) | `OS.syserror -> string` |
-| val | [`exist`](../sig/POSIX_ERROR.md#val-exist) | `OS.syserror` |
-| val | [`fault`](../sig/POSIX_ERROR.md#val-fault) | `OS.syserror` |
-| val | [`fbig`](../sig/POSIX_ERROR.md#val-fbig) | `OS.syserror` |
-| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `word -> OS.syserror` |
-| val | [`inprogress`](../sig/POSIX_ERROR.md#val-inprogress) | `OS.syserror` |
-| val | [`intr`](../sig/POSIX_ERROR.md#val-intr) | `OS.syserror` |
-| val | [`inval`](../sig/POSIX_ERROR.md#val-inval) | `OS.syserror` |
-| val | [`io`](../sig/POSIX_ERROR.md#val-io) | `OS.syserror` |
-| val | [`isdir`](../sig/POSIX_ERROR.md#val-isdir) | `OS.syserror` |
-| val | [`loop`](../sig/POSIX_ERROR.md#val-loop) | `OS.syserror` |
-| val | [`mfile`](../sig/POSIX_ERROR.md#val-mfile) | `OS.syserror` |
-| val | [`mlink`](../sig/POSIX_ERROR.md#val-mlink) | `OS.syserror` |
-| val | [`msgsize`](../sig/POSIX_ERROR.md#val-msgsize) | `OS.syserror` |
-| val | [`nametoolong`](../sig/POSIX_ERROR.md#val-nametoolong) | `OS.syserror` |
-| val | [`nfile`](../sig/POSIX_ERROR.md#val-nfile) | `OS.syserror` |
-| val | [`nodev`](../sig/POSIX_ERROR.md#val-nodev) | `OS.syserror` |
-| val | [`noent`](../sig/POSIX_ERROR.md#val-noent) | `OS.syserror` |
-| val | [`noexec`](../sig/POSIX_ERROR.md#val-noexec) | `OS.syserror` |
-| val | [`nolck`](../sig/POSIX_ERROR.md#val-nolck) | `OS.syserror` |
-| val | [`nomem`](../sig/POSIX_ERROR.md#val-nomem) | `OS.syserror` |
-| val | [`nospc`](../sig/POSIX_ERROR.md#val-nospc) | `OS.syserror` |
-| val | [`nosys`](../sig/POSIX_ERROR.md#val-nosys) | `OS.syserror` |
-| val | [`notdir`](../sig/POSIX_ERROR.md#val-notdir) | `OS.syserror` |
-| val | [`notempty`](../sig/POSIX_ERROR.md#val-notempty) | `OS.syserror` |
-| val | [`notsup`](../sig/POSIX_ERROR.md#val-notsup) | `OS.syserror` |
-| val | [`notty`](../sig/POSIX_ERROR.md#val-notty) | `OS.syserror` |
-| val | [`nxio`](../sig/POSIX_ERROR.md#val-nxio) | `OS.syserror` |
-| val | [`perm`](../sig/POSIX_ERROR.md#val-perm) | `OS.syserror` |
-| val | [`pipe`](../sig/POSIX_ERROR.md#val-pipe) | `OS.syserror` |
-| val | [`range`](../sig/POSIX_ERROR.md#val-range) | `OS.syserror` |
-| val | [`rofs`](../sig/POSIX_ERROR.md#val-rofs) | `OS.syserror` |
-| val | [`spipe`](../sig/POSIX_ERROR.md#val-spipe) | `OS.syserror` |
-| val | [`srch`](../sig/POSIX_ERROR.md#val-srch) | `OS.syserror` |
-| val | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | `string -> OS.syserror option` |
-| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `OS.syserror -> word` |
-| val | [`toobig`](../sig/POSIX_ERROR.md#val-toobig) | `OS.syserror` |
-| val | [`xdev`](../sig/POSIX_ERROR.md#val-xdev) | `OS.syserror` |
+| type | [`syserror`](../sig/POSIX_ERROR.md#type-syserror) | `RuneError.syserror` |
+| val | [`acces`](../sig/POSIX_ERROR.md#val-acces) | `RuneError.syserror` |
+| val | [`again`](../sig/POSIX_ERROR.md#val-again) | `RuneError.syserror` |
+| val | [`badf`](../sig/POSIX_ERROR.md#val-badf) | `RuneError.syserror` |
+| val | [`badmsg`](../sig/POSIX_ERROR.md#val-badmsg) | `RuneError.syserror` |
+| val | [`busy`](../sig/POSIX_ERROR.md#val-busy) | `RuneError.syserror` |
+| val | [`canceled`](../sig/POSIX_ERROR.md#val-canceled) | `RuneError.syserror` |
+| val | [`child`](../sig/POSIX_ERROR.md#val-child) | `RuneError.syserror` |
+| val | [`deadlk`](../sig/POSIX_ERROR.md#val-deadlk) | `RuneError.syserror` |
+| val | [`dom`](../sig/POSIX_ERROR.md#val-dom) | `RuneError.syserror` |
+| val | [`errorMsg`](../sig/POSIX_ERROR.md#val-errormsg) | `RuneError.syserror -> string` |
+| val | [`errorName`](../sig/POSIX_ERROR.md#val-errorname) | `RuneError.syserror -> string` |
+| val | [`exist`](../sig/POSIX_ERROR.md#val-exist) | `RuneError.syserror` |
+| val | [`fault`](../sig/POSIX_ERROR.md#val-fault) | `RuneError.syserror` |
+| val | [`fbig`](../sig/POSIX_ERROR.md#val-fbig) | `RuneError.syserror` |
+| val | [`fromWord`](../sig/POSIX_ERROR.md#val-fromword) | `word -> RuneError.syserror` |
+| val | [`inprogress`](../sig/POSIX_ERROR.md#val-inprogress) | `RuneError.syserror` |
+| val | [`intr`](../sig/POSIX_ERROR.md#val-intr) | `RuneError.syserror` |
+| val | [`inval`](../sig/POSIX_ERROR.md#val-inval) | `RuneError.syserror` |
+| val | [`io`](../sig/POSIX_ERROR.md#val-io) | `RuneError.syserror` |
+| val | [`isdir`](../sig/POSIX_ERROR.md#val-isdir) | `RuneError.syserror` |
+| val | [`loop`](../sig/POSIX_ERROR.md#val-loop) | `RuneError.syserror` |
+| val | [`mfile`](../sig/POSIX_ERROR.md#val-mfile) | `RuneError.syserror` |
+| val | [`mlink`](../sig/POSIX_ERROR.md#val-mlink) | `RuneError.syserror` |
+| val | [`msgsize`](../sig/POSIX_ERROR.md#val-msgsize) | `RuneError.syserror` |
+| val | [`nametoolong`](../sig/POSIX_ERROR.md#val-nametoolong) | `RuneError.syserror` |
+| val | [`nfile`](../sig/POSIX_ERROR.md#val-nfile) | `RuneError.syserror` |
+| val | [`nodev`](../sig/POSIX_ERROR.md#val-nodev) | `RuneError.syserror` |
+| val | [`noent`](../sig/POSIX_ERROR.md#val-noent) | `RuneError.syserror` |
+| val | [`noexec`](../sig/POSIX_ERROR.md#val-noexec) | `RuneError.syserror` |
+| val | [`nolck`](../sig/POSIX_ERROR.md#val-nolck) | `RuneError.syserror` |
+| val | [`nomem`](../sig/POSIX_ERROR.md#val-nomem) | `RuneError.syserror` |
+| val | [`nospc`](../sig/POSIX_ERROR.md#val-nospc) | `RuneError.syserror` |
+| val | [`nosys`](../sig/POSIX_ERROR.md#val-nosys) | `RuneError.syserror` |
+| val | [`notdir`](../sig/POSIX_ERROR.md#val-notdir) | `RuneError.syserror` |
+| val | [`notempty`](../sig/POSIX_ERROR.md#val-notempty) | `RuneError.syserror` |
+| val | [`notsup`](../sig/POSIX_ERROR.md#val-notsup) | `RuneError.syserror` |
+| val | [`notty`](../sig/POSIX_ERROR.md#val-notty) | `RuneError.syserror` |
+| val | [`nxio`](../sig/POSIX_ERROR.md#val-nxio) | `RuneError.syserror` |
+| val | [`perm`](../sig/POSIX_ERROR.md#val-perm) | `RuneError.syserror` |
+| val | [`pipe`](../sig/POSIX_ERROR.md#val-pipe) | `RuneError.syserror` |
+| val | [`range`](../sig/POSIX_ERROR.md#val-range) | `RuneError.syserror` |
+| val | [`rofs`](../sig/POSIX_ERROR.md#val-rofs) | `RuneError.syserror` |
+| val | [`spipe`](../sig/POSIX_ERROR.md#val-spipe) | `RuneError.syserror` |
+| val | [`srch`](../sig/POSIX_ERROR.md#val-srch) | `RuneError.syserror` |
+| val | [`syserror`](../sig/POSIX_ERROR.md#val-syserror) | `string -> RuneError.syserror option` |
+| val | [`toWord`](../sig/POSIX_ERROR.md#val-toword) | `RuneError.syserror -> word` |
+| val | [`toobig`](../sig/POSIX_ERROR.md#val-toobig) | `RuneError.syserror` |
+| val | [`xdev`](../sig/POSIX_ERROR.md#val-xdev) | `RuneError.syserror` |
 
 ## Notes
 

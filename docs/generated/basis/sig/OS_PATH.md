@@ -307,7 +307,7 @@ val splitDirFile : string -> {dir : string, file : string}
 
 **Example** `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-**Law** `joinDirFile (splitDirFile p) = p` for a path `p` that is not empty
+**Law** `joinDirFile (splitDirFile p) = p` for `p <> ""` (for every `p : string`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -355,7 +355,7 @@ val dir : string -> string
 
 `dir p` is the [`dir`](#val-dir) part of `splitDirFile p`.
 
-**Law** `dir p = #dir (splitDirFile p)`
+**Law** `dir p = #dir (splitDirFile p)` (for every `p : string`)
 
 **Example** `dir "a/b/c" = "a/b"`
 
@@ -401,7 +401,7 @@ otherwise there is none.
 
 **Example** `splitBaseExt ".profile" = {base = ".profile", ext = NONE}`
 
-**Law** `joinBaseExt (splitBaseExt p) = p`
+**Law** `joinBaseExt (splitBaseExt p) = p` (for every `p : string`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -522,7 +522,7 @@ val isCanonical : string -> bool
 
 `isCanonical p` is `true` when `p` is what [`mkCanonical`](#val-mkcanonical) would give.
 
-**Law** `isCanonical p = (mkCanonical p = p)`
+**Law** `isCanonical p = (mkCanonical p = p)` (for every `p : string`)
 
 **Example** `isCanonical "a/../b" = false`
 
@@ -588,8 +588,7 @@ already relative.
 
 **Example** `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"`
 
-**Law** `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for canonical absolute paths `p` and `q`; a path that is not
-canonical comes back canonical
+**Law** `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q andalso isAbsolute q`; a path that is not canonical comes back canonical (for every `p : string`, `q : string`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -626,7 +625,7 @@ val isRelative : string -> bool
 
 `isRelative p` is `true` when `p` does not start from a root.
 
-**Law** `isRelative p = not (isAbsolute p)`
+**Law** `isRelative p = not (isAbsolute p)` (for every `p : string`)
 
 **Example** `isRelative "a/b" = true`
 

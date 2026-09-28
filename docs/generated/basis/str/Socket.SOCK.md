@@ -19,12 +19,12 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`sock_type`](../sig/SOCKET.md#type-sock.sock_type) | *a type of its own* |
-| val | [`dgram`](../sig/SOCKET.md#val-sock.dgram) | `sock_type` |
-| val | [`fromString`](../sig/SOCKET.md#val-sock.fromstring) | `string -> sock_type option` |
-| val | [`list`](../sig/SOCKET.md#val-sock.list) | `unit -> (string * sock_type) list` |
-| val | [`stream`](../sig/SOCKET.md#val-sock.stream) | `sock_type` |
-| val | [`toString`](../sig/SOCKET.md#val-sock.tostring) | `sock_type -> string` |
+| type | [`sock_type`](../sig/SOCKET.md#type-sock.sock_type) | `RuneNet.sock_type` |
+| val | [`dgram`](../sig/SOCKET.md#val-sock.dgram) | `RuneNet.sock_type` |
+| val | [`fromString`](../sig/SOCKET.md#val-sock.fromstring) | `string -> RuneNet.sock_type option` |
+| val | [`list`](../sig/SOCKET.md#val-sock.list) | `unit -> (string * RuneNet.sock_type) list` |
+| val | [`stream`](../sig/SOCKET.md#val-sock.stream) | `RuneNet.sock_type` |
+| val | [`toString`](../sig/SOCKET.md#val-sock.tostring) | `RuneNet.sock_type -> string` |
 
 ---
 

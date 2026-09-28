@@ -27,14 +27,14 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | type | [`array`](../sig/PRIM_IO.md#type-array) | `CharArray.array` |
 | type | [`array_slice`](../sig/PRIM_IO.md#type-array_slice) | `CharArraySlice.slice` |
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `char` |
-| type | [`pos`](../sig/PRIM_IO.md#type-pos) | *a type of its own* |
+| type | [`pos`](../sig/PRIM_IO.md#type-pos) | `RuneTextPos.pos` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
 | type | [`vector`](../sig/PRIM_IO.md#type-vector) | `string` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `Substring.substring` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
 | val | [`augmentWriter`](../sig/PRIM_IO.md#val-augmentwriter) | `writer -> writer` |
-| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `pos * pos -> order` |
+| val | [`compare`](../sig/PRIM_IO.md#val-compare) | `RuneTextPos.pos * RuneTextPos.pos -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
 | val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `string -> reader` |

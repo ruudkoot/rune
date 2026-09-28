@@ -126,7 +126,7 @@ val array : int * 'a -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
-**Law** `sub (array (n, x), i) = x` for `0 <= i < n`
+**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n` (for every `n : int`, `x : 'a`, `i : int`)
 
 **Example** `vector (array (3, #"x")) = Vector.fromList [#"x", #"x", #"x"]`
 
@@ -146,7 +146,7 @@ val fromList : 'a list -> 'a array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
-**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` (for every `l : 'a list`, `i : int`)
 
 **Example** `sub (fromList [10, 20, 30], 1) = 20`
 
@@ -173,8 +173,8 @@ val tabulate : int * (int -> 'a) -> 'a array
 > of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all, so no effect of `f`
 > happens for an array that is never made.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
-effects
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
+has no effects (for every `n : int`, `f : int -> 'a`, `i : int`)
 
 **Example** `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]`
 
@@ -200,7 +200,7 @@ val length : 'a array -> int
 
 `length arr` is the number of elements of `arr`.
 
-**Law** `length (fromList l) = List.length l`
+**Law** `length (fromList l) = List.length l` (for every `l : 'a list`)
 
 **Example** `length (fromList [1, 2, 3]) = 3`
 
@@ -238,7 +238,7 @@ val update : 'a array * int * 'a -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
 
-**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
+**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i andalso i < length arr` (for every `arr : 'a array`, `i : int`, `x : 'a`)
 
 **Example** `let val a = array (3, 0) in update (a, 1, 5); foldr (op ::) [] a end = [0, 5, 0]`
 
@@ -258,7 +258,7 @@ val vector : 'a array -> 'a vector
 
 It is a copy: a later [`update`](#val-update) of `arr` does not touch it.
 
-**Law** `vector arr = Vector.tabulate (length arr, fn i => sub (arr, i))`
+**Law** `vector arr = Vector.tabulate (length arr, fn i => sub (arr, i))` (for every `arr : 'a array`)
 
 **Example** `vector (fromList [1, 2]) = Vector.fromList [1, 2]`
 
@@ -286,8 +286,7 @@ that overlap are what [`ArraySlice.copy`](../sig/ARRAY_SLICE.md#val-copy) is for
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
 
-**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
-for `0 <= i < length src`, when `src` and `dst` are not the same array
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` (for every `src : 'a array`, `dst : 'a array`, `di : int`, `i : int`)
 
 **Example** `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di = 0}; vector a end = Vector.fromList [1, 2, 3, 4]`
 
@@ -314,8 +313,7 @@ val copyVec : {src : 'a vector, dst : 'a array, di : int} -> unit
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + Vector.length src > length dst`,
 and then nothing has been copied.
 
-**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)`
-for `0 <= i < Vector.length v`
+**Law** `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= i andalso i < Vector.length v` (for every `v : 'a vector`, `dst : 'a array`, `di : int`, `i : int`)
 
 **Example** `let val a = array (4, 0) in copyVec {src = Vector.fromList [1, 2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]`
 
@@ -357,7 +355,7 @@ val app : ('a -> unit) -> 'a array -> unit
 
 `app f arr` applies `f` to every element, from 0 up, for its effect.
 
-**Law** `app f arr = appi (fn (_, x) => f x) arr`
+**Law** `app f arr = appi (fn (_, x) => f x) arr` (for every `f : 'a -> unit`, `arr : 'a array`)
 
 **Example** `let val s = ref 0 in app (fn x => s := !s + x) (fromList [1, 2, 3]); !s end = 6`
 
@@ -393,7 +391,7 @@ val modify : ('a -> 'a) -> 'a array -> unit
 
 `modify f arr` replaces every element by `f` of it, in place, from 0 up.
 
-**Law** `modify f arr = modifyi (fn (_, x) => f x) arr`
+**Law** `modify f arr = modifyi (fn (_, x) => f x) arr` (for every `f : 'a -> 'a`, `arr : 'a array`)
 
 **Example** `let val a = fromList [1, 2, 3] in modify (fn x => x * 2) a; vector a end = Vector.fromList [2, 4, 6]`
 
@@ -443,7 +441,7 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldl f init arr` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init arr = foldli (fn (_, x, acc) => f (x, acc)) init arr`
+**Law** `foldl f init arr = foldli (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `arr : 'a array`)
 
 **Example** `foldl (op ::) [] (fromList [1, 2, 3]) = [3, 2, 1]`
 
@@ -461,7 +459,7 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldr f init arr` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init arr = foldri (fn (_, x, acc) => f (x, acc)) init arr`
+**Law** `foldr f init arr = foldri (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `arr : 'a array`)
 
 **Example** `foldr (op ::) [] (fromList [1, 2, 3]) = [1, 2, 3]`
 
@@ -500,7 +498,7 @@ val find : ('a -> bool) -> 'a array -> 'a option
 
 `find p arr` is `SOME x` for the first element that satisfies `p`, or `NONE`.
 
-**Law** `find p arr = Option.map #2 (findi (fn (_, x) => p x) arr)`
+**Law** `find p arr = Option.map #2 (findi (fn (_, x) => p x) arr)` (for every `p : 'a -> bool`, `arr : 'a array`)
 
 **Example** `find (fn x => x > 1) (fromList [1, 2, 3]) = SOME 2`
 
@@ -518,7 +516,7 @@ val exists : ('a -> bool) -> 'a array -> bool
 
 `exists p arr` is `true` when some element satisfies `p`; it stops at the first that does.
 
-**Law** `exists p arr = isSome (find p arr)`
+**Law** `exists p arr = isSome (find p arr)` (for every `p : 'a -> bool`, `arr : 'a array`)
 
 **Example** `exists (fn x => x > 2) (fromList [1, 2, 3]) = true`
 
@@ -536,7 +534,7 @@ val all : ('a -> bool) -> 'a array -> bool
 
 `all p arr` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-**Law** `all p arr = not (exists (not o p) arr)`
+**Law** `all p arr = not (exists (not o p) arr)` (for every `p : 'a -> bool`, `arr : 'a array`)
 
 **Example** `all (fn x => x > 0) (fromList [1, 2, 3]) = true`
 
@@ -557,7 +555,7 @@ val collate : ('a * 'a -> order) -> 'a array * 'a array -> order
 This compares what the arrays hold, where `=` compares which array it
 is.
 
-**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)` (for every `cmp : 'a * 'a -> order`, `a : 'a array`, `b : 'a array`)
 
 **Example** `collate Int.compare (fromList [1, 2], fromList [1, 3]) = LESS`
 

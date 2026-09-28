@@ -56,7 +56,8 @@ sig
 
      Raises: `Size` if `r < 0`, `c < 0`, or the array would be too large.
 
-     Law: `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+     Law: `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0
+     <= j andalso j < c`
 
      Example: `dimensions (array (2, 3, 0)) = (2, 3)` *)
   val array : int * int * elem -> array
@@ -66,8 +67,9 @@ sig
      Raises: `Size` if the lists are not all of one length, or if the array
      would be too large.
 
-     Law: `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
-     every row `i` and column `j` of the array
+     Law: `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0
+     <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols
+     (fromList rows)`
 
      Example: `sub (fromList [[1, 2], [3, 4]], 1, 0) = 3` *)
   val fromList : elem list list -> array
@@ -83,8 +85,8 @@ sig
 
      Pinned by: `*Array2.tabulate/Size-before-f`
 
-     Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
-     `0 <= j < c`, when `f` has no effects
+     Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i
+     < r andalso 0 <= j andalso j < c`, when `f` has no effects
 
      Example: `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1)) = [10, 11, 12]` *)
   val tabulate : traversal -> int * int * (int * int -> elem) -> array
@@ -102,8 +104,8 @@ sig
 
      Raises: `Subscript` if `i` or `j` is outside the array.
 
-     Law: `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
-     column `j` of `arr`
+     Law: `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i
+     < nRows arr andalso 0 <= j andalso j < nCols arr`
 
      Example: `let val a = array (2, 2, 0) in update (a, 1, 0, 7); IntVector.foldr (op ::) [] (row (a, 1)) end
      = [7, 0]` *)

@@ -46,6 +46,7 @@ MonoVectorArbFn	functor	ARB_OF	where type t = V.vector	required	ascribed	lib/tes
 MonoVectorSliceArbFn	functor	ARB_OF	where type t = S.slice	required	ascribed	lib/test/property/family.sml
 PositionArb	structure	ARB_OF	where type t = Position.int	required	claimed	lib/test/property/numbers.sml
 Prop	structure	PROP		required	claimed	lib/test/property/prop.sml
+RandomArb	structure	ARB_OF	where type t = Random.gen	required	claimed	lib/test/property/data.sml
 Real32Arb	structure	ARB_OF	where type t = Real32.real	required	claimed	lib/test/property/sized.sml
 Real64Arb	structure	ARB_OF	where type t = Real64.real	required	claimed	lib/test/property/sized.sml
 RealArb	structure	ARB_OF	where type t = Real.real	required	claimed	lib/test/property/numbers.sml

@@ -43,6 +43,7 @@ file tests/doc/text.sml
       para: `take (l, i)` is the first `i` elements of `l`; `take (l, length l)` is `l`.
       reserved Raises: `Subscript` if `i < 0` or `i > length l`.
       reserved Law: `take (l, i) @ drop (l, i) = l`
+        law: take (l, i) @ drop (l, i) = l
       reserved Complexity: linear in `i`.
       reserved Example: `take ([1, 2, 3], 2) = [1, 2]`
     val @

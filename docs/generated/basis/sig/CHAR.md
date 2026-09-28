@@ -186,7 +186,7 @@ val ord : char -> int
 
 `ord c` is the code of `c`, between 0 and [`maxOrd`](#val-maxord).
 
-**Law** `chr (ord c) = c`
+**Law** `chr (ord c) = c` (for every `c : char`)
 
 **Example** `ord #"A" = 65`
 
@@ -210,7 +210,7 @@ val chr : int -> char
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `i < 0` or `i > maxOrd`.
 
-**Law** `ord (chr i) = i` for `0 <= i <= maxOrd`
+**Law** `ord (chr i) = i` for `Int.<= (0, i) andalso Int.<= (i, maxOrd)` (for every `i : int`)
 
 **Example** `chr 97 = #"a"`
 
@@ -234,7 +234,7 @@ val succ : char -> char
 
 **Raises** [`Chr`](../sig/GENERAL.md#exn-chr) if `c` is [`maxChar`](#val-maxchar).
 
-**Law** `pred (succ c) = c` for `c <> maxChar`
+**Law** `pred (succ c) = c` for `c <> maxChar` (for every `c : char`)
 
 **Example** `succ #"a" = #"b"`
 
@@ -277,7 +277,7 @@ val compare : char * char -> order
 > **Reading** `Char.compare/127-128`. The codes are not negative, so 127 comes
 > before 128 and 255 after 0: a character is not a signed byte.
 
-**Law** `compare (c, d) = Int.compare (ord c, ord d)`
+**Law** `compare (c, d) = Int.compare (ord c, ord d)` (for every `c : char`, `d : char`)
 
 **Example** `compare (#"a", #"b") = LESS`
 
@@ -301,7 +301,7 @@ val >= : char * char -> bool
 `c < d`, `c <= d`, `c > d` and `c >= d` compare the codes of two
 characters.
 
-**Law** `(c < d) = (ord c < ord d)`, and the same for the others
+**Law** `(c < d) = Int.< (ord c, ord d)`, and `(c <= d) = Int.<= (ord c, ord d)`, and `(c > d) = Int.> (ord c, ord d)`, and `(c >= d) = Int.>= (ord c, ord d)` (for every `c : char`, `d : char`)
 
 **Example** `Char.< (#"Z", #"a") = true`
 
@@ -344,7 +344,7 @@ val notContains : string -> char -> bool
 
 `notContains s c` is `true` when `c` does not occur in `s`.
 
-**Law** `notContains s c = not (contains s c)`
+**Law** `notContains s c = not (contains s c)` (for every `s : string`, `c : char`)
 
 **Example** `notContains "abc" #"d" = true`
 
@@ -390,7 +390,7 @@ val toLower : char -> char
 `toLower c` is the lower case letter for an upper case letter `c`, and `c`
 otherwise.
 
-**Law** `toLower (toUpper c) = toLower c`
+**Law** `toLower (toUpper c) = toLower c` (for every `c : char`)
 
 **Example** `toLower #"Q" = #"q"`
 
@@ -432,7 +432,7 @@ val isAlpha : char -> bool
 `isAlpha c` is `true` for a letter, `A` to `Z` and `a` to `z`.
 
 **Law** `isAlpha c = (isUpper c orelse isLower c)`, as the specification
-defines it
+defines it (for every `c : char`)
 
 **Example** `isAlpha #"_" = false`
 
@@ -453,7 +453,7 @@ val isAlphaNum : char -> bool
 `isAlphaNum c` is `true` for a letter or a decimal digit.
 
 **Law** `isAlphaNum c = (isAlpha c orelse isDigit c)`, as the specification
-defines it
+defines it (for every `c : char`)
 
 **Example** `isAlphaNum #"7" = true`
 
@@ -567,7 +567,7 @@ val isPrint : char -> bool
 32 to 126.
 
 **Law** `isPrint c = (isGraph c orelse c = #" ")`, as the specification
-defines it
+defines it (for every `c : char`)
 
 **Example** `isPrint #" " = true`
 
@@ -589,7 +589,7 @@ val isSpace : char -> bool
 `\n`, `\v`, `\f` and `\r`.
 
 **Law** `isSpace c = ((#"\t" <= c andalso c <= #"\r") orelse c = #" ")`, as
-the specification defines it
+the specification defines it (for every `c : char`)
 
 **Example** `isSpace #"\t" = true`
 
@@ -611,7 +611,7 @@ val isPunct : char -> bool
 nor a digit.
 
 **Law** `isPunct c = (isGraph c andalso not (isAlphaNum c))`, as the
-specification defines it
+specification defines it (for every `c : char`)
 
 **Example** `isPunct #"_" = true`
 
@@ -658,7 +658,7 @@ quote get a backslash in front. The control characters with a name are
 are written `\^@` to `\^_`, and codes from 127 up as a backslash and three
 decimal digits.
 
-**Law** `fromString (toString c) = SOME c`
+**Law** `fromString (toString c) = SOME c` (for every `c : char`)
 
 **Example** `toString #"\n" = "\\n"`
 
@@ -719,7 +719,7 @@ val fromString : String.string -> char option
 `fromString s` is the character that the text `s` begins with, read as
 [`scan`](#val-scan) reads it, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 > **Reading** `Char.fromString/printable-only-all-rejected`. A first character
 > outside the printable range, codes 32 to 126, gives `NONE`, and so does
@@ -769,7 +769,7 @@ The control characters with a name in C are `\a`, `\b`, `\t`, `\n`, `\v`,
 `\f` and `\r`; every other character is a backslash and three octal
 digits.
 
-**Law** `fromCString (toCString c) = SOME c`
+**Law** `fromCString (toCString c) = SOME c` (for every `c : char`)
 
 **Example** `toCString #"\000" = "\\000"`
 

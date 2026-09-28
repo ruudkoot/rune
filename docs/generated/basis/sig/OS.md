@@ -189,7 +189,7 @@ val syserror : string -> syserror option
 > it, and different conditions have different names, so [`syserror`](#val-syserror) and
 > [`errorName`](#val-errorname) invert each other.
 
-**Law** `syserror (errorName e) = SOME e`
+**Law** `syserror (errorName e) = SOME e` (for every `e : RuneError.syserror`)
 
 **Example** `syserror "no-such-error" = NONE`
 

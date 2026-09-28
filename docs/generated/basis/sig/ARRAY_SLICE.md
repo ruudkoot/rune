@@ -115,8 +115,7 @@ val sub : 'a slice * int -> 'a
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
 
-**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for
-`0 <= k < Array.length arr - i`
+**Law** `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k andalso k < Array.length arr - i` (for every `arr : 'a array`, `i : int`, `k : int`)
 
 **Example** `sub (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 0) = 2`
 
@@ -136,7 +135,7 @@ val update : 'a slice * int * 'a -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length sl`.
 
-**Law** `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i < length sl`
+**Law** `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i andalso i < length sl` (for every `sl : 'a ArraySlice.slice`, `i : int`, `x : 'a`)
 
 **Example** `let val a = Array.fromList [1, 2, 3] in update (slice (a, 1, NONE), 0, 9); Array.vector a end = Vector.fromList [1, 9, 3]`
 
@@ -156,7 +155,7 @@ val full : 'a Array.array -> 'a slice
 
 `full arr` is the whole of `arr` as a slice: `slice (arr, 0, NONE)`.
 
-**Law** `base (full arr) = (arr, 0, Array.length arr)`
+**Law** `base (full arr) = (arr, 0, Array.length arr)` (for every `arr : 'a array`)
 
 **Example** `length (full (Array.fromList [1, 2, 3])) = 3`
 
@@ -176,7 +175,7 @@ val slice : 'a Array.array * int * int option -> 'a slice
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > Array.length arr`, or, with `SOME n`, if `n < 0` or `i + n > Array.length arr`.
 
-**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` when the slice exists
+**Law** `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice (arr, i, SOME n)); true)` (for every `arr : 'a array`, `i : int`, `n : int`)
 
 **Example** `vector (slice (Array.fromList [1, 2, 3, 4], 1, SOME 2)) = Vector.fromList [2, 3]`
 
@@ -210,8 +209,7 @@ The bounds are those of `sl`, not of the array it is a slice of.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
 `n < 0` or `i + n > length sl`.
 
-**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for
-`0 <= k < length sl - i`
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` (for every `sl : 'a ArraySlice.slice`, `i : int`, `k : int`)
 
 **Example** `vector (subslice (slice (Array.fromList [1, 2, 3, 4], 1, NONE), 1, SOME 1)) = Vector.fromList [3]`
 
@@ -251,7 +249,7 @@ val vector : 'a slice -> 'a Vector.vector
 
 `vector sl` is an immutable vector of the elements of `sl`, which is a copy.
 
-**Law** `vector sl = Vector.tabulate (length sl, fn i => sub (sl, i))`
+**Law** `vector sl = Vector.tabulate (length sl, fn i => sub (sl, i))` (for every `sl : 'a ArraySlice.slice`)
 
 **Example** `vector (slice (Array.fromList [1, 2, 3], 1, NONE)) = Vector.fromList [2, 3]`
 
@@ -337,7 +335,7 @@ val isEmpty : 'a slice -> bool
 
 `isEmpty sl` is `true` when `sl` has no elements.
 
-**Law** `isEmpty sl = (length sl = 0)`
+**Law** `isEmpty sl = (length sl = 0)` (for every `sl : 'a ArraySlice.slice`)
 
 **Example** `isEmpty (slice (Array.fromList [1], 1, NONE)) = true`
 
@@ -393,7 +391,7 @@ val app : ('a -> unit) -> 'a slice -> unit
 
 `app f sl` applies `f` to every element, from 0 up, for its effect.
 
-**Law** `app f sl = appi (f o #2) sl`
+**Law** `app f sl = appi (f o #2) sl` (for every `f : 'a -> unit`, `sl : 'a ArraySlice.slice`)
 
 **Example** `let val s = ref 0 in app (fn x => s := !s + x) (slice (Array.fromList [1, 2, 3], 1, NONE)); !s end = 5`
 
@@ -430,7 +428,7 @@ val modify : ('a -> 'a) -> 'a slice -> unit
 
 `modify f sl` replaces every element by `f` of it, in place, from 0 up.
 
-**Law** `modify f sl = modifyi (fn (_, x) => f x) sl`
+**Law** `modify f sl = modifyi (fn (_, x) => f x) sl` (for every `f : 'a -> 'a`, `sl : 'a ArraySlice.slice`)
 
 **Example** `let val a = Array.fromList [1, 2, 3, 4] in modify (fn _ => 0) (slice (a, 1, SOME 2)); Array.vector a end = Vector.fromList [1, 0, 0, 4]`
 
@@ -484,7 +482,7 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldl f init sl` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init sl = foldli (fn (_, a, x) => f (a, x)) init sl`
+**Law** `foldl f init sl = foldli (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `sl : 'a ArraySlice.slice`)
 
 **Example** `foldl (op ::) [] (full (Array.fromList [1, 2, 3])) = [3, 2, 1]`
 
@@ -502,7 +500,7 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldr f init sl` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init sl = foldri (fn (_, a, x) => f (a, x)) init sl`
+**Law** `foldr f init sl = foldri (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `sl : 'a ArraySlice.slice`)
 
 **Example** `foldr (op ::) [] (full (Array.fromList [1, 2, 3])) = [1, 2, 3]`
 
@@ -541,7 +539,7 @@ val find : ('a -> bool) -> 'a slice -> 'a option
 
 `find p sl` is `SOME x` for the first element that satisfies `p`, or `NONE`.
 
-**Law** `find p sl = Option.map #2 (findi (fn (_, x) => p x) sl)`
+**Law** `find p sl = Option.map #2 (findi (fn (_, x) => p x) sl)` (for every `p : 'a -> bool`, `sl : 'a ArraySlice.slice`)
 
 **Example** `find (fn x => x > 1) (full (Array.fromList [1, 2, 3])) = SOME 2`
 
@@ -561,7 +559,7 @@ val exists : ('a -> bool) -> 'a slice -> bool
 
 Only the elements of the slice are looked at, not the rest of its array.
 
-**Law** `exists p sl = isSome (find p sl)`
+**Law** `exists p sl = isSome (find p sl)` (for every `p : 'a -> bool`, `sl : 'a ArraySlice.slice`)
 
 **Example** `exists (fn x => x = 1) (slice (Array.fromList [1, 2, 3], 1, NONE)) = false`
 
@@ -579,7 +577,7 @@ val all : ('a -> bool) -> 'a slice -> bool
 
 `all p sl` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-**Law** `all p sl = not (exists (not o p) sl)`
+**Law** `all p sl = not (exists (not o p) sl)` (for every `p : 'a -> bool`, `sl : 'a ArraySlice.slice`)
 
 **Example** `all (fn x => x > 1) (slice (Array.fromList [1, 2, 3], 1, NONE)) = true`
 
@@ -597,7 +595,7 @@ val collate : ('a * 'a -> order) -> 'a slice * 'a slice -> order
 
 `collate cmp (sl, tl)` compares the elements of two slices lexicographically with `cmp`.
 
-**Law** `collate cmp (sl, tl) = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] tl)`
+**Law** `collate cmp (sl, sl') = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] sl')` (for every `cmp : 'a * 'a -> order`, `sl : 'a ArraySlice.slice`, `sl' : 'a ArraySlice.slice`)
 
 **Example** `collate Int.compare (slice (Array.fromList [1, 2, 3], 1, NONE), full (Array.fromList [2])) = GREATER`
 

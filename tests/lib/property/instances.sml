@@ -148,6 +148,8 @@ val () = probe ("IEEEReal.float_class", IEEERealArb.floatClass)
 val () = probe ("IEEEReal.decimal_approx", IEEERealArb.decimalApprox)
 val () = probe ("StringCvt.radix", BasisDataArb.radix)
 val () = probe ("'a VectorSlice.slice", Arb.vectorSlice int)
+(* lib/random's own law (M7) *)
+val () = probe ("Random.gen", RandomArb.arb)
 
 val () = print ("frozen " ^ StringCvt.padLeft #"0" 16 (Word64.fmt StringCvt.HEX (!observed)) ^ "\n")
 val () = if !failed = 0 then () else OS.Process.exit OS.Process.failure

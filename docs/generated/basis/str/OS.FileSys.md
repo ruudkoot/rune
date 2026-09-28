@@ -26,11 +26,11 @@ What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | [`access_mode`](../sig/OS_FILE_SYS.md#type-access_mode) | `A_READ` &#124; `A_WRITE` &#124; `A_EXEC` |
-| type | [`dirstream`](../sig/OS_FILE_SYS.md#type-dirstream) | *a type of its own* |
+| type | [`dirstream`](../sig/OS_FILE_SYS.md#type-dirstream) | `RuneFileSys.dirstream` |
 | type | [`file_id`](../sig/OS_FILE_SYS.md#type-file_id) | *a type of its own* |
-| val | [`access`](../sig/OS_FILE_SYS.md#val-access) | `string * access_mode list -> bool` |
+| val | [`access`](../sig/OS_FILE_SYS.md#val-access) | `string * RuneFileSys.access_mode list -> bool` |
 | val | [`chDir`](../sig/OS_FILE_SYS.md#val-chdir) | `string -> unit` |
-| val | [`closeDir`](../sig/OS_FILE_SYS.md#val-closedir) | `dirstream -> unit` |
+| val | [`closeDir`](../sig/OS_FILE_SYS.md#val-closedir) | `RuneFileSys.dirstream -> unit` |
 | val | [`compare`](../sig/OS_FILE_SYS.md#val-compare) | `file_id * file_id -> order` |
 | val | [`fileId`](../sig/OS_FILE_SYS.md#val-fileid) | `string -> file_id` |
 | val | [`fileSize`](../sig/OS_FILE_SYS.md#val-filesize) | `string -> int` |
@@ -41,13 +41,13 @@ What each means is on [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md); the types are this
 | val | [`isLink`](../sig/OS_FILE_SYS.md#val-islink) | `string -> bool` |
 | val | [`mkDir`](../sig/OS_FILE_SYS.md#val-mkdir) | `string -> unit` |
 | val | [`modTime`](../sig/OS_FILE_SYS.md#val-modtime) | `string -> Time.time` |
-| val | [`openDir`](../sig/OS_FILE_SYS.md#val-opendir) | `string -> dirstream` |
-| val | [`readDir`](../sig/OS_FILE_SYS.md#val-readdir) | `dirstream -> string option` |
+| val | [`openDir`](../sig/OS_FILE_SYS.md#val-opendir) | `string -> RuneFileSys.dirstream` |
+| val | [`readDir`](../sig/OS_FILE_SYS.md#val-readdir) | `RuneFileSys.dirstream -> string option` |
 | val | [`readLink`](../sig/OS_FILE_SYS.md#val-readlink) | `string -> string` |
 | val | [`realPath`](../sig/OS_FILE_SYS.md#val-realpath) | `string -> string` |
 | val | [`remove`](../sig/OS_FILE_SYS.md#val-remove) | `string -> unit` |
 | val | [`rename`](../sig/OS_FILE_SYS.md#val-rename) | `{new : string, old : string} -> unit` |
-| val | [`rewindDir`](../sig/OS_FILE_SYS.md#val-rewinddir) | `dirstream -> unit` |
+| val | [`rewindDir`](../sig/OS_FILE_SYS.md#val-rewinddir) | `RuneFileSys.dirstream -> unit` |
 | val | [`rmDir`](../sig/OS_FILE_SYS.md#val-rmdir) | `string -> unit` |
 | val | [`setTime`](../sig/OS_FILE_SYS.md#val-settime) | `string * Time.time option -> unit` |
 | val | [`tmpName`](../sig/OS_FILE_SYS.md#val-tmpname) | `unit -> string` |

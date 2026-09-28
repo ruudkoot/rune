@@ -85,7 +85,7 @@ val zip : 'a list * 'b list -> ('a * 'b) list
 
 It stops at the end of the shorter list.
 
-**Law** `List.length (zip (l, m)) = Int.min (List.length l, List.length m)`
+**Law** `List.length (zip (l, m)) = Int.min (List.length l, List.length m)` (for every `l : 'a list`, `m : 'b list`)
 
 **Example** `zip ([1, 2, 3], ["a", "b"]) = [(1, "a"), (2, "b")]`
 
@@ -121,7 +121,7 @@ val unzip : ('a * 'b) list -> 'a list * 'b list
 
 `unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.
 
-**Law** `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other
+**Law** `unzip (zip (l, m)) = (l, m)` when `length l = length m` (for every `l : 'a list`, `m : 'b list`)
 
 **Example** `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])`
 
@@ -141,7 +141,7 @@ val app : ('a * 'b -> unit) -> 'a list * 'b list -> unit
 
 `app f (l, m)` applies `f` to the pairs of elements at the same position, from left to right, for its effect.
 
-**Law** `app f (l, m) = List.app f (zip (l, m))`
+**Law** `app f (l, m) = List.app f (zip (l, m))` (for every `f : 'a * 'b -> unit`, `l : 'a list`, `m : 'b list`)
 
 **Example** `let val sum = ref 0 in app (fn (a, b) => sum := !sum + a * b) ([1, 2], [3, 4]); !sum end = 11`
 
@@ -180,7 +180,7 @@ val map : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
 `map f (l, m)` is the list of the results of `f` on the pairs of elements at the same position.
 
-**Law** `map f (l, m) = List.map f (zip (l, m))`
+**Law** `map f (l, m) = List.map f (zip (l, m))` (for every `f : 'a * 'b -> 'c`, `l : 'a list`, `m : 'b list`)
 
 **Example** `map (op +) ([1, 2], [10, 20, 30]) = [11, 22]`
 
@@ -224,7 +224,7 @@ val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 `f` takes the two elements and the accumulator, and the traversal stops
 at the end of the shorter list.
 
-**Law** `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+**Law** `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'a * 'b * 'c -> 'c`, `init : 'c`, `l : 'a list`, `m : 'b list`)
 
 **Example** `foldl (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11`
 
@@ -242,7 +242,7 @@ val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
 `foldr f init (l, m)` combines the pairs of elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))`
+**Law** `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'a * 'b * 'c -> 'c`, `init : 'c`, `l : 'a list`, `m : 'b list`)
 
 **Example** `foldr (fn (a, b, acc) => (a, b) :: acc) [] ([1, 2], ["a", "b", "c"]) = [(1, "a"), (2, "b")]`
 
@@ -309,7 +309,7 @@ val all : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 It stops at the first pair that does not, and at the end of the shorter
 list, so `all p (l, [])` is `true`.
 
-**Law** `all p (l, m) = List.all p (zip (l, m))`
+**Law** `all p (l, m) = List.all p (zip (l, m))` (for every `p : 'a * 'b -> bool`, `l : 'a list`, `m : 'b list`)
 
 **Example** `all (op <) ([1, 2], [2, 3, 0]) = true`
 
@@ -329,7 +329,7 @@ val exists : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 
 It stops at the first pair that does, and at the end of the shorter list.
 
-**Law** `exists p (l, m) = List.exists p (zip (l, m))`
+**Law** `exists p (l, m) = List.exists p (zip (l, m))` (for every `p : 'a * 'b -> bool`, `l : 'a list`, `m : 'b list`)
 
 **Example** `exists (op =) ([1, 2], [2, 2]) = true`
 

@@ -71,7 +71,7 @@ sig
 
      Raises: `Empty` if `l` is empty.
 
-     Law: `hd l :: tl l = l` for a non-empty `l`
+     Law: `hd l :: tl l = l` for `not (null l)`
 
      Example: `hd [1, 2, 3] = 1`
 
@@ -118,7 +118,7 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i > length l`.
 
-     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
+     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i andalso i <= length l`
 
      Example: `take ([1, 2, 3], 2) = [1, 2]` *)
   val take : 'a list * int -> 'a list

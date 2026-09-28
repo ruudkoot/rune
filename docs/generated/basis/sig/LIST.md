@@ -136,7 +136,7 @@ val null : 'a list -> bool
 
 Unlike `l = []` it does not need an equality type.
 
-**Law** `null l = (length l = 0)`
+**Law** `null l = (length l = 0)` (for every `l : 'a list`)
 
 **Example** `null [] = true`
 
@@ -156,7 +156,7 @@ val length : 'a list -> int
 
 `length l` is the number of elements of `l`.
 
-**Law** `length (l @ m) = length l + length m`
+**Law** `length (l @ m) = length l + length m` (for every `l : 'a list`, `m : 'a list`)
 
 **Example** `length [1, 2, 3] = 3`
 
@@ -205,7 +205,7 @@ val hd : 'a list -> 'a
 
 **Raises** [`Empty`](#exn-empty) if `l` is empty.
 
-**Law** `hd l :: tl l = l` for a non-empty `l`
+**Law** `hd l :: tl l = l` for `not (null l)` (for every `l : 'a list`)
 
 **Example** `hd [1, 2, 3] = 1`
 
@@ -309,7 +309,7 @@ val take : 'a list * int -> 'a list
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length l`.
 
-**Law** `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
+**Law** `take (l, i) @ drop (l, i) = l` for `0 <= i andalso i <= length l` (for every `l : 'a list`, `i : int`)
 
 **Example** `take ([1, 2, 3], 2) = [1, 2]`
 
@@ -349,7 +349,7 @@ val rev : 'a list -> 'a list
 
 `rev l` is the list of the elements of `l` in the opposite order.
 
-**Law** `rev (rev l) = l`
+**Law** `rev (rev l) = l` (for every `l : 'a list`)
 
 **Example** `rev [1, 2, 3] = [3, 2, 1]`
 
@@ -369,7 +369,7 @@ val concat : 'a list list -> 'a list
 
 `concat ls` appends all the lists of `ls`, in order.
 
-**Law** `concat [l, m, n] = l @ m @ n`
+**Law** `concat [l, m, n] = l @ m @ n` (for every `l : 'a list`, `m : 'a list`, `n : 'a list`)
 
 **Example** `concat [[1], [], [2, 3]] = [1, 2, 3]`
 
@@ -391,7 +391,7 @@ the intermediate list.
 It is the usual way to finish a loop that accumulated its results back to
 front.
 
-**Law** `revAppend (l, m) = rev l @ m`
+**Law** `revAppend (l, m) = rev l @ m` (for every `l : 'a list`, `m : 'a list`)
 
 **Example** `revAppend ([1, 2], [3]) = [2, 1, 3]`
 
@@ -412,7 +412,7 @@ val app : ('a -> unit) -> 'a list -> unit
 `app f l` applies `f` to every element of `l`, from left to right, for its
 effect.
 
-**Law** `app f l = foldl (fn (x, ()) => f x) () l`
+**Law** `app f l = foldl (fn (x, ()) => f x) () l` (for every `f : 'a -> unit`, `l : 'a list`)
 
 **Example** `let val sum = ref 0 in app (fn x => sum := !sum + x) [1, 2, 3]; !sum end = 6`
 
@@ -433,7 +433,7 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 `map f l` is the list of the results of applying `f` to each element of
 `l`, from left to right.
 
-**Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects
+**Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects (for every `f : 'a -> 'b`, `g : 'c -> 'a`, `l : 'c list`)
 
 **Example** `map (fn x => x * 2) [1, 2, 3] = [2, 4, 6]`
 
@@ -457,7 +457,7 @@ every result `SOME v`, in order.
 Elements for which `f` answers `NONE` leave nothing behind: it is a [`map`](#val-map)
 and a [`filter`](#val-filter) in one pass.
 
-**Law** `mapPartial f l = map valOf (filter isSome (map f l))`
+**Law** `mapPartial f l = map valOf (filter isSome (map f l))` (for every `f : 'a -> 'b option`, `l : 'a list`)
 
 **Example** `mapPartial (fn x => if x > 1 then SOME (x * x) else NONE) [1, 2, 3] = [4, 9]`
 
@@ -499,7 +499,7 @@ original order.
 
 `p` is applied to every element, from left to right.
 
-**Law** `filter p l = #1 (partition p l)`
+**Law** `filter p l = #1 (partition p l)` (for every `p : 'a -> bool`, `l : 'a list`)
 
 **Example** `filter (fn x => x mod 2 = 1) [1, 2, 3] = [1, 3]`
 
@@ -522,7 +522,7 @@ Both lists keep the original order, and `p` is applied once to every
 element, from left to right.
 
 **Law** `partition p l = (filter p l, filter (not o p) l)` when `p` has no
-effects
+effects (for every `p : 'a -> bool`, `l : 'a list`)
 
 **Example** `partition (fn x => x > 1) [1, 2, 3] = ([2, 3], [1])`
 
@@ -545,7 +545,7 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 The accumulator is the second component of the argument of `f`, and
 `foldl f init [] = init`.
 
-**Law** `foldl (op ::) [] l = rev l`
+**Law** `foldl (op ::) [] l = rev l` (for every `l : 'a list`)
 
 **Example** `foldl (op -) 0 [1, 2, 3] = 3 - (2 - (1 - 0))`, which is 2.
 
@@ -569,7 +569,7 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 
 `foldr f init [] = init`.
 
-**Law** `foldr (op ::) [] l = l`
+**Law** `foldr (op ::) [] l = l` (for every `l : 'a list`)
 
 **Example** `foldr (op -) 0 [1, 2, 3] = 1 - (2 - (3 - 0))`, which is 2.
 
@@ -592,7 +592,7 @@ the first one that does.
 
 `exists p []` is `false`.
 
-**Law** `exists p l = not (all (not o p) l)`
+**Law** `exists p l = not (all (not o p) l)` (for every `p : 'a -> bool`, `l : 'a list`)
 
 **Example** `exists (fn x => x > 2) [1, 2, 3] = true`
 
@@ -635,7 +635,7 @@ of increasing argument.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`, before `f` is applied at all.
 
-**Law** `tabulate (length l, fn i => nth (l, i)) = l`
+**Law** `tabulate (length l, fn i => nth (l, i)) = l` (for every `l : 'a list`)
 
 **Example** `tabulate (3, fn i => i * i) = [0, 1, 4]`
 

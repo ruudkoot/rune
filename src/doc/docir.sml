@@ -108,8 +108,19 @@ struct
                       (indent n ^ "list") :: List.concat (List.map (fn is => textLines (n + 1, "item", DocText.inlinesText is)) items)
                   | DocText.Reserved {keyword, modifier, body} =>
                       textLines (n, "reserved " ^ keyword ^ (case modifier of SOME m => " (" ^ m ^ ")" | NONE => ""),
-                                 DocText.inlinesText body))
+                                 DocText.inlinesText body)
+                      @ (if keyword = "Law" then lawLines (n + 1, body) else []))
                 doc)
+
+  (* how the grammar of laws reads a `Law:` paragraph (quickcheck M7) *)
+  and lawLines (n, body) =
+    let val {laws, conditions, domains, pure} = DocLawGrammar.parts body
+    in
+      List.map (fn l => indent n ^ "law: " ^ l) laws
+      @ List.map (fn c => indent n ^ "condition: " ^ c) conditions
+      @ List.map (fn (x, g) => indent n ^ "domain: " ^ x ^ " from " ^ g) domains
+      @ List.map (fn f => indent n ^ "pure: " ^ f) pure
+    end
 
   fun fieldLines n ({label, ty, doc} : field) =
     (indent n ^ "field " ^ label ^ " : " ^ ty) :: docLines (n + 1, doc)

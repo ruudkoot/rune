@@ -184,7 +184,8 @@ waits.
 > what the fields hold: the exception the reader raised is the `cause` and
 > the reader's own name is the `name`.
 
-**Law** `#1 (input f) = #1 (input f)`: a stream in hand does not change
+**Law** `let val (a, _) = input f val (b, _) = input f in a = b end`: a
+stream in hand does not change (for every `f : BinIO.StreamIO.instream`)
 
 **Example** `Byte.bytesToString (#1 (input (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"`
 
@@ -211,7 +212,7 @@ val input1 : instream -> (elem * instream) option
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
 **Law** `isSome (input1 f) = not (endOfStream f)` when the reader does not
-fail
+fail (for every `f : BinIO.StreamIO.instream`)
 
 A stream is a value, and reading from it gives another, so reading the
 same stream twice gives the same element:
@@ -598,7 +599,7 @@ Changing to `NO_BUF` flushes what is held.
 > changes. Changing between `LINE_BUF` and `BLOCK_BUF` does not flush:
 > what is held stays until the new mode lets it go.
 
-**Law** `(setBufferMode (f, mode); getBufferMode f) = mode`
+**Law** `(setBufferMode (f, mode); getBufferMode f) = mode` (for every `f : BinIO.StreamIO.outstream`, `mode : IO.buffer_mode`)
 
 **Example** `let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in setBufferMode (f, IO.BLOCK_BUF); getBufferMode f end = IO.BLOCK_BUF`
 
@@ -620,7 +621,7 @@ val getBufferMode : outstream -> IO.buffer_mode
 
 `getBufferMode f` is the mode `f` holds back by.
 
-**Law** `getBufferMode (mkOutstream (wr, mode)) = mode`
+**Law** `getBufferMode (mkOutstream (wr, mode)) = mode` (for every `wr : BinPrimIO.writer`, `mode : IO.buffer_mode`)
 
 **Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in getBufferMode out before (closeOut out; OS.FileSys.remove p) end = IO.BLOCK_BUF`
 
@@ -677,7 +678,7 @@ val getWriter : outstream -> writer * IO.buffer_mode
 > already terminated gives its writer and its mode again without flushing;
 > only a closed one raises.
 
-**Law** `#2 (getWriter (mkOutstream (wr, mode))) = mode`
+**Law** `#2 (getWriter (mkOutstream (wr, mode))) = mode` (for every `wr : BinPrimIO.writer`, `mode : IO.buffer_mode`)
 
 **Example** `#2 (getWriter (mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF))) = IO.NO_BUF`
 

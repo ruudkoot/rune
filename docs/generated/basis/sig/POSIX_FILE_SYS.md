@@ -211,7 +211,7 @@ val wordToFD : SysWord.word -> file_desc
 
 `wordToFD w` is the descriptor numbered `w`, whether or not it is open.
 
-**Law** `fdToWord (wordToFD w) = w`
+**Law** `fdToWord (wordToFD w) = w` (for every `w : word`)
 
 <details><summary>Other implementations (1)</summary>
 
@@ -247,7 +247,7 @@ val iodToFD : OS.IO.iodesc -> file_desc option
 
 `iodToFD iod` is `SOME` of the descriptor that `iod` is, or `NONE` when it is not one.
 
-**Law** `iodToFD (fdToIOD fd) = SOME fd`
+**Law** `iodToFD (fdToIOD fd) = SOME fd` (for every `fd : Posix.ProcEnv.file_desc`)
 
 **Example** `iodToFD (fdToIOD stdin) = SOME stdin`
 
@@ -1172,7 +1172,7 @@ val devToWord : dev -> SysWord.word
 
 `devToWord d` is the number of the device `d`.
 
-**Law** `devToWord (wordToDev w) = w`
+**Law** `devToWord (wordToDev w) = w` (for every `w : word`)
 
 <details><summary>Tests (2)</summary>
 
@@ -1210,7 +1210,7 @@ val inoToWord : ino -> SysWord.word
 
 `inoToWord i` is the number of the file `i`.
 
-**Law** `inoToWord (wordToIno w) = w`
+**Law** `inoToWord (wordToIno w) = w` (for every `w : word`)
 
 <details><summary>Tests (2)</summary>
 

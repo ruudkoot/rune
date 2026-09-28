@@ -25,16 +25,16 @@ What each means is on [`OS_PROCESS`](../sig/OS_PROCESS.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`status`](../sig/OS_PROCESS.md#type-status) | *a type of its own* |
+| type | [`status`](../sig/OS_PROCESS.md#type-status) | `RuneStatus.status` |
 | val | [`atExit`](../sig/OS_PROCESS.md#val-atexit) | `(unit -> unit) -> unit` |
-| val | [`exit`](../sig/OS_PROCESS.md#val-exit) | `status -> 'a` |
-| val | [`failure`](../sig/OS_PROCESS.md#val-failure) | `status` |
+| val | [`exit`](../sig/OS_PROCESS.md#val-exit) | `RuneStatus.status -> 'a` |
+| val | [`failure`](../sig/OS_PROCESS.md#val-failure) | `RuneStatus.status` |
 | val | [`getEnv`](../sig/OS_PROCESS.md#val-getenv) | `string -> string option` |
-| val | [`isSuccess`](../sig/OS_PROCESS.md#val-issuccess) | `status -> bool` |
+| val | [`isSuccess`](../sig/OS_PROCESS.md#val-issuccess) | `RuneStatus.status -> bool` |
 | val | [`sleep`](../sig/OS_PROCESS.md#val-sleep) | `Time.time -> unit` |
-| val | [`success`](../sig/OS_PROCESS.md#val-success) | `status` |
-| val | [`system`](../sig/OS_PROCESS.md#val-system) | `string -> status` |
-| val | [`terminate`](../sig/OS_PROCESS.md#val-terminate) | `status -> 'a` |
+| val | [`success`](../sig/OS_PROCESS.md#val-success) | `RuneStatus.status` |
+| val | [`system`](../sig/OS_PROCESS.md#val-system) | `string -> RuneStatus.status` |
+| val | [`terminate`](../sig/OS_PROCESS.md#val-terminate) | `RuneStatus.status -> 'a` |
 
 ## Notes
 

@@ -207,7 +207,11 @@ sig
     (* `ltype fl` is the kind of lock `fl` describes.
 
        Law: `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p})
-       = t`, and likewise for the other fields *)
+       = t`, and `whence (flock {ltype = t, whence = w, start = s, len = n, pid
+       = p}) = w`, and `start (flock {ltype = t, whence = w, start = s, len =
+       n, pid = p}) = s`, and `len (flock {ltype = t, whence = w, start = s,
+       len = n, pid = p}) = n`, and `pid (flock {ltype = t, whence = w, start =
+       s, len = n, pid = p}) = p` *)
     val ltype : flock -> lock_type
 
     (* `whence fl` is what `start fl` is counted from. *)

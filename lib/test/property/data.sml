@@ -136,3 +136,18 @@ struct
                     end,
      co = fn r => Random.hashString (contents r), eq = NONE}
 end
+
+(* The arbitrary of the generators of lib/random: the generator of a seed
+   drawn as `Gen.word64` draws a word, shown by `Random.toString`.
+
+   Implements: ARB_OF where type t = Random.gen *)
+structure RandomArb : ARB_OF where type t = Random.gen =
+struct
+  type t = Random.gen
+
+  val arb : Random.gen Arb.arb =
+    {gen = Gen.map Random.fromSeed Gen.word64,
+     show = fn g => "valOf (Random.fromString " ^ Show.string (Random.toString g) ^ ")",
+     co = fn g => Random.hashString (Random.toString g),
+     eq = SOME (fn (g, h) => Random.toString g = Random.toString h)}
+end

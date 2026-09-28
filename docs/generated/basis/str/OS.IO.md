@@ -26,24 +26,24 @@ What each means is on [`OS_IO`](../sig/OS_IO.md); the types are this structure's
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`iodesc`](../sig/OS_IO.md#type-iodesc) | *a type of its own* |
+| type | [`iodesc`](../sig/OS_IO.md#type-iodesc) | `RuneIODesc.iodesc` |
 | type | [`iodesc_kind`](../sig/OS_IO.md#type-iodesc_kind) | *a type of its own* |
 | type | [`poll_desc`](../sig/OS_IO.md#type-poll_desc) | *a type of its own* |
 | type | [`poll_info`](../sig/OS_IO.md#type-poll_info) | *a type of its own* |
 | exception | [`Poll`](../sig/OS_IO.md#exn-poll) |  |
-| val | [`compare`](../sig/OS_IO.md#val-compare) | `iodesc * iodesc -> order` |
-| val | [`hash`](../sig/OS_IO.md#val-hash) | `iodesc -> word` |
+| val | [`compare`](../sig/OS_IO.md#val-compare) | `RuneIODesc.iodesc * RuneIODesc.iodesc -> order` |
+| val | [`hash`](../sig/OS_IO.md#val-hash) | `RuneIODesc.iodesc -> word` |
 | val | [`infoToPollDesc`](../sig/OS_IO.md#val-infotopolldesc) | `poll_info -> poll_desc` |
 | val | [`isIn`](../sig/OS_IO.md#val-isin) | `poll_info -> bool` |
 | val | [`isOut`](../sig/OS_IO.md#val-isout) | `poll_info -> bool` |
 | val | [`isPri`](../sig/OS_IO.md#val-ispri) | `poll_info -> bool` |
-| val | [`kind`](../sig/OS_IO.md#val-kind) | `iodesc -> iodesc_kind` |
+| val | [`kind`](../sig/OS_IO.md#val-kind) | `RuneIODesc.iodesc -> iodesc_kind` |
 | val | [`poll`](../sig/OS_IO.md#val-poll) | `poll_desc list * Time.time option -> poll_info list` |
-| val | [`pollDesc`](../sig/OS_IO.md#val-polldesc) | `iodesc -> poll_desc option` |
+| val | [`pollDesc`](../sig/OS_IO.md#val-polldesc) | `RuneIODesc.iodesc -> poll_desc option` |
 | val | [`pollIn`](../sig/OS_IO.md#val-pollin) | `poll_desc -> poll_desc` |
 | val | [`pollOut`](../sig/OS_IO.md#val-pollout) | `poll_desc -> poll_desc` |
 | val | [`pollPri`](../sig/OS_IO.md#val-pollpri) | `poll_desc -> poll_desc` |
-| val | [`pollToIODesc`](../sig/OS_IO.md#val-polltoiodesc) | `poll_desc -> iodesc` |
+| val | [`pollToIODesc`](../sig/OS_IO.md#val-polltoiodesc) | `poll_desc -> RuneIODesc.iodesc` |
 | structure | [`Kind`](../str/OS.IO.Kind.md) |  |
 
 ## Notes

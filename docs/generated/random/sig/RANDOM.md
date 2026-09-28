@@ -117,7 +117,7 @@ it must.
 
 **Raises** [`Domain`](../../basis/sig/GENERAL.md#exn-domain) if `n` is zero.
 
-**Law** `#1 (below n g) < n = true` for `n <> 0w0`
+**Law** `#1 (below n g) < n = true` for `n <> 0w0` (for every `n : Word64.word`, `g : Random.gen`)
 
 **Example** `#1 (below 0w1 (fromSeed 0w3)) = 0w0`
 
@@ -200,7 +200,7 @@ val fromString : string -> gen option
 when `s` is none: two hexadecimal numbers with a colon between them,
 the second odd.
 
-**Law** `Option.map toString (fromString (toString g)) = SOME (toString g)`
+**Law** `Option.map toString (fromString (toString g)) = SOME (toString g)` (for every `g : Random.gen`)
 
 **Example** `not (isSome (fromString "12:34"))`, for the gamma is even
 

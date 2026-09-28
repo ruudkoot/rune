@@ -45,6 +45,7 @@ signature names and no others, unless the structure is listed at the end of this
 | [`PropertyDimensions`](str/PropertyDimensions.md) | *none* |  | required |  | [lib/test/property/family.sml](../../../../lib/test/property/family.sml) |
 | [`PropertyScratch`](str/PropertyScratch.md) | *none* |  | required |  | [lib/test/property/system.sml](../../../../lib/test/property/system.sml) |
 | [`PropertySource`](str/PropertySource.md) | *none* |  | required |  | [lib/test/property/source.sml](../../../../lib/test/property/source.sml) |
+| [`RandomArb`](str/RandomArb.md) | : [`ARB_OF`](sig/ARB_OF.md) | `where type t = Random.gen` | required |  | [lib/test/property/data.sml](../../../../lib/test/property/data.sml) |
 | [`Real32Arb`](str/Real32Arb.md) | : [`ARB_OF`](sig/ARB_OF.md) | `where type t = Real32.real` | required | an application of `RealArbFn` | [lib/test/property/sized.sml](../../../../lib/test/property/sized.sml) |
 | [`Real64Arb`](str/Real64Arb.md) | : [`ARB_OF`](sig/ARB_OF.md) | `where type t = Real64.real` | required | an application of `RealArbFn` | [lib/test/property/sized.sml](../../../../lib/test/property/sized.sml) |
 | [`RealArb`](str/RealArb.md) | : [`ARB_OF`](sig/ARB_OF.md) | `where type t = Real.real` | required | an application of `RealArbFn` | [lib/test/property/numbers.sml](../../../../lib/test/property/numbers.sml) |

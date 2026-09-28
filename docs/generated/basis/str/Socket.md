@@ -31,56 +31,56 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 | type | [`out_flags`](../sig/SOCKET.md#type-out_flags) | `{don't_route : bool, oob : bool}` |
 | type | [`passive`](../sig/SOCKET.md#type-passive) | `passive'` |
 | datatype | [`shutdown_mode`](../sig/SOCKET.md#type-shutdown_mode) | `NO_RECVS` &#124; `NO_SENDS` &#124; `NO_RECVS_OR_SENDS` |
-| type | [`sock`](../sig/SOCKET.md#type-sock) | *a type of its own* |
-| type | [`sock_addr`](../sig/SOCKET.md#type-sock_addr) | *a type of its own* |
+| type | [`sock`](../sig/SOCKET.md#type-sock) | `('a, 'b) RuneSocket.sock` |
+| type | [`sock_addr`](../sig/SOCKET.md#type-sock_addr) | `'a RuneSocket.sock_addr` |
 | type | [`sock_desc`](../sig/SOCKET.md#type-sock_desc) | *a type of its own* |
 | type | [`stream`](../sig/SOCKET.md#type-stream) | `'a stream'` |
-| val | [`accept`](../sig/SOCKET.md#val-accept) | `('a, passive' stream') sock -> ('a, active' stream') sock * 'a sock_addr` |
-| val | [`acceptNB`](../sig/SOCKET.md#val-acceptnb) | `('a, passive' stream') sock -> (('a, active' stream') sock * 'a sock_addr) option` |
-| val | [`bind`](../sig/SOCKET.md#val-bind) | `('a, 'b) sock * 'a sock_addr -> unit` |
-| val | [`close`](../sig/SOCKET.md#val-close) | `('a, 'b) sock -> unit` |
-| val | [`connect`](../sig/SOCKET.md#val-connect) | `('a, 'b) sock * 'a sock_addr -> unit` |
-| val | [`connectNB`](../sig/SOCKET.md#val-connectnb) | `('a, 'b) sock * 'a sock_addr -> bool` |
-| val | [`familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) | `'a sock_addr -> NetHostDB.addr_family` |
-| val | [`ioDesc`](../sig/SOCKET.md#val-iodesc) | `('a, 'b) sock -> OS.IO.iodesc` |
-| val | [`listen`](../sig/SOCKET.md#val-listen) | `('a, passive' stream') sock * int -> unit` |
-| val | [`recvArr`](../sig/SOCKET.md#val-recvarr) | `('a, active' stream') sock * Word8ArraySlice.slice -> int` |
-| val | [`recvArr'`](../sig/SOCKET.md#val-recvarr-prime) | `('a, active' stream') sock * Word8ArraySlice.slice * in_flags -> int` |
-| val | [`recvArrFrom`](../sig/SOCKET.md#val-recvarrfrom) | `('a, dgram') sock * Word8ArraySlice.slice -> int * 'a sock_addr` |
-| val | [`recvArrFrom'`](../sig/SOCKET.md#val-recvarrfrom-prime) | `('a, dgram') sock * Word8ArraySlice.slice * in_flags -> int * 'a sock_addr` |
-| val | [`recvArrFromNB`](../sig/SOCKET.md#val-recvarrfromnb) | `('a, dgram') sock * Word8ArraySlice.slice -> (int * 'a sock_addr) option` |
-| val | [`recvArrFromNB'`](../sig/SOCKET.md#val-recvarrfromnb-prime) | `('a, dgram') sock * Word8ArraySlice.slice * in_flags -> (int * 'a sock_addr) option` |
-| val | [`recvArrNB`](../sig/SOCKET.md#val-recvarrnb) | `('a, active' stream') sock * Word8ArraySlice.slice -> int option` |
-| val | [`recvArrNB'`](../sig/SOCKET.md#val-recvarrnb-prime) | `('a, active' stream') sock * Word8ArraySlice.slice * in_flags -> int option` |
-| val | [`recvVec`](../sig/SOCKET.md#val-recvvec) | `('a, active' stream') sock * int -> Word8Vector.vector` |
-| val | [`recvVec'`](../sig/SOCKET.md#val-recvvec-prime) | `('a, active' stream') sock * int * in_flags -> Word8Vector.vector` |
-| val | [`recvVecFrom`](../sig/SOCKET.md#val-recvvecfrom) | `('a, dgram') sock * int -> Word8Vector.vector * 'a sock_addr` |
-| val | [`recvVecFrom'`](../sig/SOCKET.md#val-recvvecfrom-prime) | `('a, dgram') sock * int * in_flags -> Word8Vector.vector * 'a sock_addr` |
-| val | [`recvVecFromNB`](../sig/SOCKET.md#val-recvvecfromnb) | `('a, dgram') sock * int -> (Word8Vector.vector * 'a sock_addr) option` |
-| val | [`recvVecFromNB'`](../sig/SOCKET.md#val-recvvecfromnb-prime) | `('a, dgram') sock * int * in_flags -> (Word8Vector.vector * 'a sock_addr) option` |
-| val | [`recvVecNB`](../sig/SOCKET.md#val-recvvecnb) | `('a, active' stream') sock * int -> Word8Vector.vector option` |
-| val | [`recvVecNB'`](../sig/SOCKET.md#val-recvvecnb-prime) | `('a, active' stream') sock * int * in_flags -> Word8Vector.vector option` |
-| val | [`sameAddr`](../sig/SOCKET.md#val-sameaddr) | `'a sock_addr * 'a sock_addr -> bool` |
+| val | [`accept`](../sig/SOCKET.md#val-accept) | `('a, passive' stream') RuneSocket.sock -> ('a, active' stream') RuneSocket.sock * 'a RuneSocket.sock_addr` |
+| val | [`acceptNB`](../sig/SOCKET.md#val-acceptnb) | `('a, passive' stream') RuneSocket.sock -> (('a, active' stream') RuneSocket.sock * 'a RuneSocket.sock_addr) option` |
+| val | [`bind`](../sig/SOCKET.md#val-bind) | `('a, 'b) RuneSocket.sock * 'a RuneSocket.sock_addr -> unit` |
+| val | [`close`](../sig/SOCKET.md#val-close) | `('a, 'b) RuneSocket.sock -> unit` |
+| val | [`connect`](../sig/SOCKET.md#val-connect) | `('a, 'b) RuneSocket.sock * 'a RuneSocket.sock_addr -> unit` |
+| val | [`connectNB`](../sig/SOCKET.md#val-connectnb) | `('a, 'b) RuneSocket.sock * 'a RuneSocket.sock_addr -> bool` |
+| val | [`familyOfAddr`](../sig/SOCKET.md#val-familyofaddr) | `'a RuneSocket.sock_addr -> RuneNet.addr_family` |
+| val | [`ioDesc`](../sig/SOCKET.md#val-iodesc) | `('a, 'b) RuneSocket.sock -> RuneIODesc.iodesc` |
+| val | [`listen`](../sig/SOCKET.md#val-listen) | `('a, passive' stream') RuneSocket.sock * int -> unit` |
+| val | [`recvArr`](../sig/SOCKET.md#val-recvarr) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice -> int` |
+| val | [`recvArr'`](../sig/SOCKET.md#val-recvarr-prime) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice * in_flags -> int` |
+| val | [`recvArrFrom`](../sig/SOCKET.md#val-recvarrfrom) | `('a, dgram') RuneSocket.sock * Word8ArraySlice.slice -> int * 'a RuneSocket.sock_addr` |
+| val | [`recvArrFrom'`](../sig/SOCKET.md#val-recvarrfrom-prime) | `('a, dgram') RuneSocket.sock * Word8ArraySlice.slice * in_flags -> int * 'a RuneSocket.sock_addr` |
+| val | [`recvArrFromNB`](../sig/SOCKET.md#val-recvarrfromnb) | `('a, dgram') RuneSocket.sock * Word8ArraySlice.slice -> (int * 'a RuneSocket.sock_addr) option` |
+| val | [`recvArrFromNB'`](../sig/SOCKET.md#val-recvarrfromnb-prime) | `('a, dgram') RuneSocket.sock * Word8ArraySlice.slice * in_flags -> (int * 'a RuneSocket.sock_addr) option` |
+| val | [`recvArrNB`](../sig/SOCKET.md#val-recvarrnb) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice -> int option` |
+| val | [`recvArrNB'`](../sig/SOCKET.md#val-recvarrnb-prime) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice * in_flags -> int option` |
+| val | [`recvVec`](../sig/SOCKET.md#val-recvvec) | `('a, active' stream') RuneSocket.sock * int -> Word8Vector.vector` |
+| val | [`recvVec'`](../sig/SOCKET.md#val-recvvec-prime) | `('a, active' stream') RuneSocket.sock * int * in_flags -> Word8Vector.vector` |
+| val | [`recvVecFrom`](../sig/SOCKET.md#val-recvvecfrom) | `('a, dgram') RuneSocket.sock * int -> Word8Vector.vector * 'a RuneSocket.sock_addr` |
+| val | [`recvVecFrom'`](../sig/SOCKET.md#val-recvvecfrom-prime) | `('a, dgram') RuneSocket.sock * int * in_flags -> Word8Vector.vector * 'a RuneSocket.sock_addr` |
+| val | [`recvVecFromNB`](../sig/SOCKET.md#val-recvvecfromnb) | `('a, dgram') RuneSocket.sock * int -> (Word8Vector.vector * 'a RuneSocket.sock_addr) option` |
+| val | [`recvVecFromNB'`](../sig/SOCKET.md#val-recvvecfromnb-prime) | `('a, dgram') RuneSocket.sock * int * in_flags -> (Word8Vector.vector * 'a RuneSocket.sock_addr) option` |
+| val | [`recvVecNB`](../sig/SOCKET.md#val-recvvecnb) | `('a, active' stream') RuneSocket.sock * int -> Word8Vector.vector option` |
+| val | [`recvVecNB'`](../sig/SOCKET.md#val-recvvecnb-prime) | `('a, active' stream') RuneSocket.sock * int * in_flags -> Word8Vector.vector option` |
+| val | [`sameAddr`](../sig/SOCKET.md#val-sameaddr) | `'a RuneSocket.sock_addr * 'a RuneSocket.sock_addr -> bool` |
 | val | [`sameDesc`](../sig/SOCKET.md#val-samedesc) | `sock_desc * sock_desc -> bool` |
 | val | [`select`](../sig/SOCKET.md#val-select) | `{exs : sock_desc list, rds : sock_desc list, timeout : Time.time option, wrs : sock_desc list} -> {exs : sock_desc list, rds : sock_desc list, wrs : sock_desc list}` |
-| val | [`sendArr`](../sig/SOCKET.md#val-sendarr) | `('a, active' stream') sock * Word8ArraySlice.slice -> int` |
-| val | [`sendArr'`](../sig/SOCKET.md#val-sendarr-prime) | `('a, active' stream') sock * Word8ArraySlice.slice * out_flags -> int` |
-| val | [`sendArrNB`](../sig/SOCKET.md#val-sendarrnb) | `('a, active' stream') sock * Word8ArraySlice.slice -> int option` |
-| val | [`sendArrNB'`](../sig/SOCKET.md#val-sendarrnb-prime) | `('a, active' stream') sock * Word8ArraySlice.slice * out_flags -> int option` |
-| val | [`sendArrTo`](../sig/SOCKET.md#val-sendarrto) | `('a, dgram') sock * 'a sock_addr * Word8ArraySlice.slice -> unit` |
-| val | [`sendArrTo'`](../sig/SOCKET.md#val-sendarrto-prime) | `('a, dgram') sock * 'a sock_addr * Word8ArraySlice.slice * out_flags -> unit` |
-| val | [`sendArrToNB`](../sig/SOCKET.md#val-sendarrtonb) | `('a, dgram') sock * 'a sock_addr * Word8ArraySlice.slice -> bool` |
-| val | [`sendArrToNB'`](../sig/SOCKET.md#val-sendarrtonb-prime) | `('a, dgram') sock * 'a sock_addr * Word8ArraySlice.slice * out_flags -> bool` |
-| val | [`sendVec`](../sig/SOCKET.md#val-sendvec) | `('a, active' stream') sock * Word8VectorSlice.slice -> int` |
-| val | [`sendVec'`](../sig/SOCKET.md#val-sendvec-prime) | `('a, active' stream') sock * Word8VectorSlice.slice * out_flags -> int` |
-| val | [`sendVecNB`](../sig/SOCKET.md#val-sendvecnb) | `('a, active' stream') sock * Word8VectorSlice.slice -> int option` |
-| val | [`sendVecNB'`](../sig/SOCKET.md#val-sendvecnb-prime) | `('a, active' stream') sock * Word8VectorSlice.slice * out_flags -> int option` |
-| val | [`sendVecTo`](../sig/SOCKET.md#val-sendvecto) | `('a, dgram') sock * 'a sock_addr * Word8VectorSlice.slice -> unit` |
-| val | [`sendVecTo'`](../sig/SOCKET.md#val-sendvecto-prime) | `('a, dgram') sock * 'a sock_addr * Word8VectorSlice.slice * out_flags -> unit` |
-| val | [`sendVecToNB`](../sig/SOCKET.md#val-sendvectonb) | `('a, dgram') sock * 'a sock_addr * Word8VectorSlice.slice -> bool` |
-| val | [`sendVecToNB'`](../sig/SOCKET.md#val-sendvectonb-prime) | `('a, dgram') sock * 'a sock_addr * Word8VectorSlice.slice * out_flags -> bool` |
-| val | [`shutdown`](../sig/SOCKET.md#val-shutdown) | `('a, 'b stream') sock * shutdown_mode -> unit` |
-| val | [`sockDesc`](../sig/SOCKET.md#val-sockdesc) | `('a, 'b) sock -> sock_desc` |
+| val | [`sendArr`](../sig/SOCKET.md#val-sendarr) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice -> int` |
+| val | [`sendArr'`](../sig/SOCKET.md#val-sendarr-prime) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice * out_flags -> int` |
+| val | [`sendArrNB`](../sig/SOCKET.md#val-sendarrnb) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice -> int option` |
+| val | [`sendArrNB'`](../sig/SOCKET.md#val-sendarrnb-prime) | `('a, active' stream') RuneSocket.sock * Word8ArraySlice.slice * out_flags -> int option` |
+| val | [`sendArrTo`](../sig/SOCKET.md#val-sendarrto) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8ArraySlice.slice -> unit` |
+| val | [`sendArrTo'`](../sig/SOCKET.md#val-sendarrto-prime) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8ArraySlice.slice * out_flags -> unit` |
+| val | [`sendArrToNB`](../sig/SOCKET.md#val-sendarrtonb) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8ArraySlice.slice -> bool` |
+| val | [`sendArrToNB'`](../sig/SOCKET.md#val-sendarrtonb-prime) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8ArraySlice.slice * out_flags -> bool` |
+| val | [`sendVec`](../sig/SOCKET.md#val-sendvec) | `('a, active' stream') RuneSocket.sock * Word8VectorSlice.slice -> int` |
+| val | [`sendVec'`](../sig/SOCKET.md#val-sendvec-prime) | `('a, active' stream') RuneSocket.sock * Word8VectorSlice.slice * out_flags -> int` |
+| val | [`sendVecNB`](../sig/SOCKET.md#val-sendvecnb) | `('a, active' stream') RuneSocket.sock * Word8VectorSlice.slice -> int option` |
+| val | [`sendVecNB'`](../sig/SOCKET.md#val-sendvecnb-prime) | `('a, active' stream') RuneSocket.sock * Word8VectorSlice.slice * out_flags -> int option` |
+| val | [`sendVecTo`](../sig/SOCKET.md#val-sendvecto) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8VectorSlice.slice -> unit` |
+| val | [`sendVecTo'`](../sig/SOCKET.md#val-sendvecto-prime) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8VectorSlice.slice * out_flags -> unit` |
+| val | [`sendVecToNB`](../sig/SOCKET.md#val-sendvectonb) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8VectorSlice.slice -> bool` |
+| val | [`sendVecToNB'`](../sig/SOCKET.md#val-sendvectonb-prime) | `('a, dgram') RuneSocket.sock * 'a RuneSocket.sock_addr * Word8VectorSlice.slice * out_flags -> bool` |
+| val | [`shutdown`](../sig/SOCKET.md#val-shutdown) | `('a, 'b stream') RuneSocket.sock * RuneSocket.shutdown_mode -> unit` |
+| val | [`sockDesc`](../sig/SOCKET.md#val-sockdesc) | `('a, 'b) RuneSocket.sock -> sock_desc` |
 | structure | [`AF`](../str/Socket.AF.md) |  |
 | structure | [`Ctl`](../str/Socket.Ctl.md) |  |
 | structure | [`SOCK`](../str/Socket.SOCK.md) |  |

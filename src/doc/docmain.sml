@@ -174,7 +174,22 @@ struct
             println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " files to " ^ dir); status)
     end
 
+  (* The arbitraries of lib/test/property, where the library directory has
+     it: what the variables of laws are resolved against (quickcheck M7). *)
+  fun readInstances () : unit =
+    case !libDir of
+      NONE => ()
+    | SOME d =>
+        (DocElab.instanceStructures :=
+           SOME (List.filter (fn n => String.isSuffix "Arb" n)
+                             (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property"))))))
+        handle _ => ()
+
   fun run () : OS.Process.status =
+    (readInstances ();
+     run' ())
+
+  and run' () : OS.Process.status =
     if !labels then
       (case !tests of
          SOME dir => (print (DocTests.tsv (DocTests.suite dir)); report ())

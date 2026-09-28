@@ -24,29 +24,29 @@ What each means is on [`POSIX_SIGNAL`](../sig/POSIX_SIGNAL.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`signal`](../sig/POSIX_SIGNAL.md#type-signal) | `Unix.signal` |
-| val | [`abrt`](../sig/POSIX_SIGNAL.md#val-abrt) | `Unix.signal` |
-| val | [`alrm`](../sig/POSIX_SIGNAL.md#val-alrm) | `Unix.signal` |
-| val | [`bus`](../sig/POSIX_SIGNAL.md#val-bus) | `Unix.signal` |
-| val | [`chld`](../sig/POSIX_SIGNAL.md#val-chld) | `Unix.signal` |
-| val | [`cont`](../sig/POSIX_SIGNAL.md#val-cont) | `Unix.signal` |
-| val | [`fpe`](../sig/POSIX_SIGNAL.md#val-fpe) | `Unix.signal` |
-| val | [`fromWord`](../sig/POSIX_SIGNAL.md#val-fromword) | `word -> Unix.signal` |
-| val | [`hup`](../sig/POSIX_SIGNAL.md#val-hup) | `Unix.signal` |
-| val | [`ill`](../sig/POSIX_SIGNAL.md#val-ill) | `Unix.signal` |
-| val | [`int`](../sig/POSIX_SIGNAL.md#val-int) | `Unix.signal` |
-| val | [`kill`](../sig/POSIX_SIGNAL.md#val-kill) | `Unix.signal` |
-| val | [`pipe`](../sig/POSIX_SIGNAL.md#val-pipe) | `Unix.signal` |
-| val | [`quit`](../sig/POSIX_SIGNAL.md#val-quit) | `Unix.signal` |
-| val | [`segv`](../sig/POSIX_SIGNAL.md#val-segv) | `Unix.signal` |
-| val | [`stop`](../sig/POSIX_SIGNAL.md#val-stop) | `Unix.signal` |
-| val | [`term`](../sig/POSIX_SIGNAL.md#val-term) | `Unix.signal` |
-| val | [`toWord`](../sig/POSIX_SIGNAL.md#val-toword) | `Unix.signal -> word` |
-| val | [`tstp`](../sig/POSIX_SIGNAL.md#val-tstp) | `Unix.signal` |
-| val | [`ttin`](../sig/POSIX_SIGNAL.md#val-ttin) | `Unix.signal` |
-| val | [`ttou`](../sig/POSIX_SIGNAL.md#val-ttou) | `Unix.signal` |
-| val | [`usr1`](../sig/POSIX_SIGNAL.md#val-usr1) | `Unix.signal` |
-| val | [`usr2`](../sig/POSIX_SIGNAL.md#val-usr2) | `Unix.signal` |
+| type | [`signal`](../sig/POSIX_SIGNAL.md#type-signal) | `RunePosixSignal.signal` |
+| val | [`abrt`](../sig/POSIX_SIGNAL.md#val-abrt) | `RunePosixSignal.signal` |
+| val | [`alrm`](../sig/POSIX_SIGNAL.md#val-alrm) | `RunePosixSignal.signal` |
+| val | [`bus`](../sig/POSIX_SIGNAL.md#val-bus) | `RunePosixSignal.signal` |
+| val | [`chld`](../sig/POSIX_SIGNAL.md#val-chld) | `RunePosixSignal.signal` |
+| val | [`cont`](../sig/POSIX_SIGNAL.md#val-cont) | `RunePosixSignal.signal` |
+| val | [`fpe`](../sig/POSIX_SIGNAL.md#val-fpe) | `RunePosixSignal.signal` |
+| val | [`fromWord`](../sig/POSIX_SIGNAL.md#val-fromword) | `word -> RunePosixSignal.signal` |
+| val | [`hup`](../sig/POSIX_SIGNAL.md#val-hup) | `RunePosixSignal.signal` |
+| val | [`ill`](../sig/POSIX_SIGNAL.md#val-ill) | `RunePosixSignal.signal` |
+| val | [`int`](../sig/POSIX_SIGNAL.md#val-int) | `RunePosixSignal.signal` |
+| val | [`kill`](../sig/POSIX_SIGNAL.md#val-kill) | `RunePosixSignal.signal` |
+| val | [`pipe`](../sig/POSIX_SIGNAL.md#val-pipe) | `RunePosixSignal.signal` |
+| val | [`quit`](../sig/POSIX_SIGNAL.md#val-quit) | `RunePosixSignal.signal` |
+| val | [`segv`](../sig/POSIX_SIGNAL.md#val-segv) | `RunePosixSignal.signal` |
+| val | [`stop`](../sig/POSIX_SIGNAL.md#val-stop) | `RunePosixSignal.signal` |
+| val | [`term`](../sig/POSIX_SIGNAL.md#val-term) | `RunePosixSignal.signal` |
+| val | [`toWord`](../sig/POSIX_SIGNAL.md#val-toword) | `RunePosixSignal.signal -> word` |
+| val | [`tstp`](../sig/POSIX_SIGNAL.md#val-tstp) | `RunePosixSignal.signal` |
+| val | [`ttin`](../sig/POSIX_SIGNAL.md#val-ttin) | `RunePosixSignal.signal` |
+| val | [`ttou`](../sig/POSIX_SIGNAL.md#val-ttou) | `RunePosixSignal.signal` |
+| val | [`usr1`](../sig/POSIX_SIGNAL.md#val-usr1) | `RunePosixSignal.signal` |
+| val | [`usr2`](../sig/POSIX_SIGNAL.md#val-usr2) | `RunePosixSignal.signal` |
 
 ## Notes
 

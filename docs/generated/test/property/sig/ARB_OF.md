@@ -5,7 +5,7 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 49 |
+| Implementations | 50 |
 | Documentation | 2 of 2 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/family\_sig.sml](../../../../../lib/test/property/family_sig.sml) |
@@ -39,6 +39,7 @@ functor MonoArraySliceArbFn (...) : ARB_OF where type t = S.slice
 functor MonoVectorArbFn (...) : ARB_OF where type t = V.vector
 functor MonoVectorSliceArbFn (...) : ARB_OF where type t = S.slice
 structure PositionArb : ARB_OF where type t = Position.int
+structure RandomArb : ARB_OF where type t = Random.gen
 structure Real32Arb : ARB_OF where type t = Real32.real
 structure Real64Arb : ARB_OF where type t = Real64.real
 structure RealArb : ARB_OF where type t = Real.real
@@ -92,6 +93,7 @@ functor WordArbFn (...) : ARB_OF where type t = W.word
 | `MonoVectorArbFn` | The arbitrary of the vectors of a structure of `MONO_VECTOR`: lists of `elem`, by the generator principle P6. `name` is the structure's name, which the printer writes. | [lib/test/property/family.sml](../../../../../lib/test/property/family.sml) |
 | `MonoVectorSliceArbFn` | The arbitrary of the slices of a structure of `MONO_VECTOR_SLICE`: a vector of `vector`, and a start and a length within it, compared as [`Arb.vectorSlice`](../sig/ARB.md#val-vectorslice) compares slices. `name` is the structure's name. | [lib/test/property/family.sml](../../../../../lib/test/property/family.sml) |
 | [`PositionArb`](../str/PositionArb.md) |  | [lib/test/property/numbers.sml](../../../../../lib/test/property/numbers.sml) |
+| [`RandomArb`](../str/RandomArb.md) | The arbitrary of the generators of lib/random: the generator of a seed drawn as [`Gen.word64`](../sig/GEN.md#val-word64) draws a word, shown by `Random.toString`. | [lib/test/property/data.sml](../../../../../lib/test/property/data.sml) |
 | [`Real32Arb`](../str/Real32Arb.md) |  | [lib/test/property/sized.sml](../../../../../lib/test/property/sized.sml) |
 | [`Real64Arb`](../str/Real64Arb.md) |  | [lib/test/property/sized.sml](../../../../../lib/test/property/sized.sml) |
 | [`RealArb`](../str/RealArb.md) |  | [lib/test/property/numbers.sml](../../../../../lib/test/property/numbers.sml) |

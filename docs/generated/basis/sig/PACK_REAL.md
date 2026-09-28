@@ -153,7 +153,7 @@ val fromBytes : Word8Vector.vector -> real
 vector is read from its start.
 
 **Law** `fromBytes (toBytes r) = r`, except that a NaN comes back as some
-NaN
+NaN (for every `r : real`)
 
 **Example** `Real.== (PackReal64Little.fromBytes (PackReal64Little.toBytes 2.5), 2.5) = true`
 
@@ -244,8 +244,8 @@ val update : Word8Array.array * int * real -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `arr` is shorter than `bytesPerElem * (i + 1)`.
 
-**Law** `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN
-comes back as some NaN
+**Law** `(update (arr, i, r); subArr (arr, i)) = r`, except that a NaN comes
+back as some NaN (for every `arr : Word8Array.array`, `i : int`, `r : real`)
 
 **Example** `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F`
 

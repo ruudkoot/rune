@@ -41,5 +41,6 @@ src/doc/docannot.sml
 src/doc/docresolve.sml
 src/doc/docpage.sml
 src/doc/docexamples.sml
+src/doc/doclaws.sml
 src/doc/docsite.sml
 src/doc/docmain.sml

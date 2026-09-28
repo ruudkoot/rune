@@ -208,7 +208,7 @@ val fromList : elem list -> vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
-**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` (for every `l : char list`, `i : int`)
 
 **Example** `fromList [#"a", #"b"] = "ab"`
 
@@ -274,8 +274,8 @@ val tabulate : int * (int -> elem) -> vector
 > say whether the length is checked before `f` is applied. It is: a length
 > out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
-effects
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
+has no effects (for every `n : int`, `f : int -> char`, `i : int`)
 
 **Example** `tabulate (3, fn i => Char.chr (97 + i)) = "abc"`
 
@@ -299,7 +299,7 @@ val length : vector -> int
 
 `length x` is the number of elements.
 
-**Law** `length (fromList l) = List.length l`
+**Law** `length (fromList l) = List.length l` (for every `l : char list`)
 
 **Example** `length "abc" = 3`
 
@@ -349,7 +349,9 @@ val update : vector * int * elem -> vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length v`.
 
-**Law** `sub (update (v, i, x), i) = x`, and `sub (update (v, i, x), j) = sub (v, j)` for every other position `j`
+**Law** `sub (update (v, i, x), i) = x` (for every `v : string`, `i : int`, `x : char`)
+
+**Law** `sub (update (v, i, x), j) = sub (v, j)` for `j <> i andalso 0 <= j andalso j < length v` (for every `v : string`, `i : int`, `x : char`, `j : int`)
 
 **Example** `update ("abc", 1, #"x") = "axc"`
 
@@ -379,7 +381,7 @@ val concat : vector list -> vector
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxLen`](#val-maxlen).
 
-**Law** `length (concat l) = List.foldl (fn (v, n) => length v + n) 0 l`
+**Law** `length (concat l) = List.foldl (fn (v, n) => length v + n) 0 l` (for every `l : string list`)
 
 **Example** `concat ["ab", "", "c"] = "abc"`
 
@@ -419,7 +421,7 @@ val app : (elem -> unit) -> vector -> unit
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
 
-**Law** `app f x = appi (fn (_, e) => f e) x`
+**Law** `app f x = appi (fn (_, e) => f e) x` (for every `f : char -> unit`, `x : string`)
 
 **Example** `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195`
 
@@ -463,7 +465,7 @@ val map : (elem -> elem) -> vector -> vector
 
 `map f v` is the vector of the results of `f` on each element, in order.
 
-**Law** `map f v = mapi (fn (_, e) => f e) v`
+**Law** `map f v = mapi (fn (_, e) => f e) v` (for every `f : char -> char`, `v : string`)
 
 **Example** `map Char.toUpper "abc" = "ABC"`
 
@@ -535,7 +537,7 @@ val foldl : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : string`)
 
 **Example** `foldl (op ::) [] "abc" = [#"c", #"b", #"a"]`
 
@@ -595,7 +597,7 @@ val foldr : (elem * 'a -> 'a) -> 'a -> vector -> 'a
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : string`)
 
 **Example** `foldr (op ::) [] "abc" = [#"a", #"b", #"c"]`
 
@@ -640,7 +642,7 @@ val find : (elem -> bool) -> vector -> elem option
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
-**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)` (for every `p : char -> bool`, `x : string`)
 
 **Example** `find Char.isDigit "a12" = SOME #"1"`
 
@@ -674,7 +676,7 @@ val exists : (elem -> bool) -> vector -> bool
 
 `exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
 
-**Law** `exists p x = isSome (find p x)`
+**Law** `exists p x = isSome (find p x)` (for every `p : char -> bool`, `x : string`)
 
 **Example** `exists Char.isDigit "ab" = false`
 
@@ -696,7 +698,7 @@ val all : (elem -> bool) -> vector -> bool
 
 `all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-**Law** `all p x = not (exists (not o p) x)`
+**Law** `all p x = not (exists (not o p) x)` (for every `p : char -> bool`, `x : string`)
 
 **Example** `all Char.isLower "ab" = true`
 
@@ -718,7 +720,7 @@ val collate : (elem * elem -> order) -> vector * vector -> order
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
 
-**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)` (for every `cmp : char * char -> order`, `a : string`, `b : string`)
 
 **Example** `collate Char.compare ("ab", "ac") = LESS`
 

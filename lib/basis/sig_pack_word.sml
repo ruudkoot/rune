@@ -81,8 +81,9 @@ sig
      Raises: `Subscript` if `i < 0` or if the bytes of element `i` are not
      all in `arr`.
 
-     Law: `(update (arr, i, w); subArr (arr, i))` is `w` with the bits above
-     `8 * bytesPerElem` cleared
+     Law: `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w,
+     LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`:
+     `w` with the bits above `8 * bytesPerElem` cleared
 
      Example: `let val a = Word8Array.array (2, 0w0) in PackWord16Big.update
      (a, 0, 0wx1234); Word8Array.vector a end = Word8Vector.fromList [0wx12,

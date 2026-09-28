@@ -140,7 +140,7 @@ val wordToUid : SysWord.word -> uid
 
 `wordToUid w` is the user numbered `w`, whether or not there is such a user.
 
-**Law** `uidToWord (wordToUid w) = w`
+**Law** `uidToWord (wordToUid w) = w` (for every `w : word`)
 
 **Example** `uidToWord (wordToUid 0w0) = 0w0`
 
@@ -172,7 +172,7 @@ val wordToGid : SysWord.word -> gid
 
 `wordToGid w` is the group numbered `w`.
 
-**Law** `gidToWord (wordToGid w) = w`
+**Law** `gidToWord (wordToGid w) = w` (for every `w : word`)
 
 <details><summary>Tests (1)</summary>
 
@@ -489,7 +489,7 @@ val getenv : string -> string option
 
 `getenv name` is `SOME` of the value of the environment variable `name`, or `NONE`.
 
-**Law** `getenv name = OS.Process.getEnv name`
+**Law** `getenv name = OS.Process.getEnv name` (for every `name : string`)
 
 **Example** `getenv "A_VARIABLE_THAT_NOBODY_SETS" = NONE`
 

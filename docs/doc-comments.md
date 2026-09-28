@@ -93,7 +93,7 @@ set is closed and case-sensitive.
 | Paragraph | In the comment of | What follows the colon |
 |---|---|---|
 | `Raises:` | a value | the exception in backquotes, then when it is raised; one paragraph per exception |
-| `Law:` | a value | an equation, in backquotes |
+| `Law:` | a value | an equation or a `bool`, in backquotes, with its conditions (*Laws*) |
 | `Complexity:` | a value | prose |
 | `Example:` | anything | code; every piece is a closed `bool` that is true, and is run (below) |
 | `See also:` | anything | references in backquotes |
@@ -185,6 +185,39 @@ type without equality is compared through its text: `Real.fmt (StringCvt.FIX
 
 An example says what this library does, so `Int.precision = SOME 64` is a
 fine example; the programs are not tried on other implementations.
+
+## Laws
+
+A `Law:` says what holds for every value of its variables
+(docs/plans/quickcheck.md, D6 and D7). runedoc elaborates every law, as it
+does every example, and gives each variable a type and an arbitrary of
+lib/test/property to draw it from. So a law is Standard ML, in the paragraph's
+pieces of code, read by a small grammar:
+
+- The first piece of code is a law, and so is one after "and" that follows a
+  law: ``Law: `concat [s, t] = s ^ t`, and `concat [] = ""` ``.
+- A piece after "for" or "when" is a condition, a `bool`, and so is one after
+  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. A
+  condition that raises an exception does not hold, so ``when `(ignore
+  (slice (v, i, SOME n)); true)` `` says "when the slice exists".
+- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and ``when `f` has
+  no effects`` (or ``when `f` and `g` have no effects``) draws the functions
+  from the pure ones. Other functions may raise and have effects, and a law
+  compares what its two sides do with them.
+- Any other piece is prose: a name or a result the sentence speaks of.
+
+The conditions of a paragraph hold for each of its laws, so a law with a
+condition of its own gets a paragraph of its own. The names a law leaves
+unbound, under `open S` as an example is read, are its variables, and the
+page lists them with their types; a variable that should be a member but is
+misspelt shows there. A law that is an equation, `l = r`, compares what its
+sides do: equal values, or the same exception. Each side is run with its
+own copy of the variables, so a side that changes an array does not change
+the other's, and a type without equality is compared by its arbitrary's
+equality (the identity of reals, the characters of a substring). A law that
+is not an equation is a `bool`. The fixity is the top level's, so write
+`Real.== (x, y)`, and name another structure's operators in full where
+`open S` rebinds them (`Int.< (ord c, ord d)` under `open Char`).
 
 ## Annotations
 

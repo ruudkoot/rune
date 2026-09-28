@@ -113,6 +113,10 @@ struct
      signature of the ratchet says; it is not for a structure's own comment,
      which may name the library's internals -- `RuneIODesc.FD` is real and is
      documented nowhere. *)
+  (* The variables of a law of a signature, where it elaborated: set by the
+     site when the library has been elaborated (quickcheck M7). *)
+  val lawVariables : (string * string -> DocElab.variable list option) ref = ref (fn _ => NONE)
+
   fun blocksWith (strict : bool)
                  (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
                  (doc : I.doc) : string =
@@ -146,7 +150,20 @@ struct
                                else ())
                    | NONE => ());
                   labelled ("Raises", body))
-             | "Law" => labelled ("Law", body)
+             | "Law" =>
+                 (* the variables each law holds for, as elaboration typed them *)
+                 let
+                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l))
+                                                           (#laws (DocLawGrammar.parts body)))
+                   val once = List.foldl (fn (v : DocElab.variable, acc) =>
+                                            if List.exists (fn (w : DocElab.variable) => #name w = #name v) acc then acc
+                                            else acc @ [v]) [] vars
+                 in
+                   if List.null once then labelled ("Law", body)
+                   else "**Law** " ^ inl body ^ " (for every "
+                        ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
+                        ^ ")\n\n"
+                 end
              | "Example" => labelled ("Example", body)
              | "Complexity" => labelled ("Complexity", body)
              | "See also" => labelled ("See also", body)

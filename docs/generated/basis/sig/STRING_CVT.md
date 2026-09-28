@@ -242,7 +242,7 @@ val takel : (char -> bool) -> (char, 'a) reader -> 'a -> string
 `takel p getc strm` is the string of the characters at the front of `strm`
 that satisfy `p`.
 
-**Law** `takel p getc strm = #1 (splitl p getc strm)`
+**Law** `takel p getc strm = #1 (splitl p getc strm)` (for every `p : char -> bool`, `getc : 'a -> (char * 'a) option`, `strm : 'a`)
 
 **Example** `takel Char.isDigit Substring.getc (Substring.full "12ab") = "12"`
 
@@ -261,7 +261,7 @@ val dropl : (char -> bool) -> (char, 'a) reader -> 'a -> 'a
 `dropl p getc strm` is `strm` without the characters at its front that
 satisfy `p`.
 
-**Law** `dropl p getc strm = #2 (splitl p getc strm)`
+**Law** `dropl p getc strm = #2 (splitl p getc strm)` (for every `p : char -> bool`, `getc : 'a -> (char * 'a) option`, `strm : 'a`)
 
 **Example** `implode (dropl Char.isSpace List.getItem (explode "  x")) = "x"`
 
@@ -281,7 +281,7 @@ val skipWS : (char, 'a) reader -> 'a -> 'a
 
 White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
 
-**Law** `skipWS getc strm = dropl Char.isSpace getc strm`
+**Law** `skipWS getc strm = dropl Char.isSpace getc strm` (for every `getc : 'a -> (char * 'a) option`, `strm : 'a`)
 
 **Example** `Substring.string (skipWS Substring.getc (Substring.full "  a")) = "a"`
 

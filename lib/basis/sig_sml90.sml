@@ -182,7 +182,7 @@ sig
 
   (* `input (f, n)` is at most `n` characters read from `f`, and fewer at the end of the stream.
 
-     Law: `input (f, n) = ""` exactly when `end_of_stream f`, for `n > 0`
+     Law: `(input (f, n) = "") = end_of_stream f` for `n > 0`
 
      Raises: `Io` if the stream cannot be read. *)
   val input : instream * int -> string

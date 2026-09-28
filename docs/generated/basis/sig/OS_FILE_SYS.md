@@ -532,7 +532,7 @@ val compare : file_id * file_id -> order
 
 `compare (a, b)` orders two file identities, so that they can be kept in a map.
 
-**Law** `compare (a, b) = EQUAL` exactly when `a = b`
+**Law** `(compare (a, b) = EQUAL) = (a = b)` (for every `a : OS.FileSys.file_id`, `b : OS.FileSys.file_id`)
 
 <details><summary>Tests (4)</summary>
 

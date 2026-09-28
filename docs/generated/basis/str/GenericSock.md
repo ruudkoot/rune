@@ -26,10 +26,10 @@ What each means is on [`GENERIC_SOCK`](../sig/GENERIC_SOCK.md); the types are th
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`socket`](../sig/GENERIC_SOCK.md#val-socket) | `NetHostDB.addr_family * Socket.SOCK.sock_type -> ('a, 'b) Socket.sock` |
-| val | [`socket'`](../sig/GENERIC_SOCK.md#val-socket-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('a, 'b) Socket.sock` |
-| val | [`socketPair`](../sig/GENERIC_SOCK.md#val-socketpair) | `NetHostDB.addr_family * Socket.SOCK.sock_type -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock` |
-| val | [`socketPair'`](../sig/GENERIC_SOCK.md#val-socketpair-prime) | `NetHostDB.addr_family * Socket.SOCK.sock_type * int -> ('a, 'b) Socket.sock * ('a, 'b) Socket.sock` |
+| val | [`socket`](../sig/GENERIC_SOCK.md#val-socket) | `RuneNet.addr_family * RuneNet.sock_type -> ('a, 'b) RuneSocket.sock` |
+| val | [`socket'`](../sig/GENERIC_SOCK.md#val-socket-prime) | `RuneNet.addr_family * RuneNet.sock_type * int -> ('a, 'b) RuneSocket.sock` |
+| val | [`socketPair`](../sig/GENERIC_SOCK.md#val-socketpair) | `RuneNet.addr_family * RuneNet.sock_type -> ('a, 'b) RuneSocket.sock * ('a, 'b) RuneSocket.sock` |
+| val | [`socketPair'`](../sig/GENERIC_SOCK.md#val-socketpair-prime) | `RuneNet.addr_family * RuneNet.sock_type * int -> ('a, 'b) RuneSocket.sock * ('a, 'b) RuneSocket.sock` |
 
 ## Notes
 

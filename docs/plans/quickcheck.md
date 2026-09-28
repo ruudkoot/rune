@@ -33,7 +33,7 @@ What it rests on:
 | M4 | The property core | done 2026-09-28 |
 | M5 | Shrinking and functions | done 2026-09-28 |
 | M6 | The Basis's instances, and the generators frozen | done 2026-09-28 |
-| M7 | Laws elaborated | |
+| M7 | Laws elaborated | done 2026-09-28; the rewrites await the owner's review |
 | M8 | Laws run | |
 | M9 | The hunt | |
 
@@ -1494,6 +1494,38 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - The notation-only rewrites of lib/basis's laws, in a before/after table in this file for the owner to review.
 * **Why now:** a law must mean one thing before it can be run.
 * **Done when:** every law elaborates, the table is reviewed, `make docs` output is committed, and `make check` passes.
+* **Done** (2026-09-28), all but the owner's review of the rewrites:
+  - **The grammar of laws** (D7), in `DocLawGrammar` (`src/doc/doctext.sml`) and documented in `docs/doc-comments.md`, *Laws*:
+    - the first piece of code is a law, and so is one after "and" that follows a law;
+    - a piece after "for" or "when" is a condition, and so is one after "and" that follows a condition or a domain;
+    - "for `x` from `G`" is a domain, and "when `f` has no effects" or "when `f` and `g` have no effects" makes the functions pure;
+    - the rest is prose.
+
+    The conditions of a paragraph hold for each of its laws. A condition that raises does not hold, so "when the slice exists" is written ``when `(ignore (slice (v, i, SOME n)); true)` ``. `--dump-ir` prints each law's parts.
+  - **Elaboration** (`DocElab.elabLaw`): a law is read under `open S`, as its signature's examples are.
+    - Its variables are found by elaborating `fn (x1, ..., xk) => ...` until nothing is left unbound, and are typed by the elaborator.
+    - An equation's two sides are elaborated as a list, so that they have one type that need not admit equality (D6). They are cut at the `=` token of the parse, since an infix application's span leaves out its operands' parentheses.
+    - Anything else must be a `bool`, and so must each condition.
+    - A failed attempt's pending flexible records and overloads are cleared before the next one. Without that, 40 laws failed on a record the earlier attempt left behind.
+  - **Instances.** Every variable is given an arbitrary by its type:
+    - a type variable at `int` (D8);
+    - a function by `Arb.function`, or `Arb.pureFunction` where the law says it has no effects;
+    - tuples, records of fields, and `(char, 'a)` readers by their shapes;
+    - every other type by a table, or as `XArb.arb` for a type `X.t` that is `X`'s own. `Word8Array.vector` names a vector, so the rule looks at the type as well as the structure.
+
+    runedoc reads the `XArb` names from `lib/test/property/MANIFEST`. A type with no arbitrary is an error at its comment, and every variable of the Basis has one.
+    - `lib/random`'s own law needed one more, `RandomArb` for `Random.gen`: the generator of a drawn seed. `frozen.expected` was renewed for it (`E3990241ADEC0310`). Without the new probe the hash is still M6's, so no earlier draw changed.
+  - **The pages** show each law's variables with their types: "(for every `i : int`, `j : int`)". 266 of the 286 laws have variables; the others are closed.
+  - **Errors at the comment** for a law that is no Standard ML, a condition that is not a `bool`, and a variable with no arbitrary. `make check-docs` elaborates every law of the Basis, so none may stay. Tests: `tests/doc/laws.sml` (the grammar, through `--dump-ir`), `laws.lib` (pages with variables) and `lawerrors.lib` (the three errors).
+  - **The rewrites.** 73 laws in 24 files were rewritten, each in *Appendix: the rewrites of M7*, for the owner's review.
+    - 41 are notation only: chained comparisons, `^` as a power, `==` as infix, operators that `open S` rebinds, `before`'s precedence, a variable named `tl`, `~0w0`, and "is" for `=`.
+    - 19 put a condition written in prose into Standard ML, and 7 do both.
+    - 5 write out "and the same for the others" and its kin.
+    - 1 splits a paragraph whose second law has a condition of its own.
+    - They follow one rule: translate what the text says and add nothing it does not. So a law whose text states no condition for an exception it will meet stays as it is, and M9 will report it.
+    - The prose phrases left as prose restrict nothing the arbitraries draw, or are asides: "as the specification defines it", "for a vector type that admits equality", "when the reader does not fail" (the drawn readers never fail), "except that a NaN comes back as some NaN" (D6's identity of reals makes every NaN equal), and "for every condition, named here or not".
+    - Before the rewrites, 190 laws did not elaborate: 136 from runedoc's first bugs, and 54 that needed a rewrite.
+  - **For the owner:** the table, and whether a translated condition means what the prose meant. The Date law's "the fields of `r` are in range" is the widest translation. It includes the offset within a day and a day within its month's length in a leap year.
 
 ### M8. Laws run (M, about 450)
 
@@ -1577,6 +1609,89 @@ test that it fails when it should:
 - **Planted bugs** with known minimal counterexamples, and the shrinking challenge (M5).
 - **Mutants** of copies of Basis structures, killed by the library's own properties at reported rates (M6).
 - **Determinism.** The same seed gives the same cases, the same counterexample and the same replay token on every VM, at every `-O` and on every compiler (M4, M9).
+
+## Appendix: the rewrites of M7
+
+What each law was, what it is, and why (*M7*). Notation is rewritten
+without changing what the law says. A condition in prose becomes Standard ML
+that says what the prose says. "The others" are written out. The owner
+reviews every row, and can veto a change of meaning (*The blind test*).
+
+| File | Before | After | Kind |
+|---|---|---|---|
+| `int_sig.sml` | `(i < j) = (compare (i, j) = LESS)`, and the same for the others | `(i < j) = (compare (i, j) = LESS)`, and `(i <= j) = (compare (i, j) <> GREATER)`, and `(i > j) = (compare (i, j) = GREATER)`, and `(i >= j) = (compare (i, j) <> LESS)` | the others written out |
+| `int_sig.sml` | `fromInt (sign i) * abs i = i` when `abs i` is in the range | `fromInt (sign i) * abs i = i` when `minInt <> SOME i` | condition |
+| `int_sig.sml` | `fromInt (toInt i) = i` when `i` is in the range of `Int.int` | `fromInt (toInt i) = i` when `(case Int.minInt of NONE => true \| SOME m => LargeInt.<= (Int.toLarge m, toLarge i)) andalso (case Int.maxInt of NONE => true \| SOME m => LargeInt.<= (toLarge i, Int.toLarge m))` | condition |
+| `int_sig.sml` | `i - j = i + ~j` when `~j` is in the range | `i - j = i + ~j` when `minInt <> SOME j` | condition |
+| `int_sig.sml` | `maxInt = SOME (fromLarge (IntInf.pow (2, p - 1) - 1))` where `precision = SOME p` | `case precision of SOME p => maxInt = SOME (fromLarge (IntInf.- (IntInf.pow (2, Int.- (p, 1)), 1))) \| NONE => true` | notation and condition |
+| `int_sig.sml` | `minInt = SOME (fromLarge (~ (IntInf.pow (2, p - 1))))` where `precision = SOME p` | `case precision of SOME p => minInt = SOME (fromLarge (IntInf.~ (IntInf.pow (2, Int.- (p, 1))))) \| NONE => true` | notation and condition |
+| `int_sig.sml` | `toLarge (fromLarge i) = i` when `i` is in the range | `toLarge (fromLarge i) = i` when `(case minInt of NONE => true \| SOME m => LargeInt.<= (toLarge m, i)) andalso (case maxInt of NONE => true \| SOME m => LargeInt.<= (i, toLarge m))` | condition |
+| `int_sig.sml` | `~ (~ i) = i` when `~i` is in the range | `~ (~ i) = i` when `minInt <> SOME i` | condition |
+| `mono_sigs.sml` | `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i < length src`, when `src` and `dst` are not the same array | `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` | notation and condition |
+| `mono_sigs.sml` | `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr` | `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i andalso i < length arr` | notation |
+| `mono_sigs.sml` | `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i < length sl` | `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i andalso i < length sl` | notation |
+| `mono_sigs.sml` | `length (slice (v, i, SOME n)) = n` when the slice exists | `length (slice (v, i, SOME n)) = n` when `(ignore (slice (v, i, SOME n)); true)` | condition |
+| `mono_sigs.sml` | `sub (array (n, x), i) = x` for `0 <= i < n` | `sub (array (n, x), i) = x` for `0 <= i andalso i < n` | notation |
+| `mono_sigs.sml` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` | notation |
+| `mono_sigs.sml` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` | notation |
+| `mono_sigs.sml` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k < length sl - i` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` | notation |
+| `mono_sigs.sml` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k < length sl - i` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` | notation |
+| `mono_sigs.sml` | `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no effects | `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f` has no effects | notation |
+| `mono_sigs.sml` | `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no effects | `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f` has no effects | notation |
+| `mono_sigs.sml` | `sub (update (v, i, x), i) = x`, and `sub (update (v, i, x), j) = sub (v, j)` for every other position `j` | Law: `sub (update (v, i, x), i) = x` <br> Law: `sub (update (v, i, x), j) = sub (v, j)` for `j <> i andalso 0 <= j andalso j < length v` | condition, and split |
+| `sig_array.sml` | `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i < length src`, when `src` and `dst` are not the same array | `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` | notation and condition |
+| `sig_array.sml` | `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= i < Vector.length v` | `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)` for `0 <= i andalso i < Vector.length v` | notation |
+| `sig_array.sml` | `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr` | `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i andalso i < length arr` | notation |
+| `sig_array.sml` | `sub (array (n, x), i) = x` for `0 <= i < n` | `sub (array (n, x), i) = x` for `0 <= i andalso i < n` | notation |
+| `sig_array.sml` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l` | `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` | notation |
+| `sig_array.sml` | `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no effects | `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f` has no effects | notation |
+| `sig_array2.sml` | `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and column `j` of `arr` | `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i < nRows arr andalso 0 <= j andalso j < nCols arr` | condition |
+| `sig_array2.sml` | `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))` for every column `j` of `arr` | `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))` for `0 <= j andalso j < nCols arr` | condition |
+| `sig_array2.sml` | `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))` for every row `i` of `arr` | `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))` for `0 <= i andalso i < nRows arr` | condition |
+| `sig_array2.sml` | `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c` | `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c` | notation |
+| `sig_array2.sml` | `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for every row `i` and column `j` of the array | `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0 <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols (fromList rows)` | condition |
+| `sig_array2.sml` | `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and `0 <= j < c`, when `f` has no effects | `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects | notation |
+| `sig_array_slice.sml` | `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i < length sl` | `(update (sl, i, x); sub (sl, i)) = x` for `0 <= i andalso i < length sl` | notation |
+| `sig_array_slice.sml` | `base (slice (arr, i, SOME n)) = (arr, i, n)` when the slice exists | `base (slice (arr, i, SOME n)) = (arr, i, n)` when `(ignore (slice (arr, i, SOME n)); true)` | condition |
+| `sig_array_slice.sml` | `collate cmp (sl, tl) = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] tl)` | `collate cmp (sl, sl') = List.collate cmp (foldr (op ::) [] sl, foldr (op ::) [] sl')` | notation |
+| `sig_array_slice.sml` | `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k < Array.length arr - i` | `sub (slice (arr, i, NONE), k) = Array.sub (arr, i + k)` for `0 <= k andalso k < Array.length arr - i` | notation |
+| `sig_array_slice.sml` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k < length sl - i` | `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` | notation |
+| `sig_byte.sml` | `(packString (arr, i, ss); unpackString (Word8ArraySlice.slice (arr, i, SOME (Substring.size ss)))) = Substring.string ss` when it fits | `(packString (arr, i, ss); unpackString (Word8ArraySlice.slice (arr, i, SOME (Substring.size ss)))) = Substring.string ss` when `0 <= i andalso Substring.size ss <= Word8Array.length arr - i` | condition |
+| `sig_char.sml` | `(c < d) = (ord c < ord d)`, and the same for the others | `(c < d) = Int.< (ord c, ord d)`, and `(c <= d) = Int.<= (ord c, ord d)`, and `(c > d) = Int.> (ord c, ord d)`, and `(c >= d) = Int.>= (ord c, ord d)` | notation, and the others written out |
+| `sig_char.sml` | `ord (chr i) = i` for `0 <= i <= maxOrd` | `ord (chr i) = i` for `Int.<= (0, i) andalso Int.<= (i, maxOrd)` | notation |
+| `sig_date.sml` | `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for a time `t` at or after the epoch | `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for `Time.>= (t, Time.zeroTime)` | condition |
+| `sig_date.sml` | `year (date r) = #year r` when the fields of `r` are in range, and the same for `month`, `day`, `hour`, `minute` and `second` | `year (date r) = #year r`, and `month (date r) = #month r`, and `day (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) = #minute r`, and `second (date r) = #second r`, when `let val {year = y, month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val days = case m of Feb => if leap then 29 else 28 \| Apr => 30 \| Jun => 30 \| Sep => 30 \| Nov => 30 \| _ => 31 in 1 <= d andalso d <= days andalso 0 <= h andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s <= 59 andalso (case off of NONE => true \| SOME t => Time.< (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400)) end` | condition, and the others written out |
+| `sig_general.sml` | `e before e' = (fn (a, ()) => a) (e, e')` | `(e before e') = (fn (a, ()) => a) (e, e')` | notation |
+| `sig_general.sml` | `f o (g o h) = (f o g) o h`: composition is associative, as functions and not as values that `=` could compare | `(f o (g o h)) x = ((f o g) o h) x`: composition is associative, as functions and not as values that `=` could compare | notation |
+| `sig_int_inf.sml` | `pow (2, log2 i) <= i andalso i < pow (2, log2 i + 1)` for `i > 0` | `pow (2, log2 i) <= i andalso i < pow (2, Int.+ (log2 i, 1))` for `i > 0` | notation |
+| `sig_int_inf.sml` | `pow (i, j + k) = pow (i, j) * pow (i, k)` for `j` and `k` not negative | `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)` | notation and condition |
+| `sig_list.sml` | `hd l :: tl l = l` for a non-empty `l` | `hd l :: tl l = l` for `not (null l)` | condition |
+| `sig_list.sml` | `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l` | `take (l, i) @ drop (l, i) = l` for `0 <= i andalso i <= length l` | notation |
+| `sig_list_pair.sml` | `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other | `unzip (zip (l, m)) = (l, m)` when `length l = length m` | condition |
+| `sig_math.sml` | `atan2 (y, x) = atan (y / x)` for `x > 0` | `atan2 (y, x) = atan (y / x)` for `x > 0.0` | notation |
+| `sig_mono_array2.sml` | `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and column `j` of `arr` | `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i < nRows arr andalso 0 <= j andalso j < nCols arr` | condition |
+| `sig_mono_array2.sml` | `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c` | `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c` | notation |
+| `sig_mono_array2.sml` | `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for every row `i` and column `j` of the array | `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0 <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols (fromList rows)` | condition |
+| `sig_mono_array2.sml` | `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and `0 <= j < c`, when `f` has no effects | `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects | notation |
+| `sig_os_file_sys.sml` | `compare (a, b) = EQUAL` exactly when `a = b` | `(compare (a, b) = EQUAL) = (a = b)` | notation |
+| `sig_os_io.sml` | `compare (d, e) = EQUAL` exactly when `d = e` | `(compare (d, e) = EQUAL) = (d = e)` | notation |
+| `sig_os_path.sml` | `joinDirFile (splitDirFile p) = p` for a path `p` that is not empty | `joinDirFile (splitDirFile p) = p` for `p <> ""` | condition |
+| `sig_os_path.sml` | `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for canonical absolute paths `p` and `q`; a path that is not canonical comes back canonical | `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q andalso isAbsolute q`; a path that is not canonical comes back canonical | condition |
+| `sig_pack_real.sml` | `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN comes back as some NaN | `(update (arr, i, r); subArr (arr, i)) = r`, except that a NaN comes back as some NaN | notation |
+| `sig_pack_word.sml` | `(update (arr, i, w); subArr (arr, i))` is `w` with the bits above `8 * bytesPerElem` cleared | `(update (arr, i, w); subArr (arr, i)) = LargeWord.andb (w, LargeWord.- (LargeWord.<< (0w1, Word.fromInt (8 * bytesPerElem)), 0w1))`: `w` with the bits above `8 * bytesPerElem` cleared | notation |
+| `sig_posix_io.sml` | `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = t`, and likewise for the other fields | `ltype (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = t`, and `whence (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = w`, and `start (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = s`, and `len (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = n`, and `pid (flock {ltype = t, whence = w, start = s, len = n, pid = p}) = p` | the others written out |
+| `sig_posix_tty.sml` | `fieldsOf (termios r)` has the fields of `r` | `fieldsOf (termios r) = r` | notation |
+| `sig_posix_tty.sml` | `getiflag t = #iflag (fieldsOf t)`, and so for the other flags and for `getcc` | `getiflag t = #iflag (fieldsOf t)`, and `getoflag t = #oflag (fieldsOf t)`, and `getcflag t = #cflag (fieldsOf t)`, and `getlflag t = #lflag (fieldsOf t)`, and `getcc t = #cc (fieldsOf t)` | the others written out |
+| `sig_real.sml` | `#whole (split x) + #frac (split x) == x` | `== (#whole (split x) + #frac (split x), x)` | notation |
+| `sig_real.sml` | `fromManExp (toManExp x) == x` for a finite `x` | `== (fromManExp (toManExp x), x)` for `isFinite x` | notation and condition |
+| `sig_real.sml` | `valOf (fromDecimal (toDecimal x)) == x`, with the same sign bit, for a normal or subnormal `x` | `== (valOf (fromDecimal (toDecimal x)), x) andalso signBit (valOf (fromDecimal (toDecimal x))) = signBit x` for `isNormal x orelse class x = IEEEReal.SUBNORMAL` | notation and condition |
+| `sig_sml90.sml` | `input (f, n) = ""` exactly when `end_of_stream f`, for `n > 0` | `(input (f, n) = "") = end_of_stream f` for `n > 0` | notation |
+| `sig_string.sml` | `tokens p s = List.filter (fn t => size t > 0) (fields p s)` | `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)` | notation |
+| `streamio_sig.sml` | `#1 (input f) = #1 (input f)`: a stream in hand does not change | `let val (a, _) = input f val (b, _) = input f in a = b end`: a stream in hand does not change | notation |
+| `word_sig.sml` | `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure | `<< (w, n) = w * (let fun pow e = if e = 0w0 then 0w1 else let val h = pow (Word.>> (e, 0w1)) in if Word.andb (e, 0w1) = 0w1 then 0w2 * h * h else h * h end in pow n end)`: `w` times 2 to the `n`, in the arithmetic of this structure | notation |
+| `word_sig.sml` | `>> (w, n) = w div 0w2 ^ n` | `>> (w, n) = (if LargeInt.>= (Word.toLargeInt n, LargeInt.fromInt wordSize) then 0w0 else fromLargeInt (LargeInt.div (toLargeInt w, IntInf.pow (2, Word.toInt n))))`: `w` divided by 2 to the `n` | notation |
+| `word_sig.sml` | `toLargeX w = toLarge w` when `w < 2^(wordSize-1)` | `toLargeX w = toLarge w` when `w < << (0w1, Word.fromInt (Int.- (wordSize, 1)))` | notation |
+| `word_sig.sml` | `~w = notb w + 0w1`, and `~0w0 = 0w0` | `~w = notb w + 0w1`, and `~ 0w0 = 0w0` | notation |
 
 ## Appendix: the census of laws
 

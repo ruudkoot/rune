@@ -87,8 +87,17 @@ sig
 
   (* `year d` is the year of `d`, as a number and not counted from 1900.
 
-     Law: `year (date r) = #year r` when the fields of `r` are in range, and
-     the same for `month`, `day`, `hour`, `minute` and `second`
+     Law: `year (date r) = #year r`, and `month (date r) = #month r`, and `day
+     (date r) = #day r`, and `hour (date r) = #hour r`, and `minute (date r) =
+     #minute r`, and `second (date r) = #second r`, when `let val {year = y,
+     month = m, day = d, hour = h, minute = mi, second = s, offset = off} = r
+     val leap = (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 val
+     days = case m of Feb => if leap then 29 else 28 | Apr => 30 | Jun => 30 |
+     Sep => 30 | Nov => 30 | _ => 31 in 1 <= d andalso d <= days andalso 0 <= h
+     andalso h <= 23 andalso 0 <= mi andalso mi <= 59 andalso 0 <= s andalso s
+     <= 59 andalso (case off of NONE => true | SOME t => Time.<
+     (Time.fromSeconds ~86400, t) andalso Time.< (t, Time.fromSeconds 86400))
+     end`
 
      Example: `year (date {year = 1995, month = Mar, day = 8, hour = 19, minute = 6, second = 45, offset = SOME Time.zeroTime}) = 1995` *)
   val year : date -> int
@@ -187,8 +196,8 @@ sig
      The suite assumes that the clock of the machine shows a year from 2020 to
      2199.
 
-     Law: `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for a
-     time `t` at or after the epoch
+     Law: `toTime (fromTimeUniv t) = Time.fromSeconds (Time.toSeconds t)` for
+     `Time.>= (t, Time.zeroTime)`
 
      Example: `toString (fromTimeUniv (Time.fromSeconds 86400)) = "Fri Jan 02
      00:00:00 1970"` *)

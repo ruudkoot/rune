@@ -25,15 +25,15 @@ What each means is on [`INET_SOCK`](../sig/INET_SOCK.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`dgram_sock`](../sig/INET_SOCK.md#type-dgram_sock) | `(inet', dgram') Socket.sock` |
+| type | [`dgram_sock`](../sig/INET_SOCK.md#type-dgram_sock) | `(inet', dgram') RuneSocket.sock` |
 | type | [`inet`](../sig/INET_SOCK.md#type-inet) | `inet'` |
-| type | [`sock`](../sig/INET_SOCK.md#type-sock) | `(inet', 'a) Socket.sock` |
-| type | [`sock_addr`](../sig/INET_SOCK.md#type-sock_addr) | `inet' Socket.sock_addr` |
-| type | [`stream_sock`](../sig/INET_SOCK.md#type-stream_sock) | `(inet', 'a stream') Socket.sock` |
+| type | [`sock`](../sig/INET_SOCK.md#type-sock) | `(inet', 'a) RuneSocket.sock` |
+| type | [`sock_addr`](../sig/INET_SOCK.md#type-sock_addr) | `inet' RuneSocket.sock_addr` |
+| type | [`stream_sock`](../sig/INET_SOCK.md#type-stream_sock) | `(inet', 'a stream') RuneSocket.sock` |
 | val | [`any`](../sig/INET_SOCK.md#val-any) | `int -> sock_addr` |
-| val | [`fromAddr`](../sig/INET_SOCK.md#val-fromaddr) | `sock_addr -> NetHostDB.in_addr * int` |
-| val | [`inetAF`](../sig/INET_SOCK.md#val-inetaf) | `NetHostDB.addr_family` |
-| val | [`toAddr`](../sig/INET_SOCK.md#val-toaddr) | `NetHostDB.in_addr * int -> sock_addr` |
+| val | [`fromAddr`](../sig/INET_SOCK.md#val-fromaddr) | `sock_addr -> RuneNet.in_addr * int` |
+| val | [`inetAF`](../sig/INET_SOCK.md#val-inetaf) | `RuneNet.addr_family` |
+| val | [`toAddr`](../sig/INET_SOCK.md#val-toaddr) | `RuneNet.in_addr * int -> sock_addr` |
 | structure | [`TCP`](../str/INetSock.TCP.md) |  |
 | structure | [`UDP`](../str/INetSock.UDP.md) |  |
 

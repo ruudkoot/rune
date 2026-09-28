@@ -19,30 +19,30 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`getATMARK`](../sig/SOCKET.md#val-ctl.getatmark) | `('a, active' stream') Socket.sock -> bool` |
-| val | [`getBROADCAST`](../sig/SOCKET.md#val-ctl.getbroadcast) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getDEBUG`](../sig/SOCKET.md#val-ctl.getdebug) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getDONTROUTE`](../sig/SOCKET.md#val-ctl.getdontroute) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getERROR`](../sig/SOCKET.md#val-ctl.geterror) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getKEEPALIVE`](../sig/SOCKET.md#val-ctl.getkeepalive) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getLINGER`](../sig/SOCKET.md#val-ctl.getlinger) | `('a, 'b) Socket.sock -> Time.time option` |
-| val | [`getNREAD`](../sig/SOCKET.md#val-ctl.getnread) | `('a, 'b) Socket.sock -> int` |
-| val | [`getOOBINLINE`](../sig/SOCKET.md#val-ctl.getoobinline) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getPeerName`](../sig/SOCKET.md#val-ctl.getpeername) | `('a, 'b) Socket.sock -> 'a Socket.sock_addr` |
-| val | [`getRCVBUF`](../sig/SOCKET.md#val-ctl.getrcvbuf) | `('a, 'b) Socket.sock -> int` |
-| val | [`getREUSEADDR`](../sig/SOCKET.md#val-ctl.getreuseaddr) | `('a, 'b) Socket.sock -> bool` |
-| val | [`getSNDBUF`](../sig/SOCKET.md#val-ctl.getsndbuf) | `('a, 'b) Socket.sock -> int` |
-| val | [`getSockName`](../sig/SOCKET.md#val-ctl.getsockname) | `('a, 'b) Socket.sock -> 'a Socket.sock_addr` |
-| val | [`getTYPE`](../sig/SOCKET.md#val-ctl.gettype) | `('a, 'b) Socket.sock -> Socket.SOCK.sock_type` |
-| val | [`setBROADCAST`](../sig/SOCKET.md#val-ctl.setbroadcast) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setDEBUG`](../sig/SOCKET.md#val-ctl.setdebug) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setDONTROUTE`](../sig/SOCKET.md#val-ctl.setdontroute) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setKEEPALIVE`](../sig/SOCKET.md#val-ctl.setkeepalive) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setLINGER`](../sig/SOCKET.md#val-ctl.setlinger) | `('a, 'b) Socket.sock * Time.time option -> unit` |
-| val | [`setOOBINLINE`](../sig/SOCKET.md#val-ctl.setoobinline) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setRCVBUF`](../sig/SOCKET.md#val-ctl.setrcvbuf) | `('a, 'b) Socket.sock * int -> unit` |
-| val | [`setREUSEADDR`](../sig/SOCKET.md#val-ctl.setreuseaddr) | `('a, 'b) Socket.sock * bool -> unit` |
-| val | [`setSNDBUF`](../sig/SOCKET.md#val-ctl.setsndbuf) | `('a, 'b) Socket.sock * int -> unit` |
+| val | [`getATMARK`](../sig/SOCKET.md#val-ctl.getatmark) | `('a, active' stream') RuneSocket.sock -> bool` |
+| val | [`getBROADCAST`](../sig/SOCKET.md#val-ctl.getbroadcast) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getDEBUG`](../sig/SOCKET.md#val-ctl.getdebug) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getDONTROUTE`](../sig/SOCKET.md#val-ctl.getdontroute) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getERROR`](../sig/SOCKET.md#val-ctl.geterror) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getKEEPALIVE`](../sig/SOCKET.md#val-ctl.getkeepalive) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getLINGER`](../sig/SOCKET.md#val-ctl.getlinger) | `('a, 'b) RuneSocket.sock -> Time.time option` |
+| val | [`getNREAD`](../sig/SOCKET.md#val-ctl.getnread) | `('a, 'b) RuneSocket.sock -> int` |
+| val | [`getOOBINLINE`](../sig/SOCKET.md#val-ctl.getoobinline) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getPeerName`](../sig/SOCKET.md#val-ctl.getpeername) | `('a, 'b) RuneSocket.sock -> 'a RuneSocket.sock_addr` |
+| val | [`getRCVBUF`](../sig/SOCKET.md#val-ctl.getrcvbuf) | `('a, 'b) RuneSocket.sock -> int` |
+| val | [`getREUSEADDR`](../sig/SOCKET.md#val-ctl.getreuseaddr) | `('a, 'b) RuneSocket.sock -> bool` |
+| val | [`getSNDBUF`](../sig/SOCKET.md#val-ctl.getsndbuf) | `('a, 'b) RuneSocket.sock -> int` |
+| val | [`getSockName`](../sig/SOCKET.md#val-ctl.getsockname) | `('a, 'b) RuneSocket.sock -> 'a RuneSocket.sock_addr` |
+| val | [`getTYPE`](../sig/SOCKET.md#val-ctl.gettype) | `('a, 'b) RuneSocket.sock -> RuneNet.sock_type` |
+| val | [`setBROADCAST`](../sig/SOCKET.md#val-ctl.setbroadcast) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setDEBUG`](../sig/SOCKET.md#val-ctl.setdebug) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setDONTROUTE`](../sig/SOCKET.md#val-ctl.setdontroute) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setKEEPALIVE`](../sig/SOCKET.md#val-ctl.setkeepalive) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setLINGER`](../sig/SOCKET.md#val-ctl.setlinger) | `('a, 'b) RuneSocket.sock * Time.time option -> unit` |
+| val | [`setOOBINLINE`](../sig/SOCKET.md#val-ctl.setoobinline) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setRCVBUF`](../sig/SOCKET.md#val-ctl.setrcvbuf) | `('a, 'b) RuneSocket.sock * int -> unit` |
+| val | [`setREUSEADDR`](../sig/SOCKET.md#val-ctl.setreuseaddr) | `('a, 'b) RuneSocket.sock * bool -> unit` |
+| val | [`setSNDBUF`](../sig/SOCKET.md#val-ctl.setsndbuf) | `('a, 'b) RuneSocket.sock * int -> unit` |
 
 ## Notes
 

@@ -78,8 +78,8 @@ sig
      Raises: `Subscript` if `i < 0` or `arr` is shorter than `bytesPerElem *
      (i + 1)`.
 
-     Law: `(update (arr, i, r); subArr (arr, i))` is `r`, except that a NaN
-     comes back as some NaN
+     Law: `(update (arr, i, r); subArr (arr, i)) = r`, except that a NaN comes
+     back as some NaN
 
      Example: `let val a = Word8Array.array (8, 0w0) in PackReal64Little.update
      (a, 0, 1.0); Word8Array.sub (a, 7) end = 0wx3F` *)

@@ -26,15 +26,15 @@ What each means is on [`UNIX`](../sig/UNIX.md); the types are this structure's o
 | --- | --- | --- |
 | datatype | [`exit_status`](../sig/UNIX.md#type-exit_status) | `W_EXITED` &#124; `W_EXITSTATUS` &#124; `W_SIGNALED` &#124; `W_STOPPED` |
 | type | [`proc`](../sig/UNIX.md#type-proc) | *a type of its own* |
-| type | [`signal`](../sig/UNIX.md#type-signal) | *a type of its own* |
+| type | [`signal`](../sig/UNIX.md#type-signal) | `RunePosixSignal.signal` |
 | val | [`binInstreamOf`](../sig/UNIX.md#val-bininstreamof) | `(BinIO.instream, 'a) proc -> BinIO.instream` |
 | val | [`binOutstreamOf`](../sig/UNIX.md#val-binoutstreamof) | `('a, BinIO.outstream) proc -> BinIO.outstream` |
 | val | [`execute`](../sig/UNIX.md#val-execute) | `string * string list -> ('a, 'b) proc` |
 | val | [`executeInEnv`](../sig/UNIX.md#val-executeinenv) | `string * string list * string list -> ('a, 'b) proc` |
 | val | [`exit`](../sig/UNIX.md#val-exit) | `Word8.word -> 'a` |
-| val | [`fromStatus`](../sig/UNIX.md#val-fromstatus) | `OS.Process.status -> exit_status` |
-| val | [`kill`](../sig/UNIX.md#val-kill) | `('a, 'b) proc * signal -> unit` |
-| val | [`reap`](../sig/UNIX.md#val-reap) | `('a, 'b) proc -> OS.Process.status` |
+| val | [`fromStatus`](../sig/UNIX.md#val-fromstatus) | `RuneStatus.status -> RunePosixProcess.exit_status` |
+| val | [`kill`](../sig/UNIX.md#val-kill) | `('a, 'b) proc * RunePosixSignal.signal -> unit` |
+| val | [`reap`](../sig/UNIX.md#val-reap) | `('a, 'b) proc -> RuneStatus.status` |
 | val | [`streamsOf`](../sig/UNIX.md#val-streamsof) | `(TextIO.instream, TextIO.outstream) proc -> TextIO.instream * TextIO.outstream` |
 | val | [`textInstreamOf`](../sig/UNIX.md#val-textinstreamof) | `(TextIO.instream, 'a) proc -> TextIO.instream` |
 | val | [`textOutstreamOf`](../sig/UNIX.md#val-textoutstreamof) | `('a, TextIO.outstream) proc -> TextIO.outstream` |

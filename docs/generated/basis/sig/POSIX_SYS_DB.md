@@ -235,7 +235,7 @@ val getgrgid : gid -> Group.group
 
 **Raises** [`OS.SysErr`](../sig/OS.md#exn-syserr) if there is no such group.
 
-**Law** `Group.gid (getgrgid g) = g`
+**Law** `Group.gid (getgrgid g) = g` (for every `g : Posix.ProcEnv.gid`)
 
 **Example** `let val g = Posix.ProcEnv.wordToGid 0w0 in Group.gid (getgrgid g) = g end = true`
 
@@ -277,7 +277,7 @@ val getpwuid : uid -> Passwd.passwd
 > [`OS.SysErr`](../sig/OS.md#exn-syserr) for it all the same, since the alternative would be to
 > return something that names nobody.
 
-**Law** `Passwd.uid (getpwuid u) = u`
+**Law** `Passwd.uid (getpwuid u) = u` (for every `u : Posix.ProcEnv.uid`)
 
 **Example** `Passwd.name (getpwuid (Posix.ProcEnv.wordToUid 0w0)) = "root"`
 

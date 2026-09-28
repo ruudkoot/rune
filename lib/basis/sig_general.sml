@@ -151,7 +151,7 @@ sig
 
      It is infix with precedence 3.
 
-     Law: `f o (g o h) = (f o g) o h`: composition is associative, as
+     Law: `(f o (g o h)) x = ((f o g) o h) x`: composition is associative, as
      functions and not as values that `=` could compare
 
      Example: `(Int.toString o (fn x => x + 1)) 1 = "2"` *)
@@ -162,7 +162,7 @@ sig
      It is infix with precedence 0, the loosest there is, so that
      `x before print "done"` needs no parentheses.
 
-     Law: `e before e' = (fn (a, ()) => a) (e, e')`
+     Law: `(e before e') = (fn (a, ()) => a) (e, e')`
 
      Example: `(1 before ()) = 1` *)
   val before : 'a * unit -> 'a

@@ -18,10 +18,10 @@ What each means is on [`SOCKET`](../sig/SOCKET.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`addr_family`](../sig/SOCKET.md#type-af.addr_family) | `NetHostDB.addr_family` |
-| val | [`fromString`](../sig/SOCKET.md#val-af.fromstring) | `string -> NetHostDB.addr_family option` |
-| val | [`list`](../sig/SOCKET.md#val-af.list) | `unit -> (string * NetHostDB.addr_family) list` |
-| val | [`toString`](../sig/SOCKET.md#val-af.tostring) | `NetHostDB.addr_family -> string` |
+| type | [`addr_family`](../sig/SOCKET.md#type-af.addr_family) | `RuneNet.addr_family` |
+| val | [`fromString`](../sig/SOCKET.md#val-af.fromstring) | `string -> RuneNet.addr_family option` |
+| val | [`list`](../sig/SOCKET.md#val-af.list) | `unit -> (string * RuneNet.addr_family) list` |
+| val | [`toString`](../sig/SOCKET.md#val-af.tostring) | `RuneNet.addr_family -> string` |
 
 ## Notes
 

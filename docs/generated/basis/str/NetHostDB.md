@@ -25,20 +25,20 @@ What each means is on [`NET_HOST_DB`](../sig/NET_HOST_DB.md); the types are this
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`addr_family`](../sig/NET_HOST_DB.md#type-addr_family) | *a type of its own* |
+| type | [`addr_family`](../sig/NET_HOST_DB.md#type-addr_family) | `RuneNet.addr_family` |
 | type | [`entry`](../sig/NET_HOST_DB.md#type-entry) | *a type of its own* |
-| type | [`in_addr`](../sig/NET_HOST_DB.md#type-in_addr) | *a type of its own* |
-| val | [`addr`](../sig/NET_HOST_DB.md#val-addr) | `entry -> in_addr` |
-| val | [`addrType`](../sig/NET_HOST_DB.md#val-addrtype) | `entry -> addr_family` |
-| val | [`addrs`](../sig/NET_HOST_DB.md#val-addrs) | `entry -> in_addr list` |
+| type | [`in_addr`](../sig/NET_HOST_DB.md#type-in_addr) | `RuneNet.in_addr` |
+| val | [`addr`](../sig/NET_HOST_DB.md#val-addr) | `entry -> RuneNet.in_addr` |
+| val | [`addrType`](../sig/NET_HOST_DB.md#val-addrtype) | `entry -> RuneNet.addr_family` |
+| val | [`addrs`](../sig/NET_HOST_DB.md#val-addrs) | `entry -> RuneNet.in_addr list` |
 | val | [`aliases`](../sig/NET_HOST_DB.md#val-aliases) | `entry -> string list` |
-| val | [`fromString`](../sig/NET_HOST_DB.md#val-fromstring) | `string -> in_addr option` |
-| val | [`getByAddr`](../sig/NET_HOST_DB.md#val-getbyaddr) | `in_addr -> entry option` |
+| val | [`fromString`](../sig/NET_HOST_DB.md#val-fromstring) | `string -> RuneNet.in_addr option` |
+| val | [`getByAddr`](../sig/NET_HOST_DB.md#val-getbyaddr) | `RuneNet.in_addr -> entry option` |
 | val | [`getByName`](../sig/NET_HOST_DB.md#val-getbyname) | `string -> entry option` |
 | val | [`getHostName`](../sig/NET_HOST_DB.md#val-gethostname) | `unit -> string` |
 | val | [`name`](../sig/NET_HOST_DB.md#val-name) | `entry -> string` |
-| val | [`scan`](../sig/NET_HOST_DB.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (in_addr * 'a) option` |
-| val | [`toString`](../sig/NET_HOST_DB.md#val-tostring) | `in_addr -> string` |
+| val | [`scan`](../sig/NET_HOST_DB.md#val-scan) | `('a -> (char * 'a) option) -> 'a -> (RuneNet.in_addr * 'a) option` |
+| val | [`toString`](../sig/NET_HOST_DB.md#val-tostring) | `RuneNet.in_addr -> string` |
 
 ## Notes
 

@@ -106,7 +106,7 @@ val fromWord : SysWord.word -> signal
 
 `fromWord w` is the signal numbered `w`, which need not be one named here.
 
-**Law** `fromWord (toWord s) = s`
+**Law** `fromWord (toWord s) = s` (for every `s : RunePosixSignal.signal`)
 
 **Example** `fromWord 0w15 = term`
 

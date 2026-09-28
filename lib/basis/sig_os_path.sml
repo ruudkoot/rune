@@ -121,7 +121,7 @@ sig
 
      Example: `splitDirFile "a/b/" = {dir = "a/b", file = ""}`
 
-     Law: `joinDirFile (splitDirFile p) = p` for a path `p` that is not empty *)
+     Law: `joinDirFile (splitDirFile p) = p` for `p <> ""` *)
   val splitDirFile : string -> {dir : string, file : string}
 
   (* `joinDirFile {dir, file}` is the path of `file` inside `dir`.
@@ -233,8 +233,8 @@ sig
      Example: `mkRelative {path = "/a/b/c", relativeTo = "/a/d"} = "../b/c"`
 
      Law: `mkAbsolute {path = mkRelative {path = p, relativeTo = q}, relativeTo
-     = q} = p` for canonical absolute paths `p` and `q`; a path that is not
-     canonical comes back canonical *)
+     = q} = p` for `isCanonical p andalso isAbsolute p andalso isCanonical q
+     andalso isAbsolute q`; a path that is not canonical comes back canonical *)
   val mkRelative : {path : string, relativeTo : string} -> string
 
   (* `isAbsolute p` is `true` when `p` starts from a root.

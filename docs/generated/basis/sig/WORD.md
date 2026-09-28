@@ -176,7 +176,7 @@ val toLarge : word -> LargeWord.word
 
 `toLarge w` is `w` as a word of [`LargeWord`](../str/Word.md), with zeros in the bits above [`wordSize`](#val-wordsize).
 
-**Law** `fromLarge (toLarge w) = w`
+**Law** `fromLarge (toLarge w) = w` (for every `w : word`)
 
 **Example** `Word8.toLarge 0wxFF = 0wxFF`
 
@@ -194,7 +194,7 @@ val toLargeX : word -> LargeWord.word
 
 `toLargeX w` is `w` as a word of [`LargeWord`](../str/Word.md), with the top bit of `w` copied into the bits above it.
 
-**Law** `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
+**Law** `toLargeX w = toLarge w` when `w < << (0w1, Word.fromInt (Int.- (wordSize, 1)))` (for every `w : word`)
 
 **Example** `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF` in Rune, where
 `LargeWord.wordSize = 64`
@@ -315,7 +315,7 @@ val fromLargeInt : LargeInt.int -> word
 A negative `i` is taken in two's complement, and what does not fit is
 dropped.
 
-**Law** `fromLargeInt (toLargeIntX w) = w`
+**Law** `fromLargeInt (toLargeIntX w) = w` (for every `w : word`)
 
 **Example** `Word8.fromLargeInt ~1 = 0wxFF`
 
@@ -470,7 +470,7 @@ val notb : word -> word
 
 `notb w` is `w` with every bit inverted.
 
-**Law** `notb w = ~w - 0w1`
+**Law** `notb w = ~w - 0w1` (for every `w : word`)
 
 **Example** `Word.notb 0w0 = 0wxFFFFFFFFFFFFFFFF`
 
@@ -496,7 +496,8 @@ val << : word * Word.word -> word
 
 A shift of [`wordSize`](#val-wordsize) bits or more gives 0.
 
-**Law** `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure
+**Law** `<< (w, n) = w * (let fun pow e = if e = 0w0 then 0w1 else let val h = pow (Word.>> (e, 0w1)) in if Word.andb (e, 0w1) = 0w1 then 0w2 * h * h else h * h end in pow n end)`: `w` times 2 to the `n`, in the arithmetic
+of this structure (for every `w : word`, `n : word`)
 
 **Example** `<< (0w1, 0w4) = 0w16`
 
@@ -520,7 +521,7 @@ val >> : word * Word.word -> word
 
 A shift of [`wordSize`](#val-wordsize) bits or more gives 0.
 
-**Law** `>> (w, n) = w div 0w2 ^ n`
+**Law** `>> (w, n) = (if LargeInt.>= (Word.toLargeInt n, LargeInt.fromInt wordSize) then 0w0 else fromLargeInt (LargeInt.div (toLargeInt w, IntInf.pow (2, Word.toInt n))))`: `w` divided by 2 to the `n` (for every `w : word`, `n : word`)
 
 **Example** `Word8.>> (0wx80, 0w1) = 0wx40`
 
@@ -659,7 +660,7 @@ val mod : word * word -> word
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `b` is zero.
 
-**Law** `(a div b) * b + (a mod b) = a`
+**Law** `(a div b) * b + (a mod b) = a` (for every `a : word`, `b : word`)
 
 **Example** `0w7 mod 0w2 = 0w1`
 
@@ -721,7 +722,7 @@ val ~ : word -> word
 
 `~w` is the negation modulo `2^wordSize`: the two's complement of `w`.
 
-**Law** `~w = notb w + 0w1`, and `~0w0 = 0w0`
+**Law** `~w = notb w + 0w1`, and `~ 0w0 = 0w0` (for every `w : word`)
 
 **Example** `Word8.~ 0w1 = 0wxFF`
 
@@ -795,7 +796,7 @@ val toString : word -> string
 
 `toString w` is the text of `w` in base 16, with the digits `A` to `F` and no prefix.
 
-**Law** `toString w = fmt StringCvt.HEX w`
+**Law** `toString w = fmt StringCvt.HEX w` (for every `w : word`)
 
 **Example** `toString 0w255 = "FF"`
 
@@ -853,7 +854,7 @@ val fromString : string -> word option
 
 **Raises** [`Overflow`](../sig/GENERAL.md#exn-overflow) if the digits name a number of more than [`wordSize`](#val-wordsize) bits.
 
-**Law** `fromString s = StringCvt.scanString (scan StringCvt.HEX) s`
+**Law** `fromString s = StringCvt.scanString (scan StringCvt.HEX) s` (for every `s : string`)
 
 **Example** `fromString "0wxff" = SOME 0w255`
 
