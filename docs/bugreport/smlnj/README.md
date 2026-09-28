@@ -5,7 +5,7 @@ One directory per bug, each with:
 * a program that shows the bug with SML/NJ's own Basis Library
   (`sml bug.sml`, nothing of Rune involved);
 * where there is one, a `fix.diff` against
-  [smlnj/legacy](https://github.com/smlnj/legacy) at `6ed5a0a` (2026-09-13),
+  [smlnj/legacy](https://github.com/smlnj/legacy/tree/6ed5a0a9b3f42df06c8dd999373521c70d44d04b) at `6ed5a0a` (2026-09-13),
   which also applies to the sources of 110.99.9;
 * an `upstream.md` with the text to post.
 
@@ -50,23 +50,23 @@ The table is in the order of the ranking below.
 
 | # | Report | 32-bit, 110.99.9 (Linux and Windows; release and source builds) | 64-bit release | 110.79 (32-bit) | with the fixes | Upstream |
 |---|---|---|---|---|---|---|
-| 1 | [GC/real-corrupted-on-64-bit](GC/real-corrupted-on-64-bit/BUGREPORT.md) | 0 | 83 in 300,000 (590 with `@SMLalloc=128k`) | n/a | 0 | the cause of [#299](https://github.com/smlnj/legacy/issues/299) (open) |
-| 2 | [GC/spilled-word64-argument](GC/spilled-word64-argument/BUGREPORT.md): an `Int64`/`Word64` argument in the spill record | 0 | constant call wrong, then "bogus fault" | 0 | 0 | the legacy side of [#381](https://github.com/smlnj/legacy/issues/381) (open) |
-| 3 | [Int64.+/carry-and-borrow](Int64.+/carry-and-borrow/BUGREPORT.md) | 6 of 7 | 0 | other bugs | 0 | not reported |
-| 4 | [Word64-low-half](Word64-low-half/BUGREPORT.md): 64-bit literals lose bits 30 and 31 | 7 of 7 (0 in a native fixed point) | 0 | 0 | 0 | [#260](https://github.com/smlnj/legacy/issues/260), closed as fixed but not fixed |
-| 5 | [Word64/shifts-and-negation](Word64/shifts-and-negation/BUGREPORT.md) | 8 of 8 | 0 | 0 | 0 | not reported; the cause of [#373](https://github.com/smlnj/legacy/issues/373) |
-| 6 | [IEEEReal.setRoundingMode/windows-no-op](IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md) | 7 of 7 on Windows, 0 on Linux | 0 (Linux) | 0 (Windows and Linux) | 0 | [#70](https://github.com/smlnj/legacy/issues/70) fixed it for Linux only; Windows not reported |
-| 7 | [Real.ceil/conversions-to-int](Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
-| 8 | [Int.fromLarge/fused-conversions](Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
-| 9 | [Word32.fromLarge/fused-sign-extension](Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
-| 10 | [Int64.toInt/high-word-ignored](Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
-| 11 | [Real.fromManExp/subnormal-is-zero](Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
-| 12 | [Real.fromLargeInt/rounds-twice](Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
-| 13 | [Real.nextAfter/subnormal-and-zero](Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
+| 1 | [GC/real-corrupted-on-64-bit](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/GC/real-corrupted-on-64-bit/BUGREPORT.md) | 0 | 83 in 300,000 (590 with `@SMLalloc=128k`) | n/a | 0 | the cause of [#299](https://github.com/smlnj/legacy/issues/299) (open) |
+| 2 | [GC/spilled-word64-argument](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/GC/spilled-word64-argument/BUGREPORT.md): an `Int64`/`Word64` argument in the spill record | 0 | constant call wrong, then "bogus fault" | 0 | 0 | the legacy side of [#381](https://github.com/smlnj/legacy/issues/381) (open) |
+| 3 | [Int64.+/carry-and-borrow](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int64.+/carry-and-borrow/BUGREPORT.md) | 6 of 7 | 0 | other bugs | 0 | not reported |
+| 4 | [Word64-low-half](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word64-low-half/BUGREPORT.md): 64-bit literals lose bits 30 and 31 | 7 of 7 (0 in a native fixed point) | 0 | 0 | 0 | [#260](https://github.com/smlnj/legacy/issues/260), closed as fixed but not fixed |
+| 5 | [Word64/shifts-and-negation](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word64/shifts-and-negation/BUGREPORT.md) | 8 of 8 | 0 | 0 | 0 | not reported; the cause of [#373](https://github.com/smlnj/legacy/issues/373) |
+| 6 | [IEEEReal.setRoundingMode/windows-no-op](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md) | 7 of 7 on Windows, 0 on Linux | 0 (Linux) | 0 (Windows and Linux) | 0 | [#70](https://github.com/smlnj/legacy/issues/70) fixed it for Linux only; Windows not reported |
+| 7 | [Real.ceil/conversions-to-int](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
+| 8 | [Int.fromLarge/fused-conversions](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
+| 9 | [Word32.fromLarge/fused-sign-extension](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
+| 10 | [Int64.toInt/high-word-ignored](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
+| 11 | [Real.fromManExp/subnormal-is-zero](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
+| 12 | [Real.fromLargeInt/rounds-twice](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
+| 13 | [Real.nextAfter/subnormal-and-zero](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
 
 Only the literals come from how the release is made; the rest are in the
 sources. The code behind 6, 7, the first part of 8, 9, 11, 12 and 13 is
-the same in [smlnj/smlnj](https://github.com/smlnj/smlnj) at `a5f3fa7`, so
+the same in [smlnj/smlnj](https://github.com/smlnj/smlnj/tree/a5f3fa766c04eac403b4012414f2845006854f84) at `a5f3fa7`, so
 the 2026 series has those too (6 only where it builds for Windows). The
 2026 series has no `invokegc.sml`, the code behind 1. According to smlnj/smlnj
 #394, 2026.3 fixes 2 with a new `CPSTransFn`. That was established by
@@ -123,26 +123,26 @@ Each report's `upstream.md` is the text to post, with the fields of the
 issue form, the program, a transcript and the patch filled in:
 
 * **Comments** on [#260](https://github.com/smlnj/legacy/issues/260)
-  ([Word64-low-half](Word64-low-half/upstream.md)),
+  ([Word64-low-half](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word64-low-half/upstream.md)),
   [#373](https://github.com/smlnj/legacy/issues/373)
-  ([Word64/shifts-and-negation](Word64/shifts-and-negation/upstream.md)),
+  ([Word64/shifts-and-negation](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word64/shifts-and-negation/upstream.md)),
   [#254](https://github.com/smlnj/legacy/issues/254)
-  ([Real.fromManExp](Real.fromManExp/subnormal-is-zero/upstream.md)),
+  ([Real.fromManExp](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.fromManExp/subnormal-is-zero/upstream.md)),
   [#299](https://github.com/smlnj/legacy/issues/299)
-  ([the GC corruption](GC/real-corrupted-on-64-bit/upstream.md), with its
+  ([the GC corruption](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/GC/real-corrupted-on-64-bit/upstream.md), with its
   cause and fix) and [#381](https://github.com/smlnj/legacy/issues/381)
-  ([the spilled argument](GC/spilled-word64-argument/upstream.md), with a
+  ([the spilled argument](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/GC/spilled-word64-argument/upstream.md), with a
   fix for legacy).
 * **Eight new issues** on smlnj/legacy:
-  - [Int64.+](Int64.+/carry-and-borrow/upstream.md);
-  - [IEEEReal.setRoundingMode on Windows](IEEEReal.setRoundingMode/windows-no-op/upstream.md),
+  - [Int64.+](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int64.+/carry-and-borrow/upstream.md);
+  - [IEEEReal.setRoundingMode on Windows](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/IEEEReal.setRoundingMode/windows-no-op/upstream.md),
     which names #70;
-  - [Real.ceil](Real.ceil/conversions-to-int/upstream.md);
-  - [fused conversions](Int.fromLarge/fused-conversions/upstream.md);
-  - [fused sign extension](Word32.fromLarge/fused-sign-extension/upstream.md);
-  - [Int64.toInt](Int64.toInt/high-word-ignored/upstream.md);
-  - [Real.fromLargeInt](Real.fromLargeInt/rounds-twice/upstream.md);
-  - [Real.nextAfter](Real.nextAfter/subnormal-and-zero/upstream.md).
+  - [Real.ceil](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.ceil/conversions-to-int/upstream.md);
+  - [fused conversions](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int.fromLarge/fused-conversions/upstream.md);
+  - [fused sign extension](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Word32.fromLarge/fused-sign-extension/upstream.md);
+  - [Int64.toInt](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Int64.toInt/high-word-ignored/upstream.md);
+  - [Real.fromLargeInt](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.fromLargeInt/rounds-twice/upstream.md);
+  - [Real.nextAfter](https://github.com/ruudkoot/rune/blob/8e4a5cb4a633e2ba8e7e1d26d294c53a36128259/docs/bugreport/smlnj/Real.nextAfter/subnormal-and-zero/upstream.md).
 
 The legacy form asks for one report when the development version has the
 bug too; the drafts of the all-platform bugs say so.
