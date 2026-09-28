@@ -55,28 +55,29 @@ What each means is on [`STREAM_IO`](../sig/STREAM_IO.md); the types are this str
 | val | [`setBufferMode`](../sig/STREAM_IO.md#val-setbuffermode) | `outstream * IO.buffer_mode -> unit` |
 | val | [`setPosOut`](../sig/STREAM_IO.md#val-setposout) | `out_pos -> outstream` |
 
-<details><summary>Other implementations (20)</summary>
+<details><summary>Other implementations (21)</summary>
 
 - **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
-- **SML/NJ 110.99.9** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+- **SML/NJ** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
 - **MLton, Poly/ML, MLKit** &mdash; closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")
 - **MLton, MLKit** &mdash; closeOut of a stream that getWriter terminated does not close the writer ("one can close a truncated or terminated string")
-- **MLton, SML/NJ 110.99.9, MLKit** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, SML/NJ, MLKit** &mdash; filePosIn of a truncated stream raises nothing
 - **MLton, SML/NJ** &mdash; another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
-- **SML/NJ 110.99.9** &mdash; getReader of a closed or truncated stream raises nothing
-- **SML/NJ 110.99.9** &mdash; getWriter of a closed stream raises nothing
+- **MLKit** &mdash; filePosIn of a closed stream raises nothing (docs/bugreport/mlkit/TextIO.StreamIO.filePosIn/truncated-no-Io)
+- **SML/NJ** &mdash; getReader of a closed or truncated stream raises nothing
+- **SML/NJ** &mdash; getWriter of a closed stream raises nothing
 - **Poly/ML** &mdash; input lets the exception of the reader through instead of raising Io with it as the cause
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it: the example of stream-io.html ("abc", end-of-stream, "defg") gives "abc" and then "" for good
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it as the definition by input does
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
-- **SML/NJ 110.99.9** &mdash; inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+- **SML/NJ** &mdash; inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
-- **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+- **SML/NJ** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 - **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 - **MLKit** &mdash; output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
-- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+- **SML/NJ** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 
 </details>
 

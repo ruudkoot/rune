@@ -9,9 +9,9 @@
 #
 #   --prefix DIR   install under DIR (default: /usr/local as root, ~/.local otherwise)
 #   --destdir DIR  prepend DIR to every destination, for staged installs
-#   --host NAME    install the host build bin/rune-NAME (mlton, smlnj, polyml
-#                  or mlkit) instead of the bytecode compiler; rune then
-#                  points at it
+#   --host NAME    install the host build bin/rune-NAME (mlton, smlnj-legacy,
+#                  smlnj-dev, polyml or mlkit) instead of the bytecode
+#                  compiler; rune then points at it
 #   --uninstall    remove what an install with the same options put there
 #
 # This script never builds anything; `make install` builds first when it is not
@@ -22,8 +22,17 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 prefix=${PREFIX:-}
 destdir=${DESTDIR:-}
 host=${HOST:-}
-# the SML/NJ that runs an installed rune-smlnj (that of `make hosts`)
-smlnj=${SMLNJ:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/smlnj/bin/sml}
+# the SML/NJ that runs an installed heap image (that of `make hosts`)
+smlnj_legacy=${SMLNJ:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/smlnj-legacy/bin/sml}
+smlnj_dev=${SMLNJ_DEV:-${RUNE_HOSTS:-$HOME/.local/rune-hosts}/smlnj-dev/bin/sml}
+# sml_for_host HOST: the sml of a heap-image build, or failure for the others.
+sml_for_host() {
+  case "$1" in
+    smlnj-legacy) printf '%s\n' "$smlnj_legacy" ;;
+    smlnj-dev) printf '%s\n' "$smlnj_dev" ;;
+    *) return 1 ;;
+  esac
+}
 heap=${RUNE_HEAP:-67108864}
 uninstall=0
 
@@ -42,8 +51,8 @@ while [ $# -gt 0 ]; do
 done
 
 case "$host" in
-  ""|mlton|smlnj|polyml|mlkit) ;;
-  *) echo "install.sh: unknown host: $host (mlton, smlnj, polyml or mlkit)" >&2; exit 2 ;;
+  ""|mlton|smlnj-legacy|smlnj-dev|polyml|mlkit) ;;
+  *) echo "install.sh: unknown host: $host (mlton, smlnj-legacy, smlnj-dev, polyml or mlkit)" >&2; exit 2 ;;
 esac
 
 if [ -z "$prefix" ]; then
@@ -59,11 +68,12 @@ zshdir=$destdir$prefix/share/zsh/site-functions
 # ------------------------------------------------------------------ uninstall
 if [ "$uninstall" = 1 ]; then
   rm -f "$bindir/rune" "$bindir/runevm" \
-        "$bindir/rune-mlton" "$bindir/rune-smlnj" "$bindir/rune-polyml" "$bindir/rune-mlkit" \
-        "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj" "$bindir/runedoc-polyml" \
-        "$bindir/runedoc-mlkit" \
-        "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj" "$bindir/runeopt-polyml" \
-        "$bindir/runeopt-mlkit"
+        "$bindir/rune-mlton" "$bindir/rune-smlnj-legacy" "$bindir/rune-smlnj-dev" \
+        "$bindir/rune-polyml" "$bindir/rune-mlkit" \
+        "$bindir/runedoc" "$bindir/runedoc-mlton" "$bindir/runedoc-smlnj-legacy" \
+        "$bindir/runedoc-smlnj-dev" "$bindir/runedoc-polyml" "$bindir/runedoc-mlkit" \
+        "$bindir/runeopt" "$bindir/runeopt-mlton" "$bindir/runeopt-smlnj-legacy" \
+        "$bindir/runeopt-smlnj-dev" "$bindir/runeopt-polyml" "$bindir/runeopt-mlkit"
   rm -rf "$libdir"
   rm -f "$mandir/rune.1" "$mandir/runevm.1" "$mandir/runedoc.1" "$mandir/runeopt.1"
   rm -f "$bashdir/rune" "$bashdir/runedoc" "$bashdir/runeopt"
@@ -79,13 +89,13 @@ need() { [ -e "$1" ] || missing="$missing $1"; }
 need "$root/bin/runevm"
 if [ -z "$host" ]; then
   need "$root/bin/rune.rbc"
-elif [ "$host" = smlnj ]; then
+elif sml_for_host "$host" > /dev/null; then
   # ml-build suffixes the heap with the architecture, so match whatever is there.
   found=0
-  for h in "$root"/bin/rune-smlnj.heap.*; do
+  for h in "$root"/bin/rune-"$host".heap.*; do
     if [ -e "$h" ]; then found=1; fi
   done
-  if [ "$found" = 0 ]; then missing="$missing $root/bin/rune-smlnj.heap.<arch>"; fi
+  if [ "$found" = 0 ]; then missing="$missing $root/bin/rune-$host.heap.<arch>"; fi
 else
   need "$root/bin/rune-$host.bin"
 fi
@@ -115,12 +125,12 @@ if [ -z "$host" ]; then
   installed=rune
 else
   case "$host" in
-    smlnj)
-      for h in "$root"/bin/rune-smlnj.heap.*; do
+    smlnj-legacy|smlnj-dev)
+      for h in "$root"/bin/rune-"$host".heap.*; do
         copy "$h" "$libdir/${h##*/}" 644
       done
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/rune-smlnj.heap" --lib "$d/../lib/rune" "$@"\n' "$smlnj" \
-        > "$bindir/rune-smlnj"
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/rune-%s.heap" --lib "$d/../lib/rune" "$@"\n' \
+        "$(sml_for_host "$host")" "$host" > "$bindir/rune-$host"
       ;;
     *)
       copy "$root/bin/rune-$host.bin" "$libdir/rune-$host.bin" 755
@@ -143,15 +153,15 @@ if [ -z "$host" ]; then
     chmod 755 "$bindir/runedoc"
     doc=runedoc
   fi
-elif [ "$host" = smlnj ]; then
+elif sml_for_host "$host" > /dev/null; then
   found=0
-  for h in "$root"/bin/runedoc-smlnj.heap.*; do
+  for h in "$root"/bin/runedoc-"$host".heap.*; do
     if [ -e "$h" ]; then copy "$h" "$libdir/${h##*/}" 644; found=1; fi
   done
   if [ "$found" = 1 ]; then
-    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runedoc-smlnj.heap" --lib "$d/../lib/rune" "$@"\n' "$smlnj" \
-      > "$bindir/runedoc-smlnj"
-    doc=runedoc-smlnj
+    printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runedoc-%s.heap" --lib "$d/../lib/rune" "$@"\n' \
+      "$(sml_for_host "$host")" "$host" > "$bindir/runedoc-$host"
+    doc=runedoc-$host
   fi
 elif [ -e "$root/bin/runedoc-$host.bin" ]; then
   copy "$root/bin/runedoc-$host.bin" "$libdir/runedoc-$host.bin" 755
@@ -176,15 +186,15 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
       chmod 755 "$bindir/runeopt"
       opt=runeopt
     fi
-  elif [ "$host" = smlnj ]; then
+  elif sml_for_host "$host" > /dev/null; then
     found=0
-    for h in "$root"/bin/runeopt-smlnj.heap.*; do
+    for h in "$root"/bin/runeopt-"$host".heap.*; do
       if [ -e "$h" ]; then copy "$h" "$libdir/${h##*/}" 644; found=1; fi
     done
     if [ "$found" = 1 ]; then
-      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runeopt-smlnj.heap" --runtime "$d/../lib/rune/runtime" "$@"\n' "$smlnj" \
-        > "$bindir/runeopt-smlnj"
-      opt=runeopt-smlnj
+      printf '#!/bin/sh\nd=$(dirname "$0")\nexec "%s" @SMLload="$d/../lib/rune/runeopt-%s.heap" --runtime "$d/../lib/rune/runtime" "$@"\n' \
+        "$(sml_for_host "$host")" "$host" > "$bindir/runeopt-$host"
+      opt=runeopt-$host
     fi
   elif [ -e "$root/bin/runeopt-$host.bin" ]; then
     copy "$root/bin/runeopt-$host.bin" "$libdir/runeopt-$host.bin" 755
@@ -238,8 +248,8 @@ if [ -n "$opt" ]; then
 fi
 
 echo "installed $installed${doc:+, runedoc}${opt:+, runeopt} and runevm in $prefix/bin, the basis library in $prefix/lib/rune"
-if [ "$host" = smlnj ]; then
-  echo "note: rune-smlnj runs with $smlnj"
+if sml=$(sml_for_host "$host"); then
+  echo "note: rune-$host runs with $sml"
 fi
 
 case ":${PATH:-}:" in

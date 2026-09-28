@@ -91,8 +91,8 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 - **SML/NJ** &mdash; IntInf.pow (i, j) is 0 for \| i \| = 1 and j \< 0
 - **SML/NJ** &mdash; pow (1, j) and pow (\~1, j) for a negative j are 0, where the page has "\|i\| = 1: i^j"
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
-- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
-- **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
+- **SML/NJ** &mdash; IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
+- **SML/NJ** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 - **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
 - **Poly/ML 5.9.2** &mdash; IntInf.\~\>\> of a negative number that does not fit a machine word rounds towards zero, not down (\~2^100 \~\>\> 0w101 is 0, not \~1); 5.7.1 rounds down
 

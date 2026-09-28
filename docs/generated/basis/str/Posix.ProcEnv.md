@@ -105,8 +105,8 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
-- **SML/NJ 110.99.9 (64-bit)** &mdash; the elapsed time of times is negative
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; the elapsed time of times is negative
 
 </details>
 

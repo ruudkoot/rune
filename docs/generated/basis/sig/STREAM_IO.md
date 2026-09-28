@@ -249,7 +249,7 @@ longer than the greatest length of a vector.
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **SML/NJ** &mdash; inputN (strm, \~1) raises Subscript, not Size
-- **SML/NJ 110.99.9** &mdash; inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
+- **SML/NJ** &mdash; inputN that finds fewer than n elements before an end-of-stream leaves the stream before it, where inputAll leaves it past it (allAndN)
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it, so that inputN and inputAll disagree (allAndN)
 - **Poly/ML** &mdash; inputAll leaves the stream at the end-of-stream where it stops, not "immediately past" it
 
@@ -306,7 +306,7 @@ val canInput : instream * int -> int option
 <details><summary>Other implementations (2)</summary>
 
 - **MLton** &mdash; canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
-- **SML/NJ 110.99.9** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
+- **SML/NJ** &mdash; canInput on a stream whose reader would block answers SOME 0 (end-of-stream), not NONE, and the elements it reads ahead are lost to the stream
 
 </details>
 
@@ -386,7 +386,7 @@ terminated.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+- **SML/NJ** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 
 </details>
 
@@ -409,7 +409,7 @@ val output1 : outstream * elem -> unit
 <details><summary>Other implementations (3)</summary>
 
 - **MLton** &mdash; output1 lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
-- **SML/NJ 110.99.9** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
+- **SML/NJ** &mdash; output and output1 on a stream that getWriter terminated go on writing instead of raising Io
 - **MLKit** &mdash; output1 on an unbuffered stream lets the exception of the writer through instead of raising Io with it as the cause (output raises Io)
 
 </details>
@@ -523,7 +523,7 @@ consumed.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; getReader of a closed or truncated stream raises nothing
+- **SML/NJ** &mdash; getReader of a closed or truncated stream raises nothing
 
 </details>
 
@@ -563,10 +563,11 @@ truncated or closed.
 
 **Example** `(case input1 (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) of SOME (_, g) => filePosIn g | NONE => ~1) = 1`
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (3)</summary>
 
-- **MLton, SML/NJ 110.99.9, MLKit** &mdash; filePosIn of a truncated stream raises nothing
+- **MLton, SML/NJ, MLKit** &mdash; filePosIn of a truncated stream raises nothing
 - **MLton, SML/NJ** &mdash; another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
+- **MLKit** &mdash; filePosIn of a closed stream raises nothing (docs/bugreport/mlkit/TextIO.StreamIO.filePosIn/truncated-no-Io)
 
 </details>
 
@@ -627,7 +628,7 @@ val getBufferMode : outstream -> IO.buffer_mode
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
+- **SML/NJ** &mdash; openAppend makes an unbuffered stream ("When opening a stream for writing, the stream will be block buffered by default")
 
 </details>
 
@@ -684,7 +685,7 @@ val getWriter : outstream -> writer * IO.buffer_mode
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; getWriter of a closed stream raises nothing
+- **SML/NJ** &mdash; getWriter of a closed stream raises nothing
 
 </details>
 
@@ -740,7 +741,7 @@ the stream is terminated or closed.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+- **SML/NJ** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 
 </details>
 

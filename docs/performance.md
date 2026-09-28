@@ -20,9 +20,10 @@ being done about it, is in [plans/performance.md](plans/performance.md)
 | `native:HOST` | the program on the host's own Basis Library, compiled by the host |
 | `xc1:HOST` | the program on Rune's Basis Library (`lib/basis`), compiled by the host ([basis-compat.md](basis-compat.md)) |
 
-The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), Poly/ML
-5.9.2 and MLKit 4.7.23 (`make hosts`). MLKit came later, and its numbers were
-taken on another machine: they are in a section of their own, *MLKit*.
+The hosts are MLton 20241230, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ
+2026.2, Poly/ML 5.9.2 and MLKit 4.7.23 (`make hosts`). The times below were
+taken before SML/NJ 2026.2 joined them. MLKit came later, and its numbers
+were taken on another machine: they are in a section of their own, *MLKit*.
 
 ## Running programs
 
@@ -36,7 +37,7 @@ configuration, the geometric mean of `fib` and `tak`, which use no Basis
 Library. That ratio separates what a library costs from how fast a system
 runs code at all.
 
-| Program | rune | rune:opt | rune:new | rune:windows | rune:windows32 | rune:linux32 | rune:ppc64 | native:mlton | native:smlnj | native:smlnj32 | native:polyml | xc1:mlton | xc1:smlnj | xc1:smlnj32 | xc1:polyml |
+| Program | rune | rune:opt | rune:new | rune:windows | rune:windows32 | rune:linux32 | rune:ppc64 | native:mlton | native:smlnj-legacy | native:smlnj32 | native:polyml | xc1:mlton | xc1:smlnj-legacy | xc1:smlnj32 | xc1:polyml |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | array_sieve | 8.42 (2.7) | 4.67 (4.0) | 17.79 (2.4) | 9.10 (2.4) | 15.75 (2.9) | 11.89 (2.8) | 90.47 (2.7) | 0.43 (1.7) | 1.19 (3.9) | 0.94 (3.0) | 0.58 (3.1) | 0.47 (2.1) | 1.27 (3.7) | n/a | 0.66 (3.5) |
 | fib | 5.50 (1.8) | 2.35 (2.0) | 12.35 (1.7) | 6.42 (1.7) | 9.30 (1.7) | 7.72 (1.8) | 53.49 (1.6) | 0.42 (1.6) | 0.40 (1.3) | 0.41 (1.3) | 0.30 (1.6) | 0.37 (1.6) | 0.38 (1.1) | n/a | 0.29 (1.6) |
@@ -87,8 +88,8 @@ Each build of the compiler compiling `examples/hello.sml`, and compiling
 the compiler itself (`BOOT_SRCS`, the bootstrap's input), the same day at
 the same commit: wall-clock time, the fastest of three rounds, a round of
 `hello` being 20 compiles. The builds of the hosts are what `make
-host-builds` makes (`bin/rune-mlton`, `bin/rune-smlnj`, `bin/rune-smlnj32`,
-`bin/rune-polyml`); the others are the self-hosted compiler, `bin/rune.rbc`,
+host-builds` makes (`bin/rune-mlton`, `bin/rune-smlnj-legacy`, `bin/rune-smlnj32`,
+`bin/rune-smlnj-dev`, `bin/rune-polyml`); the others are the self-hosted compiler, `bin/rune.rbc`,
 on each VM, and translated by `runeopt`.
 
 | Build | `hello` | the compiler |

@@ -169,7 +169,7 @@ Also in the [top-level environment](../top-level.md): `Div`.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+- **SML/NJ 110.99.9** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 
 </details>
 
@@ -215,7 +215,7 @@ Also in the [top-level environment](../top-level.md): `Fail`.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
+- **SML/NJ 110.99.9** &mdash; compiler bug: \`case General.Fail "v" of Fail s =\> s \| \_ =\> ...\` takes the default rule when the value is built and matched in one compilation unit under two names of the same exception
 
 </details>
 

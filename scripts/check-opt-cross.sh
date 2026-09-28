@@ -8,7 +8,7 @@ set -u
 cd "$(dirname "$0")/.."
 out=tests/out/opt-cross
 mkdir -p "$out"
-builds="mlton smlnj smlnj32 polyml mlkit"
+builds="mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit"
 [ -x bin/runeopt-boot ] && builds="$builds boot"
 status=0
 

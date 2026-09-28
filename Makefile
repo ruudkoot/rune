@@ -1,12 +1,13 @@
 # Rune: Standard ML '97 to bytecode compiler + portable C VM.
 #
 #   make hosts      install the SML systems Rune is built and compared with
-#                   (MLton, SML/NJ in 64 and 32 bits, Poly/ML, MLKit) under
-#                   ~/.local/rune-hosts; needed once, before anything else
+#                   (MLton, SML/NJ 110.99.9 in 64 and 32 bits, SML/NJ 2026.2,
+#                   Poly/ML, MLKit) under ~/.local/rune-hosts; needed once,
+#                   before anything else
 #   make            build bin/rune (the self-hosted compiler), bin/runevm, and
 #                   bin/runedoc and bin/runeopt, which the compiler compiles
-#   make mlton|smlnj|smlnj32|polyml|mlkit   build the compiler with one of them
-#   make host-builds  build the compiler with all five
+#   make mlton|smlnj-legacy|smlnj32|smlnj-dev|polyml|mlkit   build the compiler with one of them
+#   make host-builds  build the compiler with all six
 #   make vm         build bin/runevm, and bin/runevm-new, vm/new's first loop
 #   make boot       bin/rune.rbc (the compiler compiled by bin/rune-$(BOOTHOST)),
 #                   the bin/rune-boot wrapper that runs it, and bin/rune -> it
@@ -48,16 +49,16 @@
 #                   bytecode (docs/bytecode.md); part of make check
 #
 # bin/rune is the compiler Rune ships: itself, on the VM. The host builds
-# bin/rune-mlton, bin/rune-smlnj, bin/rune-smlnj32, bin/rune-polyml and
-# bin/rune-mlkit exist to bootstrap it and to check that all six agree
-# (check-cross). Every target that runs the compiler uses $(RUNE), so
-# `make test RUNE=bin/rune-mlton` is the fast loop. `make BOOTHOST=smlnj`
-# bootstraps with another host.
+# bin/rune-mlton, bin/rune-smlnj-legacy, bin/rune-smlnj32, bin/rune-smlnj-dev,
+# bin/rune-polyml and bin/rune-mlkit exist to bootstrap it and to check that
+# all seven agree (check-cross). Every target that runs the compiler uses
+# $(RUNE), so `make test RUNE=bin/rune-mlton` is the fast loop.
+# `make BOOTHOST=smlnj-legacy` bootstraps with another host.
 #
 # The SML systems are the releases scripts/fetch-hosts.sh installs under
 # $(HOSTS), never ones the machine has on its PATH: MLTON, MLBUILD, SMLNJ,
-# MLBUILD32, SMLNJ32, POLYC and MLKIT name their commands (MLKIT_LIB its
-# library, which it is given as SML_LIB).
+# MLBUILD32, SMLNJ32, MLBUILD_DEV, SMLNJ_DEV, POLYC and MLKIT name their
+# commands (MLKIT_LIB its library, which it is given as SML_LIB).
 #
 # The build and test targets check their own tools once before they first run
 # (scripts/doctor.sh); `make DOCTOR=no ...` skips that.
@@ -109,15 +110,17 @@ AR      ?= ar
 # The host SML systems (`make hosts`).
 HOSTS     ?= $(or $(RUNE_HOSTS),$(HOME)/.local/rune-hosts)
 MLTON     ?= $(HOSTS)/mlton/bin/mlton
-MLBUILD   ?= $(HOSTS)/smlnj/bin/ml-build
-SMLNJ     ?= $(HOSTS)/smlnj/bin/sml
+MLBUILD   ?= $(HOSTS)/smlnj-legacy/bin/ml-build
+SMLNJ     ?= $(HOSTS)/smlnj-legacy/bin/sml
 MLBUILD32 ?= $(HOSTS)/smlnj32/bin/ml-build
 SMLNJ32   ?= $(HOSTS)/smlnj32/bin/sml
+MLBUILD_DEV ?= $(HOSTS)/smlnj-dev/bin/ml-build
+SMLNJ_DEV ?= $(HOSTS)/smlnj-dev/bin/sml
 POLYC     ?= $(HOSTS)/polyml/bin/polyc
 MLKIT     ?= $(HOSTS)/mlkit/bin/mlkit
 MLKIT_LIB ?= $(HOSTS)/mlkit/lib/mlkit
 export RUNE_HOSTS := $(HOSTS)
-export MLTON SMLNJ SMLNJ32 POLYC MLKIT MLKIT_LIB
+export MLTON SMLNJ SMLNJ32 SMLNJ_DEV POLYC MLKIT MLKIT_LIB
 
 # Sources of the compiler as compiled by itself, the host build that compiles
 # stage 1, and the initial semispace of the VM that bin/rune runs on. The heap
@@ -128,7 +131,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -192,15 +195,17 @@ bin/runeisa.rbc: bin/rune bin/rune.rbc build/config.sml $(SOURCES_ISA) src/main/
 # A --lib of the caller's comes later on the command line and so wins.
 mlton: bin/rune-mlton
 
-smlnj: bin/rune-smlnj
+smlnj-legacy: bin/rune-smlnj-legacy
 
 smlnj32: bin/rune-smlnj32
+
+smlnj-dev: bin/rune-smlnj-dev
 
 polyml: bin/rune-polyml
 
 mlkit: bin/rune-mlkit
 
-host-builds: mlton smlnj smlnj32 polyml mlkit runedoc-host-builds runeopt-host-builds
+host-builds: mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit runedoc-host-builds runeopt-host-builds
 
 bin/rune-mlton.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -210,19 +215,30 @@ bin/rune-mlton: bin/rune-mlton.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/rune-mlton.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-bin/rune-smlnj: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj
+bin/rune-smlnj-legacy: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj-legacy
 	@mkdir -p bin
-	$(MLBUILD) build/rune.cm Main.main bin/rune-smlnj.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
+	$(MLBUILD) build/rune.cm Main.main bin/rune-smlnj-legacy.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj-legacy.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
 	chmod +x $@
 
 # The 32-bit SML/NJ (31-bit int and word) catches code that depends on the
 # width of int. After the 64-bit build: CM keeps both in the same .cm
 # directories.
-bin/rune-smlnj32: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/rune-smlnj
+bin/rune-smlnj32: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/rune-smlnj-legacy
 	@mkdir -p bin
 	$(MLBUILD32) build/rune.cm Main.main bin/rune-smlnj32.heap
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj32.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+# 2026.2 writes CM metadata in .cm, as 110.99.9 does, and that name is fixed
+# in its heap. The group it compiles is a copy under build/smlnj-dev-root
+# whose sources are symlinks, so the binfiles are not the legacy compilers'.
+# The three dev artifacts share that tree and so come one after another.
+bin/rune-smlnj-dev: $(BUILDGEN) $(SOURCES) $(GEN_SML) Makefile | build/.doctor-smlnj-dev
+	@mkdir -p bin
+	cm=$$(sh scripts/smlnj-dev-root.sh build/rune.cm); \
+	  $(MLBUILD_DEV) "$$cm" Main.main bin/rune-smlnj-dev.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/rune-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
 bin/rune-polyml.bin: $(BUILDGEN) $(SOURCES) $(GEN_SML) src/main/polyml-main.sml | build/.doctor-polyml
@@ -251,7 +267,7 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 # sources-doc.txt, built like the compiler by every host and by the compiler
 # itself (bin/runedoc, on runevm). The SML/NJ builds come one after another
 # and after the compiler's: CM keeps them all in the same .cm directories.
-runedoc-host-builds: bin/runedoc-mlton bin/runedoc-smlnj bin/runedoc-smlnj32 bin/runedoc-polyml bin/runedoc-mlkit
+runedoc-host-builds: bin/runedoc-mlton bin/runedoc-smlnj-legacy bin/runedoc-smlnj32 bin/runedoc-smlnj-dev bin/runedoc-polyml bin/runedoc-mlkit
 
 bin/runedoc-mlton.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-mlton-main.sml | build/.doctor-mlton
 	@mkdir -p bin
@@ -261,16 +277,23 @@ bin/runedoc-mlton: bin/runedoc-mlton.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runedoc-mlton.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runedoc-smlnj: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj bin/rune-smlnj32
+bin/runedoc-smlnj-legacy: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj-legacy bin/rune-smlnj32
 	@mkdir -p bin
-	$(MLBUILD) build/runedoc.cm DocMain.main bin/runedoc-smlnj.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
+	$(MLBUILD) build/runedoc.cm DocMain.main bin/runedoc-smlnj-legacy.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj-legacy.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ)" > $@
 	chmod +x $@
 
-bin/runedoc-smlnj32: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runedoc-smlnj
+bin/runedoc-smlnj32: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runedoc-smlnj-legacy
 	@mkdir -p bin
 	$(MLBUILD32) build/runedoc.cm DocMain.main bin/runedoc-smlnj32.heap
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj32.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+bin/runedoc-smlnj-dev: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) Makefile | build/.doctor-smlnj-dev bin/rune-smlnj-dev
+	@mkdir -p bin
+	cm=$$(sh scripts/smlnj-dev-root.sh build/runedoc.cm); \
+	  $(MLBUILD_DEV) "$$cm" DocMain.main bin/runedoc-smlnj-dev.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runedoc-smlnj-dev.heap" --lib "$$d/../lib" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
 bin/runedoc-polyml.bin: $(BUILDGEN) $(SOURCES_DOC) $(GEN_SML) src/main/runedoc-polyml-main.sml | build/.doctor-polyml
@@ -296,7 +319,7 @@ bin/runedoc-mlkit: bin/runedoc-mlkit.bin Makefile
 # directory of the runtime a program is linked with (build/librune.a and
 # build/rune-offsets.s). The SML/NJ builds come after runedoc's, for the same
 # reason as runedoc's do.
-runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj bin/runeopt-smlnj32 bin/runeopt-polyml bin/runeopt-mlkit
+runeopt-host-builds: bin/runeopt-mlton bin/runeopt-smlnj-legacy bin/runeopt-smlnj32 bin/runeopt-smlnj-dev bin/runeopt-polyml bin/runeopt-mlkit
 
 # The translations bin/runevm-opt keeps are by the checksum of the bytecode
 # alone: a new runeopt or runtime empties them, or the suites would run the
@@ -310,16 +333,23 @@ bin/runeopt-mlton: bin/runeopt-mlton.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runeopt-mlton.bin" --runtime "$$d/../build" "$$@"\n' > $@
 	chmod +x $@
 
-bin/runeopt-smlnj: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj bin/runedoc-smlnj32
+bin/runeopt-smlnj-legacy: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj-legacy bin/runedoc-smlnj32
 	@mkdir -p bin
-	$(MLBUILD) build/runeopt.cm OptMain.main bin/runeopt-smlnj.heap
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ)" > $@
+	$(MLBUILD) build/runeopt.cm OptMain.main bin/runeopt-smlnj-legacy.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj-legacy.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ)" > $@
 	chmod +x $@
 
-bin/runeopt-smlnj32: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runeopt-smlnj
+bin/runeopt-smlnj32: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj32 bin/runeopt-smlnj-legacy
 	@mkdir -p bin
 	$(MLBUILD32) build/runeopt.cm OptMain.main bin/runeopt-smlnj32.heap
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj32.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ32)" > $@
+	chmod +x $@
+
+bin/runeopt-smlnj-dev: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) Makefile | build/.doctor-smlnj-dev bin/runedoc-smlnj-dev
+	@mkdir -p bin
+	cm=$$(sh scripts/smlnj-dev-root.sh build/runeopt.cm); \
+	  $(MLBUILD_DEV) "$$cm" OptMain.main bin/runeopt-smlnj-dev.heap
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "%s" @SMLload="$$d/runeopt-smlnj-dev.heap" --runtime "$$d/../build" "$$@"\n' "$(SMLNJ_DEV)" > $@
 	chmod +x $@
 
 bin/runeopt-polyml.bin: $(BUILDGEN) $(SOURCES_OPT) $(GEN_SML) src/main/runeopt-polyml-main.sml | build/.doctor-polyml
@@ -577,7 +607,7 @@ test: $(RUNE) vm | build/.doctor-check
 	sh tests/vm/run-vm-tests.sh --vm $(RUNEVM)
 
 test-all: host-builds vm | build/.doctor-check
-	@for c in mlton smlnj smlnj32 polyml mlkit; do \
+	@for c in mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit; do \
 	  echo "=== testing with $$c build ==="; \
 	  sh tests/run-tests.sh -j $(JOBS) --rune bin/rune-$$c --vm bin/runevm || exit 1; \
 	done
@@ -761,7 +791,7 @@ endif
 hosts: | build/.doctor-matrix
 	sh scripts/fetch-hosts.sh
 
-MATRIX_DOCTOR := build/.doctor-mlton build/.doctor-smlnj build/.doctor-smlnj32 build/.doctor-polyml build/.doctor-mlkit build/.doctor-check
+MATRIX_DOCTOR := build/.doctor-mlton build/.doctor-smlnj-legacy build/.doctor-smlnj32 build/.doctor-smlnj-dev build/.doctor-polyml build/.doctor-mlkit build/.doctor-check
 
 matrix-quick: $(RUNE) vm | $(MATRIX_DOCTOR)
 	RUNE=$(abspath $(RUNE)) RUNEVM=$(abspath $(RUNEVM)) \
@@ -781,8 +811,9 @@ perf: $(RUNE) vm | $(MATRIX_DOCTOR)
 # Stage 1: a host build compiles the compiler to bytecode. bin/rune-boot runs
 # it on runevm and is what bin/rune names; `bootstrap` checks that it
 # reproduces itself byte for byte. check-cross knows the build as `boot`.
-# All host builds emit the same bytecode, so BOOTHOST (mlton, smlnj, smlnj32,
-# polyml or mlkit) only decides which one builds stage 1, not what comes out.
+# All host builds emit the same bytecode, so BOOTHOST (mlton, smlnj-legacy,
+# smlnj32, smlnj-dev, polyml or mlkit) only decides which one builds stage 1,
+# not what comes out.
 bin/rune.rbc: bin/rune-$(BOOTHOST) bin/runevm $(BOOT_SRCS) lib/basis/MANIFEST $(wildcard lib/basis/*.sml)
 	bin/rune-$(BOOTHOST) --lint --mid-roundtrip -o $@ $(BOOT_SRCS)
 
@@ -926,7 +957,7 @@ install:
 	@if [ "$$(id -u)" -eq 0 ]; then \
 	  echo "install: running as root, installing what is in bin/ as it stands"; \
 	else \
-	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj,$(HOST)),bin/runedoc-smlnj bin/runeopt-smlnj,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all); \
+	  $(MAKE) --no-print-directory $(if $(HOST),vm $(HOST) $(if $(filter smlnj-legacy,$(HOST)),bin/runedoc-smlnj-legacy bin/runeopt-smlnj-legacy,bin/runedoc-$(HOST) bin/runeopt-$(HOST)) build/librune.a,all); \
 	fi
 	RUNE_HEAP=$(RUNE_HEAP) SMLNJ=$(SMLNJ) sh scripts/install.sh $(INSTALL_FLAGS)
 

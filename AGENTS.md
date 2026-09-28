@@ -57,8 +57,9 @@ keep these invariants:
   `make docs`: the documentation shows those lines under the members, from
   the committed `tests/basis/annotations.txt`.
   After a library change run `make matrix-quick` as well: it runs the suite
-  on Rune's library compiled by each host (MLton, SML/NJ in 64 and 32 bits,
-  Poly/ML, MLKit); `make matrix` adds the suite on each host's own library.
+  on Rune's library compiled by each host (MLton, SML/NJ 110.99.9 in 64 and
+  32 bits, SML/NJ 2026.2, Poly/ML, MLKit); `make matrix` adds the suite on
+  each host's own library.
 * **Instruction set / primitives** change only through their descriptions,
   `src/isa/stack.sml` and `src/isa/prims.sml` (then `make isa`, which writes
   the generated files and `vm/opcodes.def` and `vm/prims.def`; `make
@@ -220,7 +221,7 @@ keep these invariants:
   to it. Nothing absolute is baked into the bytecode. `make install` writes the
   same kind of wrapper for the installed tree (`scripts/install.sh`).
 * The compiler must build with every host SML system and with itself
-  (`make boot`), and all six builds must produce identical bytecode. Follow
+  (`make boot`), and all seven builds must produce identical bytecode. Follow
   the portability rules in `docs/building.md` (Basis-only code, no dependence
   on `Int` width, only `structure`/`signature`/`functor` at top level,
   deterministic iteration, and sources that stay inside the language
@@ -281,7 +282,7 @@ keep these invariants:
   --library NAME` checks it), and whose `# library:` lines name the libraries
   it is written on. It may not use `_prim`. The mechanism's tests are in
   `tests/lib` (`make test-lib`). After a change to such a library, run `make
-  test-lib-hosts`: its tests on MLton, SML/NJ, Poly/ML and MLKit, against their
+  test-lib-hosts`: its tests on MLton, SML/NJ 110.99.9, SML/NJ 2026.2, Poly/ML and MLKit, against their
   own Basis. **Never work around a bug of a compiler other than Rune in such a
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the
   failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in

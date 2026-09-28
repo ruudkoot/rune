@@ -214,7 +214,7 @@ val input1 : instream -> elem option
 
 - **MLton** &mdash; after input1, inputLine, lookahead, endOfStream or canInput, inputAll returns the rest of the stream without consuming it: the same elements are read again
 - **MLton, MLKit** &mdash; the input1 that returns NONE leaves the stream before the end-of-stream; a second one consumes it
-- **SML/NJ, SML/NJ 110.99.9** &mdash; input1 never moves past an end-of-stream
+- **SML/NJ** &mdash; input1 never moves past an end-of-stream
 
 </details>
 
@@ -541,7 +541,7 @@ val getOutstream : outstream -> StreamIO.outstream
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 
@@ -561,7 +561,7 @@ val setOutstream : outstream * StreamIO.outstream -> unit
 
 <details><summary>Other implementations (1)</summary>
 
-- **MLton, SML/NJ 110.99.9, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
+- **MLton, SML/NJ, Poly/ML, MLKit** &mdash; getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 
 </details>
 
@@ -603,7 +603,7 @@ What is written afterwards replaces what stood there.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
+- **SML/NJ** &mdash; setPosOut neither flushes nor moves the writer: output goes on at the end
 
 </details>
 

@@ -13,7 +13,7 @@ problem, do them by hand before building or testing anything:
 2. **Ask the user before installing packages.** Show them what `make doctor`
    reported and the commands below, and install only once they agree.
 3. **Run `make hosts`** once the packages are in, which fetches and builds
-   MLton, SML/NJ (64 and 32 bits), Poly/ML and MLKit under
+   MLton, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ 2026.2, Poly/ML and MLKit under
    `~/.local/rune-hosts`.
    `make doctor` should then pass.
 4. **Run `make envcheck`** (under a minute, `docs/envcheck.md`): it reports
@@ -34,7 +34,7 @@ running Ubuntu; that one is about what only Anthropic's cloud sessions do.
 
 Required by `make hosts`:
 
-    apt-get install -y libgmp-dev gcc-multilib
+    apt-get install -y libgmp-dev gcc-multilib cmake g++ python3
 
 Optional (the debug-information checks of the native code generator):
 
@@ -156,10 +156,11 @@ With everything installed it takes about 30 s at the start of a session
 
 ### The cache of the hosts
 
-The host SML systems take 162 s to build on a fresh machine (`make hosts`
-builds the five at once; one after another they took about 275 s: MLton 1,
-SML/NJ 49 and 53, Poly/ML 157, MLKit 15, whose binary release is 73 MB to
-fetch). The branch `cloud-cache` holds them
+The host SML systems take 162 s to build on a fresh machine without
+SML/NJ 2026.2 (`make hosts` builds those five at once; one after another
+they took about 275 s: MLton 1, SML/NJ 110.99.9 49 and 53, Poly/ML 157,
+MLKit 15, whose binary release is 73 MB to fetch). SML/NJ 2026.2 is
+another build, and most of it is compiling LLVM. The branch `cloud-cache` holds them
 prebuilt, 114 MB in `cloud/cache/` (66 MB before MLKit), and the hook
 restores them from it in about 12 s where they are missing
 (`scripts/cloud-cache.sh restore`): a hook without the hosts took 16 s in

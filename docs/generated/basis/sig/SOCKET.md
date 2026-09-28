@@ -526,7 +526,7 @@ the system's `int` cannot hold.
 
 - **MLton, SML/NJ** &mdash; setLINGER takes a negative time without raising Time
 - **MLton, SML/NJ (32-bit)** &mdash; setLINGER raises Overflow, not Time, for a time too large for the system
-- **SML/NJ 110.99.9 (64-bit)** &mdash; setLINGER takes a time too large for the system without raising Time
+- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; setLINGER takes a time too large for the system without raising Time
 - **Poly/ML** &mdash; setLINGER raises SysErr ("Invalid time"), not Time, for a negative time
 
 </details>

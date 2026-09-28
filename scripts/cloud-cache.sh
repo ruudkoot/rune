@@ -20,12 +20,13 @@ cd "$(dirname "$0")/.."
 prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 branch=${CLOUD_CACHE_BRANCH:-cloud-cache}
 # the versions scripts/fetch-hosts.sh installs
-eval "$(grep -E '^(MLTON|SMLNJ|POLYML|MLKIT)_VERSION=' scripts/fetch-hosts.sh)"
-hosts="mlton:$MLTON_VERSION smlnj:$SMLNJ_VERSION smlnj32:$SMLNJ_VERSION polyml:$POLYML_VERSION mlkit:$MLKIT_VERSION"
+eval "$(grep -E '^(MLTON_VERSION|SMLNJ_VERSION|SMLNJ_DEV_VERSION|POLYML_VERSION|MLKIT_VERSION)=' scripts/fetch-hosts.sh)"
+hosts="mlton:$MLTON_VERSION smlnj-legacy:$SMLNJ_VERSION smlnj32:$SMLNJ_VERSION smlnj-dev:$SMLNJ_DEV_VERSION polyml:$POLYML_VERSION mlkit:$MLKIT_VERSION"
 
 key() {
   . /etc/os-release 2> /dev/null || true
-  printf 'mlton-%s smlnj-%s polyml-%s mlkit-%s %s %s-%s glibc-%s %s\n' "$MLTON_VERSION" "$SMLNJ_VERSION" \
+  printf 'mlton-%s smlnj-legacy-%s smlnj-dev-%s polyml-%s mlkit-%s %s %s-%s glibc-%s %s\n' \
+    "$MLTON_VERSION" "$SMLNJ_VERSION" "$SMLNJ_DEV_VERSION" \
     "$POLYML_VERSION" "$MLKIT_VERSION" "$(uname -m)" "${ID:-unknown}" "${VERSION_ID:-unknown}" \
     "$(getconf GNU_LIBC_VERSION 2> /dev/null | awk '{ print $2 }')" "$prefix"
 }

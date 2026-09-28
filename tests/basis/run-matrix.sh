@@ -28,19 +28,21 @@
 #   portability            rune:linux32 and rune:ppc64, and their -new
 #                          forms with rune:aarch64-new (bin/runevm-new-aarch64
 #                          under qemu, its JIT on; docs/plans/jit.md M12)
-#   native:mlton  native:smlnj  native:smlnj32  native:polyml  native:mlkit
+#   native:mlton  native:smlnj-legacy  native:smlnj32  native:smlnj-dev
+#   native:polyml  native:mlkit
 #                          the suite against the host's own Basis Library
-#   xc1:mlton  xc1:smlnj  xc1:smlnj32  xc1:polyml  xc1:mlkit
+#   xc1:mlton  xc1:smlnj-legacy  xc1:smlnj32  xc1:smlnj-dev  xc1:polyml  xc1:mlkit
 #                          the suite against Rune's Basis Library (lib/basis)
 #                          compiled by the host; see below
-#   hosts                  native:HOST for the five hosts
-#   xc1                    xc1:HOST for the five hosts
+#   hosts                  native:HOST for the six hosts
+#   xc1                    xc1:HOST for the six hosts
 #   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
-# ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ built
-# for 64 bits (smlnj) and for 32 (smlnj32: 31-bit int and word), Poly/ML and
-# MLKit (63-bit int and word); MLTON=, SMLNJ=, SMLNJ32=, POLY= and MLKIT=
-# override their commands, MLKIT_LIB= MLKit's library. A configuration
+# ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ 110.99.9
+# for 64 bits (smlnj-legacy) and for 32 (smlnj32: 31-bit int and word),
+# SML/NJ 2026.2 (smlnj-dev), Poly/ML and MLKit (63-bit int and word);
+# MLTON=, SMLNJ=, SMLNJ32=, SMLNJ_DEV=, POLY= and MLKIT= override their
+# commands, MLKIT_LIB= MLKit's library. A configuration
 # is reported under an id that carries the version of the host, e.g.
 # native:smlnj32@110.99.9; tests/basis/deviations.txt matches on it.
 #
@@ -339,7 +341,7 @@ load() {
       # (docs/bugreport/mlkit/IntInf.scan/sign-inside-the-digits)
       (cd "$loaddir" && ulimit -v "$mlkit_memory" && timeout "$limit" ./prog > stdout 2>> log < /dev/null)
       ;;
-    *:smlnj|*:smlnj32)
+    *:smlnj-legacy|*:smlnj32|*:smlnj-dev)
       # With a heap image of the library the program starts from it and uses
       # only its own files; the image itself uses what it is given.
       if [ "$kind" = xc1 ] && [ -f "$cfgout/basis.image" ]; then
@@ -787,7 +789,7 @@ save_image() {
   discard_image
   [ "${RUNE_MATRIX_NO_IMAGE:-0}" = 0 ] || return 0
   case "$host" in
-    smlnj|smlnj32)
+    smlnj-legacy|smlnj32|smlnj-dev)
       { printf 'val () = ('
         sep=""
         for f in $1 $2; do printf '%suse "%s"' "$sep" "$f"; sep="; "; done
@@ -906,7 +908,7 @@ probe_basis() {
     # it, and only if that fails does every file get its own run.
     accepted=""
     case "$host" in
-      smlnj|smlnj32|polyml) session_probe "$1" "$prelude" "$all" && tried=2 ;;
+      smlnj-legacy|smlnj32|smlnj-dev|polyml) session_probe "$1" "$prelude" "$all" && tried=2 ;;
     esac
     if [ -z "$accepted" ]; then
       : > "$cfgout/basis.dropped"
@@ -950,8 +952,8 @@ hosts_prefix=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 expand() {
   for c in $(echo "$1" | tr ',' ' '); do
     case "$c" in
-      hosts) echo native:mlton native:smlnj native:smlnj32 native:polyml native:mlkit ;;
-      xc1) echo xc1:mlton xc1:smlnj xc1:smlnj32 xc1:polyml xc1:mlkit ;;
+      hosts) echo native:mlton native:smlnj-legacy native:smlnj32 native:smlnj-dev native:polyml native:mlkit ;;
+      xc1) echo xc1:mlton xc1:smlnj-legacy xc1:smlnj32 xc1:smlnj-dev xc1:polyml xc1:mlkit ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
       portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new rune:aarch64-new ;;
@@ -1057,13 +1059,17 @@ resolve() {
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}
       version=$("$cmd1" 2> /dev/null | sed -n '1s/^MLton \([0-9][0-9.]*\).*/\1/p')
       ;;
-    native:smlnj|xc1:smlnj)
-      cmd1=${SMLNJ:-$hosts_prefix/smlnj/bin/sml}
-      version=$("$cmd1" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9][0-9.]*\).*/\1/p')
+    native:smlnj-legacy|xc1:smlnj-legacy)
+      cmd1=${SMLNJ:-$hosts_prefix/smlnj-legacy/bin/sml}
+      version=$("$cmd1" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9][0-9.]*\).*/\1/p;}')
       ;;
     native:smlnj32|xc1:smlnj32)
       cmd1=${SMLNJ32:-$hosts_prefix/smlnj32/bin/sml}
-      version=$("$cmd1" @SMLversion 2> /dev/null | sed -n '1s/^sml \([0-9][0-9.]*\).*/\1/p')
+      version=$("$cmd1" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9][0-9.]*\).*/\1/p;}')
+      ;;
+    native:smlnj-dev|xc1:smlnj-dev)
+      cmd1=${SMLNJ_DEV:-$hosts_prefix/smlnj-dev/bin/sml}
+      version=$("$cmd1" @SMLversion 2> /dev/null | sed -n '1{s/^sml //;s/^\([0-9][0-9.]*\).*/\1/p;}')
       ;;
     native:polyml|xc1:polyml)
       cmd1=${POLY:-$hosts_prefix/polyml/bin/poly}

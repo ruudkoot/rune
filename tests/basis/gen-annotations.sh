@@ -44,8 +44,9 @@ function host(config,   kind, rest, name, version, at, h, bits) {
   if (name == "mlton") h = "MLton"
   else if (name == "polyml") h = "Poly/ML"
   else if (name == "smlnj*") h = "SML/NJ"
-  else if (name == "smlnj") { h = "SML/NJ"; bits = " (64-bit)" }
+  else if (name == "smlnj-legacy") { h = "SML/NJ"; bits = " (64-bit)" }
   else if (name == "smlnj32") { h = "SML/NJ"; bits = " (32-bit)" }
+  else if (name == "smlnj-dev" || name == "smlnj-dev*") h = "SML/NJ development"
   else if (name == "mlkit") h = "MLKit"
   else if (name == "*") h = "MLton, SML/NJ, Poly/ML, MLKit"
   else return "?"

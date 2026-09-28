@@ -1,7 +1,7 @@
 #!/bin/sh
 # The libraries beside the basis library on the other compilers
 # (docs/plans/quickcheck.md, D10 and M3): each library's tests, built by
-# MLton, SML/NJ (64 and 32 bits), Poly/ML and MLKit against their own Basis
+# MLton, SML/NJ 110.99.9 (64 and 32 bits), SML/NJ 2026.2, Poly/ML and MLKit against their own Basis
 # Library, must give what they give on Rune.
 #   tests/lib/run-hosts.sh [HOST...]      (default: every host `make hosts` installed)
 # A library is plain Standard ML '97 and is never changed to work around a
@@ -14,8 +14,9 @@ set -u
 cd "$(dirname "$0")/../.."
 hosts_dir=${RUNE_HOSTS:-$HOME/.local/rune-hosts}
 mlton=${MLTON:-$hosts_dir/mlton/bin/mlton}
-smlnj=${SMLNJ:-$hosts_dir/smlnj/bin/sml}
+smlnj_legacy=${SMLNJ:-$hosts_dir/smlnj-legacy/bin/sml}
 smlnj32=${SMLNJ32:-$hosts_dir/smlnj32/bin/sml}
+smlnj_dev=${SMLNJ_DEV:-$hosts_dir/smlnj-dev/bin/sml}
 poly=${POLY:-$hosts_dir/polyml/bin/poly}
 mlkit=${MLKIT:-$hosts_dir/mlkit/bin/mlkit}
 mlkit_lib=${MLKIT_LIB:-$hosts_dir/mlkit/lib/mlkit}
@@ -24,7 +25,7 @@ rm -rf "$out"
 mkdir -p "$out"
 top=$(pwd)
 
-hosts=${*:-mlton smlnj smlnj32 polyml mlkit}
+hosts=${*:-mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit}
 
 # The tests: LABEL | the library's files | the test program | how its output
 # is judged (kat: equal to the reference's output; props: no FAIL line).
@@ -65,8 +66,11 @@ build() {
     mlton)
       { echo '$(SML_LIB)/basis/basis.mlb'; for f in "$@"; do echo "$top/$f"; done; } > "$out/$name.mlb"
       "$mlton" -output "$out/$name" "$out/$name.mlb" > "$out/$name.err" 2>&1 && "$out/$name" > "$out/$name.out" 2>&1 ;;
-    smlnj|smlnj32)
-      if [ "$host" = smlnj ]; then sml=$smlnj; else sml=$smlnj32; fi
+    smlnj-legacy|smlnj32|smlnj-dev)
+      if [ "$host" = smlnj-legacy ]; then sml=$smlnj_legacy
+      elif [ "$host" = smlnj-dev ]; then sml=$smlnj_dev
+      else sml=$smlnj32
+      fi
       echo 'val () = OS.Process.exit OS.Process.success' > "$out/exit.sml"
       "$sml" "$@" "$out/exit.sml" < /dev/null > "$out/$name.raw" 2>&1
       grep -v -E '^(\[|Standard ML|val |- |structure |signature |type |datatype |exception |fun )' "$out/$name.raw" > "$out/$name.out"
@@ -84,7 +88,8 @@ build() {
 
 for host in $hosts; do
   case "$host" in
-    mlton) bin=$mlton ;; smlnj) bin=$smlnj ;; smlnj32) bin=$smlnj32 ;; polyml) bin=$poly ;; mlkit) bin=$mlkit ;;
+    mlton) bin=$mlton ;; smlnj-legacy) bin=$smlnj_legacy ;; smlnj32) bin=$smlnj32 ;;
+    smlnj-dev) bin=$smlnj_dev ;; polyml) bin=$poly ;; mlkit) bin=$mlkit ;;
     *) echo "unknown host: $host"; exit 2 ;;
   esac
   if [ ! -x "$bin" ]; then echo "$host: not installed ($bin; make hosts)"; continue; fi
