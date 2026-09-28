@@ -1,0 +1,2 @@
+tests/lang/pat.or_warnings.sml:6:5: warning: match is not exhaustive (missing case: B)
+tests/lang/pat.or_warnings.sml:8:15: warning: redundant match rule

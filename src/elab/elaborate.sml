@@ -201,6 +201,7 @@ struct
     | PTyped (p, t, _) => tyvarsOfTy (t, unguardedPat (p, acc))
     | PLayered (_, tyopt, p, _, _) =>
         unguardedPat (p, case tyopt of SOME t => tyvarsOfTy (t, acc) | NONE => acc)
+    | POr (ps, _) => List.foldl unguardedPat acc ps
     | _ => acc
 
   (* declarations nested in an expression *)
@@ -331,15 +332,29 @@ struct
   fun elabPat (env, level, scope, isGlobal, p : pat, bound : (string * span) list ref)
       : ty * (string * valstatus) list =
     let
+      (* An alternative of an or-pattern after the first binds the variables
+         of the first, to the same stamps and types: shares holds their
+         bindings, the innermost or-pattern's first, with the names the
+         alternative has bound so far. *)
+      val shares : ((string * (int * ty * (string * valstatus))) list * string list ref) list ref = ref []
       fun bindVar (name, sp) =
-        (checkBindable (name, sp, true);
-         if List.exists (fn (n, _) => n = name) (!bound) then
-           err (sp, "duplicate variable '" ^ name ^ "' in pattern")
-         else bound := (name, sp) :: !bound;
-         let
-           val stamp = freshStamp ()
-           val t = fresh level
-         in Ty.bindVar (stamp, t); (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal})) end)
+        case !shares of
+          (share, seen) :: _ =>
+            (checkBindable (name, sp, true);
+             if List.exists (fn n => n = name) (!seen) then err (sp, "duplicate variable '" ^ name ^ "' in pattern")
+             else seen := name :: !seen;
+             case List.find (fn (n, _) => n = name) share of
+               SOME (_, b) => b
+             | NONE => err (sp, "variable '" ^ name ^ "' is not bound by the first alternative of the or-pattern"))
+        | [] =>
+            (checkBindable (name, sp, true);
+             if List.exists (fn (n, _) => n = name) (!bound) then
+               err (sp, "duplicate variable '" ^ name ^ "' in pattern")
+             else bound := (name, sp) :: !bound;
+             let
+               val stamp = freshStamp ()
+               val t = fresh level
+             in Ty.bindVar (stamp, t); (stamp, t, (name, Val {scheme = t, stamp = stamp, global = isGlobal})) end)
       fun elab p =
         case p of
           PWild _ => (fresh level, [])
@@ -417,6 +432,24 @@ struct
                          NONE => ()
                        | SOME t => unifyAt (sp, elabTy (env, scope, level, t), tv, "pattern type annotation")
             in (tv, b :: bs) end
+        | POr (p1 :: rest, _) =>
+            let
+              val (t1, bs1) = elab p1
+              val share = List.mapPartial (fn (name, st as Val {scheme, stamp, ...}) => SOME (name, (stamp, scheme, (name, st)))
+                                            | _ => NONE) bs1
+              fun alt p =
+                let
+                  val seen = ref []
+                  val () = shares := (share, seen) :: !shares
+                  val (t, _) = elab p
+                  val () = shares := List.tl (!shares)
+                in
+                  case List.find (fn (n, _) => not (List.exists (fn m => m = n) (!seen))) share of
+                    SOME (n, _) => err (spanOfPat p, "variable '" ^ n ^ "' is not bound by every alternative of the or-pattern")
+                  | NONE => unifyAt (spanOfPat p, t1, t, "or-pattern alternative")
+                end
+            in List.app alt rest; (t1, bs1) end
+        | POr ([], _) => Error.bug "an or-pattern of no alternative"
     in
       elab p
     end

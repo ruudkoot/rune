@@ -17,7 +17,9 @@ filter=
 if [ "${1:-}" = "--one" ]; then
   rune=$2 vm=$3 out=$4 src=$5
   name=$(basename "$src" .sml)
-  "$rune" --lib lib "$src" -o "$out/$name.rbc" > "$out/$name.log" 2>&1 || exit 0
+  cargs=""; [ -f "${src%.sml}.cargs" ] && cargs=$(cat "${src%.sml}.cargs")
+  # shellcheck disable=SC2086
+  "$rune" --lib lib $cargs "$src" -o "$out/$name.rbc" > "$out/$name.log" 2>&1 || exit 0
   "$vm" --disasm "$out/$name.rbc" 2>/dev/null |
     sed -n 's/.*	; \(.*\)$/\1/p' |
     awk -F: '{ if ($2 + 0 < 1) low[$1] = 1; if ($2 + 0 > hi[$1]) hi[$1] = $2 + 0 }

@@ -69,6 +69,7 @@ struct
     | PApp of longid * patinfo option ref * pat * span    (* constructor application *)
     | PTyped of pat * ty * span
     | PLayered of string * ty option * pat * patinfo option ref * span
+    | POr of pat list * span                              (* (p1 | ... | pn), with --or-patterns *)
 
   and ty =
       TyVar of string * span
@@ -149,7 +150,43 @@ struct
     case p of
       PWild s => s | PScon (_, _, s) => s | PVar (_, _, s) => s | PRecord (_, _, _, s) => s
     | PTuple (_, s) => s | PList (_, s) => s | PApp (_, _, _, s) => s | PTyped (_, _, s) => s
-    | PLayered (_, _, _, _, s) => s
+    | PLayered (_, _, _, _, s) => s | POr (_, s) => s
+
+  (* The alternatives of a pattern: the patterns without or-patterns that it
+     matches as, one for every choice of an alternative in each of its
+     or-patterns, in order. A pattern without one is its only alternative;
+     the alternatives share the annotation slots of the pattern. *)
+  fun alternatives (p : pat) : pat list =
+    let
+      (* every choice of an element from each list, in order *)
+      fun choices [] = [[]]
+        | choices (xs :: rest) =
+          let val tails = choices rest
+          in List.concat (List.map (fn x => List.map (fn t => x :: t) tails) xs) end
+    in
+      case p of
+        POr (ps, _) => List.concat (List.map alternatives ps)
+      | PRecord (fields, flex, slot, sp) =>
+          List.map (fn ps => PRecord (ListPair.zip (List.map #1 fields, ps), flex, slot, sp))
+                   (choices (List.map (alternatives o #2) fields))
+      | PTuple (ps, sp) => List.map (fn ps => PTuple (ps, sp)) (choices (List.map alternatives ps))
+      | PList (ps, sp) => List.map (fn ps => PList (ps, sp)) (choices (List.map alternatives ps))
+      | PApp (id, slot, arg, sp) => List.map (fn a => PApp (id, slot, a, sp)) (alternatives arg)
+      | PTyped (q, t, sp) => List.map (fn q => PTyped (q, t, sp)) (alternatives q)
+      | PLayered (v, t, q, slot, sp) => List.map (fn q => PLayered (v, t, q, slot, sp)) (alternatives q)
+      | _ => [p]
+    end
+
+  fun hasOr (p : pat) : bool =
+    case p of
+      POr _ => true
+    | PRecord (fields, _, _, _) => List.exists (hasOr o #2) fields
+    | PTuple (ps, _) => List.exists hasOr ps
+    | PList (ps, _) => List.exists hasOr ps
+    | PApp (_, _, arg, _) => hasOr arg
+    | PTyped (q, _, _) => hasOr q
+    | PLayered (_, _, q, _, _) => hasOr q
+    | _ => false
 
   fun spanOfTy t =
     case t of
@@ -223,6 +260,7 @@ struct
     | PApp (id, _, p, sp) => PApp (id, ref NONE, copyPat p, sp)
     | PTyped (p, t, sp) => PTyped (copyPat p, t, sp)
     | PLayered (v, t, p, _, sp) => PLayered (v, t, copyPat p, ref NONE, sp)
+    | POr (ps, sp) => POr (List.map copyPat ps, sp)
 
   and copyDec d =
     case d of
@@ -309,6 +347,7 @@ struct
     | PTyped (p, t, _) => "(" ^ patToString p ^ " : " ^ tyToString t ^ ")"
     | PLayered (v, NONE, p, _, _) => "(" ^ v ^ " as " ^ patToString p ^ ")"
     | PLayered (v, SOME t, p, _, _) => "(" ^ v ^ " : " ^ tyToString t ^ " as " ^ patToString p ^ ")"
+    | POr (ps, _) => "(" ^ String.concatWith " | " (List.map patToString ps) ^ ")"
 
   and tyToString t =
     case t of

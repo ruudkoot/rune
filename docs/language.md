@@ -29,6 +29,7 @@ SML rejects, or reject some that SML accepts.
 | Flexible records | The labels of a flexible record pattern (`{a, ...}`) or selector (`#a`) must be determined by the end of the program (Section 4.11 leaves the granularity to the implementation). A generalised flexible record is resolved by any of its uses; the types of the labels it did not mention are then determined per use rather than shared. |
 | `_prim "name" : ty` | Extension used by the basis library to access VM primitives. Only allowed with `--allow-prim`. |
 | `_overload kind Strid [bits \| via f]` | Extension used by the basis library: a declaration that makes the type `Strid.kind` (`kind` is `int`, `word`, `real`, `char` or `string`) an overloading type. The overloaded operators at that type are the values `Strid.+`, `Strid.<`, ...; its constants are those of the builtin type restricted to `bits` bits (default 64), or `f digits` for a function `f : string -> Strid.kind`. Only allowed with `--allow-prim`. |
+| Or-patterns | `(p1 \| ... \| pn)` (row `pat.or`), an extension of Successor ML and SML/NJ. Only allowed with `--or-patterns`: without it Rune takes Standard ML '97 alone and rejects one. |
 | I/O | The imperative streams of `TextIO` and `BinIO` are datatypes rather than abstract types, so an `instream` (a reference) admits equality; an `outstream` does not. `CharVector.vector` is `string` (the specification requires it) and `Word8Vector.vector` is one underneath but abstract; a `Word8Array.array` and a `CharArray.array` are the VM's array of bytes, a byte an element. |
 
 ## Lexical structure
@@ -106,6 +107,7 @@ SML rejects, or reject some that SML accepts.
 | pat.layered | Layered patterns `x as p`, `x : ty as p` | Supported | |
 | pat.annot | Typed patterns `p : ty` | Supported | |
 | pat.ref | `ref p` patterns | Supported | |
+| pat.or | Or-patterns `(p1 \| ... \| pn)`, an extension (Successor ML, SML/NJ): only with `--or-patterns` | Supported | A parenthesized pattern of alternatives, nested anywhere a pattern is, matches what one of them matches, trying them in order. Every alternative binds the same variables, at the same types. A match with one is compiled as a decision tree at every level, each alternative a way to the rule's body, which is not copied. |
 
 ## Types and inference
 

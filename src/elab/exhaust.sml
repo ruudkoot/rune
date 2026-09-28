@@ -71,7 +71,8 @@ struct
          | PIExn i => Exn (i, [simplify arg])
          | PIVar _ => Error.bug "constructor application pattern annotated as variable")
     | PTyped (p, _, _) => simplify p
-    | PLayered (_, _, p, _, _) => simplify p)
+    | PLayered (_, _, p, _, _) => simplify p
+    | POr _ => Error.bug "an or-pattern not expanded into its alternatives")
 
   (* --- heads (constructors) of the first column --- *)
   datatype head =
@@ -235,23 +236,36 @@ struct
     | ws => String.concatWith " " (List.map atom ws)
 
   (* --- entry points --- *)
-  fun checkRedundant (rows : spat list list, spans : Source.span list) : unit =
+
+  (* The rows of a rule: one for each alternative of its patterns (a rule
+     without an or-pattern has one). *)
+  fun rowsOf (pats : pat list) : spat list list =
+    let
+      fun choices [] = [[]]
+        | choices (xs :: rest) =
+          let val tails = choices rest
+          in List.concat (List.map (fn x => List.map (fn t => x :: t) tails) xs) end
+    in List.map (List.map simplify) (choices (List.map alternatives pats)) end
+
+  (* A rule is redundant when none of its rows is useful with respect to the
+     rows of the rules before it. *)
+  fun checkRedundant (rules : spat list list list, spans : Source.span list) : unit =
     let
       fun go (_, [], _) = ()
-        | go (prev, row :: rest, sp :: sps) =
-          (if useful (0, List.rev prev, row) then () else Error.warn (sp, "redundant match rule");
-           go (row :: prev, rest, sps))
+        | go (prev, rows :: rest, sp :: sps) =
+          (if List.exists (fn row => useful (0, List.rev prev, row)) rows then () else Error.warn (sp, "redundant match rule");
+           go (List.revAppend (rows, prev), rest, sps))
         | go _ = ()
-    in go ([], rows, spans) end
+    in go ([], rules, spans) end
 
   (* A match of rules (fn, case: exhaustive and irredundant; handle: irredundant only). *)
   fun checkMatch (pats : pat list, sp : Source.span, exhaustive : bool) : unit =
     let val () = startWork sp
-        val rows = List.map (fn p => [simplify p]) pats
+        val rules = List.map (fn p => rowsOf [p]) pats
     in
-      checkRedundant (rows, List.map spanOfPat pats);
+      checkRedundant (rules, List.map spanOfPat pats);
       if exhaustive then
-        case missing (0, rows, 1) of
+        case missing (0, List.concat rules, 1) of
           SOME v => Error.warn (sp, "match is not exhaustive (missing case: " ^ witnessString v ^ ")")
         | NONE => ()
       else ()
@@ -263,17 +277,17 @@ struct
       [] => ()
     | first :: _ =>
         let val () = startWork sp
-            val rows = List.map (List.map simplify) clauses
+            val rules = List.map rowsOf clauses
         in
-          checkRedundant (rows, spans);
-          case missing (0, rows, List.length first) of
+          checkRedundant (rules, spans);
+          case missing (0, List.concat rules, List.length first) of
             SOME v => Error.warn (sp, "match is not exhaustive (missing case: " ^ witnessString v ^ ")")
           | NONE => ()
         end
 
   (* A value binding pat = exp. *)
   fun checkBinding (p : pat, sp : Source.span) : unit =
-    (startWork sp; case missing (0, [[simplify p]], 1) of
+    (startWork sp; case missing (0, rowsOf [p], 1) of
       SOME v => Error.warn (sp, "binding is not exhaustive (missing case: " ^ witnessString v ^ ")")
     | NONE => ())
 end

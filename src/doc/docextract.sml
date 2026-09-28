@@ -343,6 +343,7 @@ struct
     | Ast.PApp (_, _, q, _) => patternNames q
     | Ast.PTyped (q, _, _) => patternNames q
     | Ast.PLayered (x, _, q, _, _) => x :: patternNames q
+    | Ast.POr (q :: _, _) => patternNames q        (* every alternative binds the same *)
     | _ => []
 
   (* What a declaration declares, by name; nothing for one that declares

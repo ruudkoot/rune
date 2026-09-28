@@ -7,7 +7,7 @@
 # is), N at a time, except the programs tests/windows-skip.txt lists; its
 # header gives the reasons. What a program must print and how it must exit
 # are checked as tests/run-tests.sh checks them, from the same siblings
-# (.args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore). The results of
+# (.cargs, .args, .vmargs, .stdin, .exitcode, .stderr, .stderr-head, .cwarn, .restore). The results of
 # bin/runevmSUFFIX.exe go to tests/out/windowsSUFFIX. Then tests/runtime runs on
 # each VM, and a few programs run with --count on each and on bin/runevm-stack:
 # the counts of instructions, bytes and objects must be the same, since a
@@ -61,7 +61,9 @@ rbcdir=tests/out/windows-rbc
 if [ "$mode" = --compile-one ]; then
   name=$filter
   base=tests/lang/$name
-  if ! "$rune" "$base.sml" -o "$rbcdir/$name.rbc" 2> "$rbcdir/$name.cerr"; then
+  cargs=""; [ -f "$base.cargs" ] && cargs=$(cat "$base.cargs")
+  # shellcheck disable=SC2086
+  if ! "$rune" $cargs "$base.sml" -o "$rbcdir/$name.rbc" 2> "$rbcdir/$name.cerr"; then
     echo "FAIL $name: compile error: $(head -1 "$rbcdir/$name.cerr")"
   elif [ -f "$base.cwarn" ] && ! cmp -s "$rbcdir/$name.cerr" "$base.cwarn"; then
     echo "FAIL $name: compiler warnings differ (diff $base.cwarn $rbcdir/$name.cerr)"

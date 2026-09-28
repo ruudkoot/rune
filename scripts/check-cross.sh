@@ -102,7 +102,8 @@ if [ -n "$one" ]; then
       # shellcheck disable=SC2086
       check "$(result_name "$one")" tests/basis/harness.sml $uses "$t" tests/basis/finish.sml
       ;;
-    *) check "$(result_name "$one")" "$one" ;;
+    # shellcheck disable=SC2046
+    *) check "$(result_name "$one")" $(cat "${one%.sml}.cargs" 2> /dev/null) "$one" ;;
   esac > "$out/$(result_name "$one").result"
   exit 0
 fi

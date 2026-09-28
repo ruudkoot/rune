@@ -117,6 +117,7 @@ struct
          | _ => true)
     | PTyped (p, _, _) => refutable p
     | PLayered (_, _, p, _, _) => refutable p
+    | POr (ps, _) => List.all refutable ps
 
   (* compilePat (p, v, k): test/destructure the value in variable v against
      p, binding its variables, then continue with k. *)
@@ -174,6 +175,7 @@ struct
         (case info (slot, sp) of
            PIVar (stamp, g) => bindVar (stamp, g, Var v, compilePat (p, v, k))
          | _ => Error.bug "layered pattern annotated as constructor")
+    | POr _ => Error.bug "an or-pattern matched rule by rule"
 
   and compileFields (fields : (int * pat) list, v : int, k : lexp) : lexp =
     case fields of
@@ -253,8 +255,9 @@ struct
                        ([], binds) (pats, cols)
     in {pats = List.rev pats', binds = binds', rule = rule} end
 
-  (* The local variables a rule binds, in order, with their types. *)
-  fun varsOf (ps : pat list) : (int * Ty.ty) list =
+  (* The local variables a rule binds, in order, with their types; with
+     global, its global ones (a top-level val binding's) instead. *)
+  fun boundVars (global : bool) (ps : pat list) : (int * Ty.ty) list =
     let
       fun ty stamp =
         case IntTable.find (Ty.binders, stamp) of
@@ -262,7 +265,7 @@ struct
         | NONE => Error.bug ("pattern variable v" ^ Int.toString stamp ^ " has no type")
       fun localVar (slot, sp, acc) =
         case info (slot, sp) of
-          PIVar (stamp, false) => (stamp, ty stamp) :: acc
+          PIVar (stamp, g) => if g = global then (stamp, ty stamp) :: acc else acc
         | _ => acc
       fun go (p, acc) =
         case p of
@@ -275,7 +278,11 @@ struct
         | PApp (_, _, arg, _) => go (arg, acc)
         | PTyped (p, _, _) => go (p, acc)
         | PLayered (_, _, p, slot, sp) => go (p, localVar (slot, sp, acc))
+        | POr (p :: _, _) => go (p, acc)       (* every alternative binds the same *)
+        | POr ([], _) => acc
     in List.rev (List.foldl go [] ps) end
+
+  val varsOf = boundVars false
 
   (* What a column's tests are, from a pattern of it that tests something. *)
   datatype kind =
@@ -346,25 +353,43 @@ struct
   fun ifTag (v : int, tag : int, yes : lexp, no : lexp) : lexp =
     If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), yes, no)
 
-  fun trees (vars : int list, rules : (pat list * lexp) list, failure : lexp) : lexp =
+  (* limit: a tree too big for the rules raises TooBig, for them to be
+     matched rule by rule instead (which a match with an or-pattern cannot
+     be: a rule of one is a row for each of its alternatives, which all jump
+     to its body) *)
+  fun trees (vars : int list, rules : (pat list * lexp) list, failure : lexp, limit : bool) : lexp =
     let
-      val joins = Vector.fromList (List.map (fn (pats, body) => (freshVar (), varsOf pats, body)) rules)
-      (* a tree too big for the rules is made rule by rule instead *)
+      (* A rule's join: its label, parameters and body, the stamps whose
+         values a jump to it passes, and whether the leaf sets the rule's
+         globals. A rule with an or-pattern has a leaf for each alternative,
+         and a global is set once: its join takes the globals as parameters
+         too, and its body sets them. *)
+      fun join (pats, body) =
+        if List.exists hasOr pats then
+          let
+            val locals = varsOf pats
+            val globals = boundVars true pats
+            val fresh = List.map (fn (_, t) => (freshVar (), t)) globals
+            val body = ListPair.foldr (fn ((f, _), (g, _), k) => Seq (SetGlobal (g, Var f), k)) body (fresh, globals)
+          in (freshVar (), locals @ fresh, body, List.map #1 (locals @ globals), false) end
+        else let val params = varsOf pats in (freshVar (), params, body, List.map #1 params, true) end
+      val joins = Vector.fromList (List.map join rules)
       val budget = ref (64 + 16 * List.length rules)
-      fun spend () = (budget := !budget - 1; if !budget < 0 then raise TooBig else ())
+      fun spend () = if limit then (budget := !budget - 1; if !budget < 0 then raise TooBig else ()) else ()
 
       (* the rule of the first row matches: its globals set, and a jump to
          its body with the values of its variables *)
       fun leaf ({binds, rule, ...} : row) : lexp =
         let
-          val (j, params, _) = Vector.sub (joins, rule)
+          val (j, _, _, args, setGlobals) = Vector.sub (joins, rule)
           fun valueOf s =
             case List.find (fn (s', _, _) => s' = s) binds of
               SOME (_, _, w) => Var w
             | NONE => Error.bug "a variable of a rule not bound on the way to it"
+          val jump = Jump (j, List.map valueOf args)
         in
-          List.foldl (fn ((s, true, w), k) => Seq (SetGlobal (s, Var w), k) | (_, k) => k)
-                     (Jump (j, List.map (fn (s, _) => valueOf s) params)) binds
+          if setGlobals then List.foldl (fn ((s, true, w), k) => Seq (SetGlobal (s, Var w), k) | (_, k) => k) jump binds
+          else jump
         end
 
       fun tree (cols : int list, rows : row list) : lexp =
@@ -484,21 +509,38 @@ struct
               end
         end
 
-      val tree = tree (vars, List.tabulate (Vector.length joins, fn i => {pats = #1 (List.nth (rules, i)), binds = [], rule = i}))
+      (* every choice of an element from each list, in order *)
+      fun choices [] = [[]]
+        | choices (xs :: rest) =
+          let val tails = choices rest
+          in List.concat (List.map (fn x => List.map (fn t => x :: t) tails) xs) end
+      fun rowsOf (i, (pats, _)) =
+        if List.exists hasOr pats then
+          List.map (fn alt => {pats = alt, binds = [], rule = i}) (choices (List.map alternatives pats))
+        else [{pats = pats, binds = [], rule = i}]
+      val tree = tree (vars, List.concat (List.tabulate (Vector.length joins, fn i => rowsOf (i, List.nth (rules, i)))))
     in
-      Vector.foldr (fn ((j, params, body), k) => Join (j, params, body, k)) tree joins
+      Vector.foldr (fn ((j, params, body, _, _), k) => Join (j, params, body, k)) tree joins
     end
 
   fun useTrees rules = List.length rules >= 2 andalso Pass.enabled ("trees", 1)
 
+  (* A match with an or-pattern is a decision tree at every level. *)
+  fun anyOr (rules : (pat list * lexp) list) = List.exists (fn (pats, _) => List.exists hasOr pats) rules
+
   (* Match the value in v against rules in order; `failure` runs if none matches. *)
   fun compileMatch (v : int, rules : (pat * lexp) list, failure : lexp) : lexp =
-    if useTrees rules then
-      trees ([v], List.map (fn (p, b) => ([p], b)) rules, failure) handle TooBig => backtrack (v, rules, failure)
-    else backtrack (v, rules, failure)
+    let val clauses = List.map (fn (p, b) => ([p], b)) rules
+    in
+      if anyOr clauses then trees ([v], clauses, failure, false)
+      else if useTrees rules then
+        trees ([v], clauses, failure, true) handle TooBig => backtrack (v, rules, failure)
+      else backtrack (v, rules, failure)
+    end
 
   (* Multi-argument clauses (fun declarations): each clause has one pattern per parameter. *)
   fun compileClauses (vars : int list, clauses : (pat list * lexp) list, failure : lexp) : lexp =
-    if useTrees clauses then trees (vars, clauses, failure) handle TooBig => backtrackClauses (vars, clauses, failure)
+    if anyOr clauses then trees (vars, clauses, failure, false)
+    else if useTrees clauses then trees (vars, clauses, failure, true) handle TooBig => backtrackClauses (vars, clauses, failure)
     else backtrackClauses (vars, clauses, failure)
 end

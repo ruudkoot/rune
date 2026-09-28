@@ -100,6 +100,14 @@ Allow the
 extension in the inputs. It names a VM primitive directly and is how the basis
 library is written; it is unchecked and not part of the language.
 .TP
+.B \-\-or\-patterns
+Allow or-patterns, an extension of Successor ML and SML/NJ: a parenthesized
+pattern
+.RI ( p1 " | " p2 " | ...)"
+matches what any of its alternatives matches. Every alternative binds the
+same variables at the same types. Without the option the compiler takes
+Standard ML '97 only.
+.TP
 .B \-\-typecheck\-only
 Stop after type checking; write no bytecode.
 .TP

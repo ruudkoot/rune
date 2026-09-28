@@ -256,6 +256,7 @@ struct
 
   fun main (_ : string, args : string list) : OS.Process.status =
     (Options.parse args;
+     Parser.orPatterns := !Options.orPatterns;
      if !Options.showHelp then (print Options.usage; OS.Process.success)
      else if !Options.showVersion then (println ("rune " ^ Config.version); OS.Process.success)
      else if !Options.basisCheck then checkManifest ()
