@@ -87,7 +87,7 @@ Real.toString/notation-* | Poly/ML | toString does not choose the shorter of the
 Math.pow/*one-base-*Inf | Poly/ML | Math.pow (+-1.0, +-inf) is 1.0 (C pow), not NaN
 Real.rem/*Inf-y | SML/NJ | Real.rem (x, inf) is NaN, not x
 Real.rem/law-agrees-with-Int-rem | SML/NJ | Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
-Real.fromManExp/minPos | SML/NJ | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos
+Real.fromManExp/minPos | SML/NJ | fromManExp {man = 0.5, exp = ~1073} is 0.0, not minPos: every result below 2^-1021 is 0.0 (docs/bugreport/smlnj/Real.fromManExp; smlnj/legacy#254, closed as fixed in 110.99.3)
 Real.realFloor/zero | SML/NJ | Real.realFloor 0.0 is ~0.0
 Real.real*/*huge | SML/NJ | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
 Real.realRound/large-odd | SML/NJ | Real.realRound (2^52 + 1) is 2^52
@@ -97,7 +97,7 @@ Real.round/minInt-minus-half-tie-to-even | SML/NJ (32-bit) | Real.round (minInt 
 Real.fromLargeInt/sticky-bit | SML/NJ (32-bit) | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
 Real.fmt/GEN-seventeen-digits | SML/NJ | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 Real.fmt/GEN-notation-* | SML/NJ | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
-Real.fmt/EXACT-* | SML/NJ (32-bit) | not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+Real.fmt/EXACT-law-fromString-inverts | SML/NJ (32-bit) | fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy#373)
 Real.fromString/leading-whitespace | SML/NJ | scan skips only space, tab and newline, not the other Char.isSpace characters (\r, \v, \f)
 Real.fromString/exact-* | SML/NJ | scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
 Math.atan2/*negzero* | SML/NJ | Math.atan2 ignores the sign of a zero: atan2 (~0.0, 1.0) = 0.0, atan2 (0.0, ~0.0) = 0.0
@@ -418,14 +418,14 @@ NetHostDB.fromString/three-parts | Poly/ML | the last number of "a.b.c" is taken
 NetHostDB.fromString/same-address | Poly/ML | "127.1" is read as 0.0.127.1, not 127.0.0.1
 NetHostDB.fromString/initial-whitespace | Poly/ML | fromString and scan do not skip initial whitespace
 NetHostDB.scan/whitespace-then-rest | Poly/ML | fromString and scan do not skip initial whitespace
-Int[0-9]*.sameSign/* | SML/NJ (32-bit) | sameSign (0, i) is true for positive i
+Int64.sameSign/* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the borrow wrong, and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 Word[0-9]*.scan/HEX-0w-is-no-prefix | Poly/ML | 0w is not a prefix of the hexadecimal format, but 0w12 is read as 0wx12
 Word[0-9]*.fromString/0w-is-no-prefix | Poly/ML | reads 0w12 as 0wx12, but 0w is not a prefix of the hexadecimal format
 Int[0-9]*.mod/minInt-by-minus-one | SML/NJ (64-bit) | mod (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 Int[0-9]*.rem/minInt-by-minus-one | SML/NJ (64-bit) | rem (minInt, ~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-Int64.fromString/* | SML/NJ (32-bit) | Int64.fromString raises an exception for a value that does not fit 32 bits
-Int64.scan/* | SML/NJ (32-bit) | Int64.scan raises an exception for a value that does not fit 32 bits
-Int64.fmt/*HEX* | SML/NJ (32-bit) | Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+Int64.fromString/* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the borrow wrong, and fromString and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+Int64.scan/* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+Int64.fmt/*HEX* | SML/NJ (32-bit) | fmt raises an exception for minInt and maxInt and gets other numbers wrong: Int64.+ and Int64.- get the carry and the borrow wrong (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 Int32.abs/Overflow-minInt | SML/NJ 110.99.9 (64-bit) | Int32.abs minInt gives minInt instead of raising Overflow
 Word[0-9]*.toInt/through-LargeWord-* | SML/NJ (64-bit) | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
 Word[0-9]*.~>>/*-by-all-ones | Poly/ML | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
@@ -462,7 +462,7 @@ Real32.toDecimal/negative-zero | Poly/ML 5.9.2 | toDecimal of a zero has exp 1, 
 Real32.fromString/overflow | Poly/ML 5.9.2 | fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
 Real32.fromString/above-half-minPos | Poly/ML 5.9.2 | fromString rounds a number just above half of minPos to zero
 Real32.fromString/TO_* | Poly/ML 5.9.2 | another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
-Int64.* | SML/NJ (32-bit) | Int64 is emulated with two words and comes out wrong throughout: Int64.+ (~2, ~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+Int64.* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the borrow wrong (~2 + ~3 is ~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 PackWord*.update/* | SML/NJ (32-bit) | update writes the wrong bytes: the low half of the word for PackWord64, and the second byte of a PackWord16 or PackWord32 element unchanged
-Real.fromString/minus-exponent | SML/NJ (32-bit) | fromString "1.5e~2" is not the real nearest 0.015 (under xc1 through the shim's real_from_string, which is the host's Real.fromString)
-Posix.IO.SEEK_[CE]*/negative | SML/NJ (32-bit) | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
+Real.fromString/minus-exponent | SML/NJ (32-bit) | fromString "1.5e~2" is not the real nearest 0.015: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy#373); under xc1 through the shim's real_from_string, which is the host's Real.fromString
+Posix.IO.SEEK_[CE]*/negative | SML/NJ (32-bit) | lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to: the release's boot files are cross-compiled on amd64, which builds their IntInf constants with 62-bit digits; a native fixed point of 110.99.9 is right (docs/bugreport/smlnj/Word64-low-half)

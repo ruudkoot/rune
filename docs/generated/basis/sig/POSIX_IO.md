@@ -326,7 +326,7 @@ What a position given to [`lseek`](#val-lseek) or a lock is counted from.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
+- **SML/NJ (32-bit)** &mdash; lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to: the release's boot files are cross-compiled on amd64, which builds their IntInf constants with 62-bit digits; a native fixed point of 110.99.9 is right (docs/bugreport/smlnj/Word64-low-half)
 
 </details>
 

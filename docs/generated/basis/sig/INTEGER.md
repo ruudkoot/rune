@@ -149,7 +149,7 @@ val toLarge : int -> LargeInt.int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -177,7 +177,7 @@ val fromLarge : LargeInt.int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -205,7 +205,7 @@ val toInt : int -> Int.int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -233,7 +233,7 @@ val fromInt : Int.int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -263,7 +263,7 @@ val precision : Int.int option
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -293,7 +293,7 @@ val minInt : int option
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -322,7 +322,7 @@ too.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -356,7 +356,7 @@ val + : int * int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -394,7 +394,7 @@ val - : int * int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -422,7 +422,7 @@ val * : int * int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -453,7 +453,7 @@ It rounds down, where [`quot`](#val-quot) rounds towards zero: `quot (~7, 2)` is
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -490,7 +490,7 @@ Its sign is the divisor's, where that of [`rem`](#val-rem) is the dividend's:
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -520,7 +520,7 @@ It rounds towards zero, where [`div`](#val-div) rounds down: `~7 div 2` is `~4`.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -555,7 +555,7 @@ Its sign is the dividend's, where that of [`mod`](#val-mod) is the divisor's:
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -583,7 +583,7 @@ val compare : int * int -> order
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -612,7 +612,7 @@ val >= : int * int -> bool
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -642,7 +642,7 @@ val ~ : int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -679,7 +679,7 @@ val abs : int -> int
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -707,7 +707,7 @@ val min : int * int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -733,7 +733,7 @@ val max : int * int -> int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -759,7 +759,7 @@ val sign : int -> Int.int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -788,8 +788,8 @@ val sameSign : int * int -> bool
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ (32-bit)** &mdash; sameSign (0, i) is true for positive i
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -821,7 +821,7 @@ to `F` and nothing before them.
 <details><summary>Other implementations (2)</summary>
 
 - **SML/NJ** &mdash; IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
-- **SML/NJ (32-bit)** &mdash; Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
+- **SML/NJ (32-bit)** &mdash; fmt raises an exception for minInt and maxInt and gets other numbers wrong: Int64.+ and Int64.- get the carry and the borrow wrong (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -845,7 +845,7 @@ val toString : int -> string
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -889,8 +889,8 @@ structure.
 - **SML/NJ 110.99.9** &mdash; IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 - **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
 - **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is SOME (98, ""), not SOME (1, "\~2")
-- **SML/NJ (32-bit)** &mdash; Int64.scan raises an exception for a value that does not fit 32 bits
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 
@@ -924,8 +924,8 @@ It reads decimal digits only, so a prefix of base 16 stops it after the
 - **SML/NJ** &mdash; IntInf.fromString and Word.fromString do not skip vertical tab, form feed and carriage return
 - **MLKit** &mdash; scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
 - **MLKit** &mdash; a sign after the digits is read as the sign of a further group of digits: "1\~2" is 98 and "1+2" is 102, not 1 (IntInf.sml reads every group of digits with NumScan.scanInt, which takes a sign)
-- **SML/NJ (32-bit)** &mdash; Int64.fromString raises an exception for a value that does not fit 32 bits
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and fromString and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 

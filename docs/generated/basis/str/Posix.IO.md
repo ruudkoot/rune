@@ -87,7 +87,7 @@ What each means is on [`POSIX_IO`](../sig/POSIX_IO.md); the types are this struc
 <details><summary>Other implementations (3)</summary>
 
 - **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor
-- **SML/NJ (32-bit)** &mdash; lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to
+- **SML/NJ (32-bit)** &mdash; lseek with a negative offset from the current position or the end gives a position of its own (2^30 + the offset), not the one it moved to: the release's boot files are cross-compiled on amd64, which builds their IntInf constants with 62-bit digits; a native fixed point of 110.99.9 is right (docs/bugreport/smlnj/Word64-low-half)
 - **SML/NJ** &mdash; getfl returns no status flags and O\_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
 
 </details>

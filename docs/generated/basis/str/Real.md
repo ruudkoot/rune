@@ -219,7 +219,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **Poly/ML** &mdash; GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
 - **SML/NJ** &mdash; GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 - **SML/NJ** &mdash; GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "\~1.5E\~07")
-- **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+- **SML/NJ (32-bit)** &mdash; fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373)
 - **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
 - **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
 - **MLKit** &mdash; fmt (GEN \_) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "\~0.0"), and 9.6 at one digit is "1E1", not "10"
@@ -229,13 +229,13 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
 - **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
 - **SML/NJ, MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
-- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos
+- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos: every result below 2^-1021 is 0.0 (docs/bugreport/smlnj/Real.fromManExp; smlnj/legacy\#254, closed as fixed in 110.99.3)
 - **Poly/ML 5.9.2** &mdash; fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
 - **SML/NJ** &mdash; scan skips only space, tab and newline, not the other Char.isSpace characters (\\r, \\v, \\f)
 - **SML/NJ** &mdash; scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
 - **Poly/ML 5.9.2** &mdash; fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 - **SML/NJ, Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
-- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015 (under xc1 through the shim's real\_from\_string, which is the host's Real.fromString)
+- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373); under xc1 through the shim's real\_from\_string, which is the host's Real.fromString
 - **MLton, Poly/ML, MLKit** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
 - **Poly/ML** &mdash; Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
 - **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
