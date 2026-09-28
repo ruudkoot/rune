@@ -602,10 +602,11 @@ check-docs: $(RUNE) $(RUNEDOC)
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis, lib/random and src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
+	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
@@ -617,10 +618,13 @@ DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/
               --out docs/generated/basis --title "The Standard ML Basis Library"
 # the libraries beside it (docs/plans/quickcheck.md, D1)
 DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
+DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
+                 --title "Property testing"
 
 docs: $(RUNEDOC)
 	$(RUNEDOC) $(DOCS_BASIS)
 	$(RUNEDOC) $(DOCS_RANDOM)
+	$(RUNEDOC) $(DOCS_PROPERTY)
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems

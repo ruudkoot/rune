@@ -1,0 +1,13 @@
+name	kind	signature	realisations	status	origin	source
+ARB	signature			required	declared	lib/test/property/arb_sig.sml
+CHECK	signature			required	declared	lib/test/property/check_sig.sml
+CO	signature			required	declared	lib/test/property/co_sig.sml
+GEN	signature			required	declared	lib/test/property/gen_sig.sml
+PROP	signature			required	declared	lib/test/property/prop_sig.sml
+SHOW	signature			required	declared	lib/test/property/show_sig.sml
+Arb	structure	ARB		required	claimed	lib/test/property/arb.sml
+Check	structure	CHECK		required	claimed	lib/test/property/check.sml
+Co	structure	CO		required	claimed	lib/test/property/co.sml
+Gen	structure	GEN		required	claimed	lib/test/property/gen.sml
+Prop	structure	PROP		required	claimed	lib/test/property/prop.sml
+Show	structure	SHOW		required	claimed	lib/test/property/show.sml

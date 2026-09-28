@@ -19,7 +19,10 @@
 #     error;
 #   - runedoc documents a library written on another;
 #   - lib/random gives the known answers of tests/lib/random/reference.c and
-#     keeps its promises (tests/lib/random/props.sml).
+#     keeps its promises (tests/lib/random/props.sml);
+#   - lib/test/property's core holds (tests/lib/property/core.sml) and draws
+#     what fingerprint.expected says;
+#   - the examples of both libraries' documentation hold.
 # Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 cd "$(dirname "$0")/../.."
@@ -153,6 +156,38 @@ if "$runedoc" --lib lib --library random --examples "$ex" > "$ex/runedoc.log" 2>
   done
 else
   bad "random: runedoc --examples (see $ex/runedoc.log)"
+fi
+
+# lib/test/property (docs/plans/quickcheck.md, M4 on): its core, the
+# fingerprint of what a seed draws (the same on every compiler), its
+# MANIFEST and the examples of its documentation
+if "$rune" --library test/property tests/lib/property/core.sml -o "$out/property-core.rbc" > "$out/property-core.cerr" 2>&1 &&
+   "$runevm" "$out/property-core.rbc" > "$out/property-core.out" 2>&1 &&
+   ! grep -q "^FAIL" "$out/property-core.out" &&
+   [ "$(grep '^fingerprint' "$out/property-core.out" | cut -d' ' -f2)" = "$(cat tests/lib/property/fingerprint.expected)" ]; then
+  ok
+else
+  bad "property: the core (see $out/property-core.cerr, $out/property-core.out)"
+fi
+if "$rune" --library test/property --basis-check > "$out/property-check.txt" 2>&1; then
+  ok
+else
+  bad "property: --basis-check (see $out/property-check.txt)"
+fi
+ex=$out/property-examples
+mkdir -p "$ex"
+if "$runedoc" --lib lib --library test/property --examples "$ex" > "$ex/runedoc.log" 2>&1; then
+  for f in "$ex"/*.sml; do
+    p=${f%.sml}
+    if "$rune" --library test/property "$f" -o "$p.rbc" > "$p.cerr" 2>&1 && "$runevm" "$p.rbc" > "$p.out" 2>&1 &&
+       grep -q "^PASS" "$p.out" && ! grep -q "^FAIL" "$p.out"; then
+      ok
+    else
+      bad "property: the examples of $(basename "$f" .sml) (see $p.cerr, $p.out)"
+    fi
+  done
+else
+  bad "property: runedoc --examples (see $ex/runedoc.log)"
 fi
 
 echo "test-lib: passed $passed, failed $failed"

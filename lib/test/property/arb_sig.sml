@@ -1,0 +1,72 @@
+(* Arbitraries: the generator, the printer, the observer and the equality of
+   a type, as one record -- what QuickCheck finds by a type class and a
+   program here passes by name (docs/plans/quickcheck.md, D4).
+
+   Area: Property testing *)
+signature ARB =
+sig
+  (* The record of a type: `eq` is `NONE` where the type has no equality of
+     its own and none is given, and is then the equality of what `show`
+     shows. *)
+  type 'a arb = {gen : 'a Gen.gen, show : 'a -> string, co : 'a -> Word64.word,
+                 eq : ('a * 'a -> bool) option}
+
+  (* `equal a (x, y)` is the equality of `a`: its `eq`, or the equality of
+     what its `show` shows. *)
+  val equal : 'a arb -> 'a * 'a -> bool
+
+  (* `int` is the arbitrary of `Int.int`. *)
+  val int : int arb
+
+  (* `word` is the arbitrary of `Word.word`. *)
+  val word : word arb
+
+  (* `word64` is the arbitrary of `Word64.word`. *)
+  val word64 : Word64.word arb
+
+  (* `char` is the arbitrary of `Char.char`. *)
+  val char : char arb
+
+  (* `string` is the arbitrary of `String.string`. *)
+  val string : string arb
+
+  (* `real` is the arbitrary of `Real.real`, whose equality is identity.
+
+     Identity is the same number, with the zeros told apart and every NaN
+     equal to every other (docs/plans/quickcheck.md, D6). *)
+  val real : real arb
+
+  (* `bool` is the arbitrary of `bool`. *)
+  val bool : bool arb
+
+  (* `unit` is the arbitrary of `unit`. *)
+  val unit : unit arb
+
+  (* `order` is the arbitrary of `order`. *)
+  val order : order arb
+
+  (* `option a` is the arbitrary of options of `a`. *)
+  val option : 'a arb -> 'a option arb
+
+  (* `list a` is the arbitrary of lists of `a`. *)
+  val list : 'a arb -> 'a list arb
+
+  (* `vector a` is the arbitrary of vectors of `a`. *)
+  val vector : 'a arb -> 'a vector arb
+
+  (* `array a` is the arbitrary of arrays of `a`, compared by their elements:
+     a fresh array at every draw. *)
+  val array : 'a arb -> 'a array arb
+
+  (* `pair (a, b)` is the arbitrary of pairs. *)
+  val pair : 'a arb * 'b arb -> ('a * 'b) arb
+
+  (* `triple (a, b, c)` is the arbitrary of triples. *)
+  val triple : 'a arb * 'b arb * 'c arb -> ('a * 'b * 'c) arb
+
+  (* `function (co, b)` is the arbitrary of functions from what `co` observes to `b`.
+
+     They are pure and total (docs/plans/quickcheck.md, D5, class A). A
+     function has no equality and is shown as `fn`. *)
+  val function : ('a -> Word64.word) * 'b arb -> ('a -> 'b) arb
+end

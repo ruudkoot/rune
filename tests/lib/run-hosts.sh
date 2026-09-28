@@ -31,8 +31,11 @@ hosts=${*:-mlton smlnj smlnj32 polyml mlkit}
 cc=${CC:-cc}
 "$cc" -O2 -o "$out/random-reference" tests/lib/random/reference.c && "$out/random-reference" > "$out/random-kat.expected" ||
   { echo "test-lib-hosts: tests/lib/random/reference.c does not build or run"; exit 1; }
-tests="random.kat|lib/random/random_sig.sml lib/random/random.sml|tests/lib/random/kat.sml|kat
-random.props|lib/random/random_sig.sml lib/random/random.sml|tests/lib/random/props.sml|props"
+random="lib/random/random_sig.sml lib/random/random.sml"
+property=$(sed -n 's/^\([a-z_]*\.sml\) *|.*/lib\/test\/property\/\1/p' lib/test/property/MANIFEST | tr '\n' ' ')
+tests="random.kat|$random|tests/lib/random/kat.sml|kat
+random.props|$random|tests/lib/random/props.sml|props
+property.core|$random $property|tests/lib/property/core.sml|core"
 
 passed=0
 explained=0
@@ -89,6 +92,8 @@ for host in $hosts; do
       case "$judge" in
         kat) grep -E '^(seed|split|below)' "$out/$name.out" > "$out/$name.got"; cmp -s "$out/$name.got" "$out/random-kat.expected" ;;
         props) grep -q '^PASS' "$out/$name.out" && ! grep -q '^FAIL' "$out/$name.out" ;;
+        core) grep -q '^PASS' "$out/$name.out" && ! grep -q '^FAIL' "$out/$name.out" &&
+              [ "$(grep '^fingerprint' "$out/$name.out" | cut -d' ' -f2)" = "$(cat tests/lib/property/fingerprint.expected)" ] ;;
       esac
       result=$?
     else

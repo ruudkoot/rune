@@ -30,7 +30,7 @@ What it rests on:
 | M1 | The Example rule | done 2026-09-28 |
 | M2 | Libraries: `rune --library` | done 2026-09-28 |
 | M3 | `lib/random` | done 2026-09-28 |
-| M4 | The property core | |
+| M4 | The property core | done 2026-09-28 |
 | M5 | Shrinking and functions | |
 | M6 | The Basis's instances, and the generators frozen | |
 | M7 | Laws elaborated | |
@@ -1344,6 +1344,28 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - `tests/lib/property`: generators are checked for their distributions (every family of P1 to P6 appears in a thousand draws), for determinism (a seed gives the same cases on every VM and at every `-O`), and for the independence of subtrees (changing a node changes only its part).
 * **Why now:** this is QuickCheck without shrinking, and everything later is built on it.
 * **Done when:** the suite passes, a property over `int list` and one over `int -> bool` find planted bugs, and `make check` passes.
+* **Done** (2026-09-28):
+  - **`lib/test/property`** (`rune --library test/property`, written on `lib/random` by its `# library:` line), as *The architecture* has it. `PropertySource` is the implicit tree, whose nodes carry their kind for M5.
+  - **`GEN`:**
+    - the combinators: `return`, `map`, `map2`, `bind`, `pair`, `triple`, `sized`, `resize`, `oneOf`, `frequency`, `elements`, `filter` (a hundred tries, then a discard), `fix`;
+    - the Basis's simple types by the generator principles: integers by P1 in thirds, with an offset or zigzag encoding (E6), in `Word64` so that no width is assumed; words by P3; `char` by P5; `real` by P4, made from its bits; `bool`, `unit`, `order`;
+    - `option`, and `list` with a length and a mark per element (P6), `listOf`, `string`, `vector`, and `array` (fresh at every draw);
+    - pure functions keyed by an observation.
+  - **`CO`, `SHOW`, `ARB`.** Observers, printers that print Standard ML, and the `arb` records of D4 with the instances of the Basis's simple types. `real`'s equality is identity (D6 C).
+  - **`PROP`.** `holds`, `forAll`, `equal` and `law` compare outcomes (D6): a value, or an exception by name. `law` draws each side's argument anew from the same nodes, so that a side that changes an array does not change the other's. There are also `==>`, `label`, `classify` and `cover`.
+  - **`CHECK`.** Seeds are a hash of the name. Sizes grow from 0 to 100 over 100 cases (P8). It also has labels and coverage, replay tokens with `Check.replay`, `report` in the `PASS`/`FAIL` form, and `main`.
+  - **Tests: `tests/lib/property/core.sml`** has 29 checks:
+    - every family of P1, P3 to P6 in a thousand draws;
+    - the same value from the same seed, and a fingerprint of 200 draws that every compiler must reproduce (`fingerprint.expected`);
+    - a node set to 0 changes its part alone;
+    - the planted bugs over an `int list` and over an `int -> bool` are found;
+    - exceptions as outcomes, fresh arrays for each side of a law, discards, giving up, coverage, and replay.
+  - **The documentation's examples run** (`make test-lib`), and the library is documented in full (`docs/generated/test/property`). Its links into the Basis come from M3's `--basis-docs`.
+  - **Found on the way:** a first version of the tests used `Int.abs` on drawn integers and failed at `minInt`, an edge of P1 whose absolute value overflows. It was the test's bug, of the named law's kind.
+  - **Not yet portable at this commit.** `make test-lib-hosts` found two problems, which M5 fixes:
+    - SML/NJ has no `PackRealLittle` and Poly/ML has no `PackReal64Little`, and the library used the first. Both are optional in the Basis, so neither may be used.
+    - The fingerprint hashed printed values, and `Real.fmt` prints differently on Poly/ML, MLton and SML/NJ (`tests/basis/deviations.txt`). So MLton, Poly/ML and MLKit gave fingerprints of their own, although the 28 other checks pass on all three.
+  - **Left for M5:** shrinking (a failure is reported as drawn), and the call tables and classes B and C of functions (D5). **Left for M6:** exhaustive search, and the instances of signature families.
 
 ### M5. Shrinking and functions (M, about 800)
 
