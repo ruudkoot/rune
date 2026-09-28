@@ -29,7 +29,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | The Example rule | done 2026-09-28 |
 | M2 | Libraries: `rune --library` | done 2026-09-28 |
-| M3 | `lib/random` | |
+| M3 | `lib/random` | done 2026-09-28 |
 | M4 | The property core | |
 | M5 | Shrinking and functions | |
 | M6 | The Basis's instances, and the generators frozen | |
@@ -1316,6 +1316,25 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
     - the same answers from MLton, SML/NJ, Poly/ML and MLKit through the matrix's `xc1:` build of the library. SML/NJ's 32-bit build gets them wrong through its `Word64` literal bug (E4): a `HOST-BUG` deviation, and a report in `docs/bugreport/smlnj`.
 * **Why now:** the property library is built on it. And a PRNG that is wrong on one compiler only, for instance through a width assumption, is the kind of bug that must be caught before anything depends on it.
 * **Done when:** the suite passes on Rune and the other compilers and `make check` passes.
+* **Done** (2026-09-28):
+  - **The library.** `lib/random` (`RANDOM`, `Random :> RANDOM`) as *The architecture* has it:
+    - SplitMix64 with the JDK's `split` and `mixGamma`;
+    - Lemire's bounded draws, with the 128-bit product built from 32-bit halves;
+    - reals from 53 bits, in two ints of at most 27 bits;
+    - `hash` and `hashString`, replay tokens, and `fromEntropy`.
+    
+    It is written in `Word64`, with an int only at its interface, and documented in full (`lib/random/DOCUMENTED`; `docs/generated/random` from `make docs`, checked by `make check-docs`).
+  - **Its tests in `tests/lib`** (`make test-lib`, in `make check`):
+    - the known answers of `tests/lib/random/reference.c`, a C transcription of splitmix64.c, the JDK's split and Lemire's draw, which the runner compiles and compares;
+    - `props.sml`, with χ² tests of `below`, `int` and `bool` at p = 0.001 under fixed seeds, reals, the errors raised, tokens and `split`;
+    - `--basis-check`;
+    - the documentation's 8 examples.
+  - **On the other compilers.** `make test-lib-hosts` (`tests/lib/run-hosts.sh`, not in `make check`) builds the same tests with each host compiler against its own Basis. MLton (with its 32-bit `Int`), SML/NJ for 64 bits, Poly/ML and MLKit pass.
+    - SML/NJ 110.99.9's 32-bit build does not. Its `Word64.word` loses bits 30 and 31 of its low half, in literals and in arithmetic.
+    - That is smlnj/legacy #260, closed as fixed in 110.99.4 and still there, together with an arithmetic half it never reported.
+    - It is a `HOST-BUG` line of `tests/lib/deviations.txt`, with a report in `docs/bugreport/smlnj/Word64-low-half`. The library is not changed for it (the owner's rule, now in `AGENTS.md`).
+  - **runedoc links into the Basis.** A library written on the Basis Library now resolves what its comments name of it, a `Raises:` exception included, and `--basis-docs DIR` links it to the Basis Library's pages. Without that, `lib/random`'s `Raises: Domain` was an error under its ratchet. `tests/doc/onbasis.lib` covers it.
+  - **Not done:** χ² over Schaathun's split sequences. `props.sml` checks only that two split streams differ; a statistical battery for `split` is left for when it matters.
 
 ### M4. The property core (M, about 1,200)
 

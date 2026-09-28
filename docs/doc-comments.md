@@ -148,6 +148,16 @@ check pins (and the other way round), and what a host reads differently in a
 signature that is documented in full needs a `Reading:` of that member.
 `coverage.md` lists the deviations and limitations that no check pins.
 
+## Libraries beside the Basis Library
+
+A library other than the Basis Library (`runedoc --library random`) is
+elaborated on top of it, and its comments may name what it has: a
+reference that the library does not resolve, and a `Raises:` exception, are
+looked up in the Basis Library. `--basis-docs DIR` says where the Basis
+Library's pages are, from the `--out` directory, and such a name then links
+there; `make docs` writes `docs/generated/random` with `--basis-docs
+../basis`.
+
 ## Examples that run
 
 Every piece of code in an `Example:` paragraph is a claim: a closed

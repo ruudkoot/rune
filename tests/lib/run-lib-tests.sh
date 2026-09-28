@@ -17,7 +17,9 @@
 #   - --basis-check checks the libraries' MANIFESTs against their sources;
 #   - a library may not use _prim, and a library written on itself is an
 #     error;
-#   - runedoc documents a library written on another.
+#   - runedoc documents a library written on another;
+#   - lib/random gives the known answers of tests/lib/random/reference.c and
+#     keeps its promises (tests/lib/random/props.sml).
 # Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
 cd "$(dirname "$0")/../.."
@@ -105,6 +107,52 @@ if "$runedoc" --lib "$root" --library toy2 --out "$out/toy2.site" --title toy2 >
   ok
 else
   bad "runedoc --library toy2 (see $out/runedoc.txt)"
+fi
+
+# lib/random (docs/plans/quickcheck.md, M3), as a program uses it: --library
+# random under the --lib of bin/rune. Its known answers are those of
+# tests/lib/random/reference.c, a C transcription of splitmix64.c and of the
+# split of Java's SplittableRandom; tests/lib/run-hosts.sh runs the same on
+# the other compilers.
+cc=${CC:-cc}
+if "$cc" -O2 -o "$out/random-reference" tests/lib/random/reference.c > "$out/random-reference.cerr" 2>&1 &&
+   "$out/random-reference" > "$out/random-kat.expected" &&
+   "$rune" --library random tests/lib/random/kat.sml -o "$out/random-kat.rbc" > "$out/random-kat.cerr" 2>&1 &&
+   "$runevm" "$out/random-kat.rbc" > "$out/random-kat.out" 2>&1 &&
+   cmp -s "$out/random-kat.out" "$out/random-kat.expected"; then
+  ok
+else
+  bad "random: the known answers (diff $out/random-kat.expected $out/random-kat.out)"
+fi
+if "$rune" --library random tests/lib/random/props.sml -o "$out/random-props.rbc" > "$out/random-props.cerr" 2>&1 &&
+   "$runevm" "$out/random-props.rbc" > "$out/random-props.out" 2>&1 &&
+   ! grep -q "^FAIL" "$out/random-props.out"; then
+  ok
+else
+  bad "random: the properties (see $out/random-props.cerr, $out/random-props.out)"
+fi
+if "$rune" --library random --basis-check > "$out/random-check.txt" 2>&1; then
+  ok
+else
+  bad "random: --basis-check (see $out/random-check.txt)"
+fi
+
+# the examples of lib/random's documentation, which must hold as the Basis
+# Library's do (tests/basis/run-examples.sh): one program for its signature
+ex=$out/random-examples
+mkdir -p "$ex"
+if "$runedoc" --lib lib --library random --examples "$ex" > "$ex/runedoc.log" 2>&1; then
+  for f in "$ex"/*.sml; do
+    p=${f%.sml}
+    if "$rune" --library random "$f" -o "$p.rbc" > "$p.cerr" 2>&1 && "$runevm" "$p.rbc" > "$p.out" 2>&1 &&
+       grep -q "^PASS" "$p.out" && ! grep -q "^FAIL" "$p.out"; then
+      ok
+    else
+      bad "random: the examples of $(basename "$f" .sml) (see $p.cerr, $p.out)"
+    fi
+  done
+else
+  bad "random: runedoc --examples (see $ex/runedoc.log)"
 fi
 
 echo "test-lib: passed $passed, failed $failed"

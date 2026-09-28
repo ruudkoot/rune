@@ -111,7 +111,7 @@ struct
 
   (* An environment for pages in the directory that `root` leads out of. *)
   fun envOf (modules : I.module list, out : string, ratchet : string list, sites : DocTests.site list,
-             annotations : DocAnnot.file option) =
+             annotations : DocAnnot.file option, outer : {index : R.index, root : string option} option) =
     let
       val tests = List.foldl (fn (s : DocTests.site, m) =>
                                 StringMap.insert (m, #scope s, (case StringMap.find (m, #scope s) of
@@ -281,7 +281,7 @@ struct
                    topLevel = topLevel, tests = tests, annotations = annotated,
                    ratchet = fn s => List.exists (fn r => r = s) ratchet,
                    strPageOf = strPageOf,
-                   links = links, anchors = anchors} : P.env)
+                   links = links, anchors = anchors, outer = outer} : P.env)
     end
 
   (* ---- pages other than those of signatures ---- *)
@@ -810,7 +810,8 @@ struct
                                                                   ratchet = #ratchet env, topLevel = #topLevel env,
                                                                   strPageOf = #strPageOf env,
                                                                   tests = #tests env, annotations = #annotations env,
-                                                                  links = #links env, anchors = #anchors env},
+                                                                  links = #links env, anchors = #anchors env,
+                                                                  outer = #outer env},
                                                                  path, {page = R.sigPage (#signat o'), anchor = #anchor o'},
                                                                  Source.noSpan) ^ ")") g) ^ "\n"
             end
@@ -1387,14 +1388,21 @@ struct
     end
 
   fun build {dir : string, prelude : DocElab.prelude, title : string, out : string, tests : string option,
-             annotations : string option} : file list =
+             annotations : string option, basisDocs : string option} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
       val ratchet = ratchetOf dir
       val sites = case tests of SOME t => DocTests.suite t | NONE => []
       val annotated = Option.map DocAnnot.load annotations
-      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated)
+      (* a library written on the Basis Library may name what it documents *)
+      val outer =
+        case #basis prelude of
+          NONE => NONE
+        | SOME basis =>
+            let val (_, index, _, _) = envOf (load basis, upFrom out, [], [], NONE, NONE)
+            in SOME {index = index, root = Option.map (fn d => d ^ "/") basisDocs} end
+      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated, outer)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkRatchet (dir, sigs, ratchet)
       (* with a suite: every specified member of a claimed structure has a check *)
@@ -1760,7 +1768,7 @@ struct
   fun examples {dir : string} : file list =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"
@@ -1776,7 +1784,7 @@ struct
   fun checkCoverage {dir : string, tests : string} : int =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
     in
       coverageOf (modules, claims, index, DocTests.suite tests, tests)
     end

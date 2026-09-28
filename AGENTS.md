@@ -280,7 +280,12 @@ keep these invariants:
   names what it uses of the basis library as well (`rune --basis-check
   --library NAME` checks it), and whose `# library:` lines name the libraries
   it is written on. It may not use `_prim`. The mechanism's tests are in
-  `tests/lib` (`make test-lib`).
+  `tests/lib` (`make test-lib`). After a change to such a library, run `make
+  test-lib-hosts`: its tests on MLton, SML/NJ, Poly/ML and MLKit, against their
+  own Basis. **Never work around a bug of a compiler other than Rune in such a
+  library** (the owner's rule, 2026-09-27): write it plainly, and mark the
+  failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in
+  `docs/bugreport/HOST`.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

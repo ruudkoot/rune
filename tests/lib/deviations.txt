@@ -1,0 +1,13 @@
+# Known failures of the libraries beside the basis library on the other
+# compilers (tests/lib/run-hosts.sh), in the form of tests/basis/deviations.txt:
+#
+#   config-glob | label-glob | CATEGORY | reason
+#
+# config-glob matches native:HOST (native:mlton, native:smlnj,
+# native:smlnj32, native:polyml, native:mlkit), label-glob the test's label.
+# A library is never changed to work around a host's bug (AGENTS.md): the
+# failure is a HOST-BUG line here, with a report in docs/bugreport.
+
+# ---- SML/NJ built for 32 bits: a Word64.word loses bits 30 and 31 of its
+# low half, in literals and in arithmetic (docs/bugreport/smlnj/Word64-low-half).
+native:smlnj32 | random.* | HOST-BUG | Word64 values lose bits 30 and 31 of their low half (0wx40000000 : Word64.word is 0w0), so SplitMix64's constants and sums are wrong; smlnj/legacy #260, closed as fixed in 110.99.4, is still there in 110.99.9

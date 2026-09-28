@@ -12,8 +12,12 @@ struct
     \       runedoc --library NAME --examples DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
     \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST;\n\
-    \                  a NAME with a slash in it is the directory itself. A\n\
-    \                  library other than LIBDIR/basis is read on top of it\n\
+    \                  a NAME that begins with / or . is the directory itself.\n\
+    \                  A library other than LIBDIR/basis is read on top of it,\n\
+    \                  after the libraries its # library: lines name\n\
+    \  --basis-docs DIR  for a library on top of LIBDIR/basis: where its pages\n\
+    \                  are, from DIR of --out, for the links to what it names\n\
+    \                  of the basis library (without it, those are plain code)\n\
     \  --out DIR       write the documentation there, and remove the pages\n\
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
@@ -45,6 +49,7 @@ struct
   val page = ref false
   val library : string option ref = ref NONE
   val out : string option ref = ref NONE
+  val basisDocs : string option ref = ref NONE
   val title : string option ref = ref NONE
   val check = ref false
   val tests : string option ref = ref NONE
@@ -66,6 +71,7 @@ struct
     | "--check" :: rest => (check := true; parse rest)
     | "--library" :: name :: rest => (library := SOME name; parse rest)
     | "--out" :: dir :: rest => (out := SOME dir; parse rest)
+    | "--basis-docs" :: dir :: rest => (basisDocs := SOME dir; parse rest)
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
@@ -111,7 +117,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE)
+      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE, NONE)
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in
@@ -153,7 +159,7 @@ struct
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
       val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
       val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations,
-                                 title = (case !title of SOME t => t | NONE => shown)}
+                                 title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
     in

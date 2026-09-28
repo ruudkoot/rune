@@ -33,12 +33,29 @@ struct
               (* the page that describes a structure of that name, if any *)
               strPageOf : string -> string option,
               links : (string * string * Source.span) list ref,
-              anchors : (string * string * Source.span) list ref}
+              anchors : (string * string * Source.span) list ref,
+              (* for a library written on the Basis Library: the Basis Library's index, where a reference
+                 the library does not resolve is looked up, and where its pages are from the root of the
+                 output (--basis-docs), if they are to be linked *)
+              outer : {index : R.index, root : string option} option}
 
   fun href (env : env, from : string, {page, anchor} : R.target, span : Source.span) : string =
     (#links env := (page, anchor, span) :: !(#links env);
      if page = from andalso anchor = "" then List.last (String.fields (fn c => c = #"/") page)
      else (if page = from then "" else #root env ^ page) ^ (if anchor = "" then "" else "#" ^ anchor))
+
+  (* A reference the library does not resolve, looked up in the Basis Library
+     it is written on: NONE when it is not there either, SOME NONE when it is
+     but its pages are not to be linked, and SOME (SOME link) otherwise. A
+     link out of the output is not checked (verify cannot see those pages). *)
+  fun outside (env : env) (c : string) : string option option =
+    case #outer env of
+      NONE => NONE
+    | SOME {index, root} =>
+        (case R.resolve (index, "", [], []) c of
+           R.Target {page, anchor} =>
+             SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
+         | _ => NONE)
 
   (* A structure's name, as a link to its page when it has one. *)
   fun strLink (env : env, from : string, name : string) : string =
@@ -104,8 +121,12 @@ struct
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
-            ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
-               (span, "`" ^ c ^ "` names nothing that is documented"); NONE)
+            (case outside env c of
+               SOME l => l
+             | NONE =>
+                 ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
+                    (span, "`" ^ c ^ "` names nothing that is documented"); NONE))
+        | R.Unknown => Option.join (outside env c)
         | _ => NONE
       val inl = M.inlines link
       fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
@@ -120,7 +141,7 @@ struct
                      SOME exn =>
                        (case R.resolve (#index env, sigName, path, args) exn of
                           R.Target _ => ()
-                        | _ => if #ratchet env sigName
+                        | _ => if #ratchet env sigName andalso not (isSome (outside env exn))
                                then DocDiag.error (span, "`Raises:` names `" ^ exn ^ "`, which is no exception that is documented")
                                else ())
                    | NONE => ());

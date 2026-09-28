@@ -3,7 +3,10 @@
    Area: Tests *)
 signature WORDS =
 sig
-  (* `count s` is the number of words of `s`.
+  (* `count s` is the number of words of `s`, the tokens of `String.tokens`
+     that `Char.isSpace` separates.
+
+     Raises: `Size` never; the name is the Basis Library's.
 
      Example: `count "a b  c" = 3` *)
   val count : string -> int

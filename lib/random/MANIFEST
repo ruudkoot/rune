@@ -1,0 +1,9 @@
+# The random-number library (docs/plans/quickcheck.md, D2 and M3), one file
+# per line, in load order, in the form of lib/basis/MANIFEST:
+#
+#   file | always or demand | host | provides | requires
+#
+# The requires column names what a file uses of the basis library too, so
+# that a program that names only Random loads it.
+random_sig.sml | demand | yes | RANDOM | Word64
+random.sml     | demand | yes | Random | BinIO Char CharVector IO RANDOM Real String StringCvt Time Word64 Word8 Word8Vector Word8VectorSlice
