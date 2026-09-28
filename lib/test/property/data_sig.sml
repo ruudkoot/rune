@@ -27,6 +27,14 @@ sig
   (* The arbitrary of the records of fields that `Date.date` takes. *)
   val fields : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,
                 offset : Time.time option} Arb.arb
+
+  (* The arbitrary of the records of fields that are all in range: a domain a law can name (D7).
+
+     The year is from ~10^9 to 10^9, the day one of its month, the hour,
+     the minute and the second within the day, and the offset less than a
+     day either way, or `NONE`. *)
+  val fieldsInRange : {year : int, month : Date.month, day : int, hour : int, minute : int, second : int,
+                       offset : Time.time option} Arb.arb
 end
 
 (* The arbitraries of `IEEEReal`'s types, by the generator principle P12.
@@ -62,6 +70,11 @@ sig
   (* The arbitrary of the orders in which `Array2` traverses an array,
      `Array2.RowMajor` the simplest. *)
   val traversal : Array2.traversal Arb.arb
+
+  (* The arbitrary of canonical absolute paths: `/` and names of letters and digits between slashes, as many as a list's length.
+
+     A domain for the laws of `OS.Path` about such paths (D7). *)
+  val canonicalAbsolutePath : string Arb.arb
 
   (* The arbitrary of readers of characters over a drawn string, whose stream is a position in it.
 

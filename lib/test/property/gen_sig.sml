@@ -236,4 +236,12 @@ sig
      when the case is over: a generator of things that must be undone, such
      as a file or a socket. *)
   val resource : 'a gen * ('a -> unit) -> 'a gen
+
+  (* `shared (g, release)` draws as `resource` does, but once in a case at each place: the condition of a law and each of its sides get the same thing.
+
+     It is for a thing that is its identity, as a file descriptor or a
+     socket is, where each side of a law must see the same one. A thing
+     whose state a side changes, as a stream's, is drawn by `resource`, so
+     that each side has its own. *)
+  val shared : 'a gen * ('a -> unit) -> 'a gen
 end

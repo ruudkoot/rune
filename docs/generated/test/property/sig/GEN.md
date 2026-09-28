@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 43 of 43 entries documented |
+| Documentation | 44 of 44 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/gen\_sig.sml](../../../../../lib/test/property/gen_sig.sml) |
 
@@ -79,6 +79,7 @@ sig
   val <a href="#val-wordbits">wordBits</a> : int -&gt; Word64.word gen
   val <a href="#val-primitive">primitive</a> : (PropertySource.source * PropertySource.position -&gt; 'a) -&gt; 'a gen
   val <a href="#val-resource">resource</a> : 'a gen * ('a -&gt; unit) -&gt; 'a gen
+  val <a href="#val-shared">shared</a> : 'a gen * ('a -&gt; unit) -&gt; 'a gen
 end
 </pre>
 
@@ -522,6 +523,19 @@ val resource : 'a gen * ('a -> unit) -> 'a gen
 `resource (g, release)` draws what `g` draws, and calls `release` on it
 when the case is over: a generator of things that must be undone, such
 as a file or a socket.
+
+### <a name="val-shared"></a>`shared`
+
+```sml
+val shared : 'a gen * ('a -> unit) -> 'a gen
+```
+
+`shared (g, release)` draws as [`resource`](#val-resource) does, but once in a case at each place: the condition of a law and each of its sides get the same thing.
+
+It is for a thing that is its identity, as a file descriptor or a
+socket is, where each side of a law must see the same one. A thing
+whose state a side changes, as a stream's, is drawn by [`resource`](#val-resource), so
+that each side has its own.
 
 ---
 

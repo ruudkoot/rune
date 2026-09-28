@@ -517,4 +517,16 @@ struct
   (* the value g draws, with release registered to run when the case is over *)
   fun resource (g : 'a gen, release : 'a -> unit) : 'a gen =
     fn (s, a) => let val x = g (s, a) in S.cleanup (s, fn () => release x); x end
+
+  (* as resource, but made once in a case at each place: every draw there is
+     the same one (an exception of its own carries it in the source) *)
+  fun shared (g : 'a gen, release : 'a -> unit) : 'a gen =
+    let
+      exception Made of 'a
+    in
+      fn (s, a) =>
+        case S.madeAt (s, #address a) of
+          SOME (Made x) => x
+        | _ => let val x = g (s, a) in S.make (s, #address a, Made x); S.cleanup (s, fn () => release x); x end
+    end
 end

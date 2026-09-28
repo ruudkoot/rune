@@ -40,15 +40,17 @@ struct
                  cleanups : (unit -> unit) list ref,
                  (* the nodes read and calls made so far, and whether the case
                     has gone past the budget *)
-                 work : int ref, over : bool ref}
+                 work : int ref, over : bool ref,
+                 (* what `Gen.shared` made in the case, by address *)
+                 made : (Word64.word * exn) list ref}
 
   fun new (seed : Word64.word, size : int, set : node list, zeros : Word64.word list list) : source =
     {seed = seed, size = size, set = set, zeros = zeros, trail = ref [], sequences = ref [], calls = ref [],
-     effects = ref [], cleanups = ref [], work = ref 0, over = ref false}
+     effects = ref [], cleanups = ref [], work = ref 0, over = ref false, made = ref []}
 
   fun resized (s : source, n : int) : source =
     {seed = #seed s, size = n, set = #set s, zeros = #zeros s, trail = #trail s, sequences = #sequences s,
-     calls = #calls s, effects = #effects s, cleanups = #cleanups s, work = #work s, over = #over s}
+     calls = #calls s, effects = #effects s, cleanups = #cleanups s, work = #work s, over = #over s, made = #made s}
 
   fun step (a : Word64.word, w : Word64.word) : Word64.word =
     Random.hash (Word64.+ (Word64.* (a, 0wxD1B54A32D192ED03), Word64.+ (w, 0wx9E3779B97F4A7C15)))
@@ -166,6 +168,11 @@ struct
   fun cleanUp (s : source) : unit =
     let val fs = !(#cleanups s)
     in #cleanups s := []; List.app (fn f => f () handle _ => ()) fs end
+
+  (* What was made at an address in the case, and the making of it. *)
+  fun madeAt (s : source, a : Word64.word) : exn option =
+    Option.map #2 (List.find (fn (b, _) => b = a) (!(#made s)))
+  fun make (s : source, a : Word64.word, x : exn) : unit = #made s := (a, x) :: !(#made s)
 
   fun sequences (s : source) : sequence list = List.rev (!(#sequences s))
   fun calls (s : source) : (position * string) list = List.rev (!(#calls s))

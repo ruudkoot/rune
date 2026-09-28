@@ -5,6 +5,7 @@
 - `Fail` (con): [PROP](../sig/PROP.md#con-fail)
 - `Failed` (con): [CHECK](../sig/CHECK.md#con-failed)
 - `fields` (val): [DATE_ARB](../sig/DATE_ARB.md#val-fields)
+- `fieldsInRange` (val): [DATE_ARB](../sig/DATE_ARB.md#val-fieldsinrange)
 - `fileDesc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-filedesc)
 - `fileId` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-fileid)
 - `filter` (val): [GEN](../sig/GEN.md#val-filter)

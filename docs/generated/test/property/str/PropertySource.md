@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: it matches no signature of the library |
 | Status | required |
-| Members | 35 |
+| Members | 37 |
 | Tests | not listed |
 | Source | [lib/test/property/source.sml](../../../../../lib/test/property/source.sml) |
 
@@ -32,7 +32,7 @@ The types are this structure's own.
 | type | `node` | `{address : Word64.word, bound : Word64.word, kind : kind, path : Word64.word list, word : Word64.word}` |
 | type | `position` | `{address : Word64.word, path : Word64.word list}` |
 | type | `sequence` | `{length : Word64.word, marks : Word64.word list option, parts : Word64.word list}` |
-| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, over : bool ref, seed : Word64.word, sequences : sequence list ref, set : node list, size : int, trail : node list ref, work : int ref, zeros : Word64.word list list}` |
+| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, made : (Word64.word * exn) list ref, over : bool ref, seed : Word64.word, sequences : sequence list ref, set : node list, size : int, trail : node list ref, work : int ref, zeros : Word64.word list list}` |
 | exception | `TooBig` |  |
 | val | `addressOf` | `Word64.word list -> Word64.word` |
 | val | `bitsOf` | `real -> Word64.word` |
@@ -45,6 +45,8 @@ The types are this structure's own.
 | val | `cleanup` | `source * (unit -> unit) -> unit` |
 | val | `effect` | `source * string -> unit` |
 | val | `isPrefix` | `Word64.word list * Word64.word list -> bool` |
+| val | `madeAt` | `source * Word64.word -> exn option` |
+| val | `make` | `source * Word64.word * exn -> unit` |
 | val | `new` | `Word64.word * int * node list * Word64.word list list -> source` |
 | val | `nodes` | `source -> node list` |
 | val | `read` | `source * position * kind * (Word64.word -> Word64.word) -> Word64.word` |

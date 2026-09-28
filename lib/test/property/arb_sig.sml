@@ -61,6 +61,16 @@ sig
   (* `intInf` is the arbitrary of `IntInf.int`, drawn by `Gen.intInf`. *)
   val intInf : IntInf.int arb
 
+  (* `intRange (lo, hi)` is the arbitrary of the integers of `[lo, hi]`, drawn by `Gen.intRange`: a domain a law can name (D7).
+
+     Raises: `Domain` if `hi < lo`. *)
+  val intRange : int * int -> int arb
+
+  (* `wordRange (lo, hi)` is the arbitrary of the words of `[lo, hi]`, drawn as `Gen.intRange` draws integers.
+
+     Raises: `Domain` if `hi < lo`. *)
+  val wordRange : word * word -> word arb
+
   (* `reference a` is the arbitrary of references to `a`: a new one at every
      draw, and equal only to itself, as `=` on references is. *)
   val reference : 'a arb -> 'a ref arb

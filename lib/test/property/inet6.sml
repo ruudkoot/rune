@@ -10,6 +10,6 @@ struct
      co = fn a => Random.hashString (INet6Sock.toString a), eq = SOME (op =)}
 
   fun streamSock () : 'mode INet6Sock.stream_sock Arb.arb =
-    {gen = Gen.resource (Gen.primitive (fn _ => INet6Sock.TCP.socket ()), fn s => Socket.close s handle _ => ()),
+    {gen = Gen.shared (Gen.primitive (fn _ => INet6Sock.TCP.socket ()), fn s => Socket.close s handle _ => ()),
      show = fn _ => "(* a new TCP socket over IPv6 *)", co = fn _ => 0w0, eq = NONE}
 end

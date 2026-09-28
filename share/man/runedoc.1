@@ -143,6 +143,19 @@ Each is shown under every member that has such a check. A line
 names the block they are shown in. A glob that finds no check of a documented
 member is an error.
 .TP
+.BI \-\-law\-skips " FILE"
+The laws that do not hold in the library's implementation, or are not tested
+there, as lines
+.IB glob " | " "" "FAILS \fRor\fP UNTESTED" " | " why \fR,\fP
+where the glob is that of a law's label at a structure, as
+.BR MATH.atan2/law\-1@Real.Math .
+Each law is marked on its page, beneath it, with the structures and the
+reason. A glob that finds no law is an error. The Basis Library's list is
+.BR tests/basis/law\-skips.txt ,
+which
+.B make test\-laws
+reads too.
+.TP
 .BI \-\-examples " DIR"
 Write the examples of the comments, each a claim of type
 .BR bool ,

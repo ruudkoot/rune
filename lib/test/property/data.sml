@@ -79,6 +79,21 @@ struct
                       PropertyAround.around (0, 59), PropertyAround.around (0, 59), offsetIn (2 * 86400)),
      show = showFields, co = coFields, eq = SOME (op =)}
 
+  (* the days of the month m of the year y, in the Gregorian calendar *)
+  fun daysIn (y, m) =
+    case m of
+      Date.Feb => if (y mod 4 = 0 andalso y mod 100 <> 0) orelse y mod 400 = 0 then 29 else 28
+    | Date.Apr => 30 | Date.Jun => 30 | Date.Sep => 30 | Date.Nov => 30
+    | _ => 31
+
+  val fieldsInRange : fields Arb.arb =
+    {gen = Gen.bind (Gen.pair (Gen.intRange (~1000000000, 1000000000), #gen month))
+                    (fn (y, m) => Gen.map2 (fn ((d, h, mi), (s, off)) => make (y, d, h, mi, s) (m, off))
+                                           (Gen.triple (Gen.intRange (1, daysIn (y, m)), Gen.intRange (0, 23),
+                                                        Gen.intRange (0, 59)),
+                                            Gen.pair (Gen.intRange (0, 59), offsetIn 86399))),
+     show = showFields, co = coFields, eq = SOME (op =)}
+
   fun fieldsOf (d : Date.date) : fields =
     {year = Date.year d, month = Date.month d, day = Date.day d, hour = Date.hour d, minute = Date.minute d,
      second = Date.second d, offset = Date.offset d}
@@ -127,6 +142,15 @@ struct
     let fun go (i, acc) = case r i of SOME (c, j) => if j > i then go (j, c :: acc) else String.implode (List.rev (c :: acc))
                                     | NONE => String.implode (List.rev acc)
     in go (0, []) end
+
+  (* a name of a path: 1 to 8 letters or digits *)
+  val names = "abcdefghijklmnopqrstuvwxyz0123456789"
+  val name : string Gen.gen =
+    Gen.map (fn cs => String.implode (List.map (fn i => String.sub (names, i)) cs))
+            (Gen.listOf (Gen.intRange (1, 8)) (Gen.intRange (0, String.size names - 1)))
+  val canonicalAbsolutePath : string Arb.arb =
+    {gen = Gen.map (fn ns => "/" ^ String.concatWith "/" ns) (Gen.list name), show = Show.string,
+     co = Co.string, eq = SOME (op =)}
 
   val reader : (char, int) StringCvt.reader Arb.arb =
     {gen = Gen.map readerOf Gen.string,

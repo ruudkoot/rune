@@ -217,12 +217,16 @@ pieces of code, read by a small grammar:
   "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. An
   integer variable that a condition bounds this way, `lo <= x`, `x < hi` and
   the like joined by `andalso`, is drawn within the bounds, after the
-  variables they name, and not drawn and thrown away. A
-  condition that raises an exception does not hold, so ``when `(ignore
-  (slice (v, i, SOME n)); true)` `` says "when the slice exists".
-- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and ``when `f` has
-  no effects`` (or ``when `f` and `g` have no effects``) draws the functions
-  from the pure ones. Other functions may raise and have effects, and a law
+  variables they name, and not drawn and thrown away. Where the bounds name
+  each other in a cycle, as `0 <= i andalso i < n andalso n <= maxLen` does,
+  the variable first in the law keeps those that name no variable of the
+  cycle, and one that is such a variable gives way to that variable's own
+  bounds: `n` is drawn from 1 to `maxLen`, then `i` below it. A condition `x = y` between two variables of one type draws `y` as
+  `x`. A condition that raises an exception does not hold, so ``when
+  `(ignore (slice (v, i, SOME n)); true)` `` says "when the slice exists".
+- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and so does ``and
+  `y` from `H` `` after it; ``when `f` has no effects`` (or ``when `f` and
+  `g` have no effects``) draws the functions from the pure ones. Other functions may raise and have effects, and a law
   compares what its two sides do with them.
 - Any other piece is prose: a name or a result the sentence speaks of.
 
@@ -245,6 +249,14 @@ library as a program for each signature, held at every structure that
 implements it, and `make test-laws` runs those of lib/basis. The fixity is the top level's, so write
 `Real.== (x, y)`, and name another structure's operators in full where
 `open S` rebinds them (`Int.< (ord c, ord d)` under `open Char`).
+
+A law that does not hold in the implementation, or that is not tested there,
+is a line of `tests/basis/law-skips.txt`, `label-glob | FAILS or UNTESTED |
+why`, and not a law left out: `runedoc --law-skips` marks it on its page,
+beneath the law, with the structures and the reason, and `make test-laws`
+counts its failure as known and its pass as a line to remove. A law that can
+be restated so that it holds is restated instead, with the case that broke it
+as a `Counterexample:`.
 
 ## Annotations
 
