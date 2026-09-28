@@ -316,7 +316,7 @@ sig
 
   (* `fieldsOf t` is the fields of `t`, the record that `termios` takes.
 
-     Law: `fieldsOf (termios r)` has the fields of `r` *)
+     Law: `fieldsOf (termios r) = r` *)
   val fieldsOf : termios
                  -> {iflag : I.flags,
                      oflag : O.flags,
@@ -328,8 +328,9 @@ sig
 
   (* `getiflag t` is the input flags of `t`.
 
-     Law: `getiflag t = #iflag (fieldsOf t)`, and so for the other flags and
-     for `getcc` *)
+     Law: `getiflag t = #iflag (fieldsOf t)`, and `getoflag t = #oflag
+     (fieldsOf t)`, and `getcflag t = #cflag (fieldsOf t)`, and `getlflag t =
+     #lflag (fieldsOf t)`, and `getcc t = #cc (fieldsOf t)` *)
   val getiflag : termios -> I.flags
 
   (* `getoflag t` is the output flags of `t`. *)

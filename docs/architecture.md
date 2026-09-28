@@ -99,7 +99,7 @@ that what `runeopt` writes names fields and never gives their offsets.
 | `DocTests` | `src/doc/doctests.sml` | The checks of a test suite, read out of its sources with the compiler's parser: the labels `Structure.member/case` (literal, or literal and computed), what kind of check each is and which exception a `raises` expects, test functors expanded by the `name` each application gives. The pages list the checks of every member, and generation fails for a specified member of a claimed structure that has none. |
 | `DocNotes` | `src/doc/docnotes.sml` | The notes of the doc comments (readings, errata, deviations, implementation choices, limitations) with what pins them: the `Pinned by:` globs, which must match checks of the suite, or the check whose label is the note's id. They are written to `notes.tsv` and `readings.md`; `tests/basis/check-notes.sh` compares the export with `deviations.txt`, so that the suite depends on the documentation and not the other way round. |
 | `DocAnnot` | `src/doc/docannot.sml` | Annotations: what a file made elsewhere says about the members, `glob \| whom it is about \| text`, where the glob is that of a check's label (`*`, `?`, `[...]`). An annotation is shown under every member with such a check, and one that finds none is an error. The Basis Library's file is `tests/basis/annotations.txt`, the host lines of `deviations.txt` as `tests/basis/gen-annotations.sh` writes them. |
-| `DocExamples` | `src/doc/docexamples.sml` | The pieces of `Example:` paragraphs that are equations, `e = v`: which structure they are read in (`open Int` for `INTEGER`), the expression that `DocElab` elaborates when the documentation is made, and the program for each signature that `runedoc --examples` writes and `tests/basis/run-examples.sh` runs. |
+| `DocExamples` | `src/doc/docexamples.sml` | The pieces of `Example:` paragraphs, each a claim of type `bool`: which structure they are read in (`open Int` for `INTEGER`), the expression that `DocElab` elaborates when the documentation is made, and the program for each signature that `runedoc --examples` writes and `tests/basis/run-examples.sh` runs. |
 | `DocResolve` | `src/doc/docresolve.sml` | What a code span that is an identifier refers to: an argument of the usage head, a member of the signature (through its substructures and includes), a module; `List.map` leads to the page of `LIST`. |
 | `DocPage` | `src/doc/docpage.sml` | The page of a signature: status, synopsis, overview, contents, the interface with its identifiers linked, the entries with their tables of constructors and fields, notes as quotations. |
 | `DocSite` | `src/doc/docsite.sml` | A library's documentation as a tree of files: the pages, the overview by area, the index of identifiers, `conventions.md`, `coverage.md`, `structures.md` (with the names a structure declares beyond its signature), the pages of the functors, `top-level.md` (what the files that every program loads declare, each name with the structure member it is and that member's description), `exceptions.md` (from the `Raises:` paragraphs), `readings.md`, `claims.tsv`, `notes.tsv`; the ratchet of `DOCUMENTED`; checks that every anchor is unique and every link leads somewhere, that no page is too large for GitHub; writes the tree or compares it with the one on disk. |
@@ -204,6 +204,17 @@ elaborated with the structure whole. A `final` file (`epilogue.sml`, which runs 
 the files it requires are loaded already. Primitives are bound with
 `_prim "name" : ty`. The tags of `option` and `order` are relied upon by
 primitives that construct options.
+
+Other libraries sit beside the basis library under the `--lib` directory
+(`lib/test/property`), each with a `MANIFEST` of the same form
+(`BasisManifest`, `src/driver/basismanifest.sml`). `rune --library NAME` adds
+a library's entries after the basis library's, with those of the libraries
+its `# library:` lines name before it, and the files are chosen from all of
+them together, by path. A library's requires column names what it uses of
+the basis library, so that a program that names only the library loads what
+the library needs. The driver elaborates the basis library with `_prim`
+allowed, then the other libraries without, then the program; runedoc
+elaborates a library on the same terms (`DocElab.library`).
 
 ## Adding a language feature (checklist)
 

@@ -1,0 +1,6 @@
+./tests/doc/lawerrors.lib/colors.sml:16:7: error: the law `next (next (next c)) = c` has a variable `c : Colors.color` that lib/test/property has no arbitrary of
+./tests/doc/lawerrors.lib/colors.sml:16:7: error: the law `next (next (next c)) = c` compares its sides at `Colors.color`, which lib/test/property has no arbitrary of
+./tests/doc/lawerrors.lib/colors.sml:16:7: error: the law `(next o next) = (next o next)` compares functions (`Colors.color -> Colors.color`), which only their calls can compare: apply both sides to a variable
+./tests/doc/lawerrors.lib/colors.sml:21:7: error: the law `index c < 3 +` is no Standard ML: infix operator '+' used without arguments in expression; use 'op +'
+./tests/doc/lawerrors.lib/colors.sml:30:7: error: the law `fromIndex (i mod 3) = fromIndex ((i + 3) mod 3)` is no Standard ML: a condition of it (`i`) is not a bool: type annotation: type mismatch between bool list and int list (type constructor mismatch: bool vs int)
+./tests/doc/lawerrors.lib/colors.sml:30:7: error: the law `fromIndex 0 = fromIndex 3` compares its sides at `Colors.color`, which lib/test/property has no arbitrary of

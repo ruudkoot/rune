@@ -212,6 +212,6 @@ sig
 
   (* `compare (a, b)` orders two file identities, so that they can be kept in a map.
 
-     Law: `compare (a, b) = EQUAL` exactly when `a = b` *)
+     Law: `(compare (a, b) = EQUAL) = (a = b)` *)
   val compare : file_id * file_id -> order
 end

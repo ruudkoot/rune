@@ -1,0 +1,41 @@
+# The property-testing library (docs/plans/quickcheck.md, M4 to M6), one file
+# per line, in load order, in the form of lib/basis/MANIFEST. It is written
+# on lib/random:
+# library: random
+#
+# The host column is yes for a file that every compiler of
+# tests/lib/run-hosts.sh builds, and no for one that names a structure the
+# Basis leaves optional (Int8, WideChar, SML90, IntArray2) or Rune's own
+# (INet6Sock).
+#
+#   file | always or demand | host | provides | requires
+source.sml    | demand | yes | PropertySource | IEEEReal List Random Real Word64
+gen_sig.sml   | demand | yes | GEN            | IntInf LargeInt PropertySource Word64
+gen.sml       | demand | yes | Gen            | Array Char GEN Int IntInf LargeInt List PropertySource Random Real String Vector Word Word64
+co_sig.sml    | demand | yes | CO             | Word64
+co.sml        | demand | yes | Co             | CO Char List PropertySource Random Word Word64
+show_sig.sml  | demand | yes | SHOW           | Word64
+show.sml      | demand | yes | Show           | Array Bool Char CharVector Int List Real SHOW String StringCvt Vector Word Word64
+arb_sig.sml   | demand | yes | ARB            | Array2 ArraySlice Gen IntInf VectorSlice Word64
+arb.sml       | demand | yes | Arb            | ARB Array Array2 ArraySlice Co Gen Int IntInf List ListPair Option Random Real Show Vector VectorSlice Word64
+prop_sig.sml  | demand | yes | PROP           | Arb Gen PropertySource
+prop.sml      | demand | yes | Prop           | Arb Gen PROP PropertySource String
+check_sig.sml | demand | yes | CHECK          | Prop Word64
+check.sml     | demand | yes | Check          | CHECK Int List OS Option Prop PropertySource Random Real String StringCvt TextIO Word Word64
+family_sig.sml | demand | yes | ARB_OF        | Arb
+family.sml    | demand | yes | CharArbFn IntegerArbFn MonoArray2ArbFn MonoArrayArbFn MonoArraySliceArbFn MonoVectorArbFn MonoVectorSliceArbFn PropertyDimensions RealArbFn StringArbFn SubstringArbFn WordArbFn | ARB_OF Arb Array2 CHAR Co Gen IEEEReal INTEGER Int IntInf List ListPair MONO_ARRAY MONO_ARRAY2 MONO_ARRAY_SLICE MONO_VECTOR MONO_VECTOR_SLICE PropertySource REAL Random Real STRING SUBSTRING Show StringCvt Vector WORD Word Word64
+data_sig.sml  | demand | yes | BASIS_DATA_ARB DATE_ARB IEEE_REAL_ARB | Arb Array2 Date IEEEReal IO StringCvt Time
+data.sml      | demand | yes | BasisDataArb DateArb IEEERealArb PropertyAround RandomArb TimeArb | ARB_OF Arb Array2 BASIS_DATA_ARB Bool Co DATE_ARB Date Gen IEEEReal IEEE_REAL_ARB IO Int IntInf LargeInt List Option Random Show String StringCvt Time Word64
+numbers.sml   | demand | yes | IntArb IntInfArb LargeIntArb LargeRealArb LargeWordArb PositionArb RealArb SysWordArb Word8Arb WordArb | Int IntInf IntegerArbFn LargeInt LargeReal LargeWord Position Real RealArbFn SysWord Word Word8 WordArbFn
+sized.sml     | demand | no  | FixedIntArb Int16Arb Int32Arb Int64Arb Int8Arb Real32Arb Real64Arb Word16Arb Word32Arb Word64Arb | FixedInt Int16 Int32 Int64 Int8 IntegerArbFn Real32 Real64 RealArbFn Word16 Word32 Word64 WordArbFn
+text.sml      | demand | yes | CharArb CharArrayArb CharArraySliceArb CharVectorArb CharVectorSliceArb StringArb SubstringArb | Char CharArbFn CharArray CharArraySlice CharVector CharVectorSlice MonoArrayArbFn MonoArraySliceArbFn MonoVectorArbFn MonoVectorSliceArbFn String StringArbFn Substring SubstringArbFn
+wide.sml      | demand | no  | WideCharArb WideStringArb WideSubstringArb WideTextArb | Arb CharArbFn Gen StringArbFn SubstringArbFn WideChar WideString WideSubstring WideTextPrimIO
+bytes.sml     | demand | yes | Word8ArrayArb Word8ArraySliceArb Word8VectorArb Word8VectorSliceArb | MonoArrayArbFn MonoArraySliceArbFn MonoVectorArbFn MonoVectorSliceArbFn Word8Arb Word8Array Word8ArraySlice Word8Vector Word8VectorSlice
+arrays2.sml   | demand | no  | CharArray2Arb IntArray2Arb Word8Array2Arb | CharArb CharArray2 IntArb IntArray2 MonoArray2ArbFn Word8Arb Word8Array2
+system_sig.sml | demand | yes | SYSTEM_ARB | Arb BinIO INetSock NetHostDB OS Posix Socket TextIO TextPrimIO
+system.sml    | demand | yes | PropertyScratch SystemArb | Arb BinIO BinPrimIO CharArraySlice CharVectorSlice Co Gen INetSock IO List ListPair NetHostDB OS Posix Random SYSTEM_ARB Show Socket String StringCvt SysWord TextIO TextPrimIO Vector Word64 Word8 Word8ArraySlice Word8Vector Word8VectorSlice
+inet6_sig.sml | demand | no  | INET6_SOCK_ARB | Arb INet6Sock
+inet6.sml     | demand | no  | INet6SockArb   | Arb Gen INET6_SOCK_ARB INet6Sock List Random Show Socket String StringCvt Word64
+sml90_sig.sml | demand | no  | SML90_ARB      | Arb SML90
+sml90.sml     | demand | no  | SML90Arb       | Arb Gen PropertyScratch SML90 SML90_ARB
+sequences.sml | demand | no  | BoolArray2Arb BoolArrayArb BoolArraySliceArb BoolVectorArb BoolVectorSliceArb Int16Array2Arb Int16ArrayArb Int16ArraySliceArb Int16VectorArb Int16VectorSliceArb Int32Array2Arb Int32ArrayArb Int32ArraySliceArb Int32VectorArb Int32VectorSliceArb Int64Array2Arb Int64ArrayArb Int64ArraySliceArb Int64VectorArb Int64VectorSliceArb Int8Array2Arb Int8ArrayArb Int8ArraySliceArb Int8VectorArb Int8VectorSliceArb IntArrayArb IntArraySliceArb IntVectorArb IntVectorSliceArb LargeIntArray2Arb LargeIntArrayArb LargeIntArraySliceArb LargeIntVectorArb LargeIntVectorSliceArb LargeRealArray2Arb LargeRealArrayArb LargeRealArraySliceArb LargeRealVectorArb LargeRealVectorSliceArb LargeWordArray2Arb LargeWordArrayArb LargeWordArraySliceArb LargeWordVectorArb LargeWordVectorSliceArb Real32Array2Arb Real32ArrayArb Real32ArraySliceArb Real32VectorArb Real32VectorSliceArb Real64Array2Arb Real64ArrayArb Real64ArraySliceArb Real64VectorArb Real64VectorSliceArb RealArray2Arb RealArrayArb RealArraySliceArb RealVectorArb RealVectorSliceArb WideCharArray2Arb WideCharArrayArb WideCharArraySliceArb WideCharVectorArb WideCharVectorSliceArb Word16Array2Arb Word16ArrayArb Word16ArraySliceArb Word16VectorArb Word16VectorSliceArb Word32Array2Arb Word32ArrayArb Word32ArraySliceArb Word32VectorArb Word32VectorSliceArb Word64Array2Arb Word64ArrayArb Word64ArraySliceArb Word64VectorArb Word64VectorSliceArb WordArray2Arb WordArrayArb WordArraySliceArb WordVectorArb WordVectorSliceArb | Arb BoolArray BoolArray2 BoolArraySlice BoolVector BoolVectorSlice Int16Arb Int16Array Int16Array2 Int16ArraySlice Int16Vector Int16VectorSlice Int32Arb Int32Array Int32Array2 Int32ArraySlice Int32Vector Int32VectorSlice Int64Arb Int64Array Int64Array2 Int64ArraySlice Int64Vector Int64VectorSlice Int8Arb Int8Array Int8Array2 Int8ArraySlice Int8Vector Int8VectorSlice IntArb IntArray IntArraySlice IntVector IntVectorSlice LargeIntArb LargeIntArray LargeIntArray2 LargeIntArraySlice LargeIntVector LargeIntVectorSlice LargeRealArb LargeRealArray LargeRealArray2 LargeRealArraySlice LargeRealVector LargeRealVectorSlice LargeWordArb LargeWordArray LargeWordArray2 LargeWordArraySlice LargeWordVector LargeWordVectorSlice MonoArray2ArbFn MonoArrayArbFn MonoArraySliceArbFn MonoVectorArbFn MonoVectorSliceArbFn Real32Arb Real32Array Real32Array2 Real32ArraySlice Real32Vector Real32VectorSlice Real64Arb Real64Array Real64Array2 Real64ArraySlice Real64Vector Real64VectorSlice RealArb RealArray RealArray2 RealArraySlice RealVector RealVectorSlice WideCharArb WideCharArray WideCharArray2 WideCharArraySlice WideCharVector WideCharVectorSlice Word16Arb Word16Array Word16Array2 Word16ArraySlice Word16Vector Word16VectorSlice Word32Arb Word32Array Word32Array2 Word32ArraySlice Word32Vector Word32VectorSlice Word64Arb Word64Array Word64Array2 Word64ArraySlice Word64Vector Word64VectorSlice WordArb WordArray WordArray2 WordArraySlice WordVector WordVectorSlice

@@ -98,7 +98,7 @@ hash table.
 > the descriptor, and two [`iodesc`](#type-iodesc) are equal when the numbers are: the
 > [`iodesc`](#type-iodesc) of the reader under [`TextIO.stdIn`](../sig/TEXT_IO.md#val-stdin) is `Posix.FileSys.fdToIOD Posix.FileSys.stdin`.
 
-**Law** `hash d = hash e` when `d = e`
+**Law** `hash d = hash e` when `d = e` (for every `d : RuneIODesc.iodesc`, `e : RuneIODesc.iodesc`)
 
 <details><summary>Tests (6)</summary>
 
@@ -117,7 +117,7 @@ val compare : iodesc * iodesc -> order
 `compare (d, e)` orders descriptors in some total order, which has no
 meaning beyond that.
 
-**Law** `compare (d, e) = EQUAL` exactly when `d = e`
+**Law** `(compare (d, e) = EQUAL) = (d = e)` (for every `d : RuneIODesc.iodesc`, `e : RuneIODesc.iodesc`)
 
 **Example** `let val d = Posix.FileSys.fdToIOD Posix.FileSys.stdin in compare (d, d) end = EQUAL`
 
@@ -348,7 +348,7 @@ val pollToIODesc : poll_desc -> iodesc
 
 `pollToIODesc pd` is the descriptor that `pd` was made from.
 
-**Law** `pollToIODesc (valOf (pollDesc d)) = d`, and `pollToIODesc (pollIn pd) = pollToIODesc pd`
+**Law** `pollToIODesc (valOf (pollDesc d)) = d`, and `pollToIODesc (pollIn pd) = pollToIODesc pd` (for every `d : RuneIODesc.iodesc`, `pd : OS.IO.poll_desc`)
 
 <details><summary>Tests (5)</summary>
 
@@ -385,7 +385,7 @@ read, or the end of the stream.
 
 **Raises** [`Poll`](#exn-poll) if the descriptor does not support input.
 
-**Law** `pollIn (pollIn pd) = pollIn pd`
+**Law** `pollIn (pollIn pd) = pollIn pd` (for every `pd : OS.IO.poll_desc`)
 
 <details><summary>Tests (3)</summary>
 

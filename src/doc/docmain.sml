@@ -10,10 +10,15 @@ struct
   val usage =
     "usage: runedoc --library NAME --out DIR [--check] [--title TEXT]\n\
     \       runedoc --library NAME --examples DIR\n\
+    \       runedoc --library NAME --laws DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
     \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST;\n\
-    \                  a NAME with a slash in it is the directory itself. A\n\
-    \                  library other than LIBDIR/basis is read on top of it\n\
+    \                  a NAME that begins with / or . is the directory itself.\n\
+    \                  A library other than LIBDIR/basis is read on top of it,\n\
+    \                  after the libraries its # library: lines name\n\
+    \  --basis-docs DIR  for a library on top of LIBDIR/basis: where its pages\n\
+    \                  are, from DIR of --out, for the links to what it names\n\
+    \                  of the basis library (without it, those are plain code)\n\
     \  --out DIR       write the documentation there, and remove the pages\n\
     \                  that are no longer generated\n\
     \  --check         write nothing: fail if DIR is not what would be written\n\
@@ -23,8 +28,12 @@ struct
     \  --annotations FILE  what others say about the members, as lines\n\
     \                  `label-glob | whom it is about | text`; shown with the\n\
     \                  members that have a check with such a label\n\
-    \  --examples DIR  write the examples of the comments that are equations,\n\
-    \                  `e = v`, as a program for each signature, and stop\n\
+    \  --examples DIR  write the examples of the comments, claims of type bool,\n\
+    \                  as a program for each signature, and stop\n\
+    \  --laws DIR      write the laws of the comments as a program for each\n\
+    \                  signature, holding each at every structure that\n\
+    \                  implements it, and stop; compile one with\n\
+    \                  rune --library test/property\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -45,11 +54,13 @@ struct
   val page = ref false
   val library : string option ref = ref NONE
   val out : string option ref = ref NONE
+  val basisDocs : string option ref = ref NONE
   val title : string option ref = ref NONE
   val check = ref false
   val tests : string option ref = ref NONE
   val annotations : string option ref = ref NONE
   val examples : string option ref = ref NONE
+  val lawsDir : string option ref = ref NONE
   val labels = ref false
   val checkCoverage = ref false
   val lint = ref false
@@ -66,10 +77,12 @@ struct
     | "--check" :: rest => (check := true; parse rest)
     | "--library" :: name :: rest => (library := SOME name; parse rest)
     | "--out" :: dir :: rest => (out := SOME dir; parse rest)
+    | "--basis-docs" :: dir :: rest => (basisDocs := SOME dir; parse rest)
     | "--title" :: text :: rest => (title := SOME text; parse rest)
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
     | "--examples" :: dir :: rest => (examples := SOME dir; parse rest)
+    | "--laws" :: dir :: rest => (lawsDir := SOME dir; parse rest)
     | "--labels" :: rest => (labels := true; parse rest)
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
@@ -111,7 +124,7 @@ struct
   fun pages (paths : string list) : unit =
     let
       val modules = List.concat (List.map load paths)
-      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE)
+      val (claims, index, _, envAt) = DocSite.envOf (modules, "", [], [], NONE, NONE)
       val () = DocClaims.checkNames (#signatures index) claims
       val env = envAt "../"
     in
@@ -120,24 +133,31 @@ struct
     end
 
   (* The directory of the library NAME: LIBDIR/NAME, or NAME itself when it
-     is written as a path. *)
+     is written as a path, beginning with / or . (as the compiler reads
+     --library). *)
   fun directoryOf (name : string) : string =
-    if CharVector.exists (fn c => c = #"/") name then name
-    else case !libDir of SOME d => d ^ "/" ^ name | NONE => raise Usage "no library directory (use --lib DIR)"
+    if String.isPrefix "/" name orelse String.isPrefix "." name then name
+    else case !libDir of SOME d => BasisManifest.libraryDir (d, name) | NONE => raise Usage "no library directory (use --lib DIR)"
 
   (* What a library other than the Basis Library is written on: LIBDIR/basis,
-     if it is there. *)
-  fun preludeOf (dir : string) : string option =
+     if it is there, and the libraries its MANIFEST names on # library:
+     lines, with those they name, in the order they are elaborated. *)
+  fun preludeOf (dir : string) : DocElab.prelude =
     case !libDir of
-      NONE => NONE
+      NONE => {basis = NONE, libraries = []}
     | SOME d =>
         let
           val basis = d ^ "/basis"
           fun real p = OS.FileSys.fullPath p handle OS.SysErr _ => p
+          val libraries =
+            List.filter (fn l => real l <> real dir)
+                        (BasisManifest.libraries (d, BasisManifest.libraryRequires dir))
+            handle BasisManifest.Usage why => raise Usage why
         in
-          if real basis = real dir then NONE
-          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ]) then SOME basis
-          else NONE
+          if real basis = real dir then {basis = NONE, libraries = []}
+          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ])
+          then {basis = SOME basis, libraries = libraries}
+          else {basis = NONE, libraries = libraries}
         end
 
   fun generate (name : string) : OS.Process.status =
@@ -146,7 +166,7 @@ struct
       val dir = case !out of SOME d => d | NONE => raise Usage "no output directory (use --out DIR)"
       val shown = List.last (String.tokens (fn c => c = #"/") name) handle Empty => name
       val files = DocSite.build {dir = lib, prelude = preludeOf lib, out = dir, tests = !tests, annotations = !annotations,
-                                 title = (case !title of SOME t => t | NONE => shown)}
+                                 title = (case !title of SOME t => t | NONE => shown), basisDocs = !basisDocs}
                   handle BasisManifest.Usage why => raise Usage why
       val status = report ()
     in
@@ -161,7 +181,22 @@ struct
             println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " files to " ^ dir); status)
     end
 
+  (* The arbitraries of lib/test/property, where the library directory has
+     it: what the variables of laws are resolved against (quickcheck M7). *)
+  fun readInstances () : unit =
+    case !libDir of
+      NONE => ()
+    | SOME d =>
+        (DocElab.instanceStructures :=
+           SOME (List.filter (fn n => String.isSuffix "Arb" n)
+                             (List.concat (List.map #provides (BasisManifest.readManifest (d ^ "/test/property"))))))
+        handle _ => ()
+
   fun run () : OS.Process.status =
+    (readInstances ();
+     run' ())
+
+  and run' () : OS.Process.status =
     if !labels then
       (case !tests of
          SOME dir => (print (DocTests.tsv (DocTests.suite dir)); report ())
@@ -180,6 +215,22 @@ struct
              status
            end
        | _ => raise Usage "--check-coverage needs --library NAME and --tests DIR")
+    else if isSome (!lawsDir) then
+      (case !library of
+         SOME name =>
+           let
+             val dir = valOf (!lawsDir)
+             val lib = directoryOf name
+             val files = DocSite.laws {dir = lib, prelude = preludeOf lib} handle BasisManifest.Usage why => raise Usage why
+             val status = report ()
+           in
+             if OS.Process.isSuccess status
+             then (DocSite.write (dir, files);
+                   println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " programs of laws to " ^ dir))
+             else ();
+             status
+           end
+       | _ => raise Usage "--laws needs --library NAME")
     else if isSome (!examples) then
       (case !library of
          SOME name =>

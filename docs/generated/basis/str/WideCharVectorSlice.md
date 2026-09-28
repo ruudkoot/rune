@@ -25,30 +25,30 @@ What each means is on [`MONO_VECTOR_SLICE`](../sig/MONO_VECTOR_SLICE.md); the ty
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `WideChar.char` |
+| type | [`elem`](../sig/MONO_VECTOR_SLICE.md#type-elem) | `RuneWideChar.char` |
 | type | [`slice`](../sig/MONO_VECTOR_SLICE.md#type-slice) | *a type of its own* |
 | type | [`vector`](../sig/MONO_VECTOR_SLICE.md#type-vector) | `WideCharVector.vector` |
-| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(WideChar.char -> bool) -> slice -> bool` |
-| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(WideChar.char -> unit) -> slice -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * WideChar.char -> unit) -> slice -> unit` |
+| val | [`all`](../sig/MONO_VECTOR_SLICE.md#val-all) | `(RuneWideChar.char -> bool) -> slice -> bool` |
+| val | [`app`](../sig/MONO_VECTOR_SLICE.md#val-app) | `(RuneWideChar.char -> unit) -> slice -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR_SLICE.md#val-appi) | `(int * RuneWideChar.char -> unit) -> slice -> unit` |
 | val | [`base`](../sig/MONO_VECTOR_SLICE.md#val-base) | `slice -> WideCharVector.vector * int * int` |
-| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(WideChar.char * WideChar.char -> order) -> slice * slice -> order` |
+| val | [`collate`](../sig/MONO_VECTOR_SLICE.md#val-collate) | `(RuneWideChar.char * RuneWideChar.char -> order) -> slice * slice -> order` |
 | val | [`concat`](../sig/MONO_VECTOR_SLICE.md#val-concat) | `slice list -> WideCharVector.vector` |
-| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(WideChar.char -> bool) -> slice -> bool` |
-| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(WideChar.char -> bool) -> slice -> WideChar.char option` |
-| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * WideChar.char -> bool) -> slice -> (int * WideChar.char) option` |
-| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * WideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`exists`](../sig/MONO_VECTOR_SLICE.md#val-exists) | `(RuneWideChar.char -> bool) -> slice -> bool` |
+| val | [`find`](../sig/MONO_VECTOR_SLICE.md#val-find) | `(RuneWideChar.char -> bool) -> slice -> RuneWideChar.char option` |
+| val | [`findi`](../sig/MONO_VECTOR_SLICE.md#val-findi) | `(int * RuneWideChar.char -> bool) -> slice -> (int * RuneWideChar.char) option` |
+| val | [`foldl`](../sig/MONO_VECTOR_SLICE.md#val-foldl) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR_SLICE.md#val-foldli) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR_SLICE.md#val-foldr) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR_SLICE.md#val-foldri) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> slice -> 'a` |
 | val | [`full`](../sig/MONO_VECTOR_SLICE.md#val-full) | `WideCharVector.vector -> slice` |
-| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (WideChar.char * slice) option` |
+| val | [`getItem`](../sig/MONO_VECTOR_SLICE.md#val-getitem) | `slice -> (RuneWideChar.char * slice) option` |
 | val | [`isEmpty`](../sig/MONO_VECTOR_SLICE.md#val-isempty) | `slice -> bool` |
 | val | [`length`](../sig/MONO_VECTOR_SLICE.md#val-length) | `slice -> int` |
-| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(WideChar.char -> WideChar.char) -> slice -> WideCharVector.vector` |
-| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * WideChar.char -> WideChar.char) -> slice -> WideCharVector.vector` |
+| val | [`map`](../sig/MONO_VECTOR_SLICE.md#val-map) | `(RuneWideChar.char -> RuneWideChar.char) -> slice -> WideCharVector.vector` |
+| val | [`mapi`](../sig/MONO_VECTOR_SLICE.md#val-mapi) | `(int * RuneWideChar.char -> RuneWideChar.char) -> slice -> WideCharVector.vector` |
 | val | [`slice`](../sig/MONO_VECTOR_SLICE.md#val-slice) | `WideCharVector.vector * int * int option -> slice` |
-| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> WideChar.char` |
+| val | [`sub`](../sig/MONO_VECTOR_SLICE.md#val-sub) | `slice * int -> RuneWideChar.char` |
 | val | [`subslice`](../sig/MONO_VECTOR_SLICE.md#val-subslice) | `slice * int * int option -> slice` |
 | val | [`vector`](../sig/MONO_VECTOR_SLICE.md#val-vector) | `slice -> WideCharVector.vector` |
 

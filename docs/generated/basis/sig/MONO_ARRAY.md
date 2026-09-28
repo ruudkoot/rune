@@ -167,7 +167,7 @@ val array : int * elem -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0` or `n > maxLen`.
 
-**Law** `sub (array (n, x), i) = x` for `0 <= i < n`
+**Law** `sub (array (n, x), i) = x` for `0 <= i andalso i < n` (for every `n : int`, `x : char`, `i : int`)
 
 **Example** `vector (array (3, #"x")) = "xxx"`
 
@@ -191,7 +191,7 @@ val fromList : elem list -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `l` is longer than [`maxLen`](#val-maxlen).
 
-**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+**Law** `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i < List.length l` (for every `l : char list`, `i : int`)
 
 **Example** `sub (fromList [#"a", #"b"], 1) = #"b"`
 
@@ -218,8 +218,8 @@ val tabulate : int * (int -> elem) -> array
 > [`Array.tabulate`](../sig/ARRAY.md#val-tabulate): a length out of range raises [`Size`](../sig/GENERAL.md#exn-size) without applying
 > `f` at all.
 
-**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
-effects
+**Law** `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
+has no effects (for every `n : int`, `f : int -> char`, `i : int`)
 
 **Example** `vector (tabulate (3, fn i => Char.chr (97 + i))) = "abc"`
 
@@ -243,7 +243,7 @@ val length : array -> int
 
 `length x` is the number of elements.
 
-**Law** `length (fromList l) = List.length l`
+**Law** `length (fromList l) = List.length l` (for every `l : char list`)
 
 **Example** `length (fromList [#"a", #"b"]) = 2`
 
@@ -287,7 +287,7 @@ val update : array * int * elem -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i >= length arr`.
 
-**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
+**Law** `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i andalso i < length arr` (for every `arr : CharArray.array`, `i : int`, `x : char`)
 
 **Example** `let val a = array (3, #"-") in update (a, 1, #"x"); vector a end = "-x-"`
 
@@ -377,8 +377,7 @@ that overlap are what [`MONO_ARRAY_SLICE.copy`](../sig/MONO_ARRAY_SLICE.md#val-c
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `di < 0` or `di + length src > length dst`, and
 then nothing has been copied.
 
-**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
-for `0 <= i < length src`, when `src` and `dst` are not the same array
+**Law** `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)` for `0 <= i andalso i < length src andalso src <> dst` (for every `src : CharArray.array`, `dst : CharArray.array`, `di : int`, `i : int`)
 
 **Example** `let val b = array (4, #".") in copy {src = fromList [#"a", #"b", #"c"], dst = b, di = 1}; vector b end = ".abc"`
 
@@ -455,7 +454,7 @@ val app : (elem -> unit) -> array -> unit
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
 
-**Law** `app f x = appi (fn (_, e) => f e) x`
+**Law** `app f x = appi (fn (_, e) => f e) x` (for every `f : char -> unit`, `x : CharArray.array`)
 
 **Example** `let val s = ref 0 in app (fn c => s := !s + Char.ord c) (fromList [#"a", #"b"]); !s end = 195`
 
@@ -495,7 +494,7 @@ val modify : (elem -> elem) -> array -> unit
 
 `modify f x` replaces every element by `f` of it, in place, from 0 up.
 
-**Law** `modify f x = modifyi (fn (_, e) => f e) x`
+**Law** `modify f x = modifyi (fn (_, e) => f e) x` (for every `f : char -> char`, `x : CharArray.array`)
 
 **Example** `let val a = fromList [#"a", #"b"] in modify Char.toUpper a; vector a end = "AB"`
 
@@ -591,7 +590,7 @@ val foldl : (elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : CharArray.array`)
 
 **Example** `foldl (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"c", #"b", #"a"]`
 
@@ -613,7 +612,7 @@ val foldr : (elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : CharArray.array`)
 
 **Example** `foldr (op ::) [] (fromList [#"a", #"b", #"c"]) = [#"a", #"b", #"c"]`
 
@@ -656,7 +655,7 @@ val find : (elem -> bool) -> array -> elem option
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
-**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)` (for every `p : char -> bool`, `x : CharArray.array`)
 
 **Example** `find Char.isDigit (fromList [#"a", #"1", #"2"]) = SOME #"1"`
 
@@ -678,7 +677,7 @@ val exists : (elem -> bool) -> array -> bool
 
 `exists p x` is `true` when some element satisfies `p`; it stops at the first that does.
 
-**Law** `exists p x = isSome (find p x)`
+**Law** `exists p x = isSome (find p x)` (for every `p : char -> bool`, `x : CharArray.array`)
 
 **Example** `exists Char.isDigit (fromList [#"a", #"b"]) = false`
 
@@ -698,7 +697,7 @@ val all : (elem -> bool) -> array -> bool
 
 `all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-**Law** `all p x = not (exists (not o p) x)`
+**Law** `all p x = not (exists (not o p) x)` (for every `p : char -> bool`, `x : CharArray.array`)
 
 **Example** `all Char.isLower (fromList [#"a", #"b"]) = true`
 
@@ -721,7 +720,7 @@ val collate : (elem * elem -> order) -> array * array -> order
 This compares what the arrays hold, where `=` compares which array it
 is.
 
-**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)` (for every `cmp : char * char -> order`, `a : CharArray.array`, `b : CharArray.array`)
 
 **Example** `collate Char.compare (fromList [#"a", #"b"], fromList [#"a", #"c"]) = LESS`
 

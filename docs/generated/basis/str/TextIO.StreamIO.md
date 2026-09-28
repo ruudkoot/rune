@@ -30,7 +30,7 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 | type | [`instream`](../sig/STREAM_IO.md#type-instream) | *a type of its own* |
 | type | [`out_pos`](../sig/STREAM_IO.md#type-out_pos) | *a type of its own* |
 | type | [`outstream`](../sig/STREAM_IO.md#type-outstream) | *a type of its own* |
-| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `TextPrimIO.pos` |
+| type | [`pos`](../sig/STREAM_IO.md#type-pos) | `RuneTextPos.pos` |
 | type | [`reader`](../sig/STREAM_IO.md#type-reader) | `TextPrimIO.reader` |
 | type | [`vector`](../sig/STREAM_IO.md#type-vector) | `string` |
 | type | [`writer`](../sig/STREAM_IO.md#type-writer) | `TextPrimIO.writer` |
@@ -38,8 +38,8 @@ What each means is on [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md) and [`STREAM_
 | val | [`closeIn`](../sig/STREAM_IO.md#val-closein) | `instream -> unit` |
 | val | [`closeOut`](../sig/STREAM_IO.md#val-closeout) | `outstream -> unit` |
 | val | [`endOfStream`](../sig/STREAM_IO.md#val-endofstream) | `instream -> bool` |
-| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> TextPrimIO.pos` |
-| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> TextPrimIO.pos` |
+| val | [`filePosIn`](../sig/STREAM_IO.md#val-fileposin) | `instream -> RuneTextPos.pos` |
+| val | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | `out_pos -> RuneTextPos.pos` |
 | val | [`flushOut`](../sig/STREAM_IO.md#val-flushout) | `outstream -> unit` |
 | val | [`getBufferMode`](../sig/STREAM_IO.md#val-getbuffermode) | `outstream -> IO.buffer_mode` |
 | val | [`getPosOut`](../sig/STREAM_IO.md#val-getposout) | `outstream -> out_pos` |

@@ -96,7 +96,8 @@ sig
      fixed: an array is too large when the number of its elements is no
      `int`, or when it exceeds what an array can hold.
 
-     Law: `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+     Law: `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0
+     <= j andalso j < c`
 
      Example: `dimensions (array (2, 3, 0)) = (2, 3)` *)
   val array : int * int * 'a -> 'a array
@@ -106,8 +107,9 @@ sig
      Raises: `Size` if the lists are not all of one length, or if the array
      would be too large.
 
-     Law: `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
-     every row `i` and column `j` of the array
+     Law: `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0
+     <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols
+     (fromList rows)`
 
      Example: `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0),
      dimensions a) end = (3, (2, 2))` *)
@@ -129,8 +131,8 @@ sig
      asked for, and its result fills the array before the rest is
      computed.
 
-     Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
-     `0 <= j < c`, when `f` has no effects
+     Law: `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i
+     < r andalso 0 <= j andalso j < c`, when `f` has no effects
 
      Example: `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) =
      Vector.fromList [10, 11, 12]` *)
@@ -149,8 +151,8 @@ sig
 
      Raises: `Subscript` if `i` or `j` is outside the array.
 
-     Law: `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
-     column `j` of `arr`
+     Law: `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i
+     < nRows arr andalso 0 <= j andalso j < nCols arr`
 
      Example: `let val a = array (2, 2, 0) in update (a, 1, 0, 7); row (a, 1)
      end = Vector.fromList [7, 0]` *)
@@ -182,7 +184,7 @@ sig
      Raises: `Subscript` if `i` is no row of `arr`.
 
      Law: `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))`
-     for every row `i` of `arr`
+     for `0 <= i andalso i < nRows arr`
 
      Example: `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]` *)
   val row : 'a array * int -> 'a Vector.vector
@@ -191,8 +193,8 @@ sig
 
      Raises: `Subscript` if `j` is no column of `arr`.
 
-     Law: `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))`
-     for every column `j` of `arr`
+     Law: `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i,
+     j))` for `0 <= j andalso j < nCols arr`
 
      Example: `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]` *)
   val column : 'a array * int -> 'a Vector.vector

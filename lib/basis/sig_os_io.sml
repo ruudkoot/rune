@@ -38,7 +38,7 @@ sig
   (* `compare (d, e)` orders descriptors in some total order, which has no
      meaning beyond that.
 
-     Law: `compare (d, e) = EQUAL` exactly when `d = e`
+     Law: `(compare (d, e) = EQUAL) = (d = e)`
 
      Example: `let val d = Posix.FileSys.fdToIOD Posix.FileSys.stdin in
      compare (d, d) end = EQUAL` *)

@@ -23,8 +23,8 @@ sig
 
   (* `protocol e` is the number of the protocol.
 
-     Example: `Option.map protocol (getByName "tcp")` is `SOME 6` where
-     `/etc/protocols` lists TCP. *)
+     Where `/etc/protocols` lists TCP, `Option.map protocol (getByName "tcp")`
+     is `SOME 6`. *)
   val protocol : entry -> int
 
   (* `getByName name` is `SOME` of what the database records about the protocol `name`, or `NONE`. *)

@@ -229,7 +229,7 @@ sig
 
      Example: `toString (fromManExp {man = 0.75, exp = 4}) = "12"`
 
-     Law: `fromManExp (toManExp x) == x` for a finite `x` *)
+     Law: `== (fromManExp (toManExp x), x)` for `isFinite x` *)
   val fromManExp : {man : real, exp : int} -> real
 
   (* `split x` is the whole part and the fractional part of `x`, each with the sign of `x`.
@@ -237,7 +237,7 @@ sig
      The whole part is `x` rounded towards zero. For an infinity the
      fractional part is a zero, and for a NaN both are NaNs.
 
-     Law: `#whole (split x) + #frac (split x) == x`
+     Law: `== (#whole (split x) + #frac (split x), x)`
 
      Example: `(fn {whole, frac} => (toString whole, toString frac)) (split
      ~1.5) = ("~1", "~0.5")` *)
@@ -423,8 +423,8 @@ sig
      Example: `fmt (StringCvt.GEN (SOME 4)) 123456.0 = "123500"`, for the
      digits beyond the four become zeros where the fixed form is the shorter.
 
-     Example: `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString
-     (toDecimal 0.1)`. *)
+     Example: `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `fmt StringCvt.EXACT
+     0.1 = IEEEReal.toString (toDecimal 0.1)`. *)
   val fmt : StringCvt.realfmt -> real -> string
 
   (* `toString x` is the text of `x` in the general notation with the default number of digits.
@@ -492,8 +492,9 @@ sig
 
      Example: `#digits (toDecimal 0.1) = [1]`
 
-     Law: `valOf (fromDecimal (toDecimal x)) == x`, with the same sign bit,
-     for a normal or subnormal `x` *)
+     Law: `== (valOf (fromDecimal (toDecimal x)), x) andalso signBit (valOf
+     (fromDecimal (toDecimal x))) = signBit x` for `isNormal x orelse class x =
+     IEEEReal.SUBNORMAL` *)
   val toDecimal : real -> IEEEReal.decimal_approx
 
   (* `fromDecimal d` is the real nearest to the decimal number `d`, or `NONE` when a digit of `d` is outside 0 to 9.

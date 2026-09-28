@@ -168,7 +168,7 @@ val compare : pos * pos -> order
 
 `compare (p, q)` orders two positions: earlier in the stream is less.
 
-**Law** `(compare (p, q) = EQUAL) = (p = q)`
+**Law** `(compare (p, q) = EQUAL) = (p = q)` (for every `p : int`, `q : int`)
 
 **Example** `compare (0, 1) = LESS`
 

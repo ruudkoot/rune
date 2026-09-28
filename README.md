@@ -54,6 +54,8 @@ MLKit do differently. `runedoc` generates it from the comments of `lib/basis`
 | `vm/` | the virtual machine |
 | `src/isa/` | the instruction set and the primitives, described in Standard ML; `runeisa` writes the tables of the VM and the compiler from them |
 | `lib/basis/` | the basis library; `MANIFEST` says which files a program that names a structure needs |
+| `lib/random/` | pseudo-random numbers (SplitMix64), a library beside the basis library: `rune --library random` |
+| `lib/test/property/` | property testing, a QuickCheck for Standard ML: `rune --library test/property` (docs/plans/quickcheck.md) |
 | `tests/` | `run-tests.sh`, `lang/` (run tests), `errors/` (compile-error tests), `basis/` (the Basis Library suite, also run against MLton, SML/NJ, Poly/ML and MLKit) |
 | `docs/` | [language.md](docs/language.md), [bytecode.md](docs/bytecode.md), [runtime.md](docs/runtime.md), [building.md](docs/building.md), [architecture.md](docs/architecture.md), [native.md](docs/native.md), [performance.md](docs/performance.md), [basis-compat.md](docs/basis-compat.md), [doc-comments.md](docs/doc-comments.md); [generated/basis](docs/generated/basis/README.md), the documentation of the library |
 | `examples/` | small programs; `examples/runtime/` is the `Runtime` structure, which is Rune's own |

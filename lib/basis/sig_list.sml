@@ -71,7 +71,7 @@ sig
 
      Raises: `Empty` if `l` is empty.
 
-     Law: `hd l :: tl l = l` for a non-empty `l`
+     Law: `hd l :: tl l = l` for `not (null l)`
 
      Example: `hd [1, 2, 3] = 1`
 
@@ -118,7 +118,7 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i > length l`.
 
-     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i <= length l`
+     Law: `take (l, i) @ drop (l, i) = l` for `0 <= i andalso i <= length l`
 
      Example: `take ([1, 2, 3], 2) = [1, 2]` *)
   val take : 'a list * int -> 'a list
@@ -232,7 +232,7 @@ sig
 
      Law: `foldl (op ::) [] l = rev l`
 
-     Example: `foldl (op -) 0 [1, 2, 3] = 2`, which is `3 - (2 - (1 - 0))`.
+     Example: `foldl (op -) 0 [1, 2, 3] = 3 - (2 - (1 - 0))`, which is 2.
 
      Complexity: one application of `f` per element; constant stack. *)
   val foldl : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
@@ -244,7 +244,7 @@ sig
 
      Law: `foldr (op ::) [] l = l`
 
-     Example: `foldr (op -) 0 [1, 2, 3] = 2`, which is `1 - (2 - (3 - 0))`. *)
+     Example: `foldr (op -) 0 [1, 2, 3] = 1 - (2 - (3 - 0))`, which is 2. *)
   val foldr : ('a * 'b -> 'b) -> 'b -> 'a list -> 'b
 
   (* `exists p l` is `true` when some element of `l` satisfies `p`; it stops at

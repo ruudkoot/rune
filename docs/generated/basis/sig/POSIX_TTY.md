@@ -1024,7 +1024,7 @@ val wordToSpeed : SysWord.word -> speed
 
 `wordToSpeed w` is the speed whose `speed_t` value is `w`.
 
-**Law** `wordToSpeed (speedToWord s) = s`
+**Law** `wordToSpeed (speedToWord s) = s` (for every `s : Posix.TTY.speed`)
 
 <details><summary>Tests (2)</summary>
 
@@ -1310,7 +1310,7 @@ val fieldsOf : termios
 
 `fieldsOf t` is the fields of `t`, the record that [`termios`](#val-termios) takes.
 
-**Law** `fieldsOf (termios r)` has the fields of `r`
+**Law** `fieldsOf (termios r) = r` (for every `r : {cc : Posix.TTY.V.cc, cflag : Posix.TTY.C.flags, iflag : Posix.TTY.I.flags, ispeed : Posix.TTY.speed, lflag : Posix.TTY.L.flags, oflag : Posix.TTY.O.flags, ospeed : Posix.TTY.speed}`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -1336,8 +1336,7 @@ val getiflag : termios -> I.flags
 
 `getiflag t` is the input flags of `t`.
 
-**Law** `getiflag t = #iflag (fieldsOf t)`, and so for the other flags and
-for [`getcc`](#val-getcc)
+**Law** `getiflag t = #iflag (fieldsOf t)`, and `getoflag t = #oflag (fieldsOf t)`, and `getcflag t = #cflag (fieldsOf t)`, and `getlflag t = #lflag (fieldsOf t)`, and `getcc t = #cc (fieldsOf t)` (for every `t : Posix.TTY.termios`)
 
 <details><summary>Tests (1)</summary>
 
@@ -1447,7 +1446,7 @@ val setospeed : termios * speed -> termios
 
 `setospeed (t, s)` is `t` with `s` as the speed it sends at.
 
-**Law** `CF.getospeed (CF.setospeed (t, s)) = s`
+**Law** `CF.getospeed (CF.setospeed (t, s)) = s` (for every `t : Posix.TTY.termios`, `s : Posix.TTY.speed`)
 
 **Example** `CF.getospeed (CF.setospeed (termios {iflag = I.flags [], oflag = O.flags [], cflag = C.flags [], lflag = L.flags [], cc = V.cc [], ispeed = b9600, ospeed = b9600}, b38400)) = b38400`
 
@@ -1465,7 +1464,7 @@ val setispeed : termios * speed -> termios
 
 `setispeed (t, s)` is `t` with `s` as the speed it receives at.
 
-**Law** `CF.getispeed (CF.setispeed (t, s)) = s`
+**Law** `CF.getispeed (CF.setispeed (t, s)) = s` (for every `t : Posix.TTY.termios`, `s : Posix.TTY.speed`)
 
 <details><summary>Tests (1)</summary>
 

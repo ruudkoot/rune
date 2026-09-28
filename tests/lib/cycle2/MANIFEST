@@ -1,0 +1,2 @@
+# Two libraries written on each other (tests/lib/run-lib-tests.sh).
+# library: cycle1

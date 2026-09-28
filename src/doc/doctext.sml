@@ -4,7 +4,8 @@
    is a list; text between backquotes is code; a bare URL is a link. Nothing
    else is markup. A paragraph that starts with one of a closed set of
    keywords and a colon is reserved: it says something that can be checked
-   (`Raises:`) or that the generator uses (`Implements:`). *)
+   (`Raises:`) or that the generator uses (`Implements:`). A law may be named:
+   `Law (Associative):`. *)
 structure DocText =
 struct
   datatype inline =
@@ -21,7 +22,8 @@ struct
   (* The reserved paragraphs. The notes are those that record how the library
      reads or departs from its specification (D5). *)
   val notes = ["Reading", "Erratum", "Deviation", "Implementation", "Limitation"]
-  val keywords = ["Raises", "Example", "Law", "Complexity", "See also", "Area", "Status", "Implements", "Pinned by"] @ notes
+  val keywords = ["Raises", "Example", "Counterexample", "Law", "Complexity", "See also", "Area", "Status", "Implements",
+                  "Pinned by"] @ notes
   val statuses = ["required", "optional", "extension"]
 
   fun isNote k = List.exists (fn n => n = k) notes
@@ -162,8 +164,13 @@ struct
     let
       val hasCode = List.exists (fn Code _ => true | _ => false) body
     in
-      if isSome modifier andalso not (keyword = "Reading" andalso modifier = SOME "the suite differs") then
-        SOME ("`" ^ keyword ^ " (" ^ valOf modifier ^ "):` is not known: the one modifier is `Reading (the suite differs):`")
+      if isSome modifier andalso not (keyword = "Reading" andalso modifier = SOME "the suite differs")
+         andalso keyword <> "Law" then
+        SOME ("`" ^ keyword ^ " (" ^ valOf modifier ^ "):` is not known: a modifier is a law's name, `Law (Associative):`, "
+              ^ "or `Reading (the suite differs):`")
+      else if keyword = "Law" andalso isSome modifier
+              andalso not (CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-" orelse c = #" ") (valOf modifier)) then
+        SOME ("`Law (" ^ valOf modifier ^ "):` names a law with other than letters, digits, hyphens and blanks")
       else if isNote keyword then
         (if isSome (firstCode body) then NONE
          else SOME ("`" ^ keyword ^ ":` begins with the note's id in backquotes, as in `" ^ keyword ^ ": `Char.fromString/unescaped-double-quote`. ...`"))
@@ -183,4 +190,70 @@ struct
     case i of Text t => t | Code c => "`" ^ c ^ "`" | Url u => "<" ^ u ^ ">"
 
   fun inlinesText (is : inline list) : string = String.concat (List.map inlineText is)
+end
+
+(* The grammar of a `Law:` paragraph (docs/plans/quickcheck.md, D7): what
+   each piece of code in it is. See DocLaws. *)
+structure DocLawGrammar =
+struct
+  structure T = DocText
+
+  fun words (t : string) : string list = String.tokens (fn c => Char.isSpace c orelse c = #"," orelse c = #":") t
+  fun lastWord (t : string) : string option = case List.rev (words t) of w :: _ => SOME w | [] => NONE
+  (* the words of t begin with those of prefix, however the lines break *)
+  fun startsWith (t : string, prefix : string) : bool =
+    String.isPrefix (String.concatWith " " (String.tokens Char.isSpace prefix))
+                    (String.concatWith " " (String.tokens Char.isSpace t))
+
+  datatype role = Law | Condition | Domain of string | Pure | Prose
+
+  (* The role of every piece of code of a paragraph, in order. *)
+  fun roles (body : T.inline list) : (string * role) list =
+    let
+      fun textBefore (T.Text t :: _) = t
+        | textBefore _ = ""
+      fun noEffects t = startsWith (t, "has no effects") orelse startsWith (t, "have no effects")
+      (* seen: what came before, nearest first; last: the role of the last
+         piece that was not prose *)
+      fun go ([], _, _) = []
+        | go (T.Code c :: rest, seen, last) =
+            let
+              val w = lastWord (textBefore seen)
+              val next = case rest of T.Text t :: _ => t | _ => ""
+              (* "when `f` and `g` have no effects" *)
+              val andThenPure = startsWith (next, "and")
+                                andalso (case rest of _ :: T.Code _ :: T.Text t :: _ => noEffects t | _ => false)
+              val role =
+                case last of
+                  NONE => Law
+                | SOME r =>
+                    if w = SOME "for" orelse w = SOME "when" then
+                      if startsWith (next, "from") then
+                        (case rest of _ :: T.Code g :: _ => Domain g | _ => Condition)
+                      else if noEffects next orelse andThenPure then Pure
+                      else Condition
+                    else if w = SOME "and" then
+                      (case r of Law => Law | Condition => Condition | Pure => Pure | _ => Prose)
+                    else Prose
+              val rest = case role of Domain _ => (case rest of t :: _ :: more => t :: more | _ => rest) | _ => rest
+              (* a domain is a condition on its variable: "and" after it goes on with conditions *)
+              val last = case role of Prose => last | Domain _ => SOME Condition | r => SOME r
+            in
+              (c, role) :: go (rest, T.Code c :: seen, last)
+            end
+        | go (x :: rest, seen, last) = go (rest, x :: seen, last)
+    in
+      go (body, [], NONE)
+    end
+
+  (* The laws of a paragraph, and its conditions, domains and pure functions. *)
+  fun parts (body : T.inline list) : {laws : string list, conditions : string list,
+                                      domains : (string * string) list, pure : string list} =
+    let val rs = roles body
+    in
+      {laws = List.mapPartial (fn (c, Law) => SOME c | _ => NONE) rs,
+       conditions = List.mapPartial (fn (c, Condition) => SOME c | _ => NONE) rs,
+       domains = List.mapPartial (fn (x, Domain g) => SOME (x, g) | _ => NONE) rs,
+       pure = List.mapPartial (fn (f, Pure) => SOME f | _ => NONE) rs}
+    end
 end

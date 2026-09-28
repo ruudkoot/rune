@@ -20,11 +20,11 @@ The types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | `elem` | `WideChar.char` |
+| type | `elem` | `RuneWideChar.char` |
 | datatype | `instream` | `In` |
-| type | `out_pos` | `{position : WideTextPrimIO.pos, stream : outstream}` |
+| type | `out_pos` | `{position : RuneWideTextPos.pos, stream : outstream}` |
 | datatype | `outstream` | `Out` |
-| type | `pos` | `WideTextPrimIO.pos` |
+| type | `pos` | `RuneWideTextPos.pos` |
 | type | `reader` | `WideTextPrimIO.reader` |
 | datatype | `segment` | `Unread` &#124; `Chunk` &#124; `Eos` |
 | type | `state` | `{active : bool ref, augmented : WideTextPrimIO.reader, closed : bool ref, reader : WideTextPrimIO.reader}` |
@@ -35,8 +35,8 @@ The types are this structure's own.
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
 | val | `endOfStream` | `instream -> bool` |
-| val | `filePosIn` | `instream -> WideTextPrimIO.pos` |
-| val | `filePosOut` | `out_pos -> WideTextPrimIO.pos` |
+| val | `filePosIn` | `instream -> RuneWideTextPos.pos` |
+| val | `filePosOut` | `out_pos -> RuneWideTextPos.pos` |
 | val | `flushAll` | `outstream * string -> unit` |
 | val | `flushBuffer` | `outstream * string -> unit` |
 | val | `flushDevice` | `outstream * string -> unit` |
@@ -50,7 +50,7 @@ The types are this structure's own.
 | val | `hasNewline` | `WideCharVector.vector -> bool` |
 | val | `here` | `(unit -> 'a) option -> 'a option` |
 | val | `input` | `instream -> WideCharVector.vector * instream` |
-| val | `input1` | `instream -> (WideChar.char * instream) option` |
+| val | `input1` | `instream -> (RuneWideChar.char * instream) option` |
 | val | `inputAll` | `instream -> WideCharVector.vector * instream` |
 | val | `inputLine` | `instream -> (WideCharVector.vector * instream) option` |
 | val | `inputN` | `instream * int -> WideCharVector.vector * instream` |
@@ -59,7 +59,7 @@ The types are this structure's own.
 | val | `mkOutstream` | `WideTextPrimIO.writer * IO.buffer_mode -> outstream` |
 | val | `mkOutstreamOver` | `WideTextPrimIO.writer * IO.buffer_mode * {flush : unit -> unit, write : WideCharVector.vector -> unit} -> outstream` |
 | val | `output` | `outstream * WideCharVector.vector -> unit` |
-| val | `output1` | `outstream * WideChar.char -> unit` |
+| val | `output1` | `outstream * RuneWideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
 | val | `outputWith` | `outstream * WideCharVector.vector * string -> unit` |
 | val | `readerName` | `WideTextPrimIO.reader -> string` |

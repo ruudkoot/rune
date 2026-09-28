@@ -93,9 +93,10 @@ set is closed and case-sensitive.
 | Paragraph | In the comment of | What follows the colon |
 |---|---|---|
 | `Raises:` | a value | the exception in backquotes, then when it is raised; one paragraph per exception |
-| `Law:` | a value | an equation, in backquotes |
+| `Law:` | a value | an equation or a `bool`, in backquotes, with its conditions (*Laws*) |
 | `Complexity:` | a value | prose |
-| `Example:` | anything | code; a piece that is an equation, `e = v`, is run (below) |
+| `Example:` | anything | code; every piece is a closed `bool` that is true, and is run (below) |
+| `Counterexample:` | anything an example may document | a claim, in backquotes, that does not hold (*Counterexamples*) |
 | `See also:` | anything | references in backquotes |
 | `Area:` | a signature, a functor, a structure that no signature describes | the area of the library's overview page that lists it |
 | `Status:` | a signature, structure or functor | `required`, `optional` or `extension`; a signature without one is required, a structure without one has the status of its signature |
@@ -148,12 +149,23 @@ check pins (and the other way round), and what a host reads differently in a
 signature that is documented in full needs a `Reading:` of that member.
 `coverage.md` lists the deviations and limitations that no check pins.
 
+## Libraries beside the Basis Library
+
+A library other than the Basis Library (`runedoc --library random`) is
+elaborated on top of it, and its comments may name what it has: a
+reference that the library does not resolve, and a `Raises:` exception, are
+looked up in the Basis Library. `--basis-docs DIR` says where the Basis
+Library's pages are, from the `--out` directory, and such a name then links
+there; `make docs` writes `docs/generated/random` with `--basis-docs
+../basis`.
+
 ## Examples that run
 
-A piece of code in an `Example:` paragraph that is an equation, `e = v`, is a
-claim, and it is checked twice. When the documentation is made it is
-elaborated against the library, so that an example that is no Standard ML,
-names what is not there or compares what has no equality is an error at its
+Every piece of code in an `Example:` paragraph is a claim: a closed
+expression of type `bool` that is true, most often an equation `e = v`. It is
+checked twice. When the documentation is made it is elaborated against the
+library, so that an example that is no Standard ML, is not a `bool`, names
+what is not there or compares what has no equality is an error at its
 comment. And `runedoc --examples DIR` writes the examples of each signature
 as a program, which `make test-basis` compiles and runs
 (`tests/basis/run-examples.sh`): an example that is false, or raises an
@@ -165,13 +177,71 @@ with the shortest name among those the specification requires (`Int` for
 `INTEGER`, `String` for `STRING`), and for a member of a substructure under
 `open S.Sub` as well. Name any other structure in full: `Word8.toIntX 0wxFF =
 ~1`. The fixity is that of the top level, so `Real.== (x, y)` and not `x ==
-y`. What holds for every argument is a `Law:`, which is not run; an example
-has no free variables. Code that is no equation is only shown, so a value of
-a type without equality is compared through its text: `Real.fmt (StringCvt.FIX
+y`. What holds for every argument is a `Law:`; an example has no free
+variables. Code that is not a claim -- an expression whose value the prose
+gives, the name of a character or of a file -- belongs in the prose, not in an
+`Example:`: write the claim instead (`Word8.toInt 0wxFF = 255`). A value of a
+type without equality is compared through its text: `Real.fmt (StringCvt.FIX
 (SOME 1)) (Math.sqrt 4.0) = "2.0"`.
 
 An example says what this library does, so `Int.precision = SOME 64` is a
 fine example; the programs are not tried on other implementations.
+
+## Counterexamples
+
+A `Counterexample:` is the opposite of an example: a closed claim in
+backquotes that does *not* hold, where an obvious reading of a member, or a
+law without its condition, breaks. It is judged as a law is (D6): an equation
+`l = r` whose two sides have different outcomes (different values, or one
+raises, or they raise different exceptions), or any other claim that is false
+or raises. So ``Counterexample: `valOf Int.maxInt + 1 = valOf Int.minInt` ``
+shows that `+` does not wrap: its left side raises `Overflow`. runedoc
+elaborates every counterexample as it does every example, and the programs of
+`--examples` try each and fail if it holds. The sides of an equation must have
+one type that admits equality, which the program compares their values at;
+compare reals and other types without equality by a claim, with `Real.==`. A
+false claim is easy to write by accident, so pair a counterexample with the
+claim it breaks, and say in the prose why it breaks.
+
+## Laws
+
+A `Law:` says what holds for every value of its variables
+(docs/plans/quickcheck.md, D6 and D7). runedoc elaborates every law, as it
+does every example, and gives each variable a type and an arbitrary of
+lib/test/property to draw it from. So a law is Standard ML, in the paragraph's
+pieces of code, read by a small grammar:
+
+- The first piece of code is a law, and so is one after "and" that follows a
+  law: ``Law: `concat [s, t] = s ^ t`, and `concat [] = ""` ``.
+- A piece after "for" or "when" is a condition, a `bool`, and so is one after
+  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. A
+  condition that raises an exception does not hold, so ``when `(ignore
+  (slice (v, i, SOME n)); true)` `` says "when the slice exists".
+- ``for `x` from `G` `` draws `x` from the arbitrary `G`, and ``when `f` has
+  no effects`` (or ``when `f` and `g` have no effects``) draws the functions
+  from the pure ones. Other functions may raise and have effects, and a law
+  compares what its two sides do with them.
+- Any other piece is prose: a name or a result the sentence speaks of.
+
+A law may be named, `Law (Associative):`, and is then labelled by its name
+(`GENERAL.o/law-associative`) and not by its number; the name is letters,
+digits, hyphens and blanks, and each law of a named paragraph with several is
+numbered after it.
+
+The conditions of a paragraph hold for each of its laws, so a law with a
+condition of its own gets a paragraph of its own. The names a law leaves
+unbound, under `open S` as an example is read, are its variables, and the
+page lists them with their types; a variable that should be a member but is
+misspelt shows there. A law that is an equation, `l = r`, compares what its
+sides do: equal values, or the same exception. Each side is run with its
+own copy of the variables, so a side that changes an array does not change
+the other's, and a type without equality is compared by its arbitrary's
+equality (the identity of reals, the characters of a substring). A law that
+is not an equation is a `bool`. `runedoc --laws DIR` writes every law of a
+library as a program for each signature, held at every structure that
+implements it, and `make test-laws` runs those of lib/basis. The fixity is the top level's, so write
+`Real.== (x, y)`, and name another structure's operators in full where
+`open S` rebinds them (`Int.< (ord c, ord d)` under `open Char`).
 
 ## Annotations
 
@@ -224,7 +294,7 @@ in the commit that finishes its documentation.
 bin/runedoc --lint FILE...      # what is wrong with the comments of the files
 bin/runedoc --page FILE...      # the pages of the signatures of the files, on the standard output
 bin/runedoc --dump-ir FILE...   # what the generator makes of them, before any rendering
-bin/runedoc --library basis --examples DIR   # the examples that are equations, as programs
+bin/runedoc --library basis --examples DIR   # the examples, as programs
 sh tests/basis/run-examples.sh  # write them, compile them and run them
 make docs                       # write docs/generated/basis; commit the result
 ```

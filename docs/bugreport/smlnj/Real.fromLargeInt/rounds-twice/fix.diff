@@ -1,0 +1,182 @@
+diff --git a/base/system/Basis/Implementation/Target32Bit/intinf-to-real64.sml b/base/system/Basis/Implementation/Target32Bit/intinf-to-real64.sml
+index 644d631..5807326 100644
+--- a/base/system/Basis/Implementation/Target32Bit/intinf-to-real64.sml
++++ b/base/system/Basis/Implementation/Target32Bit/intinf-to-real64.sml
+@@ -13,6 +13,8 @@ structure IntInfToReal64 : sig
+ 
+   end = struct
+ 
++    structure W = InlineT.Word
++
+     val fromInt32 : Int32.int -> real = InlineT.Real64.from_int32
+     fun w2r w = fromInt32(InlineT.Int32.fromLarge(InlineT.Word.toLargeInt w))
+     val baseBits = InlineT.Word.toIntX CoreIntInf.baseBits
+@@ -20,27 +22,66 @@ structure IntInfToReal64 : sig
+     val rbase = w2r CoreIntInf.base
+ 
+   (* some protection against insanity... *)
+-    val _ = if baseBits < 18  (* i.e., 3 * baseBits < 53 *)
+-	  then raise Fail "big digits in intinf implementation do not have enough bits"
++    val _ = if baseBits <> 30
++	  then raise Fail "unexpected baseBits in intinf implementation"
+ 	  else ()
+ 
++  (* the number of bits of a digit *)
++    fun bitLen w = let
++	  fun lp (0w0, n) = n
++	    | lp (w, n) = lp (W.rshiftl (w, 0w1), n + 1)
++	  in
++	    lp (w, 0)
++	  end
++
++  (* the i'th digit, least significant first, or 0 *)
++    fun digit (d :: _, 0) = d
++      | digit (_ :: ds, i) = digit (ds, i - 1)
++      | digit ([], _) = 0w0
++
++  (* are all the digits before the i'th 0? *)
++    fun zeroBelow (_, 0) = true
++      | zeroBelow (d :: ds, i) = (d = 0w0) andalso zeroBelow (ds, i - 1)
++      | zeroBelow ([], _) = true
++
++  (* the w (<= 30) bits of the magnitude from bit p up *)
++    fun bitsAt (digits, p, w) = let
++	  val i = p div baseBits
++	  val off = W.fromInt (p mod baseBits)
++	  val lo = W.rshiftl (digit (digits, i), off)
++	  val bits = if off = 0w0 then lo
++		else W.orb (lo, W.lshift (digit (digits, i + 1), 0w30 - off))
++	  in
++	    W.andb (bits, W.lshift (0w1, W.fromInt w) - 0w1)
++	  end
++
++  (* The result is rounded once, in the current rounding mode, from the number with
++   * its sign: from at most 60 bits, which are exact as two reals, or from 55 bits of
++   * the magnitude below its top and a sticky bit for the bits under them, which
++   * rounds as the whole number does.
++   *)
+     fun cvt (x : IntInf.int) = let
+ 	  val CoreIntInf.BI{ negative, digits } = CoreIntInf.concrete x
+-	  fun dosign (x : real) = if negative then ~x else x
+-	(* We need at most three "big digits" to get 53 bits of precision...
+-	 * (See insanity insurance above.)
+-	 *)
+-	  fun calc (k, d1, d2, d3, []) =
+-		dosign (Assembly.A.scalb (w2r d1 +
+-					  rbase * (w2r d2 + rbase * w2r d3),
+-					  k))
+-	    | calc (k, _, d1, d2, d3 :: r) = calc (k + baseBits, d1, d2, d3, r)
++	  fun signed w = if negative then ~(w2r w) else w2r w
+ 	  in
+ 	    case digits
+ 	     of [] => 0.0
+-	      | [d] => dosign (w2r d)
+-	      | [d1, d2] => dosign (rbase * w2r d2 + w2r d1)
+-	      | d1 :: d2 :: d3 :: r => calc (0, d1, d2, d3, r)
++	      | [d] => signed d
++	      | [d0, d1] => rbase * signed d1 + signed d0
++	      | _ => let
++		  fun last [d] = d
++		    | last (_ :: ds) = last ds
++		    | last [] = 0w0
++		  val k = baseBits * (length digits - 1) + bitLen (last digits) - 55
++		  val lo = bitsAt (digits, k, 30)
++		  val hi = bitsAt (digits, k + 30, 25)
++		  val sticky = not (zeroBelow (digits, k div baseBits)
++			andalso W.andb (digit (digits, k div baseBits),
++			      W.lshift (0w1, W.fromInt (k mod baseBits)) - 0w1) = 0w0)
++		  val lo = if sticky then W.orb (lo, 0w1) else lo
++		  in
++		    Assembly.A.scalb (rbase * signed hi + signed lo, k)
++		  end
+ 	    (* end case *)
+ 	  end
+ 
+diff --git a/base/system/Basis/Implementation/Target64Bit/intinf-to-real64.sml b/base/system/Basis/Implementation/Target64Bit/intinf-to-real64.sml
+index 715a4ff..cf9f705 100644
+--- a/base/system/Basis/Implementation/Target64Bit/intinf-to-real64.sml
++++ b/base/system/Basis/Implementation/Target64Bit/intinf-to-real64.sml
+@@ -13,32 +13,70 @@ structure IntInfToReal64 : sig
+ 
+   end = struct
+ 
++    structure W = InlineT.Word
++
+     val fromInt64 : Int64.int -> real = InlineT.Real64.from_int64
+-    fun w2r w = fromInt64(InlineT.Int64.fromLarge(InlineT.Word.toLargeInt w))
++    fun w2i w = InlineT.Int64.fromLarge(InlineT.Word.toLargeInt w)
+     val baseBits = InlineT.Word.toIntX CoreIntInf.baseBits
+ 
+-    val rbase = w2r CoreIntInf.base
+-
+   (* some protection against insanity... *)
+     val _ = if baseBits <> 62
+ 	  then raise Fail "unexpected baseBits in intinf implementation"
+ 	  else ()
+ 
++  (* the number of bits of a digit *)
++    fun bitLen w = let
++	  fun lp (0w0, n) = n
++	    | lp (w, n) = lp (W.rshiftl (w, 0w1), n + 1)
++	  in
++	    lp (w, 0)
++	  end
++
++  (* the i'th digit, least significant first, or 0 *)
++    fun digit (d :: _, 0) = d
++      | digit (_ :: ds, i) = digit (ds, i - 1)
++      | digit ([], _) = 0w0
++
++  (* are all the digits before the i'th 0? *)
++    fun zeroBelow (_, 0) = true
++      | zeroBelow (d :: ds, i) = (d = 0w0) andalso zeroBelow (ds, i - 1)
++      | zeroBelow ([], _) = true
++
++  (* the w (<= 62) bits of the magnitude from bit p up *)
++    fun bitsAt (digits, p, w) = let
++	  val i = p div baseBits
++	  val off = W.fromInt (p mod baseBits)
++	  val lo = W.rshiftl (digit (digits, i), off)
++	  val bits = if off = 0w0 then lo
++		else W.orb (lo, W.lshift (digit (digits, i + 1), 0w62 - off))
++	  in
++	    W.andb (bits, W.lshift (0w1, W.fromInt w) - 0w1)
++	  end
++
++  (* The result is rounded once, in the current rounding mode, from the number with
++   * its sign: from a single digit, or from 55 bits of the magnitude below its top and
++   * a sticky bit for the bits under them, which rounds as the whole number does.
++   *)
+     fun cvt (x : IntInf.int) = let
+ 	  val CoreIntInf.BI{ negative, digits } = CoreIntInf.concrete x
+-	  fun dosign (x : real) = if negative then ~x else x
+-	(* We need at most two "big digits" to get 53 bits of precision...
+-	 * (See insanity insurance above.)
+-	 *)
+-	  fun calc (k, d1, d2, []) =
+-		dosign (Assembly.A.scalb (w2r d1 + rbase * w2r d2, k))
+-	    | calc (k, _, d1, d2 :: r) = calc (k + baseBits, d1, d2, r)
++	  fun signed w = if negative then fromInt64 (InlineT.Int64.~ (w2i w)) else fromInt64 (w2i w)
+ 	  in
+ 	    case digits
+ 	     of [] => 0.0
+-	      | [d] => dosign (w2r d)
+-	      | [d1, d2] => dosign (w2r d1 + rbase * w2r d2)
+-	      | d1 :: d2 :: r => calc (0, d1, d2, r)
++	      | [d] => signed d
++	      | _ => let
++		  fun last [d] = d
++		    | last (_ :: ds) = last ds
++		    | last [] = 0w0
++		  val k = baseBits * (length digits - 1) + bitLen (last digits) - 55
++		  val m = bitsAt (digits, k, 55)
++		  val sticky = not (zeroBelow (digits, k div baseBits)
++			andalso W.andb (digit (digits, k div baseBits),
++			      W.lshift (0w1, W.fromInt (k mod baseBits)) - 0w1) = 0w0)
++		  val m = if sticky then W.orb (m, 0w1) else m
++		  in
++		    Assembly.A.scalb (signed m, k)
++		  end
+ 	    (* end case *)
+ 	  end
+ 

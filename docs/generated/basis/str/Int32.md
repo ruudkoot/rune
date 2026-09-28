@@ -55,12 +55,11 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`toString`](../sig/INTEGER.md#val-tostring) | `Int32.int -> string` |
 | val | [`~`](../sig/INTEGER.md#val-op-tilde) | `Int32.int -> Int32.int` |
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (4)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; Int32.abs minInt gives minInt instead of raising Overflow
 - **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 - **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-- **SML/NJ (32-bit)** &mdash; sameSign (0, i) is true for positive i
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
 
 </details>

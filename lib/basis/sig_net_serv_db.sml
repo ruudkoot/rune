@@ -24,8 +24,8 @@ sig
 
   (* `port e` is the port the service is reached at.
 
-     Example: `Option.map port (getByName ("http", SOME "tcp"))` is `SOME 80`
-     where `/etc/services` lists HTTP. *)
+     Where `/etc/services` lists HTTP, `Option.map port (getByName ("http",
+     SOME "tcp"))` is `SOME 80`. *)
   val port : entry -> int
 
   (* `protocol e` is the name of the protocol it is reached over. *)

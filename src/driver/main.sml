@@ -4,10 +4,12 @@ struct
   fun println s = print (s ^ "\n")
   fun eprintln s = TextIO.output (TextIO.stdErr, s ^ "\n")
 
-  fun libDir () : string =
+  fun libRoot () : string =
     case !Options.libDir of
       NONE => raise Options.Usage "no basis library (use --lib DIR or --no-prelude)"
-    | SOME lib => lib ^ "/basis"
+    | SOME lib => lib
+
+  fun libDir () : string = libRoot () ^ "/basis"
 
   datatype when = datatype BasisManifest.when
   type entry = BasisManifest.entry
@@ -16,6 +18,15 @@ struct
   val providers = BasisManifest.providers
   val select = BasisManifest.select
   fun readManifest () = BasisManifest.readManifest (libDir ())
+
+  (* The libraries of --library and those they are written on, in the order
+     they are compiled, with the entries of each. *)
+  fun libraryManifests () : (string * entry list) list =
+    List.map (fn d => (d, BasisManifest.readManifest d))
+             (BasisManifest.libraries (libRoot (), !Options.libraries)
+              handle BasisManifest.Usage why => raise Options.Usage why)
+
+  fun inBasis (e : entry) : bool = #dir e = libDir ()
 
   fun defaultOutput (first : string) : string =
     let
@@ -56,16 +67,17 @@ struct
      (A top-level value or fixity directive belongs in an always file.) *)
   fun checkManifest () : OS.Process.status =
     let
-      val entries = readManifest ()
-      val dir = libDir ()
-      val provider = providers entries
+      val basisEntries = readManifest ()
+      val libs = libraryManifests ()
       val ok = ref true
-      fun complain (e : entry, msg) = (eprintln ("rune: " ^ dir ^ "/MANIFEST: " ^ #file e ^ ": " ^ msg); ok := false)
+      fun complain (e : entry, msg) = (eprintln ("rune: " ^ #dir e ^ "/MANIFEST: " ^ #file e ^ ": " ^ msg); ok := false)
       fun sorted l = StringMap.listKeys (List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty l)
       fun show l = String.concatWith " " l
-      fun check (e : entry, earlier : names) : names =
+      (* A file of the basis library is checked against the basis library;
+         one of another library against it and all that comes before it. *)
+      fun check provider (e : entry, earlier : names) : names =
         let
-          val toks = loadTokens (dir ^ "/" ^ #file e)
+          val toks = loadTokens (BasisManifest.path e)
           val (prog, fx) = Parser.parseTokensWith (toks, !fixity)
           val () = fixity := fx
           val declared =
@@ -80,7 +92,7 @@ struct
           val used =
             List.filter (fn n => not (List.exists (fn p => p = n) (#provides e))
                                  andalso (case StringMap.find (provider, n) of
-                                            SOME files => List.exists (fn f => f <> #file e) files
+                                            SOME files => List.exists (fn f => f <> BasisManifest.path e) files
                                           | NONE => false))
                         (StringMap.listKeys (namesOf (toks, StringMap.empty)))
           (* -Name in the column: named, but not required *)
@@ -98,9 +110,12 @@ struct
                                                 String.substring (Ast.decToString d ^ "                    ", 0, 20)))
                           prog
         in List.foldl (fn (n, m) => StringMap.insert (m, n, ())) earlier (#provides e) end
-      val _ = List.foldl check StringMap.empty entries
+      val earlier = List.foldl (check (providers basisEntries)) StringMap.empty basisEntries
+      val all = basisEntries @ List.concat (List.map #2 libs)
+      val _ = List.foldl (fn ((_, es), earlier) => List.foldl (check (providers all)) earlier es) earlier libs
+      val count = List.length all
     in
-      if !ok then (println ("basis-check: OK (" ^ Int.toString (List.length entries) ^ " files)"); OS.Process.success)
+      if !ok then (println ("basis-check: OK (" ^ Int.toString count ^ " files)"); OS.Process.success)
       else OS.Process.failure
     end
 
@@ -127,16 +142,29 @@ struct
       val inputs = !Options.inputs
       val () = if List.null inputs then raise Options.Usage "no input files" else ()
       val userToks = List.map loadTokens inputs
+      val () = if !Options.noPrelude andalso not (List.null (!Options.libraries))
+               then raise Options.Usage "--library needs the basis library (not --no-prelude)" else ()
       val basis =
         if !Options.noPrelude then []
         else
-          let val entries = readManifest ()
+          let
+            val entries = readManifest () @ List.concat (List.map #2 (libraryManifests ()))
+            val mentioned = List.foldl namesOf StringMap.empty userToks
+            (* A library beside the basis library sees the basis library as a
+               program does, through its seals: what the chosen files of the
+               libraries name counts as mentioned, and the choice is made
+               again with it. *)
+            val chosenLibrary = List.filter (not o inBasis) (select (entries, mentioned))
+            val mentioned =
+              List.foldl (fn (e, m) => namesOf (loadTokens (BasisManifest.path e), m)) mentioned chosenLibrary
           in
             if !Options.basisAll then entries
-            else select (entries, List.foldl namesOf StringMap.empty userToks)
+            else select (entries, mentioned)
           end
     in
-      if !Options.basisDeps then (List.app (fn e : entry => println (#file e)) basis; OS.Process.success)
+      if !Options.basisDeps
+      then (List.app (fn e : entry => println (if inBasis e then #file e else BasisManifest.path e)) basis;
+            OS.Process.success)
       else compileWith (List.filter (fn e : entry => #when e <> Final) basis,
                         List.filter (fn e : entry => #when e = Final) basis, userToks, inputs)
     end
@@ -150,13 +178,18 @@ struct
 
   and frontEnd (basis : entry list, final : entry list, userToks, _ : string list) : Lambda.lexp option =
     let
-      fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (libDir () ^ "/" ^ #file e))) es)
-      val preludeProg = parseEntries basis
+      fun parseEntries es = List.concat (List.map (fn e : entry => parseTokens (loadTokens (BasisManifest.path e))) es)
+      (* the basis library may use _prim; the libraries beside it may not *)
+      val basisProg = parseEntries (List.filter inBasis basis)
+      val libraryProg = parseEntries (List.filter (not o inBasis) basis)
+      val preludeProg = basisProg @ libraryProg
       val userProg = List.concat (List.map parseTokens userToks) @ parseEntries final
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) userProg else ()
       val env = ref Env.initial
       val () = Elaborate.allowPrim := true
-      val () = Elaborate.elabTop (env, preludeProg)
+      val () = Elaborate.elabTop (env, basisProg)
+      val () = Elaborate.allowPrim := false
+      val () = Elaborate.elabTop (env, libraryProg)
       val () = Elaborate.allowPrim := !Options.allowPrim
       val () = Elaborate.elabTop (env, userProg)
       val () = Elaborate.finish ()

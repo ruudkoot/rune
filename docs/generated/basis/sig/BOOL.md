@@ -69,7 +69,7 @@ val not : bool -> bool
 
 `not b` is the negation of `b`.
 
-**Law** `not (not b) = b`
+**Law** `not (not b) = b` (for every `b : bool`)
 
 **Example** `not true = false`
 
@@ -89,7 +89,7 @@ val toString : bool -> string
 
 `toString b` is `"true"` or `"false"`.
 
-**Law** `fromString (toString b) = SOME b`
+**Law** `fromString (toString b) = SOME b` (for every `b : bool`)
 
 **Example** `toString false = "false"`
 
@@ -146,7 +146,7 @@ val fromString : string -> bool option
 `fromString s` is the boolean that `s` begins with, read as [`scan`](#val-scan) reads
 it, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 > **Reading** `Bool.fromString/none-not-whitespace-*`. The characters whose
 > codes are next to those of the white space characters (0, 8, 14, 31, 33,

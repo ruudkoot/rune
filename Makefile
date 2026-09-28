@@ -128,7 +128,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -602,9 +602,11 @@ check-docs: $(RUNE) $(RUNEDOC)
 	sh scripts/check-docs.sh
 	RUNE=$(RUNE) sh scripts/gen-basis-sigs.sh --check
 	$(RUNE) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of lib/basis and src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	sh tests/basis/gen-annotations.sh --check
 	$(RUNEDOC) $(DOCS_BASIS) --check
+	$(RUNEDOC) $(DOCS_RANDOM) --check
+	$(RUNEDOC) $(DOCS_PROPERTY) --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
@@ -614,9 +616,15 @@ check-docs: $(RUNE) $(RUNEDOC)
 # made from deviations.txt by tests/basis/gen-annotations.sh and committed.
 DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
               --out docs/generated/basis --title "The Standard ML Basis Library"
+# the libraries beside it (docs/plans/quickcheck.md, D1)
+DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
+DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
+                 --title "Property testing"
 
 docs: $(RUNEDOC)
 	$(RUNEDOC) $(DOCS_BASIS)
+	$(RUNEDOC) $(DOCS_RANDOM)
+	$(RUNEDOC) $(DOCS_PROPERTY)
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. The matrix targets compare Rune with other systems
@@ -636,6 +644,22 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 # `make test-doc RUNEDOC=bin/runedoc-mlton` is the faster loop.
 test-doc: $(RUNEDOC) vm
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
+
+# The libraries beside the basis library and rune --library (tests/lib;
+# docs/plans/quickcheck.md, D1).
+test-lib: $(RUNE) $(RUNEDOC) vm
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+
+# The laws of the Basis Library's documentation, each at every structure that
+# implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
+# until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
+test-laws: $(RUNE) $(RUNEDOC) vm
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
+
+# The same libraries on the hosts, against their own Basis Library (after a
+# change to a library, as matrix-quick is after one to lib/basis).
+test-lib-hosts:
+	sh tests/lib/run-hosts.sh
 
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
@@ -871,6 +895,7 @@ check:
 	@$(MAKE) --no-print-directory host-builds vm boot runedoc runeopt
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
+	@$(MAKE) --no-print-directory test-lib
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt

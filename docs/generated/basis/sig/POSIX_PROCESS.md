@@ -119,7 +119,7 @@ val pidToWord : pid -> SysWord.word
 
 `pidToWord pid` is the number of `pid`.
 
-**Law** `pidToWord (wordToPid w) = w`
+**Law** `pidToWord (wordToPid w) = w` (for every `w : word`)
 
 <details><summary>Tests (2)</summary>
 

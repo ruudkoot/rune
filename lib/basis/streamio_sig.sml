@@ -75,7 +75,8 @@ sig
      Pinned by: `*IO.StreamIO.input/Io-when-the-reader-fails`,
      `*IO.StreamIO.input/Io-name-is-the-reader's`
 
-     Law: `#1 (input f) = #1 (input f)`: a stream in hand does not change
+     Law: `let val (a, _) = input f val (b, _) = input f in a = b end`: a
+     stream in hand does not change
 
      Example: `Byte.bytesToString (#1 (input (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"` *)
   val input : instream -> vector * instream

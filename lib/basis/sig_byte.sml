@@ -75,7 +75,8 @@ sig
      is if `i + Substring.size ss > Word8Array.length arr`.
 
      Law: `(packString (arr, i, ss); unpackString (Word8ArraySlice.slice (arr,
-     i, SOME (Substring.size ss)))) = Substring.string ss` when it fits
+     i, SOME (Substring.size ss)))) = Substring.string ss` when `0 <= i andalso
+     Substring.size ss <= Word8Array.length arr - i`
 
      Example: `let val a = Word8Array.array (4, 0w46) in packString (a, 1,
      Substring.full "ab"); unpackString (Word8ArraySlice.full a) end = ".ab."` *)

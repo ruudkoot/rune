@@ -205,13 +205,13 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 > NaN the significand is `x` itself; the exponent of a zero is 0, and that
 > of an infinity or a NaN is left open.
 
-<details><summary>Other implementations (58)</summary>
+<details><summary>Other implementations (59)</summary>
 
 - **MLKit** &mdash; the optimiser compiles 0.0 + e and e + 0.0 as e, so 0.0 + \~0.0 is \~0.0, not 0.0 (with --no\_optimiser it is 0.0)
-- **SML/NJ** &mdash; Real.ceil minPos is 0
+- **SML/NJ** &mdash; Real.ceil minPos is 0: ceil is \~1 - floor (\~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
 - **MLKit** &mdash; ceil of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 - **MLton** &mdash; another reading of the specification: SCI, FIX and GEN print \~0.0 without its sign; the test takes the reading of SML/NJ and Poly/ML, "\~0.0"
@@ -219,23 +219,24 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **Poly/ML** &mdash; GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
 - **SML/NJ** &mdash; GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 - **SML/NJ** &mdash; GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "\~1.5E\~07")
-- **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+- **SML/NJ (32-bit)** &mdash; fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373)
 - **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
 - **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
 - **MLKit** &mdash; fmt (GEN \_) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "\~0.0"), and 9.6 at one digit is "1E1", not "10"
 - **MLKit** &mdash; fmt (GEN \_) is C's %g: it chooses the notation by the exponent, not the shorter one ("0.001", "10000000000.0", "1.235E5"), and adds ".0" to an integral value
 - **MLKit** &mdash; fromDecimal of class NAN gives a NaN of the opposite sign: it negates posInf - posInf, whose sign bit the processor sets
 - **MLKit** &mdash; fromDecimal converts the magnitude in the current rounding mode and negates it, where the specification asks for TO\_NEAREST: under TO\_NEGINF {sign = true, digits = \[1\], exp = 0} is \~0.09999999999999999, not \~0.1
-- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 - **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
-- **SML/NJ, MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
-- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos
+- **SML/NJ** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value") (docs/bugreport/smlnj/Real.fromLargeInt)
+- **MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos: every result below 2^-1021 is 0.0 (docs/bugreport/smlnj/Real.fromManExp; smlnj/legacy\#254, closed as fixed in 110.99.3)
 - **Poly/ML 5.9.2** &mdash; fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
 - **SML/NJ** &mdash; scan skips only space, tab and newline, not the other Char.isSpace characters (\\r, \\v, \\f)
 - **SML/NJ** &mdash; scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
 - **Poly/ML 5.9.2** &mdash; fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 - **SML/NJ, Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
-- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015 (under xc1 through the shim's real\_from\_string, which is the host's Real.fromString)
+- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373); under xc1 through the shim's real\_from\_string, which is the host's Real.fromString
 - **MLton, Poly/ML, MLKit** &mdash; another reading of the specification: nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = \~0.0)
 - **Poly/ML** &mdash; Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
 - **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
@@ -251,7 +252,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **SML/NJ** &mdash; Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
 - **SML/NJ 110.99.9** &mdash; rem (±inf, y) is a zero, not NaN
 - **SML/NJ 110.99.9** &mdash; rem (x, ±0.0) is a zero, not NaN
-- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9** &mdash; scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
 - **Poly/ML 5.9.2** &mdash; toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
 - **MLKit** &mdash; toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")

@@ -115,7 +115,7 @@ the sign of `j`.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `divMod (i, j) = (i div j, i mod j)`
+**Law** `divMod (i, j) = (i div j, i mod j)` (for every `i : IntInf.int`, `j : IntInf.int`)
 
 **Example** `divMod (~7, 2) = (~4, 1)`
 
@@ -139,7 +139,7 @@ The quotient is rounded towards zero and the remainder has the sign of
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `j` is zero.
 
-**Law** `quotRem (i, j) = (quot (i, j), rem (i, j))`
+**Law** `quotRem (i, j) = (quot (i, j), rem (i, j))` (for every `i : IntInf.int`, `j : IntInf.int`)
 
 **Example** `quotRem (~7, 2) = (~3, ~1)`
 
@@ -165,8 +165,7 @@ and 0 for every other `i` but 0.
 
 **Raises** [`Div`](../sig/GENERAL.md#exn-div) if `i` is zero and `j` is negative.
 
-**Law** `pow (i, j + k) = pow (i, j) * pow (i, k)` for `j` and `k` not
-negative
+**Law** `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0) andalso Int.>= (k, 0)` (for every `i : IntInf.int`, `j : int`, `k : int`)
 
 **Example** `pow (2, 100) = 1267650600228229401496703205376`
 
@@ -196,7 +195,7 @@ highest bit of `i`.
 
 **Raises** [`Domain`](../sig/GENERAL.md#exn-domain) if `i <= 0`.
 
-**Law** `pow (2, log2 i) <= i andalso i < pow (2, log2 i + 1)` for `i > 0`
+**Law** `pow (2, log2 i) <= i andalso i < pow (2, Int.+ (log2 i, 1))` for `i > 0` (for every `i : IntInf.int`)
 
 **Example** `log2 (pow (2, 100)) = 100`
 
@@ -232,7 +231,7 @@ val xorb : int * int -> int
 
 `xorb (i, j)` is the bitwise exclusive "or" of `i` and `j`.
 
-**Law** `xorb (i, i) = 0`
+**Law** `xorb (i, i) = 0` (for every `i : IntInf.int`)
 
 **Example** `xorb (12, 10) = 6`
 
@@ -268,7 +267,7 @@ val notb : int -> int
 
 `notb i` is `i` with every bit inverted.
 
-**Law** `notb i = ~(i + 1)`
+**Law** `notb i = ~(i + 1)` (for every `i : IntInf.int`)
 
 **Example** `notb 0 = ~1`
 
@@ -286,7 +285,7 @@ val << : int * Word.word -> int
 
 `<< (i, n)` is `i` shifted left by `n` bits: `i * 2^n`.
 
-**Law** `<< (i, n) = i * pow (2, Word.toInt n)`
+**Law** `<< (i, n) = i * pow (2, Word.toInt n)` (for every `i : IntInf.int`, `n : word`)
 
 **Example** `<< (1, 0w100) = pow (2, 100)`
 
@@ -304,7 +303,7 @@ val ~>> : int * Word.word -> int
 
 `~>> (i, n)` is `i` shifted right by `n` bits with its sign kept: `i div 2^n`, rounded towards negative infinity.
 
-**Law** `~>> (i, n) = i div pow (2, Word.toInt n)`
+**Law** `~>> (i, n) = i div pow (2, Word.toInt n)` (for every `i : IntInf.int`, `n : word`)
 
 **Example** `~>> (~5, 0w1) = ~3`
 

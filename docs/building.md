@@ -424,6 +424,19 @@ bin/runeopt file.rbc -o prog          # an executable of it (Linux, x86-64)
 RUNEVM_OPTIONS=--count ./prog [args]  # runs it, with the options of runevm
 ```
 
+A library other than the basis library is compiled with `--library NAME`:
+the directory `NAME` of the `--lib` directory (`lib/test/property`, say),
+or a path when `NAME` begins with `/` or `.`. It has a `MANIFEST` in the
+basis library's form, whose `# library: NAME ...` lines name the libraries
+it is written on; those are compiled first, and the files of all of them are
+chosen as the basis library's are, by what the program names
+(`tests/lib/run-lib-tests.sh`, `make test-lib`). A library other than the
+basis library may not use `_prim`.
+
+```
+bin/rune --library test/property prog.sml   # prog.sml with the property-testing library
+```
+
 Run `bin/rune --help` and `bin/runevm --help` for the option lists, or
 `man rune` and `man runevm` after `make install`. Exit
 status of `rune`: 0 success, 1 compile error or usage error. Exit status of

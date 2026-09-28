@@ -42,7 +42,7 @@ sig
 
      Raises: `Size` if `n < 0` or `n > maxLen`.
 
-     Law: `sub (array (n, x), i) = x` for `0 <= i < n`
+     Law: `sub (array (n, x), i) = x` for `0 <= i andalso i < n`
 
      Example: `vector (array (3, #"x")) = Vector.fromList [#"x", #"x", #"x"]` *)
   val array : int * 'a -> 'a array
@@ -51,7 +51,8 @@ sig
 
      Raises: `Size` if `l` is longer than `maxLen`.
 
-     Law: `sub (fromList l, i) = List.nth (l, i)` for `0 <= i < List.length l`
+     Law: `sub (fromList l, i) = List.nth (l, i)` for `0 <= i andalso i <
+     List.length l`
 
      Example: `sub (fromList [10, 20, 30], 1) = 20` *)
   val fromList : 'a list -> 'a array
@@ -67,8 +68,8 @@ sig
      of range raises `Size` without applying `f` at all, so no effect of `f`
      happens for an array that is never made.
 
-     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i < n`, when `f` has no
-     effects
+     Law: `sub (tabulate (n, f), i) = f i` for `0 <= i andalso i < n`, when `f`
+     has no effects
 
      Example: `vector (tabulate (4, fn i => i * i)) = Vector.fromList [0, 1, 4, 9]` *)
   val tabulate : int * (int -> 'a) -> 'a array
@@ -93,7 +94,8 @@ sig
 
      Raises: `Subscript` if `i < 0` or `i >= length arr`.
 
-     Law: `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i < length arr`
+     Law: `(update (arr, i, x); sub (arr, i)) = x` for `0 <= i andalso i <
+     length arr`
 
      Example: `let val a = array (3, 0) in update (a, 1, 5); foldr (op ::) [] a
      end = [0, 5, 0]` *)
@@ -120,8 +122,8 @@ sig
      Raises: `Subscript` if `di < 0` or `di + length src > length dst`, and
      then nothing has been copied.
 
-     Law: `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub (src, i)`
-     for `0 <= i < length src`, when `src` and `dst` are not the same array
+     Law: `(copy {src = src, dst = dst, di = di}; sub (dst, di + i)) = sub
+     (src, i)` for `0 <= i andalso i < length src andalso src <> dst`
 
      Example: `let val a = fromList [1, 2, 3, 4] in copy {src = a, dst = a, di
      = 0}; vector a end = Vector.fromList [1, 2, 3, 4]` *)
@@ -132,8 +134,8 @@ sig
      Raises: `Subscript` if `di < 0` or `di + Vector.length src > length dst`,
      and then nothing has been copied.
 
-     Law: `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) = Vector.sub (v, i)`
-     for `0 <= i < Vector.length v`
+     Law: `(copyVec {src = v, dst = dst, di = di}; sub (dst, di + i)) =
+     Vector.sub (v, i)` for `0 <= i andalso i < Vector.length v`
 
      Example: `let val a = array (4, 0) in copyVec {src = Vector.fromList [1,
      2], dst = a, di = 1}; vector a end = Vector.fromList [0, 1, 2, 0]` *)

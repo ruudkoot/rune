@@ -1,0 +1,45 @@
+diff --git a/base/runtime/c-libs/smlnj-math/fp-dep.h b/base/runtime/c-libs/smlnj-math/fp-dep.h
+index 60267f0..6707b41 100644
+--- a/base/runtime/c-libs/smlnj-math/fp-dep.h
++++ b/base/runtime/c-libs/smlnj-math/fp-dep.h
+@@ -35,7 +35,11 @@
+ #if defined(HAS_ANSI_C_FP_EXT)
+ #  include <fenv.h>
+ /* some compilers may ignore the fesetround() function if this is not ON */
+-#pragma STDC FENV_ACCESS ON
++#  if defined(_MSC_VER)
++#    pragma fenv_access (on)
++#  else
++#    pragma STDC FENV_ACCESS ON
++#  endif
+ 
+ typedef int fe_rnd_mode_t;
+ 
+@@ -82,6 +86,9 @@ typedef int fe_rnd_mode_t;
+ /**
+  ** Win32 can set (some) alternate math paramters, but then only by re-linking
+  ** with different objects.  Best to do it by hand here as well.
++ ** (Microsoft's C takes the <fenv.h> path above: its C library has the C99
++ ** fegetround and fesetround, whose modes are not the x87 values below, so
++ ** that these declarations would call them with modes they reject.)
+  **/
+ #  define FE_TONEAREST		0
+ #  define FE_TOWARDZERO		3
+diff --git a/base/runtime/include/ml-osdep.h b/base/runtime/include/ml-osdep.h
+index a21199f..eaf6962 100644
+--- a/base/runtime/include/ml-osdep.h
++++ b/base/runtime/include/ml-osdep.h
+@@ -51,8 +51,11 @@ extern int GetPageSize (void);
+ 
+ #endif
+ 
+-/* support for ANSI C Floating-point extensions */
+-#if defined(OPSYS_DARWIN) || defined(OPSYS_LINUX)
++/* support for ANSI C Floating-point extensions (Microsoft's C has <fenv.h>
++ * since Visual Studio 2013)
++ */
++#if defined(OPSYS_DARWIN) || defined(OPSYS_LINUX) \
++    || (defined(OPSYS_WIN32) && defined(_MSC_VER))
+ #  define HAS_ANSI_C_FP_EXT
+ #endif
+ 

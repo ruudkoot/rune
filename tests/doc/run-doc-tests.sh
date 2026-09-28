@@ -23,9 +23,12 @@
 #                   structures.md, where the expectation exists
 #   NAME.lib.examples  the programs that `--examples` writes for it, one after
 #                   another, where the expectation exists
+#   NAME.lib.laws   the programs that `--laws` writes for it, one after
+#                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
 # one with a file ANNOTATIONS with --annotations, and one with a file ON-BASIS
-# as `--lib lib --library tests/doc/NAME.lib`, on top of the Basis Library.
+# as `--lib lib --library ./tests/doc/NAME.lib`, on top of the Basis Library,
+# and one with a file BASIS-DOCS with --basis-docs and what the file says.
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -99,7 +102,10 @@ for lib in tests/doc/*.lib; do
   # a library with a file ON-BASIS uses the Basis Library: it is named by its
   # directory, and LIBDIR is the one that has basis in it
   where="--lib tests/doc --library $name.lib"
-  [ -f "$lib/ON-BASIS" ] && where="--lib lib --library $lib"
+  [ -f "$lib/ON-BASIS" ] && where="--lib lib --library ./$lib"
+  # a library with a file BASIS-DOCS links what it names of the Basis Library
+  # to the pages there: the file says where they are from its output
+  [ -f "$lib/BASIS-DOCS" ] && where="$where --basis-docs $(cat "$lib/BASIS-DOCS")"
   # shellcheck disable=SC2086
   "$runedoc" $where $suite --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
   if [ -d "$out/$name.site" ]; then (cd "$out/$name.site" && find . -type f | sort) > "$out/$name.lib.files"; else : > "$out/$name.lib.files"; fi
@@ -133,6 +139,14 @@ for lib in tests/doc/*.lib; do
     cat "$out/$name.examples"/*.sml > "$out/$name.lib.examples" 2> /dev/null || : > "$out/$name.lib.examples"
     [ $update = 1 ] && cp "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
     same "$name.lib.examples" "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
+  fi
+  if [ -f "tests/doc/$name.lib.laws" ]; then
+    rm -rf "$out/$name.laws"
+    # shellcheck disable=SC2086
+    "$runedoc" $where --laws "$out/$name.laws" > /dev/null 2>&1
+    cat "$out/$name.laws"/*.sml > "$out/$name.lib.laws" 2> /dev/null || : > "$out/$name.lib.laws"
+    [ $update = 1 ] && cp "$out/$name.lib.laws" "tests/doc/$name.lib.laws"
+    same "$name.lib.laws" "$out/$name.lib.laws" "tests/doc/$name.lib.laws"
   fi
   if [ -d "$lib/tests" ]; then
     "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1

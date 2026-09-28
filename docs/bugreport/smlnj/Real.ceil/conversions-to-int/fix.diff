@@ -1,0 +1,67 @@
+diff --git a/base/system/smlnj/init/pervasive.sml b/base/system/smlnj/init/pervasive.sml
+index 4024c82..141a4e6 100644
+--- a/base/system/smlnj/init/pervasive.sml
++++ b/base/system/smlnj/init/pervasive.sml
+@@ -171,19 +171,32 @@ val real = R64.from_int
+ 
+ val floor = R64.floor
+ 
+-fun ceil x = Int.- (~1, floor (R64.~ (x + 1.0)))
++(* ceil and round start from floor x, which checks the range of int, and from
++ * the difference between x and it, which is exact.  Where floor x is out of range,
++ * the result can still be minInt, for an x less than one (ceil) or one half (round)
++ * below it; there x + 1.0 and x + 0.5 are exact and floor of them gives the answer
++ * or raises Overflow.
++ *)
++fun ceil x = let
++      val f = floor x
++      in
++	if R64.== (real f, x) then f else Int.+ (f, 1)
++      end
++	handle Overflow => Int.- (~1, floor (R64.~ (x + 1.0)))
+ 
+ fun trunc x = if R64.< (x, 0.0) then ceil x else floor x
+ 
+ fun round x = let
+     (* ties go to the nearest even number *)
+-      val fl = floor(x+0.5)
+-      val cl = ceil(x-0.5)
++      val f = floor x
++      val d = R64.- (x, real f)
+       in
+-	if fl=cl then fl
+-	else if Word.andb(Word.fromInt fl, 0w1) = 0w1 then cl
+-	else fl
++	if R64.< (d, 0.5) then f
++	else if R64.> (d, 0.5) orelse Word.andb(Word.fromInt f, 0w1) = 0w1
++	  then Int.+ (f, 1)
++	  else f
+       end
++	handle Overflow => floor (x + 0.5)
+ 
+ (* List *)
+ exception Empty
+diff --git a/base/system/smlnj/init/target64-inline.sml b/base/system/smlnj/init/target64-inline.sml
+index 809777a..d952406 100644
+--- a/base/system/smlnj/init/target64-inline.sml
++++ b/base/system/smlnj/init/target64-inline.sml
+@@ -97,14 +97,14 @@ structure InlineT =
+  * the CPS code generator.  Can also use InLine.round_real64_to_int.
+  *)
+ 	local
+-	(* the minInt (~4611686018427387904) and maxInt (4611686018427387904)
+-	 * values converted to reals (with loss of precision).
++	(* minInt (~4611686018427387904 = ~2^62) and maxInt + 1 (2^62), which are
++	 * exact as reals; floor x is an int when rminInt <= x < rmaxInt.
+ 	 *)
+-	  val rminInt = ~4611686018427390000.0
+-	  val rmaxInt = 4611686018427390000.0
++	  val rminInt = ~4611686018427387904.0
++	  val rmaxInt = 4611686018427387904.0
+ 	in
+ 	fun floor (x : real) =
+-	      if InLine.real64_le(rminInt, x) andalso InLine.real64_le(x, rmaxInt)
++	      if InLine.real64_le(rminInt, x) andalso InLine.real64_lt(x, rmaxInt)
+ 		then Assembly.A.floor x
+ 	      else if InLine.real64_eql(x, x)
+ 		then raise Assembly.Overflow

@@ -18,8 +18,8 @@ What each means is on [`UNIX_SOCK`](../sig/UNIX_SOCK.md); the types are this str
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`socket`](../sig/UNIX_SOCK.md#val-strm.socket) | `unit -> (unix', 'a stream') Socket.sock` |
-| val | [`socketPair`](../sig/UNIX_SOCK.md#val-strm.socketpair) | `unit -> (unix', 'a stream') Socket.sock * (unix', 'a stream') Socket.sock` |
+| val | [`socket`](../sig/UNIX_SOCK.md#val-strm.socket) | `unit -> (unix', 'a stream') RuneSocket.sock` |
+| val | [`socketPair`](../sig/UNIX_SOCK.md#val-strm.socketpair) | `unit -> (unix', 'a stream') RuneSocket.sock * (unix', 'a stream') RuneSocket.sock` |
 
 ---
 

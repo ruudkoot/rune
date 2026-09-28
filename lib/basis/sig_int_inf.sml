@@ -63,8 +63,8 @@ sig
 
      Raises: `Div` if `i` is zero and `j` is negative.
 
-     Law: `pow (i, j + k) = pow (i, j) * pow (i, k)` for `j` and `k` not
-     negative
+     Law: `pow (i, Int.+ (j, k)) = pow (i, j) * pow (i, k)` for `Int.>= (j, 0)
+     andalso Int.>= (k, 0)`
 
      Example: `pow (2, 100) = 1267650600228229401496703205376`
 
@@ -76,7 +76,8 @@ sig
 
      Raises: `Domain` if `i <= 0`.
 
-     Law: `pow (2, log2 i) <= i andalso i < pow (2, log2 i + 1)` for `i > 0`
+     Law: `pow (2, log2 i) <= i andalso i < pow (2, Int.+ (log2 i, 1))` for `i
+     > 0`
 
      Example: `log2 (pow (2, 100)) = 100` *)
   val log2 : int -> Int.int

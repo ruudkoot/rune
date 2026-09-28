@@ -25,11 +25,11 @@ What each means is on [`OS`](../sig/OS.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`syserror`](../sig/OS.md#type-syserror) | *a type of its own* |
-| exception | [`SysErr`](../sig/OS.md#exn-syserr) | `of string * syserror option` |
-| val | [`errorMsg`](../sig/OS.md#val-errormsg) | `syserror -> string` |
-| val | [`errorName`](../sig/OS.md#val-errorname) | `syserror -> string` |
-| val | [`syserror`](../sig/OS.md#val-syserror) | `string -> syserror option` |
+| type | [`syserror`](../sig/OS.md#type-syserror) | `RuneError.syserror` |
+| exception | [`SysErr`](../sig/OS.md#exn-syserr) | `of string * RuneError.syserror option` |
+| val | [`errorMsg`](../sig/OS.md#val-errormsg) | `RuneError.syserror -> string` |
+| val | [`errorName`](../sig/OS.md#val-errorname) | `RuneError.syserror -> string` |
+| val | [`syserror`](../sig/OS.md#val-syserror) | `string -> RuneError.syserror option` |
 | structure | [`FileSys`](../str/OS.FileSys.md) | [`OS_FILE_SYS`](../sig/OS_FILE_SYS.md) |
 | structure | [`IO`](../str/OS.IO.md) | [`OS_IO`](../sig/OS_IO.md) |
 | structure | [`Path`](../str/OS.Path.md) | [`OS_PATH`](../sig/OS_PATH.md) |

@@ -55,10 +55,11 @@ sig
 
   (* `toLargeX w` is `w` as a word of `LargeWord`, with the top bit of `w` copied into the bits above it.
 
-     Law: `toLargeX w = toLarge w` when `w < 2^(wordSize-1)`
+     Law: `toLargeX w = toLarge w` when `w < << (0w1, Word.fromInt (Int.-
+     (wordSize, 1)))`
 
-     Example: `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF`, in Rune, whose
-     `LargeWord` has 64 bits *)
+     Example: `Word8.toLargeX 0wxFF = 0wxFFFFFFFFFFFFFFFF` in Rune, where
+     `LargeWord.wordSize = 64` *)
   val toLargeX : word -> LargeWord.word
 
   (* `toLargeWord w` is another name for `toLarge`, which the specification deprecates. *)
@@ -118,7 +119,7 @@ sig
 
      Raises: `Overflow` if that number is outside the range of `Int.int`.
 
-     Example: `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF` is 255. *)
+     Example: `Word8.toIntX 0wxFF = ~1`, where `Word8.toInt 0wxFF = 255`. *)
   val toIntX : word -> int
 
   (* `fromInt i` is the word with the low `wordSize` bits of `i`.
@@ -156,7 +157,10 @@ sig
 
      A shift of `wordSize` bits or more gives 0.
 
-     Law: `<< (w, n) = w * 0w2 ^ n` in the arithmetic of this structure
+     Law: `<< (w, n) = w * (let fun pow e = if e = 0w0 then 0w1 else let val h
+     = pow (Word.>> (e, 0w1)) in if Word.andb (e, 0w1) = 0w1 then 0w2 * h * h
+     else h * h end in pow n end)`: `w` times 2 to the `n`, in the arithmetic
+     of this structure
 
      Example: `<< (0w1, 0w4) = 0w16`
 
@@ -167,7 +171,9 @@ sig
 
      A shift of `wordSize` bits or more gives 0.
 
-     Law: `>> (w, n) = w div 0w2 ^ n`
+     Law: `>> (w, n) = (if LargeInt.>= (Word.toLargeInt n, LargeInt.fromInt wordSize) then
+     0w0 else fromLargeInt (LargeInt.div (toLargeInt w, IntInf.pow (2,
+     Word.toInt n))))`: `w` divided by 2 to the `n`
 
      Example: `Word8.>> (0wx80, 0w1) = 0wx40` *)
   val >> : word * Word.word -> word
@@ -235,7 +241,7 @@ sig
 
   (* `~w` is the negation modulo `2^wordSize`: the two's complement of `w`.
 
-     Law: `~w = notb w + 0w1`, and `~0w0 = 0w0`
+     Law: `~w = notb w + 0w1`, and `~ 0w0 = 0w0`
 
      Example: `Word8.~ 0w1 = 0wxFF` *)
   val ~ : word -> word

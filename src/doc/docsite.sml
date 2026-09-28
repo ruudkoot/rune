@@ -111,7 +111,7 @@ struct
 
   (* An environment for pages in the directory that `root` leads out of. *)
   fun envOf (modules : I.module list, out : string, ratchet : string list, sites : DocTests.site list,
-             annotations : DocAnnot.file option) =
+             annotations : DocAnnot.file option, outer : {index : R.index, root : string option} option) =
     let
       val tests = List.foldl (fn (s : DocTests.site, m) =>
                                 StringMap.insert (m, #scope s, (case StringMap.find (m, #scope s) of
@@ -281,7 +281,7 @@ struct
                    topLevel = topLevel, tests = tests, annotations = annotated,
                    ratchet = fn s => List.exists (fn r => r = s) ratchet,
                    strPageOf = strPageOf,
-                   links = links, anchors = anchors} : P.env)
+                   links = links, anchors = anchors, outer = outer} : P.env)
     end
 
   (* ---- pages other than those of signatures ---- *)
@@ -394,10 +394,25 @@ struct
            [] => ""
          | withExamples =>
              "## Examples that are run\n\n"
-             ^ "An example that is an equation, `e = v`, is elaborated when these pages are made and tried by the\n"
-             ^ "test suite: " ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, in "
+             ^ "Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim\n"
+             ^ "that does not hold: each is elaborated when these pages are made and tried by the test suite: "
+             ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, "
+             ^ (case List.length (List.filter #counter (List.concat (List.map DocExamples.ofSignature sigs))) of
+                  0 => ""
+                | c => Int.toString c ^ " of them counterexamples, ")
+             ^ "in "
              ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
                                                 withExamples)
+             ^ ".\n\n")
+      ^ (case List.filter (fn (_, n) => n > 0) (List.map (fn s : I.signatureRecord => (#name s, List.length (DocLaws.ofSignature s))) sigs) of
+           [] => ""
+         | withLaws =>
+             "## Laws that are run\n\n"
+             ^ "Every law is elaborated when these pages are made, with its variables typed and given an arbitrary\n"
+             ^ "to draw them from, and `make test-laws` holds it at every structure that implements its signature: "
+             ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withLaws) ^ " of them, in "
+             ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
+                                                withLaws)
              ^ ".\n\n")
       ^ (if List.null unpinned then ""
          else "## Notes that no check pins\n\n"
@@ -431,8 +446,8 @@ struct
     ^ "  specification and then its description, which for a function begins with the function applied\n"
     ^ "  to arguments, such as `take (l, i)`: those names are the names of the arguments in what follows.\n"
     ^ "  **Raises** names an exception and says when it is raised; **Law** is an equation that holds;\n"
-    ^ "  **Example**, **Complexity** and **See also** are what they say. An example that is an equation,\n"
-    ^ "  `e = v`, is more than an illustration: it is compiled when the pages are made, with the members of\n"
+    ^ "  **Example**, **Complexity** and **See also** are what they say. An example is more than an\n"
+    ^ "  illustration: it is a claim that is true, compiled when the pages are made, with the members of\n"
     ^ "  the signature in scope, and the test suite tries it.\n"
     ^ "- A datatype has a table of its constructors, a record one of its fields.\n"
     ^ "- A quoted block is a note on how the library reads its specification: a **Reading** of text that is\n"
@@ -810,7 +825,8 @@ struct
                                                                   ratchet = #ratchet env, topLevel = #topLevel env,
                                                                   strPageOf = #strPageOf env,
                                                                   tests = #tests env, annotations = #annotations env,
-                                                                  links = #links env, anchors = #anchors env},
+                                                                  links = #links env, anchors = #anchors env,
+                                                                  outer = #outer env},
                                                                  path, {page = R.sigPage (#signat o'), anchor = #anchor o'},
                                                                  Source.noSpan) ^ ")") g) ^ "\n"
             end
@@ -1386,15 +1402,22 @@ struct
       ^ "---\n\n<sub>Generated by runedoc from the MANIFEST; do not edit.</sub>\n"
     end
 
-  fun build {dir : string, prelude : string option, title : string, out : string, tests : string option,
-             annotations : string option} : file list =
+  fun build {dir : string, prelude : DocElab.prelude, title : string, out : string, tests : string option,
+             annotations : string option, basisDocs : string option} : file list =
     let
       val modules = load dir
       val sigs = sort (fn (a : I.signatureRecord, b : I.signatureRecord) => String.compare (#name a, #name b) = LESS) (signaturesOf modules)
       val ratchet = ratchetOf dir
       val sites = case tests of SOME t => DocTests.suite t | NONE => []
       val annotated = Option.map DocAnnot.load annotations
-      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated)
+      (* a library written on the Basis Library may name what it documents *)
+      val outer =
+        case #basis prelude of
+          NONE => NONE
+        | SOME basis =>
+            let val (_, index, _, _) = envOf (load basis, upFrom out, [], [], NONE, NONE)
+            in SOME {index = index, root = Option.map (fn d => d ^ "/") basisDocs} end
+      val (claims, index, paged, env) = envOf (modules, upFrom out, ratchet, sites, annotated, outer)
       val () = DocClaims.checkNames (#signatures index) claims
       val () = checkRatchet (dir, sigs, ratchet)
       (* with a suite: every specified member of a claimed structure has a check *)
@@ -1423,11 +1446,54 @@ struct
                                      else ())
                                   (P.entriesOf (#body s)))
                       sigs;
-             (* the examples that are equations, under the structure they are read in *)
+             (* the examples, under the structure they are read in *)
              List.app (fn s : I.signatureRecord =>
-                         List.app (fn e => DocElab.checkExample lib (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
+                         List.app (fn e => if #counter e
+                                           then DocElab.checkCounterexample lib
+                                                  (#code e, DocExamples.counterCheck (exampleStructure (#name s), e), #span e)
+                                           else DocElab.checkExample lib
+                                                  (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
                                   (DocExamples.ofSignature s))
-                      sigs)
+                      sigs;
+             (* the laws, under the structure the examples are read in, with
+                their variables and the types those have (quickcheck M7) *)
+             List.app (fn s : I.signatureRecord =>
+                         List.app (fn l : DocLaws.law =>
+                                     let
+                                       val opens = case exampleStructure (#name s) of
+                                                     SOME st => DocLaws.opens (st, #path l)
+                                                   | NONE => ""
+                                     in
+                                       case DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l) of
+                                         DocElab.NotSml msg =>
+                                           DocDiag.error (#span l, "the law `" ^ #code l ^ "` is no Standard ML: " ^ msg)
+                                       | DocElab.Quantified (vars, side) =>
+                                           (DocLaws.elaborated := !DocLaws.elaborated @ [(l, vars)];
+                                            if isSome (!DocElab.instanceStructures) then
+                                              (List.app (fn {name, ty, instance = NONE} =>
+                                                              DocDiag.error (#span l, "the law `" ^ #code l ^ "` has a variable `"
+                                                                                      ^ name ^ " : " ^ ty
+                                                                                      ^ "` that lib/test/property has no arbitrary of")
+                                                          | _ => ())
+                                                        vars;
+                                               case side of
+                                                 SOME {ty, instance, ...} =>
+                                                   if DocLaws.hasFunction ty then
+                                                     DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares functions (`" ^ ty
+                                                                             ^ "`), which only their calls can compare: apply both sides to a variable")
+                                                   else if not (isSome instance) then
+                                                     DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares its sides at `" ^ ty
+                                                                             ^ "`, which lib/test/property has no arbitrary of")
+                                                   else ()
+                                               | NONE => ())
+                                            else ())
+                                     end)
+                                  (DocLaws.ofSignature s))
+                      sigs;
+             DocPage.lawVariables :=
+               (fn (signat, code) =>
+                  Option.map #2 (List.find (fn (l : DocLaws.law, _) => #signat l = signat andalso #code l = code)
+                                           (!DocLaws.elaborated))))
         | NONE => ()
       val functors = List.mapPartial (fn I.Functor f => if isPublic (#name f) then SOME f else NONE | _ => NONE) modules
       val sigPages = List.map (fn s : I.signatureRecord => (R.sigPage (#name s), P.signaturePage (env "../", title) s)) sigs
@@ -1756,11 +1822,11 @@ struct
     end
 
   (* The programs that try the examples of the signatures, one for each
-     signature that has an example that is an equation. *)
+     signature that has an example. *)
   fun examples {dir : string} : file list =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
       fun sigStatus s = case StringMap.find (#signatures index, s) of
                           SOME (I.Signature {doc, ...}) => P.statusOf doc
                         | _ => "required"
@@ -1773,10 +1839,48 @@ struct
                       (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
     end
 
+  (* The programs that hold the laws of the signatures at every structure
+     that implements them (docs/plans/quickcheck.md, D8 and M8), one for each
+     signature with a law. A law is elaborated anew at each structure, where
+     its variables may have other types. *)
+  fun laws {dir : string, prelude : DocElab.prelude} : file list =
+    case DocElab.library (dir, prelude) of
+      NONE => []
+    | SOME lib =>
+        let
+          val modules = load dir
+          val (claims, _, _, _) = envOf (modules, "", [], [], NONE, NONE)
+          fun implementers signat =
+            List.foldl (fn (n, acc) => if List.exists (fn m => m = n) acc then acc else acc @ [n]) []
+                       (sort (fn (a : string, b) => a < b)
+                             (List.map #name (List.filter (fn c : DocClaims.claim =>
+                                                              #signat c = signat andalso not (#isFunctor c)
+                                                              andalso #origin c <> "inherited")
+                                                           claims)))
+          fun entries (l : DocLaws.law) =
+            case implementers (#signat l) of
+              [] => ["  (" ^ DocLaws.str (DocLaws.label l) ^ ", fn () => raise Fail \"no structure implements "
+                     ^ #signat l ^ "\")"]
+            | ss => List.map (fn st =>
+                                let val opens = DocLaws.opens (st, #path l)
+                                in
+                                  DocLaws.entry (l, st, opens, DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l),
+                                                 DocElab.sides (#fixity lib) (#code l))
+                                end)
+                             ss
+        in
+          List.mapPartial (fn s : I.signatureRecord =>
+                             case DocLaws.ofSignature s of
+                               [] => NONE
+                             | ls => SOME (#name s ^ ".sml",
+                                           DocLaws.program (#name s, P.normalise (#file s), List.concat (List.map entries ls))))
+                          (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
+        end
+
   fun checkCoverage {dir : string, tests : string} : int =
     let
       val modules = load dir
-      val (claims, index, _, _) = envOf (modules, "", [], [], NONE)
+      val (claims, index, _, _) = envOf (modules, "", [], [], NONE, NONE)
     in
       coverageOf (modules, claims, index, DocTests.suite tests, tests)
     end

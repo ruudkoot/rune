@@ -35,7 +35,7 @@ sig
 
   (* `unzip l` is the pair of the lists of the first and of the second components of the pairs of `l`.
 
-     Law: `unzip (zip (l, m)) = (l, m)` when `l` and `m` are as long as each other
+     Law: `unzip (zip (l, m)) = (l, m)` when `length l = length m`
 
      Example: `unzip [(1, "a"), (2, "b")] = ([1, 2], ["a", "b"])` *)
   val unzip : ('a * 'b) list -> 'a list * 'b list
@@ -157,7 +157,7 @@ sig
      is applied to the pairs of the common prefix before the lengths are
      known.
 
-     Example: `allEq (op =) ([1, 2], [1, 2, 3]) = false` where `all (op =) ([1,
-     2], [1, 2, 3])` is `true`. *)
+     Example: `allEq (op =) ([1, 2], [1, 2, 3]) = false`, where `all (op =) ([1,
+     2], [1, 2, 3])` holds. *)
   val allEq : ('a * 'b -> bool) -> 'a list * 'b list -> bool
 end

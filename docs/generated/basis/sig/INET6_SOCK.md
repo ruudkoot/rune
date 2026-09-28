@@ -178,7 +178,7 @@ val toString : in6_addr -> string
 
 `toString a` is the text of `a` as `inet_ntop` writes it.
 
-**Law** `fromString (toString a) = SOME a`
+**Law** `fromString (toString a) = SOME a` (for every `a : INet6Sock.in6_addr`)
 
 **Example** `toString (valOf (fromString "0:0:0:0:0:0:0:1")) = "::1"`
 
@@ -267,7 +267,7 @@ val fromAddr : sock_addr -> in6_addr * int
 
 `fromAddr addr` is the host and the port of `addr`.
 
-**Law** `fromAddr (toAddr (a, p)) = (a, p)`
+**Law** `fromAddr (toAddr (a, p)) = (a, p)` (for every `a : INet6Sock.in6_addr`, `p : int`)
 
 <details><summary>Tests (1)</summary>
 
@@ -361,7 +361,7 @@ val setNODELAY : 'mode stream_sock * bool -> unit
 
 `setNODELAY (sock, b)` sets it.
 
-**Law** `(setNODELAY (sock, b); getNODELAY sock) = b`
+**Law** `(setNODELAY (sock, b); getNODELAY sock) = b` (for every `sock : (inet6', 'a stream') RuneSocket.sock`, `b : bool`)
 
 <details><summary>Tests (2)</summary>
 

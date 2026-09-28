@@ -1,0 +1,3 @@
+# A library of laws on the Basis Library (docs/plans/quickcheck.md, M7): each
+# law is elaborated, its variables typed and given an arbitrary.
+colors.sml | demand | yes | COLORS Colors |

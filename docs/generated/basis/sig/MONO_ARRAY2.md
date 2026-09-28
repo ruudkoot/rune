@@ -205,7 +205,7 @@ val array : int * int * elem -> array
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `r < 0`, `c < 0`, or the array would be too large.
 
-**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c` (for every `r : int`, `c : int`, `x : int`, `i : int`, `j : int`)
 
 **Example** `dimensions (array (2, 3, 0)) = (2, 3)`
 
@@ -236,8 +236,7 @@ val fromList : elem list list -> array
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length, or if the array
 would be too large.
 
-**Law** `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
-every row `i` and column `j` of the array
+**Law** `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0 <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols (fromList rows)` (for every `rows : int list list`, `i : int`, `j : int`)
 
 **Example** `sub (fromList [[1, 2], [3, 4]], 1, 0) = 3`
 
@@ -271,8 +270,7 @@ val tabulate : traversal -> int * int * (int * int -> elem) -> array
 > as for [`Array2.tabulate`](../sig/ARRAY2.md#val-tabulate): a negative dimension, or an array that is too
 > large, raises [`Size`](../sig/GENERAL.md#exn-size) without applying `f` at all.
 
-**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
-`0 <= j < c`, when `f` has no effects
+**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> int`, `i : int`, `j : int`)
 
 **Example** `IntVector.foldr (op ::) [] (row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1)) = [10, 11, 12]`
 
@@ -332,8 +330,7 @@ val update : array * int * int * elem -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
-**Law** `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
-column `j` of `arr`
+**Law** `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i < nRows arr andalso 0 <= j andalso j < nCols arr` (for every `arr : IntArray2.array`, `i : int`, `j : int`, `x : int`)
 
 **Example** `let val a = array (2, 2, 0) in update (a, 1, 0, 7); IntVector.foldr (op ::) [] (row (a, 1)) end = [7, 0]`
 
@@ -379,7 +376,7 @@ val nCols : array -> int
 
 `nCols arr` is the number of columns.
 
-**Law** `nCols arr = #2 (dimensions arr)`
+**Law** `nCols arr = #2 (dimensions arr)` (for every `arr : IntArray2.array`)
 
 **Example** `nCols (fromList [[1, 2, 3]]) = 3`
 
@@ -405,7 +402,7 @@ val nRows : array -> int
 
 `nRows arr` is the number of rows.
 
-**Law** `nRows arr = #1 (dimensions arr)`
+**Law** `nRows arr = #1 (dimensions arr)` (for every `arr : IntArray2.array`)
 
 **Example** `nRows (fromList [[1, 2, 3]]) = 1`
 
@@ -593,7 +590,7 @@ val app : traversal -> (elem -> unit) -> array -> unit
 
 `app trv f arr` applies `f` to every element, in the order `trv` gives, for its effect.
 
-**Law** `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : int -> unit`, `arr : IntArray2.array`)
 
 **Example** `let val r = ref [] in app ColMajor (fn x => r := x :: !r) (fromList [[1, 2], [3, 4]]); !r end = [4, 2, 3, 1]`
 
@@ -647,7 +644,7 @@ val fold : traversal -> (elem * 'b -> 'b) -> 'b -> array -> 'b
 
 `fold trv f init arr` combines every element, in the order `trv` gives.
 
-**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : int * 'a -> 'a`, `init : 'a`, `arr : IntArray2.array`)
 
 **Example** `fold ColMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 2, 3, 1]`
 
@@ -705,7 +702,7 @@ val modify : traversal -> (elem -> elem) -> array -> unit
 
 `modify trv f arr` replaces every element by `f` of it, in the order `trv` gives.
 
-**Law** `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : int -> int`, `arr : IntArray2.array`)
 
 **Example** `let val a = fromList [[1, 2], [3, 4]] in modify RowMajor (fn x => x * x) a; IntVector.foldr (op ::) [] (row (a, 1)) end = [9, 16]`
 

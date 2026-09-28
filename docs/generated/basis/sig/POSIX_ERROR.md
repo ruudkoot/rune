@@ -139,7 +139,7 @@ val fromWord : SysWord.word -> syserror
 
 `fromWord w` is the condition whose `errno` value is `w`.
 
-**Law** `fromWord (toWord e) = e`
+**Law** `fromWord (toWord e) = e` (for every `e : RuneError.syserror`)
 
 <details><summary>Tests (2)</summary>
 
@@ -200,7 +200,7 @@ val syserror : string -> syserror option
 `syserror s` is `SOME` of the condition that [`errorName`](#val-errorname) calls `s`, or `NONE`.
 
 **Law** `syserror (errorName e) = SOME e` for every condition, named here
-or not.
+or not. (for every `e : RuneError.syserror`)
 
 **Example** `syserror "noent" = SOME noent`
 

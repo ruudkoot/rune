@@ -189,7 +189,7 @@ of stream.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the reader fails.
 
-**Law** `input f = let val (v, s) = StreamIO.input (getInstream f) in setInstream (f, s); v end`
+**Law** `input f = let val (v, s) = StreamIO.input (getInstream f) in setInstream (f, s); v end` (for every `f : BinIO.instream`)
 
 **Example** `Byte.bytesToString (input (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "abc"), Byte.stringToBytes "")))) = "abc"`
 
@@ -290,7 +290,7 @@ val inputAll : instream -> vector
 > real for a file: a read after one delivers what was appended since, so a
 > second [`inputAll`](#val-inputall) need not be empty.
 
-**Law** `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in setInstream (f, s); v end`
+**Law** `inputAll f = let val (v, s) = StreamIO.inputAll (getInstream f) in setInstream (f, s); v end` (for every `f : BinIO.instream`)
 
 **Example** `Byte.bytesToString (inputAll (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"`
 
@@ -323,7 +323,7 @@ val canInput : instream * int -> int option
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if `n < 0`.
 
-**Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)`
+**Law** `canInput (f, n) = StreamIO.canInput (getInstream f, n)` (for every `f : BinIO.instream`, `n : int`)
 
 **Example** `canInput (mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")), 1) = SOME 1`
 
@@ -350,7 +350,7 @@ val lookahead : instream -> elem option
 > stream before that end of stream, which a following [`input`](#val-input) then
 > consumes.
 
-**Law** `lookahead f = Option.map #1 (StreamIO.input1 (getInstream f))`
+**Law** `lookahead f = Option.map #1 (StreamIO.input1 (getInstream f))` (for every `f : BinIO.instream`)
 
 **Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")) in (lookahead f, input1 f) end = (SOME 0w97, SOME 0w97)`
 
@@ -418,7 +418,7 @@ val endOfStream : instream -> bool
 > that read gives nothing, and only afterwards is what the source gained
 > seen.
 
-**Law** `endOfStream f = StreamIO.endOfStream (getInstream f)`
+**Law** `endOfStream f = StreamIO.endOfStream (getInstream f)` (for every `f : BinIO.instream`)
 
 **Example** `let val f = mkInstream (StreamIO.mkInstream (BinPrimIO.openVector (Byte.stringToBytes "a"), Byte.stringToBytes "")) in (endOfStream f, input1 f, endOfStream f) end = (false, SOME 0w97, true)`
 

@@ -1,0 +1,3 @@
+# Laws that are not what the grammar of laws asks for (docs/plans/quickcheck.md,
+# M7): each is an error at its comment.
+colors.sml | demand | yes | COLORS Colors |

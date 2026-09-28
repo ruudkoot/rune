@@ -18,6 +18,12 @@ sig
   (* Reading (the suite agrees): `X.y/z`. An unknown modifier. *)
   type e
 
+  (* `ident x` is `x`.
+
+     Law (Left_identity!): `ident x = x`, a law named with other than
+     letters, digits, hyphens and blanks *)
+  val ident : 'a -> 'a
+
   (* Raises: `Subscript` on a type. *)
   type f
 

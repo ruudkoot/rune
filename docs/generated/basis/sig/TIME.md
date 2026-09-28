@@ -549,7 +549,7 @@ val fromString : string -> time option
 
 `fromString s` is `SOME` of the time that `s` begins with, after whitespace, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 **Raises** [`Time`](#exn-time) if the number does not fit.
 

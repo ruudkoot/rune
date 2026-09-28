@@ -189,7 +189,7 @@ val array : int * int * 'a -> 'a array
 > fixed: an array is too large when the number of its elements is no
 > `int`, or when it exceeds what an array can hold.
 
-**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i < r` and `0 <= j < c`
+**Law** `sub (array (r, c, x), i, j) = x` for `0 <= i andalso i < r andalso 0 <= j andalso j < c` (for every `r : int`, `c : int`, `x : 'a`, `i : int`, `j : int`)
 
 **Example** `dimensions (array (2, 3, 0)) = (2, 3)`
 
@@ -219,8 +219,7 @@ val fromList : 'a list list -> 'a array
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the lists are not all of one length, or if the array
 would be too large.
 
-**Law** `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for
-every row `i` and column `j` of the array
+**Law** `sub (fromList rows, i, j) = List.nth (List.nth (rows, i), j)` for `0 <= i andalso i < nRows (fromList rows) andalso 0 <= j andalso j < nCols (fromList rows)` (for every `rows : 'a list list`, `i : int`, `j : int`)
 
 **Example** `let val a = fromList [[1, 2], [3, 4]] in (sub (a, 1, 0), dimensions a) end = (3, (2, 2))`
 
@@ -260,8 +259,7 @@ val tabulate : traversal -> int * int * (int * int -> 'a) -> 'a array
 > asked for, and its result fills the array before the rest is
 > computed.
 
-**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i < r` and
-`0 <= j < c`, when `f` has no effects
+**Law** `sub (tabulate trv (r, c, f), i, j) = f (i, j)` for `0 <= i andalso i < r andalso 0 <= j andalso j < c`, when `f` has no effects (for every `trv : Array2.traversal`, `r : int`, `c : int`, `f : int * int -> 'a`, `i : int`, `j : int`)
 
 **Example** `row (tabulate RowMajor (2, 3, fn (i, j) => 10 * i + j), 1) = Vector.fromList [10, 11, 12]`
 
@@ -315,8 +313,7 @@ val update : 'a array * int * int * 'a -> unit
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` or `j` is outside the array.
 
-**Law** `(update (arr, i, j, x); sub (arr, i, j)) = x` for every row `i` and
-column `j` of `arr`
+**Law** `(update (arr, i, j, x); sub (arr, i, j)) = x` for `0 <= i andalso i < nRows arr andalso 0 <= j andalso j < nCols arr` (for every `arr : 'a Array2.array`, `i : int`, `j : int`, `x : 'a`)
 
 **Example** `let val a = array (2, 2, 0) in update (a, 1, 0, 7); row (a, 1) end = Vector.fromList [7, 0]`
 
@@ -359,7 +356,7 @@ val nCols : 'a array -> int
 
 `nCols arr` is the number of columns.
 
-**Law** `nCols arr = #2 (dimensions arr)`
+**Law** `nCols arr = #2 (dimensions arr)` (for every `arr : 'a Array2.array`)
 
 **Example** `nCols (fromList [[1, 2, 3]]) = 3`
 
@@ -384,7 +381,7 @@ val nRows : 'a array -> int
 
 `nRows arr` is the number of rows.
 
-**Law** `nRows arr = #1 (dimensions arr)`
+**Law** `nRows arr = #1 (dimensions arr)` (for every `arr : 'a Array2.array`)
 
 **Example** `nRows (fromList [[1, 2, 3]]) = 1`
 
@@ -412,7 +409,7 @@ val row : 'a array * int -> 'a Vector.vector
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i` is no row of `arr`.
 
 **Law** `row (arr, i) = Vector.tabulate (nCols arr, fn j => sub (arr, i, j))`
-for every row `i` of `arr`
+for `0 <= i andalso i < nRows arr` (for every `arr : 'a Array2.array`, `i : int`)
 
 **Example** `row (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [3, 4]`
 
@@ -440,8 +437,7 @@ val column : 'a array * int -> 'a Vector.vector
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `j` is no column of `arr`.
 
-**Law** `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))`
-for every column `j` of `arr`
+**Law** `column (arr, j) = Vector.tabulate (nRows arr, fn i => sub (arr, i, j))` for `0 <= j andalso j < nCols arr` (for every `arr : 'a Array2.array`, `j : int`)
 
 **Example** `column (fromList [[1, 2], [3, 4]], 1) = Vector.fromList [2, 4]`
 
@@ -547,7 +543,7 @@ val app : traversal -> ('a -> unit) -> 'a array -> unit
 
 `app trv f arr` applies `f` to every element of `arr`, in the order `trv` gives, for its effect.
 
-**Law** `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `app trv f arr = appi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : 'a -> unit`, `arr : 'a Array2.array`)
 
 **Example** `let val r = ref [] in app ColMajor (fn x => r := x :: !r) (fromList [[1, 2], [3, 4]]); !r end = [4, 2, 3, 1]`
 
@@ -603,7 +599,7 @@ val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
 
-**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : 'b * 'a -> 'a`, `init : 'a`, `arr : 'b Array2.array`)
 
 **Example** `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2, 1]`
 
@@ -660,7 +656,7 @@ val modify : traversal -> ('a -> 'a) -> 'a array -> unit
 
 `modify trv f arr` replaces every element of `arr` by `f` of it, in the order `trv` gives.
 
-**Law** `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}`
+**Law** `modify trv f arr = modifyi trv (fn (_, _, x) => f x) {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : 'a -> 'a`, `arr : 'a Array2.array`)
 
 **Example** `let val a = fromList [[1, 2], [3, 4]] in modify RowMajor (fn x => x * x) a; row (a, 1) end = Vector.fromList [9, 16]`
 

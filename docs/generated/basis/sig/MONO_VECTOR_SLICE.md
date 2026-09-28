@@ -147,7 +147,7 @@ val length : slice -> int
 
 `length x` is the number of elements.
 
-**Law** `length (slice (v, i, SOME n)) = n` when the slice exists
+**Law** `length (slice (v, i, SOME n)) = n` when `(ignore (slice (v, i, SOME n)); true)` (for every `v : string`, `i : int`, `n : int`)
 
 **Example** `length (slice ("abc", 1, NONE)) = 2`
 
@@ -193,7 +193,7 @@ val full : vector -> slice
 
 `full v` is the whole of `v` as a slice: `slice (v, 0, NONE)`.
 
-**Law** `vector (full v) = v` for a vector type that admits equality
+**Law** `vector (full v) = v` for a vector type that admits equality (for every `v : string`)
 
 **Example** `vector (full "hi") = "hi"`
 
@@ -251,8 +251,7 @@ The bounds are those of `sl`, not of what it is a slice of.
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0` or `i > length sl`, or, with `SOME n`, if
 `n < 0` or `i + n > length sl`.
 
-**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for
-`0 <= k < length sl - i`
+**Law** `sub (subslice (sl, i, NONE), k) = sub (sl, i + k)` for `0 <= k andalso k < length sl - i` (for every `sl : Substring.substring`, `i : int`, `k : int`)
 
 **Example** `vector (subslice (slice ("abcd", 1, NONE), 1, SOME 1)) = "c"`
 
@@ -325,7 +324,7 @@ val concat : slice list -> vector
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than a vector can be: the
 `maxLen` of the vector structure.
 
-**Law** `length (full (concat l)) = List.foldl (fn (sl, n) => length sl + n) 0 l`
+**Law** `length (full (concat l)) = List.foldl (fn (sl, n) => length sl + n) 0 l` (for every `l : Substring.substring list`)
 
 **Example** `concat [slice ("abc", 1, NONE), full "d"] = "bcd"`
 
@@ -347,7 +346,7 @@ val isEmpty : slice -> bool
 
 `isEmpty sl` is `true` when `sl` has no elements.
 
-**Law** `isEmpty sl = (length sl = 0)`
+**Law** `isEmpty sl = (length sl = 0)` (for every `sl : Substring.substring`)
 
 **Example** `isEmpty (slice ("a", 1, NONE)) = true`
 
@@ -412,7 +411,7 @@ val app : (elem -> unit) -> slice -> unit
 
 `app f x` applies `f` to every element, from 0 up, for its effect.
 
-**Law** `app f x = appi (fn (_, e) => f e) x`
+**Law** `app f x = appi (fn (_, e) => f e) x` (for every `f : char -> unit`, `x : Substring.substring`)
 
 <details><summary>Tests (4)</summary>
 
@@ -453,7 +452,7 @@ val map : (elem -> elem) -> slice -> vector
 
 `map f sl` is the vector of the results of `f` on each element, in order.
 
-**Law** `map f sl = mapi (fn (_, e) => f e) sl`
+**Law** `map f sl = mapi (fn (_, e) => f e) sl` (for every `f : char -> char`, `sl : Substring.substring`)
 
 **Example** `map Char.toUpper (slice ("abc", 1, NONE)) = "BC"`
 
@@ -497,7 +496,7 @@ val foldr : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 
 `foldr f init x` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldr f init x = foldri (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : Substring.substring`)
 
 **Example** `foldr (op ::) [] (full "ab") = [#"a", #"b"]`
 
@@ -519,7 +518,7 @@ val foldl : (elem * 'b -> 'b) -> 'b -> slice -> 'b
 
 `foldl f init x` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x`
+**Law** `foldl f init x = foldli (fn (_, e, acc) => f (e, acc)) init x` (for every `f : char * 'a -> 'a`, `init : 'a`, `x : Substring.substring`)
 
 **Example** `foldl (op ::) [] (full "ab") = [#"b", #"a"]`
 
@@ -582,7 +581,7 @@ val find : (elem -> bool) -> slice -> elem option
 
 `find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.
 
-**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)`
+**Law** `find p x = Option.map #2 (findi (fn (_, e) => p e) x)` (for every `p : char -> bool`, `x : Substring.substring`)
 
 **Example** `find Char.isDigit (full "a1") = SOME #"1"`
 
@@ -604,7 +603,7 @@ val exists : (elem -> bool) -> slice -> bool
 
 Only the elements of the slice are looked at, not the rest of its vector.
 
-**Law** `exists p x = isSome (find p x)`
+**Law** `exists p x = isSome (find p x)` (for every `p : char -> bool`, `x : Substring.substring`)
 
 **Example** `exists (fn c => c = #"a") (slice ("ab", 1, NONE)) = false`
 
@@ -624,7 +623,7 @@ val all : (elem -> bool) -> slice -> bool
 
 `all p x` is `true` when every element satisfies `p`; it stops at the first that does not.
 
-**Law** `all p x = not (exists (not o p) x)`
+**Law** `all p x = not (exists (not o p) x)` (for every `p : char -> bool`, `x : Substring.substring`)
 
 **Example** `all Char.isLower (slice ("Ab", 1, NONE)) = true`
 
@@ -644,7 +643,7 @@ val collate : (elem * elem -> order) -> slice * slice -> order
 
 `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
 
-**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`
+**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)` (for every `cmp : char * char -> order`, `a : Substring.substring`, `b : Substring.substring`)
 
 **Example** `collate Char.compare (slice ("abc", 1, NONE), full "b") = GREATER`
 

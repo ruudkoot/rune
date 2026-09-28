@@ -1,0 +1,119 @@
+diff --git a/base/compiler/CPS/opt/contract-prim.sml b/base/compiler/CPS/opt/contract-prim.sml
+index 1d35189..284b927 100644
+--- a/base/compiler/CPS/opt/contract-prim.sml
++++ b/base/compiler/CPS/opt/contract-prim.sml
+@@ -148,6 +148,14 @@ structure ContractPrim : sig
+           then Val arg
+           else Pure(P.COPY{from=from, to=to}, [arg])
+ 
++  (* The `_INF` conversions have an extra argument: the "_Core" conversion function
++   * for their size (see `pickName` in FLINT/trans/transprim.sml).  On 32-bit targets,
++   * the function for 64 bits works on pairs of 32-bit words and the one for the other
++   * sizes on single words, so a contraction may give the function of a conversion of
++   * size n to a conversion of size m only when `sameInfFn(n, m)`.
++   *)
++    fun sameInfFn (n, m) = Target.is64 orelse ((n > 32) = (m > 32))
++
+   (* contraction for impure arithmetic operations; note that 64-bit IMUL, IDIV,
+    * IMOD, IQUOT, and IREM have three arguments on 32-bit targets, so we need
+    * to allow for the extra argument in the patterns.
+@@ -230,15 +238,18 @@ structure ContractPrim : sig
+                          of ARITHinfo(P.TEST{from=m, ...}, args) =>
+                               (* TEST(n,p) o TEST(m,n) ==> TEST(m, p) *)
+                               Arith(P.TEST{from=m, to=p}, args)
+-                          | ARITHinfo(P.TEST_INF _, [u, f]) =>
++                          | ARITHinfo(P.TEST_INF _, [u, f]) => if sameInfFn(n, p)
+                               (* TEST(n,p) o TEST(∞,n) ==> TEST(∞, p) *)
+-                              Arith(P.TEST_INF p, [u, f])
++                              then Arith(P.TEST_INF p, [u, f])
++                              else None
+                           | PUREinfo(P.COPY{from=m, ...}, [u]) =>
+-                              if (p >= m)
+-                                (* TEST(n,p) o COPY(m,n) ==> COPY(m, p) if (p >= m) *)
++                              if (p > m)
++                                (* TEST(n,p) o COPY(m,n) ==> COPY(m, p) if (p > m) *)
+                                 then mkCOPY(m, p, u)
+-                                (* TEST(n,p) o COPY(m,n) ==> TEST(m, p) if (p < m) *)
+-                                else Arith(P.TEST{from=m, to=p}, [u])
++                                (* COPY is unsigned, so
++                                 * TEST(n,p) o COPY(m,n) ==> TESTU(m, p) if (p <= m)
++                                 *)
++                                else Arith(P.TESTU{from=m, to=p}, [u])
+                           | PUREinfo(P.EXTEND{from=m, ...}, [u]) =>
+                               if (p >= m)
+                                 (* TEST(n,p) o EXTEND(m,n) ==> EXTEND(m, p) if (p >= m) *)
+@@ -278,19 +289,26 @@ structure ContractPrim : sig
+             (***** TEST_INF *****
+              *
+              * Note that `TEST_INF` will have an extra argument (the
+-             * `Core.testInf` function).
++             * `Core.testInf` function).  `COPY_INF` is unsigned, so the
++             * test that replaces a `TEST_INF` of it is a `TESTU`.  On 32-bit
++             * targets, a `TEST` or `TESTU` from 64 bits needs an extra argument
++             * that we do not have here, so we leave those cases alone.
+              *)
+             | (P.TEST_INF p, VAR v::_) => (case #info(get v)
+-                 of PUREinfo(P.COPY_INF m, u::_) => if (p >= m)
+-                      (* TEST(∞,p) o COPY(m,∞) ==> COPY(m,p) when (p >= m) *)
++                 of PUREinfo(P.COPY_INF m, u::_) => if (p > m)
++                      (* TEST(∞,p) o COPY(m,∞) ==> COPY(m,p) when (p > m) *)
+                       then mkCOPY(m, p, u)
+-                      (* TEST(∞,p) o COPY(m,∞) ==> TEST(m,p) when (p < m) *)
+-                      else Arith(P.TEST{from=m, to=p}, [u])
++                      else if (m > 32) andalso not Target.is64
++                        then None
++                      (* TEST(∞,p) o COPY(m,∞) ==> TESTU(m,p) when (p <= m) *)
++                        else Arith(P.TESTU{from=m, to=p}, [u])
+                   | PUREinfo(P.EXTEND_INF m, u::_) => if (p >= m)
+                       (* TEST(∞,p) o EXTEND(m,∞) ==> EXTEND(m,p) when (p >= m) *)
+                       then Pure(P.EXTEND{from=m, to=p}, [u])
++                      else if (m > 32) andalso not Target.is64
++                        then None
+                       (* TEST(∞,p) o EXTEND(m,∞) ==> TEST(m,p) when (p < m) *)
+-                      else Arith(P.TEST{from=m, to=p}, [u])
++                        else Arith(P.TEST{from=m, to=p}, [u])
+                   | _ => None
+                 (* end case *))
+             | _ => None
+@@ -455,9 +473,10 @@ structure ContractPrim : sig
+                          of PUREinfo(P.TRUNC{from=m, ...}, arg) =>
+                               (* TRUNC(n,p) o TRUNC(m,n) ==> TRUNC(m,p) *)
+                               Pure(P.TRUNC{from=m, to=p}, arg)
+-                          | PUREinfo(P.TRUNC_INF _, arg) =>
++                          | PUREinfo(P.TRUNC_INF _, arg) => if sameInfFn(n, p)
+                               (* TRUNC(n,p) o TRUNC(∞,n) ==> TRUNC(∞,p) *)
+-                              Pure(P.TRUNC_INF p, arg)
++                              then Pure(P.TRUNC_INF p, arg)
++                              else None
+                           | PUREinfo(P.COPY{from=m, ...}, [u]) =>
+                               if (p >= m)
+                                 (* TRUNC(n,p) o COPY(m,n) ==> COPY(m,p) if (p >= m) *)
+@@ -475,18 +494,22 @@ structure ContractPrim : sig
+                     | _ => bug "bogus argument to TRUNC"
+                   (* end case *))
+             (***** COPY_INF *****)
+-            | (P.COPY_INF _, [VAR v, f]) => (case #info(get v)
+-                 of PUREinfo(P.COPY{from=m, ...}, [u]) =>
++            | (P.COPY_INF n, [VAR v, f]) => (case #info(get v)
++                 of PUREinfo(P.COPY{from=m, ...}, [u]) => if sameInfFn(n, m)
+                       (* COPY(n,∞) o COPY(m,n) ==> COPY(m,∞) *)
+-                      Pure(P.COPY_INF m, [u, f])
++                      then Pure(P.COPY_INF m, [u, f])
++                      else None
+                   | _ => None
+                 (* end case *))
+             (***** EXTEND_INF *****)
+             | (P.EXTEND_INF n, [VAR v, f]) => (case #info(get v)
+-                 of PUREinfo(P.EXTEND{from=m, ...}, [u]) =>
++                 of PUREinfo(P.EXTEND{from=m, ...}, [u]) => if sameInfFn(n, m)
+                       (* EXTEND(n,∞) o EXTEND(m,n) ==> EXTEND(m,∞) *)
+-                      Pure(P.EXTEND_INF m, [u, f])
+-                  | PUREinfo(P.COPY{from=m, ...}, [u]) => if (m < n)
++                      then Pure(P.EXTEND_INF m, [u, f])
++                      else None
++                  | PUREinfo(P.COPY{from=m, ...}, [u]) => if not (sameInfFn(n, m))
++                      then None
++                    else if (m < n)
+                       (* EXTEND(n,∞) o COPY(m,n) ==> COPY(m,∞) when (m < n) *)
+                       then Pure(P.COPY_INF m, [u, f])
+                       (* EXTEND(n,∞) o COPY(m,n) ==> EXTEND(m,∞) when (m = n) *)

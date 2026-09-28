@@ -184,7 +184,7 @@ val base : substring -> string * int * int
 
 `base ss` is the triple of the string that `ss` is a stretch of, where it starts in that string, and how long it is.
 
-**Law** `base (substring (s, i, n)) = (s, i, n)`
+**Law** `base (substring (s, i, n)) = (s, i, n)` (for every `s : string`, `i : int`, `n : int`)
 
 **Example** `base (substring ("hello", 1, 3)) = ("hello", 1, 3)`
 
@@ -238,7 +238,7 @@ val substring : string * int * int -> substring
 
 `substring (s, i, n)` is the `n` characters of `s` from position `i`.
 
-**Law** `substring (s, i, n) = extract (s, i, SOME n)`
+**Law** `substring (s, i, n) = extract (s, i, SOME n)` (for every `s : string`, `i : int`, `n : int`)
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, `n < 0` or `i + n > String.size s`.
 
@@ -286,7 +286,7 @@ val string : substring -> string
 
 This is where the copy happens.
 
-**Law** `string (full s) = s`
+**Law** `string (full s) = s` (for every `s : string`)
 
 **Example** `string (substring ("abcde", 1, 2)) = "bc"`
 
@@ -306,7 +306,7 @@ val isEmpty : substring -> bool
 
 `isEmpty ss` is `true` when `ss` has no characters.
 
-**Law** `isEmpty ss = (size ss = 0)`
+**Law** `isEmpty ss = (size ss = 0)` (for every `ss : Substring.substring`)
 
 **Example** `isEmpty (full "") = true`
 
@@ -581,7 +581,7 @@ val compare : substring * substring -> order
 What they are substrings of does not matter: only the characters they
 hold.
 
-**Law** `compare (ss, tt) = String.compare (string ss, string tt)`
+**Law** `compare (ss, tt) = String.compare (string ss, string tt)` (for every `ss : Substring.substring`, `tt : Substring.substring`)
 
 **Example** `compare (full "ab", full "abc") = LESS`
 
@@ -621,7 +621,7 @@ val splitl : (char -> bool) -> substring -> substring * substring
 
 `splitl p ss` is the pair of the longest prefix of `ss` whose characters satisfy `p` and the rest.
 
-**Law** `splitl p ss = (takel p ss, dropl p ss)`
+**Law** `splitl p ss = (takel p ss, dropl p ss)` (for every `p : char -> bool`, `ss : Substring.substring`)
 
 **Example** `(fn (a, b) => (string a, string b)) (splitl Char.isAlpha (full "ab12")) = ("ab", "12")`
 
@@ -755,7 +755,7 @@ When `s` does not occur, the first component is all of `ss` and the
 second is empty at its end, so the two always fit back together. The
 empty string occurs at once, which makes the first component empty.
 
-**Law** `let val (pref, suff) = position s ss in concat [pref, suff] = string ss end`
+**Law** `let val (pref, suff) = position s ss in concat [pref, suff] = string ss end` (for every `s : string`, `ss : Substring.substring`)
 
 > **Erratum** `Substring.position/none-ends-after-the-substring`. The
 > specification describes the second component as "the longest suffix of
@@ -832,7 +832,7 @@ val tokens : (char -> bool) -> substring -> substring list
 A run of delimiters counts as one, and the pieces are substrings of the
 same base string, so nothing is copied.
 
-**Law** `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)`
+**Law** `tokens p ss = List.filter (fn t => not (isEmpty t)) (fields p ss)` (for every `p : char -> bool`, `ss : Substring.substring`)
 
 **Example** `map string (tokens Char.isSpace (full " a  b ")) = ["a", "b"]`
 

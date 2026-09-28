@@ -1,0 +1,113 @@
+diff --git a/base/compiler/CPS/opt/num64cnv.sml b/base/compiler/CPS/opt/num64cnv.sml
+index acb8f80..b6c7c3e 100644
+--- a/base/compiler/CPS/opt/num64cnv.sml
++++ b/base/compiler/CPS/opt/num64cnv.sml
+@@ -264,7 +264,8 @@ structure Num64Cnv : sig
+   (* logical shift-right, where we know that amt < 0w64
+    *
+    * fun w63RShiftL ((hi, lo), amt) =
+-   *	   if (amt < 32)
++   *	   if (amt = 0) then (hi, lo)
++   *	   else if (amt < 32)
+    *	     then let
+    *	       val hi' = (hi >> amt)
+    *           val lo' = (lo >> amt) | (hi << (0w32 - amt))
+@@ -274,9 +275,11 @@ structure Num64Cnv : sig
+    *         else (0, (hi >> (amt - 0w32)))
+    *
+    * Note, that while there is a branch-free version of this, it does not work
+-   * on the x86 architecture, which uses mod-32 shift amounts.
++   * on the x86 architecture, which uses mod-32 shift amounts; for the same reason,
++   * a shift by 0 needs its own case, since `0w32 - amt` would be 0w32.
+    *)
+     fun w64RShiftL (n, amt, res, cexp) = join (res, cexp, fn k =>
++	  sIf(P.EQL, amt, tagNum 0, k n,
+ 	  from64(n, fn (hi, lo) =>
+ 	    sIf(P.LT, amt, tagNum 32,
+ 	      pure_arith32(P.RSHIFTL, [hi, amt], fn hi' =>
+@@ -288,12 +291,13 @@ structure Num64Cnv : sig
+ 	      (* else *)
+ 	      taggedArith(P.SUB, [amt, tagNum 32], fn tmp4 =>
+ 	      pure_arith32(P.RSHIFTL, [hi, tmp4], fn lo' =>
+-		to64(zero, lo', k))))))
++		to64(zero, lo', k)))))))
+ 
+   (*arithmetic shift-right, where we know that amt < 0w64
+    *
+    * fun w63RShift ((hi, lo), amt) =
+-   *	   if (amt < 32)
++   *	   if (amt = 0) then (hi, lo)
++   *	   else if (amt < 32)
+    *	     then let
+    *	       val hi' = (hi ~>> amt)
+    *           val lo' = (lo >> amt) | (hi << (0w32 - amt))
+@@ -306,10 +310,11 @@ structure Num64Cnv : sig
+    * on the x86 architecture, which uses mod-32 shift amounts.
+    *)
+     fun w64RShift (n, amt, res, cexp) = join (res, cexp, fn k =>
++	  sIf(P.EQL, amt, tagNum 0, k n,
+ 	  from64(n, fn (hi, lo) =>
+ 	    sIf(P.LT, amt, tagNum 32,
+ 	      pure_arith32(P.RSHIFT, [hi, amt], fn hi' =>
+-	      pure_arith32(P.RSHIFT, [lo, amt], fn tmp1 =>
++	      pure_arith32(P.RSHIFTL, [lo, amt], fn tmp1 =>
+ 	      taggedArith(P.SUB, [tagNum 32, amt], fn tmp2 =>
+ 	      pure_arith32(P.LSHIFT, [hi, tmp2], fn tmp3 =>
+ 	      pure_arith32(P.ORB, [tmp1, tmp3], fn lo' =>
+@@ -317,13 +322,14 @@ structure Num64Cnv : sig
+ 	      (* else *)
+ 	      pure_arith32(P.RSHIFT, [hi, tagNum 31], fn hi' =>
+ 	      taggedArith(P.SUB, [amt, tagNum 32], fn tmp4 =>
+-	      pure_arith32(P.RSHIFTL, [hi, tmp4], fn lo' =>
+-		to64(hi', lo', k)))))))
++	      pure_arith32(P.RSHIFT, [hi, tmp4], fn lo' =>
++		to64(hi', lo', k))))))))
+ 
+   (* shift-left, where we know that amt < 0w64
+    *
+    * fun w64LShift ((hi, lo), amt) =
+-   *	   if (amt < 0w32)
++   *	   if (amt = 0w0) then (hi, lo)
++   *	   else if (amt < 0w32)
+    *	     then let
+    *	       val hi' = (hi << amt) | (lo >> (0w32 - amt))
+    *           val lo' = (lo << amt)
+@@ -336,6 +342,7 @@ structure Num64Cnv : sig
+    * on the x86 architecture, which uses mod-32 shift amounts.
+    *)
+     fun w64LShift (n, amt, res, cexp) = join (res, cexp, fn k =>
++	  sIf(P.EQL, amt, tagNum 0, k n,
+ 	  from64(n, fn (hi, lo) =>
+ 	    sIf(P.LT, amt, tagNum 32,
+ 	      pure_arith32(P.LSHIFT, [hi, amt], fn tmp1 =>
+@@ -347,7 +354,7 @@ structure Num64Cnv : sig
+ 	      (* else *)
+ 	      taggedArith(P.SUB, [amt, tagNum 32], fn tmp4 =>
+ 	      pure_arith32(P.LSHIFT, [lo, tmp4], fn hi' =>
+-		to64(hi', zero, k))))))
++		to64(hi', zero, k)))))))
+ 
+   (*
+    * fun w64Eql ((hi1, lo1), (hi2, lo2)) =
+@@ -723,7 +730,7 @@ structure Num64Cnv : sig
+ 		    | (P.MUL, [a, b, f]) => mkApply(f, [a, b], res, e)
+ 		    | (P.QUOT, [a, b, f]) => mkApply(f, [a, b], res, e)
+ 		    | (P.REM , [a, b, f]) => mkApply(f, [a, b], res, e)
+-		    | (P.NEG, [a]) => i64Neg(a, res, cexp e)
++		    | (P.NEG, [a]) => w64Neg(a, res, cexp e)
+ 		    | (P.ORB, [a, b]) => w64Orb(a, b, res, cexp e)
+ 		    | (P.XORB, [a, b]) => w64Xorb(a, b, res, cexp e)
+ 		    | (P.ANDB, [a, b]) => w64Andb(a, b, res, cexp e)
+diff --git a/base/compiler/FLINT/trans/transprim.sml b/base/compiler/FLINT/trans/transprim.sml
+index fd02ce3..dd452ef 100644
+--- a/base/compiler/FLINT/trans/transprim.sml
++++ b/base/compiler/FLINT/trans/transprim.sml
+@@ -341,7 +341,7 @@ structure TransPrim : sig
+ 	  fun inlineArithmeticShiftRight (kind as PO.UINT sz) = let
+ 		fun lword n = L.WORD{ival = Int.toLarge n, ty = Tgt.defaultIntSz}
+ 		val shiftLimit = lword sz
+-		val shiftWidth = lword Tgt.defaultIntSz
++		val shiftWidth = lword (if sz > Tgt.defaultIntSz then sz - 1 else Tgt.defaultIntSz)
+ 		val argt = lt_tup [baselt kind, lt_int]
+ 		val cmpShiftAmt =
+ 		      L.PRIM(PO.CMP{oper=PO.LTE, kind=PO.UINT Tgt.defaultIntSz}, lt_icmp, [])

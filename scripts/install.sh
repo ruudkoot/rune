@@ -203,16 +203,22 @@ if [ -e "$root/build/librune.a" ] && [ -e "$root/build/rune-offsets.s" ]; then
   fi
 fi
 
-copy "$root/lib/basis/MANIFEST" "$libdir/basis/MANIFEST" 644
-# the first column of a line is the file
-while IFS='|' read -r f _; do
-  f=$(echo $f)
-  case "$f" in ""|\#*) continue ;; esac
-  copy "$root/lib/basis/$f" "$libdir/basis/$f" 644
-done < "$root/lib/basis/MANIFEST"
-# what runedoc reads besides: the overview and the list of what is documented in full
-for f in overview.doc DOCUMENTED; do
-  if [ -e "$root/lib/basis/$f" ]; then copy "$root/lib/basis/$f" "$libdir/basis/$f" 644; fi
+# every library: lib/basis and each directory of lib with a MANIFEST, such as
+# lib/test/property (docs/plans/quickcheck.md, D1), under the same name
+for manifest in $(cd "$root/lib" && find . -name MANIFEST | sort); do
+  l=$(dirname "$manifest" | sed 's|^\./||')
+  mkdir -p "$libdir/$l"
+  copy "$root/lib/$l/MANIFEST" "$libdir/$l/MANIFEST" 644
+  # the first column of a line is the file
+  while IFS='|' read -r f _; do
+    f=$(echo $f)
+    case "$f" in ""|\#*) continue ;; esac
+    copy "$root/lib/$l/$f" "$libdir/$l/$f" 644
+  done < "$root/lib/$l/MANIFEST"
+  # what runedoc reads besides: the overview and the list of what is documented in full
+  for f in overview.doc DOCUMENTED; do
+    if [ -e "$root/lib/$l/$f" ]; then copy "$root/lib/$l/$f" "$libdir/$l/$f" 644; fi
+  done
 done
 
 copy "$root/man/rune.1" "$mandir/rune.1" 644

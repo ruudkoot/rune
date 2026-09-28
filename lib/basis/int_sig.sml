@@ -50,7 +50,9 @@ sig
 
      Raises: `Overflow` if `i` is outside the range of this structure.
 
-     Law: `toLarge (fromLarge i) = i` when `i` is in the range
+     Law: `toLarge (fromLarge i) = i` when `(case minInt of NONE => true | SOME
+     m => LargeInt.<= (toLarge m, i)) andalso (case maxInt of NONE => true |
+     SOME m => LargeInt.<= (i, toLarge m))`
 
      Example: `fromLarge (IntInf.pow (2, 10)) = 1024` *)
   val fromLarge : LargeInt.int -> int
@@ -59,7 +61,9 @@ sig
 
      Raises: `Overflow` if `i` is outside the range of `Int.int`.
 
-     Law: `fromInt (toInt i) = i` when `i` is in the range of `Int.int`
+     Law: `fromInt (toInt i) = i` when `(case Int.minInt of NONE => true | SOME
+     m => LargeInt.<= (Int.toLarge m, toLarge i)) andalso (case Int.maxInt of
+     NONE => true | SOME m => LargeInt.<= (toLarge i, Int.toLarge m))`
 
      Example: `toInt 7 = 7` *)
   val toInt : int -> Int.int
@@ -83,8 +87,8 @@ sig
 
   (* `minInt` is the smallest integer of this structure, or `NONE` when there is none.
 
-     Law: `minInt = SOME (fromLarge (~ (IntInf.pow (2, p - 1))))` where
-     `precision = SOME p`
+     Law: `case precision of SOME p => minInt = SOME (fromLarge (IntInf.~
+     (IntInf.pow (2, Int.- (p, 1))))) | NONE => true`
 
      Example: `minInt = SOME ~9223372036854775808` *)
   val minInt : int option
@@ -94,8 +98,8 @@ sig
      The range is not symmetric: `~minInt` overflows and `abs minInt` does
      too.
 
-     Law: `maxInt = SOME (fromLarge (IntInf.pow (2, p - 1) - 1))` where
-     `precision = SOME p`
+     Law: `case precision of SOME p => maxInt = SOME (fromLarge (IntInf.-
+     (IntInf.pow (2, Int.- (p, 1)), 1))) | NONE => true`
 
      Example: `Int.maxInt = SOME 9223372036854775807` *)
   val maxInt : int option
@@ -114,7 +118,7 @@ sig
 
      Raises: `Overflow` if the result is outside the range.
 
-     Law: `i - j = i + ~j` when `~j` is in the range
+     Law: `i - j = i + ~j` when `minInt <> SOME j`
 
      Example: `3 - 5 = ~2` *)
   val - : int * int -> int
@@ -186,7 +190,9 @@ sig
 
   (* `i < j`, `i <= j`, `i > j` and `i >= j` compare two integers.
 
-     Law: `(i < j) = (compare (i, j) = LESS)`, and the same for the others
+     Law: `(i < j) = (compare (i, j) = LESS)`, and `(i <= j) = (compare (i, j)
+     <> GREATER)`, and `(i > j) = (compare (i, j) = GREATER)`, and `(i >= j) =
+     (compare (i, j) <> LESS)`
 
      Example: `~3 < 2 = true` *)
   val < : int * int -> bool
@@ -198,7 +204,7 @@ sig
 
      Raises: `Overflow` for `~minInt`, which is not in the range.
 
-     Law: `~ (~ i) = i` when `~i` is in the range
+     Law: `~ (~ i) = i` when `minInt <> SOME i`
 
      Example: `~ (~5) = 5` *)
   val ~ : int -> int
@@ -228,7 +234,7 @@ sig
 
   (* `sign i` is ~1, 0 or 1, as `i` is negative, zero or positive.
 
-     Law: `fromInt (sign i) * abs i = i` when `abs i` is in the range
+     Law: `fromInt (sign i) * abs i = i` when `minInt <> SOME i`
 
      Example: `sign ~3 = ~1` *)
   val sign : int -> Int.int

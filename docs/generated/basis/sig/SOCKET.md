@@ -279,7 +279,7 @@ val fromString : string -> addr_family option
 > constant without its leading `"AF_"`: `"INET"` and `"UNIX"`, so
 > `"AF_INET"` gives `NONE`.
 
-**Law** `AF.fromString (AF.toString af) = SOME af`
+**Law** `AF.fromString (AF.toString af) = SOME af` (for every `af : RuneNet.addr_family`)
 
 <details><summary>Tests (6)</summary>
 
@@ -365,7 +365,7 @@ val fromString : string -> sock_type option
 
 `fromString s` is `SOME` of the kind called `s`, or `NONE`.
 
-**Law** `SOCK.fromString (SOCK.toString st) = SOME st`
+**Law** `SOCK.fromString (SOCK.toString st) = SOME st` (for every `st : RuneNet.sock_type`)
 
 <details><summary>Tests (5)</summary>
 

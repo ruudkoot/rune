@@ -1,0 +1,5 @@
+# A library written on another (tests/lib/run-lib-tests.sh):
+# library: toy
+#
+#   file | always or demand | host | provides | requires
+toy2.sml | demand | yes | Toy2 | Toy

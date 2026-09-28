@@ -172,7 +172,7 @@ sig
 
      Example: `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-     Law: `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
+     Law: `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)`
 
      Reading: `String.tokens/order`. The specification says the tokens are
      "derived from s from left to right", and not how often `p` is asked:
@@ -291,8 +291,8 @@ sig
      such a sequence gives `SOME ""`, and so does one that a bad escape
      follows.
 
-     Example: `fromString "a\\nb" = SOME "a\nb"`, where the first text has the
-     two characters `\` and `n` in it. *)
+     Example: `fromString "a\\nb" = SOME "a\nb"`, where the first text has a
+     backslash and an n in it: `size "a\\nb" = 4`. *)
   val fromString : String.string -> string option
 
   (* `toCString s` is the text that stands for `s` inside a C string constant.

@@ -224,7 +224,7 @@ val substring : string * int * int -> string
 
 `substring (s, i, n)` is the `n` characters of `s` from position `i`.
 
-**Law** `substring (s, i, n) = extract (s, i, SOME n)`
+**Law** `substring (s, i, n) = extract (s, i, SOME n)` (for every `s : string`, `i : int`, `n : int`)
 
 **Raises** [`Subscript`](../sig/GENERAL.md#exn-subscript) if `i < 0`, `n < 0` or `i + n > size s`.
 
@@ -278,7 +278,7 @@ val concat : string list -> string
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
 
-**Law** `concat [s, t] = s ^ t`, and `concat [] = ""`
+**Law** `concat [s, t] = s ^ t`, and `concat [] = ""` (for every `s : string`, `t : string`)
 
 **Example** `concat ["a", "", "bc"] = "abc"`
 
@@ -365,7 +365,7 @@ val explode : string -> char list
 
 `explode s` is the list of the characters of `s`, in order.
 
-**Law** `implode (explode s) = s`
+**Law** `implode (explode s) = s` (for every `s : string`)
 
 **Example** `explode "ab" = [#"a", #"b"]`
 
@@ -412,7 +412,7 @@ one, which is how a string is escaped or expanded.
 
 **Raises** [`Size`](../sig/GENERAL.md#exn-size) if the result would be longer than [`maxSize`](#val-maxsize).
 
-**Law** `translate f s = concat (List.map f (explode s))`
+**Law** `translate f s = concat (List.map f (explode s))` (for every `f : char -> string`, `s : string`)
 
 **Example** `translate (fn #"a" => "4" | c => str c) "banana" = "b4n4n4"`
 
@@ -439,7 +439,7 @@ nothing behind, so this is how a line is split into words.
 
 **Example** `tokens Char.isSpace "  a  b " = ["a", "b"]`
 
-**Law** `tokens p s = List.filter (fn t => size t > 0) (fields p s)`
+**Law** `tokens p s = List.filter (fn t => Int.> (size t, 0)) (fields p s)` (for every `p : char -> bool`, `s : string`)
 
 > **Reading** `String.tokens/order`. The specification says the tokens are
 > "derived from s from left to right", and not how often `p` is asked:
@@ -560,7 +560,7 @@ val compare : string * string -> order
 
 A string that is a prefix of another comes before it.
 
-**Law** `compare (s, t) = collate Char.compare (s, t)`
+**Law** `compare (s, t) = collate Char.compare (s, t)` (for every `s : string`, `t : string`)
 
 **Example** `compare ("abc", "abd") = LESS`
 
@@ -631,7 +631,7 @@ Every character is written as [`Char.toString`](../sig/CHAR.md#val-tostring) wri
 ones as themselves, with a backslash before a backslash or a double
 quote, and the others as a named escape, `\^c`, or three decimal digits.
 
-**Law** `toString s = translate Char.toString s`
+**Law** `toString s = translate Char.toString s` (for every `s : string`)
 
 **Example** `toString "a\tb\"" = "a\\tb\\\""`
 
@@ -696,15 +696,15 @@ val fromString : String.string -> string option
 
 `fromString s` is the characters that the text `s` begins with, read as [`scan`](#val-scan) reads them, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 > **Reading** `String.fromString/format-first`. A formatting sequence counts
 > as read although it stands for no character, so a text of nothing but
 > such a sequence gives `SOME ""`, and so does one that a bad escape
 > follows.
 
-**Example** `fromString "a\\nb" = SOME "a\nb"`, where the first text has the
-two characters `\` and `n` in it.
+**Example** `fromString "a\\nb" = SOME "a\nb"`, where the first text has a
+backslash and an n in it: `size "a\\nb" = 4`.
 
 <details><summary>Other implementations (2)</summary>
 

@@ -26,27 +26,27 @@ What each means is on [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md); the types are this
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`array`](../sig/MONO_ARRAY2.md#type-array) | *a type of its own* |
-| type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `WideChar.char` |
+| type | [`elem`](../sig/MONO_ARRAY2.md#type-elem) | `RuneWideChar.char` |
 | type | [`region`](../sig/MONO_ARRAY2.md#type-region) | `{base : WideCharArray2.array, col : int, ncols : int option, nrows : int option, row : int}` |
 | datatype | [`traversal`](../sig/MONO_ARRAY2.md#type-traversal) | `RowMajor` &#124; `ColMajor` |
 | type | [`vector`](../sig/MONO_ARRAY2.md#type-vector) | `WideCharVector.vector` |
-| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (WideChar.char -> unit) -> WideCharArray2.array -> unit` |
-| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * WideChar.char -> unit) -> region -> unit` |
-| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * WideChar.char -> WideCharArray2.array` |
+| val | [`app`](../sig/MONO_ARRAY2.md#val-app) | `Array2.traversal -> (RuneWideChar.char -> unit) -> WideCharArray2.array -> unit` |
+| val | [`appi`](../sig/MONO_ARRAY2.md#val-appi) | `Array2.traversal -> (int * int * RuneWideChar.char -> unit) -> region -> unit` |
+| val | [`array`](../sig/MONO_ARRAY2.md#val-array) | `int * int * RuneWideChar.char -> WideCharArray2.array` |
 | val | [`column`](../sig/MONO_ARRAY2.md#val-column) | `WideCharArray2.array * int -> WideCharVector.vector` |
 | val | [`copy`](../sig/MONO_ARRAY2.md#val-copy) | `{dst : WideCharArray2.array, dst_col : int, dst_row : int, src : region} -> unit` |
 | val | [`dimensions`](../sig/MONO_ARRAY2.md#val-dimensions) | `WideCharArray2.array -> int * int` |
-| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (WideChar.char * 'a -> 'a) -> 'a -> WideCharArray2.array -> 'a` |
-| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * WideChar.char * 'a -> 'a) -> 'a -> region -> 'a` |
-| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `WideChar.char list list -> WideCharArray2.array` |
-| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (WideChar.char -> WideChar.char) -> WideCharArray2.array -> unit` |
-| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * WideChar.char -> WideChar.char) -> region -> unit` |
+| val | [`fold`](../sig/MONO_ARRAY2.md#val-fold) | `Array2.traversal -> (RuneWideChar.char * 'a -> 'a) -> 'a -> WideCharArray2.array -> 'a` |
+| val | [`foldi`](../sig/MONO_ARRAY2.md#val-foldi) | `Array2.traversal -> (int * int * RuneWideChar.char * 'a -> 'a) -> 'a -> region -> 'a` |
+| val | [`fromList`](../sig/MONO_ARRAY2.md#val-fromlist) | `RuneWideChar.char list list -> WideCharArray2.array` |
+| val | [`modify`](../sig/MONO_ARRAY2.md#val-modify) | `Array2.traversal -> (RuneWideChar.char -> RuneWideChar.char) -> WideCharArray2.array -> unit` |
+| val | [`modifyi`](../sig/MONO_ARRAY2.md#val-modifyi) | `Array2.traversal -> (int * int * RuneWideChar.char -> RuneWideChar.char) -> region -> unit` |
 | val | [`nCols`](../sig/MONO_ARRAY2.md#val-ncols) | `WideCharArray2.array -> int` |
 | val | [`nRows`](../sig/MONO_ARRAY2.md#val-nrows) | `WideCharArray2.array -> int` |
 | val | [`row`](../sig/MONO_ARRAY2.md#val-row) | `WideCharArray2.array * int -> WideCharVector.vector` |
-| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `WideCharArray2.array * int * int -> WideChar.char` |
-| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> WideChar.char) -> WideCharArray2.array` |
-| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `WideCharArray2.array * int * int * WideChar.char -> unit` |
+| val | [`sub`](../sig/MONO_ARRAY2.md#val-sub) | `WideCharArray2.array * int * int -> RuneWideChar.char` |
+| val | [`tabulate`](../sig/MONO_ARRAY2.md#val-tabulate) | `Array2.traversal -> int * int * (int * int -> RuneWideChar.char) -> WideCharArray2.array` |
+| val | [`update`](../sig/MONO_ARRAY2.md#val-update) | `WideCharArray2.array * int * int * RuneWideChar.char -> unit` |
 
 <details><summary>Other implementations (9)</summary>
 

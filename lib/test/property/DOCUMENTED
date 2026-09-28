@@ -1,0 +1,17 @@
+# The signatures that are documented in full (docs/plans/docgen.md, D10).
+# runedoc treats what is a warning elsewhere as an error for them: an entry
+# without documentation, a function whose description shows no usage, a first
+# paragraph too long for a summary, a reference that leads nowhere.
+ARB
+ARB_OF
+BASIS_DATA_ARB
+CHECK
+CO
+DATE_ARB
+GEN
+IEEE_REAL_ARB
+INET6_SOCK_ARB
+PROP
+SHOW
+SML90_ARB
+SYSTEM_ARB

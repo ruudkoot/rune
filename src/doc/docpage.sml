@@ -33,12 +33,29 @@ struct
               (* the page that describes a structure of that name, if any *)
               strPageOf : string -> string option,
               links : (string * string * Source.span) list ref,
-              anchors : (string * string * Source.span) list ref}
+              anchors : (string * string * Source.span) list ref,
+              (* for a library written on the Basis Library: the Basis Library's index, where a reference
+                 the library does not resolve is looked up, and where its pages are from the root of the
+                 output (--basis-docs), if they are to be linked *)
+              outer : {index : R.index, root : string option} option}
 
   fun href (env : env, from : string, {page, anchor} : R.target, span : Source.span) : string =
     (#links env := (page, anchor, span) :: !(#links env);
      if page = from andalso anchor = "" then List.last (String.fields (fn c => c = #"/") page)
      else (if page = from then "" else #root env ^ page) ^ (if anchor = "" then "" else "#" ^ anchor))
+
+  (* A reference the library does not resolve, looked up in the Basis Library
+     it is written on: NONE when it is not there either, SOME NONE when it is
+     but its pages are not to be linked, and SOME (SOME link) otherwise. A
+     link out of the output is not checked (verify cannot see those pages). *)
+  fun outside (env : env) (c : string) : string option option =
+    case #outer env of
+      NONE => NONE
+    | SOME {index, root} =>
+        (case R.resolve (index, "", [], []) c of
+           R.Target {page, anchor} =>
+             SOME (Option.map (fn r => #root env ^ r ^ page ^ (if anchor = "" then "" else "#" ^ anchor)) root)
+         | _ => NONE)
 
   (* A structure's name, as a link to its page when it has one. *)
   fun strLink (env : env, from : string, name : string) : string =
@@ -96,6 +113,10 @@ struct
      signature of the ratchet says; it is not for a structure's own comment,
      which may name the library's internals -- `RuneIODesc.FD` is real and is
      documented nowhere. *)
+  (* The variables of a law of a signature, where it elaborated: set by the
+     site when the library has been elaborated (quickcheck M7). *)
+  val lawVariables : (string * string -> DocElab.variable list option) ref = ref (fn _ => NONE)
+
   fun blocksWith (strict : bool)
                  (env : env, page : string, sigName : string, path : string list, args : string list, span : Source.span)
                  (doc : I.doc) : string =
@@ -104,8 +125,12 @@ struct
         case R.resolve (#index env, sigName, path, args) c of
           R.Target t => SOME (href (env, page, t, span))
         | R.Unresolved =>
-            ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
-               (span, "`" ^ c ^ "` names nothing that is documented"); NONE)
+            (case outside env c of
+               SOME l => l
+             | NONE =>
+                 ((if strict andalso #ratchet env sigName then DocDiag.error else DocDiag.warn)
+                    (span, "`" ^ c ^ "` names nothing that is documented"); NONE))
+        | R.Unknown => Option.join (outside env c)
         | _ => NONE
       val inl = M.inlines link
       fun labelled (label, body) = "**" ^ label ^ "** " ^ inl body ^ "\n\n"
@@ -120,13 +145,28 @@ struct
                      SOME exn =>
                        (case R.resolve (#index env, sigName, path, args) exn of
                           R.Target _ => ()
-                        | _ => if #ratchet env sigName
+                        | _ => if #ratchet env sigName andalso not (isSome (outside env exn))
                                then DocDiag.error (span, "`Raises:` names `" ^ exn ^ "`, which is no exception that is documented")
                                else ())
                    | NONE => ());
                   labelled ("Raises", body))
-             | "Law" => labelled ("Law", body)
+             | "Law" =>
+                 (* the variables each law holds for, as elaboration typed them *)
+                 let
+                   val vars = List.concat (List.mapPartial (fn l => !lawVariables (sigName, l))
+                                                           (#laws (DocLawGrammar.parts body)))
+                   val once = List.foldl (fn (v : DocElab.variable, acc) =>
+                                            if List.exists (fn (w : DocElab.variable) => #name w = #name v) acc then acc
+                                            else acc @ [v]) [] vars
+                   val head = case modifier of SOME m => "Law (" ^ M.escape m ^ ")" | NONE => "Law"
+                 in
+                   if List.null once then labelled (head, body)
+                   else "**" ^ head ^ "** " ^ inl body ^ " (for every "
+                        ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
+                        ^ ")\n\n"
+                 end
              | "Example" => labelled ("Example", body)
+             | "Counterexample" => labelled ("Counterexample", body)
              | "Complexity" => labelled ("Complexity", body)
              | "See also" => labelled ("See also", body)
              | "Area" => ""
@@ -153,7 +193,8 @@ struct
       String.concatWith "<br><br>"
         (List.mapPartial (fn T.Para is => SOME (M.cell link is)
                            | T.Reserved {keyword, body, ...} =>
-                               if T.isNote keyword orelse keyword = "Example" orelse keyword = "See also"
+                               if T.isNote keyword orelse keyword = "Example" orelse keyword = "Counterexample"
+                                  orelse keyword = "See also"
                                then SOME ("**" ^ keyword ^ "** " ^ M.cell link body) else NONE
                            | T.CodeBlock c => SOME (M.code (T.oneLine c))
                            | T.Bullets items => SOME (String.concatWith "<br>" (List.map (fn is => "&bull; " ^ M.cell link is) items)))

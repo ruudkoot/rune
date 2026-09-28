@@ -129,7 +129,7 @@ val toAddr : NetHostDB.in_addr * int -> sock_addr
 
 `toAddr (a, port)` is the address of the port `port` at the host address `a`.
 
-**Law** `fromAddr (toAddr (a, port)) = (a, port)`
+**Law** `fromAddr (toAddr (a, port)) = (a, port)` (for every `a : RuneNet.in_addr`, `port : int`)
 
 **Example** `#2 (fromAddr (toAddr (valOf (NetHostDB.fromString "10.0.0.1"), 8080))) = 8080`
 
@@ -275,7 +275,7 @@ val setNODELAY : 'mode stream_sock * bool -> unit
 
 `setNODELAY (sock, b)` sends small writes at once, or lets them be gathered.
 
-**Law** `(setNODELAY (sock, b); getNODELAY sock) = b`
+**Law** `(setNODELAY (sock, b); getNODELAY sock) = b` (for every `sock : (inet', 'a stream') RuneSocket.sock`, `b : bool`)
 
 <details><summary>Tests (3)</summary>
 

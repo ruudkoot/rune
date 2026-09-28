@@ -157,7 +157,7 @@ operation until it is set again.
 > **Implementation** `IEEEReal.setRoundingMode/fesetround`. The mode of the C
 > library, set with `fesetround`.
 
-**Law** `(setRoundingMode m; getRoundingMode ()) = m`
+**Law** `(setRoundingMode m; getRoundingMode ()) = m` (for every `m : IEEEReal.rounding_mode`)
 
 **Example** `(setRoundingMode TO_NEAREST; getRoundingMode ()) = TO_NEAREST`
 
@@ -282,7 +282,7 @@ val fromString : string -> decimal_approx option
 
 `fromString s` is the decimal number that the text `s` begins with, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 **Example** `Option.map toString (fromString "~0.0012e3") = SOME "~0.12E1"`
 

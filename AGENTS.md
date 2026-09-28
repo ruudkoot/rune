@@ -227,7 +227,7 @@ keep these invariants:
   described in `docs/language.md`: explicit `IntInf` operations, Rune's
   Basis subset).
 * Before finishing any change run `make check` (= `test`, `test-all`,
-  `test-basis`, `test-doc`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
+  `test-basis`, `test-doc`, `test-lib`, `test-opt`, `test-native`, `perf-check`, `check-positions`,
   `check-cross`, `check-docs`, `check-isa`, `test-ir`, `check-levels`,
   `bootstrap`; runs on all CPUs,
   about 3 minutes on 16). `bin/rune` is the self-hosted compiler, so it is what
@@ -272,9 +272,27 @@ keep these invariants:
   `docs/generated/basis` is made from the library's comments: after changing
   a signature or a comment of `lib/basis`, run `make docs` and commit what it
   writes (`make check-docs` fails on a stale tree). Never edit it by hand.
-  An `Example:` that is an equation, `e = v`, is compiled by `make docs` and
-  run by `make test-basis`; give a description an example where it shows
+  Every piece of an `Example:` is a claim, a closed `bool` that is true; it is
+  compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
+* A library beside the basis library (`lib/NAME`, compiled with `rune --library
+  NAME`) has a `MANIFEST` in the basis library's form, whose requires column
+  names what it uses of the basis library as well (`rune --basis-check
+  --library NAME` checks it), and whose `# library:` lines name the libraries
+  it is written on. It may not use `_prim`. The mechanism's tests are in
+  `tests/lib` (`make test-lib`). After a change to such a library, run `make
+  test-lib-hosts`: its tests on MLton, SML/NJ, Poly/ML and MLKit, against their
+  own Basis. **Never work around a bug of a compiler other than Rune in such a
+  library** (the owner's rule, 2026-09-27): write it plainly, and mark the
+  failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in
+  `docs/bugreport/HOST`.
+* A `Law:` of lib/basis is Standard ML that runedoc elaborates and `make
+  test-laws` runs at every structure that implements its signature, with its
+  variables drawn by lib/test/property (`docs/doc-comments.md`, *Laws*). Write
+  a condition as Standard ML after "for" or "when", not in prose, or the law
+  is run without it. `make test-laws` is not part of `make check` until every
+  law holds (docs/plans/quickcheck.md, D12); the owner's review of the M7
+  rewrites and the hunt of M9 come first.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

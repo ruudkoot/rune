@@ -1,0 +1,5 @@
+# A library that uses _prim, which only the basis library may
+# (tests/lib/run-lib-tests.sh).
+#
+#   file | always or demand | host | provides | requires
+prim.sml | demand | yes | Prim |

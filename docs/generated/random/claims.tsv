@@ -1,0 +1,3 @@
+name	kind	signature	realisations	status	origin	source
+RANDOM	signature			required	declared	lib/random/random_sig.sml
+Random	structure	RANDOM		required	claimed	lib/random/random.sml

@@ -13,6 +13,10 @@ runedoc \- generate the documentation of a Standard ML library
 .BI \-\-examples " DIR"
 .br
 .B runedoc
+.BI \-\-library " NAME"
+.BI \-\-laws " DIR"
+.br
+.B runedoc
 .RB ( \-\-page | \-\-dump\-ir | \-\-lint )
 .IR file.sml " ..."
 .SH DESCRIPTION
@@ -84,10 +88,24 @@ Document the library in
 .IR LIBDIR / NAME .
 A
 .I NAME
-with a slash in it is the directory of the library itself. A library other
+that begins with
+.B /
+or
+.B .
+is the directory of the library itself. A library other
 than
 .IR LIBDIR /basis
-is elaborated on top of the Basis Library, so that it may use it.
+is elaborated on top of the Basis Library, so that it may use it, after the
+libraries its
+.B # library:
+lines name. What its comments name of the Basis Library is looked up there.
+.TP
+.BI \-\-basis\-docs " DIR"
+For a library on top of the Basis Library: where the Basis Library's pages
+are, from the
+.B \-\-out
+directory, so that what the library's comments name of it links there.
+Without it such a name is shown as code.
 .TP
 .BI \-\-out " DIR"
 Write the pages to
@@ -126,16 +144,39 @@ names the block they are shown in. A glob that finds no check of a documented
 member is an error.
 .TP
 .BI \-\-examples " DIR"
-Write the examples of the comments that are equations,
-.IB e " = " v \fR,\fP
+Write the examples of the comments, each a claim of type
+.BR bool ,
 as one program for each signature into
 .I DIR
 and stop. Each program prints a line
 .B PASS
 or
 .B FAIL
-for every example and exits with a failure if one does not hold. The same
-examples are elaborated whenever the documentation is made.
+for every example and exits with a failure if one does not hold. A
+counterexample, a claim that must not hold, is written into the same program
+and passes when its equation's sides have different outcomes or its claim is
+false or raises. The same examples and counterexamples are elaborated
+whenever the documentation is made.
+.TP
+.BI \-\-laws " DIR"
+Write the laws of the comments as one program for each signature into
+.I DIR
+and stop. A program holds every law of its signature at every structure that
+implements it, each labelled
+.IB SIG . member /law- n @ Structure\fR,
+with its variables drawn from the arbitraries of the library
+.BR test/property ,
+and is compiled with
+.BR "rune \-\-library test/property" .
+It prints a line
+.B LAW
+before each law and
+.B PASS
+or
+.B FAIL
+after it, and exits with a failure if a law does not hold. The same laws are
+elaborated whenever the documentation is made; a law that is no Standard ML,
+or has a variable no arbitrary draws, is an error at its comment.
 .TP
 .B \-\-labels
 With

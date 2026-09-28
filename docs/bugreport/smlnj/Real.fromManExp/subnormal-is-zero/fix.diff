@@ -1,0 +1,22 @@
+diff --git a/base/system/Basis/Implementation/Real/real64.sml b/base/system/Basis/Implementation/Real/real64.sml
+index 8646062..1b4188e 100644
+--- a/base/system/Basis/Implementation/Real/real64.sml
++++ b/base/system/Basis/Implementation/Real/real64.sml
+@@ -186,10 +186,13 @@ structure Real64Imp : REAL =
+                                  in f(e-1020,  Assembly.A.scalb(m,1020))
+                                 end
+                     else if e < ~1020
+-                         then if e < ~1200 then 0.0
+-                           else let fun f(i,x) = if i=0 then x else f(i-1, x*0.5)
+-                                 in f(1020-e, Assembly.A.scalb(m, ~1020))
+-                                end
++                         (* the result is below 2^-1021: scale `m` within the
++                          * normal range, which scalb handles on every target,
++                          * and multiply by 2^-1022 once, so that the result is
++                          * rounded once and an underflow keeps the sign
++                          *)
++                         then Assembly.A.scalb(m, if e < ~1222 then ~200 else e + 1022)
++                                * minNormalPos
+                          else Assembly.A.scalb(m,e)  (* This is the common case! *)
+                   else let
+                     val {man=m', exp=e'} = toManExp m

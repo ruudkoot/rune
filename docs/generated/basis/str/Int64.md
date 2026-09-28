@@ -65,14 +65,14 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 
 <details><summary>Other implementations (8)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Int64 is emulated with two words and comes out wrong throughout: Int64.+ (\~2, \~3) is 1073741819, and the comparisons, div, mod, abs, sign, fmt and the conversions follow it
-- **SML/NJ (32-bit)** &mdash; Int64.fmt StringCvt.HEX produces the digits a to f, not A to F
-- **SML/NJ (32-bit)** &mdash; Int64.fromString raises an exception for a value that does not fit 32 bits
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong (\~2 + \~3 is \~8589934597 when the numbers are not constants), and the comparisons, div, mod, abs, sign, fmt and the conversions are checked on numbers made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+- **SML/NJ (32-bit)** &mdash; fmt raises an exception for minInt and maxInt and gets other numbers wrong: Int64.+ and Int64.- get the carry and the borrow wrong (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and fromString and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 - **SML/NJ (64-bit)** &mdash; mod (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
 - **SML/NJ (64-bit)** &mdash; rem (minInt, \~1) raises an exception instead of giving 0 (Int32 on 110.79, Int64 on both)
-- **SML/NJ (32-bit)** &mdash; sameSign (0, i) is true for positive i
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 - **SML/NJ** &mdash; scan does not skip vertical tab, form feed and carriage return
-- **SML/NJ (32-bit)** &mdash; Int64.scan raises an exception for a value that does not fit 32 bits
+- **SML/NJ (32-bit)** &mdash; Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 
 </details>
 

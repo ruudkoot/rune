@@ -19,8 +19,8 @@ What each means is on [`INET6_SOCK`](../sig/INET6_SOCK.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| val | [`socket`](../sig/INET6_SOCK.md#val-udp.socket) | `unit -> (inet6', dgram') Socket.sock` |
-| val | [`socket'`](../sig/INET6_SOCK.md#val-udp.socket-prime) | `int -> (inet6', dgram') Socket.sock` |
+| val | [`socket`](../sig/INET6_SOCK.md#val-udp.socket) | `unit -> (inet6', dgram') RuneSocket.sock` |
+| val | [`socket'`](../sig/INET6_SOCK.md#val-udp.socket-prime) | `int -> (inet6', dgram') RuneSocket.sock` |
 
 ---
 

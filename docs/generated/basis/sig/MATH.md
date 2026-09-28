@@ -359,7 +359,7 @@ follow the table of the specification: on the y axis the angle is
 `pi/2` or `~pi/2`, `atan2 (0.0, ~0.0)` is [`pi`](#val-pi), and two infinities give
 an odd multiple of `pi/4`.
 
-**Law** `atan2 (y, x) = atan (y / x)` for `x > 0`
+**Law** `atan2 (y, x) = atan (y / x)` for `x > 0.0` (for every `y : real`, `x : real`)
 
 **Example** `Real.== (atan2 (0.0, ~1.0), pi) = true`
 

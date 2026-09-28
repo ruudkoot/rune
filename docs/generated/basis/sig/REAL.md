@@ -554,7 +554,7 @@ val sameSign : real * real -> bool
 
 `sameSign (x, y)` is `true` when `x` and `y` have the same sign bit.
 
-**Law** `sameSign (x, y) = (signBit x = signBit y)`
+**Law** `sameSign (x, y) = (signBit x = signBit y)` (for every `x : real`, `y : real`)
 
 <details><summary>Tests (10)</summary>
 
@@ -689,7 +689,7 @@ val ?= : real * real -> bool
 
 `?= (x, y)` is `true` when `x` and `y` are equal or either is a NaN: "unordered or equal".
 
-**Law** `?= (x, y) = (unordered (x, y) orelse == (x, y))`
+**Law** `?= (x, y) = (unordered (x, y) orelse == (x, y))` (for every `x : real`, `y : real`)
 
 <details><summary>Tests (10)</summary>
 
@@ -829,7 +829,7 @@ or a NaN as `man` is the result.
 
 **Example** `toString (fromManExp {man = 0.75, exp = 4}) = "12"`
 
-**Law** `fromManExp (toManExp x) == x` for a finite `x`
+**Law** `== (fromManExp (toManExp x), x)` for `isFinite x` (for every `x : real`)
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -838,7 +838,7 @@ or a NaN as `man` is the result.
 
 <details><summary>Other implementations (2)</summary>
 
-- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos
+- **SML/NJ** &mdash; fromManExp {man = 0.5, exp = \~1073} is 0.0, not minPos: every result below 2^-1021 is 0.0 (docs/bugreport/smlnj/Real.fromManExp; smlnj/legacy\#254, closed as fixed in 110.99.3)
 - **Poly/ML 5.9.2** &mdash; fromManExp {man = minPos, exp = 2074} is inf, not 2^1000
 
 </details>
@@ -862,7 +862,7 @@ val split : real -> {whole : real, frac : real}
 The whole part is `x` rounded towards zero. For an infinity the
 fractional part is a zero, and for a NaN both are NaNs.
 
-**Law** `#whole (split x) + #frac (split x) == x`
+**Law** `== (#whole (split x) + #frac (split x), x)` (for every `x : real`)
 
 **Example** `(fn {whole, frac} => (toString whole, toString frac)) (split ~1.5) = ("~1", "~0.5")`
 
@@ -887,7 +887,7 @@ val realMod : real -> real
 
 `realMod x` is the fractional part of `x`, with its sign.
 
-**Law** `realMod x = #frac (split x)`
+**Law** `realMod x = #frac (split x)` (for every `x : real`)
 
 <details><summary>Other implementations (1)</summary>
 
@@ -1104,8 +1104,8 @@ Also in the [top-level environment](../top-level.md): `floor`.
 <details><summary>Other implementations (3)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1133,10 +1133,10 @@ Also in the [top-level environment](../top-level.md): `ceil`.
 
 <details><summary>Other implementations (6)</summary>
 
-- **SML/NJ** &mdash; Real.ceil minPos is 0
+- **SML/NJ** &mdash; Real.ceil minPos is 0: ceil is \~1 - floor (\~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
 - **MLKit** &mdash; ceil of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
@@ -1167,8 +1167,8 @@ Also in the [top-level environment](../top-level.md): `trunc`.
 <details><summary>Other implementations (4)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; trunc of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
 </details>
@@ -1200,10 +1200,10 @@ Also in the [top-level environment](../top-level.md): `round`.
 <details><summary>Other implementations (5)</summary>
 
 - **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1232,8 +1232,8 @@ val toInt : IEEEReal.rounding_mode -> real -> int
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; toInt TO\_POSINF is ceil, which gives minInt for 2^62 instead of raising Overflow
 - **MLKit** &mdash; toInt TO\_POSINF and TO\_ZERO are ceil and trunc, which raise Overflow for minInt = \~2^62
 
@@ -1263,8 +1263,8 @@ a bounded [`LargeInt.int`](../sig/INTEGER.md#type-int); [`Domain`](../sig/GENERA
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF are exchanged for it: toLargeInt TO\_NEGINF \~2.5 is \~2
 - **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF disagree with floor and ceil on negative reals
 
@@ -1294,7 +1294,7 @@ Also in the [top-level environment](../top-level.md): `real`.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1321,11 +1321,12 @@ A magnitude beyond [`maxFinite`](#val-maxfinite) gives an infinity of the sign o
 > reals goes to the one whose last digit is even, and the digits that are
 > dropped decide the rest.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 - **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
-- **SML/NJ, MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+- **SML/NJ** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value") (docs/bugreport/smlnj/Real.fromLargeInt)
+- **MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 - **Poly/ML 5.9.2** &mdash; fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 
 </details>
@@ -1415,7 +1416,7 @@ application already raises.
 **Example** `fmt (StringCvt.GEN (SOME 4)) 123456.0 = "123500"`, for the
 digits beyond the four become zeros where the fixed form is the shorter.
 
-**Example** `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `IEEEReal.toString (toDecimal 0.1)`.
+**Example** `fmt StringCvt.EXACT 0.1 = "0.1"`, which is `fmt StringCvt.EXACT 0.1 = IEEEReal.toString (toDecimal 0.1)`.
 
 <details><summary>Other implementations (10)</summary>
 
@@ -1424,7 +1425,7 @@ digits beyond the four become zeros where the fixed form is the shorter.
 - **Poly/ML** &mdash; GEN does not choose the shorter of the two notations ("0.001", "10000000000.0", "1.235E5")
 - **SML/NJ** &mdash; GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 - **SML/NJ** &mdash; GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "\~1.5E\~07")
-- **SML/NJ (32-bit)** &mdash; not there: Real.fmt StringCvt.EXACT raises Fail "RealFormat: fmtReal: EXACT not supported"
+- **SML/NJ (32-bit)** &mdash; fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373)
 - **SML/NJ 110.99.9** &mdash; fmt of minPos prints the digits of the shortest representation, 5E\~324, padded with zeros instead of the digits asked for
 - **Poly/ML 5.9.2** &mdash; fmt StringCvt.EXACT of a zero is "0.0E1", not "0.0"
 - **MLKit** &mdash; fmt (GEN \_) is C's %g with ".0" added to an integral result: integral values print with ".0" ("1.0", "\~0.0"), and 9.6 at one digit is "1E1", not "10"
@@ -1448,7 +1449,7 @@ val toString : real -> string
 
 `toString x` is the text of `x` in the general notation with the default number of digits.
 
-**Law** `toString x = fmt (StringCvt.GEN NONE) x`
+**Law** `toString x = fmt (StringCvt.GEN NONE) x` (for every `x : real`)
 
 **Example** `toString 1.0 = "1"`
 
@@ -1524,7 +1525,7 @@ val fromString : string -> real option
 
 `fromString s` is the real that the text `s` begins with, or `NONE`.
 
-**Law** `fromString s = StringCvt.scanString scan s`
+**Law** `fromString s = StringCvt.scanString scan s` (for every `s : string`)
 
 > **Reading** `Real.fromString/TO_NEGINF-negative`. The numeral is rounded in
 > the rounding mode that is in force, as in MLton and in C's `strtod`;
@@ -1539,7 +1540,7 @@ val fromString : string -> real option
 - **SML/NJ** &mdash; scan is not correctly rounded (long digit strings, minNormalPos, 2^53 + 1 + epsilon), and no format gives the 17 digits of a round trip
 - **Poly/ML 5.9.2** &mdash; fromString of 2^53 + 1 + 10^-21 gives 2^53, not 2^53 + 2, as if the digits stopped at the tie 2^53 + 1
 - **SML/NJ, Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading (and C's), that a numeral is rounded in the current mode
-- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015 (under xc1 through the shim's real\_from\_string, which is the host's Real.fromString)
+- **SML/NJ (32-bit)** &mdash; fromString "1.5e\~2" is not the real nearest 0.015: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy\#373); under xc1 through the shim's real\_from\_string, which is the host's Real.fromString
 - **Poly/ML 5.9.2** &mdash; fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
 - **Poly/ML 5.9.2** &mdash; fromString rounds a number just above half of minPos to zero
 - **Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
@@ -1575,8 +1576,7 @@ case.
 
 **Example** `#digits (toDecimal 0.1) = [1]`
 
-**Law** `valOf (fromDecimal (toDecimal x)) == x`, with the same sign bit,
-for a normal or subnormal `x`
+**Law** `== (valOf (fromDecimal (toDecimal x)), x) andalso signBit (valOf (fromDecimal (toDecimal x))) = signBit x` for `isNormal x orelse class x = IEEEReal.SUBNORMAL` (for every `x : real`)
 
 <details><summary>Other implementations (4)</summary>
 
