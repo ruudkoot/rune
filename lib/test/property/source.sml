@@ -37,15 +37,18 @@ struct
                  calls : (position * string) list ref,
                  (* the calls of effect-observing functions, as the side of a law made them *)
                  effects : string list ref,
-                 cleanups : (unit -> unit) list ref}
+                 cleanups : (unit -> unit) list ref,
+                 (* the nodes read and calls made so far, and whether the case
+                    has gone past the budget *)
+                 work : int ref, over : bool ref}
 
   fun new (seed : Word64.word, size : int, set : node list, zeros : Word64.word list list) : source =
     {seed = seed, size = size, set = set, zeros = zeros, trail = ref [], sequences = ref [], calls = ref [],
-     effects = ref [], cleanups = ref []}
+     effects = ref [], cleanups = ref [], work = ref 0, over = ref false}
 
   fun resized (s : source, n : int) : source =
     {seed = #seed s, size = n, set = #set s, zeros = #zeros s, trail = #trail s, sequences = #sequences s,
-     calls = #calls s, effects = #effects s, cleanups = #cleanups s}
+     calls = #calls s, effects = #effects s, cleanups = #cleanups s, work = #work s, over = #over s}
 
   fun step (a : Word64.word, w : Word64.word) : Word64.word =
     Random.hash (Word64.+ (Word64.* (a, 0wxD1B54A32D192ED03), Word64.+ (w, 0wx9E3779B97F4A7C15)))
@@ -64,12 +67,25 @@ struct
   (* The address of a path. *)
   fun addressOf (path : Word64.word list) : Word64.word = List.foldl (fn (w, a) => step (a, w)) (#address root) path
 
+  (* A case may read a million nodes and make a million calls of generated
+     functions: one that does more is too big to judge, and is discarded
+     (docs/plans/quickcheck.md, M9). Past the budget every read and call
+     raises `TooBig` again, so that code that handles every exception cannot
+     go on past it, and the runner discards the case whatever its verdict. *)
+  exception TooBig
+  val budget = 1000000
+  fun spend (s : source) : unit =
+    if !(#over s) then raise TooBig
+    else (#work s := !(#work s) + 1; if !(#work s) > budget then (#over s := true; raise TooBig) else ())
+  fun tooBig (s : source) : bool = !(#over s)
+
   (* The word of the node at p: the one set for it, 0 below a zeroed path,
      or the sample of the node's random word. The node is logged, with its
      kind and its bound (0 when the words that are values are not finite). *)
   fun readIn (s : source, {address, path} : position, kind : kind, bound : Word64.word,
               sample : Word64.word -> Word64.word) : Word64.word =
     let
+      val () = spend s
       val w = case List.find (fn n : node => #address n = address) (#set s) of
                 SOME n => #word n
               | NONE =>
@@ -83,7 +99,7 @@ struct
     readIn (s, p, kind, 0w0, sample)
 
   fun sequence (s : source, q : sequence) : unit = #sequences s := q :: !(#sequences s)
-  fun call (s : source, f : position, text : string) : unit = #calls s := (f, text) :: !(#calls s)
+  fun call (s : source, f : position, text : string) : unit = (spend s; #calls s := (f, text) :: !(#calls s))
   fun effect (s : source, text : string) : unit = #effects s := text :: !(#effects s)
 
   (* The effects logged since the last call, which forgets them. *)

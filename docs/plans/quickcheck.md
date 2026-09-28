@@ -1001,12 +1001,12 @@ numbers it gave are reported as they came out.
 
 - **P1. Integers of a structure with bounds** are drawn from three families of equal weight, 1/3 each: small, edges and uniform.
   - *Small:* uniform in `[-size, size]`, clipped to the bounds.
-  - *Edges:* 0, 1, ~1, the bounds and their neighbours, and ±2^k and ±2^k ± 1 for every k below the precision.
+  - *Edges:* 0, 1, ~1, the bounds and their neighbours, and ±2^k and ±2^k ± 1 for every k below the precision. Half the edges drawn are the first kind, the extremes, and half the powers of two (changed before the hunt, 2026-09-28). Before, all were equally likely, so a bound was one of about 380 edges at `Int`. A mutant of `Word.fromLargeInt` that is wrong only at the top bit survived 100 cases, and was killed once the extremes were drawn half the time.
   - *Uniform:* uniform over the whole range.
 
   The prototype used 1/2, 1/4, 1/4 (E3). There, half the draws were small, and it found the named law's overflow in a median of 90 tests at `Int64`, where uniform draws alone needed a median of 11. QuickCheck's size-bounded integers never found it. No family may be dropped: small values give readable counterexamples, the edges find boundaries, and uniform draws cover the whole range.
 - **P2. `IntInf`** has no bounds. Its three families are small, the edges of every fixed width (±2^k and ±2^k ± 1 for k up to 130), and uniform magnitudes of 1 to `size` limbs.
-- **P3. Words**, by P1 without a sign: 0, 1, the maximum and its neighbour, 2^k and 2^k ± 1, and the top bit.
+- **P3. Words**, by P1 without a sign: 0, 1, the maximum and its neighbour, 2^k and 2^k ± 1, and the top bit. The extremes are 0, 1, the maximum and its neighbour, and the top bit and its neighbours (P1).
 - **P4. Reals** also come in three families.
   - *Specials:* ±0, ±∞, a NaN, the least subnormal, the largest subnormal, the least normal, the largest finite, ±1, 0.5, 2^53 and 2^53 + 1.
   - *Small decimals:* integers and halves in `[-size, size]`.
@@ -1030,6 +1030,13 @@ numbers it gave are reported as they came out.
   - This is the small scope hypothesis of Jackson's Alloy and of SmallCheck (Runciman, Naylor and Lindblad 2008): most bugs show on some small input.
   - It reaches the relations between independent values, such as an index one past the end of a string drawn beside it, which three independent random draws rarely meet.
   - A property whose cases are all few enough runs exhaustively instead (P9).
+
+- **P14. Drawing into a condition** (added before the hunt, 2026-09-28, with the owner's approval). An integer variable that a law's conditions bound draws from within the bounds.
+  - The conditions are joined by `andalso`, and the bounds are `lo <= x`, `lo < x`, `x < hi`, `x <= hi` and their mirror images, where the other side does not name `x`.
+  - The variable is drawn by P1's families over the range, after the variables the bounds name. So the range's ends are its edges, and the other variables are drawn as before.
+  - The condition is still tested. An empty range, or a bound that raises, discards the case.
+  - **Why:** the first run of the laws (M8) gave up on 145 laws at their structures. Among P1's integers, an index within a length is rare: a third of them are over the whole range. Those laws were not tested at all, and the ones that passed were tested mostly at the small sizes where the condition is easy to meet.
+  - The rule is generic and favours no law, and it changes no draw of a law without such a condition. It is D7's domain, "for `x` from `G`", inferred from the condition.
 
 **Frozen** on 2026-09-28, at the end of M6. `tests/lib/property/instances.sml` draws from the instance of every type of the census and hashes what the draws observe. `frozen.expected` holds that hash, so any change to what the generators draw fails `make test-lib` until the hash is renewed. A renewal needs a reason from the list above, recorded in its commit.
 
@@ -1576,6 +1583,10 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - **`o` has the laws of a category and its definition**, named: Definition, `(f o g) x = f (g x)`, which alone pins the order; Associative; Left-identity; and Right-identity, the identity written `fn y => y` as the Basis has none. All four pass.
   - **Named laws** (the owner's proposal). `Law (Associative):` names a law, and its label is its name, `GENERAL.o/law-associative`.
   - **Counterexamples** (the owner's proposal). A `Counterexample:` is a closed claim that must not hold, judged as a law is. An equation's sides must have different outcomes; any other claim must be false or raise. runedoc elaborates it with the examples, and the examples' programs try it. It is where D12 keeps the case that broke a law.
+  - **The adequacy of the laws, first.** The last step of the hunt, mutants of the Basis Library's own sources run against its laws (FitSpec's check), was run first, to learn how much a law's pass is worth. The tool is `tools/mutate/mutate.sml` and `tests/basis/run-mutants.sh`, and the results are in `docs/plans/quickcheck-hunt.md`.
+    - Its first run had a bug: a mutant of `List.tabulate` hung the tester itself, which uses the Basis Library, before any law ran, and was counted as surviving. A mutant is now killed when a law that passes on the Basis Library does not pass on it, whatever the reason.
+    - It found a weakness of the generators: the edges of P1 and P3. They changed as P1 says.
+  - **P14, drawing into a condition** (*Generator principles*). It was built on the owner's instruction to fix the library where the hunt shows it is not enough.
   - **Call tables** in a report list each call of a generated function once. The condition and the two sides of a law call copies of it, whose calls were listed together; the comparison of the sides' calls is unchanged.
 
 ### Later

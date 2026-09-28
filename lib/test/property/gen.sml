@@ -94,9 +94,11 @@ struct
 
   fun clamp (lo, hi) v = if v < lo then lo else if v > hi then hi else v
 
-  (* the edges of [lo, hi]: 0, 1, ~1, the bounds and their neighbours, and
-     every power of two in range with its neighbours *)
-  fun edges (lo : int, hi : int) : int list =
+  (* The edges of [lo, hi], in two halves (P1): the extremes, 0, 1, ~1, the
+     bounds and their neighbours; and every power of two in range with its
+     neighbours. Each half is drawn from as often as the other, so that the
+     few extremes are not lost among the many powers. *)
+  fun edges (lo : int, hi : int) : int list * int list =
     let
       fun pows (p, acc) =
         let
@@ -105,12 +107,24 @@ struct
         in
           (if p <= hi div 2 orelse ~p >= lo div 2 then pows (p * 2, acc) else acc) handle Overflow => acc
         end
-      val candidates = [0, 1, ~1, lo, hi] @ ((lo + 1) :: [] handle Overflow => []) @ ((hi - 1) :: [] handle Overflow => [])
-                       @ pows (2, [])
+      fun inRange vs = List.filter (fn v => lo <= v andalso v <= hi) vs
+      val extremes = inRange ([0, 1, ~1, lo, hi] @ ((lo + 1) :: [] handle Overflow => [])
+                              @ ((hi - 1) :: [] handle Overflow => []))
+      val powers = List.filter (fn v => not (List.exists (fn e => e = v) extremes)) (inRange (pows (2, [])))
     in
-      List.filter (fn v => lo <= v andalso v <= hi) candidates
+      (extremes, powers)
     end
-    handle Overflow => [0, lo, hi]
+    handle Overflow => ([0, lo, hi], [])
+
+  (* an edge: from the extremes or the powers, half the time each *)
+  fun edge (extremes : 'a vector, powers : 'a vector) (g : Random.gen) : 'a =
+    let
+      val (half, g) = Random.below 0w2 g
+      val v = if half = 0w0 orelse Vector.length powers = 0 then extremes else powers
+      val (x, _) = Random.word64 g
+    in
+      Vector.sub (v, Word64.toInt (uniformBelow (Word64.fromInt (Vector.length v)) x))
+    end
 
   (* uniform in [lo, hi] from the random word r *)
   fun uniformIn (lo : int, hi : int) (r : Word64.word) : int =
@@ -121,7 +135,7 @@ struct
     if hi < lo then raise Domain
     else
       let
-        val es = Vector.fromList (edges (lo, hi))
+        val es = let val (e, p) = edges (lo, hi) in (Vector.fromList e, Vector.fromList p) end
         val target = clamp (lo, hi) 0
         (* offsets from the target in Word64, where they are exact whatever
            the width of int *)
@@ -143,7 +157,7 @@ struct
           in
             encode (case family of
                       0w0 => uniformIn (clamp (lo, hi) (~size), clamp (lo, hi) size) x
-                    | 0w1 => Vector.sub (es, Word64.toInt (uniformBelow (Word64.fromInt (Vector.length es)) x))
+                    | 0w1 => edge es g
                     | _ => uniformIn (lo, hi) x)
           end
         (* the words that are values: below the larger encoding of the
@@ -164,14 +178,16 @@ struct
   val maxSpan : LargeInt.int option = SOME (Word64.toLargeInt (Word64.notb 0w0)) handle Overflow => NONE
   val half : LargeInt.int option = SOME (Word64.toLargeInt 0wx8000000000000000) handle Overflow => NONE
 
-  fun largeEdges (lo : LargeInt.int, hi : LargeInt.int) : LargeInt.int list =
+  fun largeEdges (lo : LargeInt.int, hi : LargeInt.int) : LargeInt.int list * LargeInt.int list =
     let
       fun pows (p, acc) =
         if p > hi andalso ~p < lo then acc
         else (pows (p * 2, p :: p - 1 :: p + 1 :: ~p :: ~p - 1 :: ~p + 1 :: acc) handle Overflow => acc)
       val near = List.mapPartial (fn f => SOME (f ()) handle Overflow => NONE) [fn () => lo + 1, fn () => hi - 1]
+      fun inRange vs = List.filter (fn v => lo <= v andalso v <= hi) vs
+      val extremes = inRange ([0, 1, ~1, lo, hi] @ near)
     in
-      List.filter (fn v => lo <= v andalso v <= hi) ([0, 1, ~1, lo, hi] @ near @ pows (2, []))
+      (extremes, List.filter (fn v => not (List.exists (fn e => e = v) extremes)) (inRange (pows (2, []))))
     end
 
   fun largeRange (lo : LargeInt.int, hi : LargeInt.int) : LargeInt.int gen =
@@ -191,7 +207,7 @@ struct
             let val v = Word64.toLargeIntX (unzig x) in if v < lo then lo else if v > hi then hi else v end
           else if target = lo then lo + Word64.toLargeInt (Word64.min (x, w (hi - lo)))
           else hi - Word64.toLargeInt (Word64.min (x, w (hi - lo)))
-        val es = Vector.fromList (largeEdges (lo, hi))
+        val es = let val (e, p) = largeEdges (lo, hi) in (Vector.fromList e, Vector.fromList p) end
         fun uniform (a : LargeInt.int, b : LargeInt.int) (x : Word64.word) : LargeInt.int =
           let val span = w (b - a + 1)
           in a + Word64.toLargeInt (if span = 0w0 then x else uniformBelow span x) end
@@ -205,7 +221,7 @@ struct
           in
             encode (case family of
                       0w0 => uniform (clampTo (~n), clampTo n) x
-                    | 0w1 => Vector.sub (es, Word64.toInt (uniformBelow (Word64.fromInt (Vector.length es)) x))
+                    | 0w1 => edge es g
                     | _ => uniform (lo, hi) x)
           end
         val bound = Word64.+ (Word64.max (encode lo, encode hi), 0w1)
@@ -255,7 +271,13 @@ struct
         else
           let val p = Word64.<< (0w1, Word.fromInt k)
           in pows (k + 1, p :: Word64.- (p, 0w1) :: Word64.+ (p, 0w1) :: acc) end
-      val es = Vector.fromList (List.filter (fn w => w <= max) ([0w0, 0w1, max, Word64.- (max, 0w1)] @ pows (1, [])))
+      (* the extremes: 0, 1, the largest and its neighbour, the top bit
+         and its neighbours; and the powers of two and their neighbours *)
+      val top = Word64.<< (0w1, Word.fromInt (Int.max (bits - 1, 0)))
+      val extremes = List.filter (fn w => w <= max)
+                                 [0w0, 0w1, max, Word64.- (max, 0w1), top, Word64.- (top, 0w1), Word64.+ (top, 0w1)]
+      val es = (Vector.fromList extremes,
+                Vector.fromList (List.filter (fn w => w <= max andalso not (List.exists (fn e => e = w) extremes)) (pows (1, []))))
       fun sampler size r =
         let
           val g = Random.fromSeed r
@@ -264,7 +286,7 @@ struct
         in
           case family of
             0w0 => uniformBelow (Word64.+ (Word64.min (Word64.fromInt (Int.max (size, 0)), max), 0w1)) x
-          | 0w1 => Vector.sub (es, Word64.toInt (uniformBelow (Word64.fromInt (Vector.length es)) x))
+          | 0w1 => edge es g
           | _ => Word64.andb (x, max)
         end
     in
@@ -446,15 +468,18 @@ struct
       let
         val span = hi - lo + 1
         fun inRange v = lo <= v andalso v <= hi
-        val edges =
+        (* the extremes and the powers of two, as intRange's edges *)
+        val (extremes, powers) =
           let
             fun pows (p, acc) =
               if p > hi andalso ~p < lo then acc else pows (p * 2, p :: p - 1 :: p + 1 :: ~p :: ~p - 1 :: ~p + 1 :: acc)
-            val all = [0, 1, ~1, lo, hi, lo + 1, hi - 1] @ List.rev (pows (2, []))
             fun dedup ([], _) = []
               | dedup (v :: rest, seen) = if List.exists (fn u => u = v) seen then dedup (rest, seen) else v :: dedup (rest, v :: seen)
+            val extremes = dedup (List.filter inRange [0, 1, ~1, lo, hi, lo + 1, hi - 1], [])
           in
-            Vector.fromList (dedup (List.filter inRange all, []))
+            (Vector.fromList extremes,
+             Vector.fromList (dedup (List.filter (fn v => inRange v andalso not (List.exists (fn e => e = v) extremes))
+                                                 (List.rev (pows (2, []))), [])))
           end
         (* limbs enough for the span and 32 bits more, so that the remainder
            is uniform but for a bias below 2^-32 *)
@@ -469,7 +494,9 @@ struct
                  in clampTo (IntInf.fromInt (intRange (~ (Int.max (S.size s, 0)), Int.max (S.size s, 0)) (s, S.child (a, 1))))
                     handle Overflow => clampTo n
                  end
-          | 1 => Vector.sub (edges, choice (Vector.length edges) (s, S.child (a, 1)))
+          | 1 =>
+              let val v = if Vector.length powers = 0 orelse choice 2 (s, S.child (a, 3)) = 0 then extremes else powers
+              in Vector.sub (v, choice (Vector.length v) (s, S.child (a, 1))) end
           | _ =>
               let
                 val ls = S.child (a, 2)

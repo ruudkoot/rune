@@ -253,8 +253,9 @@ val intRange : int * int -> int gen
 `intRange (lo, hi)` draws an integer of `[lo, hi]`.
 
 It is a third of the time small (within the size of 0), a third on an
-edge (0, 1, \~1, the bounds and their neighbours, powers of two and their
-neighbours), and a third anywhere.
+edge, and a third anywhere. Half the edges are the extremes (0, 1, \~1,
+the bounds and their neighbours) and half the powers of two in range
+and their neighbours.
 
 **Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`.
 
@@ -316,9 +317,11 @@ anywhere in the range.
 val word : word gen
 ```
 
-[`word`](#val-word) draws a word: a third of the time small, a third on an edge (0,
-1, the largest, powers of two and their neighbours, the top bit), a
-third anywhere.
+[`word`](#val-word) draws a word: a third of the time small, a third on an edge, a third anywhere.
+
+Half the edges are the extremes (0, 1, the largest and its neighbour,
+the top bit and its neighbours) and half the powers of two and their
+neighbours.
 
 ### <a name="val-word64"></a>`word64`
 

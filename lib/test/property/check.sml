@@ -35,10 +35,31 @@ struct
   fun classOf (r : Prop.result) : string option =
     case #verdict r of Prop.Fail {class, ...} => SOME class | _ => NONE
 
-  (* the result of p on the source, the case's cleanups run *)
+  (* The cases of the law that runs, counted, so that a runner can name the
+     case the machine could not hold (RUNE_PROPERTY_CASES) and skip it when
+     the law is run again (RUNE_PROPERTY_SKIP); see `laws`. *)
+  val caseIndex = ref 0
+  val tracing = ref false
+  val skipping : int list ref = ref []
+  val skipped = ref 0
+
+  fun discarded (why : string) : Prop.result =
+    {verdict = Prop.Discard, shown = [], labels = [], covers = []}
+
+  (* the result of p on the source, the case's cleanups run; a case that went
+     past the source's budget is discarded, whatever it did *)
   fun runCase (p : Prop.prop) (s : S.source) : Prop.result =
-    let val r = Prop.run p (s, S.root) handle e => (S.cleanUp s; raise e)
-    in S.cleanUp s; r end
+    let
+      val () = caseIndex := !caseIndex + 1
+      val k = !caseIndex
+      val () = if !tracing then (TextIO.output (TextIO.stdOut, "CASE " ^ Int.toString k ^ "\n"); TextIO.flushOut TextIO.stdOut)
+               else ()
+    in
+      if List.exists (fn j => j = k) (!skipping) then (skipped := !skipped + 1; discarded "skipped")
+      else
+        let val r = Prop.run p (s, S.root) handle S.TooBig => discarded "too big" | e => (S.cleanUp s; raise e)
+        in S.cleanUp s; if S.tooBig s then discarded "too big" else r end
+    end
 
   (* ---- the shrinker ---- *)
 
@@ -194,6 +215,7 @@ struct
              (s0 : S.source, r0 : Prop.result) : S.source * Prop.result * int =
     let
       val runs = ref 0
+      val tooBig = ref 0
       fun upTo n = List.tabulate (Int.max (n, 0), fn i => i)
       fun distinctBy key xs =
         List.foldl (fn (x, acc) => if List.exists (fn y => key y = key x) acc then acc else acc @ [x]) [] xs
@@ -203,11 +225,18 @@ struct
          has read may already be 0, and the zeroed paths only grow *)
       fun attempt (s : S.source) (set : S.node list, zeros : Word64.word list list) : (S.source * Prop.result) option =
         if !runs >= maxRuns then NONE
+        (* a case the machine could not hold ends the shrinking there, with
+           the simplest case so far *)
+        else if List.exists (fn j => j = !caseIndex + 1) (!skipping) then
+          (caseIndex := !caseIndex + 1; skipped := !skipped + 1; runs := maxRuns; NONE)
         else
           let
             val () = runs := !runs + 1
             val s' = S.new (seed, size, set, zeros)
             val r = runCase p s'
+            (* ten candidates too big to judge end the shrinking: near the
+               edge of what the machine holds, each costs a million reads *)
+            val () = if S.tooBig s' then (tooBig := !tooBig + 1; if !tooBig >= 10 then runs := maxRuns else ()) else ()
           in
             if classOf r = SOME class andalso (simpler (s', s) orelse (List.length zeros > List.length (#zeros s)
                                                                         andalso not (simpler (s, s'))))
@@ -585,8 +614,25 @@ struct
                      (SOME l, _) => List.filter (fn (n, _) => n = l) ls
                    | (NONE, SOME l) => if l = "" then ls else after (l, ls)
                    | (NONE, NONE) => ls
+      (* the laws at one structure: those whose label ends in @Structure *)
+      val chosen = case OS.Process.getEnv "RUNE_PROPERTY_AT" of
+                     SOME st => List.filter (fn (n, _) => String.isSuffix ("@" ^ st) n) chosen
+                   | NONE => chosen
+      (* RUNE_PROPERTY_SKIP: `label:k` for each case k of a law to skip *)
+      val skips =
+        case OS.Process.getEnv "RUNE_PROPERTY_SKIP" of
+          NONE => []
+        | SOME t =>
+            List.mapPartial (fn w => case String.fields (fn c => c = #":") w of
+                                       [l, k] => Option.map (fn k => (l, k)) (Int.fromString k)
+                                     | _ => NONE)
+                            (String.tokens Char.isSpace t)
+      val () = tracing := isSome (OS.Process.getEnv "RUNE_PROPERTY_CASES")
       fun one (name, make) =
-        (say ("LAW " ^ name ^ "\n");
+        (caseIndex := 0;
+         skipped := 0;
+         skipping := List.map #2 (List.filter (fn (l, _) => l = name) skips);
+         say ("LAW " ^ name ^ "\n");
          let
            val p = make ()
          in
@@ -602,8 +648,11 @@ struct
                      not (isSome (classOf r)))
                 | NONE => (say ("FAIL " ^ name ^ ": " ^ t ^ " is no replay token\n"); false))
            | NONE =>
-               let val r = if deepMode then deep name p else check default name p
-               in say (report name r); passed r end
+               let
+                 val r = if deepMode then deep name p else check default name p
+                 val note = if !skipped = 0 then ""
+                            else "  " ^ Int.toString (!skipped) ^ " cases skipped: the machine could not hold them\n"
+               in say (report name r ^ note); passed r end
          end
          handle e => (say ("FAIL " ^ name ^ ": " ^ exnName e ^ " while the law was made\n"); false))
       val results = List.map one chosen

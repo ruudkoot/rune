@@ -214,7 +214,10 @@ pieces of code, read by a small grammar:
 - The first piece of code is a law, and so is one after "and" that follows a
   law: ``Law: `concat [s, t] = s ^ t`, and `concat [] = ""` ``.
 - A piece after "for" or "when" is a condition, a `bool`, and so is one after
-  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. A
+  "and" that follows a condition: ``for `0 <= i andalso i < length l` ``. An
+  integer variable that a condition bounds this way, `lo <= x`, `x < hi` and
+  the like joined by `andalso`, is drawn within the bounds, after the
+  variables they name, and not drawn and thrown away. A
   condition that raises an exception does not hold, so ``when `(ignore
   (slice (v, i, SOME n)); true)` `` says "when the slice exists".
 - ``for `x` from `G` `` draws `x` from the arbitrary `G`, and ``when `f` has

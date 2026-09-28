@@ -1865,7 +1865,7 @@ struct
                                 let val opens = DocLaws.opens (st, #path l)
                                 in
                                   DocLaws.entry (l, st, opens, DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l),
-                                                 DocElab.sides (#fixity lib) (#code l))
+                                                 DocElab.sides (#fixity lib) (#code l), #fixity lib)
                                 end)
                              ss
         in

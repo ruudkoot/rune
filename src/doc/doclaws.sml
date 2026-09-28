@@ -107,10 +107,124 @@ struct
         let val (r, p) = together rest
         in ("Arb.pair (" ^ a ^ ", " ^ r ^ ")", "(" ^ v ^ ", " ^ p ^ ")") end
 
+  (* ---- drawing into the conditions (P14) ---- *)
+
+  (* the pieces of a condition that `andalso` joins at its top: outside
+     brackets, strings and `let ... end` *)
+  fun conjuncts (c : string) : string list =
+    let
+      val n = String.size c
+      fun word (i, w) = String.isPrefix w (String.extract (c, i, NONE))
+                        andalso (i = 0 orelse not (Char.isAlphaNum (String.sub (c, i - 1))))
+                        andalso (i + String.size w >= n orelse not (Char.isAlphaNum (String.sub (c, i + String.size w))))
+      fun go (i, depth, start, acc) =
+        if i >= n then List.rev (String.substring (c, start, n - start) :: acc)
+        else
+          case String.sub (c, i) of
+            #"(" => go (i + 1, depth + 1, start, acc) | #"[" => go (i + 1, depth + 1, start, acc)
+          | #"{" => go (i + 1, depth + 1, start, acc)
+          | #")" => go (i + 1, depth - 1, start, acc) | #"]" => go (i + 1, depth - 1, start, acc)
+          | #"}" => go (i + 1, depth - 1, start, acc)
+          | #"\"" => let fun skip j = if j >= n then n else if String.sub (c, j) = #"\\" then skip (j + 2)
+                                        else if String.sub (c, j) = #"\"" then j + 1 else skip (j + 1)
+                     in go (skip (i + 1), depth, start, acc) end
+          | _ =>
+              if word (i, "let") then go (i + 3, depth + 1, start, acc)
+              else if word (i, "end") then go (i + 3, depth - 1, start, acc)
+              else if depth = 0 andalso word (i, "andalso")
+              then go (i + 7, depth, i + 7, String.substring (c, start, i - start) :: acc)
+              else go (i + 1, depth, start, acc)
+    in
+      List.map (fn t => Substring.string (Substring.dropr Char.isSpace (Substring.dropl Char.isSpace (Substring.full t))))
+               (go (0, 0, 0, []))
+    end
+
+  (* whether the name occurs in the text as a word of its own *)
+  fun mentions (name : string) (t : string) : bool =
+    List.exists (fn w => w = name) (String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"_" orelse c = #"'")) t)
+
+  (* The bounds a condition sets on the integer variable x: lower and upper,
+     each an expression and whether it is strict. *)
+  fun boundsOf (fixity : Fixity.env) (x : string) (conditions : string list)
+      : (string * bool) list * (string * bool) list =
+    List.foldl (fn (c, (lows, highs)) =>
+                  case DocElab.infixSplit fixity ["<", "<=", ">", ">="] c of
+                    SOME (l, opr, r) =>
+                      if l = x andalso not (mentions x r) then
+                        (case opr of
+                           "<" => (lows, highs @ [(r, true)]) | "<=" => (lows, highs @ [(r, false)])
+                         | ">" => (lows @ [(r, true)], highs) | _ => (lows @ [(r, false)], highs))
+                      else if r = x andalso not (mentions x l) then
+                        (case opr of
+                           "<" => (lows @ [(l, true)], highs) | "<=" => (lows @ [(l, false)], highs)
+                         | ">" => (lows, highs @ [(l, true)]) | _ => (lows, highs @ [(l, false)]))
+                      else (lows, highs)
+                  | NONE => (lows, highs))
+               ([], []) (List.concat (List.map conjuncts conditions))
+
+  (* The arbitrary of a law's variables that draws each integer variable
+     that its conditions bound from within the bounds, after the variables
+     the bounds name (P14): the variables without bounds are drawn first,
+     then each bounded one in order, from `Gen.intRange` of its bounds, which
+     are evaluated under the structure's names. An empty range, or bounds
+     that raise, discard the case, as a condition that raises does. NONE: no
+     variable is bounded. *)
+  fun domains (fixity : Fixity.env, opens : string, vars : (string * string * string) list, conditions : string list)
+      : string option =
+    let
+      fun opened e = if opens = "" then "(" ^ e ^ ")" else "let open " ^ opens ^ " in " ^ e ^ " end"
+      val bounded =
+        List.mapPartial (fn (x, ty, _) =>
+                           if ty <> "int" then NONE
+                           else case boundsOf fixity x conditions of
+                                  ([], []) => NONE
+                                | b => SOME (x, b))
+                        vars
+      (* a bounded variable is drawn in order after the unbounded ones, and
+         its bounds may name only those and the bounded ones before it *)
+      fun order ([], _, acc) = List.rev acc
+        | order ((x, (lows, highs)) :: rest, known, acc) =
+            let
+              val later = List.filter (fn (v, _, _) => not (List.exists (fn k => k = v) known) andalso v <> x) vars
+              fun ok (e, _) = not (List.exists (fn (v, _, _) => mentions v e) later)
+            in
+              if List.all ok (lows @ highs) then order (rest, x :: known, (x, (lows, highs)) :: acc)
+              else order (rest, known, acc)
+            end
+      val unbounded0 = List.filter (fn (v, _, _) => not (List.exists (fn (x, _) => x = v) bounded)) vars
+      val drawnLate = order (bounded, List.map #1 unbounded0, [])
+      val unbounded = List.filter (fn (v, _, _) => not (List.exists (fn (x, _) => x = v) drawnLate)) vars
+    in
+      if List.null drawnLate then NONE
+      else
+        let
+          val (uarb, upat) = together (List.map (fn (v, _, a) => (v, a)) unbounded)
+          val (arb, pat) = together (List.map (fn (v, _, a) => (v, a)) vars)
+          fun lower [] = "valOf Int.minInt"
+            | lower ls = List.foldl (fn (e, acc) => "Int.max (" ^ e ^ ", " ^ acc ^ ")") (hd ls) (tl ls)
+          fun bound (e, strict, adjust) = if strict then "(" ^ e ^ ") " ^ adjust ^ " 1" else "(" ^ e ^ ")"
+          fun range (lows, highs) =
+            "(let val (lo, hi) = " ^ opened ("(" ^ (case lows of [] => "valOf Int.minInt"
+                                                               | _ => lower (List.map (fn (e, s) => bound (e, s, "+")) lows))
+                                          ^ ", " ^ (case highs of [] => "valOf Int.maxInt"
+                                                                | (e0, s0) :: hs => List.foldl (fn (e, acc) => "Int.min (" ^ e ^ ", " ^ acc ^ ")")
+                                                                                               (bound (e0, s0, "-"))
+                                                                                               (List.map (fn (e, s) => bound (e, s, "-")) hs))
+                                          ^ ")")
+            ^ " handle _ => raise Gen.Discarded in if lo > hi then raise Gen.Discarded else Gen.intRange (lo, hi) end)"
+          fun nest [] = "Gen.return " ^ pat
+            | nest ((x, b) :: rest) = "Gen.bind " ^ range b ^ " (fn " ^ x ^ " => " ^ nest rest ^ ")"
+        in
+          SOME ("let val a = " ^ arb ^ " in {gen = Gen.bind (#gen (" ^ uarb ^ ")) (fn " ^ upat ^ " => " ^ nest drawnLate
+                ^ "), show = #show a, co = #co a, eq = #eq a} end")
+        end
+    end
+
   (* One law at one structure, as an entry of the program: its label and what
      makes its property, or what stops it from being run. `sides` is the law's
      two sides where it is an equation. *)
-  fun entry (l : law, structure' : string, opens : string, result : DocElab.law, sides : (string * string) option) : string =
+  fun entry (l : law, structure' : string, opens : string, result : DocElab.law, sides : (string * string) option,
+             fixity : Fixity.env) : string =
     let
       val name = label l ^ "@" ^ structure'
       fun broken why = "  (" ^ str name ^ ", fn () => raise Fail " ^ str why ^ ")"
@@ -124,6 +238,12 @@ struct
           | NONE =>
               let
                 val (arb, pat) = together (List.map (fn {name, instance, ...} : DocElab.variable => (name, valOf instance)) vars)
+                (* the integer variables its conditions bound are drawn within the bounds (P14) *)
+                val arb = case domains (fixity, opens,
+                                        List.map (fn {name, ty, instance} : DocElab.variable => (name, ty, valOf instance)) vars,
+                                        #conditions l) of
+                            SOME d => d
+                          | NONE => arb
                 val cond = case #conditions l of
                              [] => "fn _ => true"
                            | cs => "fn " ^ pat ^ " => " ^ opened (String.concatWith " andalso " (List.map (fn c => "(" ^ c ^ ")") cs))
