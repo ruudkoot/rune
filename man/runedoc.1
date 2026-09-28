@@ -152,8 +152,11 @@ and stop. Each program prints a line
 .B PASS
 or
 .B FAIL
-for every example and exits with a failure if one does not hold. The same
-examples are elaborated whenever the documentation is made.
+for every example and exits with a failure if one does not hold. A
+counterexample, a claim that must not hold, is written into the same program
+and passes when its equation's sides have different outcomes or its claim is
+false or raises. The same examples and counterexamples are elaborated
+whenever the documentation is made.
 .TP
 .BI \-\-laws " DIR"
 Write the laws of the comments as one program for each signature into

@@ -158,13 +158,15 @@ struct
                    val once = List.foldl (fn (v : DocElab.variable, acc) =>
                                             if List.exists (fn (w : DocElab.variable) => #name w = #name v) acc then acc
                                             else acc @ [v]) [] vars
+                   val head = case modifier of SOME m => "Law (" ^ M.escape m ^ ")" | NONE => "Law"
                  in
-                   if List.null once then labelled ("Law", body)
-                   else "**Law** " ^ inl body ^ " (for every "
+                   if List.null once then labelled (head, body)
+                   else "**" ^ head ^ "** " ^ inl body ^ " (for every "
                         ^ String.concatWith ", " (List.map (fn {name, ty, ...} => M.code (name ^ " : " ^ ty)) once)
                         ^ ")\n\n"
                  end
              | "Example" => labelled ("Example", body)
+             | "Counterexample" => labelled ("Counterexample", body)
              | "Complexity" => labelled ("Complexity", body)
              | "See also" => labelled ("See also", body)
              | "Area" => ""
@@ -191,7 +193,8 @@ struct
       String.concatWith "<br><br>"
         (List.mapPartial (fn T.Para is => SOME (M.cell link is)
                            | T.Reserved {keyword, body, ...} =>
-                               if T.isNote keyword orelse keyword = "Example" orelse keyword = "See also"
+                               if T.isNote keyword orelse keyword = "Example" orelse keyword = "Counterexample"
+                                  orelse keyword = "See also"
                                then SOME ("**" ^ keyword ^ "** " ^ M.cell link body) else NONE
                            | T.CodeBlock c => SOME (M.code (T.oneLine c))
                            | T.Bullets items => SOME (String.concatWith "<br>" (List.map (fn is => "&bull; " ^ M.cell link is) items)))

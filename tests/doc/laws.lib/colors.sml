@@ -22,7 +22,9 @@ sig
 
      Law: `List.length (keep (f, l)) <= List.length l` when `f` has no effects
 
-     Law: `keep (fn _ => true, l) = l`, and `keep (fn _ => false, l) = []`
+     Law (Constant): `keep (fn _ => true, l) = l`, and `keep (fn _ => false, l) = []`
+
+     Law (Idempotent): `keep (f, keep (f, l)) = keep (f, l)` when `f` has no effects
 
      Law: `keep (f, keep (g, l)) = keep (g, keep (f, l))` when `f` and `g` have
      no effects *)

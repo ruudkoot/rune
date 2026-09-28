@@ -450,8 +450,14 @@ val o : ('b -> 'c) * ('a -> 'b) -> 'a -> 'c
 
 It is infix with precedence 3.
 
-**Law** `(f o (g o h)) x = ((f o g) o h) x`: composition is associative, as
-functions and not as values that `=` could compare (for every `f : 'b -> 'a`, `g : 'c -> 'b`, `h : 'd -> 'c`, `x : 'd`)
+**Law (Definition)** `(f o g) x = f (g x)` (for every `f : 'b -> 'a`, `g : 'c -> 'b`, `x : 'c`)
+
+**Law (Associative)** `(f o (g o h)) x = ((f o g) o h) x`, as functions and
+not as values that `=` could compare (for every `f : 'b -> 'a`, `g : 'c -> 'b`, `h : 'd -> 'c`, `x : 'd`)
+
+**Law (Left-identity)** `((fn y => y) o f) x = f x` (for every `f : 'b -> 'a`, `x : 'b`)
+
+**Law (Right-identity)** `(f o (fn y => y)) x = f x` (for every `f : 'b -> 'a`, `x : 'b`)
 
 **Example** `(Int.toString o (fn x => x + 1)) 1 = "2"`
 

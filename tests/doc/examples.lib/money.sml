@@ -24,7 +24,15 @@ sig
      = zero`, a claim that is no equation
 
      Example: `show zero = 0` is ill-typed, `show nothing = "0"` names what is
-     not there, and `show = show` compares what has no equality. *)
+     not there, and `show = show` compares what has no equality.
+
+     Counterexample: `show zero = "1"`, whose sides differ; `show zero = ""
+     andalso true`, a claim that is false; and `1 div 0 = 1`, whose left side
+     raises.
+
+     Counterexample: `(fn x => x + 1) = (fn x => x)` compares at a type
+     without equality, `show nothing = ""` names what is not there, and `show
+     zero` is no claim. *)
   val show : t -> string
 
   (* Rounding. *)

@@ -19,15 +19,22 @@ struct
   type example = {signat : string,
                   member : string,              (* with its substructures; "" for the signature itself *)
                   path : string list,           (* the substructures *)
-                  code : string, span : Source.span}
+                  code : string, span : Source.span,
+                  counter : bool}               (* a `Counterexample:`, a claim that must not hold *)
 
   fun ofDoc (signat, member, path, span) (doc : I.doc) : example list =
-    List.concat
-      (List.map (fn T.Reserved {keyword = "Example", body, ...} =>
-                      List.mapPartial (fn T.Code c => SOME {signat = signat, member = member, path = path, code = c, span = span}
-                                        | _ => NONE) body
-                  | _ => [])
-                doc)
+    let
+      fun pieces (counter, body) =
+        List.mapPartial (fn T.Code c => SOME {signat = signat, member = member, path = path, code = c, span = span,
+                                              counter = counter}
+                          | _ => NONE) body
+    in
+      List.concat
+        (List.map (fn T.Reserved {keyword = "Example", body, ...} => pieces (false, body)
+                    | T.Reserved {keyword = "Counterexample", body, ...} => pieces (true, body)
+                    | _ => [])
+                  doc)
+    end
 
   fun ofSignature (s : I.signatureRecord) : example list =
     ofDoc (#name s, "", [], #span s) (#doc s)
@@ -64,8 +71,30 @@ struct
           "let open " ^ String.concatWith " " (s :: prefixes (path, s)) ^ " in " ^ code ^ " end"
         end
 
-  fun nameOf ({signat, member, code, ...} : example) : string =
-    signat ^ (if member = "" then "" else "." ^ member) ^ ": " ^ code
+  fun nameOf ({signat, member, code, counter, ...} : example) : string =
+    signat ^ (if member = "" then "" else "." ^ member) ^ ": " ^ (if counter then "counterexample " else "") ^ code
+
+  (* The code under the structure's names, as `expression` reads an example. *)
+  fun opened (structure' : string option, e : example) (code : string) : string =
+    expression (structure', {signat = #signat e, member = #member e, path = #path e, code = code, span = #span e,
+                             counter = #counter e})
+
+  (* A counterexample as what the program tries: the outcomes of an
+     equation's two sides, which must differ, or a claim that must be false
+     or raise. The top-level fixity splits the equation, as a law's is. *)
+  fun counterClaim (structure' : string option, e : example) : string =
+    case DocElab.sides Fixity.initial (#code e) of
+      SOME (l, r) => "differ (fn () => " ^ opened (structure', e) l ^ ", fn () => " ^ opened (structure', e) r ^ ")"
+    | NONE => "not (" ^ expression (structure', e) ^ ")"
+
+  (* What elaborating a counterexample checks, as a `bool`: an equation's
+     sides have one type that admits equality, which the program compares
+     their values at. *)
+  fun counterCheck (structure' : string option, e : example) : string =
+    case DocElab.sides Fixity.initial (#code e) of
+      SOME (l, r) => "let fun differ (l : unit -> ''a, r : unit -> ''a) = true in differ (fn () => "
+                     ^ opened (structure', e) l ^ ", fn () => " ^ opened (structure', e) r ^ ") end"
+    | NONE => expression (structure', e)
 
   (* The program that tries the examples of one signature: a line PASS or
      FAIL for each, and a status that says whether all hold. An example that
@@ -77,8 +106,25 @@ struct
     ^ "fun example (name, holds) =\n"
     ^ "  if holds () handle _ => false then print (\"PASS \" ^ name ^ \"\\n\")\n"
     ^ "  else (print (\"FAIL \" ^ name ^ \"\\n\"); failed := !failed + 1)\n"
-    ^ String.concat (List.map (fn e => "val () = example (\"" ^ String.toString (nameOf e) ^ "\",\n"
-                                       ^ "  fn () => " ^ expression (structure', e) ^ ")\n")
+    ^ (if List.exists #counter examples then
+         "(* a counterexample holds when its claim does not: the outcomes of an\n"
+         ^ "   equation's sides differ, or a claim is false or raises *)\n"
+         ^ "datatype 'a outcome = Value of 'a | Raised of string\n"
+         ^ "fun outcome f = Value (f ()) handle e => Raised (exnName e)\n"
+         ^ "fun differ (l, r) =\n"
+         ^ "  case (outcome l, outcome r) of\n"
+         ^ "    (Value a, Value b) => a <> b\n"
+         ^ "  | (Raised m, Raised n) => m <> n\n"
+         ^ "  | _ => true\n"
+         ^ "fun counterexample (name, fails) = example (name, fn () => fails () handle _ => true)\n"
+       else "")
+    ^ String.concat (List.map (fn e =>
+                                 if #counter e then
+                                   "val () = counterexample (\"" ^ String.toString (nameOf e) ^ "\",\n"
+                                   ^ "  fn () => " ^ counterClaim (structure', e) ^ ")\n"
+                                 else
+                                   "val () = example (\"" ^ String.toString (nameOf e) ^ "\",\n"
+                                   ^ "  fn () => " ^ expression (structure', e) ^ ")\n")
                               examples)
     ^ "val () = if !failed = 0 then () else OS.Process.exit OS.Process.failure\n"
 end

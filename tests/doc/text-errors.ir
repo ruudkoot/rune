@@ -17,6 +17,14 @@ file tests/doc/text-errors.sml
     type e
       spec: type e
       reserved Reading (the suite agrees): `X.y/z`. An unknown modifier.
+    val ident
+      spec: val ident : 'a -> 'a
+      head of ident: ident x (arguments: x)
+      para: `ident x` is `x`.
+      reserved Law (Left_identity!):
+        |`ident x = x`, a law named with other than
+        |letters, digits, hyphens and blanks
+        law: ident x = x
     type f
       spec: type f
       reserved Raises: `Subscript` on a type.
@@ -56,6 +64,8 @@ file tests/doc/text-errors.sml
       |  type d
       |
       |  type e
+      |
+      |  val ident : 'a -> 'a
       |
       |  type f
       |

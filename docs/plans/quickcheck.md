@@ -1241,7 +1241,7 @@ condition in prose (*Where we are*).
 **Decided: A** (2026-09-28), as recommended.
 
 * **A. A fix, and no skip list.** **Recommended.**
-  - **The fix.** A law that does not hold is restated so that it does, with the counterexample kept as an `Example:` written as a closed `bool`. An implementation that does not do what the law and the specification say is fixed. Where the specification's own text is what fails, a `Reading:` says so.
+  - **The fix.** A law that does not hold is restated so that it does, with the counterexample kept as a `Counterexample:` (added before the hunt, 2026-09-28: a closed claim that must not hold, judged as a law is). An implementation that does not do what the law and the specification say is fixed. Where the specification's own text is what fails, a `Reading:` says so.
   - **Joining `make check`.** The law programs join `make check` at the end of M9, when every law holds. Until then `make test-laws` stands alone, so that `make check` stays green in every commit.
 * **B. A deviation list for laws**, as `tests/basis/deviations.txt` is for checks. It makes a wrong law a line in a file, where the brief wants it found and fixed.
 
@@ -1570,6 +1570,13 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - Last, the adequacy of the laws: the mutants of M6, run against the documented laws, show which functions the laws leave unconstrained (FitSpec's check).
 * **Why now:** last, because everything before it is what it tests.
 * **Done when:** every law holds at every implementation in `make check`, and the result of the blind test is recorded here.
+* **Before the hunt** (2026-09-28, at the owner's request):
+  - **Functions are not compared as values.** A law whose sides have a function type anywhere in them was compared by what printing its values says, `fn`, and would pass whatever it said. runedoc now refuses such a law at its comment, "apply both sides to a variable". No law of the Basis did it after M7's rewrite of the associativity of `o`.
+  - **The associativity of `o` was measured.** Its cases raise `Generated` in 22% of draws and call an effect-observing function in 65%. The law, run against broken compositions, catches one that calls `g` twice, ones that swallow `g`'s or `f`'s exception or retry after one, and one that drops `f`'s result. It passes the one that runs `f` first, which is associative too.
+  - **`o` has the laws of a category and its definition**, named: Definition, `(f o g) x = f (g x)`, which alone pins the order; Associative; Left-identity; and Right-identity, the identity written `fn y => y` as the Basis has none. All four pass.
+  - **Named laws** (the owner's proposal). `Law (Associative):` names a law, and its label is its name, `GENERAL.o/law-associative`.
+  - **Counterexamples** (the owner's proposal). A `Counterexample:` is a closed claim that must not hold, judged as a law is. An equation's sides must have different outcomes; any other claim must be false or raise. runedoc elaborates it with the examples, and the examples' programs try it. It is where D12 keeps the case that broke a law.
+  - **Call tables** in a report list each call of a generated function once. The condition and the two sides of a law call copies of it, whose calls were listed together; the comparison of the sides' calls is unchanged.
 
 ### Later
 

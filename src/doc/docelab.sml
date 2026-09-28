@@ -469,16 +469,21 @@ struct
          | NONE => false)
     | NONE => false
 
-  (* An example against the library: `val it : bool = ...` has to elaborate. *)
-  fun checkExample ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
+  (* An example against the library: `val it : bool = ...` has to elaborate.
+     A counterexample is checked as one too, through what its program runs. *)
+  fun checkClaim' (kind : string) ({env, fixity} : library) (what : string, expression : string, span : Source.span) : unit =
     let
       val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<example>", "val it : bool = " ^ expression)), fixity)
     in
+      Elaborate.pendingFlex := []; Elaborate.pendingChecks := []; Elaborate.pendingOverloads := []; Elaborate.pendingLiterals := [];
       Elaborate.elabTop (ref env, prog);
       Elaborate.finish ();
       Error.warnings := []
     end
-    handle Error.CompileError (_, msg) => DocDiag.error (span, "the example `" ^ what ^ "` is not one that can be run: " ^ msg)
+    handle Error.CompileError (_, msg) => DocDiag.error (span, "the " ^ kind ^ " `" ^ what ^ "` is not one that can be run: " ^ msg)
+
+  fun checkExample lib = checkClaim' "example" lib
+  fun checkCounterexample lib = checkClaim' "counterexample" lib
 
   (* ---- laws (docs/plans/quickcheck.md, D7 and M7) ---- *)
 

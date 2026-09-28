@@ -96,6 +96,7 @@ set is closed and case-sensitive.
 | `Law:` | a value | an equation or a `bool`, in backquotes, with its conditions (*Laws*) |
 | `Complexity:` | a value | prose |
 | `Example:` | anything | code; every piece is a closed `bool` that is true, and is run (below) |
+| `Counterexample:` | anything an example may document | a claim, in backquotes, that does not hold (*Counterexamples*) |
 | `See also:` | anything | references in backquotes |
 | `Area:` | a signature, a functor, a structure that no signature describes | the area of the library's overview page that lists it |
 | `Status:` | a signature, structure or functor | `required`, `optional` or `extension`; a signature without one is required, a structure without one has the status of its signature |
@@ -186,6 +187,22 @@ type without equality is compared through its text: `Real.fmt (StringCvt.FIX
 An example says what this library does, so `Int.precision = SOME 64` is a
 fine example; the programs are not tried on other implementations.
 
+## Counterexamples
+
+A `Counterexample:` is the opposite of an example: a closed claim in
+backquotes that does *not* hold, where an obvious reading of a member, or a
+law without its condition, breaks. It is judged as a law is (D6): an equation
+`l = r` whose two sides have different outcomes (different values, or one
+raises, or they raise different exceptions), or any other claim that is false
+or raises. So ``Counterexample: `valOf Int.maxInt + 1 = valOf Int.minInt` ``
+shows that `+` does not wrap: its left side raises `Overflow`. runedoc
+elaborates every counterexample as it does every example, and the programs of
+`--examples` try each and fail if it holds. The sides of an equation must have
+one type that admits equality, which the program compares their values at;
+compare reals and other types without equality by a claim, with `Real.==`. A
+false claim is easy to write by accident, so pair a counterexample with the
+claim it breaks, and say in the prose why it breaks.
+
 ## Laws
 
 A `Law:` says what holds for every value of its variables
@@ -205,6 +222,11 @@ pieces of code, read by a small grammar:
   from the pure ones. Other functions may raise and have effects, and a law
   compares what its two sides do with them.
 - Any other piece is prose: a name or a result the sentence speaks of.
+
+A law may be named, `Law (Associative):`, and is then labelled by its name
+(`GENERAL.o/law-associative`) and not by its number; the name is letters,
+digits, hyphens and blanks, and each law of a named paragraph with several is
+numbered after it.
 
 The conditions of a paragraph hold for each of its laws, so a law with a
 condition of its own gets a paragraph of its own. The names a law leaves

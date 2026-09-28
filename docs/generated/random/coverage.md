@@ -20,8 +20,8 @@ is one a program can name and nothing explains: it is a name beyond the signatur
 
 ## Examples that are run
 
-Every example is a closed expression of type `bool` that is true: it is elaborated when these pages
-are made and tried by the test suite: 8 of them, in [`RANDOM`](sig/RANDOM.md) (8).
+Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 8 of them, in [`RANDOM`](sig/RANDOM.md) (8).
 
 ## Laws that are run
 

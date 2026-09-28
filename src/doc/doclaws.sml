@@ -24,6 +24,7 @@ struct
               member : string,              (* with its substructures *)
               path : string list,           (* the substructures *)
               index : int,                  (* the member's laws are numbered from 1 *)
+              name : string option,         (* `Law (Associative):`, with a number where its paragraph has several *)
               code : string,                (* the law as written *)
               conditions : string list,
               domains : (string * string) list,
@@ -34,20 +35,25 @@ struct
 
   fun ofDoc (signat, member, path, span) (doc : I.doc) : law list =
     let
-      val paragraphs = List.mapPartial (fn T.Reserved {keyword = "Law", body, ...} => SOME body | _ => NONE) doc
-      fun lawsOf body =
+      val paragraphs = List.mapPartial (fn T.Reserved {keyword = "Law", modifier, body} => SOME (modifier, body) | _ => NONE) doc
+      fun lawsOf (modifier, body) =
         let
           val rs = roles body
           val conditions = List.mapPartial (fn (c, Condition) => SOME c | _ => NONE) rs
           val domains = List.mapPartial (fn (x, Domain g) => SOME (x, g) | _ => NONE) rs
           val pure = List.mapPartial (fn (f, Pure) => SOME f | _ => NONE) rs
+          val laws = List.mapPartial (fn (c, Law) => SOME c | _ => NONE) rs
+          fun named k = case (modifier, laws) of
+                          (NONE, _) => NONE
+                        | (SOME m, [_]) => SOME m
+                        | (SOME m, _) => SOME (m ^ " " ^ Int.toString k)
         in
-          List.mapPartial (fn (c, Law) => SOME (c, conditions, domains, pure) | _ => NONE) rs
+          ListPair.map (fn (c, k) => (c, conditions, domains, pure, named k)) (laws, List.tabulate (List.length laws, fn k => k + 1))
         end
       val all = List.concat (List.map lawsOf paragraphs)
     in
-      ListPair.map (fn ((code, conditions, domains, pure), index) =>
-                      {signat = signat, member = member, path = path, index = index, code = code,
+      ListPair.map (fn ((code, conditions, domains, pure, name), index) =>
+                      {signat = signat, member = member, path = path, index = index, name = name, code = code,
                        conditions = conditions, domains = domains, pure = pure, span = span})
                    (all, List.tabulate (List.length all, fn i => i + 1))
     end
@@ -57,10 +63,15 @@ struct
                              ofDoc (#name s, String.concatWith "." (#path e @ [#name e]), #path e, #span e) (#doc e))
                           (DocPage.entriesOf (#body s)))
 
+  (* A law's name in a label: its letters and digits, lower case, the rest
+     a hyphen. *)
+  fun slug (name : string) : string =
+    String.concatWith "-" (String.tokens (fn c => not (Char.isAlphaNum c)) (String.map Char.toLower name))
+
   (* The label of a law, as the Basis suite labels its checks (D13):
-     `INTEGER.div/law-1`. *)
-  fun label ({signat, member, index, ...} : law) : string =
-    signat ^ "." ^ member ^ "/law-" ^ Int.toString index
+     `INTEGER.div/law-1`, or by its name, `GENERAL.o/law-associative`. *)
+  fun label ({signat, member, index, name, ...} : law) : string =
+    signat ^ "." ^ member ^ "/law-" ^ (case name of SOME n => slug n | NONE => Int.toString index)
 
   (* `open S S.Sub ...`: what a law of a member of a substructure is read under *)
   fun opens (structure' : string, path : string list) : string =
@@ -78,6 +89,11 @@ struct
   (* ---- the programs of --laws (quickcheck M8) ---- *)
 
   fun str (s : string) : string = "\"" ^ String.toString s ^ "\""
+
+  (* whether a type, as printed, has a function type in it: its values have
+     no equality, and printing them says nothing, so a law must compare
+     their calls (D6) *)
+  fun hasFunction (ty : string) : bool = String.isSubstring "->" ty
 
   (* An arbitrary of the variables together and the pattern that binds them:
      a pair or triple, pairs nested beyond three, `()` for none. *)
@@ -113,10 +129,14 @@ struct
                            | cs => "fn " ^ pat ^ " => " ^ opened (String.concatWith " andalso " (List.map (fn c => "(" ^ c ^ ")") cs))
               in
                 case (sides, side) of
-                  (SOME (left, right), SOME {instance = SOME b, ...}) =>
-                    "  (" ^ str name ^ ",\n   fn () => Prop.equalIf (" ^ arb ^ ", " ^ b ^ ")\n     (" ^ cond
-                    ^ ",\n      fn " ^ pat ^ " => " ^ opened left ^ ",\n      fn " ^ pat ^ " => " ^ opened right ^ "))"
-                | (SOME _, SOME {ty, ...}) => broken ("lib/test/property has no arbitrary of the sides' type " ^ ty)
+                  (SOME (left, right), SOME {ty, instance, ...}) =>
+                    if hasFunction ty then broken ("the law compares functions (" ^ ty ^ "): apply both sides to a variable")
+                    else
+                      (case instance of
+                         SOME b =>
+                           "  (" ^ str name ^ ",\n   fn () => Prop.equalIf (" ^ arb ^ ", " ^ b ^ ")\n     (" ^ cond
+                           ^ ",\n      fn " ^ pat ^ " => " ^ opened left ^ ",\n      fn " ^ pat ^ " => " ^ opened right ^ "))"
+                       | NONE => broken ("lib/test/property has no arbitrary of the sides' type " ^ ty))
                 | _ =>
                     "  (" ^ str name ^ ",\n   fn () => Prop.holdsIf (" ^ arb ^ ")\n     (" ^ cond
                     ^ ",\n      fn " ^ pat ^ " => " ^ opened (#code l) ^ "))"

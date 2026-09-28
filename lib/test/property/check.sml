@@ -324,8 +324,11 @@ struct
       val cs = S.calls s
       val fs = List.foldl (fn ((f : S.position, _), fs) => if List.exists (fn f' => f' = #address f) fs then fs else fs @ [#address f])
                           [] cs
+      (* each call once: the sides of a law and its condition call copies of
+         the function, which log the same calls *)
+      fun once xs = List.foldl (fn (x, acc) => if List.exists (fn y => y = x) acc then acc else acc @ [x]) [] xs
     in
-      List.map (fn f => List.map #2 (List.filter (fn (f' : S.position, _) => #address f' = f) cs)) fs
+      List.map (fn f => once (List.map #2 (List.filter (fn (f' : S.position, _) => #address f' = f) cs))) fs
     end
 
   (* ---- exhaustive mode and the small scope ---- *)

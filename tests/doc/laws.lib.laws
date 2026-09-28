@@ -16,17 +16,22 @@ val () = Check.laws [
    fn () => Prop.holdsIf (Arb.pair (Arb.pureFunction (IntArb.arb, Arb.bool), Arb.list (IntArb.arb)))
      (fn _ => true,
       fn (f, l) => let open Colors in List.length (keep (f, l)) <= List.length l end)),
-  ("COLORS.keep/law-2@Colors",
+  ("COLORS.keep/law-constant-1@Colors",
    fn () => Prop.equalIf (Arb.list (IntArb.arb), Arb.list (IntArb.arb))
      (fn _ => true,
       fn l => let open Colors in keep (fn _ => true, l) end,
       fn l => let open Colors in l end)),
-  ("COLORS.keep/law-3@Colors",
+  ("COLORS.keep/law-constant-2@Colors",
    fn () => Prop.equalIf (Arb.list (IntArb.arb), Arb.list (IntArb.arb))
      (fn _ => true,
       fn l => let open Colors in keep (fn _ => false, l) end,
       fn l => let open Colors in [] end)),
-  ("COLORS.keep/law-4@Colors",
+  ("COLORS.keep/law-idempotent@Colors",
+   fn () => Prop.equalIf (Arb.pair (Arb.pureFunction (IntArb.arb, Arb.bool), Arb.list (IntArb.arb)), Arb.list (IntArb.arb))
+     (fn _ => true,
+      fn (f, l) => let open Colors in keep (f, keep (f, l)) end,
+      fn (f, l) => let open Colors in keep (f, l) end)),
+  ("COLORS.keep/law-5@Colors",
    fn () => Prop.equalIf (Arb.triple (Arb.pureFunction (IntArb.arb, Arb.bool), Arb.pureFunction (IntArb.arb, Arb.bool), Arb.list (IntArb.arb)), Arb.list (IntArb.arb))
      (fn _ => true,
       fn (f, g, l) => let open Colors in keep (f, keep (g, l)) end,

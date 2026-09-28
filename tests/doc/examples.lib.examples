@@ -4,6 +4,16 @@ val failed = ref 0
 fun example (name, holds) =
   if holds () handle _ => false then print ("PASS " ^ name ^ "\n")
   else (print ("FAIL " ^ name ^ "\n"); failed := !failed + 1)
+(* a counterexample holds when its claim does not: the outcomes of an
+   equation's sides differ, or a claim is false or raises *)
+datatype 'a outcome = Value of 'a | Raised of string
+fun outcome f = Value (f ()) handle e => Raised (exnName e)
+fun differ (l, r) =
+  case (outcome l, outcome r) of
+    (Value a, Value b) => a <> b
+  | (Raised m, Raised n) => m <> n
+  | _ => true
+fun counterexample (name, fails) = example (name, fn () => fails () handle _ => true)
 val () = example ("MONEY: add (zero, zero) = zero",
   fn () => let open Cents in add (zero, zero) = zero end)
 val () = example ("MONEY.add: add (zero, zero) = zero",
@@ -22,6 +32,18 @@ val () = example ("MONEY.show: show nothing = \"0\"",
   fn () => let open Cents in show nothing = "0" end)
 val () = example ("MONEY.show: show = show",
   fn () => let open Cents in show = show end)
+val () = counterexample ("MONEY.show: counterexample show zero = \"1\"",
+  fn () => differ (fn () => let open Cents in show zero end, fn () => let open Cents in "1" end))
+val () = counterexample ("MONEY.show: counterexample show zero = \"\" andalso true",
+  fn () => not (let open Cents in show zero = "" andalso true end))
+val () = counterexample ("MONEY.show: counterexample 1 div 0 = 1",
+  fn () => differ (fn () => let open Cents in 1 div 0 end, fn () => let open Cents in 1 end))
+val () = counterexample ("MONEY.show: counterexample (fn x => x + 1) = (fn x => x)",
+  fn () => differ (fn () => let open Cents in (fn x => x + 1) end, fn () => let open Cents in (fn x => x) end))
+val () = counterexample ("MONEY.show: counterexample show nothing = \"\"",
+  fn () => differ (fn () => let open Cents in show nothing end, fn () => let open Cents in "" end))
+val () = counterexample ("MONEY.show: counterexample show zero",
+  fn () => not (let open Cents in show zero end))
 val () = example ("MONEY.Round.down: down zero = zero",
   fn () => let open Cents Cents.Round in down zero = zero end)
 val () = if !failed = 0 then () else OS.Process.exit OS.Process.failure

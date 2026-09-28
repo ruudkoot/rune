@@ -9,7 +9,10 @@ sig
   (* `next c` is the colour after `c`, and `Red` after `Blue`.
 
      Law: `next (next (next c)) = c`, where `c` is a colour that
-     lib/test/property has no arbitrary of *)
+     lib/test/property has no arbitrary of
+
+     Law: `(next o next) = (next o next)`: functions, which only their calls
+     can compare *)
   val next : color -> color
 
   (* `index c` is the place of `c` among the colours, from 0.

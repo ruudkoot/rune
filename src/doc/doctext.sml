@@ -4,7 +4,8 @@
    is a list; text between backquotes is code; a bare URL is a link. Nothing
    else is markup. A paragraph that starts with one of a closed set of
    keywords and a colon is reserved: it says something that can be checked
-   (`Raises:`) or that the generator uses (`Implements:`). *)
+   (`Raises:`) or that the generator uses (`Implements:`). A law may be named:
+   `Law (Associative):`. *)
 structure DocText =
 struct
   datatype inline =
@@ -21,7 +22,8 @@ struct
   (* The reserved paragraphs. The notes are those that record how the library
      reads or departs from its specification (D5). *)
   val notes = ["Reading", "Erratum", "Deviation", "Implementation", "Limitation"]
-  val keywords = ["Raises", "Example", "Law", "Complexity", "See also", "Area", "Status", "Implements", "Pinned by"] @ notes
+  val keywords = ["Raises", "Example", "Counterexample", "Law", "Complexity", "See also", "Area", "Status", "Implements",
+                  "Pinned by"] @ notes
   val statuses = ["required", "optional", "extension"]
 
   fun isNote k = List.exists (fn n => n = k) notes
@@ -162,8 +164,13 @@ struct
     let
       val hasCode = List.exists (fn Code _ => true | _ => false) body
     in
-      if isSome modifier andalso not (keyword = "Reading" andalso modifier = SOME "the suite differs") then
-        SOME ("`" ^ keyword ^ " (" ^ valOf modifier ^ "):` is not known: the one modifier is `Reading (the suite differs):`")
+      if isSome modifier andalso not (keyword = "Reading" andalso modifier = SOME "the suite differs")
+         andalso keyword <> "Law" then
+        SOME ("`" ^ keyword ^ " (" ^ valOf modifier ^ "):` is not known: a modifier is a law's name, `Law (Associative):`, "
+              ^ "or `Reading (the suite differs):`")
+      else if keyword = "Law" andalso isSome modifier
+              andalso not (CharVector.all (fn c => Char.isAlphaNum c orelse c = #"-" orelse c = #" ") (valOf modifier)) then
+        SOME ("`Law (" ^ valOf modifier ^ "):` names a law with other than letters, digits, hyphens and blanks")
       else if isNote keyword then
         (if isSome (firstCode body) then NONE
          else SOME ("`" ^ keyword ^ ":` begins with the note's id in backquotes, as in `" ^ keyword ^ ": `Char.fromString/unescaped-double-quote`. ...`"))

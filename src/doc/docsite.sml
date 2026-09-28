@@ -394,8 +394,13 @@ struct
            [] => ""
          | withExamples =>
              "## Examples that are run\n\n"
-             ^ "Every example is a closed expression of type `bool` that is true: it is elaborated when these pages\n"
-             ^ "are made and tried by the test suite: " ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, in "
+             ^ "Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim\n"
+             ^ "that does not hold: each is elaborated when these pages are made and tried by the test suite: "
+             ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withExamples) ^ " of them, "
+             ^ (case List.length (List.filter #counter (List.concat (List.map DocExamples.ofSignature sigs))) of
+                  0 => ""
+                | c => Int.toString c ^ " of them counterexamples, ")
+             ^ "in "
              ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
                                                 withExamples)
              ^ ".\n\n")
@@ -1443,7 +1448,11 @@ struct
                       sigs;
              (* the examples, under the structure they are read in *)
              List.app (fn s : I.signatureRecord =>
-                         List.app (fn e => DocElab.checkExample lib (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
+                         List.app (fn e => if #counter e
+                                           then DocElab.checkCounterexample lib
+                                                  (#code e, DocExamples.counterCheck (exampleStructure (#name s), e), #span e)
+                                           else DocElab.checkExample lib
+                                                  (#code e, DocExamples.expression (exampleStructure (#name s), e), #span e))
                                   (DocExamples.ofSignature s))
                       sigs;
              (* the laws, under the structure the examples are read in, with
@@ -1468,10 +1477,15 @@ struct
                                                           | _ => ())
                                                         vars;
                                                case side of
-                                                 SOME {ty, instance = NONE, ...} =>
-                                                   DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares its sides at `" ^ ty
-                                                                           ^ "`, which lib/test/property has no arbitrary of")
-                                               | _ => ())
+                                                 SOME {ty, instance, ...} =>
+                                                   if DocLaws.hasFunction ty then
+                                                     DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares functions (`" ^ ty
+                                                                             ^ "`), which only their calls can compare: apply both sides to a variable")
+                                                   else if not (isSome instance) then
+                                                     DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares its sides at `" ^ ty
+                                                                             ^ "`, which lib/test/property has no arbitrary of")
+                                                   else ()
+                                               | NONE => ())
                                             else ())
                                      end)
                                   (DocLaws.ofSignature s))
