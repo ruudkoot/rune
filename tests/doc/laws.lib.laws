@@ -3,7 +3,7 @@
    `rune --library test/property` (docs/plans/quickcheck.md, M8). *)
 val () = Check.laws [
   ("COLORS.index/law-1@Colors",
-   fn () => Prop.equalIf (IntArb.arb, IntArb.arb)
+   fn () => Prop.equalIf (let val a = IntArb.arb in {gen = Gen.bind (#gen (Arb.unit)) (fn () => Gen.bind (let val (lo, hi) = let open Colors in ((0), (3) - 1) end handle _ => raise Gen.Discarded in if lo > hi then raise Gen.Discarded else Gen.intRange (lo, hi) end) (fn i => Gen.return i)), show = #show a, co = #co a, eq = #eq a} end, IntArb.arb)
      (fn i => let open Colors in (0 <= i andalso i < 3) end,
       fn i => let open Colors in index (fromIndex i) end,
       fn i => let open Colors in i end)),

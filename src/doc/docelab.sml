@@ -487,9 +487,11 @@ struct
 
   (* ---- laws (docs/plans/quickcheck.md, D7 and M7) ---- *)
 
-  (* The two sides of a law that is an equation at its top, as the law's
-     text before and after its `=`; NONE for any other law. *)
-  fun sides (fixity : Fixity.env) (code : string) : (string * string) option =
+  (* The text before and after the operator of an infix application at the
+     top of `code`, where the operator is one of `ops`: NONE otherwise. The
+     operator's own place in the parse cuts the text, since the span of an
+     infix application leaves out its operands' parentheses. *)
+  fun infixSplit (fixity : Fixity.env) (ops : string list) (code : string) : (string * string * string) option =
     let
       val prefix = "val it = "
       val (prog, _) = Parser.parseTokensWith (Lexer.tokenize (Source.fromString ("<law>", prefix ^ code)), fixity)
@@ -507,16 +509,24 @@ struct
       fun trim t = Substring.string (Substring.dropr Char.isSpace (Substring.dropl Char.isSpace (Substring.full t)))
     in
       case prog of
-        [Ast.DVal (_, [(_, Ast.EApp (Ast.EVar (([], "="), _, {start, ...}), Ast.ETuple ([_, _], _), _))], _)] =>
-          let
-            val l = trim (String.substring (code, 0, start - n))
-            val r = trim (String.extract (code, start - n + 1, NONE))
-          in
-            if String.sub (code, start - n) = #"=" andalso balanced l andalso balanced r then SOME (l, r) else NONE
-          end
+        [Ast.DVal (_, [(_, Ast.EApp (Ast.EVar (([], opr), _, {start, stop, ...}), Ast.ETuple ([_, _], _), _))], _)] =>
+          if not (List.exists (fn o' => o' = opr) ops) then NONE
+          else
+            let
+              val l = trim (String.substring (code, 0, start - n))
+              val r = trim (String.extract (code, stop - n, NONE))
+            in
+              if String.substring (code, start - n, stop - start) = opr andalso balanced l andalso balanced r
+              then SOME (l, opr, r) else NONE
+            end
       | _ => NONE
     end
     handle _ => NONE
+
+  (* The two sides of a law that is an equation at its top, as the law's
+     text before and after its `=`; NONE for any other law. *)
+  fun sides (fixity : Fixity.env) (code : string) : (string * string) option =
+    Option.map (fn (l, _, r) => (l, r)) (infixSplit fixity ["="] code)
 
   (* What elaborating a law found: its variables with their types, as the
      documentation writes them, or why it is no Standard ML. *)

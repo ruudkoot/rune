@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: it matches no signature of the library |
 | Status | required |
-| Members | 31 |
+| Members | 35 |
 | Tests | not listed |
 | Source | [lib/test/property/source.sml](../../../../../lib/test/property/source.sml) |
 
@@ -32,9 +32,11 @@ The types are this structure's own.
 | type | `node` | `{address : Word64.word, bound : Word64.word, kind : kind, path : Word64.word list, word : Word64.word}` |
 | type | `position` | `{address : Word64.word, path : Word64.word list}` |
 | type | `sequence` | `{length : Word64.word, marks : Word64.word list option, parts : Word64.word list}` |
-| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, seed : Word64.word, sequences : sequence list ref, set : node list, size : int, trail : node list ref, zeros : Word64.word list list}` |
+| type | `source` | `{calls : (position * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, over : bool ref, seed : Word64.word, sequences : sequence list ref, set : node list, size : int, trail : node list ref, work : int ref, zeros : Word64.word list list}` |
+| exception | `TooBig` |  |
 | val | `addressOf` | `Word64.word list -> Word64.word` |
 | val | `bitsOf` | `real -> Word64.word` |
+| val | `budget` | `int` |
 | val | `call` | `source * position * string -> unit` |
 | val | `calls` | `source -> (position * string) list` |
 | val | `child` | `position * int -> position` |
@@ -54,8 +56,10 @@ The types are this structure's own.
 | val | `sequence` | `source * sequence -> unit` |
 | val | `sequences` | `source -> sequence list` |
 | val | `size` | `source -> int` |
+| val | `spend` | `source -> unit` |
 | val | `step` | `Word64.word * Word64.word -> Word64.word` |
 | val | `takeEffects` | `source -> string list` |
+| val | `tooBig` | `source -> bool` |
 | val | `two52` | `real` |
 | val | `withPath` | `node * Word64.word list * Word64.word -> node` |
 | val | `withWord` | `node * Word64.word -> node` |

@@ -91,7 +91,8 @@ sig
      environment chooses how they run (docs/plans/quickcheck.md, D9 and
      D13): `RUNE_PROPERTY_DEEP` runs 10000 cases for each seed from 1 to
      1000 until one fails; `RUNE_PROPERTY_ONLY` runs the law of that name
-     alone; `RUNE_PROPERTY_AFTER` runs the laws after the one of that name,
+     alone; `RUNE_PROPERTY_AT` the laws at the structure of that name;
+     `RUNE_PROPERTY_AFTER` runs the laws after the one of that name,
      where a run that was stopped goes on; `RUNE_PROPERTY_REPLAY` runs the
      case of that replay token, shrunk, and prints it. The last line counts
      the laws that passed and failed. *)
