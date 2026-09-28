@@ -50,6 +50,23 @@ sig
      not change what the other side sees. *)
   val law : 'a Arb.arb * 'b Arb.arb -> ('a -> 'b) * ('a -> 'b) -> prop
 
+  (* `holdsIf a (cond, claim)` holds when `claim x` is true for the `x` of `a` for which `cond x` is.
+
+     This is a law of documentation that is not an equation
+     (docs/plans/quickcheck.md, M8). `cond` and `claim` each have an `x` of
+     their own, drawn from the same nodes, so that one does not change what
+     the other sees. A case whose condition is false or raises is discarded,
+     and one whose claim raises fails with the exception's class. *)
+  val holdsIf : 'a Arb.arb -> ('a -> bool) * ('a -> bool) -> prop
+
+  (* `equalIf (a, b) (cond, l, r)` holds when `l x` and `r x` have one outcome for the `x` of `a` for which `cond x` is true.
+
+     This is a law of documentation that is an equation: the outcomes of the
+     sides are compared by `b` as `law` compares them, and each side and the
+     condition have an `x` of their own, drawn from the same nodes. A case
+     whose condition is false or raises is discarded. *)
+  val equalIf : 'a Arb.arb * 'b Arb.arb -> ('a -> bool) * ('a -> 'b) * ('a -> 'b) -> prop
+
   (* `==> (cond, p)` is `p ()` where `cond` holds, and discards the case where it does not.
 
      With `infix ==>` it is written `cond ==> p`. *)

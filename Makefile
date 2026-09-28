@@ -128,7 +128,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -649,6 +649,12 @@ test-doc: $(RUNEDOC) vm
 # docs/plans/quickcheck.md, D1).
 test-lib: $(RUNE) $(RUNEDOC) vm
 	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+
+# The laws of the Basis Library's documentation, each at every structure that
+# implements its signature (docs/plans/quickcheck.md, M8). Not in `make check`
+# until every law holds (D12); RUNE_PROPERTY_DEEP=1 runs the deep mode.
+test-laws: $(RUNE) $(RUNEDOC) vm
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/basis/run-laws.sh -j $(JOBS)
 
 # The same libraries on the hosts, against their own Basis Library (after a
 # change to a library, as matrix-quick is after one to lib/basis).

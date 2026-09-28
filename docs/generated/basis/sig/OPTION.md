@@ -237,7 +237,7 @@ val mapPartial : ('a -> 'b option) -> 'a option -> 'b option
 It chains two computations that may fail: the second runs only if the
 first gave a value.
 
-**Law** `mapPartial f opt = join (map f opt)` (for every `f : 'a -> 'b option`, `opt : 'a option`)
+**Law** `mapPartial f opt = join (map f opt)` (for every `f : 'b -> 'a option`, `opt : 'b option`)
 
 **Example** `mapPartial Int.fromString (SOME "x") = NONE`
 
@@ -256,7 +256,7 @@ val compose : ('a -> 'b) * ('c -> 'a option) -> 'c -> 'b option
 `compose (f, g) a` is `SOME (f v)` when `g a` is `SOME v`, and [`NONE`](#con-none) when
 `g a` is [`NONE`](#con-none).
 
-**Law** `compose (f, g) a = map f (g a)` (for every `f : 'a -> 'b`, `g : 'c -> 'a option`, `a : 'c`)
+**Law** `compose (f, g) a = map f (g a)` (for every `f : 'b -> 'a`, `g : 'c -> 'b option`, `a : 'c`)
 
 **Example** `compose (fn x => x + 1, Int.fromString) "41" = SOME 42`
 
@@ -275,7 +275,7 @@ val composePartial : ('a -> 'b option) * ('c -> 'a option) -> 'c -> 'b option
 `composePartial (f, g) a` is `f v` when `g a` is `SOME v`, and [`NONE`](#con-none) when
 `g a` is [`NONE`](#con-none).
 
-**Law** `composePartial (f, g) a = mapPartial f (g a)` (for every `f : 'a -> 'b option`, `g : 'c -> 'a option`, `a : 'c`)
+**Law** `composePartial (f, g) a = mapPartial f (g a)` (for every `f : 'b -> 'a option`, `g : 'c -> 'b option`, `a : 'c`)
 
 **Example** `composePartial (Int.fromString, SOME) "42" = SOME 42`
 

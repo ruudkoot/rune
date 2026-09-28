@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/check\_sig.sml](../../../../../lib/test/property/check_sig.sml) |
 
@@ -54,6 +54,7 @@ sig
   val <a href="#val-report">report</a> : string -&gt; result -&gt; string
   val <a href="#val-passed">passed</a> : result -&gt; bool
   val <a href="#val-main">main</a> : (string * Prop.prop) list -&gt; unit
+  val <a href="#val-laws">laws</a> : (string * (unit -&gt; Prop.prop)) list -&gt; unit
 end
 </pre>
 
@@ -196,6 +197,24 @@ val main : (string * Prop.prop) list -> unit
 
 `main ps` runs each named property with [`default`](#val-default), prints its report,
 and ends the program with failure if one did not pass.
+
+### <a name="val-laws"></a>`laws`
+
+```sml
+val laws : (string * (unit -> Prop.prop)) list -> unit
+```
+
+`laws ls` runs the laws of a program of `runedoc --laws`, each named, and ends the program with failure if one did not pass.
+
+Before each law it prints `LAW name`, so that a run a watchdog stops
+names the law it was in, and after it the law's report. The
+environment chooses how they run (docs/plans/quickcheck.md, D9 and
+D13): `RUNE_PROPERTY_DEEP` runs 10000 cases for each seed from 1 to
+1000 until one fails; `RUNE_PROPERTY_ONLY` runs the law of that name
+alone; `RUNE_PROPERTY_AFTER` runs the laws after the one of that name,
+where a run that was stopped goes on; `RUNE_PROPERTY_REPLAY` runs the
+case of that replay token, shrunk, and prints it. The last line counts
+the laws that passed and failed.
 
 ---
 

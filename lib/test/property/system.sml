@@ -65,6 +65,51 @@ struct
      co = fn s => case BinIO.StreamIO.getBufferMode s of IO.NO_BUF => 0w0 | IO.LINE_BUF => 0w1 | IO.BLOCK_BUF => 0w2,
      eq = NONE}
 
+  (* ---- text streams over drawn strings ---- *)
+
+  fun textRest (f : TextIO.StreamIO.instream) : string = #1 (TextIO.StreamIO.inputAll f)
+
+  val textStreamInstream : TextIO.StreamIO.instream Arb.arb =
+    {gen = Gen.map (fn s => TextIO.getInstream (TextIO.openString s)) Gen.string,
+     show = fn f => "TextIO.getInstream (TextIO.openString " ^ Show.string (textRest f) ^ ")",
+     co = fn f => Random.hashString (textRest f), eq = NONE}
+
+  val textInstream : TextIO.instream Arb.arb =
+    {gen = Gen.map TextIO.openString Gen.string,
+     show = fn s => "TextIO.openString " ^ Show.string (textRest (TextIO.getInstream s)),
+     co = fn s => Random.hashString (textRest (TextIO.getInstream s)), eq = NONE}
+
+  fun keepingText () : TextIO.StreamIO.writer =
+    let
+      val kept = ref ([] : string list)
+      fun writeVec sl = (kept := CharVectorSlice.vector sl :: !kept; CharVectorSlice.length sl)
+      fun writeArr sl = (kept := CharArraySlice.vector sl :: !kept; CharArraySlice.length sl)
+    in
+      TextPrimIO.WR {name = "<kept>", chunkSize = 4096, writeVec = SOME writeVec, writeArr = SOME writeArr,
+                     writeVecNB = SOME (SOME o writeVec), writeArrNB = SOME (SOME o writeArr), block = SOME (fn () => ()),
+                     canOutput = SOME (fn () => true), getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
+                     close = fn () => (), ioDesc = NONE}
+    end
+
+  val textWriter : TextIO.StreamIO.writer Arb.arb =
+    {gen = Gen.primitive (fn _ => keepingText ()), show = comment "a text writer that keeps what it is given",
+     co = fn _ => 0w0, eq = NONE}
+
+  val textOutstream : TextIO.StreamIO.outstream Arb.arb =
+    {gen = Gen.map (fn m => TextIO.StreamIO.mkOutstream (keepingText (), m)) (Gen.elements (Vector.fromList [IO.NO_BUF, IO.LINE_BUF, IO.BLOCK_BUF])),
+     show = comment "an output stream to a text writer that keeps what it is given", co = fn _ => 0w0, eq = NONE}
+
+  (* the position of a reader over s after k of its characters *)
+  fun positionIn (s : string, k : int) : TextPrimIO.pos =
+    case TextPrimIO.openVector s of
+      TextPrimIO.RD {readVec = SOME read, getPos = SOME getPos, ...} => (ignore (read k); getPos ())
+    | _ => raise Fail "a text reader of a vector with no readVec or getPos"
+
+  val textPos : TextPrimIO.pos Arb.arb =
+    {gen = Gen.map positionIn (Gen.bind Gen.string (fn s => Gen.map (fn k => (s, k)) (Gen.intRange (0, String.size s)))),
+     show = comment "the position of a text reader",
+     co = fn _ => 0w0, eq = SOME (op =)}
+
   (* ---- files in a scratch directory ---- *)
 
   open PropertyScratch
@@ -184,6 +229,28 @@ struct
   val termiosFields =
     {gen = Gen.map T.fieldsOf (#gen termios), show = fn r => "Posix.TTY.fieldsOf (" ^ #show termios (T.termios r) ^ ")",
      co = fn r => #co termios (T.termios r), eq = SOME (fn (a, b) => #show termios (T.termios a) = #show termios (T.termios b))}
+  end
+
+  local
+    structure T = Posix.TTY
+  in
+    fun flagsArb (fromWord : SysWord.word -> 'f, toWord : 'f -> SysWord.word, name : string) : 'f Arb.arb =
+      {gen = Gen.map (fromWord o sysWord) (Gen.wordBits 32),
+       show = fn f => name ^ ".fromWord " ^ hex (toWord f),
+       co = fn f => Word64.fromLarge (SysWord.toLarge (toWord f)),
+       eq = SOME (fn (f, g) => toWord f = toWord g)}
+    val ttyIflags = flagsArb (T.I.fromWord, T.I.toWord, "Posix.TTY.I")
+    val ttyOflags = flagsArb (T.O.fromWord, T.O.toWord, "Posix.TTY.O")
+    val ttyCflags = flagsArb (T.C.fromWord, T.C.toWord, "Posix.TTY.C")
+    val ttyLflags = flagsArb (T.L.fromWord, T.L.toWord, "Posix.TTY.L")
+    fun ccList (cc : T.V.cc) = List.tabulate (T.V.nccs, fn i => T.V.sub (cc, i))
+    val ttyCc : T.V.cc Arb.arb =
+      {gen = Gen.map (fn cs => T.V.cc (ListPair.zip (List.tabulate (T.V.nccs, fn i => i), cs)))
+                     (Gen.listOf (Gen.return T.V.nccs) Gen.char),
+       show = fn cc => "Posix.TTY.V.cc " ^ Show.list (Show.pair (Show.int, Show.char))
+                                                      (ListPair.zip (List.tabulate (T.V.nccs, fn i => i), ccList cc)),
+       co = fn cc => Co.list Co.char (ccList cc),
+       eq = SOME (fn (a, b) => ccList a = ccList b)}
   end
 
   val whence = Arb.enum [(Posix.IO.SEEK_SET, "Posix.IO.SEEK_SET"), (Posix.IO.SEEK_CUR, "Posix.IO.SEEK_CUR"),

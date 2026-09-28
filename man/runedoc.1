@@ -13,6 +13,10 @@ runedoc \- generate the documentation of a Standard ML library
 .BI \-\-examples " DIR"
 .br
 .B runedoc
+.BI \-\-library " NAME"
+.BI \-\-laws " DIR"
+.br
+.B runedoc
 .RB ( \-\-page | \-\-dump\-ir | \-\-lint )
 .IR file.sml " ..."
 .SH DESCRIPTION
@@ -150,6 +154,26 @@ or
 .B FAIL
 for every example and exits with a failure if one does not hold. The same
 examples are elaborated whenever the documentation is made.
+.TP
+.BI \-\-laws " DIR"
+Write the laws of the comments as one program for each signature into
+.I DIR
+and stop. A program holds every law of its signature at every structure that
+implements it, each labelled
+.IB SIG . member /law- n @ Structure\fR,
+with its variables drawn from the arbitraries of the library
+.BR test/property ,
+and is compiled with
+.BR "rune \-\-library test/property" .
+It prints a line
+.B LAW
+before each law and
+.B PASS
+or
+.B FAIL
+after it, and exits with a failure if a law does not hold. The same laws are
+elaborated whenever the documentation is made; a law that is no Standard ML,
+or has a variable no arbitrary draws, is an error at its comment.
 .TP
 .B \-\-labels
 With

@@ -435,7 +435,10 @@ struct
         else
           let
             val (caseSeed, g) = Random.word64 g
-            val size = sizeOf passed
+            (* discarded cases grow the size too, a tenth as fast, as
+               QuickCheck's do: a condition that small values never meet
+               must not keep the run at size 0 *)
+            val size = sizeOf (passed + discarded div 10)
             val s = S.new (caseSeed, size, [], [])
             val r = runCase p s
           in
@@ -545,5 +548,65 @@ struct
       val results = List.map (fn (name, p) => let val r = check default name p in print (report name r); r end) ps
     in
       if List.all passed results then () else OS.Process.exit OS.Process.failure
+    end
+
+  (* ---- the programs of runedoc --laws (docs/plans/quickcheck.md, M8 and D9) ---- *)
+
+  fun say (s : string) : unit = (TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
+
+  (* the deep mode (P11): 10000 cases for each seed from 1 to 1000, until one fails *)
+  fun deep (name : string) (p : Prop.prop) : result =
+    let
+      fun go k =
+        let
+          val r = check {seed = SOME (Word64.fromInt k), tests = 10000, maxSize = 100, maxDiscards = 100000,
+                         maxShrinks = 5000, exhaustiveBelow = #exhaustiveBelow default, smallScope = #smallScope default}
+                        name p
+        in
+          case r of
+            Passed {exhaustive = true, ...} => r
+          | Passed _ => if k >= 1000 then r else go (k + 1)
+          | _ => r
+        end
+    in
+      go 1
+    end
+
+  fun laws (ls : (string * (unit -> Prop.prop)) list) : unit =
+    let
+      val deepMode = isSome (OS.Process.getEnv "RUNE_PROPERTY_DEEP")
+      (* the laws after one, where a run that was stopped goes on *)
+      fun after (l, []) = []
+        | after (l, (n, p) :: rest) = if n = l then rest else after (l, rest)
+      val chosen = case (OS.Process.getEnv "RUNE_PROPERTY_ONLY", OS.Process.getEnv "RUNE_PROPERTY_AFTER") of
+                     (SOME l, _) => List.filter (fn (n, _) => n = l) ls
+                   | (NONE, SOME l) => if l = "" then ls else after (l, ls)
+                   | (NONE, NONE) => ls
+      fun one (name, make) =
+        (say ("LAW " ^ name ^ "\n");
+         let
+           val p = make ()
+         in
+           case OS.Process.getEnv "RUNE_PROPERTY_REPLAY" of
+             SOME t =>
+               (case replay t p of
+                  SOME r =>
+                    (say ((case #verdict r of
+                             Prop.Pass => "PASS "
+                           | Prop.Discard => "DISCARDED "
+                           | Prop.Fail {class, ...} => "FAIL " ^ class ^ ": ")
+                          ^ name ^ " at " ^ t ^ "\n" ^ String.concat (List.map (fn x => "  " ^ x ^ "\n") (#shown r)));
+                     not (isSome (classOf r)))
+                | NONE => (say ("FAIL " ^ name ^ ": " ^ t ^ " is no replay token\n"); false))
+           | NONE =>
+               let val r = if deepMode then deep name p else check default name p
+               in say (report name r); passed r end
+         end
+         handle e => (say ("FAIL " ^ name ^ ": " ^ exnName e ^ " while the law was made\n"); false))
+      val results = List.map one chosen
+      val failures = List.length (List.filter not results)
+    in
+      say ("laws: " ^ Int.toString (List.length results - failures) ^ " pass, " ^ Int.toString failures ^ " fail\n");
+      if failures = 0 then () else OS.Process.exit OS.Process.failure
     end
 end

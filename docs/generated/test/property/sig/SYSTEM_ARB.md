@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 23 of 23 entries documented |
+| Documentation | 33 of 33 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/system\_sig.sml](../../../../../lib/test/property/system_sig.sml) |
 
@@ -39,6 +39,11 @@ sig
   val <a href="#val-binstreaminstream">binStreamInstream</a> : BinIO.StreamIO.instream Arb.arb
   val <a href="#val-binwriter">binWriter</a> : BinIO.StreamIO.writer Arb.arb
   val <a href="#val-binoutstream">binOutstream</a> : BinIO.StreamIO.outstream Arb.arb
+  val <a href="#val-textinstream">textInstream</a> : TextIO.instream Arb.arb
+  val <a href="#val-textstreaminstream">textStreamInstream</a> : TextIO.StreamIO.instream Arb.arb
+  val <a href="#val-textwriter">textWriter</a> : TextIO.StreamIO.writer Arb.arb
+  val <a href="#val-textoutstream">textOutstream</a> : TextIO.StreamIO.outstream Arb.arb
+  val <a href="#val-textpos">textPos</a> : TextPrimIO.pos Arb.arb
   val <a href="#val-iodesc">iodesc</a> : OS.IO.iodesc Arb.arb
   val <a href="#val-polldesc">pollDesc</a> : OS.IO.poll_desc Arb.arb
   val <a href="#val-fileid">fileId</a> : OS.FileSys.file_id Arb.arb
@@ -53,6 +58,11 @@ sig
   val <a href="#val-termiosfields">termiosFields</a> : {<a href="#fld-termiosfields.iflag">iflag</a> : Posix.TTY.I.flags, <a href="#fld-termiosfields.oflag">oflag</a> : Posix.TTY.O.flags, <a href="#fld-termiosfields.cflag">cflag</a> : Posix.TTY.C.flags,
                        <a href="#fld-termiosfields.lflag">lflag</a> : Posix.TTY.L.flags, <a href="#fld-termiosfields.cc">cc</a> : Posix.TTY.V.cc, <a href="#fld-termiosfields.ispeed">ispeed</a> : Posix.TTY.speed,
                        <a href="#fld-termiosfields.ospeed">ospeed</a> : Posix.TTY.speed} Arb.arb
+  val <a href="#val-ttyiflags">ttyIflags</a> : Posix.TTY.I.flags Arb.arb
+  val <a href="#val-ttyoflags">ttyOflags</a> : Posix.TTY.O.flags Arb.arb
+  val <a href="#val-ttycflags">ttyCflags</a> : Posix.TTY.C.flags Arb.arb
+  val <a href="#val-ttylflags">ttyLflags</a> : Posix.TTY.L.flags Arb.arb
+  val <a href="#val-ttycc">ttyCc</a> : Posix.TTY.V.cc Arb.arb
   val <a href="#val-whence">whence</a> : Posix.IO.whence Arb.arb
   val <a href="#val-locktype">lockType</a> : Posix.IO.lock_type Arb.arb
   val <a href="#val-addrfamily">addrFamily</a> : Socket.AF.addr_family Arb.arb
@@ -97,6 +107,50 @@ val binOutstream : BinIO.StreamIO.outstream Arb.arb
 
 The arbitrary of functional binary output streams over a writer of
 [`binWriter`](#val-binwriter), with any buffer mode.
+
+### <a name="val-textinstream"></a>`textInstream`
+
+```sml
+val textInstream : TextIO.instream Arb.arb
+```
+
+The arbitrary of text input streams over a drawn string, shown as the
+characters they have left.
+
+### <a name="val-textstreaminstream"></a>`textStreamInstream`
+
+```sml
+val textStreamInstream : TextIO.StreamIO.instream Arb.arb
+```
+
+The arbitrary of functional text input streams over a drawn string.
+
+### <a name="val-textwriter"></a>`textWriter`
+
+```sml
+val textWriter : TextIO.StreamIO.writer Arb.arb
+```
+
+The arbitrary of text writers that keep what they are given and accept
+every write.
+
+### <a name="val-textoutstream"></a>`textOutstream`
+
+```sml
+val textOutstream : TextIO.StreamIO.outstream Arb.arb
+```
+
+The arbitrary of functional text output streams over a writer of
+[`textWriter`](#val-textwriter), with any buffer mode.
+
+### <a name="val-textpos"></a>`textPos`
+
+```sml
+val textPos : TextPrimIO.pos Arb.arb
+```
+
+The arbitrary of the positions of text readers: that of a reader over a
+drawn string after a drawn number of its characters.
 
 ### <a name="val-iodesc"></a>`iodesc`
 
@@ -211,6 +265,48 @@ The arbitrary of the records of the fields of terminal settings, as
 | <a name="fld-termiosfields.cc"></a>`cc` | `Posix.TTY.V.cc` |  |
 | <a name="fld-termiosfields.ispeed"></a>`ispeed` | `Posix.TTY.speed` |  |
 | <a name="fld-termiosfields.ospeed"></a>`ospeed` | `Posix.TTY.speed` |  |
+
+### <a name="val-ttyiflags"></a>`ttyIflags`
+
+```sml
+val ttyIflags : Posix.TTY.I.flags Arb.arb
+```
+
+The arbitrary of the input flags of terminal settings, from a drawn
+word; two are equal when their words are.
+
+### <a name="val-ttyoflags"></a>`ttyOflags`
+
+```sml
+val ttyOflags : Posix.TTY.O.flags Arb.arb
+```
+
+The arbitrary of the output flags of terminal settings.
+
+### <a name="val-ttycflags"></a>`ttyCflags`
+
+```sml
+val ttyCflags : Posix.TTY.C.flags Arb.arb
+```
+
+The arbitrary of the control flags of terminal settings.
+
+### <a name="val-ttylflags"></a>`ttyLflags`
+
+```sml
+val ttyLflags : Posix.TTY.L.flags Arb.arb
+```
+
+The arbitrary of the local flags of terminal settings.
+
+### <a name="val-ttycc"></a>`ttyCc`
+
+```sml
+val ttyCc : Posix.TTY.V.cc Arb.arb
+```
+
+The arbitrary of the control characters of terminal settings, one drawn
+for every index; two are equal when they have the same characters.
 
 ### <a name="val-whence"></a>`whence`
 

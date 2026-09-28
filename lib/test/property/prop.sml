@@ -84,6 +84,49 @@ struct
        end)
       handle Gen.Discarded => plain Discard
 
+  (* ---- the laws of documentation (docs/plans/quickcheck.md, M8) ---- *)
+
+  (* whether the condition holds of x: one that raises does not *)
+  fun holdsOf (cond : 'a -> bool) (x : 'a) : bool = cond x handle _ => false
+
+  fun holdsIf (a : 'a Arb.arb) (cond : 'a -> bool, claim : 'a -> bool) : prop =
+    fn (s, addr) =>
+      (let
+         val here = S.child (addr, 1)
+         (* the condition and the law each have an x of their own *)
+         val xc = Gen.draw (#gen a) (s, here)
+       in
+         if not (holdsOf cond xc) then plain Discard
+         else
+           let
+             val x = Gen.draw (#gen a) (s, here)
+             val shown = #show a x
+             val verdict = (if claim x then Pass else Fail {class = "false", message = ""}) handle e => exceptional e
+           in
+             {verdict = verdict, shown = [shown], labels = [], covers = []}
+           end
+       end)
+      handle Gen.Discarded => plain Discard
+
+  fun equalIf (a : 'a Arb.arb, b : 'b Arb.arb) (cond : 'a -> bool, l : 'a -> 'b, r : 'a -> 'b) : prop =
+    fn (s, addr) =>
+      (let
+         val here = S.child (addr, 1)
+         val xc = Gen.draw (#gen a) (s, here)
+       in
+         if not (holdsOf cond xc) then plain Discard
+         else
+           let
+             val xl = Gen.draw (#gen a) (s, here)
+             val xr = Gen.draw (#gen a) (s, here)
+             val shown = #show a xl
+           in
+             {verdict = judge b (outcome s (fn () => l xl), outcome s (fn () => r xr)),
+              shown = [shown], labels = [], covers = []}
+           end
+       end)
+      handle Gen.Discarded => plain Discard
+
   infix ==>
   fun (cond : bool) ==> (p : unit -> prop) : prop = if cond then (fn sa => p () sa) else fn _ => plain Discard
 

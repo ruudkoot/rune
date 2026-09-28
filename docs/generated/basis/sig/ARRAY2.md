@@ -599,7 +599,7 @@ val fold : traversal -> ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `fold trv f init arr` combines every element of `arr`, in the order `trv` gives.
 
-**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : 'a * 'b -> 'b`, `init : 'b`, `arr : 'a Array2.array`)
+**Law** `fold trv f init arr = foldi trv (fn (_, _, x, acc) => f (x, acc)) init {base = arr, row = 0, col = 0, nrows = NONE, ncols = NONE}` (for every `trv : Array2.traversal`, `f : 'b * 'a -> 'a`, `init : 'a`, `arr : 'b Array2.array`)
 
 **Example** `fold RowMajor (op ::) [] (fromList [[1, 2], [3, 4]]) = [4, 3, 2, 1]`
 

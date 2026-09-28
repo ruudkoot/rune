@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`PROP`](../sig/PROP.md) |
 | Status | required |
-| Members | 13 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/test/property/prop.sml](../../../../../lib/test/property/prop.sml) |
 
@@ -29,9 +29,11 @@ What each means is on [`PROP`](../sig/PROP.md); the types are this structure's o
 | val | [`classify`](../sig/PROP.md#val-classify) | `bool -> string -> prop -> prop` |
 | val | [`cover`](../sig/PROP.md#val-cover) | `real -> bool -> string -> prop -> prop` |
 | val | [`equal`](../sig/PROP.md#val-equal) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string} -> (unit -> 'a) * (unit -> 'a) -> prop` |
+| val | [`equalIf`](../sig/PROP.md#val-equalif) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string} * {co : 'b -> Word64.word, eq : ('b * 'b -> bool) option, gen : 'b Gen.gen, show : 'b -> string} -> ('a -> bool) * ('a -> 'b) * ('a -> 'b) -> prop` |
 | val | [`forAll`](../sig/PROP.md#val-forall) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string} -> ('a -> prop) -> prop` |
 | val | [`forAllGen`](../sig/PROP.md#val-forallgen) | `'a Gen.gen * ('a -> string) -> ('a -> prop) -> prop` |
 | val | [`holds`](../sig/PROP.md#val-holds) | `bool -> prop` |
+| val | [`holdsIf`](../sig/PROP.md#val-holdsif) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string} -> ('a -> bool) * ('a -> bool) -> prop` |
 | val | [`label`](../sig/PROP.md#val-label) | `string -> prop -> prop` |
 | val | [`law`](../sig/PROP.md#val-law) | `{co : 'a -> Word64.word, eq : ('a * 'a -> bool) option, gen : 'a Gen.gen, show : 'a -> string} * {co : 'b -> Word64.word, eq : ('b * 'b -> bool) option, gen : 'b Gen.gen, show : 'b -> string} -> ('a -> 'b) * ('a -> 'b) -> prop` |
 | val | [`run`](../sig/PROP.md#val-run) | `prop -> {calls : ({address : Word64.word, path : Word64.word list} * string) list ref, cleanups : (unit -> unit) list ref, effects : string list ref, seed : Word64.word, sequences : {length : Word64.word, marks : Word64.word list option, parts : Word64.word list} list ref, set : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list, size : int, trail : {address : Word64.word, bound : Word64.word, kind : PropertySource.kind, path : Word64.word list, word : Word64.word} list ref, zeros : Word64.word list list} * {address : Word64.word, path : Word64.word list} -> result` |

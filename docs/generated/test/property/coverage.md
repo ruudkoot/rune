@@ -9,17 +9,17 @@ documented when a comment describes it, alone or together with the entry before 
 | [`ARB`](sig/ARB.md) | 26 | 26 | 100% | 14 | 14 |
 | [`ARB_OF`](sig/ARB_OF.md) | 2 | 2 | 100% | 0 | 0 |
 | [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 4 | 4 | 100% | 0 | 0 |
-| [`CHECK`](sig/CHECK.md) | 8 | 8 | 100% | 5 | 5 |
+| [`CHECK`](sig/CHECK.md) | 9 | 9 | 100% | 6 | 6 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
 | [`DATE_ARB`](sig/DATE_ARB.md) | 5 | 5 | 100% | 0 | 0 |
 | [`GEN`](sig/GEN.md) | 43 | 43 | 100% | 30 | 30 |
 | [`IEEE_REAL_ARB`](sig/IEEE_REAL_ARB.md) | 3 | 3 | 100% | 0 | 0 |
 | [`INET6_SOCK_ARB`](sig/INET6_SOCK_ARB.md) | 2 | 2 | 100% | 1 | 1 |
-| [`PROP`](sig/PROP.md) | 13 | 13 | 100% | 10 | 10 |
+| [`PROP`](sig/PROP.md) | 15 | 15 | 100% | 12 | 12 |
 | [`SHOW`](sig/SHOW.md) | 17 | 17 | 100% | 7 | 7 |
 | [`SML90_ARB`](sig/SML90_ARB.md) | 1 | 1 | 100% | 0 | 0 |
-| [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 23 | 23 | 100% | 1 | 1 |
-| **all** | 161 | 161 | 100% | 72 | 72 |
+| [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 33 | 33 | 100% | 1 | 1 |
+| **all** | 174 | 174 | 100% | 75 | 75 |
 
 ## Members a signature describes
 
@@ -28,7 +28,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-55 structures have a page, with 274 members, of which 237 (86%) are described by a signature.
+140 structures have a page, with 457 members, of which 418 (91%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
@@ -36,6 +36,7 @@ is one a program can name and nothing explains: it is a name beyond the signatur
 | [`PropertyDimensions`](str/PropertyDimensions.md) | 3 | 0 | 0% |
 | [`PropertyScratch`](str/PropertyScratch.md) | 2 | 0 | 0% |
 | [`PropertySource`](str/PropertySource.md) | 31 | 0 | 0% |
+| [`WideTextArb`](str/WideTextArb.md) | 2 | 0 | 0% |
 
 ## Examples that are run
 

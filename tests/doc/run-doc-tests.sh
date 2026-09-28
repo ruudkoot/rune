@@ -23,6 +23,8 @@
 #                   structures.md, where the expectation exists
 #   NAME.lib.examples  the programs that `--examples` writes for it, one after
 #                   another, where the expectation exists
+#   NAME.lib.laws   the programs that `--laws` writes for it, one after
+#                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
 # one with a file ANNOTATIONS with --annotations, and one with a file ON-BASIS
 # as `--lib lib --library ./tests/doc/NAME.lib`, on top of the Basis Library,
@@ -137,6 +139,14 @@ for lib in tests/doc/*.lib; do
     cat "$out/$name.examples"/*.sml > "$out/$name.lib.examples" 2> /dev/null || : > "$out/$name.lib.examples"
     [ $update = 1 ] && cp "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
     same "$name.lib.examples" "$out/$name.lib.examples" "tests/doc/$name.lib.examples"
+  fi
+  if [ -f "tests/doc/$name.lib.laws" ]; then
+    rm -rf "$out/$name.laws"
+    # shellcheck disable=SC2086
+    "$runedoc" $where --laws "$out/$name.laws" > /dev/null 2>&1
+    cat "$out/$name.laws"/*.sml > "$out/$name.lib.laws" 2> /dev/null || : > "$out/$name.lib.laws"
+    [ $update = 1 ] && cp "$out/$name.lib.laws" "tests/doc/$name.lib.laws"
+    same "$name.lib.laws" "$out/$name.lib.laws" "tests/doc/$name.lib.laws"
   fi
   if [ -d "$lib/tests" ]; then
     "$runedoc" --tests "$lib/tests" --labels > "$out/$name.lib.labels" 2>&1

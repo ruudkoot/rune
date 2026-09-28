@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 60 requirements between the 29 files become 32 arrows.
+library and not a wall of lines: the 68 requirements between the 30 files become 35 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,7 +24,7 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["Not in an area<br>(1)"]
-  a1["Property testing<br>(28)"]
+  a1["Property testing<br>(29)"]
   a1 -- 2 --> a0
 ```
 
@@ -58,7 +58,7 @@ flowchart TD
   n17["IntArb<br>IntInfArb<br>LargeIntArb<br>LargeRealArb<br>LargeWordArb<br>PositionArb<br>RealArb<br>SysWordArb<br>Word8Arb<br>WordArb"]
   n18["FixedIntArb<br>Int16Arb<br>Int32Arb<br>Int64Arb<br>Int8Arb<br>Real32Arb<br>Real64Arb<br>Word16Arb<br>Word32Arb<br>Word64Arb"]
   n19["CharArb<br>CharArrayArb<br>CharArraySliceArb<br>CharVectorArb<br>CharVectorSliceArb<br>StringArb<br>SubstringArb"]
-  n20["WideCharArb<br>WideStringArb<br>WideSubstringArb"]
+  n20["Wide* (4)"]
   n21["Word8* (4)"]
   n22["CharArray2Arb<br>IntArray2Arb<br>Word8Array2Arb"]
   n23(["SYSTEM_ARB"])
@@ -67,6 +67,7 @@ flowchart TD
   n26["INet6SockArb"]
   n27(["SML90_ARB"])
   n28["SML90Arb"]
+  n29["BoolArray2Arb<br>BoolArrayArb<br>BoolArraySliceArb<br>BoolVectorArb<br>BoolVectorSliceArb<br>Int16Array2Arb<br>Int16ArrayArb<br>Int16ArraySliceArb<br>Int16VectorArb<br>Int16VectorSliceArb<br>Int32Array2Arb<br>Int32ArrayArb<br>Int32ArraySliceArb<br>Int32VectorArb<br>Int32VectorSliceArb<br>Int64Array2Arb<br>Int64ArrayArb<br>Int64ArraySliceArb<br>Int64VectorArb<br>Int64VectorSliceArb<br>Int8Array2Arb<br>Int8ArrayArb<br>Int8ArraySliceArb<br>Int8VectorArb<br>Int8VectorSliceArb<br>IntArrayArb<br>IntArraySliceArb<br>IntVectorArb<br>IntVectorSliceArb<br>LargeIntArray2Arb<br>LargeIntArrayArb<br>LargeIntArraySliceArb<br>LargeIntVectorArb<br>LargeIntVectorSliceArb<br>LargeRealArray2Arb<br>LargeRealArrayArb<br>LargeRealArraySliceArb<br>LargeRealVectorArb<br>LargeRealVectorSliceArb<br>LargeWordArray2Arb<br>LargeWordArrayArb<br>LargeWordArraySliceArb<br>LargeWordVectorArb<br>LargeWordVectorSliceArb<br>Real32Array2Arb<br>Real32ArrayArb<br>Real32ArraySliceArb<br>Real32VectorArb<br>Real32VectorSliceArb<br>Real64Array2Arb<br>Real64ArrayArb<br>Real64ArraySliceArb<br>Real64VectorArb<br>Real64VectorSliceArb<br>RealArray2Arb<br>RealArrayArb<br>RealArraySliceArb<br>RealVectorArb<br>RealVectorSliceArb<br>WideCharArray2Arb<br>WideCharArrayArb<br>WideCharArraySliceArb<br>WideCharVectorArb<br>WideCharVectorSliceArb<br>Word16Array2Arb<br>Word16ArrayArb<br>Word16ArraySliceArb<br>Word16VectorArb<br>Word16VectorSliceArb<br>Word32Array2Arb<br>Word32ArrayArb<br>Word32ArraySliceArb<br>Word32VectorArb<br>Word32VectorSliceArb<br>Word64Array2Arb<br>Word64ArrayArb<br>Word64ArraySliceArb<br>Word64VectorArb<br>Word64VectorSliceArb<br>WordArray2Arb<br>WordArrayArb<br>WordArraySliceArb<br>WordVectorArb<br>WordVectorSliceArb"]
   n2 --> n1
   n4 --> n3
   n6 --> n5
@@ -97,6 +98,9 @@ flowchart TD
   n27 --> n8
   n28 --> n24
   n28 --> n27
+  n29 --> n18
+  n29 --> n17
+  n29 --> n20
 ```
 
 It also needs Not in an area (2).

@@ -286,6 +286,13 @@ keep these invariants:
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the
   failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in
   `docs/bugreport/HOST`.
+* A `Law:` of lib/basis is Standard ML that runedoc elaborates and `make
+  test-laws` runs at every structure that implements its signature, with its
+  variables drawn by lib/test/property (`docs/doc-comments.md`, *Laws*). Write
+  a condition as Standard ML after "for" or "when", not in prose, or the law
+  is run without it. `make test-laws` is not part of `make check` until every
+  law holds (docs/plans/quickcheck.md, D12); the owner's review of the M7
+  rewrites and the hunt of M9 come first.
 * A change to the documentation generator (`src/doc`) needs a test in
   `tests/doc` (`make test-doc`): an input and the expected `.ir`, `.md` and `.diag` next to it,
   reviewed line by line like any `.expected` file.

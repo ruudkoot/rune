@@ -25,6 +25,25 @@ sig
      `binWriter`, with any buffer mode. *)
   val binOutstream : BinIO.StreamIO.outstream Arb.arb
 
+  (* The arbitrary of text input streams over a drawn string, shown as the
+     characters they have left. *)
+  val textInstream : TextIO.instream Arb.arb
+
+  (* The arbitrary of functional text input streams over a drawn string. *)
+  val textStreamInstream : TextIO.StreamIO.instream Arb.arb
+
+  (* The arbitrary of text writers that keep what they are given and accept
+     every write. *)
+  val textWriter : TextIO.StreamIO.writer Arb.arb
+
+  (* The arbitrary of functional text output streams over a writer of
+     `textWriter`, with any buffer mode. *)
+  val textOutstream : TextIO.StreamIO.outstream Arb.arb
+
+  (* The arbitrary of the positions of text readers: that of a reader over a
+     drawn string after a drawn number of its characters. *)
+  val textPos : TextPrimIO.pos Arb.arb
+
   (* The arbitrary of I/O descriptors: the read end of a pipe, closed when
      the case is over. *)
   val iodesc : OS.IO.iodesc Arb.arb
@@ -68,6 +87,23 @@ sig
   val termiosFields : {iflag : Posix.TTY.I.flags, oflag : Posix.TTY.O.flags, cflag : Posix.TTY.C.flags,
                        lflag : Posix.TTY.L.flags, cc : Posix.TTY.V.cc, ispeed : Posix.TTY.speed,
                        ospeed : Posix.TTY.speed} Arb.arb
+
+  (* The arbitrary of the input flags of terminal settings, from a drawn
+     word; two are equal when their words are. *)
+  val ttyIflags : Posix.TTY.I.flags Arb.arb
+
+  (* The arbitrary of the output flags of terminal settings. *)
+  val ttyOflags : Posix.TTY.O.flags Arb.arb
+
+  (* The arbitrary of the control flags of terminal settings. *)
+  val ttyCflags : Posix.TTY.C.flags Arb.arb
+
+  (* The arbitrary of the local flags of terminal settings. *)
+  val ttyLflags : Posix.TTY.L.flags Arb.arb
+
+  (* The arbitrary of the control characters of terminal settings, one drawn
+     for every index; two are equal when they have the same characters. *)
+  val ttyCc : Posix.TTY.V.cc Arb.arb
 
   (* The arbitrary of the origins of a seek, `Posix.IO.SEEK_SET` the
      simplest. *)

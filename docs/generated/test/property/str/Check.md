@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CHECK`](../sig/CHECK.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/test/property/check.sml](../../../../../lib/test/property/check.sml) |
 
@@ -26,6 +26,7 @@ What each means is on [`CHECK`](../sig/CHECK.md); the types are this structure's
 | datatype | [`result`](../sig/CHECK.md#type-result) | `Passed` &#124; `Failed` &#124; `GaveUp` |
 | val | [`check`](../sig/CHECK.md#val-check) | `config -> string -> Prop.prop -> result` |
 | val | [`default`](../sig/CHECK.md#val-default) | `config` |
+| val | [`laws`](../sig/CHECK.md#val-laws) | `(string * (unit -> Prop.prop)) list -> unit` |
 | val | [`main`](../sig/CHECK.md#val-main) | `(string * Prop.prop) list -> unit` |
 | val | [`passed`](../sig/CHECK.md#val-passed) | `result -> bool` |
 | val | [`replay`](../sig/CHECK.md#val-replay) | `string -> Prop.prop -> {covers : (string * real * bool) list, labels : string list, shown : string list, verdict : Prop.verdict} option` |

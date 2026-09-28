@@ -10,6 +10,7 @@ struct
   val usage =
     "usage: runedoc --library NAME --out DIR [--check] [--title TEXT]\n\
     \       runedoc --library NAME --examples DIR\n\
+    \       runedoc --library NAME --laws DIR\n\
     \       runedoc (--page | --dump-ir | --lint) FILE...\n\
     \  --library NAME  document the library LIBDIR/NAME, which has a MANIFEST;\n\
     \                  a NAME that begins with / or . is the directory itself.\n\
@@ -29,6 +30,10 @@ struct
     \                  members that have a check with such a label\n\
     \  --examples DIR  write the examples of the comments, claims of type bool,\n\
     \                  as a program for each signature, and stop\n\
+    \  --laws DIR      write the laws of the comments as a program for each\n\
+    \                  signature, holding each at every structure that\n\
+    \                  implements it, and stop; compile one with\n\
+    \                  rune --library test/property\n\
     \  --labels        print the checks of the suite of --tests and stop\n\
     \  --check-coverage  with --library and --tests: every value and exception\n\
     \                  that a signature specifies has a check for every\n\
@@ -55,6 +60,7 @@ struct
   val tests : string option ref = ref NONE
   val annotations : string option ref = ref NONE
   val examples : string option ref = ref NONE
+  val lawsDir : string option ref = ref NONE
   val labels = ref false
   val checkCoverage = ref false
   val lint = ref false
@@ -76,6 +82,7 @@ struct
     | "--tests" :: dir :: rest => (tests := SOME dir; parse rest)
     | "--annotations" :: file :: rest => (annotations := SOME file; parse rest)
     | "--examples" :: dir :: rest => (examples := SOME dir; parse rest)
+    | "--laws" :: dir :: rest => (lawsDir := SOME dir; parse rest)
     | "--labels" :: rest => (labels := true; parse rest)
     | "--check-coverage" :: rest => (checkCoverage := true; parse rest)
     | "--lint" :: rest => (lint := true; parse rest)
@@ -208,6 +215,22 @@ struct
              status
            end
        | _ => raise Usage "--check-coverage needs --library NAME and --tests DIR")
+    else if isSome (!lawsDir) then
+      (case !library of
+         SOME name =>
+           let
+             val dir = valOf (!lawsDir)
+             val lib = directoryOf name
+             val files = DocSite.laws {dir = lib, prelude = preludeOf lib} handle BasisManifest.Usage why => raise Usage why
+             val status = report ()
+           in
+             if OS.Process.isSuccess status
+             then (DocSite.write (dir, files);
+                   println ("runedoc: wrote " ^ Int.toString (List.length files) ^ " programs of laws to " ^ dir))
+             else ();
+             status
+           end
+       | _ => raise Usage "--laws needs --library NAME")
     else if isSome (!examples) then
       (case !library of
          SOME name =>

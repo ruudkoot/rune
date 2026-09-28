@@ -34,7 +34,7 @@ What it rests on:
 | M5 | Shrinking and functions | done 2026-09-28 |
 | M6 | The Basis's instances, and the generators frozen | done 2026-09-28 |
 | M7 | Laws elaborated | done 2026-09-28; the rewrites await the owner's review |
-| M8 | Laws run | |
+| M8 | Laws run | done 2026-09-28 |
 | M9 | The hunt | |
 
 The owner decided D1 to D13 on 2026-09-28, every one as recommended
@@ -1536,6 +1536,31 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - The compile time and run time of the law programs are measured against E1's estimate.
 * **Why now:** it is the harness the hunt runs in.
 * **Done when:** `make test-laws` runs every law and reports each one's result. It is not yet in `make check` (D12).
+* **Done** (2026-09-28):
+  - **`runedoc --laws DIR`** writes a program for each signature with a law: 48 for the Basis. It elaborates every law anew at every structure that claims the signature (D8), so that its variables have that structure's types.
+    - Each law at each structure is an entry `("SIG.member/law-n@Structure", fn () => ...)` (D13).
+    - An equation is `Prop.equalIf (arb, sides) (condition, left, right)` and any other law `Prop.holdsIf arb (condition, law)`, each side read under `open Structure`.
+    - A law that does not elaborate at a structure, or has a variable with no arbitrary there, is an entry that fails and says why, so every law has a result.
+    - `tests/doc/laws.lib.laws` pins the programs of a small library.
+  - **`Prop.holdsIf` and `Prop.equalIf`** draw the condition's variables and each side's from the same nodes but apart, so that nothing one does changes what another sees (D6). A condition that raises does not hold.
+  - **`Check.laws`** runs a program's laws, prints `LAW label` before each and its report after, and ends with a count. The environment selects the deep mode (`RUNE_PROPERTY_DEEP`, P11), one law (`RUNE_PROPERTY_ONLY`), the laws after one (`RUNE_PROPERTY_AFTER`), or one case (`RUNE_PROPERTY_REPLAY`). `tests/lib/property/laws.sml` tests it.
+  - **`tests/basis/run-laws.sh`, `make test-laws`:**
+    - It compiles every program with `rune --library test/property`.
+    - It runs each program with at most `LAWS_MEMORY` megabytes (4096). Past the bound an allocation raises `Size`, or the VM stops for want of memory.
+    - The watchdog stops a program when a law has run `LAWS_TIMEOUT` seconds (120) without the next one starting, and the program is started again after that law (D9).
+    - `results.txt` has a line for every law at every structure: `PASS`, `FAIL`, or `STOPPED` with the reason. `times.txt` has each program's compile and run times.
+    - The first run had neither bound, and four programs held 22 GB between them before they were stopped.
+  - **`coverage.md`** gains "Laws that are run": 309 laws in 48 signatures.
+  - **Instances.** Every structure is D8's, so the arrays, vectors, slices and two-dimensional arrays of every element type have instances. There are 84 more in `sequences.sml`: M6 had made only those of characters and bytes, which is what the census's types, read at the examples' structures, asked for. The text streams, readers' positions, and terminal flags and control characters were added for the same reason. A law whose sides have a type with no arbitrary is now an error at its comment too.
+  - **A fix to the runner.** A case's size grew only with the cases that passed, so a run that discarded every case stayed at size 0, where a list is empty and `0 <= i andalso i < length l` never holds. Discards now grow the size a tenth as fast, as in QuickCheck, which is P8's growth over the run and changes no draw of M6's frozen generators.
+  - **The first run** (`make test-laws`, 4 jobs; 11 minutes):
+    - 1,730 laws at their structures: 1,315 pass and 313 fail. 145 of the failures gave up on their conditions: a condition such as an index within a length is rare among P1's integers, which D7's domains are for.
+    - 102 were stopped: 100 at the memory bound, 1 on the stack's bound and 1 by the watchdog.
+    - No program failed to compile.
+    - Which laws fail, and why, is the hunt's (M9), so it is not written here.
+  - **Against E1.**
+    - Compiling a program takes a median of 2.9 s and at most 16 s (the Posix signatures, which load the most of the library and the Basis). All 48 took 215 s, against E1's estimate of 45 s for a library of the prototype's size. The library is now 3,600 lines in 30 files, and the programs of the families hold a law at up to 19 structures.
+    - Running takes 1,909 s in all. Most of it is the laws the watchdog or the memory bound stopped. The laws that finish run in seconds, as E2 said.
 
 ### M9. The hunt (varies)
 

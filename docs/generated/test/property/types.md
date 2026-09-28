@@ -7,7 +7,7 @@ them all. They are found by elaborating the library and comparing the type names
 says what is the case and not only what is meant. A type that abbreviates more than a name, such
 as a reader or a record, is not listed. Every name says why it is a name of its type:
 
-- **required by the signature** (15): the signature of the structure, with the `where type`
+- **required by the signature** (32): the signature of the structure, with the `where type`
   of its declaration in the specification, says which type it is, as `CharVector.vector` is `string`;
 - **required of the top level** (0): the top level is defined to have the type of that
   structure, as `int` is `Int.int`;
@@ -24,9 +24,21 @@ as a reader or a record, is not listed. Every name says why it is a name of its 
 | [`Int64Arb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`FixedIntArb.t`](sig/ARB_OF.md#type-t) |
 | [`IntInfArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeIntArb.t`](sig/ARB_OF.md#type-t) |
 | `real` | *required by the signature:* [`RealArb.t`](sig/ARB_OF.md#type-t), [`Real64Arb.t`](sig/ARB_OF.md#type-t), [`LargeRealArb.t`](sig/ARB_OF.md#type-t) |
+| [`RealArray2Arb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`Real64Array2Arb.t`](sig/ARB_OF.md#type-t), [`LargeRealArray2Arb.t`](sig/ARB_OF.md#type-t) |
+| [`RealArrayArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`Real64ArrayArb.t`](sig/ARB_OF.md#type-t), [`LargeRealArrayArb.t`](sig/ARB_OF.md#type-t) |
+| [`RealArraySliceArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`Real64ArraySliceArb.t`](sig/ARB_OF.md#type-t), [`LargeRealArraySliceArb.t`](sig/ARB_OF.md#type-t) |
+| [`RealVectorArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`Real64VectorArb.t`](sig/ARB_OF.md#type-t), [`LargeRealVectorArb.t`](sig/ARB_OF.md#type-t) |
+| [`RealVectorSliceArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`Real64VectorSliceArb.t`](sig/ARB_OF.md#type-t), [`LargeRealVectorSliceArb.t`](sig/ARB_OF.md#type-t) |
 | `string` | *required by the signature:* [`StringArb.t`](sig/ARB_OF.md#type-t), [`CharVectorArb.t`](sig/ARB_OF.md#type-t) |
 | `substring` | *required by the signature:* [`SubstringArb.t`](sig/ARB_OF.md#type-t), [`CharVectorSliceArb.t`](sig/ARB_OF.md#type-t) |
+| [`WideStringArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`WideCharVectorArb.t`](sig/ARB_OF.md#type-t) |
+| [`WideSubstringArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`WideCharVectorSliceArb.t`](sig/ARB_OF.md#type-t) |
 | `word` | *required by the signature:* [`WordArb.t`](sig/ARB_OF.md#type-t), [`SysWordArb.t`](sig/ARB_OF.md#type-t), [`LargeWordArb.t`](sig/ARB_OF.md#type-t) |
+| [`WordArray2Arb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeWordArray2Arb.t`](sig/ARB_OF.md#type-t) |
+| [`WordArrayArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeWordArrayArb.t`](sig/ARB_OF.md#type-t) |
+| [`WordArraySliceArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeWordArraySliceArb.t`](sig/ARB_OF.md#type-t) |
+| [`WordVectorArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeWordVectorArb.t`](sig/ARB_OF.md#type-t) |
+| [`WordVectorSliceArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeWordVectorSliceArb.t`](sig/ARB_OF.md#type-t) |
 
 ---
 

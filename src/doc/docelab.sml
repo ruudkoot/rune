@@ -516,7 +516,8 @@ struct
   (* What elaborating a law found: its variables with their types, as the
      documentation writes them, or why it is no Standard ML. *)
   type variable = {name : string, ty : string, instance : string option}
-  datatype law = Quantified of variable list | NotSml of string
+  (* the variables of a law, and for an equation the type of its sides *)
+  datatype law = Quantified of variable list * variable option | NotSml of string
 
   (* The structures of lib/test/property that are arbitraries (`XArb`, read
      from its MANIFEST), where that library is there: an instance is then
@@ -564,7 +565,13 @@ struct
      ("Posix.IO.lock_type", "SystemArb.lockType"), ("Socket.AF.addr_family", "SystemArb.addrFamily"),
      ("Socket.SOCK.sock_type", "SystemArb.sockType"), ("NetHostDB.in_addr", "SystemArb.inAddr"),
      ("NetHostDB.entry", "SystemArb.hostEntry"), ("SML90.instream", "SML90Arb.instream"),
-     ("INet6Sock.in6_addr", "INet6SockArb.inAddr"), ("Random.gen", "RandomArb.arb")]
+     ("INet6Sock.in6_addr", "INet6SockArb.inAddr"), ("Random.gen", "RandomArb.arb"),
+     ("TextIO.instream", "SystemArb.textInstream"), ("TextIO.StreamIO.instream", "SystemArb.textStreamInstream"),
+     ("TextIO.StreamIO.writer", "SystemArb.textWriter"), ("TextIO.StreamIO.outstream", "SystemArb.textOutstream"),
+     ("TextPrimIO.pos", "SystemArb.textPos"), ("WideTextPrimIO.pos", "WideTextArb.pos"),
+     ("Posix.TTY.I.flags", "SystemArb.ttyIflags"), ("Posix.TTY.O.flags", "SystemArb.ttyOflags"),
+     ("Posix.TTY.C.flags", "SystemArb.ttyCflags"), ("Posix.TTY.L.flags", "SystemArb.ttyLflags"),
+     ("Posix.TTY.V.cc", "SystemArb.ttyCc")]
 
   (* The arbitrary of a type, as an expression: a type variable at `int`
      (D8), a function type by `Arb.function` (`Arb.pureFunction` for a
@@ -684,8 +691,8 @@ struct
       : law =
     case elabLaw' lib (opens, code, [], pure) of
       NotSml msg => NotSml msg
-    | Quantified vars =>
-        if List.null conditions then Quantified vars
+    | q as Quantified _ =>
+        if List.null conditions then q
         else
           case elabLaw' lib (opens, code, conditions, pure) of
             NotSml msg =>
@@ -715,22 +722,31 @@ struct
             fun nameOf (c : Types.tycon) = IntMap.find (names, #stamp c)
             val printer = Types.newPrinter ()
             fun show t = Types.toStringNamed (nameOf, printer) t
-            val types =
+            val (types, claim) =
               case Env.findVal (!envRef, ([], "it")) of
                 SOME (Env.Val {scheme, ...}) =>
                   (case Types.prune scheme of
-                     Types.TArrow (dom, _) =>
-                       (case (vars, Types.prune dom) of
-                          ([], _) => []
-                        | ([_], t) => [t]
-                        | (_, Types.TRecord fs) => List.map #2 fs
-                        | (_, t) => [t])
-                   | _ => [])
-              | _ => []
+                     Types.TArrow (dom, rng) =>
+                       ((case (vars, Types.prune dom) of
+                           ([], _) => []
+                         | ([_], t) => [t]
+                         | (_, Types.TRecord fs) => List.map #2 fs
+                         | (_, t) => [t]),
+                        case Types.prune rng of
+                          Types.TRecord (("1", c) :: _) => SOME c
+                        | _ => NONE)
+                   | _ => ([], NONE))
+              | _ => ([], NONE)
+            (* an equation's sides are elaborated as a list of the two *)
+            val side =
+              case (isSome (sides fixity code), Option.map Types.prune claim) of
+                (true, SOME (Types.TCon (_, [t]))) => SOME {name = "", ty = show t, instance = instanceOf lib false t}
+              | _ => NONE
           in
             Quantified (ListPair.map (fn (v, t) => {name = v, ty = show t,
                                                      instance = instanceOf lib (List.exists (fn f => f = v) pure) t})
-                                     (vars, types))
+                                     (vars, types),
+                        side)
           end
           handle Error.CompileError (_, msg) =>
             if String.isPrefix unbound msg then

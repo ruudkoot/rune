@@ -215,7 +215,9 @@ sides do: equal values, or the same exception. Each side is run with its
 own copy of the variables, so a side that changes an array does not change
 the other's, and a type without equality is compared by its arbitrary's
 equality (the identity of reals, the characters of a substring). A law that
-is not an equation is a `bool`. The fixity is the top level's, so write
+is not an equation is a `bool`. `runedoc --laws DIR` writes every law of a
+library as a program for each signature, held at every structure that
+implements it, and `make test-laws` runs those of lib/basis. The fixity is the top level's, so write
 `Real.== (x, y)`, and name another structure's operators in full where
 `open S` rebinds them (`Int.< (ord c, ord d)` under `open Char`).
 

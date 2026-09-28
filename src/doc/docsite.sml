@@ -399,6 +399,16 @@ struct
              ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
                                                 withExamples)
              ^ ".\n\n")
+      ^ (case List.filter (fn (_, n) => n > 0) (List.map (fn s : I.signatureRecord => (#name s, List.length (DocLaws.ofSignature s))) sigs) of
+           [] => ""
+         | withLaws =>
+             "## Laws that are run\n\n"
+             ^ "Every law is elaborated when these pages are made, with its variables typed and given an arbitrary\n"
+             ^ "to draw them from, and `make test-laws` holds it at every structure that implements its signature: "
+             ^ Int.toString (List.foldl (fn ((_, n), t) => n + t) 0 withLaws) ^ " of them, in "
+             ^ String.concatWith ", " (List.map (fn (name, n) => "[" ^ M.code name ^ "](" ^ R.sigPage name ^ ") (" ^ Int.toString n ^ ")")
+                                                withLaws)
+             ^ ".\n\n")
       ^ (if List.null unpinned then ""
          else "## Notes that no check pins\n\n"
               ^ "A deviation or a limitation that the test suite does not show. A reading or an erratum need not\n"
@@ -1448,15 +1458,20 @@ struct
                                        case DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l) of
                                          DocElab.NotSml msg =>
                                            DocDiag.error (#span l, "the law `" ^ #code l ^ "` is no Standard ML: " ^ msg)
-                                       | DocElab.Quantified vars =>
+                                       | DocElab.Quantified (vars, side) =>
                                            (DocLaws.elaborated := !DocLaws.elaborated @ [(l, vars)];
                                             if isSome (!DocElab.instanceStructures) then
-                                              List.app (fn {name, ty, instance = NONE} =>
-                                                             DocDiag.error (#span l, "the law `" ^ #code l ^ "` has a variable `"
-                                                                                     ^ name ^ " : " ^ ty
-                                                                                     ^ "` that lib/test/property has no arbitrary of")
-                                                         | _ => ())
-                                                       vars
+                                              (List.app (fn {name, ty, instance = NONE} =>
+                                                              DocDiag.error (#span l, "the law `" ^ #code l ^ "` has a variable `"
+                                                                                      ^ name ^ " : " ^ ty
+                                                                                      ^ "` that lib/test/property has no arbitrary of")
+                                                          | _ => ())
+                                                        vars;
+                                               case side of
+                                                 SOME {ty, instance = NONE, ...} =>
+                                                   DocDiag.error (#span l, "the law `" ^ #code l ^ "` compares its sides at `" ^ ty
+                                                                           ^ "`, which lib/test/property has no arbitrary of")
+                                               | _ => ())
                                             else ())
                                      end)
                                   (DocLaws.ofSignature s))
@@ -1809,6 +1824,44 @@ struct
                          | es => SOME (#name s ^ ".sml", DocExamples.program (#name s, P.normalise (#file s), structureOf (#name s), es)))
                       (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
     end
+
+  (* The programs that hold the laws of the signatures at every structure
+     that implements them (docs/plans/quickcheck.md, D8 and M8), one for each
+     signature with a law. A law is elaborated anew at each structure, where
+     its variables may have other types. *)
+  fun laws {dir : string, prelude : DocElab.prelude} : file list =
+    case DocElab.library (dir, prelude) of
+      NONE => []
+    | SOME lib =>
+        let
+          val modules = load dir
+          val (claims, _, _, _) = envOf (modules, "", [], [], NONE, NONE)
+          fun implementers signat =
+            List.foldl (fn (n, acc) => if List.exists (fn m => m = n) acc then acc else acc @ [n]) []
+                       (sort (fn (a : string, b) => a < b)
+                             (List.map #name (List.filter (fn c : DocClaims.claim =>
+                                                              #signat c = signat andalso not (#isFunctor c)
+                                                              andalso #origin c <> "inherited")
+                                                           claims)))
+          fun entries (l : DocLaws.law) =
+            case implementers (#signat l) of
+              [] => ["  (" ^ DocLaws.str (DocLaws.label l) ^ ", fn () => raise Fail \"no structure implements "
+                     ^ #signat l ^ "\")"]
+            | ss => List.map (fn st =>
+                                let val opens = DocLaws.opens (st, #path l)
+                                in
+                                  DocLaws.entry (l, st, opens, DocElab.elabLaw lib (opens, #code l, #conditions l, #pure l),
+                                                 DocElab.sides (#fixity lib) (#code l))
+                                end)
+                             ss
+        in
+          List.mapPartial (fn s : I.signatureRecord =>
+                             case DocLaws.ofSignature s of
+                               [] => NONE
+                             | ls => SOME (#name s ^ ".sml",
+                                           DocLaws.program (#name s, P.normalise (#file s), List.concat (List.map entries ls))))
+                          (sort (fn (a : I.signatureRecord, b : I.signatureRecord) => #name a < #name b) (signaturesOf modules))
+        end
 
   fun checkCoverage {dir : string, tests : string} : int =
     let

@@ -5,8 +5,18 @@
 - `t` (type): [ARB_OF](../sig/ARB_OF.md#type-t), [DATE_ARB](../sig/DATE_ARB.md#type-t)
 - `termios` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-termios)
 - `termiosFields` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-termiosfields)
+- `textInstream` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-textinstream)
+- `textOutstream` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-textoutstream)
+- `textPos` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-textpos)
+- `textStreamInstream` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-textstreaminstream)
+- `textWriter` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-textwriter)
 - `traversal` (val): [BASIS_DATA_ARB](../sig/BASIS_DATA_ARB.md#val-traversal)
 - `triple` (val): [ARB](../sig/ARB.md#val-triple), [CO](../sig/CO.md#val-triple), [GEN](../sig/GEN.md#val-triple), [SHOW](../sig/SHOW.md#val-triple)
+- `ttyCc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-ttycc)
+- `ttyCflags` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-ttycflags)
+- `ttyIflags` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-ttyiflags)
+- `ttyLflags` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-ttylflags)
+- `ttyOflags` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-ttyoflags)
 
 ---
 

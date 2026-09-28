@@ -441,7 +441,7 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldl f init arr` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init arr = foldli (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `arr : 'a array`)
+**Law** `foldl f init arr = foldli (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'b * 'a -> 'a`, `init : 'a`, `arr : 'b array`)
 
 **Example** `foldl (op ::) [] (fromList [1, 2, 3]) = [3, 2, 1]`
 
@@ -459,7 +459,7 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a array -> 'b
 
 `foldr f init arr` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init arr = foldri (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `arr : 'a array`)
+**Law** `foldr f init arr = foldri (fn (_, x, acc) => f (x, acc)) init arr` (for every `f : 'b * 'a -> 'a`, `init : 'a`, `arr : 'b array`)
 
 **Example** `foldr (op ::) [] (fromList [1, 2, 3]) = [1, 2, 3]`
 

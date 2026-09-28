@@ -196,6 +196,16 @@ if "$rune" --library test/property tests/lib/property/mutants.sml -o "$out/prope
 else
   bad "property: the mutants (see $out/property-mutants.cerr, $out/property-mutants.out)"
 fi
+# Check.laws: every law, then one alone
+if "$rune" --library test/property tests/lib/property/laws.sml -o "$out/property-laws.rbc" > "$out/property-laws.cerr" 2>&1 &&
+   "$runevm" "$out/property-laws.rbc" > "$out/property-laws.out" 2>&1 &&
+   [ "$(grep -c '^LAW ' "$out/property-laws.out")" = 2 ] && grep -q "^laws: 2 pass, 0 fail" "$out/property-laws.out" &&
+   RUNE_PROPERTY_ONLY=TEST.nth/law-1@List "$runevm" "$out/property-laws.rbc" > "$out/property-laws-only.out" 2>&1 &&
+   grep -q "^laws: 1 pass, 0 fail" "$out/property-laws-only.out" && grep -q "^PASS TEST.nth" "$out/property-laws-only.out"; then
+  ok
+else
+  bad "property: Check.laws (see $out/property-laws.out, $out/property-laws-only.out)"
+fi
 if "$rune" --library test/property --basis-check > "$out/property-check.txt" 2>&1; then
   ok
 else

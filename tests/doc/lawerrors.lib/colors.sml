@@ -21,7 +21,9 @@ sig
 
      Raises: `Subscript` if `i` is not a place of a colour.
 
-     Law: `fromIndex (i mod 3) = fromIndex ((i + 3) mod 3)` for `i` *)
+     Law: `fromIndex (i mod 3) = fromIndex ((i + 3) mod 3)` for `i`
+
+     Law: `fromIndex 0 = fromIndex 3` *)
   val fromIndex : int -> color
 end
 

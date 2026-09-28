@@ -5,6 +5,7 @@
 - `elements` (val): [GEN](../sig/GEN.md#val-elements)
 - `enum` (val): [ARB](../sig/ARB.md#val-enum)
 - `equal` (val): [ARB](../sig/ARB.md#val-equal), [PROP](../sig/PROP.md#val-equal)
+- `equalIf` (val): [PROP](../sig/PROP.md#val-equalif)
 - `exn` (val): [ARB](../sig/ARB.md#val-exn)
 
 ---

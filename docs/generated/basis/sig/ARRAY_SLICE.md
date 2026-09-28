@@ -482,7 +482,7 @@ val foldl : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldl f init sl` combines the elements from the left, as [`List.foldl`](../sig/LIST.md#val-foldl) does.
 
-**Law** `foldl f init sl = foldli (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `sl : 'a ArraySlice.slice`)
+**Law** `foldl f init sl = foldli (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'b * 'a -> 'a`, `init : 'a`, `sl : 'b ArraySlice.slice`)
 
 **Example** `foldl (op ::) [] (full (Array.fromList [1, 2, 3])) = [3, 2, 1]`
 
@@ -500,7 +500,7 @@ val foldr : ('a * 'b -> 'b) -> 'b -> 'a slice -> 'b
 
 `foldr f init sl` combines the elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init sl = foldri (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'a * 'b -> 'b`, `init : 'b`, `sl : 'a ArraySlice.slice`)
+**Law** `foldr f init sl = foldri (fn (_, a, x) => f (a, x)) init sl` (for every `f : 'b * 'a -> 'a`, `init : 'a`, `sl : 'b ArraySlice.slice`)
 
 **Example** `foldr (op ::) [] (full (Array.fromList [1, 2, 3])) = [1, 2, 3]`
 

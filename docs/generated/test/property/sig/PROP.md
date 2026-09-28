@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 13 of 13 entries documented |
+| Documentation | 15 of 15 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/prop\_sig.sml](../../../../../lib/test/property/prop_sig.sml) |
 
@@ -44,6 +44,8 @@ sig
   val <a href="#val-forallgen">forAllGen</a> : 'a Gen.gen * ('a -&gt; string) -&gt; ('a -&gt; prop) -&gt; prop
   val <a href="#val-equal">equal</a> : 'a Arb.arb -&gt; (unit -&gt; 'a) * (unit -&gt; 'a) -&gt; prop
   val <a href="#val-law">law</a> : 'a Arb.arb * 'b Arb.arb -&gt; ('a -&gt; 'b) * ('a -&gt; 'b) -&gt; prop
+  val <a href="#val-holdsif">holdsIf</a> : 'a Arb.arb -&gt; ('a -&gt; bool) * ('a -&gt; bool) -&gt; prop
+  val <a href="#val-equalif">equalIf</a> : 'a Arb.arb * 'b Arb.arb -&gt; ('a -&gt; bool) * ('a -&gt; 'b) * ('a -&gt; 'b) -&gt; prop
   val <a href="#val-op-eq-eq-gt">==&gt;</a> : bool * (unit -&gt; prop) -&gt; prop
   val <a href="#val-label">label</a> : string -&gt; prop -&gt; prop
   val <a href="#val-classify">classify</a> : bool -&gt; string -&gt; prop -&gt; prop
@@ -151,6 +153,33 @@ It is `forAll a` of `equal b (fn () => l x, fn () => r x)`, except that
 each side is given its own `x`, drawn anew from the same part of the
 tree: a side that changes an array or calls a function with effects does
 not change what the other side sees.
+
+### <a name="val-holdsif"></a>`holdsIf`
+
+```sml
+val holdsIf : 'a Arb.arb -> ('a -> bool) * ('a -> bool) -> prop
+```
+
+`holdsIf a (cond, claim)` holds when `claim x` is true for the `x` of `a` for which `cond x` is.
+
+This is a law of documentation that is not an equation
+(docs/plans/quickcheck.md, M8). `cond` and `claim` each have an `x` of
+their own, drawn from the same nodes, so that one does not change what
+the other sees. A case whose condition is false or raises is discarded,
+and one whose claim raises fails with the exception's class.
+
+### <a name="val-equalif"></a>`equalIf`
+
+```sml
+val equalIf : 'a Arb.arb * 'b Arb.arb -> ('a -> bool) * ('a -> 'b) * ('a -> 'b) -> prop
+```
+
+`equalIf (a, b) (cond, l, r)` holds when `l x` and `r x` have one outcome for the `x` of `a` for which `cond x` is true.
+
+This is a law of documentation that is an equation: the outcomes of the
+sides are compared by `b` as [`law`](#val-law) compares them, and each side and the
+condition have an `x` of their own, drawn from the same nodes. A case
+whose condition is false or raises is discarded.
 
 ### <a name="val-op-eq-eq-gt"></a>`==>`
 

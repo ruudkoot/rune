@@ -433,7 +433,7 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 `map f l` is the list of the results of applying `f` to each element of
 `l`, from left to right.
 
-**Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects (for every `f : 'a -> 'b`, `g : 'c -> 'a`, `l : 'c list`)
+**Law** `map f (map g l) = map (f o g) l` when `f` and `g` have no effects (for every `f : 'b -> 'a`, `g : 'c -> 'b`, `l : 'c list`)
 
 **Example** `map (fn x => x * 2) [1, 2, 3] = [2, 4, 6]`
 
@@ -457,7 +457,7 @@ every result `SOME v`, in order.
 Elements for which `f` answers `NONE` leave nothing behind: it is a [`map`](#val-map)
 and a [`filter`](#val-filter) in one pass.
 
-**Law** `mapPartial f l = map valOf (filter isSome (map f l))` (for every `f : 'a -> 'b option`, `l : 'a list`)
+**Law** `mapPartial f l = map valOf (filter isSome (map f l))` (for every `f : 'b -> 'a option`, `l : 'b list`)
 
 **Example** `mapPartial (fn x => if x > 1 then SOME (x * x) else NONE) [1, 2, 3] = [4, 9]`
 

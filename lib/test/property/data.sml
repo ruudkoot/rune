@@ -138,7 +138,8 @@ struct
 end
 
 (* The arbitrary of the generators of lib/random: the generator of a seed
-   drawn as `Gen.word64` draws a word, shown by `Random.toString`.
+   drawn as `Gen.word64` draws a word, shown as the text lib/random writes of
+   it.
 
    Implements: ARB_OF where type t = Random.gen *)
 structure RandomArb : ARB_OF where type t = Random.gen =

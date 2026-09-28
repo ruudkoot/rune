@@ -180,7 +180,7 @@ val map : ('a * 'b -> 'c) -> 'a list * 'b list -> 'c list
 
 `map f (l, m)` is the list of the results of `f` on the pairs of elements at the same position.
 
-**Law** `map f (l, m) = List.map f (zip (l, m))` (for every `f : 'a * 'b -> 'c`, `l : 'a list`, `m : 'b list`)
+**Law** `map f (l, m) = List.map f (zip (l, m))` (for every `f : 'b * 'c -> 'a`, `l : 'b list`, `m : 'c list`)
 
 **Example** `map (op +) ([1, 2], [10, 20, 30]) = [11, 22]`
 
@@ -224,7 +224,7 @@ val foldl : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 `f` takes the two elements and the accumulator, and the traversal stops
 at the end of the shorter list.
 
-**Law** `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'a * 'b * 'c -> 'c`, `init : 'c`, `l : 'a list`, `m : 'b list`)
+**Law** `foldl f init (l, m) = List.foldl (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'b * 'c * 'a -> 'a`, `init : 'a`, `l : 'b list`, `m : 'c list`)
 
 **Example** `foldl (fn (a, b, acc) => a * b + acc) 0 ([1, 2], [3, 4]) = 11`
 
@@ -242,7 +242,7 @@ val foldr : ('a * 'b * 'c -> 'c) -> 'c -> 'a list * 'b list -> 'c
 
 `foldr f init (l, m)` combines the pairs of elements from the right, as [`List.foldr`](../sig/LIST.md#val-foldr) does.
 
-**Law** `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'a * 'b * 'c -> 'c`, `init : 'c`, `l : 'a list`, `m : 'b list`)
+**Law** `foldr f init (l, m) = List.foldr (fn ((x, y), acc) => f (x, y, acc)) init (zip (l, m))` (for every `f : 'b * 'c * 'a -> 'a`, `init : 'a`, `l : 'b list`, `m : 'c list`)
 
 **Example** `foldr (fn (a, b, acc) => (a, b) :: acc) [] ([1, 2], ["a", "b", "c"]) = [(1, "a"), (2, "b")]`
 

@@ -69,7 +69,7 @@ val fromIndex : int -> color
 
 **Raises** `Subscript` if `i` is not a place of a colour.
 
-**Law** `fromIndex (i mod 3) = fromIndex ((i + 3) mod 3)` (for every `i : int`)
+**Law** `index (fromIndex (i mod 3)) = index (fromIndex ((i + 3) mod 3))` (for every `i : int`)
 
 ### <a name="val-keep"></a>`keep`
 
