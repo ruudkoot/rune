@@ -39,13 +39,13 @@
 #   xc1:mlton  xc1:smlnj-legacy  xc1:smlnj32  xc1:smlnj-dev  xc1:polyml  xc1:mlkit
 #                          the suite against Rune's Basis Library (lib/basis)
 #                          compiled by the host; see below
-#   xc2:mlton              the suite against MLton's Basis Library compiled by
-#                          bin/rune and run by bin/runevm: the library's
-#                          sources, MLton's primitives and C functions made
+#   xc2:mlton  xc2:mlkit   the suite against the Basis Library of MLton or MLKit
+#                          compiled by bin/rune and run by bin/runevm: the
+#                          library's sources, its primitives and C functions made
 #                          of Rune's (tests/basis/xc2/README.md)
 #   hosts                  native:HOST for the six hosts
 #   xc1                    xc1:HOST for the six hosts
-#   xc2                    xc2:mlton
+#   xc2                    xc2:mlton and xc2:mlkit
 #   all                    rune, hosts and xc1 (not windows)
 # The hosts are the releases scripts/fetch-hosts.sh installed under
 # ${RUNE_HOSTS:-$HOME/.local/rune-hosts} (`make hosts`): MLton, SML/NJ 110.99.9
@@ -567,7 +567,7 @@ run_one_body() {
   # test, so it is kept: looking again costs a compilation of the library per
   # group, which is most of what a run spends on a host.
   toolkey=$libkey
-  case $kind in rune|xc2) toolkey="$libkey.$runekey" ;; esac
+  case $kind in rune) toolkey="$libkey.$runekey" ;; xc2) toolkey="$libkey.$runekey.$xc2key" ;; esac
   seckey="$toolkey-$(cksum < "$src" | cut -d " " -f 1)-$(echo "$cmd1 $cmd2 $limit" | cksum | cut -d " " -f 1)"
   kept=$cfgout/$test.sections
   if [ "$refresh" = 0 ] && [ -f "$kept" ] && [ "$(head -1 "$kept")" = "$seckey" ]; then
@@ -838,6 +838,13 @@ if [ -z "$runekey" ]; then
   runekey=$(cat src/*/*.sml runtime/*.c runtime/*.h 2>/dev/null | cksum | cut -d " " -f 1)
 fi
 export RUNE_MATRIX_RUNEKEY=$runekey
+# The generators, shims and patches of the xc2 configurations decide their
+# sections as well.
+xc2key=${RUNE_MATRIX_XC2KEY:-}
+if [ -z "$xc2key" ]; then
+  xc2key=$(find tests/basis/xc2 -type f | LC_ALL=C sort | xargs cat | cksum | cut -d " " -f 1)
+fi
+export RUNE_MATRIX_XC2KEY=$xc2key
 
 # discard_image: remove a saved host session and the marker that makes load
 # use it. The image is valid only while basis.key matches the current library.
@@ -1021,7 +1028,7 @@ probe_xc2() {
   trap 'exit 1' HUP INT TERM
   t_probe=$(now)
   mlib=$(config_field "$1" 6)
-  [ -f "$mlib/targets/self/constants" ] || { echo "no MLton library in '$mlib'" > "$cfgout/basis.done"; return; }
+  [ -d "$mlib" ] || { echo "no library of $host in '$mlib'" > "$cfgout/basis.done"; return; }
   key=$(find tests/basis/xc2 -type f | sort | xargs cat lib/basis/MANIFEST lib/basis/*.sml | cksum | cut -d ' ' -f 1)-$(echo "$cmd1 $mlib" | cksum | cut -d ' ' -f 1)
   if [ -f "$cfgout/basis.key" ] && [ "$(cat "$cfgout/basis.key")" = "$key" ] && [ -f "$cfgout/xc2/prefix" ]; then
     echo "cached 0 $(since "$t_probe")" > "$cfgout/basis.time"
@@ -1062,7 +1069,7 @@ expand() {
     case "$c" in
       hosts) echo native:mlton native:smlnj-legacy native:smlnj32 native:smlnj-dev native:polyml native:mlkit ;;
       xc1) echo xc1:mlton xc1:smlnj-legacy xc1:smlnj32 xc1:smlnj-dev xc1:polyml xc1:mlkit ;;
-      xc2) echo xc2:mlton ;;
+      xc2) echo xc2:mlton xc2:mlkit ;;
       all) echo rune; expand hosts,xc1 ;;
       windows) echo rune:windows rune:windows32 rune:windows-new rune:windows32-new ;;
       portability) echo rune:linux32 rune:ppc64 rune:linux32-new rune:ppc64-new rune:aarch64-new ;;
@@ -1175,6 +1182,16 @@ resolve() {
       version=$("$mlton" 2> /dev/null | sed -n '1s/^MLton \([0-9][0-9.]*\).*/\1/p')
       # the sixth field of the configuration: MLton's library directory
       extra=$(cd "$(dirname "$mlton")/../lib/mlton" 2> /dev/null && pwd)
+      ;;
+    xc2:mlkit)
+      # Rune's compiler and machine with MLKit's library (lib/mlkit/basis)
+      cmd1=${RUNE:-$root/bin/rune}
+      cmd2=${RUNEVM:-$root/bin/runevm}
+      [ -x "$cmd1" ] && [ -x "$cmd2" ] || { echo "run-matrix: $cmd1 or $cmd2 is missing (run make)" >&2; return 1; }
+      mlkit=${MLKIT:-$hosts_prefix/mlkit/bin/mlkit}
+      version=$("$mlkit" --version 2> /dev/null | sed -n '1s/^MLKit v\([0-9][0-9.]*\).*/\1/p')
+      # the sixth field of the configuration: MLKit's library directory
+      extra=${MLKIT_LIB:-$(cd "$(dirname "$mlkit")/../lib/mlkit" 2> /dev/null && pwd)}
       ;;
     native:mlton|xc1:mlton)
       cmd1=${MLTON:-$hosts_prefix/mlton/bin/mlton}
@@ -1427,15 +1444,19 @@ function readlines(file, arr,   n, l) { n = 0; while ((getline l < file) > 0) ar
 # explain ID LABEL: "LINE|CATEGORY|reason" of the first line that explains
 # the failure, "" if none; LINE is 0 for a line of rune that an xc1
 # configuration inherits, or of native:HOST that xc2:HOST inherits (not
-# counted as used)
+# counted as used), and for a line that xc2:HOST matches without naming xc2
+# (*:HOST, a failure of the compiler or the runtime of the host, which xc2
+# may not share)
 function explain(id, label,   k, i, ln) {
   for (k = 1; k <= ncand[id]; k++) {
     i = cand[id, k]
-    ln = (id ~ cre[i]) ? dline[i] : 0
+    ln = (id ~ cre[i] && !xc2only(id, i)) ? dline[i] : 0
     if (label ~ lre[i]) return ln "|" cat[i] "|" why[i]
   }
   return ""
 }
+# a line that ID, a configuration of xc2, matches without naming xc2
+function xc2only(id, i) { return id ~ /^xc2:/ && cglob[i] !~ /^xc2/ }
 # the lines that can explain a failure of ID, in order
 function candidates(id,   i) {
   for (i = 1; i <= ndev; i++)
@@ -1537,9 +1558,10 @@ BEGIN {
   for (k = 1; k <= nun; k++) print unexplained[k] > unexplainedfile
   # Stale deviations: a line must match a failure in every configuration of
   # this run that its configuration glob names (not a HOST-FLAKY line: that
-  # failure comes and goes). The checks of a test that timed out in a
-  # configuration, as the rune configuration reports them, may not have run:
-  # a line that matches one of them is not stale there.
+  # failure comes and goes; nor, for xc2:HOST, a line that does not name
+  # xc2). The checks of a test that timed out in a configuration, as the
+  # rune configuration reports them, may not have run: a line that matches
+  # one of them is not stale there.
   if (filter == "") {
     for (key in timedout) {
       split(key, kk, SUBSEP); r = dir["rune"] "/" kk[2] ".result"
@@ -1550,7 +1572,7 @@ BEGIN {
       if (cat[i] == "HOST-FLAKY") continue
       for (a = 1; a <= nids; a++) {
         id = ids[a]
-        if (id !~ cre[i] || ((dline[i], id) in used)) continue
+        if (id !~ cre[i] || xc2only(id, i) || ((dline[i], id) in used)) continue
         skip = 0
         for (k = 1; k <= nunrun[id]; k++) if (unrun[id, k] ~ lre[i]) { skip = 1; break }
         if (skip) continue

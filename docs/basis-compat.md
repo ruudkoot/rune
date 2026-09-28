@@ -47,12 +47,15 @@ configuration are in `tests/out/matrix/<configuration>/<test>.dir/`.
   portable Standard ML, that its `_prim` annotations agree with
   `runtime/prims.def`, and that its code is right independently of Rune's compiler
   and VM.
-* `xc2:mlton`: the suite on MLton's library (its sources, `lib/mlton/sml/basis`
-  of the host) compiled by Rune, with MLton's primitives and C functions
-  made of Rune's (`tests/basis/xc2`). This checks Rune's compiler and VM on
-  another implementation's 37,000 lines of library, as the tests use them:
-  where it fails a check that `native:mlton` passes, or passes one that it
-  fails, the compilers or the shim differ.
+* `xc2:mlton` and `xc2:mlkit`: the suite on MLton's or MLKit's library (its
+  sources, `lib/mlton/sml/basis` or `lib/mlkit/basis` of the host) compiled
+  by Rune, with the host's primitives and C functions made of Rune's
+  (`tests/basis/xc2`). This checks Rune's compiler and VM on another
+  implementation's 37,000 (MLton) or 25,000 (MLKit) lines of library, as
+  the tests use them: where it fails a check that `native:HOST` passes, or
+  passes one that it fails, the compilers or the shim differ. SML/NJ's and
+  Poly/ML's libraries lean on their compilers' representations too much for
+  a shim ([tests/basis/xc2/README.md](../tests/basis/xc2/README.md)).
 * `rune:windows` and `rune:windows32`: the suite on Rune, on the VMs of
   Windows (`make windows`, `make test-windows`; [building.md](building.md)).
   Their lines of `deviations.txt` are `WINDOWS`: what Windows does not
@@ -87,6 +90,13 @@ needs.
 | `xc1:smlnj-dev@2026.2` | 139,175 | 138,752 | 412 | 11 | 2 | 0 |
 | `xc1:polyml@5.9.2` | 139,125 | 138,750 | 364 | 11 | 2 | 0 |
 | `xc1:mlkit@4.7.23` | 139,054 | 138,524 | 519 | 11 | 2 | 0 |
+| `xc2:mlton@20241230` | 138,668 | 138,072 | 596 | 0 | 9 | 0 |
+| `xc2:mlkit@4.7.23` | 116,563 | 115,596 | 967 | 0 | 44 | 0 |
+
+The `xc2` rows are of a run of those two configurations alone, on
+2026-09-28 (under WSL2). `xc2:mlkit` runs more checks than
+`native:mlkit`: MLKit's compiler cannot load `posix_procenv` and
+`posix_sysdb`, which Rune compiles.
 
 On Rune every check passes. The `xc1` configurations skip the 11 checks of
 `INet6Sock` that open a socket, which the shim declines, and fail the checks
