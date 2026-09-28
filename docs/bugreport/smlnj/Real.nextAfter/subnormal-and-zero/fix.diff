@@ -1,0 +1,48 @@
+diff --git a/base/system/Basis/Implementation/Real/real64.sml b/base/system/Basis/Implementation/Real/real64.sml
+index 8646062..22ea1b1 100644
+--- a/base/system/Basis/Implementation/Real/real64.sml
++++ b/base/system/Basis/Implementation/Real/real64.sml
+@@ -283,30 +283,25 @@ structure Real64Imp : REAL =
+                       then fromBits(W64.orb(rSign, infBits))
+                       else fromBits(W64.orb(rSign, ef))
+                   end
+-            (* decrement the magnitude of r by one ulp *)
+-            fun stepDn () = let
+-                  val ef = W64.andb(rBits, expAndFracMask) - 0w1
+-                  in
+-                    if (ef < 0wx0010000000000000)
+-                      (* underflow, so return ±zero *)
+-                      then fromBits rSign
+-                      else fromBits(W64.orb(rSign, ef))
+-                  end
++            (* decrement the magnitude of r by one ulp; r is not ±0.0 here, and the
++             * step down from the least normal number is the largest subnormal one
++             *)
++            fun stepDn () =
++                  fromBits(W64.orb(rSign, W64.andb(rBits, expAndFracMask) - 0w1))
+             in
+               if (rExp = expMask)
+                 then r  (* r is either a NaN or infinity so return it *)
+-              else if (tExp = expMask)
+-                then if (tFrac <> 0w0)
+-                  then t (* t is a NaN, so return it *)
+-                  else if (rSign = tSign)
+-                    (* t is infinity with the same sign as r, so make r bigger *)
+-                    then stepUp ()
+-                    (* t is infinity with the opposite sign as r, so make r smaller *)
+-                    else stepDn ()
+-              (* both r and t are normal/subnormal numbers *)
++              else if (tExp = expMask) andalso (tFrac <> 0w0)
++                then t (* t is a NaN, so return it *)
+               else if (W64.orb(rExp, rFrac) = 0w0)
+                 (* rExp = 0 && rFrac = 0 ==> r = ±0.0 *)
+                 then fromBits(W64.orb(tSign, 0w1)) (* ± minimum subnormal *)
++              else if (tExp = expMask)
++                then if (rSign = tSign)
++                  (* t is infinity with the same sign as r, so make r bigger *)
++                  then stepUp ()
++                  (* t is infinity with the opposite sign as r, so make r smaller *)
++                  else stepDn ()
+               (* bit r and t are non-zero normal/subnormal numbers *)
+               else if (rSign <> tSign)
+                 (* when different signs, move `r` toward 0 *)

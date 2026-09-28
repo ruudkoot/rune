@@ -1,0 +1,13 @@
+diff --git a/base/compiler/FLINT/trans/transprim.sml b/base/compiler/FLINT/trans/transprim.sml
+index fd02ce3..e165e71 100644
+--- a/base/compiler/FLINT/trans/transprim.sml
++++ b/base/compiler/FLINT/trans/transprim.sml
+@@ -307,7 +307,7 @@ structure TransPrim : sig
+ 			in
+ 			  mkFn argTy (fn arg =>
+ 			    L.APP(L.PRIM(po, primTy, []),
+-			      L.RECORD[arg, coreAcc "w64ToInt32X"]))
++			      L.RECORD[arg, coreAcc "i64ToInt32"]))
+ 			end
+ 		    | chkPrim arg = L.PRIM arg
+ 		  in
