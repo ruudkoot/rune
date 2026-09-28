@@ -113,7 +113,7 @@ rounded once when it is stored as a double.
   MLton and Poly/ML;
 * on the 64-bit build its core test does the same in the runs that end, but
   some do not, for a bug of that build that the fixes do not touch
-  ([README](../../README.md)).
+  ([GC/real-corrupted-on-64-bit](../../GC/real-corrupted-on-64-bit/BUGREPORT.md)).
 
 ## How Rune met it
 

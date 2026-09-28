@@ -1104,8 +1104,8 @@ Also in the [top-level environment](../top-level.md): `floor`.
 <details><summary>Other implementations (3)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1133,10 +1133,10 @@ Also in the [top-level environment](../top-level.md): `ceil`.
 
 <details><summary>Other implementations (6)</summary>
 
-- **SML/NJ** &mdash; Real.ceil minPos is 0
+- **SML/NJ** &mdash; Real.ceil minPos is 0: ceil is \~1 - floor (\~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; ceil of 2^62, the first real above maxInt, is minInt, not Overflow: the runtime compares with maxInt written as a double, which is 2^62
 - **MLKit** &mdash; ceil of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
@@ -1167,8 +1167,8 @@ Also in the [top-level environment](../top-level.md): `trunc`.
 <details><summary>Other implementations (4)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; trunc of minInt = \~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 
 </details>
@@ -1200,10 +1200,10 @@ Also in the [top-level environment](../top-level.md): `round`.
 <details><summary>Other implementations (5)</summary>
 
 - **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
+- **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1232,8 +1232,8 @@ val toInt : IEEEReal.rounding_mode -> real -> int
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; toInt TO\_POSINF is ceil, which gives minInt for 2^62 instead of raising Overflow
 - **MLKit** &mdash; toInt TO\_POSINF and TO\_ZERO are ceil and trunc, which raise Overflow for minInt = \~2^62
 
@@ -1263,8 +1263,8 @@ a bounded [`LargeInt.int`](../sig/INTEGER.md#type-int); [`Domain`](../sig/GENERA
 <details><summary>Other implementations (5)</summary>
 
 - **SML/NJ 110.99.9 (64-bit)** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 - **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF are exchanged for it: toLargeInt TO\_NEGINF \~2.5 is \~2
 - **MLKit** &mdash; toLargeInt rounds the magnitude of a negative real in the mode given, so that TO\_NEGINF and TO\_POSINF disagree with floor and ceil on negative reals
 
@@ -1294,7 +1294,7 @@ Also in the [top-level environment](../top-level.md): `real`.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt
+- **SML/NJ 110.99.9 (64-bit)** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
 
 </details>
 
@@ -1321,11 +1321,12 @@ A magnitude beyond [`maxFinite`](#val-maxfinite) gives an infinity of the sign o
 > reals goes to the one whose last digit is even, and the digits that are
 > dropped decide the rest.
 
-<details><summary>Other implementations (4)</summary>
+<details><summary>Other implementations (5)</summary>
 
-- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+- **SML/NJ (32-bit)** &mdash; Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 - **MLKit** &mdash; fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48
-- **SML/NJ, MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+- **SML/NJ** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value") (docs/bugreport/smlnj/Real.fromLargeInt)
+- **MLKit** &mdash; fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO\_NEGINF \~(2^53 + 1) is \~2^53, not \~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 - **Poly/ML 5.9.2** &mdash; fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 
 </details>

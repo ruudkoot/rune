@@ -154,9 +154,9 @@ native:smlnj*@* | Real.realFloor/zero | HOST-BUG | Real.realFloor 0.0 is ~0.0
 native:smlnj*@* | Real.real*/*huge | HOST-BUG | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
 native:smlnj*@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52
 native:smlnj*@* | Real.real*/negzero-sign | HOST-BUG | realCeil, realTrunc and realRound lose the sign of a zero result
-*:smlnj*@* | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0
-native:smlnj32@* | Real.round/minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
-native:smlnj32@* | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+*:smlnj*@* | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0: ceil is ~1 - floor (~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
+native:smlnj32@* | Real.round/minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
+native:smlnj32@* | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 *:smlnj*@* | Real.fmt/GEN-seventeen-digits | HOST-BUG | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 native:smlnj*@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
 native:smlnj32@* | Real.fmt/EXACT-law-fromString-inverts | HOST-BUG | fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy#373)
@@ -173,13 +173,13 @@ native:smlnj*@* | Real.fromString/leading-whitespace | HOST-BUG | scan skips onl
 *:smlnj*@* | Real32.Math.*nh/negzero | HOST-BUG | Math.sinh (~0.0) and Math.tanh (~0.0) are 0.0, not ~0.0, and Real32.Math computes with them
 *:smlnj*@* | Real32.Math.tanh/posInf | HOST-BUG | Math.tanh posInf is NaN, and Real32.Math computes with it
 *:smlnj*@* | Real32.Math.tan/negzero | HOST-BUG | Math.tan (~0.0) is 0.0, not ~0.0, and Real32.Math computes with it
-*:smlnj*@110.99.9 | Real.*/law-* | HOST-FLAKY | on a loaded machine (32 runs at once) about one run in ten gets a result wrong in the last bits: fromManExp (toManExp x) differs from x for x = ~9.69494874253E272; never seen alone
+*:smlnj*@110.99.9 | Real.*/law-* | HOST-FLAKY | on a loaded machine (32 runs at once) about one run in ten gets a result wrong in the last bits: fromManExp (toManExp x) differs from x for x = ~9.69494874253E272; never seen alone; probably a garbage collection corrupting a real (docs/bugreport/smlnj/GC)
 *:smlnj@110.99.9 | Math.*/law-* | HOST-FLAKY | as the Real laws: Math.ln/law-product-is-sum failed once in a full matrix run and not since
 native:smlnj*@110.99.9 | Real.rem/*Inf-x | HOST-BUG | rem (±inf, y) is a zero, not NaN
 native:smlnj*@110.99.9 | Real.rem/*zero-y | HOST-BUG | rem (x, ±0.0) is a zero, not NaN
 *:smlnj@110.99.9 | Real.*/Overflow-*above-maxInt | HOST-BUG | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-*:smlnj@110.99.9 | Real.*/*minInt* | HOST-BUG | ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-*:smlnj@110.99.9 | Real.*/*near-maxInt | HOST-BUG | ceil of the largest real below 2^62, an integer, is one less than it
+*:smlnj@110.99.9 | Real.*/*minInt* | HOST-BUG | ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+*:smlnj@110.99.9 | Real.*/*near-maxInt | HOST-BUG | ceil of the largest real below 2^62, an integer, is one less than it: ceil is ~1 - floor (~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 *:smlnj*@110.99.9 | Real.fmt/*-minPos | HOST-BUG | fmt of minPos prints the digits of the shortest representation, 5E~324, padded with zeros instead of the digits asked for
 native:smlnj*@110.99.9 | Real.scan/point-* | HOST-BUG | scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
 native:polyml@5.9.2 | Real.toDecimal/* | HOST-BUG | toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
@@ -580,7 +580,7 @@ native:smlnj*@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an expone
 native:polyml@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:mlkit@* | IEEEReal.scan/huge-exponent | SPEC-AMBIGUOUS | reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 native:smlnj*@* | IntInf.pow/*one-to-minus-* | HOST-BUG | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
-native:smlnj*@* | Real.fromLargeInt/TO_NEGINF-negative-rounds-down | HOST-BUG | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+native:smlnj*@* | Real.fromLargeInt/TO_NEGINF-negative-rounds-down | HOST-BUG | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value") (docs/bugreport/smlnj/Real.fromLargeInt)
 native:mlkit@* | Real.fromLargeInt/TO_NEGINF-negative-rounds-down | HOST-BUG | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 native:smlnj*@* | *.StreamIO.filePosIn/Io-closed | SPEC-AMBIGUOUS | gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 native:smlnj*@110.99.9 | *IO.input1/passes-an-end-of-stream | HOST-BUG | input1 never moves past an end-of-stream
@@ -699,7 +699,7 @@ native:smlnj32@* | Int64.fromString/* | HOST-BUG | Int64.+ and Int64.- get the c
 native:smlnj32@* | Int64.scan/* | HOST-BUG | Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 native:smlnj32@* | Int64.fmt/*HEX* | HOST-BUG | fmt raises an exception for minInt and maxInt and gets other numbers wrong: Int64.+ and Int64.- get the carry and the borrow wrong (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 native:smlnj@110.99.9 | Int32.abs/Overflow-minInt | HOST-BUG | Int32.abs minInt gives minInt instead of raising Overflow
-native:smlnj@* | Word[0-9]*.toInt/through-LargeWord-* | HOST-BUG | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+native:smlnj@* | Word[0-9]*.toInt/through-LargeWord-* | HOST-BUG | Int.fromLarge (LargeWord.toLargeInt w) is fused into a signed test, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does (docs/bugreport/smlnj/Int.fromLarge/fused-conversions)
 native:polyml@* | Word[0-9]*.~>>/*-by-all-ones | HOST-BUG | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
 native:polyml@* | Word64.~>>/* | HOST-BUG | Word64.~>> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
 xc1:mlton@* | @section/intn_*/constants | XC1-NA | integer and word constants at the IntN and WordN of lib/basis: a host's overloading is closed

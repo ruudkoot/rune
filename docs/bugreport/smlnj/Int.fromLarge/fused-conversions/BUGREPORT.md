@@ -87,12 +87,14 @@ results computed with `IntInf`:
 | 32-bit builds | none: the compiler stops |
 | 32-bit with `fix.diff` and the other fixes of this directory | 0 of 2,989 |
 | 64-bit with the same fixes | 19 of 3,184 |
+| 32-bit and 64-bit with these and the fix of [Word32.fromLarge/fused-sign-extension](../../Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 0 |
 
 Of the release's 78, 59 are this bug. The remaining 19 are a different
-64-bit bug that these fixes do not touch: `Word32.fromLargeInt
-(Int32.toLarge ~1)` and `Word32.fromLarge (Word8.toLargeX 0wxFF)` give a
-`Word32.word` whose `toString` is `7FFFFFFFFFFFFFFF`. It is not analysed or
-reported.
+64-bit bug in the same file:
+[Word32.fromLarge/fused-sign-extension](../../Word32.fromLarge/fused-sign-extension/BUGREPORT.md).
+`Word32.fromLargeInt (Int32.toLarge ~1)` and
+`Word32.fromLarge (Word8.toLargeX 0wxFF)` give a `Word32.word` whose
+`toString` is `7FFFFFFFFFFFFFFF`.
 
 ## The cause
 

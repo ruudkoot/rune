@@ -92,9 +92,9 @@ Real.realFloor/zero | SML/NJ | Real.realFloor 0.0 is ~0.0
 Real.real*/*huge | SML/NJ | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
 Real.realRound/large-odd | SML/NJ | Real.realRound (2^52 + 1) is 2^52
 Real.real*/negzero-sign | SML/NJ | realCeil, realTrunc and realRound lose the sign of a zero result
-Real.ceil/small-positive | SML/NJ | Real.ceil minPos is 0
-Real.round/minInt-minus-half-tie-to-even | SML/NJ (32-bit) | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt
-Real.fromLargeInt/sticky-bit | SML/NJ (32-bit) | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100
+Real.ceil/small-positive | SML/NJ | Real.ceil minPos is 0: ceil is ~1 - floor (~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
+Real.round/minInt-minus-half-tie-to-even | SML/NJ (32-bit) | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
+Real.fromLargeInt/sticky-bit | SML/NJ (32-bit) | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 Real.fmt/GEN-seventeen-digits | SML/NJ | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 Real.fmt/GEN-notation-* | SML/NJ | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
 Real.fmt/EXACT-law-fromString-inverts | SML/NJ (32-bit) | fromString reads some of the digits fmt EXACT writes one ulp high: it rounds with Word64 shifts, which the 32-bit build gets wrong for a shift by 0 (docs/bugreport/smlnj/Word64/shifts-and-negation; smlnj/legacy#373)
@@ -112,8 +112,8 @@ Real32.Math.tan/negzero | SML/NJ | Math.tan (~0.0) is 0.0, not ~0.0, and Real32.
 Real.rem/*Inf-x | SML/NJ 110.99.9 | rem (±inf, y) is a zero, not NaN
 Real.rem/*zero-y | SML/NJ 110.99.9 | rem (x, ±0.0) is a zero, not NaN
 Real.*/Overflow-*above-maxInt | SML/NJ 110.99.9 (64-bit) | floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
-Real.*/*minInt* | SML/NJ 110.99.9 (64-bit) | ceil and trunc of minInt (and of minInt - 0.5) give maxInt
-Real.*/*near-maxInt | SML/NJ 110.99.9 (64-bit) | ceil of the largest real below 2^62, an integer, is one less than it
+Real.*/*minInt* | SML/NJ 110.99.9 (64-bit) | ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
+Real.*/*near-maxInt | SML/NJ 110.99.9 (64-bit) | ceil of the largest real below 2^62, an integer, is one less than it: ceil is ~1 - floor (~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
 Real.fmt/*-minPos | SML/NJ 110.99.9 | fmt of minPos prints the digits of the shortest representation, 5E~324, padded with zeros instead of the digits asked for
 Real.scan/point-* | SML/NJ 110.99.9 | scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
 Real.toDecimal/* | Poly/ML 5.9.2 | toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
@@ -349,7 +349,7 @@ IEEEReal.scan/huge-exponent | SML/NJ | another reading of the specification: rea
 IEEEReal.scan/huge-exponent | Poly/ML | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IEEEReal.scan/huge-exponent | MLKit | another reading of the specification: reads an exponent beyond every int as an infinity or a zero (class INF or ZERO); the test takes the reading of Rune, a normal number whose exponent is far out and of the right sign
 IntInf.pow/*one-to-minus-* | SML/NJ | pow (1, j) and pow (~1, j) for a negative j are 0, where the page has "|i| = 1: i^j"
-Real.fromLargeInt/TO_NEGINF-negative-rounds-down | SML/NJ | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
+Real.fromLargeInt/TO_NEGINF-negative-rounds-down | SML/NJ | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value") (docs/bugreport/smlnj/Real.fromLargeInt)
 Real.fromLargeInt/TO_NEGINF-negative-rounds-down | MLKit | fromLargeInt rounds the magnitude in the current rounding mode and negates it: under TO_NEGINF ~(2^53 + 1) is ~2^53, not ~(2^53 + 2) ("the current rounding mode is used to determine the resulting value")
 *.StreamIO.filePosIn/Io-closed | SML/NJ | another reading of the specification: gives the position of a closed stream; the test takes the reading of Rune and Poly/ML (Io, as for a truncated stream)
 *IO.input1/passes-an-end-of-stream | SML/NJ 110.99.9 | input1 never moves past an end-of-stream
@@ -427,7 +427,7 @@ Int64.fromString/* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the
 Int64.scan/* | SML/NJ (32-bit) | Int64.+ and Int64.- get the carry and the borrow wrong, and scan and the numbers of the checks are made with them (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 Int64.fmt/*HEX* | SML/NJ (32-bit) | fmt raises an exception for minInt and maxInt and gets other numbers wrong: Int64.+ and Int64.- get the carry and the borrow wrong (docs/bugreport/smlnj/Int64.+/carry-and-borrow)
 Int32.abs/Overflow-minInt | SML/NJ 110.99.9 (64-bit) | Int32.abs minInt gives minInt instead of raising Overflow
-Word[0-9]*.toInt/through-LargeWord-* | SML/NJ (64-bit) | LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+Word[0-9]*.toInt/through-LargeWord-* | SML/NJ (64-bit) | Int.fromLarge (LargeWord.toLargeInt w) is fused into a signed test, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does (docs/bugreport/smlnj/Int.fromLarge/fused-conversions)
 Word[0-9]*.~>>/*-by-all-ones | Poly/ML | ~>> by a shift of all ones gives 0, not the word filled with its sign bit
 Word64.~>>/* | Poly/ML | Word64.~>> by a shift of 64 or more does not give 0 or all ones: it keeps the word as it is, or only its sign bit (0wx8000000000000000)
 Bool*:MONO_*/vector-is-BoolVector.vector | MLton 20241230 | BoolVector.length (BoolArray.vector (BoolArray.array (3, true))) is 0 in a program that also uses BoolArraySlice (copyVec, full, sub) or BoolArray2; alone it is 3, and 20210117 gives 3 in the same program

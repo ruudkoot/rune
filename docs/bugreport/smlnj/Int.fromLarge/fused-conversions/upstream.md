@@ -298,7 +298,7 @@ against results computed with `IntInf`, went as follows:
   compile it;
 * with this patch and those filed alongside (the `Int64.toInt` check and the
   64-bit literals), the 32-bit build gets none of 2,989 wrong;
-* the 64-bit build gets 19 wrong, from a separate 64-bit bug that I have not
-  looked into: `Word32.fromLargeInt (Int32.toLarge ~1)` and
-  `Word32.fromLarge (Word8.toLargeX 0wxFF)` give a `Word32.word` that prints
-  as `7FFFFFFFFFFFFFFF`.
+* the 64-bit build gets 19 wrong, from a separate bug in the same file,
+  filed alongside: `Word32.fromLargeInt (Int32.toLarge ~1)` gives a
+  `Word32.word` that prints as `7FFFFFFFFFFFFFFF`. With its fix too, both
+  builds get none wrong.

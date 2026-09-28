@@ -348,7 +348,7 @@ which a word as wide as an `int` can reach.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ (64-bit)** &mdash; LargeWord.toLargeInt of a word with its top bit set is negative, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does
+- **SML/NJ (64-bit)** &mdash; Int.fromLarge (LargeWord.toLargeInt w) is fused into a signed test, so the conversion through LargeWord that the specification gives for toInt raises no Overflow where toInt does (docs/bugreport/smlnj/Int.fromLarge/fused-conversions)
 
 </details>
 

@@ -1,0 +1,49 @@
+diff --git a/base/compiler/CPS/opt/contract-prim.sml b/base/compiler/CPS/opt/contract-prim.sml
+index 1d35189..3b0fb3d 100644
+--- a/base/compiler/CPS/opt/contract-prim.sml
++++ b/base/compiler/CPS/opt/contract-prim.sml
+@@ -269,8 +269,10 @@ structure ContractPrim : sig
+                         else Arith(P.TESTU{from=m, to=p}, [u])
+                   | PUREinfo(P.EXTEND{from=m, ...}, [u]) =>
+                       if (p >= m)
+-                        (* TESTU(n,p) o EXTEND(m,n) ==> EXTEND(m, p) if (p >= m) *)
+-                        then Pure(P.EXTEND{from=m, to=p}, [u])
++                        (* a negative number, extended to n bits and read as unsigned,
++                         * is 2^n more than itself, which one conversion cannot say
++                         *)
++                        then None
+                         (* TESTU(n,p) o EXTEND(m,n) ==> TESTU(m, p) if (p < m) *)
+                         else Arith(P.TESTU{from=m, to=p}, [u])
+                   | _ => None
+@@ -466,8 +468,14 @@ structure ContractPrim : sig
+                                 else Pure(P.TRUNC{from=m, to=p}, [u])
+                           | PUREinfo(P.EXTEND{from=m, to=n}, arg) =>
+                               if (p >= m)
+-                                (* TRUNC(n,p) o EXTEND(m,n) ==> EXTEND(m,p) if (p >= m) *)
+-                                then Pure(P.EXTEND{from=m, to=p}, arg)
++                                (* TRUNC(n,p) o EXTEND(m,n) ==> EXTEND(m,p) if (p >= m),
++                                 * when p bits are the whole of the representation; a
++                                 * word of fewer bits must be 0 above them, and EXTEND
++                                 * fills them with the sign
++                                 *)
++                                then if (p >= Target.defaultIntSz)
++                                  then Pure(P.EXTEND{from=m, to=p}, arg)
++                                  else None
+                                 (* TRUNC(n,p) o EXTEND(m,n) ==> TRUNC(m,p) if (p < m) *)
+                                 else Pure(P.TRUNC{from=m, to=p}, arg)
+                           | _ => None
+@@ -501,8 +509,12 @@ structure ContractPrim : sig
+                       (* TRUNC(∞,p) o COPY(m,∞) ==> TRUNC(m,p) when (m > p) *)
+                       else Pure(P.TRUNC{from=m, to=p}, [u])
+                   | PUREinfo(P.EXTEND_INF m, [u, _]) => if (p >= m)
+-                      (* TRUNC(∞,p) o EXTEND(m,∞) ==> EXTEND(m,p) when (p >= m) *)
+-                      then Pure(P.EXTEND{from=m, to=p}, [u])
++                      (* TRUNC(∞,p) o EXTEND(m,∞) ==> EXTEND(m,p) when (p >= m), and
++                       * p bits are the whole of the representation (see TRUNC)
++                       *)
++                      then if (p >= Target.defaultIntSz)
++                        then Pure(P.EXTEND{from=m, to=p}, [u])
++                        else None
+                       (* TRUNC(∞,p) o EXTEND(m,∞) ==> TRUNC(m,p) when (m > p) *)
+                       else Pure(P.TRUNC{from=m, to=p}, [u])
+                   | _ => None
