@@ -1,5 +1,6 @@
-(* The basis library's MANIFEST and the choice of the files a program loads:
-   shared by the compiler driver and runedoc. *)
+(* The MANIFEST of a library -- the basis library, or one of the libraries
+   beside it (docs/plans/quickcheck.md, D1) -- and the choice of the files a
+   program loads: shared by the compiler driver and runedoc. *)
 structure BasisManifest =
 struct
   exception Usage of string
@@ -19,8 +20,11 @@ struct
      mentions one, never because a file of the library requires the name. *)
   datatype when = Always | Demand | Seal | Final
   (* requires is read from the text when it is asked for: most programs need
-     it of few files *)
-  type entry = {file : string, when : when, provides : string list, requires : unit -> string list}
+     it of few files. dir is the directory of the library the file is in. *)
+  type entry = {dir : string, file : string, when : when, provides : string list, requires : unit -> string list}
+
+  (* The file of an entry, as a path. *)
+  fun path (e : entry) : string = #dir e ^ "/" ^ #file e
 
   fun trim (s : string) : string =
     let
@@ -64,7 +68,7 @@ struct
             [b1, b2, b3, b4] =>
               (case (one (i, b1), one (b1 + 1, b2)) of
                  (SOME file, SOME mode) =>
-                   {file = file,
+                   {dir = dir, file = file,
                     when = (case mode of "always" => Always | "demand" => Demand | "seal" => Seal | "final" => Final | _ => bad (i, e)),
                     provides = words (b3 + 1, b4), requires = fn () => words (b4 + 1, e)}
                | _ => bad (i, e))
@@ -91,13 +95,13 @@ struct
                    | ((Token.LONGID (s :: _, _), _), acc) => StringMap.insert (acc, s, ())
                    | (_, acc) => acc) acc toks
 
-  (* name -> the files that provide it, in MANIFEST order *)
+  (* name -> the files that provide it, as paths, in MANIFEST order *)
   fun providers (entries : entry list) : string list StringMap.map =
     List.foldl (fn (e : entry, m) =>
                    List.foldl (fn (n, m) =>
                                   StringMap.insert (m, n, (case StringMap.find (m, n) of
-                                                             SOME fs => fs @ [#file e]
-                                                           | NONE => [#file e])))
+                                                             SOME fs => fs @ [path e]
+                                                           | NONE => [path e])))
                               m (#provides e))
                StringMap.empty entries
 
@@ -114,14 +118,14 @@ struct
       fun providersOf n = List.filter (fn e : entry => #when e <> Seal andalso List.exists (fn p => p = n) (#provides e)) entries
       fun required (e : entry) = List.filter (fn n => not (String.isPrefix "-" n)) (#requires e ())
       fun add (e : entry, chosen : names) : names =
-        if StringMap.member (chosen, #file e) then chosen
+        if StringMap.member (chosen, path e) then chosen
         else
           List.foldl (fn (n, chosen) =>
                          case providersOf n of
                            [] => raise Usage ("basis manifest: " ^ #file e ^ " requires " ^ n ^
                                                       ", which no file provides")
                          | es => List.foldl add chosen es)
-                     (StringMap.insert (chosen, #file e, ()))
+                     (StringMap.insert (chosen, path e, ()))
                      (required e)
       val wanted = fn e : entry => #when e = Always orelse List.exists (fn n => StringMap.member (mentioned, n)) (#provides e)
       val chosen = List.foldl (fn (e, chosen) => if wanted e then add (e, chosen) else chosen) StringMap.empty entries
@@ -131,10 +135,55 @@ struct
       val chosen =
         List.foldl (fn (e : entry, chosen) =>
                        if #when e = Final
-                          andalso List.all (fn n => List.exists (fn e' : entry => StringMap.member (chosen, #file e'))
+                          andalso List.all (fn n => List.exists (fn e' : entry => StringMap.member (chosen, path e'))
                                                                 (providersOf n))
                                            (required e)
                        then add (e, chosen) else chosen)
                    chosen entries
-    in List.filter (fn e : entry => StringMap.member (chosen, #file e)) entries end
+    in List.filter (fn e : entry => StringMap.member (chosen, path e)) entries end
+
+  (* ---- the libraries beside the basis library ----
+     A library is a directory with a MANIFEST in the form above. The libraries
+     it is written on besides the basis library are named in its MANIFEST by
+     a line
+       # library: NAME ...
+     and are loaded before it. A NAME is a directory under the directory of
+     the libraries (--lib), test/property for LIBDIR/test/property, unless it
+     begins with / or ., when it is a path. *)
+
+  fun libraryDir (libDir : string, name : string) : string =
+    if String.isPrefix "/" name orelse String.isPrefix "." name then name else libDir ^ "/" ^ name
+
+  (* The libraries a library's MANIFEST names on its # library: lines. *)
+  fun libraryRequires (dir : string) : string list =
+    let
+      val manifest = dir ^ "/MANIFEST"
+      val ins = TextIO.openIn manifest handle IO.Io _ => raise Usage ("cannot read library manifest " ^ manifest)
+      fun lines acc =
+        case TextIO.inputLine ins of
+          NONE => List.rev acc
+        | SOME l =>
+            let val l = trim l
+            in
+              if String.isPrefix "# library:" l
+              then lines (List.rev (String.tokens Char.isSpace (String.extract (l, 10, NONE))) @ acc)
+              else lines acc
+            end
+    in lines [] before TextIO.closeIn ins end
+
+  (* The directories of the named libraries and of those they are written on,
+     each once, every library after the ones it names. *)
+  fun libraries (libDir : string, names : string list) : string list =
+    let
+      fun visit (stack : string list) (name : string, done : string list) : string list =
+        let val dir = libraryDir (libDir, name)
+        in
+          if List.exists (fn d => d = dir) done then done
+          else if List.exists (fn d => d = dir) stack
+          then raise Usage ("library " ^ name ^ " is written on itself (" ^ String.concatWith " <- " (dir :: stack) ^ ")")
+          else
+            let val done = List.foldl (visit (dir :: stack)) done (libraryRequires dir)
+            in done @ [dir] end
+        end
+    in List.foldl (visit []) [] names end
 end

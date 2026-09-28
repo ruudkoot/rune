@@ -28,7 +28,7 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | The Example rule | done 2026-09-28 |
-| M2 | Libraries: `rune --library` | |
+| M2 | Libraries: `rune --library` | done 2026-09-28 |
 | M3 | `lib/random` | |
 | M4 | The property core | |
 | M5 | Shrinking and functions | |
@@ -1285,6 +1285,25 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - `docs/building.md`, `man/rune.1` and `README.md`'s layout table are updated.
 * **Why now:** both new libraries need it. It is compiler source under the portability rules, and it can be tested with a toy library before either new library exists.
 * **Done when:** a program compiled with `--library toy` runs, the same program compiled with the files listed gives the same bytecode, and `make check` passes.
+* **Done** (2026-09-28):
+  - **The option.** `rune --library NAME`, repeatable, as D1 has it:
+    - `BasisManifest` entries carry their directory, and are chosen by path;
+    - `# library:` lines name the libraries a library is written on, which `BasisManifest.libraries` loads first, each once, refusing a cycle;
+    - the libraries are elaborated after the basis library, without `_prim`;
+    - `--basis-deps` prints a library's files by path, and `--basis-check` checks its MANIFEST, whose requires column names what it uses of the basis library.
+  - **A library sees the basis library through its seals, as a program does.** The files the chosen libraries name count as mentioned, and the choice is made again. The comparison with the files listed found this: without it a library saw `Int` whole, helpers included. With it the two compiles make the same bytecode, the source path they record aside.
+  - **runedoc** takes a name with a `/` as a name unless it begins with `/` or `.`, reads the same `# library:` lines, and allows `_prim` only to the basis library or to a library written on nothing. `tests/doc/run-doc-tests.sh` passes its on-Basis fixtures as `./` paths.
+  - **Installing.** `scripts/install.sh` installs every directory of `lib` that has a MANIFEST.
+  - **Tests.** `tests/lib` (`make test-lib`, in `make check`) has 8 checks over toy libraries:
+    - a program runs;
+    - the files listed give the same bytecode;
+    - a library written on another loads it first;
+    - `--basis-deps` loads nothing a program does not name;
+    - `--basis-check` passes;
+    - `_prim` is refused;
+    - a library written on itself is refused;
+    - runedoc documents a library written on another.
+  - **Documentation.** `docs/building.md`, `docs/architecture.md`, `man/rune.1`, `rune --help` and `AGENTS.md`.
 
 ### M3. `lib/random` (S, about 450 with tests)
 

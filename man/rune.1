@@ -42,6 +42,29 @@ listing the source files to compile before the inputs. Required unless
 .B \-\-no\-prelude
 is given.
 .TP
+.BI \-\-library " NAME"
+Compile the library
+.IR DIR / NAME
+too, after the basis library and before the inputs:
+.I NAME
+is a directory under the
+.B \-\-lib
+directory, such as
+.BR test/property ,
+or a path when it begins with
+.B /
+or
+.BR . .
+Its
+.B MANIFEST
+has the basis library's form, and its lines
+.B # library:
+.I NAME ...
+name the libraries it is written on, which are compiled before it. A
+library's files are chosen as the basis library's are, and may not use
+.BR _prim .
+Repeatable.
+.TP
 .B \-\-no\-prelude
 Do not compile the basis library before the inputs. The result then has no
 top-level environment at all, so it is only useful together with
@@ -60,12 +83,16 @@ it compiles every file. The
 records what each file provides and requires.
 .TP
 .B \-\-basis\-deps
-Print the basis library files that the inputs load, one per line, and exit.
+Print the library files that the inputs load, one per line, and exit: a
+file of the basis library by its name, one of another library by its path.
 .TP
 .B \-\-basis\-check
 Check the provides and requires columns of the
 .B MANIFEST
-against the library sources, and exit.
+against the library sources, and exit; with
+.BR \-\-library ,
+those of the libraries too, whose requires column names what they use of the
+basis library.
 .TP
 .B \-\-allow\-prim
 Allow the

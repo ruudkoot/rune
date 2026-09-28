@@ -25,7 +25,7 @@
 #                   another, where the expectation exists
 # A library with a suite is generated with --tests, so that pins are checked,
 # one with a file ANNOTATIONS with --annotations, and one with a file ON-BASIS
-# as `--lib lib --library tests/doc/NAME.lib`, on top of the Basis Library.
+# as `--lib lib --library ./tests/doc/NAME.lib`, on top of the Basis Library.
 # --update rewrites the expectations that exist; review them line by line as
 # you would an .expected file. Override the generator with RUNEDOC=.
 set -u
@@ -99,7 +99,7 @@ for lib in tests/doc/*.lib; do
   # a library with a file ON-BASIS uses the Basis Library: it is named by its
   # directory, and LIBDIR is the one that has basis in it
   where="--lib tests/doc --library $name.lib"
-  [ -f "$lib/ON-BASIS" ] && where="--lib lib --library $lib"
+  [ -f "$lib/ON-BASIS" ] && where="--lib lib --library ./$lib"
   # shellcheck disable=SC2086
   "$runedoc" $where $suite --out "$out/$name.site" --title "$name" > /dev/null 2> "$out/$name.lib.diag"
   if [ -d "$out/$name.site" ]; then (cd "$out/$name.site" && find . -type f | sort) > "$out/$name.lib.files"; else : > "$out/$name.lib.files"; fi

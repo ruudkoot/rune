@@ -128,7 +128,7 @@ BOOT_SRCS := build/config.sml $(SOURCES) src/main/rune-main.sml
 BOOTHOST ?= mlton
 RUNE_HEAP ?= 67108864
 
-.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
+.PHONY: isa check-isa test-ir check-levels test-new test-new-jit test-new-asan mlkit windows test-windows portability test-portability docs test-doc test-lib runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj smlnj32 polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall
 
 all: vm boot runedoc runeopt
 
@@ -637,6 +637,11 @@ test-basis: $(RUNE) $(RUNEDOC) vm | build/.doctor-check
 test-doc: $(RUNEDOC) vm
 	RUNEDOC=$(RUNEDOC) sh tests/doc/run-doc-tests.sh
 
+# The libraries beside the basis library and rune --library (tests/lib;
+# docs/plans/quickcheck.md, D1).
+test-lib: $(RUNE) $(RUNEDOC) vm
+	RUNE=$(RUNE) RUNEVM=$(RUNEVM) RUNEDOC=$(RUNEDOC) sh tests/lib/run-lib-tests.sh
+
 # The native code generator's own tests (tests/opt): after the suites, whose
 # programs it checks and disassembles.
 test-opt: $(RUNEOPT) $(RUNE) vm build/librune.a
@@ -871,6 +876,7 @@ check:
 	@$(MAKE) --no-print-directory host-builds vm boot runedoc runeopt
 	@$(MAKE) --no-print-directory test bootstrap
 	@$(MAKE) --no-print-directory test-doc
+	@$(MAKE) --no-print-directory test-lib
 	@$(MAKE) --no-print-directory test-all
 	@$(MAKE) --no-print-directory test-basis
 	@$(MAKE) --no-print-directory test-opt

@@ -10,6 +10,7 @@ struct
   val allowPrim = ref false
   (* No default: every bin/rune* is a wrapper that passes --lib. *)
   val libDir : string option ref = ref NONE
+  val libraries : string list ref = ref []     (* --library NAME: libraries besides the basis *)
   val dumpTokens = ref false
   val dumpAst = ref false
   val typecheckOnly = ref false
@@ -28,12 +29,17 @@ struct
     \  -o FILE           write bytecode to FILE (default: first input with .rbc)\n\
     \  --lib DIR         directory containing the basis library, in DIR/basis\n\
     \                    (required unless --no-prelude)\n\
+    \  --library NAME    compile the library LIBDIR/NAME (a MANIFEST like the basis\n\
+    \                    library's) and those it names, after the basis library\n\
+    \                    and before the inputs; NAME is a path if it begins with\n\
+    \                    / or .; repeatable\n\
     \  --no-prelude      do not compile the basis library before the inputs\n\
     \  --basis MODE      demand (default): compile the files of the basis library\n\
     \                    that the inputs name, and what those need; all: every file\n\
-    \  --basis-deps      print the basis library files the inputs load, and exit\n\
+    \  --basis-deps      print the library files the inputs load, and exit\n\
     \  --basis-check     check the provides and requires columns of the basis\n\
-    \                    library's MANIFEST against its sources, and exit\n\
+    \                    library's MANIFEST, and of those of --library, against\n\
+    \                    their sources, and exit\n\
     \  --allow-prim      allow the _prim extension in the inputs\n\
     \  --typecheck-only  stop after type checking\n\
     \  --no-warnings     do not print warnings (nonexhaustive or redundant matches)\n\
@@ -74,6 +80,8 @@ struct
     | ["-o"] => raise Usage "-o requires an argument"
     | "--lib" :: d :: rest => (libDir := SOME d; parse rest)
     | ["--lib"] => raise Usage "--lib requires an argument"
+    | "--library" :: n :: rest => (libraries := !libraries @ [n]; parse rest)
+    | ["--library"] => raise Usage "--library requires a name"
     | "--no-prelude" :: rest => (noPrelude := true; parse rest)
     | "--basis" :: "all" :: rest => (basisAll := true; parse rest)
     | "--basis" :: "demand" :: rest => (basisAll := false; parse rest)

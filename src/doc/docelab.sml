@@ -11,23 +11,32 @@ structure DocElab =
 struct
   type library = {env : Env.env, fixity : Fixity.env}
 
+  (* What a library is written on: the Basis Library, for every library but
+     itself, and the libraries its MANIFEST names (docs/plans/quickcheck.md,
+     D1), in the order they are elaborated. *)
+  type prelude = {basis : string option, libraries : string list}
+
   (* NONE when the library does not elaborate; the compiler's error is
-     reported, and the documentation is still made. prelude: the directory of
-     a library that this one is written on, the Basis Library for every other
-     one; it is elaborated first, whole. *)
-  fun library (dir : string, prelude : string option) : library option =
+     reported, and the documentation is still made. The prelude is elaborated
+     first, whole. The Basis Library may use _prim, and so may a library that
+     is written on nothing; a library written on the Basis Library may not,
+     as the compiler has it. *)
+  fun library (dir : string, prelude : prelude) : library option =
     let
       val fixity = ref Fixity.initial
       fun parse d (e : BasisManifest.entry) =
         let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
       fun programOf d = List.concat (List.map (parse d) (BasisManifest.readManifest d))
-      val before' = case prelude of SOME d => programOf d | NONE => []
-      val prog = before' @ programOf dir
+      val basisProg = case #basis prelude of SOME d => programOf d | NONE => []
+      val prog = List.concat (List.map programOf (#libraries prelude)) @ programOf dir
       val env = ref Env.initial
     in
       Elaborate.allowPrim := true;
+      Elaborate.elabTop (env, basisProg);
+      Elaborate.allowPrim := not (isSome (#basis prelude));
       Elaborate.elabTop (env, prog);
+      Elaborate.allowPrim := true;
       Elaborate.finish ();
       Error.warnings := [];
       SOME {env = !env, fixity = !fixity}

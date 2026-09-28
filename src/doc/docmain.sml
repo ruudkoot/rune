@@ -120,24 +120,31 @@ struct
     end
 
   (* The directory of the library NAME: LIBDIR/NAME, or NAME itself when it
-     is written as a path. *)
+     is written as a path, beginning with / or . (as the compiler reads
+     --library). *)
   fun directoryOf (name : string) : string =
-    if CharVector.exists (fn c => c = #"/") name then name
-    else case !libDir of SOME d => d ^ "/" ^ name | NONE => raise Usage "no library directory (use --lib DIR)"
+    if String.isPrefix "/" name orelse String.isPrefix "." name then name
+    else case !libDir of SOME d => BasisManifest.libraryDir (d, name) | NONE => raise Usage "no library directory (use --lib DIR)"
 
   (* What a library other than the Basis Library is written on: LIBDIR/basis,
-     if it is there. *)
-  fun preludeOf (dir : string) : string option =
+     if it is there, and the libraries its MANIFEST names on # library:
+     lines, with those they name, in the order they are elaborated. *)
+  fun preludeOf (dir : string) : DocElab.prelude =
     case !libDir of
-      NONE => NONE
+      NONE => {basis = NONE, libraries = []}
     | SOME d =>
         let
           val basis = d ^ "/basis"
           fun real p = OS.FileSys.fullPath p handle OS.SysErr _ => p
+          val libraries =
+            List.filter (fn l => real l <> real dir)
+                        (BasisManifest.libraries (d, BasisManifest.libraryRequires dir))
+            handle BasisManifest.Usage why => raise Usage why
         in
-          if real basis = real dir then NONE
-          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ]) then SOME basis
-          else NONE
+          if real basis = real dir then {basis = NONE, libraries = []}
+          else if OS.FileSys.access (basis ^ "/MANIFEST", [OS.FileSys.A_READ])
+          then {basis = SOME basis, libraries = libraries}
+          else {basis = NONE, libraries = libraries}
         end
 
   fun generate (name : string) : OS.Process.status =

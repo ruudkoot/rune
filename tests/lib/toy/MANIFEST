@@ -1,0 +1,9 @@
+# A library for the tests of rune --library (tests/lib/run-lib-tests.sh):
+# the form of lib/basis/MANIFEST, one file per line, in load order.
+#
+#   file | always or demand | host | provides | requires
+#
+# A library's files name what they use of the basis library in the requires
+# column, so that a program that names only the library loads it.
+toy.sml   | demand | yes | Toy   | Int
+extra.sml | demand | yes | Extra |

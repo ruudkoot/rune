@@ -205,6 +205,17 @@ the files it requires are loaded already. Primitives are bound with
 `_prim "name" : ty`. The tags of `option` and `order` are relied upon by
 primitives that construct options.
 
+Other libraries sit beside the basis library under the `--lib` directory
+(`lib/test/property`), each with a `MANIFEST` of the same form
+(`BasisManifest`, `src/driver/basismanifest.sml`). `rune --library NAME` adds
+a library's entries after the basis library's, with those of the libraries
+its `# library:` lines name before it, and the files are chosen from all of
+them together, by path. A library's requires column names what it uses of
+the basis library, so that a program that names only the library loads what
+the library needs. The driver elaborates the basis library with `_prim`
+allowed, then the other libraries without, then the program; runedoc
+elaborates a library on the same terms (`DocElab.library`).
+
 ## Adding a language feature (checklist)
 
 1. Lexer/parser/AST as needed; elaboration (types + annotations); translation
