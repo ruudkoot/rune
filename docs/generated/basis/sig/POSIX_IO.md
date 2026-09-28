@@ -636,7 +636,7 @@ The type of a lock description.
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -667,7 +667,7 @@ val flock : {
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -689,7 +689,7 @@ val ltype : flock -> lock_type
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -709,7 +709,7 @@ val whence : flock -> whence
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -729,7 +729,7 @@ val start : flock -> Position.int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -749,7 +749,7 @@ val len : flock -> Position.int
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 
@@ -769,7 +769,7 @@ val pid : flock -> pid option
 
 <details><summary>Other implementations (1)</summary>
 
-- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+- **SML/NJ 110.99.9 (64-bit)** &mdash; FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 </details>
 

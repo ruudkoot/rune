@@ -1,0 +1,22 @@
+diff --git a/base/compiler/CodeGen/cpscompile/invokegc.sml b/base/compiler/CodeGen/cpscompile/invokegc.sml
+index 699a7a6..c05b7ee 100644
+--- a/base/compiler/CodeGen/cpscompile/invokegc.sml
++++ b/base/compiler/CodeGen/cpscompile/invokegc.sml
+@@ -712,10 +712,14 @@ functor InvokeGC (
+ 	    | eqF (T.FLOAD(_,ea1,_), T.FLOAD(_,ea2,_)) = eqEA(ea1, ea2)
+ 	    | eqF _ = false
+ 	  in
+-	    ListPair.all eqR (b1, b2)
++	  (* NOTE: `ListPair.all` ignores the excess elements of the longer list,
++	   * so we must use `ListPair.allEq` here; otherwise, a function with
++	   * float or untagged roots could share the GC code of one without them.
++	   *)
++	    ListPair.allEq eqR (b1, b2)
+ 	      andalso eqR(ret1, ret2)
+-	      andalso ListPair.all eqR (i1, i2)
+-	      andalso ListPair.all eqF (f1, f2)
++	      andalso ListPair.allEq eqR (i1, i2)
++	      andalso ListPair.allEq eqF (f1, f2)
+ 	  end
+       | sameCallingConvention _ = false
+ 

@@ -1,0 +1,59 @@
+diff --git a/base/compiler/CPS/convert/cpstrans.sml b/base/compiler/CPS/convert/cpstrans.sml
+index 86bcc7a..959ecf2 100644
+--- a/base/compiler/CPS/convert/cpstrans.sml
++++ b/base/compiler/CPS/convert/cpstrans.sml
+@@ -103,6 +103,16 @@ functor CPStrans (MachSpec : MACH_SPEC) : sig
+ 		    then h (args, ctys, gpnum, fpnum, [], [], [], [], [])
+ 		    else NONE
+ 		end (* function argSpill *)
++        (* spilled arguments that are untagged machine words (e.g., `Int64.int` and
++         * `Word64.word` on 64-bit targets) are not pointers, so they cannot go in
++         * the record of spilled general arguments, which the GC scans; instead,
++         * we put them in a raw record of their own, which goes in that record.
++         * `rawSpill (vs, cts)` returns the untagged arguments of `vs` (with their
++         * types) and the others, both in order.
++         *)
++	  fun isRawWord (NUMt{sz, tag=false}) = (sz = Target.mlValueSz)
++	    | isRawWord _ = false
++	  fun rawSpill (vs, cts) = List.partition (isRawWord o #2) (ListPair.zipEq (vs, cts))
+         (* spill code for the arguments of a function application *)
+ 	  fun spillIn (origargs, origctys, spgvars, spgctys, spfvars) = let
+ 		val (fhdr, spgvars, spgctys) = (case spfvars
+@@ -117,6 +127,17 @@ functor CPStrans (MachSpec : MACH_SPEC) : sig
+ 			      (fh, (VAR v)::spgvars, ct::spgctys)
+ 			    end
+ 		      (* end case *))
++		val (fhdr, spgvars, spgctys) = (case rawSpill (spgvars, spgctys)
++		       of ([], _) => (fhdr, spgvars, spgctys)
++			| (raws, others) => let
++                          (* we have untagged machine words to spill *)
++			    val v = mkv()
++			    val vs = map (fn (x, _) => (x, OFFp 0)) raws
++			    fun rh e = fhdr (RECORD(RK_RAWBLOCK, vs, v, e))
++			    in
++			      (rh, (VAR v) :: map #1 others, PTRt VPT :: map #2 others)
++			    end
++		      (* end case *))
+ 		val (spgv, ghdr) = (case spgvars
+ 		       of [] => (NONE, fhdr)
+ 			| [x] => (SOME x, fhdr)
+@@ -151,6 +172,19 @@ functor CPStrans (MachSpec : MACH_SPEC) : sig
+ 			      (SOME v, fh, v::spgvars, ct::spgctys)
+ 			    end
+ 		      (* end case *))
++		val (fhdr, spgvars, spgctys) = (case rawSpill (spgvars, spgctys)
++		       of ([], _) => (fhdr, spgvars, spgctys)
++			| (raws, others) => let
++                          (* we have spilled untagged machine words *)
++			    val v = mkv()
++			    val v' = VAR v
++                            fun rh e = List.foldri
++                                  (fn (i, (sv, st), e) => SELECT(i, v', sv, st, e))
++                                    (fhdr e) raws
++			    in
++			      (rh, v :: map #1 others, PTRt VPT :: map #2 others)
++			    end
++		      (* end case *))
+ 		val (spgv, ghdr) = (case (spgvars, spgctys)
+ 		       of ([], _) => (NONE, fhdr)
+ 			| ([x], t::_) => (SOME(x, t), fhdr)

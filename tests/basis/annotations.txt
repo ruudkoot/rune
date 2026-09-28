@@ -324,7 +324,7 @@ Posix.FileSys.createf/existing-mode-kept | MLKit | chmod, with which the check s
 Posix.IO.*getfl* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor
 Posix.IO.setfl/[ak]* | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
 Posix.IO.O.nonblock/setfl | SML/NJ | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
-Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+Posix.IO.FLock.* | SML/NJ 110.99.9 (64-bit) | FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 *IO.[gs]etOutstream/flushes* | MLton | getOutstream and setOutstream do not flush the stream ("flushes strm and returns the underlying StreamIO output stream", "flushes the stream underlying strm, and then assigns")
 *StreamIO.canInput/determined-stream-does-not-block | MLton | canInput on a stream whose elements input has already read answers SOME 0, which means end-of-stream (the noBlock predicate of stream-io.html)
 *StreamIO.closeIn/truncated-stream-closes-the-reader | MLton | closeIn of a stream that getReader truncated does not close the reader ("one can close a truncated or terminated string")

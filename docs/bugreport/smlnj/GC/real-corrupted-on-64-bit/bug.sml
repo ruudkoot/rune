@@ -1,9 +1,11 @@
-(* SML/NJ for 64 bits: a function that converts a real to its bits gives
-   0wxFFF0000000000000 for some powers of two, after a garbage collection.
+(* SML/NJ for 64 bits: a function that converts a real to its bits gives a
+   wrong word (0wxFFF0000000000000 or a heap address) for some powers of two,
+   when a garbage collection happens at the entry of the continuation that
+   receives the mantissa of Real.toManExp in a register.
    Each of 300000 calls gets a power of two from 2^-1021 to 2^1023, made from
-   its bits, and must give those bits back. Run with a small allocation area,
-   which makes collections frequent: sml @SMLalloc=128k bug.sml
-   (with the default area it fails less often; with 512k or more, not at all) *)
+   its bits, and must give those bits back. A small allocation area makes
+   collections frequent: sml @SMLalloc=128k bug.sml gets about 590 wrong, the
+   default (512k) about 80, and 4m about 5. *)
 val two52 : real = 4503599627370496.0
 fun hex w = Word64.fmt StringCvt.HEX w
 fun cast (w : Word64.word) : real =  (* the power of two whose bits are w *)

@@ -523,7 +523,7 @@ xc1:mlkit@* | Posix.FileSys.ST.mode/* | HOST-BUG | the file's mode is set by cre
 *:smlnj*@* | Posix.IO.*getfl* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor
 *:smlnj*@* | Posix.IO.setfl/[ak]* | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back (the effect of setfl (fd, O.append) is seen)
 *:smlnj*@* | Posix.IO.O.nonblock/setfl | HOST-BUG | getfl returns no status flags and O_RDONLY whatever the descriptor, so that what setfl sets cannot be read back
-native:smlnj@110.99.9 | Posix.IO.FLock.* | HOST-BUG | FLock.start returns garbage (a large number) instead of the start given to FLock.flock
+native:smlnj@110.99.9 | Posix.IO.FLock.* | HOST-BUG | FLock.start returns garbage (a large number) instead of the start given to FLock.flock: flock's arguments do not all fit the registers, and the compiler keeps the Position.int among the rest raw in a record that, for constant arguments, the runtime builds with the number boxed, so the start read is the address of the box (docs/bugreport/smlnj/GC/spilled-word64-argument)
 xc1:smlnj32@* | Posix.IO.mk*/* | WIDTH | the readers and writers of lib/basis ask fstat whether the descriptor is a regular file, and fstat makes the times of the file Time.time values, microseconds in an int, and the int of the host has 31 bits: Overflow
 native:mlkit@* | @load/posix_io | HOST-ABSENT | Posix.IO lacks fsync and file locks (FLock, getlk, setlk, setlkw)
 native:mlkit@* | @section/posix_io_sig/matches | HOST-ABSENT | Posix.IO lacks fsync and file locks (FLock, getlk, setlk, setlkw)

@@ -1,65 +1,70 @@
-# Draft: new issue on smlnj/legacy
+# Draft: comment on smlnj/legacy#299
 
-Where: https://github.com/smlnj/legacy/issues/new?template=00_bug_report.yaml
+Where: https://github.com/smlnj/legacy/issues/299
 
-**Title:** 64-bit: a garbage collection corrupts a value held by a function (single-file reproducer; related to #299 and #381?)
+---
 
-| Field | Value |
-|---|---|
-| Version | 110.99.9 (Latest) |
-| Operating System | Linux |
-| OS Version | Ubuntu 24.04 (WSL2), kernel 6.18 |
-| Processor | x86-64 (64-bit) |
-| System Component | Core system |
-| Severity | Critical |
-| Also present in the "development" version? | Unknown (2026.3 has the new `CPSTransFn` of #394; not tried) |
+I think I found the cause: 64-bit functions share GC code whose roots do
+not match theirs. It is a one-line fix in
+`base/compiler/CodeGen/cpscompile/invokegc.sml`.
 
-### Description
-
-A pure function that computes the bits of a real (with `Real.toManExp`,
-`Real.fromManExp`, `Real.toLargeInt` and `Word64` operations) now and then
-returns a wrong word. The word is `0wxFFF0000000000000`, which it would give
-if `Real.toManExp`'s mantissa read as 0.0, or a heap address. The same call
-on the same number is right a moment later, and which calls go wrong
-changes from run to run.
-
-It depends on garbage collection: 82 of 300,000 calls at the default
-settings, and 588 with `@SMLalloc=128k`. Every 64-bit release I tried from
-110.96 to 110.99.9 has it; the 32-bit build does not. In a larger program
-the process also stops with "Fatal error -- bogus fault" or "bogus
-overflow fault".
-
-This may be what #299 sees (a value not preserved across a collection), or
-#381/#394 (a record mixing raw 64-bit values and pointers after arity
-lowering). The program is a single file without functors or `Pack`
-structures.
-
-### Transcript
-
-```
-$ sml @SMLalloc=128k bug.sml
-Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
-bits 47A0000000000000 -> 77DCBF85D000000
-bits 3F00000000000000 -> 772FE1740000
-bits 2D60000000000000 -> FFF0000000000000
-bits 9C0000000000000 -> 772FE1740000
-bits 6EF0000000000000 -> 772FE1740000
-588 of 300000 wrong
-```
-
-### Expected Behavior
-
-`0 of 300000 wrong`.
-
-### Steps to Reproduce
+`emitLongJumpsToGCInvocation` lets an escaping function or continuation use
+the GC code of an earlier one when `sameCallingConvention` says their roots
+are the same:
 
 ```sml
-(* SML/NJ for 64 bits: a function that converts a real to its bits gives
-   0wxFFF0000000000000 for some powers of two, after a garbage collection.
+	    ListPair.all eqR (b1, b2)
+	      andalso eqR(ret1, ret2)
+	      andalso ListPair.all eqR (i1, i2)
+	      andalso ListPair.all eqF (f1, f2)
+```
+
+`ListPair.all` ignores the excess elements of the longer list, so root
+lists of different lengths count as equal. For example, `[]` and `[xmm0]`
+count as the same float roots. A function whose argument is an untagged
+`Word64` or a real in a register can then share GC code that does not save
+it, and the collection loses the value. Here that gives `0wxDEADBEEF` back
+as a heap address.
+
+With `ListPair.allEq`, the reproducer of this issue fails on 0 of 10 loads.
+It fails on 7 to 10 of 10 with 110.99.9.
+
+```diff
+diff --git a/base/compiler/CodeGen/cpscompile/invokegc.sml b/base/compiler/CodeGen/cpscompile/invokegc.sml
+index 699a7a6..c05b7ee 100644
+--- a/base/compiler/CodeGen/cpscompile/invokegc.sml
++++ b/base/compiler/CodeGen/cpscompile/invokegc.sml
+@@ -712,10 +712,14 @@ functor InvokeGC (
+ 	    | eqF (T.FLOAD(_,ea1,_), T.FLOAD(_,ea2,_)) = eqEA(ea1, ea2)
+ 	    | eqF _ = false
+ 	  in
+-	    ListPair.all eqR (b1, b2)
++	  (* NOTE: `ListPair.all` ignores the excess elements of the longer list,
++	   * so we must use `ListPair.allEq` here; otherwise, a function with
++	   * float or untagged roots could share the GC code of one without them.
++	   *)
++	    ListPair.allEq eqR (b1, b2)
+ 	      andalso eqR(ret1, ret2)
+-	      andalso ListPair.all eqR (i1, i2)
+-	      andalso ListPair.all eqF (f1, f2)
++	      andalso ListPair.allEq eqR (i1, i2)
++	      andalso ListPair.allEq eqF (f1, f2)
+ 	  end
+       | sameCallingConvention _ = false
+ 
+```
+
+A single-file program that shows the same thing with reals:
+
+```sml
+(* SML/NJ for 64 bits: a function that converts a real to its bits gives a
+   wrong word (0wxFFF0000000000000 or a heap address) for some powers of two,
+   when a garbage collection happens at the entry of the continuation that
+   receives the mantissa of Real.toManExp in a register.
    Each of 300000 calls gets a power of two from 2^-1021 to 2^1023, made from
-   its bits, and must give those bits back. Run with a small allocation area,
-   which makes collections frequent: sml @SMLalloc=128k bug.sml
-   (with the default area it fails less often; with 512k or more, not at all) *)
+   its bits, and must give those bits back. A small allocation area makes
+   collections frequent: sml @SMLalloc=128k bug.sml gets about 590 wrong, the
+   default (512k) about 80, and 4m about 5. *)
 val two52 : real = 4503599627370496.0
 fun hex w = Word64.fmt StringCvt.HEX w
 fun cast (w : Word64.word) : real =  (* the power of two whose bits are w *)
@@ -89,18 +94,22 @@ val () = print (Int.toString (!bad) ^ " of 300000 wrong\n")
 val () = OS.Process.exit OS.Process.success
 ```
 
-### Additional Information
+```
+$ sml @SMLalloc=128k bug.sml            # 110.99.9, 64-bit
+bits 31C0000000000000 -> FFF0000000000000
+bits E20000000000000 -> 732032D40000
+bits 7350000000000000 -> 732032D40000
+bits 61B0000000000000 -> FFF0000000000000
+bits 3E10000000000000 -> 732032D40000
+587 of 300000 wrong
+```
 
-What I found without locating the fault:
-* The failures need the function's exact shape. Binding its intermediate
-  values to names, or dropping the `isNan` or `isFinite` test or either
-  branch, makes them go away.
-* No `Control.CG` flag I tried changes them (flattenargs, extraflatten,
-  etasplit, uncurry, betaexpand, dropargs, rounds, spillGen, ifidiom,
-  lambdaprop, invariant). `closureStrategy := 1` changes the count, and
-  `checkCPS` reports nothing.
-* In the CPS after closure conversion, the continuations carry the mantissa
-  (`R64`) and the shifted exponent (`I64`) unboxed across the calls that
-  allocate, in `RK_FCONT`/`RK_RAWBLOCK` closure records or in float
-  registers that `invokegc.sml` packs into a raw record around a
-  collection.
+With the patch, built to a fixed point, it gives `0 of 300000 wrong` in
+three runs with `@SMLalloc=128k` and one with the default. Its continuation
+that receives `Real.toManExp`'s mantissa in `%xmm0` used to jump to GC code
+that saved no float register. It now gets code of its own that boxes
+`%xmm0` before the call and reloads it after.
+
+Every 64-bit release I tried has the bug, from 110.94 on. The 2026 series
+has no `invokegc.sml`. #381/#394 is a different bug: its program still
+fails with this patch.

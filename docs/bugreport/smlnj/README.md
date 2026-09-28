@@ -30,7 +30,7 @@ run on these builds:
   32-bit release from 110.79 to 110.99.8 and some 64-bit ones, and the
   Windows installers of ten releases from 110.79 to 110.99.3.
 * **With the fixes:**
-  - the ten `fix.diff`s of the compiler and Basis applied and built
+  - the twelve `fix.diff`s of the compiler and Basis applied and built
     natively on Linux for 32 and 64 bits;
   - the fixes of the literals, `Int64.+`, the shifts, `Int64.toInt`, the
     fused conversions, `Real.fromManExp` and `Real.nextAfter` also
@@ -50,65 +50,71 @@ The table is in the order of the ranking below.
 
 | # | Report | 32-bit, 110.99.9 (Linux and Windows; release and source builds) | 64-bit release | 110.79 (32-bit) | with the fixes | Upstream |
 |---|---|---|---|---|---|---|
-| 1 | [GC/real-corrupted-on-64-bit](GC/real-corrupted-on-64-bit/BUGREPORT.md) | 0 | 82 in 300,000 (588 with `@SMLalloc=128k`) | n/a | not fixed | not reported; maybe [#299](https://github.com/smlnj/legacy/issues/299) / [#381](https://github.com/smlnj/legacy/issues/381) |
-| 2 | [Int64.+/carry-and-borrow](Int64.+/carry-and-borrow/BUGREPORT.md) | 6 of 7 | 0 | other bugs | 0 | not reported |
-| 3 | [Word64-low-half](Word64-low-half/BUGREPORT.md): 64-bit literals lose bits 30 and 31 | 7 of 7 (0 in a native fixed point) | 0 | 0 | 0 | [#260](https://github.com/smlnj/legacy/issues/260), closed as fixed but not fixed |
-| 4 | [Word64/shifts-and-negation](Word64/shifts-and-negation/BUGREPORT.md) | 8 of 8 | 0 | 0 | 0 | not reported; the cause of [#373](https://github.com/smlnj/legacy/issues/373) |
-| 5 | [IEEEReal.setRoundingMode/windows-no-op](IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md) | 7 of 7 on Windows, 0 on Linux | 0 (Linux) | 0 (Windows and Linux) | 0 | [#70](https://github.com/smlnj/legacy/issues/70) fixed it for Linux only; Windows not reported |
-| 6 | [Real.ceil/conversions-to-int](Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
-| 7 | [Int.fromLarge/fused-conversions](Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
-| 8 | [Word32.fromLarge/fused-sign-extension](Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
-| 9 | [Int64.toInt/high-word-ignored](Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
-| 10 | [Real.fromManExp/subnormal-is-zero](Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
-| 11 | [Real.fromLargeInt/rounds-twice](Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
-| 12 | [Real.nextAfter/subnormal-and-zero](Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
+| 1 | [GC/real-corrupted-on-64-bit](GC/real-corrupted-on-64-bit/BUGREPORT.md) | 0 | 83 in 300,000 (590 with `@SMLalloc=128k`) | n/a | 0 | the cause of [#299](https://github.com/smlnj/legacy/issues/299) (open) |
+| 2 | [GC/spilled-word64-argument](GC/spilled-word64-argument/BUGREPORT.md): an `Int64`/`Word64` argument in the spill record | 0 | constant call wrong, then "bogus fault" | 0 | 0 | the legacy side of [#381](https://github.com/smlnj/legacy/issues/381) (open) |
+| 3 | [Int64.+/carry-and-borrow](Int64.+/carry-and-borrow/BUGREPORT.md) | 6 of 7 | 0 | other bugs | 0 | not reported |
+| 4 | [Word64-low-half](Word64-low-half/BUGREPORT.md): 64-bit literals lose bits 30 and 31 | 7 of 7 (0 in a native fixed point) | 0 | 0 | 0 | [#260](https://github.com/smlnj/legacy/issues/260), closed as fixed but not fixed |
+| 5 | [Word64/shifts-and-negation](Word64/shifts-and-negation/BUGREPORT.md) | 8 of 8 | 0 | 0 | 0 | not reported; the cause of [#373](https://github.com/smlnj/legacy/issues/373) |
+| 6 | [IEEEReal.setRoundingMode/windows-no-op](IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md) | 7 of 7 on Windows, 0 on Linux | 0 (Linux) | 0 (Windows and Linux) | 0 | [#70](https://github.com/smlnj/legacy/issues/70) fixed it for Linux only; Windows not reported |
+| 7 | [Real.ceil/conversions-to-int](Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
+| 8 | [Int.fromLarge/fused-conversions](Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
+| 9 | [Word32.fromLarge/fused-sign-extension](Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
+| 10 | [Int64.toInt/high-word-ignored](Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
+| 11 | [Real.fromManExp/subnormal-is-zero](Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
+| 12 | [Real.fromLargeInt/rounds-twice](Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
+| 13 | [Real.nextAfter/subnormal-and-zero](Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
 
 Only the literals come from how the release is made; the rest are in the
-sources. The code behind 5, 6, the first part of 7, 8, 10, 11 and 12 is
+sources. The code behind 6, 7, the first part of 8, 9, 11, 12 and 13 is
 the same in [smlnj/smlnj](https://github.com/smlnj/smlnj) at `a5f3fa7`, so
-the 2026 series has those too (5 only where it builds for Windows); that
-was established by reading the code, and no 2026 build was run. Whether
-2026.3 has 1 is unknown.
+the 2026 series has those too (6 only where it builds for Windows). The
+2026 series has no `invokegc.sml`, the code behind 1. According to smlnj/smlnj
+#394, 2026.3 fixes 2 with a new `CPSTransFn`. That was established by
+reading the code and the issue, and no 2026 build was run.
 
 ## Ranking
 
 Ranked by how likely a program is to meet the bug, how much harm it does,
 and whether it is silent. Crashes rank below wrong answers.
 
-1. **GC/real-corrupted-on-64-bit.** A garbage collection corrupts a value
-   in a pure function, or the process stops with "bogus fault", on the
-   default 64-bit platform, in every 64-bit release since at least 110.96.
-   Silent and nondeterministic. No fix.
-2. **Int64.+/carry-and-borrow** (32-bit). Everyday `Int64` and
+1. **GC/real-corrupted-on-64-bit.** A garbage collection loses a real or
+   an untagged `Word64`/`Int64` argument of a function. It happens on the
+   default 64-bit platform, in every 64-bit release since the first
+   (110.94). Silent and nondeterministic; a one-line fix.
+2. **GC/spilled-word64-argument** (64-bit). A function of five or more
+   arguments, one of them an `Int64` or `Word64` that does not fit the
+   registers, reads the address of a box when the arguments are constants
+   (as `Posix.IO.FLock.flock` does), and otherwise can crash the collector.
+3. **Int64.+/carry-and-borrow** (32-bit). Everyday `Int64` and
    `Position.int` arithmetic is off by 2^33 whenever a carry happens, and
    `Overflow` is missed.
-3. **Word64-low-half** (32-bit releases). Every negative `Int64` literal
+4. **Word64-low-half** (32-bit releases). Every negative `Int64` literal
    and many `Word64` constants are wrong, and so are the `IntInf` constants
    of the release's own compiler and Basis.
-4. **Word64/shifts-and-negation** (32-bit). Silent wrong shifts, which
+5. **Word64/shifts-and-negation** (32-bit). Silent wrong shifts, which
    also make `Real.fromString` read about 9% of reals one ulp high (#373).
-5. **IEEEReal.setRoundingMode/windows-no-op** (Windows, since 110.91).
+6. **IEEEReal.setRoundingMode/windows-no-op** (Windows, since 110.91).
    `Real.realFloor`, `realCeil` and `realTrunc` round to nearest, which is
    wrong for about half of all non-integers, and `setRoundingMode` does
    nothing. Silent, but only on Windows, and `Real.floor` and the other
    conversions to `int` do not use the mode.
-6. **Real.ceil/conversions-to-int** (all platforms).
+7. **Real.ceil/conversions-to-int** (all platforms).
    - `ceil` and `trunc` are one off just above an integer.
    - On 64 bits `floor`, `ceil`, `trunc` and `round` wrap around near 2^62
      instead of raising `Overflow`.
-7. **Int.fromLarge/fused-conversions** (all platforms, and the 2026
+8. **Int.fromLarge/fused-conversions** (all platforms, and the 2026
    series). The Basis's own `Int.fromLarge (Word.toLargeInt w)` misses
    `Overflow`. On 32 bits there is also garbage and a compiler crash.
-8. **Word32.fromLarge/fused-sign-extension** (64-bit mostly).
+9. **Word32.fromLarge/fused-sign-extension** (64-bit mostly).
    `Word32.fromLargeInt (Int32.toLarge i)` makes a malformed word for a
    negative `i`.
-9. **Int64.toInt/high-word-ignored** (32-bit). Silent truncation, but only
-   for numbers that should raise `Overflow`.
-10. **Real.fromManExp/subnormal-is-zero** (all platforms). Wrong below
+10. **Int64.toInt/high-word-ignored** (32-bit). Silent truncation, but only
+    for numbers that should raise `Overflow`.
+11. **Real.fromManExp/subnormal-is-zero** (all platforms). Wrong below
     2^-1021.
-11. **Real.fromLargeInt/rounds-twice** (all platforms). One ulp off for
+12. **Real.fromLargeInt/rounds-twice** (all platforms). One ulp off for
     numbers of more than 60 or 62 bits, and in the directed rounding modes.
-12. **Real.nextAfter/subnormal-and-zero** (all platforms). Edge cases of a
+13. **Real.nextAfter/subnormal-and-zero** (all platforms). Edge cases of a
     rarely used function.
 
 ## Drafts for upstream
@@ -119,12 +125,15 @@ issue form, the program, a transcript and the patch filled in:
 * **Comments** on [#260](https://github.com/smlnj/legacy/issues/260)
   ([Word64-low-half](Word64-low-half/upstream.md)),
   [#373](https://github.com/smlnj/legacy/issues/373)
-  ([Word64/shifts-and-negation](Word64/shifts-and-negation/upstream.md))
-  and [#254](https://github.com/smlnj/legacy/issues/254)
-  ([Real.fromManExp](Real.fromManExp/subnormal-is-zero/upstream.md)).
-* **Nine new issues** on smlnj/legacy:
-  - [the GC corruption](GC/real-corrupted-on-64-bit/upstream.md), which
-    names #299 and #381;
+  ([Word64/shifts-and-negation](Word64/shifts-and-negation/upstream.md)),
+  [#254](https://github.com/smlnj/legacy/issues/254)
+  ([Real.fromManExp](Real.fromManExp/subnormal-is-zero/upstream.md)),
+  [#299](https://github.com/smlnj/legacy/issues/299)
+  ([the GC corruption](GC/real-corrupted-on-64-bit/upstream.md), with its
+  cause and fix) and [#381](https://github.com/smlnj/legacy/issues/381)
+  ([the spilled argument](GC/spilled-word64-argument/upstream.md), with a
+  fix for legacy).
+* **Eight new issues** on smlnj/legacy:
   - [Int64.+](Int64.+/carry-and-borrow/upstream.md);
   - [IEEEReal.setRoundingMode on Windows](IEEEReal.setRoundingMode/windows-no-op/upstream.md),
     which names #70;
@@ -198,21 +207,27 @@ this directory.
 
 ## What the fixes do to Rune's suites
 
-**Basis suite** (`tests/basis/run-matrix.sh`), all ten fixes:
+**Basis suite** (`tests/basis/run-matrix.sh`), all twelve fixes:
 
 | Configuration | release: checks, explained | with the fixes: checks, explained | lines that match no failure with the fixes |
 |---|---|---|---|
 | `native:smlnj32` | 48,968, 1,466 | 59,401, 645 | 149, 157-159, 162, 583, 693, 698-700, 774-778, 780, 781 |
-| `native:smlnj` (64-bit) | 61,677, 669 | 61,677, 651 | 149, 157, 181, 182, 583, 702 |
+| `native:smlnj` (64-bit) | 61,677, 669 | 61,677, 648 | 149, 157, 181, 182, 526, 583, 702 |
 
 * Neither build has an unexplained failure, with or without the fixes.
+  The first full run with all twelve fixes had some for each: eleven
+  `Posix.Process` checks on 64 bits and `OS.FileSys.hash/spread` on 32
+  bits. They passed when run alone and in a second full run.
+* Line 526 (`Posix.IO.FLock.*`) goes with the fix of
+  GC/spilled-word64-argument.
 * The 32-bit build runs more checks because the `Word8`, `Word32`,
   `Word64` and `LargeWord` tests now compile.
 * Of the lines above, only 781 (`Posix.IO.SEEK_[CE]*/negative`) also goes
   away with a native fixed point alone. The Real32.Math lines 173-175 match
   no failure in either configuration, with or without the fixes.
 
-**Library tests** (`tests/lib/run-hosts.sh`): on 32 bits all four tests
-pass, where the release fails `random.*` and `property.*`. On 64 bits
-`property.core` passes in the runs that end, but the GC corruption (#1
-above) makes some of them fail or stop.
+**Library tests** (`tests/lib/run-hosts.sh`): all four tests pass, where
+the release fails `random.*` and `property.*` on 32 bits and
+`property.core` on 64 bits. On 64 bits `property.core` passed 20 runs of
+20. With the fixes before GC/real-corrupted-on-64-bit it passed none of
+20, and with that fix but not GC/spilled-word64-argument, 10 of 20.
