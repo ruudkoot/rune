@@ -26,12 +26,18 @@ run on these builds:
     (`base/system/cmb-cross -64 x86-unix`), which is how the release makes its
     32-bit boot files (`admin/prepare-release.sh`, step 9).
 * **Others:** the 64-bit release on Linux (`config/install.sh -64`), Ubuntu
-  24.04's package of 110.79 (`smlnj 110.79-8build1`, 32-bit), and every
-  32-bit release from 110.79 to 110.99.8 and some 64-bit ones.
-* **With the fixes:** all ten `fix.diff`s applied and built natively on
-  Linux for 32 and 64 bits. The first seven were also cross-compiled on
-  amd64 into x86-unix and x86-win32 boot files, installed on Linux and on
-  Windows.
+  24.04's package of 110.79 (`smlnj 110.79-8build1`, 32-bit), every
+  32-bit release from 110.79 to 110.99.8 and some 64-bit ones, and the
+  Windows installers of ten releases from 110.79 to 110.99.3.
+* **With the fixes:**
+  - the ten `fix.diff`s of the compiler and Basis applied and built
+    natively on Linux for 32 and 64 bits;
+  - the fixes of the literals, `Int64.+`, the shifts, `Int64.toInt`, the
+    fused conversions, `Real.fromManExp` and `Real.nextAfter` also
+    cross-compiled on amd64 into x86-unix and x86-win32 boot files,
+    installed on Linux and on Windows;
+  - the runtime `fix.diff` of `IEEEReal.setRoundingMode` built into the
+    Windows source build.
 
 Linux is Ubuntu 24.04 on WSL2 (gcc 13.3); Windows is Windows 11 (10.0.22000).
 
@@ -48,19 +54,21 @@ The table is in the order of the ranking below.
 | 2 | [Int64.+/carry-and-borrow](Int64.+/carry-and-borrow/BUGREPORT.md) | 6 of 7 | 0 | other bugs | 0 | not reported |
 | 3 | [Word64-low-half](Word64-low-half/BUGREPORT.md): 64-bit literals lose bits 30 and 31 | 7 of 7 (0 in a native fixed point) | 0 | 0 | 0 | [#260](https://github.com/smlnj/legacy/issues/260), closed as fixed but not fixed |
 | 4 | [Word64/shifts-and-negation](Word64/shifts-and-negation/BUGREPORT.md) | 8 of 8 | 0 | 0 | 0 | not reported; the cause of [#373](https://github.com/smlnj/legacy/issues/373) |
-| 5 | [Real.ceil/conversions-to-int](Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
-| 6 | [Int.fromLarge/fused-conversions](Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
-| 7 | [Word32.fromLarge/fused-sign-extension](Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
-| 8 | [Int64.toInt/high-word-ignored](Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
-| 9 | [Real.fromManExp/subnormal-is-zero](Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
-| 10 | [Real.fromLargeInt/rounds-twice](Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
-| 11 | [Real.nextAfter/subnormal-and-zero](Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
+| 5 | [IEEEReal.setRoundingMode/windows-no-op](IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md) | 7 of 7 on Windows, 0 on Linux | 0 (Linux) | 0 (Windows and Linux) | 0 | [#70](https://github.com/smlnj/legacy/issues/70) fixed it for Linux only; Windows not reported |
+| 6 | [Real.ceil/conversions-to-int](Real.ceil/conversions-to-int/BUGREPORT.md) | 4 of 12 | 9 of 12 | `ceil minPos` is 0 | 0 | not reported |
+| 7 | [Int.fromLarge/fused-conversions](Int.fromLarge/fused-conversions/BUGREPORT.md) | 2 + crash + 4 | 4 | 2 | 0 | not reported |
+| 8 | [Word32.fromLarge/fused-sign-extension](Word32.fromLarge/fused-sign-extension/BUGREPORT.md) | 2 of 5 | 5 of 5 | n/a | 0 | not reported |
+| 9 | [Int64.toInt/high-word-ignored](Int64.toInt/high-word-ignored/BUGREPORT.md) | 6 of 8 | 0 | other bugs | 0 | not reported |
+| 10 | [Real.fromManExp/subnormal-is-zero](Real.fromManExp/subnormal-is-zero/BUGREPORT.md) | 6 of 6 | 6 | 6 | 0 | [#254](https://github.com/smlnj/legacy/issues/254), closed as fixed but not fixed |
+| 11 | [Real.fromLargeInt/rounds-twice](Real.fromLargeInt/rounds-twice/BUGREPORT.md) | 31 of 148 (Linux) | 34 of 148 | n/a | 0 | not reported |
+| 12 | [Real.nextAfter/subnormal-and-zero](Real.nextAfter/subnormal-and-zero/BUGREPORT.md) | 5 of 5 | 5 | absent | 0 | not reported |
 
 Only the literals come from how the release is made; the rest are in the
-sources. The code behind 5, the first part of 6, 7, 9, 10 and 11 is the
-same in [smlnj/smlnj](https://github.com/smlnj/smlnj) at `a5f3fa7`, so the
-2026 series has those too; that was established by reading the code, and no
-2026 build was run. Whether 2026.3 has 1 is unknown.
+sources. The code behind 5, 6, the first part of 7, 8, 10, 11 and 12 is
+the same in [smlnj/smlnj](https://github.com/smlnj/smlnj) at `a5f3fa7`, so
+the 2026 series has those too (5 only where it builds for Windows); that
+was established by reading the code, and no 2026 build was run. Whether
+2026.3 has 1 is unknown.
 
 ## Ranking
 
@@ -79,23 +87,28 @@ and whether it is silent. Crashes rank below wrong answers.
    of the release's own compiler and Basis.
 4. **Word64/shifts-and-negation** (32-bit). Silent wrong shifts, which
    also make `Real.fromString` read about 9% of reals one ulp high (#373).
-5. **Real.ceil/conversions-to-int** (all platforms).
+5. **IEEEReal.setRoundingMode/windows-no-op** (Windows, since 110.91).
+   `Real.realFloor`, `realCeil` and `realTrunc` round to nearest, which is
+   wrong for about half of all non-integers, and `setRoundingMode` does
+   nothing. Silent, but only on Windows, and `Real.floor` and the other
+   conversions to `int` do not use the mode.
+6. **Real.ceil/conversions-to-int** (all platforms).
    - `ceil` and `trunc` are one off just above an integer.
    - On 64 bits `floor`, `ceil`, `trunc` and `round` wrap around near 2^62
      instead of raising `Overflow`.
-6. **Int.fromLarge/fused-conversions** (all platforms, and the 2026
+7. **Int.fromLarge/fused-conversions** (all platforms, and the 2026
    series). The Basis's own `Int.fromLarge (Word.toLargeInt w)` misses
    `Overflow`. On 32 bits there is also garbage and a compiler crash.
-7. **Word32.fromLarge/fused-sign-extension** (64-bit mostly).
+8. **Word32.fromLarge/fused-sign-extension** (64-bit mostly).
    `Word32.fromLargeInt (Int32.toLarge i)` makes a malformed word for a
    negative `i`.
-8. **Int64.toInt/high-word-ignored** (32-bit). Silent truncation, but only
+9. **Int64.toInt/high-word-ignored** (32-bit). Silent truncation, but only
    for numbers that should raise `Overflow`.
-9. **Real.fromManExp/subnormal-is-zero** (all platforms). Wrong below
-   2^-1021.
-10. **Real.fromLargeInt/rounds-twice** (all platforms). One ulp off for
+10. **Real.fromManExp/subnormal-is-zero** (all platforms). Wrong below
+    2^-1021.
+11. **Real.fromLargeInt/rounds-twice** (all platforms). One ulp off for
     numbers of more than 60 or 62 bits, and in the directed rounding modes.
-11. **Real.nextAfter/subnormal-and-zero** (all platforms). Edge cases of a
+12. **Real.nextAfter/subnormal-and-zero** (all platforms). Edge cases of a
     rarely used function.
 
 ## Drafts for upstream
@@ -109,10 +122,12 @@ issue form, the program, a transcript and the patch filled in:
   ([Word64/shifts-and-negation](Word64/shifts-and-negation/upstream.md))
   and [#254](https://github.com/smlnj/legacy/issues/254)
   ([Real.fromManExp](Real.fromManExp/subnormal-is-zero/upstream.md)).
-* **Eight new issues** on smlnj/legacy:
+* **Nine new issues** on smlnj/legacy:
   - [the GC corruption](GC/real-corrupted-on-64-bit/upstream.md), which
     names #299 and #381;
   - [Int64.+](Int64.+/carry-and-borrow/upstream.md);
+  - [IEEEReal.setRoundingMode on Windows](IEEEReal.setRoundingMode/windows-no-op/upstream.md),
+    which names #70;
   - [Real.ceil](Real.ceil/conversions-to-int/upstream.md);
   - [fused conversions](Int.fromLarge/fused-conversions/upstream.md);
   - [fused sign extension](Word32.fromLarge/fused-sign-extension/upstream.md);
@@ -201,10 +216,3 @@ this directory.
 pass, where the release fails `random.*` and `property.*`. On 64 bits
 `property.core` passes in the runs that end, but the GC corruption (#1
 above) makes some of them fail or stop.
-
-## Seen on the way, not reported here
-
-* **Windows:** `IEEEReal.setRoundingMode` has no effect in the 32-bit
-  Windows release: `1.0 / 3.0` is the same under `TO_POSINF` and
-  `TO_NEGINF`. Found with `Real.fromLargeInt/rounds-twice/bug.sml`; not
-  looked into.

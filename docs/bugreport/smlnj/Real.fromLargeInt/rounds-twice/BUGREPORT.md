@@ -52,9 +52,10 @@ MLton 20241230 gets all 148 right.
 | 32-bit and 64-bit with `fix.diff` | 0 |
 
 The Windows MSI gets more wrong in the directed modes, because
-`IEEEReal.setRoundingMode` has no effect there: after it, 1.0 / 3.0 is the
-same under `TO_POSINF` and `TO_NEGINF`. That is a separate bug, not looked
-into; to nearest, Windows fails the same cases as Linux.
+`IEEEReal.setRoundingMode` has no effect there
+([IEEEReal.setRoundingMode/windows-no-op](../../IEEEReal.setRoundingMode/windows-no-op/BUGREPORT.md)).
+To nearest, Windows fails the same cases as Linux, and with that report's
+fix it fails the same cases in every mode.
 
 ```
 $ sml bug.sml                           # 110.99.9, 64-bit

@@ -430,5 +430,5 @@ index 715a4ff..cf9f705 100644
 ```
 
 Tested with a fixed point for 32 and 64 bits: 0 of 148 wrong on both.
-(Separately: on Windows, `IEEEReal.setRoundingMode` seems to have no
-effect: `1.0 / 3.0` is the same under `TO_POSINF` and `TO_NEGINF`.)
+(On Windows the directed modes fail more cases, because
+`IEEEReal.setRoundingMode` has no effect there; that is a separate issue.)
