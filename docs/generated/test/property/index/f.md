@@ -4,8 +4,12 @@
 
 - `Fail` (con): [PROP](../sig/PROP.md#con-fail)
 - `Failed` (con): [CHECK](../sig/CHECK.md#con-failed)
+- `fields` (val): [DATE_ARB](../sig/DATE_ARB.md#val-fields)
+- `fileDesc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-filedesc)
+- `fileId` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-fileid)
 - `filter` (val): [GEN](../sig/GEN.md#val-filter)
 - `fix` (val): [GEN](../sig/GEN.md#val-fix)
+- `floatClass` (val): [IEEE_REAL_ARB](../sig/IEEE_REAL_ARB.md#val-floatclass)
 - `forAll` (val): [PROP](../sig/PROP.md#val-forall)
 - `forAllGen` (val): [PROP](../sig/PROP.md#val-forallgen)
 - `frequency` (val): [GEN](../sig/GEN.md#val-frequency)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 36 of 36 entries documented |
+| Documentation | 43 of 43 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/gen\_sig.sml](../../../../../lib/test/property/gen_sig.sml) |
 
@@ -55,8 +55,12 @@ sig
   val <a href="#val-fix">fix</a> : ('a gen -&gt; 'a gen) -&gt; 'a gen
   val <a href="#val-intrange">intRange</a> : int * int -&gt; int gen
   val <a href="#val-int">int</a> : int gen
+  val <a href="#val-largerange">largeRange</a> : LargeInt.int * LargeInt.int -&gt; LargeInt.int gen
+  val <a href="#val-intinf">intInf</a> : IntInf.int gen
+  val <a href="#val-intinfrange">intInfRange</a> : IntInf.int * IntInf.int -&gt; IntInf.int gen
   val <a href="#val-word">word</a> : word gen
   val <a href="#val-word64">word64</a> : Word64.word gen
+  val <a href="#val-code">code</a> : int -&gt; int gen
   val <a href="#val-char">char</a> : char gen
   val <a href="#val-real">real</a> : real gen
   val <a href="#val-bool">bool</a> : bool gen
@@ -72,6 +76,9 @@ sig
   val <a href="#val-functionof">functionOf</a> : ('a -&gt; Word64.word) * ('a -&gt; string) * ('b -&gt; string) * 'b gen -&gt; ('a -&gt; 'b) gen
   val <a href="#val-pureof">pureOf</a> : ('a -&gt; Word64.word) * ('a -&gt; string) * ('b -&gt; string) * 'b gen -&gt; ('a -&gt; 'b) gen
   exception <a href="#exn-generated">Generated</a>
+  val <a href="#val-wordbits">wordBits</a> : int -&gt; Word64.word gen
+  val <a href="#val-primitive">primitive</a> : (PropertySource.source * PropertySource.position -&gt; 'a) -&gt; 'a gen
+  val <a href="#val-resource">resource</a> : 'a gen * ('a -&gt; unit) -&gt; 'a gen
 end
 </pre>
 
@@ -262,6 +269,47 @@ val int : int gen
 [`int`](#val-int) draws an integer of the whole range of [`Int.int`](../../../basis/sig/INTEGER.md#type-int), as [`intRange`](#val-intrange)
 does; where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) has no bounds, of the range of 64 bits.
 
+### <a name="val-largerange"></a>`largeRange`
+
+```sml
+val largeRange : LargeInt.int * LargeInt.int -> LargeInt.int gen
+```
+
+`largeRange (lo, hi)` draws an integer of `[lo, hi]` as [`intRange`](#val-intrange) does, for a range of at most 2^64 integers.
+
+The integers may be of any size: this is what the arbitraries of [`Int64`](../../../basis/str/Int64.md)
+and [`Position`](../../../basis/str/Int.md) are made of where [`Int.int`](../../../basis/sig/INTEGER.md#type-int) is narrower.
+
+**Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`, or if the range has more than 2^64
+integers.
+
+### <a name="val-intinf"></a>`intInf`
+
+```sml
+val intInf : IntInf.int gen
+```
+
+[`intInf`](#val-intinf) draws an [`IntInf.int`](../../../basis/sig/INTEGER.md#type-int): a third of the time small, a third an
+edge of a fixed width, a third of any magnitude.
+
+An edge is 2^k, 2^k - 1 or 2^k + 1, or the negation of one, for `k` up
+to 130. A magnitude is 1 to [`size`](../../../basis/sig/STRING.md#val-size) limbs of 30 bits (the limbs of Rune's
+[`IntInf`](../../../basis/str/IntInf.md)), each uniform, with either sign.
+
+### <a name="val-intinfrange"></a>`intInfRange`
+
+```sml
+val intInfRange : IntInf.int * IntInf.int -> IntInf.int gen
+```
+
+`intInfRange (lo, hi)` draws an integer of `[lo, hi]`, a range of any width, as [`intRange`](#val-intrange) does.
+
+It is a third of the time small, a third on an edge (0, 1, \~1, the bounds
+and their neighbours, powers of two and their neighbours), and a third
+anywhere in the range.
+
+**Raises** [`Domain`](../../../basis/sig/GENERAL.md#exn-domain) if `hi < lo`.
+
 ### <a name="val-word"></a>`word`
 
 ```sml
@@ -279,6 +327,18 @@ val word64 : Word64.word gen
 ```
 
 [`word64`](#val-word64) draws a 64-bit word as [`word`](#val-word) draws a word.
+
+### <a name="val-code"></a>`code`
+
+```sml
+val code : int -> int gen
+```
+
+`code maxOrd` draws the code of a character of a character set of
+`maxOrd + 1` characters, as [`char`](#val-char) draws a character.
+
+Where `maxOrd` is above 255, a third of the draws that are any of the
+256 are instead any of the whole set.
 
 ### <a name="val-char"></a>`char`
 
@@ -429,6 +489,36 @@ exception Generated
 ```
 
 [`Generated`](#exn-generated) is what a raising function of [`functionOf`](#val-functionof) raises.
+
+### <a name="val-wordbits"></a>`wordBits`
+
+```sml
+val wordBits : int -> Word64.word gen
+```
+
+`wordBits n` draws a word of `n` bits (at most 64), as [`word`](#val-word) draws a
+word.
+
+### <a name="val-primitive"></a>`primitive`
+
+```sml
+val primitive : (PropertySource.source * PropertySource.position -> 'a) -> 'a gen
+```
+
+`primitive f` is the generator that runs `f` with the source and the position it is given.
+
+It is a generator that reads its nodes from the source itself, as the
+arbitraries of a family of structures do.
+
+### <a name="val-resource"></a>`resource`
+
+```sml
+val resource : 'a gen * ('a -> unit) -> 'a gen
+```
+
+`resource (g, release)` draws what `g` draws, and calls `release` on it
+when the case is over: a generator of things that must be undone, such
+as a file or a socket.
 
 ---
 

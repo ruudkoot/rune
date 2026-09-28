@@ -2,6 +2,10 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) **t** [u](u.md) [v](v.md) [w](w.md) [symbols](symbols.md)
 
+- `t` (type): [ARB_OF](../sig/ARB_OF.md#type-t), [DATE_ARB](../sig/DATE_ARB.md#type-t)
+- `termios` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-termios)
+- `termiosFields` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-termiosfields)
+- `traversal` (val): [BASIS_DATA_ARB](../sig/BASIS_DATA_ARB.md#val-traversal)
 - `triple` (val): [ARB](../sig/ARB.md#val-triple), [CO](../sig/CO.md#val-triple), [GEN](../sig/GEN.md#val-triple), [SHOW](../sig/SHOW.md#val-triple)
 
 ---

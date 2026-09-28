@@ -3,6 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) **v** [w](w.md) [symbols](symbols.md)
 
 - `vector` (val): [ARB](../sig/ARB.md#val-vector), [GEN](../sig/GEN.md#val-vector), [SHOW](../sig/SHOW.md#val-vector)
+- `vectorSlice` (val): [ARB](../sig/ARB.md#val-vectorslice)
 - `verdict` (type): [PROP](../sig/PROP.md#type-verdict)
 
 ---

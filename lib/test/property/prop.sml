@@ -76,9 +76,11 @@ struct
          (* each side has an x of its own, drawn from the same nodes *)
          val xl = Gen.draw (#gen a) (s, here)
          val xr = Gen.draw (#gen a) (s, here)
+         (* shown before the sides run, which may change it (a stream) *)
+         val shown = #show a xl
        in
          {verdict = judge b (outcome s (fn () => l xl), outcome s (fn () => r xr)),
-          shown = [#show a xl], labels = [], covers = []}
+          shown = [shown], labels = [], covers = []}
        end)
       handle Gen.Discarded => plain Discard
 

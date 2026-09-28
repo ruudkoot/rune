@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 22 requirements between the 13 files become 13 arrows.
+library and not a wall of lines: the 60 requirements between the 29 files become 32 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,7 +24,7 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["Not in an area<br>(1)"]
-  a1["Property testing<br>(12)"]
+  a1["Property testing<br>(28)"]
   a1 -- 2 --> a0
 ```
 
@@ -51,6 +51,22 @@ flowchart TD
   n10["Prop"]
   n11(["CHECK"])
   n12["Check"]
+  n13(["ARB_OF"])
+  n14["CharArbFn<br>IntegerArbFn<br>MonoArray2ArbFn<br>MonoArrayArbFn<br>MonoArraySliceArbFn<br>MonoVectorArbFn<br>MonoVectorSliceArbFn<br>PropertyDimensions<br>RealArbFn<br>StringArbFn<br>SubstringArbFn<br>WordArbFn"]
+  n15(["BASIS_DATA_ARB<br>DATE_ARB<br>IEEE_REAL_ARB"])
+  n16["BasisDataArb<br>DateArb<br>IEEERealArb<br>PropertyAround<br>TimeArb"]
+  n17["IntArb<br>IntInfArb<br>LargeIntArb<br>LargeRealArb<br>LargeWordArb<br>PositionArb<br>RealArb<br>SysWordArb<br>Word8Arb<br>WordArb"]
+  n18["FixedIntArb<br>Int16Arb<br>Int32Arb<br>Int64Arb<br>Int8Arb<br>Real32Arb<br>Real64Arb<br>Word16Arb<br>Word32Arb<br>Word64Arb"]
+  n19["CharArb<br>CharArrayArb<br>CharArraySliceArb<br>CharVectorArb<br>CharVectorSliceArb<br>StringArb<br>SubstringArb"]
+  n20["WideCharArb<br>WideStringArb<br>WideSubstringArb"]
+  n21["Word8* (4)"]
+  n22["CharArray2Arb<br>IntArray2Arb<br>Word8Array2Arb"]
+  n23(["SYSTEM_ARB"])
+  n24["PropertyScratch<br>SystemArb"]
+  n25(["INET6_SOCK_ARB"])
+  n26["INet6SockArb"]
+  n27(["SML90_ARB"])
+  n28["SML90Arb"]
   n2 --> n1
   n4 --> n3
   n6 --> n5
@@ -62,6 +78,25 @@ flowchart TD
   n10 --> n9
   n11 --> n10
   n12 --> n11
+  n13 --> n8
+  n14 --> n13
+  n15 --> n8
+  n16 --> n13
+  n16 --> n15
+  n17 --> n14
+  n18 --> n14
+  n19 --> n14
+  n20 --> n14
+  n21 --> n17
+  n22 --> n19
+  n22 --> n17
+  n23 --> n8
+  n24 --> n23
+  n25 --> n8
+  n26 --> n25
+  n27 --> n8
+  n28 --> n24
+  n28 --> n27
 ```
 
 It also needs Not in an area (2).

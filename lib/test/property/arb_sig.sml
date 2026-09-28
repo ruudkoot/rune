@@ -58,6 +58,47 @@ sig
      a fresh array at every draw. *)
   val array : 'a arb -> 'a array arb
 
+  (* `intInf` is the arbitrary of `IntInf.int`, drawn by `Gen.intInf`. *)
+  val intInf : IntInf.int arb
+
+  (* `reference a` is the arbitrary of references to `a`: a new one at every
+     draw, and equal only to itself, as `=` on references is. *)
+  val reference : 'a arb -> 'a ref arb
+
+  (* `enum xs` is the arbitrary of the values of `xs`, each shown as its name:
+     the arbitrary of a datatype with no values in its constructors. The first
+     is the simplest.
+
+     Raises: `Empty` if `xs` is empty.
+
+     Example: `#show (enum [(LESS, "LESS"), (GREATER, "GREATER")]) GREATER = "GREATER"` *)
+  val enum : (''a * string) list -> ''a arb
+
+  (* `vectorSlice a` is the arbitrary of slices of vectors of `a`: a vector,
+     and a start and a length within it.
+
+     Two slices are equal when their vectors have equal elements and their
+     starts and lengths are the same. *)
+  val vectorSlice : 'a arb -> 'a VectorSlice.slice arb
+
+  (* `arraySlice a` is the arbitrary of slices of arrays of `a`, as
+     `vectorSlice` draws them, over a fresh array at every draw. *)
+  val arraySlice : 'a arb -> 'a ArraySlice.slice arb
+
+  (* `array2 a` is the arbitrary of two-dimensional arrays of `a`.
+
+     The numbers of rows and of columns are each drawn as a length is, at the
+     square root of the size; an array with no rows has no columns. Two
+     arrays are equal when they have the same dimensions and equal elements. *)
+  val array2 : 'a arb -> 'a Array2.array arb
+
+  (* `exn` is the arbitrary of exceptions: those of the Basis Library that
+     carry no value, `Gen.Generated`, and `Fail` with any message.
+
+     Two exceptions are equal when they have the same name, and, for `Fail`,
+     the same message. *)
+  val exn : exn arb
+
   (* `pair (a, b)` is the arbitrary of pairs. *)
   val pair : 'a arb * 'b arb -> ('a * 'b) arb
 

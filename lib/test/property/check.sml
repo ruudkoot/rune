@@ -10,12 +10,15 @@ structure Check :> CHECK =
 struct
   structure S = PropertySource
 
-  type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int}
+  type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int,
+                 exhaustiveBelow : int, smallScope : int}
 
-  val default : config = {seed = NONE, tests = 100, maxSize = 100, maxDiscards = 1000, maxShrinks = 5000}
+  val default : config = {seed = NONE, tests = 100, maxSize = 100, maxDiscards = 1000, maxShrinks = 5000,
+                          exhaustiveBelow = 65536, smallScope = 100}
 
   datatype result =
-      Passed of {tests : int, discarded : int, labels : (string * int) list, short : (string * real * real) list}
+      Passed of {tests : int, discarded : int, exhaustive : bool, labels : (string * int) list,
+                 short : (string * real * real) list}
     | Failed of {test : int, size : int, class : string, message : string, counterexample : string list,
                  calls : string list list, shrinks : int, replay : string}
     | GaveUp of {tests : int, discarded : int}
@@ -31,6 +34,11 @@ struct
 
   fun classOf (r : Prop.result) : string option =
     case #verdict r of Prop.Fail {class, ...} => SOME class | _ => NONE
+
+  (* the result of p on the source, the case's cleanups run *)
+  fun runCase (p : Prop.prop) (s : S.source) : Prop.result =
+    let val r = Prop.run p (s, S.root) handle e => (S.cleanUp s; raise e)
+    in S.cleanUp s; r end
 
   (* ---- the shrinker ---- *)
 
@@ -74,7 +82,7 @@ struct
     | _ => smaller (#word n)
 
   fun setWord (set : S.node list, a : Word64.word, w : Word64.word) : S.node list =
-    List.map (fn n => if #address n = a then {address = a, path = #path n, word = w, kind = #kind n} else n) set
+    List.map (fn n => if #address n = a then S.withWord (n, w) else n) set
 
   (* a case is simpler than another when it reads fewer nodes, or as many and
      its words are smaller where they first differ: an order with no endless
@@ -101,7 +109,7 @@ struct
               NONE => NONE
             | SOME j =>
                 let val path = base @ [Word64.fromInt j] @ tl rest
-                in SOME {address = S.addressOf path, path = path, word = #word n, kind = #kind n} end
+                in SOME (S.withPath (n, path, S.addressOf path)) end
           end
         else SOME n
     in
@@ -119,9 +127,7 @@ struct
   (* the set with element i of the sequence deleted and the elements after it
      moved down, its length one less *)
   fun deleted (set : S.node list, q : S.sequence, i : int) : S.node list =
-    List.map (fn n => if #address n = #length q andalso #word n > 0w0
-                      then {address = #address n, path = #path n, word = Word64.- (#word n, 0w1), kind = #kind n}
-                      else n)
+    List.map (fn n => if #address n = #length q andalso #word n > 0w0 then S.withWord (n, Word64.- (#word n, 0w1)) else n)
              (renumber (set, q, fn j => if j = i then NONE else if j < i then SOME j else SOME (j - 1)))
 
   (* the set with elements i and i + 1 of the sequence swapped *)
@@ -166,7 +172,7 @@ struct
                                    val rest = List.drop (#path nd, List.length from)
                                    val path = to @ [Word64.+ (m, hd rest)] @ tl rest
                                  in
-                                   {address = S.addressOf path, path = path, word = #word nd, kind = #kind nd}
+                                   S.withPath (nd, path, S.addressOf path)
                                  end
                                else nd)
                             set
@@ -201,7 +207,7 @@ struct
           let
             val () = runs := !runs + 1
             val s' = S.new (seed, size, set, zeros)
-            val r = Prop.run p (s', S.root)
+            val r = runCase p s'
           in
             if classOf r = SOME class andalso (simpler (s', s) orelse (List.length zeros > List.length (#zeros s)
                                                                         andalso not (simpler (s, s'))))
@@ -322,33 +328,116 @@ struct
       List.map (fn f => List.map #2 (List.filter (fn (f' : S.position, _) => #address f' = f) cs)) fs
     end
 
+  (* ---- exhaustive mode and the small scope ---- *)
+
+  (* The case after s, when every node reads 0 unless it is set: the last
+     node s read that has a word left below its bound (and below cap, where
+     there is one) is raised by one, the nodes read before it are kept and
+     those after it forgotten. So the cases come in the order of their
+     words, simplest first, and each shape of the tree is met once. *)
+  fun nextCase (s : S.source, cap : Word64.word option) : S.node list option =
+    let
+      fun top (n : S.node) =
+        case cap of
+          NONE => #bound n
+        | SOME c => if #bound n = 0w0 then c else Word64.min (#bound n, c)
+      fun bump [] = NONE
+        | bump ((n : S.node) :: earlier) =
+            if Word64.+ (#word n, 0w1) < top n then SOME (List.rev (S.withWord (n, Word64.+ (#word n, 0w1)) :: earlier))
+            else bump earlier
+    in
+      bump (List.rev (S.nodes s))
+    end
+
+  fun finite (s : S.source) : bool = List.all (fn n => #bound n <> 0w0) (S.nodes s)
+
+  (* the product of the bounds of the nodes s read, if it is at most limit *)
+  fun product (s : S.source, limit : int) : int option =
+    List.foldl (fn (n : S.node, SOME k) =>
+                  if #bound n = 0w0 orelse #bound n > Word64.fromInt limit then NONE
+                  else let val b = Word64.toInt (#bound n) in if k > limit div b then NONE else SOME (k * b) end
+                | (_, NONE) => NONE)
+               (SOME 1) (S.nodes s)
+
+  fun exhaustiveToken (s : S.source, size : int) : string =
+    "X" ^ String.concatWith "." (List.map (fn n => Word64.fmt StringCvt.HEX (#word n)) (S.nodes s)) ^ ":" ^ Int.toString size
+
   (* ---- runs ---- *)
 
-  fun check ({seed, tests, maxSize, maxDiscards, maxShrinks} : config) (name : string) (p : Prop.prop) : result =
+  (* the result of a run that passed: coverage that fell short of what was
+     asked for is reported *)
+  fun passedAfter (passed : int, discarded : int, exhaustive : bool, labels : (string * int) list,
+                   covers : (string * real * bool) list) : result =
+    let
+      val asked = List.foldl (fn ((l, pct, _), m) => if List.exists (fn (l', _) => l' = l) m then m else (l, pct) :: m)
+                             [] covers
+      val short =
+        List.mapPartial (fn (l, pct) =>
+                           let val had = 100.0 * real (List.length (List.filter (fn (l', _, b) => l' = l andalso b) covers))
+                                         / real (Int.max (passed, 1))
+                           in if had < pct then SOME (l, pct, had) else NONE end)
+                        asked
+    in
+      Passed {tests = passed, discarded = discarded, exhaustive = exhaustive, labels = labels, short = short}
+    end
+
+  (* What running the cases in order found: a failure, every case passing,
+     or a stop before the last. *)
+  datatype enumerated =
+      Found of result
+    | Complete of int * int * (string * int) list * (string * real * bool) list
+    | Stopped
+
+  (* The cases of p in order, at most limit of them. Exhaustive: every node
+     must have a finite bound, and the bounds of a case must multiply to at
+     most limit, or the run stops. With a cap: every node's words are below
+     it too. *)
+  fun cases (p : Prop.prop, size : int, cap : Word64.word option, limit : int, exhaustive : bool) : enumerated =
+    let
+      fun loop (set, k, passed, discarded, labels, covers) =
+        if k >= limit then Stopped
+        else
+          let
+            val s = S.new (0w0, size, set, [[]])
+            val r = runCase p s
+          in
+            if exhaustive andalso (not (finite s) orelse not (isSome (product (s, limit)))) then Stopped
+            else
+              case #verdict r of
+                Prop.Fail {class, message} =>
+                  Found (Failed {test = k, size = size, class = class, message = message, counterexample = #shown r,
+                                 calls = callsOf s, shrinks = 0, replay = exhaustiveToken (s, size)})
+              | v =>
+                  let
+                    val (passed, discarded, labels, covers) =
+                      case v of
+                        Prop.Pass => (passed + 1, discarded, List.foldl (fn (l, m) => count (m, l)) labels (#labels r),
+                                      #covers r @ covers)
+                      | _ => (passed, discarded + 1, labels, covers)
+                  in
+                    case nextCase (s, cap) of
+                      SOME set => loop (set, k + 1, passed, discarded, labels, covers)
+                    | NONE => Complete (passed, discarded, labels, covers)
+                  end
+          end
+    in
+      loop ([], 0, 0, 0, [], [])
+    end
+
+  fun check ({seed, tests, maxSize, maxDiscards, maxShrinks, exhaustiveBelow, smallScope} : config) (name : string)
+            (p : Prop.prop) : result =
     let
       val seed = case seed of SOME s => s | NONE => Random.hashString name
       fun sizeOf k = if tests <= 1 then maxSize else Int.min (k, tests - 1) * maxSize div (tests - 1)
       fun loop (g, passed, discarded, labels, covers) =
-        if passed >= tests then
-          let
-            val asked = List.foldl (fn ((l, pct, _), m) => if List.exists (fn (l', _) => l' = l) m then m else (l, pct) :: m)
-                                   [] covers
-            val short =
-              List.mapPartial (fn (l, pct) =>
-                                 let val had = 100.0 * real (List.length (List.filter (fn (l', _, b) => l' = l andalso b) covers))
-                                               / real (Int.max (passed, 1))
-                                 in if had < pct then SOME (l, pct, had) else NONE end)
-                              asked
-          in
-            Passed {tests = passed, discarded = discarded, labels = labels, short = short}
-          end
+        if passed >= tests then passedAfter (passed, discarded, false, labels, covers)
         else if discarded > maxDiscards then GaveUp {tests = passed, discarded = discarded}
         else
           let
             val (caseSeed, g) = Random.word64 g
             val size = sizeOf passed
             val s = S.new (caseSeed, size, [], [])
-            val r = Prop.run p (s, S.root)
+            val r = runCase p s
           in
             case #verdict r of
               Prop.Pass => loop (g, passed + 1, discarded, List.foldl (fn (l, m) => count (m, l)) labels (#labels r),
@@ -364,24 +453,66 @@ struct
                           replay = token (caseSeed, size)}
                 end
           end
+      fun random () = loop (Random.fromSeed seed, 0, 0, [], [])
     in
-      loop (Random.fromSeed seed, 0, 0, [], [])
+      case if exhaustiveBelow > 0 then cases (p, maxSize, NONE, exhaustiveBelow, true) else Stopped of
+        Found r => r
+      | Complete (passed, discarded, labels, covers) =>
+          if passed = 0 andalso discarded > 0 then GaveUp {tests = 0, discarded = discarded}
+          else passedAfter (passed, discarded, true, labels, covers)
+      | Stopped =>
+          (* the small scope: the cases whose words are all below 3, the
+             simplest first, before the random ones *)
+          case if smallScope > 0 then cases (p, maxSize, SOME 0w3, smallScope, false) else Stopped of
+            Found r => r
+          | _ => random ()
+    end
+
+  (* the case of an exhaustive token: its words set in the order they are
+     read, one run for each *)
+  fun exhaustiveCase (p : Prop.prop) (words : Word64.word list, size : int) : Prop.result option =
+    let
+      fun go (set, ws) =
+        let
+          val s = S.new (0w0, size, set, [[]])
+          val r = runCase p s
+        in
+          case ws of
+            [] => SOME r
+          | w :: rest =>
+              (case List.drop (S.nodes s, List.length set) of
+                 n :: _ => go (set @ [S.withWord (n, w)], rest)
+               | [] => NONE)
+              handle Subscript => NONE
+        end
+    in
+      go ([], words)
     end
 
   fun replay (t : string) (p : Prop.prop) : Prop.result option =
     case String.fields (fn c => c = #":") t of
       [s, n] =>
-        (case (StringCvt.scanString (Word64.scan StringCvt.HEX) s, Int.fromString n) of
-           (SOME seed, SOME size) =>
-             let
-               val src = S.new (seed, size, [], [])
-               val r = Prop.run p (src, S.root)
-             in
-               case classOf r of
-                 SOME class => SOME (#2 (shrink (p, seed, size, class, #maxShrinks default) (src, r)))
-               | NONE => SOME r
-             end
-         | _ => NONE)
+        if String.isPrefix "X" s then
+          let
+            val ws = List.map (StringCvt.scanString (Word64.scan StringCvt.HEX))
+                              (List.filter (fn w => w <> "") (String.fields (fn c => c = #".") (String.extract (s, 1, NONE))))
+          in
+            case (List.all isSome ws, Int.fromString n) of
+              (true, SOME size) => exhaustiveCase p (List.map valOf ws, size)
+            | _ => NONE
+          end
+        else
+          (case (StringCvt.scanString (Word64.scan StringCvt.HEX) s, Int.fromString n) of
+             (SOME seed, SOME size) =>
+               let
+                 val src = S.new (seed, size, [], [])
+                 val r = runCase p src
+               in
+                 case classOf r of
+                   SOME class => SOME (#2 (shrink (p, seed, size, class, #maxShrinks default) (src, r)))
+                 | NONE => SOME r
+               end
+           | _ => NONE)
     | _ => NONE
 
   fun passed (Passed {short, ...}) = List.null short
@@ -391,8 +522,9 @@ struct
 
   fun report (name : string) (r : result) : string =
     case r of
-      Passed {tests, discarded, labels, short} =>
+      Passed {tests, discarded, exhaustive, labels, short} =>
         (if List.null short then "PASS " else "FAIL ") ^ name ^ ": " ^ Int.toString tests ^ " cases"
+        ^ (if exhaustive then ", every one" else "")
         ^ (if discarded > 0 then ", " ^ Int.toString discarded ^ " discarded" else "") ^ "\n"
         ^ String.concat (List.map (fn (l, n) => "  " ^ pct (100.0 * real n / real (Int.max (tests, 1))) ^ " " ^ l ^ "\n")
                                   (List.rev labels))

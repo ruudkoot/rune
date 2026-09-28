@@ -7,7 +7,7 @@ them all. They are found by elaborating the library and comparing the type names
 says what is the case and not only what is meant. A type that abbreviates more than a name, such
 as a reader or a record, is not listed. Every name says why it is a name of its type:
 
-- **required by the signature** (0): the signature of the structure, with the `where type`
+- **required by the signature** (15): the signature of the structure, with the `where type`
   of its declaration in the specification, says which type it is, as `CharVector.vector` is `string`;
 - **required of the top level** (0): the top level is defined to have the type of that
   structure, as `int` is `Int.int`;
@@ -19,6 +19,14 @@ as a reader or a record, is not listed. Every name says why it is a name of its 
 
 | Type | Also |
 | --- | --- |
+| `char` | *required by the signature:* [`CharArb.t`](sig/ARB_OF.md#type-t) |
+| `int` | *required by the signature:* [`IntArb.t`](sig/ARB_OF.md#type-t), [`PositionArb.t`](sig/ARB_OF.md#type-t) |
+| [`Int64Arb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`FixedIntArb.t`](sig/ARB_OF.md#type-t) |
+| [`IntInfArb.t`](sig/ARB_OF.md#type-t) | *required by the signature:* [`LargeIntArb.t`](sig/ARB_OF.md#type-t) |
+| `real` | *required by the signature:* [`RealArb.t`](sig/ARB_OF.md#type-t), [`Real64Arb.t`](sig/ARB_OF.md#type-t), [`LargeRealArb.t`](sig/ARB_OF.md#type-t) |
+| `string` | *required by the signature:* [`StringArb.t`](sig/ARB_OF.md#type-t), [`CharVectorArb.t`](sig/ARB_OF.md#type-t) |
+| `substring` | *required by the signature:* [`SubstringArb.t`](sig/ARB_OF.md#type-t), [`CharVectorSliceArb.t`](sig/ARB_OF.md#type-t) |
+| `word` | *required by the signature:* [`WordArb.t`](sig/ARB_OF.md#type-t), [`SysWordArb.t`](sig/ARB_OF.md#type-t), [`LargeWordArb.t`](sig/ARB_OF.md#type-t) |
 
 ---
 

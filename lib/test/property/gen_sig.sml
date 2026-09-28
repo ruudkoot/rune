@@ -103,6 +103,32 @@ sig
      does; where `Int.int` has no bounds, of the range of 64 bits. *)
   val int : int gen
 
+  (* `largeRange (lo, hi)` draws an integer of `[lo, hi]` as `intRange` does, for a range of at most 2^64 integers.
+
+     The integers may be of any size: this is what the arbitraries of `Int64`
+     and `Position` are made of where `Int.int` is narrower.
+
+     Raises: `Domain` if `hi < lo`, or if the range has more than 2^64
+     integers. *)
+  val largeRange : LargeInt.int * LargeInt.int -> LargeInt.int gen
+
+  (* `intInf` draws an `IntInf.int`: a third of the time small, a third an
+     edge of a fixed width, a third of any magnitude.
+
+     An edge is 2^k, 2^k - 1 or 2^k + 1, or the negation of one, for `k` up
+     to 130. A magnitude is 1 to `size` limbs of 30 bits (the limbs of Rune's
+     `IntInf`), each uniform, with either sign. *)
+  val intInf : IntInf.int gen
+
+  (* `intInfRange (lo, hi)` draws an integer of `[lo, hi]`, a range of any width, as `intRange` does.
+
+     It is a third of the time small, a third on an edge (0, 1, ~1, the bounds
+     and their neighbours, powers of two and their neighbours), and a third
+     anywhere in the range.
+
+     Raises: `Domain` if `hi < lo`. *)
+  val intInfRange : IntInf.int * IntInf.int -> IntInf.int gen
+
   (* `word` draws a word: a third of the time small, a third on an edge (0,
      1, the largest, powers of two and their neighbours, the top bit), a
      third anywhere. *)
@@ -110,6 +136,13 @@ sig
 
   (* `word64` draws a 64-bit word as `word` draws a word. *)
   val word64 : Word64.word gen
+
+  (* `code maxOrd` draws the code of a character of a character set of
+     `maxOrd + 1` characters, as `char` draws a character.
+
+     Where `maxOrd` is above 255, a third of the draws that are any of the
+     256 are instead any of the whole set. *)
+  val code : int -> int gen
 
   (* `char` draws a character: half the time any of the 256.
 
@@ -185,4 +218,19 @@ sig
 
   (* `Generated` is what a raising function of `functionOf` raises. *)
   exception Generated
+
+  (* `wordBits n` draws a word of `n` bits (at most 64), as `word` draws a
+     word. *)
+  val wordBits : int -> Word64.word gen
+
+  (* `primitive f` is the generator that runs `f` with the source and the position it is given.
+
+     It is a generator that reads its nodes from the source itself, as the
+     arbitraries of a family of structures do. *)
+  val primitive : (PropertySource.source * PropertySource.position -> 'a) -> 'a gen
+
+  (* `resource (g, release)` draws what `g` draws, and calls `release` on it
+     when the case is over: a generator of things that must be undone, such
+     as a file or a socket. *)
+  val resource : 'a gen * ('a -> unit) -> 'a gen
 end

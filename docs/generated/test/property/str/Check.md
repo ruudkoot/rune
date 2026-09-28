@@ -22,7 +22,7 @@ What each means is on [`CHECK`](../sig/CHECK.md); the types are this structure's
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`config`](../sig/CHECK.md#type-config) | `{maxDiscards : int, maxShrinks : int, maxSize : int, seed : Word64.word option, tests : int}` |
+| type | [`config`](../sig/CHECK.md#type-config) | `{exhaustiveBelow : int, maxDiscards : int, maxShrinks : int, maxSize : int, seed : Word64.word option, smallScope : int, tests : int}` |
 | datatype | [`result`](../sig/CHECK.md#type-result) | `Passed` &#124; `Failed` &#124; `GaveUp` |
 | val | [`check`](../sig/CHECK.md#val-check) | `config -> string -> Prop.prop -> result` |
 | val | [`default`](../sig/CHECK.md#val-default) | `config` |

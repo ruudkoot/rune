@@ -97,7 +97,7 @@ val () = check ("tree/parts-are-independent", fn () =>
     val (a, b) = Gen.draw g (s, PropertySource.root)
     (* the first node read is the length of the first list: set it to 0 *)
     val first = hd (PropertySource.nodes s)
-    val s' = PropertySource.new (0w7, 30, [{address = #address first, path = #path first, word = 0w0, kind = #kind first}], [])
+    val s' = PropertySource.new (0w7, 30, [PropertySource.withWord (first, 0w0)], [])
     val (a', b') = Gen.draw g (s', PropertySource.root)
   in
     List.null a' andalso b' = b andalso not (List.null a)
@@ -156,6 +156,48 @@ val () = check ("replay/the-same-case", fn () =>
            SOME {verdict = Prop.Fail _, shown, ...} => shown = counterexample
          | _ => false)
     | _ => false
+  end)
+
+(* ---- exhaustive mode (P9) ---- *)
+val i8 : int Arb.arb = {gen = Gen.intRange (~128, 127), show = Show.int, co = Co.int, eq = SOME (op =)}
+val sumBelow = Prop.forAll (Arb.pair (i8, i8)) (fn (i, j) => Prop.holds (i + j < 100))
+val () = check ("exhaustive/every-case", fn () =>
+  case Check.check Check.default "pairs" (Prop.forAll (Arb.pair (i8, i8)) (fn _ => Prop.holds true)) of
+    Check.Passed {tests, exhaustive, ...} => tests = 65536 andalso exhaustive
+  | _ => false)
+val () = check ("exhaustive/simplest-first", fn () =>
+  case Check.check Check.default "sum" sumBelow of
+    Check.Failed {counterexample, shrinks, ...} => counterexample = ["(0, 100)"] andalso shrinks = 0
+  | _ => false)
+val () = check ("exhaustive/replay", fn () =>
+  case Check.check Check.default "sum" sumBelow of
+    Check.Failed {replay, ...} =>
+      (case Check.replay replay sumBelow of
+         SOME {verdict = Prop.Fail _, shown, ...} => shown = ["(0, 100)"]
+       | _ => false)
+  | _ => false)
+val () = check ("exhaustive/too-many-cases-samples", fn () =>
+  case Check.check Check.default "ints" (Prop.forAll Arb.int (fn _ => Prop.holds true)) of
+    Check.Passed {tests, exhaustive, ...} => tests = 100 andalso not exhaustive
+  | _ => false)
+val () = check ("exhaustive/off", fn () =>
+  case Check.check {seed = NONE, tests = 100, maxSize = 100, maxDiscards = 1000, maxShrinks = 5000, exhaustiveBelow = 0,
+                    smallScope = 0}
+                   "bools" (Prop.forAll Arb.bool (fn _ => Prop.holds true)) of
+    Check.Passed {tests, exhaustive, ...} => tests = 100 andalso not exhaustive
+  | _ => false)
+
+(* ---- what a case makes is undone when it is over ---- *)
+val () = check ("resource/released-after-each-case", fn () =>
+  let
+    val made = ref 0
+    val released = ref 0
+    val g = Gen.resource (Gen.map (fn x => (made := !made + 1; x)) Gen.int, fn _ => released := !released + 1)
+    val a = {gen = g, show = Show.int, co = Co.int, eq = SOME (op =)} : int Arb.arb
+    val r = Check.check Check.default "made" (Prop.forAll a (fn _ => Prop.holds (!made = !released + 1)))
+  in
+    (* 100 cases, and the one exhaustive mode tries first *)
+    Check.passed r andalso !made = !released andalso !made >= 100
   end)
 
 val () = if !failed = 0 then () else OS.Process.exit OS.Process.failure

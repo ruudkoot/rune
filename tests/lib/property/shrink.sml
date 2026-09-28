@@ -15,7 +15,7 @@ val seeds = List.tabulate (10, fn i => i + 1)
    the shrink took *)
 fun shrunk (p : Prop.prop) (s : int) : string list * int =
   case Check.check {seed = SOME (Word64.fromInt s), tests = 10000, maxSize = 100, maxDiscards = 1000,
-                    maxShrinks = 5000} "shrink" p of
+                    maxShrinks = 5000, exhaustiveBelow = 65536, smallScope = 0} "shrink" p of
     Check.Failed {counterexample, shrinks, ...} => (counterexample, shrinks)
   | _ => (["(no failure)"], 0)
 

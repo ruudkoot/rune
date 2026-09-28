@@ -32,7 +32,7 @@ What it rests on:
 | M3 | `lib/random` | done 2026-09-28 |
 | M4 | The property core | done 2026-09-28 |
 | M5 | Shrinking and functions | done 2026-09-28 |
-| M6 | The Basis's instances, and the generators frozen | |
+| M6 | The Basis's instances, and the generators frozen | done 2026-09-28 |
 | M7 | Laws elaborated | |
 | M8 | Laws run | |
 | M9 | The hunt | |
@@ -1012,7 +1012,7 @@ numbers it gave are reported as they came out.
   - *Small decimals:* integers and halves in `[-size, size]`.
   - *Bit patterns:* uniform, which covers every exponent.
   
-  Reals are made from bits through `PackReal64Little`, so the rounding mode a law may set does not change them.
+  Reals are made from their bits with `Real`'s own exact operations (M5), so the rounding mode a law may set does not change them.
 - **P5. Characters** are uniform over all 256 codes half the time. The other half is split evenly between letters and digits, the space and controls (`\n`, `\t`, `\000`), and the characters Standard ML's own syntax for numbers, characters and strings gives a meaning to (`#"~"`, `#"-"`, `#"+"`, `#"\\"`, `#"\""`, `#"."`, `#"e"`, `#"E"`, `#"0"`, `#"x"`, `#"w"`).
 - **P6. Strings, lists, vectors and arrays** have a length uniform in `[0, size]`, and 0 and 1 with weight 1/8 each. Their elements follow their own rules, so a string has the characters of P5.
 - **P7. Functions** are drawn from the three classes of D5 with equal weight: pure, raising and effect-observing. Their results come from subtrees keyed by the observation of the argument. A raising function raises an exception of the library's own for some arguments (a quarter of them) and returns otherwise. Effect-observing functions log their calls.
@@ -1020,6 +1020,18 @@ numbers it gave are reported as they came out.
 - **P9. Exhaustive search.** It is used when every variable has a finite domain and the product is at most 2^16 cases in `make check`, or 2^20 in the deep mode. `bool`, `order`, `char`, `Int8`, `Word8` and their pairs qualify.
 - **P10. Instances.** A law is tested at every implementation of its signature, and a type variable at `int` (D8).
 - **P11. Counts.** In `make check`: 100 cases per law per implementation, or exhaustively, with a fixed seed. In the deep mode: 10,000 cases per seed for seeds 1 to 1,000, fixed in advance.
+- **P12. Values built from parts** (added at M6, before any law ran).
+  - *An abstract value* (`Date.date`, `Time.time`, terminal settings) is made by its structure's own constructor from parts within the range the Basis documents. So a draw never raises: a `Date.date` has a year from 1900 to 2200, which the specification asks for, and fields in range.
+  - *A range the specification leaves to the implementation* is read from the structure, as P1 reads `maxInt`. `Time.time`'s range is found by doubling a time until `Time` is raised.
+  - *A record of parts* (`Date.date`'s fields, a `decimal_approx`) draws each part around its documented range, widened on each side by the range's own width. Parts out of range and on its edges are then drawn as often as parts in it. A part with no documented range (a year, an exponent) is drawn by P1 over its whole type.
+  - *A wide character* follows P5, and a sixth of its draws are any character of the whole set.
+- **P13. The small scope** (added at M6, from the mutant calibration). Before its random cases, a run tries the cases in which every word read is 0, 1 or 2, simplest first, up to as many cases as the run has random ones.
+  - Integers are then 0, ~1 and 1, lengths up to 2, and characters the first three codes.
+  - This is the small scope hypothesis of Jackson's Alloy and of SmallCheck (Runciman, Naylor and Lindblad 2008): most bugs show on some small input.
+  - It reaches the relations between independent values, such as an index one past the end of a string drawn beside it, which three independent random draws rarely meet.
+  - A property whose cases are all few enough runs exhaustively instead (P9).
+
+**Frozen** on 2026-09-28, at the end of M6. `tests/lib/property/instances.sml` draws from the instance of every type of the census and hashes what the draws observe. `frozen.expected` holds that hash, so any change to what the generators draw fails `make test-lib` until the hash is renewed. A renewal needs a reason from the list above, recorded in its commit.
 
 ## The blind test
 
@@ -1438,6 +1450,41 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
   - **Frozen.** The principles are then frozen (*Generator principles*).
 * **Why now:** after this the generators are what the hunt will use, so they are fixed before any documented law is run.
 * **Done when:** every type in the census has an instance, the mutants are killed at the reported rates, and `make check` passes.
+* **Done** (2026-09-28):
+  - **Instances.** The functors are named with `Fn`, so that the instance of the type of a structure `X` of the Basis is `XArb.arb`. That is the rule by which M7's runedoc will resolve a type to its instance.
+    - `IntegerArbFn`, `WordArbFn`, `RealArbFn`, `CharArbFn`, `StringArbFn`, `SubstringArbFn`, and `MonoVectorArbFn`, `MonoArrayArbFn`, the two slice functors and `MonoArray2ArbFn`. They read bounds, word sizes, precision and `maxOrd` from the structure (D4).
+    - An integer structure within `Int.int`'s range is drawn through `Int`, and a wider one through `Gen.largeRange` in `LargeInt`. So no width is assumed.
+    - A real structure other than binary64 gets its own specials, and bit patterns with an exponent uniform over its format.
+    - The instances: `IntArb`, `IntInfArb`, `LargeIntArb`, `PositionArb`, `WordArb`, `Word8Arb`, `LargeWordArb`, `SysWordArb`, `RealArb`, `LargeRealArb`, `CharArb`, `StringArb`, `SubstringArb`, `CharVectorArb`, `CharArrayArb`, the char and `Word8` slices, vectors and arrays. The optional ones are `Int8Arb` to `Int64Arb`, `FixedIntArb`, `Word16Arb` to `Word64Arb`, `Real32Arb`, `Real64Arb`, the wide characters, strings and substrings, and `IntArray2Arb`, `CharArray2Arb` and `Word8Array2Arb`.
+    - `Arb` gained `intInf`, `reference`, `enum` (datatypes), `vectorSlice`, `arraySlice`, `array2` and `exn`. `DateArb` (dates, months, weekdays, the record of fields), `TimeArb`, `IEEERealArb` and `BasisDataArb` (buffer modes, radixes, traversals, readers over a string with positions as the stream) follow P12.
+  - **System values** (`SystemArb`, `SML90Arb`, `INet6SockArb`) are made, and undone after each case:
+    - binary streams over drawn bytes, a writer that keeps what it is given, and output streams over it;
+    - an SML '90 stream of a scratch file;
+    - pipes for I/O and Posix descriptors and poll descriptors, and scratch files for file ids;
+    - new TCP sockets over IPv4 and IPv6;
+    - the process's own ids, and `localhost`'s host entry;
+    - the named signals, errors and speeds, and terminal settings from drawn flags and control characters.
+
+    `Gen.resource` registers a cleanup, and `Check` runs a case's cleanups when the case is over, in random runs, shrinking and enumeration alike. No type of the census was left without a generator, so no law has to name a domain for that reason.
+  - **Exhaustive mode (P9).** Every node records its bound: the number of words that are values of it, or none.
+    - When every node of a case is bounded and the bounds multiply to at most `exhaustiveBelow` (65,536), `Check` runs every case in the order of their words, simplest first. So a failure found is the simplest there is, and it is not shrunk.
+    - The bounds are checked at every case, since a later case may read more nodes than the first.
+    - Such a failure's replay token lists the words (`X0.1.C8:100`).
+  - **The small scope (P13)** runs next, for `smallScope` cases (100).
+  - **Mutant calibration** (`tests/lib/property/mutants.sml`): each mutant of a copy of the members is compared, by outcome, with the Basis's own member, by properties written for this test.
+
+    | Family | Mutants | Killed |
+    |---|---|---|
+    | `List` | `nth` off by one, `take` without its `Subscript`, `drop` of a negative count, `tabulate` off by one, `foldl` with swapped arguments, `partition` with swapped results | 6 of 6 |
+    | `Int8` | `fromInt` off by one, `+` without its `Overflow`, `-` with swapped arguments, `div` rounding towards zero, `abs` without its `Overflow`, `sign` with the wrong sign | 6 of 6 |
+    | `Substring` | `substring` off by one, `sub` off by one, `triml` without its `Subscript`, `splitAt` with swapped results, `isPrefix` with swapped arguments | 5 of 5 |
+
+    - Before P13, `substring` off by one survived. It accepts `i + n` one past the end of the string, which random draws of the string and the two integers rarely meet.
+    - A first fix made integers drawn after a list more likely to be near its length. It broke two things the design needs, which the core and shrink tests caught: a node set by the shrinker then changed parts it did not own, and the two sides of a law no longer drew the same argument. It was taken out for P13.
+  - **Frozen** (*Generator principles*): `tests/lib/property/instances.sml` probes 110 types. They are the census's 113 types of free variables as 86 instances (its type variables at `int`, D8), and 24 more of the same families. Each value drawn must show, be equal to itself and have one observation. The hash of the observations is `frozen.expected`, except for the ids and host entry that the process makes from itself.
+  - **Portable where the Basis is.** A file of the library that names an optional structure is `host = no` in the `MANIFEST`: `sized.sml`, `wide.sml`, `arrays2.sml`, `sml90.sml` and `inet6.sml`. `tests/lib/run-hosts.sh` builds the others on every compiler. MLton lacks `SML90`, and SML/NJ and Poly/ML lack `Int8`, which is how these files were found. `make test-lib-hosts`: 15 pass, 5 explained by the host bugs of M3 and M5, none failed.
+  - **Found on the way:** the test's copy of `Substring.substring` checked `i + n > size s`, which overflows where the Basis raises `Subscript`. It was the test's bug, of the named law's kind again. And `Prop.law` showed a case's argument after the sides had run, so a stream showed what the sides had left of it. It now shows it before.
+  - **Costs:** `instances.sml` runs in about 7 seconds and `mutants.sml` in about 14, most of them exhaustive runs over `Int8` pairs.
 
 ### M7. Laws elaborated (M, about 600 and the rewrites)
 

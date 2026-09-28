@@ -6,13 +6,20 @@ documented when a comment describes it, alone or together with the entry before 
 
 | Signature | Entries | Documented |  | Functions | With a usage head |
 | --- | --- | --- | --- | --- | --- |
-| [`ARB`](sig/ARB.md) | 19 | 19 | 100% | 9 | 9 |
+| [`ARB`](sig/ARB.md) | 26 | 26 | 100% | 14 | 14 |
+| [`ARB_OF`](sig/ARB_OF.md) | 2 | 2 | 100% | 0 | 0 |
+| [`BASIS_DATA_ARB`](sig/BASIS_DATA_ARB.md) | 4 | 4 | 100% | 0 | 0 |
 | [`CHECK`](sig/CHECK.md) | 8 | 8 | 100% | 5 | 5 |
 | [`CO`](sig/CO.md) | 14 | 14 | 100% | 4 | 4 |
-| [`GEN`](sig/GEN.md) | 36 | 36 | 100% | 24 | 24 |
+| [`DATE_ARB`](sig/DATE_ARB.md) | 5 | 5 | 100% | 0 | 0 |
+| [`GEN`](sig/GEN.md) | 43 | 43 | 100% | 30 | 30 |
+| [`IEEE_REAL_ARB`](sig/IEEE_REAL_ARB.md) | 3 | 3 | 100% | 0 | 0 |
+| [`INET6_SOCK_ARB`](sig/INET6_SOCK_ARB.md) | 2 | 2 | 100% | 1 | 1 |
 | [`PROP`](sig/PROP.md) | 13 | 13 | 100% | 10 | 10 |
-| [`SHOW`](sig/SHOW.md) | 16 | 16 | 100% | 6 | 6 |
-| **all** | 106 | 106 | 100% | 58 | 58 |
+| [`SHOW`](sig/SHOW.md) | 17 | 17 | 100% | 7 | 7 |
+| [`SML90_ARB`](sig/SML90_ARB.md) | 1 | 1 | 100% | 0 | 0 |
+| [`SYSTEM_ARB`](sig/SYSTEM_ARB.md) | 23 | 23 | 100% | 1 | 1 |
+| **all** | 161 | 161 | 100% | 72 | 72 |
 
 ## Members a signature describes
 
@@ -21,16 +28,19 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-7 structures have a page, with 132 members, of which 106 (80%) are described by a signature.
+54 structures have a page, with 272 members, of which 235 (86%) are described by a signature.
 
 | Structure | Members | Described |  |
 | --- | --- | --- | --- |
-| [`PropertySource`](str/PropertySource.md) | 26 | 0 | 0% |
+| [`PropertyAround`](str/PropertyAround.md) | 1 | 0 | 0% |
+| [`PropertyDimensions`](str/PropertyDimensions.md) | 3 | 0 | 0% |
+| [`PropertyScratch`](str/PropertyScratch.md) | 2 | 0 | 0% |
+| [`PropertySource`](str/PropertySource.md) | 31 | 0 | 0% |
 
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true: it is elaborated when these pages
-are made and tried by the test suite: 13 of them, in [`CO`](sig/CO.md) (1), [`GEN`](sig/GEN.md) (4), [`SHOW`](sig/SHOW.md) (8).
+are made and tried by the test suite: 15 of them, in [`ARB`](sig/ARB.md) (1), [`CO`](sig/CO.md) (1), [`GEN`](sig/GEN.md) (4), [`SHOW`](sig/SHOW.md) (9).
 
 ---
 

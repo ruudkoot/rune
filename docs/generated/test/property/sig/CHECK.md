@@ -40,10 +40,12 @@ a [`Div`](../../../basis/sig/GENERAL.md#exn-div) never turns into an [`Overflow`
 <pre>
 signature CHECK =
 sig
-  type <a href="#type-config">config</a> = {<a href="#fld-config.seed">seed</a> : Word64.word option, <a href="#fld-config.tests">tests</a> : int, <a href="#fld-config.maxsize">maxSize</a> : int, <a href="#fld-config.maxdiscards">maxDiscards</a> : int, <a href="#fld-config.maxshrinks">maxShrinks</a> : int}
+  type <a href="#type-config">config</a> = {<a href="#fld-config.seed">seed</a> : Word64.word option, <a href="#fld-config.tests">tests</a> : int, <a href="#fld-config.maxsize">maxSize</a> : int, <a href="#fld-config.maxdiscards">maxDiscards</a> : int, <a href="#fld-config.maxshrinks">maxShrinks</a> : int,
+                 <a href="#fld-config.exhaustivebelow">exhaustiveBelow</a> : int, <a href="#fld-config.smallscope">smallScope</a> : int}
   val <a href="#val-default">default</a> : config
   datatype <a href="#type-result">result</a> =
-      <a href="#con-passed">Passed</a> of {<a href="#fld-passed.tests">tests</a> : int, <a href="#fld-passed.discarded">discarded</a> : int, <a href="#fld-passed.labels">labels</a> : (string * int) list, <a href="#fld-passed.short">short</a> : (string * real * real) list}
+      <a href="#con-passed">Passed</a> of {<a href="#fld-passed.tests">tests</a> : int, <a href="#fld-passed.discarded">discarded</a> : int, <a href="#fld-passed.exhaustive">exhaustive</a> : bool, <a href="#fld-passed.labels">labels</a> : (string * int) list,
+                 <a href="#fld-passed.short">short</a> : (string * real * real) list}
     | <a href="#con-failed">Failed</a> of {<a href="#fld-failed.test">test</a> : int, <a href="#fld-failed.size">size</a> : int, <a href="#fld-failed.class">class</a> : string, <a href="#fld-failed.message">message</a> : string, <a href="#fld-failed.counterexample">counterexample</a> : string list,
                  <a href="#fld-failed.calls">calls</a> : string list list, <a href="#fld-failed.shrinks">shrinks</a> : int, <a href="#fld-failed.replay">replay</a> : string}
     | <a href="#con-gaveup">GaveUp</a> of {<a href="#fld-gaveup.tests">tests</a> : int, <a href="#fld-gaveup.discarded">discarded</a> : int}
@@ -58,7 +60,8 @@ end
 ### <a name="type-config"></a>`config`
 
 ```sml
-type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int}
+type config = {seed : Word64.word option, tests : int, maxSize : int, maxDiscards : int, maxShrinks : int,
+               exhaustiveBelow : int, smallScope : int}
 ```
 
 How a property is run.
@@ -66,7 +69,24 @@ How a property is run.
 `seed` is the seed of the run (`NONE`: a hash of the name), `tests` the
 number of cases that must pass, `maxSize` the largest size,
 `maxDiscards` the number of discarded cases after which the run gives
-up, and `maxShrinks` the number of runs the shrinker may make.
+up, `maxShrinks` the number of runs the shrinker may make, and
+`exhaustiveBelow` the most cases a property may have for every one of
+them to be run instead (0: never), and `smallScope` the number of cases
+of the small scope that are run before the random ones (0: none).
+
+A property has finitely many cases when every word its case reads has
+finitely many values (a [`bool`](../../../basis/sig/BOOL.md#type-bool), a `char`, an [`Int8.int`](../../../basis/sig/INTEGER.md#type-int), a choice among
+a list, and tuples of these), and no length: exhaustive mode then runs
+them all, at size `maxSize`, simplest first, and a failure found is the
+simplest there is, with no shrinking.
+
+Otherwise the small scope is run first: the cases in which every word
+read is 0, 1 or 2 (integers 0, \~1 and 1, lengths up to 2, the first
+characters, both booleans), simplest first, as many as `smallScope`
+allows. A failure there is reported as exhaustive mode reports one; the
+cases that pass are not counted in `tests`. A property whose values need
+each other's bounds (an index one past the end of a string drawn beside
+it) fails there where random cases rarely meet it.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -75,6 +95,8 @@ up, and `maxShrinks` the number of runs the shrinker may make.
 | <a name="fld-config.maxsize"></a>`maxSize` | `int` |  |
 | <a name="fld-config.maxdiscards"></a>`maxDiscards` | `int` |  |
 | <a name="fld-config.maxshrinks"></a>`maxShrinks` | `int` |  |
+| <a name="fld-config.exhaustivebelow"></a>`exhaustiveBelow` | `int` |  |
+| <a name="fld-config.smallscope"></a>`smallScope` | `int` |  |
 
 ### <a name="val-default"></a>`default`
 
@@ -82,14 +104,19 @@ up, and `maxShrinks` the number of runs the shrinker may make.
 val default : config
 ```
 
-100 cases, sizes up to 100, a seed from the name, giving up after 1000
-discarded cases, shrinking in at most 5000 runs.
+100 cases at sizes up to 100, from a seed that is a hash of the name.
+
+A run gives up after 1000 discarded cases and shrinks in at most 5000
+runs. It runs every case of a property with at most 65536 of them
+(docs/plans/quickcheck.md, P9), and otherwise first 100 cases of the
+small scope (P13).
 
 ### <a name="type-result"></a>`result`
 
 ```sml
 datatype result =
-    Passed of {tests : int, discarded : int, labels : (string * int) list, short : (string * real * real) list}
+    Passed of {tests : int, discarded : int, exhaustive : bool, labels : (string * int) list,
+               short : (string * real * real) list}
   | Failed of {test : int, size : int, class : string, message : string, counterexample : string list,
                calls : string list list, shrinks : int, replay : string}
   | GaveUp of {tests : int, discarded : int}
@@ -100,13 +127,15 @@ What a run found.
 [`Failed`](#con-failed) has the shrunk case: `counterexample` is what it drew, as
 shown, and `calls` the calls of each of its generated functions, with
 `shrinks` the runs that the shrinking took. [`replay`](#val-replay) is the token of the
-case as it was drawn.
+case as it was drawn. [`Passed`](#con-passed)'s `exhaustive` says that its cases were
+every case there is.
 
 | Constructor | Argument | Description |
 | --- | --- | --- |
-| <a name="con-passed"></a>`Passed` | `{tests : int, discarded : int, labels : (string * int) list, short : (string * real * real) list}` |  |
+| <a name="con-passed"></a>`Passed` | `{tests : int, discarded : int, exhaustive : bool, labels : (string * int) list, short : (string * real * real) list}` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.tests"></a>`tests` | `int` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.discarded"></a>`discarded` | `int` |  |
+| &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.exhaustive"></a>`exhaustive` | `bool` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.labels"></a>`labels` | `(string * int) list` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-passed.short"></a>`short` | `(string * real * real) list` |  |
 | <a name="con-failed"></a>`Failed` | `{test : int, size : int, class : string, message : string, counterexample : string list, calls : string list list, shrinks : int, replay : string}` |  |

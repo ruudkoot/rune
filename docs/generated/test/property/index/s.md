@@ -4,8 +4,13 @@
 
 - `sample` (val): [GEN](../sig/GEN.md#val-sample)
 - `show` (type): [SHOW](../sig/SHOW.md#type-show)
+- `signal` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-signal)
 - `sized` (val): [GEN](../sig/GEN.md#val-sized)
+- `sockType` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-socktype)
+- `speed` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-speed)
+- `streamSock` (val): [INET6_SOCK_ARB](../sig/INET6_SOCK_ARB.md#val-streamsock)
 - `string` (val): [ARB](../sig/ARB.md#val-string), [CO](../sig/CO.md#val-string), [GEN](../sig/GEN.md#val-string), [SHOW](../sig/SHOW.md#val-string)
+- `syserror` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-syserror)
 
 ---
 

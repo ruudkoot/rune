@@ -46,6 +46,12 @@ sig
   (* `order` shows an order. *)
   val order : order show
 
+  (* `parens t` is `t` in parentheses where it has a space and is not
+     already bracketed or a string: an argument of a constructor.
+
+     Example: `parens "~3" = "~3" andalso parens "SOME 1" = "(SOME 1)"` *)
+  val parens : string -> string
+
   (* `option s` shows an option.
 
      Example: `option int (SOME 3) = "SOME 3"` *)

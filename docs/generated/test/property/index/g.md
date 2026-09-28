@@ -5,6 +5,7 @@
 - `GaveUp` (con): [CHECK](../sig/CHECK.md#con-gaveup)
 - `gen` (type): [GEN](../sig/GEN.md#type-gen)
 - `Generated` (exn): [GEN](../sig/GEN.md#exn-generated)
+- `gid` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-gid)
 
 ---
 

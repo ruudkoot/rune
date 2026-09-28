@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`SHOW`](../sig/SHOW.md) |
 | Status | required |
-| Members | 16 |
+| Members | 17 |
 | Tests | not listed |
 | Source | [lib/test/property/show.sml](../../../../../lib/test/property/show.sml) |
 
@@ -31,6 +31,7 @@ What each means is on [`SHOW`](../sig/SHOW.md); the types are this structure's o
 | val | [`option`](../sig/SHOW.md#val-option) | `'a show -> 'a option show` |
 | val | [`order`](../sig/SHOW.md#val-order) | `order show` |
 | val | [`pair`](../sig/SHOW.md#val-pair) | `'a show * 'b show -> ('a * 'b) show` |
+| val | [`parens`](../sig/SHOW.md#val-parens) | `string show` |
 | val | [`real`](../sig/SHOW.md#val-real) | `real show` |
 | val | [`string`](../sig/SHOW.md#val-string) | `string show` |
 | val | [`triple`](../sig/SHOW.md#val-triple) | `'a show * 'b show * 'c show -> ('a * 'b * 'c) show` |

@@ -17,7 +17,15 @@ struct
   (* A position: the address of a node, and the steps from the root to it. *)
   type position = {address : Word64.word, path : Word64.word list}
 
-  type node = {address : Word64.word, path : Word64.word list, word : Word64.word, kind : kind}
+  (* A node read: where it is, its word, its kind, and the number of words
+     that are values of it, 0 when that is not finite (exhaustive mode
+     enumerates the words below the bound). *)
+  type node = {address : Word64.word, path : Word64.word list, word : Word64.word, kind : kind, bound : Word64.word}
+
+  fun withWord ({address, path, kind, bound, ...} : node, w : Word64.word) : node =
+    {address = address, path = path, word = w, kind = kind, bound = bound}
+  fun withPath ({word, kind, bound, ...} : node, path : Word64.word list, address : Word64.word) : node =
+    {address = address, path = path, word = word, kind = kind, bound = bound}
 
   (* A list's layout: the address of the node of its length, and the paths
      of its elements' parts and of their marks (listOf has none). *)
@@ -28,15 +36,16 @@ struct
                  (* the calls of generated functions, by the function's position, as text *)
                  calls : (position * string) list ref,
                  (* the calls of effect-observing functions, as the side of a law made them *)
-                 effects : string list ref}
+                 effects : string list ref,
+                 cleanups : (unit -> unit) list ref}
 
   fun new (seed : Word64.word, size : int, set : node list, zeros : Word64.word list list) : source =
     {seed = seed, size = size, set = set, zeros = zeros, trail = ref [], sequences = ref [], calls = ref [],
-     effects = ref []}
+     effects = ref [], cleanups = ref []}
 
   fun resized (s : source, n : int) : source =
     {seed = #seed s, size = n, set = #set s, zeros = #zeros s, trail = #trail s, sequences = #sequences s,
-     calls = #calls s, effects = #effects s}
+     calls = #calls s, effects = #effects s, cleanups = #cleanups s}
 
   fun step (a : Word64.word, w : Word64.word) : Word64.word =
     Random.hash (Word64.+ (Word64.* (a, 0wxD1B54A32D192ED03), Word64.+ (w, 0wx9E3779B97F4A7C15)))
@@ -57,8 +66,9 @@ struct
 
   (* The word of the node at p: the one set for it, 0 below a zeroed path,
      or the sample of the node's random word. The node is logged, with its
-     kind. *)
-  fun read (s : source, {address, path} : position, kind : kind, sample : Word64.word -> Word64.word) : Word64.word =
+     kind and its bound (0 when the words that are values are not finite). *)
+  fun readIn (s : source, {address, path} : position, kind : kind, bound : Word64.word,
+              sample : Word64.word -> Word64.word) : Word64.word =
     let
       val w = case List.find (fn n : node => #address n = address) (#set s) of
                 SOME n => #word n
@@ -66,8 +76,11 @@ struct
                   if List.exists (fn z => isPrefix (z, path)) (#zeros s) then 0w0
                   else sample (Random.hash (Word64.xorb (#seed s, address)))
     in
-      #trail s := {address = address, path = path, word = w, kind = kind} :: !(#trail s); w
+      #trail s := {address = address, path = path, word = w, kind = kind, bound = bound} :: !(#trail s); w
     end
+
+  fun read (s : source, p : position, kind : kind, sample : Word64.word -> Word64.word) : Word64.word =
+    readIn (s, p, kind, 0w0, sample)
 
   fun sequence (s : source, q : sequence) : unit = #sequences s := q :: !(#sequences s)
   fun call (s : source, f : position, text : string) : unit = #calls s := (f, text) :: !(#calls s)
@@ -127,6 +140,16 @@ struct
     in
       if Word64.andb (w, 0wx8000000000000000) <> 0w0 then ~ magnitude else magnitude
     end
+
+  (* A cleanup to run when the case is over: what a generator that makes
+     things (a file, a socket) registers to undo them. *)
+  fun cleanup (s : source, f : unit -> unit) : unit = #cleanups s := f :: !(#cleanups s)
+
+  (* Runs the cleanups of the case, the last registered first, each once;
+     an exception of one does not stop the others. *)
+  fun cleanUp (s : source) : unit =
+    let val fs = !(#cleanups s)
+    in #cleanups s := []; List.app (fn f => f () handle _ => ()) fs end
 
   fun sequences (s : source) : sequence list = List.rev (!(#sequences s))
   fun calls (s : source) : (position * string) list = List.rev (!(#calls s))

@@ -2,8 +2,14 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) **i** [l](l.md) [m](m.md) [o](o.md) [p](p.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [symbols](symbols.md)
 
+- `inAddr` (val): [INET6_SOCK_ARB](../sig/INET6_SOCK_ARB.md#val-inaddr), [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-inaddr)
+- `inetStreamSock` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-inetstreamsock)
+- `instream` (val): [SML90_ARB](../sig/SML90_ARB.md#val-instream)
 - `int` (val): [ARB](../sig/ARB.md#val-int), [CO](../sig/CO.md#val-int), [GEN](../sig/GEN.md#val-int), [SHOW](../sig/SHOW.md#val-int)
+- `intInf` (val): [ARB](../sig/ARB.md#val-intinf), [GEN](../sig/GEN.md#val-intinf)
+- `intInfRange` (val): [GEN](../sig/GEN.md#val-intinfrange)
 - `intRange` (val): [GEN](../sig/GEN.md#val-intrange)
+- `iodesc` (val): [SYSTEM_ARB](../sig/SYSTEM_ARB.md#val-iodesc)
 
 ---
 

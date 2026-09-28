@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 16 of 16 entries documented |
+| Documentation | 17 of 17 entries documented |
 | Tests | not listed |
 | Source | [lib/test/property/show\_sig.sml](../../../../../lib/test/property/show_sig.sml) |
 
@@ -39,6 +39,7 @@ sig
   val <a href="#val-bool">bool</a> : bool show
   val <a href="#val-unit">unit</a> : unit show
   val <a href="#val-order">order</a> : order show
+  val <a href="#val-parens">parens</a> : string -&gt; string
   val <a href="#val-option">option</a> : 'a show -&gt; 'a option show
   val <a href="#val-list">list</a> : 'a show -&gt; 'a list show
   val <a href="#val-vector">vector</a> : 'a show -&gt; 'a vector show
@@ -139,6 +140,17 @@ val order : order show
 ```
 
 [`order`](#val-order) shows an order.
+
+### <a name="val-parens"></a>`parens`
+
+```sml
+val parens : string -> string
+```
+
+`parens t` is `t` in parentheses where it has a space and is not
+already bracketed or a string: an argument of a constructor.
+
+**Example** `parens "~3" = "~3" andalso parens "SOME 1" = "(SOME 1)"`
 
 ### <a name="val-option"></a>`option`
 

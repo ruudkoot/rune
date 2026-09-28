@@ -1,13 +1,75 @@
 name	kind	signature	realisations	status	origin	source
 ARB	signature			required	declared	lib/test/property/arb_sig.sml
+ARB_OF	signature			required	declared	lib/test/property/family_sig.sml
+BASIS_DATA_ARB	signature			required	declared	lib/test/property/data_sig.sml
 CHECK	signature			required	declared	lib/test/property/check_sig.sml
 CO	signature			required	declared	lib/test/property/co_sig.sml
+DATE_ARB	signature			required	declared	lib/test/property/data_sig.sml
 GEN	signature			required	declared	lib/test/property/gen_sig.sml
+IEEE_REAL_ARB	signature			required	declared	lib/test/property/data_sig.sml
+INET6_SOCK_ARB	signature			required	declared	lib/test/property/inet6_sig.sml
 PROP	signature			required	declared	lib/test/property/prop_sig.sml
 SHOW	signature			required	declared	lib/test/property/show_sig.sml
+SML90_ARB	signature			required	declared	lib/test/property/sml90_sig.sml
+SYSTEM_ARB	signature			required	declared	lib/test/property/system_sig.sml
 Arb	structure	ARB		required	claimed	lib/test/property/arb.sml
+BasisDataArb	structure	BASIS_DATA_ARB		required	claimed	lib/test/property/data.sml
+CharArb	structure	ARB_OF	where type t = Char.char	required	claimed	lib/test/property/text.sml
+CharArbFn	functor	ARB_OF	where type t = C.char	required	ascribed	lib/test/property/family.sml
+CharArray2Arb	structure	ARB_OF	where type t = CharArray2.array	required	claimed	lib/test/property/arrays2.sml
+CharArrayArb	structure	ARB_OF	where type t = CharArray.array	required	claimed	lib/test/property/text.sml
+CharArraySliceArb	structure	ARB_OF	where type t = CharArraySlice.slice	required	claimed	lib/test/property/text.sml
+CharVectorArb	structure	ARB_OF	where type t = CharVector.vector	required	claimed	lib/test/property/text.sml
+CharVectorSliceArb	structure	ARB_OF	where type t = CharVectorSlice.slice	required	claimed	lib/test/property/text.sml
 Check	structure	CHECK		required	claimed	lib/test/property/check.sml
 Co	structure	CO		required	claimed	lib/test/property/co.sml
+DateArb	structure	DATE_ARB		required	claimed	lib/test/property/data.sml
+FixedIntArb	structure	ARB_OF	where type t = FixedInt.int	required	claimed	lib/test/property/sized.sml
 Gen	structure	GEN		required	claimed	lib/test/property/gen.sml
+IEEERealArb	structure	IEEE_REAL_ARB		required	claimed	lib/test/property/data.sml
+INet6SockArb	structure	INET6_SOCK_ARB		required	claimed	lib/test/property/inet6.sml
+Int16Arb	structure	ARB_OF	where type t = Int16.int	required	claimed	lib/test/property/sized.sml
+Int32Arb	structure	ARB_OF	where type t = Int32.int	required	claimed	lib/test/property/sized.sml
+Int64Arb	structure	ARB_OF	where type t = Int64.int	required	claimed	lib/test/property/sized.sml
+Int8Arb	structure	ARB_OF	where type t = Int8.int	required	claimed	lib/test/property/sized.sml
+IntArb	structure	ARB_OF	where type t = Int.int	required	claimed	lib/test/property/numbers.sml
+IntArray2Arb	structure	ARB_OF	where type t = IntArray2.array	required	claimed	lib/test/property/arrays2.sml
+IntInfArb	structure	ARB_OF	where type t = IntInf.int	required	claimed	lib/test/property/numbers.sml
+IntegerArbFn	functor	ARB_OF	where type t = I.int	required	ascribed	lib/test/property/family.sml
+LargeIntArb	structure	ARB_OF	where type t = LargeInt.int	required	claimed	lib/test/property/numbers.sml
+LargeRealArb	structure	ARB_OF	where type t = LargeReal.real	required	claimed	lib/test/property/numbers.sml
+LargeWordArb	structure	ARB_OF	where type t = LargeWord.word	required	claimed	lib/test/property/numbers.sml
+MonoArray2ArbFn	functor	ARB_OF	where type t = A.array	required	ascribed	lib/test/property/family.sml
+MonoArrayArbFn	functor	ARB_OF	where type t = A.array	required	ascribed	lib/test/property/family.sml
+MonoArraySliceArbFn	functor	ARB_OF	where type t = S.slice	required	ascribed	lib/test/property/family.sml
+MonoVectorArbFn	functor	ARB_OF	where type t = V.vector	required	ascribed	lib/test/property/family.sml
+MonoVectorSliceArbFn	functor	ARB_OF	where type t = S.slice	required	ascribed	lib/test/property/family.sml
+PositionArb	structure	ARB_OF	where type t = Position.int	required	claimed	lib/test/property/numbers.sml
 Prop	structure	PROP		required	claimed	lib/test/property/prop.sml
+Real32Arb	structure	ARB_OF	where type t = Real32.real	required	claimed	lib/test/property/sized.sml
+Real64Arb	structure	ARB_OF	where type t = Real64.real	required	claimed	lib/test/property/sized.sml
+RealArb	structure	ARB_OF	where type t = Real.real	required	claimed	lib/test/property/numbers.sml
+RealArbFn	functor	ARB_OF	where type t = R.real	required	ascribed	lib/test/property/family.sml
+SML90Arb	structure	SML90_ARB		required	claimed	lib/test/property/sml90.sml
 Show	structure	SHOW		required	claimed	lib/test/property/show.sml
+StringArb	structure	ARB_OF	where type t = String.string	required	claimed	lib/test/property/text.sml
+StringArbFn	functor	ARB_OF	where type t = S.string	required	ascribed	lib/test/property/family.sml
+SubstringArb	structure	ARB_OF	where type t = Substring.substring	required	claimed	lib/test/property/text.sml
+SubstringArbFn	functor	ARB_OF	where type t = S.substring	required	ascribed	lib/test/property/family.sml
+SysWordArb	structure	ARB_OF	where type t = SysWord.word	required	claimed	lib/test/property/numbers.sml
+SystemArb	structure	SYSTEM_ARB		required	claimed	lib/test/property/system.sml
+TimeArb	structure	ARB_OF	where type t = Time.time	required	ascribed	lib/test/property/data.sml
+WideCharArb	structure	ARB_OF	where type t = WideChar.char	required	claimed	lib/test/property/wide.sml
+WideStringArb	structure	ARB_OF	where type t = WideString.string	required	claimed	lib/test/property/wide.sml
+WideSubstringArb	structure	ARB_OF	where type t = WideSubstring.substring	required	claimed	lib/test/property/wide.sml
+Word16Arb	structure	ARB_OF	where type t = Word16.word	required	claimed	lib/test/property/sized.sml
+Word32Arb	structure	ARB_OF	where type t = Word32.word	required	claimed	lib/test/property/sized.sml
+Word64Arb	structure	ARB_OF	where type t = Word64.word	required	claimed	lib/test/property/sized.sml
+Word8Arb	structure	ARB_OF	where type t = Word8.word	required	claimed	lib/test/property/numbers.sml
+Word8Array2Arb	structure	ARB_OF	where type t = Word8Array2.array	required	claimed	lib/test/property/arrays2.sml
+Word8ArrayArb	structure	ARB_OF	where type t = Word8Array.array	required	claimed	lib/test/property/bytes.sml
+Word8ArraySliceArb	structure	ARB_OF	where type t = Word8ArraySlice.slice	required	claimed	lib/test/property/bytes.sml
+Word8VectorArb	structure	ARB_OF	where type t = Word8Vector.vector	required	claimed	lib/test/property/bytes.sml
+Word8VectorSliceArb	structure	ARB_OF	where type t = Word8VectorSlice.slice	required	claimed	lib/test/property/bytes.sml
+WordArb	structure	ARB_OF	where type t = Word.word	required	claimed	lib/test/property/numbers.sml
+WordArbFn	functor	ARB_OF	where type t = W.word	required	ascribed	lib/test/property/family.sml

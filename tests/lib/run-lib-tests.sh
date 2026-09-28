@@ -23,7 +23,10 @@
 #   - lib/test/property's core holds (tests/lib/property/core.sml) and draws
 #     what fingerprint.expected says, and its shrinker reaches the known
 #     minima of the shrinking challenge and of planted bugs
-#     (tests/lib/property/shrink.sml);
+#     (tests/lib/property/shrink.sml), its arbitraries cover every type of
+#     the census of the Basis Library's laws and draw what frozen.expected
+#     says (instances.sml), and its properties kill every mutant of
+#     mutants.sml;
 #   - the examples of both libraries' documentation hold.
 # Override the tools with RUNE=, RUNEVM= and RUNEDOC=.
 set -u
@@ -177,6 +180,21 @@ if "$rune" --library test/property tests/lib/property/shrink.sml -o "$out/proper
   ok
 else
   bad "property: shrinking (see $out/property-shrink.cerr, $out/property-shrink.out)"
+fi
+if "$rune" --library test/property tests/lib/property/instances.sml -o "$out/property-instances.rbc" > "$out/property-instances.cerr" 2>&1 &&
+   "$runevm" "$out/property-instances.rbc" > "$out/property-instances.out" 2>&1 &&
+   ! grep -q "^FAIL" "$out/property-instances.out" &&
+   [ "$(grep '^frozen' "$out/property-instances.out" | cut -d' ' -f2)" = "$(cat tests/lib/property/frozen.expected)" ]; then
+  ok
+else
+  bad "property: the instances, or what they draw (see $out/property-instances.cerr, $out/property-instances.out)"
+fi
+if "$rune" --library test/property tests/lib/property/mutants.sml -o "$out/property-mutants.rbc" > "$out/property-mutants.cerr" 2>&1 &&
+   "$runevm" "$out/property-mutants.rbc" > "$out/property-mutants.out" 2>&1 &&
+   ! grep -q "^FAIL\|^SURVIVED" "$out/property-mutants.out"; then
+  ok
+else
+  bad "property: the mutants (see $out/property-mutants.cerr, $out/property-mutants.out)"
 fi
 if "$rune" --library test/property --basis-check > "$out/property-check.txt" 2>&1; then
   ok

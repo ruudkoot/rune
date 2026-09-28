@@ -6,6 +6,7 @@
 - `check` (val): [CHECK](../sig/CHECK.md#val-check)
 - `classify` (val): [PROP](../sig/PROP.md#val-classify)
 - `co` (type): [CO](../sig/CO.md#type-co)
+- `code` (val): [GEN](../sig/GEN.md#val-code)
 - `config` (type): [CHECK](../sig/CHECK.md#type-config)
 - `cover` (val): [PROP](../sig/PROP.md#val-cover)
 
