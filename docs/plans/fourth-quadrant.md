@@ -9,6 +9,13 @@ The matrix tests three of the four ways to pair a compiler with a library:
 
 This is what the fourth would take. It was measured on 2026-09-21, not built.
 
+**Status (2026-09-28):** built, for three hosts and not only MLton:
+`xc2:mlton`, `xc2:mlkit` and `xc2:smlnj-legacy` run the whole suite on the host's
+library compiled by Rune, with nothing unexplained. Poly/ML's library is
+still out of reach. How it is done, and what differs from the hosts, is in
+[tests/basis/xc2/README.md](../../tests/basis/xc2/README.md); the rest of
+this page is the measurement that came before.
+
 ## What it would prove
 
 `xc1` shows that Rune's *library* does not depend on accidents of Rune, and

@@ -80,6 +80,7 @@ native:mlkit@* | Char.fromString/unescaped-double-quote | SPEC-AMBIGUOUS | conve
 native:mlton@* | String.fromString/unescaped-double-quote* | SPEC-AMBIGUOUS | stops at an unescaped double quote; the test takes the reading of SML/NJ and Poly/ML (it converts to itself)
 native:mlton@* | String.fromCString/NONE-* | HOST-BUG | SOME "" instead of NONE when no character can be converted
 native:smlnj*@* | @section/string/extract-overflow | HOST-BUG | String.extract (s, i, SOME j) with i or j near Int.maxInt: no Subscript but a crash (a segmentation fault on 110.79, a failed allocation on 110.99.9)
+xc2:smlnj-legacy@* | String.extract/SOME-Subscript-not-Overflow-* | HOST-BUG | the check of extract (s, i, SOME j) adds i and j without the check of Overflow (fast_add): the sum wraps round, the region passes, and a string of j characters is made, which raises Size where native SML/NJ fails to allocate it (@section/string/extract-overflow)
 native:smlnj*@* | String.isSubstring/empty-empty | HOST-BUG | isSubstring "" "" is false
 native:smlnj*@* | String.isSubstring/law-39 | HOST-BUG | isSubstring "" "" is false (the law draws two empty strings)
 native:smlnj*@* | String.*/format-then-* | HOST-BUG | NONE instead of SOME "" when only an escaped formatting sequence can be scanned
@@ -266,6 +267,7 @@ native:smlnj*@* | Array2.*/no-[rc]* | HOST-BUG | Array2.array (r, c, x) with r =
 native:smlnj*@* | Array2.row/Subscript-no-rows | HOST-BUG | row (a, 0) of an array without rows is an empty vector instead of Subscript
 native:smlnj*@* | Array2.*/nothing-* | HOST-BUG | a RowMajor traversal of a valid region without rows, and a ColMajor traversal of one without columns, applies f to one row or column, even beyond the end of the array
 native:smlnj*@* | @section/array2/no-elements-writes | HOST-BUG | modifyi and copy on a valid region without rows or columns write one row or column, even beyond the end of the array: segmentation fault
+xc2:smlnj-legacy@* | Array2.*/model-empty-* | HOST-BUG | the laws of the section no-elements-writes, which native SML/NJ does not get through, fail as no-[rc]* and nothing-* do: array (r, c, x) with r = 0 or c = 0 makes an array of dimensions (0, 0), and a traversal of a region without rows (RowMajor) or columns (ColMajor) applies f to one row or column, even beyond the end of the array (Subscript)
 native:smlnj*@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row and dst_col)
 native:smlnj*@* | Array2.row/Subscript-not-Overflow | HOST-BUG | row (a, Int.maxInt) raises Overflow instead of Subscript
 native:polyml@* | Array2.*/Subscript-not-Overflow-* | HOST-BUG | the region checks of appi, foldi, modifyi and copy raise Overflow instead of Subscript when row + nrows or col + ncols overflows (copy also for dst_row + nrows)

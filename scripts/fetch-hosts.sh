@@ -15,8 +15,9 @@
 #    in SML and needs an MLton to build; links against the system's GMP).
 #  * SML/NJ 110.99.9: config/install.sh, 64-bit (smlnj-legacy) and 32-bit
 #    (smlnj32: 31-bit int and word, which has found many portability bugs;
-#    needs gcc -m32). A checkout that still looks up <prefix>/smlnj keeps
-#    working: that name stays a symlink to the same 64-bit install.
+#    needs gcc -m32), and beside the 64-bit one the sources of its library.
+#    A checkout that still looks up <prefix>/smlnj keeps working: that name
+#    stays a symlink to the same 64-bit install.
 #  * SML/NJ 2026.2 (smlnj-dev): the development line, 64-bit only (amd64 and
 #    arm64). The arch tarball from smlnj.org carries the sources and the boot
 #    files; build.sh compiles the bundled LLVM and needs CMake 3.23, a C++17
@@ -144,13 +145,26 @@ install_smlnj_legacy() {
     ln -sfn "smlnj-$v" "$prefix/smlnj-legacy"
     ln -sfn "smlnj-$v" "$prefix/smlnj"
     echo "smlnj-legacy $v is already installed"
-    return
+  else
+    install_smlnj_bits smlnj-legacy 64 || return 1
+    # Other checkouts still resolve <prefix>/smlnj.
+    if [ -d "$prefix/smlnj-legacy-$v" ]; then
+      ln -sfn "smlnj-legacy-$v" "$prefix/smlnj"
+    fi
   fi
-  install_smlnj_bits smlnj-legacy 64
-  # Other checkouts still resolve <prefix>/smlnj.
-  if [ -d "$prefix/smlnj-legacy-$v" ]; then
-    ln -sfn "smlnj-legacy-$v" "$prefix/smlnj"
-  fi
+  smlnj_system
+}
+# smlnj_system: the sources of SML/NJ's library (system.tgz of the release,
+# which install.sh does not fetch) in the system directory of the
+# smlnj-legacy installation, for the xc2:smlnj-legacy configuration of the
+# Basis matrix (tests/basis/xc2).
+smlnj_system() {
+  v=$SMLNJ_VERSION
+  d=$(cd "$prefix/smlnj-legacy" && pwd -P) || return 1
+  [ -f "$d/system/Basis/basis.cm" ] && return 0
+  [ -f "$d/system.tgz" ] ||
+    fetch "https://smlnj.cs.uchicago.edu/dist/working/$v/system.tgz" "$d/system.tgz" || return 1
+  tar -xzf "$d/system.tgz" -C "$d"
 }
 install_smlnj32() { install_smlnj_bits smlnj32 32; }
 

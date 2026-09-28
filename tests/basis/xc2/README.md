@@ -15,24 +15,29 @@ where `native:HOST` fails a check because of the host's library, `xc2:HOST`
 fails it too, and a check that fails in one and not in the other is a
 difference between the compilers (or a defect of the shim below). So the
 configuration tests Rune's compiler on another implementation's SML, as the
-test programs use it. There are two:
+test programs use it. There are three:
 
 * `xc2:mlton`: MLton's library (`lib/mlton/sml/basis` of the host), some
   37,000 lines in 387 files.
 * `xc2:mlkit`: MLKit's (`lib/mlkit/basis`), some 25,000 lines in 139 files.
+* `xc2:smlnj-legacy`: SML/NJ's (`system/Basis` of the release, and the part of
+  `system/smlnj/init` that is not the compiler's primitives), some 26,000
+  lines in 265 files.
 
-SML/NJ and Poly/ML have none; see the end.
+Poly/ML has none; see the end.
 
 ## How a program is made
 
 `HOST/gen.sh OUTDIR LIB` writes what a program compiles before its own files
-(`OUTDIR/prefix`):
+(`OUTDIR/prefix`), and the options of Rune's it needs besides `--allow-prim`
+(`OUTDIR/flags`):
 
 1. **The sources.** The host's `basis.patch` is applied to a copy of its
    library. `mlb-flatten.awk` and `flatten.sh` flatten its `basis.mlb` into
    the SML files it loads, in order. The scoping of `local A in B end` is
    kept by saving the structures `A` rebinds before `A` and restoring them
-   after `B` (`toplevel.awk` finds the names).
+   after `B` (`toplevel.awk` finds the names). SML/NJ's library is described
+   for CM instead, whose order the host's `sml` gives (below).
 2. **The host's extensions.** `HOST/rewrite.awk` replaces the host's way of
    naming a primitive or a C function by a name of the shim, keeping the
    line breaks.
@@ -145,21 +150,67 @@ What differs from MLKit, and why:
   no `UnixSock` to make one), and the primitives of the code the patch
   leaves out; their stubs raise.
 
-## SML/NJ and Poly/ML
+## xc2:smlnj-legacy
 
-Their libraries are written against their compilers' representations more
-than MLton's and MLKit's are, and a shim cannot make that of Rune's:
+`smlnj/gen.sh OUTDIR SMLNJ` takes SML/NJ's installation: its `sml` gives
+the order of the library's files, and `SMLNJ/system` their sources, which
+`scripts/fetch-hosts.sh` unpacks from the release's `system.tgz` (the
+installer does not fetch it). `smlnj/order.sml` asks CM for the portable
+dependency graph of `Basis/basis-common.cm` (`CM.Graph.graph`), whose
+definitions are in the order CM compiles them; the generator puts the files
+of the group `TypesOnly` first, then `Implementation`, then `Exports`, which
+rebinds names (`Socket`, `Posix`) that `Implementation`'s files mean as they
+were in their own group. Before them come the files of the init library
+(`smlnj/init`, in the order of `init.cmi`), except those that are the
+compiler's primitives: `smlnj/rts.sml` is the runtime's `Assembly`,
+`smlnj/core.sml` `Core` and `CoreIntInf`, and `smlnj/inline.sml` `InlineT`
+(`InLine`'s primitives with their types) and `MathInlineT`, all made of
+Rune's. `smlnj/prologue.sml` gives `PrimTypes` as Rune's types (`int` and
+`word` are Rune's, `word8vector` is Rune's `string`, `word8array` an array
+of `Word8.word`, ...), and `smlnj/rewrite.awk` replaces the vector
+constants `#[...]` and `CInterface.c_function "LIB" "NAME"`, a C function of
+the runtime, by `XC2NC.LIB_NAME`: `smlnj/cfuns.sml` makes those the test
+programs reach, and the generated stubs raise for the rest. The library
+uses or-patterns, an extension of SML/NJ's: Rune compiles it with
+`--or-patterns` (`OUTDIR/flags`).
 
-* **SML/NJ** (23,000 lines in `system/Basis/Implementation`) is compiled in
-  the compiler's primitive environment (`init.cmi`: `PrimTypes`, `InlineT`,
-  `Core`), with CM's descriptions, not MLB. `InlineT`'s primitives have their
-  types (`target64-inline.sml`), so a shim could make them as MLton's; but
-  the library casts between representations 89 times (`InlineT.cast`: a
-  `CharVector` operation used as `Word8Vector`'s, a `word ref` read as a
-  `real ref` in `PackReal64Big`), allocates strings and byte vectors and
-  fills them in place (`Assembly.A.create_s`; 107 uses of `Assembly`), and
-  reaches its runtime by 62 `CInterface.c_function`s. Each cast would be a
-  patch, and the strings and byte vectors a rewrite as large as MLKit's.
+As with MLKit, the shim does what SML/NJ's C runtime (`base/runtime/c-libs`)
+does, its bugs included: `fcntl_gfl` asks `F_GETFD` for the flags,
+`getaddrfamily` looks the family up in the network's byte order (so that
+`Socket.familyOfAddr` is `<UNKNOWN>`), `getservbyport` is given the port in
+the machine's order, the library binds `ctlSNDBUF` for the receive buffer
+too, and the poll of `OS.IO.poll` and `Socket.select` is `select`, which
+fails for a descriptor that is not open and for a negative time.
+
+What differs from SML/NJ, and why:
+
+* **`int` and `word`.** They are Rune's, of 64 bits, where SML/NJ's have 63
+  (its `Int63` and `Word63`); the patch makes `Int.precision`, `minInt`,
+  `maxInt` and `Word.wordSize` say so, as MLton's is built for 64-bit
+  `int` and `word`. The unchecked arithmetic of `InlineT` wraps at 64 bits.
+* **Strings and byte vectors.** SML/NJ allocates a string or a
+  `Word8Vector` (`Assembly.A.create_s`) and fills it in place, and casts
+  between `CharVector` and `Word8Vector` (`InlineT.cast`). Rune's strings
+  are made whole: the patch fills an array of chars and converts it
+  (`XC2N.buf`, `XC2N.bstr`), in some 30 files, and a cast becomes a copy.
+  `Word8Vector.vector` is Rune's `string`, its elements the bytes of the
+  chars.
+* **The compiler's bugs.** A check that ends native SML/NJ runs here, and
+  shows what the library does: an `Array2` of no elements
+  (`no-elements-writes`), `String.extract` near `Int.maxInt`,
+  `OS.IO.poll` for input and output at once. A bug of SML/NJ's compiler
+  (`General.*/as-value`) does not show.
+* **Not made.** Continuations (`SMLofNJ.Cont`), signal handlers, the
+  collector's and the profiler's controls, `Unsafe.Object` and
+  `Unsafe.blastRead`, exporting a heap, `NetDB` (outside the Basis), and
+  the size of a terminal's window (`Posix.TTY.getWindowSz` gives `NONE`):
+  their C functions raise, or answer as a system without them would.
+
+## Poly/ML
+
+Its library is written against its compiler's representations more than
+the others are:
+
 * **Poly/ML** (32,000 lines in `basis`, 63 of its 102 files calling
   `RunCall`) reaches its runtime by 220 `RunCall.rtsCall*`s, casts 147 times
   (`RunCall.unsafeCast`), and builds strings, vectors and `IntInf`s on raw
@@ -176,5 +227,6 @@ explains the same failure in `xc2:HOST`: the same library source fails the
 same way (such a line is not required to match in `xc2:HOST`, where a bug of
 the host's compiler or runtime does not show). A line for `xc2:HOST` records
 what differs: `XC2-NA` for what the shim does not make, a bug of the host's
-library that shows only in xc2 (MLKit cannot load the test), and otherwise a
+library that shows only in xc2 (MLKit cannot load the test, SML/NJ does not
+get through it), and otherwise a
 defect of the shim or of Rune's compiler.
